@@ -3,7 +3,7 @@ package shipmentmoveservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -52,7 +52,7 @@ type Params struct {
 	Notifications   *notificationservice.Service                `optional:"true"`
 	DashControlRepo tenantports.DashControlRepository           `optional:"true"`
 	MoveObservers   []shipmentserviceports.MoveStatusObserver   `                group:"move_status_observers"`
-	Publisher       agentports.AgentEventPublisher              `optional:"true"`
+	Publisher       agenteventports.AgentEventPublisher         `optional:"true"`
 }
 
 type service struct {
@@ -72,7 +72,7 @@ type service struct {
 	notifications   *notificationservice.Service
 	dashControlRepo tenantports.DashControlRepository
 	moveObservers   []shipmentserviceports.MoveStatusObserver
-	publisher       agentports.AgentEventPublisher
+	publisher       agenteventports.AgentEventPublisher
 }
 
 //nolint:gocritic // service constructor

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -341,10 +341,10 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 
 type recordedWaitNotices struct {
 	agentwaitports.AgentWaitNotifier
-	events []*agentports.AgentEvent
+	events []*agenteventports.AgentEvent
 }
 
-func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *agentports.AgentEvent) {
+func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 

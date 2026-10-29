@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -34,7 +34,7 @@ type ActivitiesParams struct {
 	AuditService auditports.AuditService
 	EventService shipmenteventports.ShipmentEventService
 	Invalidator  shipmentinvalidationports.ShipmentInvalidator
-	AgentEvents  agentports.AgentEventPublisher `optional:"true"`
+	AgentEvents  agenteventports.AgentEventPublisher `optional:"true"`
 	Logger       *zap.Logger
 }
 
@@ -43,7 +43,7 @@ type Activities struct {
 	auditService auditports.AuditService
 	eventService shipmenteventports.ShipmentEventService
 	invalidator  shipmentinvalidationports.ShipmentInvalidator
-	agentEvents  agentports.AgentEventPublisher
+	agentEvents  agenteventports.AgentEventPublisher
 	logger       *zap.Logger
 }
 
@@ -118,7 +118,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 			}
 		}
 
-		agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, a.agentEvents, agenteventports.AgentEvent{
 			Kind:      agenttrigger.EventShipmentCreated,
 			SubjectID: entity.ID,
 			TenantInfo: pagination.TenantInfo{

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -292,10 +292,10 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 	connections, err := a.eachDriftConnection(
 		ctx,
 		func(tenant pagination.TenantInfo, connectionID pulid.ID) error {
-			agentports.PublishAgentEvent(
+			agenteventports.PublishAgentEvent(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
 				a.publisher,
-				agentports.AgentEvent{
+				agenteventports.AgentEvent{
 					Kind:       agenttrigger.EventAccountingReconciliationDue,
 					SubjectID:  connectionID,
 					TenantInfo: tenant,

@@ -1,8 +1,10 @@
 package assistantcompaction
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -19,14 +21,14 @@ type Params struct {
 	Logger        *zap.Logger
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Proposals     agentports.AgentProposalRepository
+	Proposals     agentproposalports.AgentProposalRepository
 	Permissions   permissionports.PermissionEngine
-	Budgets       agentports.AgentBudgetService           `optional:"true"`
-	Decisions     agentports.AgentDecisionRepository      `optional:"true"`
-	AgentControls tenantports.AgentControlRepository      `optional:"true"`
-	Queries       agenttoolports.AgentQueryToolRegistry   `optional:"true"`
-	Quota         platformplanports.QuotaGuard            `optional:"true"`
-	Chapters      assistantchapterports.ChapterRepository `optional:"true"`
+	Budgets       agentbudgetports.AgentBudgetService        `optional:"true"`
+	Decisions     agentdecisionports.AgentDecisionRepository `optional:"true"`
+	AgentControls tenantports.AgentControlRepository         `optional:"true"`
+	Queries       agenttoolports.AgentQueryToolRegistry      `optional:"true"`
+	Quota         platformplanports.QuotaGuard               `optional:"true"`
+	Chapters      assistantchapterports.ChapterRepository    `optional:"true"`
 }
 
 func New(p Params) *Service {

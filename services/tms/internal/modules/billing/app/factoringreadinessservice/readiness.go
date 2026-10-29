@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -61,7 +61,7 @@ type ReadinessParams struct {
 	Templates     documenttemplateports.DocumentTemplateResolver
 	Inliner       documenttemplateports.AssetInliner `optional:"true"`
 	Email         emailports.EmailService
-	Events        agentports.AgentEventPublisher `optional:"true"`
+	Events        agenteventports.AgentEventPublisher `optional:"true"`
 	Audit         auditports.AuditService
 	Realtime      realtimeports.RealtimeService `optional:"true"`
 	Logger        *zap.Logger
@@ -81,7 +81,7 @@ type ReadinessService struct {
 	templates     documenttemplateports.DocumentTemplateResolver
 	inliner       documenttemplateports.AssetInliner
 	email         emailports.EmailService
-	events        agentports.AgentEventPublisher
+	events        agenteventports.AgentEventPublisher
 	rec           factoringaction.Recorder
 	l             *zap.Logger
 	now           func() int64
@@ -281,7 +281,7 @@ func (s *ReadinessService) announce(
 		related = append(related, *state.FactoringCompanyID)
 	}
 	related = append(related, state.CustomerID)
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventFactoringInvoiceReady,
 		SubjectID:  state.InvoiceID,
 		TenantInfo: tenantInfo,
@@ -761,7 +761,7 @@ func (s *ReadinessService) warnChargebacksDue(
 		if !claimed {
 			continue
 		}
-		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventFactoringChargebackDue,
 			SubjectID:  row.InvoiceID,
 			TenantInfo: tenantInfo,
@@ -806,7 +806,7 @@ func (s *ReadinessService) warnExpiringNoas(
 		if !claimed {
 			continue
 		}
-		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventFactoringNoaExpiring,
 			SubjectID:  noa.ID,
 			TenantInfo: tenantInfo,

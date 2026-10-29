@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingfacts"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -20,7 +20,7 @@ type BriefingSourceParams struct {
 	fx.In
 
 	Watchtower  watchtowerports.WatchtowerRepository
-	Decisions   agentports.AgentDecisionQueueService
+	Decisions   agentdecisionqueueports.AgentDecisionQueueService
 	Board       dispatchboardports.DispatchConsoleRepository
 	Credentials workercredentialports.WorkerCredentialRepository
 	Billing     billingqueueports.BillingQueueRepository

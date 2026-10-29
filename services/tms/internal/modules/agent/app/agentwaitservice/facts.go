@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -35,7 +35,7 @@ type facts struct {
 	telematics  telematicsports.TelematicsRepository
 	carriers    carrierports.CarrierRepository
 	customers   customerports.CustomerRepository
-	subjects    agentports.AgentSubjectRepository
+	subjects    agentsubjectports.AgentSubjectRepository
 	portalRuns  agentextensionports.PortalRunRepository
 	webWatches  agentextensionports.WebWatchRepository
 	documents   documentports.DocumentRepository
@@ -233,7 +233,7 @@ func (f *facts) assessParty(
 ) error {
 	switch {
 	case c.ShipmentID.IsNotNil():
-		found, err := f.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+		found, err := f.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
 			TenantInfo:  tenant,
 			SubjectType: agent.SubjectShipment,
 			SubjectID:   c.ShipmentID,

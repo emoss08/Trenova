@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -65,7 +65,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	Enqueuer          *accountingsyncenqueue.Enqueuer
 	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Publisher         agentports.AgentEventPublisher               `optional:"true"`
+	Publisher         agenteventports.AgentEventPublisher          `optional:"true"`
 	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
 	Realtime          realtimeports.RealtimeService                `optional:"true"`
 }

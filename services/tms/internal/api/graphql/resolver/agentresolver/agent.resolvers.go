@@ -27,10 +27,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -193,7 +201,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		return nil, err
 	}
 
-	outcome, err := r.AgentDecisionService.DecideWithOutcome(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := r.AgentDecisionService.DecideWithOutcome(ctx, &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    proposalID,
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
@@ -222,7 +230,7 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		return nil, err
 	}
 
-	plan, err := r.AgentPlanService.Decide(ctx, &agentports.DecideAgentPlanRequest{
+	plan, err := r.AgentPlanService.Decide(ctx, &agentplanports.DecideAgentPlanRequest{
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
@@ -248,7 +256,7 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		return nil, err
 	}
 
-	outcome, err := r.AgentDecisionService.DecideOwn(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := r.AgentDecisionService.DecideOwn(ctx, &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    proposalID,
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
@@ -296,7 +304,7 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	plan, err := r.AgentPlanService.DecideOwn(ctx, &agentports.DecideAgentPlanRequest{
+	plan, err := r.AgentPlanService.DecideOwn(ctx, &agentplanports.DecideAgentPlanRequest{
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
@@ -358,7 +366,7 @@ func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*a
 		return nil, err
 	}
 
-	return r.AgentEvaluationService.Replay(ctx, &agentports.ReplayAgentRunRequest{
+	return r.AgentEvaluationService.Replay(ctx, &agentevaluationports.ReplayAgentRunRequest{
 		RunID:      id,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -519,7 +527,7 @@ func (r *MutationResolver) ResolveAgentException(ctx context.Context, id string,
 		return nil, err
 	}
 
-	return r.AgentExceptionService.Resolve(ctx, &agentports.ResolveAgentExceptionRequest{
+	return r.AgentExceptionService.Resolve(ctx, &agentexceptionports.ResolveAgentExceptionRequest{
 		ID:              exceptionID,
 		ResolutionState: input.ResolutionState,
 		ResolutionNotes: gqlscalar.StringValue(input.ResolutionNotes),
@@ -546,7 +554,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	return r.AgentControlService.Update(ctx, &agentports.UpdateAgentControlRequest{
+	return r.AgentControlService.Update(ctx, &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode:            input.ShadowMode,
 		EarnedAutonomy:        input.EarnedAutonomy,
 		PromotionThreshold:    input.PromotionThreshold,
@@ -554,7 +562,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		PersonMonthlyMessages: input.PersonMonthlyMessages,
 		LearningOff:           input.LearningOff,
 		AutoChaptersOff:       input.AutoChaptersOff,
-		AgentMoney: agentports.AgentMoneyLimitsUpdate{
+		AgentMoney: agentcontrolports.AgentMoneyLimitsUpdate{
 			CallCeilingMinor: callCeiling,
 			RunCalls:         input.AgentMoneyRunCalls,
 			RunAmountMinor:   runAmount,
@@ -629,7 +637,7 @@ func (r *QueryResolver) AgentProposals(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.AgentProposalService.ListConnection(
 		ctx,
-		&agentports.ListAgentProposalConnectionRequest{
+		&agentproposalports.ListAgentProposalConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentProposalColumns(ctx, "edges.node"),
@@ -658,7 +666,7 @@ func (r *QueryResolver) AgentProposal(ctx context.Context, id string) (*agent.Ag
 	}
 
 	ti := resolvercore.TenantInfo(authCtx)
-	return r.AgentProposalService.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	return r.AgentProposalService.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &ti,
 	})
@@ -681,7 +689,7 @@ func (r *QueryResolver) AgentPlans(ctx context.Context, input gqlmodel.DataTable
 
 	result, err := r.AgentPlanService.ListConnection(
 		ctx,
-		&agentports.ListAgentPlanConnectionRequest{
+		&agentplanports.ListAgentPlanConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentPlanColumns(ctx, "edges.node"),
@@ -709,7 +717,7 @@ func (r *QueryResolver) AgentPlan(ctx context.Context, id string) (*agentplan.Ag
 		return nil, err
 	}
 
-	return r.AgentPlanService.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+	return r.AgentPlanService.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
@@ -754,7 +762,7 @@ func (r *QueryResolver) AgentReflections(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.AgentReflectionService.ListConnection(
 		ctx,
-		&agentports.ListAgentReflectionConnectionRequest{
+		&agentreflectionports.ListAgentReflectionConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentReflectionColumns(ctx, "edges.node"),
@@ -780,7 +788,7 @@ func (r *QueryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.AgentEvaluationService.ListConnection(
 		ctx,
-		&agentports.ListAgentEvaluationConnectionRequest{
+		&agentevaluationports.ListAgentEvaluationConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: gqlconnection.AgentEvaluationColumns(ctx, "edges.node"),
@@ -804,7 +812,7 @@ func (r *QueryResolver) AgentEvaluation(ctx context.Context, id string) (*agente
 		return nil, err
 	}
 
-	return r.AgentEvaluationService.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
+	return r.AgentEvaluationService.GetByID(ctx, agentevaluationports.GetAgentEvaluationByIDRequest{
 		ID:         evaluationID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
@@ -853,7 +861,7 @@ func (r *QueryResolver) AgentExceptions(ctx context.Context, input gqlmodel.Data
 
 	result, err := r.AgentExceptionService.ListConnection(
 		ctx,
-		&agentports.ListAgentExceptionConnectionRequest{
+		&agentexceptionports.ListAgentExceptionConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentExceptionColumns(ctx, "edges.node"),
@@ -882,7 +890,7 @@ func (r *QueryResolver) AgentException(ctx context.Context, id string) (*agentex
 	}
 
 	ti := resolvercore.TenantInfo(authCtx)
-	return r.AgentExceptionService.GetByID(ctx, agentports.GetAgentExceptionByIDRequest{
+	return r.AgentExceptionService.GetByID(ctx, agentexceptionports.GetAgentExceptionByIDRequest{
 		ID:         exceptionID,
 		TenantInfo: &ti,
 	})
@@ -918,13 +926,13 @@ func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agentmemory.M
 	return replacingMemory(ctx, obj)
 }
 
-func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error) {
+func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int) ([]*agenttrustports.ToolPromotion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	candidates, err := r.AgentTrustService.PromotionCandidates(ctx, &agentports.PromoteReadyRequest{
+	candidates, err := r.AgentTrustService.PromotionCandidates(ctx, &agenttrustports.PromoteReadyRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Threshold:  threshold,
 	})
@@ -932,7 +940,7 @@ func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int
 		return nil, err
 	}
 
-	out := make([]*agentports.ToolPromotion, len(candidates))
+	out := make([]*agenttrustports.ToolPromotion, len(candidates))
 	for idx := range candidates {
 		out[idx] = &candidates[idx]
 	}
@@ -945,7 +953,7 @@ func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*g
 		return nil, err
 	}
 
-	summary, err := r.AgentActivityService.Summary(ctx, &agentports.AgentActivitySummaryRequest{
+	summary, err := r.AgentActivityService.Summary(ctx, &agentactivityports.AgentActivitySummaryRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Since:      int64(since),
 	})

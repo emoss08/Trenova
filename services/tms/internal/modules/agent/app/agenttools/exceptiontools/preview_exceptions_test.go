@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -20,7 +20,7 @@ import (
 )
 
 type savingExceptions struct {
-	agentports.AgentExceptionService
+	agentexceptionports.AgentExceptionService
 
 	saved *agentexception.AgentException
 	guard agenttoolstest.WriteGuard
@@ -28,7 +28,7 @@ type savingExceptions struct {
 
 func (f *savingExceptions) Flag(
 	_ context.Context,
-	req *agentports.FlagAgentExceptionRequest,
+	req *agentexceptionports.FlagAgentExceptionRequest,
 	_ *permissionports.RequestActor,
 ) (*agentexception.AgentException, error) {
 	if err := f.guard.Write(); err != nil {

@@ -771,7 +771,7 @@ thumbs.
 **Measurement defects that bias any comparison across providers:**
 
 1. Cache tokens are dropped. `ChatCompletionResult` has no cache fields
-   (`ports/agentports/agentcompletion.go:148-180`), and the Anthropic adapter reports only
+   (`ports/llmports/agentcompletion.go:148-180`), and the Anthropic adapter reports only
    uncached `input_tokens` (DB-002: a Haiku turn reads "4 in"). OpenAI's input count includes
    its cached tokens. Both the bench matrix and `ai_work_units.input_tokens` therefore undercount
    Claude's input heavily, relative to OpenAI. The trace spans normalize this; the rollups do not.

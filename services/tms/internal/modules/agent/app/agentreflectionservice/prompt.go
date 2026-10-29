@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -43,7 +43,7 @@ type promptInput struct {
 	Trigger     string
 	Signals     agentreflection.ReflectionSignals
 	Memories    []*agentmemory.Memory
-	Subjects    []agentports.ReflectionSubjectRef
+	Subjects    []agentreflectionports.ReflectionSubjectRef
 	ToolNames   []string
 	Proposals   []DecidedProposal
 	Messages    []conversation.Message

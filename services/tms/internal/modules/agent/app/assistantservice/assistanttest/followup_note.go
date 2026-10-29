@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type StubDecisionRepo struct {
-	agentports.AgentDecisionRepository
+	agentdecisionports.AgentDecisionRepository
 
 	Decisions []*agentdecision.AgentDecision
 	Asked     [][]pulid.ID
@@ -17,7 +17,7 @@ type StubDecisionRepo struct {
 
 func (s *StubDecisionRepo) ListByProposals(
 	_ context.Context,
-	req agentports.ListAgentDecisionsByProposalsRequest,
+	req agentdecisionports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agentdecision.AgentDecision, error) {
 	s.Asked = append(s.Asked, req.ProposalIDs)
 

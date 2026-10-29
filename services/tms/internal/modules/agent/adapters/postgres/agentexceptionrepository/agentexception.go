@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentExceptionRepository {
+func New(p Params) agentexceptionports.AgentExceptionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentexception-repository"),
@@ -40,7 +40,7 @@ func New(p Params) agentports.AgentExceptionRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *agentports.ListAgentExceptionRequest,
+	req *agentexceptionports.ListAgentExceptionRequest,
 ) (*pagination.ListResult[*agentexception.AgentException], error) {
 	return dbtx.Read(
 		ctx,
@@ -68,7 +68,7 @@ func (r *repository) List(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req agentports.ListAgentExceptionsByIDsRequest,
+	req agentexceptionports.ListAgentExceptionsByIDsRequest,
 ) ([]*agentexception.AgentException, error) {
 	return dbtx.Read(
 		ctx,
@@ -95,7 +95,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentExceptionConnectionRequest,
+	req *agentexceptionports.ListAgentExceptionConnectionRequest,
 ) (*pagination.CursorListResult[*agentexception.AgentException], error) {
 	return dbtx.Read(
 		ctx,
@@ -123,7 +123,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentExceptionByIDRequest,
+	req agentexceptionports.GetAgentExceptionByIDRequest,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
 		entity, err := agentexceptiondb.AgentExceptions.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -156,7 +156,7 @@ func (r *repository) Create(
 
 func (r *repository) UpdateResolution(
 	ctx context.Context,
-	req agentports.UpdateAgentExceptionResolutionRequest,
+	req agentexceptionports.UpdateAgentExceptionResolutionRequest,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
 		e := agentexceptiondb.AgentExceptions

@@ -18,7 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -244,7 +245,7 @@ func (r *Recorder) tableContinuedBy(
 type Recorder struct {
 	repo      assistantartifactports.AssistantArtifactRepository
 	proposals proposalstores.ProposalStore
-	activity  agentports.AgentActivityPublisher
+	activity  agentactivityports.AgentActivityPublisher
 	logger    *zap.Logger
 	ctx       context.Context
 	thread    *conversation.Thread
@@ -272,7 +273,7 @@ type Reads struct {
 type Deps struct {
 	Repo      assistantartifactports.AssistantArtifactRepository
 	Proposals proposalstores.ProposalStore
-	Activity  agentports.AgentActivityPublisher
+	Activity  agentactivityports.AgentActivityPublisher
 	Logger    *zap.Logger
 	Reads     *Reads
 }
@@ -745,7 +746,7 @@ func (r *Recorder) store(
 
 	r.remember(saved)
 	if r.activity != nil {
-		r.activity.ArtifactChanged(r.ctx, saved, r.actor, agentports.ActivityUpdated)
+		r.activity.ArtifactChanged(r.ctx, saved, r.actor, agentactivityports.ActivityUpdated)
 	}
 	r.emit(kernelports.StreamEvent{
 		Event: assistantstreamports.AssistantEventArtifact,
@@ -793,10 +794,13 @@ func (r *Recorder) requestDecision(
 		return nil, toolartifacts.ErrDecisionUnavailable
 	}
 
-	stored, err := r.proposals.ListByThread(r.ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   r.thread.ID,
-		TenantInfo: r.tenant,
-	})
+	stored, err := r.proposals.ListByThread(
+		r.ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   r.thread.ID,
+			TenantInfo: r.tenant,
+		},
+	)
 	if err != nil {
 		r.logger.Warn("the proposal a decision was asked for could not be read",
 			zap.String("thread", r.thread.ID.String()),

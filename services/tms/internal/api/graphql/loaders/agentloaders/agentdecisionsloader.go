@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,14 +15,14 @@ import (
 type decisionsByProposalsLister interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agentdecision.AgentDecision, error)
 }
 
 type AgentDecisionsByProposalIDLoaderFactoryParams struct {
 	fx.In
 
-	Decisions agentports.AgentDecisionRepository
+	Decisions agentdecisionports.AgentDecisionRepository
 }
 
 // AgentDecisionsByProposalIDLoaderFactory reads the decisions behind a page
@@ -51,7 +51,7 @@ func (f *AgentDecisionsByProposalIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agentdecision.AgentDecision, error) {
 			decisions, err := f.decisions.ListByProposals(
 				ctx,
-				agentports.ListAgentDecisionsByProposalsRequest{
+				agentdecisionports.ListAgentDecisionsByProposalsRequest{
 					ProposalIDs: ids,
 					TenantInfo:  tenantInfo,
 				},

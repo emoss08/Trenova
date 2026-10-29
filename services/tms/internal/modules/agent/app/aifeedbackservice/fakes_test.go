@@ -13,8 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -174,7 +176,7 @@ type fakeProposals struct{ proposal *agent.AgentProposal }
 
 func (f *fakeProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return f.proposal, nil
 }
@@ -183,7 +185,7 @@ type fakePlans struct{ plan *agentplan.AgentPlan }
 
 func (f *fakePlans) GetByID(
 	context.Context,
-	agentports.GetAgentPlanByIDRequest,
+	agentplanports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return f.plan, nil
 }
@@ -207,7 +209,7 @@ type fakeExceptions struct {
 
 func (f *fakeExceptions) GetByID(
 	context.Context,
-	agentports.GetAgentExceptionByIDRequest,
+	agentexceptionports.GetAgentExceptionByIDRequest,
 ) (*agentexception.AgentException, error) {
 	return f.exception, nil
 }

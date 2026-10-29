@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
@@ -18,10 +18,10 @@ import (
 )
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
@@ -53,7 +53,7 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func eventService(publisher agentports.AgentEventPublisher) *Service {
+func eventService(publisher agenteventports.AgentEventPublisher) *Service {
 	return &Service{l: zap.NewNop(), watchtower: silentProjector{}, publisher: publisher}
 }
 

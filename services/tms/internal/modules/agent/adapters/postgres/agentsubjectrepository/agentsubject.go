@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
@@ -49,7 +49,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentSubjectRepository {
+func New(p Params) agentsubjectports.AgentSubjectRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-subject-repository"),
@@ -166,7 +166,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 
 func (r *repository) Exists(
 	ctx context.Context,
-	req agentports.AgentSubjectExistsRequest,
+	req agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		if req.SubjectID.IsNil() {

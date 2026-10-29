@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -87,7 +87,7 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 	t.Parallel()
 
-	for name, budgets := range map[string]agentports.AgentBudgetService{
+	for name, budgets := range map[string]agentbudgetports.AgentBudgetService{
 		"unreadable": &moneyBudgets{Err: errors.New("database down")},
 		"absent":     nil,
 	} {

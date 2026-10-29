@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -34,13 +36,13 @@ import (
 )
 
 type evalStore struct {
-	agentports.AgentEvaluationRepository
+	agentevaluationports.AgentEvaluationRepository
 	stored *agentevaluation.Evaluation
 }
 
 func (s *evalStore) GetByID(
 	context.Context,
-	agentports.GetAgentEvaluationByIDRequest,
+	agentevaluationports.GetAgentEvaluationByIDRequest,
 ) (*agentevaluation.Evaluation, error) {
 	copied := *s.stored
 
@@ -83,25 +85,25 @@ func (s *runStore) GetByID(
 }
 
 type proposalStore struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 	proposals []*agent.AgentProposal
 }
 
 func (s *proposalStore) ListByRun(
 	context.Context,
-	agentports.ListAgentProposalsByRunRequest,
+	agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return s.proposals, nil
 }
 
 type decisionStore struct {
-	agentports.AgentDecisionRepository
+	agentdecisionports.AgentDecisionRepository
 	decisions []*agentdecision.AgentDecision
 }
 
 func (s *decisionStore) ListByProposals(
 	context.Context,
-	agentports.ListAgentDecisionsByProposalsRequest,
+	agentdecisionports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agentdecision.AgentDecision, error) {
 	return s.decisions, nil
 }

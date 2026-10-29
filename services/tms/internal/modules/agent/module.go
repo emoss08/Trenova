@@ -158,7 +158,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -307,7 +308,7 @@ func SharedOptions() fx.Option {
 			agentcontrolservice.New,
 			agentdefinitionservice.New,
 			agentdraftservice.New,
-			func(s *agentdraftservice.Service) agentports.AgentDraftingService { return s },
+			func(s *agentdraftservice.Service) agentdraftports.AgentDraftingService { return s },
 			agentcapabilityservice.New,
 			assistanthandoffservice.New,
 			assistantchapterservice.New,
@@ -344,7 +345,7 @@ func SharedOptions() fx.Option {
 			fx.Annotate(
 				agentevents.New,
 				fx.As(fx.Self()),
-				fx.As(new(agentports.AgentEventPublisher)),
+				fx.As(new(agenteventports.AgentEventPublisher)),
 			),
 			agentproposalservice.New,
 			agentexceptionservice.New,

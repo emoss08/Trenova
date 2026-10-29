@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -101,12 +101,12 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	approving, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	approving, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusApproving,
 		CommitsAt:  5,
-		Approval:   agentports.PlanApproval{ReasonCode: "looks right", PreviewDigest: "abc"},
+		Approval:   agentplanports.PlanApproval{ReasonCode: "looks right", PreviewDigest: "abc"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentplan.PlanStatusApproving, approving.Status)
@@ -118,7 +118,7 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	assert.Nil(t, approving.UndoneAt)
 	assert.Greater(t, approving.Version, plan.Version)
 
-	reopened, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	reopened, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusPending,
@@ -138,13 +138,13 @@ func TestUpdateStatus_ADecisionWithoutAWindowKeepsItsNoteAndDigest(t *testing.T)
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	rejected, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	rejected, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              plan.ID,
 		TenantInfo:      h.tenant,
 		Status:          agentplan.PlanStatusRejected,
 		DecidedByUserID: h.tenant.UserID,
 		DecidedAt:       9,
-		Approval:        agentports.PlanApproval{Note: "Not today"},
+		Approval:        agentplanports.PlanApproval{Note: "Not today"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentplan.PlanStatusRejected, rejected.Status)
@@ -161,7 +161,7 @@ func TestUpdateStatus_AStaleFromStatusIsNotFound(t *testing.T) {
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	_, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
 		Status:     agentplan.PlanStatusApproved,
@@ -183,7 +183,7 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *t
 
 	pending := h.plan(t, h.run(t, definition.ID))
 	decided := h.plan(t, h.run(t, definition.ID))
-	_, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              decided.ID,
 		TenantInfo:      h.tenant,
 		Status:          agentplan.PlanStatusRejected,
@@ -195,7 +195,7 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *t
 
 	expired, err := h.repo.ExpirePendingByDefinition(
 		h.ctx,
-		agentports.ExpireAgentPlansByDefinitionRequest{
+		agentplanports.ExpireAgentPlansByDefinitionRequest{
 			AgentDefinitionID: definition.ID,
 			TenantInfo:        h.tenant,
 		},

@@ -20,9 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -92,7 +92,7 @@ type Service struct {
 	notifications notifier
 }
 
-func New(p Params) agentports.AgentTrustService {
+func New(p Params) agenttrustports.AgentTrustService {
 	svc := &Service{
 		l:           p.Logger.Named("service.agenttrust"),
 		db:          p.DB,

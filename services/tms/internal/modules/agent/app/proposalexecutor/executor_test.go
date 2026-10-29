@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -85,12 +85,12 @@ type recordedExecution struct {
 
 type fakeProposalRepo struct {
 	recorded  []recordedExecution
-	simulated []agentports.RecordAgentProposalSimulationRequest
+	simulated []agentproposalports.RecordAgentProposalSimulationRequest
 }
 
 func (r *fakeProposalRepo) RecordExecution(
 	_ context.Context,
-	req agentports.RecordAgentProposalExecutionRequest,
+	req agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	r.recorded = append(r.recorded, recordedExecution{
 		status:     req.Status,
@@ -362,7 +362,7 @@ func TestExecute_RecordsFailureWhenTheToolNoLongerExists(t *testing.T) {
 
 func (r *fakeProposalRepo) RecordSimulation(
 	_ context.Context,
-	req agentports.RecordAgentProposalSimulationRequest,
+	req agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	r.simulated = append(r.simulated, req)
 

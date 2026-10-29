@@ -13,7 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
@@ -39,7 +40,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Usage         aiusageports.AIUsageRepository
 	Runs          agentruntimeports.AgentRunRepository
-	Proposals     agentports.AgentProposalRepository
+	Proposals     agentproposalports.AgentProposalRepository
 	Organizations tenantports.OrganizationRepository
 	Controls      tenantports.AgentControlRepository
 	Books         tenantports.AccountingControlRepository
@@ -64,7 +65,7 @@ type booksReader interface {
 type moneyCounter interface {
 	SumAutomaticMoney(
 		ctx context.Context,
-		req *agentports.SumAutomaticMoneyRequest,
+		req *agentproposalports.SumAutomaticMoneyRequest,
 	) (agenttooltrust.MoneyUse, error)
 }
 
@@ -87,7 +88,10 @@ type runCounter interface {
 }
 
 type toolCounter interface {
-	CountExecutedTool(ctx context.Context, req agentports.CountExecutedToolRequest) (int, error)
+	CountExecutedTool(
+		ctx context.Context,
+		req agentproposalports.CountExecutedToolRequest,
+	) (int, error)
 }
 
 // timezoneReader names the organization's zone, which is what "this month"
@@ -96,7 +100,7 @@ type timezoneReader interface {
 	Timezone(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }
 
-func New(p Params) agentports.AgentBudgetService {
+func New(p Params) agentbudgetports.AgentBudgetService {
 	return &Service{
 		l:         p.Logger.Named("service.agentbudget"),
 		usage:     p.Usage,
@@ -113,9 +117,9 @@ func New(p Params) agentports.AgentBudgetService {
 func (s *Service) CheckRun(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (agentports.BudgetRefusal, error) {
+) (agentbudgetports.BudgetRefusal, error) {
 	if definition == nil {
-		return agentports.BudgetRefusal{}, nil
+		return agentbudgetports.BudgetRefusal{}, nil
 	}
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
@@ -127,11 +131,11 @@ func (s *Service) CheckRun(
 			Since:        windows.monthStart,
 		})
 		if err != nil {
-			return agentports.BudgetRefusal{}, err
+			return agentbudgetports.BudgetRefusal{}, err
 		}
 		if cost.CostUSD.GreaterThanOrEqual(*definition.MonthlyBudgetUSD) {
-			return agentports.BudgetRefusal{
-				Cap:      agentports.BudgetCapMonthly,
+			return agentbudgetports.BudgetRefusal{
+				Cap:      agentbudgetports.BudgetCapMonthly,
 				Spent:    cost.CostUSD.StringFixed(2),
 				Limit:    definition.MonthlyBudgetUSD.StringFixed(2),
 				ResetsAt: windows.nextMonth,
@@ -146,11 +150,11 @@ func (s *Service) CheckRun(
 			Since:        windows.dayStart,
 		})
 		if err != nil {
-			return agentports.BudgetRefusal{}, err
+			return agentbudgetports.BudgetRefusal{}, err
 		}
 		if started >= definition.DailyRunLimit {
-			return agentports.BudgetRefusal{
-				Cap:      agentports.BudgetCapDailyRuns,
+			return agentbudgetports.BudgetRefusal{
+				Cap:      agentbudgetports.BudgetCapDailyRuns,
 				Spent:    strconv.Itoa(started),
 				Limit:    strconv.Itoa(definition.DailyRunLimit),
 				ResetsAt: windows.nextDay,
@@ -158,37 +162,37 @@ func (s *Service) CheckRun(
 		}
 	}
 
-	return agentports.BudgetRefusal{}, nil
+	return agentbudgetports.BudgetRefusal{}, nil
 }
 
 func (s *Service) CheckTool(
 	ctx context.Context,
-	req agentports.CheckToolBudgetRequest,
-) (agentports.BudgetRefusal, error) {
+	req agentbudgetports.CheckToolBudgetRequest,
+) (agentbudgetports.BudgetRefusal, error) {
 	definition, toolName := req.Definition, req.ToolName
 	if definition == nil {
-		return agentports.BudgetRefusal{}, nil
+		return agentbudgetports.BudgetRefusal{}, nil
 	}
 	limit := definition.ToolDailyLimit(toolName)
 	if limit <= 0 {
-		return agentports.BudgetRefusal{}, nil
+		return agentbudgetports.BudgetRefusal{}, nil
 	}
 
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
-	used, err := s.proposals.CountExecutedTool(ctx, agentports.CountExecutedToolRequest{
+	used, err := s.proposals.CountExecutedTool(ctx, agentproposalports.CountExecutedToolRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		ToolName:     toolName,
 		Since:        windows.dayStart,
 	})
 	if err != nil {
-		return agentports.BudgetRefusal{}, err
+		return agentbudgetports.BudgetRefusal{}, err
 	}
 	used += max(req.Unrecorded, 0)
 	if used >= limit {
-		return agentports.BudgetRefusal{
-			Cap:      agentports.BudgetCapTool,
+		return agentbudgetports.BudgetRefusal{
+			Cap:      agentbudgetports.BudgetCapTool,
 			Tool:     toolName,
 			Spent:    strconv.Itoa(used),
 			Limit:    strconv.Itoa(limit),
@@ -196,12 +200,12 @@ func (s *Service) CheckTool(
 		}, nil
 	}
 
-	return agentports.BudgetRefusal{}, nil
+	return agentbudgetports.BudgetRefusal{}, nil
 }
 
 func (s *Service) MoneyAllowance(
 	ctx context.Context,
-	req agentports.MoneyAllowanceRequest,
+	req agentbudgetports.MoneyAllowanceRequest,
 ) (agenttooltrust.MoneyAllowance, error) {
 	if req.Definition == nil {
 		return agenttooltrust.MoneyAllowance{}, errNoDefinition
@@ -221,7 +225,7 @@ func (s *Service) MoneyAllowance(
 		return agenttooltrust.MoneyAllowance{}, err
 	}
 
-	day, err := s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
+	day, err := s.money.SumAutomaticMoney(ctx, &agentproposalports.SumAutomaticMoneyRequest{
 		TenantInfo: tenantInfo,
 		Currency:   currency,
 		Since:      dayStart,
@@ -233,7 +237,7 @@ func (s *Service) MoneyAllowance(
 	simulated := req.Definition.SimulationMode
 	run := agenttooltrust.MoneyUse{}
 	if req.RunID.IsNotNil() {
-		if run, err = s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
+		if run, err = s.money.SumAutomaticMoney(ctx, &agentproposalports.SumAutomaticMoneyRequest{
 			TenantInfo: tenantInfo,
 			Currency:   currency,
 			RunID:      req.RunID,
@@ -305,7 +309,7 @@ func (s *Service) moneyDayStart(
 func (s *Service) Status(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (*agentports.AgentBudgetStatus, error) {
+) (*agentbudgetports.AgentBudgetStatus, error) {
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
 
@@ -326,7 +330,7 @@ func (s *Service) Status(
 		return nil, err
 	}
 
-	status := &agentports.AgentBudgetStatus{
+	status := &agentbudgetports.AgentBudgetStatus{
 		MonthStart:     windows.monthStart,
 		DayStart:       windows.dayStart,
 		SpentUSD:       cost.CostUSD.StringFixed(2),
@@ -335,7 +339,7 @@ func (s *Service) Status(
 		RunsToday:      started,
 		DailyRunLimit:  definition.DailyRunLimit,
 		SimulationMode: definition.SimulationMode,
-		Tools:          make([]agentports.ToolBudgetUse, 0, len(definition.ToolDailyLimits)),
+		Tools:          make([]agentbudgetports.ToolBudgetUse, 0, len(definition.ToolDailyLimits)),
 	}
 	if definition.MonthlyBudgetUSD != nil {
 		budget := definition.MonthlyBudgetUSD.StringFixed(2)
@@ -347,18 +351,21 @@ func (s *Service) Status(
 		if limit <= 0 {
 			continue
 		}
-		used, cErr := s.proposals.CountExecutedTool(ctx, agentports.CountExecutedToolRequest{
-			TenantInfo:   tenant,
-			DefinitionID: definition.ID,
-			ToolName:     tool,
-			Since:        windows.dayStart,
-		})
+		used, cErr := s.proposals.CountExecutedTool(
+			ctx,
+			agentproposalports.CountExecutedToolRequest{
+				TenantInfo:   tenant,
+				DefinitionID: definition.ID,
+				ToolName:     tool,
+				Since:        windows.dayStart,
+			},
+		)
 		if cErr != nil {
 			return nil, cErr
 		}
 		status.Tools = append(
 			status.Tools,
-			agentports.ToolBudgetUse{Tool: tool, Used: used, Limit: limit},
+			agentbudgetports.ToolBudgetUse{Tool: tool, Used: used, Limit: limit},
 		)
 	}
 

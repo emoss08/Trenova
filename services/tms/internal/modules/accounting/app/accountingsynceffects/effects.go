@@ -3,7 +3,7 @@ package accountingsynceffects
 import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -21,7 +21,7 @@ type Deps struct {
 	Controls      tenantports.AccountingControlRepository
 	Audit         auditports.AuditService
 	Dispatcher    accountingsyncports.AccountingSyncDispatcher
-	Publisher     agentports.AgentEventPublisher
+	Publisher     agenteventports.AgentEventPublisher
 	Watchtower    watchtowerports.WatchtowerProjector
 	Realtime      realtimeports.RealtimeService
 }
@@ -34,7 +34,7 @@ type Effects struct {
 	controls      tenantports.AccountingControlRepository
 	audit         auditports.AuditService
 	dispatcher    accountingsyncports.AccountingSyncDispatcher
-	publisher     agentports.AgentEventPublisher
+	publisher     agenteventports.AgentEventPublisher
 	watchtower    watchtowerports.WatchtowerProjector
 	realtime      realtimeports.RealtimeService
 }

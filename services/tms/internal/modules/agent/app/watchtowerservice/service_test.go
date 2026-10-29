@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -305,22 +305,22 @@ func (d *stubDefinitions) List(
 }
 
 type stubEvents struct {
-	published []agentports.AgentEvent
+	published []agenteventports.AgentEvent
 }
 
-func (e *stubEvents) Publish(_ context.Context, event agentports.AgentEvent) {
+func (e *stubEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	e.published = append(e.published, event)
 }
 
 type stubRuns struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 
-	last *agentports.StartAgentRunForDefinitionRequest
+	last *agentruntimeports.StartAgentRunForDefinitionRequest
 }
 
 func (r *stubRuns) StartForDefinition(
 	_ context.Context,
-	req *agentports.StartAgentRunForDefinitionRequest,
+	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	r.last = req

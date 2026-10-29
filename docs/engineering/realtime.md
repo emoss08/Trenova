@@ -19,7 +19,7 @@ domain write ── PublishResourceInvalidation ──▶ in-memory queue ──
 
 | Piece | Where |
 |---|---|
-| Port (events, envelopes, gateway, broker) | `internal/modules/agent/ports/agentports/realtime.go` |
+| Port (events, envelopes, gateway, broker) | `internal/modules/agent/ports/realtimeports/realtime.go` |
 | Publishing an invalidation | `internal/modules/kernel/app/realtimeservice/service.go` |
 | Opening streams, presence and typing rules | `internal/modules/kernel/app/realtimeservice/gateway.go` |
 | Redis bus, fan-out, replay, presence register | `internal/infrastructure/realtimebroker/` |

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview/agentpreviewdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
@@ -31,7 +31,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.AgentProposalBaselineRepository {
+func New(p Params) agentproposalports.AgentProposalBaselineRepository {
 	return &repository{db: p.DB}
 }
 
@@ -55,7 +55,7 @@ func (r *repository) Create(ctx context.Context, baseline *agentpreview.Proposal
 
 func (r *repository) GetByProposal(
 	ctx context.Context,
-	req agentports.GetProposalBaselineRequest,
+	req agentproposalports.GetProposalBaselineRequest,
 ) (*agentpreview.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentpreview.ProposalBaseline, error) {
 		baseline, err := agentpreviewdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
@@ -69,7 +69,7 @@ func (r *repository) GetByProposal(
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
-	req agentports.ListProposalBaselinesRequest,
+	req agentproposalports.ListProposalBaselinesRequest,
 ) ([]*agentpreview.ProposalBaseline, error) {
 	return dbtx.Read(
 		ctx,
@@ -94,7 +94,7 @@ func (r *repository) ListByProposals(
 
 func (r *repository) PurgeOrphans(
 	ctx context.Context,
-	req agentports.PurgeOrphanProposalBaselinesRequest,
+	req agentproposalports.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge orphaned proposal baselines across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {

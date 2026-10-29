@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -19,19 +20,19 @@ import (
 )
 
 type inlineRuns struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 }
 
 func (inlineRuns) StartInline(
 	_ context.Context,
-	req *agentports.StartInlineAgentRunRequest,
+	req *agentruntimeports.StartInlineAgentRunRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: pulid.MustNew("arun_"), AgentType: req.AgentType}, nil
 }
 
 type createdProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	created []*agent.AgentProposal
 }

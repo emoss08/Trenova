@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
@@ -24,21 +25,21 @@ type ActivitiesParams struct {
 	fx.In
 
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
-	ProposalRepo        agentports.AgentProposalRepository
+	ProposalRepo        agentproposalports.AgentProposalRepository
 	AutoAssign          dispatchconsoleports.DispatchAutoAssignService
 	// Watchtower puts a load about to leave with nobody on it on the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers dispatch for the same moves.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Activities struct {
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
-	proposalRepo        agentports.AgentProposalRepository
+	proposalRepo        agentproposalports.AgentProposalRepository
 	autoAssign          dispatchconsoleports.DispatchAutoAssignService
 	watchtower          watchtowerports.WatchtowerProjector
-	publisher           agentports.AgentEventPublisher
+	publisher           agenteventports.AgentEventPublisher
 	now                 func() int64
 	logger              *zap.Logger
 }
@@ -184,7 +185,7 @@ func (a *Activities) raiseCoverageRisk(
 		if a.watchtower != nil {
 			a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
 		}
-		agentports.PublishAgentEvent(ctx, a.publisher, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, a.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventShipmentMoveCoverageAtRisk,
 			SubjectID:  move.MoveID,
 			TenantInfo: tenant,
@@ -206,7 +207,7 @@ func (a *Activities) retireProposals(
 
 	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
-		agentports.ExpireAgentProposalsByRunRequest{
+		agentproposalports.ExpireAgentProposalsByRunRequest{
 			RunID:      plan.RunID,
 			TenantInfo: tenant,
 		},

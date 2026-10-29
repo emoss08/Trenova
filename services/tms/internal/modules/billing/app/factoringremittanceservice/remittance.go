@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
@@ -47,7 +47,7 @@ type RemittanceParams struct {
 	Content     documentports.DocumentContentService            `optional:"true"`
 	Completion  llmports.CompletionService                      `optional:"true"`
 	Starter     factoringremittanceports.RemittanceStageStarter `optional:"true"`
-	Events      agentports.AgentEventPublisher                  `optional:"true"`
+	Events      agenteventports.AgentEventPublisher             `optional:"true"`
 	Audit       auditports.AuditService
 	Realtime    realtimeports.RealtimeService `optional:"true"`
 	SheetLimits rateimport.Limits             `optional:"true"`
@@ -64,7 +64,7 @@ type RemittanceService struct {
 	content     documentports.DocumentContentService
 	completion  llmports.CompletionService
 	starter     factoringremittanceports.RemittanceStageStarter
-	events      agentports.AgentEventPublisher
+	events      agenteventports.AgentEventPublisher
 	rec         factoringaction.Recorder
 	sheetLimits rateimport.Limits
 	l           *zap.Logger
@@ -723,7 +723,7 @@ func (s *RemittanceService) announceStaged(
 	if rem.Status != factoringremittance.RemittanceStatusParsed {
 		return
 	}
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventFactoringRemittanceStaged,
 		SubjectID:  rem.ID,
 		TenantInfo: remittanceTenant(rem),

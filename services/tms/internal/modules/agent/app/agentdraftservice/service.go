@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -46,7 +46,7 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 }
 
-var _ agentports.AgentDraftingService = (*Service)(nil)
+var _ agentdraftports.AgentDraftingService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -72,8 +72,8 @@ func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInf
 
 func (s *Service) DraftFromDescription(
 	ctx context.Context,
-	req *agentports.DraftAgentRequest,
-) (*agentports.AgentDraft, error) {
+	req *agentdraftports.DraftAgentRequest,
+) (*agentdraftports.AgentDraft, error) {
 	description, err := checkDescription(req.Description)
 	if err != nil {
 		return nil, err
@@ -146,8 +146,8 @@ func (s *Service) DraftFromDescription(
 
 func (s *Service) TightenInstructions(
 	ctx context.Context,
-	req *agentports.TightenAgentInstructionsRequest,
-) (*agentports.TightenedAgentInstructions, error) {
+	req *agentdraftports.TightenAgentInstructionsRequest,
+) (*agentdraftports.TightenedAgentInstructions, error) {
 	instructions, err := checkInstructions(req.Instructions)
 	if err != nil {
 		return nil, err
@@ -252,9 +252,9 @@ func checkInstructions(text string) (string, error) {
 
 func draftOf(
 	definition *agentdefinition.Definition,
-	notes []agentports.AgentDraftNote,
-) *agentports.AgentDraft {
-	return &agentports.AgentDraft{
+	notes []agentdraftports.AgentDraftNote,
+) *agentdraftports.AgentDraft {
+	return &agentdraftports.AgentDraft{
 		Name:                   definition.Name,
 		Description:            definition.Description,
 		Icon:                   definition.Icon,

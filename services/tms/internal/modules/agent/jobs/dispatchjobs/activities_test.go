@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
@@ -29,7 +29,7 @@ type stubProposalRepo struct {
 
 func (m *stubProposalRepo) ExpirePendingByRun(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsByRunRequest,
+	req agentproposalports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	args := m.Called(ctx, req)
 	return args.Int(0), args.Error(1)
@@ -37,56 +37,56 @@ func (m *stubProposalRepo) ExpirePendingByRun(
 
 func (m *stubProposalRepo) ExpirePendingByDefinition(
 	context.Context,
-	agentports.ExpireAgentProposalsByDefinitionRequest,
+	agentproposalports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) ExpirePending(
 	context.Context,
-	agentports.ExpireAgentProposalsRequest,
+	agentproposalports.ExpireAgentProposalsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) ListByIDs(
 	context.Context,
-	agentports.ListAgentProposalsByIDsRequest,
+	agentproposalports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListPendingForReminder(
 	context.Context,
-	agentports.ListPendingProposalsForReminderRequest,
+	agentproposalports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) MarkReminded(
 	context.Context,
-	agentports.MarkProposalsRemindedRequest,
+	agentproposalports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) List(
 	context.Context,
-	*agentports.ListAgentProposalRequest,
+	*agentproposalports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListConnection(
 	context.Context,
-	*agentports.ListAgentProposalConnectionRequest,
+	*agentproposalports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -100,21 +100,21 @@ func (m *stubProposalRepo) Create(
 
 func (m *stubProposalRepo) RecordExecution(
 	context.Context,
-	agentports.RecordAgentProposalExecutionRequest,
+	agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListByThread(
 	context.Context,
-	agentports.ListAgentProposalsByThreadRequest,
+	agentproposalports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) UpdateStatus(
 	context.Context,
-	agentports.UpdateAgentProposalStatusRequest,
+	agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -238,7 +238,7 @@ func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
 	deps.proposals.On(
 		"ExpirePendingByRun",
 		mock.Anything,
-		mock.MatchedBy(func(req agentports.ExpireAgentProposalsByRunRequest) bool {
+		mock.MatchedBy(func(req agentproposalports.ExpireAgentProposalsByRunRequest) bool {
 			return req.RunID == plan.RunID && req.TenantInfo.OrgID == only.OrgID
 		}),
 	).Return(4, nil).Once()
@@ -388,63 +388,63 @@ func TestHorizonPlanSweepActivity_PropagatesTenantLookupFailure(t *testing.T) {
 
 func (s *stubProposalRepo) RecordSimulation(
 	context.Context,
-	agentports.RecordAgentProposalSimulationRequest,
+	agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) SetPendingModifications(
 	context.Context,
-	agentports.SetPendingModificationsRequest,
+	agentproposalports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) CountExecutedTool(
 	context.Context,
-	agentports.CountExecutedToolRequest,
+	agentproposalports.CountExecutedToolRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (s *stubProposalRepo) ListByPlans(
 	context.Context,
-	agentports.ListAgentProposalsByPlansRequest,
+	agentproposalports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) ListByPlan(
 	context.Context,
-	agentports.ListAgentProposalsByPlanRequest,
+	agentproposalports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) SkipPendingByPlan(
 	context.Context,
-	agentports.SkipPendingByPlanRequest,
+	agentproposalports.SkipPendingByPlanRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (s *stubProposalRepo) ListByRun(
 	context.Context,
-	agentports.ListAgentProposalsByRunRequest,
+	agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ExpirePendingByThread(
 	context.Context,
-	agentports.ExpireAgentProposalsByThreadRequest,
+	agentproposalports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (s *stubProposalRepo) SumAutomaticMoney(
 	context.Context,
-	*agentports.SumAutomaticMoneyRequest,
+	*agentproposalports.SumAutomaticMoneyRequest,
 ) (agenttooltrust.MoneyUse, error) {
 	return agenttooltrust.MoneyUse{}, nil
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +32,7 @@ func newCommitEnv(t *testing.T) *commitEnv {
 
 	c := &commitEnv{env: env, started: env.Now()}
 	env.OnActivity("CommitApprovalActivity", mock.Anything, mock.Anything).
-		Return(func(context.Context, *agentports.CommitApprovalRequest) error {
+		Return(func(context.Context, *agentapprovalports.CommitApprovalRequest) error {
 			c.committed = append(c.committed, env.Now())
 
 			return nil
@@ -42,12 +42,12 @@ func newCommitEnv(t *testing.T) *commitEnv {
 }
 
 func (c *commitEnv) run() *CommitResult {
-	c.env.ExecuteWorkflow(ProposalCommitWorkflow, &agentports.CommitApprovalRequest{
+	c.env.ExecuteWorkflow(ProposalCommitWorkflow, &agentapprovalports.CommitApprovalRequest{
 		OrganizationID:  pulid.ID("org_test"),
 		BusinessUnitID:  pulid.ID("bu_test"),
 		DecidedByUserID: pulid.ID("usr_test"),
 		WorkflowID:      decisioncommitcontract.WorkflowID(pulid.ID("ap_test")),
-		CommitsAt:       c.started.Add(agentports.ApprovalUndoWindow).Unix(),
+		CommitsAt:       c.started.Add(agentapprovalports.ApprovalUndoWindow).Unix(),
 	})
 
 	var result CommitResult
@@ -67,8 +67,12 @@ func TestProposalCommitWorkflow_CommitsWhenTheWindowCloses(t *testing.T) {
 	require.NoError(t, c.env.GetWorkflowError())
 	assert.True(t, result.Committed)
 	require.Len(t, c.committed, 1)
-	assert.GreaterOrEqual(t, c.committed[0].Sub(c.started), agentports.ApprovalUndoWindow-time.Second,
-		"the commit waits out the window")
+	assert.GreaterOrEqual(
+		t,
+		c.committed[0].Sub(c.started),
+		agentapprovalports.ApprovalUndoWindow-time.Second,
+		"the commit waits out the window",
+	)
 }
 
 // An undo inside the window ends the wait without committing anything.

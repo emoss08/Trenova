@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +30,10 @@ func (p *shownPlan) stale() bool {
 // annotate hands a step the preview the plan was approved on, so its
 // decision records the step as the decider saw it, projected from the steps
 // before it, rather than as it reads once they have run.
-func (p *shownPlan) annotate(req *agentports.DecideAgentProposalRequest, proposalID pulid.ID) {
+func (p *shownPlan) annotate(
+	req *agentdecisionports.DecideAgentProposalRequest,
+	proposalID pulid.ID,
+) {
 	if p == nil || p.preview == nil {
 		return
 	}
@@ -62,7 +66,7 @@ func (p *shownPlan) digest() string {
 // nothing runs. A rejection needs no preview.
 func (s *Service) settlePreview(
 	ctx context.Context,
-	req *agentports.DecideAgentPlanRequest,
+	req *agentplanports.DecideAgentPlanRequest,
 	plan *agentplan.AgentPlan,
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,

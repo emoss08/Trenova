@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -20,10 +20,10 @@ import (
 const sweepNow = int64(1_767_225_600)
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 

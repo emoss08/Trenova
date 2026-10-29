@@ -26,8 +26,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -431,7 +431,7 @@ func (s *Dispatcher) withinBudget(
 		return toolcall.Result{}, false
 	}
 
-	refusal, err := s.budgets.CheckTool(ctx, agentports.CheckToolBudgetRequest{
+	refusal, err := s.budgets.CheckTool(ctx, agentbudgetports.CheckToolBudgetRequest{
 		Definition: req.Definition,
 		ToolName:   toolName,
 		Unrecorded: executedCount(soFar, toolName),
@@ -467,7 +467,7 @@ func (s *Dispatcher) MoneyAllowance(
 	}
 
 	return func(ctx context.Context) (agenttooltrust.MoneyAllowance, error) {
-		allowance, err := s.budgets.MoneyAllowance(ctx, agentports.MoneyAllowanceRequest{
+		allowance, err := s.budgets.MoneyAllowance(ctx, agentbudgetports.MoneyAllowanceRequest{
 			Definition: req.Definition,
 			RunID:      req.RunID,
 			Unrecorded: spent,

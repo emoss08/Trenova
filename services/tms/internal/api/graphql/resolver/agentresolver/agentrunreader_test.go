@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -21,7 +20,7 @@ import (
 )
 
 type recordingRunService struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 
 	lists []*agentruntimeports.ListAgentRunConnectionRequest
 	gets  []agentruntimeports.GetAgentRunByIDRequest

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -39,8 +39,8 @@ type recommendationCandidate struct {
 
 func (s *Matcher) MatchAgent(
 	ctx context.Context,
-	req *agentports.AgentMatchRequest,
-) (*agentports.AgentMatch, error) {
+	req *agentrecommendationports.AgentMatchRequest,
+) (*agentrecommendationports.AgentMatch, error) {
 	if req == nil || req.Actor == nil ||
 		req.Actor.PrincipalType != permissionports.PrincipalTypeUser || s.catalog == nil {
 		return noMatch(), nil
@@ -50,12 +50,12 @@ func (s *Matcher) MatchAgent(
 	if text == "" {
 		return noMatch(), nil
 	}
-	if utf8.RuneCountInString(text) > agentports.MaxAgentRecommendationTextRunes {
+	if utf8.RuneCountInString(text) > agentrecommendationports.MaxAgentRecommendationTextRunes {
 		return nil, errortypes.NewValidationError(
 			"text",
 			errortypes.ErrInvalidLength,
 			"A question can be matched to an agent when it is at most {0} characters.",
-			agentports.MaxAgentRecommendationTextRunes,
+			agentrecommendationports.MaxAgentRecommendationTextRunes,
 		)
 	}
 	resources, err := matchContextResources(req.ContextKinds)
@@ -91,7 +91,7 @@ func (s *Matcher) MatchAgent(
 		return noMatch(), nil
 	}
 	if best := topTier(wide); !pool.permitsBest(best) {
-		return &agentports.AgentMatch{
+		return &agentrecommendationports.AgentMatch{
 			Outcome: agentsuggestion.MatchNoAgent,
 			Tools:   s.matchTools(best),
 		}, nil
@@ -125,29 +125,29 @@ func (s *Matcher) MatchAgent(
 	return s.matchFor(agentsuggestion.MatchBetterAgent, best.definition, best.matched), nil
 }
 
-func noMatch() *agentports.AgentMatch {
-	return &agentports.AgentMatch{Outcome: agentsuggestion.MatchNone}
+func noMatch() *agentrecommendationports.AgentMatch {
+	return &agentrecommendationports.AgentMatch{Outcome: agentsuggestion.MatchNone}
 }
 
 func (s *Matcher) matchFor(
 	outcome agentsuggestion.MatchOutcome,
 	definition *agentdefinition.Definition,
 	matched []string,
-) *agentports.AgentMatch {
-	return &agentports.AgentMatch{
+) *agentrecommendationports.AgentMatch {
+	return &agentrecommendationports.AgentMatch{
 		Outcome: outcome,
 		Agent:   definition,
 		Tools:   s.matchTools(matched),
 	}
 }
 
-func (s *Matcher) matchTools(names []string) []agentports.AgentMatchTool {
-	if len(names) > agentports.MaxAgentRecommendationTools {
-		names = names[:agentports.MaxAgentRecommendationTools]
+func (s *Matcher) matchTools(names []string) []agentrecommendationports.AgentMatchTool {
+	if len(names) > agentrecommendationports.MaxAgentRecommendationTools {
+		names = names[:agentrecommendationports.MaxAgentRecommendationTools]
 	}
-	tools := make([]agentports.AgentMatchTool, 0, len(names))
+	tools := make([]agentrecommendationports.AgentMatchTool, 0, len(names))
 	for _, name := range names {
-		tool := agentports.AgentMatchTool{Name: name}
+		tool := agentrecommendationports.AgentMatchTool{Name: name}
 		if descriptor, ok := s.catalog.Descriptor(name); ok {
 			tool.Summary = stringutils.Ellipsize(
 				stringutils.CollapseWhitespace(stringutils.FirstSentence(descriptor.Description)),
@@ -238,12 +238,12 @@ func (s *Matcher) isAbout(name string, resources map[permission.Resource]struct{
 }
 
 func matchContextResources(kinds []string) (map[permission.Resource]struct{}, error) {
-	if len(kinds) > agentports.MaxAgentMatchContextKinds {
+	if len(kinds) > agentrecommendationports.MaxAgentMatchContextKinds {
 		return nil, errortypes.NewValidationError(
 			"contextKinds",
 			errortypes.ErrInvalid,
 			"A question can name at most {0} kinds of record.",
-			agentports.MaxAgentMatchContextKinds,
+			agentrecommendationports.MaxAgentMatchContextKinds,
 		)
 	}
 

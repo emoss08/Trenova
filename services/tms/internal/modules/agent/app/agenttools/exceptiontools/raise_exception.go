@@ -14,7 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,13 +58,13 @@ var ErrSubjectUncheckable = errors.New(
 )
 
 type RaiseExceptionTool struct {
-	exceptions agentports.AgentExceptionService
-	subjects   agentports.AgentSubjectRepository
+	exceptions agentexceptionports.AgentExceptionService
+	subjects   agentsubjectports.AgentSubjectRepository
 }
 
 func NewRaiseExceptionTool(
-	exceptions agentports.AgentExceptionService,
-	subjects agentports.AgentSubjectRepository,
+	exceptions agentexceptionports.AgentExceptionService,
+	subjects agentsubjectports.AgentSubjectRepository,
 ) agenttoolports.AgentTool {
 	return &RaiseExceptionTool{exceptions: exceptions, subjects: subjects}
 }
@@ -197,7 +198,7 @@ func (t *RaiseExceptionTool) Execute(
 func (t *RaiseExceptionTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*agentports.FlagAgentExceptionRequest, error) {
+) (*agentexceptionports.FlagAgentExceptionRequest, error) {
 	if params.RunID.IsNil() {
 		return nil, ErrMissingRun
 	}
@@ -241,7 +242,7 @@ func (t *RaiseExceptionTool) request(
 	})
 	evidence = append(evidence, named...)
 
-	return &agentports.FlagAgentExceptionRequest{
+	return &agentexceptionports.FlagAgentExceptionRequest{
 		RunID:          params.RunID,
 		Category:       category,
 		Severity:       severity,
@@ -329,7 +330,7 @@ func (t *RaiseExceptionTool) subject(
 	if t.subjects == nil {
 		return "", pulid.Nil, ErrSubjectUncheckable
 	}
-	exists, err := t.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+	exists, err := t.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
 		TenantInfo:  toolparams.TenantFrom(params),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,

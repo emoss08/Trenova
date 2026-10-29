@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,10 +32,14 @@ func TestDecideOwn_AStalePlanIsRefusedAtOnceRatherThanHeldForItsWindow(t *testin
 	require.Len(t, followUps.requests, 1)
 	assert.Equal(t, plan.ID, followUps.requests[0].PlanID)
 
-	require.NoError(t, f.svc.CommitOwnApprovalNow(t.Context(), &agentports.SettleApprovalRequest{
-		PlanID:     plan.ID,
-		TenantInfo: f.req.TenantInfo,
-	}, f.actor), "committing a refused plan now leaves it as it is")
+	require.NoError(
+		t,
+		f.svc.CommitOwnApprovalNow(t.Context(), &agentapprovalports.SettleApprovalRequest{
+			PlanID:     plan.ID,
+			TenantInfo: f.req.TenantInfo,
+		}, f.actor),
+		"committing a refused plan now leaves it as it is",
+	)
 	assert.Len(t, f.decider.decided, 1)
 	assert.Len(t, followUps.requests, 1)
 }
@@ -58,7 +63,7 @@ func TestCommitApproval_APlanWhoseRecordMovedInItsWindowIsRefusedAndReportedOnce
 
 	previews.stale = true
 	previews.staleStep = 2
-	commit := &agentports.CommitApprovalRequest{
+	commit := &agentapprovalports.CommitApprovalRequest{
 		OrganizationID:  f.req.TenantInfo.OrgID,
 		BusinessUnitID:  f.req.TenantInfo.BuID,
 		DecidedByUserID: f.actor.UserID,
@@ -75,7 +80,7 @@ func TestCommitApproval_APlanWhoseRecordMovedInItsWindowIsRefusedAndReportedOnce
 	require.Len(t, f.decider.decided, 1, "only the moved step is recorded, and it runs nothing")
 	assert.Equal(t, f.steps.steps[1].ID, f.decider.decided[0].ProposalID)
 	require.Len(t, followUps.requests, 1)
-	assert.NotContains(t, announced.actions, agentports.ActivityReopened)
+	assert.NotContains(t, announced.actions, agentactivityports.ActivityReopened)
 
 	require.NoError(t, f.svc.CommitApproval(t.Context(), commit),
 		"a retried commit activity finds the plan already settled")

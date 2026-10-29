@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
@@ -53,29 +54,29 @@ func (traceRuns) GetByID(
 }
 
 type traceProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	proposal *agent.AgentProposal
-	executed []agentports.RecordAgentProposalExecutionRequest
+	executed []agentproposalports.RecordAgentProposalExecutionRequest
 }
 
 func (p *traceProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) UpdateStatus(
 	context.Context,
-	agentports.UpdateAgentProposalStatusRequest,
+	agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) RecordExecution(
 	_ context.Context,
-	req agentports.RecordAgentProposalExecutionRequest,
+	req agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	p.executed = append(p.executed, req)
 
@@ -83,7 +84,7 @@ func (p *traceProposals) RecordExecution(
 }
 
 type traceDecisions struct {
-	agentports.AgentDecisionRepository
+	agentdecisionports.AgentDecisionRepository
 
 	created *agentdecision.AgentDecision
 }
@@ -200,10 +201,10 @@ func (h *decideHarness) decide(
 	t *testing.T,
 	ctx context.Context,
 	decision agentdecision.DecisionType,
-) *agentports.DecisionOutcome {
+) *agentdecisionports.DecisionOutcome {
 	t.Helper()
 
-	outcome, err := h.service.DecideWithOutcome(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := h.service.DecideWithOutcome(ctx, &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID: h.proposals.proposal.ID,
 		Decision:   decision,
 		ReasonCode: "looks_right",

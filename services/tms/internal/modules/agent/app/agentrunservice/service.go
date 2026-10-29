@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -55,9 +56,9 @@ type Params struct {
 	Workflows    kernelports.WorkflowStarter
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Budgets      agentports.AgentBudgetService     `optional:"true"`
-	Activity     agentports.AgentActivityPublisher `optional:"true"`
-	Plans        platformplanports.PlanService     `optional:"true"`
+	Budgets      agentbudgetports.AgentBudgetService       `optional:"true"`
+	Activity     agentactivityports.AgentActivityPublisher `optional:"true"`
+	Plans        platformplanports.PlanService             `optional:"true"`
 }
 
 type Service struct {
@@ -67,12 +68,12 @@ type Service struct {
 	validator   *Validator
 	workflows   kernelports.WorkflowStarter
 	audit       auditports.AuditService
-	budgets     agentports.AgentBudgetService
-	activity    agentports.AgentActivityPublisher
+	budgets     agentbudgetports.AgentBudgetService
+	activity    agentactivityports.AgentActivityPublisher
 	plans       platformplanports.PlanService
 }
 
-func New(p Params) agentports.AgentRunService {
+func New(p Params) agentruntimeports.AgentRunService {
 	return &Service{
 		l:           p.Logger.Named("service.agentrun"),
 		repo:        p.Repo,
@@ -87,7 +88,7 @@ func New(p Params) agentports.AgentRunService {
 }
 func (s *Service) StartForDefinition(
 	ctx context.Context,
-	req *agentports.StartAgentRunForDefinitionRequest,
+	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	if !s.workflows.Enabled() {
@@ -190,7 +191,7 @@ func (s *Service) StartForDefinition(
 	}, agentcontract.AgentRunWorkflowName, payload); err != nil {
 		var started *serviceerror.WorkflowExecutionAlreadyStarted
 		if errors.As(err, &started) {
-			return nil, agentports.ErrAgentRunAlreadyOpen
+			return nil, agentruntimeports.ErrAgentRunAlreadyOpen
 		}
 
 		return nil, err
@@ -216,7 +217,12 @@ func (s *Service) StartForDefinition(
 		fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger),
 	)
 	if s.activity != nil {
-		s.activity.RunChanged(ctx, updated, actor.AuditActorOrSystem(), agentports.ActivityCreated)
+		s.activity.RunChanged(
+			ctx,
+			updated,
+			actor.AuditActorOrSystem(),
+			agentactivityports.ActivityCreated,
+		)
 	}
 
 	return updated, nil
@@ -246,7 +252,7 @@ func (s *Service) assertWithinBudget(
 
 func (s *Service) resolveDefinition(
 	ctx context.Context,
-	req *agentports.StartAgentRunForDefinitionRequest,
+	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 ) (*agentdefinition.Definition, error) {
 	if req.DefinitionID.IsNotNil() {
 		return s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
@@ -272,7 +278,7 @@ func (s *Service) resolveDefinition(
 }
 func (s *Service) StartInline(
 	ctx context.Context,
-	req *agentports.StartInlineAgentRunRequest,
+	req *agentruntimeports.StartInlineAgentRunRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	promptVersion := req.PromptVersion

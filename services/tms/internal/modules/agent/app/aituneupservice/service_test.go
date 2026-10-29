@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -218,24 +218,24 @@ func (u *usageRepo) ProviderTaskTotals(
 }
 
 type trust struct {
-	agentports.AgentTrustService
-	ready    []agentports.ToolPromotion
-	promoted []*agentports.PromoteToolRequest
+	agenttrustports.AgentTrustService
+	ready    []agenttrustports.ToolPromotion
+	promoted []*agenttrustports.PromoteToolRequest
 }
 
 func (t *trust) PromotionCandidates(
 	context.Context,
-	*agentports.PromoteReadyRequest,
-) ([]agentports.ToolPromotion, error) {
+	*agenttrustports.PromoteReadyRequest,
+) ([]agenttrustports.ToolPromotion, error) {
 	return t.ready, nil
 }
 
 func (t *trust) PromoteTool(
 	_ context.Context,
-	req *agentports.PromoteToolRequest,
-) (*agentports.ToolPromotion, error) {
+	req *agenttrustports.PromoteToolRequest,
+) (*agenttrustports.ToolPromotion, error) {
 	t.promoted = append(t.promoted, req)
-	return &agentports.ToolPromotion{}, nil
+	return &agenttrustports.ToolPromotion{}, nil
 }
 
 type shadow struct {
@@ -469,7 +469,7 @@ func TestComputeReadsTrustOnlyWhileEarnedAutonomyIsOff(t *testing.T) {
 	f := newFixture(t)
 	dispatch := agent("agd_dispatch")
 	f.addAgent(dispatch)
-	f.trust.ready = []agentports.ToolPromotion{{
+	f.trust.ready = []agenttrustports.ToolPromotion{{
 		AgentDefinitionID: dispatch.ID, ToolName: "assign_driver", Streak: 11, Approvals: 22, TrackedSince: now - 14*day,
 	}}
 

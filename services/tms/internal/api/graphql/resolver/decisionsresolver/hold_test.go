@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -199,7 +199,7 @@ func TestPendingDecisionEdgeHold_AnswersWhatItsNodeAnswers(t *testing.T) {
 func TestPendingDecisionSummary_HeldIsWhatTheBadgeLeavesOut(t *testing.T) {
 	t.Parallel()
 
-	summary := &agentports.PendingDecisionSummary{Total: 5}
+	summary := &agentdecisionqueueports.PendingDecisionSummary{Total: 5}
 
 	assert.Equal(t, 2, pendingDecisionSummary(summary, 3).Held)
 	assert.Equal(t, 5, pendingDecisionSummary(summary, 0).Held, "a pause holds everything")

@@ -23,7 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -62,14 +63,14 @@ type modificationChecker interface {
 type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agentdecision.AgentDecision, error)
 }
 
 type stepReader interface {
 	ListByPlan(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByPlanRequest,
+		req agentproposalports.ListAgentProposalsByPlanRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
@@ -77,7 +78,7 @@ type baselineStore interface {
 	Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListProposalBaselinesRequest,
+		req agentproposalports.ListProposalBaselinesRequest,
 	) ([]*agentpreview.ProposalBaseline, error)
 }
 
@@ -89,9 +90,9 @@ type Params struct {
 	Tools       agenttoolports.AgentToolRegistry
 	Versions    agenttoolports.RecordVersionReader `optional:"true"`
 	Labeler     agentruntimeports.RecordLabeler    `optional:"true"`
-	Baselines   agentports.AgentProposalBaselineRepository
-	Decisions   agentports.AgentDecisionRepository
-	Proposals   agentports.AgentProposalRepository
+	Baselines   agentproposalports.AgentProposalBaselineRepository
+	Decisions   agentdecisionports.AgentDecisionRepository
+	Proposals   agentproposalports.AgentProposalRepository
 	Executor    *proposalexecutor.Service
 	Permissions permissionports.PermissionEngine
 	Metrics     *metrics.Registry                   `optional:"true"`
@@ -346,7 +347,7 @@ func (s *Service) planSteps(
 			return nil, errortypes.NewBusinessError("The plan's steps cannot be read")
 		}
 		var err error
-		steps, err = s.steps.ListByPlan(ctx, agentports.ListAgentProposalsByPlanRequest{
+		steps, err = s.steps.ListByPlan(ctx, agentproposalports.ListAgentProposalsByPlanRequest{
 			PlanID:     plan.ID,
 			TenantInfo: tenantOf(plan),
 		})

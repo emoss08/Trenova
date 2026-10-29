@@ -2,7 +2,7 @@ package agentresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 )
 
 type ActivityVisibility struct {
@@ -11,7 +11,7 @@ type ActivityVisibility struct {
 }
 
 func ActivitySummaryToModel(
-	summary *agentports.AgentActivitySummary,
+	summary *agentactivityports.AgentActivitySummary,
 	visible ActivityVisibility,
 ) *gqlmodel.AgentActivitySummary {
 	out := &gqlmodel.AgentActivitySummary{

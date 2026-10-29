@@ -12,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -74,14 +75,14 @@ type caseStore interface {
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentProposalByIDRequest,
+		req agentproposalports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agentdecision.AgentDecision, error)
 }
 
@@ -127,8 +128,8 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Cases         agentqualityports.AgentEvalCaseRepository
-	Proposals     agentports.AgentProposalRepository
-	Decisions     agentports.AgentDecisionRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Decisions     agentdecisionports.AgentDecisionRepository
 	Runs          agentruntimeports.AgentRunRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Conversations conversationports.ConversationRepository
@@ -157,7 +158,7 @@ type Service struct {
 	now           func() int64
 }
 
-func New(p Params) agentports.AgentEvalCaseService {
+func New(p Params) agentqualityports.AgentEvalCaseService {
 	return &Service{
 		l:             p.Logger.Named("service.agentevalcase"),
 		cases:         p.Cases,
@@ -191,9 +192,9 @@ func (s *Service) ListConnection(
 
 func (s *Service) CreateCurated(
 	ctx context.Context,
-	req *agentports.CreateCuratedEvalCaseRequest,
+	req *agentqualityports.CreateCuratedEvalCaseRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	definition, err := s.definitions.GetByID(
 		ctx,
 		agentdefinitionports.GetAgentDefinitionByIDRequest{
@@ -239,7 +240,7 @@ func (s *Service) CreateCurated(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateEvalCaseRequest,
+	req *agentqualityports.UpdateEvalCaseRequest,
 	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
 	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
@@ -292,7 +293,7 @@ func (s *Service) Update(
 
 func (s *Service) SetStatus(
 	ctx context.Context,
-	req *agentports.SetEvalCaseStatusRequest,
+	req *agentqualityports.SetEvalCaseStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
 	if !req.Status.IsValid() {
@@ -362,7 +363,7 @@ func (s *Service) save(
 	ctx context.Context,
 	evalCase *agentquality.EvalCase,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		userID := actor.UserID
 		evalCase.CreatedByUserID = &userID
@@ -376,7 +377,7 @@ func (s *Service) save(
 		BuID:  evalCase.BusinessUnitID,
 	}
 	if existing, found, err := s.byContent(ctx, evalCase, tenantInfo); err != nil || found {
-		return &agentports.EvalCaseCapture{Case: existing, Duplicate: found}, err
+		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: found}, err
 	}
 
 	created, err := s.cases.Create(ctx, evalCase)
@@ -405,13 +406,13 @@ func (s *Service) save(
 			return nil, err
 		}
 
-		return &agentports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
+		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	}
 
 	s.log(created, nil, actor, permission.OpCreate,
 		fmt.Sprintf("Evaluation case captured from %s", created.Source))
 
-	return &agentports.EvalCaseCapture{Case: created}, nil
+	return &agentqualityports.EvalCaseCapture{Case: created}, nil
 }
 
 func (s *Service) byContent(

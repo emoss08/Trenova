@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -47,7 +47,7 @@ type Matcher struct {
 	matchable   func() []string
 }
 
-var _ agentports.AgentRecommender = (*Matcher)(nil)
+var _ agentrecommendationports.AgentRecommender = (*Matcher)(nil)
 
 func NewMatcher(p MatcherParams) *Matcher {
 	return &Matcher{

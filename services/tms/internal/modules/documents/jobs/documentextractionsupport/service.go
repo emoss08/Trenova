@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
@@ -27,7 +27,7 @@ type Params struct {
 	DocumentControlRepo tenantports.DocumentControlRepository
 	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
 	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	AgentEvents         agentports.AgentEventPublisher `optional:"true"`
+	AgentEvents         agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -36,7 +36,7 @@ type Service struct {
 	documentControlRepo tenantports.DocumentControlRepository
 	draftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
 	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	agentEvents         agentports.AgentEventPublisher
+	agentEvents         agenteventports.AgentEventPublisher
 }
 
 func New(p Params) *Service {
@@ -104,7 +104,7 @@ func (a *Service) UpsertDraft(
 		return "", err
 	}
 
-	agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, a.agentEvents, agenteventports.AgentEvent{
 		Kind:      agenttrigger.EventDocumentExtracted,
 		SubjectID: doc.ID,
 		TenantInfo: pagination.TenantInfo{

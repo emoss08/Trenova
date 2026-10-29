@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -131,7 +131,7 @@ func (s *Service) notifyVisitWaits(
 		at = timeutils.NowUnix()
 	}
 
-	s.waits.NotifyEvent(ctx, &agentports.AgentEvent{
+	s.waits.NotifyEvent(ctx, &agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  move.ID,
 		TenantInfo: event.tenantInfo,

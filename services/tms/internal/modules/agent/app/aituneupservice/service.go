@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -40,7 +40,7 @@ type Params struct {
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
 	Providers        aiproviderports.AIProviderRepository
 	ProviderService  aiproviderports.AIProviderService
-	Trust            agentports.AgentTrustService
+	Trust            agenttrustports.AgentTrustService
 	Shadow           agentshadowports.AgentShadowService
 	Usage            aiusageports.AIUsageRepository
 }
@@ -54,7 +54,7 @@ type Service struct {
 	agentDefinitions agentdefinitionports.AgentDefinitionService
 	providers        aiproviderports.AIProviderRepository
 	providerService  aiproviderports.AIProviderService
-	trust            agentports.AgentTrustService
+	trust            agenttrustports.AgentTrustService
 	shadow           agentshadowports.AgentShadowService
 	usage            aiusageports.AIUsageRepository
 	computing        singleflight.Group
@@ -215,7 +215,7 @@ func (s *Service) inputs(
 	}
 
 	if !control.EarnedAutonomy {
-		ready, readyErr := s.trust.PromotionCandidates(ctx, &agentports.PromoteReadyRequest{
+		ready, readyErr := s.trust.PromotionCandidates(ctx, &agenttrustports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 		})
@@ -283,7 +283,7 @@ func usageRows(rows []aiusageports.AIUsageProviderTaskTotals) []aituneup.Provide
 	return out
 }
 
-func readyTools(promotions []agentports.ToolPromotion) []aituneup.ReadyTool {
+func readyTools(promotions []agenttrustports.ToolPromotion) []aituneup.ReadyTool {
 	out := make([]aituneup.ReadyTool, 0, len(promotions))
 	for idx := range promotions {
 		promotion := &promotions[idx]

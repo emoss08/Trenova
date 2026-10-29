@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -119,7 +119,7 @@ func (e *Effects) PublishOutcome(
 	default:
 		return
 	}
-	agentports.PublishAgentEvent(ctx, e.publisher, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, e.publisher, agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  record.ID,
 		TenantInfo: record.TenantInfo(),

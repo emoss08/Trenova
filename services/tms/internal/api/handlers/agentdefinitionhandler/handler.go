@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -30,8 +31,8 @@ type Params struct {
 	fx.In
 
 	Service              agentdefinitionports.AgentDefinitionService
-	Trust                agentports.AgentTrustService
-	Budgets              agentports.AgentBudgetService
+	Trust                agenttrustports.AgentTrustService
+	Budgets              agentbudgetports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
 	Streams              assistantstreamports.TurnStreamReader
 	Logger               *zap.Logger
@@ -41,8 +42,8 @@ type Params struct {
 
 type Handler struct {
 	service   agentdefinitionports.AgentDefinitionService
-	trust     agentports.AgentTrustService
-	budgets   agentports.AgentBudgetService
+	trust     agenttrustports.AgentTrustService
+	budgets   agentbudgetports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
 	streams   assistantstreamports.TurnStreamReader
 	logger    *zap.Logger

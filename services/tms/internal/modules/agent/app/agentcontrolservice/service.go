@@ -3,7 +3,8 @@ package agentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,7 +34,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	// Trust promotes the tools that had already earned it when earned
 	// autonomy is turned on or its threshold lowered.
-	Trust agentports.AgentTrustService `optional:"true"`
+	Trust agenttrustports.AgentTrustService `optional:"true"`
 }
 
 type Service struct {
@@ -42,11 +43,11 @@ type Service struct {
 	repo     tenantports.AgentControlRepository
 	versions settingversionports.SettingVersionRepository
 	audit    auditports.AuditService
-	trust    agentports.AgentTrustService
+	trust    agenttrustports.AgentTrustService
 	now      func() int64
 }
 
-func New(p Params) agentports.AgentControlService {
+func New(p Params) agentcontrolports.AgentControlService {
 	return &Service{
 		l:        p.Logger.Named("service.agentcontrol"),
 		db:       p.DB,
@@ -72,7 +73,7 @@ func (s *Service) Get(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateAgentControlRequest,
+	req *agentcontrolports.UpdateAgentControlRequest,
 	actor *permissionports.RequestActor,
 ) (*agentcontrol.AgentControl, error) {
 	control, err := s.repo.GetOrCreate(ctx, req.TenantInfo)
@@ -154,7 +155,7 @@ func (s *Service) promoteEarned(
 		return
 	}
 
-	promoted, err := s.trust.PromoteReady(ctx, &agentports.PromoteReadyRequest{
+	promoted, err := s.trust.PromoteReady(ctx, &agenttrustports.PromoteReadyRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: updated.OrganizationID,
 			BuID:  updated.BusinessUnitID,
@@ -259,7 +260,7 @@ func (s *Service) applyTrainingConsent(
 
 func applyAgentMoney(
 	control *agentcontrol.AgentControl,
-	update *agentports.AgentMoneyLimitsUpdate,
+	update *agentcontrolports.AgentMoneyLimitsUpdate,
 ) {
 	if update.CallCeilingMinor != nil {
 		control.AgentMoneyCallCeilingMinor = *update.CallCeilingMinor

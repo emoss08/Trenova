@@ -20,8 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -313,7 +314,7 @@ func (r *QueryResolver) AgentAccessPreview(ctx context.Context, input gqlmodel.A
 	return accessPreviewToModel(suggestion), nil
 }
 
-func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error) {
+func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -328,7 +329,7 @@ func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID 
 	return r.AgentCapabilityService.Update(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error) {
+func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (*agentcapabilityports.AgentCapabilities, error) {
 	// Anyone who may use the assistant may ask; the service then refuses an
 	// agent the reader may not use.
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
@@ -341,7 +342,7 @@ func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (
 		return nil, err
 	}
 
-	return r.AgentCapabilityService.Get(ctx, &agentports.GetAgentCapabilitiesRequest{
+	return r.AgentCapabilityService.Get(ctx, &agentcapabilityports.GetAgentCapabilitiesRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    id,
 	}, actorutil.FromAuthContext(authCtx))
@@ -501,7 +502,7 @@ func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([
 	})
 }
 
-func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error) {
+func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentdraftports.AgentDraft) ([]string, error) {
 	kinds := make([]string, 0, len(obj.EventKinds))
 	for _, kind := range obj.EventKinds {
 		kinds = append(kinds, string(kind))
@@ -510,7 +511,7 @@ func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentports.Age
 	return kinds, nil
 }
 
-func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error) {
+func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentdraftports.AgentDraft) (map[string]any, error) {
 	tiers := make(map[string]any, len(obj.ToolTiers))
 	for tool, tier := range obj.ToolTiers {
 		tiers[tool] = string(tier)
@@ -519,19 +520,19 @@ func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentports.Agen
 	return tiers, nil
 }
 
-func (r *MutationResolver) DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error) {
+func (r *MutationResolver) DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AgentDraftingService.DraftFromDescription(ctx, &agentports.DraftAgentRequest{
+	return r.AgentDraftingService.DraftFromDescription(ctx, &agentdraftports.DraftAgentRequest{
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Description: description,
 	})
 }
 
-func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error) {
+func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -544,7 +545,7 @@ func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instruc
 		)
 	}
 
-	return r.AgentDraftingService.TightenInstructions(ctx, &agentports.TightenAgentInstructionsRequest{
+	return r.AgentDraftingService.TightenInstructions(ctx, &agentdraftports.TightenAgentInstructionsRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Instructions: instructions,
 	})

@@ -2,7 +2,7 @@ package assistanttranscripts
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -17,7 +17,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Proposals     agentports.AgentProposalRepository
+	Proposals     agentproposalports.AgentProposalRepository
 	Runs          agentruntimeports.AgentRunRepository    `optional:"true"`
 	Users         tenantports.UserRepository              `optional:"true"`
 	Chapters      assistantchapterports.ChapterRepository `optional:"true"`

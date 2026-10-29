@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentProposalRepository {
+func New(p Params) agentproposalports.AgentProposalRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentproposal-repository"),
@@ -62,7 +62,7 @@ func expiry() []keel.Assignment {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *agentports.ListAgentProposalRequest,
+	req *agentproposalports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	return dbtx.Read(
 		ctx,
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentProposalConnectionRequest,
+	req *agentproposalports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	return dbtx.Read(
 		ctx,
@@ -118,7 +118,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentProposalByIDRequest,
+	req agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		entity, err := agentdb.AgentProposals.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -165,7 +165,7 @@ func (r *repository) updateOne(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req agentports.UpdateAgentProposalStatusRequest,
+	req agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
@@ -190,7 +190,7 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) ExpirePendingByRun(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsByRunRequest,
+	req agentproposalports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentdb.AgentProposals
@@ -226,7 +226,7 @@ func (r *repository) expireByRuns(
 
 func (r *repository) ExpirePendingByDefinition(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsByDefinitionRequest,
+	req agentproposalports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns
@@ -250,7 +250,7 @@ func (r *repository) ExpirePendingByDefinition(
 // would follow up into a thread that no longer exists.
 func (r *repository) ExpirePendingByThread(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsByThreadRequest,
+	req agentproposalports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns
@@ -276,7 +276,7 @@ func (r *repository) ExpirePendingByThread(
 // is what keeps it cheap at any size.
 func (r *repository) ExpirePending(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsRequest,
+	req agentproposalports.ExpireAgentProposalsRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent proposals across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -311,7 +311,7 @@ func (r *repository) ExpirePending(
 // partial index on pending unreminded rows keeps it cheap.
 func (r *repository) ListPendingForReminder(
 	ctx context.Context,
-	req agentports.ListPendingProposalsForReminderRequest,
+	req agentproposalports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	ctx = dbscope.WithSystem(ctx, "list pending proposals due a reminder across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
@@ -353,7 +353,7 @@ func (r *repository) ListPendingForReminder(
 
 func (r *repository) MarkReminded(
 	ctx context.Context,
-	req agentports.MarkProposalsRemindedRequest,
+	req agentproposalports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.IDs) == 0 {
@@ -374,7 +374,7 @@ func (r *repository) MarkReminded(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req agentports.ListAgentProposalsByIDsRequest,
+	req agentproposalports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		if len(req.IDs) == 0 {
@@ -405,7 +405,7 @@ func byPlansQuery(planIDs ...pulid.ID) *keel.Query[*agent.AgentProposal] {
 // ListByPlan reads a plan's steps in the order they are meant to run.
 func (r *repository) ListByPlan(
 	ctx context.Context,
-	req agentports.ListAgentProposalsByPlanRequest,
+	req agentproposalports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		proposals, err := byPlansQuery(req.PlanID).All(ctx, r.db.Keel(ctx))
@@ -421,7 +421,7 @@ func (r *repository) ListByPlan(
 
 func (r *repository) ListByPlans(
 	ctx context.Context,
-	req agentports.ListAgentProposalsByPlansRequest,
+	req agentproposalports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
 	if len(req.PlanIDs) == 0 {
 		return []*agent.AgentProposal{}, nil
@@ -444,7 +444,7 @@ func (r *repository) ListByPlans(
 // expire, and the record should say so.
 func (r *repository) SkipPendingByPlan(
 	ctx context.Context,
-	req agentports.SkipPendingByPlanRequest,
+	req agentproposalports.SkipPendingByPlanRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentdb.AgentProposals
@@ -468,7 +468,7 @@ func (r *repository) SkipPendingByPlan(
 
 func (r *repository) ListByRun(
 	ctx context.Context,
-	req agentports.ListAgentProposalsByRunRequest,
+	req agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals

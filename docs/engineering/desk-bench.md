@@ -42,7 +42,7 @@ Four things make that observable and repeatable:
   the bench or by the application (a decision follow-up), is seen the moment it starts. The
   bench follows each one's stream from the first frame, waits for its result, and keeps
   waiting a few seconds for another turn the last one started.
-- **No learning.** `agentports.AgentReflectionScheduler` is replaced with one that does
+- **No learning.** `agentreflectionports.AgentReflectionScheduler` is replaced with one that does
   nothing, so a bench conversation is never looked back over. A conversation goes quiet after
   ten minutes, so a run longer than that fed what its early cases taught to the cases after them:
   a rejected hold taught "this person does not want a hold for missing paperwork", and the case
@@ -50,7 +50,7 @@ Four things make that observable and repeatable:
   (`benchLeftovers`) also retires the memories earlier bench conversations taught and dismisses
   what they suggested; memories from people's own conversations are never touched. Reflection
   itself is covered by its own tests, not by the bench. For the same reason
-  `agentports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
+  `agenttrustports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
   rejections and its failed executions are not outcomes for earned autonomy: its streaks
   promoted `billing_transfer` to AutoExecute on Billing exceptions, and the case that
   approves that proposal found it had already run.

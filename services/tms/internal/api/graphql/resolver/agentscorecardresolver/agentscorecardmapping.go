@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 )
 
 // toGQLAgentScorecard shapes the counted record for the wire.
@@ -12,7 +12,9 @@ import (
 // The trust ladder rides along on the same object rather than as a field
 // resolver: it comes from one query the service already made, and a lazy
 // field would turn one request into two for a panel that always shows both.
-func toGQLAgentScorecard(result *agentports.AgentScorecardResult) *gqlmodel.AgentScorecard {
+func toGQLAgentScorecard(
+	result *agentevaluationports.AgentScorecardResult,
+) *gqlmodel.AgentScorecard {
 	card := result.Scorecard
 
 	out := &gqlmodel.AgentScorecard{

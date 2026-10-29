@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
@@ -70,7 +70,7 @@ type SubmissionParams struct {
 	Senders          []factoringsubmissionports.FactoringTransport  `                group:"factoring_transports"`
 	Starter          factoringsubmissionports.SubmissionSendStarter `optional:"true"`
 	Requester        factoringports.EvaluationRequester             `optional:"true"`
-	Events           agentports.AgentEventPublisher                 `optional:"true"`
+	Events           agenteventports.AgentEventPublisher            `optional:"true"`
 	Audit            auditports.AuditService
 	Realtime         realtimeports.RealtimeService `optional:"true"`
 	Logger           *zap.Logger
@@ -97,7 +97,7 @@ type SubmissionService struct {
 	senders          map[factoringsubmission.TransportMethod]factoringsubmissionports.FactoringTransport
 	starter          factoringsubmissionports.SubmissionSendStarter
 	requester        factoringports.EvaluationRequester
-	events           agentports.AgentEventPublisher
+	events           agenteventports.AgentEventPublisher
 	rec              factoringaction.Recorder
 	l                *zap.Logger
 	now              func() int64
@@ -628,7 +628,7 @@ func (s *SubmissionService) publishEvent(
 	kind agenttrigger.EventKind,
 	detail string,
 ) {
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  sub.ID,
 		TenantInfo: tenantInfo,

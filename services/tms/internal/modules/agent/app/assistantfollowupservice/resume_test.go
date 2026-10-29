@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +41,7 @@ type fakeProposals struct {
 
 func (f *fakeProposals) ListByThread(
 	_ context.Context,
-	_ agentports.ListAgentProposalsByThreadRequest,
+	_ agentproposalports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.proposals, nil
 }
@@ -50,7 +52,7 @@ type fakePlans struct {
 
 func (f *fakePlans) ListByThread(
 	_ context.Context,
-	_ agentports.ListAgentPlansByThreadRequest,
+	_ agentplanports.ListAgentPlansByThreadRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return f.plans, nil
 }
@@ -61,7 +63,7 @@ type fakeDecisions struct {
 
 func (f *fakeDecisions) ListByProposals(
 	_ context.Context,
-	_ agentports.ListAgentDecisionsByProposalsRequest,
+	_ agentdecisionports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -133,22 +133,23 @@ func match(
 	text string,
 	current pulid.ID,
 	contextKinds ...string,
-) *agentports.AgentMatch {
+) *agentrecommendationports.AgentMatch {
 	t.Helper()
 
-	found, err := service.build().MatchAgent(t.Context(), &agentports.AgentMatchRequest{
-		Actor:          runtimetest.Actor(),
-		Text:           text,
-		CurrentAgentID: current,
-		ContextKinds:   contextKinds,
-	})
+	found, err := service.build().
+		MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
+			Actor:          runtimetest.Actor(),
+			Text:           text,
+			CurrentAgentID: current,
+			ContextKinds:   contextKinds,
+		})
 	require.NoError(t, err)
 	require.NotNil(t, found)
 
 	return found
 }
 
-func toolNames(tools []agentports.AgentMatchTool) []string {
+func toolNames(tools []agentrecommendationports.AgentMatchTool) []string {
 	out := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		out = append(out, tool.Name)
@@ -169,7 +170,7 @@ func TestMatchAgent_PicksTheAgentHoldingTheToolTheQuestionNeeds(t *testing.T) {
 	assert.Equal(t, agentsuggestion.MatchBetterAgent, found.Outcome)
 	require.NotNil(t, found.Agent)
 	assert.Equal(t, compliance.ID, found.Agent.ID)
-	assert.Equal(t, []agentports.AgentMatchTool{{
+	assert.Equal(t, []agentrecommendationports.AgentMatchTool{{
 		Name:    "worker_list_credentials",
 		Summary: "Worker credentials falling due: medical cards, licences, hazmat.",
 	}}, found.Tools)
@@ -240,7 +241,7 @@ func TestMatchAgent_SaysNoAgentCanHelpWhenNoAgentHoldsTheBestTool(t *testing.T) 
 
 	assert.Equal(t, agentsuggestion.MatchNoAgent, found.Outcome)
 	assert.Nil(t, found.Agent)
-	assert.Equal(t, []agentports.AgentMatchTool{{
+	assert.Equal(t, []agentrecommendationports.AgentMatchTool{{
 		Name:    "invoice_list",
 		Summary: "List invoices by status or due date.",
 	}}, found.Tools, "the tools that would answer it are named for whoever can add them")
@@ -393,10 +394,11 @@ func TestMatchAgent_MatchesNothingForAnythingButAPerson(t *testing.T) {
 	actor := runtimetest.Actor()
 	actor.PrincipalType = permissionports.PrincipalTypeAPIKey
 
-	found, err := service.build().MatchAgent(t.Context(), &agentports.AgentMatchRequest{
-		Actor: actor,
-		Text:  "which invoices are past due?",
-	})
+	found, err := service.build().
+		MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
+			Actor: actor,
+			Text:  "which invoices are past due?",
+		})
 
 	require.NoError(t, err)
 	require.NotNil(t, found)
@@ -410,10 +412,11 @@ func TestMatchAgent_RefusesAQuestionPastTheLimit(t *testing.T) {
 	billing := runtimetest.AgentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
 
-	found, err := service.build().MatchAgent(t.Context(), &agentports.AgentMatchRequest{
-		Actor: runtimetest.Actor(),
-		Text:  strings.Repeat("a", agentports.MaxAgentRecommendationTextRunes+1),
-	})
+	found, err := service.build().
+		MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
+			Actor: runtimetest.Actor(),
+			Text:  strings.Repeat("a", agentrecommendationports.MaxAgentRecommendationTextRunes+1),
+		})
 
 	require.Error(t, err)
 	var validation *errortypes.Error
@@ -443,7 +446,7 @@ func TestMatchAgent_NamesAtMostThreeMatchedTools(t *testing.T) {
 	)
 
 	require.NotNil(t, found.Agent)
-	assert.Len(t, found.Tools, agentports.MaxAgentRecommendationTools)
+	assert.Len(t, found.Tools, agentrecommendationports.MaxAgentRecommendationTools)
 }
 
 func TestMatchAgent_KeepsTheCurrentAgentWhenOneOfItsDelegatesHoldsTheTool(t *testing.T) {
@@ -525,12 +528,12 @@ func TestMatchAgent_RefusesMoreKindsOfRecordThanAQuestionCanName(t *testing.T) {
 
 	billing := runtimetest.AgentHolding("Billing assistant", "invoice_list")
 	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
-	kinds := make([]string, agentports.MaxAgentMatchContextKinds+1)
+	kinds := make([]string, agentrecommendationports.MaxAgentMatchContextKinds+1)
 	for idx := range kinds {
 		kinds[idx] = permission.ResourceCustomer.String()
 	}
 
-	_, err := service.build().MatchAgent(t.Context(), &agentports.AgentMatchRequest{
+	_, err := service.build().MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
 		Actor:        runtimetest.Actor(),
 		Text:         "which invoices are past due?",
 		ContextKinds: kinds,
@@ -692,7 +695,7 @@ func TestMatchAgent_ReadsAPersonsAgentsOnceWhileTheyType(t *testing.T) {
 	actor := runtimetest.Actor()
 
 	for _, text := range []string{"which invoices", "which invoices are past due?"} {
-		found, err := matcher.MatchAgent(t.Context(), &agentports.AgentMatchRequest{
+		found, err := matcher.MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
 			Actor:          actor,
 			Text:           text,
 			CurrentAgentID: billing.ID,
@@ -704,7 +707,7 @@ func TestMatchAgent_ReadsAPersonsAgentsOnceWhileTheyType(t *testing.T) {
 	assert.Equal(t, 1, definitions.lists, "the agents are read once and kept for a moment")
 
 	other := runtimetest.Actor()
-	_, err := matcher.MatchAgent(t.Context(), &agentports.AgentMatchRequest{
+	_, err := matcher.MatchAgent(t.Context(), &agentrecommendationports.AgentMatchRequest{
 		Actor: other,
 		Text:  "which invoices are past due?",
 	})

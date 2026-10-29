@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -13,7 +13,7 @@ import (
 type proposalEditStore interface {
 	SetPendingModifications(
 		ctx context.Context,
-		req agentports.SetPendingModificationsRequest,
+		req agentproposalports.SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 }
 

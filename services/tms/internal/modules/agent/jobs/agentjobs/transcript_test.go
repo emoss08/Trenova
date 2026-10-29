@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,12 +19,12 @@ import (
 )
 
 type filedProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 }
 
 func (filedProposals) ListByRun(
 	_ context.Context,
-	req agentports.ListAgentProposalsByRunRequest,
+	req agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return []*agent.AgentProposal{{
 		ID:     pulid.MustNew("apr_"),

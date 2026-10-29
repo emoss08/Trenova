@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func TestDecisionResult_SaysAnApprovalWasRefusedAndWhy(t *testing.T) {
 	why := "the record changed since this was proposed: the shipment S-1 was at version 3 " +
 		"when this was proposed and is at version 5 now, so nothing was changed"
 
-	got := DecisionResult(&agentports.AgentProposalDecisionResult{
+	got := DecisionResult(&agentdecisionports.AgentProposalDecisionResult{
 		ProposalID: id,
 		Decision:   decision,
 		Error:      why,
@@ -73,7 +73,7 @@ func TestDecisionResult_LeavesTheErrorAbsentWhenTheWriteRan(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("ap_")
-	got := DecisionResult(&agentports.AgentProposalDecisionResult{
+	got := DecisionResult(&agentdecisionports.AgentProposalDecisionResult{
 		ProposalID: id,
 		Decision:   &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted},
 		Executed:   true,

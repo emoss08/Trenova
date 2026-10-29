@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -37,7 +37,7 @@ func (s *Service) announce(ctx context.Context, message *inboundmessage.InboundM
 	// The detail names the message, never what it says: a wait it ends hands
 	// the line to the agent, which reads the message itself, and taints its
 	// work when it does.
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:      agenttrigger.EventInboundMessageClassified,
 		SubjectID: message.ID,
 		TenantInfo: pagination.TenantInfo{

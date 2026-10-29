@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -47,7 +47,7 @@ type Params struct {
 	// Events is told about each receipt that could not be matched on its
 	// own, so an agent subscribed to bank_receipt.exception can work it. It
 	// is optional because an import is worth running with nobody listening.
-	Events agentports.AgentEventPublisher `optional:"true"`
+	Events agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -59,7 +59,7 @@ type Service struct {
 	accountingRepo      tenantports.AccountingControlRepository
 	notificationService *notificationservice.Service
 	auditService        auditports.AuditService
-	events              agentports.AgentEventPublisher
+	events              agenteventports.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection
@@ -421,7 +421,7 @@ func (s *Service) markException(
 			)
 		}
 	}
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventBankReceiptException,
 		SubjectID:  updated.ID,
 		TenantInfo: tenantInfo,

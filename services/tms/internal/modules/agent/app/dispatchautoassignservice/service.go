@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -45,9 +46,9 @@ type Params struct {
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	AgentControlRepo    tenantports.AgentControlRepository
 	DefinitionRepo      agentdefinitionports.AgentDefinitionRepository
-	ProposalRepo        agentports.AgentProposalRepository
+	ProposalRepo        agentproposalports.AgentProposalRepository
 	CandidateService    *dispatchcandidateservice.Service
-	AgentRunService     agentports.AgentRunService
+	AgentRunService     agentruntimeports.AgentRunService
 	Executor            *proposalexecutor.Service
 }
 
@@ -57,9 +58,9 @@ type Service struct {
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	agentControlRepo    tenantports.AgentControlRepository
 	definitionRepo      agentdefinitionports.AgentDefinitionRepository
-	proposalRepo        agentports.AgentProposalRepository
+	proposalRepo        agentproposalports.AgentProposalRepository
 	candidates          *dispatchcandidateservice.Service
-	runService          agentports.AgentRunService
+	runService          agentruntimeports.AgentRunService
 	executor            *proposalexecutor.Service
 }
 
@@ -367,7 +368,7 @@ func (s *Service) recordPlan(
 		return nil, nil
 	}
 
-	run, err := s.runService.StartInline(ctx, &agentports.StartInlineAgentRunRequest{
+	run, err := s.runService.StartInline(ctx, &agentruntimeports.StartInlineAgentRunRequest{
 		AgentType:         agent.TypeDispatchAssignment,
 		AgentDefinitionID: policy.DefinitionID,
 		SubjectType:       agent.SubjectShipmentMove,

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -61,8 +61,8 @@ type Params struct {
 	Watchtower watchtowerports.WatchtowerProjector `                                                          optional:"true"`
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
-	Publisher agentports.AgentEventPublisher `                                                          optional:"true"`
-	Plans     platformplanports.PlanService  `                                                          optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `                                                          optional:"true"`
+	Plans     platformplanports.PlanService       `                                                          optional:"true"`
 }
 
 type Service struct {
@@ -84,7 +84,7 @@ type Service struct {
 	auditService    auditports.AuditService
 	realtime        realtimeports.RealtimeService
 	watchtower      watchtowerports.WatchtowerProjector
-	publisher       agentports.AgentEventPublisher
+	publisher       agenteventports.AgentEventPublisher
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
 	plans           platformplanports.PlanService

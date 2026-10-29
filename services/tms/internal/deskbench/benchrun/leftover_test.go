@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +44,7 @@ func (s *leftoverStarter) CancelWorkflow(_ context.Context, workflowID, _ string
 }
 
 type leftoverRuns struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 
 	watcher *benchwatch.TurnWatcher
 	starter *leftoverStarter
@@ -53,12 +53,12 @@ type leftoverRuns struct {
 
 func (r *leftoverRuns) StartForDefinition(
 	ctx context.Context,
-	_ *agentports.StartAgentRunForDefinitionRequest,
+	_ *agentruntimeports.StartAgentRunForDefinitionRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	r.starts++
 	if len(r.starter.cancelled) == 0 {
-		return nil, agentports.ErrAgentRunAlreadyOpen
+		return nil, agentruntimeports.ErrAgentRunAlreadyOpen
 	}
 	run := &agent.AgentRun{ID: pulid.MustNew("ar_")}
 	if _, err := r.watcher.StartWorkflow(

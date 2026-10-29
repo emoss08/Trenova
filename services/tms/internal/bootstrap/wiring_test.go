@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
@@ -142,7 +145,7 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 				processOptions,
 				fx.Invoke(
 					func(
-						agentports.AgentEventPublisher,
+						agenteventports.AgentEventPublisher,
 						watchtowerports.WatchtowerProjector,
 						// A trajectory recorder is optional at every use site, so
 						// an installation missing it records nothing and says
@@ -180,9 +183,9 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						accountingdriftports.AccountingDriftChecker,
 						accountingsyncports.AccountingSyncDispatcher,
 						proposalrecorder.PlanStore,
-						agentports.AgentTrustService,
-						agentports.AgentProposalNotifier,
-						agentports.AgentActivityPublisher,
+						agenttrustports.AgentTrustService,
+						agentproposalports.AgentProposalNotifier,
+						agentactivityports.AgentActivityPublisher,
 						inboundmessageports.TriageRuleEvaluator,
 						inboundmessageports.TriageRuleTeacher,
 						inboundmessageports.SenderHintProvider,

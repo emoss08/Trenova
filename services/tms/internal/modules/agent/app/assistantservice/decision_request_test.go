@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,7 +72,7 @@ func TestRequestDecision_PutsTheWaitingCardBackAsAnArtifact(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, shown)
 
-	assert.Equal(t, agentports.ListAgentProposalsByThreadRequest{
+	assert.Equal(t, agentproposalports.ListAgentProposalsByThreadRequest{
 		ThreadID:   fixture.thread.ID,
 		TenantInfo: fixture.tenant,
 	}, fixture.proposals.LastList, "only this conversation's proposals, in this tenant")

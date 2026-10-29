@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
@@ -85,7 +85,7 @@ func (s *Limits) AssertWithinAllowance(
 }
 
 type Limits struct {
-	Budgets       agentports.AgentBudgetService
+	Budgets       agentbudgetports.AgentBudgetService
 	Conversations conversationports.ConversationRepository
 	AgentControls tenantports.AgentControlRepository
 	Quota         platformplanports.QuotaGuard

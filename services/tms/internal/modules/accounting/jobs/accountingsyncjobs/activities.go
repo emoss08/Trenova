@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ type ActivitiesParams struct {
 	Poller                accountinginboundports.AccountingChangePoller
 	Drift                 accountingdriftports.AccountingDriftReconciler
 	DriftChecker          accountingdriftports.AccountingDriftChecker
-	Publisher             agentports.AgentEventPublisher `optional:"true"`
+	Publisher             agenteventports.AgentEventPublisher `optional:"true"`
 	Logger                *zap.Logger
 }
 
@@ -46,7 +46,7 @@ type Activities struct {
 	poller       accountinginboundports.AccountingChangePoller
 	drift        accountingdriftports.AccountingDriftReconciler
 	driftChecker accountingdriftports.AccountingDriftChecker
-	publisher    agentports.AgentEventPublisher
+	publisher    agenteventports.AgentEventPublisher
 	l            *zap.Logger
 }
 

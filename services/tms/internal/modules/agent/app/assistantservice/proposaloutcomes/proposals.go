@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +40,7 @@ func (s *Reader) DecisionsFor(
 
 	decisions, err := s.Decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: ids,
 			TenantInfo:  tenant,
 		},
@@ -77,10 +78,13 @@ func (s *Reader) Outcomes(
 		return nil
 	}
 
-	stored, err := s.Proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   thread.ID,
-		TenantInfo: tenant,
-	})
+	stored, err := s.Proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   thread.ID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		s.Logger.Warn("could not read the thread's proposals for the model",
 			zap.String("thread", thread.ID.String()), zap.Error(err))

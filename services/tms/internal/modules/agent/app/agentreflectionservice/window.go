@@ -14,7 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,10 +31,13 @@ func (s *Service) threadProposals(
 	threadID pulid.ID,
 	messages []conversation.Message,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   threadID,
-		TenantInfo: tenant,
-	})
+	stored, err := s.proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		s.l.Warn("agent reflection: the conversation's proposals could not be read",
 			zap.String("thread", threadID.String()),
@@ -68,7 +72,7 @@ func (s *Service) runProposals(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
+	stored, err := s.proposals.ListByRun(ctx, agentproposalports.ListAgentProposalsByRunRequest{
 		RunID:      runID,
 		TenantInfo: tenant,
 	})
@@ -111,7 +115,7 @@ func (s *Service) decided(
 
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: ids,
 			TenantInfo:  tenant,
 		},

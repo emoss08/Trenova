@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -72,7 +71,7 @@ func (s *Service) handOffToAgent(
 		return nil, err
 	}
 
-	run, err := s.runs.StartForDefinition(ctx, &agentports.StartAgentRunForDefinitionRequest{
+	run, err := s.runs.StartForDefinition(ctx, &agentruntimeports.StartAgentRunForDefinitionRequest{
 		DefinitionID: req.AgentDefinitionID,
 		SubjectType:  item.SubjectType,
 		SubjectID:    item.SubjectID,

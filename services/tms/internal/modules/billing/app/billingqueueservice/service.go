@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
@@ -72,7 +72,7 @@ type Params struct {
 	Validator            *Validator
 	OrderDerivation      orderports.OrderDerivationService
 	DetentionBilling     detentionports.DetentionBillingService
-	AgentEvents          agentports.AgentEventPublisher `optional:"true"`
+	AgentEvents          agenteventports.AgentEventPublisher `optional:"true"`
 	// Watchtower puts an item that cannot be invoiced on the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// The review reads: issues and activity, the shipment's paperwork and
@@ -106,7 +106,7 @@ type Service struct {
 	validator            *Validator
 	orderDerivation      orderports.OrderDerivationService
 	detentionBilling     detentionports.DetentionBillingService
-	agentEvents          agentports.AgentEventPublisher
+	agentEvents          agenteventports.AgentEventPublisher
 	watchtower           watchtowerports.WatchtowerProjector
 	reviewRepo           billingqueueports.BillingQueueReviewRepository
 	activity             *billingqueueactivity.Recorder
@@ -939,7 +939,7 @@ func (s *Service) publishStatusAgentEvent(
 		return
 	}
 
-	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.agentEvents, agenteventports.AgentEvent{
 		Kind:      kind,
 		SubjectID: item.ID,
 		TenantInfo: pagination.TenantInfo{

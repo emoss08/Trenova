@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -49,16 +49,16 @@ func (f *fakePermissions) Check(
 }
 
 type fakeSummaries struct {
-	asked agentports.RecordSummaries
+	asked recordsummaryports.RecordSummaries
 	refs  []map[permission.Resource][]pulid.ID
 }
 
 func (f *fakeSummaries) Summaries(
 	_ context.Context,
-	req *agentports.RecordSummaryRequest,
-) (agentports.RecordSummaries, error) {
+	req *recordsummaryports.RecordSummaryRequest,
+) (recordsummaryports.RecordSummaries, error) {
 	f.refs = append(f.refs, req.Refs)
-	out := agentports.RecordSummaries{}
+	out := recordsummaryports.RecordSummaries{}
 	for resource, ids := range req.Refs {
 		for _, id := range ids {
 			if summary, ok := f.asked[resource][id]; ok {
@@ -179,7 +179,7 @@ func newFixture() *fixture {
 		permissions: &fakePermissions{allowed: map[permission.Resource]bool{
 			permission.ResourceShipment: true,
 		}},
-		summaries:   &fakeSummaries{asked: agentports.RecordSummaries{}},
+		summaries:   &fakeSummaries{asked: recordsummaryports.RecordSummaries{}},
 		artifacts:   &fakeArtifacts{byID: map[pulid.ID]*assistantartifact.Artifact{}},
 		threads:     &fakeThreads{},
 		analytics:   &fakeAnalytics{},

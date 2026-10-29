@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -47,7 +47,7 @@ func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option 
 }
 
 func previewRaisedException(
-	request *agentports.FlagAgentExceptionRequest,
+	request *agentexceptionports.FlagAgentExceptionRequest,
 ) (*agentpreview.ToolPreview, error) {
 	summary := fmt.Sprintf(
 		"Would hand %s to a person as a %s %s exception.",

@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -135,7 +135,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 
 	tenant := resolvercore.TenantInfo(authCtx)
 	actor := actorutil.FromAuthContext(authCtx)
-	var captured *agentports.EvalCaseCapture
+	var captured *agentqualityports.EvalCaseCapture
 	switch {
 	case evalCaseSources(input) != 1:
 		return nil, errortypes.NewValidationError(
@@ -155,7 +155,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		if parseErr != nil {
 			return nil, parseErr
 		}
-		captured, err = r.AgentEvalCaseService.CreateFromProposal(ctx, &agentports.CreateEvalCaseFromProposalRequest{
+		captured, err = r.AgentEvalCaseService.CreateFromProposal(ctx, &agentqualityports.CreateEvalCaseFromProposalRequest{
 			ProposalID: proposalID,
 			Title:      gqlscalar.DerefString(input.FromProposal.Title),
 			TenantInfo: tenant,
@@ -165,7 +165,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		if parseErr != nil {
 			return nil, parseErr
 		}
-		captured, err = r.AgentEvalCaseService.CreateFromFeedback(ctx, &agentports.CreateEvalCaseFromFeedbackRequest{
+		captured, err = r.AgentEvalCaseService.CreateFromFeedback(ctx, &agentqualityports.CreateEvalCaseFromFeedbackRequest{
 			FeedbackID: feedbackID,
 			Title:      gqlscalar.DerefString(input.FromFeedback.Title),
 			TenantInfo: tenant,
@@ -216,7 +216,7 @@ func (r *MutationResolver) SetAgentEvalCaseStatus(ctx context.Context, id string
 		return nil, err
 	}
 
-	return r.AgentEvalCaseService.SetStatus(ctx, &agentports.SetEvalCaseStatusRequest{
+	return r.AgentEvalCaseService.SetStatus(ctx, &agentqualityports.SetEvalCaseStatusRequest{
 		ID:         caseID,
 		Status:     status,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
@@ -234,7 +234,7 @@ func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	return r.AgentEvaluationService.ReplayCase(ctx, &agentports.ReplayAgentEvalCaseRequest{
+	return r.AgentEvaluationService.ReplayCase(ctx, &agentevaluationports.ReplayAgentEvalCaseRequest{
 		CaseID:     caseID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -466,7 +466,7 @@ func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRu
 
 	result, err := r.AgentEvaluationService.ListConnection(
 		ctx,
-		&agentports.ListAgentEvaluationConnectionRequest{
+		&agentevaluationports.ListAgentEvaluationConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			Columns:    gqlconnection.AgentEvaluationColumns(ctx, "edges.node"),

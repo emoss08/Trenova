@@ -23,7 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/deskbench/benchwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,11 +42,11 @@ type Runner struct {
 	live       *benchlive.Feed
 	recorder   *benchrecord.Recorder
 	watcher    *benchwatch.TurnWatcher
-	runs       agentports.AgentRunService
+	runs       agentruntimeports.AgentRunService
 	runRecords agentruntimeports.AgentRunRepository
-	proposals  agentports.AgentProposalRepository
+	proposals  agentproposalports.AgentProposalRepository
 	previews   agentruntimeports.ProposalPreviewService
-	decisions  agentports.AgentDecisionService
+	decisions  agentdecisionports.AgentDecisionService
 	shipments  shipmentserviceports.ShipmentService
 	exclusive  func(key string) func()
 	measure    func(

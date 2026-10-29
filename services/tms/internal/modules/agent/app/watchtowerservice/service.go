@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -52,9 +52,9 @@ type Params struct {
 	Projector   *Projector
 	Permissions permissionports.PermissionEngine
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	Runs        agentports.AgentRunService           `optional:"true"`
+	Runs        agentruntimeports.AgentRunService    `optional:"true"`
 	RunRepo     agentruntimeports.AgentRunRepository `optional:"true"`
-	Events      agentports.AgentEventPublisher       `optional:"true"`
+	Events      agenteventports.AgentEventPublisher  `optional:"true"`
 	Sources     []watchtowerports.WatchtowerSource   `                group:"watchtower_sources"`
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
@@ -74,10 +74,10 @@ type Service struct {
 	access      kindAccess
 	dismisser   *Dismisser
 	definitions agentdefinitionports.AgentDefinitionRepository
-	runs        agentports.AgentRunService
+	runs        agentruntimeports.AgentRunService
 	runRepo     agentruntimeports.AgentRunRepository
 	exceptions  *Exceptions
-	events      agentports.AgentEventPublisher
+	events      agenteventports.AgentEventPublisher
 	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource
 	now         func() int64
 }
@@ -384,7 +384,7 @@ func (s *Service) HandOff(
 			return nil, lErr
 		}
 		if len(subscribers) > 0 && s.events != nil {
-			agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+			agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 				Kind:       item.EventKind,
 				SubjectID:  item.SubjectID,
 				TenantInfo: req.TenantInfo,

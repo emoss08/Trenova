@@ -54,7 +54,40 @@ packages:
   github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports:
@@ -63,10 +96,19 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/modules/agent/ports/agentports:
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports:
@@ -78,7 +120,13 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports:
@@ -154,6 +202,12 @@ packages:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports:

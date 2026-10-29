@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -136,9 +136,9 @@ func (p *Projector) upsert(
 		return nil
 	}
 
-	action := agentports.ActivityUpdated
+	action := agentactivityports.ActivityUpdated
 	if inserted {
-		action = agentports.ActivityCreated
+		action = agentactivityports.ActivityCreated
 	}
 	p.publish(ctx, saved, action)
 	if inserted && saved.Severity == watchtower.SeverityCritical {

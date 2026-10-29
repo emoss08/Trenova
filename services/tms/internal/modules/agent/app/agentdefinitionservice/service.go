@@ -16,7 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -44,8 +45,8 @@ type Params struct {
 	DB           kernelports.Transactor
 	Repo         agentdefinitionports.AgentDefinitionRepository
 	Versions     agentdefinitionports.AgentDefinitionVersionRepository
-	Proposals    agentports.AgentProposalRepository
-	AgentPlans   agentports.AgentPlanRepository
+	Proposals    agentproposalports.AgentProposalRepository
+	AgentPlans   agentplanports.AgentPlanRepository
 	Tools        agenttoolports.AgentToolRegistry
 	QueryTools   agenttoolports.AgentQueryToolRegistry
 	Contexts     agentruntimeports.RuntimeContextBuilder
@@ -67,8 +68,8 @@ type Service struct {
 	db          kernelports.Transactor
 	repo        agentdefinitionports.AgentDefinitionRepository
 	versions    agentdefinitionports.AgentDefinitionVersionRepository
-	proposals   agentports.AgentProposalRepository
-	agentPlans  agentports.AgentPlanRepository
+	proposals   agentproposalports.AgentProposalRepository
+	agentPlans  agentplanports.AgentPlanRepository
 	tools       agenttoolports.AgentToolRegistry
 	queryTools  agenttoolports.AgentQueryToolRegistry
 	contexts    agentruntimeports.RuntimeContextBuilder
@@ -288,7 +289,7 @@ func (s *Service) withdrawAndDelete(
 ) error {
 	proposals, err := s.proposals.ExpirePendingByDefinition(
 		ctx,
-		agentports.ExpireAgentProposalsByDefinitionRequest{
+		agentproposalports.ExpireAgentProposalsByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},
@@ -299,7 +300,7 @@ func (s *Service) withdrawAndDelete(
 
 	plans, err := s.agentPlans.ExpirePendingByDefinition(
 		ctx,
-		agentports.ExpireAgentPlansByDefinitionRequest{
+		agentplanports.ExpireAgentPlansByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},

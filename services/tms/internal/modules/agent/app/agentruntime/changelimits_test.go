@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -19,7 +19,7 @@ import (
 // hoursBudgets answers only the business-hours question; the runtime asks
 // nothing else of it in these tests.
 type hoursBudgets struct {
-	agentports.AgentBudgetService
+	agentbudgetports.AgentBudgetService
 
 	within bool
 }
@@ -30,9 +30,9 @@ func (b hoursBudgets) WithinBusinessHours(context.Context, *agentdefinition.Defi
 
 func (b hoursBudgets) CheckTool(
 	context.Context,
-	agentports.CheckToolBudgetRequest,
-) (agentports.BudgetRefusal, error) {
-	return agentports.BudgetRefusal{}, nil
+	agentbudgetports.CheckToolBudgetRequest,
+) (agentbudgetports.BudgetRefusal, error) {
+	return agentbudgetports.BudgetRefusal{}, nil
 }
 
 func autoChangeDefinition(tool string) *agentdefinition.Definition {

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -303,7 +303,7 @@ type fakeRunProposals struct {
 
 func (f *fakeRunProposals) ListByRun(
 	context.Context,
-	agentports.ListAgentProposalsByRunRequest,
+	agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.calls++
 

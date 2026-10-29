@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -63,7 +65,7 @@ func (f *fakeRunsByID) ListByIDs(
 }
 
 type fakeProposalsByID struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	proposals map[pulid.ID]*agent.AgentProposal
 	calls     int
@@ -71,7 +73,7 @@ type fakeProposalsByID struct {
 
 func (f *fakeProposalsByID) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentProposalsByIDsRequest,
+	req agentproposalports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.calls++
 	out := make([]*agent.AgentProposal, 0, len(req.IDs))
@@ -85,7 +87,7 @@ func (f *fakeProposalsByID) ListByIDs(
 }
 
 type fakePlansByID struct {
-	agentports.AgentPlanRepository
+	agentplanports.AgentPlanRepository
 
 	plans map[pulid.ID]*agentplan.AgentPlan
 	calls int
@@ -93,7 +95,7 @@ type fakePlansByID struct {
 
 func (f *fakePlansByID) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentPlansByIDsRequest,
+	req agentplanports.ListAgentPlansByIDsRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	f.calls++
 	out := make([]*agentplan.AgentPlan, 0, len(req.IDs))
@@ -107,7 +109,7 @@ func (f *fakePlansByID) ListByIDs(
 }
 
 type fakeExceptionsByID struct {
-	agentports.AgentExceptionRepository
+	agentexceptionports.AgentExceptionRepository
 
 	exceptions map[pulid.ID]*agentexception.AgentException
 	calls      int
@@ -115,7 +117,7 @@ type fakeExceptionsByID struct {
 
 func (f *fakeExceptionsByID) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentExceptionsByIDsRequest,
+	req agentexceptionports.ListAgentExceptionsByIDsRequest,
 ) ([]*agentexception.AgentException, error) {
 	f.calls++
 	out := make([]*agentexception.AgentException, 0, len(req.IDs))

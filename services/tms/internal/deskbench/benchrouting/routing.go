@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,11 +55,11 @@ func (c *RoutingCase) Validate() error {
 		return fmt.Errorf("%s: %w", c.Name, ErrRoutingNoAsk)
 	case strings.TrimSpace(c.Expect) == "":
 		return fmt.Errorf("%s: %w", c.Name, ErrRoutingNoExpect)
-	case len(c.About) > agentports.MaxAgentMatchContextKinds:
+	case len(c.About) > agentrecommendationports.MaxAgentMatchContextKinds:
 		return fmt.Errorf(
 			"%s: a question is about at most %d kinds of record",
 			c.Name,
-			agentports.MaxAgentMatchContextKinds,
+			agentrecommendationports.MaxAgentMatchContextKinds,
 		)
 	}
 
@@ -211,7 +211,7 @@ func Match(
 
 func routeOne(
 	ctx context.Context,
-	recommender agentports.AgentRecommender,
+	recommender agentrecommendationports.AgentRecommender,
 	session *deskbench.Session,
 	routing *RoutingCase,
 ) *RoutingResult {
@@ -234,12 +234,15 @@ func routeOne(
 	}
 	result.From = from.Name
 
-	found, err := recommender.MatchAgent(session.Context(ctx), &agentports.AgentMatchRequest{
-		Actor:          &session.Actor,
-		Text:           routing.Ask,
-		CurrentAgentID: from.ID,
-		ContextKinds:   routing.About,
-	})
+	found, err := recommender.MatchAgent(
+		session.Context(ctx),
+		&agentrecommendationports.AgentMatchRequest{
+			Actor:          &session.Actor,
+			Text:           routing.Ask,
+			CurrentAgentID: from.ID,
+			ContextKinds:   routing.About,
+		},
+	)
 	if err != nil {
 		result.Error = err.Error()
 		result.ExpectedProfile = ExpectedProfile(routing.Expect, from)
@@ -285,7 +288,10 @@ func profileOf(definition *agentdefinition.Definition) string {
 	}
 }
 
-func SelectedProfile(from *agentdefinition.Definition, found *agentports.AgentMatch) string {
+func SelectedProfile(
+	from *agentdefinition.Definition,
+	found *agentrecommendationports.AgentMatch,
+) string {
 	if found == nil {
 		return profileError
 	}
@@ -344,7 +350,7 @@ func UnreachableExpectation(expect string, agents []*agentdefinition.Definition)
 func RoutingPasses(
 	expect string,
 	from *agentdefinition.Definition,
-	found *agentports.AgentMatch,
+	found *agentrecommendationports.AgentMatch,
 ) bool {
 	if found == nil {
 		return false
@@ -381,7 +387,7 @@ func RoutingPasses(
 
 func answeredBy(
 	from *agentdefinition.Definition,
-	found *agentports.AgentMatch,
+	found *agentrecommendationports.AgentMatch,
 ) []*agentdefinition.Definition {
 	switch found.Outcome {
 	case agentsuggestion.MatchBetterAgent:

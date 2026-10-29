@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -22,14 +22,14 @@ import (
 type Params struct {
 	fx.In
 
-	PlanService          agentports.AgentPlanService
+	PlanService          agentplanports.AgentPlanService
 	PreviewService       agentruntimeports.ProposalPreviewService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	plans    agentports.AgentPlanService
+	plans    agentplanports.AgentPlanService
 	previews agentruntimeports.ProposalPreviewService
 	eh       *helpers.ErrorHandler
 	pm       *middleware.PermissionMiddleware
@@ -82,7 +82,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	plan, err := h.plans.GetByID(c.Request.Context(), agentports.GetAgentPlanByIDRequest{
+	plan, err := h.plans.GetByID(c.Request.Context(), agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -127,7 +127,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	plan, err := h.plans.GetByID(c.Request.Context(), agentports.GetAgentPlanByIDRequest{
+	plan, err := h.plans.GetByID(c.Request.Context(), agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -165,7 +165,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	}
 
 	actor := actorFromAuthContext(authCtx)
-	plan, err := h.plans.Decide(c.Request.Context(), &agentports.DecideAgentPlanRequest{
+	plan, err := h.plans.Decide(c.Request.Context(), &agentplanports.DecideAgentPlanRequest{
 		PlanID:        planID,
 		Decision:      body.Decision,
 		ReasonCode:    body.ReasonCode,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -14,20 +14,20 @@ import (
 const now = int64(1_800_000_000)
 
 type fakeRepo struct {
-	totals *agentports.AgentActivityTotals
-	asked  []agentports.AgentActivityTotalsRequest
+	totals *agentactivityports.AgentActivityTotals
+	asked  []agentactivityports.AgentActivityTotalsRequest
 }
 
 func (f *fakeRepo) Totals(
 	_ context.Context,
-	req agentports.AgentActivityTotalsRequest,
-) (*agentports.AgentActivityTotals, error) {
+	req agentactivityports.AgentActivityTotalsRequest,
+) (*agentactivityports.AgentActivityTotals, error) {
 	f.asked = append(f.asked, req)
 
 	return f.totals, nil
 }
 
-func serviceWith(totals *agentports.AgentActivityTotals) (*Service, *fakeRepo) {
+func serviceWith(totals *agentactivityports.AgentActivityTotals) (*Service, *fakeRepo) {
 	repo := &fakeRepo{totals: totals}
 
 	return &Service{repo: repo, now: func() int64 { return now }}, repo
@@ -37,7 +37,7 @@ func TestSummaryCountsTheDayAndTheWeeksDecisions(t *testing.T) {
 	t.Parallel()
 
 	oldest := now - 3600
-	svc, repo := serviceWith(&agentports.AgentActivityTotals{
+	svc, repo := serviceWith(&agentactivityports.AgentActivityTotals{
 		Runs:              14,
 		RunsFailed:        2,
 		RunsWorking:       1,
@@ -51,7 +51,7 @@ func TestSummaryCountsTheDayAndTheWeeksDecisions(t *testing.T) {
 	})
 	tenant := pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"}
 
-	summary, err := svc.Summary(t.Context(), &agentports.AgentActivitySummaryRequest{
+	summary, err := svc.Summary(t.Context(), &agentactivityports.AgentActivitySummaryRequest{
 		TenantInfo: tenant,
 		Since:      now - 9*3600,
 	})
@@ -73,9 +73,12 @@ func TestSummaryCountsTheDayAndTheWeeksDecisions(t *testing.T) {
 func TestSummaryHasNoApprovalShareWithoutDecisions(t *testing.T) {
 	t.Parallel()
 
-	svc, _ := serviceWith(&agentports.AgentActivityTotals{})
+	svc, _ := serviceWith(&agentactivityports.AgentActivityTotals{})
 
-	summary, err := svc.Summary(t.Context(), &agentports.AgentActivitySummaryRequest{Since: now})
+	summary, err := svc.Summary(
+		t.Context(),
+		&agentactivityports.AgentActivitySummaryRequest{Since: now},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, summary.Decided)
 	assert.Nil(t, summary.ApprovedAsProposed)
@@ -84,10 +87,13 @@ func TestSummaryHasNoApprovalShareWithoutDecisions(t *testing.T) {
 func TestSummaryRefusesAWindowInTheFutureOrTooFarBack(t *testing.T) {
 	t.Parallel()
 
-	svc, repo := serviceWith(&agentports.AgentActivityTotals{})
+	svc, repo := serviceWith(&agentactivityports.AgentActivityTotals{})
 
 	for _, since := range []int64{now + 1, now - 32*24*3600} {
-		_, err := svc.Summary(t.Context(), &agentports.AgentActivitySummaryRequest{Since: since})
+		_, err := svc.Summary(
+			t.Context(),
+			&agentactivityports.AgentActivitySummaryRequest{Since: since},
+		)
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
 		assert.Equal(t, "since", validation.Field)

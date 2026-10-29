@@ -18,8 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -59,11 +60,11 @@ type actionLogger interface {
 type proposalOutcomeRecorder interface {
 	RecordExecution(
 		ctx context.Context,
-		req agentports.RecordAgentProposalExecutionRequest,
+		req agentproposalports.RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
 	RecordSimulation(
 		ctx context.Context,
-		req agentports.RecordAgentProposalSimulationRequest,
+		req agentproposalports.RecordAgentProposalSimulationRequest,
 	) (*agent.AgentProposal, error)
 }
 
@@ -89,14 +90,14 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Tools        agenttoolports.AgentToolRegistry
-	ProposalRepo agentports.AgentProposalRepository
+	ProposalRepo agentproposalports.AgentProposalRepository
 	Permissions  permissionports.PermissionEngine
 	AuditService auditports.AuditService
 	// Versions is optional; without it a pinned proposal executes unchecked.
 	Versions agenttoolports.RecordVersionReader `optional:"true"`
 	// Budgets is optional; without it a tool's daily cap is not enforced on
 	// approval.
-	Budgets     agentports.AgentBudgetService `optional:"true"`
+	Budgets     agentbudgetports.AgentBudgetService `optional:"true"`
 	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	DB          kernelports.Transactor
@@ -110,7 +111,7 @@ type Service struct {
 	permissions  permissionChecker
 	versions     agenttoolports.RecordVersionReader
 	audit        actionLogger
-	budgets      agentports.AgentBudgetService
+	budgets      agentbudgetports.AgentBudgetService
 	definitions  definitionResolver
 	runs         RunReader
 	db           kernelports.Transactor
@@ -672,7 +673,7 @@ func (s *Service) assertWithinBudget(
 		return nil
 	}
 
-	refusal, err := s.budgets.CheckTool(ctx, agentports.CheckToolBudgetRequest{
+	refusal, err := s.budgets.CheckTool(ctx, agentbudgetports.CheckToolBudgetRequest{
 		Definition: definition,
 		ToolName:   toolName,
 	})
@@ -699,7 +700,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 
 	if _, err := s.proposalRepo.RecordSimulation(
 		ctx,
-		agentports.RecordAgentProposalSimulationRequest{
+		agentproposalports.RecordAgentProposalSimulationRequest{
 			ID:               proposal.ID,
 			TenantInfo:       tenantOf(proposal),
 			SimulatedAt:      now,
@@ -976,7 +977,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	now := timeutils.NowUnix()
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentports.RecordAgentProposalExecutionRequest{
+		agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:                    proposal.ID,
 			Status:                agent.ProposalStatusExecuted,
 			ExecutedAt:            &now,
@@ -1038,7 +1039,7 @@ func (s *Service) recordFailureAs(
 ) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentports.RecordAgentProposalExecutionRequest{
+		agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:               proposal.ID,
 			Status:           agent.ProposalStatusExecutionFailed,
 			ExecutionError:   cause.Error(),

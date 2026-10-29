@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -94,14 +94,14 @@ func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 }
 
 type fakeExceptionService struct {
-	agentports.AgentExceptionService
+	agentexceptionports.AgentExceptionService
 
-	flagged []*agentports.FlagAgentExceptionRequest
+	flagged []*agentexceptionports.FlagAgentExceptionRequest
 }
 
 func (f *fakeExceptionService) Flag(
 	_ context.Context,
-	req *agentports.FlagAgentExceptionRequest,
+	req *agentexceptionports.FlagAgentExceptionRequest,
 	_ *permissionports.RequestActor,
 ) (*agentexception.AgentException, error) {
 	f.flagged = append(f.flagged, req)

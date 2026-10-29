@@ -15,5 +15,4 @@ exceptions:
     ceiling: 4118
     reason: 'Mutual references: Shipment holds its moves, stops, assignments, charges, allocations, comments and commodities as keel relations in both directions, so the aggregate shares one package (closure from Shipment, ShipmentMove, Stop and Assignment is 3,270 lines). Everything that only uses the aggregate lives in chargeallocation, commentbody, shipmentrating, shipmenthold, quickfilter, movesplit, pickupwindow, shipmentcoverage and boardgrouping.'
 debt:
-  services/tms/internal/modules/agent/ports/agentports: 2233
   services/tms/internal/modules/identity/domain/permission: 2040

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
@@ -93,9 +93,9 @@ type Service struct {
 	now         func() int64
 }
 
-var _ agentports.RecordAnchorReader = (*Service)(nil)
+var _ recordanchorports.RecordAnchorReader = (*Service)(nil)
 
-func New(p Params) agentports.RecordAnchorReader {
+func New(p Params) recordanchorports.RecordAnchorReader {
 	return NewWithDependencies(&Dependencies{
 		Logger:      p.Logger,
 		Permissions: p.Permissions,
@@ -160,7 +160,7 @@ type kindBatch struct {
 
 func (s *Service) Anchor(
 	ctx context.Context,
-	req *agentports.RecordAnchorRequest,
+	req *recordanchorports.RecordAnchorRequest,
 ) []agentturn.RuntimeAnchor {
 	if req == nil || len(req.Records) == 0 {
 		return nil
@@ -226,7 +226,7 @@ func (s *Service) Anchor(
 	return anchors
 }
 
-func (s *Service) timezone(ctx context.Context, req *agentports.RecordAnchorRequest) string {
+func (s *Service) timezone(ctx context.Context, req *recordanchorports.RecordAnchorRequest) string {
 	if req.Timezone != "" || s.orgs == nil {
 		return req.Timezone
 	}

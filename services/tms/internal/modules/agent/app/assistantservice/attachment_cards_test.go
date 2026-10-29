@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -451,8 +451,8 @@ func (c *attachmentConversations) GetThread(
 	return c.thread, nil
 }
 
-func extractedEvent(doc *document.Document) *agentports.AgentEvent {
-	return &agentports.AgentEvent{
+func extractedEvent(doc *document.Document) *agenteventports.AgentEvent {
+	return &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},

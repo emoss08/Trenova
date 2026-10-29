@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -30,21 +32,21 @@ const resumeWindow = 24 * time.Hour
 type proposalLister interface {
 	ListByThread(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByThreadRequest,
+		req agentproposalports.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type planLister interface {
 	ListByThread(
 		ctx context.Context,
-		req agentports.ListAgentPlansByThreadRequest,
+		req agentplanports.ListAgentPlansByThreadRequest,
 	) ([]*agentplan.AgentPlan, error)
 }
 
 type decisionLister interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agentdecision.AgentDecision, error)
 }
 
@@ -114,7 +116,7 @@ func (s *Service) oldestUnreported(
 		return nil, err
 	}
 
-	plans, err := s.decided.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
+	plans, err := s.decided.plans.ListByThread(ctx, agentplanports.ListAgentPlansByThreadRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 	})
@@ -172,7 +174,10 @@ func (s *Service) decidedProposals(
 ) ([]unreported, error) {
 	proposals, err := s.decided.proposals.ListByThread(
 		ctx,
-		agentports.ListAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -193,7 +198,10 @@ func (s *Service) decidedProposals(
 
 	decisions, err := s.decided.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
 	)
 	if err != nil {
 		return nil, err

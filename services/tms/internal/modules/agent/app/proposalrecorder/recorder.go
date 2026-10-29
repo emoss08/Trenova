@@ -15,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -47,18 +49,18 @@ type Params struct {
 	Logger    *zap.Logger
 	DB        kernelports.Transactor
 	Runs      agentruntimeports.AgentRunRepository
-	Proposals agentports.AgentProposalRepository
+	Proposals agentproposalports.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
 	// the recorder still stores proposals where no ledger is wired.
-	Trust agentports.AgentTrustService `optional:"true"`
+	Trust agenttrustports.AgentTrustService `optional:"true"`
 	// Notifier tells the people who can decide that a background run left
 	// something waiting. Optional for the same reason.
-	Notifier agentports.AgentProposalNotifier `optional:"true"`
+	Notifier agentproposalports.AgentProposalNotifier `optional:"true"`
 	// Plans groups a run's pending proposals into one decision. Without it
 	// every proposal stands on its own, which is how things worked before.
 	Plans PlanStore `optional:"true"`
 	// Activity tells connected clients a proposal or plan is waiting.
-	Activity agentports.AgentActivityPublisher `optional:"true"`
+	Activity agentactivityports.AgentActivityPublisher `optional:"true"`
 	// Watchtower puts what is waiting on a person onto the one feed they
 	// read; without it the decision still stands, unannounced.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
@@ -87,9 +89,9 @@ type Service struct {
 	runs       RunOpener
 	proposals  ProposalStore
 	plans      PlanStore
-	trust      agentports.AgentTrustService
-	notifier   agentports.AgentProposalNotifier
-	activity   agentports.AgentActivityPublisher
+	trust      agenttrustports.AgentTrustService
+	notifier   agentproposalports.AgentProposalNotifier
+	activity   agentactivityports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
 	scripts    ScriptStepReader
 }
@@ -646,7 +648,7 @@ func (s *Service) notifyPending(
 		return
 	}
 
-	if err := s.notifier.NotifyPending(ctx, agentports.PendingProposalsNotice{
+	if err := s.notifier.NotifyPending(ctx, agentproposalports.PendingProposalsNotice{
 		Definition: definition,
 		Run:        run,
 		Proposals:  proposals,
@@ -837,10 +839,10 @@ func (s *Service) announce(
 
 	auditActor := actor.AuditActorOrSystem()
 	for _, proposal := range proposals {
-		s.activity.ProposalChanged(ctx, proposal, auditActor, agentports.ActivityCreated)
+		s.activity.ProposalChanged(ctx, proposal, auditActor, agentactivityports.ActivityCreated)
 	}
 	for _, plan := range plans {
-		s.activity.PlanChanged(ctx, plan, auditActor, agentports.ActivityCreated)
+		s.activity.PlanChanged(ctx, plan, auditActor, agentactivityports.ActivityCreated)
 	}
 }
 

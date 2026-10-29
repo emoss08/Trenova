@@ -19,7 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,7 +125,7 @@ func (r *Runner) startFreshRun(
 	label string,
 ) (*firedRun, error) {
 	fired, err := r.startRun(ctx, session, definition, fire, subjectID)
-	if err == nil || fire.Schedule || !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+	if err == nil || fire.Schedule || !errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) {
 		return fired, err
 	}
 
@@ -156,7 +157,7 @@ func (r *Runner) startFreshRun(
 		case <-ticker.C:
 		}
 		fired, err = r.startRun(ctx, session, definition, fire, subjectID)
-		if err == nil || !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) ||
+		if err == nil || !errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) ||
 			time.Now().After(deadline) {
 			return fired, err
 		}
@@ -193,7 +194,7 @@ func (r *Runner) startRun(
 	fire *benchscenario.Fire,
 	subjectID pulid.ID,
 ) (*firedRun, error) {
-	req := &agentports.StartAgentRunForDefinitionRequest{
+	req := &agentruntimeports.StartAgentRunForDefinitionRequest{
 		DefinitionID: definition.ID,
 		TenantInfo:   session.Tenant,
 	}
@@ -441,7 +442,7 @@ func (r *Runner) runProposals(
 
 	proposals, err := r.proposals.ListByIDs(
 		session.Context(ctx),
-		agentports.ListAgentProposalsByIDsRequest{
+		agentproposalports.ListAgentProposalsByIDsRequest{
 			IDs:        ids,
 			TenantInfo: session.Tenant,
 		},
@@ -583,7 +584,7 @@ func (r *Runner) settleRun(
 		if proposal.Status != agent.ProposalStatusPending {
 			continue
 		}
-		reject := &agentports.DecideAgentProposalRequest{
+		reject := &agentdecisionports.DecideAgentProposalRequest{
 			ProposalID: proposal.ID,
 			Decision:   agentdecision.DecisionRejected,
 			Note:       runCleanupNote,

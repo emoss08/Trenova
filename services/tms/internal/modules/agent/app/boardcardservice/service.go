@@ -11,11 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -37,7 +37,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Permissions   permissionports.PermissionEngine
-	Summaries     agentports.RecordSummarizer
+	Summaries     recordsummaryports.RecordSummarizer
 	Artifacts     assistantartifactports.AssistantArtifactRepository
 	Conversations conversationports.ConversationRepository
 	Analytics     kernelports.AnalyticsService
@@ -97,7 +97,7 @@ type activityReader interface {
 type Service struct {
 	l             *zap.Logger
 	permissions   permissionChecker
-	summaries     agentports.RecordSummarizer
+	summaries     recordsummaryports.RecordSummarizer
 	artifacts     artifactReader
 	threads       threadReader
 	analytics     analyticsReader
@@ -220,7 +220,7 @@ func (s *Service) Fill(
 			readable[resource] = ids
 		}
 	}
-	summaries, err := s.summaries.Summaries(ctx, &agentports.RecordSummaryRequest{
+	summaries, err := s.summaries.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,
 		Refs:   readable,
 		Now:    now,

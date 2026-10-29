@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -48,9 +49,9 @@ type turnAnchor struct {
 
 func (s *Service) CreateFromProposal(
 	ctx context.Context,
-	req *agentports.CreateEvalCaseFromProposalRequest,
+	req *agentqualityports.CreateEvalCaseFromProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	tenantInfo := req.TenantInfo
 	existing, err := s.cases.GetByProposal(ctx, agentqualityports.GetAgentEvalCaseByProposalRequest{
 		ProposalID: req.ProposalID,
@@ -58,12 +59,12 @@ func (s *Service) CreateFromProposal(
 	})
 	switch {
 	case err == nil:
-		return &agentports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
+		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	case !isNotFound(err):
 		return nil, err
 	}
 
-	proposal, err := s.proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	proposal, err := s.proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         req.ProposalID,
 		TenantInfo: &tenantInfo,
 	})
@@ -156,9 +157,9 @@ func (s *Service) CreateFromProposal(
 
 func (s *Service) CreateFromMessage(
 	ctx context.Context,
-	req *agentports.CreateEvalCaseFromMessageRequest,
+	req *agentqualityports.CreateEvalCaseFromMessageRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	return s.captureMessage(ctx, &messageCapture{
 		threadID:  req.ThreadID,
 		messageID: req.MessageID,
@@ -169,9 +170,9 @@ func (s *Service) CreateFromMessage(
 
 func (s *Service) CreateFromFeedback(
 	ctx context.Context,
-	req *agentports.CreateEvalCaseFromFeedbackRequest,
+	req *agentqualityports.CreateEvalCaseFromFeedbackRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	feedback, err := s.likedReply(ctx, req.TenantInfo, req.FeedbackID)
 	if err != nil {
 		return nil, err
@@ -246,7 +247,7 @@ func (s *Service) captureMessage(
 	ctx context.Context,
 	req *messageCapture,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	tenantInfo := req.tenant
 	thread, err := s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         req.threadID,
@@ -318,8 +319,8 @@ func (s *Service) captureMessage(
 
 func (s *Service) CaptureCandidates(
 	ctx context.Context,
-	req agentports.CaptureEvalCaseCandidatesRequest,
-) (*agentports.CaptureEvalCaseCandidatesResult, error) {
+	req agentqualityports.CaptureEvalCaseCandidatesRequest,
+) (*agentqualityports.CaptureEvalCaseCandidatesResult, error) {
 	candidates, err := s.cases.ListCaptureCandidates(
 		ctx,
 		agentqualityports.ListEvalCaseCaptureCandidatesRequest{Since: req.Since, Limit: req.Limit},
@@ -328,9 +329,9 @@ func (s *Service) CaptureCandidates(
 		return nil, err
 	}
 
-	result := &agentports.CaptureEvalCaseCandidatesResult{Scanned: len(candidates)}
+	result := &agentqualityports.CaptureEvalCaseCandidatesResult{Scanned: len(candidates)}
 	for _, candidate := range candidates {
-		request := &agentports.CreateEvalCaseFromProposalRequest{
+		request := &agentqualityports.CreateEvalCaseFromProposalRequest{
 			ProposalID: candidate.ProposalID,
 			TenantInfo: candidate.TenantInfo(),
 		}
@@ -364,7 +365,7 @@ func (s *Service) proposalDecisions(
 ) ([]*agentdecision.AgentDecision, error) {
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: []pulid.ID{proposalID},
 			TenantInfo:  tenantInfo,
 		},

@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -96,14 +98,14 @@ type watchtowerReader interface {
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentProposalByIDRequest,
+		req agentproposalports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type planReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentPlanByIDRequest,
+		req agentplanports.GetAgentPlanByIDRequest,
 	) (*agentplan.AgentPlan, error)
 }
 
@@ -117,7 +119,7 @@ type runReader interface {
 type exceptionReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentExceptionByIDRequest,
+		req agentexceptionports.GetAgentExceptionByIDRequest,
 	) (*agentexception.AgentException, error)
 }
 
@@ -159,10 +161,10 @@ type Params struct {
 	Briefings     briefingports.BriefingRepository
 	Insights      insightports.InsightRepository
 	Watchtower    watchtowerports.WatchtowerRepository
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository
 	Runs          agentruntimeports.AgentRunRepository
-	Exceptions    agentports.AgentExceptionRepository
+	Exceptions    agentexceptionports.AgentExceptionRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Memories      agentmemoryports.AgentMemoryRepository
 	Retention     tenantports.DataRetentionRepository

@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
@@ -50,10 +52,13 @@ func (s *Service) SaveProposalEdits(
 		return nil, errortypes.NewNotFoundError("Proposal not found in this conversation")
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	stored, err := s.proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +87,7 @@ func (s *Service) SaveProposalEdits(
 
 	saved, err := s.proposalEdits.SetPendingModifications(
 		ctx,
-		agentports.SetPendingModificationsRequest{
+		agentproposalports.SetPendingModificationsRequest{
 			ID:            proposal.ID,
 			TenantInfo:    req.TenantInfo,
 			Modifications: changed,
@@ -143,7 +148,7 @@ func (s *Service) ListThreadProposals(
 
 	stored, err := s.proposals.ListByThread(
 		ctx,
-		agentports.ListAgentProposalsByThreadRequest{
+		agentproposalports.ListAgentProposalsByThreadRequest{
 			ThreadID:   req.ID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -268,7 +273,7 @@ func (s *Service) ListThreadPlans(
 		return []assistantproposalports.AssistantPlan{}, nil
 	}
 
-	stored, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
+	stored, err := s.plans.ListByThread(ctx, agentplanports.ListAgentPlansByThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -329,10 +334,13 @@ func (s *Service) threadPlanSteps(
 		return steps, nil
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	stored, err := s.proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +368,7 @@ type Service struct {
 	proposalEdits proposalEditStore
 	plans         proposalstores.PlanStore
 	shadow        *agentshadow.Resolver
-	decisions     agentports.AgentDecisionRepository
+	decisions     agentdecisionports.AgentDecisionRepository
 	labeler       agentruntimeports.RecordLabeler
 	permissions   permissionports.PermissionEngine
 	tools         agenttoolports.AgentToolRegistry

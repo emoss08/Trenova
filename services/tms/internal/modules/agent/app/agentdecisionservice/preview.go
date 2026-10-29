@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,7 +57,7 @@ type shownPreview struct {
 func (s *Service) settlePreview(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
 ) (*shownPreview, error) {
 	// A person can always reject, whatever the preview has become since they

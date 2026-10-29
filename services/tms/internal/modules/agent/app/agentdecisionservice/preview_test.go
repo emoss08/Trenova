@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +64,7 @@ type statusRecorder struct {
 
 func (p *statusRecorder) UpdateStatus(
 	ctx context.Context,
-	req agentports.UpdateAgentProposalStatusRequest,
+	req agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.updated++
 
@@ -85,10 +87,10 @@ func decideWith(
 	h *decideHarness,
 	decision agentdecision.DecisionType,
 	digest string,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	t.Helper()
 
-	return h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
+	return h.service.DecideWithOutcome(t.Context(), &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    h.proposals.proposal.ID,
 		Decision:      decision,
 		ReasonCode:    "looks_right",
@@ -161,7 +163,7 @@ func TestDecide_AStaleRefusalLeavesTheTrustLedgerAlone(t *testing.T) {
 }
 
 type recordedTrust struct {
-	agentports.AgentTrustService
+	agenttrustports.AgentTrustService
 
 	decisions int
 	failures  int
@@ -199,17 +201,21 @@ func TestDecide_AStalePlanStepIsRefusedEvenWhereItWouldNeedReview(t *testing.T) 
 		},
 	}
 
-	outcome, err := h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
-		ProposalID:  h.proposals.proposal.ID,
-		Decision:    agentdecision.DecisionAccepted,
-		ReasonCode:  "decided_as_plan",
-		WithinPlan:  true,
-		StepPreview: step,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: h.actor.OrganizationID,
-			BuID:  h.actor.BusinessUnitID,
+	outcome, err := h.service.DecideWithOutcome(
+		t.Context(),
+		&agentdecisionports.DecideAgentProposalRequest{
+			ProposalID:  h.proposals.proposal.ID,
+			Decision:    agentdecision.DecisionAccepted,
+			ReasonCode:  "decided_as_plan",
+			WithinPlan:  true,
+			StepPreview: step,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: h.actor.OrganizationID,
+				BuID:  h.actor.BusinessUnitID,
+			},
 		},
-	}, h.actor)
+		h.actor,
+	)
 	require.NoError(t, err)
 	require.ErrorIs(t, outcome.ExecutionError, agentplan.ErrTargetChanged)
 	require.Len(t, h.proposals.executed, 1)

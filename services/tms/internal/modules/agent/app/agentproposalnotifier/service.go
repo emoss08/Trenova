@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -88,9 +88,12 @@ type shadowReader interface {
 type proposalStore interface {
 	ListPendingForReminder(
 		ctx context.Context,
-		req agentports.ListPendingProposalsForReminderRequest,
+		req agentproposalports.ListPendingProposalsForReminderRequest,
 	) ([]*agent.AgentProposal, error)
-	MarkReminded(ctx context.Context, req agentports.MarkProposalsRemindedRequest) (int, error)
+	MarkReminded(
+		ctx context.Context,
+		req agentproposalports.MarkProposalsRemindedRequest,
+	) (int, error)
 }
 
 type runReader interface {
@@ -113,7 +116,7 @@ type Params struct {
 	Logger      *zap.Logger
 	AppConfig   *appconfig.Config
 	Roles       permissionports.RoleRepository
-	Proposals   agentports.AgentProposalRepository
+	Proposals   agentproposalports.AgentProposalRepository
 	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Orgs        tenantports.OrganizationRepository
@@ -142,7 +145,7 @@ type Service struct {
 	inliner       documenttemplateports.AssetInliner
 }
 
-func New(p Params) agentports.AgentProposalNotifier {
+func New(p Params) agentproposalports.AgentProposalNotifier {
 	svc := &Service{
 		l:           p.Logger.Named("service.agentproposalnotifier"),
 		roles:       p.Roles,
@@ -175,7 +178,7 @@ func New(p Params) agentports.AgentProposalNotifier {
 // and a notice that leads to nothing to decide is worse than none.
 func (s *Service) NotifyPending(
 	ctx context.Context,
-	notice agentports.PendingProposalsNotice,
+	notice agentproposalports.PendingProposalsNotice,
 ) error {
 	if notice.Run == nil || notice.Definition == nil || notice.Run.Trigger == agent.RunTriggerChat {
 		return nil
@@ -235,11 +238,11 @@ func (s *Service) NotifyPending(
 // reminder rather than one every sweep.
 func (s *Service) RemindPending(
 	ctx context.Context,
-	req agentports.RemindPendingProposalsRequest,
+	req agentproposalports.RemindPendingProposalsRequest,
 ) (int, error) {
 	proposals, err := s.proposals.ListPendingForReminder(
 		ctx,
-		agentports.ListPendingProposalsForReminderRequest{
+		agentproposalports.ListPendingProposalsForReminderRequest{
 			Before: req.Now - int64(req.OlderThan.Seconds()),
 			Now:    req.Now,
 			Limit:  req.Limit,
@@ -306,7 +309,7 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 
 	// Marked first: a proposal in shadow is hidden, so there is nothing to
 	// remind anyone of, and it must not be picked up again by the next sweep.
-	if _, err = s.proposals.MarkReminded(ctx, agentports.MarkProposalsRemindedRequest{
+	if _, err = s.proposals.MarkReminded(ctx, agentproposalports.MarkProposalsRemindedRequest{
 		IDs: ids(group.proposals),
 		At:  now,
 	}); err != nil {

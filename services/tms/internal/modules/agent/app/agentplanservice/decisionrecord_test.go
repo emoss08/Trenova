@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +23,7 @@ func TestDecide_AnApprovalRecordsItsNoteAndTheDigestItWasMadeOn(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotEmpty(t, h.plans.statuses)
-	assert.Equal(t, agentports.PlanApproval{
+	assert.Equal(t, agentplanports.PlanApproval{
 		ReasonCode:    "looks right",
 		Note:          "Go ahead, Samuel is already at the yard.",
 		PreviewDigest: "plan-digest",
@@ -83,7 +84,7 @@ func TestCommitApproval_KeepsTheDigestStoredAtApprovalWhenNoPreviewSettlesAtComm
 	h.plans.plan.CommitsAt = &commitsAt
 	h.plans.plan.ApprovalPreviewDigest = "sha256:stored-at-approval"
 
-	err := h.svc.CommitApproval(t.Context(), &agentports.CommitApprovalRequest{
+	err := h.svc.CommitApproval(t.Context(), &agentapprovalports.CommitApprovalRequest{
 		OrganizationID:  h.req.TenantInfo.OrgID,
 		BusinessUnitID:  h.req.TenantInfo.BuID,
 		DecidedByUserID: h.actor.UserID,

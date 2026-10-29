@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
@@ -96,7 +97,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
@@ -1015,7 +1015,7 @@ type AgentAudienceSuggestion struct {
 
 type AgentCapabilityToolInput struct {
 	Key  string                         `json:"key"`
-	Mode agentports.AgentCapabilityMode `json:"mode"`
+	Mode agentcapabilityports.AgentCapabilityMode `json:"mode"`
 }
 
 type AgentControlInput struct {

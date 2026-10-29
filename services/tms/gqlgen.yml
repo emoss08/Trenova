@@ -2546,7 +2546,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyTier
   AgentToolPromotion:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolPromotion
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports.ToolPromotion
   AgentRunEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent.AgentRunEvent
@@ -2808,28 +2808,28 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentlint.Finding
   AgentCapabilityMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityMode
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityMode
   AgentCapabilityTool:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityTool
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityTool
   AgentCapabilityHandoff:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityHandoff
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityHandoff
   AgentCapabilityLimits:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityLimits
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityLimits
   AgentCapabilities:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilities
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilities
   AgentDraft:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraft
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraft
   AgentDraftNote:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraftNote
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraftNote
   AgentInstructionsTightened:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TightenedAgentInstructions
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.TightenedAgentInstructions
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.AccessMode

@@ -3,7 +3,7 @@ package accountingconnectionkit
 import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -25,7 +25,7 @@ type Deps struct {
 	Audit        auditports.AuditService
 	Realtime     realtimeports.RealtimeService
 	Watchtower   watchtowerports.WatchtowerProjector
-	Publisher    agentports.AgentEventPublisher
+	Publisher    agenteventports.AgentEventPublisher
 	Refresher    accountingconnectionports.AccountingReferenceRefresher
 	Plans        platformplanports.PlanService
 	Certificates accountingconnectionports.AccountingPendingCertificateRepository
@@ -42,7 +42,7 @@ type Kit struct {
 	audit        auditports.AuditService
 	realtime     realtimeports.RealtimeService
 	watchtower   watchtowerports.WatchtowerProjector
-	publisher    agentports.AgentEventPublisher
+	publisher    agenteventports.AgentEventPublisher
 	refresher    accountingconnectionports.AccountingReferenceRefresher
 	plans        platformplanports.PlanService
 	certificates accountingconnectionports.AccountingPendingCertificateRepository

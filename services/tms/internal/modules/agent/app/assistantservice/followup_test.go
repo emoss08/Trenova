@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -157,7 +157,7 @@ type stubPlanStore struct {
 
 func (s *stubPlanStore) ListByThread(
 	_ context.Context,
-	_ agentports.ListAgentPlansByThreadRequest,
+	_ agentplanports.ListAgentPlansByThreadRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return s.plans, nil
 }
@@ -233,7 +233,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 
 func (s *stubPlanStore) ExpirePendingByThread(
 	context.Context,
-	agentports.ExpireAgentPlansByThreadRequest,
+	agentplanports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

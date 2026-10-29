@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
@@ -97,17 +97,17 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	assert.Equal(t, []pulid.ID{copyOne, copyTwo}, result.ShipmentIDs)
 	assert.Equal(t, sourceID, result.SourceShipmentID)
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	assert.Equal(t, []agentports.AgentEvent{
+	assert.Equal(t, []agenteventports.AgentEvent{
 		{Kind: agenttrigger.EventShipmentCreated, SubjectID: copyOne, TenantInfo: tenant},
 		{Kind: agenttrigger.EventShipmentCreated, SubjectID: copyTwo, TenantInfo: tenant},
 	}, agentEvents.events)
 }
 
 type recordingAgentEvents struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingAgentEvents) Publish(_ context.Context, event agentports.AgentEvent) {
+func (r *recordingAgentEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 

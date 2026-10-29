@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -39,7 +39,7 @@ type Publisher struct {
 	realtime realtimeports.RealtimeService
 }
 
-func New(p Params) agentports.AgentActivityPublisher {
+func New(p Params) agentactivityports.AgentActivityPublisher {
 	return &Publisher{
 		l:        p.Logger.Named("service.agentactivity"),
 		realtime: p.Realtime,

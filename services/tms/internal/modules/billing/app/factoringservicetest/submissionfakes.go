@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -468,10 +468,10 @@ func (f *FakeRequester) RequestEvaluation(
 
 type FakeEvents struct {
 	Mu     sync.Mutex
-	Events []agentports.AgentEvent
+	Events []agenteventports.AgentEvent
 }
 
-func (f *FakeEvents) Publish(_ context.Context, event agentports.AgentEvent) {
+func (f *FakeEvents) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	f.Mu.Lock()
 	defer f.Mu.Unlock()
 	f.Events = append(f.Events, event)

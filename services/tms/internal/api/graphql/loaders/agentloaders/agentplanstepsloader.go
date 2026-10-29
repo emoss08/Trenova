@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,14 +15,14 @@ import (
 type proposalsByPlansLister interface {
 	ListByPlans(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByPlansRequest,
+		req agentproposalports.ListAgentProposalsByPlansRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type AgentPlanStepsByPlanIDLoaderFactoryParams struct {
 	fx.In
 
-	Proposals agentports.AgentProposalRepository
+	Proposals agentproposalports.AgentProposalRepository
 }
 
 type AgentPlanStepsByPlanIDLoaderFactory struct {
@@ -46,10 +46,13 @@ func (f *AgentPlanStepsByPlanIDLoaderFactory) batchFunc(
 ) loadercore.BatchFetchFunc[[]*agent.AgentProposal] {
 	return loadercore.BatchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agent.AgentProposal, error) {
-			steps, err := f.proposals.ListByPlans(ctx, agentports.ListAgentProposalsByPlansRequest{
-				PlanIDs:    ids,
-				TenantInfo: tenantInfo,
-			})
+			steps, err := f.proposals.ListByPlans(
+				ctx,
+				agentproposalports.ListAgentProposalsByPlansRequest{
+					PlanIDs:    ids,
+					TenantInfo: tenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

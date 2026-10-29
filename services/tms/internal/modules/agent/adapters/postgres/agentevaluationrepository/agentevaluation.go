@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentEvaluationRepository {
+func New(p Params) agentevaluationports.AgentEvaluationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentevaluation-repository"),
@@ -101,7 +101,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentEvaluationByIDRequest,
+	req agentevaluationports.GetAgentEvaluationByIDRequest,
 ) (*agentevaluation.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
 		entity, err := agentevaluationdb.Evaluations.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -115,7 +115,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentEvaluationConnectionRequest,
+	req *agentevaluationports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
 	return dbtx.Read(
 		ctx,
@@ -161,7 +161,7 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agentevaluation
 
 func (r *repository) ListBySuiteRun(
 	ctx context.Context,
-	req agentports.ListSuiteEvaluationsRequest,
+	req agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentevaluation.Evaluation, error) {
 		limit := req.Limit
@@ -184,7 +184,7 @@ func (r *repository) ListBySuiteRun(
 
 func (r *repository) SkipPendingBySuiteRun(
 	ctx context.Context,
-	req agentports.SkipPendingSuiteEvaluationsRequest,
+	req agentevaluationports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		e := agentevaluationdb.Evaluations

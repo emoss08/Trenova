@@ -1602,7 +1602,7 @@ subject always sorts first, and the kind is read off the id's prefix
 (`permission.RecordKindOfIDPrefix`), so an id of no known kind is never kept.
 
 Every turn reads them again while it is prepared, beside the subject
-(`checkTurn` → `anchorRecords` → `agentports.RecordAnchorReader`,
+(`checkTurn` → `anchorRecords` → `recordanchorports.RecordAnchorReader`,
 `recordanchorservice`): this turn's mentions and page record first, then the
 working set, leaving out the subject, which `<subject_context>` already reads
 fresh. Access is checked per kind on every turn (`subjectaccess.MayReadResource`);
@@ -2286,7 +2286,7 @@ seven of them. `shipment_list` takes `late` too: shipments with a stop not yet r
 window has closed (`ShipmentOptions.LateAt`, through the open-stop index), whatever their status,
 since Delayed is a status a person sets and most late loads never carry it.
 
-A list call's `fields` (`agentports.ListFieldsParam`) narrows only the model's copy of the rows
+A list call's `fields` (`agenttoolports.ListFieldsParam`) narrows only the model's copy of the rows
 (`narrowRows`, inside `encodeModelDocument`, which `fitPage` uses too): each keeps its id, the
 columns named and whatever the list works out beside its `columns`. The list itself, and so the
 table beside the conversation and its later pages, keeps every column, and a script's read is

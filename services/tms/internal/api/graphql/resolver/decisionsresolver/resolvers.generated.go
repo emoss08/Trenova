@@ -3,13 +3,13 @@
 package decisionsresolver
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	AgentDecisionQueueService agentports.AgentDecisionQueueService
+	AgentDecisionQueueService agentdecisionqueueports.AgentDecisionQueueService
 }
 
 type AgentPlanResolver struct{ *Deps }

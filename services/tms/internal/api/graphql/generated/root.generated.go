@@ -3,6 +3,9 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
@@ -275,7 +278,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -882,8 +884,8 @@ type AgentDefinitionResolver interface {
 }
 
 type AgentDraftResolver interface {
-	EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error)
-	ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error)
+	EventKinds(ctx context.Context, obj *agentdraftports.AgentDraft) ([]string, error)
+	ToolTiers(ctx context.Context, obj *agentdraftports.AgentDraft) (map[string]any, error)
 }
 
 type AgentEvalCaseResolver interface {
@@ -2094,9 +2096,9 @@ type MutationResolver interface {
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
-	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
-	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
-	TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error)
+	DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error)
+	TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -2856,7 +2858,7 @@ type QueryResolver interface {
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agentexception.AgentException, error)
 	AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error)
-	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agenttrustports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentOrganizationProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
 	AgentOrganizationProfileHistory(ctx context.Context, limit *int) ([]*agentprofile.Profile, error)
@@ -2872,7 +2874,7 @@ type QueryResolver interface {
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
-	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*agentcapabilityports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)

@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -55,7 +55,7 @@ type Params struct {
 	// Events is told about each finding the first time it appears, so an
 	// agent subscribed to insight.detected can act on it. It is optional
 	// because the refresh is worth running with no agent to hear about it.
-	Events agentports.AgentEventPublisher `optional:"true"`
+	Events agenteventports.AgentEventPublisher `optional:"true"`
 	// Watchtower puts each finding on the one feed a person reads. Optional
 	// for the same reason: the refresh is worth running without it.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
@@ -76,7 +76,7 @@ type Service struct {
 	detectors   *detector.Registry
 	narrator    *narrator.Service
 	permissions permissionChecker
-	events      agentports.AgentEventPublisher
+	events      agenteventports.AgentEventPublisher
 	watchtower  watchtowerports.WatchtowerProjector
 }
 
@@ -251,7 +251,7 @@ func (s *Service) announce(
 			continue
 		}
 
-		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventInsightDetected,
 			SubjectID:  entity.ID,
 			TenantInfo: tenant,

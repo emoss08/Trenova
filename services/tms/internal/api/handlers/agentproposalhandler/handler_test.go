@@ -15,7 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -27,24 +28,24 @@ import (
 )
 
 type recordingDecisions struct {
-	agentports.AgentDecisionService
+	agentdecisionports.AgentDecisionService
 
-	sent    *agentports.DecideAgentProposalRequest
+	sent    *agentdecisionports.DecideAgentProposalRequest
 	err     error
 	execErr error
 }
 
 func (d *recordingDecisions) DecideWithOutcome(
 	_ context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	d.sent = req
 	if d.err != nil {
 		return nil, d.err
 	}
 
-	return &agentports.DecisionOutcome{
+	return &agentdecisionports.DecisionOutcome{
 		Decision: &agentdecision.AgentDecision{
 			ID:       pulid.MustNew("adec_"),
 			Decision: req.Decision,
@@ -54,14 +55,14 @@ func (d *recordingDecisions) DecideWithOutcome(
 }
 
 type storedProposals struct {
-	agentports.AgentProposalService
+	agentproposalports.AgentProposalService
 
 	proposal *agent.AgentProposal
 }
 
 func (p *storedProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
@@ -86,8 +87,8 @@ func (p *digestPreviews) ForProposal(
 }
 
 func newHandler(
-	decisions agentports.AgentDecisionService,
-	proposals agentports.AgentProposalService,
+	decisions agentdecisionports.AgentDecisionService,
+	proposals agentproposalports.AgentProposalService,
 	previews agentruntimeports.ProposalPreviewService,
 ) *agentproposalhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{

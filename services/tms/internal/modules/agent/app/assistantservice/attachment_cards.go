@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -87,7 +87,7 @@ func (s *Service) showFinishedAttachments(
 // longer than most turns, so this is how the card usually arrives: after the
 // reply, in the conversation the file was sent in, read as the person who
 // sent it. A file uploaded and never sent gets no card.
-func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.AgentEvent) {
+func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventports.AgentEvent) {
 	if event == nil || event.Kind != agenttrigger.EventDocumentExtracted ||
 		s.documents == nil || s.artifacts == nil {
 		return

@@ -6,9 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -17,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -35,18 +41,18 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository `optional:"true"`
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository `optional:"true"`
 	AIProviders   aiproviderports.AIProviderRepository
 	Shadow        *agentshadow.Resolver
-	Budgets       agentports.AgentBudgetService      `optional:"true"`
-	Decisions     agentports.AgentDecisionRepository `optional:"true"`
+	Budgets       agentbudgetports.AgentBudgetService        `optional:"true"`
+	Decisions     agentdecisionports.AgentDecisionRepository `optional:"true"`
 	// Artifacts keeps what a turn produced besides words; Subjects describes
 	// the record a conversation was opened from.
 	Artifacts assistantartifactports.AssistantArtifactRepository `optional:"true"`
 	Subjects  agentruntimeports.AgentSubjectDescriber            `optional:"true"`
-	Anchors   agentports.RecordAnchorReader                      `optional:"true"`
-	Activity  agentports.AgentActivityPublisher                  `optional:"true"`
+	Anchors   recordanchorports.RecordAnchorReader               `optional:"true"`
+	Activity  agentactivityports.AgentActivityPublisher          `optional:"true"`
 	// Documents checks that an attached file is the person's own; Contents
 	// reads what document intelligence made of it.
 	Documents documentports.DocumentRepository     `optional:"true"`
@@ -78,7 +84,7 @@ type Params struct {
 var Module = fx.Module("assistant",
 	fx.Provide(New),
 	fx.Provide(fx.Annotate(
-		func(s *Service) agentports.AttachmentExtractionObserver { return s },
+		func(s *Service) agenteventports.AttachmentExtractionObserver { return s },
 		fx.ResultTags(`group:"attachment_extraction_observers"`),
 	)),
 )
@@ -95,12 +101,12 @@ type Service struct {
 	plans         proposalstores.PlanStore
 	providers     aiproviderports.AIProviderRepository
 	shadow        *agentshadow.Resolver
-	budgets       agentports.AgentBudgetService
-	decisions     agentports.AgentDecisionRepository
+	budgets       agentbudgetports.AgentBudgetService
+	decisions     agentdecisionports.AgentDecisionRepository
 	artifacts     assistantartifactports.AssistantArtifactRepository
 	subjects      agentruntimeports.AgentSubjectDescriber
-	anchors       agentports.RecordAnchorReader
-	activity      agentports.AgentActivityPublisher
+	anchors       recordanchorports.RecordAnchorReader
+	activity      agentactivityports.AgentActivityPublisher
 	documents     documentports.DocumentRepository
 	contents      documentports.DocumentContentService
 	permissions   permissionports.PermissionEngine

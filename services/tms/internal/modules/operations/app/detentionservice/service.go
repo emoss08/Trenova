@@ -3,7 +3,7 @@ package detentionservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -121,7 +121,7 @@ type Params struct {
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers detention when a clock starts
 	// and when a notice is left for a person to send.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 	// Realtime refreshes the billing queue when a charge starts or stops
 	// holding its shipment off an invoice.
 	Realtime realtimeports.RealtimeService `optional:"true"`
@@ -153,7 +153,7 @@ type Service struct {
 	contextBuilder    *detentionnoticerender.ContextBuilder
 	auditService      auditports.AuditService
 	watchtower        watchtowerports.WatchtowerProjector
-	publisher         agentports.AgentEventPublisher
+	publisher         agenteventports.AgentEventPublisher
 	realtime          realtimeports.RealtimeService
 	senders           emailports.EmailSenderResolver
 	documentStore     documentports.DocumentStore

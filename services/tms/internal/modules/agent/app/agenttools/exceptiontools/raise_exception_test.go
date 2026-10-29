@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,12 +18,12 @@ import (
 type fakeSubjectRepository struct {
 	exists bool
 	err    error
-	asked  []agentports.AgentSubjectExistsRequest
+	asked  []agentsubjectports.AgentSubjectExistsRequest
 }
 
 func (f *fakeSubjectRepository) Exists(
 	_ context.Context,
-	req agentports.AgentSubjectExistsRequest,
+	req agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	f.asked = append(f.asked, req)
 

@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -91,10 +91,10 @@ type ActivitiesParams struct {
 	Metrics       *metrics.Registry                       `optional:"true"`
 	// Workflows starts the compaction a turn that filled its conversation
 	// sets off.
-	Workflows   kernelports.WorkflowStarter              `optional:"true"`
-	Reflections agentports.AgentReflectionScheduler      `optional:"true"`
-	Queue       assistantturnports.AssistantQueueSettler `optional:"true"`
-	Chapters    assistantchapterports.ChapterScheduler   `optional:"true"`
+	Workflows   kernelports.WorkflowStarter                   `optional:"true"`
+	Reflections agentreflectionports.AgentReflectionScheduler `optional:"true"`
+	Queue       assistantturnports.AssistantQueueSettler      `optional:"true"`
+	Chapters    assistantchapterports.ChapterScheduler        `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -112,7 +112,7 @@ type Activities struct {
 	followUps     assistantports.DecisionFollowUpResumer
 	metrics       *aimetrics.Assistant
 	workflows     kernelports.WorkflowStarter
-	reflections   agentports.AgentReflectionScheduler
+	reflections   agentreflectionports.AgentReflectionScheduler
 	queue         assistantturnports.AssistantQueueSettler
 	chapters      assistantchapterports.ChapterScheduler
 }
@@ -455,7 +455,7 @@ func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
 	}
 
 	payload := in.Payload
-	a.reflections.AfterTurn(ctx, &agentports.ReflectOnThreadRequest{
+	a.reflections.AfterTurn(ctx, &agentreflectionports.ReflectOnThreadRequest{
 		TenantInfo: payload.TenantInfo(),
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,

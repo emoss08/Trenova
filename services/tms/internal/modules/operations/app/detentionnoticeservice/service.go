@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -255,7 +255,7 @@ type Service struct {
 	workflowStarter  kernelports.WorkflowStarter
 	templates        documenttemplateports.DocumentTemplateResolver
 	contextBuilder   *detentionnoticerender.ContextBuilder
-	publisher        agentports.AgentEventPublisher
+	publisher        agenteventports.AgentEventPublisher
 	senders          emailports.EmailSenderResolver
 	documentStore    documentports.DocumentStore
 	documents        documentports.DocumentRepository
@@ -275,7 +275,7 @@ type Deps struct {
 	WorkflowStarter  kernelports.WorkflowStarter
 	Templates        documenttemplateports.DocumentTemplateResolver
 	ContextBuilder   *detentionnoticerender.ContextBuilder
-	Publisher        agentports.AgentEventPublisher
+	Publisher        agenteventports.AgentEventPublisher
 	Senders          emailports.EmailSenderResolver
 	DocumentStore    documentports.DocumentStore
 	Documents        documentports.DocumentRepository
@@ -665,7 +665,7 @@ func (s *Service) SweepNoticesDue(
 			// detention is woken to draft it. A policy that could not be
 			// read is a configuration problem and wakes nobody.
 			if policy != nil {
-				agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+				agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 					Kind:       agenttrigger.EventDetentionNoticeDue,
 					SubjectID:  occurrence.ID,
 					TenantInfo: tenantInfo,

@@ -7,17 +7,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type RecordedAnchors struct {
-	Asked []*agentports.RecordAnchorRequest
+	Asked []*recordanchorports.RecordAnchorRequest
 }
 
 func (r *RecordedAnchors) Anchor(
 	_ context.Context,
-	req *agentports.RecordAnchorRequest,
+	req *recordanchorports.RecordAnchorRequest,
 ) []agentturn.RuntimeAnchor {
 	r.Asked = append(r.Asked, req)
 	out := make([]agentturn.RuntimeAnchor, 0, len(req.Records))

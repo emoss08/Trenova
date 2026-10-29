@@ -23,7 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
@@ -476,7 +479,7 @@ func (c *Conversation) loadProposal(
 	ctx context.Context,
 	id pulid.ID,
 ) (*agent.AgentProposal, error) {
-	return c.session.bench.Proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	return c.session.bench.Proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         id,
 		TenantInfo: &c.session.Tenant,
 	})
@@ -537,7 +540,7 @@ func (c *Conversation) decideProposal(
 		Note:       d.Note,
 	}
 
-	req := &agentports.DecideAgentProposalRequest{
+	req := &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    proposal.ID,
 		Decision:      decision,
 		Modifications: d.Modifications,
@@ -561,7 +564,7 @@ func (c *Conversation) decideProposal(
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentapprovalports.SettleApprovalRequest{
 		ProposalID: proposal.ID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -588,7 +591,7 @@ func (c *Conversation) decidePlan(
 		Note:     d.Note,
 	}
 
-	planReq := &agentports.DecideAgentPlanRequest{
+	planReq := &agentplanports.DecideAgentPlanRequest{
 		PlanID:     proposal.PlanID,
 		Decision:   decision,
 		Note:       d.Note,
@@ -610,7 +613,7 @@ func (c *Conversation) decidePlan(
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentapprovalports.SettleApprovalRequest{
 		PlanID:     proposal.PlanID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -648,7 +651,7 @@ func (c *Conversation) proposalDigest(
 }
 
 func (c *Conversation) planDigest(ctx context.Context, planID pulid.ID) (string, error) {
-	plan, err := c.session.bench.Plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+	plan, err := c.session.bench.Plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: c.session.Tenant,
 	})

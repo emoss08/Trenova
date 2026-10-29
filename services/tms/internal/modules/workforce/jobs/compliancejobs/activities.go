@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -69,7 +69,7 @@ type ActivitiesParams struct {
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers credentials, once for the
 	// driver rather than once for each paper.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
@@ -86,7 +86,7 @@ type Activities struct {
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
 	watchtower      watchtowerports.WatchtowerProjector
-	publisher       agentports.AgentEventPublisher
+	publisher       agenteventports.AgentEventPublisher
 	logger          *zap.Logger
 }
 
@@ -228,7 +228,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 				},
 			))
 		}
-		agentports.PublishAgentEvent(tenantCtx, a.publisher, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(tenantCtx, a.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,

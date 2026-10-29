@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -308,13 +309,13 @@ func (fakeConversations) GetThreadOwned(
 }
 
 type fakeRuns struct {
-	started []*agentports.StartAgentRunForDefinitionRequest
+	started []*agentruntimeports.StartAgentRunForDefinitionRequest
 	err     error
 }
 
 func (f *fakeRuns) StartForDefinition(
 	_ context.Context,
-	req *agentports.StartAgentRunForDefinitionRequest,
+	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	if f.err != nil {
@@ -515,7 +516,7 @@ func TestNotifyEvent_EndsOnlyTheWaitOnThatStop(t *testing.T) {
 	leaving := openWait(agentwait.KindStopDeparture, agentwait.Condition{ShipmentMoveID: move})
 	h := newHarness(atHere, atThere, anyStop, leaving)
 
-	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
+	h.svc.NotifyEvent(context.Background(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventShipmentMoveArrived,
 		SubjectID:  move,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
@@ -538,7 +539,7 @@ func TestNotifyEvent_AReplyMatchedToTheCarrierEndsItsWait(t *testing.T) {
 	waiting := openWait(agentwait.KindReply, agentwait.Condition{CarrierID: carrier})
 	h := newHarness(waiting)
 
-	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
+	h.svc.NotifyEvent(context.Background(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventInboundMessageClassified,
 		SubjectID:  pulid.MustNew("inm_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

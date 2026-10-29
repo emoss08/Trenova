@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,7 +35,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         agentports.AgentEvaluationRepository
+	Repo         agentevaluationports.AgentEvaluationRepository
 	Runs         agentruntimeports.AgentRunRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Cases        agentqualityports.AgentEvalCaseRepository
@@ -45,7 +45,7 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	repo        agentports.AgentEvaluationRepository
+	repo        agentevaluationports.AgentEvaluationRepository
 	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	cases       agentqualityports.AgentEvalCaseRepository
@@ -53,7 +53,7 @@ type Service struct {
 	audit       auditports.AuditService
 }
 
-func New(p Params) agentports.AgentEvaluationService {
+func New(p Params) agentevaluationports.AgentEvaluationService {
 	return &Service{
 		l:           p.Logger.Named("service.agentevaluation"),
 		repo:        p.Repo,
@@ -69,7 +69,7 @@ func New(p Params) agentports.AgentEvaluationService {
 // workflow that carries it out.
 func (s *Service) Replay(
 	ctx context.Context,
-	req *agentports.ReplayAgentRunRequest,
+	req *agentevaluationports.ReplayAgentRunRequest,
 	actor *permissionports.RequestActor,
 ) (*agentevaluation.Evaluation, error) {
 	if !s.workflows.Enabled() {
@@ -118,7 +118,7 @@ func (s *Service) Replay(
 
 func (s *Service) ReplayCase(
 	ctx context.Context,
-	req *agentports.ReplayAgentEvalCaseRequest,
+	req *agentevaluationports.ReplayAgentEvalCaseRequest,
 	actor *permissionports.RequestActor,
 ) (*agentevaluation.Evaluation, error) {
 	if !s.workflows.Enabled() {
@@ -230,14 +230,14 @@ func (s *Service) start(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentEvaluationByIDRequest,
+	req agentevaluationports.GetAgentEvaluationByIDRequest,
 ) (*agentevaluation.Evaluation, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentEvaluationConnectionRequest,
+	req *agentevaluationports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
 	return s.repo.ListConnection(ctx, req)
 }

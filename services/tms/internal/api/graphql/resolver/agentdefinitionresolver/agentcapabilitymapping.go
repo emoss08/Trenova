@@ -2,7 +2,7 @@ package agentdefinitionresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -12,13 +12,13 @@ import (
 func capabilitiesUpdate(
 	agentID string,
 	input *gqlmodel.UpdateAgentCapabilitiesInput,
-) (*agentports.UpdateAgentCapabilitiesRequest, error) {
+) (*agentcapabilityports.UpdateAgentCapabilitiesRequest, error) {
 	id, err := pulid.MustParse(agentID)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &agentports.UpdateAgentCapabilitiesRequest{
+	req := &agentcapabilityports.UpdateAgentCapabilitiesRequest{
 		AgentID:               id,
 		Version:               int64(input.Version),
 		Enabled:               input.Enabled,
@@ -43,7 +43,7 @@ func capabilitiesUpdate(
 		if tool == nil {
 			continue
 		}
-		req.Tools = append(req.Tools, agentports.AgentCapabilityToolChange{
+		req.Tools = append(req.Tools, agentcapabilityports.AgentCapabilityToolChange{
 			Key:  tool.Key,
 			Mode: tool.Mode,
 		})

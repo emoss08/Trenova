@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -583,7 +583,7 @@ func (s *Service) publishEventsToAgents(
 		if !watchtowersources.CarrierIntelEventOnTower(event) {
 			continue
 		}
-		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventCarrierIntelEventOpened,
 			SubjectID:  event.ID,
 			TenantInfo: tenant,

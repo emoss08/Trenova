@@ -1,7 +1,7 @@
 package inboundintake
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -32,7 +32,7 @@ type testService struct {
 	uploads     documentuploadports.DocumentUploadService
 	documents   documentports.DocumentRepository
 	watchtower  watchtowerports.WatchtowerProjector
-	events      agentports.AgentEventPublisher
+	events      agenteventports.AgentEventPublisher
 	audit       auditports.AuditService
 	realtime    realtimeports.RealtimeService
 	indexer     retrievalports.RetrievalIndexer

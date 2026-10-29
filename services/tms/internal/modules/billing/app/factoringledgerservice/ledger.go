@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -46,8 +46,8 @@ type LedgerParams struct {
 	Periods     fiscalperiodports.FiscalPeriodRepository
 	Sequences   seqgen.Generator
 	Journals    journalentryports.JournalPostingRepository
-	Requester   factoringports.EvaluationRequester `optional:"true"`
-	Events      agentports.AgentEventPublisher     `optional:"true"`
+	Requester   factoringports.EvaluationRequester  `optional:"true"`
+	Events      agenteventports.AgentEventPublisher `optional:"true"`
 	Audit       auditports.AuditService
 	Realtime    realtimeports.RealtimeService `optional:"true"`
 	Logger      *zap.Logger
@@ -63,7 +63,7 @@ type LedgerService struct {
 	controls    tenantports.AccountingControlRepository
 	writer      journalposting.Writer
 	requester   factoringports.EvaluationRequester
-	events      agentports.AgentEventPublisher
+	events      agenteventports.AgentEventPublisher
 	rec         factoringaction.Recorder
 	now         func() int64
 }
@@ -251,7 +251,7 @@ func (s *LedgerService) publishEvent(
 	related []pulid.ID,
 	detail string,
 ) {
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  subjectID,
 		TenantInfo: tenantInfo,

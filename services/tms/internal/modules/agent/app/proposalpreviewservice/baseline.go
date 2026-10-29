@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -169,10 +170,13 @@ func (s *Service) markChangedSinceProposed(
 	for _, d := range drafts {
 		ids = append(ids, d.proposal.ID)
 	}
-	baselines, err := s.baselines.ListByProposals(ctx, agentports.ListProposalBaselinesRequest{
-		ProposalIDs: ids,
-		TenantInfo:  tenant,
-	})
+	baselines, err := s.baselines.ListByProposals(
+		ctx,
+		agentproposalports.ListProposalBaselinesRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not read the baselines of proposals being previewed", zap.Error(err))
 
@@ -260,7 +264,7 @@ func (s *Service) recordedFor(
 	if s.decisions != nil {
 		decisions, err := s.decisions.ListByProposals(
 			ctx,
-			agentports.ListAgentDecisionsByProposalsRequest{
+			agentdecisionports.ListAgentDecisionsByProposalsRequest{
 				ProposalIDs: []pulid.ID{proposal.ID},
 				TenantInfo:  tenantOf(proposal),
 			},

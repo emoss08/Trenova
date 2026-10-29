@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/shared/money"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ import (
 // nor a failed one what an earlier run made.
 func (r *repository) RecordExecution(
 	ctx context.Context,
-	req agentports.RecordAgentProposalExecutionRequest,
+	req agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
@@ -73,7 +73,7 @@ func (r *repository) RecordExecution(
 // with some other subject's id from matching.
 func (r *repository) ListByThread(
 	ctx context.Context,
-	req agentports.ListAgentProposalsByThreadRequest,
+	req agentproposalports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
@@ -99,7 +99,7 @@ func (r *repository) ListByThread(
 // has been made and this is what came of it.
 func (r *repository) RecordSimulation(
 	ctx context.Context,
-	req agentports.RecordAgentProposalSimulationRequest,
+	req agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
@@ -132,7 +132,7 @@ func (r *repository) RecordSimulation(
 // instant, through the run that made each proposal.
 func (r *repository) CountExecutedTool(
 	ctx context.Context,
-	req agentports.CountExecutedToolRequest,
+	req agentproposalports.CountExecutedToolRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentdb.AgentProposals
@@ -160,7 +160,7 @@ type automaticMoneyRow struct {
 var errMoneyCurrencyRequired = errors.New("sum automatic money writes: a currency is required")
 
 func automaticMoneyQuery(
-	req *agentports.SumAutomaticMoneyRequest,
+	req *agentproposalports.SumAutomaticMoneyRequest,
 	currency string,
 ) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
@@ -183,7 +183,7 @@ func automaticMoneyQuery(
 
 func (r *repository) SumAutomaticMoney(
 	ctx context.Context,
-	req *agentports.SumAutomaticMoneyRequest,
+	req *agentproposalports.SumAutomaticMoneyRequest,
 ) (agenttooltrust.MoneyUse, error) {
 	currency := money.ISOCode(req.Currency)
 	if currency == "" {

@@ -36,10 +36,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -72,7 +72,7 @@ type Params struct {
 	Versions agenttoolports.RecordVersionReader `optional:"true"`
 	// Budgets is optional. With it an automatic write past its tool's daily
 	// cap is refused before it runs.
-	Budgets agentports.AgentBudgetService           `optional:"true"`
+	Budgets agentbudgetports.AgentBudgetService     `optional:"true"`
 	Trust   agenttoolports.AgentToolTrustRepository `optional:"true"`
 	// Extensions is optional. Without it no extension's tools are offered.
 	Extensions agentextensionports.AgentExtensionGate `optional:"true"`

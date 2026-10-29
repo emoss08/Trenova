@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -66,7 +66,7 @@ func chatReply() *draftReply {
 func sanitize(
 	t *testing.T,
 	reply *draftReply,
-) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentports.AgentDraftNote) {
+) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentdraftports.AgentDraftNote) {
 	t.Helper()
 
 	req, notes, err := sanitizeDraft(&sanitizeInput{
@@ -80,7 +80,7 @@ func sanitize(
 	return req, notes
 }
 
-func noteFields(notes []agentports.AgentDraftNote) []string {
+func noteFields(notes []agentdraftports.AgentDraftNote) []string {
 	fields := make([]string, 0, len(notes))
 	for _, note := range notes {
 		fields = append(fields, note.Field)

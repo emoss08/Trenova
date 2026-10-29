@@ -77,7 +77,7 @@ The agent module may not import `internal/api` (`.go-arch-lint.yml`), so the rea
 inversion port declared low and provided at the composition root:
 
 ```go
-// agentports
+// graphqlreadports
 type GraphQLReader interface {
 	Read(ctx context.Context, req *GraphQLReadRequest) (*GraphQLReadResult, error)
 }

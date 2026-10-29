@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,14 +14,14 @@ import (
 )
 
 type holdPlans struct {
-	agentports.AgentPlanRepository
+	agentplanports.AgentPlanRepository
 
 	byID map[pulid.ID]*agentplan.AgentPlan
 }
 
 func (r *holdPlans) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentPlansByIDsRequest,
+	req agentplanports.ListAgentPlansByIDsRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	out := make([]*agentplan.AgentPlan, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -34,7 +34,7 @@ func (r *holdPlans) ListByIDs(
 }
 
 type holdPlanService struct {
-	agentports.AgentPlanService
+	agentplanports.AgentPlanService
 
 	holds map[pulid.ID]*assistantproposalports.ProposalHold
 }

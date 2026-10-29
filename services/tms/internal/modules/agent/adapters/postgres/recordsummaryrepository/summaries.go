@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
@@ -44,7 +44,7 @@ type Repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.RecordSummarizer {
+func New(p Params) recordsummaryports.RecordSummarizer {
 	return &Repository{db: p.DB}
 }
 
@@ -189,26 +189,30 @@ func entriesQuery(ids []pulid.ID) projection {
 
 func (r *Repository) Summaries(
 	ctx context.Context,
-	req *agentports.RecordSummaryRequest,
-) (agentports.RecordSummaries, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agentports.RecordSummaries, error) {
-		out := make(agentports.RecordSummaries, len(req.Refs))
-		for resource, ids := range req.Refs {
-			ids = distinct(ids)
-			if len(ids) == 0 {
-				continue
+	req *recordsummaryports.RecordSummaryRequest,
+) (recordsummaryports.RecordSummaries, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (recordsummaryports.RecordSummaries, error) {
+			out := make(recordsummaryports.RecordSummaries, len(req.Refs))
+			for resource, ids := range req.Refs {
+				ids = distinct(ids)
+				if len(ids) == 0 {
+					continue
+				}
+				read, err := r.read(ctx, resource, ids, req.Now)
+				if err != nil {
+					return nil, fmt.Errorf("read %s summaries: %w", resource, err)
+				}
+				if read != nil {
+					out[resource] = read
+				}
 			}
-			read, err := r.read(ctx, resource, ids, req.Now)
-			if err != nil {
-				return nil, fmt.Errorf("read %s summaries: %w", resource, err)
-			}
-			if read != nil {
-				out[resource] = read
-			}
-		}
 
-		return out, nil
-	})
+			return out, nil
+		},
+	)
 }
 
 func (r *Repository) read(

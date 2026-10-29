@@ -17,8 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -40,9 +42,9 @@ type Params struct {
 	Permissions   permissionports.PermissionEngine
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository
-	Decisions     agentports.AgentDecisionRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository
+	Decisions     agentdecisionports.AgentDecisionRepository
 }
 
 type Service struct {

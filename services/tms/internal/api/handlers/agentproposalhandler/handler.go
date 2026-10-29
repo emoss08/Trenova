@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -24,16 +25,16 @@ import (
 type Params struct {
 	fx.In
 
-	ProposalService      agentports.AgentProposalService
-	DecisionService      agentports.AgentDecisionService
+	ProposalService      agentproposalports.AgentProposalService
+	DecisionService      agentdecisionports.AgentDecisionService
 	PreviewService       agentruntimeports.ProposalPreviewService `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	proposalService agentports.AgentProposalService
-	decisionService agentports.AgentDecisionService
+	proposalService agentproposalports.AgentProposalService
+	decisionService agentdecisionports.AgentDecisionService
 	previews        agentruntimeports.ProposalPreviewService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
@@ -90,7 +91,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*agent.AgentProposal], error) {
 			return h.proposalService.List(
 				c.Request.Context(),
-				&agentports.ListAgentProposalRequest{Filter: req},
+				&agentproposalports.ListAgentProposalRequest{Filter: req},
 			)
 		},
 	)
@@ -127,7 +128,7 @@ func (h *Handler) preview(c *gin.Context) {
 	tenant := pagination.FromAuthAsUser(authCtx)
 	proposal, err := h.proposalService.GetByID(
 		c.Request.Context(),
-		agentports.GetAgentProposalByIDRequest{ID: proposalID, TenantInfo: &tenant},
+		agentproposalports.GetAgentProposalByIDRequest{ID: proposalID, TenantInfo: &tenant},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -186,7 +187,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	outcome, err := h.decisionService.DecideWithOutcome(
 		c.Request.Context(),
-		&agentports.DecideAgentProposalRequest{
+		&agentdecisionports.DecideAgentProposalRequest{
 			ProposalID:    proposalID,
 			Decision:      body.Decision,
 			Modifications: body.Modifications,

@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -222,12 +223,12 @@ type Service struct {
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	permissions   permissionports.PermissionEngine
 	queries       agenttoolports.AgentQueryToolRegistry
-	budgets       agentports.AgentBudgetService
+	budgets       agentbudgetports.AgentBudgetService
 	agentControls tenantports.AgentControlRepository
 	quota         platformplanports.QuotaGuard
 	chapters      assistantchapterports.ChapterRepository
 	proposals     proposalstores.ProposalStore
-	decisions     agentports.AgentDecisionRepository
+	decisions     agentdecisionports.AgentDecisionRepository
 }
 
 func (s *Service) access() *agentaccess.Access {

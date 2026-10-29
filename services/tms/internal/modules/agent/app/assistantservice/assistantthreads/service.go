@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/memorynotes"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -34,7 +34,7 @@ type Service struct {
 	cases         deskcaseports.AssistantCaseStates
 	plans         proposalstores.PlanStore
 	proposals     proposalstores.ProposalStore
-	budgets       agentports.AgentBudgetService
+	budgets       agentbudgetports.AgentBudgetService
 	notifier      raiseNotifier
 	pageThreads   conversationports.PageThreadRepository
 	systemAgents  agentdefinitionports.SystemAgentProvisioner

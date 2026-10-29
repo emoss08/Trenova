@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -68,15 +69,15 @@ func (d *deletableDefinitions) Delete(
 }
 
 type withdrawnProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 	log *deleteLog
-	req agentports.ExpireAgentProposalsByDefinitionRequest
+	req agentproposalports.ExpireAgentProposalsByDefinitionRequest
 	err error
 }
 
 func (p *withdrawnProposals) ExpirePendingByDefinition(
 	ctx context.Context,
-	req agentports.ExpireAgentProposalsByDefinitionRequest,
+	req agentproposalports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	p.log.record(ctx, "withdraw proposals")
 	p.req = req
@@ -84,14 +85,14 @@ func (p *withdrawnProposals) ExpirePendingByDefinition(
 }
 
 type withdrawnPlans struct {
-	agentports.AgentPlanRepository
+	agentplanports.AgentPlanRepository
 	log *deleteLog
-	req agentports.ExpireAgentPlansByDefinitionRequest
+	req agentplanports.ExpireAgentPlansByDefinitionRequest
 }
 
 func (p *withdrawnPlans) ExpirePendingByDefinition(
 	ctx context.Context,
-	req agentports.ExpireAgentPlansByDefinitionRequest,
+	req agentplanports.ExpireAgentPlansByDefinitionRequest,
 ) (int, error) {
 	p.log.record(ctx, "withdraw plans")
 	p.req = req

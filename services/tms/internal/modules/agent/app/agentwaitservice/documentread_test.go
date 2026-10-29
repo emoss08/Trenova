@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -272,7 +272,7 @@ func TestNotifyEvent_AnExtractionSavedEndsTheWaitOnItsFile(t *testing.T) {
 	)
 	h := newHarness(waiting, other)
 
-	h.svc.NotifyEvent(t.Context(), &agentports.AgentEvent{
+	h.svc.NotifyEvent(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  documentID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

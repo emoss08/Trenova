@@ -21,7 +21,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -77,7 +77,7 @@ type Facts struct {
 // optional: a nil source is a section the briefing does without.
 type Sources struct {
 	Watchtower  watchtowerports.WatchtowerRepository
-	Decisions   agentports.AgentDecisionQueueService
+	Decisions   agentdecisionqueueports.AgentDecisionQueueService
 	Board       dispatchboardports.DispatchConsoleRepository
 	Credentials workercredentialports.WorkerCredentialRepository
 	Billing     billingqueueports.BillingQueueRepository

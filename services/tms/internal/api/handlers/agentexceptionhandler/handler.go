@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -20,13 +20,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              agentports.AgentExceptionService
+	Service              agentexceptionports.AgentExceptionService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service agentports.AgentExceptionService
+	service agentexceptionports.AgentExceptionService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -75,7 +75,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*agentexception.AgentException], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&agentports.ListAgentExceptionRequest{Filter: req},
+				&agentexceptionports.ListAgentExceptionRequest{Filter: req},
 			)
 		},
 	)
@@ -104,7 +104,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	updated, err := h.service.Resolve(
 		c.Request.Context(),
-		&agentports.ResolveAgentExceptionRequest{
+		&agentexceptionports.ResolveAgentExceptionRequest{
 			ID:              exceptionID,
 			ResolutionState: body.ResolutionState,
 			ResolutionNotes: body.ResolutionNotes,

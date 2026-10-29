@@ -29,9 +29,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -68,32 +73,32 @@ type ActivitiesParams struct {
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Controls     tenantports.AgentControlRepository
 	RunRepo      agentruntimeports.AgentRunRepository
-	ProposalRepo agentports.AgentProposalRepository
-	Runs         agentports.AgentRunService
+	ProposalRepo agentproposalports.AgentProposalRepository
+	Runs         agentruntimeports.AgentRunService
 	Runtime      *agentruntime.Service
 	Steps        agentruntimeports.RunStepLedger
 	Trajectory   agentruntimeports.AgentRunEventRecorder `optional:"true"`
 	Contexts     agentruntimeports.RuntimeContextBuilder
 	Recorder     *proposalrecorder.Service
 	Subjects     agentruntimeports.AgentSubjectDescriber
-	Activity     agentports.AgentActivityPublisher `optional:"true"`
-	Notifier     agentports.AgentProposalNotifier  `optional:"true"`
-	Plans        agentports.AgentPlanRepository    `optional:"true"`
+	Activity     agentactivityports.AgentActivityPublisher `optional:"true"`
+	Notifier     agentproposalports.AgentProposalNotifier  `optional:"true"`
+	Plans        agentplanports.AgentPlanRepository        `optional:"true"`
 	// Baselines is optional; with it the expiry sweep removes baselines whose
 	// proposal was never filed.
-	Baselines     agentports.AgentProposalBaselineRepository `optional:"true"`
-	Evaluations   agentports.AgentEvaluationRepository
+	Baselines     agentproposalports.AgentProposalBaselineRepository `optional:"true"`
+	Evaluations   agentevaluationports.AgentEvaluationRepository
 	EvalCases     agentqualityports.AgentEvalCaseRepository
-	CaseService   agentports.AgentEvalCaseService `optional:"true"`
+	CaseService   agentqualityports.AgentEvalCaseService `optional:"true"`
 	Users         tenantports.UserRepository
 	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
 	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
-	Decisions     agentports.AgentDecisionRepository
+	Decisions     agentdecisionports.AgentDecisionRepository
 	Conversations conversationports.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower    watchtowerports.WatchtowerProjector `optional:"true"`
-	Reflections   agentports.AgentReflectionScheduler `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector           `optional:"true"`
+	Reflections   agentreflectionports.AgentReflectionScheduler `optional:"true"`
 	Schedules     *agentcontract.DefinitionSchedules
 	PlatformPlans platformplanports.PlanService `optional:"true"`
 	// Waits reads the wait whose ending started a run that picks up work.
@@ -105,27 +110,27 @@ type Activities struct {
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
 	runRepo       agentruntimeports.AgentRunRepository
-	proposalRepo  agentports.AgentProposalRepository
-	runs          agentports.AgentRunService
+	proposalRepo  agentproposalports.AgentProposalRepository
+	runs          agentruntimeports.AgentRunService
 	runtime       *agentruntime.Service
 	steps         agentruntimeports.RunStepLedger
 	trajectory    agentruntimeports.AgentRunEventRecorder
 	contexts      agentruntimeports.RuntimeContextBuilder
 	recorder      *proposalrecorder.Service
-	notifier      agentports.AgentProposalNotifier
-	plans         agentports.AgentPlanRepository
-	baselines     agentports.AgentProposalBaselineRepository
-	evaluations   agentports.AgentEvaluationRepository
+	notifier      agentproposalports.AgentProposalNotifier
+	plans         agentplanports.AgentPlanRepository
+	baselines     agentproposalports.AgentProposalBaselineRepository
+	evaluations   agentevaluationports.AgentEvaluationRepository
 	evalCases     agentqualityports.AgentEvalCaseRepository
-	caseService   agentports.AgentEvalCaseService
+	caseService   agentqualityports.AgentEvalCaseService
 	users         tenantports.UserRepository
 	scorer        *agentscoring.Scorer
-	decisions     agentports.AgentDecisionRepository
+	decisions     agentdecisionports.AgentDecisionRepository
 	conversations conversationports.ConversationRepository
 	subjects      agentruntimeports.AgentSubjectDescriber
-	activity      agentports.AgentActivityPublisher
+	activity      agentactivityports.AgentActivityPublisher
 	watchtower    watchtowerports.WatchtowerProjector
-	reflections   agentports.AgentReflectionScheduler
+	reflections   agentreflectionports.AgentReflectionScheduler
 	schedules     *agentcontract.DefinitionSchedules
 	platformPlans platformplanports.PlanService
 	waits         agentwaitports.AgentWaitRepository
@@ -448,10 +453,13 @@ func (a *Activities) PendingProposalsActivity(
 	ctx context.Context,
 	input *PendingProposalsInput,
 ) (int, error) {
-	proposals, err := a.proposalRepo.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
-		RunID:      input.RunID,
-		TenantInfo: input.TenantInfo,
-	})
+	proposals, err := a.proposalRepo.ListByRun(
+		ctx,
+		agentproposalports.ListAgentProposalsByRunRequest{
+			RunID:      input.RunID,
+			TenantInfo: input.TenantInfo,
+		},
+	)
 	if err != nil {
 		return 0, fmt.Errorf("list the run's proposals: %w", err)
 	}
@@ -570,7 +578,7 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
 	if a.reflections != nil {
-		a.reflections.AfterRun(ctx, &agentports.ReflectOnRunRequest{
+		a.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
 			TenantInfo: input.TenantInfo,
 			RunID:      input.RunID,
 		})
@@ -627,7 +635,7 @@ func (a *Activities) ExpireProposalsActivity(
 
 	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
-		agentports.ExpireAgentProposalsByRunRequest{
+		agentproposalports.ExpireAgentProposalsByRunRequest{
 			RunID:      input.RunID,
 			TenantInfo: input.TenantInfo,
 		},
@@ -721,14 +729,14 @@ func (a *Activities) StartScheduledRunActivity(
 		return nil, fmt.Errorf("record the scheduled run: %w", err)
 	}
 
-	run, err := a.runs.StartForDefinition(ctx, &agentports.StartAgentRunForDefinitionRequest{
+	run, err := a.runs.StartForDefinition(ctx, &agentruntimeports.StartAgentRunForDefinitionRequest{
 		DefinitionID: definition.ID,
 		Trigger:      definition.TriggerMode.RunTrigger(),
 		Slot:         payload.Slot,
 		TenantInfo:   tenant,
 	}, agentActorFor(tenant, definition))
 	if err != nil {
-		if errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+		if errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) {
 			return &StartScheduledRunResult{Skipped: "slot_already_started"}, nil
 		}
 		if errortypes.IsPlanRestrictionError(err) {
@@ -783,7 +791,12 @@ func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
 		return
 	}
 
-	a.activity.RunChanged(ctx, run, permissionports.SystemAuditActor(), agentports.ActivityUpdated)
+	a.activity.RunChanged(
+		ctx,
+		run,
+		permissionports.SystemAuditActor(),
+		agentactivityports.ActivityUpdated,
+	)
 }
 
 func (a *Activities) unattendedActor(
@@ -902,9 +915,12 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	})
 	defer span.End()
 
-	expired, err := a.proposalRepo.ExpirePending(ctx, agentports.ExpireAgentProposalsRequest{
-		Before: input.Now,
-	})
+	expired, err := a.proposalRepo.ExpirePending(
+		ctx,
+		agentproposalports.ExpireAgentProposalsRequest{
+			Before: input.Now,
+		},
+	)
 	if err != nil {
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
@@ -922,7 +938,7 @@ func (a *Activities) ExpireStaleProposalsActivity(
 
 	// A plan outlives none of its steps: once they have expired, so has it.
 	if a.plans != nil {
-		expiredPlans, planErr := a.plans.ExpirePending(ctx, agentports.ExpireAgentPlansRequest{
+		expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{
 			Before: input.Now,
 		})
 		if planErr != nil {
@@ -953,9 +969,12 @@ func (a *Activities) purgeOrphanBaselines(ctx context.Context, now int64) {
 		return
 	}
 
-	purged, err := a.baselines.PurgeOrphans(ctx, agentports.PurgeOrphanProposalBaselinesRequest{
-		Before: now - int64(orphanBaselineAge.Seconds()),
-	})
+	purged, err := a.baselines.PurgeOrphans(
+		ctx,
+		agentproposalports.PurgeOrphanProposalBaselinesRequest{
+			Before: now - int64(orphanBaselineAge.Seconds()),
+		},
+	)
 	if err != nil {
 		a.logger.Warn("could not purge orphaned proposal baselines", zap.Error(err))
 
@@ -1026,7 +1045,7 @@ func (a *Activities) RemindPendingProposalsActivity(
 		return &RemindPendingProposalsResult{}, nil
 	}
 
-	reminded, err := a.notifier.RemindPending(ctx, agentports.RemindPendingProposalsRequest{
+	reminded, err := a.notifier.RemindPending(ctx, agentproposalports.RemindPendingProposalsRequest{
 		Now:       input.Now,
 		OlderThan: time.Duration(input.OlderThanSeconds) * time.Second,
 		Limit:     reminderBatchLimit,
@@ -1065,10 +1084,13 @@ func (a *Activities) recordProposals(
 	ctx context.Context,
 	p recordProposalsParams,
 ) (*proposalrecorder.RecordResult, error) {
-	existing, err := a.proposalRepo.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
-		RunID:      p.Run.ID,
-		TenantInfo: p.TenantInfo,
-	})
+	existing, err := a.proposalRepo.ListByRun(
+		ctx,
+		agentproposalports.ListAgentProposalsByRunRequest{
+			RunID:      p.Run.ID,
+			TenantInfo: p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read the proposals this run already raised: %w", err)
 	}

@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
@@ -408,7 +409,7 @@ func (s *Service) withdrawPending(
 ) {
 	if s.proposals != nil {
 		if _, err := s.proposals.ExpirePendingByThread(ctx,
-			agentports.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+			agentproposalports.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
 		); err != nil {
 			s.logger.Warn("could not withdraw a deleted conversation's proposals",
 				zap.String("thread", threadID.String()), zap.Error(err))
@@ -416,7 +417,7 @@ func (s *Service) withdrawPending(
 	}
 	if s.plans != nil {
 		if _, err := s.plans.ExpirePendingByThread(ctx,
-			agentports.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+			agentplanports.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
 		); err != nil {
 			s.logger.Warn("could not withdraw a deleted conversation's plans",
 				zap.String("thread", threadID.String()), zap.Error(err))

@@ -21,16 +21,29 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
@@ -377,14 +390,14 @@ type Params struct {
 	FactoringTransportService         factoringsubmissionports.TransportService
 	InvoiceDisputeService             invoiceports.InvoiceDisputeService
 	LateChargeService                 latechargeports.LateChargeService
-	AgentRunService                   agentports.AgentRunService
+	AgentRunService                   agentruntimeports.AgentRunService
 	AgentDefinitionService            agentdefinitionports.AgentDefinitionService
-	AgentCapabilityService            agentports.AgentCapabilityService
-	AgentRecommender                  agentports.AgentRecommender
+	AgentCapabilityService            agentcapabilityports.AgentCapabilityService
+	AgentRecommender                  agentrecommendationports.AgentRecommender
 	AgentShadowService                agentshadowports.AgentShadowService
-	AgentTrustService                 agentports.AgentTrustService
+	AgentTrustService                 agenttrustports.AgentTrustService
 	AgentTestPromptService            agentdefinitionports.AgentTestPromptService
-	AgentDraftingService              agentports.AgentDraftingService
+	AgentDraftingService              agentdraftports.AgentDraftingService
 	AIControlSummaryService           aicontrolsummaryports.AIControlSummaryService
 	AITuneUpService                   aituneupports.AITuneUpService
 	AIAnalyticsService                aianalyticsports.AnalyticsService
@@ -392,24 +405,24 @@ type Params struct {
 	AIProviderService                 aiproviderports.AIProviderService
 	AIUsageService                    aiusageports.AIUsageService
 	AIRetrievalStatusService          retrievalports.AIRetrievalStatusService
-	AgentProposalService              agentports.AgentProposalService
-	AgentPlanService                  agentports.AgentPlanService
+	AgentProposalService              agentproposalports.AgentProposalService
+	AgentPlanService                  agentplanports.AgentPlanService
 	AgentMemoryService                agentmemoryports.AgentMemoryService
-	AgentReflectionService            agentports.AgentReflectionService
+	AgentReflectionService            agentreflectionports.AgentReflectionService
 	AIFeedbackService                 aifeedbackports.AIFeedbackService
 	AgentSuggestionService            agentsuggestionports.AgentSuggestionService
-	AgentEvaluationService            agentports.AgentEvaluationService
-	AgentEvalCaseService              agentports.AgentEvalCaseService
+	AgentEvaluationService            agentevaluationports.AgentEvaluationService
+	AgentEvalCaseService              agentqualityports.AgentEvalCaseService
 	ExtractionEvalService             extractionevalports.ExtractionEvalService
 	ExtractionShadowService           extractionshadowports.ExtractionShadowService
 	ExtractionRolloutService          extractionrolloutports.ExtractionRolloutService
 	AITrainingHistoryService          aitrainingports.AITrainingHistoryService
 	AgentQualityService               agentqualityports.AgentQualityService
-	AgentActivityService              agentports.AgentActivityService
-	AgentExceptionService             agentports.AgentExceptionService
-	AgentDecisionService              agentports.AgentDecisionService
-	AgentDecisionQueueService         agentports.AgentDecisionQueueService
-	ApprovalCommitter                 agentports.ApprovalCommitter
+	AgentActivityService              agentactivityports.AgentActivityService
+	AgentExceptionService             agentexceptionports.AgentExceptionService
+	AgentDecisionService              agentdecisionports.AgentDecisionService
+	AgentDecisionQueueService         agentdecisionqueueports.AgentDecisionQueueService
+	ApprovalCommitter                 agentapprovalports.ApprovalCommitter
 	AgentAccessService                agentdefinitionports.AgentAccessService
 	AgentSafetyService                agenttoolports.AgentSafetyService
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
@@ -433,13 +446,13 @@ type Params struct {
 	CaptureRequestService             *capturerequests.Service
 	CaptureFilingService              *capturefiling.Service
 	CaptureReleaseService             *capturereleaseservice.Service
-	AgentScorecardService             agentports.AgentScorecardService
+	AgentScorecardService             agentevaluationports.AgentScorecardService
 	AgentRunEventRepo                 agentruntimeports.AgentRunEventRepository
 	AIAuditService                    aiauditports.AIAuditService
 	BriefingService                   briefingports.BriefingService
 	AgentProfileService               agentprofileports.Service
 	AgentTools                        agenttoolports.AgentToolRegistry
-	AgentControlService               agentports.AgentControlService
+	AgentControlService               agentcontrolports.AgentControlService
 	ProposalPreviewService            agentruntimeports.ProposalPreviewService `optional:"true"`
 	IAMService                        iamports.IAMService
 	RoleService                       *roleservice.Service
@@ -646,14 +659,14 @@ type Services struct {
 	FactoringTransportService         factoringsubmissionports.TransportService
 	InvoiceDisputeService             invoiceports.InvoiceDisputeService
 	LateChargeService                 latechargeports.LateChargeService
-	AgentRunService                   agentports.AgentRunService
+	AgentRunService                   agentruntimeports.AgentRunService
 	AgentDefinitionService            agentdefinitionports.AgentDefinitionService
-	AgentCapabilityService            agentports.AgentCapabilityService
-	AgentRecommender                  agentports.AgentRecommender
+	AgentCapabilityService            agentcapabilityports.AgentCapabilityService
+	AgentRecommender                  agentrecommendationports.AgentRecommender
 	AgentShadowService                agentshadowports.AgentShadowService
-	AgentTrustService                 agentports.AgentTrustService
+	AgentTrustService                 agenttrustports.AgentTrustService
 	AgentTestPromptService            agentdefinitionports.AgentTestPromptService
-	AgentDraftingService              agentports.AgentDraftingService
+	AgentDraftingService              agentdraftports.AgentDraftingService
 	AiControlSummaryService           aicontrolsummaryports.AIControlSummaryService
 	AiTuneUpService                   aituneupports.AITuneUpService
 	AiAnalyticsService                aianalyticsports.AnalyticsService
@@ -661,24 +674,24 @@ type Services struct {
 	AiProviderService                 aiproviderports.AIProviderService
 	AiUsageService                    aiusageports.AIUsageService
 	AiRetrievalStatusService          retrievalports.AIRetrievalStatusService
-	AgentProposalService              agentports.AgentProposalService
-	AgentPlanService                  agentports.AgentPlanService
+	AgentProposalService              agentproposalports.AgentProposalService
+	AgentPlanService                  agentplanports.AgentPlanService
 	AgentMemoryService                agentmemoryports.AgentMemoryService
-	AgentReflectionService            agentports.AgentReflectionService
+	AgentReflectionService            agentreflectionports.AgentReflectionService
 	AiFeedbackService                 aifeedbackports.AIFeedbackService
 	AgentSuggestionService            agentsuggestionports.AgentSuggestionService
-	AgentEvaluationService            agentports.AgentEvaluationService
-	AgentEvalCaseService              agentports.AgentEvalCaseService
+	AgentEvaluationService            agentevaluationports.AgentEvaluationService
+	AgentEvalCaseService              agentqualityports.AgentEvalCaseService
 	ExtractionEvalService             extractionevalports.ExtractionEvalService
 	ExtractionShadowService           extractionshadowports.ExtractionShadowService
 	ExtractionRolloutService          extractionrolloutports.ExtractionRolloutService
 	AiTrainingHistoryService          aitrainingports.AITrainingHistoryService
 	AgentQualityService               agentqualityports.AgentQualityService
-	AgentActivityService              agentports.AgentActivityService
-	AgentExceptionService             agentports.AgentExceptionService
-	AgentDecisionService              agentports.AgentDecisionService
-	AgentDecisionQueueService         agentports.AgentDecisionQueueService
-	ApprovalCommitter                 agentports.ApprovalCommitter
+	AgentActivityService              agentactivityports.AgentActivityService
+	AgentExceptionService             agentexceptionports.AgentExceptionService
+	AgentDecisionService              agentdecisionports.AgentDecisionService
+	AgentDecisionQueueService         agentdecisionqueueports.AgentDecisionQueueService
+	ApprovalCommitter                 agentapprovalports.ApprovalCommitter
 	AgentAccessService                agentdefinitionports.AgentAccessService
 	AgentSafetyService                agenttoolports.AgentSafetyService
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
@@ -702,13 +715,13 @@ type Services struct {
 	CaptureRequestService             *capturerequests.Service
 	CaptureFilingService              *capturefiling.Service
 	CaptureReleaseService             *capturereleaseservice.Service
-	AgentScorecardService             agentports.AgentScorecardService
+	AgentScorecardService             agentevaluationports.AgentScorecardService
 	AgentRunEventRepo                 agentruntimeports.AgentRunEventRepository
 	AiAuditService                    aiauditports.AIAuditService
 	BriefingService                   briefingports.BriefingService
 	AgentProfileService               agentprofileports.Service
 	AgentTools                        agenttoolports.AgentToolRegistry
-	AgentControlService               agentports.AgentControlService
+	AgentControlService               agentcontrolports.AgentControlService
 	ProposalPreviewService            agentruntimeports.ProposalPreviewService
 	IamService                        iamports.IAMService
 	RoleService                       *roleservice.Service

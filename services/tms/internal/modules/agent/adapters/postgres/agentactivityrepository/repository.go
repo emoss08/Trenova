@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"go.uber.org/fx"
 )
 
@@ -27,7 +27,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.AgentActivityRepository {
+func New(p Params) agentactivityports.AgentActivityRepository {
 	return &repository{db: p.DB}
 }
 
@@ -66,62 +66,66 @@ func openResolutionStates() []agentexception.ResolutionState {
 
 func (r *repository) Totals(
 	ctx context.Context,
-	req agentports.AgentActivityTotalsRequest,
-) (*agentports.AgentActivityTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.AgentActivityTotals, error) {
-		runs := agentdb.AgentRuns
-		proposals := agentdb.AgentProposals
-		exceptions := agentexceptiondb.AgentExceptions
-		decisions := agentdecisiondb.AgentDecisions
+	req agentactivityports.AgentActivityTotalsRequest,
+) (*agentactivityports.AgentActivityTotals, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentactivityports.AgentActivityTotals, error) {
+			runs := agentdb.AgentRuns
+			proposals := agentdb.AgentProposals
+			exceptions := agentexceptiondb.AgentExceptions
+			decisions := agentdecisiondb.AgentDecisions
 
-		var (
-			runRow      runTotals
-			proposalRow proposalTotals
-			openCount   int64
-			decisionRow decisionTotals
-		)
-		err := keel.Batch(ctx, r.db.Keel(ctx),
-			keel.IntoValue(runs.Pick(
-				keel.Count().Filter(runs.CreatedAt.Gte(req.RunsSince)),
-				keel.Count().Filter(keel.And(
-					runs.CreatedAt.Gte(req.RunsSince),
-					runs.Status.Eq(agent.RunStatusFailed),
-				)),
-				keel.Count().Filter(runs.Status.In(workingStatuses()...)),
-				keel.Count().Filter(runs.Status.Eq(agent.RunStatusAwaitingDecision)),
-			), &runRow),
-			keel.IntoValue(proposals.
-				Pick(keel.Count(), proposals.CreatedAt.Min()).
-				Where(proposals.Status.Eq(agent.ProposalStatusPending)), &proposalRow),
-			keel.CountInto(
-				exceptions.Where(exceptions.ResolutionState.In(openResolutionStates()...)),
-				&openCount,
-			),
-			keel.IntoValue(decisions.Pick(
-				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionAccepted)),
-				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionModified)),
-				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionRejected)),
-			).Where(
-				decisions.ProposalID.IsNotNull(),
-				decisions.UndoneAt.IsNull(),
-				decisions.CreatedAt.Gte(req.DecisionsSince),
-			), &decisionRow),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("count agent activity: %w", err)
-		}
+			var (
+				runRow      runTotals
+				proposalRow proposalTotals
+				openCount   int64
+				decisionRow decisionTotals
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoValue(runs.Pick(
+					keel.Count().Filter(runs.CreatedAt.Gte(req.RunsSince)),
+					keel.Count().Filter(keel.And(
+						runs.CreatedAt.Gte(req.RunsSince),
+						runs.Status.Eq(agent.RunStatusFailed),
+					)),
+					keel.Count().Filter(runs.Status.In(workingStatuses()...)),
+					keel.Count().Filter(runs.Status.Eq(agent.RunStatusAwaitingDecision)),
+				), &runRow),
+				keel.IntoValue(proposals.
+					Pick(keel.Count(), proposals.CreatedAt.Min()).
+					Where(proposals.Status.Eq(agent.ProposalStatusPending)), &proposalRow),
+				keel.CountInto(
+					exceptions.Where(exceptions.ResolutionState.In(openResolutionStates()...)),
+					&openCount,
+				),
+				keel.IntoValue(decisions.Pick(
+					keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionAccepted)),
+					keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionModified)),
+					keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionRejected)),
+				).Where(
+					decisions.ProposalID.IsNotNull(),
+					decisions.UndoneAt.IsNull(),
+					decisions.CreatedAt.Gte(req.DecisionsSince),
+				), &decisionRow),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("count agent activity: %w", err)
+			}
 
-		return &agentports.AgentActivityTotals{
-			Runs:              int(runRow.Runs),
-			RunsFailed:        int(runRow.Failed),
-			RunsWorking:       int(runRow.Working),
-			RunsAwaiting:      int(runRow.Awaiting),
-			PendingProposals:  int(proposalRow.Pending),
-			OldestPendingAt:   proposalRow.OldestPending,
-			OpenExceptions:    int(openCount),
-			DecisionsAccepted: int(decisionRow.Accepted),
-			DecisionsModified: int(decisionRow.Modified),
-			DecisionsRejected: int(decisionRow.Rejected),
-		}, nil
-	})
+			return &agentactivityports.AgentActivityTotals{
+				Runs:              int(runRow.Runs),
+				RunsFailed:        int(runRow.Failed),
+				RunsWorking:       int(runRow.Working),
+				RunsAwaiting:      int(runRow.Awaiting),
+				PendingProposals:  int(proposalRow.Pending),
+				OldestPendingAt:   proposalRow.OldestPending,
+				OpenExceptions:    int(openCount),
+				DecisionsAccepted: int(decisionRow.Accepted),
+				DecisionsModified: int(decisionRow.Modified),
+				DecisionsRejected: int(decisionRow.Rejected),
+			}, nil
+		},
+	)
 }

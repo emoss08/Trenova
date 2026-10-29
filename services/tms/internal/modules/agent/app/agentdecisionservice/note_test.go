@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,10 +29,10 @@ func (h *decideHarness) decideWithNote(
 	t *testing.T,
 	decision agentdecision.DecisionType,
 	note string,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	t.Helper()
 
-	return h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
+	return h.service.DecideWithOutcome(t.Context(), &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID: h.proposals.proposal.ID,
 		Decision:   decision,
 		ReasonCode: "rejected_in_conversation",

@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -107,14 +108,14 @@ func (s *InsightSource) Snapshot(
 // DecisionSource puts what is waiting on a person on the tower: proposals
 // on their own and plans as one unit, the same queue the Desk decides.
 type DecisionSource struct {
-	queue       agentports.AgentDecisionQueueService
+	queue       agentdecisionqueueports.AgentDecisionQueueService
 	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	kind        watchtower.SourceKind
 }
 
 func NewProposalSource(
-	queue agentports.AgentDecisionQueueService,
+	queue agentdecisionqueueports.AgentDecisionQueueService,
 	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
@@ -127,7 +128,7 @@ func NewProposalSource(
 }
 
 func NewPlanSource(
-	queue agentports.AgentDecisionQueueService,
+	queue agentdecisionqueueports.AgentDecisionQueueService,
 	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
@@ -145,10 +146,10 @@ func (s *DecisionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	pending := make([]agentports.PendingDecision, 0, decisionPageSize)
+	pending := make([]agentdecisionqueueports.PendingDecision, 0, decisionPageSize)
 	after := ""
 	for range decisionPages {
-		page, err := s.queue.ListPending(ctx, agentports.ListPendingDecisionsRequest{
+		page, err := s.queue.ListPending(ctx, agentdecisionqueueports.ListPendingDecisionsRequest{
 			TenantInfo: tenant,
 			First:      decisionPageSize,
 			After:      after,
@@ -336,10 +337,12 @@ func (s *FailedRunSource) Snapshot(
 
 // ExceptionSource puts open agent exceptions on the tower.
 type ExceptionSource struct {
-	repo agentports.AgentExceptionRepository
+	repo agentexceptionports.AgentExceptionRepository
 }
 
-func NewExceptionSource(repo agentports.AgentExceptionRepository) watchtowerports.WatchtowerSource {
+func NewExceptionSource(
+	repo agentexceptionports.AgentExceptionRepository,
+) watchtowerports.WatchtowerSource {
 	return &ExceptionSource{repo: repo}
 }
 
@@ -354,7 +357,7 @@ func (s *ExceptionSource) Snapshot(
 		filterEq("resolutionState", string(agentexception.ResolutionStateOpen)),
 	}
 
-	result, err := s.repo.List(ctx, &agentports.ListAgentExceptionRequest{Filter: filter})
+	result, err := s.repo.List(ctx, &agentexceptionports.ListAgentExceptionRequest{Filter: filter})
 	if err != nil {
 		return nil, err
 	}

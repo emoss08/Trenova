@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsummaryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -54,7 +54,10 @@ func TestSummaries_ReadEachRecordOnceWithItsLaneStatusAndMeasures(t *testing.T) 
 		refs[permission.ResourceCarrier] = append(refs[permission.ResourceCarrier], carrier.ID)
 	}
 	for _, entry := range entries {
-		refs[permission.ResourceJournalEntry] = append(refs[permission.ResourceJournalEntry], entry.ID)
+		refs[permission.ResourceJournalEntry] = append(
+			refs[permission.ResourceJournalEntry],
+			entry.ID,
+		)
 	}
 	missing := pulid.MustNew("shp_")
 	refs[permission.ResourceShipment] = append(refs[permission.ResourceShipment], missing)
@@ -62,7 +65,7 @@ func TestSummaries_ReadEachRecordOnceWithItsLaneStatusAndMeasures(t *testing.T) 
 	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
 		DB: postgres.NewTestConnection(db),
 	})
-	summaries, err := repo.Summaries(ctx, &agentports.RecordSummaryRequest{
+	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,
 		Refs:   refs,
 		Now:    time.Now().Unix(),
@@ -110,7 +113,7 @@ func TestSummaries_ReadNothingOfAnotherTenant(t *testing.T) {
 		DB: postgres.NewTestConnection(db),
 	})
 
-	summaries, err := repo.Summaries(ctx, &agentports.RecordSummaryRequest{
+	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: other,
 		Refs:   map[permission.Resource][]pulid.ID{permission.ResourceShipment: {shipment.ID}},
 		Now:    time.Now().Unix(),
@@ -178,7 +181,7 @@ func TestSummaries_ReadALoadEstimatedToMissAWindowStillOpenAsProjected(t *testin
 	repo := recordsummaryrepository.New(recordsummaryrepository.Params{
 		DB: postgres.NewTestConnection(db),
 	})
-	summaries, err := repo.Summaries(ctx, &agentports.RecordSummaryRequest{
+	summaries, err := repo.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,
 		Refs:   map[permission.Resource][]pulid.ID{permission.ResourceShipment: {move.ShipmentID}},
 		Now:    now,

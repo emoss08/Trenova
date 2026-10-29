@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -487,7 +489,7 @@ func (s *Service) creditWatchtowerSource(
 
 		return
 	case watchtower.SourceAgentProposal:
-		proposal, pErr := s.proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+		proposal, pErr := s.proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 			ID:         sourceID,
 			TenantInfo: &tenant,
 		})
@@ -497,7 +499,7 @@ func (s *Service) creditWatchtowerSource(
 		}
 		runID = proposal.RunID
 	case watchtower.SourceAgentPlan:
-		plan, pErr := s.plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+		plan, pErr := s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
 		})
@@ -509,10 +511,13 @@ func (s *Service) creditWatchtowerSource(
 	case watchtower.SourceAgentRunFailed:
 		runID = sourceID
 	case watchtower.SourceAgentException:
-		exception, xErr := s.exceptions.GetByID(ctx, agentports.GetAgentExceptionByIDRequest{
-			ID:         sourceID,
-			TenantInfo: &tenant,
-		})
+		exception, xErr := s.exceptions.GetByID(
+			ctx,
+			agentexceptionports.GetAgentExceptionByIDRequest{
+				ID:         sourceID,
+				TenantInfo: &tenant,
+			},
+		)
 		if xErr != nil {
 			err = xErr
 			break

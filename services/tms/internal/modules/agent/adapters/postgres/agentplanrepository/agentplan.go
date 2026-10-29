@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentPlanRepository {
+func New(p Params) agentplanports.AgentPlanRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentplan-repository"),
@@ -60,7 +60,7 @@ func (r *repository) Create(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req agentports.ListAgentPlansByIDsRequest,
+	req agentplanports.ListAgentPlansByIDsRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentplan.AgentPlan, error) {
 		if len(req.IDs) == 0 {
@@ -79,7 +79,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentPlanByIDRequest,
+	req agentplanports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		entity, err := agentplandb.AgentPlans.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -95,7 +95,7 @@ func (r *repository) GetByID(
 // first, so a reopened thread can show them where their turns were.
 func (r *repository) ListByThread(
 	ctx context.Context,
-	req agentports.ListAgentPlansByThreadRequest,
+	req agentplanports.ListAgentPlansByThreadRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentplan.AgentPlan, error) {
 		p := agentplandb.AgentPlans
@@ -118,7 +118,7 @@ func (r *repository) ListByThread(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentPlanConnectionRequest,
+	req *agentplanports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
 	return dbtx.Read(
 		ctx,
@@ -145,7 +145,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func statusAssignments(req *agentports.UpdateAgentPlanStatusRequest) []keel.Assignment {
+func statusAssignments(req *agentplanports.UpdateAgentPlanStatusRequest) []keel.Assignment {
 	p := agentplandb.AgentPlans
 	sets := []keel.Assignment{p.Status.To(req.Status)}
 	approval := []keel.Assignment{
@@ -194,7 +194,7 @@ func statusAssignments(req *agentports.UpdateAgentPlanStatusRequest) []keel.Assi
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req agentports.UpdateAgentPlanStatusRequest,
+	req agentplanports.UpdateAgentPlanStatusRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentplandb.AgentPlans
@@ -215,7 +215,7 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) RecordProgress(
 	ctx context.Context,
-	req agentports.RecordAgentPlanProgressRequest,
+	req agentplanports.RecordAgentPlanProgressRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentplandb.AgentPlans
@@ -245,7 +245,7 @@ func (r *repository) RecordProgress(
 
 func (r *repository) ExpirePending(
 	ctx context.Context,
-	req agentports.ExpireAgentPlansRequest,
+	req agentplanports.ExpireAgentPlansRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -274,7 +274,7 @@ func (r *repository) ExpirePending(
 
 func (r *repository) ExpirePendingByThread(
 	ctx context.Context,
-	req agentports.ExpireAgentPlansByThreadRequest,
+	req agentplanports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns
@@ -296,7 +296,7 @@ func (r *repository) ExpirePendingByThread(
 
 func (r *repository) ExpirePendingByDefinition(
 	ctx context.Context,
-	req agentports.ExpireAgentPlansByDefinitionRequest,
+	req agentplanports.ExpireAgentPlansByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns

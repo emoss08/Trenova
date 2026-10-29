@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,7 +49,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentDecisionQueueRepository {
+func New(p Params) agentdecisionqueueports.AgentDecisionQueueRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdecisionqueue-repository"),
@@ -65,13 +65,13 @@ type pendingTotals struct {
 // stands on its own, and every pending plan as one row, each with the run's
 // agent beside it. Both halves are scoped to the tenant and skip what has
 // expired.
-func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
+func pendingQueue(req *agentdecisionqueueports.ListPendingDecisionsQuery) *keel.CTETable {
 	p := agentdb.AgentProposals
 	pRun := agentdb.AgentRuns.As("prun")
 	pDef := agentdefinitiondb.Definitions.As("pdef")
 	proposals := p.
 		Pick(
-			keel.Text(string(agentports.PendingDecisionProposal)),
+			keel.Text(string(agentdecisionqueueports.PendingDecisionProposal)),
 			p.ID,
 			p.CreatedAt,
 			pRun.AgentDefinitionID,
@@ -96,7 +96,7 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 	step := agentdb.AgentProposals.As("step")
 	plans := pl.
 		Pick(
-			keel.Text(string(agentports.PendingDecisionPlan)),
+			keel.Text(string(agentdecisionqueueports.PendingDecisionPlan)),
 			pl.ID,
 			pl.CreatedAt,
 			plRun.AgentDefinitionID,
@@ -149,12 +149,12 @@ func clampLimit(limit int) int {
 
 func (r *repository) ListPending(
 	ctx context.Context,
-	req agentports.ListPendingDecisionsQuery,
-) (*agentports.PendingDecisionsPageRow, error) {
+	req agentdecisionqueueports.ListPendingDecisionsQuery,
+) (*agentdecisionqueueports.PendingDecisionsPageRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentports.PendingDecisionsPageRow, error) {
+		func(ctx context.Context) (*agentdecisionqueueports.PendingDecisionsPageRow, error) {
 			limit := clampLimit(req.Limit)
 			q := pendingQueue(&req)
 			createdAt, id := q.Col("created_at"), q.Col("id")
@@ -167,7 +167,7 @@ func (r *repository) ListPending(
 				)
 			}
 
-			entries, err := keel.Into[agentports.PendingDecisionEntry](
+			entries, err := keel.Into[agentdecisionqueueports.PendingDecisionEntry](
 				ctx,
 				r.db.Keel(ctx),
 				q.Query().With(q).
@@ -182,9 +182,9 @@ func (r *repository) ListPending(
 				return nil, fmt.Errorf("list pending decisions: %w", err)
 			}
 
-			page := &agentports.PendingDecisionsPageRow{Entries: entries}
+			page := &agentdecisionqueueports.PendingDecisionsPageRow{Entries: entries}
 			if page.Entries == nil {
-				page.Entries = []agentports.PendingDecisionEntry{}
+				page.Entries = []agentdecisionqueueports.PendingDecisionEntry{}
 			}
 			if len(entries) > limit {
 				page.Entries = entries[:limit]
@@ -198,7 +198,7 @@ func (r *repository) ListPending(
 
 func (r *repository) CountPending(
 	ctx context.Context,
-	req agentports.ListPendingDecisionsQuery,
+	req agentdecisionqueueports.ListPendingDecisionsQuery,
 ) (keel.RowCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
 		q := pendingQueue(&req)
@@ -217,13 +217,13 @@ func (r *repository) CountPending(
 
 func (r *repository) Summary(
 	ctx context.Context,
-	req agentports.PendingDecisionSummaryRequest,
-) (*agentports.PendingDecisionSummary, error) {
+	req agentdecisionqueueports.PendingDecisionSummaryRequest,
+) (*agentdecisionqueueports.PendingDecisionSummary, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentports.PendingDecisionSummary, error) {
-			q := pendingQueue(&agentports.ListPendingDecisionsQuery{
+		func(ctx context.Context) (*agentdecisionqueueports.PendingDecisionSummary, error) {
+			q := pendingQueue(&agentdecisionqueueports.ListPendingDecisionsQuery{
 				TenantInfo: req.TenantInfo,
 				Audience:   req.Audience,
 				Now:        req.Now,
@@ -234,8 +234,8 @@ func (r *repository) Summary(
 
 			var (
 				totals  pendingTotals
-				byAgent []agentports.PendingDecisionAgentCount
-				byTool  []agentports.PendingDecisionToolCount
+				byAgent []agentdecisionqueueports.PendingDecisionAgentCount
+				byTool  []agentdecisionqueueports.PendingDecisionToolCount
 			)
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.IntoValue(
@@ -263,10 +263,10 @@ func (r *repository) Summary(
 				return nil, fmt.Errorf("summarize pending decisions: %w", err)
 			}
 
-			summary := &agentports.PendingDecisionSummary{
+			summary := &agentdecisionqueueports.PendingDecisionSummary{
 				Total:   int(totals.Total),
-				ByAgent: []agentports.PendingDecisionAgentCount{},
-				ByTool:  []agentports.PendingDecisionToolCount{},
+				ByAgent: []agentdecisionqueueports.PendingDecisionAgentCount{},
+				ByTool:  []agentdecisionqueueports.PendingDecisionToolCount{},
 			}
 			if totals.Total == 0 {
 				return summary, nil
@@ -286,49 +286,53 @@ func (r *repository) Summary(
 
 func (r *repository) ListRecent(
 	ctx context.Context,
-	req agentports.ListRecentDecisionsQuery,
-) ([]agentports.RecentDecisionEntry, error) {
+	req agentdecisionqueueports.ListRecentDecisionsQuery,
+) ([]agentdecisionqueueports.RecentDecisionEntry, error) {
 	limit := clampLimit(req.Limit)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]agentports.RecentDecisionEntry, error) {
+		func(ctx context.Context) ([]agentdecisionqueueports.RecentDecisionEntry, error) {
 			d := agentdecisiondb.AgentDecisions
 			p := agentdb.AgentProposals
 			run := agentdb.AgentRuns
 			def := agentdefinitiondb.Definitions
 			u := tenantdb.Users
 
-			entries, err := keel.Into[agentports.RecentDecisionEntry](ctx, r.db.Keel(ctx), d.
-				Pick(
-					d.ID,
-					p.ID,
-					keel.CastText(d.Decision),
-					d.ReasonCode,
-					d.Note.Coalesce(""),
-					d.DecidedByUserID,
-					u.Name.Coalesce(""),
-					d.CreatedAt,
-				).
-				Join(p, p.ID.EqCol(d.ProposalID)).
-				Join(run, run.ID.EqCol(p.RunID)).
-				LeftJoin(def, def.ID.EqCol(run.AgentDefinitionID)).
-				LeftJoin(u, u.ID.EqCol(d.DecidedByUserID)).
-				Where(
-					d.CreatedAt.Gte(req.Since),
-					p.PlanID.IsNull(),
-					audience(def, req.Audience),
-				).
-				Order(d.CreatedAt.Desc(), d.ID.Desc()).
-				Limit(limit))
+			entries, err := keel.Into[agentdecisionqueueports.RecentDecisionEntry](
+				ctx,
+				r.db.Keel(ctx),
+				d.
+					Pick(
+						d.ID,
+						p.ID,
+						keel.CastText(d.Decision),
+						d.ReasonCode,
+						d.Note.Coalesce(""),
+						d.DecidedByUserID,
+						u.Name.Coalesce(""),
+						d.CreatedAt,
+					).
+					Join(p, p.ID.EqCol(d.ProposalID)).
+					Join(run, run.ID.EqCol(p.RunID)).
+					LeftJoin(def, def.ID.EqCol(run.AgentDefinitionID)).
+					LeftJoin(u, u.ID.EqCol(d.DecidedByUserID)).
+					Where(
+						d.CreatedAt.Gte(req.Since),
+						p.PlanID.IsNull(),
+						audience(def, req.Audience),
+					).
+					Order(d.CreatedAt.Desc(), d.ID.Desc()).
+					Limit(limit),
+			)
 			if err != nil {
 				r.l.Error("failed to list recent decisions", zap.Error(err))
 
 				return nil, fmt.Errorf("list recent decisions: %w", err)
 			}
 			if entries == nil {
-				entries = []agentports.RecentDecisionEntry{}
+				entries = []agentdecisionqueueports.RecentDecisionEntry{}
 			}
 
 			return entries, nil

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -56,7 +56,7 @@ type harnessParams struct {
 	action []agenttoolports.AgentTool
 	ledger agentruntimeports.RunStepLedger
 	// budgets reads the organization's money limits for a money write.
-	budgets agentports.AgentBudgetService
+	budgets agentbudgetports.AgentBudgetService
 	// delegates opens another agent's turn when the run's agent hands it a
 	// task.
 	delegates DelegateOpener

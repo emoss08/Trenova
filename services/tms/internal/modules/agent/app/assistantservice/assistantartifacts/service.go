@@ -23,8 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -560,7 +562,7 @@ func (s *Service) appendRunVersion(
 			PrincipalType: permissionports.PrincipalTypeUser,
 			PrincipalID:   req.UserID,
 			UserID:        req.UserID,
-		}, agentports.ActivityUpdated)
+		}, agentactivityports.ActivityUpdated)
 	}
 	out := artifactpayload.ToAssistantArtifact(saved)
 
@@ -682,7 +684,7 @@ func (s *Service) followDecisions(
 	if wantProposals && s.proposals != nil {
 		proposals, err := s.proposals.ListByThread(
 			ctx,
-			agentports.ListAgentProposalsByThreadRequest{
+			agentproposalports.ListAgentProposalsByThreadRequest{
 				ThreadID:   req.ID,
 				TenantInfo: req.TenantInfo,
 			},
@@ -708,7 +710,7 @@ func (s *Service) followDecisions(
 	}
 
 	if wantPlans && s.plans != nil {
-		plans, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
+		plans, err := s.plans.ListByThread(ctx, agentplanports.ListAgentPlansByThreadRequest{
 			ThreadID:   req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -964,7 +966,7 @@ func (s *Service) appendDocumentVersion(
 			PrincipalType: permissionports.PrincipalTypeUser,
 			PrincipalID:   req.UserID,
 			UserID:        req.UserID,
-		}, agentports.ActivityUpdated)
+		}, agentactivityports.ActivityUpdated)
 	}
 	out := artifactpayload.ToAssistantArtifact(saved)
 
@@ -1114,7 +1116,7 @@ type Service struct {
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	artifacts     assistantartifactports.AssistantArtifactRepository
 	permissions   permissionports.PermissionEngine
-	activity      agentports.AgentActivityPublisher
+	activity      agentactivityports.AgentActivityPublisher
 	proposals     proposalstores.ProposalStore
 	plans         proposalstores.PlanStore
 	queries       agenttoolports.AgentQueryToolRegistry

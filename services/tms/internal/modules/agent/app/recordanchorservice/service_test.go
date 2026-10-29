@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordanchorservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -96,7 +96,7 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 		Now:        func() int64 { return now },
 	})
 
-	anchors := service.Anchor(t.Context(), &agentports.RecordAnchorRequest{
+	anchors := service.Anchor(t.Context(), &recordanchorports.RecordAnchorRequest{
 		Actor: &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 		Records: []agentpagecontext.EntityRef{
 			{ID: shipmentID.String(), Label: "the acme load"},
@@ -146,7 +146,7 @@ func TestAnchor_NothingToReadIsNothing(t *testing.T) {
 	t.Parallel()
 
 	service := recordanchorservice.NewWithDependencies(&recordanchorservice.Dependencies{})
-	assert.Nil(t, service.Anchor(t.Context(), &agentports.RecordAnchorRequest{}))
+	assert.Nil(t, service.Anchor(t.Context(), &recordanchorports.RecordAnchorRequest{}))
 	assert.Nil(t, service.Anchor(t.Context(), nil))
 }
 

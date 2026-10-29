@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ type threadPlans struct {
 
 func (s *threadPlans) ListByThread(
 	context.Context,
-	agentports.ListAgentPlansByThreadRequest,
+	agentplanports.ListAgentPlansByThreadRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return s.plans, nil
 }
@@ -80,7 +80,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 
 func (s *threadPlans) ExpirePendingByThread(
 	context.Context,
-	agentports.ExpireAgentPlansByThreadRequest,
+	agentplanports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

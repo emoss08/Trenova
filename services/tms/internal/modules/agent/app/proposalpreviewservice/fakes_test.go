@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -254,7 +255,7 @@ func (f *fakeBaselines) Create(_ context.Context, baseline *agentpreview.Proposa
 
 func (f *fakeBaselines) ListByProposals(
 	_ context.Context,
-	req agentports.ListProposalBaselinesRequest,
+	req agentproposalports.ListProposalBaselinesRequest,
 ) ([]*agentpreview.ProposalBaseline, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
@@ -277,7 +278,7 @@ type fakeDecisions struct {
 
 func (f *fakeDecisions) ListByProposals(
 	context.Context,
-	agentports.ListAgentDecisionsByProposalsRequest,
+	agentdecisionports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
@@ -288,7 +289,7 @@ type fakeSteps struct {
 
 func (f *fakeSteps) ListByPlan(
 	context.Context,
-	agentports.ListAgentProposalsByPlanRequest,
+	agentproposalports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }

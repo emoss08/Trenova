@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -229,7 +229,7 @@ type Service struct {
 	invalidator          shipmentinvalidationports.ShipmentInvalidator
 	commercial           *shipmentcommercial.Calculator
 	distanceCalculation  shipmentdistanceports.DistanceCalculationService
-	agentEvents          agentports.AgentEventPublisher
+	agentEvents          agenteventports.AgentEventPublisher
 	mutationObservers    []shipmentserviceports.ShipmentMutationObserver
 	effects              *shipmenteffects.Effects
 	readiness            *shipmentbillingreadiness.Service
@@ -256,7 +256,7 @@ type Deps struct {
 	Invalidator          shipmentinvalidationports.ShipmentInvalidator
 	Commercial           *shipmentcommercial.Calculator
 	DistanceCalculation  shipmentdistanceports.DistanceCalculationService
-	AgentEvents          agentports.AgentEventPublisher
+	AgentEvents          agenteventports.AgentEventPublisher
 	MutationObservers    []shipmentserviceports.ShipmentMutationObserver
 	Effects              *shipmenteffects.Effects
 	Readiness            *shipmentbillingreadiness.Service
@@ -422,7 +422,7 @@ func (s *Service) announceCreated(
 		),
 	)
 
-	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.agentEvents, agenteventports.AgentEvent{
 		Kind:      agenttrigger.EventShipmentCreated,
 		SubjectID: created.ID,
 		TenantInfo: pagination.TenantInfo{

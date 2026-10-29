@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -31,11 +33,11 @@ type Params struct {
 	Runtime       *agentruntime.Service
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository `optional:"true"`
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository `optional:"true"`
 	AIProviders   aiproviderports.AIProviderRepository
 	Shadow        *agentshadow.Resolver
-	Budgets       agentports.AgentBudgetService `optional:"true"`
+	Budgets       agentbudgetports.AgentBudgetService `optional:"true"`
 	Permissions   permissionports.PermissionEngine
 	Cases         deskcaseports.AssistantCaseStates                     `optional:"true"`
 	Runs          agentruntimeports.AgentRunRepository                  `optional:"true"`

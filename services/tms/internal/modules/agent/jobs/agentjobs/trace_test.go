@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -125,14 +125,14 @@ func TestFinishReplay_AnEvaluationIsItsOwnTraceMarkedAsOne(t *testing.T) {
 }
 
 type expiringProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	expired int
 }
 
 func (p *expiringProposals) ExpirePendingByRun(
 	context.Context,
-	agentports.ExpireAgentProposalsByRunRequest,
+	agentproposalports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	return p.expired, nil
 }

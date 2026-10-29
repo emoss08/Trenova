@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,15 +24,15 @@ import (
 const fixedNow = 1_700_000_000
 
 type stubScorecards struct {
-	agentports.AgentScorecardRepository
+	agentevaluationports.AgentScorecardRepository
 
-	asked  agentports.ScorecardRequest
+	asked  agentevaluationports.ScorecardRequest
 	totals *agentevaluation.ScorecardTotals
 }
 
 func (s *stubScorecards) Aggregate(
 	_ context.Context,
-	req agentports.ScorecardRequest,
+	req agentevaluationports.ScorecardRequest,
 ) (*agentevaluation.ScorecardTotals, error) {
 	s.asked = req
 	if s.totals == nil {
@@ -100,8 +100,8 @@ func actor() *permissionports.RequestActor {
 	}
 }
 
-func request(window agentevaluation.ScorecardWindow) agentports.AgentScorecardRequest {
-	return agentports.AgentScorecardRequest{
+func request(window agentevaluation.ScorecardWindow) agentevaluationports.AgentScorecardRequest {
+	return agentevaluationports.AgentScorecardRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),

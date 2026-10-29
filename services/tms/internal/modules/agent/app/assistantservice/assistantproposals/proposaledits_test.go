@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,12 +17,12 @@ import (
 )
 
 type recordingEdits struct {
-	saved []agentports.SetPendingModificationsRequest
+	saved []agentproposalports.SetPendingModificationsRequest
 }
 
 func (r *recordingEdits) SetPendingModifications(
 	_ context.Context,
-	req agentports.SetPendingModificationsRequest,
+	req agentproposalports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	r.saved = append(r.saved, req)
 

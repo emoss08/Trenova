@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -53,10 +54,13 @@ func (r *Deps) ProposalPreview(
 	}
 
 	tenant := resolvercore.TenantInfo(authCtx)
-	proposal, err := r.AgentProposalService.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
-		ID:         proposalID,
-		TenantInfo: &tenant,
-	})
+	proposal, err := r.AgentProposalService.GetByID(
+		ctx,
+		agentproposalports.GetAgentProposalByIDRequest{
+			ID:         proposalID,
+			TenantInfo: &tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +82,7 @@ func (r *Deps) PlanPreview(
 		return nil, err
 	}
 
-	plan, err := r.AgentPlanService.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+	plan, err := r.AgentPlanService.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})

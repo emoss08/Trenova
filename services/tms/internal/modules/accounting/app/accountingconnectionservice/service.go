@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -31,7 +31,7 @@ type Params struct {
 	AuditService  auditports.AuditService
 	Realtime      realtimeports.RealtimeService                                     `optional:"true"`
 	Watchtower    watchtowerports.WatchtowerProjector                               `optional:"true"`
-	Publisher     agentports.AgentEventPublisher                                    `optional:"true"`
+	Publisher     agenteventports.AgentEventPublisher                               `optional:"true"`
 	Refresher     accountingconnectionports.AccountingReferenceRefresher            `optional:"true"`
 	Poller        accountinginboundports.AccountingChangePoller                     `optional:"true"`
 	Plans         platformplanports.PlanService                                     `optional:"true"`

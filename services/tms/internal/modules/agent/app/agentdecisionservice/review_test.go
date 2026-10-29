@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -108,8 +108,8 @@ func planStep(
 	h *decideHarness,
 	step *agentpreview.ProposalPreview,
 	reviewed bool,
-) *agentports.DecideAgentProposalRequest {
-	return &agentports.DecideAgentProposalRequest{
+) *agentdecisionports.DecideAgentProposalRequest {
+	return &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:          h.proposals.proposal.ID,
 		Decision:            agentdecision.DecisionAccepted,
 		ReasonCode:          "looks_right",

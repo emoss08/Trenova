@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 )
 
@@ -15,9 +16,9 @@ import (
 // came to depend on what the bench had run before.
 type unlearned struct{}
 
-func (unlearned) AfterTurn(context.Context, *agentports.ReflectOnThreadRequest) {}
+func (unlearned) AfterTurn(context.Context, *agentreflectionports.ReflectOnThreadRequest) {}
 
-func (unlearned) AfterRun(context.Context, *agentports.ReflectOnRunRequest) {}
+func (unlearned) AfterRun(context.Context, *agentreflectionports.ReflectOnRunRequest) {}
 
 // unchaptered keeps chapter titling out of the bench: it is a model call per
 // question that the bench neither scores nor should pay for, and its calls
@@ -33,7 +34,7 @@ func (unchaptered) Cue(context.Context, *assistantchapterports.ChapterTurnReques
 // found nothing to approve; the rejections would have taken tiers back the
 // same way.
 type untrusted struct {
-	agentports.AgentTrustService
+	agenttrustports.AgentTrustService
 }
 
 func (untrusted) RecordDecision(

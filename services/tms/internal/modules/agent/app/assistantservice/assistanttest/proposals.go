@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
@@ -117,17 +117,17 @@ type StubProposalRepo struct {
 	ByThread []*agent.AgentProposal
 	err      error
 	ListErr  error
-	LastList agentports.ListAgentProposalsByThreadRequest
+	LastList agentproposalports.ListAgentProposalsByThreadRequest
 
 	ByRun   []*agent.AgentProposal
-	LastRun agentports.ListAgentProposalsByRunRequest
+	LastRun agentproposalports.ListAgentProposalsByRunRequest
 
 	ExpiredThreads []pulid.ID
 }
 
 func (r *StubProposalRepo) ListByRun(
 	_ context.Context,
-	req agentports.ListAgentProposalsByRunRequest,
+	req agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	r.LastRun = req
 	if r.ListErr != nil {
@@ -153,7 +153,7 @@ func (r *StubProposalRepo) Create(
 
 func (r *StubProposalRepo) ListByThread(
 	_ context.Context,
-	req agentports.ListAgentProposalsByThreadRequest,
+	req agentproposalports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	r.LastList = req
 	if r.ListErr != nil {
@@ -186,7 +186,7 @@ func (r *StubConversationRepo) GetThread(
 
 func (r *StubProposalRepo) ExpirePendingByThread(
 	_ context.Context,
-	req agentports.ExpireAgentProposalsByThreadRequest,
+	req agentproposalports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	r.ExpiredThreads = append(r.ExpiredThreads, req.ThreadID)
 

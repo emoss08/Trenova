@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -45,7 +45,7 @@ func (s *Service) RunTranscript(
 		return nil, err
 	}
 
-	proposals, err := s.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
+	proposals, err := s.proposals.ListByRun(ctx, agentproposalports.ListAgentProposalsByRunRequest{
 		RunID:      run.ID,
 		TenantInfo: tenant,
 	})
@@ -137,10 +137,13 @@ func (s *Service) Transcript(
 		return nil, err
 	}
 
-	proposals, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	proposals, err := s.proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

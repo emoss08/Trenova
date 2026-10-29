@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -27,7 +27,7 @@ type DispatcherParams struct {
 	Versions agenttoolports.RecordVersionReader
 	// Budgets is optional. With it an automatic write past its tool's daily
 	// cap is refused before it runs.
-	Budgets agentports.AgentBudgetService
+	Budgets agentbudgetports.AgentBudgetService
 	Trust   agenttoolports.AgentToolTrustRepository
 	// Previews is optional. With it a held write's target is pinned, and
 	// what it would do kept as its baseline, in one read-only snapshot;
@@ -57,7 +57,7 @@ type Dispatcher struct {
 	actionTools agenttoolports.AgentToolRegistry
 	permissions permissionports.PermissionEngine
 	versions    agenttoolports.RecordVersionReader
-	budgets     agentports.AgentBudgetService
+	budgets     agentbudgetports.AgentBudgetService
 	trust       agenttoolports.AgentToolTrustRepository
 	previews    agentruntimeports.ProposalPreviewService
 	rules       agenttoolports.ToolRuleOverrides

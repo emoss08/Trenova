@@ -19,10 +19,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -67,15 +73,15 @@ type deps struct {
 	Users            tenantports.UserRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
 	Providers        aiproviderports.AIProviderRepository
-	Proposals        agentports.AgentProposalRepository
+	Proposals        agentproposalports.AgentProposalRepository
 	Previews         agentruntimeports.ProposalPreviewService
-	Decisions        agentports.AgentDecisionService
-	Plans            agentports.AgentPlanService
-	Committer        agentports.ApprovalCommitter
+	Decisions        agentdecisionports.AgentDecisionService
+	Plans            agentplanports.AgentPlanService
+	Committer        agentapprovalports.ApprovalCommitter
 	Documents        *documentservice.Service
 	Contents         documentports.DocumentContentService
-	Recommender      agentports.AgentRecommender
-	Runs             agentports.AgentRunService
+	Recommender      agentrecommendationports.AgentRecommender
+	Runs             agentruntimeports.AgentRunService
 	RunRecords       agentruntimeports.AgentRunRepository
 	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
 	ActionTools      agenttoolports.AgentToolRegistry
@@ -159,17 +165,21 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			bench.recorder = benchrecord.NewRecorder(inner)
 			return bench.recorder
 		}),
-		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
-			return unlearned{}
-		}),
+		fx.Decorate(
+			func(agentreflectionports.AgentReflectionScheduler) agentreflectionports.AgentReflectionScheduler {
+				return unlearned{}
+			},
+		),
 		fx.Decorate(
 			func(assistantchapterports.ChapterScheduler) assistantchapterports.ChapterScheduler {
 				return unchaptered{}
 			},
 		),
-		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
-			return untrusted{AgentTrustService: inner}
-		}),
+		fx.Decorate(
+			func(inner agenttrustports.AgentTrustService) agenttrustports.AgentTrustService {
+				return untrusted{AgentTrustService: inner}
+			},
+		),
 		fx.Decorate(
 			func(inner tenantports.AgentControlRepository) tenantports.AgentControlRepository {
 				return unshadowed{AgentControlRepository: inner}

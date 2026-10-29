@@ -22,8 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -74,10 +76,13 @@ func (a *Activities) openReplay(
 ) (*replay, error) {
 	tenant := payload.TenantInfo()
 
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         payload.EvaluationID,
-		TenantInfo: tenant,
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         payload.EvaluationID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"agent evaluation unavailable", "EvaluationUnavailable", err,
@@ -545,10 +550,13 @@ func (a *Activities) FinishReplayActivity(
 	ctx context.Context,
 	input *FinishReplayInput,
 ) (*ReplayRunResult, error) {
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         input.Payload.EvaluationID,
-		TenantInfo: input.Payload.TenantInfo(),
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         input.Payload.EvaluationID,
+			TenantInfo: input.Payload.TenantInfo(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -614,10 +622,13 @@ func emitEvaluationRoot(
 // FailEvaluationActivity records why a replay did not finish, so the row
 // never sits at Running with nothing to say.
 func (a *Activities) FailEvaluationActivity(ctx context.Context, input *FailEvaluationInput) error {
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         input.EvaluationID,
-		TenantInfo: input.TenantInfo,
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         input.EvaluationID,
+			TenantInfo: input.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -644,10 +655,13 @@ func (a *Activities) originalProposals(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]agentreplay.OriginalProposal, error) {
-	proposals, err := a.proposalRepo.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
-		RunID:      runID,
-		TenantInfo: tenant,
-	})
+	proposals, err := a.proposalRepo.ListByRun(
+		ctx,
+		agentproposalports.ListAgentProposalsByRunRequest{
+			RunID:      runID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list source proposals: %w", err)
 	}
@@ -658,7 +672,10 @@ func (a *Activities) originalProposals(
 	}
 	decisions, err := a.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("list source decisions: %w", err)

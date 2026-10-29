@@ -502,7 +502,7 @@ unstable digest shows itself.
 | Piece | Path (under `services/tms`) |
 |---|---|
 | Model, bounds, digest | `internal/modules/agent/domain/agentpreview/preview.go`, `proposalbaseline.go` |
-| Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
+| Ports | `internal/modules/agent/ports/agenttoolports/agenttool.go`, `internal/modules/agent/ports/agentruntimeports/proposalpreview.go`, `internal/modules/agent/ports/agentproposalports/agentproposalbaseline.go` |
 | Builder | `internal/modules/agent/app/toolpreview/` |
 | Service | `internal/modules/agent/app/proposalpreviewservice/` |
 | Labels, baselines | `internal/modules/agent/adapters/postgres/{recordlabelrepository,agentproposalbaselinerepository}/` |

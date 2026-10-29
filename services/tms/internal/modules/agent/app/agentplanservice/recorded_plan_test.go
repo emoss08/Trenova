@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -62,9 +63,9 @@ type executingDecider struct {
 
 func (d *executingDecider) DecideWithOutcome(
 	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	outcome, err := d.fakeDecider.DecideWithOutcome(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -152,7 +153,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		shadow:    fakeShadow{},
 	}
 
-	plan, err := svc.Decide(t.Context(), &agentports.DecideAgentPlanRequest{
+	plan, err := svc.Decide(t.Context(), &agentplanports.DecideAgentPlanRequest{
 		PlanID:     result.Plan.ID,
 		Decision:   agentdecision.DecisionAccepted,
 		ReasonCode: "approve all",

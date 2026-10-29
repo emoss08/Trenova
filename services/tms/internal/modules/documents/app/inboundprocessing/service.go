@@ -3,7 +3,7 @@ package inboundprocessing
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -25,7 +25,7 @@ type Params struct {
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
 	Completion    llmports.CompletionService             `optional:"true"`
-	Events        agentports.AgentEventPublisher         `optional:"true"`
+	Events        agenteventports.AgentEventPublisher    `optional:"true"`
 	Hints         inboundmessageports.SenderHintProvider `optional:"true"`
 	Indexer       retrievalports.RetrievalIndexer        `optional:"true"`
 	Logger        *zap.Logger
@@ -50,7 +50,7 @@ type Params struct {
 type Service struct {
 	activityRepo  inboundmessageports.TriageActivityRepository
 	completion    llmports.CompletionService
-	events        agentports.AgentEventPublisher
+	events        agenteventports.AgentEventPublisher
 	hints         inboundmessageports.SenderHintProvider
 	indexer       retrievalports.RetrievalIndexer
 	l             *zap.Logger

@@ -6,7 +6,9 @@ package approvalwindow
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/fx"
 )
@@ -14,20 +16,23 @@ import (
 type Params struct {
 	fx.In
 
-	Decisions agentports.AgentDecisionService
-	Plans     agentports.AgentPlanService
+	Decisions agentdecisionports.AgentDecisionService
+	Plans     agentplanports.AgentPlanService
 }
 
 type Service struct {
-	decisions agentports.ApprovalCommitter
-	plans     agentports.ApprovalCommitter
+	decisions agentapprovalports.ApprovalCommitter
+	plans     agentapprovalports.ApprovalCommitter
 }
 
-func New(p Params) agentports.ApprovalCommitter {
+func New(p Params) agentapprovalports.ApprovalCommitter {
 	return &Service{decisions: p.Decisions, plans: p.Plans}
 }
 
-func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitApprovalRequest) error {
+func (s *Service) CommitApproval(
+	ctx context.Context,
+	req *agentapprovalports.CommitApprovalRequest,
+) error {
 	if req.PlanID.IsNotNil() {
 		return s.plans.CommitApproval(ctx, req)
 	}
@@ -37,7 +42,7 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 
 func (s *Service) UndoOwnApproval(
 	ctx context.Context,
-	req *agentports.SettleApprovalRequest,
+	req *agentapprovalports.SettleApprovalRequest,
 	actor *permissionports.RequestActor,
 ) error {
 	if req.PlanID.IsNotNil() {
@@ -49,7 +54,7 @@ func (s *Service) UndoOwnApproval(
 
 func (s *Service) CommitOwnApprovalNow(
 	ctx context.Context,
-	req *agentports.SettleApprovalRequest,
+	req *agentapprovalports.SettleApprovalRequest,
 	actor *permissionports.RequestActor,
 ) error {
 	if req.PlanID.IsNotNil() {

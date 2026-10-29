@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
@@ -71,7 +71,7 @@ type Params struct {
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers intake on a file that could
 	// not be turned into shipments or updates.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -93,7 +93,7 @@ type Service struct {
 	replayer            *edilading.Replayer
 	metrics             *documentmetrics.EDI
 	watchtower          watchtowerports.WatchtowerProjector
-	publisher           agentports.AgentEventPublisher
+	publisher           agenteventports.AgentEventPublisher
 	contentGate         contentscanports.Gate
 }
 
@@ -343,7 +343,7 @@ func (s *Service) processInboundFile(
 		s.notifyQuarantinedFile(ctx, updated)
 	}
 	if tendered {
-		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventEDITenderReceived,
 			SubjectID:  updated.ID,
 			TenantInfo: inboundFileTenant(updated),
@@ -382,7 +382,7 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *ediinboundfil
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
 	}
 
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventEDIFileQuarantined,
 		SubjectID:  file.ID,
 		TenantInfo: inboundFileTenant(file),

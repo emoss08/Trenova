@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +23,7 @@ import (
 const judgeReply = `{"score":0.9,"rationale":"It answered from the records."}`
 
 type judgedEvaluations struct {
-	agentports.AgentEvaluationRepository
+	agentevaluationports.AgentEvaluationRepository
 	stored  map[pulid.ID]*agentevaluation.Evaluation
 	order   []pulid.ID
 	updates int
@@ -41,7 +41,7 @@ func (f *judgedEvaluations) clone(id pulid.ID) *agentevaluation.Evaluation {
 
 func (f *judgedEvaluations) ListBySuiteRun(
 	_ context.Context,
-	req agentports.ListSuiteEvaluationsRequest,
+	req agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	out := make([]*agentevaluation.Evaluation, 0, len(f.order))
 	for _, id := range f.order {
@@ -55,7 +55,7 @@ func (f *judgedEvaluations) ListBySuiteRun(
 
 func (f *judgedEvaluations) GetByID(
 	_ context.Context,
-	req agentports.GetAgentEvaluationByIDRequest,
+	req agentevaluationports.GetAgentEvaluationByIDRequest,
 ) (*agentevaluation.Evaluation, error) {
 	if _, ok := f.stored[req.ID]; !ok {
 		return nil, errortypes.NewNotFoundError("Evaluation not found")

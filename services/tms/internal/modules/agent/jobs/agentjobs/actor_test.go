@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -97,12 +97,12 @@ func TestUnattendedActor_AMissingSystemUserFailsTheAttemptRetryably(t *testing.T
 }
 
 type noProposalsYet struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 }
 
 func (noProposalsYet) ListByRun(
 	context.Context,
-	agentports.ListAgentProposalsByRunRequest,
+	agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }

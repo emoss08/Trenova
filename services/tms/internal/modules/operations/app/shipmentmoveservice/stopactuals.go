@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -345,7 +345,7 @@ func (s *service) publishStopActualEvent(
 		at = *req.OccurredAt
 	}
 
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  req.MoveID,
 		TenantInfo: req.TenantInfo,

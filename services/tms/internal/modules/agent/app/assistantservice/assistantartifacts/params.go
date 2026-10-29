@@ -2,8 +2,10 @@ package assistantartifacts
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposalstores"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
@@ -24,10 +26,10 @@ type Params struct {
 	Logger        *zap.Logger
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository                     `optional:"true"`
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository                 `optional:"true"`
 	Artifacts     assistantartifactports.AssistantArtifactRepository `optional:"true"`
-	Activity      agentports.AgentActivityPublisher                  `optional:"true"`
+	Activity      agentactivityports.AgentActivityPublisher          `optional:"true"`
 	Permissions   permissionports.PermissionEngine
 	Runs          agentruntimeports.AgentRunRepository  `optional:"true"`
 	Users         tenantports.UserRepository            `optional:"true"`

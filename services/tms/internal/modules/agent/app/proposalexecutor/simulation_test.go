@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -31,21 +31,21 @@ func (f fixedDefinition) ForRun(
 }
 
 type fakeBudgets struct {
-	refusal agentports.BudgetRefusal
+	refusal agentbudgetports.BudgetRefusal
 	asked   string
 }
 
 func (f *fakeBudgets) CheckRun(
 	context.Context,
 	*agentdefinition.Definition,
-) (agentports.BudgetRefusal, error) {
-	return agentports.BudgetRefusal{}, nil
+) (agentbudgetports.BudgetRefusal, error) {
+	return agentbudgetports.BudgetRefusal{}, nil
 }
 
 func (f *fakeBudgets) CheckTool(
 	_ context.Context,
-	req agentports.CheckToolBudgetRequest,
-) (agentports.BudgetRefusal, error) {
+	req agentbudgetports.CheckToolBudgetRequest,
+) (agentbudgetports.BudgetRefusal, error) {
 	f.asked = req.ToolName
 
 	return f.refusal, nil
@@ -53,7 +53,7 @@ func (f *fakeBudgets) CheckTool(
 
 func (f *fakeBudgets) MoneyAllowance(
 	context.Context,
-	agentports.MoneyAllowanceRequest,
+	agentbudgetports.MoneyAllowanceRequest,
 ) (agenttooltrust.MoneyAllowance, error) {
 	return agenttooltrust.MoneyAllowance{}, nil
 }
@@ -61,7 +61,7 @@ func (f *fakeBudgets) MoneyAllowance(
 func (f *fakeBudgets) Status(
 	context.Context,
 	*agentdefinition.Definition,
-) (*agentports.AgentBudgetStatus, error) {
+) (*agentbudgetports.AgentBudgetStatus, error) {
 	return nil, nil
 }
 
@@ -124,8 +124,8 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	repo := &fakeProposalRepo{}
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
-	budgets := &fakeBudgets{refusal: agentports.BudgetRefusal{
-		Cap: agentports.BudgetCapTool, Tool: "dispatch_assign_move", Spent: "5", Limit: "5",
+	budgets := &fakeBudgets{refusal: agentbudgetports.BudgetRefusal{
+		Cap: agentbudgetports.BudgetCapTool, Tool: "dispatch_assign_move", Spent: "5", Limit: "5",
 	}}
 	svc.budgets = budgets
 

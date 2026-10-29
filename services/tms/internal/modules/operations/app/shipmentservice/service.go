@@ -4,7 +4,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -92,7 +92,7 @@ type Params struct {
 	OrderDerivation      orderports.OrderDerivationService
 	DistanceCalculation  shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	TenderGuard          tenderports.TenderGuard                          `optional:"true"`
-	AgentEvents          agentports.AgentEventPublisher                   `optional:"true"`
+	AgentEvents          agenteventports.AgentEventPublisher              `optional:"true"`
 	Quota                platformplanports.QuotaGuard                     `optional:"true"`
 	QuickFilters         shipmentports.ShipmentQuickFilterBasisResolver
 	Invalidator          shipmentinvalidationports.ShipmentInvalidator
@@ -134,7 +134,7 @@ type service struct {
 	orderDerivation      orderports.OrderDerivationService
 	distanceCalculation  shipmentdistanceports.DistanceCalculationService
 	tenderGuard          tenderports.TenderGuard
-	agentEvents          agentports.AgentEventPublisher
+	agentEvents          agenteventports.AgentEventPublisher
 	quota                platformplanports.QuotaGuard
 	mutationObservers    []shipmentserviceports.ShipmentMutationObserver
 	effects              *shipmenteffects.Effects

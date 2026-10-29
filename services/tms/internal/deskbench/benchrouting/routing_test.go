@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,24 +101,30 @@ func TestRoutingPasses(t *testing.T) {
 		Name:     "Billing",
 		Template: agenttemplate.TemplateBillingAssistant,
 	}
-	better := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}
+	better := &agentrecommendationports.AgentMatch{
+		Outcome: agentsuggestion.MatchBetterAgent,
+		Agent:   billing,
+	}
 	compliance := &agentdefinition.Definition{
 		ID:       pulid.MustNew("agdef_"),
 		Name:     "Compliance",
 		Template: agenttemplate.TemplateComplianceAssistant,
 	}
-	current := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
-	delegated := &agentports.AgentMatch{
+	current := &agentrecommendationports.AgentMatch{
+		Outcome: agentsuggestion.MatchCurrentAgent,
+		Agent:   dispatch,
+	}
+	delegated := &agentrecommendationports.AgentMatch{
 		Outcome:  agentsuggestion.MatchCurrentAgent,
 		Agent:    dispatch,
 		Delegate: compliance,
 	}
-	nobody := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
-	nothing := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNone}
+	nobody := &agentrecommendationports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
+	nothing := &agentrecommendationports.AgentMatch{Outcome: agentsuggestion.MatchNone}
 
 	cases := []struct {
 		expect string
-		found  *agentports.AgentMatch
+		found  *agentrecommendationports.AgentMatch
 		want   bool
 	}{
 		{"BillingAssistant", better, true},
@@ -241,9 +247,15 @@ func TestProfileConfusion_CountsWhatEachCaseExpectedAgainstWhatItGot(t *testing.
 			"agdef_",
 		), Name: "Billing", Template: agenttemplate.TemplateBillingAssistant,
 	}
-	kept := &agentports.AgentMatch{Outcome: agentsuggestion.MatchCurrentAgent, Agent: dispatch}
-	moved := &agentports.AgentMatch{Outcome: agentsuggestion.MatchBetterAgent, Agent: billing}
-	nobody := &agentports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
+	kept := &agentrecommendationports.AgentMatch{
+		Outcome: agentsuggestion.MatchCurrentAgent,
+		Agent:   dispatch,
+	}
+	moved := &agentrecommendationports.AgentMatch{
+		Outcome: agentsuggestion.MatchBetterAgent,
+		Agent:   billing,
+	}
+	nobody := &agentrecommendationports.AgentMatch{Outcome: agentsuggestion.MatchNoAgent}
 
 	assert.Equal(t, "DispatchAssistant", SelectedProfile(dispatch, kept))
 	assert.Equal(t, "BillingAssistant", SelectedProfile(dispatch, moved))

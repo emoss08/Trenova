@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -148,7 +149,7 @@ type fakeProposals struct{ proposal *agent.AgentProposal }
 
 func (f fakeProposals) GetByID(
 	_ context.Context,
-	req agentports.GetAgentProposalByIDRequest,
+	req agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	if f.proposal == nil || f.proposal.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("proposal not found")
@@ -163,7 +164,7 @@ type fakeDecisions struct {
 
 func (f fakeDecisions) ListByProposals(
 	context.Context,
-	agentports.ListAgentDecisionsByProposalsRequest,
+	agentdecisionports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
@@ -430,10 +431,10 @@ func (w *world) rate(rating aifeedback.Rating, target pulid.ID) *aifeedback.Feed
 	return row
 }
 
-func (w *world) fromProposal(t *testing.T) *agentports.EvalCaseCapture {
+func (w *world) fromProposal(t *testing.T) *agentqualityports.EvalCaseCapture {
 	t.Helper()
 
-	request := &agentports.CreateEvalCaseFromProposalRequest{
+	request := &agentqualityports.CreateEvalCaseFromProposalRequest{
 		ProposalID: w.proposal.ID,
 		TenantInfo: w.tenant,
 	}
@@ -506,7 +507,7 @@ func TestCreateFromProposal_UndecidedIsRefused(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld(t, nil)
-	request := &agentports.CreateEvalCaseFromProposalRequest{
+	request := &agentqualityports.CreateEvalCaseFromProposalRequest{
 		ProposalID: w.proposal.ID,
 		TenantInfo: w.tenant,
 	}
@@ -534,7 +535,7 @@ func TestCreateFromMessage_DedupesByContentHash(t *testing.T) {
 
 	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	liked := w.messages[7].ID
-	request := &agentports.CreateEvalCaseFromMessageRequest{
+	request := &agentqualityports.CreateEvalCaseFromMessageRequest{
 		ThreadID:   w.thread.ID,
 		MessageID:  liked,
 		TenantInfo: w.tenant,
@@ -564,7 +565,7 @@ func TestCreateFromFeedback_CapturesTheLikedReplyAndLinksTheRating(t *testing.T)
 	w := newWorld(t, nil)
 	liked := w.messages[7].ID
 	rating := w.rate(aifeedback.RatingPositive, liked)
-	request := &agentports.CreateEvalCaseFromFeedbackRequest{
+	request := &agentqualityports.CreateEvalCaseFromFeedbackRequest{
 		FeedbackID: rating.ID,
 		TenantInfo: w.tenant,
 	}
@@ -594,7 +595,7 @@ func TestCreateFromFeedback_RefusesAThumbsDown(t *testing.T) {
 	rating := w.rate(aifeedback.RatingNegative, w.messages[7].ID)
 	_, err := w.service.CreateFromFeedback(
 		t.Context(),
-		&agentports.CreateEvalCaseFromFeedbackRequest{
+		&agentqualityports.CreateEvalCaseFromFeedbackRequest{
 			FeedbackID: rating.ID,
 			TenantInfo: w.tenant,
 		},
@@ -615,7 +616,7 @@ func TestCreateFromFeedback_RefusesARatingFromAnotherTenant(t *testing.T) {
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	_, err := w.service.CreateFromFeedback(
 		t.Context(),
-		&agentports.CreateEvalCaseFromFeedbackRequest{
+		&agentqualityports.CreateEvalCaseFromFeedbackRequest{
 			FeedbackID: rating.ID,
 			TenantInfo: other,
 		},
@@ -631,7 +632,7 @@ func TestCreateFromMessage_RefusesAQuestion(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld(t, nil)
-	request := &agentports.CreateEvalCaseFromMessageRequest{
+	request := &agentqualityports.CreateEvalCaseFromMessageRequest{
 		ThreadID:   w.thread.ID,
 		MessageID:  w.messages[2].ID,
 		TenantInfo: w.tenant,
@@ -645,7 +646,7 @@ func TestCreateCurated_ValidatesBeforeSaving(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld(t, nil)
-	_, err := w.service.CreateCurated(t.Context(), &agentports.CreateCuratedEvalCaseRequest{
+	_, err := w.service.CreateCurated(t.Context(), &agentqualityports.CreateCuratedEvalCaseRequest{
 		AgentDefinitionID: w.definition.ID,
 		Input:             "  ",
 		Expected: agentquality.Expected{
@@ -674,7 +675,7 @@ func TestSetStatus_FollowsTheWorkflow(t *testing.T) {
 	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	evalCase := w.fromProposal(t).Case
 
-	active, err := w.service.SetStatus(t.Context(), &agentports.SetEvalCaseStatusRequest{
+	active, err := w.service.SetStatus(t.Context(), &agentqualityports.SetEvalCaseStatusRequest{
 		ID:         evalCase.ID,
 		Status:     agentquality.CaseStatusActive,
 		TenantInfo: w.tenant,
@@ -682,14 +683,14 @@ func TestSetStatus_FollowsTheWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, agentquality.CaseStatusActive, active.Status)
 
-	_, err = w.service.SetStatus(t.Context(), &agentports.SetEvalCaseStatusRequest{
+	_, err = w.service.SetStatus(t.Context(), &agentqualityports.SetEvalCaseStatusRequest{
 		ID:         evalCase.ID,
 		Status:     agentquality.CaseStatusCandidate,
 		TenantInfo: w.tenant,
 	}, nil)
 	require.Error(t, err, "an active case does not go back to being a candidate")
 
-	_, err = w.service.SetStatus(t.Context(), &agentports.SetEvalCaseStatusRequest{
+	_, err = w.service.SetStatus(t.Context(), &agentqualityports.SetEvalCaseStatusRequest{
 		ID:         evalCase.ID,
 		Status:     agentquality.CaseStatusQuarantined,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: w.tenant.BuID},
@@ -713,7 +714,7 @@ func TestCaptureCandidates_CountsWhatHappened(t *testing.T) {
 
 	result, err := w.service.CaptureCandidates(
 		t.Context(),
-		agentports.CaptureEvalCaseCandidatesRequest{},
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.Scanned)
@@ -726,7 +727,7 @@ func TestCaptureCandidates_CountsWhatHappened(t *testing.T) {
 
 	again, err := w.service.CaptureCandidates(
 		t.Context(),
-		agentports.CaptureEvalCaseCandidatesRequest{},
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, again.Duplicates)
@@ -747,7 +748,10 @@ func TestPurge_AppliesEachOrganizationsRetention(t *testing.T) {
 	}
 	w.service.retention = fakeRetention{items: []*dataretention.DataRetention{keepForever, yearly}}
 
-	_, err := w.service.Purge(t.Context(), agentports.PurgeEvalCasesRequest{Now: 1_700_000_000})
+	_, err := w.service.Purge(
+		t.Context(),
+		agentqualityports.PurgeEvalCasesRequest{Now: 1_700_000_000},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, w.cases.purges, 2)

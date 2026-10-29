@@ -213,7 +213,7 @@ Paths are relative to `client/apps/web/src/` unless they start with `services/` 
   - `conversation.ToolCallRecord` has only {ID, Name, Arguments, Effect, ProviderData, ProviderID} (services/tms/internal/modules/agent/domain/conversation/message.go:163-174).
   - The tool-role `Message` stores `ToolSummary`, `ToolVerdict`, `ToolFailed` and `FoundTools` (message.go:62-69).
   - `Reasoning *ReasoningTrace` is per assistant message, not per call (message.go:91).
-  - `AssistantToolStartedEvent` has {CallID, Name, Arguments, Effect} (services/tms/internal/modules/agent/ports/agentports/assistant.go:502-511).
+  - `AssistantToolStartedEvent` has {CallID, Name, Arguments, Effect} (services/tms/internal/modules/agent/ports/assistantports/assistant.go:502-511).
   - `agentrunstep.AgentRunStep` has no reason field (domain/agentrunstep/agentrunstep.go).
   - The only `rationale` on the client is on proposals (types/assistant.ts:1094).
 - Needed:

@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ import (
 )
 
 type announcedPlans struct {
-	agentports.AgentActivityPublisher
+	agentactivityports.AgentActivityPublisher
 
 	actions []string
 }
@@ -32,7 +33,7 @@ func (a *announcedPlans) PlanChanged(
 type unreachableWindow struct {
 	kernelports.WorkflowStarter
 
-	started []*agentports.CommitApprovalRequest
+	started []*agentapprovalports.CommitApprovalRequest
 }
 
 func (w *unreachableWindow) Enabled() bool { return true }
@@ -44,7 +45,7 @@ func (w *unreachableWindow) StartWorkflow(
 	args ...any,
 ) (client.WorkflowRun, error) {
 	if len(args) == 1 {
-		if req, ok := args[0].(*agentports.CommitApprovalRequest); ok {
+		if req, ok := args[0].(*agentapprovalports.CommitApprovalRequest); ok {
 			w.started = append(w.started, req)
 		}
 	}
@@ -95,10 +96,13 @@ func TestCommitOwnApprovalNow_WithoutItsWorkflowCommitsTheApprovalThePersonMade(
 		"the approval is kept with the plan",
 	)
 
-	require.NoError(t, f.svc.CommitOwnApprovalNow(t.Context(), &agentports.SettleApprovalRequest{
-		PlanID:     plan.ID,
-		TenantInfo: f.req.TenantInfo,
-	}, f.actor))
+	require.NoError(
+		t,
+		f.svc.CommitOwnApprovalNow(t.Context(), &agentapprovalports.SettleApprovalRequest{
+			PlanID:     plan.ID,
+			TenantInfo: f.req.TenantInfo,
+		}, f.actor),
+	)
 
 	assert.Equal(t, agentplan.PlanStatusCompleted, f.plans.plan.Status)
 	require.Len(t, f.decider.decided, len(f.steps.steps))
@@ -125,7 +129,7 @@ func TestCommitApproval_AGatedPlanWithoutItsPreviewIsNotReportedAsCommitted(t *t
 	f.plans.plan.Status = agentplan.PlanStatusApproving
 	f.plans.plan.CommitsAt = &commitsAt
 
-	err := f.svc.CommitOwnApprovalNow(t.Context(), &agentports.SettleApprovalRequest{
+	err := f.svc.CommitOwnApprovalNow(t.Context(), &agentapprovalports.SettleApprovalRequest{
 		PlanID:     f.plans.plan.ID,
 		TenantInfo: f.req.TenantInfo,
 	}, f.actor)
@@ -139,6 +143,6 @@ func TestCommitApproval_AGatedPlanWithoutItsPreviewIsNotReportedAsCommitted(t *t
 		"the plan waits on the person again",
 	)
 	assert.Empty(t, f.decider.decided, "no step ran")
-	assert.Equal(t, []string{agentports.ActivityReopened}, announced.actions,
+	assert.Equal(t, []string{agentactivityports.ActivityReopened}, announced.actions,
 		"nobody undid it, so it is not announced as undone")
 }

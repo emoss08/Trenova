@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -68,12 +68,15 @@ func (s *Engine) ListSuiteCases(
 	ctx context.Context,
 	req *ListSuiteCasesRequest,
 ) ([]SuiteCase, error) {
-	evaluations, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
-		TenantInfo:   req.TenantInfo,
-		SuiteRunID:   req.SuiteRunID,
-		AfterOrdinal: req.AfterOrdinal,
-		Limit:        req.Limit,
-	})
+	evaluations, err := s.evaluations.ListBySuiteRun(
+		ctx,
+		agentevaluationports.ListSuiteEvaluationsRequest{
+			TenantInfo:   req.TenantInfo,
+			SuiteRunID:   req.SuiteRunID,
+			AfterOrdinal: req.AfterOrdinal,
+			Limit:        req.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -177,12 +180,15 @@ func (s *Engine) suiteEvaluationsOf(
 	all := make([]*agentevaluation.Evaluation, 0, suiteReadPage)
 	after := 0
 	for {
-		page, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
-			TenantInfo:   tenant,
-			SuiteRunID:   suiteRunID,
-			AfterOrdinal: after,
-			Limit:        suiteReadPage,
-		})
+		page, err := s.evaluations.ListBySuiteRun(
+			ctx,
+			agentevaluationports.ListSuiteEvaluationsRequest{
+				TenantInfo:   tenant,
+				SuiteRunID:   suiteRunID,
+				AfterOrdinal: after,
+				Limit:        suiteReadPage,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -365,10 +371,13 @@ func (s *Engine) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*JudgedC
 		return &JudgedCase{Note: "No completion service is available to judge with."}, nil
 	}
 
-	evaluation, err := s.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         req.EvaluationID,
-		TenantInfo: req.TenantInfo,
-	})
+	evaluation, err := s.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         req.EvaluationID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -521,7 +530,7 @@ func (s *Engine) FinalizeSuite(
 	if req.StopReason != "" {
 		if _, err = s.evaluations.SkipPendingBySuiteRun(
 			ctx,
-			agentports.SkipPendingSuiteEvaluationsRequest{
+			agentevaluationports.SkipPendingSuiteEvaluationsRequest{
 				TenantInfo: req.TenantInfo,
 				SuiteRunID: run.ID,
 				Reason:     budgetStoppedCaseNote,
@@ -829,7 +838,7 @@ func (s *Engine) fail(ctx context.Context, run *agentqualitysuite.SuiteRun, reas
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if _, err := s.evaluations.SkipPendingBySuiteRun(
 		ctx,
-		agentports.SkipPendingSuiteEvaluationsRequest{
+		agentevaluationports.SkipPendingSuiteEvaluationsRequest{
 			TenantInfo: tenant,
 			SuiteRunID: run.ID,
 			Reason:     failedSuiteCaseNote,

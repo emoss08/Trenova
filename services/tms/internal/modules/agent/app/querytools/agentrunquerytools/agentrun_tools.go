@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -346,7 +346,7 @@ type agentRunGetter interface {
 type agentRunProposalLister interface {
 	ListByRun(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByRunRequest,
+		req agentproposalports.ListAgentProposalsByRunRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
@@ -367,7 +367,7 @@ type GetAgentRunParams struct {
 	fx.In
 
 	Runs      agentruntimeports.AgentRunRepository
-	Proposals agentports.AgentProposalRepository
+	Proposals agentproposalports.AgentProposalRepository
 	Events    agentruntimeports.AgentRunEventRepository
 }
 
@@ -570,7 +570,7 @@ func (t *getAgentRunTool) addProposals(
 	if err != nil {
 		return fmt.Errorf("read the run's own id: %w", err)
 	}
-	proposals, err := t.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
+	proposals, err := t.proposals.ListByRun(ctx, agentproposalports.ListAgentProposalsByRunRequest{
 		RunID:      runID,
 		TenantInfo: querytool.TenantOf(params),
 	})

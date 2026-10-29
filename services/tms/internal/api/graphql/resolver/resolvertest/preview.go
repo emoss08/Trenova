@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,20 +32,20 @@ func (p *PreviewPermissions) Check(
 }
 
 type PreviewProposals struct {
-	agentports.AgentProposalService
+	agentproposalports.AgentProposalService
 
 	Proposal *agent.AgentProposal
 }
 
 func (p *PreviewProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.Proposal, nil
 }
 
 type PreviewDecisions struct {
-	agentports.AgentDecisionService
+	agentdecisionports.AgentDecisionService
 
 	Yours bool
 	Asked []pulid.ID
@@ -66,7 +68,7 @@ func (d *PreviewDecisions) AssertOwnProposal(
 }
 
 type PreviewPlans struct {
-	agentports.AgentPlanService
+	agentplanports.AgentPlanService
 
 	Yours bool
 }
@@ -86,7 +88,7 @@ func (p *PreviewPlans) AssertOwnPlan(
 
 func (p *PreviewPlans) GetByID(
 	_ context.Context,
-	req agentports.GetAgentPlanByIDRequest,
+	req agentplanports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return &agentplan.AgentPlan{ID: req.ID}, nil
 }

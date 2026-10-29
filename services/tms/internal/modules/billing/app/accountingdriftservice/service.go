@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -67,7 +67,7 @@ type Params struct {
 	AuditService      auditports.AuditService
 	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
 	Checker           accountingdriftports.AccountingDriftChecker  `optional:"true"`
-	Publisher         agentports.AgentEventPublisher               `optional:"true"`
+	Publisher         agenteventports.AgentEventPublisher          `optional:"true"`
 	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
 	Realtime          realtimeports.RealtimeService                `optional:"true"`
 }
@@ -93,7 +93,7 @@ type Service struct {
 	audit         auditports.AuditService
 	dispatcher    accountingsyncports.AccountingSyncDispatcher
 	checker       accountingdriftports.AccountingDriftChecker
-	publisher     agentports.AgentEventPublisher
+	publisher     agenteventports.AgentEventPublisher
 	watchtower    watchtowerports.WatchtowerProjector
 	realtime      realtimeports.RealtimeService
 	now           func() time.Time
@@ -312,7 +312,7 @@ func (s *Service) announce(
 		if sent >= budget {
 			break
 		}
-		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 			Kind:       agenttrigger.EventAccountingDriftDetected,
 			SubjectID:  finding.ID,
 			TenantInfo: tenant,

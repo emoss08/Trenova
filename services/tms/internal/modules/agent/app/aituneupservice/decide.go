@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -185,8 +185,8 @@ func (s *Service) raiseToolTier(
 	if err != nil {
 		return err
 	}
-	_, err = s.trust.PromoteTool(ctx, &agentports.PromoteToolRequest{
-		PromoteReadyRequest: agentports.PromoteReadyRequest{
+	_, err = s.trust.PromoteTool(ctx, &agenttrustports.PromoteToolRequest{
+		PromoteReadyRequest: agenttrustports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 			DecidedBy:  actor.AuditActor().UserID,

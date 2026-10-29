@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -94,21 +96,21 @@ type agentRunsByIDs interface {
 type agentProposalsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByIDsRequest,
+		req agentproposalports.ListAgentProposalsByIDsRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type agentPlansByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentPlansByIDsRequest,
+		req agentplanports.ListAgentPlansByIDsRequest,
 	) ([]*agentplan.AgentPlan, error)
 }
 
 type agentExceptionsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req agentports.ListAgentExceptionsByIDsRequest,
+		req agentexceptionports.ListAgentExceptionsByIDsRequest,
 	) ([]*agentexception.AgentException, error)
 }
 
@@ -123,9 +125,9 @@ type watchtowerRunRepositories struct {
 	fx.In
 
 	Runs       agentruntimeports.AgentRunRepository
-	Proposals  agentports.AgentProposalRepository
-	Plans      agentports.AgentPlanRepository
-	Exceptions agentports.AgentExceptionRepository
+	Proposals  agentproposalports.AgentProposalRepository
+	Plans      agentplanports.AgentPlanRepository
+	Exceptions agentexceptionports.AgentExceptionRepository
 }
 
 type listWatchtowerItemsTool struct {
@@ -624,10 +626,13 @@ func (l watchtowerRunLinks) resolve(
 		len(links.exceptions))
 
 	if ids := sourceIDs(links.proposals); len(ids) > 0 {
-		proposals, err := l.proposals.ListByIDs(ctx, agentports.ListAgentProposalsByIDsRequest{
-			IDs:        ids,
-			TenantInfo: tenant,
-		})
+		proposals, err := l.proposals.ListByIDs(
+			ctx,
+			agentproposalports.ListAgentProposalsByIDsRequest{
+				IDs:        ids,
+				TenantInfo: tenant,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("read the proposals behind watchtower items: %w", err)
 		}
@@ -636,7 +641,7 @@ func (l watchtowerRunLinks) resolve(
 		}
 	}
 	if ids := sourceIDs(links.plans); len(ids) > 0 {
-		plans, err := l.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
+		plans, err := l.plans.ListByIDs(ctx, agentplanports.ListAgentPlansByIDsRequest{
 			IDs:        ids,
 			TenantInfo: tenant,
 		})
@@ -648,10 +653,13 @@ func (l watchtowerRunLinks) resolve(
 		}
 	}
 	if ids := sourceIDs(links.exceptions); len(ids) > 0 {
-		exceptions, err := l.exceptions.ListByIDs(ctx, agentports.ListAgentExceptionsByIDsRequest{
-			IDs:        ids,
-			TenantInfo: tenant,
-		})
+		exceptions, err := l.exceptions.ListByIDs(
+			ctx,
+			agentexceptionports.ListAgentExceptionsByIDsRequest{
+				IDs:        ids,
+				TenantInfo: tenant,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("read the exceptions behind watchtower items: %w", err)
 		}

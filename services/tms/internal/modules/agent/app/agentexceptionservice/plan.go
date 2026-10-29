@@ -2,12 +2,12 @@ package agentexceptionservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func PlanException(
-	req *agentports.FlagAgentExceptionRequest,
+	req *agentexceptionports.FlagAgentExceptionRequest,
 ) (*agentexception.AgentException, error) {
 	entity := &agentexception.AgentException{
 		OrganizationID:  req.TenantInfo.OrgID,

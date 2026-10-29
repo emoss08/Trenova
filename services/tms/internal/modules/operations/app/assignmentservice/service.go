@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -68,8 +68,8 @@ type Params struct {
 	EventService        shipmenteventports.ShipmentEventService
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	DriverNotify        *drivernotificationservice.Service
-	TenderGuard         tenderports.TenderGuard        `optional:"true"`
-	AgentEvents         agentports.AgentEventPublisher `optional:"true"`
+	TenderGuard         tenderports.TenderGuard             `optional:"true"`
+	AgentEvents         agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type service struct {
@@ -96,7 +96,7 @@ type service struct {
 	invalidator         shipmentinvalidationports.ShipmentInvalidator
 	driverNotify        *drivernotificationservice.Service
 	tenderGuard         tenderports.TenderGuard
-	agentEvents         agentports.AgentEventPublisher
+	agentEvents         agenteventports.AgentEventPublisher
 }
 
 func New(p Params) assignmentports.AssignmentService {
@@ -413,7 +413,7 @@ func (s *service) Unassign(
 			),
 		)
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
-		agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
+		agenteventports.PublishAgentEvent(ctx, s.agentEvents, agenteventports.AgentEvent{
 			Kind:      agenttrigger.EventShipmentMoveUnassigned,
 			SubjectID: ref.MoveID,
 			TenantInfo: pagination.TenantInfo{

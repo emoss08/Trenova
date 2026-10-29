@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,16 +42,16 @@ func (u *planDeciders) GetByIDs(
 }
 
 type planStepLister struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	mu       sync.Mutex
 	steps    []*agent.AgentProposal
-	requests []agentports.ListAgentProposalsByPlansRequest
+	requests []agentproposalports.ListAgentProposalsByPlansRequest
 }
 
 func (l *planStepLister) ListByPlans(
 	_ context.Context,
-	req agentports.ListAgentProposalsByPlansRequest,
+	req agentproposalports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()

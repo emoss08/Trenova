@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
@@ -139,7 +139,7 @@ type Service struct {
 	payProfileRepo    driverpayports.PayProfileRepository
 	commentRepo       shipmentcommentports.ShipmentCommentRepository
 	watchtower        watchtowerports.WatchtowerProjector
-	publisher         agentports.AgentEventPublisher
+	publisher         agenteventports.AgentEventPublisher
 	now               func() int64
 	effects           *detentioneffects.Effects
 }
@@ -155,7 +155,7 @@ type Deps struct {
 	PayProfileRepo    driverpayports.PayProfileRepository
 	CommentRepo       shipmentcommentports.ShipmentCommentRepository
 	Watchtower        watchtowerports.WatchtowerProjector
-	Publisher         agentports.AgentEventPublisher
+	Publisher         agenteventports.AgentEventPublisher
 	Now               func() int64
 	Effects           *detentioneffects.Effects
 }
@@ -537,7 +537,7 @@ func (s *Service) publishOccurrenceOpened(
 		return
 	}
 
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDetentionOccurrenceOpened,
 		SubjectID:  saved.ID,
 		TenantInfo: p.tenantInfo,

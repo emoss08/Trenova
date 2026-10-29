@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
@@ -71,7 +71,7 @@ type Params struct {
 	States        *States
 	Conversations conversationports.ConversationRepository
 	Cases         deskcaseports.AssistantCaseRepository
-	Subjects      agentports.AgentSubjectRepository
+	Subjects      agentsubjectports.AgentSubjectRepository
 	Shipments     shipmentserviceports.ShipmentService
 	Waits         agentwaitports.AgentWaitService
 	Checklists    deskcaseports.CaseChecklistRepository
@@ -89,7 +89,7 @@ type Service struct {
 	*States
 
 	conversations conversationports.ConversationRepository
-	subjects      agentports.AgentSubjectRepository
+	subjects      agentsubjectports.AgentSubjectRepository
 	shipments     shipmentserviceports.ShipmentService
 	agentWaits    agentwaitports.AgentWaitService
 	checklists    deskcaseports.CaseChecklistRepository
@@ -394,7 +394,7 @@ func (s *Service) Bind(
 		return nil, err
 	}
 
-	exists, err := s.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+	exists, err := s.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
 		TenantInfo:  req.TenantInfo,
 		SubjectType: req.SubjectType,
 		SubjectID:   req.SubjectID,

@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
-const matchRateMarker = "}:" + agentports.AgentMatchRateScope + ":"
+const matchRateMarker = "}:" + agentrecommendationports.AgentMatchRateScope + ":"
 
 type unthrottledMatches struct {
 	kernelports.RateLimitStore

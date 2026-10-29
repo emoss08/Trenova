@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -16,10 +16,10 @@ import (
 )
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 

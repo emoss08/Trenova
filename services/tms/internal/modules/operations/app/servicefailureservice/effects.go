@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -62,7 +62,7 @@ func (s *service) afterServiceFailureCreate(
 		action:  "created",
 		payload: entity,
 	})
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventServiceFailureDetected,
 		SubjectID:  entity.ShipmentID,
 		TenantInfo: serviceFailureTenantInfo(entity),

@@ -23,9 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -82,10 +83,10 @@ type Params struct {
 	Telematics    telematicsports.TelematicsRepository
 	Carriers      carrierports.CarrierRepository
 	Customers     customerports.CustomerRepository
-	Subjects      agentports.AgentSubjectRepository
+	Subjects      agentsubjectports.AgentSubjectRepository
 	Conversations conversationports.ConversationRepository
 	Turns         *assistantturnservice.Service
-	RunService    agentports.AgentRunService
+	RunService    agentruntimeports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
 	Realtime      realtimeports.RealtimeService                  `optional:"true"`
 	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
@@ -109,7 +110,7 @@ type turnStarter interface {
 type runStarter interface {
 	StartForDefinition(
 		ctx context.Context,
-		req *agentports.StartAgentRunForDefinitionRequest,
+		req *agentruntimeports.StartAgentRunForDefinitionRequest,
 		actor *permissionports.RequestActor,
 	) (*agent.AgentRun, error)
 }
@@ -403,7 +404,7 @@ func (s *Service) List(
 }
 
 // NotifyEvent ends the waits watching for what the event says happened.
-func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent) {
+func (s *Service) NotifyEvent(ctx context.Context, event *agenteventports.AgentEvent) {
 	kinds, watched := eventWatch(event)
 	if len(kinds) == 0 || len(watched) == 0 {
 		return
@@ -436,7 +437,7 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 	}
 }
 
-func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
+func eventWatch(event *agenteventports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 	switch event.Kind { //nolint:exhaustive // only these events end a wait
 	case agenttrigger.EventShipmentMoveArrived:
 		return []agentwait.Kind{agentwait.KindStopArrival}, []pulid.ID{event.SubjectID}
@@ -453,7 +454,7 @@ func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 
 // eventMeets reports whether the event is the one the wait is for. A wait on
 // one stop of a move ends only at that stop.
-func eventMeets(wait *agentwait.Wait, event *agentports.AgentEvent) bool {
+func eventMeets(wait *agentwait.Wait, event *agenteventports.AgentEvent) bool {
 	switch wait.Kind { //nolint:exhaustive // the kinds an event ends
 	case agentwait.KindStopArrival, agentwait.KindStopDeparture:
 		return wait.Condition.StopID.IsNil() ||
@@ -828,7 +829,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 	tenant := tenantOf(wait)
 	run, err := s.runService.StartForDefinition(
 		ctx,
-		&agentports.StartAgentRunForDefinitionRequest{
+		&agentruntimeports.StartAgentRunForDefinitionRequest{
 			DefinitionID: wait.AgentDefinitionID,
 			SubjectType:  wait.SubjectType,
 			SubjectID:    wait.SubjectID,
@@ -838,7 +839,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 		},
 		nil,
 	)
-	if errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+	if errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) {
 		return agentwaitcontract.ErrConversationBusy
 	}
 	if errortypes.IsBusinessError(err) {

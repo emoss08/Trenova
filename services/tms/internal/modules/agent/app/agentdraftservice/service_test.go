@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -171,7 +171,7 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	service := newTestService(completer, definitions, &stubProviders{})
 	tenantInfo := testTenant()
 
-	draft, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	draft, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  tenantInfo,
 		Description: "Answer customers asking where their loads are.",
 	})
@@ -216,13 +216,13 @@ func TestDraftFromDescriptionRefusesBeforeAskingTheModel(t *testing.T) {
 	completer := &stubCompleter{reply: validDraftReply}
 	service := newTestService(completer, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "   ",
 	})
 	require.Error(t, err)
 
-	_, err = service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err = service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: strings.Repeat("a", maxDescriptionRunes+1),
 	})
@@ -244,7 +244,7 @@ func TestDraftFromDescriptionFailsClearlyOnAnEmptyReply(t *testing.T) {
 		definitions := &stubDefinitions{}
 		service := newTestService(completer, definitions, &stubProviders{})
 
-		_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+		_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 			TenantInfo:  testTenant(),
 			Description: "Watch for late loads.",
 		})
@@ -262,7 +262,7 @@ func TestDraftFromDescriptionPassesOnTheRoutersError(t *testing.T) {
 		WithInternal(llmports.ErrNoProviderConfigured)
 	service := newTestService(&stubCompleter{err: routerErr}, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "Watch for late loads.",
 	})
@@ -280,7 +280,7 @@ func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.
 
 	result, err := service.TightenInstructions(
 		t.Context(),
-		&agentports.TightenAgentInstructionsRequest{
+		&agentdraftports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}. Always look the loads up before anything else.",
 		},
@@ -301,7 +301,7 @@ func TestTightenInstructionsRefusesAReplyThatLostAPlaceholder(t *testing.T) {
 
 	_, err := service.TightenInstructions(
 		t.Context(),
-		&agentports.TightenAgentInstructionsRequest{
+		&agentdraftports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}.",
 		},
@@ -320,7 +320,7 @@ func TestTightenInstructionsRefusesEmptyAndOverlongInstructions(t *testing.T) {
 	for _, text := range []string{" ", strings.Repeat("x", agentdefinition.MaxInstructionsRunes+1)} {
 		_, err := service.TightenInstructions(
 			t.Context(),
-			&agentports.TightenAgentInstructionsRequest{
+			&agentdraftports.TightenAgentInstructionsRequest{
 				TenantInfo:   testTenant(),
 				Instructions: text,
 			},

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection/agentreflectiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentReflectionRepository {
+func New(p Params) agentreflectionports.AgentReflectionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentreflection-repository"),
@@ -94,7 +94,7 @@ func (r *repository) claimed(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentReflectionRequest,
+	req agentreflectionports.GetAgentReflectionRequest,
 ) (*agentreflection.Reflection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
 		entity, err := agentreflectiondb.Reflections.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -143,7 +143,7 @@ func (r *repository) Update(
 
 func (r *repository) ThreadReflectedThrough(
 	ctx context.Context,
-	req agentports.ThreadReflectedThroughRequest,
+	req agentreflectionports.ThreadReflectedThroughRequest,
 ) (int, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int, bool, error) {
 		rf := agentreflectiondb.Reflections
@@ -168,7 +168,7 @@ func (r *repository) ThreadReflectedThrough(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentReflectionConnectionRequest,
+	req *agentreflectionports.ListAgentReflectionConnectionRequest,
 ) (*pagination.CursorListResult[*agentreflection.Reflection], error) {
 	return dbtx.Read(
 		ctx,

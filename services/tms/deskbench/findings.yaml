@@ -92,7 +92,7 @@ findings:
       stops at the caller's deadline instead of 20 s.
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: 151 hedges, no question let through unclassified"
     files:
-      - services/tms/internal/modules/agent/ports/agentports/agentcompletion.go
+      - services/tms/internal/modules/agent/ports/llmports/agentcompletion.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/hedge.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/limits.go
@@ -1356,7 +1356,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/agentruntime/runtimetools/withdrawproposal.go
       - services/tms/internal/modules/agent/app/proposalrecorder/recorder.go
-      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go
 
   - id: DB-057
     title: An agent without quote_shipment asked the person for a rating method the contract decides
@@ -1548,7 +1548,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/assistantservice/workingset.go
       - services/tms/internal/modules/agent/app/agentruntime/directed.go
-      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go
 
   - id: DB-066
     title: Driver pay lists took no driver name, and search_shipments ignored what a load carries
@@ -3139,7 +3139,7 @@ findings:
       TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55, TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning
     files:
       - services/tms/internal/modules/agent/app/agentguard/classifier.go
-      - services/tms/internal/modules/agent/ports/agentports/agentcompletion.go
+      - services/tms/internal/modules/agent/ports/llmports/agentcompletion.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/prompt.go
       - services/tms/internal/infrastructure/agentcompletion/modeladapter/adapter.go
@@ -3554,7 +3554,7 @@ findings:
       id argument, and a redraft that named ediPartnerId after the first let the planner match
       it landed in a lineage of its own (20261015-125246-run, edi-guide-revised #3).
     files:
-      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/app/agentruntime/replypass.go
       - services/tms/internal/modules/agent/domain/assistantartifact/lineage.go
@@ -4043,7 +4043,7 @@ findings:
       - services/tms/internal/modules/agent/domain/agentpreset/focused_templates.go
       - services/tms/internal/modules/agent/app/querytools/reportquerytools/report_tools.go
       - services/tms/internal/modules/agent/app/agentquerytoolservice/analysis_tool.go
-      - services/tms/internal/modules/agent/ports/agentports/agenttool.go
+      - services/tms/internal/modules/agent/ports/agenttoolports/agenttool.go
       - services/tms/internal/modules/agent/app/agenttoolcatalog/catalog.go
       - services/tms/internal/modules/agent/app/agentruntime/toolaccess/toolset.go
     fixedIn: >
@@ -4502,7 +4502,7 @@ findings:
       which stop the truck arrived at or left.
     files:
       - services/tms/internal/modules/agent/app/agentevents/publisher.go
-      - services/tms/internal/modules/agent/ports/agentports/agentevents.go
+      - services/tms/internal/modules/agent/ports/agenteventports/agentevents.go
       - services/tms/internal/modules/agent/domain/agentmessage/runinput.go
 
   - id: DB-194
@@ -4960,7 +4960,7 @@ findings:
     fix: >
       A bunched table names the cards it replaced (ShownArtifact.Replaces). When a replaced card's result is still in the batch the model has not read, the runtime rewrites that result's note to point to the table instead (Turn.foldReplaced, foldedNote) and drops the card from what the turn keeps; a result the model has already read is never rewritten, so the cached prefix and replayed thinking stay intact.
     files:
-      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go
       - services/tms/internal/modules/agent/app/assistantservice/toolartifacts/artifact_bunch.go
       - services/tms/internal/modules/agent/app/agentruntime/replypass.go
       - services/tms/internal/modules/agent/app/agentruntime/runtimetools/publish.go

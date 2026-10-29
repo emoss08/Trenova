@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -67,10 +67,10 @@ func ParseReply(text string) (*reflectionReply, error) {
 
 func (s *Service) Finish(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	result *llmports.StructuredCompletionResult,
-) (*agentports.ReflectionOutcome, error) {
-	reflection, err := s.repo.GetByID(ctx, agentports.GetAgentReflectionRequest{
+) (*agentreflectionports.ReflectionOutcome, error) {
+	reflection, err := s.repo.GetByID(ctx, agentreflectionports.GetAgentReflectionRequest{
 		ID:         plan.ReflectionID,
 		TenantInfo: plan.TenantInfo,
 	})
@@ -125,7 +125,7 @@ func (s *Service) Finish(
 
 func (s *Service) apply(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	in *lesson,
 ) (agentreflection.ReflectionChange, error) {
 	change := agentreflection.ReflectionChange{
@@ -179,7 +179,7 @@ func (s *Service) apply(
 
 func (s *Service) lessonRequest(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	in *lesson,
 ) (*agentmemoryports.RememberRequest, string, error) {
 	person := plan.PersonUserID
@@ -246,7 +246,7 @@ func (s *Service) lessonRequest(
 }
 
 func subjectOf(
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	in *lesson,
 	req *agentmemoryports.RememberRequest,
 ) string {
@@ -258,7 +258,7 @@ func subjectOf(
 	subjectType := agentmemory.MemorySubjectType(strings.TrimSpace(in.SubjectType))
 	id, err := pulid.Parse(raw)
 	if err != nil || !subjectType.IsValid() ||
-		!slices.Contains(plan.Subjects, agentports.ReflectionSubjectRef{
+		!slices.Contains(plan.Subjects, agentreflectionports.ReflectionSubjectRef{
 			Type: subjectType,
 			ID:   id,
 		}) {
@@ -272,7 +272,7 @@ func subjectOf(
 
 func (s *Service) audience(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	audience string,
 	req *agentmemoryports.RememberRequest,
 ) (string, error) {
@@ -327,7 +327,7 @@ func (s *Service) audience(
 
 func (s *Service) attach(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	changes []agentreflection.ReflectionChange,
 ) {
 	if plan.ThreadID.IsNil() || plan.ReplyMessageID.IsNil() {
@@ -363,7 +363,7 @@ func (s *Service) attach(
 
 func (s *Service) announce(
 	ctx context.Context,
-	plan *agentports.ReflectionPlan,
+	plan *agentreflectionports.ReflectionPlan,
 	reflection *agentreflection.Reflection,
 ) {
 	kept := reflection.KeptMemoryIDs()
@@ -377,7 +377,7 @@ func (s *Service) announce(
 			OrganizationID: plan.TenantInfo.OrgID,
 			BusinessUnitID: plan.TenantInfo.BuID,
 			AudienceUserID: plan.PersonUserID,
-			Resource:       agentports.AgentMemoryResource,
+			Resource:       agentreflectionports.AgentMemoryResource,
 			Action:         "learned",
 			RecordID:       reflection.ID,
 			ActorType:      permissionports.PrincipalTypeAgent,
@@ -393,7 +393,7 @@ func (s *Service) announce(
 	}
 }
 
-func reflectionActor(plan *agentports.ReflectionPlan) *permissionports.RequestActor {
+func reflectionActor(plan *agentreflectionports.ReflectionPlan) *permissionports.RequestActor {
 	return &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    plan.AgentDefinitionID,
@@ -411,8 +411,8 @@ func quotes(evidence string) []string {
 	return []string{stringutils.Ellipsize(evidence, maxEvidenceChars)}
 }
 
-func outcomeOf(reflection *agentreflection.Reflection) *agentports.ReflectionOutcome {
-	outcome := &agentports.ReflectionOutcome{
+func outcomeOf(reflection *agentreflection.Reflection) *agentreflectionports.ReflectionOutcome {
+	outcome := &agentreflectionports.ReflectionOutcome{
 		ReflectionID: reflection.ID,
 		Status:       reflection.Status,
 	}

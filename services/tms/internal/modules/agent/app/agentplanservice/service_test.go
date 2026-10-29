@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,23 +24,23 @@ import (
 )
 
 type fakePlans struct {
-	agentports.AgentPlanRepository
+	agentplanports.AgentPlanRepository
 
 	plan     *agentplan.AgentPlan
-	statuses []agentports.UpdateAgentPlanStatusRequest
-	progress []agentports.RecordAgentPlanProgressRequest
+	statuses []agentplanports.UpdateAgentPlanStatusRequest
+	progress []agentplanports.RecordAgentPlanProgressRequest
 }
 
 func (f *fakePlans) GetByID(
 	context.Context,
-	agentports.GetAgentPlanByIDRequest,
+	agentplanports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return f.plan, nil
 }
 
 func (f *fakePlans) UpdateStatus(
 	_ context.Context,
-	req agentports.UpdateAgentPlanStatusRequest,
+	req agentplanports.UpdateAgentPlanStatusRequest,
 ) (*agentplan.AgentPlan, error) {
 	f.statuses = append(f.statuses, req)
 	f.plan.Status = req.Status
@@ -59,7 +61,7 @@ func (f *fakePlans) UpdateStatus(
 
 func (f *fakePlans) RecordProgress(
 	_ context.Context,
-	req agentports.RecordAgentPlanProgressRequest,
+	req agentplanports.RecordAgentPlanProgressRequest,
 ) (*agentplan.AgentPlan, error) {
 	f.progress = append(f.progress, req)
 	f.plan.Status = req.Status
@@ -71,7 +73,7 @@ func (f *fakePlans) RecordProgress(
 }
 
 type fakeSteps struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	steps   []*agent.AgentProposal
 	skipped int
@@ -79,14 +81,14 @@ type fakeSteps struct {
 
 func (f *fakeSteps) ListByPlan(
 	context.Context,
-	agentports.ListAgentProposalsByPlanRequest,
+	agentproposalports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }
 
 func (f *fakeSteps) SkipPendingByPlan(
 	context.Context,
-	agentports.SkipPendingByPlanRequest,
+	agentproposalports.SkipPendingByPlanRequest,
 ) (int, error) {
 	f.skipped++
 
@@ -95,18 +97,18 @@ func (f *fakeSteps) SkipPendingByPlan(
 
 type fakeDecider struct {
 	failAt   pulid.ID
-	decided  []agentports.DecideAgentProposalRequest
+	decided  []agentdecisionports.DecideAgentProposalRequest
 	signals  int
-	lastSent *agentports.DecideAgentProposalRequest
+	lastSent *agentdecisionports.DecideAgentProposalRequest
 }
 
 func (f *fakeDecider) DecideWithOutcome(
 	_ context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	f.decided = append(f.decided, *req)
-	outcome := &agentports.DecisionOutcome{
+	outcome := &agentdecisionports.DecisionOutcome{
 		Decision: &agentdecision.AgentDecision{ID: pulid.MustNew("ad_")},
 	}
 	if req.ProposalID == f.failAt {
@@ -121,7 +123,7 @@ func (f *fakeDecider) DecideWithOutcome(
 
 func (f *fakeDecider) SignalRun(
 	_ context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	_ *agentdecision.AgentDecision,
 	_ pulid.ID,
 ) error {
@@ -171,7 +173,7 @@ type harness struct {
 	steps   *fakeSteps
 	decider *fakeDecider
 	actor   *permissionports.RequestActor
-	req     *agentports.DecideAgentPlanRequest
+	req     *agentplanports.DecideAgentPlanRequest
 }
 
 func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
@@ -200,7 +202,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 			PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: pulid.MustNew("usr_"),
 			UserID: pulid.MustNew("usr_"), OrganizationID: orgID, BusinessUnitID: buID,
 		},
-		req: &agentports.DecideAgentPlanRequest{
+		req: &agentplanports.DecideAgentPlanRequest{
 			PlanID: plan.ID, Decision: agentdecision.DecisionAccepted, ReasonCode: "looks right",
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
@@ -323,7 +325,7 @@ func TestDecide_RefusesAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
 
 func (f *fakeSteps) SumAutomaticMoney(
 	context.Context,
-	*agentports.SumAutomaticMoneyRequest,
+	*agentproposalports.SumAutomaticMoneyRequest,
 ) (agenttooltrust.MoneyUse, error) {
 	return agenttooltrust.MoneyUse{}, nil
 }
@@ -365,7 +367,7 @@ func TestDecide_AGatedPlanCanAlwaysBeRejectedUnseen(t *testing.T) {
 
 func (f *fakePlans) ListConnection(
 	context.Context,
-	*agentports.ListAgentPlanConnectionRequest,
+	*agentplanports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
 	return &pagination.CursorListResult[*agentplan.AgentPlan]{
 		Items: []*agentplan.AgentPlan{f.plan},
@@ -382,13 +384,13 @@ func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.
 
 	h := newHarness(t, 2, true)
 
-	listed, err := h.svc.ListConnection(t.Context(), &agentports.ListAgentPlanConnectionRequest{
+	listed, err := h.svc.ListConnection(t.Context(), &agentplanports.ListAgentPlanConnectionRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: h.req.TenantInfo},
 	})
 	require.NoError(t, err)
 	require.Equal(t, []*agentplan.AgentPlan{h.plans.plan}, listed.Items)
 
-	found, err := h.svc.GetByID(t.Context(), agentports.GetAgentPlanByIDRequest{
+	found, err := h.svc.GetByID(t.Context(), agentplanports.GetAgentPlanByIDRequest{
 		ID:         h.plans.plan.ID,
 		TenantInfo: h.req.TenantInfo,
 	})
@@ -408,7 +410,7 @@ func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.
 
 func (f *fakeSteps) ListByPlans(
 	context.Context,
-	agentports.ListAgentProposalsByPlansRequest,
+	agentproposalports.ListAgentProposalsByPlansRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/workingset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -49,7 +49,7 @@ func (s *Service) anchorRecords(
 		return nil
 	}
 
-	return s.anchors.Anchor(ctx, &agentports.RecordAnchorRequest{
+	return s.anchors.Anchor(ctx, &recordanchorports.RecordAnchorRequest{
 		TenantInfo: scope.Tenant,
 		Actor:      scope.Actor,
 		Records:    refs,

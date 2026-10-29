@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -25,15 +25,15 @@ import (
 )
 
 type recordingPlans struct {
-	agentports.AgentPlanService
+	agentplanports.AgentPlanService
 
 	plan *agentplan.AgentPlan
-	sent *agentports.DecideAgentPlanRequest
+	sent *agentplanports.DecideAgentPlanRequest
 }
 
 func (p *recordingPlans) Decide(
 	_ context.Context,
-	req *agentports.DecideAgentPlanRequest,
+	req *agentplanports.DecideAgentPlanRequest,
 	_ *permissionports.RequestActor,
 ) (*agentplan.AgentPlan, error) {
 	p.sent = req
@@ -43,7 +43,7 @@ func (p *recordingPlans) Decide(
 
 func (p *recordingPlans) GetByID(
 	context.Context,
-	agentports.GetAgentPlanByIDRequest,
+	agentplanports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return p.plan, nil
 }
@@ -59,7 +59,7 @@ func (planPreviews) ForPlan(
 	return &agentpreview.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
 }
 
-func newHandler(plans agentports.AgentPlanService) *agentplanhandler.Handler {
+func newHandler(plans agentplanports.AgentPlanService) *agentplanhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 		Logger:    zap.NewNop(),
 		AppConfig: &appconfig.Config{Debug: true},

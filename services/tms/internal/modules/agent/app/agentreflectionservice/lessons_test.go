@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -75,13 +75,13 @@ func (f *fakeMemories) Remember(
 }
 
 type fakeReflections struct {
-	agentports.AgentReflectionRepository
+	agentreflectionports.AgentReflectionRepository
 	stored *agentreflection.Reflection
 }
 
 func (f *fakeReflections) GetByID(
 	context.Context,
-	agentports.GetAgentReflectionRequest,
+	agentreflectionports.GetAgentReflectionRequest,
 ) (*agentreflection.Reflection, error) {
 	return f.stored, nil
 }
@@ -117,8 +117,8 @@ func lessonService(memories *fakeMemories) *Service {
 	}
 }
 
-func threadPlan() *agentports.ReflectionPlan {
-	return &agentports.ReflectionPlan{
+func threadPlan() *agentreflectionports.ReflectionPlan {
+	return &agentreflectionports.ReflectionPlan{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -140,7 +140,7 @@ func threadPlan() *agentports.ReflectionPlan {
 	}
 }
 
-func runPlan() *agentports.ReflectionPlan {
+func runPlan() *agentreflectionports.ReflectionPlan {
 	plan := threadPlan()
 	plan.Subject = agentreflection.ReflectionSubjectRun
 	plan.ThreadID = pulid.Nil
@@ -167,7 +167,7 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 	svc := lessonService(&fakeMemories{})
 	cases := []struct {
 		name   string
-		plan   *agentports.ReflectionPlan
+		plan   *agentreflectionports.ReflectionPlan
 		lesson *lesson
 		reason string
 	}{
@@ -328,7 +328,7 @@ func TestLessonRequest_ASubjectAndAReplacementTheWorkVouchesFor(t *testing.T) {
 	plan := threadPlan()
 	customer := pulid.MustNew("cus_")
 	known := pulid.MustNew("amem_")
-	plan.Subjects = []agentports.ReflectionSubjectRef{
+	plan.Subjects = []agentreflectionports.ReflectionSubjectRef{
 		{Type: agentmemory.MemorySubjectCustomer, ID: customer},
 	}
 	plan.KnownMemoryIDs = []pulid.ID{known}

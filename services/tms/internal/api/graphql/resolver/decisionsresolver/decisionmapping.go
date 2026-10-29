@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -115,7 +115,7 @@ func planHold(
 }
 
 func pendingDecisionSummary(
-	summary *agentports.PendingDecisionSummary,
+	summary *agentdecisionqueueports.PendingDecisionSummary,
 	actionable int,
 ) *gqlmodel.PendingDecisionSummary {
 	out := &gqlmodel.PendingDecisionSummary{

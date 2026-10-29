@@ -695,7 +695,7 @@ decides from its own use whether to keep it.
 | Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migrations `20261231010200_ai_provider_agent_settings` and `20261231010530_code_mode_scripts_on` |
 | Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`llmports.ScriptProviders`) |
 | Broker, index, gate check, per-turn count | `agentruntime/scriptbroker/scriptbroker.go`, `scripttool.go` |
-| `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |
+| `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agenttoolports/toolpolicy.go`, `agentquerytool.go` |
 | The tool | `querytools/scriptquerytools/script_tool.go` |
 | The runner: limits, host functions, outcome | `app/scriptrunner`; port `ports/scriptports` |
 | The WebAssembly host | `pkg/scriptvm` (embeds `scripts.wasm`); the compilation cache, shared with the rules engine, `pkg/wasmcache` |

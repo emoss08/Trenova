@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -59,7 +59,7 @@ type Params struct {
 	SuiteRuns     agentqualityports.AgentSuiteRunRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Cases         agentqualityports.AgentEvalCaseRepository
-	Evaluations   agentports.AgentEvaluationRepository
+	Evaluations   agentevaluationports.AgentEvaluationRepository
 	Usage         aiusageports.AIUsageRepository
 	Providers     aiproviderports.AIProviderRepository
 	Settings      *agentqualitysettings.Reader
@@ -76,7 +76,7 @@ type Engine struct {
 	suiteRuns   agentqualityports.AgentSuiteRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	cases       agentqualityports.AgentEvalCaseRepository
-	evaluations agentports.AgentEvaluationRepository
+	evaluations agentevaluationports.AgentEvaluationRepository
 	usage       aiusageports.AIUsageRepository
 	providers   aiproviderports.AIProviderRepository
 	settings    engineSettings

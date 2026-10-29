@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -67,13 +67,13 @@ func (f *fakeSuiteRuns) History(
 }
 
 type fakeEvaluations struct {
-	agentports.AgentEvaluationRepository
+	agentevaluationports.AgentEvaluationRepository
 	bySuite map[pulid.ID][]*agentevaluation.Evaluation
 }
 
 func (f *fakeEvaluations) ListBySuiteRun(
 	_ context.Context,
-	req agentports.ListSuiteEvaluationsRequest,
+	req agentevaluationports.ListSuiteEvaluationsRequest,
 ) ([]*agentevaluation.Evaluation, error) {
 	out := make([]*agentevaluation.Evaluation, 0)
 	for _, evaluation := range f.bySuite[req.SuiteRunID] {
@@ -87,7 +87,7 @@ func (f *fakeEvaluations) ListBySuiteRun(
 
 func (f *fakeEvaluations) SkipPendingBySuiteRun(
 	context.Context,
-	agentports.SkipPendingSuiteEvaluationsRequest,
+	agentevaluationports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return 0, nil
 }

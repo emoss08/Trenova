@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -31,7 +31,7 @@ type Scheduler struct {
 	workflows kernelports.WorkflowStarter
 }
 
-func NewScheduler(p SchedulerParams) agentports.AgentReflectionScheduler {
+func NewScheduler(p SchedulerParams) agentreflectionports.AgentReflectionScheduler {
 	return &Scheduler{
 		l:         p.Logger.Named("job.agent-reflection"),
 		signals:   p.Signals,
@@ -39,7 +39,10 @@ func NewScheduler(p SchedulerParams) agentports.AgentReflectionScheduler {
 	}
 }
 
-func (s *Scheduler) AfterTurn(ctx context.Context, req *agentports.ReflectOnThreadRequest) {
+func (s *Scheduler) AfterTurn(
+	ctx context.Context,
+	req *agentreflectionports.ReflectOnThreadRequest,
+) {
 	if s.signals == nil || req == nil || req.ThreadID.IsNil() {
 		return
 	}
@@ -70,7 +73,7 @@ func (s *Scheduler) AfterTurn(ctx context.Context, req *agentports.ReflectOnThre
 	}
 }
 
-func (s *Scheduler) AfterRun(ctx context.Context, req *agentports.ReflectOnRunRequest) {
+func (s *Scheduler) AfterRun(ctx context.Context, req *agentreflectionports.ReflectOnRunRequest) {
 	if s.workflows == nil || req == nil || req.RunID.IsNil() {
 		return
 	}

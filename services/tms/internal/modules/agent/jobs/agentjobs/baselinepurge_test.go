@@ -5,35 +5,35 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 type sweptProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	expired int
 }
 
 func (p *sweptProposals) ExpirePending(
 	context.Context,
-	agentports.ExpireAgentProposalsRequest,
+	agentproposalports.ExpireAgentProposalsRequest,
 ) (int, error) {
 	return p.expired, nil
 }
 
 type orphanBaselines struct {
-	agentports.AgentProposalBaselineRepository
+	agentproposalports.AgentProposalBaselineRepository
 
-	asked []agentports.PurgeOrphanProposalBaselinesRequest
+	asked []agentproposalports.PurgeOrphanProposalBaselinesRequest
 	err   error
 }
 
 func (b *orphanBaselines) PurgeOrphans(
 	_ context.Context,
-	req agentports.PurgeOrphanProposalBaselinesRequest,
+	req agentproposalports.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
 	b.asked = append(b.asked, req)
 

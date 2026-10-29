@@ -6,18 +6,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 )
 
 type StubMoneyBudgets struct {
-	agentports.AgentBudgetService
+	agentbudgetports.AgentBudgetService
 
 	Limits agenttooltrust.MoneyLimits
 	Used   agenttooltrust.MoneyUse
 	Err    error
 
 	mu    sync.Mutex
-	asked []agentports.MoneyAllowanceRequest
+	asked []agentbudgetports.MoneyAllowanceRequest
 }
 
 func RoomyMoneyLimits() agenttooltrust.MoneyLimits {
@@ -32,7 +32,7 @@ func RoomyMoneyLimits() agenttooltrust.MoneyLimits {
 
 func (b *StubMoneyBudgets) MoneyAllowance(
 	_ context.Context,
-	req agentports.MoneyAllowanceRequest,
+	req agentbudgetports.MoneyAllowanceRequest,
 ) (agenttooltrust.MoneyAllowance, error) {
 	b.mu.Lock()
 	b.asked = append(b.asked, req)
@@ -49,18 +49,18 @@ func (b *StubMoneyBudgets) MoneyAllowance(
 	}, nil
 }
 
-func (b *StubMoneyBudgets) Asked() []agentports.MoneyAllowanceRequest {
+func (b *StubMoneyBudgets) Asked() []agentbudgetports.MoneyAllowanceRequest {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return append([]agentports.MoneyAllowanceRequest(nil), b.asked...)
+	return append([]agentbudgetports.MoneyAllowanceRequest(nil), b.asked...)
 }
 
 func (b *StubMoneyBudgets) CheckTool(
 	context.Context,
-	agentports.CheckToolBudgetRequest,
-) (agentports.BudgetRefusal, error) {
-	return agentports.BudgetRefusal{}, nil
+	agentbudgetports.CheckToolBudgetRequest,
+) (agentbudgetports.BudgetRefusal, error) {
+	return agentbudgetports.BudgetRefusal{}, nil
 }
 
 func (b *StubMoneyBudgets) WithinBusinessHours(context.Context, *agentdefinition.Definition) bool {

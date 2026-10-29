@@ -13,7 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,10 +24,10 @@ import (
 )
 
 type Notes struct {
-	Anchors   agentports.RecordAnchorReader
+	Anchors   recordanchorports.RecordAnchorReader
 	Proposals proposalstores.ProposalStore
 	Plans     proposalstores.PlanStore
-	Decisions agentports.AgentDecisionRepository
+	Decisions agentdecisionports.AgentDecisionRepository
 }
 
 // DecisionNote writes the input of the turn that follows a decision on one of
@@ -50,10 +53,13 @@ func (s *Notes) DecisionNote(
 		)
 	}
 
-	stored, err := s.Proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   p.Thread.ID,
-		TenantInfo: p.Tenant,
-	})
+	stored, err := s.Proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   p.Thread.ID,
+			TenantInfo: p.Tenant,
+		},
+	)
 	if err != nil {
 		return decisionFollowUp{}, err
 	}
@@ -134,7 +140,7 @@ func (s *Notes) AnchorChanged(
 		return anchors
 	}
 
-	return append(anchors, s.Anchors.Anchor(ctx, &agentports.RecordAnchorRequest{
+	return append(anchors, s.Anchors.Anchor(ctx, &recordanchorports.RecordAnchorRequest{
 		TenantInfo: tenant,
 		Actor:      actor,
 		Records:    unread,
@@ -165,7 +171,7 @@ func (s *Notes) decisionsOn(
 
 	return s.Decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: proposalIDs,
 			TenantInfo:  tenant,
 		},
@@ -184,7 +190,7 @@ func (s *Notes) planDecisionNote(
 		)
 	}
 
-	plans, err := s.Plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
+	plans, err := s.Plans.ListByThread(ctx, agentplanports.ListAgentPlansByThreadRequest{
 		ThreadID:   p.Thread.ID,
 		TenantInfo: p.Tenant,
 	})
@@ -257,10 +263,13 @@ func (s *Notes) planSteps(
 		return nil, nil
 	}
 
-	stored, err := s.Proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   p.Thread.ID,
-		TenantInfo: p.Tenant,
-	})
+	stored, err := s.Proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   p.Thread.ID,
+			TenantInfo: p.Tenant,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
