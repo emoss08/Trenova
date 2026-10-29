@@ -77,18 +77,3 @@ func graphQLGetProviders() []any {
 
 	return providers
 }
-
-func getCatalogSpecs() []readspec.Get {
-	return []readspec.Get{
-		partyquerytools.CustomerGetSpec(),
-		partyquerytools.CarrierGetSpec(),
-		equipmentquerytools.TractorGetSpec(),
-		equipmentquerytools.TrailerGetSpec(),
-		billingquerytools.InvoiceGetSpec(),
-		billingquerytools.InvoiceAdjustmentGetSpec(),
-		partyquerytools.LocationGetSpec(),
-		operationsquerytools.DetentionOccurrenceGetSpec(),
-		operationsquerytools.ServiceFailureGetSpec(),
-		formulaquerytools.FormulaTemplateGetSpec(),
-	}
-}

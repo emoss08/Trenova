@@ -6,8 +6,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/billingquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/equipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/formulaquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/gettool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/operationsquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/partyquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
@@ -205,4 +210,19 @@ func TestGetTools_EveryRegisteredGetToolWithholdsNestedPeople(t *testing.T) {
 	assert.Equal(t, len(graphQLGetSpecs()), graphQLGets,
 		"every get tool that reads through GraphQL is registered, its nested people "+
 			"withheld by the field guard")
+}
+
+func getCatalogSpecs() []readspec.Get {
+	return []readspec.Get{
+		partyquerytools.CustomerGetSpec(),
+		partyquerytools.CarrierGetSpec(),
+		equipmentquerytools.TractorGetSpec(),
+		equipmentquerytools.TrailerGetSpec(),
+		billingquerytools.InvoiceGetSpec(),
+		billingquerytools.InvoiceAdjustmentGetSpec(),
+		partyquerytools.LocationGetSpec(),
+		operationsquerytools.DetentionOccurrenceGetSpec(),
+		operationsquerytools.ServiceFailureGetSpec(),
+		formulaquerytools.FormulaTemplateGetSpec(),
+	}
 }
