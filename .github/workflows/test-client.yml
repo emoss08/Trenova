@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     paths:
       - "client/**"
       - "services/tms/internal/api/graphql/schema/**"
@@ -31,8 +28,6 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - develop
     paths:
       - "client/**"
       - "services/tms/internal/api/graphql/schema/**"
@@ -57,7 +52,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:

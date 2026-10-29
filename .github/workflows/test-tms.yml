@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     paths:
       - "services/**"
       - "shared/**"
@@ -30,8 +27,6 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - develop
     paths:
       - "services/**"
       - "shared/**"
@@ -52,12 +47,13 @@ on:
       - "deploy/Dockerfile.imaging.dockerignore"
       - "docs/engineering/ai-tool-safety.md"
       - "docs/engineering/agent-write-coverage.md"
+  # Race Detection only, weekly: it takes about 90 minutes.
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "17 6 * * 1"
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:

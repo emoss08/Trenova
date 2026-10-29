@@ -10,9 +10,6 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
       - "services/tms/internal/modules/agent/domain/agentprompt/**"
@@ -50,8 +47,6 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - develop
     types: [opened, synchronize, reopened, labeled]
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
@@ -101,7 +96,7 @@ on:
         default: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
