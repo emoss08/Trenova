@@ -3,6 +3,7 @@ package runstepledger
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
@@ -16,8 +17,9 @@ import (
 
 type fakeStepRepo struct {
 	claimed []*agentrunstep.AgentRunStep
-	settled []agentruntimeports.SettleAgentRunStepRequest
-	rows    []*agentrunstep.AgentRunStep
+	settled  []agentruntimeports.SettleAgentRunStepRequest
+	recorded []*agentrunstep.AgentRunStep
+	rows     []*agentrunstep.AgentRunStep
 }
 
 func (f *fakeStepRepo) Claim(
@@ -38,7 +40,11 @@ func (f *fakeStepRepo) Settle(
 	return nil
 }
 
-func (f *fakeStepRepo) Record(context.Context, *agentrunstep.AgentRunStep) error { return nil }
+func (f *fakeStepRepo) Record(_ context.Context, step *agentrunstep.AgentRunStep) error {
+	f.recorded = append(f.recorded, step)
+
+	return nil
+}
 
 func (f *fakeStepRepo) List(
 	context.Context,
@@ -154,4 +160,172 @@ func TestLoaded_ReadsTheProvenanceBack(t *testing.T) {
 	require.NotNil(t, steps[0].DefinitionVersion)
 	assert.Equal(t, int64(4), *steps[0].DefinitionVersion)
 	assert.Equal(t, "ran", steps[0].Outcome.Verdict)
+}
+
+func TestClaim_StoresNoOutcomeForAStepNotYetRun(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+
+	_, err := ledger.Claim(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
+		OwnerID:   pulid.MustNew("ar_"),
+		Kind:      agentruntimeports.RunStepTool,
+		Key:       "step-claim",
+		Outcome:   agentruntimeports.RunStepOutcome{Content: "not yet"},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, repo.claimed, 1)
+	assert.Equal(t, string(agentruntimeports.RunStepStarted), repo.claimed[0].Status)
+	require.NotNil(t, repo.claimed[0].Outcome)
+	assert.Empty(t, repo.claimed[0].Outcome)
+	assert.Nil(t, repo.claimed[0].SettledAtMs)
+}
+
+func TestRecord_StoresTheOutcomeAndReadsItBack(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	owner := pulid.MustNew("atrn_")
+	outcome := agentruntimeports.RunStepOutcome{
+		Content: "Shipment S-1001 is billed.",
+		Data:    map[string]any{"status": "Billed"},
+		RanWith: map[string]any{"shipmentId": "shp_1"},
+		Verdict: "ran",
+	}
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
+		OwnerID:   owner,
+		Kind:      agentruntimeports.RunStepCompletion,
+		Status:    agentruntimeports.RunStepCompleted,
+		Key:       "reply-1",
+		Outcome:   outcome,
+	}))
+
+	require.Len(t, repo.recorded, 1)
+	row := repo.recorded[0]
+	assert.Equal(t, string(agentruntimeports.RunStepCompleted), row.Status)
+	assert.Equal(t, "Shipment S-1001 is billed.", row.Outcome["content"])
+	assert.Equal(t, "ran", row.Outcome["verdict"])
+	require.NotNil(t, row.SettledAtMs, "a recorded step is already finished")
+
+	repo.rows = repo.recorded
+	steps, err := ledger.Loaded(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
+		ID:   owner,
+	})
+	require.NoError(t, err)
+	require.Len(t, steps, 1)
+	assert.Equal(t, outcome, steps[0].Outcome)
+}
+
+func TestRecord_StoresAnEmptyOutcomeAsAnObject(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
+		OwnerID:   pulid.MustNew("ar_"),
+		Kind:      agentruntimeports.RunStepCompletion,
+		Status:    agentruntimeports.RunStepCompleted,
+		Key:       "reply-empty",
+	}))
+
+	require.Len(t, repo.recorded, 1)
+	require.NotNil(t, repo.recorded[0].Outcome)
+	require.NotNil(t, repo.recorded[0].Arguments)
+}
+
+func TestRecord_DropsAnAnswerTooLargeToKeep(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
+		OwnerID:   pulid.MustNew("ar_"),
+		Kind:      agentruntimeports.RunStepTool,
+		Status:    agentruntimeports.RunStepCompleted,
+		Key:       "step-large",
+		Outcome: agentruntimeports.RunStepOutcome{
+			Content: strings.Repeat("x", maxStoredOutcomeChars+1),
+			Verdict: "ran",
+		},
+	}))
+
+	require.Len(t, repo.recorded, 1)
+	assert.Empty(t, repo.recorded[0].Outcome["content"])
+	assert.Equal(t, "ran", repo.recorded[0].Outcome["verdict"])
+}
+
+func TestRecord_ClassifiesAFailedToolCall(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+
+	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
+		OwnerID:   pulid.MustNew("ar_"),
+		Kind:      agentruntimeports.RunStepTool,
+		Status:    agentruntimeports.RunStepFailed,
+		Key:       "step-denied",
+		Outcome: agentruntimeports.RunStepOutcome{
+			Content: "Tool \"dispatch_assign_move\" is not permitted.",
+			Failed:  true,
+			Reason:  "lacks update access to shipment_move",
+			Verdict: "denied",
+		},
+	}))
+
+	require.Len(t, repo.recorded, 1)
+	assert.NotEmpty(t, repo.recorded[0].Outcome["cause"])
+}
+
+func TestSettle_StoresTheOutcomeAndReadsItBack(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeStepRepo{}
+	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	owner := pulid.MustNew("ar_")
+	outcome := agentruntimeports.RunStepOutcome{
+		Content: "Move assigned to driver D-12.",
+		Data:    map[string]any{"driver": "D-12"},
+		Verdict: "ran",
+	}
+
+	require.NoError(t, ledger.Settle(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
+		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
+		OwnerID:   owner,
+		Kind:      agentruntimeports.RunStepTool,
+		Status:    agentruntimeports.RunStepCompleted,
+		Key:       "step-4",
+		Outcome:   outcome,
+	}))
+
+	require.Len(t, repo.settled, 1)
+	repo.rows = []*agentrunstep.AgentRunStep{{
+		OwnerKind: string(agentruntimeports.RunStepOwnerAgentRun),
+		OwnerID:   owner,
+		Kind:      string(agentruntimeports.RunStepTool),
+		Status:    repo.settled[0].Status,
+		StepKey:   repo.settled[0].StepKey,
+		Outcome:   repo.settled[0].Outcome,
+	}}
+
+	steps, err := ledger.Loaded(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAgentRun,
+		ID:   owner,
+	})
+	require.NoError(t, err)
+	require.Len(t, steps, 1)
+	assert.Equal(t, agentruntimeports.RunStepCompleted, steps[0].Status)
+	assert.Equal(t, outcome, steps[0].Outcome)
 }

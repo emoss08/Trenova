@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -70,7 +71,10 @@ func (s *Service) Claim(
 	tenant pagination.TenantInfo,
 	step *agentruntimeports.RunStep,
 ) (agentruntimeports.StepVerdict, error) {
-	held, err := s.repo.Claim(ctx, toEntity(tenant, step, agentruntimeports.RunStepStarted))
+	held, err := s.repo.Claim(
+		ctx,
+		toEntity(tenant, step, agentruntimeports.RunStepStarted, map[string]any{}),
+	)
 	if err == nil {
 		return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 	}
@@ -140,6 +144,30 @@ func (s *Service) Settle(
 	tenant pagination.TenantInfo,
 	step *agentruntimeports.RunStep,
 ) error {
+	return s.repo.Settle(ctx, &agentruntimeports.SettleAgentRunStepRequest{
+		TenantInfo: tenant,
+		OwnerID:    step.OwnerID,
+		StepKey:    step.Key,
+		Status:     string(step.Status),
+		Outcome:    s.storedOutcome(step),
+	})
+}
+
+func (s *Service) Record(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	step *agentruntimeports.RunStep,
+) error {
+	row := toEntity(tenant, step, step.Status, s.storedOutcome(step))
+	if step.Status != agentruntimeports.RunStepStarted {
+		settledAt := timeutils.NowUnixMilli()
+		row.SettledAtMs = &settledAt
+	}
+
+	return s.repo.Record(ctx, row)
+}
+
+func (s *Service) storedOutcome(step *agentruntimeports.RunStep) map[string]any {
 	outcome := withCause(step.Kind, &step.Outcome)
 	if len(outcome.Content) > maxStoredOutcomeChars {
 		s.l.Debug("a step's answer was too large to keep",
@@ -151,7 +179,7 @@ func (s *Service) Settle(
 
 	encoded, err := encodeOutcome(&outcome)
 	if err != nil {
-		// A settled step whose outcome cannot be encoded would come back as
+		// A finished step whose outcome cannot be encoded would come back as
 		// Unknown on the next attempt, which is wrong — it finished, and we
 		// know how. Record the status without the body rather than leave it
 		// Started.
@@ -159,24 +187,11 @@ func (s *Service) Settle(
 			zap.String("tool", step.ToolName),
 			zap.Error(err),
 		)
-		encoded = map[string]any{}
+
+		return map[string]any{}
 	}
 
-	return s.repo.Settle(ctx, &agentruntimeports.SettleAgentRunStepRequest{
-		TenantInfo: tenant,
-		OwnerID:    step.OwnerID,
-		StepKey:    step.Key,
-		Status:     string(step.Status),
-		Outcome:    encoded,
-	})
-}
-
-func (s *Service) Record(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	step *agentruntimeports.RunStep,
-) error {
-	return s.repo.Record(ctx, toEntity(tenant, step, step.Status))
+	return encoded
 }
 
 func (s *Service) Loaded(
@@ -221,6 +236,7 @@ func toEntity(
 	tenant pagination.TenantInfo,
 	step *agentruntimeports.RunStep,
 	status agentruntimeports.RunStepStatus,
+	outcome map[string]any,
 ) *agentrunstep.AgentRunStep {
 	args := step.Args
 	if args == nil {
@@ -244,7 +260,7 @@ func toEntity(
 		ToolName:               step.ToolName,
 		CallID:                 step.CallID,
 		Arguments:              args,
-		Outcome:                map[string]any{},
+		Outcome:                outcome,
 		TraceID:                step.TraceID,
 		SpanID:                 step.SpanID,
 		AgentDefinitionID:      step.DefinitionID,
