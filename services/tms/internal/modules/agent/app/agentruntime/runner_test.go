@@ -1342,7 +1342,7 @@ type dispatchRecorder struct {
 	dispatched []string
 }
 
-func (fx *dispatchRecorder) Dispatch(_ *Turn, call toolcall.Call) toolcall.Outcome {
+func (fx *dispatchRecorder) Dispatch(_ *Turn, call *toolcall.Call) toolcall.Outcome {
 	fx.dispatched = append(fx.dispatched, call.Call.Name)
 
 	return toolcall.Outcome{Content: `{"results":[]}`}
@@ -1353,8 +1353,8 @@ func (fx *dispatchRecorder) DispatchReads(
 	calls []toolcall.Call,
 ) []toolcall.Outcome {
 	outcomes := make([]toolcall.Outcome, 0, len(calls))
-	for _, call := range calls {
-		outcomes = append(outcomes, fx.Dispatch(t, call))
+	for idx := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, &calls[idx]))
 	}
 
 	return outcomes
@@ -1407,7 +1407,7 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 			ctx:  t.Context(),
 			emit: func(kernelports.StreamEvent) {},
 		}}
-		_, err := rt.Drive(rt.RestoreTurn(&replayed, state), fx)
+		_, err := rt.Drive(rt.RestoreTurn(&replayed, &state), fx)
 		require.NoError(t, err)
 
 		return fx.dispatched

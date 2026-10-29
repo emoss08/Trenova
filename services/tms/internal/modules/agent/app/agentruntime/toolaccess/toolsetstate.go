@@ -24,7 +24,7 @@ type ToolSetState struct {
 	Query      *QueryVectorState      `json:"query,omitempty"`
 }
 
-func RestoreToolSet(state ToolSetState) *ToolSet {
+func RestoreToolSet(state *ToolSetState) *ToolSet {
 	set := &ToolSet{
 		Loaded:     make(map[string]struct{}, len(state.Specs)),
 		Allowed:    state.Allowed,

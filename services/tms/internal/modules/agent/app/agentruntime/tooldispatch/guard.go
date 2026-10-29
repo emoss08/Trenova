@@ -29,7 +29,7 @@ func NewOrdinals() *Ordinals {
 }
 
 // Next returns this call's ordinal and counts it.
-func (o *Ordinals) Next(call llmports.ToolCall) int {
+func (o *Ordinals) Next(call *llmports.ToolCall) int {
 	key, ok := loopguard.CallKey(call)
 	if !ok {
 		return 0
@@ -188,9 +188,10 @@ func (s *Dispatcher) claimAndDispatch(
 	span.SetAttributes(aitrace.AIStepState.String(stepState(verdict.State)))
 	switch verdict.State {
 	case agentruntimeports.StepCompleted, agentruntimeports.StepFailed:
-		return replayedOutcome(verdict.Outcome)
+		return replayedOutcome(&verdict.Outcome)
 	case agentruntimeports.StepUnknown:
 		return unknownOutcome(p.Call.Name)
+	case agentruntimeports.StepFresh:
 	}
 
 	outcome := s.dispatch(ctx, DispatchParams{
@@ -256,7 +257,7 @@ func (s *Dispatcher) claimAndDispatch(
 // The result comes back too, when it was kept, so what the original call
 // showed beside the conversation is shown again rather than lost with the
 // attempt that made it.
-func replayedOutcome(recorded agentruntimeports.RunStepOutcome) toolcall.Result {
+func replayedOutcome(recorded *agentruntimeports.RunStepOutcome) toolcall.Result {
 	content := recorded.Content
 	if content == "" {
 		content = "This call was made on an earlier attempt of this run. " +
@@ -368,7 +369,8 @@ func (s *Dispatcher) SeedFromLedger(
 	}
 
 	replayed := 0
-	for _, step := range steps {
+	for idx := range steps {
+		step := &steps[idx]
 		if step.Kind != agentruntimeports.RunStepTool {
 			continue
 		}
@@ -376,7 +378,7 @@ func (s *Dispatcher) SeedFromLedger(
 
 		if step.Status == agentruntimeports.RunStepFailed && step.Outcome.Content != "" {
 			repeats.Record(
-				llmports.ToolCall{Name: step.ToolName, Arguments: step.Args},
+				&llmports.ToolCall{Name: step.ToolName, Arguments: step.Args},
 				step.Outcome.Content,
 			)
 		}

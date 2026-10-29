@@ -46,7 +46,7 @@ func TestOpenTurn_KeepsTheFiguresOfShortenedResultsAsEvidence(t *testing.T) {
 	want := decimal.RequireFromString("4817.25")
 	assert.True(t, containsDecimal(replycheck.GroundingSupport(turn), want))
 
-	restored := rt.RestoreTurn(req, turn.State())
+	restored := rt.RestoreTurn(req, new(turn.State()))
 	assert.True(
 		t,
 		containsDecimal(replycheck.GroundingSupport(restored), want),

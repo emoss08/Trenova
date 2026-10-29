@@ -124,7 +124,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Shall I list them?"},
 	}
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "yes, do that",
@@ -147,7 +147,7 @@ func TestNewToolSet_RanksAFollowUpWithTheMessageItAnswers(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Do you want the whole fleet or one terminal?"},
 	}
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "the whole fleet",
@@ -399,7 +399,7 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	const input = "which drivers have a medical card expiring soon"
 	probe, names := wideRuntime(t)
 	definition := runtimetest.Definition(names...)
-	opening := specNames(probe.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	opening := specNames(probe.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: definition,
 		Actor:      runtimetest.Actor(),
 		Input:      input,

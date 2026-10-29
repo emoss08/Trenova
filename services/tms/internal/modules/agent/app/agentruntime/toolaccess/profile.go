@@ -162,7 +162,7 @@ func (s *Access) holderTier(
 		return "", false
 	}
 
-	return agenttoolpolicy.StaticTier(holder, tool.Policy()), true
+	return agenttoolpolicy.StaticTier(holder, new(tool.Policy())), true
 }
 
 func BeyondNames(beyond map[string]agent.AutonomyTier) []string {

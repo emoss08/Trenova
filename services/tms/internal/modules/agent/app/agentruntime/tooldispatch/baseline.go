@@ -40,7 +40,7 @@ func (s *Dispatcher) fileBaseline(
 	b *baselineCall,
 ) (*agentruntimeports.ProposalTarget, *agentruntimeports.ProposalBaselineResult) {
 	if s.previews == nil {
-		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
+		return s.snapshotTarget(ctx, b.req, b.tool, &b.call), nil
 	}
 
 	result := s.previews.Baseline(ctx, &agentruntimeports.ProposalBaselineRequest{
@@ -51,7 +51,7 @@ func (s *Dispatcher) fileBaseline(
 		FileRefused: b.fileRefused,
 	})
 	if result == nil {
-		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
+		return s.snapshotTarget(ctx, b.req, b.tool, &b.call), nil
 	}
 
 	return result.Target, result

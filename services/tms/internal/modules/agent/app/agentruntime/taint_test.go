@@ -453,7 +453,7 @@ func TestDecideCall_UsesTheTaintTheCallWasMadeWith(t *testing.T) {
 		"tainted": {taint: tainted, tier: agent.TierActWithApproval},
 		"unknown": {taint: nil, tier: agent.TierActWithApproval},
 	} {
-		outcome := rt.DispatchStep(t.Context(), req, toolcall.Call{
+		outcome := rt.DispatchStep(t.Context(), req, &toolcall.Call{
 			Call:  llmports.ToolCall{ID: "call_" + name, Name: "apply_payment"},
 			Taint: tc.taint,
 		})

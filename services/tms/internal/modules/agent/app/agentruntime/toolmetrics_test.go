@@ -151,6 +151,6 @@ func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T
 	turn := rt.OpenTurn(t.Context(), req)
 	turn.providerKind = aiprovider.KindAnthropicMessages
 
-	restored := rt.RestoreTurn(req, turn.State())
+	restored := rt.RestoreTurn(req, new(turn.State()))
 	assert.Equal(t, aiprovider.KindAnthropicMessages, restored.providerKind)
 }

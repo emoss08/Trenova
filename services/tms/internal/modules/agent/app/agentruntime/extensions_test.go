@@ -315,12 +315,12 @@ func TestTurnState_KeepsWhetherTheTurnReadTheWeb(t *testing.T) {
 
 	turn := rt.RestoreTurn(
 		req,
-		TurnState{Held: []string{"agent_list_memories"}, ExternalContent: true},
+		&TurnState{Held: []string{"agent_list_memories"}, ExternalContent: true},
 	)
 	assert.True(t, turn.ReadExternalContent())
 	assert.True(t, turn.State().ExternalContent)
 
-	fresh := rt.RestoreTurn(req, TurnState{Held: []string{"agent_list_memories"}})
+	fresh := rt.RestoreTurn(req, &TurnState{Held: []string{"agent_list_memories"}})
 	assert.False(t, fresh.ReadExternalContent())
 	fresh.CarryExternalContent(true)
 	assert.True(t, fresh.ReadExternalContent())

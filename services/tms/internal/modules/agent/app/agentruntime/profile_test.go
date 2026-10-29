@@ -228,7 +228,7 @@ func TestTurnState_KeepsWhatTheTurnReaches(t *testing.T) {
 	service := profileRuntime(t, dispatch, billing)
 	req := conversationRequest(dispatch)
 
-	restored := service.RestoreTurn(req, service.OpenTurn(t.Context(), req).State())
+	restored := service.RestoreTurn(req, new(service.OpenTurn(t.Context(), req).State()))
 
 	assert.True(t, restored.Holds("invoice_list"))
 	assert.Equal(t, toolaccess.ProfileConversation, restored.Mode())
@@ -244,8 +244,8 @@ func TestDispatchStep_RunsAReachedWriteUnderItsHoldersCeiling(t *testing.T) {
 	req := conversationRequest(dispatch)
 	call := llmports.ToolCall{ID: "call_1", Name: "invoice_post", Arguments: map[string]any{}}
 
-	refused := service.DispatchStep(t.Context(), req, toolcall.Call{Call: call})
-	reached := service.DispatchStep(t.Context(), req, toolcall.Call{
+	refused := service.DispatchStep(t.Context(), req, &toolcall.Call{Call: call})
+	reached := service.DispatchStep(t.Context(), req, &toolcall.Call{
 		Call:   call,
 		Beyond: agent.TierPropose,
 	})

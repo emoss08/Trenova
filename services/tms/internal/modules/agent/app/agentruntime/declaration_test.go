@@ -49,7 +49,7 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	t.Parallel()
 
 	service, names := deferredCoreRuntime(t)
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
@@ -62,7 +62,7 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	assert.Contains(t, set.Deferred, agentdefinition.CoreToolWaitUntil,
 		"a core tool not loaded is still declared, so find_tools can load it")
 
-	asked := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	asked := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "wait until the truck is arriving at the dock",
@@ -75,7 +75,7 @@ func TestNewToolSet_ATurnThatCannotSearchLoadsEveryCoreTool(t *testing.T) {
 	t.Parallel()
 
 	service, _ := deferredCoreRuntime(t)
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition("worker_list", agentdefinition.CoreToolWaitUntil),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
@@ -95,11 +95,11 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	}
-	turn := service.RestoreTurn(req, service.OpenTurn(t.Context(), req).State())
+	turn := service.RestoreTurn(req, new(service.OpenTurn(t.Context(), req).State()))
 	require.False(t, turn.tools.Offers("equipment_list_trailers"))
 	declared := turn.completionRequest()
 
-	found := service.FindFor(t.Context(), req, turn.ToolsState(),
+	found := service.FindFor(t.Context(), req, new(turn.ToolsState()),
 		map[string]any{"need": "trailer inspection date"})
 	turn.LoadTools(found.Loaded)
 
@@ -111,7 +111,7 @@ func TestFindFor_LoadsWhatTheActivityFoundIntoTheTurnAsReferences(t *testing.T) 
 	assert.Contains(t, turn.tools.TakeLoaded(), "equipment_list_trailers",
 		"the next tool result names it")
 
-	restored := service.RestoreTurn(req, turn.State())
+	restored := service.RestoreTurn(req, new(turn.State()))
 	assert.True(
 		t,
 		restored.tools.Offers("equipment_list_trailers"),

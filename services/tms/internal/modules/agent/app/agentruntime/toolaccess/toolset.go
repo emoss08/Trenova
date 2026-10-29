@@ -137,8 +137,8 @@ type ToolSet struct {
 	Pinned      bool
 }
 
-func (s *Access) NewToolSet(ctx context.Context, req ToolSetRequest) *ToolSet {
-	set := s.openToolSet(ctx, &req)
+func (s *Access) NewToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet {
+	set := s.openToolSet(ctx, req)
 	if req.Command != "" {
 		set.Pinned = s.pinCommand(set, req.Command)
 	}
@@ -217,7 +217,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 			s.carryOver(set, req.History)
 			set.add(runtimetools.FindToolsSpec())
 		}
-		set.addConversational(*req)
+		set.addConversational(req)
 		s.declareWithdrawal(set, req.Delegated)
 		s.declareNamePlan(set, req.Delegated)
 
@@ -230,14 +230,15 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 	for _, name := range agentpreset.StandingTools(req.Definition.Template) {
 		s.Load(set, name)
 	}
-	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
+	ranked := s.catalog.RankHybrid(agenttoolcatalog.Query{
 		Allowed:  slices.DeleteFunc(slices.Clone(selected), set.Offers),
 		Text:     text,
 		Limit:    PreselectedTools,
 		Semantic: s.ToolSemantic(ctx, req.Query.TenantInfo, set.Query),
-	}) {
-		set.Preselected = append(set.Preselected, descriptor.Name)
-		s.Load(set, descriptor.Name)
+	})
+	for idx := range ranked {
+		set.Preselected = append(set.Preselected, ranked[idx].Name)
+		s.Load(set, ranked[idx].Name)
 	}
 	// Whether a question needs many reads is the model's to judge once it
 	// sees the first result, which is after the turn's tools are fixed, so
@@ -246,7 +247,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 	s.Load(set, codemode.ToolRunScript)
 	s.carryOver(set, req.History)
 	set.add(runtimetools.FindToolsSpec())
-	set.addConversational(*req)
+	set.addConversational(req)
 	s.declareWithdrawal(set, req.Delegated)
 	s.declareNamePlan(set, req.Delegated)
 
@@ -273,7 +274,7 @@ func defersCoreTool(name string, unattended bool) bool {
 // reading. A background run has nobody to ask: offering the question tool
 // anyway let an event-driven agent end its run on a question no one would
 // see, recorded as complete. Nor has it anywhere to publish a document.
-func (t *ToolSet) addConversational(req ToolSetRequest) {
+func (t *ToolSet) addConversational(req *ToolSetRequest) {
 	if req.Unattended {
 		return
 	}
@@ -448,8 +449,9 @@ func (s *Access) carryOver(set *ToolSet, history []conversation.Message) {
 				if strings.TrimSpace(need) == "" {
 					continue
 				}
-				for _, descriptor := range s.catalog.Find(set.Allowed, need, foundToolsLimit) {
-					s.Load(set, descriptor.Name)
+				matched := s.catalog.Find(set.Allowed, need, foundToolsLimit)
+				for idx := range matched {
+					s.Load(set, matched[idx].Name)
 				}
 			default:
 				s.Load(set, call.Name)
@@ -516,26 +518,8 @@ func (s *Access) ResolveFind(
 		Semantic:     s.ToolSemantic(ctx, actorTenant(actor), set.Query),
 		SkipSemantic: set.Loaded,
 	}))
-	names := make([]string, 0, len(found))
-	callable := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
-	added := make([]agenttoolports.AgentToolDescriptor, 0, len(found))
-	alongside := make([]string, 0, 4)
-	for _, descriptor := range found {
-		names = append(names, descriptor.Name)
-		if set.Offers(descriptor.Name) {
-			callable = append(callable, descriptor)
-			continue
-		}
-		before := len(set.Pending)
-		if s.Load(set, descriptor.Name) {
-			added = append(added, descriptor)
-			for _, name := range set.Pending[before:] {
-				if name != descriptor.Name {
-					alongside = append(alongside, name)
-				}
-			}
-		}
-	}
+	load := s.loadFound(set, found)
+	names, callable, added, alongside := load.names, load.callable, load.added, load.alongside
 
 	reached := s.reachBeyond(ctx, set, actor, need, s.strongestMatch(need, callable, added))
 	for idx := range reached {
@@ -577,6 +561,44 @@ func (s *Access) ResolveFind(
 	}
 
 	return FindAnswer{Content: strings.TrimRight(b.String(), "\n"), Found: names}
+}
+
+type foundLoad struct {
+	names     []string
+	callable  []agenttoolports.AgentToolDescriptor
+	added     []agenttoolports.AgentToolDescriptor
+	alongside []string
+}
+
+func (s *Access) loadFound(
+	set *ToolSet,
+	found []agenttoolports.AgentToolDescriptor,
+) foundLoad {
+	load := foundLoad{
+		names:     make([]string, 0, len(found)),
+		callable:  make([]agenttoolports.AgentToolDescriptor, 0, len(found)),
+		added:     make([]agenttoolports.AgentToolDescriptor, 0, len(found)),
+		alongside: make([]string, 0, 4),
+	}
+	for idx := range found {
+		descriptor := &found[idx]
+		load.names = append(load.names, descriptor.Name)
+		if set.Offers(descriptor.Name) {
+			load.callable = append(load.callable, *descriptor)
+			continue
+		}
+		before := len(set.Pending)
+		if s.Load(set, descriptor.Name) {
+			load.added = append(load.added, *descriptor)
+			for _, name := range set.Pending[before:] {
+				if name != descriptor.Name {
+					load.alongside = append(load.alongside, name)
+				}
+			}
+		}
+	}
+
+	return load
 }
 
 const BeyondLead = "These come from the desks of the person's other agents and are now " +
@@ -651,14 +673,14 @@ func (s *Access) withNamedTools(
 	}
 
 	limit := max(foundToolsLimit, len(named))
-	for _, descriptor := range found {
+	for idx := range found {
 		if len(named) >= limit {
 			break
 		}
 		if !slices.ContainsFunc(named, func(d agenttoolports.AgentToolDescriptor) bool {
-			return d.Name == descriptor.Name
+			return d.Name == found[idx].Name
 		}) {
-			named = append(named, descriptor)
+			named = append(named, found[idx])
 		}
 	}
 
@@ -673,7 +695,8 @@ func notToolNameRune(r rune) bool {
 // as a sequence, the order of the tools around it, so the model does not
 // search again for the lookup it needs next.
 func writeToolLines(b *strings.Builder, descriptors []agenttoolports.AgentToolDescriptor) {
-	for _, descriptor := range descriptors {
+	for idx := range descriptors {
+		descriptor := &descriptors[idx]
 		fmt.Fprintf(
 			b,
 			"- %s: %s\n",
@@ -688,18 +711,20 @@ func writeToolLines(b *strings.Builder, descriptors []agenttoolports.AgentToolDe
 
 func (s *Access) unheldStrongMatches(set *ToolSet, need string) []string {
 	unheld := make([]string, 0, foundToolsLimit)
-	for _, descriptor := range s.catalog.FindHybrid(agenttoolcatalog.Query{
+	matched := s.catalog.FindHybrid(agenttoolcatalog.Query{
 		Text:       need,
 		Limit:      foundToolsLimit,
 		StrongOnly: true,
-	}) {
-		if _, loaded := set.Loaded[descriptor.Name]; loaded {
+	})
+	for idx := range matched {
+		name := matched[idx].Name
+		if _, loaded := set.Loaded[name]; loaded {
 			continue
 		}
-		if slices.Contains(set.Allowed, descriptor.Name) {
+		if slices.Contains(set.Allowed, name) {
 			continue
 		}
-		unheld = append(unheld, descriptor.Name)
+		unheld = append(unheld, name)
 	}
 
 	return unheld
@@ -726,7 +751,8 @@ func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
 	}
 	if len(nearest) > 0 {
 		b.WriteString(" Tools this agent holds that may do the job, now callable:\n")
-		for _, descriptor := range nearest {
+		for idx := range nearest {
+			descriptor := &nearest[idx]
 			s.Load(set, descriptor.Name)
 			fmt.Fprintf(
 				&b,
@@ -1076,14 +1102,6 @@ func coreOf(names []string) []string {
 	}
 
 	return core
-}
-
-func toSpec(descriptor agenttoolports.AgentToolDescriptor) kernelports.ToolSpec {
-	return kernelports.ToolSpec{
-		Name:        descriptor.Name,
-		Description: descriptor.Description,
-		Parameters:  descriptor.Parameters,
-	}
 }
 
 // withoutSelfScoped drops the tools that act on a person's own records. A run

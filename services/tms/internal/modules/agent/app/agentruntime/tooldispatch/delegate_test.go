@@ -27,7 +27,7 @@ func TestStepKey_ScopeSeparatesADelegatesStepsAndLeavesTheOwnersAlone(t *testing
 	}
 	own := toolcall.StepKey(params)
 
-	base, ok := loopguard.CallKey(llmports.ToolCall{Name: params.ToolName, Arguments: params.Args})
+	base, ok := loopguard.CallKey(&llmports.ToolCall{Name: params.ToolName, Arguments: params.Args})
 	require.True(t, ok)
 	legacy := sha256.Sum256([]byte(owner.String() + "\x00" + base + "\x00" + "0"))
 	assert.Equal(t, hex.EncodeToString(legacy[:]), own)

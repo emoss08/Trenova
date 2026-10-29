@@ -277,7 +277,7 @@ func newScriptHarness(
 func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) toolcall.Outcome {
 	h.script.steps = steps
 
-	return h.rt.DispatchStep(ctx, h.req, toolcall.Call{
+	return h.rt.DispatchStep(ctx, h.req, &toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_script",
 			Name:      codemode.ToolRunScript,
@@ -296,7 +296,7 @@ func (h *scriptHarness) discrete(
 	name string,
 	args map[string]any,
 ) toolcall.Outcome {
-	return h.rt.DispatchStep(ctx, h.req, toolcall.Call{
+	return h.rt.DispatchStep(ctx, h.req, &toolcall.Call{
 		Call:  llmports.ToolCall{ID: "call_" + name, Name: name, Arguments: args},
 		Taint: &agent.RunTaint{},
 	})
@@ -604,7 +604,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
-	denied := h.rt.DispatchStep(t.Context(), h.req, toolcall.Call{
+	denied := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:     llmports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
 		Taint:    &agent.RunTaint{},
 		Model:    "claude-haiku-5-5",
@@ -620,7 +620,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	assert.True(t, off.Failed)
 	h.req.CodeMode = codemode.OverrideDefault
 
-	fourth := h.rt.DispatchStep(t.Context(), h.req, toolcall.Call{
+	fourth := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:           llmports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
@@ -680,7 +680,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 
 	scripts.set(aiprovider.ScriptSettings{})
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
-	turnedOff := h.rt.DispatchStep(t.Context(), h.req, toolcall.Call{
+	turnedOff := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:           llmports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Ordinal:        1,
@@ -693,7 +693,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	assert.Contains(t, turnedOff.Content, "scripts are not turned on")
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
-	failover := h.rt.DispatchStep(t.Context(), h.req, toolcall.Call{
+	failover := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call:           llmports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          "claude-haiku-5-5",
@@ -819,7 +819,7 @@ func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 
-	refused := h.rt.DispatchStep(t.Context(), h.req, toolcall.Call{
+	refused := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_continues",
 			Name:      codemode.ToolRunScript,
@@ -945,7 +945,7 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 	require.True(t, ok)
 	registry.Tools = append(registry.Tools, &stubScriptTool{})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "for every customer with open loads, the count and the earliest pickup",

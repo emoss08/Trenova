@@ -60,7 +60,7 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	got := s.dispatcher.Ruled(t.Context(), ruledRequest(), ruledPolicy())
+	got := s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy()))
 
 	assert.Equal(t, agent.TierActWithApproval, got.MaxTier)
 	assert.Equal(t, agent.TierActWithApproval, got.DefaultTier)
@@ -76,7 +76,7 @@ func TestRuled_HoldsTheToolToAProposalWhenRulesCannotBeRead(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	got := s.dispatcher.Ruled(t.Context(), ruledRequest(), ruledPolicy())
+	got := s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy()))
 
 	assert.Equal(t, agent.TierPropose, got.MaxTier)
 	assert.Equal(t, agent.TierPropose, got.DefaultTier)
@@ -88,11 +88,11 @@ func TestRuled_KeepsTheDeclaredRuleWithoutRules(t *testing.T) {
 	s := buildRuntime(Params{
 		Logger: zap.NewNop(),
 	})
-	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), ruledPolicy()))
+	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy())))
 
 	rewire(
 		s,
 		func(p *Params) { p.Rules = &fakeToolRules{rules: map[string]*agenttooltrust.ToolRuleOverride{}} },
 	)
-	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), ruledPolicy()))
+	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy())))
 }

@@ -53,7 +53,7 @@ type Access struct {
 	scripts     llmports.ScriptProviders
 }
 
-func NewAccess(p AccessParams) *Access {
+func NewAccess(p *AccessParams) *Access {
 	return &Access{
 		logger:      p.Logger.Named("service.agentruntime"),
 		queryTools:  p.QueryTools,

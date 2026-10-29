@@ -31,12 +31,12 @@ func buildRuntime(p Params) *Service {
 }
 
 func (b *runtimeBuild) build() *Service {
-	accessParts, dispatchParts := accessParams(b.params), dispatcherParams(b.params)
+	accessParts, dispatchParts := accessParams(&b.params), dispatcherParams(&b.params)
 	for _, tune := range b.tunes {
 		tune(&accessParts, &dispatchParts)
 	}
 
-	return assemble(b.params, accessParts, dispatchParts)
+	return assemble(&b.params, &accessParts, &dispatchParts)
 }
 
 func buildOf(rt *Service) *runtimeBuild {

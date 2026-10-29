@@ -36,7 +36,7 @@ func (t *Turn) Delegations() int { return t.delegations }
 func (t *Turn) CountDelegation() { t.delegations++ }
 
 // NextOrdinal numbers this exact call within the run.
-func (t *Turn) NextOrdinal(call llmports.ToolCall) int { return t.counts.Next(call) }
+func (t *Turn) NextOrdinal(call *llmports.ToolCall) int { return t.counts.Next(call) }
 
 // CallIDs are the tool call ids the conversation holds, sorted, because they
 // are read in workflow code and a map ranges in a different order every time.

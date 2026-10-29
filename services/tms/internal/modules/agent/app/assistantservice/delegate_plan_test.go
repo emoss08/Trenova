@@ -59,7 +59,7 @@ func (fx *handOffEffects) Complete(
 
 func (fx *handOffEffects) Dispatch(
 	t *agentruntime.Turn,
-	call toolcall.Call,
+	call *toolcall.Call,
 ) toolcall.Outcome {
 	return fx.svc.runtime.DispatchStep(fx.ctx, t.Request(), call)
 }
@@ -69,8 +69,8 @@ func (fx *handOffEffects) DispatchReads(
 	calls []toolcall.Call,
 ) []toolcall.Outcome {
 	outcomes := make([]toolcall.Outcome, 0, len(calls))
-	for _, call := range calls {
-		outcomes = append(outcomes, fx.Dispatch(t, call))
+	for idx := range calls {
+		outcomes = append(outcomes, fx.Dispatch(t, &calls[idx]))
 	}
 
 	return outcomes
@@ -85,7 +85,7 @@ func (*handOffEffects) Emit(kernelports.StreamEvent) {}
 func (fx *handOffEffects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome toolcall.Outcome,
+	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
 	return fx.svc.runtime.ObserveCall(nil, call, outcome)
 }
@@ -118,7 +118,7 @@ func (fx *handOffEffects) delegate(
 	require.NoError(fx.t, err)
 	fx.opened = append(fx.opened, opened.Request)
 
-	turn := fx.svc.runtime.RestoreTurn(opened.Request, opened.Turn)
+	turn := fx.svc.runtime.RestoreTurn(opened.Request, &opened.Turn)
 	turn.ReserveCallIDs(call.CallIDs)
 	result, err := fx.svc.runtime.Drive(turn, fx)
 	require.NoError(fx.t, err)

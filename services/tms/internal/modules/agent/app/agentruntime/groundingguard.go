@@ -34,7 +34,7 @@ func (s *Service) reground(
 				Kind:    llmports.RetryKindRestart,
 			},
 		})
-		fx.Emit(replycheck.RegroundedEvent(assistantstreamports.RegroundRewrite, finding, reason))
+		fx.Emit(replycheck.RegroundedEvent(assistantstreamports.RegroundRewrite, &finding, reason))
 		t.messages = append(t.messages,
 			llmports.Message{
 				Role:          llmports.RoleAssistant,
@@ -52,7 +52,7 @@ func (s *Service) reground(
 	fx.Emit(
 		replycheck.RegroundedEvent(
 			assistantstreamports.RegroundNote,
-			finding,
+			&finding,
 			finding.NoteReason(),
 		),
 	)

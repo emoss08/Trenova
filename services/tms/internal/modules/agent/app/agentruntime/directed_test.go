@@ -216,7 +216,7 @@ func TestDriveDirected_TheTaskSurvivesTheTurnsState(t *testing.T) {
 	assert.Equal(t, delegate.ID, state.Directed.Delegate.ID)
 	assert.Equal(t, directedStep, state.Directed.Task)
 
-	restored := rt.RestoreTurn(req, state)
+	restored := rt.RestoreTurn(req, &state)
 	require.NotNil(t, restored.directed)
 	assert.Equal(t, delegate.ID, restored.directed.Delegate.ID)
 
@@ -279,7 +279,7 @@ func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
 	)
 
 	bare := directedRequest(delegate)
-	restored := rt.RestoreTurn(bare, state)
+	restored := rt.RestoreTurn(bare, &state)
 	require.NotNil(t, restored.directed)
 	assert.Equal(t, state.Directed.Records, restored.directed.Records)
 }

@@ -66,7 +66,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 		FoundTools: []string{"worker_list"},
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "yes, do that",
@@ -91,7 +91,7 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 		Content:    "These tools are now callable",
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "yes, do that",
@@ -126,7 +126,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 		FoundTools: []string{"worker_list"},
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(held...),
 		Actor:      runtimetest.Actor(),
 		Input:      "yes, do that",
@@ -180,8 +180,8 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 			Text:       "which trailers are due inspection",
 		},
 	}
-	want := keyword.access.NewToolSet(t.Context(), request)
-	got := unavailable.access.NewToolSet(t.Context(), request)
+	want := keyword.access.NewToolSet(t.Context(), &request)
+	got := unavailable.access.NewToolSet(t.Context(), &request)
 
 	assert.Equal(t, specNames(want.Specs), specNames(got.Specs))
 	assert.Len(t, vectorizer.Calls, 1)
@@ -199,7 +199,7 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 		"carrier_list":            0.12,
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "whose paperwork is going stale",
@@ -221,7 +221,7 @@ func TestNewToolSet_PreselectsByMeaningWhenAVectorIsAvailable(t *testing.T) {
 
 	state := set.State()
 	require.NotNil(t, state.Query, "the vector rides on the turn for find_tools")
-	restored := toolaccess.RestoreToolSet(state)
+	restored := toolaccess.RestoreToolSet(&state)
 	assert.Equal(t, query, restored.Query)
 }
 
@@ -239,7 +239,7 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 		similarity,
 	)
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
@@ -258,7 +258,7 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
-	}, set.State(), map[string]any{"need": "who is off this week"})
+	}, new(set.State()), map[string]any{"need": "who is off this week"})
 
 	assert.Equal(t, callsAtOpen, len(vectorizer.Calls), "find_tools reuses the turn's vector")
 	assert.Len(t, similarities.Requests, 2)
@@ -280,7 +280,7 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 		"worker_list":  0.18,
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
@@ -293,7 +293,7 @@ func TestFindFor_ReturnsNothingForNonsenseBelowTheFloor(t *testing.T) {
 	found := service.FindFor(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(names...),
 		Actor:      runtimetest.Actor(),
-	}, set.State(), map[string]any{"need": "zzzz qqqq"})
+	}, new(set.State()), map[string]any{"need": "zzzz qqqq"})
 
 	assert.Empty(t, found.Found)
 	assert.Empty(t, found.Loaded)

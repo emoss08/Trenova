@@ -120,16 +120,18 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	return assemble(p, accessParams(p), dispatcherParams(p))
+	accessParts, dispatchParts := accessParams(&p), dispatcherParams(&p)
+
+	return assemble(&p, &accessParts, &dispatchParts)
 }
 
 // assemble builds the runtime from its parts: the tool access every part
 // checks against, the dispatcher that runs tool calls and the streamer that
 // asks the model.
 func assemble(
-	p Params,
-	accessParts toolaccess.AccessParams,
-	dispatchParts tooldispatch.DispatcherParams,
+	p *Params,
+	accessParts *toolaccess.AccessParams,
+	dispatchParts *tooldispatch.DispatcherParams,
 ) *Service {
 	access := toolaccess.NewAccess(accessParts)
 	dispatchParts.Access = access
@@ -147,7 +149,7 @@ func assemble(
 	}
 }
 
-func accessParams(p Params) toolaccess.AccessParams {
+func accessParams(p *Params) toolaccess.AccessParams {
 	return toolaccess.AccessParams{
 		Logger:         p.Logger,
 		QueryTools:     p.QueryTools,
@@ -164,7 +166,7 @@ func accessParams(p Params) toolaccess.AccessParams {
 	}
 }
 
-func dispatcherParams(p Params) tooldispatch.DispatcherParams {
+func dispatcherParams(p *Params) tooldispatch.DispatcherParams {
 	return tooldispatch.DispatcherParams{
 		Logger:      p.Logger,
 		QueryTools:  p.QueryTools,
@@ -205,386 +207,513 @@ func (s *Service) Run(
 // Nothing here reaches outside the turn except through fx, which is what lets
 // the same loop run in process and as durable workflow code.
 func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, error) {
-	definition := t.req.Definition
-	budget := t.budget
-	result := t.result
-	tools := t.tools
-
 	t.announceOpened(fx)
 	turnmemory.Announce(t, fx)
 	if t.directed != nil {
 		return s.driveDirected(t, fx), nil
 	}
 
-	retries := 0
-	asked := false
-	stuck := false
-	grounding := replycheck.GroundingState{}
-	commandHeld := false
-	placement := replycheck.PlacementState{}
-	for result.ToolCallsUsed < budget && !stuck {
-		s.interject(t, fx)
-		reply, err := fx.Complete(t, t.completionRequest())
-		result.Usage = result.Usage.Add(reply.TotalUsage())
-		completion := reply.Completion
-		if err == nil && reply.Looped {
-			s.logger.Warn("agent reply fell into a loop; discarding it",
-				zap.String("agent", definition.Name),
-				zap.String("model", completion.ModelIdentifier),
-				zap.Bool("in_reasoning", reply.InReasoning),
-				zap.Int("retry", retries+1),
-			)
-			if retries < loopguard.MaxReplyRetries {
-				retries++
-				fx.Emit(kernelports.StreamEvent{
-					Event: assistantstreamports.AssistantEventRetrying,
-					Data: assistantstreamports.AssistantRetryingEvent{
-						Attempt: retries,
-						Reason:  loopguard.LoopRestartReason,
-						Kind:    llmports.RetryKindRestart,
-					},
-				})
-				s.reask(t, fx, ReaskLoop, completion)
-				continue
-			}
-			fx.Emit(kernelports.StreamEvent{
-				Event: assistantstreamports.AssistantEventRetrying,
-				Data: assistantstreamports.AssistantRetryingEvent{
-					Attempt: retries + 1,
-					Reason:  loopguard.LoopRestartReason,
-					Kind:    llmports.RetryKindRestart,
-				},
-			})
-			fx.Emit(modelstream.DeltaEvent(loopguard.LoopedReply))
-			return s.finish(
-				result,
-				modelstream.CannedCompletion(completion, loopguard.LoopedReply),
-				fx,
-			), nil
+	loop := &driveLoop{}
+	for t.result.ToolCallsUsed < t.budget && !loop.stuck {
+		if step := s.driveRound(t, fx, loop); step.done {
+			return step.result, step.err
 		}
-		if err != nil {
-			// What ran travels with the error. The caller decides whether to
-			// keep it, but it cannot keep what it was never handed: a model that
-			// died after a tool wrote something used to take the record of that
-			// write with it.
-			return result, err
-		}
+	}
 
-		retry, stop := s.handleCutOff(t, fx, completion)
-		if retry {
-			s.reask(t, fx, ReaskCutOff, completion)
+	return s.driveSpent(t, fx, loop), nil
+}
+
+// driveLoop is what the loop carries from one round to the next.
+type driveLoop struct {
+	retries     int
+	asked       bool
+	stuck       bool
+	grounding   replycheck.GroundingState
+	commandHeld bool
+	placement   replycheck.PlacementState
+}
+
+// driveStep is how a round ended: done ends the turn with result and err,
+// otherwise the loop asks the model again.
+type driveStep struct {
+	done   bool
+	result *agentruntimeports.RunResult
+	err    error
+}
+
+func finished(result *agentruntimeports.RunResult) driveStep {
+	return driveStep{done: true, result: result}
+}
+
+func (s *Service) driveRound(t *Turn, fx TurnEffects, loop *driveLoop) driveStep {
+	result := t.result
+	s.interject(t, fx)
+	reply, err := fx.Complete(t, t.completionRequest())
+	result.Usage = result.Usage.Add(reply.TotalUsage())
+	completion := reply.Completion
+	if err == nil && reply.Looped {
+		return s.loopedReply(t, fx, loop, &reply)
+	}
+	if err != nil {
+		// What ran travels with the error. The caller decides whether to
+		// keep it, but it cannot keep what it was never handed: a model that
+		// died after a tool wrote something used to take the record of that
+		// write with it.
+		return driveStep{done: true, result: result, err: err}
+	}
+
+	retry, stop := s.handleCutOff(t, fx, completion)
+	if retry {
+		s.reask(t, fx, ReaskCutOff, completion)
+		return driveStep{}
+	}
+
+	result.Model = completion.ModelIdentifier
+	result.ProviderID = completion.ProviderID
+	result.ContextWindow = completion.ContextWindow
+	t.providerKind = completion.ProviderKind
+	modelstream.TagReasoning(completion)
+	if stop {
+		return finished(s.finishCutOff(t, fx, completion))
+	}
+	modelstream.TagToolCalls(completion)
+	turnhistory.DistinctCallIDs(completion, t.callIDs, fx.NewCallID)
+
+	if len(completion.ToolCalls) == 0 {
+		return s.driveReply(t, fx, loop, completion)
+	}
+
+	s.recordAssistantTurn(t, fx, completion)
+	if s.runToolCalls(t, fx, loop, completion) {
+		return finished(s.finish(result, askedEnding(completion), fx))
+	}
+
+	s.logger.Debug("agent tool iteration",
+		zap.String("agent", t.req.Definition.Name),
+		zap.Int("used", result.ToolCallsUsed),
+		zap.Int("budget", t.budget),
+	)
+
+	return driveStep{}
+}
+
+func (s *Service) loopedReply(
+	t *Turn,
+	fx TurnEffects,
+	loop *driveLoop,
+	reply *modelstream.Reply,
+) driveStep {
+	completion := reply.Completion
+	s.logger.Warn("agent reply fell into a loop; discarding it",
+		zap.String("agent", t.req.Definition.Name),
+		zap.String("model", completion.ModelIdentifier),
+		zap.Bool("in_reasoning", reply.InReasoning),
+		zap.Int("retry", loop.retries+1),
+	)
+	if loop.retries < loopguard.MaxReplyRetries {
+		loop.retries++
+		fx.Emit(kernelports.StreamEvent{
+			Event: assistantstreamports.AssistantEventRetrying,
+			Data: assistantstreamports.AssistantRetryingEvent{
+				Attempt: loop.retries,
+				Reason:  loopguard.LoopRestartReason,
+				Kind:    llmports.RetryKindRestart,
+			},
+		})
+		s.reask(t, fx, ReaskLoop, completion)
+		return driveStep{}
+	}
+	fx.Emit(kernelports.StreamEvent{
+		Event: assistantstreamports.AssistantEventRetrying,
+		Data: assistantstreamports.AssistantRetryingEvent{
+			Attempt: loop.retries + 1,
+			Reason:  loopguard.LoopRestartReason,
+			Kind:    llmports.RetryKindRestart,
+		},
+	})
+	fx.Emit(modelstream.DeltaEvent(loopguard.LoopedReply))
+
+	return finished(s.finish(
+		t.result,
+		modelstream.CannedCompletion(completion, loopguard.LoopedReply),
+		fx,
+	))
+}
+
+// driveReply settles a completion that called no tools: it is the reply,
+// unless a guard sends the model back to fix it.
+func (s *Service) driveReply(
+	t *Turn,
+	fx TurnEffects,
+	loop *driveLoop,
+	completion *llmports.ChatCompletionResult,
+) driveStep {
+	// A turn that ends in silence reads as a hung screen. One that
+	// asked the person a question has said what it needed to; any
+	// other is asked once more, then given a plain line.
+	if strings.TrimSpace(completion.Text) == "" && !loop.asked {
+		if loop.retries < loopguard.MaxReplyRetries {
+			loop.retries++
+			s.reask(t, fx, ReaskEmptyReply, completion)
+			return driveStep{}
+		}
+		fx.Emit(modelstream.DeltaEvent(loopguard.EmptyReply))
+		return finished(s.finish(
+			t.result,
+			modelstream.CannedCompletion(completion, loopguard.EmptyReply),
+			fx,
+		))
+	}
+	if !loop.asked && s.holdToCommand(t, fx, completion, &loop.commandHeld) {
+		s.reask(t, fx, ReaskCommand, completion)
+		return driveStep{}
+	}
+	if s.reground(t, fx, completion, &loop.grounding) {
+		s.reask(t, fx, ReaskGrounding, completion)
+		return driveStep{}
+	}
+	s.passReply(t, fx, completion)
+	if s.placeArtifacts(t, fx, completion, &loop.placement) {
+		s.reask(t, fx, ReaskPlacement, completion)
+		return driveStep{}
+	}
+
+	return finished(s.finish(t.result, completion, fx))
+}
+
+func (s *Service) recordAssistantTurn(
+	t *Turn,
+	fx TurnEffects,
+	completion *llmports.ChatCompletionResult,
+) {
+	assistantTurn := conversation.Message{
+		Role:              conversation.RoleAssistant,
+		Content:           completion.Text,
+		ToolCalls:         turnhistory.ToToolCallRecords(completion.ToolCalls),
+		Reasoning:         completion.Reasoning,
+		Model:             completion.ModelIdentifier,
+		ProviderID:        completion.ProviderID,
+		FallbackFrom:      modelstream.FallbackOf(completion),
+		InputTokens:       completion.InputTokens,
+		OutputTokens:      completion.OutputTokens,
+		LatencyMs:         completion.LatencyMs,
+		CostUSD:           completion.CostUSD,
+		CreatedAt:         fx.Now(),
+		ProviderMessageID: completion.ProviderMessageID,
+	}
+	t.result.Messages = append(t.result.Messages, assistantTurn)
+	// The thinking goes back with the calls it produced. Anthropic and the
+	// Responses API both refuse a tool result whose reasoning is missing.
+	t.messages = append(t.messages, llmports.Message{
+		Role:          llmports.RoleAssistant,
+		Content:       completion.Text,
+		ToolCalls:     completion.ToolCalls,
+		Reasoning:     completion.Reasoning,
+		ReplyID:       completion.ProviderMessageID,
+		ReplyProvider: completion.ProviderID,
+	})
+	fx.Emit(kernelports.StreamEvent{
+		Event: assistantstreamports.AssistantEventMessage,
+		Data: assistantstreamports.AssistantMessageEvent{
+			Content:      assistantTurn.Content,
+			ToolCalls:    s.access.CallsWithEffects(assistantTurn.ToolCalls),
+			Model:        assistantTurn.Model,
+			ProviderID:   assistantTurn.ProviderID,
+			FallbackFrom: assistantTurn.FallbackFrom,
+		},
+	})
+}
+
+// roundCall is one tool call of a completion, with what the round knows
+// about it.
+type roundCall struct {
+	call      *llmports.ToolCall
+	text      string
+	fannedOut map[string]toolcall.Result
+}
+
+// runToolCalls runs every tool call of a completion and reports whether a
+// question reached the person, which ends the turn.
+func (s *Service) runToolCalls(
+	t *Turn,
+	fx TurnEffects,
+	loop *driveLoop,
+	completion *llmports.ChatCompletionResult,
+) bool {
+	result := t.result
+	batch := &tooldispatch.ReadBatch{}
+	shownNow := false
+	fannedOut := delegation.FanOut(
+		t, s.handing(t, fx), completion.ToolCalls, result.ToolCallsUsed, t.budget,
+	)
+	for _, call := range completion.ToolCalls {
+		check := &tooldispatch.JoinCheck{
+			Call:   call,
+			Used:   result.ToolCallsUsed,
+			Budget: t.budget,
+			Stuck:  loop.stuck,
+		}
+		key, joins := t.joins(batch, check)
+		if !joins && batch.Size() > 0 {
+			// The waiting reads settle first; with them settled the call
+			// may start a batch of its own.
+			s.settleReads(t, fx, batch)
+			check.Used = result.ToolCallsUsed
+			key, joins = t.joins(batch, check)
+		}
+		if joins {
+			s.emitToolStarted(fx, &call)
+			s.access.Load(t.tools, call.Name)
+			batch.Calls = append(batch.Calls, t.dispatchCall(&call, completion.Text))
+			batch.Keys = append(batch.Keys, key)
 			continue
 		}
 
-		result.Model = completion.ModelIdentifier
-		result.ProviderID = completion.ProviderID
-		result.ContextWindow = completion.ContextWindow
-		t.providerKind = completion.ProviderKind
-		modelstream.TagReasoning(completion)
-		if stop {
-			return s.finishCutOff(t, fx, completion), nil
+		if _, ran := fannedOut[call.ID]; !ran {
+			s.emitToolStarted(fx, &call)
 		}
-		modelstream.TagToolCalls(completion)
-		turnhistory.DistinctCallIDs(completion, t.callIDs, fx.NewCallID)
-
-		if len(completion.ToolCalls) == 0 {
-			// A turn that ends in silence reads as a hung screen. One that
-			// asked the person a question has said what it needed to; any
-			// other is asked once more, then given a plain line.
-			if strings.TrimSpace(completion.Text) == "" && !asked {
-				if retries < loopguard.MaxReplyRetries {
-					retries++
-					s.reask(t, fx, ReaskEmptyReply, completion)
-					continue
-				}
-				fx.Emit(modelstream.DeltaEvent(loopguard.EmptyReply))
-				return s.finish(
-					result,
-					modelstream.CannedCompletion(completion, loopguard.EmptyReply),
-					fx,
-				), nil
-			}
-			if !asked && s.holdToCommand(t, fx, completion, &commandHeld) {
-				s.reask(t, fx, ReaskCommand, completion)
-				continue
-			}
-			if s.reground(t, fx, completion, &grounding) {
-				s.reask(t, fx, ReaskGrounding, completion)
-				continue
-			}
-			s.passReply(t, fx, completion)
-			if s.placeArtifacts(t, fx, completion, &placement) {
-				s.reask(t, fx, ReaskPlacement, completion)
-				continue
-			}
-
-			return s.finish(result, completion, fx), nil
+		if s.runToolCall(t, fx, loop, &roundCall{
+			call:      &call,
+			text:      completion.Text,
+			fannedOut: fannedOut,
+		}) {
+			shownNow = true
 		}
+	}
+	s.settleReads(t, fx, batch)
 
-		assistantTurn := conversation.Message{
-			Role:              conversation.RoleAssistant,
-			Content:           completion.Text,
-			ToolCalls:         turnhistory.ToToolCallRecords(completion.ToolCalls),
-			Reasoning:         completion.Reasoning,
-			Model:             completion.ModelIdentifier,
-			ProviderID:        completion.ProviderID,
-			FallbackFrom:      modelstream.FallbackOf(completion),
-			InputTokens:       completion.InputTokens,
-			OutputTokens:      completion.OutputTokens,
-			LatencyMs:         completion.LatencyMs,
-			CostUSD:           completion.CostUSD,
-			CreatedAt:         fx.Now(),
-			ProviderMessageID: completion.ProviderMessageID,
+	return shownNow
+}
+
+// runToolCall answers one tool call the loop runs on its own, and reports
+// whether it was a question that reached the person.
+func (s *Service) runToolCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roundCall) bool {
+	call := rc.call
+	// Arguments that did not parse are not arguments. The tool used to
+	// run on the empty map that stood in for them, and a list tool given
+	// no filters lists everything.
+	if call.ArgumentsError != "" {
+		outcome := invalidArguments(call)
+		s.recordToolResult(t, fx, call, &outcome)
+		// It counts against the budget like any call. A model whose output
+		// limit cuts every call short sends the same broken call each time,
+		// and a loop that did not count it asked the model again, and paid for
+		// it, without end.
+		t.result.ToolCallsUsed++
+		return false
+	}
+	if outcome, refused := s.overBudget(t, call); refused {
+		s.recordToolResult(t, fx, call, &outcome)
+		return false
+	}
+
+	switch call.Name {
+	case runtimetools.FindToolsName:
+		outcome := s.findTools(t, fx, call)
+		s.recordToolResult(t, fx, call, &outcome)
+		return false
+	case askuser.Name:
+		outcome, shown := s.askUser(t, fx, loop, call)
+		t.result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		return shown
+	}
+
+	if outcome, handled := runtimetools.Answer(t, t.tools.Offers, call); handled {
+		t.result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		return false
+	}
+
+	// Only a turn that holds delegate_task hands out work, and a turn
+	// working for another agent is told why it cannot. Any other turn
+	// that names it is answered as for any tool it does not hold, as
+	// it was before the tool existed.
+	if call.Name == runtimetools.DelegateTaskName &&
+		(t.Holds(runtimetools.DelegateTaskName) || t.req.Delegation != nil) {
+		outcome, ran := rc.fannedOut[call.ID]
+		if !ran {
+			outcome = delegation.Delegate(t, s.handing(t, fx), call)
 		}
-		result.Messages = append(result.Messages, assistantTurn)
-		// The thinking goes back with the calls it produced. Anthropic and the
-		// Responses API both refuse a tool result whose reasoning is missing.
-		t.messages = append(t.messages, llmports.Message{
-			Role:          llmports.RoleAssistant,
-			Content:       completion.Text,
-			ToolCalls:     completion.ToolCalls,
-			Reasoning:     completion.Reasoning,
-			ReplyID:       completion.ProviderMessageID,
-			ReplyProvider: completion.ProviderID,
-		})
-		fx.Emit(kernelports.StreamEvent{
-			Event: assistantstreamports.AssistantEventMessage,
-			Data: assistantstreamports.AssistantMessageEvent{
-				Content:      assistantTurn.Content,
-				ToolCalls:    s.access.CallsWithEffects(assistantTurn.ToolCalls),
-				Model:        assistantTurn.Model,
-				ProviderID:   assistantTurn.ProviderID,
-				FallbackFrom: assistantTurn.FallbackFrom,
-			},
-		})
+		t.result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		return false
+	}
 
-		batch := &tooldispatch.ReadBatch{}
-		shownNow := false
-		fannedOut := delegation.FanOut(
-			t, s.handing(t, fx), completion.ToolCalls, result.ToolCallsUsed, budget,
-		)
-		for _, call := range completion.ToolCalls {
-			check := &tooldispatch.JoinCheck{
-				Call:   call,
-				Used:   result.ToolCallsUsed,
-				Budget: budget,
-				Stuck:  stuck,
-			}
-			key, joins := t.joins(batch, check)
-			if !joins && batch.Size() > 0 {
-				// The waiting reads settle first; with them settled the call
-				// may start a batch of its own.
-				s.settleReads(t, fx, batch)
-				check.Used = result.ToolCallsUsed
-				key, joins = t.joins(batch, check)
-			}
-			if joins {
-				s.emitToolStarted(fx, &call)
-				s.access.Load(tools, call.Name)
-				batch.Calls = append(batch.Calls, t.dispatchCall(&call, completion.Text))
-				batch.Keys = append(batch.Keys, key)
-				continue
-			}
+	s.runHeldCall(t, fx, loop, rc)
 
-			if _, ran := fannedOut[call.ID]; !ran {
-				s.emitToolStarted(fx, &call)
-			}
+	return false
+}
 
-			// Arguments that did not parse are not arguments. The tool used to
-			// run on the empty map that stood in for them, and a list tool given
-			// no filters lists everything.
-			if call.ArgumentsError != "" {
-				outcome := toolcall.Refused(
-					aitrace.OutcomeInvalid,
-					"its arguments were not valid JSON",
-					"Tool %q was not run: its arguments were not valid JSON (%s). "+
-						"This usually means the reply hit its output limit partway through "+
-						"the call. Send it again with complete arguments.",
-					call.Name, call.ArgumentsError,
-				)
-				s.recordToolResult(t, fx, call, outcome)
-				// It counts against the budget like any call. A model whose output
-				// limit cuts every call short sends the same broken call each time,
-				// and a loop that did not count it asked the model again, and paid for
-				// it, without end.
-				result.ToolCallsUsed++
-				continue
-			}
+func invalidArguments(call *llmports.ToolCall) toolcall.Result {
+	return toolcall.Refused(
+		aitrace.OutcomeInvalid,
+		"its arguments were not valid JSON",
+		"Tool %q was not run: its arguments were not valid JSON (%s). "+
+			"This usually means the reply hit its output limit partway through "+
+			"the call. Send it again with complete arguments.",
+		call.Name, call.ArgumentsError,
+	)
+}
 
-			// The budget is per call, not per batch. A model that asks for ten
-			// tools in one completion does not get ten when it was allowed one;
-			// the calls past the line are answered, so the model knows, but not
-			// run.
-			if result.ToolCallsUsed >= budget &&
-				!s.escalatesPastBudget(t, call.Name, result.ToolCallsUsed-budget) {
-				outcome := toolcall.Refused(
-					aitrace.OutcomeOverBudget,
-					"the turn's tool budget is spent",
-					"Tool %q was not run: this turn's tool budget of %d is spent. "+
-						"Answer with what you have.",
-					call.Name, budget,
-				)
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
+// overBudget refuses a call past the turn's tool budget. The budget is per
+// call, not per batch. A model that asks for ten tools in one completion does
+// not get ten when it was allowed one; the calls past the line are answered,
+// so the model knows, but not run.
+func (s *Service) overBudget(t *Turn, call *llmports.ToolCall) (toolcall.Result, bool) {
+	used := t.result.ToolCallsUsed
+	if used < t.budget || s.escalatesPastBudget(t, call.Name, used-t.budget) {
+		return toolcall.Result{}, false
+	}
 
-			if call.Name == runtimetools.FindToolsName {
-				tools.FindCalls++
-				var outcome toolcall.Result
-				if tools.FindCalls > toolaccess.MaxFindCalls {
-					// Past the cap the search is charged, so a model that
-					// only ever searches still runs out of turn.
-					result.ToolCallsUsed++
-					outcome = toolcall.Refused(
-						aitrace.OutcomeOverBudget,
-						"the turn's tool searches are spent",
-						"You have searched for tools %d times this turn. Use what is "+
-							"loaded, or tell the person what you could not find.",
-						toolaccess.MaxFindCalls,
-					)
-				} else {
-					answer := fx.Find(t, call.Arguments)
-					outcome = toolcall.Result{
-						Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
-						Found:   answer.Found,
-						HandOff: answer.HandOff,
-					}
-				}
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
+	return toolcall.Refused(
+		aitrace.OutcomeOverBudget,
+		"the turn's tool budget is spent",
+		"Tool %q was not run: this turn's tool budget of %d is spent. "+
+			"Answer with what you have.",
+		call.Name, t.budget,
+	), true
+}
 
-			if call.Name == askuser.Name {
-				question := askuser.ComparableQuestion(
-					argcheck.String(call.Arguments, "question"),
-				)
-				_, repeated := t.questions[question]
-				content, shown := askuser.Resolve(t.localNow(fx), call.Arguments)
-				outcome := toolcall.Result{Content: content}
-				switch {
-				case !tools.Offers(askuser.Name) && t.req.Delegation != nil:
-					outcome = toolcall.Refused(
-						aitrace.OutcomeDenied,
-						"a delegated task cannot ask the person",
-						"%s",
-						delegation.DelegatedAskRefusal,
-					)
-				case !tools.Offers(askuser.Name):
-					outcome = toolcall.Refused(aitrace.OutcomeDenied,
-						"nobody is in the conversation to ask", "%s", askuser.UnattendedRefusal)
-				case question != "" && repeated:
-					outcome = toolcall.Refused(aitrace.OutcomeDuplicate,
-						"the same question was already asked", "%s", askuser.RepeatedRefusal)
-				case !shown:
-					// Nothing reached the person, so the turn has not asked
-					// anything: it may not end in silence on it, and the
-					// question may be asked again as it should have been.
-					outcome = toolcall.Refused(aitrace.OutcomeInvalid,
-						"the question could not be shown as asked", "%s", content)
-				default:
-					asked = true
-					shownNow = true
-					if question != "" {
-						t.questions[question] = struct{}{}
-					}
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if outcome, handled := runtimetools.Answer(t, tools.Offers, call); handled {
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			// Only a turn that holds delegate_task hands out work, and a turn
-			// working for another agent is told why it cannot. Any other turn
-			// that names it is answered as for any tool it does not hold, as
-			// it was before the tool existed.
-			if call.Name == runtimetools.DelegateTaskName &&
-				(t.Holds(runtimetools.DelegateTaskName) || t.req.Delegation != nil) {
-				outcome, ran := fannedOut[call.ID]
-				if !ran {
-					outcome = delegation.Delegate(t, s.handing(t, fx), call)
-				}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			if !t.Holds(call.Name) {
-				outcome := s.access.UnheldOutcome(tools, call.Name)
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-			if stuck {
-				s.recordToolResult(t, fx, call, toolcall.Refused(
-					aitrace.OutcomeDuplicate,
-					"the turn stopped calling tools after repeated failed calls",
-					"%s",
-					loopguard.StoppedCallText(call.Name),
-				))
-				continue
-			}
-
-			// A tool the agent holds but was not sent runs anyway — the
-			// configuration is the grant, disclosure only decides what was
-			// shown — and is loaded, so the next request carries its schema.
-			s.access.Load(tools, call.Name)
-
-			if previous, repeated := t.repeats.Seen(call); repeated {
-				outcome := toolcall.Refused(
-					aitrace.OutcomeDuplicate,
-					"the same call already failed this turn",
-					"%s",
-					loopguard.RepeatRefusal(call.Name, previous),
-				)
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				if t.repeats.Refused() {
-					stuck = true
-				}
-				continue
-			}
-
-			if t.repeats.ReadBefore(call) {
-				outcome := toolcall.Result{Content: loopguard.RepeatedRead(call.Name)}
-				result.ToolCallsUsed++
-				s.recordToolResult(t, fx, call, outcome)
-				continue
-			}
-
-			dispatch := t.dispatchCall(&call, completion.Text)
-			outcome := fx.Dispatch(t, dispatch)
-			s.settleDispatched(t, fx, &dispatch, &outcome)
-		}
-		s.settleReads(t, fx, batch)
-		if shownNow {
-			return s.finish(result, askedEnding(completion), fx), nil
-		}
-
-		s.logger.Debug("agent tool iteration",
-			zap.String("agent", definition.Name),
-			zap.Int("used", result.ToolCallsUsed),
-			zap.Int("budget", budget),
+func (s *Service) findTools(t *Turn, fx TurnEffects, call *llmports.ToolCall) toolcall.Result {
+	tools := t.tools
+	tools.FindCalls++
+	if tools.FindCalls > toolaccess.MaxFindCalls {
+		// Past the cap the search is charged, so a model that
+		// only ever searches still runs out of turn.
+		t.result.ToolCallsUsed++
+		return toolcall.Refused(
+			aitrace.OutcomeOverBudget,
+			"the turn's tool searches are spent",
+			"You have searched for tools %d times this turn. Use what is "+
+				"loaded, or tell the person what you could not find.",
+			toolaccess.MaxFindCalls,
 		)
 	}
 
+	answer := fx.Find(t, call.Arguments)
+
+	return toolcall.Result{
+		Content: answer.Content + toolaccess.SearchesLeft(tools.FindCalls),
+		Found:   answer.Found,
+		HandOff: answer.HandOff,
+	}
+}
+
+func (s *Service) askUser(
+	t *Turn,
+	fx TurnEffects,
+	loop *driveLoop,
+	call *llmports.ToolCall,
+) (toolcall.Result, bool) {
+	tools := t.tools
+	question := askuser.ComparableQuestion(argcheck.String(call.Arguments, "question"))
+	_, repeated := t.questions[question]
+	content, shown := askuser.Resolve(t.localNow(fx), call.Arguments)
+	switch {
+	case !tools.Offers(askuser.Name) && t.req.Delegation != nil:
+		return toolcall.Refused(
+			aitrace.OutcomeDenied,
+			"a delegated task cannot ask the person",
+			"%s",
+			delegation.DelegatedAskRefusal,
+		), false
+	case !tools.Offers(askuser.Name):
+		return toolcall.Refused(aitrace.OutcomeDenied,
+			"nobody is in the conversation to ask", "%s", askuser.UnattendedRefusal), false
+	case question != "" && repeated:
+		return toolcall.Refused(aitrace.OutcomeDuplicate,
+			"the same question was already asked", "%s", askuser.RepeatedRefusal), false
+	case !shown:
+		// Nothing reached the person, so the turn has not asked
+		// anything: it may not end in silence on it, and the
+		// question may be asked again as it should have been.
+		return toolcall.Refused(aitrace.OutcomeInvalid,
+			"the question could not be shown as asked", "%s", content), false
+	default:
+		loop.asked = true
+		if question != "" {
+			t.questions[question] = struct{}{}
+		}
+
+		return toolcall.Result{Content: content}, true
+	}
+}
+
+// runHeldCall runs a call to a tool the loop dispatches: one the agent holds,
+// unless the turn stopped for repeats or the same call already failed or read.
+func (s *Service) runHeldCall(t *Turn, fx TurnEffects, loop *driveLoop, rc *roundCall) {
+	call := rc.call
+	result := t.result
+	if !t.Holds(call.Name) {
+		outcome := s.access.UnheldOutcome(t.tools, call.Name)
+		result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		return
+	}
+	if loop.stuck {
+		outcome := toolcall.Refused(
+			aitrace.OutcomeDuplicate,
+			"the turn stopped calling tools after repeated failed calls",
+			"%s",
+			loopguard.StoppedCallText(call.Name),
+		)
+		s.recordToolResult(t, fx, call, &outcome)
+		return
+	}
+
+	// A tool the agent holds but was not sent runs anyway — the
+	// configuration is the grant, disclosure only decides what was
+	// shown — and is loaded, so the next request carries its schema.
+	s.access.Load(t.tools, call.Name)
+
+	if previous, repeated := t.repeats.Seen(call); repeated {
+		outcome := toolcall.Refused(
+			aitrace.OutcomeDuplicate,
+			"the same call already failed this turn",
+			"%s",
+			loopguard.RepeatRefusal(call.Name, previous),
+		)
+		result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		if t.repeats.Refused() {
+			loop.stuck = true
+		}
+		return
+	}
+
+	if t.repeats.ReadBefore(call) {
+		outcome := toolcall.Result{Content: loopguard.RepeatedRead(call.Name)}
+		result.ToolCallsUsed++
+		s.recordToolResult(t, fx, call, &outcome)
+		return
+	}
+
+	dispatch := t.dispatchCall(call, rc.text)
+	outcome := fx.Dispatch(t, &dispatch)
+	s.settleDispatched(t, fx, &dispatch, &outcome)
+}
+
+// driveSpent ends a turn whose tool budget is spent, or whose tools closed
+// for repeats, with an answer from what the tools returned.
+func (s *Service) driveSpent(
+	t *Turn,
+	fx TurnEffects,
+	loop *driveLoop,
+) *agentruntimeports.RunResult {
+	result := t.result
 	note, ending, guard := budgetSpentNote, exhaustedReply, ReaskBudgetSpent
-	if stuck {
+	if loop.stuck {
 		note, ending, guard = loopguard.StuckNote, loopguard.StuckReply, ReaskStuck
 	}
 	if final := s.finalAnswer(t, fx, result, note, guard); final != nil {
-		grounding.Rewritten = true
-		s.reground(t, fx, final, &grounding)
+		loop.grounding.Rewritten = true
+		s.reground(t, fx, final, &loop.grounding)
 		s.passReply(t, fx, final)
-		placement.Retried = true
-		s.placeArtifacts(t, fx, final, &placement)
+		loop.placement.Retried = true
+		s.placeArtifacts(t, fx, final, &loop.placement)
 
-		return s.finish(result, final, fx), nil
+		return s.finish(result, final, fx)
 	}
 
 	result.Exhausted = true
@@ -596,7 +725,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 	})
 	fx.Emit(modelstream.DeltaEvent(ending))
 
-	return result, nil
+	return result
 }
 
 func (s *Service) emitToolStarted(effects TurnEffects, call *llmports.ToolCall) {
@@ -620,7 +749,7 @@ func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) tool
 		Call:                 *call,
 		CompletionText:       completionText,
 		ProposedSoFar:        runtimetools.Unwithdrawn(t.result.Actions),
-		Ordinal:              t.counts.Next(*call),
+		Ordinal:              t.counts.Next(call),
 		AfterExternalContent: t.external,
 		Taint:                t.result.Taint,
 		Earlier:              t.earlier(call.Name),
@@ -664,9 +793,9 @@ func (s *Service) settleDispatched(
 		outcome.Content += loopguard.FanOutNote(call.Name, len(dispatch.Earlier)+1)
 	}
 	if outcome.Failed {
-		t.repeats.Record(call, outcome.Content)
+		t.repeats.Record(&call, outcome.Content)
 	} else {
-		t.repeats.Ran(call)
+		t.repeats.Ran(&call)
 	}
 	if !outcome.Failed && toolaccess.ReadsExternalContent(call.Name) {
 		t.external = true
@@ -674,7 +803,7 @@ func (s *Service) settleDispatched(
 	t.absorbTaint(effects, outcome.Taint)
 	turnmemory.Note(t, effects, &outcome)
 	t.result.ToolCallsUsed++
-	s.recordToolResult(t, effects, call, outcome)
+	s.recordToolResult(t, effects, &call, &outcome)
 	if !outcome.Failed {
 		turnmemory.NoteTool(t, effects, call.Name)
 		t.noteShown(&call)
@@ -733,29 +862,31 @@ func (s *Service) finalAnswer(
 func (s *Service) recordToolResult(
 	t *Turn,
 	fx TurnEffects,
-	call llmports.ToolCall,
-	outcome toolcall.Result,
+	call *llmports.ToolCall,
+	reported *toolcall.Result,
 ) {
 	result := t.result
-	if outcome.Failed && !outcome.Dispatched && outcome.Verdict != "" {
+	if reported.Failed && !reported.Dispatched && reported.Verdict != "" {
 		result.LoopRefusals = append(result.LoopRefusals, agentruntimeports.LoopRefusal{
 			CallID:   call.ID,
 			ToolName: call.Name,
-			Verdict:  outcome.Verdict,
-			Reason:   outcome.Reason,
-			Content:  stringutils.Ellipsize(outcome.Content, maxLoopRefusalChars),
+			Verdict:  reported.Verdict,
+			Reason:   reported.Reason,
+			Content:  stringutils.Ellipsize(reported.Content, maxLoopRefusalChars),
 		})
 	}
-	if outcome.Action != nil {
-		result.Actions = append(result.Actions, *outcome.Action)
+	if reported.Action != nil {
+		result.Actions = append(result.Actions, *reported.Action)
 	}
-	result.Actions = append(result.Actions, outcome.Batch...)
-	outcome = fx.Observe(t, &call, outcome.Outcome()).Result()
+	result.Actions = append(result.Actions, reported.Batch...)
+	observable := reported.Outcome()
+	observed := fx.Observe(t, call, &observable)
+	outcome := observed.Result()
 	s.countToolOutcome(t, fx, call.Name, &outcome)
 	t.keepShown(&outcome)
 	t.foldReplaced(outcome.Shown)
 	effect := s.access.ToolEffect(call.Name)
-	summary := toolsummary.Outcome(call, outcome)
+	summary := toolsummary.Outcome(call, &outcome)
 	var records []agentpagecontext.EntityRef
 	if !outcome.Failed {
 		records = toolresult.CitedRecords(outcome.Content)

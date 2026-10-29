@@ -442,7 +442,7 @@ func (fx *effects) DispatchReads(
 ) []toolcall.Outcome {
 	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for idx := range calls {
-		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
+		outcomes = append(outcomes, fx.Dispatch(t, &calls[idx]))
 	}
 
 	return outcomes
@@ -451,13 +451,13 @@ func (fx *effects) DispatchReads(
 //nolint:gocritic // agentruntime.TurnEffects takes the call and outcome by value
 func (fx *effects) Dispatch(
 	t *agentruntime.Turn,
-	call toolcall.Call,
+	call *toolcall.Call,
 ) toolcall.Outcome {
 	req := t.Request()
 	record := DispatchRecord{
 		Definition: t.Definition(),
 		Unattended: req.Unattended,
-		Call:       call,
+		Call:       *call,
 		Held:       t.State().Held,
 		Taint:      call.Taint.Clone(),
 		SourceRead: fx.rec.hasReadSource(),
@@ -474,7 +474,8 @@ func (fx *effects) Dispatch(
 }
 
 func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) toolaccess.FindAnswer {
-	found := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
+	state := t.ToolsState()
+	found := fx.rt.FindFor(fx.ctx, t.Request(), &state, arguments)
 	t.LoadTools(found.Loaded)
 
 	return toolaccess.FindAnswer{
@@ -495,7 +496,7 @@ func (fx *effects) Emit(event kernelports.StreamEvent) {
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome toolcall.Outcome,
+	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
 	return fx.rt.ObserveCall(nil, call, outcome)
 }

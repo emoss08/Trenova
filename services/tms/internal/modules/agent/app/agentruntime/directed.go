@@ -74,7 +74,7 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentruntimeports.RunR
 		Directed: true,
 	})
 	result.ToolCallsUsed++
-	s.recordToolResult(t, fx, call, outcome)
+	s.recordToolResult(t, fx, &call, &outcome)
 
 	reply := delegation.DirectedReply(&report)
 	fx.Emit(modelstream.DeltaEvent(reply))

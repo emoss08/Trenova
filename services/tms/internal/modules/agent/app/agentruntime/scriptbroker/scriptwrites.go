@@ -254,7 +254,7 @@ func (b *Broker) Settle(
 			}
 
 			return b.s.DecideCall(ctx, agenttoolpolicy.DecideInput{
-				Policy: b.s.Ruled(ctx, req, tool.Policy()),
+				Policy: b.s.Ruled(ctx, req, new(tool.Policy())),
 				Params: tooldispatch.RunToolParams(
 					req,
 					action.ToolCallID,

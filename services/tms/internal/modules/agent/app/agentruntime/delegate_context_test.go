@@ -231,7 +231,7 @@ func TestDelegateReport_NamesEachWritesProposal(t *testing.T) {
 	run.Result.Actions[0].ProposalID = made
 	run.Result.Actions[1].ProposalID = waiting
 
-	report := delegation.Report(delegate, "call_1", run)
+	report := delegation.Report(&delegate, "call_1", &run)
 
 	require.Len(t, report.Made, 1)
 	assert.Equal(t, made, report.Made[0].ProposalID)

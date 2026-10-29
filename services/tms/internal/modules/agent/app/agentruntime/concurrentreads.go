@@ -24,11 +24,11 @@ func (t *Turn) joins(batch *tooldispatch.ReadBatch, check *tooldispatch.JoinChec
 	if check.Used+batch.Size() >= check.Budget || batch.Size() >= tooldispatch.MaxConcurrentReads {
 		return "", false
 	}
-	key, ok := loopguard.CallKey(call)
+	key, ok := loopguard.CallKey(&call)
 	if !ok || slices.Contains(batch.Keys, key) {
 		return "", false
 	}
-	if _, failed := t.repeats.Seen(call); failed || t.repeats.ReadBefore(call) {
+	if _, failed := t.repeats.Seen(&call); failed || t.repeats.ReadBefore(&call) {
 		return "", false
 	}
 	if loopguard.IsFetch(call.Name) && batch.HoldsCallTo(call.Name) {
@@ -45,7 +45,7 @@ func (s *Service) settleReads(t *Turn, fx TurnEffects, batch *tooldispatch.ReadB
 	case 0:
 		return
 	case 1:
-		outcome := fx.Dispatch(t, batch.Calls[0])
+		outcome := fx.Dispatch(t, &batch.Calls[0])
 		s.settleDispatched(t, fx, &batch.Calls[0], &outcome)
 	default:
 		outcomes := fx.DispatchReads(t, batch.Calls)

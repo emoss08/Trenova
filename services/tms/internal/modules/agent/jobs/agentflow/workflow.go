@@ -50,7 +50,7 @@ func Run(
 		events:  events,
 		steers:  workflow.GetSignalChannel(ctx, agentflowcontract.SteerSignal),
 	}
-	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), state), fx)
+	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), &state), fx)
 
 	return &Outcome{
 		Result:    result,
@@ -160,9 +160,9 @@ func (fx *workflowEffects) Complete(
 
 func (fx *workflowEffects) Dispatch(
 	_ *agentruntime.Turn,
-	call toolcall.Call,
+	call *toolcall.Call,
 ) toolcall.Outcome {
-	return fx.settleTool(&call, fx.startTool(&call))
+	return fx.settleTool(call, fx.startTool(call))
 }
 
 // DispatchReads schedules every read's activity before waiting on any, so
@@ -300,10 +300,10 @@ func streamedText(event string) bool {
 func (fx *workflowEffects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
-	outcome toolcall.Outcome,
+	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
 	if !outcome.Publishes {
-		return outcome
+		return *outcome
 	}
 
 	var a *Activities
@@ -392,7 +392,7 @@ func (fx *workflowEffects) delegate(
 		run:     opened.Run,
 		events:  fx.events,
 	}
-	turn := fx.runtime.RestoreTurn(opened.Run.request(), opened.Turn)
+	turn := fx.runtime.RestoreTurn(opened.Run.request(), &opened.Turn)
 	turn.ReserveCallIDs(call.CallIDs)
 	turn.CarryExternalContent(call.AfterExternalContent)
 	result, err := fx.runtime.Drive(turn, sub)

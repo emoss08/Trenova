@@ -80,7 +80,7 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 		},
 	}, func(kernelports.StreamEvent) {})
 	require.NoError(t, err)
-	runtime.DispatchStep(t.Context(), req, toolcall.Call{
+	runtime.DispatchStep(t.Context(), req, &toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_1",
 			Name:      replayToolName,

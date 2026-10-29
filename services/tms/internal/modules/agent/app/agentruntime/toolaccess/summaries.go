@@ -41,9 +41,9 @@ func (s *Access) Summarize(
 		summaries = append(summaries, agentturn.ToolSummary{
 			Name:                tool.Name(),
 			Description:         tool.Description(),
-			Tier:                agenttoolpolicy.StaticTier(definition, policy),
+			Tier:                agenttoolpolicy.StaticTier(definition, &policy),
 			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
-			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, policy),
+			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, &policy),
 			Escalates:           agenttoolpolicy.Escalates(definition, &policy),
 			Recipe:              recipeOf(tool),
 		})

@@ -106,7 +106,7 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "which drivers are available",
@@ -129,7 +129,7 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "which drivers are available",
@@ -164,7 +164,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	drivers := specNames(
 		service.access.NewToolSet(
 			t.Context(),
-			toolaccess.ToolSetRequest{
+			&toolaccess.ToolSetRequest{
 				Definition: definition,
 				Actor:      runtimetest.Actor(),
 				Input:      "which drivers are on the roster",
@@ -177,7 +177,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	trucks := specNames(
 		service.access.NewToolSet(
 			t.Context(),
-			toolaccess.ToolSetRequest{
+			&toolaccess.ToolSetRequest{
 				Definition: definition,
 				Actor:      runtimetest.Actor(),
 				Input:      "which trucks are out of service",
@@ -190,7 +190,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	billing := specNames(
 		service.access.NewToolSet(
 			t.Context(),
-			toolaccess.ToolSetRequest{
+			&toolaccess.ToolSetRequest{
 				Definition: definition,
 				Actor:      runtimetest.Actor(),
 				Input:      "unpaid invoices for this customer",
@@ -216,7 +216,7 @@ func TestNewToolSet_AFormulaAssistantAlwaysHoldsItsFormulaTools(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "flat 1250 for the load",
@@ -244,7 +244,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "say hello",
@@ -275,7 +275,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "anything",
@@ -313,7 +313,7 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "driver medical card expiry",
@@ -334,7 +334,7 @@ func TestResolveFind_AsksForWordsWhenGivenNone(t *testing.T) {
 	service, names := wideRuntime(t)
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -417,7 +417,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "anything",
@@ -464,7 +464,7 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 		}
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: definition,
 		Actor:      runtimetest.Actor(),
 		Input:      "anything",
@@ -503,7 +503,7 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 		}
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: definition,
 		Actor:      runtimetest.Actor(),
 		Input:      "anything",
@@ -578,7 +578,7 @@ func TestResolveFind_SuggestsNobodyWhenNoOtherAgentHoldsTheTool(t *testing.T) {
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition("customer_list", "location_list"),
 		Actor:      runtimetest.Actor(),
 		Input:      "anything",
@@ -604,7 +604,7 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	service, _ := wideRuntime(t)
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition("customer_list"),
 			Actor:      runtimetest.Actor(),
 			Input:      "anything",
@@ -628,7 +628,7 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 
 	small := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names[:4]...),
 			Actor:      runtimetest.Actor(),
 			Input:      "anything",
@@ -639,7 +639,7 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 
 	large := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names...),
 			Actor:      runtimetest.Actor(),
 			Input:      "anything",
@@ -706,7 +706,7 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "which shipments are late",
@@ -735,7 +735,7 @@ func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
 	service, names := wideRuntime(t)
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names...),
 			Actor:      nil,
 			Input:      "anything",
@@ -788,7 +788,7 @@ func TestNewToolSet_CarriesTheCoreToolsForAnAgentThatSelectedNone(t *testing.T) 
 
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
 			Input:      "which drivers are available",
@@ -811,7 +811,7 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 
 	small := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names[:toolaccess.DisclosureThreshold]...),
 			Actor:      runtimetest.Actor(),
 			Input:      "which drivers are available",
@@ -826,7 +826,7 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 
 	large := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names...),
 			Actor:      runtimetest.Actor(),
 			Input:      "which drivers are available",
@@ -864,7 +864,7 @@ func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) 
 	for _, unattended := range []bool{true, false} {
 		set := service.access.NewToolSet(
 			t.Context(),
-			toolaccess.ToolSetRequest{
+			&toolaccess.ToolSetRequest{
 				Definition: runtimetest.Definition(names...),
 				Actor:      runtimetest.Actor(),
 				Input:      "which drivers are available",
@@ -949,7 +949,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 	}
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(held...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -973,7 +973,7 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 	service := weakMatchRuntime(t)
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition("shipment_list"),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -999,7 +999,7 @@ func TestResolveFind_NeverReachesWhatAStrongOwnMatchCovers(t *testing.T) {
 	}
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(held...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -1034,7 +1034,7 @@ func TestResolveFind_ReachesPastAnOwnToolThatSharesOneWordWithTheNeed(t *testing
 	}
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(held...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -1066,7 +1066,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 	}
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(held...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -1095,7 +1095,7 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 	}
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(held...),
 			Actor:      runtimetest.Actor(),
 			Input:      "hello",
@@ -1121,7 +1121,7 @@ func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
 	service, names := wideRuntime(t)
 	set := service.access.NewToolSet(
 		t.Context(),
-		toolaccess.ToolSetRequest{
+		&toolaccess.ToolSetRequest{
 			Definition: runtimetest.Definition(names...),
 			Actor:      runtimetest.Actor(),
 			Input:      "say hello",

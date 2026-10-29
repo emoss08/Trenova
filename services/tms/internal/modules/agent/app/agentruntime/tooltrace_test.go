@@ -126,7 +126,7 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, outcome.Action)
 	action := outcome.Action
@@ -177,9 +177,9 @@ func TestDispatchStep_AReplayedCallKeepsItsProposalAndSaysSo(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	first := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	first := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 	d.req.Attempt = 2
-	second := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	second := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, first.Action)
 	require.NotNil(t, second.Action)
@@ -204,7 +204,7 @@ func TestDispatchStep_RecordsWhyACallWasRefused(t *testing.T) {
 		}}
 	})
 
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	assert.True(t, outcome.Failed)
 	assert.Nil(t, outcome.Action)
@@ -222,7 +222,7 @@ func TestDispatchStep_WrapsAnAutomaticWriteAndItsVersions(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierAutoExecute, agent.TierAutoExecute)
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, outcome.Action)
 	action := outcome.Action
@@ -259,7 +259,7 @@ func TestDispatchStep_ADelegatesCallIsTracedUnderItsTaskAndLinked(t *testing.T) 
 	ctx, activity := otel.Tracer("agentruntime-test").
 		Start(aitrace.ContextWithAnchor(t.Context(), turn), "RunActivity:shipment_place_hold")
 
-	outcome := d.rt.DispatchStep(ctx, d.req, d.call)
+	outcome := d.rt.DispatchStep(ctx, d.req, &d.call)
 	activity.End()
 
 	require.NotNil(t, outcome.Action)

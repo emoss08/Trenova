@@ -124,7 +124,7 @@ type TurnEffects interface {
 	// stopped; it is only meaningful when the error is nil.
 	Complete(t *Turn, req *llmports.ChatCompletionRequest) (modelstream.Reply, error)
 	// Dispatch runs one tool call the loop has decided to make.
-	Dispatch(t *Turn, call toolcall.Call) toolcall.Outcome
+	Dispatch(t *Turn, call *toolcall.Call) toolcall.Outcome
 	// DispatchReads runs reads the loop has decided to make, which may run
 	// at the same time, and returns their outcomes in the order given.
 	DispatchReads(t *Turn, calls []toolcall.Call) []toolcall.Outcome
@@ -134,7 +134,7 @@ type TurnEffects interface {
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
 	// reads. A published document is kept here.
-	Observe(t *Turn, call *llmports.ToolCall, outcome toolcall.Outcome) toolcall.Outcome
+	Observe(t *Turn, call *llmports.ToolCall, outcome *toolcall.Outcome) toolcall.Outcome
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
@@ -305,7 +305,7 @@ func (t *Turn) LoadTools(names []string) {
 
 // RestoreTurn rebuilds a Turn from its state. The rebuilt tool set cannot check
 // permissions, so whatever answers its find_tools must: see TurnEffects.Find.
-func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state TurnState) *Turn {
+func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state *TurnState) *Turn {
 	result := state.Result
 	questions := make(map[string]struct{}, len(state.Questions))
 	for _, question := range state.Questions {
@@ -333,7 +333,7 @@ func (s *Service) RestoreTurn(req *agentruntimeports.RunRequest, state TurnState
 		systemStable: state.SystemStable,
 		messages:     state.Messages,
 		evidence:     state.Evidence,
-		tools:        toolaccess.RestoreToolSet(state.Tools),
+		tools:        toolaccess.RestoreToolSet(&state.Tools),
 		held:         state.Held,
 		beyond:       state.Beyond,
 		mode:         state.Mode,
@@ -410,7 +410,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	} else {
 		runtimeContext.Delegates = nil
 	}
-	tools := s.access.NewToolSet(ctx, toolaccess.ToolSetRequest{
+	tools := s.access.NewToolSet(ctx, &toolaccess.ToolSetRequest{
 		Definition: definition,
 		Held:       held,
 		Beyond:     job.Beyond,
@@ -434,19 +434,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	if tools.Pinned {
 		command = req.Command
 	}
-	runtimeContext.ToolsDisclosed = tools.Disclosed
-	runtimeContext.ReachesBeyond = len(tools.Beyond) > 0
-	if tools.Searchable() {
-		runtimeContext.ToolMap = s.access.ToolMap(slices.Concat(tools.Allowed, tools.Beyond))
-	}
-	runtimeContext.Artifacts = tools.Offers(runtimetools.PublishArtifactName)
-	runtimeContext.Inline = req.Inline
-	runtimeContext.LooksUpOnly = job.Mode == toolaccess.ProfileFanOut
-	runtimeContext.DecisionRequests = tools.Offers(runtimetools.RequestDecisionName)
-	// The prompt describes the set the person may use, not the agent's whole
-	// configuration: a tool named there and refused when called reads as
-	// the system refusing rather than the person lacking the right.
-	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
+	s.describeToolSet(&runtimeContext, req, tools, job.Mode)
 	memoryFit := s.memoriesForPrompt(ctx, req, &runtimeContext)
 	runtimeContext.Memories = memoryFit.Carried
 	runtimeContext.MemoriesHeldBack = memoryFit.HeldBack
@@ -471,29 +459,14 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 
 	messages, shortened := turnhistory.ReplayHistoryWithFiles(history, req.Proposals, req.FileTexts)
 	now := turnNow(&runtimeContext)
-	input := req.Input
-	if command != "" {
-		input = toolaccess.CommandInput(command, input)
+	input := &turnInput{
+		req:     req,
+		history: history,
+		command: command,
+		context: &runtimeContext,
+		now:     now,
 	}
-	var attached agentmessage.RenderedAttachments
-	if req.Delegation == nil {
-		attached = agentmessage.RenderAttachments(
-			runtimeContext.Attachments, agentmessage.AttachmentTextBudget,
-		)
-		input = attached.Block + input
-		input = proposalledger.OutOfViewDecisions(history, req.Proposals) + input
-		input = agentmessage.DescribeAnchors(
-			runtimeContext.Anchors, now, runtimeContext.Timezone,
-		) + input
-	}
-	if definition.HasContextProvider(agentdefinition.ContextClock) {
-		input = clockLine(now, runtimeContext.Timezone) + input
-	}
-	messages = append(messages, llmports.Message{
-		Role:    llmports.RoleUser,
-		Content: input,
-		Files:   turnhistory.MessageFiles(input, runtimeContext.Attachments, &attached),
-	})
+	messages = append(messages, input.message())
 	taint, opened := turntaint.Open(req, &runtimeContext, now)
 
 	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)
@@ -537,6 +510,62 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 		external:     req.AfterExternalContent,
 		world:        s.watchWorld(ctx, req, now),
 		toolMemories: toolMemories,
+	}
+}
+
+func (s *Service) describeToolSet(
+	rc *agentturn.RuntimeContext,
+	req *agentruntimeports.RunRequest,
+	tools *toolaccess.ToolSet,
+	mode toolaccess.ProfileMode,
+) {
+	rc.ToolsDisclosed = tools.Disclosed
+	rc.ReachesBeyond = len(tools.Beyond) > 0
+	if tools.Searchable() {
+		rc.ToolMap = s.access.ToolMap(slices.Concat(tools.Allowed, tools.Beyond))
+	}
+	rc.Artifacts = tools.Offers(runtimetools.PublishArtifactName)
+	rc.Inline = req.Inline
+	rc.LooksUpOnly = mode == toolaccess.ProfileFanOut
+	rc.DecisionRequests = tools.Offers(runtimetools.RequestDecisionName)
+	// The prompt describes the set the person may use, not the agent's whole
+	// configuration: a tool named there and refused when called reads as
+	// the system refusing rather than the person lacking the right.
+	rc.Tools = usableSummaries(rc.Tools, tools)
+}
+
+// turnInput is what the person's message to the model is built from.
+type turnInput struct {
+	req     *agentruntimeports.RunRequest
+	history []conversation.Message
+	command agentextension.Command
+	context *agentturn.RuntimeContext
+	now     int64
+}
+
+func (in *turnInput) message() llmports.Message {
+	req, rc := in.req, in.context
+	input := req.Input
+	if in.command != "" {
+		input = toolaccess.CommandInput(in.command, input)
+	}
+	var attached agentmessage.RenderedAttachments
+	if req.Delegation == nil {
+		attached = agentmessage.RenderAttachments(
+			rc.Attachments, agentmessage.AttachmentTextBudget,
+		)
+		input = attached.Block + input
+		input = proposalledger.OutOfViewDecisions(in.history, req.Proposals) + input
+		input = agentmessage.DescribeAnchors(rc.Anchors, in.now, rc.Timezone) + input
+	}
+	if req.Definition.HasContextProvider(agentdefinition.ContextClock) {
+		input = clockLine(in.now, rc.Timezone) + input
+	}
+
+	return llmports.Message{
+		Role:    llmports.RoleUser,
+		Content: input,
+		Files:   turnhistory.MessageFiles(input, rc.Attachments, &attached),
 	}
 }
 
@@ -607,7 +636,7 @@ func (fx *localEffects) Complete(
 // KnowsTool reports whether name is a registered tool, read or write.
 func (s *Service) KnowsTool(name string) bool { return s.access.ToolNamed(name) != nil }
 
-func (fx *localEffects) Dispatch(t *Turn, call toolcall.Call) toolcall.Outcome {
+func (fx *localEffects) Dispatch(t *Turn, call *toolcall.Call) toolcall.Outcome {
 	return fx.s.DispatchStep(fx.ctx, t.req, call)
 }
 
@@ -619,7 +648,7 @@ func (fx *localEffects) DispatchReads(
 ) []toolcall.Outcome {
 	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for idx := range calls {
-		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
+		outcomes = append(outcomes, fx.Dispatch(t, &calls[idx]))
 	}
 
 	return outcomes
@@ -637,10 +666,12 @@ func (fx *localEffects) Emit(event kernelports.StreamEvent) { fx.emit(event) }
 func (fx *localEffects) Observe(
 	t *Turn,
 	call *llmports.ToolCall,
-	outcome toolcall.Outcome,
+	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
-	return runtimetools.Observe(fx.observer, *call, outcome.Result(), t.earlier(call.Name)).
-		Outcome()
+	result := outcome.Result()
+	observed := runtimetools.Observe(fx.observer, call, &result, t.earlier(call.Name))
+
+	return observed.Outcome()
 }
 
 func (*localEffects) NewCallID() string { return NewCallID() }
@@ -684,9 +715,12 @@ func (*localEffects) Delegate(_ *Turn, calls []delegation.Call) []delegation.Run
 func (s *Service) ObserveCall(
 	observe agentruntimeports.ToolObserver,
 	call *llmports.ToolCall,
-	outcome toolcall.Outcome,
+	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
-	return runtimetools.Observe(observe, *call, outcome.Result(), nil).Outcome()
+	result := outcome.Result()
+	observed := runtimetools.Observe(observe, call, &result, nil)
+
+	return observed.Outcome()
 }
 
 func (s *Service) ObserveDispatch(
@@ -694,7 +728,10 @@ func (s *Service) ObserveDispatch(
 	call *toolcall.Call,
 	outcome *toolcall.Outcome,
 ) toolcall.Outcome {
-	return runtimetools.Observe(observe, call.Call, outcome.Result(), call.Earlier).Outcome()
+	result := outcome.Result()
+	observed := runtimetools.Observe(observe, &call.Call, &result, call.Earlier)
+
+	return observed.Outcome()
 }
 
 // PublishStep keeps a document a publish call asked for, and says what the
@@ -705,17 +742,18 @@ func (s *Service) PublishStep(
 	observe agentruntimeports.ToolObserver,
 	call *llmports.ToolCall,
 ) toolcall.Outcome {
-	if call.Name == runtimetools.RequestDecisionName {
-		return runtimetools.Observe(observe, *call, runtimetools.DecisionStepOutcome(call.Arguments), nil).
-			Outcome()
+	var step toolcall.Result
+	switch call.Name {
+	case runtimetools.RequestDecisionName:
+		step = runtimetools.DecisionStepOutcome(call.Arguments)
+	case runtimetools.ShowBoardName:
+		step = runtimetools.BoardStepOutcome(call.Arguments)
+	default:
+		step = runtimetools.PublishOutcome(call.Arguments)
 	}
-	if call.Name == runtimetools.ShowBoardName {
-		return runtimetools.Observe(observe, *call, runtimetools.BoardStepOutcome(call.Arguments), nil).
-			Outcome()
-	}
+	observed := runtimetools.Observe(observe, call, &step, nil)
 
-	return runtimetools.Observe(observe, *call, runtimetools.PublishOutcome(call.Arguments), nil).
-		Outcome()
+	return observed.Outcome()
 }
 
 // DispatchStep runs one tool call the loop decided to make, claimed in the
@@ -725,7 +763,7 @@ func (s *Service) PublishStep(
 func (s *Service) DispatchStep(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
-	call toolcall.Call,
+	call *toolcall.Call,
 ) toolcall.Outcome {
 	outcome := s.dispatcher.GuardedDispatch(ctx, &tooldispatch.GuardedDispatchParams{
 		Req:            req,
@@ -746,7 +784,7 @@ func (s *Service) DispatchStep(
 			Reach:      call.ScriptReach,
 		},
 	})
-	outcome.Summary = toolsummary.Outcome(call.Call, outcome)
+	outcome.Summary = toolsummary.Outcome(&call.Call, &outcome)
 
 	return outcome.Outcome()
 }
@@ -758,7 +796,7 @@ func (s *Service) DispatchStep(
 func (s *Service) FindFor(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
-	state toolaccess.ToolSetState,
+	state *toolaccess.ToolSetState,
 	arguments map[string]any,
 ) toolaccess.FoundTools {
 	set := toolaccess.RestoreToolSet(state)

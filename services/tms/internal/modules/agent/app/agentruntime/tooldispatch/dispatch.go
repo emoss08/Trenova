@@ -78,8 +78,6 @@ type DispatchParams struct {
 func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Result {
 	req := p.req
 	call := p.call
-	completionText := p.completionText
-	proposedSoFar := p.proposedSoFar
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
 	if refusal, refused := s.access.ExtensionRefusal(ctx, req, call.Name); refused {
@@ -106,41 +104,7 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 	}
 
 	if tool, ok := s.queryTools.Get(call.Name); ok {
-		if !selfScoped {
-			if outcome, denied := s.authorize(
-				ctx, req.Actor, call.Name, tool.Policy().Resource, permission.OpRead,
-			); denied {
-				return outcome
-			}
-		}
-
-		if tool.Policy().Script == agenttoolports.ScriptRunner {
-			if refusal, refused := continuationRefusal(&call, p.gate); refused {
-				return refusal
-			}
-			call.Arguments = inheritScriptName(call.Arguments, p.gate.Continues)
-		}
-		contract, err := argcheck.ContractCall(
-			s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
-		)
-		if err != nil {
-			return argcheck.Refusal(call.Name, tool.ParamSchema(), err)
-		}
-		call.Arguments = contract.Args
-
-		if tool.Policy().Script == agenttoolports.ScriptRunner {
-			return s.runScriptTool(ctx, &p, tool, &call)
-		}
-
-		outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
-			fitPage: p.caller != aitrace.CallerScript,
-		})
-		outcome.RanWith = call.Arguments
-		if note := contract.Note(); note != "" && !outcome.Failed {
-			outcome.Content += "\n\n[" + note + "]"
-		}
-
-		return outcome
+		return s.dispatchQuery(ctx, &p, tool, selfScoped)
 	}
 
 	tool, ok := s.actionTools.Get(call.Name)
@@ -149,12 +113,139 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 			"Tool %q does not exist.", call.Name)
 	}
 
-	policy := s.Ruled(ctx, req, tool.Policy())
+	return s.dispatchAction(ctx, &p, tool, selfScoped)
+}
+
+func (s *Dispatcher) dispatchQuery(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentQueryTool,
+	selfScoped bool,
+) toolcall.Result {
+	req := p.req
+	call := p.call
+	if !selfScoped {
+		if outcome, denied := s.authorize(
+			ctx, req.Actor, call.Name, tool.Policy().Resource, permission.OpRead,
+		); denied {
+			return outcome
+		}
+	}
+
+	runsScript := tool.Policy().Script == agenttoolports.ScriptRunner
+	if runsScript {
+		if refusal, refused := continuationRefusal(&call, p.gate); refused {
+			return refusal
+		}
+		call.Arguments = inheritScriptName(call.Arguments, p.gate.Continues)
+	}
+	contract, err := argcheck.ContractCall(
+		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
+	)
+	if err != nil {
+		return argcheck.Refusal(call.Name, tool.ParamSchema(), err)
+	}
+	call.Arguments = contract.Args
+
+	if runsScript {
+		return s.runScriptTool(ctx, p, tool, &call)
+	}
+
+	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
+		fitPage: p.caller != aitrace.CallerScript,
+	})
+	outcome.RanWith = call.Arguments
+	if note := contract.Note(); note != "" && !outcome.Failed {
+		outcome.Content += "\n\n[" + note + "]"
+	}
+
+	return outcome
+}
+
+type callHold struct {
+	tier     agent.AutonomyTier
+	egress   agent.EgressClass
+	external bool
+	hours    bool
+}
+
+func (s *Dispatcher) dispatchAction(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentTool,
+	selfScoped bool,
+) toolcall.Result {
+	req := p.req
+	policy := s.Ruled(ctx, req, new(tool.Policy()))
+	if outcome, refused := s.prepareActionCall(ctx, p, tool, &policy, selfScoped); refused {
+		return outcome
+	}
+	decision := s.DecideCall(ctx, agenttoolpolicy.DecideInput{
+		Policy:         policy,
+		Params:         RunToolParams(req, p.call.ID, p.call.Arguments),
+		Definition:     req.Definition,
+		HolderCeiling:  p.beyond,
+		Unattended:     req.Unattended,
+		Taint:          toolaccess.DecisionTaint(p.taint, p.afterExternal),
+		MoneyAllowance: s.MoneyAllowance(req, p.moneySpent),
+		FromScript:     p.scriptStepKey != "",
+	})
+	hold := callHold{tier: decision.Tier, egress: decision.Egress}
+	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
+		hold.tier, hold.external = toolaccess.AfterExternalContent(hold.tier, p.afterExternal)
+		hold.tier, hold.hours = s.heldForBusinessHours(ctx, req, hold.tier)
+	}
+	if hold.tier != agent.TierAutoExecute {
+		if outcome, refused := pinProposalSelection(ctx, p, tool); refused {
+			return outcome
+		}
+	}
+	if p.scriptStepKey != "" && hold.tier == agent.TierAutoExecute {
+		return toolcall.Refused(
+			aitrace.OutcomeInvalid,
+			"a prepared change would run on its own",
+			"Tool %q was not prepared: a change from a script never runs on its own.",
+			p.call.Name,
+		)
+	}
+	action := pendingAction(ctx, p, &decision, &hold)
+
+	if outcome, refused := validateCall(ctx, p, tool, hold.tier); refused {
+		return outcome
+	}
+
+	if hold.tier != agent.TierAutoExecute {
+		return s.fileProposal(ctx, p, tool, action, &hold)
+	}
+
+	// An automatic write in simulation is previewed where it would have run,
+	// and recorded as such, so a person can read what the agent would have
+	// done at full reach before it is given any.
+	if req.Definition.SimulationMode {
+		return s.simulateAction(ctx, &actionParams{DispatchParams: *p, tool: tool, action: action})
+	}
+
+	if outcome, refused := s.withinBudget(ctx, req, p.call.Name, p.proposedSoFar); refused {
+		return outcome
+	}
+
+	return s.executeAction(ctx, &actionParams{DispatchParams: *p, tool: tool, action: action})
+}
+
+func (s *Dispatcher) prepareActionCall(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentTool,
+	policy *agenttoolports.ToolPolicy,
+	selfScoped bool,
+) (toolcall.Result, bool) {
+	req := p.req
+	call := p.call
 	if !selfScoped {
 		if outcome, denied := s.authorize(
 			ctx, req.Actor, call.Name, policy.Resource, policy.Operation,
 		); denied {
-			return outcome
+			return outcome, true
 		}
 	}
 
@@ -162,7 +253,7 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
 	)
 	if err != nil {
-		return argcheck.Refusal(call.Name, tool.ParamSchema(), err)
+		return argcheck.Refusal(call.Name, tool.ParamSchema(), err), true
 	}
 	call.Arguments = contract.Args
 	p.argumentNote = contract.Note()
@@ -180,57 +271,52 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 			ctx, RunToolParams(req, p.idempotencyKey, call.Arguments),
 		)
 		if rErr != nil {
-			return unresolvedSelection(call.Name, "proposed or run", rErr)
+			return unresolvedSelection(call.Name, "proposed or run", rErr), true
 		}
 		call.Arguments = resolved
 	}
 	p.call = call
-	if outcome, refused := oversizedChange(
-		req,
-		call.Name,
-		tool.ParamSchema(),
-		call.Arguments,
-	); refused {
-		return outcome
+
+	return oversizedChange(req, call.Name, tool.ParamSchema(), call.Arguments)
+}
+
+func pinProposalSelection(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentTool,
+) (toolcall.Result, bool) {
+	pinner, pins := tool.(agenttoolports.ToolProposalSelectionResolver)
+	if !pins {
+		return toolcall.Result{}, false
 	}
-	tierParams := RunToolParams(req, call.ID, call.Arguments)
-	decision := s.DecideCall(ctx, agenttoolpolicy.DecideInput{
-		Policy:         policy,
-		Params:         tierParams,
-		Definition:     req.Definition,
-		HolderCeiling:  p.beyond,
-		Unattended:     req.Unattended,
-		Taint:          toolaccess.DecisionTaint(p.taint, p.afterExternal),
-		MoneyAllowance: s.MoneyAllowance(req, p.moneySpent),
-		FromScript:     p.scriptStepKey != "",
-	})
-	tier, heldForExternal, heldForHours := decision.Tier, false, false
-	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
-		tier, heldForExternal = toolaccess.AfterExternalContent(tier, p.afterExternal)
-		tier, heldForHours = s.heldForBusinessHours(ctx, req, tier)
+	pinned, err := pinner.ResolveProposalSelection(
+		ctx, RunToolParams(p.req, p.idempotencyKey, p.call.Arguments),
+	)
+	if err != nil {
+		return unresolvedSelection(p.call.Name, "proposed", err), true
 	}
-	if tier != agent.TierAutoExecute {
-		if pinner, pins := tool.(agenttoolports.ToolProposalSelectionResolver); pins {
-			pinned, pErr := pinner.ResolveProposalSelection(
-				ctx, RunToolParams(req, p.idempotencyKey, call.Arguments),
-			)
-			if pErr != nil {
-				return unresolvedSelection(call.Name, "proposed", pErr)
-			}
-			call.Arguments = pinned
-			p.call = call
-		}
-	}
+	p.call.Arguments = pinned
+
+	return toolcall.Result{}, false
+}
+
+func pendingAction(
+	ctx context.Context,
+	p *DispatchParams,
+	decision *agenttoolpolicy.Decision,
+	hold *callHold,
+) *agentruntimeports.PendingAction {
+	call := p.call
 	action := &agentruntimeports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
 		Rationale: turnhistory.ProposalRationale(turnhistory.RationaleInput{
-			Narration: completionText,
+			Narration: p.completionText,
 			ToolName:  call.Name,
 			Arguments: call.Arguments,
-			Input:     req.Input,
+			Input:     p.req.Input,
 		}),
-		Tier:          tier,
+		Tier:          hold.tier,
 		ToolCallID:    call.ID,
 		Egress:        decision.Egress,
 		HeldBy:        decision.HeldBy,
@@ -239,126 +325,124 @@ func (s *Dispatcher) dispatch(ctx context.Context, p DispatchParams) toolcall.Re
 		Tainted:       p.taint.Tainted() || p.afterExternal,
 		ScriptStepKey: p.scriptStepKey,
 	}
-	if p.scriptStepKey != "" && tier == agent.TierAutoExecute {
-		return toolcall.Refused(
-			aitrace.OutcomeInvalid,
-			"a prepared change would run on its own",
-			"Tool %q was not prepared: a change from a script never runs on its own.",
-			call.Name,
-		)
-	}
-	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
+	if hold.external && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
 	}
-	if heldForHours {
+	if hold.hours {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByBusinessHours)
 	}
-	if tier != agent.TierAutoExecute {
+	if hold.tier != agent.TierAutoExecute {
 		action.MoneyMinor = nil
 		action.MoneyCurrency = ""
 	}
 	source := decision.Source
-	if heldForExternal || heldForHours {
+	if hold.external || hold.hours {
 		source = agenttooltrust.TierSourcePolicyDefault
 	}
 	stampAction(ctx, action, source, p.stepKey)
 
-	// A tool that can check its own arguments does so now, at every tier,
-	// while the model can still fix the call: before a person is asked to
-	// approve a proposal that was never going to run, before a simulation
-	// records what it would have done, and before an automatic write runs.
-	if validator, validates := tool.(agenttoolports.ToolValidator); validates {
-		if vErr := validator.Validate(
-			ctx, RunToolParams(req, p.idempotencyKey, call.Arguments),
-		); vErr != nil {
-			verb := "run"
-			if tier != agent.TierAutoExecute {
-				verb = "proposed"
-			}
+	return action
+}
 
-			return toolcall.Refused(
-				aitrace.OutcomeInvalid,
-				vErr.Error(),
-				"Tool %q was not %s, because it would fail as called: %s\n"+
-					"Fix the call and try again.",
-				call.Name, verb, vErr.Error(),
-			)
-		}
+// validateCall lets a tool that can check its own arguments do so now, at
+// every tier, while the model can still fix the call: before a person is asked
+// to approve a proposal that was never going to run, before a simulation
+// records what it would have done, and before an automatic write runs.
+func validateCall(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentTool,
+	tier agent.AutonomyTier,
+) (toolcall.Result, bool) {
+	validator, validates := tool.(agenttoolports.ToolValidator)
+	if !validates {
+		return toolcall.Result{}, false
 	}
-
+	vErr := validator.Validate(ctx, RunToolParams(p.req, p.idempotencyKey, p.call.Arguments))
+	if vErr == nil {
+		return toolcall.Result{}, false
+	}
+	verb := "run"
 	if tier != agent.TierAutoExecute {
-		// The same write proposed twice is one decision asked for twice. A
-		// model that never learned its earlier proposal was still waiting
-		// used to raise it again on every "yes", and the person got a stack
-		// of identical cards.
-		if proposalledger.PendingDuplicate(call, req.Proposals, proposedSoFar) {
-			return toolcall.Result{
-				Content: proposalledger.DuplicateText(call.Name),
-				Verdict: aitrace.OutcomeDuplicate,
-				Reason:  "the same change is already waiting for a decision",
-			}
-		}
-
-		// The write is previewed as it is filed. One that its own rules would
-		// refuse is not filed: a person could only reject it, so the model is
-		// told why and asked for what is missing instead. A write on a record
-		// an earlier step of this turn changes is the exception, since that
-		// step may be what makes it valid.
-		dependsOnStep := dependsOnEarlierStep(tool, &call, proposedSoFar)
-		target, baseline := s.fileBaseline(ctx, &baselineCall{
-			req:         req,
-			tool:        tool,
-			call:        call,
-			proposalID:  action.ProposalID,
-			persist:     req.AttributedPurpose() != aiusageports.AIUsagePurposeEvaluation,
-			fileRefused: dependsOnStep,
-		})
-		if baseline != nil && !dependsOnStep {
-			if refusal := baseline.Preview.Refusal(); refusal != nil {
-				return refusedBeforeFiling(call.Name, refusal)
-			}
-		}
-		action.Target = target
-
-		content := s.filedText(ctx, &filedTextParams{
-			req:      req,
-			toolName: call.Name,
-			action:   action,
-			tier:     tier,
-			prepared: p.scriptStepKey != "",
-		}) +
-			heldReason(
-				action.HeldBy,
-				decision.Egress,
-			) + toolsummary.FilingEcho(baseline, call.Arguments)
-		if note := p.argumentNote; note != "" {
-			content += "\n" + note
-		}
-		if heldForExternal {
-			content += toolaccess.ExternalContentNote
-		}
-		if heldForHours {
-			content += businessHoursNote
-		}
-		if req.Definition.SimulationMode {
-			content += " This agent is in simulation: an approval will preview the change, not make it."
-		}
-
-		return toolcall.Result{Content: content, Action: action, Verdict: aitrace.OutcomeProposed}
+		verb = "proposed"
 	}
 
-	// An automatic write in simulation is previewed where it would have run,
-	// and recorded as such, so a person can read what the agent would have
-	// done at full reach before it is given any.
+	return toolcall.Refused(
+		aitrace.OutcomeInvalid,
+		vErr.Error(),
+		"Tool %q was not %s, because it would fail as called: %s\n"+
+			"Fix the call and try again.",
+		p.call.Name, verb, vErr.Error(),
+	), true
+}
+
+func (s *Dispatcher) fileProposal(
+	ctx context.Context,
+	p *DispatchParams,
+	tool agenttoolports.AgentTool,
+	action *agentruntimeports.PendingAction,
+	hold *callHold,
+) toolcall.Result {
+	req := p.req
+	call := p.call
+	// The same write proposed twice is one decision asked for twice. A
+	// model that never learned its earlier proposal was still waiting
+	// used to raise it again on every "yes", and the person got a stack
+	// of identical cards.
+	if proposalledger.PendingDuplicate(&call, req.Proposals, p.proposedSoFar) {
+		return toolcall.Result{
+			Content: proposalledger.DuplicateText(call.Name),
+			Verdict: aitrace.OutcomeDuplicate,
+			Reason:  "the same change is already waiting for a decision",
+		}
+	}
+
+	// The write is previewed as it is filed. One that its own rules would
+	// refuse is not filed: a person could only reject it, so the model is
+	// told why and asked for what is missing instead. A write on a record
+	// an earlier step of this turn changes is the exception, since that
+	// step may be what makes it valid.
+	dependsOnStep := dependsOnEarlierStep(tool, &call, p.proposedSoFar)
+	target, baseline := s.fileBaseline(ctx, &baselineCall{
+		req:         req,
+		tool:        tool,
+		call:        call,
+		proposalID:  action.ProposalID,
+		persist:     req.AttributedPurpose() != aiusageports.AIUsagePurposeEvaluation,
+		fileRefused: dependsOnStep,
+	})
+	if baseline != nil && !dependsOnStep {
+		if refusal := baseline.Preview.Refusal(); refusal != nil {
+			return refusedBeforeFiling(call.Name, refusal)
+		}
+	}
+	action.Target = target
+
+	content := s.filedText(ctx, &filedTextParams{
+		req:      req,
+		toolName: call.Name,
+		action:   action,
+		tier:     hold.tier,
+		prepared: p.scriptStepKey != "",
+	}) +
+		heldReason(
+			action.HeldBy,
+			hold.egress,
+		) + toolsummary.FilingEcho(baseline, call.Arguments)
+	if note := p.argumentNote; note != "" {
+		content += "\n" + note
+	}
+	if hold.external {
+		content += toolaccess.ExternalContentNote
+	}
+	if hold.hours {
+		content += businessHoursNote
+	}
 	if req.Definition.SimulationMode {
-		return s.simulateAction(ctx, actionParams{DispatchParams: p, tool: tool, action: action})
+		content += " This agent is in simulation: an approval will preview the change, not make it."
 	}
 
-	if outcome, refused := s.withinBudget(ctx, req, call.Name, proposedSoFar); refused {
-		return outcome
-	}
-
-	return s.executeAction(ctx, actionParams{DispatchParams: p, tool: tool, action: action})
+	return toolcall.Result{Content: content, Action: action, Verdict: aitrace.OutcomeProposed}
 }
 
 type filedTextParams struct {
@@ -522,7 +606,7 @@ type actionParams struct {
 
 // executeParams is what the tool is handed, built once so the simulated and
 // the executed path cannot drift apart in what they pass.
-func (a actionParams) executeParams() agenttoolports.ToolExecuteParams {
+func (a *actionParams) executeParams() agenttoolports.ToolExecuteParams {
 	params := RunToolParams(a.req, a.idempotencyKey, a.call.Arguments)
 	if a.tool.Policy().CarriesTaint {
 		params.Taint = a.taint.Clone()
@@ -531,7 +615,7 @@ func (a actionParams) executeParams() agenttoolports.ToolExecuteParams {
 	return params
 }
 
-func (s *Dispatcher) simulateAction(ctx context.Context, a actionParams) toolcall.Result {
+func (s *Dispatcher) simulateAction(ctx context.Context, a *actionParams) toolcall.Result {
 	call := a.call
 	action := a.action
 
@@ -543,7 +627,7 @@ func (s *Dispatcher) simulateAction(ctx context.Context, a actionParams) toolcal
 		proposalID: action.ProposalID,
 	})
 	action.Target = target
-	writeCtx, write := s.startWrite(ctx, &a, true)
+	writeCtx, write := s.startWrite(ctx, a, true)
 	if s.previews != nil {
 		action.Simulation = toolsimulation.FromBaseline(call.Name, call.Arguments, baseline)
 	} else {
@@ -743,17 +827,24 @@ func (s *Dispatcher) runQueryToolWith(
 	}
 	content := ""
 	if extras.fitPage {
-		if fitted, cut := toolresult.FitPage(data, encoded, now, req.Context.Timezone, fields); cut {
+		if fitted, cut := toolresult.FitPage(
+			data,
+			encoded,
+			now,
+			req.Context.Timezone,
+			fields,
+		); cut {
 			data, encoded, document = fitted.Data, fitted.Encoded, fitted.Document
 			content = "\n\n" + fitted.Note()
 		}
 	}
 
+	policy := s.Ruled(ctx, req, new(tool.Policy()))
 	outcome := toolcall.Result{
 		Content: toolresult.Fence(call.Name, encoded) + content,
 		Data:    data,
 		Summary: toolsummary.Result(call.Name, document),
-		Taint:   turntaint.Call(s.Ruled(ctx, req, tool.Policy()), *call, data, now),
+		Taint:   turntaint.Call(&policy, call, data, now),
 		Verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(agentmemoryports.MemoryRecall); ok {
@@ -775,14 +866,14 @@ func firstPage(arguments map[string]any) bool {
 
 const listAfterParam = "after"
 
-func (s *Dispatcher) executeAction(ctx context.Context, a actionParams) toolcall.Result {
+func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcall.Result {
 	call := a.call
 	action := a.action
 
 	action.Executed = true
-	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
+	action.Target = s.snapshotTarget(ctx, a.req, a.tool, &call)
 
-	writeCtx, write := s.startWrite(ctx, &a, false)
+	writeCtx, write := s.startWrite(ctx, a, false)
 	action.ExecutedAt = timeutils.NowUnix()
 	var (
 		result    *agentrecord.ToolExecutionResult
@@ -819,15 +910,11 @@ func (s *Dispatcher) executeAction(ctx context.Context, a actionParams) toolcall
 	}
 	write.End()
 
+	policy := s.Ruled(ctx, a.req, new(a.tool.Policy()))
 	outcome := toolcall.Result{
 		Content: ranContent(call.Name, result),
 		Action:  action,
-		Taint: turntaint.Call(
-			s.Ruled(ctx, a.req, a.tool.Policy()),
-			call,
-			nil,
-			timeutils.NowUnix(),
-		),
+		Taint:   turntaint.Call(&policy, &call, nil, timeutils.NowUnix()),
 		Verdict: aitrace.OutcomeRan,
 		Saved:   saved,
 	}
@@ -950,6 +1037,8 @@ func egressReason(egress agent.EgressClass) string {
 		return "it would reach someone outside the organization"
 	case agent.EgressMoney:
 		return "it moves money"
+	case agent.EgressNone, agent.EgressPersonal, agent.EgressInternal:
+		return "of what the change would reach"
 	default:
 		return "of what the change would reach"
 	}
@@ -1059,7 +1148,7 @@ func (s *Dispatcher) snapshotTarget(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
 	tool agenttoolports.AgentTool,
-	call llmports.ToolCall,
+	call *llmports.ToolCall,
 ) *agentruntimeports.ProposalTarget {
 	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok || s.versions == nil {
@@ -1095,10 +1184,10 @@ func (s *Dispatcher) snapshotTarget(
 func (s *Dispatcher) Ruled(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
-	policy agenttoolports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) agenttoolports.ToolPolicy {
 	if s.rules == nil || req == nil || req.Actor == nil {
-		return policy
+		return *policy
 	}
 
 	rules, err := s.rules.For(ctx, req.Actor.TenantInfo())

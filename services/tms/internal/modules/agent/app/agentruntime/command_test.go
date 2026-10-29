@@ -532,7 +532,7 @@ func TestCommandTurn_KeepsBeingHeldAfterARestore(t *testing.T) {
 			state := rt.service.OpenTurn(t.Context(), req).State()
 			require.Equal(t, tc.command, state.Command)
 
-			restored := rt.service.RestoreTurn(req, state)
+			restored := rt.service.RestoreTurn(req, &state)
 			assert.Equal(t, tc.command, restored.command)
 		})
 	}

@@ -65,7 +65,7 @@ type fingerprintToolSet struct {
 	Tools   []fingerprintTool `json:"tools"`
 }
 
-func projectPolicy(policy agenttoolports.ToolPolicy) *fingerprintPolicy {
+func projectPolicy(policy *agenttoolports.ToolPolicy) *fingerprintPolicy {
 	projected := &fingerprintPolicy{
 		Kind:                policy.Kind,
 		Resource:            policy.Resource,
@@ -103,7 +103,7 @@ func (s *Access) fingerprintTool(
 			Registered:  true,
 			Description: tool.Description(),
 			Parameters:  tool.ParamSchema(),
-			Policy:      projectPolicy(tool.Policy()),
+			Policy:      projectPolicy(new(tool.Policy())),
 		}
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
@@ -113,8 +113,8 @@ func (s *Access) fingerprintTool(
 			Registered:  true,
 			Description: tool.Description(),
 			Parameters:  tool.ParamSchema(),
-			Tier:        agenttoolpolicy.StaticTier(definition, policy),
-			Policy:      projectPolicy(policy),
+			Tier:        agenttoolpolicy.StaticTier(definition, &policy),
+			Policy:      projectPolicy(&policy),
 		}
 		if definition != nil && definition.SetsToolTier(name) {
 			projected.SetTier = definition.ToolTiers[name]
@@ -123,7 +123,7 @@ func (s *Access) fingerprintTool(
 		return projected
 	}
 	if policy, ok := runtimetools.PolicyNamed(name); ok {
-		return fingerprintTool{Name: name, Registered: true, Policy: projectPolicy(policy)}
+		return fingerprintTool{Name: name, Registered: true, Policy: projectPolicy(&policy)}
 	}
 
 	return fingerprintTool{Name: name}

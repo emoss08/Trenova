@@ -70,7 +70,7 @@ type Dispatcher struct {
 	brokers   ScriptBrokers
 }
 
-func NewDispatcher(p DispatcherParams) *Dispatcher {
+func NewDispatcher(p *DispatcherParams) *Dispatcher {
 	return &Dispatcher{
 		logger:      p.Logger.Named("service.agentruntime"),
 		access:      p.Access,

@@ -41,8 +41,8 @@ type recordFeed struct {
 
 func (f *recordFeed) TaintedRecords() []agentrecord.RecordRef { return f.records }
 
-func feedPolicy(reads agenttooltrust.ExternalRead) agenttoolports.ToolPolicy {
-	return agenttoolports.ToolPolicy{
+func feedPolicy(reads agenttooltrust.ExternalRead) *agenttoolports.ToolPolicy {
+	return &agenttoolports.ToolPolicy{
 		Name:          "exception_list_watchtower_items",
 		ReadsExternal: reads,
 		Source:        agent.TaintSourceInboundMessage,
@@ -54,8 +54,8 @@ func feedPolicy(reads agenttooltrust.ExternalRead) agenttoolports.ToolPolicy {
 	}
 }
 
-func feedCall() llmports.ToolCall {
-	return llmports.ToolCall{ID: "call_feed", Name: "exception_list_watchtower_items"}
+func feedCall() *llmports.ToolCall {
+	return &llmports.ToolCall{ID: "call_feed", Name: "exception_list_watchtower_items"}
 }
 
 func TestCallTaint_EachSourcedRowIsMarkedWithItsOwnSource(t *testing.T) {
@@ -162,7 +162,7 @@ func TestCallTaint_ARecordCarrierIsMarkedWithThePolicySource(t *testing.T) {
 		Source:        agent.TaintSourceRunRecord,
 	}
 
-	marks := turntaint.Call(policy, feedCall(), feed, 1)
+	marks := turntaint.Call(&policy, feedCall(), feed, 1)
 
 	require.Len(t, marks, 1)
 	assert.Equal(t, agent.TaintSourceRunRecord, marks[0].Source)

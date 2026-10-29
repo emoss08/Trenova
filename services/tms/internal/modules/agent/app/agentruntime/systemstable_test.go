@@ -37,6 +37,6 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 	require.Less(t, state.SystemStable, len(state.System))
 	assert.Equal(t, state.SystemStable, turn.completionRequest().SystemStable)
 
-	restored := rt.RestoreTurn(req, state)
+	restored := rt.RestoreTurn(req, &state)
 	assert.Equal(t, state.SystemStable, restored.completionRequest().SystemStable)
 }

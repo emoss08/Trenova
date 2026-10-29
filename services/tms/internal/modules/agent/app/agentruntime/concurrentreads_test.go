@@ -47,13 +47,13 @@ func (fx *batchRecorder) record(event kernelports.StreamEvent) {
 	}
 }
 
-func (fx *batchRecorder) answer(call toolcall.Call) toolcall.Outcome {
+func (fx *batchRecorder) answer(call *toolcall.Call) toolcall.Outcome {
 	fx.earlier[call.Call.ID] = call.Earlier
 
 	return toolcall.Outcome{Content: `{"results":[]}`}
 }
 
-func (fx *batchRecorder) Dispatch(_ *Turn, call toolcall.Call) toolcall.Outcome {
+func (fx *batchRecorder) Dispatch(_ *Turn, call *toolcall.Call) toolcall.Outcome {
 	fx.steps = append(fx.steps, "alone "+call.Call.ID)
 
 	return fx.answer(call)
@@ -65,9 +65,9 @@ func (fx *batchRecorder) DispatchReads(
 ) []toolcall.Outcome {
 	ids := make([]string, 0, len(calls))
 	outcomes := make([]toolcall.Outcome, 0, len(calls))
-	for _, call := range calls {
-		ids = append(ids, call.Call.ID)
-		outcomes = append(outcomes, fx.answer(call))
+	for idx := range calls {
+		ids = append(ids, calls[idx].Call.ID)
+		outcomes = append(outcomes, fx.answer(&calls[idx]))
 	}
 	fx.steps = append(fx.steps, "together "+strings.Join(ids, " "))
 
@@ -296,7 +296,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 			}}
 		})
 		fx := newBatchRecorder(t, rt)
-		_, err := rt.Drive(rt.RestoreTurn(request, state), fx)
+		_, err := rt.Drive(rt.RestoreTurn(request, &state), fx)
 		require.NoError(t, err)
 
 		return fx.steps

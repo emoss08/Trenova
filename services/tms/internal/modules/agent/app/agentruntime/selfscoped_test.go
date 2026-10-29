@@ -161,7 +161,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 		})
 	})
 
-	set := service.access.NewToolSet(t.Context(), toolaccess.ToolSetRequest{
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: runtimetest.Definition(
 			append(names, "home_get_layout", "report_list_dashboards")...),
 		Actor: runtimetest.Actor(),

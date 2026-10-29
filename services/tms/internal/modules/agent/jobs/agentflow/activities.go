@@ -213,7 +213,7 @@ func (a *Activities) FindToolsActivity(
 	ctx context.Context,
 	in *FindToolsInput,
 ) (*FindToolsResult, error) {
-	found := a.runtime.FindFor(ctx, in.Run.request(), in.Tools, in.Arguments)
+	found := a.runtime.FindFor(ctx, in.Run.request(), &in.Tools, in.Arguments)
 
 	return &FindToolsResult{
 		Content: found.Content,
@@ -318,7 +318,7 @@ func (a *Activities) runTool(
 	req.Steps = a.steps
 	req.Attempt = int(activity.GetInfo(ctx).Attempt)
 
-	outcome := a.runtime.DispatchStep(ctx, req, in.Call)
+	outcome := a.runtime.DispatchStep(ctx, req, &in.Call)
 	observe, kept, done := a.observing(ctx, &in.Run)
 	defer done()
 	outcome = a.runtime.ObserveDispatch(observe, &in.Call, &outcome)

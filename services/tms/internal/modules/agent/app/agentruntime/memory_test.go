@@ -237,7 +237,7 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 	already := pulid.MustNew("amem_")
 	turn := rt.RestoreTurn(
 		&agentruntimeports.RunRequest{Definition: runtimetest.Definition()},
-		TurnState{
+		&TurnState{
 			Result:       agentruntimeports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
 			ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}},
 		},

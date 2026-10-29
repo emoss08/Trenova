@@ -21,12 +21,12 @@ func testDispatcher(p DispatcherParams) *Dispatcher {
 	if p.Permissions == nil {
 		p.Permissions = &agenttest.StubPermissions{}
 	}
-	p.Access = toolaccess.NewAccess(toolaccess.AccessParams{
+	p.Access = toolaccess.NewAccess(&toolaccess.AccessParams{
 		Logger:      p.Logger,
 		QueryTools:  p.QueryTools,
 		ActionTools: p.ActionTools,
 		Permissions: p.Permissions,
 	})
 
-	return NewDispatcher(p)
+	return NewDispatcher(&p)
 }
