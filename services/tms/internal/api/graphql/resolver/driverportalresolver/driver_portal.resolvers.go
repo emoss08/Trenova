@@ -31,6 +31,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -43,7 +45,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error) {
+func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalinvitationservice.InviteWorkerResult, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
@@ -58,14 +60,14 @@ func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmo
 	if err != nil {
 		return nil, err
 	}
-	req := &driverportalservice.InviteWorkerRequest{
+	req := &driverportalinvitationservice.InviteWorkerRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		WorkerID:   workerID,
 	}
 	if input.Email != nil {
 		req.Email = *input.Email
 	}
-	return r.DriverPortalService.InviteWorker(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.DriverPortalInvitationService.InviteWorker(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error) {
@@ -83,7 +85,7 @@ func (r *MutationResolver) RevokeWorkerPortalAccess(ctx context.Context, workerI
 	if err != nil {
 		return false, err
 	}
-	if err = r.DriverPortalService.RevokeAccess(
+	if err = r.DriverPortalInvitationService.RevokeAccess(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		id,
@@ -334,10 +336,10 @@ func (r *MutationResolver) AcknowledgeMyPolicy(ctx context.Context, input gqlmod
 	}
 
 	client := gqlctx.ClientInfoFrom(ctx)
-	return r.DriverPortalService.AcknowledgeMyPolicy(
+	return r.DriverPortalRecordsService.AcknowledgeMyPolicy(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
-		&driverportalservice.AcknowledgeMyPolicyRequest{
+		&driverportalrecordsservice.AcknowledgeMyPolicyRequest{
 			PolicyID:      policyID,
 			SignatureName: gqlscalar.StringValue(input.SignatureName),
 			IP:            client.IP,
@@ -357,7 +359,7 @@ func (r *MutationResolver) WithdrawMyProfileChange(ctx context.Context, id strin
 		return nil, gqlid.InvalidIDError("id", "Request is invalid")
 	}
 
-	return r.DriverPortalService.WithdrawMyProfileChange(ctx, resolvercore.TenantInfo(authCtx), requestID)
+	return r.DriverPortalRecordsService.WithdrawMyProfileChange(ctx, resolvercore.TenantInfo(authCtx), requestID)
 }
 
 func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel.SetMyAvailabilityInput) (*workerschedule.WorkerAvailabilityPreference, error) {
@@ -366,10 +368,10 @@ func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	return r.DriverPortalService.SetMyAvailability(
+	return r.DriverPortalRecordsService.SetMyAvailability(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
-		&driverportalservice.SetMyAvailabilityRequest{
+		&driverportalrecordsservice.SetMyAvailabilityRequest{
 			DayOfWeek:  int16(input.DayOfWeek), //nolint:gosec // validated 0..6
 			Preference: input.Preference,
 			Note:       gqlscalar.StringValue(input.Note),
@@ -388,7 +390,7 @@ func (r *MutationResolver) ProposeMyShiftSwap(ctx context.Context, input gqlmode
 		return nil, gqlid.InvalidIDError("counterpartyWorkerId", "Worker is invalid")
 	}
 
-	req := &driverportalservice.ProposeMyShiftSwapRequest{
+	req := &driverportalrecordsservice.ProposeMyShiftSwapRequest{
 		CounterpartyWorkerID: counterpartyID,
 		ShiftDate:            int64(input.ShiftDate),
 		Reason:               gqlscalar.StringValue(input.Reason),
@@ -398,7 +400,7 @@ func (r *MutationResolver) ProposeMyShiftSwap(ctx context.Context, input gqlmode
 		req.CounterpartyShiftDate = &counterDate
 	}
 
-	return r.DriverPortalService.ProposeMyShiftSwap(ctx, resolvercore.TenantInfo(authCtx), req)
+	return r.DriverPortalRecordsService.ProposeMyShiftSwap(ctx, resolvercore.TenantInfo(authCtx), req)
 }
 
 func (r *MutationResolver) RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error) {
@@ -412,7 +414,7 @@ func (r *MutationResolver) RespondToMyShiftSwap(ctx context.Context, input gqlmo
 		return nil, gqlid.InvalidIDError("id", "Swap is invalid")
 	}
 
-	return r.DriverPortalService.RespondToMyShiftSwap(
+	return r.DriverPortalRecordsService.RespondToMyShiftSwap(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		swapID,
@@ -582,15 +584,15 @@ func (r *MyPTOBalanceResolver) UsedYtdDays(ctx context.Context, obj *ptoledgerse
 	return gqldecimal.DecimalString(obj.UsedYTDDays), nil
 }
 
-func (r *PortalCredentialResolver) ID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error) {
+func (r *PortalCredentialResolver) ID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error) {
 	return gqlid.IDPtr(obj.ID), nil
 }
 
-func (r *PortalCredentialResolver) DocumentID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error) {
+func (r *PortalCredentialResolver) DocumentID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error) {
 	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
-func (r *QueryResolver) WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error) {
+func (r *QueryResolver) WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalinvitationservice.PortalStatus, error) {
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
@@ -605,7 +607,7 @@ func (r *QueryResolver) WorkerPortalStatus(ctx context.Context, workerID string)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.GetPortalStatus(ctx, resolvercore.TenantInfo(authCtx), id)
+	return r.DriverPortalInvitationService.GetPortalStatus(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) SettlementDisputes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementDisputeConnection, error) {
@@ -682,12 +684,12 @@ func (r *QueryResolver) MyComplianceProfile(ctx context.Context) (*driverportals
 	return r.DriverPortalService.MyComplianceProfile(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyCredentials(ctx context.Context) ([]*driverportalservice.PortalCredential, error) {
+func (r *QueryResolver) MyCredentials(ctx context.Context) ([]*driverportalrecordsservice.PortalCredential, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyCredentials(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyCredentials(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyLoadComments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalComment, error) {
@@ -797,20 +799,20 @@ func (r *QueryResolver) MyDisputes(ctx context.Context) ([]*driversettlement.Dis
 	)
 }
 
-func (r *QueryResolver) MyPortalFeatures(ctx context.Context) (*driverportalservice.PortalFeatures, error) {
+func (r *QueryResolver) MyPortalFeatures(ctx context.Context) (*driverportalrecordsservice.PortalFeatures, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyPortalFeatures(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyPortalFeatures(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyPolicies(ctx context.Context) ([]*driverportalservice.PortalPolicy, error) {
+func (r *QueryResolver) MyPolicies(ctx context.Context) ([]*driverportalrecordsservice.PortalPolicy, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyPolicies(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyPolicies(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyPolicyDocumentURL(ctx context.Context, policyID string) (string, error) {
@@ -824,7 +826,7 @@ func (r *QueryResolver) MyPolicyDocumentURL(ctx context.Context, policyID string
 		return "", gqlid.InvalidIDError("policyId", "Policy is invalid")
 	}
 
-	return r.DriverPortalService.MyPolicyDocumentURL(ctx, resolvercore.TenantInfo(authCtx), id)
+	return r.DriverPortalRecordsService.MyPolicyDocumentURL(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) MyProfileChangeRequests(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error) {
@@ -832,16 +834,16 @@ func (r *QueryResolver) MyProfileChangeRequests(ctx context.Context) ([]*profile
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyProfileChangeRequests(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyProfileChangeRequests(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalservice.PortalSchedule, error) {
+func (r *QueryResolver) MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalrecordsservice.PortalSchedule, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.DriverPortalService.MySchedule(
+	return r.DriverPortalRecordsService.MySchedule(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		gqlscalar.Int64Value(at),
@@ -854,15 +856,15 @@ func (r *QueryResolver) MyAvailability(ctx context.Context) ([]*workerschedule.W
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyAvailability(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyAvailability(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyShiftSwaps(ctx context.Context) ([]*driverportalservice.PortalShiftSwap, error) {
+func (r *QueryResolver) MyShiftSwaps(ctx context.Context) ([]*driverportalrecordsservice.PortalShiftSwap, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyShiftSwaps(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyShiftSwaps(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyPTO(ctx context.Context) ([]*worker.WorkerPTO, error) {
@@ -881,12 +883,12 @@ func (r *QueryResolver) MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.
 	return r.DriverPortalService.MyPTOBalances(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error) {
+func (r *QueryResolver) MyLeave(ctx context.Context) (*driverportalrecordsservice.PortalLeave, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyLeave(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyLeave(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyExpenses(ctx context.Context) ([]*payexpense.Expense, error) {

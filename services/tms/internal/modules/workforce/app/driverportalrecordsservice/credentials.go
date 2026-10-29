@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -39,7 +40,7 @@ func (s *Service) MyCredentials(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*PortalCredential, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +82,12 @@ func (s *Service) UploadMyCredentialDocument(
 	credentialID pulid.ID,
 	file *multipart.FileHeader,
 	actor *permissionports.RequestActor,
-) (*PortalDocument, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+) (*driverportalservice.PortalDocument, error) {
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.portal.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowProfileDocumentUpload },
 		"Your carrier collects qualification documents outside Dash — see your fleet manager.",
 	); err != nil {
@@ -134,7 +135,7 @@ func (s *Service) UploadMyCredentialDocument(
 	}
 
 	s.notifyCredentialUpload(ctx, tenantInfo, wrk, cred)
-	return portalDocumentView(result.Document), nil
+	return driverportalservice.PortalDocumentView(result.Document), nil
 }
 
 func (s *Service) notifyCredentialUpload(
@@ -147,7 +148,7 @@ func (s *Service) notifyCredentialUpload(
 	if cred.CredentialType != nil {
 		name = cred.CredentialType.Name
 	}
-	s.notifyDispatch(
+	s.portal.NotifyDispatch(
 		ctx,
 		tenantInfo,
 		"credential_document_uploaded",

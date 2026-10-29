@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
@@ -133,7 +133,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// The portal service reaches back into the employment service through the
 	// safety service to record a termination, so injecting the revoker through
 	// FX would close that cycle; it arrives after both are built.
-	func(s *workeremploymentservice.Service, portal *driverportalservice.Service) {
+	func(
+		s *workeremploymentservice.Service,
+		portal *driverportalinvitationservice.Service,
+	) {
 		s.SetPortalRevoker(portal)
 	},
 	// Providing services.EDITenderChannel would close the constructor cycle

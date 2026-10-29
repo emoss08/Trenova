@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -14,7 +14,7 @@ func (s *Service) MyReviews(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*workerreview.PerformanceReview, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (s *Service) AcknowledgeMyReview(
 	reviewID pulid.ID,
 	comment string,
 ) (*workerreview.PerformanceReview, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *Service) AcknowledgeMyReview(
 	if err != nil {
 		return nil, err
 	}
-	s.notifyDispatch(
+	s.portal.NotifyDispatch(
 		ctx,
 		tenantInfo,
 		"review_acknowledged",

@@ -114,7 +114,7 @@ func (s *Service) MyProfileDocuments(
 		if item.Status == document.StatusArchived {
 			continue
 		}
-		views = append(views, portalDocumentView(item))
+		views = append(views, PortalDocumentView(item))
 	}
 	return views, nil
 }
@@ -133,7 +133,7 @@ func (s *Service) UploadMyProfileDocument(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowProfileDocumentUpload },
 		"Your carrier collects qualification documents outside Dash — see your fleet manager.",
 	); err != nil {
@@ -156,7 +156,7 @@ func (s *Service) UploadMyProfileDocument(
 	if err != nil {
 		return nil, err
 	}
-	return portalDocumentView(result.Document), nil
+	return PortalDocumentView(result.Document), nil
 }
 
 func (s *Service) MyLoadDocuments(
@@ -186,7 +186,7 @@ func (s *Service) MyLoadDocuments(
 		if item.Status == document.StatusArchived {
 			continue
 		}
-		views = append(views, portalDocumentView(item))
+		views = append(views, PortalDocumentView(item))
 	}
 	return views, nil
 }
@@ -202,7 +202,7 @@ func (s *Service) UploadMyLoadDocument(
 	if err := s.requireAssignedShipment(ctx, tenantInfo, shipmentID); err != nil {
 		return nil, err
 	}
-	if _, err := s.requireFeature(ctx, tenantInfo,
+	if _, err := s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowLoadDocumentUpload },
 		"Your carrier collects paperwork outside Dash — turn in documents the way you do today.",
 	); err != nil {
@@ -225,7 +225,7 @@ func (s *Service) UploadMyLoadDocument(
 	if err != nil {
 		return nil, err
 	}
-	return portalDocumentView(result.Document), nil
+	return PortalDocumentView(result.Document), nil
 }
 
 func (s *Service) requireAssignedShipment(
@@ -247,7 +247,7 @@ func (s *Service) requireAssignedShipment(
 	return nil
 }
 
-func portalDocumentView(item *document.Document) *PortalDocument {
+func PortalDocumentView(item *document.Document) *PortalDocument {
 	if item == nil {
 		return nil
 	}

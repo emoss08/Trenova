@@ -173,6 +173,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/orgholidayservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
@@ -451,6 +453,8 @@ type Params struct {
 	DriverSettlementTransferService   *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
 	DriverPortalService               *driverportalservice.Service
+	DriverPortalInvitationService     *driverportalinvitationservice.Service
+	DriverPortalRecordsService        *driverportalrecordsservice.Service
 	SettlementControlService          *settlementcontrolservice.Service
 	AccountingControlRepo             tenantports.AccountingControlRepository
 	DashControlService                *dashcontrolservice.Service
@@ -708,6 +712,8 @@ type Services struct {
 	DriverSettlementTransferService   *driversettlementtransferservice.Service
 	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
 	DriverPortalService               *driverportalservice.Service
+	DriverPortalInvitationService     *driverportalinvitationservice.Service
+	DriverPortalRecordsService        *driverportalrecordsservice.Service
 	SettlementControlService          *settlementcontrolservice.Service
 	AccountingControlRepo             tenantports.AccountingControlRepository
 	DashControlService                *dashcontrolservice.Service
@@ -976,6 +982,8 @@ func newServices(p *Params) *Services {
 		DriverSettlementTransferService:   p.DriverSettlementTransferService,
 		DriverSettlementWorkspaceService:  p.DriverSettlementWorkspaceService,
 		DriverPortalService:               p.DriverPortalService,
+		DriverPortalInvitationService:     p.DriverPortalInvitationService,
+		DriverPortalRecordsService:        p.DriverPortalRecordsService,
 		SettlementControlService:          p.SettlementControlService,
 		AccountingControlRepo:             p.AccountingControlRepo,
 		DashControlService:                p.DashControlService,

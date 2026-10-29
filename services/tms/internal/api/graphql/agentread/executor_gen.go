@@ -259,6 +259,8 @@ import (
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	driverportalinvitationservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
@@ -328,6 +330,8 @@ type ResolverParams struct {
 	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	DocumentTypeService               *documenttypeservice.Service
 	DriverPayService                  *driverpayservice.Service
+	DriverPortalInvitationService     *driverportalinvitationservice.Service
+	DriverPortalRecordsService        *driverportalrecordsservice.Service
 	DriverPortalService               *driverportalservice.Service
 	DriverSettlementRepo              driversettlementports.DriverSettlementRepository
 	DriverSettlementReviewService     *driversettlementreviewservice.Service
@@ -1354,6 +1358,8 @@ func NewSchema(p ResolverParams) Schema {
 		NotificationService:           p.NotificationService,
 		DriverSettlementReviewService: p.DriverSettlementReviewService,
 		DriverPortalService:           p.DriverPortalService,
+		DriverPortalInvitationService: p.DriverPortalInvitationService,
+		DriverPortalRecordsService:    p.DriverPortalRecordsService,
 		DashControlService:            p.DashControlService,
 	}
 	driversettlementDeps := &driversettlementresolver.Deps{
@@ -1517,9 +1523,9 @@ func NewSchema(p ResolverParams) Schema {
 		OrderService: p.OrderService,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
-		Core:                     core,
-		PerformanceReviewService: p.PerformanceReviewService,
-		DriverPortalService:      p.DriverPortalService,
+		Core:                       core,
+		PerformanceReviewService:   p.PerformanceReviewService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	rateDeps := &rateresolver.Deps{
 		Core:                 core,
@@ -1632,14 +1638,14 @@ func NewSchema(p ResolverParams) Schema {
 		WorkerLeaveService: p.WorkerLeaveService,
 	}
 	workersafetyDeps := &workersafetyresolver.Deps{
-		Core:                core,
-		WorkerSafetyService: p.WorkerSafetyService,
-		DriverPortalService: p.DriverPortalService,
+		Core:                       core,
+		WorkerSafetyService:        p.WorkerSafetyService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	workertrainingDeps := &workertrainingresolver.Deps{
-		Core:                  core,
-		WorkerTrainingService: p.WorkerTrainingService,
-		DriverPortalService:   p.DriverPortalService,
+		Core:                       core,
+		WorkerTrainingService:      p.WorkerTrainingService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	customerBillingProfile := &customerBillingProfileResolver{
 		customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},

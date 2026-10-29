@@ -4,14 +4,14 @@ package workersafetyresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	WorkerSafetyService *workersafetyservice.Service
-	DriverPortalService *driverportalservice.Service
+	WorkerSafetyService        *workersafetyservice.Service
+	DriverPortalRecordsService *driverportalrecordsservice.Service
 }
 
 type DisciplinaryLadderResolver struct{ *Deps }

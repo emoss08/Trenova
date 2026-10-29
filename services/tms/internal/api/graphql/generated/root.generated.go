@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"context"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -2228,7 +2230,7 @@ type MutationResolver interface {
 	AssignDocumentTemplate(ctx context.Context, input gqlmodel.AssignDocumentTemplateInput) (*documenttemplate.DocumentTemplateAssignment, error)
 	UnassignDocumentTemplate(ctx context.Context, input gqlmodel.UnassignDocumentTemplateInput) (bool, error)
 	SendTestMessageTemplate(ctx context.Context, input gqlmodel.SendTestMessageTemplateInput) (bool, error)
-	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error)
+	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalinvitationservice.InviteWorkerResult, error)
 	RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error)
 	UpdateMyContactInfo(ctx context.Context, input gqlmodel.UpdateMyContactInfoInput) (*driverportalservice.PortalComplianceProfile, error)
 	CreateMyLoadComment(ctx context.Context, input gqlmodel.CreateMyLoadCommentInput) (*driverportalservice.PortalComment, error)
@@ -2659,8 +2661,8 @@ type MutationResolver interface {
 	WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
 	CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
 	AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*workertraining.WorkerTrainingRecord, error)
-	StartMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
-	AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
+	StartMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error)
+	AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error)
 	BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error)
 }
 
@@ -2786,14 +2788,14 @@ type PlannedPTOAccrualResolver interface {
 }
 
 type PortalCredentialResolver interface {
-	ID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
-	DocumentID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
+	ID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
+	DocumentID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
 }
 
 type PortalTrainingResolver interface {
-	ID(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
-	Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*workertraining.TrainingStatus, error)
-	Score(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
+	ID(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
+	Status(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*workertraining.TrainingStatus, error)
+	Score(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
 }
 
 type QueryResolver interface {
@@ -3044,14 +3046,14 @@ type QueryResolver interface {
 	RenderMessageTemplatePreview(ctx context.Context, input gqlmodel.DocumentTemplatePreviewInput) (*gqlmodel.DocumentTemplatePreview, error)
 	DocumentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTypeConnection, error)
 	DocumentType(ctx context.Context, id string) (*documenttype.DocumentType, error)
-	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error)
+	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalinvitationservice.PortalStatus, error)
 	SettlementDisputes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementDisputeConnection, error)
 	SettlementDispute(ctx context.Context, id string) (*driversettlement.Dispute, error)
 	OpenSettlementDisputeCount(ctx context.Context) (int, error)
 	MyPortalProfile(ctx context.Context) (*driverportalservice.PortalProfile, error)
 	MyLoads(ctx context.Context, scope driverportalservice.LoadScope, limit *int) ([]*driverportalservice.PortalLoad, error)
 	MyComplianceProfile(ctx context.Context) (*driverportalservice.PortalComplianceProfile, error)
-	MyCredentials(ctx context.Context) ([]*driverportalservice.PortalCredential, error)
+	MyCredentials(ctx context.Context) ([]*driverportalrecordsservice.PortalCredential, error)
 	MyLoadComments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalComment, error)
 	MyPeriodSummary(ctx context.Context) (*driverportalservice.PortalPeriodSummary, error)
 	MyRecentPayEvents(ctx context.Context, limit *int) ([]*driversettlement.PayEvent, error)
@@ -3060,16 +3062,16 @@ type QueryResolver interface {
 	MyEscrow(ctx context.Context) (*driverportalservice.PortalEscrowSummary, error)
 	MyAdvances(ctx context.Context) ([]*payadvance.PayAdvance, error)
 	MyDisputes(ctx context.Context) ([]*driversettlement.Dispute, error)
-	MyPortalFeatures(ctx context.Context) (*driverportalservice.PortalFeatures, error)
-	MyPolicies(ctx context.Context) ([]*driverportalservice.PortalPolicy, error)
+	MyPortalFeatures(ctx context.Context) (*driverportalrecordsservice.PortalFeatures, error)
+	MyPolicies(ctx context.Context) ([]*driverportalrecordsservice.PortalPolicy, error)
 	MyPolicyDocumentURL(ctx context.Context, policyID string) (string, error)
 	MyProfileChangeRequests(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error)
-	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalservice.PortalSchedule, error)
+	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalrecordsservice.PortalSchedule, error)
 	MyAvailability(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error)
-	MyShiftSwaps(ctx context.Context) ([]*driverportalservice.PortalShiftSwap, error)
+	MyShiftSwaps(ctx context.Context) ([]*driverportalrecordsservice.PortalShiftSwap, error)
 	MyPTO(ctx context.Context) ([]*worker.WorkerPTO, error)
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
-	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
+	MyLeave(ctx context.Context) (*driverportalrecordsservice.PortalLeave, error)
 	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
 	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error)
 	MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
@@ -3494,7 +3496,7 @@ type QueryResolver interface {
 	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error)
 	WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error)
 	WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error)
-	MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error)
+	MyTraining(ctx context.Context) ([]*driverportalrecordsservice.PortalTraining, error)
 }
 
 type RateAgreementResolver interface {

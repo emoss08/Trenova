@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -15,7 +15,7 @@ func (s *Service) MySafetyScorecard(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*safetyscorecard.SafetyScorecard, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (s *Service) MyRecognitions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*workerdiscipline.WorkerRecognition, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (s *Service) MyDisciplinaryActions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 	actionID pulid.ID,
 	comment string,
 ) (*workerdiscipline.WorkerDisciplinaryAction, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 	if err != nil {
 		return nil, err
 	}
-	s.notifyDispatch(
+	s.portal.NotifyDispatch(
 		ctx,
 		tenantInfo,
 		"disciplinary_acknowledged",

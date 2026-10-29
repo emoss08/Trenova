@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
@@ -204,7 +204,7 @@ func (r *MutationResolver) AttachWorkerTrainingDocument(ctx context.Context, inp
 	})
 }
 
-func (r *MutationResolver) StartMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error) {
+func (r *MutationResolver) StartMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -213,10 +213,10 @@ func (r *MutationResolver) StartMyTraining(ctx context.Context, id string) (*dri
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Training record is invalid")
 	}
-	return r.DriverPortalService.StartMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
+	return r.DriverPortalRecordsService.StartMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
 }
 
-func (r *MutationResolver) AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error) {
+func (r *MutationResolver) AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (r *MutationResolver) AcknowledgeMyTraining(ctx context.Context, id string)
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Training record is invalid")
 	}
-	return r.DriverPortalService.AcknowledgeMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
+	return r.DriverPortalRecordsService.AcknowledgeMyTraining(ctx, resolvercore.TenantInfo(authCtx), recordID)
 }
 
 func (r *MutationResolver) BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error) {
@@ -255,11 +255,11 @@ func (r *MutationResolver) BulkAssignTraining(ctx context.Context, input gqlmode
 	})
 }
 
-func (r *PortalTrainingResolver) ID(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error) {
+func (r *PortalTrainingResolver) ID(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error) {
 	return gqlid.IDPtr(obj.ID), nil
 }
 
-func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*workertraining.TrainingStatus, error) {
+func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*workertraining.TrainingStatus, error) {
 	if obj.Status == "" {
 		return nil, nil //nolint:nilnil // nothing assigned yet renders as null
 	}
@@ -267,7 +267,7 @@ func (r *PortalTrainingResolver) Status(ctx context.Context, obj *driverportalse
 	return &status, nil
 }
 
-func (r *PortalTrainingResolver) Score(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error) {
+func (r *PortalTrainingResolver) Score(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error) {
 	return stringutils.Ptr(obj.Score), nil
 }
 
@@ -372,12 +372,12 @@ func (r *QueryResolver) WorkerTrainingSummary(ctx context.Context, workerID stri
 	return r.WorkerTrainingService.Summary(ctx, resolvercore.TenantInfo(authCtx), wid)
 }
 
-func (r *QueryResolver) MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error) {
+func (r *QueryResolver) MyTraining(ctx context.Context) ([]*driverportalrecordsservice.PortalTraining, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyTraining(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyTraining(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error) {

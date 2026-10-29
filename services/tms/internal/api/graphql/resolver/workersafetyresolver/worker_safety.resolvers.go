@@ -181,7 +181,7 @@ func (r *MutationResolver) AcknowledgeMyDisciplinaryAction(ctx context.Context, 
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Disciplinary action is invalid")
 	}
-	return r.DriverPortalService.AcknowledgeMyDisciplinaryAction(ctx, resolvercore.TenantInfo(authCtx), actionID, gqlscalar.StringValue(comment))
+	return r.DriverPortalRecordsService.AcknowledgeMyDisciplinaryAction(ctx, resolvercore.TenantInfo(authCtx), actionID, gqlscalar.StringValue(comment))
 }
 
 func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error) {
@@ -286,7 +286,7 @@ func (r *QueryResolver) MySafetyScorecard(ctx context.Context) (*safetyscorecard
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MySafetyScorecard(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MySafetyScorecard(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyRecognitions(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error) {
@@ -294,7 +294,7 @@ func (r *QueryResolver) MyRecognitions(ctx context.Context) ([]*workerdiscipline
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyRecognitions(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyRecognitions(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyDisciplinaryActions(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
@@ -302,7 +302,7 @@ func (r *QueryResolver) MyDisciplinaryActions(ctx context.Context) ([]*workerdis
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyDisciplinaryActions(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyDisciplinaryActions(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *SafetyScorecardResolver) HighestDiscipline(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*workerdiscipline.DisciplinaryLevel, error) {

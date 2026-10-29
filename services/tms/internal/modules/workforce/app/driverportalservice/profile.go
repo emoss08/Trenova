@@ -110,7 +110,7 @@ func (s *Service) UpdateMyContactInfo(
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.requireFeature(ctx, tenantInfo,
+	control, err := s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowContactInfoEdit },
 		"Your carrier manages contact details in the office — ask them to update your record.",
 	)
@@ -137,7 +137,7 @@ func (s *Service) UpdateMyContactInfo(
 		}); err != nil {
 			return nil, err
 		}
-		s.notifyDispatch(
+		s.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"profile_change_requested",

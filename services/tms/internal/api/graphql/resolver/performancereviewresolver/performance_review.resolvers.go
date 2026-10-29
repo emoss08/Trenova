@@ -179,7 +179,7 @@ func (r *MutationResolver) AcknowledgeMyReview(ctx context.Context, id string, c
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Review is invalid")
 	}
-	return r.DriverPortalService.AcknowledgeMyReview(ctx, resolvercore.TenantInfo(authCtx), reviewID, gqlscalar.StringValue(comment))
+	return r.DriverPortalRecordsService.AcknowledgeMyReview(ctx, resolvercore.TenantInfo(authCtx), reviewID, gqlscalar.StringValue(comment))
 }
 
 func (r *PerformanceReviewResolver) ReviewerID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error) {
@@ -292,7 +292,7 @@ func (r *QueryResolver) MyReviews(ctx context.Context) ([]*workerreview.Performa
 	if err != nil {
 		return nil, err
 	}
-	return r.DriverPortalService.MyReviews(ctx, resolvercore.TenantInfo(authCtx))
+	return r.DriverPortalRecordsService.MyReviews(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *ReviewRatingResolver) Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error) {

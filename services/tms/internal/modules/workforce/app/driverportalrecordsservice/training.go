@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -92,7 +92,7 @@ func (s *Service) MyTraining(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*PortalTraining, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *Service) StartMyTraining(
 	tenantInfo pagination.TenantInfo,
 	recordID pulid.ID,
 ) (*PortalTraining, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (s *Service) AcknowledgeMyTraining(
 	tenantInfo pagination.TenantInfo,
 	recordID pulid.ID,
 ) (*PortalTraining, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (s *Service) AcknowledgeMyTraining(
 		return nil, err
 	}
 	if record.IsOpen() {
-		s.notifyDispatch(
+		s.portal.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"training_acknowledged",

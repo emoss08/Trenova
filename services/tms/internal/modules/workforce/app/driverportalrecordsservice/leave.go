@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func (s *Service) MyLeave(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*PortalLeave, error) {
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}

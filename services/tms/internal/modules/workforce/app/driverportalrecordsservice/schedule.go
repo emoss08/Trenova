@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -61,7 +61,7 @@ func (s *Service) MySchedule(
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (s *Service) MyAvailability(
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (s *Service) SetMyAvailability(
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (s *Service) MyShiftSwaps(
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (s *Service) ProposeMyShiftSwap(
 	if err := s.requireScheduling(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +292,7 @@ func (s *Service) RespondToMyShiftSwap(
 		)
 	}
 
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}

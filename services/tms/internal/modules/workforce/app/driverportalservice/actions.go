@@ -53,7 +53,7 @@ func (s *Service) RequestMyPTO(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowPtoRequests },
 		"Your carrier handles time-off requests outside Dash — talk to your fleet manager.",
 	); err != nil {
@@ -80,7 +80,7 @@ func (s *Service) RequestMyPTO(
 	if err != nil {
 		return nil, err
 	}
-	s.notifyDispatch(
+	s.NotifyDispatch(
 		ctx,
 		tenantInfo,
 		"dash.pto_requested",
@@ -189,7 +189,7 @@ func (s *Service) SubmitMyExpense(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowExpenseSubmission },
 		"Your carrier handles expense reimbursements outside Dash — see your fleet manager.",
 	); err != nil {
@@ -300,7 +300,7 @@ func (s *Service) RespondToMyAssignment(
 	if err != nil {
 		return err
 	}
-	control, err := s.requireFeature(ctx, tenantInfo,
+	control, err := s.RequireFeature(ctx, tenantInfo,
 		func(dc *dashcontrol.DashControl) bool { return dc.RequireLoadAcknowledgment },
 		"Your carrier doesn't use load acceptance in Dash.",
 	)
@@ -340,7 +340,7 @@ func (s *Service) RespondToMyAssignment(
 	}
 
 	if !req.Accept {
-		s.notifyDispatch(
+		s.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"dash.load_declined",
@@ -369,7 +369,7 @@ func (s *Service) MyLoadPayEstimate(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool {
 			return control.ShowLoadPay && control.ShowPayEstimates
 		},
@@ -410,7 +410,7 @@ func (s *Service) MyYtdPay(
 
 // --- shared helpers ---
 
-func (s *Service) notifyDispatch(
+func (s *Service) NotifyDispatch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	eventType, title, message, link string,

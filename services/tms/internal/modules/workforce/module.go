@@ -23,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/orgholidayservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
@@ -58,6 +60,8 @@ func SharedOptions() fx.Option {
 			schedulingrepository.New,
 			drivernotificationservice.New,
 			driverportalservice.New,
+			driverportalinvitationservice.New,
+			driverportalrecordsservice.New,
 			ptopolicyservice.New,
 			workercredentialservice.New,
 			workertrainingservice.New,
@@ -82,7 +86,7 @@ func SharedOptions() fx.Option {
 			func(s *workerchecklistservice.Service) workeroverviewservice.ChecklistLister { return s },
 			func(s *performancereviewservice.Service) workeroverviewservice.ReviewLister { return s },
 			func(s *workerleaveservice.Service) workeroverviewservice.LeaveCounter { return s },
-			func(s *workerleaveservice.Service) driverportalservice.LeaveReader { return s },
+			func(s *workerleaveservice.Service) driverportalrecordsservice.LeaveReader { return s },
 			orgholidayservice.New,
 			func(s *workerchecklistservice.Service) workerchecklistports.ChecklistSpawner { return s },
 			workeremploymentservice.New,

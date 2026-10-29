@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -607,7 +609,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PortalInvitation",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.InviteWorkerResult)
+					obj := o.(*driverportalinvitationservice.InviteWorkerResult)
 					return obj.Invitation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPortalInvitation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPortalInvitation),
@@ -617,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.InviteWorkerResult)
+					obj := o.(*driverportalinvitationservice.InviteWorkerResult)
 					return obj.InviteURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -627,7 +629,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.InviteWorkerResult)
+					obj := o.(*driverportalinvitationservice.InviteWorkerResult)
 					return obj.EmailSent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -645,7 +647,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").InviteWorkerToPortal(ctx, fc.Args["input"].(gqlmodel.InviteWorkerToPortalInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐInviteWorkerResult),
+				Marshal: gqlexec.Marshal(marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalinvitationserviceᚐInviteWorkerResult),
 			},
 			{
 				Name:       "revokeWorkerPortalAccess",
@@ -1374,7 +1376,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return gqlexec.Resolver[resolverPortalCredential](ec, "PortalCredential").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1384,7 +1386,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.CredentialTypeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1394,7 +1396,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1404,7 +1406,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.Category, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory),
@@ -1414,7 +1416,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.Health, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialHealth),
@@ -1423,7 +1425,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "daysUntilExpiry",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.DaysUntilExpiry, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -1432,7 +1434,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "expiresAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1442,7 +1444,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.NumberMasked, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1452,7 +1454,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.Required, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1462,7 +1464,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.Verified, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1472,7 +1474,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return obj.RequiresDocument, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1483,7 +1485,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalCredential)
+					obj := o.(*driverportalrecordsservice.PortalCredential)
 					return gqlexec.Resolver[resolverPortalCredential](ec, "PortalCredential").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1518,7 +1520,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.RequireLoadAcknowledgment, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1528,7 +1530,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowLoadRefusals, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1538,7 +1540,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowStopActions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1548,7 +1550,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowLoadDocumentUpload, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1558,7 +1560,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowLoadComments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1568,7 +1570,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.ShowLoadPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1578,7 +1580,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.ShowPayEstimates, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1588,7 +1590,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowExpenseSubmission, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1598,7 +1600,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.RequireExpenseReceipt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1608,7 +1610,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowSettlementDisputes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1618,7 +1620,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowProfileDocumentUpload, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1628,7 +1630,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowContactInfoEdit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1638,7 +1640,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.AllowPtoRequests, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1648,7 +1650,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.PtoBalances, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1658,7 +1660,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.LeaveBalance, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1668,7 +1670,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.Schedule, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1678,7 +1680,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.ShiftSwaps, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1688,7 +1690,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.RequireContactChangeApproval, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1698,7 +1700,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalFeatures)
+					obj := o.(*driverportalrecordsservice.PortalFeatures)
 					return obj.PoliciesOutstanding, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1851,7 +1853,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "LeaveEntitlement",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeave)
+					obj := o.(*driverportalrecordsservice.PortalLeave)
 					return obj.Entitlement, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveEntitlement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveEntitlement),
@@ -1862,10 +1864,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PortalLeaveCase",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeave)
+					obj := o.(*driverportalrecordsservice.PortalLeave)
 					return obj.Cases, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCaseᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeaveCaseᚄ),
 			},
 		}},
 		{Object: "PortalLeaveCase", Fields: []*gqlexec.Field{
@@ -1874,7 +1876,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -1884,7 +1886,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.LeaveType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType),
@@ -1894,7 +1896,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCaseStatus),
@@ -1904,7 +1906,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.Frequency, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveFrequency),
@@ -1914,7 +1916,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.FMLADesignated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1923,7 +1925,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "reason",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -1933,7 +1935,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.StartsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1942,7 +1944,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "endsAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.EndsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1951,7 +1953,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decidedAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.DecidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1961,7 +1963,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.CertificationStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNLeaveCertificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveCertificationStatus),
@@ -1970,7 +1972,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "certificationDueAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.CertificationDueAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1980,7 +1982,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.CertificationLate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1990,7 +1992,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.HoursUsed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -2000,7 +2002,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalLeaveCase)
+					obj := o.(*driverportalrecordsservice.PortalLeaveCase)
 					return obj.HoursCharged, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -2255,7 +2257,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2265,7 +2267,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2275,7 +2277,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.Title, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2284,7 +2286,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "summary",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2293,7 +2295,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "body",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.Body, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2303,7 +2305,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.HasDocument, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2313,7 +2315,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.VersionLabel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2323,7 +2325,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.RequiresSignature, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2333,7 +2335,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.EffectiveFrom, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2342,7 +2344,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "acknowledgedAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.AcknowledgedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2351,7 +2353,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "signatureName",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalPolicy)
+					obj := o.(*driverportalrecordsservice.PortalPolicy)
 					return obj.SignatureName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2537,7 +2539,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.WeekStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2547,7 +2549,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.WeekEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2556,7 +2558,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shiftName",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.ShiftName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2565,7 +2567,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shiftCode",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.ShiftCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2574,7 +2576,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shiftColor",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.ShiftColor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2584,7 +2586,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.ScheduledDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2595,10 +2597,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PortalShiftDay",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalSchedule)
+					obj := o.(*driverportalrecordsservice.PortalSchedule)
 					return obj.Days, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDayᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftDayᚄ),
 			},
 		}},
 		{Object: "PortalShiftDay", Fields: []*gqlexec.Field{
@@ -2607,7 +2609,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.Date, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2617,7 +2619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.State, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNRotaDayState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐRotaDayState),
@@ -2627,7 +2629,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.Scheduled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2637,7 +2639,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.StartMinute, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -2647,7 +2649,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.DurationMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -2656,7 +2658,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "preference",
 				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.Preference, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference),
@@ -2666,7 +2668,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftDay)
+					obj := o.(*driverportalrecordsservice.PortalShiftDay)
 					return obj.AssignmentCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2678,7 +2680,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -2688,7 +2690,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapStatus),
@@ -2698,7 +2700,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.Outgoing, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2707,7 +2709,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "counterpartyName",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.CounterpartyName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2717,7 +2719,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.ShiftDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2726,7 +2728,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "counterpartyShiftDate",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.CounterpartyShiftDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2735,7 +2737,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "reason",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2744,7 +2746,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "responseNote",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.ResponseNote, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2753,7 +2755,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "respondedAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.RespondedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2762,7 +2764,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decidedAt",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalShiftSwap)
+					obj := o.(*driverportalrecordsservice.PortalShiftSwap)
 					return obj.DecidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2880,7 +2882,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPortalStatus(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalinvitationserviceᚐPortalStatus),
 			},
 			{
 				Name:       "settlementDisputes",
@@ -2969,7 +2971,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyCredentials(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredentialᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalCredentialᚄ),
 			},
 			{
 				Name:       "myLoadComments",
@@ -3085,7 +3087,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPortalFeatures(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalFeatures),
+				Marshal: gqlexec.Marshal(marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalFeatures),
 			},
 			{
 				Name:       "myPolicies",
@@ -3097,7 +3099,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyPolicies(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicyᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalPolicyᚄ),
 			},
 			{
 				Name:       "myPolicyDocumentUrl",
@@ -3136,7 +3138,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MySchedule(ctx, fc.Args["at"].(*int), fc.Args["weeks"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalSchedule),
+				Marshal: gqlexec.Marshal(marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalSchedule),
 			},
 			{
 				Name:       "myAvailability",
@@ -3160,7 +3162,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyShiftSwaps(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwapᚄ),
+				Marshal: gqlexec.Marshal(marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftSwapᚄ),
 			},
 			{
 				Name:       "myPto",
@@ -3196,7 +3198,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyLeave(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeave),
+				Marshal: gqlexec.Marshal(marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeave),
 			},
 			{
 				Name:       "myExpenses",
@@ -3634,7 +3636,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalStatus)
+					obj := o.(*driverportalinvitationservice.PortalStatus)
 					return obj.Linked, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3644,7 +3646,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalStatus)
+					obj := o.(*driverportalinvitationservice.PortalStatus)
 					return obj.PortalUser, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -3654,7 +3656,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PortalInvitation",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalStatus)
+					obj := o.(*driverportalinvitationservice.PortalStatus)
 					return obj.PendingInvitation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOPortalInvitation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPortalInvitation),
@@ -3665,7 +3667,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PortalInvitation",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverportalservice.PortalStatus)
+					obj := o.(*driverportalinvitationservice.PortalStatus)
 					return obj.Invitations, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPortalInvitation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPortalInvitationᚄ),
@@ -3699,7 +3701,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error)
+	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalinvitationservice.InviteWorkerResult, error)
 	RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error)
 	UpdateMyContactInfo(ctx context.Context, input gqlmodel.UpdateMyContactInfoInput) (*driverportalservice.PortalComplianceProfile, error)
 	CreateMyLoadComment(ctx context.Context, input gqlmodel.CreateMyLoadCommentInput) (*driverportalservice.PortalComment, error)
@@ -3736,19 +3738,19 @@ type resolverMyPTOBalance interface {
 }
 
 type resolverPortalCredential interface {
-	ID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
-	DocumentID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
+	ID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
+	DocumentID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
 }
 
 type resolverQuery interface {
-	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error)
+	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalinvitationservice.PortalStatus, error)
 	SettlementDisputes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementDisputeConnection, error)
 	SettlementDispute(ctx context.Context, id string) (*driversettlement.Dispute, error)
 	OpenSettlementDisputeCount(ctx context.Context) (int, error)
 	MyPortalProfile(ctx context.Context) (*driverportalservice.PortalProfile, error)
 	MyLoads(ctx context.Context, scope driverportalservice.LoadScope, limit *int) ([]*driverportalservice.PortalLoad, error)
 	MyComplianceProfile(ctx context.Context) (*driverportalservice.PortalComplianceProfile, error)
-	MyCredentials(ctx context.Context) ([]*driverportalservice.PortalCredential, error)
+	MyCredentials(ctx context.Context) ([]*driverportalrecordsservice.PortalCredential, error)
 	MyLoadComments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalComment, error)
 	MyPeriodSummary(ctx context.Context) (*driverportalservice.PortalPeriodSummary, error)
 	MyRecentPayEvents(ctx context.Context, limit *int) ([]*driversettlement.PayEvent, error)
@@ -3757,16 +3759,16 @@ type resolverQuery interface {
 	MyEscrow(ctx context.Context) (*driverportalservice.PortalEscrowSummary, error)
 	MyAdvances(ctx context.Context) ([]*payadvance.PayAdvance, error)
 	MyDisputes(ctx context.Context) ([]*driversettlement.Dispute, error)
-	MyPortalFeatures(ctx context.Context) (*driverportalservice.PortalFeatures, error)
-	MyPolicies(ctx context.Context) ([]*driverportalservice.PortalPolicy, error)
+	MyPortalFeatures(ctx context.Context) (*driverportalrecordsservice.PortalFeatures, error)
+	MyPolicies(ctx context.Context) ([]*driverportalrecordsservice.PortalPolicy, error)
 	MyPolicyDocumentURL(ctx context.Context, policyID string) (string, error)
 	MyProfileChangeRequests(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error)
-	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalservice.PortalSchedule, error)
+	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalrecordsservice.PortalSchedule, error)
 	MyAvailability(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error)
-	MyShiftSwaps(ctx context.Context) ([]*driverportalservice.PortalShiftSwap, error)
+	MyShiftSwaps(ctx context.Context) ([]*driverportalrecordsservice.PortalShiftSwap, error)
 	MyPTO(ctx context.Context) ([]*worker.WorkerPTO, error)
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
-	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
+	MyLeave(ctx context.Context) (*driverportalrecordsservice.PortalLeave, error)
 	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
 	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error)
 	MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
@@ -5666,7 +5668,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐInviteWorkerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.InviteWorkerResult) graphql.Marshaler {
+func marshalNInviteWorkerToPortalResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalinvitationserviceᚐInviteWorkerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalinvitationservice.InviteWorkerResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5790,15 +5792,15 @@ func marshalNPortalComplianceProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "PortalComplianceProfile", v)
 }
 
-func marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalCredential) graphql.Marshaler {
-	return gqlexec.List[*driverportalservice.PortalCredential]{
-		Elem:        marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredential,
+func marshalNPortalCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalrecordsservice.PortalCredential) graphql.Marshaler {
+	return gqlexec.List[*driverportalrecordsservice.PortalCredential]{
+		Elem:        marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalCredential,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalCredential) graphql.Marshaler {
+func marshalNPortalCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalCredential) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5814,7 +5816,7 @@ func marshalNPortalEscrowSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PortalEscrowSummary", v)
 }
 
-func marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalFeatures(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalFeatures) graphql.Marshaler {
+func marshalNPortalFeatures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalFeatures(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalFeatures) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5846,7 +5848,7 @@ func marshalNPortalInvitationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeave(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeave) graphql.Marshaler {
+func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeave(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalLeave) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5854,15 +5856,15 @@ func marshalNPortalLeave2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "PortalLeave", v)
 }
 
-func marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalLeaveCase) graphql.Marshaler {
-	return gqlexec.List[*driverportalservice.PortalLeaveCase]{
-		Elem:        marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCase,
+func marshalNPortalLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeaveCaseᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalrecordsservice.PortalLeaveCase) graphql.Marshaler {
+	return gqlexec.List[*driverportalrecordsservice.PortalLeaveCase]{
+		Elem:        marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeaveCase,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalLeaveCase) graphql.Marshaler {
+func marshalNPortalLeaveCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalLeaveCase(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalLeaveCase) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5902,15 +5904,15 @@ func marshalNPortalPeriodSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PortalPeriodSummary", v)
 }
 
-func marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalPolicy) graphql.Marshaler {
-	return gqlexec.List[*driverportalservice.PortalPolicy]{
-		Elem:        marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicy,
+func marshalNPortalPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalrecordsservice.PortalPolicy) graphql.Marshaler {
+	return gqlexec.List[*driverportalrecordsservice.PortalPolicy]{
+		Elem:        marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalPolicy,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalPolicy) graphql.Marshaler {
+func marshalNPortalPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalPolicy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5958,7 +5960,7 @@ func marshalNPortalPtoType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalSchedule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalSchedule) graphql.Marshaler {
+func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalSchedule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalSchedule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5966,15 +5968,15 @@ func marshalNPortalSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "PortalSchedule", v)
 }
 
-func marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftDay) graphql.Marshaler {
-	return gqlexec.List[*driverportalservice.PortalShiftDay]{
-		Elem:        marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDay,
+func marshalNPortalShiftDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalrecordsservice.PortalShiftDay) graphql.Marshaler {
+	return gqlexec.List[*driverportalrecordsservice.PortalShiftDay]{
+		Elem:        marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftDay) graphql.Marshaler {
+func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalShiftDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5982,15 +5984,15 @@ func marshalNPortalShiftDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "PortalShiftDay", v)
 }
 
-func marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwapᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalservice.PortalShiftSwap) graphql.Marshaler {
-	return gqlexec.List[*driverportalservice.PortalShiftSwap]{
-		Elem:        marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwap,
+func marshalNPortalShiftSwap2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftSwapᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverportalrecordsservice.PortalShiftSwap) graphql.Marshaler {
+	return gqlexec.List[*driverportalrecordsservice.PortalShiftSwap]{
+		Elem:        marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftSwap,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalShiftSwap(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalShiftSwap) graphql.Marshaler {
+func marshalNPortalShiftSwap2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalrecordsserviceᚐPortalShiftSwap(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalrecordsservice.PortalShiftSwap) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -6190,7 +6192,7 @@ func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgement", v)
 }
 
-func marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalserviceᚐPortalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalservice.PortalStatus) graphql.Marshaler {
+func marshalNWorkerPortalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋdriverportalinvitationserviceᚐPortalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverportalinvitationservice.PortalStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

@@ -347,7 +347,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecast
   PortalCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalCredential
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalCredential
     fields:
       id:
         resolver: true
@@ -543,7 +543,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignOutcome
   PortalTraining:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalTraining
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalTraining
     fields:
       id:
         resolver: true
@@ -1310,19 +1310,19 @@ models:
         resolver: true
   PortalPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalPolicy
   PortalSchedule:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalSchedule
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalSchedule
   PortalShiftDay:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftDay
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalShiftDay
   RotaDayState:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.RotaDayState
   PortalShiftSwap:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftSwap
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalShiftSwap
   BenefitPlan:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitPlan
@@ -5139,10 +5139,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitation
   WorkerPortalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice.PortalStatus
   InviteWorkerToPortalResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.InviteWorkerResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice.InviteWorkerResult
   SettlementDisputeStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.DisputeStatus
@@ -5196,13 +5196,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DashControl
   PortalFeatures:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalFeatures
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalFeatures
   PortalLeave:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeave
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalLeave
   PortalLeaveCase:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeaveCase
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalLeaveCase
   PortalPeriodSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPeriodSummary

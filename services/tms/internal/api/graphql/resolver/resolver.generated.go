@@ -728,6 +728,8 @@ func FromServices(s *Services) *Resolver {
 		NotificationService:           s.NotificationService,
 		DriverSettlementReviewService: s.DriverSettlementReviewService,
 		DriverPortalService:           s.DriverPortalService,
+		DriverPortalInvitationService: s.DriverPortalInvitationService,
+		DriverPortalRecordsService:    s.DriverPortalRecordsService,
 		DashControlService:            s.DashControlService,
 	}
 	driversettlementDeps := &driversettlementresolver.Deps{
@@ -938,9 +940,9 @@ func FromServices(s *Services) *Resolver {
 		PageAccessService: s.PageAccessService,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
-		Core:                     s.Core,
-		PerformanceReviewService: s.PerformanceReviewService,
-		DriverPortalService:      s.DriverPortalService,
+		Core:                       s.Core,
+		PerformanceReviewService:   s.PerformanceReviewService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 	ptopolicyDeps := &ptopolicyresolver.Deps{
 		Core:             s.Core,
@@ -1186,14 +1188,14 @@ func FromServices(s *Services) *Resolver {
 		WorkerOverviewService: s.WorkerOverviewService,
 	}
 	workersafetyDeps := &workersafetyresolver.Deps{
-		Core:                s.Core,
-		WorkerSafetyService: s.WorkerSafetyService,
-		DriverPortalService: s.DriverPortalService,
+		Core:                       s.Core,
+		WorkerSafetyService:        s.WorkerSafetyService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 	workertrainingDeps := &workertrainingresolver.Deps{
-		Core:                  s.Core,
-		WorkerTrainingService: s.WorkerTrainingService,
-		DriverPortalService:   s.DriverPortalService,
+		Core:                       s.Core,
+		WorkerTrainingService:      s.WorkerTrainingService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 
 	return &Resolver{

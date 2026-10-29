@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalinvitationservice
 
 import (
 	"strings"

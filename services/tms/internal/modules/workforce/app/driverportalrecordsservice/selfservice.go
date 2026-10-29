@@ -1,4 +1,4 @@
-package driverportalservice
+package driverportalrecordsservice
 
 import (
 	"context"
@@ -49,7 +49,7 @@ func (s *Service) MyPolicies(
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *Service) MyPolicyDocumentURL(
 	if err := s.requireSelfService(); err != nil {
 		return "", err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return "", err
 	}
@@ -139,7 +139,7 @@ func (s *Service) AcknowledgeMyPolicy(
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (s *Service) MyProfileChangeRequests(
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (s *Service) WithdrawMyProfileChange(
 	if err := s.requireSelfService(); err != nil {
 		return nil, err
 	}
-	wrk, err := s.ResolveWorker(ctx, tenantInfo)
+	wrk, err := s.portal.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}

@@ -183,7 +183,7 @@ func (s *Service) MyLoads(
 			moveIDs = append(moveIDs, load.MoveID)
 		}
 	}
-	control, err := s.dashControl(ctx, tenantInfo)
+	control, err := s.DashControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) er
 	if err != nil {
 		return err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowStopActions },
 		"Your carrier records arrivals and departures from dispatch — call in your status instead.",
 	); err != nil {
@@ -410,7 +410,7 @@ func (s *Service) CreateMyLoadComment(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
+	if _, err = s.RequireFeature(ctx, tenantInfo,
 		func(control *dashcontrol.DashControl) bool { return control.AllowLoadComments },
 		"Your carrier has turned off load messaging in Dash — call your dispatcher instead.",
 	); err != nil {
@@ -501,7 +501,7 @@ func (s *Service) MyRecentPayEvents(
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
-	control, err := s.dashControl(ctx, tenantInfo)
+	control, err := s.DashControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
