@@ -207,11 +207,11 @@ func messageFixture() *edimessage.EDIMessage {
 
 func (f *fakeEDIMessageRepo) GetAckStatusCounts(
 	_ context.Context,
-	req edimessageports.GetEDIMessageStatusCountsRequest,
+	req *edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.counts = req
+	f.counts = *req
 
 	return map[edimessage.MessageAcknowledgmentStatus]int{
 		edimessage.MessageAcknowledgmentStatusPending:  2,
@@ -222,7 +222,7 @@ func (f *fakeEDIMessageRepo) GetAckStatusCounts(
 
 func (f *fakeEDIMessageRepo) GetAckStatusCountsByPartner(
 	context.Context,
-	edimessageports.GetEDIMessageStatusCountsRequest,
+	*edimessageports.GetEDIMessageStatusCountsRequest,
 ) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 	return []*edimessageports.EDIPartnerAckStatusCount{
 		{PartnerID: ediPartnerFixture, PartnerName: "Acme", PartnerCode: "ACME",
@@ -234,7 +234,7 @@ func (f *fakeEDIMessageRepo) GetAckStatusCountsByPartner(
 
 func (f *fakeEDIMessageRepo) GetOverdueAckCount(
 	context.Context,
-	edimessageports.GetEDIOverdueAckCountRequest,
+	*edimessageports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return 3, nil
 }

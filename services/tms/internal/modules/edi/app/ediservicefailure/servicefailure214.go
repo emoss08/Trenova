@@ -59,7 +59,7 @@ func (s *Service) serviceFailure214Lifecycle(
 
 	existing, err := s.messageRepo.GetServiceFailure214LifecycleMessage(
 		ctx,
-		edimessageports.GetServiceFailure214LifecycleMessageRequest{
+		&edimessageports.GetServiceFailure214LifecycleMessageRequest{
 			TenantInfo:       req.TenantInfo,
 			ServiceFailureID: req.ServiceFailureID,
 			Trigger:          string(req.Trigger),

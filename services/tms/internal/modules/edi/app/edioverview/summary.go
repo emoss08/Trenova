@@ -63,7 +63,7 @@ func (s *Service) GetEDISummary(
 	if feedLimit <= 0 {
 		feedLimit = defaultSummaryFeedLimit
 	}
-	countsReq := edimessageports.GetEDIMessageStatusCountsRequest{
+	countsReq := &edimessageports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      req.Since,
 	}
@@ -78,7 +78,7 @@ func (s *Service) GetEDISummary(
 	}
 	overdueAcks, err := s.messageRepo.GetOverdueAckCount(
 		ctx,
-		edimessageports.GetEDIOverdueAckCountRequest{
+		&edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   req.TenantInfo,
 			PendingSince: timeutils.NowUnix() - overdueAge,
 		},
@@ -208,7 +208,7 @@ func (s *Service) GetEDIAckHealth(
 		feedLimit = defaultSummaryFeedLimit
 	}
 
-	countsReq := edimessageports.GetEDIMessageStatusCountsRequest{
+	countsReq := &edimessageports.GetEDIMessageStatusCountsRequest{
 		TenantInfo:     req.TenantInfo,
 		Since:          health.Since,
 		PartnerID:      req.PartnerID,
@@ -228,7 +228,7 @@ func (s *Service) GetEDIAckHealth(
 
 	health.OverdueAckCount, err = s.messageRepo.GetOverdueAckCount(
 		ctx,
-		edimessageports.GetEDIOverdueAckCountRequest{
+		&edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:     req.TenantInfo,
 			PendingSince:   health.PendingSince,
 			PartnerID:      req.PartnerID,
@@ -334,7 +334,7 @@ func (s *Service) GetEDIAttentionCount(
 	overdueAge := overdueAckAge(req.OverdueAckAge)
 	deliveryCounts, err := s.messageRepo.GetDeliveryStatusCounts(
 		ctx,
-		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
+		&edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return 0, err
@@ -348,7 +348,7 @@ func (s *Service) GetEDIAttentionCount(
 	}
 	overdueAcks, err := s.messageRepo.GetOverdueAckCount(
 		ctx,
-		edimessageports.GetEDIOverdueAckCountRequest{
+		&edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   req.TenantInfo,
 			PendingSince: timeutils.NowUnix() - overdueAge,
 		},
@@ -402,7 +402,7 @@ func (s *Service) GetEDIVolumeSeries(
 		since = timeutils.NowUnix() - defaultVolumeSeriesWindow
 	}
 	bucket := volumeBucketFor(timeutils.NowUnix() - since)
-	points, err := s.messageRepo.GetVolumeSeries(ctx, edimessageports.GetEDIVolumeSeriesRequest{
+	points, err := s.messageRepo.GetVolumeSeries(ctx, &edimessageports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    req.TenantInfo,
 		Since:         since,
 		BucketSeconds: bucket,

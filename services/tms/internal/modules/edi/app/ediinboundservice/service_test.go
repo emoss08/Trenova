@@ -295,7 +295,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 	}
 	fixture.messageRepo.EXPECT().
 		GetOutboundMessageForAck(mock.Anything, mock.MatchedBy(
-			func(req edimessageports.GetEDIOutboundMessageForAckRequest) bool {
+			func(req *edimessageports.GetEDIOutboundMessageForAckRequest) bool {
 				return req.PartnerID == fixture.partner.ID &&
 					req.GroupControlNumber == "42" &&
 					req.TransactionControlNumber == "0042" &&

@@ -245,7 +245,7 @@ type EDIMessageRepository interface {
 	) (*edimessage.EDIMessage, error)
 	GetServiceFailure214LifecycleMessage(
 		ctx context.Context,
-		req GetServiceFailure214LifecycleMessageRequest,
+		req *GetServiceFailure214LifecycleMessageRequest,
 	) (*edimessage.EDIMessage, error)
 	GetServiceFailure214Status(
 		ctx context.Context,
@@ -265,17 +265,17 @@ type EDIMessageRepository interface {
 	) (*edimessage.EDIMessage, error)
 	GetDeliveryStatusCounts(
 		ctx context.Context,
-		req GetEDIMessageStatusCountsRequest,
+		req *GetEDIMessageStatusCountsRequest,
 	) (map[edimessage.MessageDeliveryStatus]int, error)
 	GetAckStatusCounts(
 		ctx context.Context,
-		req GetEDIMessageStatusCountsRequest,
+		req *GetEDIMessageStatusCountsRequest,
 	) (map[edimessage.MessageAcknowledgmentStatus]int, error)
 	GetAckStatusCountsByPartner(
 		ctx context.Context,
-		req GetEDIMessageStatusCountsRequest,
+		req *GetEDIMessageStatusCountsRequest,
 	) ([]*EDIPartnerAckStatusCount, error)
-	GetOverdueAckCount(ctx context.Context, req GetEDIOverdueAckCountRequest) (int, error)
+	GetOverdueAckCount(ctx context.Context, req *GetEDIOverdueAckCountRequest) (int, error)
 	ListOverdueAcks(ctx context.Context, req *ListOverdueEDIAcksRequest) (*OverdueEDIAcks, error)
 	ListRecentDeadLettered(
 		ctx context.Context,
@@ -286,7 +286,7 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req *GetEDIPartnerScorecardsRequest,
 	) ([]*EDIPartnerScorecardRow, error)
-	GetVolumeSeries(ctx context.Context, req GetEDIVolumeSeriesRequest) ([]*EDIVolumePoint, error)
+	GetVolumeSeries(ctx context.Context, req *GetEDIVolumeSeriesRequest) ([]*EDIVolumePoint, error)
 	GetPartnerSetActivity(
 		ctx context.Context,
 		req *GetEDIPartnerSetActivityRequest,
@@ -294,7 +294,7 @@ type EDIMessageRepository interface {
 	PurgeRawX12Before(ctx context.Context, req PurgeEDIRawPayloadsRequest) (int64, error)
 	GetOutboundMessageForAck(
 		ctx context.Context,
-		req GetEDIOutboundMessageForAckRequest,
+		req *GetEDIOutboundMessageForAckRequest,
 	) (*edimessage.EDIMessage, error)
 	UpdateMessageAcknowledgment(
 		ctx context.Context,

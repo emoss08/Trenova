@@ -150,17 +150,17 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	r.messages.EXPECT().GetPartnerScorecards(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.GetEDIPartnerScorecardsRequest) { scorecardReq = req }).
 		Return([]*edimessageports.EDIPartnerScorecardRow{scorecard}, nil)
-	var countsReq edimessageports.GetEDIMessageStatusCountsRequest
+	var countsReq *edimessageports.GetEDIMessageStatusCountsRequest
 	r.messages.EXPECT().GetAckStatusCounts(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
+		Run(func(_ context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) { countsReq = req }).
 		Return(map[edimessage.MessageAcknowledgmentStatus]int{edimessage.MessageAcknowledgmentStatusAccepted: 1399}, nil)
 	var setsReq *edimessageports.GetEDIPartnerSetActivityRequest
 	r.messages.EXPECT().GetPartnerSetActivity(mock.Anything, mock.Anything).
 		Run(func(_ context.Context, req *edimessageports.GetEDIPartnerSetActivityRequest) { setsReq = req }).
 		Return(sets, nil)
-	var seriesReq edimessageports.GetEDIVolumeSeriesRequest
+	var seriesReq *edimessageports.GetEDIVolumeSeriesRequest
 	r.messages.EXPECT().GetVolumeSeries(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req edimessageports.GetEDIVolumeSeriesRequest) { seriesReq = req }).
+		Run(func(_ context.Context, req *edimessageports.GetEDIVolumeSeriesRequest) { seriesReq = req }).
 		Return([]*edimessageports.EDIVolumePoint{{BucketStart: 3600, OutboundCount: 4}}, nil)
 	var overdueReq *edimessageports.ListOverdueEDIAcksRequest
 	r.messages.EXPECT().ListOverdueAcks(mock.Anything, mock.Anything).
@@ -202,13 +202,13 @@ func TestGetPartnerCard_ReadsOnePartnerOverItsWindows(t *testing.T) {
 	assert.LessOrEqual(t, window, after-PartnerCardActivityWindowSeconds)
 	assert.Equal(t, partnerID, scorecardReq.PartnerID, "the scorecard is the partner's alone")
 	assert.Equal(t, window, scorecardReq.Since)
-	assert.Equal(t, edimessageports.GetEDIMessageStatusCountsRequest{
+	assert.Equal(t, &edimessageports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: tenant, Since: window, PartnerID: partnerID,
 	}, countsReq)
 	assert.Equal(t, &edimessageports.GetEDIPartnerSetActivityRequest{
 		TenantInfo: tenant, PartnerID: partnerID, Since: window,
 	}, setsReq)
-	assert.Equal(t, edimessageports.GetEDIVolumeSeriesRequest{
+	assert.Equal(t, &edimessageports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    tenant,
 		Since:         window + PartnerCardActivityWindowSeconds - PartnerCardSeriesWindowSeconds,
 		BucketSeconds: PartnerCardSeriesBucketSeconds,

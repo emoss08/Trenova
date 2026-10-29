@@ -176,7 +176,7 @@ func (_c *MockEDIMessageRepository_CreateMessageWithDiagnostics_Call) RunAndRetu
 }
 
 // GetAckStatusCounts provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetAckStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
+func (_mock *MockEDIMessageRepository) GetAckStatusCounts(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -185,17 +185,17 @@ func (_mock *MockEDIMessageRepository) GetAckStatusCounts(ctx context.Context, r
 
 	var r0 map[edimessage.MessageAcknowledgmentStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageAcknowledgmentStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageAcknowledgmentStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[edimessage.MessageAcknowledgmentStatus]int)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -210,20 +210,20 @@ type MockEDIMessageRepository_GetAckStatusCounts_Call struct {
 
 // GetAckStatusCounts is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIMessageStatusCountsRequest
+//   - req *edimessageports.GetEDIMessageStatusCountsRequest
 func (_e *MockEDIMessageRepository_Expecter) GetAckStatusCounts(ctx any, req any) *MockEDIMessageRepository_GetAckStatusCounts_Call {
 	return &MockEDIMessageRepository_GetAckStatusCounts_Call{Call: _e.mock.On("GetAckStatusCounts", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIMessageStatusCountsRequest
+		var arg1 *edimessageports.GetEDIMessageStatusCountsRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIMessageStatusCountsRequest)
+			arg1 = args[1].(*edimessageports.GetEDIMessageStatusCountsRequest)
 		}
 		run(
 			arg0,
@@ -238,13 +238,13 @@ func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) Return(messageAcknow
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageAcknowledgmentStatus]int, error)) *MockEDIMessageRepository_GetAckStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAckStatusCountsByPartner provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetAckStatusCountsByPartner(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
+func (_mock *MockEDIMessageRepository) GetAckStatusCountsByPartner(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -253,17 +253,17 @@ func (_mock *MockEDIMessageRepository) GetAckStatusCountsByPartner(ctx context.C
 
 	var r0 []*edimessageports.EDIPartnerAckStatusCount
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) []*edimessageports.EDIPartnerAckStatusCount); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) []*edimessageports.EDIPartnerAckStatusCount); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*edimessageports.EDIPartnerAckStatusCount)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -278,20 +278,20 @@ type MockEDIMessageRepository_GetAckStatusCountsByPartner_Call struct {
 
 // GetAckStatusCountsByPartner is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIMessageStatusCountsRequest
+//   - req *edimessageports.GetEDIMessageStatusCountsRequest
 func (_e *MockEDIMessageRepository_Expecter) GetAckStatusCountsByPartner(ctx any, req any) *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call {
 	return &MockEDIMessageRepository_GetAckStatusCountsByPartner_Call{Call: _e.mock.On("GetAckStatusCountsByPartner", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIMessageStatusCountsRequest
+		var arg1 *edimessageports.GetEDIMessageStatusCountsRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIMessageStatusCountsRequest)
+			arg1 = args[1].(*edimessageports.GetEDIMessageStatusCountsRequest)
 		}
 		run(
 			arg0,
@@ -306,13 +306,13 @@ func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) Return(eDIP
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error)) *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call {
+func (_c *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) ([]*edimessageports.EDIPartnerAckStatusCount, error)) *MockEDIMessageRepository_GetAckStatusCountsByPartner_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetDeliveryStatusCounts provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetDeliveryStatusCounts(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error) {
+func (_mock *MockEDIMessageRepository) GetDeliveryStatusCounts(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -321,17 +321,17 @@ func (_mock *MockEDIMessageRepository) GetDeliveryStatusCounts(ctx context.Conte
 
 	var r0 map[edimessage.MessageDeliveryStatus]int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageDeliveryStatus]int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) map[edimessage.MessageDeliveryStatus]int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[edimessage.MessageDeliveryStatus]int)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIMessageStatusCountsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -346,20 +346,20 @@ type MockEDIMessageRepository_GetDeliveryStatusCounts_Call struct {
 
 // GetDeliveryStatusCounts is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIMessageStatusCountsRequest
+//   - req *edimessageports.GetEDIMessageStatusCountsRequest
 func (_e *MockEDIMessageRepository_Expecter) GetDeliveryStatusCounts(ctx any, req any) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
 	return &MockEDIMessageRepository_GetDeliveryStatusCounts_Call{Call: _e.mock.On("GetDeliveryStatusCounts", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIMessageStatusCountsRequest
+		var arg1 *edimessageports.GetEDIMessageStatusCountsRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIMessageStatusCountsRequest)
+			arg1 = args[1].(*edimessageports.GetEDIMessageStatusCountsRequest)
 		}
 		run(
 			arg0,
@@ -374,7 +374,7 @@ func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) Return(messageD
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
+func (_c *MockEDIMessageRepository_GetDeliveryStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIMessageStatusCountsRequest) (map[edimessage.MessageDeliveryStatus]int, error)) *MockEDIMessageRepository_GetDeliveryStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -584,7 +584,7 @@ func (_c *MockEDIMessageRepository_GetOutboundMessageByAS2MessageID_Call) RunAnd
 }
 
 // GetOutboundMessageForAck provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetOutboundMessageForAck(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetOutboundMessageForAck(ctx context.Context, req *edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -593,17 +593,17 @@ func (_mock *MockEDIMessageRepository) GetOutboundMessageForAck(ctx context.Cont
 
 	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) *edimessage.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIOutboundMessageForAckRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIOutboundMessageForAckRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIOutboundMessageForAckRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -618,20 +618,20 @@ type MockEDIMessageRepository_GetOutboundMessageForAck_Call struct {
 
 // GetOutboundMessageForAck is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIOutboundMessageForAckRequest
+//   - req *edimessageports.GetEDIOutboundMessageForAckRequest
 func (_e *MockEDIMessageRepository_Expecter) GetOutboundMessageForAck(ctx any, req any) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
 	return &MockEDIMessageRepository_GetOutboundMessageForAck_Call{Call: _e.mock.On("GetOutboundMessageForAck", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIOutboundMessageForAckRequest)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIOutboundMessageForAckRequest
+		var arg1 *edimessageports.GetEDIOutboundMessageForAckRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIOutboundMessageForAckRequest)
+			arg1 = args[1].(*edimessageports.GetEDIOutboundMessageForAckRequest)
 		}
 		run(
 			arg0,
@@ -646,13 +646,13 @@ func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) Return(eDIMess
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
+func (_c *MockEDIMessageRepository_GetOutboundMessageForAck_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIOutboundMessageForAckRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetOutboundMessageForAck_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOverdueAckCount provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetOverdueAckCount(ctx context.Context, req edimessageports.GetEDIOverdueAckCountRequest) (int, error) {
+func (_mock *MockEDIMessageRepository) GetOverdueAckCount(ctx context.Context, req *edimessageports.GetEDIOverdueAckCountRequest) (int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -661,15 +661,15 @@ func (_mock *MockEDIMessageRepository) GetOverdueAckCount(ctx context.Context, r
 
 	var r0 int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOverdueAckCountRequest) (int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIOverdueAckCountRequest) (int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIOverdueAckCountRequest) int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIOverdueAckCountRequest) int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIOverdueAckCountRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIOverdueAckCountRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -684,20 +684,20 @@ type MockEDIMessageRepository_GetOverdueAckCount_Call struct {
 
 // GetOverdueAckCount is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIOverdueAckCountRequest
+//   - req *edimessageports.GetEDIOverdueAckCountRequest
 func (_e *MockEDIMessageRepository_Expecter) GetOverdueAckCount(ctx any, req any) *MockEDIMessageRepository_GetOverdueAckCount_Call {
 	return &MockEDIMessageRepository_GetOverdueAckCount_Call{Call: _e.mock.On("GetOverdueAckCount", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetOverdueAckCount_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIOverdueAckCountRequest)) *MockEDIMessageRepository_GetOverdueAckCount_Call {
+func (_c *MockEDIMessageRepository_GetOverdueAckCount_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIOverdueAckCountRequest)) *MockEDIMessageRepository_GetOverdueAckCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIOverdueAckCountRequest
+		var arg1 *edimessageports.GetEDIOverdueAckCountRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIOverdueAckCountRequest)
+			arg1 = args[1].(*edimessageports.GetEDIOverdueAckCountRequest)
 		}
 		run(
 			arg0,
@@ -712,7 +712,7 @@ func (_c *MockEDIMessageRepository_GetOverdueAckCount_Call) Return(n int, err er
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetOverdueAckCount_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIOverdueAckCountRequest) (int, error)) *MockEDIMessageRepository_GetOverdueAckCount_Call {
+func (_c *MockEDIMessageRepository_GetOverdueAckCount_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIOverdueAckCountRequest) (int, error)) *MockEDIMessageRepository_GetOverdueAckCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -854,7 +854,7 @@ func (_c *MockEDIMessageRepository_GetPartnerSetActivity_Call) RunAndReturn(run 
 }
 
 // GetServiceFailure214LifecycleMessage provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetServiceFailure214LifecycleMessage(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error) {
+func (_mock *MockEDIMessageRepository) GetServiceFailure214LifecycleMessage(ctx context.Context, req *edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -863,17 +863,17 @@ func (_mock *MockEDIMessageRepository) GetServiceFailure214LifecycleMessage(ctx 
 
 	var r0 *edimessage.EDIMessage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) *edimessage.EDIMessage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetServiceFailure214LifecycleMessageRequest) *edimessage.EDIMessage); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*edimessage.EDIMessage)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetServiceFailure214LifecycleMessageRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetServiceFailure214LifecycleMessageRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -888,20 +888,20 @@ type MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call struct {
 
 // GetServiceFailure214LifecycleMessage is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetServiceFailure214LifecycleMessageRequest
+//   - req *edimessageports.GetServiceFailure214LifecycleMessageRequest
 func (_e *MockEDIMessageRepository_Expecter) GetServiceFailure214LifecycleMessage(ctx any, req any) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
 	return &MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call{Call: _e.mock.On("GetServiceFailure214LifecycleMessage", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Run(run func(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
+func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Run(run func(ctx context.Context, req *edimessageports.GetServiceFailure214LifecycleMessageRequest)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetServiceFailure214LifecycleMessageRequest
+		var arg1 *edimessageports.GetServiceFailure214LifecycleMessageRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetServiceFailure214LifecycleMessageRequest)
+			arg1 = args[1].(*edimessageports.GetServiceFailure214LifecycleMessageRequest)
 		}
 		run(
 			arg0,
@@ -916,7 +916,7 @@ func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Re
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
+func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetServiceFailure214LifecycleMessageRequest) (*edimessage.EDIMessage, error)) *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -990,7 +990,7 @@ func (_c *MockEDIMessageRepository_GetServiceFailure214Status_Call) RunAndReturn
 }
 
 // GetVolumeSeries provides a mock function for the type MockEDIMessageRepository
-func (_mock *MockEDIMessageRepository) GetVolumeSeries(ctx context.Context, req edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error) {
+func (_mock *MockEDIMessageRepository) GetVolumeSeries(ctx context.Context, req *edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -999,17 +999,17 @@ func (_mock *MockEDIMessageRepository) GetVolumeSeries(ctx context.Context, req 
 
 	var r0 []*edimessageports.EDIVolumePoint
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edimessageports.GetEDIVolumeSeriesRequest) []*edimessageports.EDIVolumePoint); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edimessageports.GetEDIVolumeSeriesRequest) []*edimessageports.EDIVolumePoint); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*edimessageports.EDIVolumePoint)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edimessageports.GetEDIVolumeSeriesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edimessageports.GetEDIVolumeSeriesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -1024,20 +1024,20 @@ type MockEDIMessageRepository_GetVolumeSeries_Call struct {
 
 // GetVolumeSeries is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edimessageports.GetEDIVolumeSeriesRequest
+//   - req *edimessageports.GetEDIVolumeSeriesRequest
 func (_e *MockEDIMessageRepository_Expecter) GetVolumeSeries(ctx any, req any) *MockEDIMessageRepository_GetVolumeSeries_Call {
 	return &MockEDIMessageRepository_GetVolumeSeries_Call{Call: _e.mock.On("GetVolumeSeries", ctx, req)}
 }
 
-func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) Run(run func(ctx context.Context, req edimessageports.GetEDIVolumeSeriesRequest)) *MockEDIMessageRepository_GetVolumeSeries_Call {
+func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) Run(run func(ctx context.Context, req *edimessageports.GetEDIVolumeSeriesRequest)) *MockEDIMessageRepository_GetVolumeSeries_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edimessageports.GetEDIVolumeSeriesRequest
+		var arg1 *edimessageports.GetEDIVolumeSeriesRequest
 		if args[1] != nil {
-			arg1 = args[1].(edimessageports.GetEDIVolumeSeriesRequest)
+			arg1 = args[1].(*edimessageports.GetEDIVolumeSeriesRequest)
 		}
 		run(
 			arg0,
@@ -1052,7 +1052,7 @@ func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) Return(eDIVolumePoints 
 	return _c
 }
 
-func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) RunAndReturn(run func(ctx context.Context, req edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error)) *MockEDIMessageRepository_GetVolumeSeries_Call {
+func (_c *MockEDIMessageRepository_GetVolumeSeries_Call) RunAndReturn(run func(ctx context.Context, req *edimessageports.GetEDIVolumeSeriesRequest) ([]*edimessageports.EDIVolumePoint, error)) *MockEDIMessageRepository_GetVolumeSeries_Call {
 	_c.Call.Return(run)
 	return _c
 }

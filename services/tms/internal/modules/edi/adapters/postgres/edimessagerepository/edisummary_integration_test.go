@@ -120,7 +120,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	deliveryCounts, err := messageRepo.GetDeliveryStatusCounts(
 		ctx,
-		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		&edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, deliveryCounts[edimessage.MessageDeliveryStatusSent])
@@ -129,7 +129,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	ackCounts, err := messageRepo.GetAckStatusCounts(
 		ctx,
-		edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		&edimessageports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 1, ackCounts[edimessage.MessageAcknowledgmentStatusAccepted])
@@ -138,7 +138,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	overdue, err := messageRepo.GetOverdueAckCount(
 		ctx,
-		edimessageports.GetEDIOverdueAckCountRequest{
+		&edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   tenantInfo,
 			PendingSince: now - 4*60*60,
 		},

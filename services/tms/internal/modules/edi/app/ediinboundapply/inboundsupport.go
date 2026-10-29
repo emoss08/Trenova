@@ -22,9 +22,9 @@ import (
 func (s *Service) BuildInboundMappingPreview(
 	ctx context.Context,
 	partner *edi.EDIPartner,
-	payload editransfer.LoadTenderPayload,
+	payload *editransfer.LoadTenderPayload,
 ) (*editendermapping.MappingPreview, error) {
-	return s.tenderMapping.BuildMappingPreview(ctx, partner, payload)
+	return s.tenderMapping.BuildMappingPreview(ctx, partner, *payload)
 }
 
 type ApplyExternalTenderResponseRequest struct {
@@ -230,9 +230,7 @@ func (s *Service) RecordTenderedShipmentStatus(
 	); err != nil {
 		return nil, err
 	}
-	if err = s.recordTenderedShipmentStatusEvent(ctx, req, shipmentID); err != nil {
-		return nil, err
-	}
+	s.recordTenderedShipmentStatusEvent(ctx, req, shipmentID)
 	applied, err := s.applyTendered214StopActuals(ctx, req, target)
 	if err != nil {
 		return nil, err
@@ -244,10 +242,10 @@ func (s *Service) recordTenderedShipmentStatusEvent(
 	ctx context.Context,
 	req *RecordTenderedShipmentStatusRequest,
 	shipmentID pulid.ID,
-) error {
+) {
 	offer := req.Offer
 	if s.shipmentEventRepo == nil {
-		return nil
+		return
 	}
 	severity := shipmentevent.SeverityInfo
 	if req.StatusCode == "A7" {
@@ -290,7 +288,6 @@ func (s *Service) recordTenderedShipmentStatusEvent(
 			zap.Error(err),
 		)
 	}
-	return nil
 }
 
 func externalShipmentStatusDescription(statusCode string) string {

@@ -210,10 +210,10 @@ func (r *repository) CreateMessageWithDiagnostics(
 
 func (r *repository) GetServiceFailure214LifecycleMessage(
 	ctx context.Context,
-	req edimessageports.GetServiceFailure214LifecycleMessageRequest,
+	req *edimessageports.GetServiceFailure214LifecycleMessageRequest,
 ) (*edimessage.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edimessage.EDIMessage, error) {
-		entity, err := lifecycleMessageQuery(&req).First(ctx, r.db.Keel(ctx))
+		entity, err := lifecycleMessageQuery(req).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, messageErrors.Map(err, req.ServiceFailureID.String())
 		}
@@ -437,7 +437,7 @@ type deliveryStatusCount struct {
 
 func (r *repository) GetDeliveryStatusCounts(
 	ctx context.Context,
-	req edimessageports.GetEDIMessageStatusCountsRequest,
+	req *edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edimessage.MessageDeliveryStatus]int, error) {
 	return dbtx.Read(
 		ctx,
@@ -486,7 +486,7 @@ func ackStatusFilters(req *edimessageports.GetEDIMessageStatusCountsRequest) []k
 
 func (r *repository) GetAckStatusCounts(
 	ctx context.Context,
-	req edimessageports.GetEDIMessageStatusCountsRequest,
+	req *edimessageports.GetEDIMessageStatusCountsRequest,
 ) (map[edimessage.MessageAcknowledgmentStatus]int, error) {
 	return dbtx.Read(
 		ctx,
@@ -496,7 +496,7 @@ func (r *repository) GetAckStatusCounts(
 			rows, err := keel.Into[ackStatusCount](
 				ctx,
 				r.db.Keel(ctx),
-				m.Where(ackStatusFilters(&req)...).
+				m.Where(ackStatusFilters(req)...).
 					Group(m.AckStatus).
 					Pick(m.AckStatus, keel.Count()),
 			)
@@ -516,7 +516,7 @@ func (r *repository) GetAckStatusCounts(
 
 func (r *repository) GetAckStatusCountsByPartner(
 	ctx context.Context,
-	req edimessageports.GetEDIMessageStatusCountsRequest,
+	req *edimessageports.GetEDIMessageStatusCountsRequest,
 ) ([]*edimessageports.EDIPartnerAckStatusCount, error) {
 	return dbtx.Read(
 		ctx,
@@ -527,7 +527,7 @@ func (r *repository) GetAckStatusCountsByPartner(
 			rows, err := keel.Into[edimessageports.EDIPartnerAckStatusCount](
 				ctx,
 				r.db.Keel(ctx),
-				m.Where(ackStatusFilters(&req)...).
+				m.Where(ackStatusFilters(req)...).
 					Group(m.EDIPartnerID, m.AckStatus).
 					Pick(m.EDIPartnerID, partner.Name.Max(), partner.Code.Max(), m.AckStatus, keel.Count()).
 					Order(partner.Name.Max().Asc(), m.EDIPartnerID.Asc(), m.AckStatus.Asc()),
@@ -610,7 +610,7 @@ func scorecardQuery(
 
 func (r *repository) GetVolumeSeries(
 	ctx context.Context,
-	req edimessageports.GetEDIVolumeSeriesRequest,
+	req *edimessageports.GetEDIVolumeSeriesRequest,
 ) ([]*edimessageports.EDIVolumePoint, error) {
 	return dbtx.Read(
 		ctx,
@@ -619,7 +619,7 @@ func (r *repository) GetVolumeSeries(
 			points, err := keel.Into[edimessageports.EDIVolumePoint](
 				ctx,
 				r.db.Keel(ctx),
-				volumeQuery(&req),
+				volumeQuery(req),
 			)
 			if err != nil {
 				return nil, err
@@ -722,7 +722,7 @@ func (f *overdueAckFilter) where() []keel.Pred {
 
 func (r *repository) GetOverdueAckCount(
 	ctx context.Context,
-	req edimessageports.GetEDIOverdueAckCountRequest,
+	req *edimessageports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		filter := overdueAckFilter{
@@ -904,7 +904,7 @@ func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (i
 
 func (r *repository) GetOutboundMessageForAck(
 	ctx context.Context,
-	req edimessageports.GetEDIOutboundMessageForAckRequest,
+	req *edimessageports.GetEDIOutboundMessageForAckRequest,
 ) (*edimessage.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edimessage.EDIMessage, error) {
 		m := edimessagedb.EDIMessages

@@ -110,7 +110,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	pendingSince := now - overdueAge
 
 	t.Run("every partner", func(t *testing.T) {
-		count, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
+		count, err := repo.GetOverdueAckCount(ctx, &edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   tenant,
 			PendingSince: pendingSince,
 		})
@@ -166,7 +166,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	})
 
 	t.Run("one partner", func(t *testing.T) {
-		count, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
+		count, err := repo.GetOverdueAckCount(ctx, &edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   tenant,
 			PendingSince: pendingSince,
 			PartnerID:    partners[1].ID,
@@ -188,7 +188,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 
 		counts, err := repo.GetAckStatusCounts(
 			ctx,
-			edimessageports.GetEDIMessageStatusCountsRequest{
+			&edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo: tenant,
 				PartnerID:  partners[1].ID,
 			},
@@ -214,7 +214,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	})
 
 	t.Run("one transaction set", func(t *testing.T) {
-		count, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
+		count, err := repo.GetOverdueAckCount(ctx, &edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:     tenant,
 			PendingSince:   pendingSince,
 			TransactionSet: edidocument.TransactionSet214,
@@ -222,7 +222,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, count)
 
-		none, err := repo.GetOverdueAckCount(ctx, edimessageports.GetEDIOverdueAckCountRequest{
+		none, err := repo.GetOverdueAckCount(ctx, &edimessageports.GetEDIOverdueAckCountRequest{
 			TenantInfo:     tenant,
 			PendingSince:   pendingSince,
 			TransactionSet: edidocument.TransactionSet210,
@@ -242,7 +242,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 
 		counts, err := repo.GetAckStatusCounts(
 			ctx,
-			edimessageports.GetEDIMessageStatusCountsRequest{
+			&edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo:     tenant,
 				TransactionSet: edidocument.TransactionSet210,
 			},
@@ -252,7 +252,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 
 		rows, err := repo.GetAckStatusCountsByPartner(
 			ctx,
-			edimessageports.GetEDIMessageStatusCountsRequest{
+			&edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo:     tenant,
 				TransactionSet: edidocument.TransactionSet214,
 				PartnerID:      partners[1].ID,
@@ -276,7 +276,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 	t.Run("counts by partner", func(t *testing.T) {
 		rows, err := repo.GetAckStatusCountsByPartner(
 			ctx,
-			edimessageports.GetEDIMessageStatusCountsRequest{
+			&edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo: tenant,
 				Since:      now - 35*60*60,
 			},
@@ -303,7 +303,7 @@ func TestOverdueAcks_ListAndCountAgreeOnWhatIsOverdue(t *testing.T) {
 
 		one, err := repo.GetAckStatusCountsByPartner(
 			ctx,
-			edimessageports.GetEDIMessageStatusCountsRequest{
+			&edimessageports.GetEDIMessageStatusCountsRequest{
 				TenantInfo: tenant,
 				PartnerID:  partners[1].ID,
 			},
@@ -374,7 +374,7 @@ func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.
 	require.Len(t, overdue.Partners, 1)
 	require.Equal(t, "Acme Manufacturing EDI", overdue.Partners[0].PartnerName)
 
-	counts, err := repo.GetAckStatusCounts(ctx, edimessageports.GetEDIMessageStatusCountsRequest{
+	counts, err := repo.GetAckStatusCounts(ctx, &edimessageports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: tenant,
 		PartnerID:  partner.ID,
 	})

@@ -94,7 +94,6 @@ var (
 	errBlank        = errors.New("the value is blank")
 	isaQualifierRe  = regexp.MustCompile(`^[A-Z0-9]{2}$`)
 	versionDigitsRe = regexp.MustCompile(`^\d{4,6}$`)
-	functionalIDRe  = regexp.MustCompile(`^[A-Z]{2}$`)
 	numberRe        = regexp.MustCompile(`\d+`)
 	durationRe      = regexp.MustCompile(
 		`(?i)(\d+(?:\.\d+)?)\s*(minutes?|mins?|hours?|hrs?|days?|business days?)`,

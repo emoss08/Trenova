@@ -318,7 +318,7 @@ func (s *Service) partnerCardActivity(
 
 	if activity.AckCounts, err = s.messageRepo.GetAckStatusCounts(
 		ctx,
-		edimessageports.GetEDIMessageStatusCountsRequest{
+		&edimessageports.GetEDIMessageStatusCountsRequest{
 			TenantInfo: req.TenantInfo,
 			Since:      activity.Since,
 			PartnerID:  req.PartnerID,
@@ -340,7 +340,7 @@ func (s *Service) partnerCardActivity(
 
 	if activity.Series, err = s.messageRepo.GetVolumeSeries(
 		ctx,
-		edimessageports.GetEDIVolumeSeriesRequest{
+		&edimessageports.GetEDIVolumeSeriesRequest{
 			TenantInfo:    req.TenantInfo,
 			Since:         activity.SeriesSince,
 			BucketSeconds: activity.BucketSeconds,

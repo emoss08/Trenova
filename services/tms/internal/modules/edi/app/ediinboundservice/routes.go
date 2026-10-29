@@ -58,7 +58,7 @@ func (s *Service) routeAcknowledgment(
 		}
 		original, err := s.messageRepo.GetOutboundMessageForAck(
 			ctx,
-			edimessageports.GetEDIOutboundMessageForAckRequest{
+			&edimessageports.GetEDIOutboundMessageForAckRequest{
 				TenantInfo:               tenantInfo,
 				PartnerID:                partner.ID,
 				TransactionSet:           transactionSetFromCode(entry.originalTransactionSet),
@@ -524,7 +524,7 @@ func (s *Service) routeLoadTender(
 		warnings = append(warnings, supersedeWarnings...)
 	}
 
-	preview, err := s.inboundApply.BuildInboundMappingPreview(ctx, partner, *payload)
+	preview, err := s.inboundApply.BuildInboundMappingPreview(ctx, partner, payload)
 	if err != nil {
 		return nil, warnings, err
 	}

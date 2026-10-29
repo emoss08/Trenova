@@ -254,7 +254,7 @@ func TestPartnerCardReadsKeepToOnePartner(t *testing.T) {
 	assert.Equal(t, int64(2), scorecards[0].SentCount)
 	assert.Equal(t, int64(2), scorecards[0].ReceivedCount)
 
-	series, err := messageRepo.GetVolumeSeries(ctx, edimessageports.GetEDIVolumeSeriesRequest{
+	series, err := messageRepo.GetVolumeSeries(ctx, &edimessageports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    tenantInfo,
 		Since:         now - 14*day,
 		BucketSeconds: 3600,
