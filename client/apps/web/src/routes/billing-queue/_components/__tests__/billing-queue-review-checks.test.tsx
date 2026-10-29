@@ -56,7 +56,7 @@ const fuelIssue: BillingIssue = {
     {
       key: "keep",
       label: "Keep it · bill $1,037.45",
-      amount: "1037.45",
+      amount: 1037.45,
       done: "Fuel surcharge kept",
       effect: { kind: "keep", chargeId: "acg_fuel" },
     },

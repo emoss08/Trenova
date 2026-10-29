@@ -86,7 +86,7 @@ export function DeskConversation({
     question: string,
     mentions: readonly AssistantEntityRef[],
   ) => {
-    const result = await handOffThread.mutateAsync(agentId);
+    const result = await handOffThread.mutateAsync({ agentId });
     const next = result.thread.id;
     if (mentions.length > 0) {
       setStartExtras({ threadId: next, files: [], mentions: [...mentions], providerId: "" });
