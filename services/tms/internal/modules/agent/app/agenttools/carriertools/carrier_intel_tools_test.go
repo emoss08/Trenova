@@ -12,7 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
@@ -31,13 +36,13 @@ type fakeCarrierIntel struct {
 	guard   *agenttoolstest.WriteGuard
 	carrier *carrier.Carrier
 
-	vetted    *carrierintelservice.VetCarrierRequest
+	vetted    *carrierintelvetservice.VetCarrierRequest
 	broker    pulid.ID
-	enrolled  *carrierintelservice.EnrollSubjectsRequest
-	reviewed  *carrierintelservice.MarkReviewedRequest
-	applied   *carrierintelservice.ApplySuggestionsRequest
-	imported  *carrierintelservice.ImportProspectRequest
-	verified  *carrierintelservice.VerifyEquipmentRequest
+	enrolled  *carrierintelenrollmentservice.EnrollSubjectsRequest
+	reviewed  *carrierintelreviewservice.MarkReviewedRequest
+	applied   *carrierintelvetservice.ApplySuggestionsRequest
+	imported  *carrierintelsourcingservice.ImportProspectRequest
+	verified  *carrierintelverifyservice.VerifyEquipmentRequest
 	enrollOld carrierintelenrollment.DesiredState
 }
 
@@ -56,8 +61,8 @@ func newFakeCarrierIntel() *fakeCarrierIntel {
 	}
 }
 
-func (f *fakeCarrierIntel) vetPlan() *carrierintelservice.VetPlan {
-	return &carrierintelservice.VetPlan{
+func (f *fakeCarrierIntel) vetPlan() *carrierintelvetservice.VetPlan {
+	return &carrierintelvetservice.VetPlan{
 		Subject: carrierintelports.CarrierIntelSubject{
 			Name:      f.carrier.Name,
 			DOTNumber: f.carrier.DOTNumber,
@@ -70,7 +75,7 @@ func (f *fakeCarrierIntel) vetPlan() *carrierintelservice.VetPlan {
 
 func (f *fakeCarrierIntel) VetCarrier(
 	_ context.Context,
-	req *carrierintelservice.VetCarrierRequest,
+	req *carrierintelvetservice.VetCarrierRequest,
 ) (*carrierintelservice.FetchResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -84,8 +89,8 @@ func (f *fakeCarrierIntel) VetCarrier(
 
 func (f *fakeCarrierIntel) PlanVetCarrier(
 	context.Context,
-	*carrierintelservice.VetCarrierRequest,
-) (*carrierintelservice.VetPlan, error) {
+	*carrierintelvetservice.VetCarrierRequest,
+) (*carrierintelvetservice.VetPlan, error) {
 	return f.vetPlan(), nil
 }
 
@@ -107,7 +112,7 @@ func (f *fakeCarrierIntel) PlanVetCustomerBroker(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*carrierintelservice.VetPlan, error) {
+) (*carrierintelvetservice.VetPlan, error) {
 	plan := f.vetPlan()
 	plan.Depth = carrierintel.LookupDepthFMCSA
 
@@ -116,7 +121,7 @@ func (f *fakeCarrierIntel) PlanVetCustomerBroker(
 
 func (f *fakeCarrierIntel) SetManualEnrollment(
 	_ context.Context,
-	req *carrierintelservice.EnrollSubjectsRequest,
+	req *carrierintelenrollmentservice.EnrollSubjectsRequest,
 ) (int, error) {
 	if err := f.guard.Write(); err != nil {
 		return 0, err
@@ -128,14 +133,14 @@ func (f *fakeCarrierIntel) SetManualEnrollment(
 
 func (f *fakeCarrierIntel) PlanManualEnrollment(
 	_ context.Context,
-	req *carrierintelservice.EnrollSubjectsRequest,
-) ([]carrierintelservice.EnrollmentChange, error) {
+	req *carrierintelenrollmentservice.EnrollSubjectsRequest,
+) ([]carrierintelenrollmentservice.EnrollmentChange, error) {
 	after := carrierintelenrollment.DesiredStateNotEnrolled
 	if req.Enroll {
 		after = carrierintelenrollment.DesiredStateEnrolled
 	}
 
-	return []carrierintelservice.EnrollmentChange{{
+	return []carrierintelenrollmentservice.EnrollmentChange{{
 		CarrierID: req.CarrierIDs[0],
 		Name:      f.carrier.Name,
 		Before:    f.enrollOld,
@@ -145,7 +150,7 @@ func (f *fakeCarrierIntel) PlanManualEnrollment(
 
 func (f *fakeCarrierIntel) MarkReviewed(
 	_ context.Context,
-	req *carrierintelservice.MarkReviewedRequest,
+	req *carrierintelreviewservice.MarkReviewedRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -157,8 +162,8 @@ func (f *fakeCarrierIntel) MarkReviewed(
 
 func (f *fakeCarrierIntel) PlanMarkReviewed(
 	_ context.Context,
-	req *carrierintelservice.MarkReviewedRequest,
-) (*carrierintelservice.SnapshotChange, error) {
+	req *carrierintelreviewservice.MarkReviewedRequest,
+) (*carrierintelreviewservice.SnapshotChange, error) {
 	before := &carrierintelsnapshot.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelElevated}
 	after := *before
 	now := int64(1_900_000_000)
@@ -166,7 +171,7 @@ func (f *fakeCarrierIntel) PlanMarkReviewed(
 	after.ReviewedByID = req.TenantInfo.UserID
 	after.ReviewNote = req.Note
 
-	return &carrierintelservice.SnapshotChange{Before: before, After: &after}, nil
+	return &carrierintelreviewservice.SnapshotChange{Before: before, After: &after}, nil
 }
 
 func (f *fakeCarrierIntel) SyncPlan(
@@ -182,7 +187,7 @@ func (f *fakeCarrierIntel) SyncPlan(
 
 func (f *fakeCarrierIntel) ApplySuggestions(
 	_ context.Context,
-	req *carrierintelservice.ApplySuggestionsRequest,
+	req *carrierintelvetservice.ApplySuggestionsRequest,
 ) (int, error) {
 	if err := f.guard.Write(); err != nil {
 		return 0, err
@@ -194,8 +199,8 @@ func (f *fakeCarrierIntel) ApplySuggestions(
 
 func (f *fakeCarrierIntel) PlanApplySuggestions(
 	_ context.Context,
-	req *carrierintelservice.ApplySuggestionsRequest,
-) (*carrierintelservice.SuggestionPlan, error) {
+	req *carrierintelvetservice.ApplySuggestionsRequest,
+) (*carrierintelvetservice.SuggestionPlan, error) {
 	after := *f.carrier
 	updates := make([]carrierintelsync.FieldUpdate, 0, len(req.Fields))
 	for _, field := range req.Fields {
@@ -208,7 +213,7 @@ func (f *fakeCarrierIntel) PlanApplySuggestions(
 		updates = append(updates, carrierintelsync.FieldUpdate{Field: field})
 	}
 
-	return &carrierintelservice.SuggestionPlan{
+	return &carrierintelvetservice.SuggestionPlan{
 		Before:  f.carrier,
 		After:   &after,
 		Fields:  updates,
@@ -218,7 +223,7 @@ func (f *fakeCarrierIntel) PlanApplySuggestions(
 
 func (f *fakeCarrierIntel) ImportProspect(
 	_ context.Context,
-	req *carrierintelservice.ImportProspectRequest,
+	req *carrierintelsourcingservice.ImportProspectRequest,
 ) (*carrier.Carrier, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -230,9 +235,9 @@ func (f *fakeCarrierIntel) ImportProspect(
 
 func (f *fakeCarrierIntel) PlanImportProspect(
 	_ context.Context,
-	req *carrierintelservice.ImportProspectRequest,
-) (*carrierintelservice.ImportPlan, error) {
-	return &carrierintelservice.ImportPlan{
+	req *carrierintelsourcingservice.ImportProspectRequest,
+) (*carrierintelsourcingservice.ImportPlan, error) {
+	return &carrierintelsourcingservice.ImportPlan{
 		DOTNumber:        req.DOTNumber,
 		Code:             req.Code,
 		Provider:         integration.TypeCarrierOK,
@@ -242,7 +247,7 @@ func (f *fakeCarrierIntel) PlanImportProspect(
 
 func (f *fakeCarrierIntel) VerifyEquipment(
 	_ context.Context,
-	req *carrierintelservice.VerifyEquipmentRequest,
+	req *carrierintelverifyservice.VerifyEquipmentRequest,
 ) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -256,7 +261,7 @@ func (f *fakeCarrierIntel) VerifyEquipment(
 
 func (f *fakeCarrierIntel) PlanVerifyEquipment(
 	_ context.Context,
-	req *carrierintelservice.VerifyEquipmentRequest,
+	req *carrierintelverifyservice.VerifyEquipmentRequest,
 ) (*carrierintelverification.CarrierEquipmentVerification, *carrier.Carrier, error) {
 	return &carrierintelverification.CarrierEquipmentVerification{
 		CarrierAssignmentID: req.CarrierAssignmentID,

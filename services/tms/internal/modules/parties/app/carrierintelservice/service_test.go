@@ -324,14 +324,14 @@ func (h *harness) setFallback(provider integration.Type) {
 	h.control.FallbackProvider = &provider
 }
 
-func (h *harness) bind(t *testing.T, provider integration.Type, fallback bool) *boundProvider {
+func (h *harness) Bind(t *testing.T, provider integration.Type, fallback bool) *BoundProvider {
 	t.Helper()
-	bound, err := h.svc.bind(t.Context(), h.tenant, provider, fallback)
+	bound, err := h.svc.Bind(t.Context(), h.tenant, provider, fallback)
 	require.NoError(t, err)
 	return bound
 }
 
-func (h *harness) attempt(bound *boundProvider, wanted carrierintel.LookupDepth) *lookupAttempt {
+func (h *harness) attempt(bound *BoundProvider, wanted carrierintel.LookupDepth) *lookupAttempt {
 	return &lookupAttempt{
 		tenant:  h.tenant,
 		control: h.control,
@@ -498,10 +498,10 @@ func TestToBusinessError(t *testing.T) {
 
 	var business *errortypes.BusinessError
 
-	assert.NoError(t, toBusinessError(integration.TypeCarrierOK, nil))
+	assert.NoError(t, ToBusinessError(integration.TypeCarrierOK, nil))
 
 	existing := errortypes.NewBusinessError("already friendly")
-	assert.Same(t, existing, toBusinessError(integration.TypeCarrierOK, existing))
+	assert.Same(t, existing, ToBusinessError(integration.TypeCarrierOK, existing))
 
 	kinds := []carrierintelports.CarrierIntelErrorKind{
 		carrierintelports.CarrierIntelErrorUnauthorized,
@@ -511,12 +511,12 @@ func TestToBusinessError(t *testing.T) {
 		carrierintelports.CarrierIntelErrorUnavailable,
 	}
 	for _, kind := range kinds {
-		err := toBusinessError(integration.TypeCarrierOK, providerError(kind))
+		err := ToBusinessError(integration.TypeCarrierOK, providerError(kind))
 		require.ErrorAs(t, err, &business, string(kind))
 		assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, kind), string(kind))
 	}
 
-	limited := toBusinessError(
+	limited := ToBusinessError(
 		integration.TypeCarrierOK,
 		&carrierintelports.CarrierIntelProviderError{
 			Provider:   integration.TypeCarrierOK,
@@ -540,7 +540,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			if calls == 1 {
 				return limitedErr
@@ -556,7 +556,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeMonitor)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			return limitedErr
 		})
@@ -569,7 +569,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			return &restx.RateLimitedError{RetryAfter: time.Minute}
 		})
@@ -584,14 +584,17 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("no caps configured never queries spend", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintelusage.EndpointProfileFull,
-			dotNumber: "818175",
-		})
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileFull,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Zero(t, h.usage.costCalls)
 	})
@@ -599,7 +602,7 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("a DOT already billed this month costs nothing", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("10")
@@ -608,13 +611,16 @@ func TestGuardBudget(t *testing.T) {
 			carrierintelusage.EndpointProfileFull, price, "818175", h.now,
 		)] = true
 
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintelusage.EndpointProfileFull,
-			dotNumber: "818175",
-		})
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileFull,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Zero(t, h.usage.costCalls)
 	})
@@ -622,24 +628,25 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("exceeding the monthly cap is refused and notifies once", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("8")
 
-		check := &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintelusage.EndpointProfileFull,
-			dotNumber: "818175",
+		check := &BudgetCheck{
+			Tenant:    h.tenant,
+			Control:   h.control,
+			Bound:     bound,
+			Endpoint:  carrierintelusage.EndpointProfileFull,
+			DOTNumber: "818175",
 		}
-		err := h.svc.guardBudget(t.Context(), check)
+
+		err := h.svc.GuardBudget(t.Context(), check)
 		require.ErrorIs(t, err, ErrSpendCapReached)
 		var business *errortypes.BusinessError
 		require.ErrorAs(t, err, &business)
 
-		require.ErrorIs(t, h.svc.guardBudget(t.Context(), check), ErrSpendCapReached)
+		require.ErrorIs(t, h.svc.GuardBudget(t.Context(), check), ErrSpendCapReached)
 		assert.Equal(t, []string{eventSpendHardCap}, h.notifications.eventTypes())
 		assert.Equal(t, 1, h.usage.costCalls)
 	})
@@ -647,19 +654,22 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("crossing the soft cap allows the call and warns", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.control.SoftCapPercent = 80
 		h.usage.cost = decimal.RequireFromString("7.6")
 
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintelusage.EndpointProfileLite,
-			dotNumber: "818175",
-		})
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileLite,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Equal(t, []string{eventSpendSoftCap}, h.notifications.eventTypes())
 	})
@@ -667,22 +677,23 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("daily full profile cap only limits full profiles", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		h.control.DailyFullProfileCap = new(5)
 		h.usage.billable = 5
 
-		full := &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintelusage.EndpointProfileFull,
-			dotNumber: "818175",
+		full := &BudgetCheck{
+			Tenant:    h.tenant,
+			Control:   h.control,
+			Bound:     bound,
+			Endpoint:  carrierintelusage.EndpointProfileFull,
+			DOTNumber: "818175",
 		}
-		require.ErrorIs(t, h.svc.guardBudget(t.Context(), full), ErrSpendCapReached)
+
+		require.ErrorIs(t, h.svc.GuardBudget(t.Context(), full), ErrSpendCapReached)
 
 		lite := *full
 		lite.endpoint = carrierintelusage.EndpointProfileLite
-		require.NoError(t, h.svc.guardBudget(t.Context(), &lite))
+		require.NoError(t, h.svc.GuardBudget(t.Context(), &lite))
 	})
 }
 
@@ -690,7 +701,7 @@ func TestRecordCallDedupesMonthlyCharges(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, newCarrierOKConnector())
-	bound := h.bind(t, integration.TypeCarrierOK, false)
+	bound := h.Bind(t, integration.TypeCarrierOK, false)
 	ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
 	call := carrierintelports.CarrierIntelCall{
 		Endpoint:  carrierintelusage.EndpointProfileFull,
@@ -720,7 +731,7 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("upgrades to a full profile already paid for this month", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		price := bound.prices.Price(carrierintelusage.EndpointProfileFull)
 		h.usage.dedupeKeys[carrierintelusage.BillingDedupeKey(
 			carrierintelusage.EndpointProfileFull, price, "818175", h.now,
@@ -737,7 +748,7 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("keeps the requested depth when nothing was paid", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		depth := h.svc.chooseDepth(
 			t.Context(),
 			h.attempt(bound, carrierintel.LookupDepthLite),
@@ -749,7 +760,7 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("falls back to the deepest depth the provider supports", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newFMCSAConnector())
-		bound := h.bind(t, integration.TypeFMCSAQCMobile, false)
+		bound := h.Bind(t, integration.TypeFMCSAQCMobile, false)
 		depth := h.svc.chooseDepth(
 			t.Context(),
 			h.attempt(bound, carrierintel.LookupDepthFull),
@@ -768,7 +779,7 @@ func TestLookupWithFallback(t *testing.T) {
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		result, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -788,7 +799,7 @@ func TestLookupWithFallback(t *testing.T) {
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -809,7 +820,7 @@ func TestLookupWithFallback(t *testing.T) {
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -835,7 +846,7 @@ func TestLookupWithFallback(t *testing.T) {
 		limit := decimal.RequireFromString("1")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("1")
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -856,7 +867,7 @@ func TestLookupWithFallback(t *testing.T) {
 		for range breakerFailureThreshold {
 			h.svc.breaker.record(key, true, time.Unix(h.now, 0))
 		}
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -872,7 +883,7 @@ func TestLookupWithFallback(t *testing.T) {
 		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnavailable)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -894,7 +905,7 @@ func TestLookupWithFallback(t *testing.T) {
 		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorNotFound)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		result, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -909,7 +920,7 @@ func TestResolvePrimaryRequiresProvider(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, newCarrierOKConnector())
-	_, err := h.svc.resolvePrimary(t.Context(), h.tenant, h.control)
+	_, err := h.svc.ResolvePrimary(t.Context(), h.tenant, h.control)
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 

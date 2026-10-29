@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
@@ -142,7 +143,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -2484,7 +2484,7 @@ type CarrierSourcingSearchInput struct {
 	HazmatOnly              *bool                             `json:"hazmatOnly,omitempty"`
 	ExcludeBlocking         *bool                             `json:"excludeBlocking,omitempty"`
 	ExcludeExistingCarriers *bool                             `json:"excludeExistingCarriers,omitempty"`
-	Sort                    *carrierintelservice.SourcingSort `json:"sort,omitempty"`
+	Sort                    *carrierintelsourcingservice.SourcingSort `json:"sort,omitempty"`
 	Limit                   *int                              `json:"limit,omitempty"`
 	Offset                  *int                              `json:"offset,omitempty"`
 }

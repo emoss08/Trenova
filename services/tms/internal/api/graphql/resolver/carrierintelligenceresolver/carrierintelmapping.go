@@ -13,7 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
@@ -29,8 +32,8 @@ import (
 
 func controlPatchFromInput(
 	input *gqlmodel.CarrierIntelControlPatchInput,
-) (*carrierintelservice.ControlPatch, error) {
-	patch := &carrierintelservice.ControlPatch{
+) (*carrierintelenrollmentservice.ControlPatch, error) {
+	patch := &carrierintelenrollmentservice.ControlPatch{
 		ConfirmEstimatedCost: gqlscalar.BoolValue(input.ConfirmEstimatedCost),
 		DailyFullProfileCap:  gqlscalar.NullableOmittable(input.DailyFullProfileCap),
 	}
@@ -159,18 +162,18 @@ func controlPatchFromInput(
 	collect(e)
 
 	if input.AutoSyncFields.IsSet() {
-		patch.AutoSyncFields = carrierintelservice.Some(input.AutoSyncFields.Value())
+		patch.AutoSyncFields = carrierintelenrollmentservice.Some(input.AutoSyncFields.Value())
 	}
 
 	if input.MonthlySpendCap.IsSet() {
 		raw := input.MonthlySpendCap.Value()
 		if raw == nil || strings.TrimSpace(*raw) == "" {
-			patch.MonthlySpendCap = carrierintelservice.Some[*decimal.Decimal](nil)
+			patch.MonthlySpendCap = carrierintelenrollmentservice.Some[*decimal.Decimal](nil)
 		} else {
 			amount, parseErr := gqldecimal.DecimalFromString(*raw, "monthlySpendCap")
 			collect(parseErr)
 			if parseErr == nil {
-				patch.MonthlySpendCap = carrierintelservice.Some(&amount)
+				patch.MonthlySpendCap = carrierintelenrollmentservice.Some(&amount)
 			}
 		}
 	}
@@ -193,7 +196,7 @@ func controlPatchFromInput(
 				Params: params,
 			}
 		}
-		patch.Rules = carrierintelservice.Some(rules)
+		patch.Rules = carrierintelenrollmentservice.Some(rules)
 	}
 
 	if err != nil {
@@ -289,7 +292,7 @@ func eventCountsToModel(
 }
 
 func usageSummaryToModel(
-	summary *carrierintelservice.UsageSummary,
+	summary *carrierintelmonitorservice.UsageSummary,
 ) *gqlmodel.CarrierIntelUsageSummary {
 	rows := make([]*gqlmodel.CarrierIntelUsageRow, 0, len(summary.ByEndpoint))
 	for _, row := range summary.ByEndpoint {
@@ -452,8 +455,8 @@ func preferredEnrollment(
 func sourcingQueryFromInput(
 	input *gqlmodel.CarrierSourcingSearchInput,
 	tenant pagination.TenantInfo,
-) *carrierintelservice.SourcingQuery {
-	return &carrierintelservice.SourcingQuery{
+) *carrierintelsourcingservice.SourcingQuery {
+	return &carrierintelsourcingservice.SourcingQuery{
 		TenantInfo:             tenant,
 		Text:                   gqlscalar.StringValue(input.Text),
 		State:                  strings.ToUpper(gqlscalar.StringValue(input.State)),
@@ -474,9 +477,11 @@ func sourcingQueryFromInput(
 
 const carrierIntelReviewQueueCountLimit = 500
 
-func sourcingSortValue(sort *carrierintelservice.SourcingSort) carrierintelservice.SourcingSort {
+func sourcingSortValue(
+	sort *carrierintelsourcingservice.SourcingSort,
+) carrierintelsourcingservice.SourcingSort {
 	if sort == nil {
-		return carrierintelservice.SourcingSortBestMatch
+		return carrierintelsourcingservice.SourcingSortBestMatch
 	}
 	return *sort
 }

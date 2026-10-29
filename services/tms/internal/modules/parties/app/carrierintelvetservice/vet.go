@@ -1,10 +1,11 @@
-package carrierintelservice
+package carrierintelvetservice
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
@@ -17,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +58,10 @@ func (s *Service) loadCarrierSubject(
 	return subjects[0], nil
 }
 
-func (s *Service) VetCarrier(ctx context.Context, req *VetCarrierRequest) (*FetchResult, error) {
+func (s *Service) VetCarrier(
+	ctx context.Context,
+	req *VetCarrierRequest,
+) (*carrierintelservice.FetchResult, error) {
 	subject, err := s.loadCarrierSubject(ctx, req.TenantInfo, req.CarrierID)
 	if err != nil {
 		return nil, err
@@ -68,7 +71,7 @@ func (s *Service) VetCarrier(ctx context.Context, req *VetCarrierRequest) (*Fetc
 	if depth.IsValid() && depth != carrierintel.LookupDepthFull {
 		purpose = carrierintel.PurposeRefresh
 	}
-	return s.Fetch(ctx, &FetchRequest{
+	return s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 		TenantInfo: req.TenantInfo,
 		Subject:    subject,
 		MinDepth:   depth,
@@ -76,63 +79,6 @@ func (s *Service) VetCarrier(ctx context.Context, req *VetCarrierRequest) (*Fetc
 		Force:      req.Force,
 		Source:     carrierintelevent.EventSourceSnapshotDiff,
 	})
-}
-
-type LookupProspectRequest struct {
-	TenantInfo   pagination.TenantInfo
-	DOTNumber    string
-	DocketNumber string
-	Depth        carrierintel.LookupDepth
-}
-
-func (s *Service) LookupProspect(
-	ctx context.Context,
-	req *LookupProspectRequest,
-) (*FetchResult, map[string]pulid.ID, error) {
-	dot := stringutils.DigitsOnly(req.DOTNumber)
-	docket := stringutils.DigitsOnly(req.DocketNumber)
-	if dot == "" && docket == "" {
-		return nil, nil, errortypes.NewValidationError("dotNumber", errortypes.ErrRequired,
-			"Enter a DOT or MC number")
-	}
-
-	subjectID := carrierintelsnapshot.ProspectSubjectID(dot)
-	if dot == "" {
-		subjectID = "MC" + docket
-	}
-	depth := req.Depth
-	if !depth.IsValid() {
-		depth = carrierintel.LookupDepthLite
-	}
-
-	result, err := s.Fetch(ctx, &FetchRequest{
-		TenantInfo: req.TenantInfo,
-		Subject: carrierintelports.CarrierIntelSubject{
-			SubjectType:  carrierintel.SubjectTypeProspect,
-			SubjectID:    subjectID,
-			DOTNumber:    dot,
-			DocketNumber: docket,
-		},
-		MinDepth: depth,
-		Purpose:  carrierintel.PurposeSourcing,
-		Source:   carrierintelevent.EventSourceSnapshotDiff,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	existing := map[string]pulid.ID{}
-	if dotFound := result.Snapshot.DOTNumber; dotFound != "" {
-		existing, err = s.subjectRepo.ListExistingCarrierDOTs(
-			ctx,
-			req.TenantInfo,
-			[]string{dotFound},
-		)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-	return result, existing, nil
 }
 
 type SelfIntelligenceResult struct {
@@ -170,7 +116,7 @@ func (s *Service) MyIntelligence(
 		return result, nil
 	}
 
-	fetched, err := s.Fetch(ctx, &FetchRequest{
+	fetched, err := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 		TenantInfo: tenantInfo,
 		Subject:    *org,
 		Purpose:    carrierintel.PurposeSelfMonitor,
@@ -189,7 +135,7 @@ func (s *Service) VetCustomerBroker(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	force bool,
-) (*FetchResult, error) {
+) (*carrierintelservice.FetchResult, error) {
 	subject, err := s.subjectRepo.GetCustomerSubject(ctx, tenantInfo, customerID)
 	if err != nil {
 		return nil, err
@@ -200,7 +146,7 @@ func (s *Service) VetCustomerBroker(
 		)
 	}
 	subject.Broker = true
-	return s.Fetch(ctx, &FetchRequest{
+	return s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 		TenantInfo: tenantInfo,
 		Subject:    *subject,
 		MinDepth:   carrierintel.LookupDepthFMCSA,

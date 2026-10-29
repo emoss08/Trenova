@@ -7,12 +7,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierintelrepository"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
@@ -98,9 +97,9 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	events := carrierintelrepository.NewEventRepository(carrierintelrepository.Params{
 		DB: conn, Logger: logger,
 	})
-	services.CarrierIntelService = carrierintelservice.New(carrierintelservice.Params{
-		Logger: logger, CarrierIntelligenceConfig: &carrierintelligenceconfig.Config{}, EventRepo: events,
-	})
+	services.CarrierIntelReviewService = carrierintelreviewservice.New(
+		carrierintelreviewservice.Params{Logger: logger, EventRepo: events},
+	)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	credentials := workercredentialrepository.New(
 		workercredentialrepository.Params{DB: conn, Logger: logger})

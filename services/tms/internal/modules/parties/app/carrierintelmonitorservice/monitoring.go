@@ -1,15 +1,14 @@
-package carrierintelservice
+package carrierintelmonitorservice
 
 import (
 	"context"
-	"time"
 
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +21,7 @@ const (
 	changeFeedPageSize      = 500
 	maxChangeFeedPages      = 40
 	defaultRefreshBatch     = 200
-	recomputeBatchSize      = 500
+	confirmBatchSize        = 500
 	feedFailureBackoffSteps = 6
 )
 
@@ -51,7 +50,7 @@ func (s *Service) PollChangeFeed(
 	if !ok {
 		return &PollResult{Skipped: true, Reason: "no provider"}, nil
 	}
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok || !connector.Descriptor().Capabilities.Has(carrierintel.CapabilityNativeMonitoring) {
 		return &PollResult{Skipped: true, Reason: "provider has no change feed"}, nil
 	}
@@ -66,7 +65,7 @@ func (s *Service) PollChangeFeed(
 		return nil, err
 	}
 	if state == nil {
-		state = newFeedState(key)
+		state = carrierintelenrollmentservice.NewFeedState(key)
 	}
 	now := s.now()
 	if state.IsPaused() {
@@ -76,11 +75,11 @@ func (s *Service) PollChangeFeed(
 		return &PollResult{Skipped: true, Reason: "not due"}, nil
 	}
 
-	bound, err := s.bind(ctx, tenantInfo, provider, false)
+	bound, err := s.intel.Bind(ctx, tenantInfo, provider, false)
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
+	monitor, ok := bound.Client().(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &PollResult{Skipped: true, Reason: "provider has no change feed"}, nil
 	}
@@ -94,7 +93,7 @@ func (s *Service) PollChangeFeed(
 	changedRefs := make(map[string]carrierintelports.CarrierIntelChangedProfile, 64)
 	for page := 1; page <= maxChangeFeedPages; page++ {
 		var feed *carrierintelports.CarrierIntelChangeFeedPage
-		listErr := s.withRateLimitWait(ctx, func() error {
+		listErr := s.intel.WithRateLimitWait(ctx, func() error {
 			var callErr error
 			feed, callErr = monitor.ListChanges(
 				ctx,
@@ -147,7 +146,7 @@ func (s *Service) PollChangeFeed(
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
-			_, fetchErr := s.Fetch(ctx, &FetchRequest{
+			_, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 				TenantInfo: tenantInfo,
 				Subject:    subject,
 				MinDepth:   carrierintel.LookupDepthFMCSA,
@@ -157,7 +156,7 @@ func (s *Service) PollChangeFeed(
 				Control:    control,
 			})
 			if fetchErr != nil {
-				if isPausingError(fetchErr) {
+				if carrierintelenrollmentservice.IsPausingError(fetchErr) {
 					return s.recordFeedFailure(ctx, &feedFailure{
 						tenant:   tenantInfo,
 						provider: provider,
@@ -210,10 +209,11 @@ func (s *Service) recordFeedFailure(
 	failure *feedFailure,
 ) (*PollResult, error) {
 	now := s.now()
-	if reason := pauseReasonFor(failure.err); reason != carrierintelenrollment.FeedPauseReasonNone {
-		if err := s.pauseFeed(
+	reason := carrierintelenrollmentservice.PauseReasonFor(failure.err)
+	if reason != carrierintelenrollment.FeedPauseReasonNone {
+		if err := s.enrollment.PauseFeed(
 			ctx, failure.tenant, failure.provider, carrierintelenrollment.FeedTypeChangeFeed, reason,
-			errorSummary(failure.err),
+			carrierintelservice.ErrorSummary(failure.err),
 		); err != nil {
 			return failure.result, err
 		}
@@ -230,7 +230,11 @@ func (s *Service) recordFeedFailure(
 	) * int64(
 		steps,
 	)
-	failure.state.RecordFailure(errorSummary(failure.err), now, now+max(backoff, 300))
+	failure.state.RecordFailure(
+		carrierintelservice.ErrorSummary(failure.err),
+		now,
+		now+max(backoff, 300),
+	)
 	if err := s.feedRepo.Upsert(ctx, failure.state); err != nil {
 		return failure.result, err
 	}
@@ -253,7 +257,7 @@ func (s *Service) confirmUnchangedEnrollments(
 				Provider:   provider,
 				Mode:       carrierintel.EnrollmentModeNative,
 				AfterID:    afterID,
-				Limit:      recomputeBatchSize,
+				Limit:      confirmBatchSize,
 			},
 		)
 		if err != nil {
@@ -303,7 +307,7 @@ func (s *Service) confirmUnchangedEnrollments(
 			}
 		}
 
-		if len(page) < recomputeBatchSize {
+		if len(page) < confirmBatchSize {
 			return nil
 		}
 		afterID = page[len(page)-1].ID
@@ -369,7 +373,7 @@ func (s *Service) RefreshDueSnapshots(
 		if ctx.Err() != nil {
 			break
 		}
-		fetched, fetchErr := s.Fetch(ctx, &FetchRequest{
+		fetched, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 			TenantInfo:    tenantInfo,
 			Subject:       subject,
 			MinDepth:      carrierintel.LookupDepthFMCSA,
@@ -379,13 +383,14 @@ func (s *Service) RefreshDueSnapshots(
 			Control:       control,
 		})
 		if fetchErr != nil {
-			if isPausingError(fetchErr) {
+			if carrierintelenrollmentservice.IsPausingError(fetchErr) {
 				if state == nil {
-					state = newFeedState(key)
+					state = carrierintelenrollmentservice.NewFeedState(key)
 				}
-				if pauseErr := s.pauseFeed(
+				if pauseErr := s.enrollment.PauseFeed(
 					ctx, tenantInfo, provider, carrierintelenrollment.FeedTypeSnapshotRefresh,
-					pauseReasonFor(fetchErr), errorSummary(fetchErr),
+					carrierintelenrollmentservice.PauseReasonFor(fetchErr),
+					carrierintelservice.ErrorSummary(fetchErr),
 				); pauseErr != nil {
 					return result, pauseErr
 				}
@@ -477,143 +482,4 @@ func (s *Service) resolveEnrollmentSubjects(
 		subjects = append(subjects, carriers...)
 	}
 	return subjects, nil
-}
-
-type RecomputeResult struct {
-	Evaluated int `json:"evaluated"`
-	Changed   int `json:"changed"`
-}
-
-func (s *Service) RecomputeStalePolicy(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	deadline time.Time,
-) (*RecomputeResult, error) {
-	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	provider, ok := control.PrimaryType()
-	if !ok {
-		return &RecomputeResult{}, nil
-	}
-
-	result := &RecomputeResult{}
-	afterID := pulid.Nil
-	for time.Now().Before(deadline) {
-		page, listErr := s.snapshotRepo.ListForRecompute(
-			ctx,
-			&carrierintelports.ListSnapshotsForRecomputeRequest{
-				TenantInfo:   tenantInfo,
-				BelowVersion: control.PolicyVersion,
-				AfterID:      afterID,
-				Limit:        recomputeBatchSize,
-			},
-		)
-		if listErr != nil {
-			return result, listErr
-		}
-		if len(page) == 0 {
-			return result, nil
-		}
-
-		for _, snap := range page {
-			afterID = snap.ID
-			subject, subjectErr := s.subjectForSnapshot(ctx, tenantInfo, snap)
-			if subjectErr != nil {
-				s.l.Warn("failed to resolve subject for recompute", zap.Error(subjectErr))
-				continue
-			}
-			ingested, ingestErr := s.confirmUnchanged(ctx, &ingestInput{
-				tenant:  tenantInfo,
-				control: control,
-				subject: subject,
-				bound:   &boundProvider{provider: provider, tenant: tenantInfo},
-				result:  &carrierintelports.CarrierIntelLookupResult{},
-				current: snap,
-				source:  carrierintelevent.EventSourceRuleEvaluation,
-				purpose: carrierintel.PurposeReconcile,
-			}, snap, s.recomputeFindings(ctx, tenantInfo, control, subject, snap), snap.EffectiveAsOf())
-			if ingestErr != nil {
-				s.l.Warn("failed to recompute snapshot findings", zap.Error(ingestErr))
-				continue
-			}
-			result.Evaluated++
-			if len(ingested.Raised) > 0 {
-				result.Changed++
-			}
-		}
-		if len(page) < recomputeBatchSize {
-			return result, nil
-		}
-	}
-	return result, nil
-}
-
-func (s *Service) recomputeFindings(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	control *carrierintelcontrol.CarrierIntelControl,
-	subject carrierintelports.CarrierIntelSubject,
-	snap *carrierintelsnapshot.CarrierIntelSnapshot,
-) []carrierintelrule.Finding {
-	findings, err := s.evaluateSubject(
-		ctx,
-		tenantInfo,
-		control,
-		subject,
-		snap.Profile,
-		snap.NotFound,
-	)
-	if err != nil {
-		return snap.Findings
-	}
-	return carrierintelrule.CarryUnconfirmed(snap.Findings, findings)
-}
-
-func (s *Service) subjectForSnapshot(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	snap *carrierintelsnapshot.CarrierIntelSnapshot,
-) (carrierintelports.CarrierIntelSubject, error) {
-	switch snap.SubjectType {
-	case carrierintel.SubjectTypeCarrier:
-		subjects, err := s.subjectRepo.ListCarrierSubjects(
-			ctx,
-			&carrierintelports.ListCarrierIntelSubjectsRequest{
-				TenantInfo: tenantInfo,
-				CarrierIDs: []pulid.ID{snap.CarrierID},
-				Limit:      1,
-			},
-		)
-		if err != nil {
-			return carrierintelports.CarrierIntelSubject{}, err
-		}
-		if len(subjects) == 1 {
-			return subjects[0], nil
-		}
-	case carrierintel.SubjectTypeOrganization:
-		org, err := s.subjectRepo.GetOrganizationSubject(ctx, tenantInfo)
-		if err != nil {
-			return carrierintelports.CarrierIntelSubject{}, err
-		}
-		if org != nil {
-			return *org, nil
-		}
-	case carrierintel.SubjectTypeCustomer:
-		customerID, err := pulid.Parse(snap.SubjectID)
-		if err == nil {
-			customer, customerErr := s.subjectRepo.GetCustomerSubject(ctx, tenantInfo, customerID)
-			if customerErr == nil {
-				return *customer, nil
-			}
-		}
-	}
-	return carrierintelports.CarrierIntelSubject{
-		SubjectType:  snap.SubjectType,
-		SubjectID:    snap.SubjectID,
-		CarrierID:    snap.CarrierID,
-		DOTNumber:    snap.DOTNumber,
-		DocketNumber: snap.DocketNumber,
-	}, nil
 }

@@ -51,7 +51,7 @@ type NotificationSender interface {
 	) (bool, error)
 }
 
-type boundProvider struct {
+type BoundProvider struct {
 	provider   integration.Type
 	connector  carrierintelports.CarrierIntelConnector
 	client     carrierintelports.CarrierIntelClient
@@ -61,8 +61,16 @@ type boundProvider struct {
 	tenant     pagination.TenantInfo
 }
 
-func (b *boundProvider) capabilities() carrierintel.CapabilitySet {
+func (b *BoundProvider) Capabilities() carrierintel.CapabilitySet {
 	return b.descriptor.Capabilities
+}
+
+func (b *BoundProvider) Client() carrierintelports.CarrierIntelClient {
+	return b.client
+}
+
+func (b *BoundProvider) Provider() integration.Type {
+	return b.provider
 }
 
 type breakerState struct {
@@ -109,12 +117,12 @@ func (b *circuitBreaker) record(key string, failed bool, now time.Time) {
 	}
 }
 
-func (s *Service) bind(
+func (s *Service) Bind(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
 	fallback bool,
-) (*boundProvider, error) {
+) (*BoundProvider, error) {
 	connector, ok := s.connectors[provider]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
@@ -127,7 +135,7 @@ func (s *Service) bind(
 		return nil, err
 	}
 
-	bound := &boundProvider{
+	bound := &BoundProvider{
 		provider:   provider,
 		connector:  connector,
 		descriptor: connector.Descriptor(),
@@ -151,30 +159,30 @@ func (s *Service) bind(
 	return bound, nil
 }
 
-func (s *Service) resolvePrimary(
+func (s *Service) ResolvePrimary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintelcontrol.CarrierIntelControl,
-) (*boundProvider, error) {
+) (*BoundProvider, error) {
 	provider, ok := control.PrimaryType()
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"No carrier intelligence provider is enabled. Enable CarrierOk or FMCSA QCMobile in Integrations",
 		)
 	}
-	return s.bind(ctx, tenantInfo, provider, false)
+	return s.Bind(ctx, tenantInfo, provider, false)
 }
 
 func (s *Service) resolveFallback(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintelcontrol.CarrierIntelControl,
-) (*boundProvider, bool) {
+) (*BoundProvider, bool) {
 	provider, ok := control.FallbackType()
 	if !ok {
 		return nil, false
 	}
-	bound, err := s.bind(ctx, tenantInfo, provider, true)
+	bound, err := s.Bind(ctx, tenantInfo, provider, true)
 	if err != nil {
 		s.l.Warn("carrier intelligence fallback provider unavailable",
 			zap.String("provider", provider.String()), zap.Error(err))
@@ -183,7 +191,7 @@ func (s *Service) resolveFallback(
 	return bound, true
 }
 
-func (s *Service) recorderFor(bound *boundProvider) carrierintelports.CarrierIntelCallRecorder {
+func (s *Service) recorderFor(bound *BoundProvider) carrierintelports.CarrierIntelCallRecorder {
 	return func(ctx context.Context, call carrierintelports.CarrierIntelCall) {
 		s.recordCall(ctx, bound, call)
 	}
@@ -191,7 +199,7 @@ func (s *Service) recorderFor(bound *boundProvider) carrierintelports.CarrierInt
 
 func (s *Service) recordCall(
 	ctx context.Context,
-	bound *boundProvider,
+	bound *BoundProvider,
 	call carrierintelports.CarrierIntelCall,
 ) {
 	now := s.now()
@@ -312,11 +320,11 @@ func isOutageError(err error) bool {
 	return kind == carrierintelports.CarrierIntelErrorUnavailable
 }
 
-func (s *Service) providerAvailable(bound *boundProvider) bool {
+func (s *Service) providerAvailable(bound *BoundProvider) bool {
 	return !s.breaker.isOpen(breakerKey(bound.tenant, bound.provider), time.Unix(s.now(), 0))
 }
 
-func (s *Service) withRateLimitWait(ctx context.Context, fn func() error) error {
+func (s *Service) WithRateLimitWait(ctx context.Context, fn func() error) error {
 	err := fn()
 	if err == nil || !carrierintel.IsInteractiveContext(ctx) {
 		return err
@@ -348,7 +356,7 @@ func retryAfter(err error) (time.Duration, bool) {
 	return 0, false
 }
 
-func toBusinessError(provider integration.Type, err error) error {
+func ToBusinessError(provider integration.Type, err error) error {
 	if err == nil {
 		return nil
 	}

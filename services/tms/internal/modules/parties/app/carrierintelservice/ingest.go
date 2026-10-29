@@ -39,7 +39,7 @@ type ingestInput struct {
 	tenant  pagination.TenantInfo
 	control *carrierintelcontrol.CarrierIntelControl
 	subject carrierintelports.CarrierIntelSubject
-	bound   *boundProvider
+	bound   *BoundProvider
 	result  *carrierintelports.CarrierIntelLookupResult
 	current *carrierintelsnapshot.CarrierIntelSnapshot
 	source  carrierintelevent.EventSource
@@ -201,7 +201,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 			return txErr
 		}
 
-		return s.updateCarrierSummary(txCtx, in.tenant, in.subject, snapshot)
+		return s.UpdateCarrierSummary(txCtx, in.tenant, in.subject, snapshot)
 	})
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (s *Service) confirmUnchanged(
 		if events, txErr = s.eventRepo.InsertIgnoreDuplicates(txCtx, events); txErr != nil {
 			return txErr
 		}
-		return s.updateCarrierSummary(txCtx, in.tenant, in.subject, current)
+		return s.UpdateCarrierSummary(txCtx, in.tenant, in.subject, current)
 	})
 	if err != nil {
 		return nil, err
@@ -480,7 +480,7 @@ func (s *Service) buildEvents(
 	return events
 }
 
-func (s *Service) updateCarrierSummary(
+func (s *Service) UpdateCarrierSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	subject carrierintelports.CarrierIntelSubject,
@@ -537,12 +537,12 @@ func (s *Service) afterIngest(
 		}
 	}
 
-	s.publish(ctx, in.tenant, "carrier_intelligence", "updated", snapshot.ID)
+	s.Publish(ctx, in.tenant, "carrier_intelligence", "updated", snapshot.ID)
 	if in.subject.CarrierID.IsNotNil() {
-		s.publish(ctx, in.tenant, "carriers", "updated", in.subject.CarrierID)
+		s.Publish(ctx, in.tenant, "carriers", "updated", in.subject.CarrierID)
 	}
 	if len(events) > 0 {
-		s.publish(ctx, in.tenant, "carrier_intel_events", "created", pulid.Nil)
+		s.Publish(ctx, in.tenant, "carrier_intel_events", "created", pulid.Nil)
 		s.projectEventsToWatchtower(ctx, events)
 		s.publishEventsToAgents(ctx, in.tenant, events)
 	}
@@ -606,7 +606,7 @@ func snapshotAuditView(snapshot *carrierintelsnapshot.CarrierIntelSnapshot) map[
 	}
 }
 
-func (s *Service) publish(
+func (s *Service) Publish(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	resource, action string,
@@ -642,9 +642,9 @@ func (s *Service) notifyRaised(
 	raised []carrierintelrule.Finding,
 ) {
 	name := subjectLabel(in.subject, snapshot.Profile)
-	link := monitoringLink
+	link := MonitoringLink
 	if in.subject.CarrierID.IsNotNil() {
-		link = carrierLinkPrefix + in.subject.CarrierID.String()
+		link = CarrierLinkPrefix + in.subject.CarrierID.String()
 	}
 	related := map[string]any{
 		"subjectType": in.subject.SubjectType.String(),
@@ -672,16 +672,16 @@ func (s *Service) notifyRaised(
 		default:
 			continue
 		}
-		s.sendNotification(ctx, &notificationRequest{
-			tenant:      in.tenant,
-			eventType:   eventType,
-			correlation: fmt.Sprintf("ci-%s-%s-%s", in.subject.SubjectID, finding.Code, day),
-			priority:    priority,
-			title:       title,
-			message:     finding.Message,
-			link:        link,
-			related:     related,
-			data:        map[string]any{"ruleCode": finding.Code.String()},
+		s.SendNotification(ctx, &NotificationRequest{
+			Tenant:      in.tenant,
+			EventType:   eventType,
+			Correlation: fmt.Sprintf("ci-%s-%s-%s", in.subject.SubjectID, finding.Code, day),
+			Priority:    priority,
+			Title:       title,
+			Message:     finding.Message,
+			Link:        link,
+			Related:     related,
+			Data:        map[string]any{"ruleCode": finding.Code.String()},
 		})
 	}
 }

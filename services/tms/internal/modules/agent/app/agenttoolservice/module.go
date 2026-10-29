@@ -74,7 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -499,13 +499,13 @@ func providePlaceWorkerDispatchHoldTool(workers *workerservice.Service) agenttoo
 }
 
 func provideAcknowledgeCarrierIntelEventTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelreviewservice.Service,
 ) agenttoolports.AgentTool {
 	return findingtools.NewAcknowledgeCarrierIntelEventTool(intel)
 }
 
 func provideResolveCarrierIntelEventTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelreviewservice.Service,
 ) agenttoolports.AgentTool {
 	return findingtools.NewResolveCarrierIntelEventTool(intel)
 }

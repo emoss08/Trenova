@@ -25,7 +25,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 )
@@ -293,40 +297,42 @@ func provideWithdrawShiftSwapTool(schedules *schedulingservice.Service) agenttoo
 	return shifttools.NewWithdrawShiftSwapTool(schedules)
 }
 
-func provideVetCarrierTool(intel *carrierintelservice.Service) agenttoolports.AgentTool {
+func provideVetCarrierTool(intel *carrierintelvetservice.Service) agenttoolports.AgentTool {
 	return carriertools.NewVetCarrierTool(intel)
 }
 
-func provideVetCustomerBrokerTool(intel *carrierintelservice.Service) agenttoolports.AgentTool {
+func provideVetCustomerBrokerTool(intel *carrierintelvetservice.Service) agenttoolports.AgentTool {
 	return carriertools.NewVetCustomerBrokerTool(intel)
 }
 
-func provideSetCarrierMonitoringTool(intel *carrierintelservice.Service) agenttoolports.AgentTool {
+func provideSetCarrierMonitoringTool(
+	intel *carrierintelenrollmentservice.Service,
+) agenttoolports.AgentTool {
 	return carriertools.NewSetCarrierMonitoringTool(intel)
 }
 
 func provideMarkCarrierIntelReviewedTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelreviewservice.Service,
 ) agenttoolports.AgentTool {
 	return carriertools.NewMarkCarrierIntelReviewedTool(intel)
 }
 
 func provideApplyCarrierIntelSuggestionsTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelvetservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
 	return carriertools.NewApplyCarrierIntelSuggestionsTool(intel, permissions)
 }
 
 func provideImportSourcedCarrierTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelsourcingservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
 	return carriertools.NewImportSourcedCarrierTool(intel, permissions)
 }
 
 func provideVerifyCarrierEquipmentTool(
-	intel *carrierintelservice.Service,
+	intel *carrierintelverifyservice.Service,
 ) agenttoolports.AgentTool {
 	return carriertools.NewVerifyCarrierEquipmentTool(intel)
 }

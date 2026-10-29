@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelreviewservice
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -96,7 +95,7 @@ func (s *Service) AcknowledgeEvents(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	s.publish(ctx, tenantInfo, "carrier_intel_events", "updated", pulid.Nil)
+	s.intel.Publish(ctx, tenantInfo, "carrier_intel_events", "updated", pulid.Nil)
 	return count, nil
 }
 
@@ -170,7 +169,7 @@ func (s *Service) ResolveEvent(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	s.publish(ctx, req.TenantInfo, "carrier_intel_events", "updated", updated.ID)
+	s.intel.Publish(ctx, req.TenantInfo, "carrier_intel_events", "updated", updated.ID)
 	if s.watchtower != nil {
 		s.watchtower.Resolve(
 			ctx,
@@ -232,7 +231,7 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		return err
 	}
 	if snapshot != nil && subjectType == carrierintel.SubjectTypeCarrier {
-		if err = s.updateCarrierSummary(ctx, req.TenantInfo, carrierintelports.CarrierIntelSubject{
+		if err = s.intel.UpdateCarrierSummary(ctx, req.TenantInfo, carrierintelports.CarrierIntelSubject{
 			SubjectType: subjectType,
 			SubjectID:   subjectID,
 			CarrierID:   snapshot.CarrierID,
@@ -261,9 +260,9 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	s.publish(ctx, req.TenantInfo, "carrier_intelligence", "updated", pulid.Nil)
+	s.intel.Publish(ctx, req.TenantInfo, "carrier_intelligence", "updated", pulid.Nil)
 	if req.CarrierID.IsNotNil() {
-		s.publish(ctx, req.TenantInfo, "carriers", "updated", req.CarrierID)
+		s.intel.Publish(ctx, req.TenantInfo, "carriers", "updated", req.CarrierID)
 	}
 	return nil
 }
@@ -320,65 +319,6 @@ func (s *Service) OpenEventCountsByCarrierIDs(
 	carrierIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
 	return s.eventRepo.CountOpenByCarrierIDs(ctx, tenantInfo, carrierIDs)
-}
-
-func (s *Service) EnrollmentsByCarrierIDs(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	carrierIDs []pulid.ID,
-) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
-	return s.enrollmentRepo.GetByCarrierIDs(ctx, tenantInfo, carrierIDs)
-}
-
-func (s *Service) ListEnrollments(
-	ctx context.Context,
-	req *carrierintelports.ListEnrollmentConnectionRequest,
-) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
-	return s.enrollmentRepo.ListConnection(ctx, req)
-}
-
-func (s *Service) EnrollmentCounts(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
-	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	provider, ok := control.PrimaryType()
-	if !ok {
-		return &carrierintelports.CarrierIntelEnrollmentCounts{}, nil
-	}
-	return s.enrollmentRepo.Counts(ctx, tenantInfo, provider)
-}
-
-func (s *Service) FeedStates(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) ([]*carrierintelenrollment.CarrierIntelFeedState, error) {
-	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	provider, ok := control.PrimaryType()
-	if !ok {
-		return []*carrierintelenrollment.CarrierIntelFeedState{}, nil
-	}
-	states := make([]*carrierintelenrollment.CarrierIntelFeedState, 0, 2)
-	for _, feedType := range []carrierintelenrollment.FeedType{
-		carrierintelenrollment.FeedTypeChangeFeed, carrierintelenrollment.FeedTypeSnapshotRefresh,
-	} {
-		state, getErr := s.feedRepo.Get(ctx, carrierintelports.CarrierIntelFeedStateKey{
-			TenantInfo: tenantInfo, Provider: provider, FeedType: feedType,
-		})
-		if getErr != nil {
-			return nil, getErr
-		}
-		if state != nil {
-			states = append(states, state)
-		}
-	}
-	return states, nil
 }
 
 func (s *Service) RawPayload(

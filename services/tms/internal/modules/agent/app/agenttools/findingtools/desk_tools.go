@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
@@ -700,7 +700,7 @@ type carrierIntelActor interface {
 	) (int, error)
 	ResolveEvent(
 		ctx context.Context,
-		req *carrierintelservice.ResolveEventRequest,
+		req *carrierintelreviewservice.ResolveEventRequest,
 	) (*carrierintelevent.CarrierIntelEvent, error)
 	GetEvent(
 		ctx context.Context,
@@ -840,7 +840,7 @@ func (t *carrierIntelEventTool) required() []string {
 
 func (t *carrierIntelEventTool) arguments(
 	params agenttoolports.ToolExecuteParams,
-) (*carrierintelservice.ResolveEventRequest, error) {
+) (*carrierintelreviewservice.ResolveEventRequest, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -854,7 +854,7 @@ func (t *carrierIntelEventTool) arguments(
 		return nil, err
 	}
 
-	request := &carrierintelservice.ResolveEventRequest{
+	request := &carrierintelreviewservice.ResolveEventRequest{
 		EventID:    eventID,
 		TenantInfo: toolparams.TenantFrom(params),
 		Note:       strings.TrimSpace(note),

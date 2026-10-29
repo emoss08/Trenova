@@ -1,10 +1,10 @@
-package carrierintelservice
+package carrierintelenrollmentservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
@@ -74,7 +74,7 @@ func (s *Service) CarrierSaved(
 	}
 
 	entity := event.Carrier
-	subject := carrierSubject(entity)
+	subject := CarrierSubject(entity)
 	now := s.now()
 
 	switch {
@@ -157,7 +157,7 @@ func (s *Service) CarriersUsed(
 	}
 }
 
-func carrierSubject(entity *carrier.Carrier) carrierintelports.CarrierIntelSubject {
+func CarrierSubject(entity *carrier.Carrier) carrierintelports.CarrierIntelSubject {
 	return carrierintelports.CarrierIntelSubject{
 		SubjectType:  carrierintel.SubjectTypeCarrier,
 		SubjectID:    entity.ID.String(),
@@ -185,7 +185,7 @@ func (s *Service) setDesired(ctx context.Context, req *desireRequest) error {
 	if len(req.subjects) == 0 {
 		return nil
 	}
-	connector, ok := s.connectors[req.provider]
+	connector, ok := s.intel.Connector(req.provider)
 	if !ok {
 		return nil
 	}
@@ -301,7 +301,7 @@ func (s *Service) SetManualEnrollment(
 			"Enable a carrier intelligence provider before monitoring carriers",
 		)
 	}
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok || !connector.Descriptor().Capabilities.SupportsMonitoring() {
 		return 0, errortypes.NewBusinessError(
 			"{0} does not support carrier monitoring", provider.String(),
@@ -340,7 +340,7 @@ func (s *Service) SetManualEnrollment(
 	}); err != nil {
 		return 0, err
 	}
-	s.publish(ctx, req.TenantInfo, "carrier_monitoring_enrollments", "updated", pulid.Nil)
+	s.intel.Publish(ctx, req.TenantInfo, "carrier_monitoring_enrollments", "updated", pulid.Nil)
 	return len(subjects), nil
 }
 
@@ -518,7 +518,7 @@ func (s *Service) SyncPendingEnrollments(
 	}
 
 	now := s.now()
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok {
 		return &SyncResult{}, nil
 	}
@@ -529,11 +529,11 @@ func (s *Service) SyncPendingEnrollments(
 		return &SyncResult{Enrolled: len(pending)}, s.enrollmentRepo.SaveSyncState(ctx, pending)
 	}
 
-	bound, err := s.bind(ctx, tenantInfo, provider, false)
+	bound, err := s.intel.Bind(ctx, tenantInfo, provider, false)
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
+	monitor, ok := bound.Client().(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &SyncResult{}, nil
 	}
@@ -590,7 +590,7 @@ func (s *Service) SyncPendingEnrollments(
 	}
 
 	if result.Enrolled+result.Removed > 0 {
-		s.publish(ctx, tenantInfo, "carrier_monitoring_enrollments", "updated", pulid.Nil)
+		s.intel.Publish(ctx, tenantInfo, "carrier_monitoring_enrollments", "updated", pulid.Nil)
 	}
 	return result, nil
 }
@@ -633,7 +633,7 @@ func (s *Service) fillProviderRefs(
 type syncBatch struct {
 	tenant  pagination.TenantInfo
 	control *carrierintelcontrol.CarrierIntelControl
-	bound   *boundProvider
+	bound   *carrierintelservice.BoundProvider
 	rows    []*carrierintelenrollment.CarrierMonitoringEnrollment
 	add     bool
 	call    func(ctx context.Context, refs []string) (*carrierintelports.CarrierIntelEnrollResult, error)
@@ -653,12 +653,12 @@ func (s *Service) syncBatches(ctx context.Context, batch *syncBatch) error {
 
 		if batch.add {
 			for _, row := range chunk {
-				if err := s.guardBudget(ctx, &budgetCheck{
-					tenant:    batch.tenant,
-					control:   batch.control,
-					bound:     batch.bound,
-					endpoint:  carrierintelusage.EndpointMonitorAdd,
-					dotNumber: row.DOTNumber,
+				if err := s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
+					Tenant:    batch.tenant,
+					Control:   batch.control,
+					Bound:     batch.bound,
+					Endpoint:  carrierintelusage.EndpointMonitorAdd,
+					DOTNumber: row.DOTNumber,
 				}); err != nil {
 					return err
 				}
@@ -668,11 +668,11 @@ func (s *Service) syncBatches(ctx context.Context, batch *syncBatch) error {
 		outcome, err := batch.call(ctx, refs)
 		now := s.now()
 		if err != nil {
-			if isPausingError(err) {
+			if IsPausingError(err) {
 				return err
 			}
 			for _, row := range chunk {
-				row.MarkFailed(errorSummary(err), now)
+				row.MarkFailed(carrierintelservice.ErrorSummary(err), now)
 			}
 			batch.result.Failed += len(chunk)
 			if saveErr := s.enrollmentRepo.SaveSyncState(ctx, chunk); saveErr != nil {
@@ -705,8 +705,8 @@ func (s *Service) syncBatches(ctx context.Context, batch *syncBatch) error {
 	return nil
 }
 
-func isPausingError(err error) bool {
-	if isSpendCapError(err) {
+func IsPausingError(err error) bool {
+	if carrierintelservice.IsSpendCapError(err) {
 		return true
 	}
 	kind, ok := carrierintelports.CarrierIntelErrorKindOf(err)
@@ -714,8 +714,8 @@ func isPausingError(err error) bool {
 		kind == carrierintelports.CarrierIntelErrorPaymentRequired)
 }
 
-func pauseReasonFor(err error) carrierintelenrollment.FeedPauseReason {
-	if isSpendCapError(err) {
+func PauseReasonFor(err error) carrierintelenrollment.FeedPauseReason {
+	if carrierintelservice.IsSpendCapError(err) {
 		return carrierintelenrollment.FeedPauseReasonSpendCap
 	}
 	kind, _ := carrierintelports.CarrierIntelErrorKindOf(err)
@@ -729,18 +729,6 @@ func pauseReasonFor(err error) carrierintelenrollment.FeedPauseReason {
 	}
 }
 
-func errorSummary(err error) string {
-	var providerErr *carrierintelports.CarrierIntelProviderError
-	if errors.As(err, &providerErr) {
-		return providerErr.Error()
-	}
-	var business *errortypes.BusinessError
-	if errors.As(err, &business) {
-		return business.Error()
-	}
-	return "provider request failed"
-}
-
 func (s *Service) pauseFromError(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -749,17 +737,17 @@ func (s *Service) pauseFromError(
 	cause error,
 	result *SyncResult,
 ) (*SyncResult, error) {
-	reason := pauseReasonFor(cause)
+	reason := PauseReasonFor(cause)
 	if reason == carrierintelenrollment.FeedPauseReasonNone {
 		return result, cause
 	}
-	if err := s.pauseFeed(
+	if err := s.PauseFeed(
 		ctx,
 		tenantInfo,
 		provider,
 		feedType,
 		reason,
-		errorSummary(cause),
+		carrierintelservice.ErrorSummary(cause),
 	); err != nil {
 		return result, err
 	}
@@ -768,7 +756,7 @@ func (s *Service) pauseFromError(
 	return result, nil
 }
 
-func (s *Service) pauseFeed(
+func (s *Service) PauseFeed(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
@@ -786,7 +774,7 @@ func (s *Service) pauseFeed(
 		return err
 	}
 	if state == nil {
-		state = newFeedState(key)
+		state = NewFeedState(key)
 	}
 	alreadyPaused := state.PausedReason == reason
 	state.Pause(reason, message, s.now())
@@ -796,29 +784,28 @@ func (s *Service) pauseFeed(
 	if alreadyPaused || reason == carrierintelenrollment.FeedPauseReasonSpendCap {
 		return nil
 	}
-
-	s.sendNotification(ctx, &notificationRequest{
-		tenant:    tenantInfo,
-		eventType: EventCarrierIntelProviderDown,
-		correlation: fmt.Sprintf(
+	s.intel.SendNotification(ctx, &carrierintelservice.NotificationRequest{
+		Tenant:    tenantInfo,
+		EventType: carrierintelservice.EventCarrierIntelProviderDown,
+		Correlation: fmt.Sprintf(
 			"ci-paused-%s-%s-%s",
 			provider,
 			reason,
 			timeutils.FormatDateKeyUTC(s.now()),
 		),
-		priority: notification.PriorityCritical,
-		title:    "Carrier monitoring paused",
-		message: fmt.Sprintf(
+		Priority: notification.PriorityCritical,
+		Title:    "Carrier monitoring paused",
+		Message: fmt.Sprintf(
 			"%s rejected monitoring requests (%s). Carriers are not being watched until the integration is fixed in Integrations.",
 			provider,
 			reason,
 		),
-		link: "/admin/integrations?type=" + provider.String(),
+		Link: "/admin/integrations?type=" + provider.String(),
 	})
 	return nil
 }
 
-func newFeedState(
+func NewFeedState(
 	key carrierintelports.CarrierIntelFeedStateKey,
 ) *carrierintelenrollment.CarrierIntelFeedState {
 	return &carrierintelenrollment.CarrierIntelFeedState{
@@ -884,7 +871,7 @@ func (s *Service) EstimateEnrollmentCost(
 	if !ok {
 		return nil, errortypes.NewBusinessError("Enable a carrier intelligence provider first")
 	}
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok {
 		return nil, errortypes.NewBusinessError("{0} is not available", provider.String())
 	}
@@ -926,15 +913,15 @@ func (s *Service) DriftCheck(
 	if !ok {
 		return &ReconcileResult{}, nil
 	}
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok || !connector.Descriptor().Capabilities.Has(carrierintel.CapabilityNativeMonitoring) {
 		return &ReconcileResult{}, nil
 	}
-	bound, err := s.bind(ctx, tenantInfo, provider, false)
+	bound, err := s.intel.Bind(ctx, tenantInfo, provider, false)
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
+	monitor, ok := bound.Client().(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &ReconcileResult{}, nil
 	}

@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelreviewservice
 
 import (
 	"context"
@@ -89,7 +89,7 @@ func (s *Service) GrantOverride(
 		"Override granted for %s until %s: %s",
 		req.RuleCode, timeutils.FormatUnixDate(created.ExpiresAt), created.Reason,
 	))
-	s.refreshStoredEvaluation(ctx, req.TenantInfo, req.CarrierID)
+	s.intel.RefreshStoredEvaluation(ctx, req.TenantInfo, req.CarrierID)
 	return created, nil
 }
 
@@ -120,7 +120,7 @@ func (s *Service) RevokeOverride(
 	s.recordOverrideEvent(ctx, req.TenantInfo, updated, fmt.Sprintf(
 		"Override for %s revoked: %s", updated.RuleCode, updated.RevokeReason,
 	))
-	s.refreshStoredEvaluation(ctx, req.TenantInfo, updated.CarrierID)
+	s.intel.RefreshStoredEvaluation(ctx, req.TenantInfo, updated.CarrierID)
 	return updated, nil
 }
 
@@ -212,43 +212,4 @@ func (s *Service) recordOverrideEvent(
 	); err != nil {
 		s.l.Warn("failed to record override event", zap.Error(err))
 	}
-}
-
-func (s *Service) refreshStoredEvaluation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	carrierID pulid.ID,
-) {
-	snapshot, err := s.snapshotRepo.GetCurrent(
-		ctx,
-		tenantInfo,
-		carrierintelports.CarrierIntelSubjectRef{
-			SubjectType: carrierintel.SubjectTypeCarrier,
-			SubjectID:   carrierID.String(),
-		},
-	)
-	if err != nil || snapshot == nil {
-		return
-	}
-	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return
-	}
-	subject, err := s.subjectForSnapshot(ctx, tenantInfo, snapshot)
-	if err != nil {
-		return
-	}
-	findings := s.recomputeFindings(ctx, tenantInfo, control, subject, snapshot)
-	prior := snapshot.Findings
-	snapshot.ApplyFindings(findings, control.PolicyVersion)
-	snapshot.ReviewState = nextReviewState(snapshot, prior, findings)
-	if err = s.snapshotRepo.UpdateEvaluation(ctx, snapshot); err != nil {
-		s.l.Warn("failed to refresh stored findings after override change", zap.Error(err))
-		return
-	}
-	if err = s.updateCarrierSummary(ctx, tenantInfo, subject, snapshot); err != nil {
-		s.l.Warn("failed to update carrier summary after override change", zap.Error(err))
-	}
-	s.publish(ctx, tenantInfo, "carriers", "updated", carrierID)
-	s.publish(ctx, tenantInfo, "carrier_intelligence", "updated", snapshot.ID)
 }

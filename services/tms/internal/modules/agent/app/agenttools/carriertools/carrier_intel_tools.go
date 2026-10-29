@@ -17,7 +17,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
@@ -88,15 +93,15 @@ var syncFieldValues = agenttoolschema.Source(
 	carrierintelsync.AllSyncFields(),
 )
 
-type carrierIntelOperator interface {
+type carrierVetter interface {
 	VetCarrier(
 		ctx context.Context,
-		req *carrierintelservice.VetCarrierRequest,
+		req *carrierintelvetservice.VetCarrierRequest,
 	) (*carrierintelservice.FetchResult, error)
 	PlanVetCarrier(
 		ctx context.Context,
-		req *carrierintelservice.VetCarrierRequest,
-	) (*carrierintelservice.VetPlan, error)
+		req *carrierintelvetservice.VetCarrierRequest,
+	) (*carrierintelvetservice.VetPlan, error)
 	VetCustomerBroker(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -107,20 +112,7 @@ type carrierIntelOperator interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		customerID pulid.ID,
-	) (*carrierintelservice.VetPlan, error)
-	SetManualEnrollment(
-		ctx context.Context,
-		req *carrierintelservice.EnrollSubjectsRequest,
-	) (int, error)
-	PlanManualEnrollment(
-		ctx context.Context,
-		req *carrierintelservice.EnrollSubjectsRequest,
-	) ([]carrierintelservice.EnrollmentChange, error)
-	MarkReviewed(ctx context.Context, req *carrierintelservice.MarkReviewedRequest) error
-	PlanMarkReviewed(
-		ctx context.Context,
-		req *carrierintelservice.MarkReviewedRequest,
-	) (*carrierintelservice.SnapshotChange, error)
+	) (*carrierintelvetservice.VetPlan, error)
 	SyncPlan(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -128,27 +120,52 @@ type carrierIntelOperator interface {
 	) (*carrierintelsync.SyncPlan, error)
 	ApplySuggestions(
 		ctx context.Context,
-		req *carrierintelservice.ApplySuggestionsRequest,
+		req *carrierintelvetservice.ApplySuggestionsRequest,
 	) (int, error)
 	PlanApplySuggestions(
 		ctx context.Context,
-		req *carrierintelservice.ApplySuggestionsRequest,
-	) (*carrierintelservice.SuggestionPlan, error)
+		req *carrierintelvetservice.ApplySuggestionsRequest,
+	) (*carrierintelvetservice.SuggestionPlan, error)
+}
+
+type carrierMonitoringEnroller interface {
+	SetManualEnrollment(
+		ctx context.Context,
+		req *carrierintelenrollmentservice.EnrollSubjectsRequest,
+	) (int, error)
+	PlanManualEnrollment(
+		ctx context.Context,
+		req *carrierintelenrollmentservice.EnrollSubjectsRequest,
+	) ([]carrierintelenrollmentservice.EnrollmentChange, error)
+}
+
+type carrierIntelReviewer interface {
+	MarkReviewed(ctx context.Context, req *carrierintelreviewservice.MarkReviewedRequest) error
+	PlanMarkReviewed(
+		ctx context.Context,
+		req *carrierintelreviewservice.MarkReviewedRequest,
+	) (*carrierintelreviewservice.SnapshotChange, error)
+}
+
+type carrierProspectImporter interface {
 	ImportProspect(
 		ctx context.Context,
-		req *carrierintelservice.ImportProspectRequest,
+		req *carrierintelsourcingservice.ImportProspectRequest,
 	) (*carrier.Carrier, error)
 	PlanImportProspect(
 		ctx context.Context,
-		req *carrierintelservice.ImportProspectRequest,
-	) (*carrierintelservice.ImportPlan, error)
+		req *carrierintelsourcingservice.ImportProspectRequest,
+	) (*carrierintelsourcingservice.ImportPlan, error)
+}
+
+type carrierEquipmentVerifier interface {
 	VerifyEquipment(
 		ctx context.Context,
-		req *carrierintelservice.VerifyEquipmentRequest,
+		req *carrierintelverifyservice.VerifyEquipmentRequest,
 	) (*carrierintelverification.CarrierEquipmentVerification, error)
 	PlanVerifyEquipment(
 		ctx context.Context,
-		req *carrierintelservice.VerifyEquipmentRequest,
+		req *carrierintelverifyservice.VerifyEquipmentRequest,
 	) (*carrierintelverification.CarrierEquipmentVerification, *carrier.Carrier, error)
 }
 
@@ -205,7 +222,7 @@ func carrierIntelResult(action string, ids map[string]string) *agentrecord.ToolE
 func vetPreview(
 	subjectResource permission.Resource,
 	subjectID pulid.ID,
-	plan *carrierintelservice.VetPlan,
+	plan *carrierintelvetservice.VetPlan,
 	force bool,
 ) *agentpreview.ToolPreview {
 	name := strings.TrimSpace(plan.Subject.Name)
@@ -234,7 +251,7 @@ func vetPreview(
 	return preview
 }
 
-func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
+func NewVetCarrierTool(intel carrierVetter) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_vet",
 		Artifact: changepreview.CarrierRecordEntity,
@@ -261,10 +278,10 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 		},
 		Required: []string{toolparams.ParamCarrierID},
 		Target:   targetCarrier,
-	}, toolspec.ReceivablePlan[*carrierintelservice.VetCarrierRequest, *carrierintelservice.VetPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelvetservice.VetCarrierRequest, *carrierintelvetservice.VetPlan]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.VetCarrierRequest, error) {
+		) (*carrierintelvetservice.VetCarrierRequest, error) {
 			carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 			if err != nil {
 				return nil, err
@@ -278,7 +295,7 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 				return nil, err
 			}
 
-			return &carrierintelservice.VetCarrierRequest{
+			return &carrierintelvetservice.VetCarrierRequest{
 				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierID:  carrierID,
 				Depth:      depth,
@@ -287,23 +304,23 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 		},
 		Plan: func(
 			ctx context.Context,
-			req *carrierintelservice.VetCarrierRequest,
+			req *carrierintelvetservice.VetCarrierRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.VetPlan, error) {
+		) (*carrierintelvetservice.VetPlan, error) {
 			return intel.PlanVetCarrier(ctx, req)
 		},
-		Refused: func(*carrierintelservice.VetCarrierRequest) string {
+		Refused: func(*carrierintelvetservice.VetCarrierRequest) string {
 			return "Would vet the carrier."
 		},
 		Render: func(
-			req *carrierintelservice.VetCarrierRequest,
-			plan *carrierintelservice.VetPlan,
+			req *carrierintelvetservice.VetCarrierRequest,
+			plan *carrierintelvetservice.VetPlan,
 		) (*agentpreview.ToolPreview, error) {
 			return vetPreview(permission.ResourceCarrier, req.CarrierID, plan, req.Force), nil
 		},
 		Run: func(
 			ctx context.Context,
-			req *carrierintelservice.VetCarrierRequest,
+			req *carrierintelvetservice.VetCarrierRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			result, err := intel.VetCarrier(ctx, req)
@@ -341,7 +358,7 @@ type brokerVet struct {
 	force      bool
 }
 
-func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTool {
+func NewVetCustomerBrokerTool(intel carrierVetter) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "customer_vet_broker",
 		Artifact: changepreview.CustomerRecordEntity,
@@ -375,7 +392,7 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 				permission.ResourceCustomer,
 			)
 		},
-	}, toolspec.ReceivablePlan[*brokerVet, *carrierintelservice.VetPlan]{
+	}, toolspec.ReceivablePlan[*brokerVet, *carrierintelvetservice.VetPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*brokerVet, error) {
 			customerID, err := toolparams.RequirePulid(params.Params, changepreview.FieldCustomerID)
 			if err != nil {
@@ -396,11 +413,11 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 			ctx context.Context,
 			req *brokerVet,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.VetPlan, error) {
+		) (*carrierintelvetservice.VetPlan, error) {
 			return intel.PlanVetCustomerBroker(ctx, req.tenant, req.customerID)
 		},
 		Refused: func(*brokerVet) string { return "Would vet the broker." },
-		Render: func(req *brokerVet, plan *carrierintelservice.VetPlan) (*agentpreview.ToolPreview, error) {
+		Render: func(req *brokerVet, plan *carrierintelvetservice.VetPlan) (*agentpreview.ToolPreview, error) {
 			return vetPreview(permission.ResourceCustomer, req.customerID, plan, req.force), nil
 		},
 		Run: func(
@@ -425,7 +442,7 @@ type monitoringView struct {
 	Monitoring carrierintelenrollment.DesiredState `json:"monitoring"`
 }
 
-func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.AgentTool {
+func NewSetCarrierMonitoringTool(intel carrierMonitoringEnroller) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_set_monitoring",
 		Artifact: changepreview.CarrierRecordEntity,
@@ -450,10 +467,10 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 			ParamEnabled: toolparams.BooleanProperty("True to monitor them, false to stop."),
 		},
 		Required: []string{paramCarrierIDs, ParamEnabled},
-	}, toolspec.ReceivablePlan[*carrierintelservice.EnrollSubjectsRequest, []carrierintelservice.EnrollmentChange]{
+	}, toolspec.ReceivablePlan[*carrierintelenrollmentservice.EnrollSubjectsRequest, []carrierintelenrollmentservice.EnrollmentChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.EnrollSubjectsRequest, error) {
+		) (*carrierintelenrollmentservice.EnrollSubjectsRequest, error) {
 			ids, err := toolparams.RequirePulidSlice(
 				params.Params,
 				paramCarrierIDs,
@@ -470,7 +487,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 				return nil, fmt.Errorf("missing required parameter %q", ParamEnabled)
 			}
 
-			return &carrierintelservice.EnrollSubjectsRequest{
+			return &carrierintelenrollmentservice.EnrollSubjectsRequest{
 				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierIDs: ids,
 				Enroll:     *enabled,
@@ -478,18 +495,18 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 		},
 		Plan: func(
 			ctx context.Context,
-			req *carrierintelservice.EnrollSubjectsRequest,
+			req *carrierintelenrollmentservice.EnrollSubjectsRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) ([]carrierintelservice.EnrollmentChange, error) {
+		) ([]carrierintelenrollmentservice.EnrollmentChange, error) {
 			return intel.PlanManualEnrollment(ctx, req)
 		},
-		Refused: func(*carrierintelservice.EnrollSubjectsRequest) string {
+		Refused: func(*carrierintelenrollmentservice.EnrollSubjectsRequest) string {
 			return "Would change carrier monitoring."
 		},
 		Render: renderMonitoring,
 		Run: func(
 			ctx context.Context,
-			req *carrierintelservice.EnrollSubjectsRequest,
+			req *carrierintelenrollmentservice.EnrollSubjectsRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			changed, err := intel.SetManualEnrollment(ctx, req)
@@ -509,8 +526,8 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 }
 
 func renderMonitoring(
-	req *carrierintelservice.EnrollSubjectsRequest,
-	changes []carrierintelservice.EnrollmentChange,
+	req *carrierintelenrollmentservice.EnrollSubjectsRequest,
+	changes []carrierintelenrollmentservice.EnrollmentChange,
 ) (*agentpreview.ToolPreview, error) {
 	records := make([]*agentpreview.RecordChange, 0, len(changes))
 	for idx := range changes {
@@ -548,7 +565,7 @@ func renderMonitoring(
 	return toolpreview.Build(summary, records...), nil
 }
 
-func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.AgentTool {
+func NewMarkCarrierIntelReviewedTool(intel carrierIntelReviewer) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_record_intelligence_review",
 		Artifact: changepreview.CarrierRecordEntity,
@@ -570,10 +587,10 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 		},
 		Required: []string{toolparams.ParamCarrierID, toolparams.ParamNote},
 		Target:   targetCarrier,
-	}, toolspec.ReceivablePlan[*carrierintelservice.MarkReviewedRequest, *carrierintelservice.SnapshotChange]{
+	}, toolspec.ReceivablePlan[*carrierintelreviewservice.MarkReviewedRequest, *carrierintelreviewservice.SnapshotChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.MarkReviewedRequest, error) {
+		) (*carrierintelreviewservice.MarkReviewedRequest, error) {
 			carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 			if err != nil {
 				return nil, err
@@ -587,7 +604,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 				return nil, err
 			}
 
-			return &carrierintelservice.MarkReviewedRequest{
+			return &carrierintelreviewservice.MarkReviewedRequest{
 				TenantInfo: toolparams.TenantFrom(*params),
 				CarrierID:  carrierID,
 				Note:       note,
@@ -595,17 +612,17 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 		},
 		Plan: func(
 			ctx context.Context,
-			req *carrierintelservice.MarkReviewedRequest,
+			req *carrierintelreviewservice.MarkReviewedRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.SnapshotChange, error) {
+		) (*carrierintelreviewservice.SnapshotChange, error) {
 			return intel.PlanMarkReviewed(ctx, req)
 		},
-		Refused: func(*carrierintelservice.MarkReviewedRequest) string {
+		Refused: func(*carrierintelreviewservice.MarkReviewedRequest) string {
 			return "Would mark the carrier's intelligence reviewed."
 		},
 		Render: func(
-			req *carrierintelservice.MarkReviewedRequest,
-			plan *carrierintelservice.SnapshotChange,
+			req *carrierintelreviewservice.MarkReviewedRequest,
+			plan *carrierintelreviewservice.SnapshotChange,
 		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				toolpreview.Record{Resource: permission.ResourceCarrier, ID: req.CarrierID},
@@ -632,7 +649,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 		},
 		Run: func(
 			ctx context.Context,
-			req *carrierintelservice.MarkReviewedRequest,
+			req *carrierintelreviewservice.MarkReviewedRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			if err := intel.MarkReviewed(ctx, req); err != nil {
@@ -646,15 +663,15 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 }
 
 type suggestionChoice struct {
-	req *carrierintelservice.ApplySuggestionsRequest
+	req *carrierintelvetservice.ApplySuggestionsRequest
 }
 
 // resolve fills a call that named no suggestion with every one carrier
 // intelligence makes now, which the preview then lists one by one.
 func (c *suggestionChoice) resolve(
 	ctx context.Context,
-	intel carrierIntelOperator,
-) (*carrierintelservice.ApplySuggestionsRequest, error) {
+	intel carrierVetter,
+) (*carrierintelvetservice.ApplySuggestionsRequest, error) {
 	if len(c.req.Fields) > 0 || len(c.req.PolicyIDs) > 0 {
 		return c.req, nil
 	}
@@ -678,7 +695,7 @@ func (c *suggestionChoice) resolve(
 }
 
 func NewApplyCarrierIntelSuggestionsTool(
-	intel carrierIntelOperator,
+	intel carrierVetter,
 	permissions permissionChecker,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
@@ -716,13 +733,13 @@ func NewApplyCarrierIntelSuggestionsTool(
 		},
 		Required: []string{toolparams.ParamCarrierID},
 		Target:   targetCarrier,
-	}, toolspec.ReceivablePlan[*suggestionChoice, *carrierintelservice.SuggestionPlan]{
+	}, toolspec.ReceivablePlan[*suggestionChoice, *carrierintelvetservice.SuggestionPlan]{
 		Request: readSuggestionChoice,
 		Plan: func(
 			ctx context.Context,
 			choice *suggestionChoice,
 			params *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.SuggestionPlan, error) {
+		) (*carrierintelvetservice.SuggestionPlan, error) {
 			if err := requireCarrierGrant(
 				ctx,
 				permissions,
@@ -777,7 +794,7 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 	if err != nil {
 		return nil, err
 	}
-	req := &carrierintelservice.ApplySuggestionsRequest{
+	req := &carrierintelvetservice.ApplySuggestionsRequest{
 		TenantInfo: toolparams.TenantFrom(*params),
 		CarrierID:  carrierID,
 	}
@@ -807,7 +824,7 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 
 func renderSuggestions(
 	_ *suggestionChoice,
-	plan *carrierintelservice.SuggestionPlan,
+	plan *carrierintelvetservice.SuggestionPlan,
 ) (*agentpreview.ToolPreview, error) {
 	fields := make([]string, 0, len(plan.Fields))
 	for _, update := range plan.Fields {
@@ -845,7 +862,7 @@ func renderSuggestions(
 }
 
 func NewImportSourcedCarrierTool(
-	intel carrierIntelOperator,
+	intel carrierProspectImporter,
 	permissions permissionChecker,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
@@ -879,13 +896,13 @@ func NewImportSourcedCarrierTool(
 			),
 		},
 		Required: []string{paramDOTNumber},
-	}, toolspec.ReceivablePlan[*carrierintelservice.ImportProspectRequest, *carrierintelservice.ImportPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelsourcingservice.ImportProspectRequest, *carrierintelsourcingservice.ImportPlan]{
 		Request: importProspectRequest,
 		Plan: func(
 			ctx context.Context,
-			req *carrierintelservice.ImportProspectRequest,
+			req *carrierintelsourcingservice.ImportProspectRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*carrierintelservice.ImportPlan, error) {
+		) (*carrierintelsourcingservice.ImportPlan, error) {
 			if err := requireCarrierGrant(
 				ctx,
 				permissions,
@@ -897,13 +914,13 @@ func NewImportSourcedCarrierTool(
 
 			return intel.PlanImportProspect(ctx, req)
 		},
-		Refused: func(*carrierintelservice.ImportProspectRequest) string {
+		Refused: func(*carrierintelsourcingservice.ImportProspectRequest) string {
 			return "Would add the sourced carrier."
 		},
 		Render: renderSourcedCarrierImport,
 		Run: func(
 			ctx context.Context,
-			req *carrierintelservice.ImportProspectRequest,
+			req *carrierintelsourcingservice.ImportProspectRequest,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			if err := requireCarrierGrant(
@@ -928,8 +945,8 @@ func NewImportSourcedCarrierTool(
 }
 
 func renderSourcedCarrierImport(
-	_ *carrierintelservice.ImportProspectRequest,
-	plan *carrierintelservice.ImportPlan,
+	_ *carrierintelsourcingservice.ImportProspectRequest,
+	plan *carrierintelsourcingservice.ImportPlan,
 ) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{
@@ -962,7 +979,7 @@ type importView struct {
 	EnrollMonitoring bool   `json:"enrollMonitoring"`
 }
 
-func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.AgentTool {
+func NewVerifyCarrierEquipmentTool(intel carrierEquipmentVerifier) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "carrier_verify_equipment",
 		Artifact: changepreview.CarrierRecordEntity,
@@ -994,11 +1011,11 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 				maxUnitNumberChars),
 		},
 		Required: []string{paramCarrierAssignmentID, paramUnitType},
-	}, toolspec.ReceivablePlan[*carrierintelservice.VerifyEquipmentRequest, *verificationPlan]{
+	}, toolspec.ReceivablePlan[*carrierintelverifyservice.VerifyEquipmentRequest, *verificationPlan]{
 		Request: verifyEquipmentRequest,
 		Plan: func(
 			ctx context.Context,
-			req *carrierintelservice.VerifyEquipmentRequest,
+			req *carrierintelverifyservice.VerifyEquipmentRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*verificationPlan, error) {
 			entity, carrierEntity, err := intel.PlanVerifyEquipment(ctx, req)
@@ -1008,11 +1025,11 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 
 			return &verificationPlan{verification: entity, carrier: carrierEntity}, nil
 		},
-		Refused: func(*carrierintelservice.VerifyEquipmentRequest) string {
+		Refused: func(*carrierintelverifyservice.VerifyEquipmentRequest) string {
 			return "Would verify the carrier's equipment."
 		},
 		Render: func(
-			_ *carrierintelservice.VerifyEquipmentRequest,
+			_ *carrierintelverifyservice.VerifyEquipmentRequest,
 			plan *verificationPlan,
 		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
@@ -1047,7 +1064,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 		},
 		Run: func(
 			ctx context.Context,
-			req *carrierintelservice.VerifyEquipmentRequest,
+			req *carrierintelverifyservice.VerifyEquipmentRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := intel.VerifyEquipment(ctx, req)
@@ -1070,7 +1087,7 @@ type verificationPlan struct {
 
 func verifyEquipmentRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*carrierintelservice.VerifyEquipmentRequest, error) {
+) (*carrierintelverifyservice.VerifyEquipmentRequest, error) {
 	assignmentID, err := toolparams.RequirePulid(params.Params, paramCarrierAssignmentID)
 	if err != nil {
 		return nil, err
@@ -1079,7 +1096,7 @@ func verifyEquipmentRequest(
 	if err != nil {
 		return nil, err
 	}
-	req := &carrierintelservice.VerifyEquipmentRequest{
+	req := &carrierintelverifyservice.VerifyEquipmentRequest{
 		TenantInfo:          toolparams.TenantFrom(*params),
 		CarrierAssignmentID: assignmentID,
 		UnitType:            unitType,
@@ -1109,7 +1126,7 @@ func verifyEquipmentRequest(
 
 func importProspectRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*carrierintelservice.ImportProspectRequest, error) {
+) (*carrierintelsourcingservice.ImportProspectRequest, error) {
 	dot, err := toolparams.RequireBoundedText(params.Params, paramDOTNumber, maxDOTNumberChars)
 	if err != nil {
 		return nil, err
@@ -1123,7 +1140,7 @@ func importProspectRequest(
 		return nil, err
 	}
 
-	return &carrierintelservice.ImportProspectRequest{
+	return &carrierintelsourcingservice.ImportProspectRequest{
 		TenantInfo:       toolparams.TenantFrom(*params),
 		DOTNumber:        dot,
 		Code:             code,

@@ -1215,16 +1215,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports.CarrierIntelSuggestion
   CarrierSourcingResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingResult
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingResult
     fields:
       existingCarrierId:
         resolver: true
   CarrierSourcingPage:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingPage
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingPage
   CarrierSourcingSort:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingSort
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingSort
   CarrierIntelFeedState:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.CarrierIntelFeedState

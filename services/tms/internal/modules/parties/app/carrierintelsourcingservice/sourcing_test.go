@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelsourcingservice
 
 import (
 	"testing"

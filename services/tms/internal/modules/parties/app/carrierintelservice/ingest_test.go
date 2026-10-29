@@ -25,7 +25,7 @@ func eventTestInput() *ingestInput {
 			Name:        "FedEx Ground",
 			DOTNumber:   "265752",
 		},
-		bound:  &boundProvider{provider: integration.TypeCarrierOK},
+		bound:  &BoundProvider{provider: integration.TypeCarrierOK},
 		source: carrierintelevent.EventSourceSnapshotDiff,
 	}
 }

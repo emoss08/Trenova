@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -148,7 +148,7 @@ func (t *carrierIntelEventTool) Preview(
 		carrierIntelRecord(event),
 		event,
 		func(closed *carrierintelevent.CarrierIntelEvent) error {
-			return carrierintelservice.PlanResolve(closed, request, now)
+			return carrierintelreviewservice.PlanResolve(closed, request, now)
 		},
 		opts...,
 	)
@@ -167,7 +167,7 @@ func (t *carrierIntelEventTool) Preview(
 
 func (t *carrierIntelEventTool) previewAcknowledge(
 	event *carrierintelevent.CarrierIntelEvent,
-	request *carrierintelservice.ResolveEventRequest,
+	request *carrierintelreviewservice.ResolveEventRequest,
 	now int64,
 	opts []toolpreview.Option,
 ) (*agentpreview.ToolPreview, error) {

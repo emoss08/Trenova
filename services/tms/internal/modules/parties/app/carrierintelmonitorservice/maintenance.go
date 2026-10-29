@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelmonitorservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -165,17 +166,17 @@ func (s *Service) SendDigest(
 		priority = notification.PriorityHigh
 	}
 
-	sent := s.sendNotification(ctx, &notificationRequest{
-		tenant:      tenantInfo,
-		eventType:   EventCarrierIntelDigest,
-		correlation: "ci-digest-" + timeutils.FormatDateKeyUTC(now),
-		priority:    priority,
-		title:       fmt.Sprintf("%d carrier changes need review", len(events)),
-		message: fmt.Sprintf(
+	sent := s.intel.SendNotification(ctx, &carrierintelservice.NotificationRequest{
+		Tenant:      tenantInfo,
+		EventType:   carrierintelservice.EventCarrierIntelDigest,
+		Correlation: "ci-digest-" + timeutils.FormatDateKeyUTC(now),
+		Priority:    priority,
+		Title:       fmt.Sprintf("%d carrier changes need review", len(events)),
+		Message: fmt.Sprintf(
 			"Unreviewed carrier intelligence changes from the last day (%s) across %s.",
 			strings.Join(parts, ", "), strings.Join(names, ", "),
 		),
-		link: monitoringLink,
+		Link: carrierintelservice.MonitoringLink,
 	})
 	if sent {
 		ids := make([]pulid.ID, 0, len(events))

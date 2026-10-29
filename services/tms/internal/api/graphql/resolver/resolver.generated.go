@@ -623,8 +623,14 @@ func FromServices(s *Services) *Resolver {
 		CarrierCapacityService: s.CarrierCapacityService,
 	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
-		Core:                s.Core,
-		CarrierIntelService: s.CarrierIntelService,
+		Core:                          s.Core,
+		CarrierIntelService:           s.CarrierIntelService,
+		CarrierIntelEnrollmentService: s.CarrierIntelEnrollmentService,
+		CarrierIntelMonitorService:    s.CarrierIntelMonitorService,
+		CarrierIntelReviewService:     s.CarrierIntelReviewService,
+		CarrierIntelVetService:        s.CarrierIntelVetService,
+		CarrierIntelSourcingService:   s.CarrierIntelSourcingService,
+		CarrierIntelVerifyService:     s.CarrierIntelVerifyService,
 	}
 	carriersettlementDeps := &carriersettlementresolver.Deps{
 		Core:                       s.Core,

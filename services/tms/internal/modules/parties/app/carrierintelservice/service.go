@@ -12,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -50,15 +48,10 @@ type Params struct {
 	SnapshotRepo              carrierintelports.CarrierIntelSnapshotRepository
 	RawRepo                   carrierintelports.CarrierIntelRawPayloadRepository
 	EventRepo                 carrierintelports.CarrierIntelEventRepository
-	EnrollmentRepo            carrierintelports.CarrierMonitoringEnrollmentRepository
-	FeedRepo                  carrierintelports.CarrierIntelFeedStateRepository
 	UsageRepo                 carrierintelports.CarrierIntelUsageRepository
 	OverrideRepo              carrierintelports.CarrierIntelOverrideRepository
-	VerifyRepo                carrierintelports.CarrierEquipmentVerificationRepository
 	SubjectRepo               carrierintelports.CarrierIntelSubjectRepository
 	CarrierRepo               carrierports.CarrierRepository
-	AssignmentRepo            carrierassignmentports.CarrierAssignmentRepository
-	UsStateRepo               usstateports.UsStateRepository
 	CarrierService            *carrierservice.Service
 	Notifications             *notificationservice.Service
 	AuditService              auditports.AuditService
@@ -82,15 +75,10 @@ type Service struct {
 	snapshotRepo    carrierintelports.CarrierIntelSnapshotRepository
 	rawRepo         carrierintelports.CarrierIntelRawPayloadRepository
 	eventRepo       carrierintelports.CarrierIntelEventRepository
-	enrollmentRepo  carrierintelports.CarrierMonitoringEnrollmentRepository
-	feedRepo        carrierintelports.CarrierIntelFeedStateRepository
 	usageRepo       carrierintelports.CarrierIntelUsageRepository
 	overrideRepo    carrierintelports.CarrierIntelOverrideRepository
-	verifyRepo      carrierintelports.CarrierEquipmentVerificationRepository
 	subjectRepo     carrierintelports.CarrierIntelSubjectRepository
 	carrierRepo     carrierports.CarrierRepository
-	assignmentRepo  carrierassignmentports.CarrierAssignmentRepository
-	usStateRepo     usstateports.UsStateRepository
 	carrierService  CarrierWriter
 	notifications   NotificationSender
 	auditService    auditports.AuditService
@@ -103,11 +91,9 @@ type Service struct {
 	now             func() int64
 }
 
-var (
-	_ carrierintelports.CarrierIntelGate         = (*Service)(nil)
-	_ carrierintelports.CarrierLifecycleObserver = (*Service)(nil)
-)
+var _ carrierintelports.CarrierIntelGate = (*Service)(nil)
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	connectors := make(
 		map[integration.Type]carrierintelports.CarrierIntelConnector,
@@ -119,7 +105,7 @@ func New(p Params) *Service {
 		}
 	}
 
-	svc := &Service{
+	return &Service{
 		l:               p.Logger.Named("service.carrier-intelligence"),
 		db:              p.DB,
 		integrations:    p.Integrations,
@@ -129,15 +115,10 @@ func New(p Params) *Service {
 		snapshotRepo:    p.SnapshotRepo,
 		rawRepo:         p.RawRepo,
 		eventRepo:       p.EventRepo,
-		enrollmentRepo:  p.EnrollmentRepo,
-		feedRepo:        p.FeedRepo,
 		usageRepo:       p.UsageRepo,
 		overrideRepo:    p.OverrideRepo,
-		verifyRepo:      p.VerifyRepo,
 		subjectRepo:     p.SubjectRepo,
 		carrierRepo:     p.CarrierRepo,
-		assignmentRepo:  p.AssignmentRepo,
-		usStateRepo:     p.UsStateRepo,
 		carrierService:  p.CarrierService,
 		notifications:   p.Notifications,
 		auditService:    p.AuditService,
@@ -149,12 +130,6 @@ func New(p Params) *Service {
 		plans:           p.Plans,
 		now:             timeutils.NowUnix,
 	}
-
-	if p.CarrierService != nil {
-		p.CarrierService.SetLifecycleObserver(svc)
-	}
-
-	return svc
 }
 
 func (s *Service) requirePaidLookups(

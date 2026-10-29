@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelverifyservice
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
@@ -73,7 +74,7 @@ func (s *Service) VerifyEquipment(
 		s.flagEquipmentMismatch(ctx, req.TenantInfo, created, carrierEntity.Name)
 	}
 
-	s.publish(ctx, req.TenantInfo, "carrier_equipment_verifications", "created", created.ID)
+	s.intel.Publish(ctx, req.TenantInfo, "carrier_equipment_verifications", "created", created.ID)
 	return created, nil
 }
 
@@ -89,18 +90,19 @@ func (s *Service) runEquipmentLookup(
 		entity.MismatchReason = "Carrier intelligence settings could not be loaded"
 		return
 	}
-	bound, err := s.resolvePrimary(ctx, tenantInfo, control)
+	bound, err := s.intel.ResolvePrimary(ctx, tenantInfo, control)
 	if err != nil {
 		entity.Result = carrierintelverification.VerificationResultUnverifiable
 		entity.MismatchReason = "No carrier intelligence provider is enabled"
 		return
 	}
-	entity.Provider = bound.provider
+	entity.Provider = bound.Provider()
 
-	lookup, ok := bound.client.(carrierintelports.CarrierIntelEquipmentLookup)
-	if !ok || !bound.capabilities().Has(carrierintel.CapabilityEquipmentLookup) {
+	lookup, ok := bound.Client().(carrierintelports.CarrierIntelEquipmentLookup)
+	if !ok || !bound.Capabilities().Has(carrierintel.CapabilityEquipmentLookup) {
 		entity.Result = carrierintelverification.VerificationResultUnverifiable
-		entity.MismatchReason = bound.provider.String() + " cannot look up equipment by VIN or plate"
+		entity.MismatchReason = bound.Provider().String() +
+			" cannot look up equipment by VIN or plate"
 		return
 	}
 	if entity.ExpectedDOTNumber == "" {
@@ -109,19 +111,19 @@ func (s *Service) runEquipmentLookup(
 		return
 	}
 
-	if err = s.guardBudget(ctx, &budgetCheck{
-		tenant:   tenantInfo,
-		control:  control,
-		bound:    bound,
-		endpoint: carrierintelusage.EndpointEquipment,
+	if err = s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
+		Tenant:   tenantInfo,
+		Control:  control,
+		Bound:    bound,
+		Endpoint: carrierintelusage.EndpointEquipment,
 	}); err != nil {
 		entity.Result = carrierintelverification.VerificationResultProviderError
-		entity.MismatchReason = errorSummary(err)
+		entity.MismatchReason = carrierintelservice.ErrorSummary(err)
 		return
 	}
 
 	var result *carrierintelports.CarrierIntelEquipmentResult
-	err = s.withRateLimitWait(ctx, func() error {
+	err = s.intel.WithRateLimitWait(ctx, func() error {
 		var callErr error
 		result, callErr = lookup.FindByEquipment(
 			ctx,
@@ -145,7 +147,9 @@ func (s *Service) runEquipmentLookup(
 			return
 		}
 		entity.Result = carrierintelverification.VerificationResultProviderError
-		entity.MismatchReason = errorSummary(toBusinessError(bound.provider, err))
+		entity.MismatchReason = carrierintelservice.ErrorSummary(
+			carrierintelservice.ToBusinessError(bound.Provider(), err),
+		)
 		return
 	}
 
@@ -240,16 +244,15 @@ func (s *Service) flagEquipmentMismatch(
 	); err != nil {
 		s.l.Warn("failed to record equipment mismatch event", zap.Error(err))
 	}
-
-	s.sendNotification(ctx, &notificationRequest{
-		tenant:      tenantInfo,
-		eventType:   EventCarrierEquipmentMismatch,
-		correlation: "ci-equipment-" + verification.ID.String(),
-		priority:    notification.PriorityCritical,
-		title:       "Equipment does not belong to " + carrierName,
-		message:     verification.MismatchReason + ". Hold the load until the carrier is confirmed.",
-		link:        carrierLinkPrefix + verification.CarrierID.String(),
-		related: map[string]any{
+	s.intel.SendNotification(ctx, &carrierintelservice.NotificationRequest{
+		Tenant:      tenantInfo,
+		EventType:   carrierintelservice.EventCarrierEquipmentMismatch,
+		Correlation: "ci-equipment-" + verification.ID.String(),
+		Priority:    notification.PriorityCritical,
+		Title:       "Equipment does not belong to " + carrierName,
+		Message:     verification.MismatchReason + ". Hold the load until the carrier is confirmed.",
+		Link:        carrierintelservice.CarrierLinkPrefix + verification.CarrierID.String(),
+		Related: map[string]any{
 			"carrierId":           verification.CarrierID.String(),
 			"carrierAssignmentId": verification.CarrierAssignmentID.String(),
 			"shipmentMoveId":      verification.ShipmentMoveID.String(),
@@ -296,7 +299,7 @@ func (s *Service) OverrideVerification(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	s.publish(ctx, req.TenantInfo, "carrier_equipment_verifications", "updated", updated.ID)
+	s.intel.Publish(ctx, req.TenantInfo, "carrier_equipment_verifications", "updated", updated.ID)
 	return updated, nil
 }
 

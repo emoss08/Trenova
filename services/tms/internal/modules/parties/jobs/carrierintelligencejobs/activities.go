@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"go.temporal.io/sdk/activity"
@@ -49,19 +51,25 @@ type ReconcileTenantPayload struct {
 type ActivitiesParams struct {
 	fx.In
 
-	Service *carrierintelservice.Service
-	Logger  *zap.Logger
+	Intel      *carrierintelservice.Service
+	Enrollment *carrierintelenrollmentservice.Service
+	Monitor    *carrierintelmonitorservice.Service
+	Logger     *zap.Logger
 }
 
 type Activities struct {
-	service *carrierintelservice.Service
-	logger  *zap.Logger
+	intel      *carrierintelservice.Service
+	enrollment *carrierintelenrollmentservice.Service
+	monitor    *carrierintelmonitorservice.Service
+	logger     *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		service: p.Service,
-		logger:  p.Logger.Named("temporal.carrier-intelligence"),
+		intel:      p.Intel,
+		enrollment: p.Enrollment,
+		monitor:    p.Monitor,
+		logger:     p.Logger.Named("temporal.carrier-intelligence"),
 	}
 }
 
@@ -83,7 +91,7 @@ func (a *Activities) ListTenantsActivity(
 		after.BusinessUnitID = payload.After.BusinessUnitID
 	}
 
-	tenants, err := a.service.ListConfiguredTenants(ctx, after, limit)
+	tenants, err := a.monitor.ListConfiguredTenants(ctx, after, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +114,7 @@ func (a *Activities) SweepTenantActivity(
 	beat := func(details ...any) { heartbeat(ctx, details...) }
 
 	beat("recompute")
-	recomputed, err := a.service.RecomputeStalePolicy(
+	recomputed, err := a.intel.RecomputeStalePolicy(
 		ctx,
 		tenantInfo,
 		time.Now().Add(recomputeBudget),
@@ -118,7 +126,7 @@ func (a *Activities) SweepTenantActivity(
 	}
 
 	beat("enrollment-sync")
-	synced, err := a.service.SyncPendingEnrollments(ctx, tenantInfo)
+	synced, err := a.enrollment.SyncPendingEnrollments(ctx, tenantInfo)
 	if err != nil {
 		return result, err
 	}
@@ -127,7 +135,7 @@ func (a *Activities) SweepTenantActivity(
 	result.Paused = synced.Paused
 
 	beat("change-feed")
-	polled, err := a.service.PollChangeFeed(ctx, tenantInfo, beat)
+	polled, err := a.monitor.PollChangeFeed(ctx, tenantInfo, beat)
 	if err != nil {
 		log.Warn("carrier intelligence change feed poll failed", zap.Error(err))
 	} else {
@@ -137,7 +145,7 @@ func (a *Activities) SweepTenantActivity(
 	}
 
 	beat("snapshot-refresh")
-	refreshed, err := a.service.RefreshDueSnapshots(ctx, tenantInfo, refreshBatchPerSweep, beat)
+	refreshed, err := a.monitor.RefreshDueSnapshots(ctx, tenantInfo, refreshBatchPerSweep, beat)
 	if err != nil {
 		log.Warn("carrier intelligence snapshot refresh failed", zap.Error(err))
 	} else {
@@ -151,10 +159,10 @@ func (a *Activities) SweepTenantActivity(
 func (a *Activities) ReconcileTenantActivity(
 	ctx context.Context,
 	payload *ReconcileTenantPayload,
-) (*carrierintelservice.ReconcileResult, error) {
+) (*carrierintelenrollmentservice.ReconcileResult, error) {
 	tenantInfo := payload.TenantInfo()
 	heartbeat(ctx, "reconcile")
-	result, err := a.service.ReconcileDesired(ctx, tenantInfo)
+	result, err := a.enrollment.ReconcileDesired(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +170,7 @@ func (a *Activities) ReconcileTenantActivity(
 		return result, nil
 	}
 	heartbeat(ctx, "drift-check")
-	drift, err := a.service.DriftCheck(ctx, tenantInfo)
+	drift, err := a.enrollment.DriftCheck(ctx, tenantInfo)
 	if err != nil {
 		a.logger.Warn("carrier intelligence watchlist drift check failed", zap.Error(err),
 			zap.String("orgId", tenantInfo.OrgID.String()))
@@ -176,17 +184,17 @@ func (a *Activities) ReconcileTenantActivity(
 func (a *Activities) DigestTenantActivity(
 	ctx context.Context,
 	payload *TenantPayload,
-) (*carrierintelservice.DigestResult, error) {
-	return a.service.SendDigest(ctx, payload.TenantInfo())
+) (*carrierintelmonitorservice.DigestResult, error) {
+	return a.monitor.SendDigest(ctx, payload.TenantInfo())
 }
 
 func (a *Activities) GlobalMaintenanceActivity(
 	ctx context.Context,
-) (*carrierintelservice.MaintenanceResult, error) {
+) (*carrierintelmonitorservice.MaintenanceResult, error) {
 	heartbeat(ctx, "maintenance")
-	return a.service.RunGlobalMaintenance(ctx)
+	return a.monitor.RunGlobalMaintenance(ctx)
 }
 
 func (a *Activities) PruneTenantActivity(ctx context.Context, payload *TenantPayload) (int, error) {
-	return a.service.PruneTenantHistory(ctx, payload.TenantInfo())
+	return a.monitor.PruneTenantHistory(ctx, payload.TenantInfo())
 }

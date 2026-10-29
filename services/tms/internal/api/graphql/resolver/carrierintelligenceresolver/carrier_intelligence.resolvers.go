@@ -20,7 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
@@ -45,7 +49,7 @@ func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier
 	}
 	return loadCarrierSnapshot(ctx,
 		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			return r.CarrierIntelService.CurrentSnapshotsByCarrierIDs(
+			return r.CarrierIntelReviewService.CurrentSnapshotsByCarrierIDs(
 				ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
 			)
 		},
@@ -63,7 +67,7 @@ func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.
 	if loadercore.Available(ctx) {
 		return partiesloaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
 	}
-	counts, err := r.CarrierIntelService.OpenEventCountsByCarrierIDs(
+	counts, err := r.CarrierIntelReviewService.OpenEventCountsByCarrierIDs(
 		ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
 	)
 	if err != nil {
@@ -81,7 +85,7 @@ func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier
 	if loadercore.Available(ctx) {
 		rows, err = partiesloaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
 	} else {
-		rows, err = r.CarrierIntelService.EnrollmentsByCarrierIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID})
+		rows, err = r.CarrierIntelEnrollmentService.EnrollmentsByCarrierIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID})
 	}
 	if err != nil {
 		return nil, err
@@ -335,7 +339,7 @@ func (r *CarrierMonitoringEnrollmentResolver) Provider(ctx context.Context, obj 
 	return obj.Provider.String(), nil
 }
 
-func (r *CarrierSourcingResultResolver) ExistingCarrierID(ctx context.Context, obj *carrierintelservice.SourcingResult) (*string, error) {
+func (r *CarrierSourcingResultResolver) ExistingCarrierID(ctx context.Context, obj *carrierintelsourcingservice.SourcingResult) (*string, error) {
 	return gqlid.IDPtr(obj.ExistingCarrierID), nil
 }
 
@@ -346,7 +350,7 @@ func (r *CustomerResolver) BrokerIntelligence(ctx context.Context, obj *customer
 	}
 	return loadCarrierSnapshot(ctx,
 		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			return r.CarrierIntelService.CurrentSnapshotsBySubjects(
+			return r.CarrierIntelReviewService.CurrentSnapshotsBySubjects(
 				ctx, resolvercore.TenantInfo(authCtx), carrierintel.SubjectTypeCustomer, []string{obj.ID.String()},
 			)
 		},
@@ -365,7 +369,7 @@ func (r *MutationResolver) UpdateCarrierIntelControl(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.UpdateControl(ctx, resolvercore.TenantInfo(authCtx), patch)
+	return r.CarrierIntelEnrollmentService.UpdateControl(ctx, resolvercore.TenantInfo(authCtx), patch)
 }
 
 func (r *MutationResolver) SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintelcontrol.CarrierIntelControl, error) {
@@ -373,7 +377,7 @@ func (r *MutationResolver) SwitchCarrierIntelProvider(ctx context.Context, provi
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SwitchPrimaryProvider(ctx, resolvercore.TenantInfo(authCtx), integration.Type(provider))
+	return r.CarrierIntelEnrollmentService.SwitchPrimaryProvider(ctx, resolvercore.TenantInfo(authCtx), integration.Type(provider))
 }
 
 func (r *MutationResolver) ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error) {
@@ -381,7 +385,7 @@ func (r *MutationResolver) ResumeCarrierIntelMonitoring(ctx context.Context) (bo
 	if err != nil {
 		return false, err
 	}
-	if err = r.CarrierIntelService.ResumeFeeds(ctx, resolvercore.TenantInfo(authCtx)); err != nil {
+	if err = r.CarrierIntelEnrollmentService.ResumeFeeds(ctx, resolvercore.TenantInfo(authCtx)); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -396,7 +400,7 @@ func (r *MutationResolver) VetCarrier(ctx context.Context, carrierID string, dep
 	if err != nil {
 		return nil, err
 	}
-	request := &carrierintelservice.VetCarrierRequest{
+	request := &carrierintelvetservice.VetCarrierRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		Force:      gqlscalar.BoolValue(force),
@@ -404,7 +408,7 @@ func (r *MutationResolver) VetCarrier(ctx context.Context, carrierID string, dep
 	if depth != nil {
 		request.Depth = *depth
 	}
-	result, err := r.CarrierIntelService.VetCarrier(ctx, request)
+	result, err := r.CarrierIntelVetService.VetCarrier(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +424,7 @@ func (r *MutationResolver) VetCustomerBroker(ctx context.Context, customerID str
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.VetCustomerBroker(ctx, resolvercore.TenantInfo(authCtx), id, gqlscalar.BoolValue(force))
+	result, err := r.CarrierIntelVetService.VetCustomerBroker(ctx, resolvercore.TenantInfo(authCtx), id, gqlscalar.BoolValue(force))
 	if err != nil {
 		return nil, err
 	}
@@ -436,7 +440,7 @@ func (r *MutationResolver) SetCarrierMonitoring(ctx context.Context, carrierIds 
 	if err != nil {
 		return 0, errortypes.NewValidationError("carrierIds", errortypes.ErrInvalid, "Carrier selection is invalid")
 	}
-	return r.CarrierIntelService.SetManualEnrollment(ctx, &carrierintelservice.EnrollSubjectsRequest{
+	return r.CarrierIntelEnrollmentService.SetManualEnrollment(ctx, &carrierintelenrollmentservice.EnrollSubjectsRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierIDs: ids,
 		Enroll:     enabled,
@@ -452,7 +456,7 @@ func (r *MutationResolver) AcknowledgeCarrierIntelEvents(ctx context.Context, id
 	if err != nil {
 		return 0, errortypes.NewValidationError("ids", errortypes.ErrInvalid, "Event selection is invalid")
 	}
-	return r.CarrierIntelService.AcknowledgeEvents(ctx, resolvercore.TenantInfo(authCtx), eventIDs)
+	return r.CarrierIntelReviewService.AcknowledgeEvents(ctx, resolvercore.TenantInfo(authCtx), eventIDs)
 }
 
 func (r *MutationResolver) ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintelevent.CarrierIntelEvent, error) {
@@ -464,7 +468,7 @@ func (r *MutationResolver) ResolveCarrierIntelEvent(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ResolveEvent(ctx, &carrierintelservice.ResolveEventRequest{
+	return r.CarrierIntelReviewService.ResolveEvent(ctx, &carrierintelreviewservice.ResolveEventRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		EventID:    id,
 		Resolution: input.Resolution,
@@ -481,7 +485,7 @@ func (r *MutationResolver) MarkCarrierIntelReviewed(ctx context.Context, carrier
 	if err != nil {
 		return false, err
 	}
-	if err = r.CarrierIntelService.MarkReviewed(ctx, &carrierintelservice.MarkReviewedRequest{
+	if err = r.CarrierIntelReviewService.MarkReviewed(ctx, &carrierintelreviewservice.MarkReviewedRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		Note:       note,
@@ -500,7 +504,7 @@ func (r *MutationResolver) GrantCarrierIntelOverride(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.GrantOverride(ctx, &carrierintelservice.GrantOverrideRequest{
+	return r.CarrierIntelReviewService.GrantOverride(ctx, &carrierintelreviewservice.GrantOverrideRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		RuleCode:   carrierintelrule.RuleCode(input.RuleCode),
@@ -518,7 +522,7 @@ func (r *MutationResolver) RevokeCarrierIntelOverride(ctx context.Context, id st
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.RevokeOverride(ctx, &carrierintelservice.RevokeOverrideRequest{
+	return r.CarrierIntelReviewService.RevokeOverride(ctx, &carrierintelreviewservice.RevokeOverrideRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		OverrideID: overrideID,
 		Reason:     reason,
@@ -541,7 +545,7 @@ func (r *MutationResolver) ApplyCarrierIntelSuggestions(ctx context.Context, inp
 	if err != nil {
 		return 0, errortypes.NewValidationError("policyIds", errortypes.ErrInvalid, "Policy selection is invalid")
 	}
-	return r.CarrierIntelService.ApplySuggestions(ctx, &carrierintelservice.ApplySuggestionsRequest{
+	return r.CarrierIntelVetService.ApplySuggestions(ctx, &carrierintelvetservice.ApplySuggestionsRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		Fields:     input.Fields,
@@ -557,7 +561,7 @@ func (r *MutationResolver) ImportSourcedCarrier(ctx context.Context, input gqlmo
 	if _, err = r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpCreate); err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ImportProspect(ctx, &carrierintelservice.ImportProspectRequest{
+	return r.CarrierIntelSourcingService.ImportProspect(ctx, &carrierintelsourcingservice.ImportProspectRequest{
 		TenantInfo:       resolvercore.TenantInfo(authCtx),
 		DOTNumber:        input.DOTNumber,
 		Code:             gqlscalar.StringValue(input.Code),
@@ -574,7 +578,7 @@ func (r *MutationResolver) VerifyCarrierEquipment(ctx context.Context, input gql
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.VerifyEquipment(ctx, &carrierintelservice.VerifyEquipmentRequest{
+	return r.CarrierIntelVerifyService.VerifyEquipment(ctx, &carrierintelverifyservice.VerifyEquipmentRequest{
 		TenantInfo:          resolvercore.TenantInfo(authCtx),
 		CarrierAssignmentID: assignmentID,
 		UnitType:            input.UnitType,
@@ -594,7 +598,7 @@ func (r *MutationResolver) OverrideCarrierEquipmentVerification(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.OverrideVerification(ctx, &carrierintelservice.OverrideVerificationRequest{
+	return r.CarrierIntelVerifyService.OverrideVerification(ctx, &carrierintelverifyservice.OverrideVerificationRequest{
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		VerificationID: verificationID,
 		Reason:         reason,
@@ -621,7 +625,7 @@ func (r *QueryResolver) CarrierIntelRuleCatalog(ctx context.Context) ([]*carrier
 	if _, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead); err != nil {
 		return nil, err
 	}
-	catalog := r.CarrierIntelService.RuleCatalog()
+	catalog := r.CarrierIntelEnrollmentService.RuleCatalog()
 	out := make([]*carrierintelrule.RuleDefinition, 0, len(catalog))
 	for idx := range catalog {
 		out = append(out, &catalog[idx])
@@ -645,7 +649,7 @@ func (r *QueryResolver) CarrierIntelEvents(ctx context.Context, input gqlmodel.D
 	if err = eventFilterFromInput(filter, request); err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.ListEvents(ctx, request)
+	result, err := r.CarrierIntelReviewService.ListEvents(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -661,7 +665,7 @@ func (r *QueryResolver) CarrierIntelEvent(ctx context.Context, id string) (*carr
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.GetEvent(ctx, resolvercore.TenantInfo(authCtx), eventID)
+	return r.CarrierIntelReviewService.GetEvent(ctx, resolvercore.TenantInfo(authCtx), eventID)
 }
 
 func (r *QueryResolver) CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error) {
@@ -675,19 +679,19 @@ func (r *QueryResolver) CarrierIntelMonitoringStatus(ctx context.Context) (*gqlm
 	if err != nil {
 		return nil, err
 	}
-	enrollmentCounts, err := r.CarrierIntelService.EnrollmentCounts(ctx, tenant)
+	enrollmentCounts, err := r.CarrierIntelEnrollmentService.EnrollmentCounts(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	eventCounts, err := r.CarrierIntelService.EventCounts(ctx, tenant)
+	eventCounts, err := r.CarrierIntelReviewService.EventCounts(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	feeds, err := r.CarrierIntelService.FeedStates(ctx, tenant)
+	feeds, err := r.CarrierIntelEnrollmentService.FeedStates(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	queue, err := r.CarrierIntelService.ReviewQueue(ctx, tenant, carrierIntelReviewQueueCountLimit)
+	queue, err := r.CarrierIntelReviewService.ReviewQueue(ctx, tenant, carrierIntelReviewQueueCountLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +737,7 @@ func (r *QueryResolver) CarrierMonitoringEnrollments(ctx context.Context, input 
 		}
 		request.VendorStates = filter.VendorStates
 	}
-	result, err := r.CarrierIntelService.ListEnrollments(ctx, request)
+	result, err := r.CarrierIntelEnrollmentService.ListEnrollments(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -745,7 +749,7 @@ func (r *QueryResolver) CarrierIntelReviewQueue(ctx context.Context, limit *int)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ReviewQueue(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.IntValue(limit))
+	return r.CarrierIntelReviewService.ReviewQueue(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.IntValue(limit))
 }
 
 func (r *QueryResolver) CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
@@ -757,7 +761,7 @@ func (r *QueryResolver) CarrierIntelSnapshotHistory(ctx context.Context, carrier
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SnapshotHistory(ctx, &carrierintelports.ListCarrierIntelSnapshotHistoryRequest{
+	return r.CarrierIntelReviewService.SnapshotHistory(ctx, &carrierintelports.ListCarrierIntelSnapshotHistoryRequest{
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   id.String(),
@@ -770,7 +774,7 @@ func (r *QueryResolver) CarrierIntelUsage(ctx context.Context, month *int) (*gql
 	if err != nil {
 		return nil, err
 	}
-	summary, err := r.CarrierIntelService.Usage(ctx, resolvercore.TenantInfo(authCtx), monthFromTimestamp(month))
+	summary, err := r.CarrierIntelMonitorService.Usage(ctx, resolvercore.TenantInfo(authCtx), monthFromTimestamp(month))
 	if err != nil {
 		return nil, err
 	}
@@ -782,7 +786,7 @@ func (r *QueryResolver) CarrierIntelCostEstimate(ctx context.Context, policy car
 	if err != nil {
 		return nil, err
 	}
-	estimate, err := r.CarrierIntelService.EstimateEnrollmentCost(
+	estimate, err := r.CarrierIntelEnrollmentService.EstimateEnrollmentCost(
 		ctx, resolvercore.TenantInfo(authCtx), policy, gqlscalar.IntValue(recentUsageDays), gqlscalar.BoolValue(includeOpenTenders),
 	)
 	if err != nil {
@@ -806,7 +810,7 @@ func (r *QueryResolver) CarrierIntelSyncPlan(ctx context.Context, carrierID stri
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SyncPlan(ctx, resolvercore.TenantInfo(authCtx), id)
+	return r.CarrierIntelVetService.SyncPlan(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierinteloverride.CarrierIntelOverride, error) {
@@ -818,7 +822,7 @@ func (r *QueryResolver) CarrierIntelOverrides(ctx context.Context, carrierID str
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ListOverrides(ctx, resolvercore.TenantInfo(authCtx), id)
+	return r.CarrierIntelReviewService.ListOverrides(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error) {
@@ -834,7 +838,7 @@ func (r *QueryResolver) CarrierIntelRawPayload(ctx context.Context, carrierID st
 	if err != nil {
 		return nil, err
 	}
-	payload, err := r.CarrierIntelService.RawPayload(ctx, resolvercore.TenantInfo(authCtx), snapID, carrierintelports.CarrierIntelSubjectRef{
+	payload, err := r.CarrierIntelReviewService.RawPayload(ctx, resolvercore.TenantInfo(authCtx), snapID, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   id.String(),
 	})
@@ -856,7 +860,7 @@ func (r *QueryResolver) CarrierIntelLookup(ctx context.Context, input gqlmodel.C
 	if err != nil {
 		return nil, err
 	}
-	request := &carrierintelservice.LookupProspectRequest{
+	request := &carrierintelsourcingservice.LookupProspectRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		DOTNumber:    gqlscalar.StringValue(input.DOTNumber),
 		DocketNumber: gqlscalar.StringValue(input.DocketNumber),
@@ -864,7 +868,7 @@ func (r *QueryResolver) CarrierIntelLookup(ctx context.Context, input gqlmodel.C
 	if input.Depth != nil {
 		request.Depth = *input.Depth
 	}
-	result, existing, err := r.CarrierIntelService.LookupProspect(ctx, request)
+	result, existing, err := r.CarrierIntelSourcingService.LookupProspect(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -875,12 +879,12 @@ func (r *QueryResolver) CarrierIntelLookup(ctx context.Context, input gqlmodel.C
 	return lookup, nil
 }
 
-func (r *QueryResolver) CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error) {
+func (r *QueryResolver) CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelsourcingservice.SourcingPage, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSourcing, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SearchCarriers(ctx, sourcingQueryFromInput(&input, resolvercore.TenantInfo(authCtx)))
+	return r.CarrierIntelSourcingService.SearchCarriers(ctx, sourcingQueryFromInput(&input, resolvercore.TenantInfo(authCtx)))
 }
 
 func (r *QueryResolver) CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error) {
@@ -888,7 +892,7 @@ func (r *QueryResolver) CarrierSourcingAutocomplete(ctx context.Context, query s
 	if err != nil {
 		return nil, err
 	}
-	suggestions, err := r.CarrierIntelService.AutocompleteCarriers(ctx, resolvercore.TenantInfo(authCtx), query, gqlscalar.IntValue(limit))
+	suggestions, err := r.CarrierIntelSourcingService.AutocompleteCarriers(ctx, resolvercore.TenantInfo(authCtx), query, gqlscalar.IntValue(limit))
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +912,7 @@ func (r *QueryResolver) CarrierEquipmentVerifications(ctx context.Context, carri
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.VerificationsByAssignmentIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{id})
+	return r.CarrierIntelVerifyService.VerificationsByAssignmentIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{id})
 }
 
 func (r *QueryResolver) MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error) {
@@ -920,7 +924,7 @@ func (r *QueryResolver) MyCarrierIntelligence(ctx context.Context, refresh *bool
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.MyIntelligence(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.BoolValue(refresh))
+	result, err := r.CarrierIntelVetService.MyIntelligence(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.BoolValue(refresh))
 	if err != nil {
 		return nil, err
 	}

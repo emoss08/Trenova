@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
@@ -31,6 +32,9 @@ type carrierIntelReader interface {
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
 	) (map[pulid.ID]int, error)
+}
+
+type carrierIntelEnrollmentReader interface {
 	EnrollmentsByCarrierIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -41,7 +45,8 @@ type carrierIntelReader interface {
 type CarrierIntelLoaderFactoryParams struct {
 	fx.In
 
-	CarrierIntelService *carrierintelservice.Service
+	CarrierIntelReviewService     *carrierintelreviewservice.Service
+	CarrierIntelEnrollmentService *carrierintelenrollmentservice.Service
 }
 
 type CarrierIntelSnapshotByCarrierIDLoaderFactory struct {
@@ -51,7 +56,7 @@ type CarrierIntelSnapshotByCarrierIDLoaderFactory struct {
 func NewCarrierIntelSnapshotByCarrierIDLoaderFactory(
 	p CarrierIntelLoaderFactoryParams,
 ) *CarrierIntelSnapshotByCarrierIDLoaderFactory {
-	return &CarrierIntelSnapshotByCarrierIDLoaderFactory{reader: p.CarrierIntelService}
+	return &CarrierIntelSnapshotByCarrierIDLoaderFactory{reader: p.CarrierIntelReviewService}
 }
 
 func newCarrierIntelSnapshotByCarrierIDLoader(f *CarrierIntelSnapshotByCarrierIDLoaderFactory,
@@ -82,7 +87,7 @@ type CarrierIntelSnapshotByCustomerIDLoaderFactory struct {
 func NewCarrierIntelSnapshotByCustomerIDLoaderFactory(
 	p CarrierIntelLoaderFactoryParams,
 ) *CarrierIntelSnapshotByCustomerIDLoaderFactory {
-	return &CarrierIntelSnapshotByCustomerIDLoaderFactory{reader: p.CarrierIntelService}
+	return &CarrierIntelSnapshotByCustomerIDLoaderFactory{reader: p.CarrierIntelReviewService}
 }
 
 func newCarrierIntelSnapshotByCustomerIDLoader(f *CarrierIntelSnapshotByCustomerIDLoaderFactory,
@@ -123,7 +128,7 @@ type CarrierIntelOpenEventCountLoaderFactory struct {
 func NewCarrierIntelOpenEventCountLoaderFactory(
 	p CarrierIntelLoaderFactoryParams,
 ) *CarrierIntelOpenEventCountLoaderFactory {
-	return &CarrierIntelOpenEventCountLoaderFactory{reader: p.CarrierIntelService}
+	return &CarrierIntelOpenEventCountLoaderFactory{reader: p.CarrierIntelReviewService}
 }
 
 func newCarrierIntelOpenEventCountLoader(f *CarrierIntelOpenEventCountLoaderFactory,
@@ -139,13 +144,15 @@ func newCarrierIntelOpenEventCountLoader(f *CarrierIntelOpenEventCountLoaderFact
 }
 
 type CarrierMonitoringEnrollmentByCarrierIDLoaderFactory struct {
-	reader carrierIntelReader
+	reader carrierIntelEnrollmentReader
 }
 
 func NewCarrierMonitoringEnrollmentByCarrierIDLoaderFactory(
 	p CarrierIntelLoaderFactoryParams,
 ) *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory {
-	return &CarrierMonitoringEnrollmentByCarrierIDLoaderFactory{reader: p.CarrierIntelService}
+	return &CarrierMonitoringEnrollmentByCarrierIDLoaderFactory{
+		reader: p.CarrierIntelEnrollmentService,
+	}
 }
 
 func newCarrierMonitoringEnrollmentByCarrierIDLoader(

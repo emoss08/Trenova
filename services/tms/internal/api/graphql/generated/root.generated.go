@@ -3,6 +3,7 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
@@ -327,7 +328,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -1248,7 +1248,7 @@ type CarrierSettlementResolver interface {
 }
 
 type CarrierSourcingResultResolver interface {
-	ExistingCarrierID(ctx context.Context, obj *carrierintelservice.SourcingResult) (*string, error)
+	ExistingCarrierID(ctx context.Context, obj *carrierintelsourcingservice.SourcingResult) (*string, error)
 }
 
 type ChargeAllocationResolver interface {
@@ -2965,7 +2965,7 @@ type QueryResolver interface {
 	CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierinteloverride.CarrierIntelOverride, error)
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
-	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
+	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelsourcingservice.SourcingPage, error)
 	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
 	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintelverification.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)

@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelsourcingservice
 
 import (
 	"cmp"
@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
@@ -89,19 +91,19 @@ type SourcingPage struct {
 func (s *Service) searchCapable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*boundProvider, carrierintelports.CarrierIntelSearcher, *carrierintelcontrol.CarrierIntelControl, error) {
+) (*carrierintelservice.BoundProvider, carrierintelports.CarrierIntelSearcher, *carrierintelcontrol.CarrierIntelControl, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	bound, err := s.resolvePrimary(ctx, tenantInfo, control)
+	bound, err := s.intel.ResolvePrimary(ctx, tenantInfo, control)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	searcher, ok := bound.client.(carrierintelports.CarrierIntelSearcher)
-	if !ok || !bound.capabilities().Has(carrierintel.CapabilitySearch) {
+	searcher, ok := bound.Client().(carrierintelports.CarrierIntelSearcher)
+	if !ok || !bound.Capabilities().Has(carrierintel.CapabilitySearch) {
 		return nil, nil, nil, errortypes.NewBusinessError(
-			"{0} does not support carrier search", bound.provider.String(),
+			"{0} does not support carrier search", bound.Provider().String(),
 		)
 	}
 	return bound, searcher, control, nil
@@ -130,11 +132,11 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	if err != nil {
 		return nil, err
 	}
-	if err = s.guardBudget(ctx, &budgetCheck{
-		tenant:   query.TenantInfo,
-		control:  control,
-		bound:    bound,
-		endpoint: carrierintelusage.EndpointSearch,
+	if err = s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
+		Tenant:   query.TenantInfo,
+		Control:  control,
+		Bound:    bound,
+		Endpoint: carrierintelusage.EndpointSearch,
 	}); err != nil {
 		return nil, err
 	}
@@ -154,13 +156,13 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	}
 
 	var result *carrierintelports.CarrierIntelSearchResult
-	err = s.withRateLimitWait(ctx, func() error {
+	err = s.intel.WithRateLimitWait(ctx, func() error {
 		var searchErr error
 		result, searchErr = searcher.Search(ctx, request)
 		return searchErr
 	})
 	if err != nil {
-		return nil, toBusinessError(bound.provider, err)
+		return nil, carrierintelservice.ToBusinessError(bound.Provider(), err)
 	}
 
 	dots := make([]string, 0, len(result.Items))
@@ -223,7 +225,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 		Items:       items,
 		Total:       result.Total,
 		FilteredOut: filteredOut,
-		Provider:    bound.provider.String(),
+		Provider:    bound.Provider().String(),
 	}, nil
 }
 
@@ -428,20 +430,20 @@ func (s *Service) AutocompleteCarriers(
 	if err != nil {
 		return nil, err
 	}
-	if !bound.capabilities().Has(carrierintel.CapabilityAutocomplete) {
+	if !bound.Capabilities().Has(carrierintel.CapabilityAutocomplete) {
 		return []carrierintelports.CarrierIntelSuggestion{}, nil
 	}
-	if err = s.guardBudget(ctx, &budgetCheck{
-		tenant:   tenantInfo,
-		control:  control,
-		bound:    bound,
-		endpoint: carrierintelusage.EndpointAutocomplete,
+	if err = s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
+		Tenant:   tenantInfo,
+		Control:  control,
+		Bound:    bound,
+		Endpoint: carrierintelusage.EndpointAutocomplete,
 	}); err != nil {
 		return nil, err
 	}
 	suggestions, err := searcher.Autocomplete(ctx, query, limit)
 	if err != nil {
-		return nil, toBusinessError(bound.provider, err)
+		return nil, carrierintelservice.ToBusinessError(bound.Provider(), err)
 	}
 	return suggestions, nil
 }
@@ -505,8 +507,8 @@ func (s *Service) ImportProspect(
 		return nil, err
 	}
 
-	subject := carrierSubject(created)
-	if _, fetchErr := s.Fetch(ctx, &FetchRequest{
+	subject := carrierintelenrollmentservice.CarrierSubject(created)
+	if _, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 		TenantInfo: req.TenantInfo,
 		Subject:    subject,
 		MinDepth:   carrierintel.LookupDepthFMCSA,
@@ -517,7 +519,7 @@ func (s *Service) ImportProspect(
 	}
 
 	if req.EnrollMonitoring {
-		if _, enrollErr := s.SetManualEnrollment(ctx, &EnrollSubjectsRequest{
+		if _, enrollErr := s.enrollment.SetManualEnrollment(ctx, &carrierintelenrollmentservice.EnrollSubjectsRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierIDs: []pulid.ID{created.ID},
 			Enroll:     true,

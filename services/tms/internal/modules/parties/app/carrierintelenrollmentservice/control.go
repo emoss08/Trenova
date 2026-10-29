@@ -1,4 +1,4 @@
-package carrierintelservice
+package carrierintelenrollmentservice
 
 import (
 	"context"
@@ -179,8 +179,7 @@ func (s *Service) UpdateControl(
 			log.Warn("failed to resume paused feeds", zap.Error(err))
 		}
 	}
-
-	s.publish(ctx, tenantInfo, "carrier_intelligence_control", "updated", updated.ID)
+	s.intel.Publish(ctx, tenantInfo, "carrier_intelligence_control", "updated", updated.ID)
 	return updated, nil
 }
 
@@ -213,7 +212,7 @@ func (s *Service) ProviderDescriptor(
 	if !ok {
 		return "", carrierintel.ProviderDescriptor{}, false, nil
 	}
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok {
 		return provider, carrierintel.ProviderDescriptor{}, false, nil
 	}
@@ -229,7 +228,7 @@ func (s *Service) SwitchPrimaryProvider(
 		return nil, errortypes.NewValidationError("provider", errortypes.ErrInvalid,
 			"Provider is not a carrier intelligence provider")
 	}
-	if _, ok := s.connectors[provider]; !ok {
+	if _, ok := s.intel.Connector(provider); !ok {
 		return nil, errortypes.NewBusinessError("{0} is not available", provider.String())
 	}
 	runtime, err := s.integrations.GetRuntimeConfig(ctx, tenantInfo, provider)
@@ -285,7 +284,7 @@ func (s *Service) SwitchPrimaryProvider(
 	if _, err = s.ReconcileDesired(ctx, tenantInfo); err != nil {
 		s.l.Warn("failed to reconcile enrollment after provider switch", zap.Error(err))
 	}
-	s.publish(ctx, tenantInfo, "carrier_intelligence_control", "updated", updated.ID)
+	s.intel.Publish(ctx, tenantInfo, "carrier_intelligence_control", "updated", updated.ID)
 	return updated, nil
 }
 
@@ -311,7 +310,7 @@ func (s *Service) releaseWatchlist(
 		return
 	}
 
-	connector, ok := s.connectors[provider]
+	connector, ok := s.intel.Connector(provider)
 	if !ok || !connector.Descriptor().Capabilities.Has(carrierintel.CapabilityNativeMonitoring) {
 		for _, row := range rows {
 			row.MarkSynced(now)
@@ -322,12 +321,12 @@ func (s *Service) releaseWatchlist(
 		return
 	}
 
-	bound, err := s.bind(ctx, tenantInfo, provider, false)
+	bound, err := s.intel.Bind(ctx, tenantInfo, provider, false)
 	if err != nil {
 		s.l.Warn("previous provider cannot be reached to release its watchlist", zap.Error(err))
 		return
 	}
-	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
+	monitor, ok := bound.Client().(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return
 	}

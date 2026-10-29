@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
@@ -230,7 +230,7 @@ func TestPlaceWorkerDispatchHold_RefusesADriverAlreadyHeld(t *testing.T) {
 type stubCarrierIntel struct {
 	event        *carrierintelevent.CarrierIntelEvent
 	acknowledged []pulid.ID
-	resolved     *carrierintelservice.ResolveEventRequest
+	resolved     *carrierintelreviewservice.ResolveEventRequest
 	guard        agenttoolstest.WriteGuard
 }
 
@@ -252,13 +252,13 @@ func (s *stubCarrierIntel) AcknowledgeEvents(
 
 func (s *stubCarrierIntel) ResolveEvent(
 	_ context.Context,
-	req *carrierintelservice.ResolveEventRequest,
+	req *carrierintelreviewservice.ResolveEventRequest,
 ) (*carrierintelevent.CarrierIntelEvent, error) {
 	if err := s.guard.Write(); err != nil {
 		return nil, err
 	}
 	s.resolved = req
-	if err := carrierintelservice.PlanResolve(s.event, req, timeutils.NowUnix()); err != nil {
+	if err := carrierintelreviewservice.PlanResolve(s.event, req, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
 
