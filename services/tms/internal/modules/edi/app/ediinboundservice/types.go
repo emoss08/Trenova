@@ -10,26 +10,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type PollMailboxRequest struct {
-	ProfileID  pulid.ID              `json:"profileId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-}
-
-type PollMailboxResult struct {
-	ProfileID     pulid.ID   `json:"profileId"`
-	StagedFileIDs []pulid.ID `json:"stagedFileIds"`
-	SkippedFiles  int        `json:"skippedFiles"`
-}
-
 type ProcessInboundFileRequest struct {
 	FileID     pulid.ID              `json:"fileId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Reprocess  bool                  `json:"reprocess"`
-}
-
-type PollableProfile struct {
-	ProfileID  pulid.ID              `json:"profileId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type parsedInterchange struct {

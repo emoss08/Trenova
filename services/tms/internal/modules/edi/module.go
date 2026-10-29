@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -35,6 +37,8 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			ediinboundservice.New,
+			ediinboundas2.New,
+			ediinboundpoll.New,
 			referencedataguard.New,
 			edipartnerrepository.New,
 			edimappingprofilerepository.New,

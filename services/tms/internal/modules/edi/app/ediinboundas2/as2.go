@@ -1,4 +1,4 @@
-package ediinboundservice
+package ediinboundas2
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -147,7 +148,7 @@ func (s *Service) receiveAS2Message(
 		parsed.FileName,
 		sanitizeAS2FileName(req.MessageID)+as2FileNameSuffix,
 	)
-	staged, skipped, err := s.stageInboundFile(
+	staged, skipped, err := s.inbound.StageInboundFile(
 		ctx,
 		profile,
 		&editransportports.EDIInboundRemoteFile{
@@ -178,7 +179,7 @@ func (s *Service) startInboundProcessing(
 	profile *edi.EDICommunicationProfile,
 	file *ediinboundfile.EDIInboundFile,
 ) {
-	request := &ProcessInboundFileRequest{
+	request := &ediinboundservice.ProcessInboundFileRequest{
 		FileID: file.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: profile.OrganizationID,
@@ -208,7 +209,7 @@ func (s *Service) startInboundProcessing(
 			return
 		}
 	}
-	if _, err := s.ProcessInboundFile(ctx, request); err != nil {
+	if _, err := s.inbound.ProcessInboundFile(ctx, request); err != nil {
 		s.l.Error(
 			"failed to process inbound AS2 file",
 			zap.String("fileId", file.ID.String()),

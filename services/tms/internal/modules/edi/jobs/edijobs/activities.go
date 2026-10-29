@@ -3,6 +3,7 @@ package edijobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -18,6 +19,7 @@ type ActivitiesParams struct {
 	EDIService        *ediservice.Service
 	Replayer          *edilading.Replayer
 	InboundService    *ediinboundservice.Service
+	PollService       *ediinboundpoll.Service
 	DataRetentionRepo tenantports.DataRetentionRepository
 	InboundFileRepo   edimessageports.EDIInboundFileRepository
 	MessageRepo       edimessageports.EDIMessageRepository
@@ -28,6 +30,7 @@ type Activities struct {
 	ediService        *ediservice.Service
 	replayer          *edilading.Replayer
 	inboundService    *ediinboundservice.Service
+	pollService       *ediinboundpoll.Service
 	dataRetentionRepo tenantports.DataRetentionRepository
 	inboundFileRepo   edimessageports.EDIInboundFileRepository
 	messageRepo       edimessageports.EDIMessageRepository
@@ -39,6 +42,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		ediService:        p.EDIService,
 		replayer:          p.Replayer,
 		inboundService:    p.InboundService,
+		pollService:       p.PollService,
 		dataRetentionRepo: p.DataRetentionRepo,
 		inboundFileRepo:   p.InboundFileRepo,
 		messageRepo:       p.MessageRepo,

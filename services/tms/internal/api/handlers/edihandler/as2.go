@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +22,7 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	request := &ediinboundservice.ReceiveAS2MessageRequest{
+	request := &ediinboundas2.ReceiveAS2MessageRequest{
 		From:                           c.GetHeader("AS2-From"),
 		To:                             c.GetHeader("AS2-To"),
 		MessageID:                      c.GetHeader("Message-ID"),
@@ -33,7 +33,7 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		ReceiptDeliveryOption:          c.GetHeader("Receipt-Delivery-Option"),
 		Body:                           body,
 	}
-	result, err := h.inboundService.ReceiveAS2Message(c.Request.Context(), request)
+	result, err := h.as2Service.ReceiveAS2Message(c.Request.Context(), request)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -58,13 +58,13 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 func (h *Handler) sendAsyncAS2MDN(
 	requestCtx context.Context,
 	returnURL string,
-	result *ediinboundservice.ReceiveAS2MessageResult,
+	result *ediinboundas2.ReceiveAS2MessageResult,
 ) {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(requestCtx), time.Minute)
 	go func() {
 		defer cancel()
-		if err := h.inboundService.SendAsyncAS2MDN(ctx, returnURL, result); err != nil {
-			h.inboundService.LogAsyncMDNFailure(returnURL, err)
+		if err := h.as2Service.SendAsyncAS2MDN(ctx, returnURL, result); err != nil {
+			h.as2Service.LogAsyncMDNFailure(returnURL, err)
 		}
 	}()
 }

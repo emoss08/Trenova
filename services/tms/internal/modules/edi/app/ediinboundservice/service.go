@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -49,7 +48,6 @@ type Params struct {
 
 	Logger              *zap.Logger
 	InboundFileRepo     edimessageports.EDIInboundFileRepository
-	ProfileRepo         edipartnerports.EDICommunicationProfileRepository
 	PartnerRepo         edipartnerports.EDIPartnerRepository
 	MessageRepo         edimessageports.EDIMessageRepository
 	DocumentTypeRepo    edipartnerports.EDIDocumentTypeRepository
@@ -62,9 +60,7 @@ type Params struct {
 	Lading              *edilading.Runtime
 	Flows               *edilading.Flows
 	Replayer            *edilading.Replayer `optional:"true"`
-	Transport           editransportports.EDITransportDispatcher
 	ContentGate         contentscanports.Gate
-	WorkflowStarter     kernelports.WorkflowStarter
 	Metrics             *metrics.Registry `optional:"true"`
 	// Watchtower puts a held-back file on the feed a person reads.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
@@ -76,7 +72,6 @@ type Params struct {
 type Service struct {
 	l                   *zap.Logger
 	inboundFileRepo     edimessageports.EDIInboundFileRepository
-	profileRepo         edipartnerports.EDICommunicationProfileRepository
 	partnerRepo         edipartnerports.EDIPartnerRepository
 	messageRepo         edimessageports.EDIMessageRepository
 	documentTypeRepo    edipartnerports.EDIDocumentTypeRepository
@@ -89,8 +84,6 @@ type Service struct {
 	lading              *edilading.Runtime
 	flows               *edilading.Flows
 	replayer            *edilading.Replayer
-	transport           editransportports.EDITransportDispatcher
-	workflowStarter     kernelports.WorkflowStarter
 	metrics             *metrics.EDI
 	watchtower          watchtowerports.WatchtowerProjector
 	publisher           agentports.AgentEventPublisher
@@ -109,7 +102,6 @@ func New(p Params) *Service {
 		watchtower:          p.Watchtower,
 		publisher:           p.Publisher,
 		inboundFileRepo:     p.InboundFileRepo,
-		profileRepo:         p.ProfileRepo,
 		partnerRepo:         p.PartnerRepo,
 		messageRepo:         p.MessageRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
@@ -122,151 +114,10 @@ func New(p Params) *Service {
 		lading:              p.Lading,
 		flows:               p.Flows,
 		replayer:            p.Replayer,
-		transport:           p.Transport,
-		workflowStarter:     p.WorkflowStarter,
 	}
 }
 
-func (s *Service) ListPollableProfiles(ctx context.Context) ([]PollableProfile, error) {
-	profiles, err := s.profileRepo.ListInboundPollingProfiles(ctx)
-	if err != nil {
-		return nil, err
-	}
-	pollable := make([]PollableProfile, 0, len(profiles))
-	for _, profile := range profiles {
-		if profile == nil {
-			continue
-		}
-		pollable = append(pollable, PollableProfile{
-			ProfileID: profile.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: profile.OrganizationID,
-				BuID:  profile.BusinessUnitID,
-			},
-		})
-	}
-	return pollable, nil
-}
-
-func (s *Service) PollMailbox(
-	ctx context.Context,
-	req *PollMailboxRequest,
-) (*PollMailboxResult, error) {
-	if req == nil || req.ProfileID.IsNil() {
-		return nil, errors.New("EDI communication profile ID is required for inbound polling")
-	}
-	profile, err := s.profileRepo.GetProfileByID(
-		ctx,
-		edipartnerports.GetEDICommunicationProfileByIDRequest{
-			ID:         req.ProfileID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if profile.EDIPartnerID.IsNil() {
-		return nil, errors.New(
-			"EDI communication profile requires a partner before inbound polling",
-		)
-	}
-	secrets, err := s.ediService.ProfileTransportSecrets(profile)
-	if err != nil {
-		return nil, err
-	}
-	fetchReq := &editransportports.EDIInboundFetchRequest{Profile: profile, Secrets: secrets}
-	remoteFiles, err := s.transport.FetchInbound(ctx, profile.Method, fetchReq)
-	if err != nil {
-		s.metrics.RecordInboundPoll(string(profile.Method), "failed")
-		s.recordPollOutcome(ctx, profile, false, err.Error())
-		return nil, err
-	}
-	s.metrics.RecordInboundPoll(string(profile.Method), "success")
-	s.recordPollOutcome(ctx, profile, true, "")
-
-	result := &PollMailboxResult{ProfileID: profile.ID}
-	for _, remoteFile := range remoteFiles {
-		if remoteFile == nil || strings.TrimSpace(remoteFile.Contents) == "" {
-			result.SkippedFiles++
-			continue
-		}
-		staged, skipped, stageErr := s.stageInboundFile(ctx, profile, remoteFile)
-		if stageErr != nil {
-			return result, stageErr
-		}
-		if skipped {
-			result.SkippedFiles++
-		} else {
-			result.StagedFileIDs = append(result.StagedFileIDs, staged.ID)
-		}
-		if archiveErr := s.transport.ArchiveInbound(
-			ctx,
-			profile.Method,
-			fetchReq,
-			remoteFile.Path,
-		); archiveErr != nil {
-			s.l.Warn(
-				"failed to archive processed inbound EDI file on remote mailbox",
-				zap.String("profileId", profile.ID.String()),
-				zap.String("remotePath", remoteFile.Path),
-				zap.Error(archiveErr),
-			)
-		}
-	}
-	return result, nil
-}
-
-func (s *Service) recordPollOutcome(
-	ctx context.Context,
-	profile *edi.EDICommunicationProfile,
-	success bool,
-	pollErr string,
-) {
-	if err := s.profileRepo.RecordInboundPollOutcome(
-		ctx,
-		edipartnerports.RecordEDIProfilePollOutcomeRequest{
-			ProfileID: profile.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: profile.OrganizationID,
-				BuID:  profile.BusinessUnitID,
-			},
-			PolledAt: timeutils.NowUnix(),
-			Success:  success,
-			Error:    pollErr,
-		},
-	); err != nil {
-		s.l.Warn(
-			"failed to record EDI inbound poll outcome",
-			zap.String("profileId", profile.ID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func (s *Service) PollAndProcessMailbox(
-	ctx context.Context,
-	req *PollMailboxRequest,
-) (*PollMailboxResult, error) {
-	result, err := s.PollMailbox(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	for _, fileID := range result.StagedFileIDs {
-		if _, procErr := s.ProcessInboundFile(ctx, &ProcessInboundFileRequest{
-			FileID:     fileID,
-			TenantInfo: req.TenantInfo,
-		}); procErr != nil {
-			s.l.Error(
-				"failed to process staged inbound EDI file during manual poll",
-				zap.String("fileId", fileID.String()),
-				zap.Error(procErr),
-			)
-		}
-	}
-	return result, nil
-}
-
-func (s *Service) stageInboundFile(
+func (s *Service) StageInboundFile(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,
 	remoteFile *editransportports.EDIInboundRemoteFile,

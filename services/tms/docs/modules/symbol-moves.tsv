@@ -18085,3 +18085,9 @@ github.com/emoss08/trenova/internal/modules/billing/app/factoringservice.NewRemi
 github.com/emoss08/trenova/internal/modules/billing/app/factoringservice.RemittanceIntake	github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice.RemittanceIntake
 github.com/emoss08/trenova/internal/modules/billing/app/factoringservice.RemittanceParams	github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice.RemittanceParams
 github.com/emoss08/trenova/internal/modules/billing/app/factoringservice.RemittanceService	github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice.RemittanceService
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.ErrAS2ProfileNotFound	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2.ErrAS2ProfileNotFound
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.ReceiveAS2MessageRequest	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2.ReceiveAS2MessageRequest
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.ReceiveAS2MessageResult	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2.ReceiveAS2MessageResult
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.PollMailboxRequest	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll.PollMailboxRequest
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.PollMailboxResult	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll.PollMailboxResult
+github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice.PollableProfile	github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll.PollableProfile

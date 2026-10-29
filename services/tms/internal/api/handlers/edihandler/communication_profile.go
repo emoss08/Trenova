@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -200,9 +200,9 @@ func (h *Handler) pollCommunicationProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.inboundService.PollAndProcessMailbox(
+	result, err := h.pollService.PollAndProcessMailbox(
 		c.Request.Context(),
-		&ediinboundservice.PollMailboxRequest{
+		&ediinboundpoll.PollMailboxRequest{
 			ProfileID:  profileID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

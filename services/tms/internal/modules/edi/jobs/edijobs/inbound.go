@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -86,7 +87,7 @@ func PollInboundMailboxesWorkflow(
 
 	var a *Activities
 	result := new(PollInboundMailboxesResult)
-	var profiles []ediinboundservice.PollableProfile
+	var profiles []ediinboundpoll.PollableProfile
 	if err := workflow.ExecuteActivity(
 		pollCtx,
 		a.ListPollableEDIProfilesActivity,
@@ -97,11 +98,11 @@ func PollInboundMailboxesWorkflow(
 
 	for _, profile := range profiles {
 		result.PolledProfiles++
-		var pollResult ediinboundservice.PollMailboxResult
+		var pollResult ediinboundpoll.PollMailboxResult
 		if err := workflow.ExecuteActivity(
 			pollCtx,
 			a.PollEDIMailboxActivity,
-			&ediinboundservice.PollMailboxRequest{
+			&ediinboundpoll.PollMailboxRequest{
 				ProfileID:  profile.ProfileID,
 				TenantInfo: profile.TenantInfo,
 			},
@@ -139,8 +140,8 @@ func PollInboundMailboxesWorkflow(
 
 func (a *Activities) ListPollableEDIProfilesActivity(
 	ctx context.Context,
-) ([]ediinboundservice.PollableProfile, error) {
-	profiles, err := a.inboundService.ListPollableProfiles(ctx)
+) ([]ediinboundpoll.PollableProfile, error) {
+	profiles, err := a.pollService.ListPollableProfiles(ctx)
 	if err != nil {
 		a.logger.Error("failed to list pollable EDI profiles", zap.Error(err))
 		return nil, err
@@ -150,9 +151,9 @@ func (a *Activities) ListPollableEDIProfilesActivity(
 
 func (a *Activities) PollEDIMailboxActivity(
 	ctx context.Context,
-	req *ediinboundservice.PollMailboxRequest,
-) (*ediinboundservice.PollMailboxResult, error) {
-	result, err := a.inboundService.PollMailbox(ctx, req)
+	req *ediinboundpoll.PollMailboxRequest,
+) (*ediinboundpoll.PollMailboxResult, error) {
+	result, err := a.pollService.PollMailbox(ctx, req)
 	if err != nil {
 		a.logger.Error(
 			"EDI mailbox polling activity failed",

@@ -1,4 +1,4 @@
-package ediinboundservice
+package ediinboundas2
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -130,8 +131,10 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 
 	ediSvc := ediservice.New(ediservice.Params{Logger: zap.NewNop()})
 	service := New(Params{
-		Logger:          zap.NewNop(),
-		InboundFileRepo: inboundFileRepo,
+		Logger: zap.NewNop(),
+		Inbound: ediinboundservice.New(
+			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+		),
 		ProfileRepo:     profileRepo,
 		EDIService:      ediSvc,
 		WorkflowStarter: workflowStarter,
@@ -296,8 +299,10 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		Once()
 
 	service := New(Params{
-		Logger:          zap.NewNop(),
-		InboundFileRepo: inboundFileRepo,
+		Logger: zap.NewNop(),
+		Inbound: ediinboundservice.New(
+			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+		),
 		ProfileRepo:     profileRepo,
 		EDIService:      ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
 		WorkflowStarter: workflowStarter,

@@ -3,6 +3,8 @@ package edihandler
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -16,6 +18,8 @@ type Params struct {
 
 	Service              *ediservice.Service
 	InboundService       *ediinboundservice.Service
+	AS2Service           *ediinboundas2.Service
+	PollService          *ediinboundpoll.Service
 	Projects             *edilading.Projects
 	LadingRuntime        *edilading.Runtime
 	ErrorHandler         *helpers.ErrorHandler
@@ -25,6 +29,8 @@ type Params struct {
 type Handler struct {
 	service        *ediservice.Service
 	inboundService *ediinboundservice.Service
+	as2Service     *ediinboundas2.Service
+	pollService    *ediinboundpoll.Service
 	projects       *edilading.Projects
 	ladingRuntime  *edilading.Runtime
 	eh             *helpers.ErrorHandler
@@ -35,6 +41,8 @@ func New(p Params) *Handler {
 	return &Handler{
 		service:        p.Service,
 		inboundService: p.InboundService,
+		as2Service:     p.AS2Service,
+		pollService:    p.PollService,
 		projects:       p.Projects,
 		ladingRuntime:  p.LadingRuntime,
 		eh:             p.ErrorHandler,
