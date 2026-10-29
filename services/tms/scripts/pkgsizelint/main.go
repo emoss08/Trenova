@@ -103,7 +103,7 @@ func run(update bool) error {
 	return fmt.Errorf("%w: %d (see %s)", errViolations, len(c.problems), guideLink)
 }
 
-func (c *checker) budget(pkg string) (int, string) {
+func (c *checker) budget(pkg string) (limit int, tier string) {
 	for _, re := range c.foundation {
 		if re.MatchString(pkg) {
 			return c.cfg.Budgets.Foundation, "foundation"
@@ -113,7 +113,7 @@ func (c *checker) budget(pkg string) (int, string) {
 	return c.cfg.Budgets.Default, "default"
 }
 
-func (c *checker) report(format string, args ...any) {
+func (c *checker) reportf(format string, args ...any) {
 	c.problems = append(c.problems, fmt.Sprintf(format, args...))
 }
 
@@ -128,7 +128,7 @@ func (c *checker) checkExceptions() {
 	for _, pkg := range slices.Sorted(maps.Keys(c.cfg.Exceptions)) {
 		entry := c.cfg.Exceptions[pkg]
 		if strings.TrimSpace(entry.Reason) == "" {
-			c.report("%s: exception has no reason", pkg)
+			c.reportf("%s: exception has no reason", pkg)
 		}
 		if c.withinBudget(pkg) {
 			c.retire(pkg, "exception", func() { delete(c.cfg.Exceptions, pkg) })
@@ -136,7 +136,7 @@ func (c *checker) checkExceptions() {
 		}
 		switch size := c.sizes[pkg]; {
 		case size > entry.Ceiling:
-			c.report("%s: %d lines, past its %d-line exception ceiling", pkg, size, entry.Ceiling)
+			c.reportf("%s: %d lines, past its %d-line exception ceiling", pkg, size, entry.Ceiling)
 		case size < entry.Ceiling && c.update:
 			entry.Ceiling = size
 			c.cfg.Exceptions[pkg] = entry
@@ -149,7 +149,7 @@ func (c *checker) retire(pkg, kind string, drop func()) {
 		drop()
 		return
 	}
-	c.report(
+	c.reportf(
 		"%s: within budget or gone; remove its %s entry with `go run ./scripts/pkgsizelint -update`",
 		pkg,
 		kind,
@@ -166,7 +166,7 @@ func (c *checker) checkBudgets() {
 		if _, ok := c.cfg.Exceptions[pkg]; ok {
 			continue
 		}
-		c.report("%s: %d lines, over the %d-line %s budget; split it", pkg, size, limit, tier)
+		c.reportf("%s: %d lines, over the %d-line %s budget; split it", pkg, size, limit, tier)
 	}
 }
 

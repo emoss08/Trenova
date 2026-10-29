@@ -23,6 +23,13 @@ type Coercion struct {
 	Omitted bool
 }
 
+type coercer struct {
+	notes []Coercion
+	// today is the calendar day "today" names where the call is read, when
+	// the caller knows it (WithToday).
+	today *time.Time
+}
+
 func clamps(property map[string]any) bool {
 	clamped, _ := property[toolschema.KeyClamp].(bool)
 
@@ -53,14 +60,14 @@ func (c *coercer) clamp(property map[string]any, value any, path string) (any, b
 		return value, false
 	}
 	if most, bounded := boundOf(property, toolschema.KeyMaximum); bounded && number > most {
-		c.note(path, "%s %s is past its most, %s, and was read as %s",
+		c.notef(path, "%s %s is past its most, %s, and was read as %s",
 			path, strconv.FormatFloat(number, 'f', -1, 64),
 			strconv.FormatFloat(most, 'f', -1, 64), strconv.FormatFloat(most, 'f', -1, 64))
 
 		return most, true
 	}
 	if least, bounded := boundOf(property, toolschema.KeyMinimum); bounded && number < least {
-		c.note(path, "%s %s is below its least, %s, and was read as %s",
+		c.notef(path, "%s %s is below its least, %s, and was read as %s",
 			path, strconv.FormatFloat(number, 'f', -1, 64),
 			strconv.FormatFloat(least, 'f', -1, 64), strconv.FormatFloat(least, 'f', -1, 64))
 
@@ -173,13 +180,6 @@ func Apply(schema, args map[string]any, opts ...Option) (map[string]any, []Coerc
 	return coerced, c.notes
 }
 
-type coercer struct {
-	notes []Coercion
-	// today is the calendar day "today" names where the call is read, when
-	// the caller knows it (WithToday).
-	today *time.Time
-}
-
 // Option adds a reading Apply can only make with something the
 // caller knows.
 type Option func(*coercer)
@@ -199,7 +199,7 @@ func WithToday(now time.Time) Option {
 // which day today is, and how far each is from it.
 var relativeDays = map[string]int{"today": 0, "yesterday": -1, "tomorrow": 1}
 
-func (c *coercer) note(path, format string, args ...any) {
+func (c *coercer) notef(path, format string, args ...any) {
 	c.notes = append(c.notes, Coercion{Path: path, Note: fmt.Sprintf(format, args...)})
 }
 
@@ -225,7 +225,7 @@ func (c *coercer) object(
 			out[target] = value
 			key = target
 			changed = true
-			c.note(
+			c.notef(
 				toolschema.JoinPath(path, key),
 				"%s was read as %s",
 				toolschema.JoinPath(path, sent),
@@ -270,7 +270,7 @@ func (c *coercer) object(
 			}
 			if trimmed, cut := trimmedID(read); cut {
 				read, did = trimmed, true
-				c.note(at, "%s was read as %q", at, trimmed)
+				c.notef(at, "%s was read as %q", at, trimmed)
 			}
 		}
 		if did {
@@ -318,7 +318,7 @@ func (c *coercer) value(property map[string]any, value any, path string) (any, b
 			return value, false
 		}
 		if decoded {
-			c.note(path, "%s was sent as JSON text and read as the object it holds; "+
+			c.notef(path, "%s was sent as JSON text and read as the object it holds; "+
 				"send the object itself", path)
 		}
 		properties, _ := property["properties"].(map[string]any)
@@ -364,7 +364,7 @@ func (c *coercer) array(property map[string]any, value any, path string) (any, b
 	if blank > 0 {
 		changed = true
 		if len(out) > 0 {
-			c.note(path, "%s held %d empty entries, which were left out", path, blank)
+			c.notef(path, "%s held %d empty entries, which were left out", path, blank)
 		}
 	}
 	if len(items) > 0 {
@@ -392,7 +392,7 @@ func (c *coercer) asList(items map[string]any, value any, path string) ([]any, b
 		return list, false
 	}
 	if list, decoded := encodedJSON[[]any](value, '['); decoded {
-		c.note(path, "%s was sent as JSON text and read as the list it holds; "+
+		c.notef(path, "%s was sent as JSON text and read as the list it holds; "+
 			"send the array itself", path)
 
 		return list, true
@@ -407,11 +407,17 @@ func (c *coercer) asList(items map[string]any, value any, path string) ([]any, b
 					list = append(list, trimmed)
 				}
 			}
-			c.note(path, "%s %q was read as a list of %d; send a JSON array", path, text, len(list))
+			c.notef(
+				path,
+				"%s %q was read as a list of %d; send a JSON array",
+				path,
+				text,
+				len(list),
+			)
 
 			return list, true
 		}
-		c.note(path, "%s was read as a list of one; send a JSON array", path)
+		c.notef(path, "%s was read as a list of one; send a JSON array", path)
 
 		return []any{value}, true
 	}
@@ -424,7 +430,7 @@ func (c *coercer) asList(items map[string]any, value any, path string) ([]any, b
 		if !isList {
 			return nil, false
 		}
-		c.note(path, "%s was read as the list inside %q; send the array itself", path, key)
+		c.notef(path, "%s was read as the list inside %q; send the array itself", path, key)
 
 		return list, true
 	}
@@ -450,7 +456,7 @@ func (c *coercer) number(kind string, value any, path string) (any, bool) {
 	}
 	// A JSON number decodes as float64, so that is what a tool reads when
 	// the model sends one unquoted; the re-read value takes the same shape.
-	c.note(path, "%s %q was read as the number %s; send numbers unquoted",
+	c.notef(path, "%s %q was read as the number %s; send numbers unquoted",
 		path, text, strconv.FormatFloat(parsed, 'f', -1, 64))
 
 	return parsed, true
@@ -476,7 +482,7 @@ func (c *coercer) text(property map[string]any, value any, path string) (any, bo
 	default:
 		return value, false
 	}
-	c.note(path, "%s %v was read as the text %q; this parameter takes text", path, value, text)
+	c.notef(path, "%s %v was read as the text %q; this parameter takes text", path, value, text)
 	read, _ := c.enum(property, text, path)
 
 	return read, true
@@ -514,12 +520,12 @@ func (c *coercer) date(format toolschema.DateFormat, value any, path string) (an
 	case toolschema.FormatDate:
 		if offset, relative := relativeDays[strings.ToLower(trimmed)]; relative && c.today != nil {
 			day := c.today.AddDate(0, 0, offset).Format(time.DateOnly)
-			c.note(path, "%s %q was read as the day %s", path, text, day)
+			c.notef(path, "%s %q was read as the day %s", path, text, day)
 
 			return day, true
 		}
 		if match := midnightDay.FindStringSubmatch(trimmed); match != nil {
-			c.note(path, "%s %q was read as the day %s; send a day as %s",
+			c.notef(path, "%s %q was read as the day %s; send a day as %s",
 				path, text, match[1], format.Shape)
 
 			return match[1], true
@@ -528,7 +534,7 @@ func (c *coercer) date(format toolschema.DateFormat, value any, path string) (an
 		if match := localMinute.FindStringSubmatch(trimmed); match != nil {
 			read := match[1] + "T" + match[2]
 			if read != text {
-				c.note(path, "%s %q was read as %s; send %s", path, text, read, format.Shape)
+				c.notef(path, "%s %q was read as %s; send %s", path, text, read, format.Shape)
 
 				return read, true
 			}
@@ -553,7 +559,7 @@ func numberText(value any) (string, bool) {
 
 // enum reads a value spelled in another case or with other separators as
 // the declared value it plainly means.
-func (c *coercer) enum(property map[string]any, text string, path string) (any, bool) {
+func (c *coercer) enum(property map[string]any, text, path string) (any, bool) {
 	allowed := toolschema.EnumValues(property)
 	if len(allowed) == 0 {
 		return text, false
@@ -566,7 +572,7 @@ func (c *coercer) enum(property map[string]any, text string, path string) (any, 
 	shape := toolschema.NameShape(strings.TrimSpace(text))
 	for _, option := range allowed {
 		if toolschema.NameShape(option) == shape {
-			c.note(path, "%s %q was read as %q", path, text, option)
+			c.notef(path, "%s %q was read as %q", path, text, option)
 
 			return option, true
 		}
@@ -582,11 +588,11 @@ func (c *coercer) boolean(value any, path string) (any, bool) {
 	}
 	switch strings.ToLower(strings.TrimSpace(text)) {
 	case "true", "yes":
-		c.note(path, "%s %q was read as true; send a JSON boolean", path, text)
+		c.notef(path, "%s %q was read as true; send a JSON boolean", path, text)
 
 		return true, true
 	case "false", "no":
-		c.note(path, "%s %q was read as false; send a JSON boolean", path, text)
+		c.notef(path, "%s %q was read as false; send a JSON boolean", path, text)
 
 		return false, true
 	default:

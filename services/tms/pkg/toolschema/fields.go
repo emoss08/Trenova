@@ -187,13 +187,13 @@ func typeOf(raw any) string {
 		return value
 	case []string:
 		for _, name := range value {
-			if name != "null" {
+			if name != TypeNull {
 				return name
 			}
 		}
 	case []any:
 		for _, name := range value {
-			if text, ok := name.(string); ok && text != "null" {
+			if text, ok := name.(string); ok && text != TypeNull {
 				return text
 			}
 		}

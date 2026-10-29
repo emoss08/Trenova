@@ -19,6 +19,7 @@ const (
 	TypeInteger = "integer"
 	TypeBoolean = "boolean"
 	TypeArray   = "array"
+	TypeNull    = "null"
 )
 
 // KeySubsetOf is this package's extension keyword marking an array of ids as a

@@ -160,16 +160,22 @@ func rangeCheckList(
 		switch n := node.(type) {
 		case *parse.RangeNode:
 			if depth+1 > maxRangeDepth {
-				*diags = append(*diags, templatediag.Error(templatediag.CodeRangeTooDeep, field, fmt.Sprintf(
-					"ranges are nested more than %d deep", maxRangeDepth,
-				)))
+				*diags = append(*diags, templatediag.Error(
+					templatediag.CodeRangeTooDeep,
+					field,
+					fmt.Sprintf("ranges are nested more than %d deep", maxRangeDepth),
+				))
 				return
 			}
 			if rangesOverNumber(n.Pipe) {
-				*diags = append(*diags, templatediag.Error(templatediag.CodeRangeOverNumber, field, fmt.Sprintf(
-					"{{range}} over a number is not allowed; use seq, which stops at %d",
-					templatefuncs.MaxSeqLength,
-				)))
+				*diags = append(*diags, templatediag.Error(
+					templatediag.CodeRangeOverNumber,
+					field,
+					fmt.Sprintf(
+						"{{range}} over a number is not allowed; use seq, which stops at %d",
+						templatefuncs.MaxSeqLength,
+					),
+				))
 			}
 			rangeCheckList(field, n.List, depth+1, diags)
 			rangeCheckList(field, n.ElseList, depth, diags)

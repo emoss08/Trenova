@@ -43,24 +43,8 @@ func DeclaredType(property map[string]any) string {
 	if definition := localDefinition(property); definition != nil {
 		return DeclaredType(definition)
 	}
-	switch typed := property["type"].(type) {
-	case string:
-		return typed
-	case []string:
-		for _, kind := range typed {
-			if kind != "null" {
-				return kind
-			}
-		}
-	case []any:
-		for _, kind := range typed {
-			if name, ok := kind.(string); ok && name != "null" {
-				return name
-			}
-		}
-	}
 
-	return ""
+	return typeOf(property[KeyType])
 }
 
 // localDefinition is the definition a property's $ref names among its own
