@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -171,7 +172,7 @@ func (v *Validator) validateAccountingCloseBlockers(
 		js := journalsourcedb.Sources
 		sources, err := js.Where(
 			js.JournalBatch().FiscalPeriodID.Eq(entity.ID),
-			js.Status.Ne("Posted"),
+			js.Status.NeCol(keel.ConstText("Posted")),
 		).Count(ctx, db)
 		if err != nil {
 			return errJournalSourceBlockers

@@ -116,7 +116,10 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 	assert.Equal(t, int64(2), lineCount)
 
 	js := journalsourcedb.Sources
-	source, err := js.Where(js.SourceEventType.Eq("ManualJournalPosted")).One(ctx, kdb)
+	source, err := js.Where(
+		js.JournalEntryID.Eq(entry.ID),
+		js.SourceEventType.Eq("ManualJournalPosted"),
+	).One(ctx, kdb)
 	require.NoError(t, err)
 	assert.Equal(t, "Posted", source.Status)
 	assert.Equal(t, entry.ID, source.JournalEntryID)
