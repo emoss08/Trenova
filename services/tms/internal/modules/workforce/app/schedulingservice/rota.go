@@ -41,20 +41,7 @@ type RotaRequest struct {
 // the pattern says what was planned, and time off, leave, dispatch and the
 // driver's own preference each say what happened to it.
 func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.Rota, error) {
-	at := req.At
-	if at <= 0 {
-		at = timeutils.NowUnix()
-	}
-	weeks := req.Weeks
-	if weeks <= 0 {
-		weeks = 1
-	}
-	if weeks > maxRotaWeeks {
-		weeks = maxRotaWeeks
-	}
-
-	weekStart := workerschedule.StartOfWeekUTC(at, time.UTC)
-	weekEnd := time.Unix(weekStart, 0).UTC().AddDate(0, 0, daysInWeek*weeks).Unix()
+	weekStart, weekEnd, weeks := rotaWindow(req)
 
 	query := &workerscheduleports.RotaQuery{
 		TenantInfo:  req.TenantInfo,
@@ -65,13 +52,63 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		Limit:       req.Limit,
 	}
 
-	var (
-		workers   []workerscheduleports.RotaWorkerRow
-		timeOff   []workerscheduleports.RotaRangeRow
-		leave     []workerscheduleports.RotaRangeRow
-		assigned  []workerscheduleports.RotaDayRow
-		templates map[pulid.ID]*workerschedule.ShiftTemplate
-	)
+	sources, err := s.gatherRotaSources(ctx, req.TenantInfo, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(req.WorkerIDs) > 0 {
+		sources.workers = filterWorkers(sources.workers, req.WorkerIDs)
+	}
+
+	preferences, err := s.gatherPreferences(ctx, req.TenantInfo, sources.workers)
+	if err != nil {
+		return nil, err
+	}
+
+	rota := workerschedule.BuildRota(workerschedule.RotaInput{
+		WeekStart: weekStart,
+		Weeks:     weeks,
+		Location:  time.UTC,
+		Workers:   rotaWorkerInputs(sources, preferences, weekStart, weekEnd),
+	})
+
+	return rota, nil
+}
+
+func rotaWindow(req *RotaRequest) (weekStart, weekEnd int64, weeks int) {
+	at := req.At
+	if at <= 0 {
+		at = timeutils.NowUnix()
+	}
+	weeks = req.Weeks
+	if weeks <= 0 {
+		weeks = 1
+	}
+	if weeks > maxRotaWeeks {
+		weeks = maxRotaWeeks
+	}
+
+	weekStart = workerschedule.StartOfWeekUTC(at, time.UTC)
+	weekEnd = time.Unix(weekStart, 0).UTC().AddDate(0, 0, daysInWeek*weeks).Unix()
+
+	return weekStart, weekEnd, weeks
+}
+
+type rotaSources struct {
+	workers   []workerscheduleports.RotaWorkerRow
+	timeOff   []workerscheduleports.RotaRangeRow
+	leave     []workerscheduleports.RotaRangeRow
+	assigned  []workerscheduleports.RotaDayRow
+	templates map[pulid.ID]*workerschedule.ShiftTemplate
+}
+
+func (s *Service) gatherRotaSources(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query *workerscheduleports.RotaQuery,
+) (*rotaSources, error) {
+	sources := &rotaSources{}
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -79,7 +116,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		if err != nil {
 			return err
 		}
-		workers = rows
+		sources.workers = rows
 		return nil
 	})
 	group.Go(func() error {
@@ -87,7 +124,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		if err != nil {
 			return err
 		}
-		timeOff = rows
+		sources.timeOff = rows
 		return nil
 	})
 	group.Go(func() error {
@@ -95,7 +132,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		if err != nil {
 			return err
 		}
-		leave = rows
+		sources.leave = rows
 		return nil
 	})
 	group.Go(func() error {
@@ -103,21 +140,21 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		if err != nil {
 			return err
 		}
-		assigned = rows
+		sources.assigned = rows
 		return nil
 	})
 	// The patterns are read whole rather than joined per worker: a carrier has
 	// a handful of them and every roster line points at one of the same few.
 	group.Go(func() error {
 		rows, err := s.repo.ListTemplates(groupCtx, &workerscheduleports.ListShiftTemplatesRequest{
-			TenantInfo: req.TenantInfo,
+			TenantInfo: tenantInfo,
 		})
 		if err != nil {
 			return err
 		}
-		templates = make(map[pulid.ID]*workerschedule.ShiftTemplate, len(rows))
+		sources.templates = make(map[pulid.ID]*workerschedule.ShiftTemplate, len(rows))
 		for _, template := range rows {
-			templates[template.ID] = template
+			sources.templates[template.ID] = template
 		}
 		return nil
 	})
@@ -126,27 +163,26 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		return nil, fmt.Errorf("gather rota: %w", err)
 	}
 
-	if len(req.WorkerIDs) > 0 {
-		workers = filterWorkers(workers, req.WorkerIDs)
-	}
+	return sources, nil
+}
 
-	preferences, err := s.gatherPreferences(ctx, req.TenantInfo, workers)
-	if err != nil {
-		return nil, err
-	}
+func rotaWorkerInputs(
+	sources *rotaSources,
+	preferences map[pulid.ID]map[int16]workerschedule.AvailabilityPreference,
+	weekStart, weekEnd int64,
+) []workerschedule.RotaWorkerInput {
+	timeOffDays := expandRanges(sources.timeOff, weekStart, weekEnd)
+	leaveDays := expandRanges(sources.leave, weekStart, weekEnd)
+	assignedDays := indexDays(sources.assigned)
 
-	timeOffDays := expandRanges(timeOff, weekStart, weekEnd)
-	leaveDays := expandRanges(leave, weekStart, weekEnd)
-	assignedDays := indexDays(assigned)
-
-	inputs := make([]workerschedule.RotaWorkerInput, 0, len(workers))
-	for _, row := range workers {
+	inputs := make([]workerschedule.RotaWorkerInput, 0, len(sources.workers))
+	for _, row := range sources.workers {
 		inputs = append(inputs, workerschedule.RotaWorkerInput{
 			WorkerID:         row.WorkerID,
 			Name:             fmt.Sprintf("%s %s", row.FirstName, row.LastName),
 			FleetCode:        row.FleetCode,
 			FleetColor:       row.FleetColor,
-			Template:         templates[row.ShiftTemplateID],
+			Template:         sources.templates[row.ShiftTemplateID],
 			CycleOffsetWeeks: row.CycleOffsetWeeks,
 			Preferences:      preferences[row.WorkerID],
 			TimeOffDays:      timeOffDays[row.WorkerID],
@@ -155,14 +191,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*workerschedule.R
 		})
 	}
 
-	rota := workerschedule.BuildRota(workerschedule.RotaInput{
-		WeekStart: weekStart,
-		Weeks:     weeks,
-		Location:  time.UTC,
-		Workers:   inputs,
-	})
-
-	return rota, nil
+	return inputs
 }
 
 // gatherPreferences reads the whole roster's stated availability in one query.

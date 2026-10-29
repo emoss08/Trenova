@@ -69,70 +69,8 @@ func BuildSafetyScorecard(
 	}
 	windowStart := timeutils.AddMonthsUTC(now, -scorecardWindowMonths)
 
-	var lastEvent int64
-	for _, event := range events {
-		if event == nil {
-			continue
-		}
-		card.ActivePoints += event.ActivePoints(now)
-		if !event.IsClosed() {
-			card.OpenEvents++
-		}
-		if event.Kind.CountsAgainstRecord() && event.OccurredAt > lastEvent {
-			lastEvent = event.OccurredAt
-		}
-		if event.OccurredAt < windowStart {
-			continue
-		}
-		switch event.Kind {
-		case workersafety.SafetyEventAccident:
-			card.Accidents++
-			if event.Preventable {
-				card.PreventableAccidents++
-			}
-		case workersafety.SafetyEventIncident:
-			card.Incidents++
-		case workersafety.SafetyEventNearMiss:
-			card.NearMisses++
-		case workersafety.SafetyEventCitation:
-			card.Citations++
-		case workersafety.SafetyEventInspection:
-			card.Inspections++
-			switch event.InspectionResult {
-			case workersafety.InspectionResultPass:
-				card.InspectionsPassed++
-			case workersafety.InspectionResultFail:
-				card.InspectionsFailed++
-			case workersafety.InspectionResultOutOfService:
-				card.InspectionsFailed++
-				card.OutOfServiceOrders++
-			case workersafety.InspectionResultNone:
-			}
-			if event.OutOfService &&
-				event.InspectionResult != workersafety.InspectionResultOutOfService {
-				card.OutOfServiceOrders++
-			}
-		}
-	}
-	if card.Inspections > 0 {
-		rate := float64(card.InspectionsPassed) / float64(card.Inspections)
-		card.CleanInspectionRate = &rate
-	}
-	if lastEvent > 0 {
-		days := workercredential.DaysUntil(now, lastEvent)
-		card.LastEventAt = &lastEvent
-		card.DaysSinceLastEvent = &days
-	}
-
-	for _, action := range actions {
-		if action == nil || !action.IsActive(now) {
-			continue
-		}
-		card.ActiveDiscipline++
-		if action.Level.Rank() > card.HighestDiscipline.Rank() {
-			card.HighestDiscipline = action.Level
-		}
-	}
+	card.tallyEvents(events, now, windowStart)
+	card.tallyDiscipline(actions, now)
 	for _, recognition := range recognitions {
 		if recognition != nil && recognition.OccurredAt >= windowStart {
 			card.Recognitions++
@@ -150,6 +88,88 @@ func BuildSafetyScorecard(
 	card.Score = score
 	card.Rating = ratingFor(score, card.ActivePoints)
 	return card
+}
+
+func (card *SafetyScorecard) tallyEvents(
+	events []*workersafety.WorkerSafetyEvent,
+	now, windowStart int64,
+) {
+	var lastEvent int64
+	for _, event := range events {
+		if event == nil {
+			continue
+		}
+		card.ActivePoints += event.ActivePoints(now)
+		if !event.IsClosed() {
+			card.OpenEvents++
+		}
+		if event.Kind.CountsAgainstRecord() && event.OccurredAt > lastEvent {
+			lastEvent = event.OccurredAt
+		}
+		if event.OccurredAt >= windowStart {
+			card.countWindowEvent(event)
+		}
+	}
+	if card.Inspections > 0 {
+		rate := float64(card.InspectionsPassed) / float64(card.Inspections)
+		card.CleanInspectionRate = &rate
+	}
+	if lastEvent > 0 {
+		days := workercredential.DaysUntil(now, lastEvent)
+		card.LastEventAt = &lastEvent
+		card.DaysSinceLastEvent = &days
+	}
+}
+
+func (card *SafetyScorecard) countWindowEvent(event *workersafety.WorkerSafetyEvent) {
+	switch event.Kind {
+	case workersafety.SafetyEventAccident:
+		card.Accidents++
+		if event.Preventable {
+			card.PreventableAccidents++
+		}
+	case workersafety.SafetyEventIncident:
+		card.Incidents++
+	case workersafety.SafetyEventNearMiss:
+		card.NearMisses++
+	case workersafety.SafetyEventCitation:
+		card.Citations++
+	case workersafety.SafetyEventInspection:
+		card.countInspection(event)
+	}
+}
+
+func (card *SafetyScorecard) countInspection(event *workersafety.WorkerSafetyEvent) {
+	card.Inspections++
+	switch event.InspectionResult {
+	case workersafety.InspectionResultPass:
+		card.InspectionsPassed++
+	case workersafety.InspectionResultFail:
+		card.InspectionsFailed++
+	case workersafety.InspectionResultOutOfService:
+		card.InspectionsFailed++
+		card.OutOfServiceOrders++
+	case workersafety.InspectionResultNone:
+	}
+	if event.OutOfService &&
+		event.InspectionResult != workersafety.InspectionResultOutOfService {
+		card.OutOfServiceOrders++
+	}
+}
+
+func (card *SafetyScorecard) tallyDiscipline(
+	actions []*workerdiscipline.WorkerDisciplinaryAction,
+	now int64,
+) {
+	for _, action := range actions {
+		if action == nil || !action.IsActive(now) {
+			continue
+		}
+		card.ActiveDiscipline++
+		if action.Level.Rank() > card.HighestDiscipline.Rank() {
+			card.HighestDiscipline = action.Level
+		}
+	}
 }
 
 func ratingFor(score, points int32) worker.SafetyRating {

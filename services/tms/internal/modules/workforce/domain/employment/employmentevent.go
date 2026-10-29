@@ -365,33 +365,13 @@ func (e *WorkerEmploymentEvent) Apply(wrk *worker.Worker) bool {
 	}
 	switch e.Kind {
 	case EmploymentEventHired, EmploymentEventRehired:
-		wrk.Status = domaintypes.StatusActive
-		wrk.CanBeAssigned = true
-		wrk.AvailableForDispatch = true
-		if wrk.Profile != nil {
-			wrk.Profile.HireDate = e.EffectiveAt
-			wrk.Profile.TerminationDate = nil
-		}
+		e.applyHire(wrk)
 		return true
 	case EmploymentEventTerminated:
-		wrk.Status = domaintypes.StatusInactive
-		wrk.CanBeAssigned = false
-		wrk.AvailableForDispatch = false
-		wrk.LeaveType = ""
-		if wrk.Profile != nil {
-			effective := e.EffectiveAt
-			wrk.Profile.TerminationDate = &effective
-		}
+		e.applyTermination(wrk)
 		return true
 	case EmploymentEventLeaveStarted:
-		wrk.CanBeAssigned = false
-		wrk.AvailableForDispatch = false
-		if value, ok := e.ToValues[EmploymentValueLeaveType]; ok &&
-			worker.LeaveType(value).IsValid() {
-			wrk.LeaveType = worker.LeaveType(value)
-		} else {
-			wrk.LeaveType = worker.LeaveTypeOther
-		}
+		e.applyLeaveStart(wrk)
 		return true
 	case EmploymentEventSuspended:
 		wrk.CanBeAssigned = false
@@ -407,34 +387,74 @@ func (e *WorkerEmploymentEvent) Apply(wrk *worker.Worker) bool {
 		wrk.AvailableForDispatch = true
 		return true
 	case EmploymentEventTransferred:
-		changed := false
-		if id, ok := e.ToValues[EmploymentValueFleetCodeID]; ok {
-			wrk.FleetCodeID = pulid.ID(id)
-			changed = true
-		}
-		if id, ok := e.ToValues[EmploymentValueManagerID]; ok {
-			wrk.ManagerID = pulid.ID(id)
-			changed = true
-		}
-		return changed
+		return e.applyTransfer(wrk)
 	case EmploymentEventPromoted:
-		changed := false
-		if value, ok := e.ToValues[EmploymentValueDriverType]; ok &&
-			worker.DriverType(value).IsValid() {
-			wrk.DriverType = worker.DriverType(value)
-			changed = true
-		}
-		if value, ok := e.ToValues[EmploymentValueWorkerType]; ok &&
-			worker.WorkerType(value).IsValid() {
-			wrk.Type = worker.WorkerType(value)
-			changed = true
-		}
-		return changed
+		return e.applyPromotion(wrk)
 	case EmploymentEventProbationEnded, EmploymentEventRateChanged:
 		return false
 	default:
 		return false
 	}
+}
+
+func (e *WorkerEmploymentEvent) applyHire(wrk *worker.Worker) {
+	wrk.Status = domaintypes.StatusActive
+	wrk.CanBeAssigned = true
+	wrk.AvailableForDispatch = true
+	if wrk.Profile != nil {
+		wrk.Profile.HireDate = e.EffectiveAt
+		wrk.Profile.TerminationDate = nil
+	}
+}
+
+func (e *WorkerEmploymentEvent) applyTermination(wrk *worker.Worker) {
+	wrk.Status = domaintypes.StatusInactive
+	wrk.CanBeAssigned = false
+	wrk.AvailableForDispatch = false
+	wrk.LeaveType = ""
+	if wrk.Profile != nil {
+		effective := e.EffectiveAt
+		wrk.Profile.TerminationDate = &effective
+	}
+}
+
+func (e *WorkerEmploymentEvent) applyLeaveStart(wrk *worker.Worker) {
+	wrk.CanBeAssigned = false
+	wrk.AvailableForDispatch = false
+	if value, ok := e.ToValues[EmploymentValueLeaveType]; ok &&
+		worker.LeaveType(value).IsValid() {
+		wrk.LeaveType = worker.LeaveType(value)
+	} else {
+		wrk.LeaveType = worker.LeaveTypeOther
+	}
+}
+
+func (e *WorkerEmploymentEvent) applyTransfer(wrk *worker.Worker) bool {
+	changed := false
+	if id, ok := e.ToValues[EmploymentValueFleetCodeID]; ok {
+		wrk.FleetCodeID = pulid.ID(id)
+		changed = true
+	}
+	if id, ok := e.ToValues[EmploymentValueManagerID]; ok {
+		wrk.ManagerID = pulid.ID(id)
+		changed = true
+	}
+	return changed
+}
+
+func (e *WorkerEmploymentEvent) applyPromotion(wrk *worker.Worker) bool {
+	changed := false
+	if value, ok := e.ToValues[EmploymentValueDriverType]; ok &&
+		worker.DriverType(value).IsValid() {
+		wrk.DriverType = worker.DriverType(value)
+		changed = true
+	}
+	if value, ok := e.ToValues[EmploymentValueWorkerType]; ok &&
+		worker.WorkerType(value).IsValid() {
+		wrk.Type = worker.WorkerType(value)
+		changed = true
+	}
+	return changed
 }
 
 func (WorkerEmploymentEvent) Constraints() []keel.Constraint {
