@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -91,7 +92,7 @@ func DescribeAccountingDriftAttention(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectAccountingDrift,
 		SubjectID:   group.SampleID,
-		EventKind:   agent.EventAccountingDriftDetected,
+		EventKind:   agenttrigger.EventAccountingDriftDetected,
 		Path:        AccountingDriftPath,
 		OccurredAt:  group.OldestDetectedAt,
 	}, true

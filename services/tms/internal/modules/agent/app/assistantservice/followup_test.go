@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -192,13 +195,13 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 }
 
 type stubPlanStore struct {
-	plans []*agent.AgentPlan
+	plans []*agentplan.AgentPlan
 }
 
 func (s *stubPlanStore) ListByThread(
 	_ context.Context,
 	_ agentports.ListAgentPlansByThreadRequest,
-) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
 	return s.plans, nil
 }
 
@@ -213,17 +216,17 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 	t.Parallel()
 
 	failedStep := 2
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:             pulid.MustNew("apl_"),
 		Title:          "Recover load 4471",
-		Status:         agent.PlanStatusFailed,
+		Status:         agentplan.PlanStatusFailed,
 		StepCount:      3,
 		CompletedSteps: 1,
 		FailedStep:     &failedStep,
 		FailureError:   "the driver is out of hours\nwrapped: cause",
 	}
 	svc, conversations, _ := followUpService(t, &agent.AgentProposal{ID: pulid.MustNew("ap_")})
-	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
+	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{plan}}
 	actor := testActor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
@@ -245,12 +248,12 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T) {
 	t.Parallel()
 
-	pending := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
+	pending := &agentplan.AgentPlan{ID: pulid.MustNew("apl_"), Status: agentplan.PlanStatusPending}
 	svc, conversations, completion := followUpService(t, &agent.AgentProposal{
 		ID:     pulid.MustNew("ap_"),
 		Status: agent.ProposalStatusExecuted,
 	})
-	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{pending}}
+	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{pending}}
 	actor := testActor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
@@ -305,7 +308,7 @@ func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
 			"pieces":     float64(10),
 		},
 	}
-	changed := []*agent.AgentDecision{{
+	changed := []*agentdecision.AgentDecision{{
 		ProposalID:    &proposal.ID,
 		Modifications: map[string]any{"pieces": float64(12)},
 	}}
@@ -313,7 +316,7 @@ func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
 	got := ranWith(proposal, changed)
 	assert.Equal(t, " It ran with pieces: 12; weight: 38500.", got)
 
-	proposal.ExecutionResult = &agent.ToolExecutionResult{
+	proposal.ExecutionResult = &agentrecord.ToolExecutionResult{
 		Action: "created",
 		Kind:   "report",
 		Name:   "On-time",

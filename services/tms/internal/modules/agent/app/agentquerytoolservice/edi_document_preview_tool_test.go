@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -165,7 +167,7 @@ func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	assert.Equal(t, "Decline", view.Response)
 	assert.True(t, view.WouldSend)
 	assert.Equal(t,
-		[]agent.RecordRef{{EntityType: ediTransferEntity, ID: transfer.ID.String()}},
+		[]agentrecord.RecordRef{{EntityType: ediTransferEntity, ID: transfer.ID.String()}},
 		view.TaintedRecords(), "a 990 repeats the partner's tender")
 }
 
@@ -329,10 +331,10 @@ func TestPreviewEDIDocument_IsAReadOnEDI(t *testing.T) {
 	t.Parallel()
 
 	policy := newPreviewEDIDocumentTool(&fakeDocumentPreviewer{}, &fakePermissions{}).Policy()
-	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind)
 	assert.Equal(t, permission.ResourceEDI, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
-	assert.Equal(t, agent.ExternalReadMarked, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceEDI, policy.Source)
 	assert.False(t, policy.CapsLaterWrites)
 }

@@ -8,8 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -247,11 +247,11 @@ func matchContextResources(kinds []string) (map[permission.Resource]struct{}, er
 
 	resources := make(map[permission.Resource]struct{}, len(kinds))
 	for _, kind := range kinds {
-		if agent.IsKnownPageEntityType(kind) {
+		if agentpagecontext.IsKnownPageEntityType(kind) {
 			resources[permission.RecordKind(kind).Resource()] = struct{}{}
 			continue
 		}
-		if agent.IsKnownPageResource(kind) {
+		if agentpagecontext.IsKnownPageResource(kind) {
 			resources[permission.Resource(kind)] = struct{}{}
 		}
 	}

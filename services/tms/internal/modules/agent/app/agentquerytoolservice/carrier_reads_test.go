@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -81,7 +82,7 @@ func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testi
 	assert.Equal(t, matchSourceEDI, items[0][fieldMatchSource])
 	assert.Equal(t, matchSourceDocument, items[1][fieldMatchSource])
 	assert.Equal(t, matchSourceManual, items[2][fieldMatchSource])
-	assert.Equal(t, []agent.RecordRef{{
+	assert.Equal(t, []agentrecord.RecordRef{{
 		EntityType: carrierInvoiceEntity,
 		ID:         "ecinv_1",
 	}}, data.(agent.TaintCarrier).TaintedRecords())

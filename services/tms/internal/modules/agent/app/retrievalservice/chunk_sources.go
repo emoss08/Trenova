@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -19,7 +19,7 @@ const (
 	maxStructuredListItems  = 20
 )
 
-func ChunkMemory(memory *agent.Memory) []Chunk {
+func ChunkMemory(memory *agentmemory.Memory) []Chunk {
 	content := strings.TrimSpace(memory.Content)
 	if content == "" {
 		return nil

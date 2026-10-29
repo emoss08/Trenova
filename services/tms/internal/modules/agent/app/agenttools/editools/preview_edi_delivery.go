@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -34,11 +34,11 @@ var ediRecordLabels = map[string]string{
 }
 
 type plannedEDIRecord struct {
-	change  *agent.RecordChange
+	change  *agentpreview.RecordChange
 	refused bool
 }
 
-func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, going int) {
+func refusedFirst(planned []plannedEDIRecord) (changes []*agentpreview.RecordChange, going int) {
 	slices.SortStableFunc(planned, func(a, b plannedEDIRecord) int {
 		switch {
 		case a.refused == b.refused:
@@ -50,7 +50,7 @@ func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, go
 		}
 	})
 
-	changes = make([]*agent.RecordChange, 0, len(planned))
+	changes = make([]*agentpreview.RecordChange, 0, len(planned))
 	for _, record := range planned {
 		changes = append(changes, record.change)
 		if !record.refused {
@@ -62,11 +62,11 @@ func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, go
 }
 
 func previewedIDs(ids []pulid.ID) ([]pulid.ID, bool) {
-	if len(ids) <= agent.MaxPreviewRecords {
+	if len(ids) <= agentpreview.MaxPreviewRecords {
 		return ids, false
 	}
 
-	return ids[:agent.MaxPreviewRecords], true
+	return ids[:agentpreview.MaxPreviewRecords], true
 }
 
 func messageLabel(message *edimessage.EDIMessage) string {
@@ -86,7 +86,7 @@ func messagePartner(message *edimessage.EDIMessage) string {
 	return tradingPartnerFallback
 }
 
-func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) {
+func deliveryChange(plan *ediservice.DeliveryPlan) (*agentpreview.RecordChange, error) {
 	message := plan.Message
 	route := "over the partner's communication profile"
 	if plan.Profile != nil && plan.Profile.Name != "" {
@@ -117,8 +117,8 @@ func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) 
 	if message.DeliveryLastError != "" {
 		body += " The last attempt failed: " + message.DeliveryLastError
 	}
-	change.Message = &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	change.Message = &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{messagePartner(message)},
 		Subject: fmt.Sprintf("EDI %s %s", message.TransactionSet, message.InterchangeControlNumber),
 		Body:    body,
@@ -132,7 +132,7 @@ func refusedRecord(
 	label string,
 	before *ediRecordView,
 	refusal error,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	after := *before
 	after.Outcome = "Refused: " + strings.TrimSpace(refusal.Error())
 
@@ -146,7 +146,7 @@ func refusedRecord(
 func (t *RetryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 func (t *ReplayEDIMessageTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (t *ReplayEDIMessageTool) Preview(
 func (t *ReprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
 	if err != nil {
 		return nil, err
@@ -297,11 +297,11 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 }
 
 func finishBulkPreview(
-	preview *agent.ToolPreview,
+	preview *agentpreview.ToolPreview,
 	going int,
 	more bool,
 	total int,
-) *agent.ToolPreview {
+) *agentpreview.ToolPreview {
 	if more {
 		preview.Partial = true
 		preview.Summary += fmt.Sprintf(
@@ -309,7 +309,7 @@ func finishBulkPreview(
 		)
 	}
 	if going == 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"None of the checked records would go as they stand.")
 	}
 

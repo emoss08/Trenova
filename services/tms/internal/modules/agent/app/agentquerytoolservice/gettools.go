@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -35,11 +36,11 @@ type getSpec struct {
 	resource    permission.Resource
 	// scope narrows the policy to the caller's own records (the person's own
 	// home page).
-	scope     agent.ToolScope
+	scope     agenttooltrust.ToolScope
 	kinds     []permission.RecordKind
 	paramName string
 	idSource  string
-	reads     agent.ExternalRead
+	reads     agenttooltrust.ExternalRead
 	source    agent.TaintSource
 	rationale string
 	fetch     func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -120,7 +121,7 @@ func conditionProblems(policy *agenttoolports.ToolPolicy) []string {
 		problems = append(problems,
 			"bounds prove a money write is within the organization's limits, but it moves no money")
 	}
-	if condition.Bounds != nil && policy.Kind != agent.ToolKindAction {
+	if condition.Bounds != nil && policy.Kind != agenttooltrust.ToolKindAction {
 		problems = append(problems, "only a write can be bounded")
 	}
 	if len(condition.Vouches) > 0 && condition.Bounds == nil {
@@ -158,18 +159,18 @@ func egressProblems(policy agenttoolports.ToolPolicy) []string {
 	}
 
 	switch policy.Kind {
-	case agent.ToolKindQuery:
+	case agenttooltrust.ToolKindQuery:
 		if len(policy.Egress) != 1 || policy.Egress[0] != agent.EgressNone {
 			add("a query tool's only egress class is none")
 		}
 		if policy.Operation != permission.OpRead {
 			add("a query tool is used under the read operation, not %q", policy.Operation)
 		}
-	case agent.ToolKindAction:
+	case agenttooltrust.ToolKindAction:
 		if policy.HasEgress(agent.EgressNone) {
 			add("an action tool changes something, so none is not one of its classes")
 		}
-	case agent.ToolKindRuntime:
+	case agenttooltrust.ToolKindRuntime:
 		for _, class := range policy.Egress {
 			if class.Leaves() {
 				add("a runtime tool never leaves the organization, but declares %q", class)
@@ -180,7 +181,8 @@ func egressProblems(policy agenttoolports.ToolPolicy) []string {
 	if len(policy.Egress) > 1 && policy.Classify == nil {
 		add("declares %d egress classes, so it must classify each call", len(policy.Egress))
 	}
-	if policy.Scope == agent.ToolScopeSelf && policy.Kind != agent.ToolKindQuery &&
+	if policy.Scope == agenttooltrust.ToolScopeSelf &&
+		policy.Kind != agenttooltrust.ToolKindQuery &&
 		!policy.HasEgress(agent.EgressPersonal) {
 		add("acts only on the caller's own records, so personal is one of its classes")
 	}
@@ -216,8 +218,8 @@ func furtherSourceProblems(policy *agenttoolports.ToolPolicy) []string {
 	}
 
 	problems := make([]string, 0, 1)
-	if policy.ReadsExternal != agent.ExternalReadMarked &&
-		policy.ReadsExternal != agent.ExternalReadAlways {
+	if policy.ReadsExternal != agenttooltrust.ExternalReadMarked &&
+		policy.ReadsExternal != agenttooltrust.ExternalReadAlways {
 		problems = append(problems, "names further taint sources but reads no outside text")
 	}
 	seen := make(map[agent.TaintSource]struct{}, len(policy.Sources))
@@ -241,7 +243,7 @@ func externalReadProblems(policy agenttoolports.ToolPolicy) []string {
 		problems = append(problems,
 			fmt.Sprintf("external read %q is not valid", policy.ReadsExternal))
 	}
-	if policy.ReadsExternal.IsValid() && policy.ReadsExternal != agent.ExternalReadNever &&
+	if policy.ReadsExternal.IsValid() && policy.ReadsExternal != agenttooltrust.ExternalReadNever &&
 		!policy.Source.IsValid() {
 		problems = append(problems, "reads outside text, so it names the taint source")
 	}
@@ -249,11 +251,11 @@ func externalReadProblems(policy agenttoolports.ToolPolicy) []string {
 		problems = append(problems, fmt.Sprintf("taint source %q is not valid", policy.Source))
 	}
 	problems = append(problems, furtherSourceProblems(&policy)...)
-	if policy.CarriesTaint && policy.Kind != agent.ToolKindAction {
+	if policy.CarriesTaint && policy.Kind != agenttooltrust.ToolKindAction {
 		problems = append(problems, "only a write can carry a run's taint into what it saves")
 	}
 	if hold := policy.TaintHold; hold != nil {
-		if policy.Kind != agent.ToolKindAction {
+		if policy.Kind != agenttooltrust.ToolKindAction {
 			problems = append(problems, "only a write can be held once the run is tainted")
 		}
 		if strings.TrimSpace(hold.Description) == "" || hold.Applies == nil {

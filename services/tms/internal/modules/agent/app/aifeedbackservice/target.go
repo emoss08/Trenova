@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
@@ -199,7 +199,7 @@ func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolve
 	return resolved, nil
 }
 
-func (r *resolvedTarget) creditTurn(fingerprint *agent.Fingerprint) {
+func (r *resolvedTarget) creditTurn(fingerprint *agentfingerprint.Fingerprint) {
 	if fingerprint == nil || fingerprint.PromptHash == "" {
 		return
 	}

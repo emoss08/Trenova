@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -96,11 +97,11 @@ func (h *Handler) list(c *gin.Context) {
 }
 
 type resolveProposalRequest struct {
-	Decision      agent.DecisionType `json:"decision"`
-	Modifications map[string]any     `json:"modifications"`
-	ReasonCode    string             `json:"reasonCode"`
-	Note          string             `json:"note"`
-	PreviewDigest string             `json:"previewDigest"`
+	Decision      agentdecision.DecisionType `json:"decision"`
+	Modifications map[string]any             `json:"modifications"`
+	ReasonCode    string                     `json:"reasonCode"`
+	Note          string                     `json:"note"`
+	PreviewDigest string                     `json:"previewDigest"`
 }
 
 func (h *Handler) preview(c *gin.Context) {

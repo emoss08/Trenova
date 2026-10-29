@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -169,13 +170,13 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would create the carrier Roadrunner Logistics")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "TX", agenttoolstest.FieldByPath(t, change, "state").After)
 	assert.Equal(t, "RRLG", agenttoolstest.FieldByPath(t, change, "scac").After)
 
@@ -246,7 +247,7 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 	preview, err := refused.(agenttoolports.ToolPreviewer).Preview(t.Context(),
 		idempotentParams(map[string]any{mdCode: "ROAD", MdName: "Road"}))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T) {
@@ -263,7 +264,7 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -308,7 +309,7 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -913,7 +913,7 @@ func (a *Activities) upsertDraft(
 	}
 
 	agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
-		Kind:      agent.EventDocumentExtracted,
+		Kind:      agenttrigger.EventDocumentExtracted,
 		SubjectID: doc.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: doc.OrganizationID,

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -146,7 +148,7 @@ func newExceptionChangeTool[R any](
 			Refused: func(R) string {
 				return "Would change an exception on the watchtower."
 			},
-			Render: func(_ R, change *kernelports.RecordChange[watchtower.Item]) (*agent.ToolPreview, error) {
+			Render: func(_ R, change *kernelports.RecordChange[watchtower.Item]) (*agentpreview.ToolPreview, error) {
 				built, err := toolpreview.Changed(toolpreview.Record{
 					Resource: permission.ResourceWatchtower,
 					ID:       change.Before.ID,
@@ -163,14 +165,14 @@ func newExceptionChangeTool[R any](
 				ctx context.Context,
 				req R,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				target := cfg.target(req)
 				target.DryRun = false
 				saved, err := cfg.apply(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: cfg.action,
 					Kind:   "exception",
 					Name:   saved.Title,
@@ -603,7 +605,7 @@ func NewCommentOnExceptionTool(
 		Render: func(
 			_ *watchtowerports.CommentOnExceptionRequest,
 			event *watchtower.Event,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			created, err := toolpreview.Create(toolpreview.Record{
 				Resource: permission.ResourceWatchtower,
 				ID:       event.ItemID,
@@ -623,13 +625,13 @@ func NewCommentOnExceptionTool(
 			ctx context.Context,
 			req *watchtowerports.CommentOnExceptionRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req.DryRun = false
 			event, err := exceptions.CommentOnException(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
 			}
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "commented",
 				Kind:   "exception",
 				IDs:    map[string]string{paramWatchtowerItemID: event.ItemID.String()},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -95,10 +95,10 @@ func (h *Handler) get(c *gin.Context) {
 }
 
 type resolvePlanRequest struct {
-	Decision      agent.DecisionType `json:"decision"`
-	ReasonCode    string             `json:"reasonCode"`
-	Note          string             `json:"note"`
-	PreviewDigest string             `json:"previewDigest"`
+	Decision      agentdecision.DecisionType `json:"decision"`
+	ReasonCode    string                     `json:"reasonCode"`
+	Note          string                     `json:"note"`
+	PreviewDigest string                     `json:"previewDigest"`
 }
 
 func actorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {

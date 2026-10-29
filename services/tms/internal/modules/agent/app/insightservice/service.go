@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
@@ -252,7 +252,7 @@ func (s *Service) announce(
 		}
 
 		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-			Kind:       agent.EventInsightDetected,
+			Kind:       agenttrigger.EventInsightDetected,
 			SubjectID:  entity.ID,
 			TenantInfo: tenant,
 		})

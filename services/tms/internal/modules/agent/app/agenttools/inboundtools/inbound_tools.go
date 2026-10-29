@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -190,17 +191,17 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Links an inbound message to a record inside Trenova; the mailbox decides " +
 			"how far it may run.",
 	}
@@ -324,16 +325,16 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Settles an inbound message inside Trenova; the mailbox decides how far " +
 			"it may run.",
 	}
@@ -522,17 +523,17 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
 		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Replies to whoever wrote in with text the model composed.",
 	}
 }

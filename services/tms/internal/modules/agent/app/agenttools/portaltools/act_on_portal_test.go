@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -181,10 +183,10 @@ func TestActOnPortalPreviewShowsWhatTheBrowserWillBeTold(t *testing.T) {
 
 	require.Len(t, preview.Changes, 1)
 	change := preview.Changes[0]
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	assert.Equal(t, permission.ResourcePortalAutomation, change.Resource)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelPortal, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelPortal, change.Message.Channel)
 	assert.Equal(t, []string{"portal.acme.com"}, change.Message.To)
 	assert.Equal(t, "Book the 8:00 AM dock appointment on October 20", change.Message.Subject)
 	assert.Equal(t,
@@ -209,7 +211,7 @@ func TestActOnPortalPreviewWarnsWhenTheSiteIsReadOnly(t *testing.T) {
 		agenttoolstest.AgentParamsFor(actArgs(portals.site.ID)))
 	require.NoError(t, err)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 	assert.Empty(t, preview.Changes)
 
 	require.Error(t, tool.Validate(t.Context(),
@@ -231,7 +233,7 @@ func TestActOnPortalStartsTheTaskParksTheWorkAndFollowsIt(t *testing.T) {
 	assert.Equal(t, "portal task", result.Kind)
 	assert.Equal(t, "Acme DC", result.Name)
 	assert.Equal(t, map[string]string{resultRunID: portals.runID.String()}, result.IDs)
-	assert.Equal(t, &agent.RecordRef{EntityType: "portal_run", ID: portals.runID.String()},
+	assert.Equal(t, &agentrecord.RecordRef{EntityType: "portal_run", ID: portals.runID.String()},
 		result.Record)
 	assert.Equal(t,
 		"Running on Acme DC. The work picks up here with what the portal said when it finishes.",

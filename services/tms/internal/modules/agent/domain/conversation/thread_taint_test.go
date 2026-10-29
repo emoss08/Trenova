@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,10 +18,16 @@ func TestThread_AbsorbTaintKeepsWhatTheConversationRead(t *testing.T) {
 	assert.False(t, thread.AbsorbTaint(&agent.RunTaint{}, 10))
 
 	read := &agent.RunTaint{}
-	read.Add(agent.TaintMark{Source: agent.TaintSourceAttachment, CallID: "", Ref: &agent.RecordRef{
-		EntityType: agent.TaintEntityDocument,
-		ID:         "doc_1",
-	}})
+	read.Add(
+		agent.TaintMark{
+			Source: agent.TaintSourceAttachment,
+			CallID: "",
+			Ref: &agentrecord.RecordRef{
+				EntityType: agent.TaintEntityDocument,
+				ID:         "doc_1",
+			},
+		},
+	)
 	assert.True(t, thread.AbsorbTaint(read, 20))
 	assert.True(t, thread.Tainted())
 	require.NotNil(t, thread.TaintedAt)

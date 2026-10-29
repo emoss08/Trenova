@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -25,7 +27,7 @@ import (
 type recordingPlans struct {
 	agentports.AgentPlanService
 
-	plan *agent.AgentPlan
+	plan *agentplan.AgentPlan
 	sent *agentports.DecideAgentPlanRequest
 }
 
@@ -33,7 +35,7 @@ func (p *recordingPlans) Decide(
 	_ context.Context,
 	req *agentports.DecideAgentPlanRequest,
 	_ *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	p.sent = req
 
 	return p.plan, nil
@@ -42,7 +44,7 @@ func (p *recordingPlans) Decide(
 func (p *recordingPlans) GetByID(
 	context.Context,
 	agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	return p.plan, nil
 }
 
@@ -53,8 +55,8 @@ type planPreviews struct {
 func (planPreviews) ForPlan(
 	_ context.Context,
 	req *agentruntimeports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
-	return &agent.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
+) (*agentpreview.PlanPreview, error) {
+	return &agentpreview.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
 }
 
 func newHandler(plans agentports.AgentPlanService) *agentplanhandler.Handler {
@@ -79,13 +81,13 @@ func newHandler(plans agentports.AgentPlanService) *agentplanhandler.Handler {
 func TestResolve_EchoesThePlanPreviewDigest(t *testing.T) {
 	t.Parallel()
 
-	plans := &recordingPlans{plan: &agent.AgentPlan{ID: pulid.MustNew("apl_")}}
+	plans := &recordingPlans{plan: &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}}
 	digest := strings.Repeat("d", 64)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-plans/" + plans.plan.ID.String() + "/resolve/").
 		WithJSONBody(map[string]any{
-			"decision":      agent.DecisionAccepted,
+			"decision":      agentdecision.DecisionAccepted,
 			"reasonCode":    "looks_right",
 			"note":          "All three are right",
 			"previewDigest": digest,
@@ -103,7 +105,7 @@ func TestResolve_EchoesThePlanPreviewDigest(t *testing.T) {
 func TestPreview_ReturnsThePlanDigestToEcho(t *testing.T) {
 	t.Parallel()
 
-	plans := &recordingPlans{plan: &agent.AgentPlan{ID: pulid.MustNew("apl_")}}
+	plans := &recordingPlans{plan: &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}}
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/agent-plans/" + plans.plan.ID.String() + "/preview/").

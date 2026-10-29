@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
@@ -93,7 +95,7 @@ type changeReviewCall struct {
 
 type changeReviewPlan struct {
 	summary string
-	changes []*agent.RecordChange
+	changes []*agentpreview.RecordChange
 	partial bool
 	refusal error
 }
@@ -139,15 +141,15 @@ func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceEDI,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     t.kind.rationale + ediDecisionRationaleEnd,
 	}
 }

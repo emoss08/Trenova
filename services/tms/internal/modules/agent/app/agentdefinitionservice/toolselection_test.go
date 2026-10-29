@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -154,9 +156,9 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 		byName[entry.Name] = entry
 	}
 
-	assert.Equal(t, agent.ToolEffectLookup, byName["shipment_get"].Effect)
-	assert.Equal(t, agent.ToolEffectChange, byName["customer_update"].Effect)
-	assert.Equal(t, agent.ToolEffectChange, byName["reassign_move"].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, byName["shipment_get"].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, byName["customer_update"].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, byName["reassign_move"].Effect)
 }
 
 func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
@@ -230,7 +232,7 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 		TriggerMode:     agentdefinition.TriggerEvent,
 		CronExpression:  "* * * * *",
 		IntervalSeconds: 300,
-		EventKinds:      []agent.EventKind{agent.EventShipmentCreated},
+		EventKinds:      []agenttrigger.EventKind{agenttrigger.EventShipmentCreated},
 		ToolNames:       []string{" shipment_get "},
 		ToolTiers:       map[string]agent.AutonomyTier{"shipment_get": agent.TierAutoExecute},
 	})
@@ -238,7 +240,7 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 	assert.Equal(t, "Night desk", d.Name)
 	assert.Empty(t, d.CronExpression)
 	assert.Zero(t, d.IntervalSeconds)
-	assert.Equal(t, []agent.EventKind{agent.EventShipmentCreated}, d.EventKinds)
+	assert.Equal(t, []agenttrigger.EventKind{agenttrigger.EventShipmentCreated}, d.EventKinds)
 	assert.Equal(t, []string{"shipment_get"}, d.ToolNames)
 	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
 	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)

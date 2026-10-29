@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
@@ -372,7 +374,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 			Refused: func(*workerinjury.WorkerInjury) string {
 				return "Would enter an injury case on the log."
 			},
-			Render: func(_ *workerinjury.WorkerInjury, planned *workerinjury.WorkerInjury) (*agent.ToolPreview, error) {
+			Render: func(_ *workerinjury.WorkerInjury, planned *workerinjury.WorkerInjury) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerInjury, pulid.Nil,
 						fmt.Sprintf("Case %d-%d", planned.CaseYear, planned.CaseNumber), 0),
@@ -388,7 +390,7 @@ func newRecordWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 				ctx context.Context,
 				entity *workerinjury.WorkerInjury,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := injuries.RecordInjury(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -458,7 +460,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 		Render: func(
 			_ *workerinjuryservice.UpdateInjuryRequest,
 			change *workerinjuryservice.InjuryChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(injuryRecord(change.Before), change.Before,
 				change.After, wfOptions(injuryFields...)...)
 			if err != nil {
@@ -471,7 +473,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *workerinjuryservice.UpdateInjuryRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := injuries.UpdateInjury(ctx, req)
 			if err != nil {
 				return nil, err
@@ -509,7 +511,7 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 				return injuries.PlanDeleteInjury(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would delete an injury case." },
-			Render: func(_ *recordDelete, injury *workerinjury.WorkerInjury) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, injury *workerinjury.WorkerInjury) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(injuryRecord(injury), injury,
 					wfOptions(injuryFields...)...)
 				if err != nil {
@@ -523,7 +525,7 @@ func newDeleteWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, injuries.DeleteInjury(ctx, req.tenant, req.id, req.userID)
 			},
 		},

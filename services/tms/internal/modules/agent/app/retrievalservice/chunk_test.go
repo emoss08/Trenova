@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -208,8 +208,8 @@ func TestChunkEmailStopsAtTheChunkCap(t *testing.T) {
 func TestChunkMemoryIsOneLine(t *testing.T) {
 	t.Parallel()
 
-	correction := &agent.Memory{
-		Kind:     agent.MemoryKindCorrection,
+	correction := &agentmemory.Memory{
+		Kind:     agentmemory.MemoryKindCorrection,
 		ToolName: "dispatch_assign_move",
 		Content:  " Loads over 900 miles need a team. ",
 	}
@@ -222,10 +222,15 @@ func TestChunkMemoryIsOneLine(t *testing.T) {
 	)
 	assert.Equal(t, ChunkHash(MemoryChunkerVersion, chunks[0].Text), chunks[0].Hash)
 
-	fact := ChunkMemory(&agent.Memory{Kind: agent.MemoryKindFact, Content: "Acme closes at 3."})
+	fact := ChunkMemory(
+		&agentmemory.Memory{Kind: agentmemory.MemoryKindFact, Content: "Acme closes at 3."},
+	)
 	assert.Equal(t, "[Fact] Acme closes at 3.", fact[0].Text)
 
-	assert.Empty(t, ChunkMemory(&agent.Memory{Kind: agent.MemoryKindFact, Content: "  "}))
+	assert.Empty(
+		t,
+		ChunkMemory(&agentmemory.Memory{Kind: agentmemory.MemoryKindFact, Content: "  "}),
+	)
 }
 
 func TestChunkHashFoldsInTheChunkerVersion(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -178,7 +179,7 @@ func TestSanitizeDraftDropsAnUnknownTierAndAnUnknownCeiling(t *testing.T) {
 func TestSanitizeDraftDropsEventsTheSystemDoesNotRaise(t *testing.T) {
 	t.Parallel()
 
-	known := agent.KnownEvents()[0].Kind
+	known := agenttrigger.KnownEvents()[0].Kind
 	reply := chatReply()
 	reply.TriggerMode = string(agentdefinition.TriggerEvent)
 	reply.EventKinds = []string{"shipment.teleported", string(known), string(known)}
@@ -187,7 +188,7 @@ func TestSanitizeDraftDropsEventsTheSystemDoesNotRaise(t *testing.T) {
 	req, notes := sanitize(t, reply)
 
 	assert.Equal(t, agentdefinition.TriggerEvent, req.TriggerMode)
-	assert.Equal(t, []agent.EventKind{known}, req.EventKinds)
+	assert.Equal(t, []agenttrigger.EventKind{known}, req.EventKinds)
 	assert.Equal(t, agentdefinition.OutputReport, req.OutputMode)
 	require.Len(t, notes, 1)
 	assert.Equal(t, "eventKinds", notes[0].Field)

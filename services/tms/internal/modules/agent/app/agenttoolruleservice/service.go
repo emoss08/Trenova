@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -60,7 +60,7 @@ func New(p Params) *Service {
 func (s *Service) For(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (map[string]*agent.ToolRuleOverride, error) {
+) (map[string]*agenttooltrust.ToolRuleOverride, error) {
 	return s.loader.For(ctx, tenantInfo)
 }
 
@@ -68,7 +68,7 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	toolName string,
-) (*agent.ToolRuleOverride, error) {
+) (*agenttooltrust.ToolRuleOverride, error) {
 	return s.repo.Get(ctx, agenttoolports.GetToolRuleOverrideRequest{
 		TenantInfo: tenantInfo,
 		ToolName:   toolName,
@@ -124,10 +124,10 @@ func (s *Service) Save(
 	after := agenttoolpolicy.ApplyOverride(declared, next)
 
 	multiErr := errortypes.NewMultiError()
-	next.Validate(agent.ToolRuleBounds{
+	next.Validate(agenttooltrust.ToolRuleBounds{
 		MaxTier:       declared.MaxTier,
 		ReadsExternal: declared.ReadsExternal,
-		Changes:       declared.EffectiveEffect() == agent.ToolEffectChange,
+		Changes:       declared.EffectiveEffect() == agenttooltrust.ToolEffectChange,
 	}, multiErr)
 	if before.MaxTier != after.MaxTier && next.Reason == "" {
 		multiErr.Add("reason", errortypes.ErrRequired,
@@ -184,8 +184,8 @@ func (s *Service) declared(toolName string) (agenttoolports.ToolPolicy, error) {
 func overrideOf(
 	declared agenttoolports.ToolPolicy,
 	change agenttoolports.ToolRuleChange,
-) *agent.ToolRuleOverride {
-	override := &agent.ToolRuleOverride{ToolName: declared.Name}
+) *agenttooltrust.ToolRuleOverride {
+	override := &agenttooltrust.ToolRuleOverride{ToolName: declared.Name}
 	if change.MaxTier != "" && change.MaxTier != declared.MaxTier {
 		override.MaxTier = change.MaxTier
 	}
@@ -199,15 +199,18 @@ func overrideOf(
 type writeRequest struct {
 	tenantInfo pagination.TenantInfo
 	toolName   string
-	existing   *agent.ToolRuleOverride
-	next       *agent.ToolRuleOverride
+	existing   *agenttooltrust.ToolRuleOverride
+	next       *agenttooltrust.ToolRuleOverride
 	actor      *permissionports.RequestActor
 }
 
-func (s *Service) write(ctx context.Context, req *writeRequest) (*agent.ToolRuleOverride, error) {
+func (s *Service) write(
+	ctx context.Context,
+	req *writeRequest,
+) (*agenttooltrust.ToolRuleOverride, error) {
 	updatedBy := req.actor.PersonUserID()
 	if req.existing == nil {
-		return s.repo.Create(ctx, &agent.ToolRuleOverride{
+		return s.repo.Create(ctx, &agenttooltrust.ToolRuleOverride{
 			OrganizationID: req.tenantInfo.OrgID,
 			BusinessUnitID: req.tenantInfo.BuID,
 			ToolName:       req.toolName,

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestCitedRecordsNamesEachRoutableRecordInAToolResultOnce(t *testing.T) {
 
 	refs := citedRecords(content)
 
-	expected := []agent.EntityRef{
+	expected := []agentpagecontext.EntityRef{
 		{Type: "shipment", ID: "shp_01", Label: "S-240193"},
 		{Type: "customer", ID: "cus_01", Label: "Acme Foods"},
 		{Type: "shipment", ID: "shp_02", Label: "S-240201"},
@@ -37,14 +37,26 @@ func TestCitedRecordsNamesEachRoutableRecordInAToolResultOnce(t *testing.T) {
 
 func TestCitedRecordsLabelsADocumentByItsFileName(t *testing.T) {
 	refs := citedRecords(`[{"id": "doc_01", "originalName": "BOL-88213.pdf", "status": "Active"}]`)
-	require.Equal(t, []agent.EntityRef{{Type: "document", ID: "doc_01", Label: "BOL-88213.pdf"}}, refs)
+	require.Equal(
+		t,
+		[]agentpagecontext.EntityRef{{Type: "document", ID: "doc_01", Label: "BOL-88213.pdf"}},
+		refs,
+	)
 }
 
 func TestCitedRecordsIgnoresTextAndOversizedResults(t *testing.T) {
 	require.Nil(t, citedRecords("Shipment S-240193 (shp_01) is late."))
 	require.Nil(t, citedRecords(""))
 	require.Nil(t, citedRecords("{not json"))
-	require.Nil(t, citedRecords(`{"id":"shp_01","proNumber":"S-1","pad":"`+strings.Repeat("x", maxCitedContentBytes)+`"}`))
+	require.Nil(
+		t,
+		citedRecords(
+			`{"id":"shp_01","proNumber":"S-1","pad":"`+strings.Repeat(
+				"x",
+				maxCitedContentBytes,
+			)+`"}`,
+		),
+	)
 }
 
 func TestCitedRecordsStopsAtTheCap(t *testing.T) {

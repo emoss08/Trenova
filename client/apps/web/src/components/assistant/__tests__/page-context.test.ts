@@ -3,7 +3,7 @@ import { derivePageContext, stripAppTitle } from "../page-context";
 
 /**
  * The server accepts every record kind the registry opens on a page
- * (domain/agent/pagecontext.go) and rejects anything else with a field error,
+ * (domain/agentpagecontext/pagecontext.go) and rejects anything else with a field error,
  * so the client derives the kind from the registry, or sends none at all.
  */
 describe("derivePageContext", () => {

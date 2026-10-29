@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -23,11 +23,11 @@ func agentRunEventColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func agentRunEventConnectionToModel(
-	result *pagination.CursorListResult[*agent.AgentRunEvent],
+	result *pagination.CursorListResult[*agentrunevent.AgentRunEvent],
 ) (*gqlmodel.AgentRunEventConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.AgentRunEvent, cursor string) *gqlmodel.AgentRunEventEdge {
+		func(node *agentrunevent.AgentRunEvent, cursor string) *gqlmodel.AgentRunEventEdge {
 			return &gqlmodel.AgentRunEventEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentRunEventEdge) string { return edge.Cursor },

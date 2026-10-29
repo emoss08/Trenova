@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -33,7 +33,7 @@ var transferPreviewLabels = map[string]string{
 func (t *EdiTransferDecisionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	call, outcome, err := t.outcome(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
@@ -56,7 +56,10 @@ func (t *EdiTransferDecisionTool) Preview(
 	return changepreview.WarnWouldFail(preview, outcome.refusal), nil
 }
 
-func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.RecordChange, error) {
+func tenderDecisionChanges(
+	outcome *tenderOutcome,
+	orgID pulid.ID,
+) ([]*agentpreview.RecordChange, error) {
 	record := toolpreview.Record{
 		Resource: permission.ResourceEDI,
 		ID:       outcome.before.ID,
@@ -71,7 +74,7 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 		return nil, err
 	}
 
-	changes := []*agent.RecordChange{status}
+	changes := []*agentpreview.RecordChange{status}
 	if outcome.approval != nil && outcome.approval.Shipment != nil {
 		created, cErr := operationstools.EnteredShipmentChanges(
 			&shipmentserviceports.ShipmentCreatePlan{
@@ -90,7 +93,7 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 	return changes, nil
 }
 
-func tenderResponseChange(after *editransfer.EDITransfer) *agent.RecordChange {
+func tenderResponseChange(after *editransfer.EDITransfer) *agentpreview.RecordChange {
 	if after == nil || after.InboundMessageID.IsNil() ||
 		(after.Status != editransfer.TransferStatusRejected && after.Status != editransfer.TransferStatusProcessing) {
 		return nil
@@ -123,8 +126,8 @@ func tenderResponseChange(after *editransfer.EDITransfer) *agent.RecordChange {
 		Resource: permission.ResourceEDI,
 		ID:       after.TargetPartnerID,
 		Label:    partner,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{partner},
 		Subject: "990 response to load tender " + strings.TrimSpace(response.BOL),
 		Body:    strings.Join(lines, "\n"),

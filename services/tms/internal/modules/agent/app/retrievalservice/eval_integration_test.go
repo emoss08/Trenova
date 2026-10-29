@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -482,13 +482,13 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 	agentScoped := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
 		Tenant:            h.tenant,
 		Items:             suites.memories.Corpus,
-		Scope:             agent.MemoryScopeAgent,
+		Scope:             agentmemory.MemoryScopeAgent,
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 	})
 	retired := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
 		Tenant: h.tenant,
 		Items:  suites.memories.Corpus,
-		Status: agent.MemoryStatusRetired,
+		Status: agentmemory.MemoryStatusRetired,
 	})
 	expiredAt := int64(1)
 	expired := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
@@ -581,7 +581,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 
 					recalled, err := memoryServices[name].Recall(h.as(h.tenant),
 						agentmemoryports.RecallAgentMemoriesRequest{
-							TenantInfo: h.tenant, Query: query, Limit: agent.MaxMemoryRecallLimit,
+							TenantInfo: h.tenant, Query: query, Limit: agentmemory.MaxMemoryRecallLimit,
 						})
 					require.NoError(t, err)
 					for _, memory := range recalled {

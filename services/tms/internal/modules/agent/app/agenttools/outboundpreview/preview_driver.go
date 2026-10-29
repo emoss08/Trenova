@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -13,15 +13,17 @@ import (
 
 // driverMessageSend is a Dash message to one driver, as the driver would
 // read it.
-func DriverMessageSend(notice *notificationports.DriverNotificationPreview) *agent.RecordChange {
+func DriverMessageSend(
+	notice *notificationports.DriverNotificationPreview,
+) *agentpreview.RecordChange {
 	return toolpreview.Send(
 		toolpreview.Record{
 			Resource: permission.ResourceWorker,
 			ID:       notice.WorkerID,
 			Label:    DriverName(notice),
 		},
-		&agent.MessagePreview{
-			Channel: agent.MessageChannelDash,
+		&agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelDash,
 			To:      []string{DriverName(notice)},
 			Subject: notice.Title,
 			Body:    notice.Message,
@@ -30,14 +32,14 @@ func DriverMessageSend(notice *notificationports.DriverNotificationPreview) *age
 }
 
 func WarnDriverUnreachable(
-	preview *agent.ToolPreview,
+	preview *agentpreview.ToolPreview,
 	notice *notificationports.DriverNotificationPreview,
 ) {
 	if notice == nil || notice.Reachable {
 		return
 	}
 
-	toolpreview.Warn(preview, agent.PreviewWarningDriverUnreachable,
+	toolpreview.Warn(preview, agentpreview.PreviewWarningDriverUnreachable,
 		DriverName(notice)+" has no Dash access, so the message would not reach them.",
 		notice.WorkerID.String())
 }

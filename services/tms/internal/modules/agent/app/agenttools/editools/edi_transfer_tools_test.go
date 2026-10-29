@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -218,7 +219,7 @@ func TestAcceptEDILoadTender_PreviewsTheShipmentAndThe990ThenRunsOnlyWhenApprove
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		transfers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
@@ -231,11 +232,11 @@ func TestAcceptEDILoadTender_PreviewsTheShipmentAndThe990ThenRunsOnlyWhenApprove
 
 	created := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceShipment, created.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 
 	response := agenttoolstest.PreviewChange(t, preview, len(preview.Changes)-1)
 	require.NotNil(t, response.Message)
-	assert.Equal(t, agent.MessageChannelEDI, response.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, response.Message.Channel)
 	assert.Contains(t, response.Message.Body, "Accepted (A)")
 	assert.Contains(t, response.Message.Body, "BOL-77")
 	assert.Contains(t, preview.Summary, "Acme Foods")
@@ -271,11 +272,11 @@ func TestAcceptEDILoadTender_RefusesATenderWhoseMappingsAreIncomplete(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		transfers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), args)
 		},
 	)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 }
 
@@ -297,7 +298,7 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		transfers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
@@ -359,7 +360,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 			preview := agenttoolstest.PreviewWithoutWrites(
 				t,
 				transfers.guard,
-				func() (*agent.ToolPreview, error) {
+				func() (*agentpreview.ToolPreview, error) {
 					return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 				},
 			)
@@ -406,11 +407,11 @@ func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 		preview := agenttoolstest.PreviewWithoutWrites(
 			t,
 			transfers.guard,
-			func() (*agent.ToolPreview, error) {
+			func() (*agentpreview.ToolPreview, error) {
 				return tool.Preview(t.Context(), args)
 			},
 		)
-		agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+		agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	}
 }
 

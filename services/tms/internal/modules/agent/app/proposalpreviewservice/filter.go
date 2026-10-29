@@ -4,7 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -64,7 +65,7 @@ func (s *Service) finish(
 	ctx context.Context,
 	d *draft,
 	a readerAccess,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	preview := d.preview
 	filter(ctx, preview, a)
 
@@ -87,7 +88,7 @@ func (s *Service) finish(
 //
 // Confidential values never reached the preview. What is withheld is
 // counted, so the reader is told how much they did not see.
-func filter(ctx context.Context, preview *agent.ProposalPreview, a readerAccess) {
+func filter(ctx context.Context, preview *agentpreview.ProposalPreview, a readerAccess) {
 	withheld := 0
 	for i := range preview.Changes {
 		withheld += filterChange(ctx, &preview.Changes[i], a)
@@ -95,15 +96,15 @@ func filter(ctx context.Context, preview *agent.ProposalPreview, a readerAccess)
 
 	preview.WithheldCount = withheld
 	if withheld > 0 {
-		preview.AddWarning(agent.PreviewWarning{
-			Code:    agent.PreviewWarningWithheld,
+		preview.AddWarning(agentpreview.PreviewWarning{
+			Code:    agentpreview.PreviewWarningWithheld,
 			Args:    []string{strconv.Itoa(withheld)},
 			Message: "Part of this change is hidden by your data access.",
 		})
 	}
 }
 
-func filterChange(ctx context.Context, change *agent.RecordChange, a readerAccess) int {
+func filterChange(ctx context.Context, change *agentpreview.RecordChange, a readerAccess) int {
 	if change.Withheld {
 		return 1
 	}
@@ -133,7 +134,7 @@ func filterChange(ctx context.Context, change *agent.RecordChange, a readerAcces
 
 func filterField(
 	ctx context.Context,
-	field *agent.PreviewFieldChange,
+	field *agentpreview.PreviewFieldChange,
 	ceiling permission.FieldSensitivity,
 	a readerAccess,
 ) int {
@@ -149,7 +150,7 @@ func filterField(
 	return filterRef(ctx, field.BeforeRef, a) + filterRef(ctx, field.AfterRef, a)
 }
 
-func filterRef(ctx context.Context, ref *agent.PreviewRef, a readerAccess) int {
+func filterRef(ctx context.Context, ref *agentpreview.PreviewRef, a readerAccess) int {
 	if ref == nil {
 		return 0
 	}
@@ -177,7 +178,7 @@ func levelOf(level permission.FieldSensitivity) permission.FieldSensitivity {
 	return level
 }
 
-func withholdChange(change *agent.RecordChange) {
+func withholdChange(change *agentpreview.RecordChange) {
 	change.Withheld = true
 	change.Label = ""
 	change.Record = nil
@@ -189,7 +190,7 @@ func withholdChange(change *agent.RecordChange) {
 	change.Money = nil
 }
 
-func withholdField(field *agent.PreviewFieldChange) {
+func withholdField(field *agentpreview.PreviewFieldChange) {
 	field.Withheld = true
 	field.Before = nil
 	field.After = nil
@@ -199,7 +200,7 @@ func withholdField(field *agent.PreviewFieldChange) {
 	field.Truncated = false
 }
 
-func withholdMoney(money *agent.MoneyPreview) {
+func withholdMoney(money *agentpreview.MoneyPreview) {
 	money.Withheld = true
 	money.Lines = nil
 	money.TotalBefore = decimal.NullDecimal{}
@@ -214,10 +215,10 @@ func withholdMoney(money *agent.MoneyPreview) {
 // this reader may see the name.
 func (s *Service) recorded(
 	ctx context.Context,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	a readerAccess,
-) *agent.ProposalPreview {
-	clone := new(agent.ProposalPreview)
+) *agentpreview.ProposalPreview {
+	clone := new(agentpreview.ProposalPreview)
 	if err := jsonutils.Convert(decision.Preview, clone); err != nil {
 		s.l.Warn("a recorded preview could not be read",
 			zap.String("decision", decision.ID.String()), zap.Error(err))
@@ -226,7 +227,7 @@ func (s *Service) recorded(
 	}
 
 	clone.Recorded = true
-	clone.Warnings = withoutCode(clone.Warnings, agent.PreviewWarningWithheld)
+	clone.Warnings = withoutCode(clone.Warnings, agentpreview.PreviewWarningWithheld)
 	applyLabels(clone.Changes, s.labels(ctx, tenantOf(decision), clone.Changes))
 	filter(ctx, clone, a)
 	clone.Digest = decision.PreviewDigest
@@ -235,10 +236,10 @@ func (s *Service) recorded(
 }
 
 func withoutCode(
-	warnings []agent.PreviewWarning,
-	code agent.PreviewWarningCode,
-) []agent.PreviewWarning {
-	kept := make([]agent.PreviewWarning, 0, len(warnings))
+	warnings []agentpreview.PreviewWarning,
+	code agentpreview.PreviewWarningCode,
+) []agentpreview.PreviewWarning {
+	kept := make([]agentpreview.PreviewWarning, 0, len(warnings))
 	for i := range warnings {
 		if warnings[i].Code != code {
 			kept = append(kept, warnings[i])

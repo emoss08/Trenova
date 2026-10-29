@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -233,7 +235,7 @@ func inboundMessageGetSpec() getSpec {
 		resource:    permission.ResourceInboundMessage,
 		paramName:   "messageId",
 		idSource:    "from the run's subject or inbox_list_inbound_messages",
-		reads:       agent.ExternalReadAlways,
+		reads:       agenttooltrust.ExternalReadAlways,
 		source:      agent.TaintSourceInboundMessage,
 		rationale:   "Reads mail an outsider wrote; nothing changes and nothing is sent.",
 		shape: func(record map[string]any, withheld map[string]struct{}, clk clock) {
@@ -298,7 +300,7 @@ func inboundMessagesListSpec() graphQLListSpec {
 		resource: permission.ResourceInboundMessage,
 		shape:    inboundSender,
 		reads: readSpec{
-			reads:  agent.ExternalReadAlways,
+			reads:  agenttooltrust.ExternalReadAlways,
 			source: agent.TaintSourceInboundMessage,
 			rationale: "Lists and searches mail outsiders wrote, subjects, senders and " +
 				"bodies included; nothing changes and nothing is sent.",
@@ -450,7 +452,7 @@ func (t *listInboundMessagesTool) search(
 
 	criteria := describeCriteria(t.spec.entityPlural, t.params, params.Params, query)
 	rows := make([]inboundSearchRow, 0, len(result.Hits))
-	tainted := make([]agent.RecordRef, 0, len(result.Hits))
+	tainted := make([]agentrecord.RecordRef, 0, len(result.Hits))
 	for _, hit := range result.Hits {
 		message := hit.Message
 		rows = append(rows, inboundSearchRow{
@@ -464,7 +466,7 @@ func (t *listInboundMessagesTool) search(
 			Classification: string(message.Classification),
 			Match:          string(hit.Match),
 		})
-		tainted = append(tainted, agent.RecordRef{
+		tainted = append(tainted, agentrecord.RecordRef{
 			EntityType: agent.TaintEntityInboundMessage,
 			ID:         message.ID.String(),
 		})

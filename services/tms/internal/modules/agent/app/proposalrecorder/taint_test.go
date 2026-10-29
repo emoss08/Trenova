@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,8 +22,8 @@ func (r *openedRuns) Create(_ context.Context, run *agent.AgentRun) (*agent.Agen
 	return run, nil
 }
 
-func messageEvidence(agentruntimeports.PendingAction, pulid.ID) []agent.EvidenceRef {
-	return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
+func messageEvidence(agentruntimeports.PendingAction, pulid.ID) []agentevidence.EvidenceRef {
+	return []agentevidence.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 }
 
 func readTaint() *agent.RunTaint {

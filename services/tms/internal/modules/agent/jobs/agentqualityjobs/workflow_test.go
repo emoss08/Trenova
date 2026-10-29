@@ -6,11 +6,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -71,9 +71,9 @@ func suiteCases(count int, from int) []agentqualityservice.SuiteCase {
 	cases := make([]agentqualityservice.SuiteCase, 0, count)
 	for idx := range count {
 		cases = append(cases, agentqualityservice.SuiteCase{
-			EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix),
+			EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 			Ordinal:      from + idx + 1,
-			Status:       agent.EvaluationStatusPending,
+			Status:       agentevaluation.EvaluationStatusPending,
 		})
 	}
 
@@ -292,7 +292,7 @@ func TestAgentSuiteRunWorkflow_SkipsCasesAlreadyReplayed(t *testing.T) {
 	t.Parallel()
 
 	cases := suiteCases(2, 0)
-	cases[0].Status = agent.EvaluationStatusCompleted
+	cases[0].Status = agentevaluation.EvaluationStatusCompleted
 	h := newSuiteHarness(t, suiteScript{pages: [][]agentqualityservice.SuiteCase{cases}})
 
 	h.env.ExecuteWorkflow(AgentSuiteRunWorkflowName, suitePayload(false))
@@ -483,10 +483,10 @@ func TestAgentSuiteJudgeWorkflow_KeepsTheBatchAndJudgesWhatItMissedOnItsOwn(t *t
 	t.Parallel()
 
 	ids := []pulid.ID{
-		pulid.MustNew(agent.EvaluationIDPrefix),
-		pulid.MustNew(agent.EvaluationIDPrefix),
-		pulid.MustNew(agent.EvaluationIDPrefix),
-		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 	}
 	h := newSuiteHarness(t, suiteScript{
 		endsAfterPolls: 3,
@@ -515,7 +515,12 @@ func TestAgentSuiteJudgeWorkflow_KeepsTheBatchAndJudgesWhatItMissedOnItsOwn(t *t
 	assert.Equal(t, 1, h.count("CollectJudgeBatchActivity"))
 	assert.Equal(t, []pulid.ID{ids[2], ids[3]}, h.judged,
 		"an item the batch lost and one it never took are judged one at a time")
-	assert.Equal(t, 2, h.count("CheckEvalBudgetActivity"), "each one-off judgement checks the budget")
+	assert.Equal(
+		t,
+		2,
+		h.count("CheckEvalBudgetActivity"),
+		"each one-off judgement checks the budget",
+	)
 	assert.Equal(t, 1, h.count("FinalizeSuiteActivity"))
 }
 
@@ -523,8 +528,8 @@ func TestAgentSuiteJudgeWorkflow_ARetriedCollectionKeepsEachJudgementOnce(t *tes
 	t.Parallel()
 
 	ids := []pulid.ID{
-		pulid.MustNew(agent.EvaluationIDPrefix),
-		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 	}
 	h := newSuiteHarness(t, suiteScript{
 		endsAfterPolls:  1,
@@ -551,8 +556,8 @@ func TestAgentSuiteJudgeWorkflow_JudgesEverythingOnItsOwnWhenTheResultsCannotBeR
 	t.Parallel()
 
 	ids := []pulid.ID{
-		pulid.MustNew(agent.EvaluationIDPrefix),
-		pulid.MustNew(agent.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
+		pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 	}
 	h := newSuiteHarness(t, suiteScript{
 		endsAfterPolls:  1,
@@ -581,7 +586,11 @@ type sweepHarness struct {
 }
 
 func plannedAgent(skip bool) agentqualityservice.PlannedAgent {
-	fingerprint := &agent.Fingerprint{DefinitionVersion: 3, PromptHash: "p", ToolSpecHash: "t"}
+	fingerprint := &agentfingerprint.Fingerprint{
+		DefinitionVersion: 3,
+		PromptHash:        "p",
+		ToolSpecHash:      "t",
+	}
 
 	return agentqualityservice.PlannedAgent{
 		AgentDefinitionID: pulid.MustNew("agd_"),

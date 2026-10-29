@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -244,7 +245,7 @@ func TestUpdateInvoiceDraft_PreviewsTheChangeAndProposesNewRecipients(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -319,7 +320,7 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -335,7 +336,7 @@ func TestGenerateInvoicePDF_RendersButRefusesWhenItWouldEmailTheCustomer(t *test
 	require.ErrorIs(t, err, invoicetools.ErrPDFWouldSend)
 	preview, err = tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), invoicetools.ErrPDFWouldSend)
 	assert.Nil(t, fake.generated)
 }
@@ -364,7 +365,7 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -374,7 +375,7 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 1).Money)
@@ -437,7 +438,7 @@ func TestCreateInvoiceMemo_PreviewsTheMemoAndNeverPostsIt(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -498,7 +499,7 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -569,14 +570,14 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would send Invoice INV-5005 to Acme EDI as an EDI 210")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelEDI, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, change.Message.Channel)
 	assert.Equal(t, []string{"Acme EDI"}, change.Message.To)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
@@ -588,7 +589,7 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 		"This invoice has already been sent by EDI; resend it with force")
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpSubmit, policy.Operation)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -326,7 +327,7 @@ func TestPlanArtifact_ListsItsStepsInOrder(t *testing.T) {
 
 	planID := pulid.MustNew("apl_")
 	other := pulid.MustNew("apl_")
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:        planID,
 		RunID:     pulid.MustNew("ar_"),
 		Title:     "Cover the move",

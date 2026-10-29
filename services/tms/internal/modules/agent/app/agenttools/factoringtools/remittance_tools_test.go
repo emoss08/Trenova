@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -226,7 +227,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&remittances.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -268,7 +269,7 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&remittances.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -20,7 +20,7 @@ func DetentionDecisionPreview(
 	summary string,
 	change *detentionservice.OccurrenceChange,
 	volatile ...string,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	occurrence, err := toolpreview.Changed(
 		DetentionRecord(change.Before),
 		change.Before,
@@ -47,13 +47,13 @@ func DetentionDecisionPreview(
 
 // shipmentDetentionMoney is the shipment's detention charge, occurrence by
 // occurrence, with the decided one as it stands and as it would stand.
-func shipmentDetentionMoney(change *detentionservice.OccurrenceChange) *agent.MoneyPreview {
+func shipmentDetentionMoney(change *detentionservice.OccurrenceChange) *agentpreview.MoneyPreview {
 	occurrences := change.Shipment
 	if !containsOccurrence(occurrences, change.Before.ID) {
 		occurrences = append([]*detention.DetentionOccurrence{change.Before}, occurrences...)
 	}
 
-	lines := make([]agent.MoneyLine, 0, len(occurrences))
+	lines := make([]agentpreview.MoneyLine, 0, len(occurrences))
 	for _, occurrence := range occurrences {
 		if occurrence == nil {
 			continue
@@ -62,7 +62,7 @@ func shipmentDetentionMoney(change *detentionservice.OccurrenceChange) *agent.Mo
 		if occurrence.ID == change.Before.ID {
 			before, after = change.Before, change.After
 		}
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label:  detentionLineLabel(occurrence),
 			Before: changepreview.KnownAmount(before.ChargedAmount()),
 			After:  changepreview.KnownAmount(after.ChargedAmount()),

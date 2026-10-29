@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -206,7 +207,7 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		cases.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -295,7 +296,7 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		cases.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -318,13 +319,13 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		cases.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)

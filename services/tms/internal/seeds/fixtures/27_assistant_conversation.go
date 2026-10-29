@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -93,7 +93,8 @@ func (s *AssistantConversationSeed) loadRefs(
 		agentdefinitiondb.Definitions.OrganizationID.Eq(org.ID),
 		agentdefinitiondb.Definitions.BusinessUnitID.Eq(org.BusinessUnitID),
 		agentdefinitiondb.Definitions.Name.In([]string{SeedAgentDispatchName, SeedAgentBillingName}...),
-	).All(ctx, db)
+	).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("load seeded agents: %w", err)
 	}
@@ -377,8 +378,8 @@ func (s *AssistantConversationSeed) insertProposal(
 		ToolParams: map[string]any{
 			"subjectType": string(agent.SubjectShipment),
 			"subjectId":   refs.shipment.ID.String(),
-			"category":    string(agent.CategoryMissingBOL),
-			"severity":    string(agent.SeverityMedium),
+			"category":    string(agentexception.CategoryMissingBOL),
+			"severity":    string(agentexception.SeverityMedium),
 			"attemptSummary": "Signed bill of lading is missing and the shipment rate " +
 				"disagrees with the customer's rate agreement.",
 			"evidence": []map[string]any{{
@@ -390,7 +391,7 @@ func (s *AssistantConversationSeed) insertProposal(
 		Confidence: decimal.NewFromFloat(0.82),
 		Rationale: "The item cannot be billed until a person resolves the rate, and " +
 			"flagging it records what was found so the reviewer does not start over.",
-		Evidence: []agent.EvidenceRef{
+		Evidence: []agentevidence.EvidenceRef{
 			{Type: "AssistantThread", ID: thread.ID.String()},
 			{Type: "AssistantMessage", ID: source.ID.String()},
 			{Type: "Shipment", ID: refs.shipment.ID.String(), Note: "Blocked in billing queue"},

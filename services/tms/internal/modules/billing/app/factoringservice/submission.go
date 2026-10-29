@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -623,7 +623,7 @@ func (s *SubmissionService) publishEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sub *factoringsubmission.Submission,
-	kind agent.EventKind,
+	kind agenttrigger.EventKind,
 	detail string,
 ) {
 	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{

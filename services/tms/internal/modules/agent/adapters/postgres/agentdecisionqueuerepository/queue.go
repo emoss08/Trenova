@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -99,12 +100,12 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 			plRun.AgentDefinitionID,
 			plDef.Name.Coalesce(""),
 			plDef.ShadowMode.Coalesce(false),
-			keel.Text(agent.PlanToolName),
+			keel.Text(agentplan.PlanToolName),
 		).
 		Join(plRun, plRun.ID.EqCol(pl.RunID)).
 		LeftJoin(plDef, plDef.ID.EqCol(plRun.AgentDefinitionID)).
 		Where(
-			pl.Status.Eq(agent.PlanStatusPending),
+			pl.Status.Eq(agentplan.PlanStatusPending),
 			keel.Or(pl.ExpiresAt.IsNull(), pl.ExpiresAt.Eq(0), pl.ExpiresAt.Gt(req.Now)),
 			keel.When(!req.AgentDefinitionID.IsNil(), plRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
 			audience(plDef, req.Audience),

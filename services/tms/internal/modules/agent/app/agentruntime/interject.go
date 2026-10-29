@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -33,9 +33,9 @@ const (
 )
 
 type Steer struct {
-	ID       pulid.ID          `json:"id"`
-	Content  string            `json:"content"`
-	Mentions []agent.EntityRef `json:"mentions,omitempty"`
+	ID       pulid.ID                     `json:"id"`
+	Content  string                       `json:"content"`
+	Mentions []agentpagecontext.EntityRef `json:"mentions,omitempty"`
 }
 
 type WorldCheck struct {
@@ -54,10 +54,10 @@ type OwnWrite struct {
 }
 
 type WorldState struct {
-	Cursor    string            `json:"cursor"`
-	Records   []agent.EntityRef `json:"records,omitempty"`
-	Own       []OwnWrite        `json:"own,omitempty"`
-	CheckedAt int64             `json:"checkedAt,omitempty"`
+	Cursor    string                       `json:"cursor"`
+	Records   []agentpagecontext.EntityRef `json:"records,omitempty"`
+	Own       []OwnWrite                   `json:"own,omitempty"`
+	CheckedAt int64                        `json:"checkedAt,omitempty"`
 }
 
 func (s *Service) watchWorld(
@@ -77,17 +77,17 @@ func (s *Service) watchWorld(
 	return openWorld(cursor, watchedRecords(req), now)
 }
 
-func watchedRecords(req *agentruntimeports.RunRequest) []agent.EntityRef {
+func watchedRecords(req *agentruntimeports.RunRequest) []agentpagecontext.EntityRef {
 	if len(req.Context.Anchors) == 0 {
 		return req.Records
 	}
-	records := make([]agent.EntityRef, 0, len(req.Records)+len(req.Context.Anchors))
+	records := make([]agentpagecontext.EntityRef, 0, len(req.Records)+len(req.Context.Anchors))
 	records = append(records, req.Records...)
 	for _, anchor := range req.Context.Anchors {
 		if anchor.Note == "" {
 			records = append(
 				records,
-				agent.EntityRef{Type: anchor.Kind, ID: anchor.ID, Label: anchor.Label},
+				agentpagecontext.EntityRef{Type: anchor.Kind, ID: anchor.ID, Label: anchor.Label},
 			)
 		}
 	}
@@ -95,13 +95,13 @@ func watchedRecords(req *agentruntimeports.RunRequest) []agent.EntityRef {
 	return records
 }
 
-func openWorld(cursor string, records []agent.EntityRef, now int64) *WorldState {
+func openWorld(cursor string, records []agentpagecontext.EntityRef, now int64) *WorldState {
 	if cursor == "" {
 		return nil
 	}
 	world := &WorldState{
 		Cursor:    cursor,
-		Records:   make([]agent.EntityRef, 0, min(len(records)+4, maxWatchedRecords)),
+		Records:   make([]agentpagecontext.EntityRef, 0, min(len(records)+4, maxWatchedRecords)),
 		CheckedAt: now,
 	}
 	for _, record := range records {
@@ -124,11 +124,11 @@ func (w *WorldState) clone() *WorldState {
 	}
 }
 
-func (w *WorldState) watch(record agent.EntityRef) {
+func (w *WorldState) watch(record agentpagecontext.EntityRef) {
 	if w == nil || !recordID(record.ID) || len(w.Records) >= maxWatchedRecords {
 		return
 	}
-	idx := slices.IndexFunc(w.Records, func(known agent.EntityRef) bool {
+	idx := slices.IndexFunc(w.Records, func(known agentpagecontext.EntityRef) bool {
 		return known.ID == record.ID
 	})
 	if idx < 0 {
@@ -152,13 +152,17 @@ func (w *WorldState) read(call *llmports.ToolCall, summary string) {
 	}
 }
 
-func RecordsRead(name string, arguments map[string]any, summary string) []agent.EntityRef {
+func RecordsRead(
+	name string,
+	arguments map[string]any,
+	summary string,
+) []agentpagecontext.EntityRef {
 	name = agenttoolports.ReadingOrder(name)
 	if !strings.HasPrefix(name, "get_") || len(arguments) == 0 {
 		return nil
 	}
 	kind := strings.TrimPrefix(name, "get_")
-	records := make([]agent.EntityRef, 0, 1)
+	records := make([]agentpagecontext.EntityRef, 0, 1)
 	for _, key := range slices.Sorted(maps.Keys(arguments)) {
 		if !strings.HasSuffix(key, "Id") && !strings.HasSuffix(key, "ID") && key != "id" {
 			continue
@@ -167,7 +171,7 @@ func RecordsRead(name string, arguments map[string]any, summary string) []agent.
 		if !ok || !recordID(id) {
 			continue
 		}
-		records = append(records, agent.EntityRef{Type: kind, ID: id, Label: summary})
+		records = append(records, agentpagecontext.EntityRef{Type: kind, ID: id, Label: summary})
 	}
 
 	return records
@@ -179,7 +183,7 @@ func (w *WorldState) wrote(action *agentruntimeports.PendingAction, at int64) {
 		return
 	}
 	id := action.Target.ID.String()
-	w.watch(agent.EntityRef{Type: string(action.Target.Resource), ID: id})
+	w.watch(agentpagecontext.EntityRef{Type: string(action.Target.Resource), ID: id})
 	idx := slices.IndexFunc(w.Own, func(own OwnWrite) bool { return own.ID == id })
 	if idx < 0 {
 		w.Own = append(w.Own, OwnWrite{ID: id, At: at})
@@ -231,7 +235,7 @@ func (w *WorldState) news(
 		if w.ownChange(change) {
 			continue
 		}
-		idx := slices.IndexFunc(w.Records, func(record agent.EntityRef) bool {
+		idx := slices.IndexFunc(w.Records, func(record agentpagecontext.EntityRef) bool {
 			return record.ID == change.RecordID
 		})
 		if idx < 0 {
@@ -264,7 +268,7 @@ func recordID(id string) bool {
 	return true
 }
 
-func watchedName(record agent.EntityRef) string {
+func watchedName(record agentpagecontext.EntityRef) string {
 	kind := strings.ReplaceAll(record.Type, "_", " ")
 	switch {
 	case record.Label != "" && kind != "" && !strings.Contains(
@@ -307,7 +311,7 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 	if content == "" {
 		return
 	}
-	mentions := agent.NormalizeEntityRefs(steer.Mentions)
+	mentions := agentpagecontext.NormalizeEntityRefs(steer.Mentions)
 	for _, mention := range mentions {
 		t.world.watch(mention)
 	}
@@ -355,7 +359,7 @@ const steerNotice = "[Notice from the system, not from the person: the person ad
 	"message above while you were still working. Take it into account from here: change " +
 	"course if it calls for that, keep what still stands, and do not start over.]"
 
-func SteerPrompt(content string, mentions []agent.EntityRef) string {
+func SteerPrompt(content string, mentions []agentpagecontext.EntityRef) string {
 	var b strings.Builder
 	b.Grow(len(content) + len(mentions)*48)
 	b.WriteString(content)

@@ -9,6 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -57,7 +60,7 @@ func (r fakeRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { retur
 type baseTool struct {
 	name     string
 	resource permission.Resource
-	scope    agent.ToolScope
+	scope    agenttooltrust.ToolScope
 }
 
 func (t *baseTool) Name() string        { return t.name }
@@ -78,20 +81,20 @@ func (t *baseTool) ParamSchema() map[string]any {
 func (t *baseTool) Policy() agenttoolports.ToolPolicy {
 	scope := t.scope
 	if scope == "" {
-		scope = agent.ToolScopeTenant
+		scope = agenttooltrust.ToolScopeTenant
 	}
 
 	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.resource,
 		Operation:     permission.OpUpdate,
 		Scope:         scope,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A test tool.",
 	}
 }
@@ -134,7 +137,7 @@ type previewingTool struct {
 func (t *previewingTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	t.asked = append(t.asked, params)
 	if t.block {
 		<-ctx.Done()
@@ -176,7 +179,7 @@ func (t *previewingTool) Preview(
 		return nil, err
 	}
 	if t.money {
-		change.Money = toolpreview.MoneyBlock("USD", agent.MoneyLine{
+		change.Money = toolpreview.MoneyBlock("USD", agentpreview.MoneyLine{
 			Label:  "Linehaul",
 			Before: decimal.NewNullDecimal(decimal.RequireFromString("100")),
 			After:  decimal.NewNullDecimal(decimal.RequireFromString("120")),
@@ -236,12 +239,12 @@ func (f *fakeLabeler) Labels(
 
 type fakeBaselines struct {
 	mu      sync.Mutex
-	kept    []*agent.ProposalBaseline
-	stored  []*agent.ProposalBaseline
+	kept    []*agentpreview.ProposalBaseline
+	stored  []*agentpreview.ProposalBaseline
 	listErr error
 }
 
-func (f *fakeBaselines) Create(_ context.Context, baseline *agent.ProposalBaseline) error {
+func (f *fakeBaselines) Create(_ context.Context, baseline *agentpreview.ProposalBaseline) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.kept = append(f.kept, baseline)
@@ -252,11 +255,11 @@ func (f *fakeBaselines) Create(_ context.Context, baseline *agent.ProposalBaseli
 func (f *fakeBaselines) ListByProposals(
 	_ context.Context,
 	req agentports.ListProposalBaselinesRequest,
-) ([]*agent.ProposalBaseline, error) {
+) ([]*agentpreview.ProposalBaseline, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*agent.ProposalBaseline, 0, len(f.stored))
+	out := make([]*agentpreview.ProposalBaseline, 0, len(f.stored))
 	for _, baseline := range f.stored {
 		for _, id := range req.ProposalIDs {
 			if baseline.ProposalID == id {
@@ -269,13 +272,13 @@ func (f *fakeBaselines) ListByProposals(
 }
 
 type fakeDecisions struct {
-	decisions []*agent.AgentDecision
+	decisions []*agentdecision.AgentDecision
 }
 
 func (f *fakeDecisions) ListByProposals(
 	context.Context,
 	agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
@@ -17,7 +17,7 @@ import (
 )
 
 type fakeMoney struct {
-	day, run agent.MoneyUse
+	day, run agenttooltrust.MoneyUse
 	asked    []*agentports.SumAutomaticMoneyRequest
 	err      error
 }
@@ -25,10 +25,10 @@ type fakeMoney struct {
 func (f *fakeMoney) SumAutomaticMoney(
 	_ context.Context,
 	req *agentports.SumAutomaticMoneyRequest,
-) (agent.MoneyUse, error) {
+) (agenttooltrust.MoneyUse, error) {
 	f.asked = append(f.asked, req)
 	if f.err != nil {
-		return agent.MoneyUse{}, f.err
+		return agenttooltrust.MoneyUse{}, f.err
 	}
 	if req.RunID.IsNotNil() {
 		return f.run, nil
@@ -78,8 +78,8 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 	t.Parallel()
 
 	counter := &fakeMoney{
-		day: agent.MoneyUse{Calls: 7, AmountMinor: 70_000},
-		run: agent.MoneyUse{Calls: 2, AmountMinor: 20_000},
+		day: agenttooltrust.MoneyUse{Calls: 7, AmountMinor: 70_000},
+		run: agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 20_000},
 	}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
@@ -89,19 +89,19 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
 		Definition: definition(),
 		RunID:      runID,
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 5_000},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 5_000},
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.MoneyLimits{
+	assert.Equal(t, agenttooltrust.MoneyLimits{
 		CallCeilingMinor: agentcontrol.DefaultAgentMoneyCallCeilingMinor,
 		RunCalls:         agentcontrol.DefaultAgentMoneyRunCalls,
 		RunAmountMinor:   agentcontrol.DefaultAgentMoneyRunAmountMinor,
 		DayCalls:         agentcontrol.DefaultAgentMoneyDayCalls,
 		DayAmountMinor:   agentcontrol.DefaultAgentMoneyDayAmountMinor,
 	}, allowance.Limits)
-	assert.Equal(t, agent.MoneyUse{Calls: 3, AmountMinor: 25_000}, allowance.Run)
-	assert.Equal(t, agent.MoneyUse{Calls: 8, AmountMinor: 75_000}, allowance.Day)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 25_000}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 8, AmountMinor: 75_000}, allowance.Day)
 	assert.Equal(t, "USD", allowance.Currency)
 
 	require.Len(t, counter.asked, 2)
@@ -118,17 +118,17 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 func TestMoneyAllowance_ATurnWithNoRunCountsOnlyItself(t *testing.T) {
 	t.Parallel()
 
-	counter := &fakeMoney{day: agent.MoneyUse{Calls: 1, AmountMinor: 100}}
+	counter := &fakeMoney{day: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 100}}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
 	svc.controls = fakeControls{control: moneyControl()}
 
 	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
 		Definition: definition(),
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 50},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 50},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.MoneyUse{Calls: 1, AmountMinor: 50}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 50}, allowance.Run)
 	assert.Len(t, counter.asked, 1)
 }
 
@@ -159,8 +159,8 @@ func TestMoneyAllowance_ASimulatedRunCountsItsSimulatedWritesAgainstTheRunAndThe
 	t.Parallel()
 
 	counter := &fakeMoney{
-		day: agent.MoneyUse{Calls: 4, AmountMinor: 40_000},
-		run: agent.MoneyUse{Calls: 2, AmountMinor: 3_000},
+		day: agenttooltrust.MoneyUse{Calls: 4, AmountMinor: 40_000},
+		run: agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 3_000},
 	}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
@@ -171,15 +171,15 @@ func TestMoneyAllowance_ASimulatedRunCountsItsSimulatedWritesAgainstTheRunAndThe
 	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
 		Definition: simulated,
 		RunID:      pulid.MustNew("arun_"),
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 500},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 500},
 	})
 	require.NoError(t, err)
 
 	require.Len(t, counter.asked, 2)
 	assert.False(t, counter.asked[0].Simulated, "the day is the organization's real writes")
 	assert.True(t, counter.asked[1].Simulated, "the run is its own simulated writes")
-	assert.Equal(t, agent.MoneyUse{Calls: 3, AmountMinor: 3_500}, allowance.Run)
-	assert.Equal(t, agent.MoneyUse{Calls: 7, AmountMinor: 43_500}, allowance.Day,
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 3_500}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 7, AmountMinor: 43_500}, allowance.Day,
 		"a simulation holds where the real run would")
 }
 

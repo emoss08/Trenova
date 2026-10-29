@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
@@ -209,7 +210,7 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		changes.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), proposing)
 		},
 	)
@@ -264,11 +265,11 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 			preview := agenttoolstest.PreviewWithoutWrites(
 				t,
 				fake.guard,
-				func() (*agent.ToolPreview, error) {
+				func() (*agentpreview.ToolPreview, error) {
 					return tool.Preview(t.Context(), call)
 				},
 			)
-			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+			agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 		})
 	}
 }
@@ -304,7 +305,7 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		changes.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
@@ -326,7 +327,7 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	rejectPreview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		changes.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), rejected)
 		},
 	)

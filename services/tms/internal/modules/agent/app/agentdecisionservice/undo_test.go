@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -104,13 +107,13 @@ type windowDecisionRows struct {
 	agentports.AgentDecisionRepository
 
 	mu   sync.Mutex
-	rows []*agent.AgentDecision
+	rows []*agentdecision.AgentDecision
 }
 
 func (d *windowDecisionRows) Create(
 	_ context.Context,
-	decision *agent.AgentDecision,
-) (*agent.AgentDecision, error) {
+	decision *agentdecision.AgentDecision,
+) (*agentdecision.AgentDecision, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -124,11 +127,11 @@ func (d *windowDecisionRows) Create(
 func (d *windowDecisionRows) ListByProposals(
 	_ context.Context,
 	req agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	out := make([]*agent.AgentDecision, 0)
+	out := make([]*agentdecision.AgentDecision, 0)
 	for i := len(d.rows) - 1; i >= 0; i-- {
 		row := d.rows[i]
 		if row.UndoneAt != nil || row.ProposalID == nil {
@@ -148,11 +151,11 @@ func (d *windowDecisionRows) ListByProposals(
 func (d *windowDecisionRows) ListByCommitWorkflow(
 	_ context.Context,
 	req agentports.ListAgentDecisionsByCommitWorkflowRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	out := make([]*agent.AgentDecision, 0)
+	out := make([]*agentdecision.AgentDecision, 0)
 	for _, row := range d.rows {
 		if row.CommitWorkflowID == req.WorkflowID {
 			clone := *row
@@ -413,7 +416,7 @@ func (h *windowHarness) approve(t *testing.T) []agentports.DeferredApproval {
 	for _, id := range h.ids {
 		reqs = append(reqs, &agentports.DecideAgentProposalRequest{
 			ProposalID: id,
-			Decision:   agent.DecisionAccepted,
+			Decision:   agentdecision.DecisionAccepted,
 			TenantInfo: h.tenant,
 		})
 	}
@@ -578,7 +581,7 @@ func TestApproval_ThatCannotBeScheduledIsTakenBack(t *testing.T) {
 
 	_, err := h.service.ApproveDeferred(t.Context(), []*agentports.DecideAgentProposalRequest{{
 		ProposalID: h.ids[0],
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		TenantInfo: h.tenant,
 	}}, h.actor)
 
@@ -603,11 +606,11 @@ func TestApproval_ApprovingIsNotDecidableAndDoesNotExpire(t *testing.T) {
 	require.Error(t, decidable(proposal))
 	assert.False(t, agent.ProposalStatusApproving.Expirable())
 	assert.True(t, agent.ProposalStatusPending.Expirable())
-	assert.False(t, agent.PlanStatusApproving.Expirable())
-	assert.False(t, agent.PlanStatusApproving.Decidable())
+	assert.False(t, agentplan.PlanStatusApproving.Expirable())
+	assert.False(t, agentplan.PlanStatusApproving.Decidable())
 }
 
-func (h *windowHarness) decisionOf(t *testing.T, id pulid.ID) *agent.AgentDecision {
+func (h *windowHarness) decisionOf(t *testing.T, id pulid.ID) *agentdecision.AgentDecision {
 	t.Helper()
 
 	h.decisions.mu.Lock()
@@ -701,7 +704,7 @@ func TestDecision_OnAHeldProposalIsRefusedAndRecordsNothing(t *testing.T) {
 		t.Context(),
 		[]*agentports.DecideAgentProposalRequest{{
 			ProposalID: h.ids[0],
-			Decision:   agent.DecisionAccepted,
+			Decision:   agentdecision.DecisionAccepted,
 			TenantInfo: h.tenant,
 		}},
 		h.actor,
@@ -720,7 +723,7 @@ func TestDecision_OnAHeldProposalIsRefusedAndRecordsNothing(t *testing.T) {
 
 	_, err = h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: h.ids[0],
-		Decision:   agent.DecisionRejected,
+		Decision:   agentdecision.DecisionRejected,
 		ReasonCode: "not now",
 		TenantInfo: h.tenant,
 	}, h.actor)
@@ -744,7 +747,7 @@ func TestApproval_AStaleApprovalIsRefusedAtOnceAndNeverHeldForAWindow(t *testing
 	require.NoError(t, approved[0].Err)
 	require.NotNil(t, approved[0].Decision, "the refused approval is recorded")
 	assert.Nil(t, approved[0].Decision.CommitsAt, "it waits on no window")
-	require.ErrorIs(t, approved[0].ExecutionError, agent.ErrTargetChanged)
+	require.ErrorIs(t, approved[0].ExecutionError, agentplan.ErrTargetChanged)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.status(stale))
 	require.Len(t, followUps.requests, 1, "the refusal is reported as it is made")
 	assert.Equal(t, stale, followUps.requests[0].ProposalID)
@@ -782,7 +785,7 @@ func TestDecideOwn_AStaleApprovalTellsItsDeciderAtOnceThatNothingChanged(t *test
 
 	outcome, err := h.service.DecideOwn(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: stale,
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		TenantInfo: h.tenant,
 	}, h.actor)
 	require.NoError(t, err, "the refusal is the decision's outcome, not an error")
@@ -807,7 +810,7 @@ func TestDecideOwn_AnApprovalInItsUndoWindowHasNotRunAndIsNotRefused(t *testing.
 
 	outcome, err := h.service.DecideOwn(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: id,
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		TenantInfo: h.tenant,
 	}, h.actor)
 	require.NoError(t, err)
@@ -830,19 +833,19 @@ type stalePreviews struct {
 func (p *stalePreviews) ForProposal(
 	_ context.Context,
 	req *agentruntimeports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	current := int64(3)
 	if req.Proposal.ID == p.stale {
 		current = 4
 	}
 
-	return &agent.ProposalPreview{
-		Schema:        agent.PreviewSchemaVersion,
+	return &agentpreview.ProposalPreview{
+		Schema:        agentpreview.PreviewSchemaVersion,
 		ProposalID:    req.Proposal.ID,
 		Tool:          req.Proposal.ToolName,
-		Coverage:      agent.PreviewCoverageFull,
+		Coverage:      agentpreview.PreviewCoverageFull,
 		TargetVersion: &current,
-		Staleness: &agent.PreviewStaleness{
+		Staleness: &agentpreview.PreviewStaleness{
 			Pinned:          true,
 			ProposedVersion: 3,
 			CurrentVersion:  current,

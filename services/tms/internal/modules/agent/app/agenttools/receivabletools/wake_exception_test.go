@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -44,7 +45,7 @@ func TestWakeException_PreviewsThenBringsItBackToTheQueue(t *testing.T) {
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, exceptions.guard, func() (
-		*agent.ToolPreview,
+		*agentpreview.ToolPreview,
 		error,
 	) {
 		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)

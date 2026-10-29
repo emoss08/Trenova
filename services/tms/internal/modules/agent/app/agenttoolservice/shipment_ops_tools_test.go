@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -232,7 +233,7 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -266,7 +267,7 @@ func TestUncancelShipment_AShipmentThatIsNotCanceledIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{toolparams.ParamShipmentID: "not-an-id"})))
@@ -286,7 +287,7 @@ func TestTransferShipmentOwnership_NamesTheNewOwner(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -316,7 +317,7 @@ func TestRerateShipment_ShowsTheMoneyAndIsAMoneyWrite(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -360,7 +361,7 @@ func TestRecalculateShipmentDistance_ShowsEachMoveThatChanges(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -390,13 +391,13 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	require.Len(t, preview.Changes, 2)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(
 		t,
 		"BOL-COPY-01",
@@ -568,7 +569,7 @@ func TestUpdateShipmentHold_ChangesOnlyWhatIsSentAndKeepsTheVersion(t *testing.T
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		holds.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -691,7 +692,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -706,7 +707,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 		).After,
 	)
 	created := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, moves.split)

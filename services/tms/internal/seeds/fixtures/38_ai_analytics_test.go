@@ -3,7 +3,7 @@ package fixtures
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,11 @@ func analyticsTestRefs() *analyticsSeedRefs {
 		admin: "usr_1",
 		now:   analyticsTestNow,
 		providers: map[string]*aiprovider.Provider{
-			SeedAIProviderLocalName: provider("aip_local", SeedAIProviderLocalName, "qwen2.5-14b-instruct"),
+			SeedAIProviderLocalName: provider(
+				"aip_local",
+				SeedAIProviderLocalName,
+				"qwen2.5-14b-instruct",
+			),
 			SeedAIProviderServerName: provider(
 				"aip_vllm",
 				SeedAIProviderServerName,
@@ -130,7 +134,7 @@ func TestAnalyticsSeedCoversEveryOutcomeCauseAndDecision(t *testing.T) {
 		assert.True(t, causes[cause], "no %s tool call", cause)
 	}
 
-	decisions := map[agent.DecisionType]bool{}
+	decisions := map[agentdecision.DecisionType]bool{}
 	for _, decision := range data.decisions {
 		decisions[decision.decision] = true
 		require.Equal(t, aianalytics.SourceAgentRun, data.units[decision.unitIndex].Source)

@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -208,11 +209,11 @@ func (r *repository) ListByAgent(
 	})
 }
 
-func capturedDecisions() []agent.DecisionType {
-	return []agent.DecisionType{
-		agent.DecisionAccepted,
-		agent.DecisionModified,
-		agent.DecisionRejected,
+func capturedDecisions() []agentdecision.DecisionType {
+	return []agentdecision.DecisionType{
+		agentdecision.DecisionAccepted,
+		agentdecision.DecisionModified,
+		agentdecision.DecisionRejected,
 	}
 }
 
@@ -380,7 +381,7 @@ func (r *repository) ListSamplingCases(
 			Pick(keel.CaseInt64().
 				When(
 					keel.Or(
-						ev.Status.Eq(agent.EvaluationStatusFailed),
+						ev.Status.Eq(agentevaluation.EvaluationStatusFailed),
 						ev.Checks.Text("passed").Eq("false"),
 					),
 					ev.CompletedAt.Coalesce(ev.UpdatedAt),
@@ -388,7 +389,7 @@ func (r *repository) ListSamplingCases(
 				Else(keel.Int64(0))).
 			Where(
 				ev.EvalCaseID.EqCol(c.ID),
-				ev.Status.In(agent.EvaluationStatusCompleted, agent.EvaluationStatusFailed),
+				ev.Status.In(agentevaluation.EvaluationStatusCompleted, agentevaluation.EvaluationStatusFailed),
 			).
 			Order(ev.CreatedAt.Desc(), ev.ID.Desc()).
 			Limit(1))

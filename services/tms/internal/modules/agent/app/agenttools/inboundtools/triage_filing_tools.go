@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -81,7 +83,7 @@ func filedAttachmentOf(attachment *inboundmessage.InboundAttachment) *filedAttac
 
 func attachmentChange(
 	before, after *inboundmessage.InboundAttachment,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceInboundMessage,
@@ -102,7 +104,10 @@ func attachmentChange(
 	)
 }
 
-func documentStatusChange(id pulid.ID, from, to document.Status) (*agent.RecordChange, error) {
+func documentStatusChange(
+	id pulid.ID,
+	from, to document.Status,
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(
 		toolpreview.Record{Resource: permission.ResourceDocument, ID: id},
 		&documentStatusView{Status: string(from)},
@@ -190,7 +195,7 @@ func newFileInboundAttachmentTool(
 				ctx context.Context,
 				call *fileCall,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				if err := requireAttachmentOn(ctx, inbox, call.file.TenantInfo,
 					call.messageID, call.file.AttachmentID); err != nil {
 					return nil, err
@@ -200,7 +205,7 @@ func newFileInboundAttachmentTool(
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "filed",
 					Kind:   "email attachment",
 					Name:   describeInboundMessage(message),
@@ -325,7 +330,10 @@ func pageRanges(params map[string]any) ([]triageworkservice.PageRange, error) {
 	return pages, nil
 }
 
-func renderFiling(call *fileCall, plan *triageworkservice.FilePlan) (*agent.ToolPreview, error) {
+func renderFiling(
+	call *fileCall,
+	plan *triageworkservice.FilePlan,
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would file " + plan.Attachment.FileName + " on the shipment"
 	if plan.Message.ID != call.messageID {
 		return refusedPreview(summary+".", errAttachmentElsewhere(call.messageID)), nil
@@ -335,7 +343,7 @@ func renderFiling(call *fileCall, plan *triageworkservice.FilePlan) (*agent.Tool
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{filed}
+	changes := []*agentpreview.RecordChange{filed}
 
 	if len(plan.Ranges) == 0 {
 		summary += " as " + plan.DocumentType.Name
@@ -481,7 +489,7 @@ func newUnfileInboundAttachmentTool(
 				ctx context.Context,
 				call *unfileCall,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				if err := requireAttachmentOn(ctx, inbox, call.unfile.TenantInfo,
 					call.messageID, call.unfile.AttachmentID); err != nil {
 					return nil, err
@@ -500,7 +508,7 @@ func newUnfileInboundAttachmentTool(
 func renderUnfiling(
 	call *unfileCall,
 	plan *triageworkservice.UnfilePlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would take " + plan.Attachment.FileName + " back off the shipment it was " +
 		"filed on"
 	if plan.Message.ID != call.messageID {
@@ -511,7 +519,7 @@ func renderUnfiling(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{unfiled}
+	changes := []*agentpreview.RecordChange{unfiled}
 
 	for _, split := range plan.Removed {
 		deleted, deleteErr := toolpreview.Delete(

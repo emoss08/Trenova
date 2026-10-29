@@ -5,7 +5,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -259,7 +259,7 @@ func (f *fakeRetrievalRepo) Search(
 type fakeSources struct {
 	retrievalports.RetrievalSourceRepository
 
-	memories  []*agent.Memory
+	memories  []*agentmemory.Memory
 	documents []*retrievalports.RetrievalDocumentSource
 	messages  []*inboundmessage.InboundMessage
 	keys      []string
@@ -279,8 +279,8 @@ func (f *fakeSources) ListModelKeys(
 func (f *fakeSources) GetMemories(
 	_ context.Context,
 	req retrievalports.RetrievalSourcesRequest,
-) ([]*agent.Memory, error) {
-	return slices.DeleteFunc(slices.Clone(f.memories), func(memory *agent.Memory) bool {
+) ([]*agentmemory.Memory, error) {
+	return slices.DeleteFunc(slices.Clone(f.memories), func(memory *agentmemory.Memory) bool {
 		return !slices.Contains(req.IDs, memory.ID)
 	}), nil
 }

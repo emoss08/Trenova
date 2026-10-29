@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -145,7 +145,10 @@ func decodeJudgement(text string) (*judgement, error) {
 	return &decoded, nil
 }
 
-func applyJudgement(checks *agent.CaseChecks, verdict *agent.JudgeVerdict) float64 {
+func applyJudgement(
+	checks *agentevaluation.CaseChecks,
+	verdict *agentevaluation.JudgeVerdict,
+) float64 {
 	if checks.HardFailure {
 		checks.Final = 0
 		checks.Passed = false

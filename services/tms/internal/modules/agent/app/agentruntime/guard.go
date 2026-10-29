@@ -6,6 +6,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -44,7 +45,7 @@ type guardedDispatchParams struct {
 	call           llmports.ToolCall
 	completionText string
 	proposedSoFar  []agentruntimeports.PendingAction
-	moneySpent     agent.MoneyUse
+	moneySpent     agenttooltrust.MoneyUse
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
 	taint   *agent.RunTaint

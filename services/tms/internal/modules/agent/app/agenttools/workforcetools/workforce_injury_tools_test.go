@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
@@ -139,7 +140,7 @@ func TestRecordWorkerInjury_TakesTheNextCaseNumber(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		injuries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -178,7 +179,7 @@ func TestUpdateWorkerInjury_ChangesOnlyWhatIsNamed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		injuries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -202,13 +203,13 @@ func TestDeleteWorkerInjury_IsOnlyProposed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		injuries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))

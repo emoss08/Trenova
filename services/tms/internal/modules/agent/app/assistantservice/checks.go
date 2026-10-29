@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -79,7 +79,7 @@ func (s *Service) checkTurn(
 	thread *conversation.Thread,
 	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
-	page *agent.PageContext,
+	page *agentpagecontext.PageContext,
 ) *turnChecks {
 	checks := &turnChecks{}
 	var wg sync.WaitGroup

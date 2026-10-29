@@ -1,7 +1,7 @@
 package outboundpreview
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -46,8 +46,8 @@ func CustomerUpdateComment(
 func RenderedEmailPreview(
 	send *emailports.SendEmailRequest,
 	versionID *pulid.ID,
-) *agent.MessagePreview {
-	message := &agent.MessagePreview{
+) *agentpreview.MessagePreview {
+	message := &agentpreview.MessagePreview{
 		To:      send.To,
 		Cc:      send.CC,
 		Bcc:     send.BCC,
@@ -64,9 +64,9 @@ func RenderedEmailPreview(
 	return message
 }
 
-func PlannedEmailPreview(planned *emailports.PlannedEmail) *agent.MessagePreview {
-	return &agent.MessagePreview{
-		Channel:           agent.MessageChannelEmail,
+func PlannedEmailPreview(planned *emailports.PlannedEmail) *agentpreview.MessagePreview {
+	return &agentpreview.MessagePreview{
+		Channel:           agentpreview.MessageChannelEmail,
 		To:                planned.To,
 		Cc:                planned.CC,
 		Bcc:               planned.BCC,

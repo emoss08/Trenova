@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -113,12 +115,12 @@ func NewSplitMoveTool(moves moveSplitter) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *shipmentmoveports.SplitMoveRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			response, err := moves.SplitMove(ctx, req)
 			if err != nil {
 				return nil, err
 			}
-			result := &agent.ToolExecutionResult{Action: "split", Kind: "move"}
+			result := &agentrecord.ToolExecutionResult{Action: "split", Kind: "move"}
 			if response != nil && response.NewMove != nil {
 				result.IDs = map[string]string{
 					ParamMoveID: req.MoveID.String(),
@@ -225,7 +227,7 @@ var splitDateTimes = toolpreview.Types(map[string]assistantartifact.DisplayType{
 func renderMoveSplit(
 	_ *shipmentmoveports.SplitMoveRequest,
 	plan *shipmentmoveports.MoveSplitPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	original := plan.Move.Stops[1]
 	relay, err := toolpreview.Changed(
 		toolpreview.Record{

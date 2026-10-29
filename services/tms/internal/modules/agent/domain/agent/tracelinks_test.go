@@ -4,6 +4,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +28,8 @@ func fieldsOf(multiErr *errortypes.MultiError) []string {
 	return fields
 }
 
-func baseRunStep() *agent.AgentRunStep {
-	return &agent.AgentRunStep{
+func baseRunStep() *agentrunstep.AgentRunStep {
+	return &agentrunstep.AgentRunStep{
 		OwnerKind: string(agent.RunOwnerAgentRun),
 		OwnerID:   pulid.MustNew("ar_"),
 		Kind:      "Tool",
@@ -59,17 +63,17 @@ func TestRunOwnerKind_CoversBothOwners(t *testing.T) {
 func TestTierSource_CoversEveryWayATierIsSet(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, []agent.TierSource{
-		agent.TierSourcePolicyDefault,
-		agent.TierSourcePersonSetting,
-		agent.TierSourceTrustEarned,
-		agent.TierSourcePersonalExemption,
-	}, agent.AllTierSources())
-	for _, source := range agent.AllTierSources() {
+	assert.Equal(t, []agenttooltrust.TierSource{
+		agenttooltrust.TierSourcePolicyDefault,
+		agenttooltrust.TierSourcePersonSetting,
+		agenttooltrust.TierSourceTrustEarned,
+		agenttooltrust.TierSourcePersonalExemption,
+	}, agenttooltrust.AllTierSources())
+	for _, source := range agenttooltrust.AllTierSources() {
 		assert.True(t, source.IsValid(), source)
 	}
-	assert.False(t, agent.TierSource("").IsValid())
-	assert.False(t, agent.TierSource("Earned").IsValid())
+	assert.False(t, agenttooltrust.TierSource("").IsValid())
+	assert.False(t, agenttooltrust.TierSource("Earned").IsValid())
 }
 
 func TestAgentRunStep_Validate_AcceptsARowWithoutTraceLinks(t *testing.T) {
@@ -113,7 +117,7 @@ func TestAgentProposal_Validate_ChecksTraceLinks(t *testing.T) {
 	t.Parallel()
 
 	proposal := baseProposal()
-	proposal.Evidence = []agent.EvidenceRef{{Type: "shipment", ID: "shp_1"}}
+	proposal.Evidence = []agentevidence.EvidenceRef{{Type: "shipment", ID: "shp_1"}}
 	proposal.TraceID = validTraceID
 	proposal.SpanID = validSpanID
 	proposal.StepKey = "step-key"
@@ -139,10 +143,10 @@ func TestAgentDecision_Validate_ChecksTraceID(t *testing.T) {
 	t.Parallel()
 
 	proposalID := pulid.MustNew("ap_")
-	decision := &agent.AgentDecision{
+	decision := &agentdecision.AgentDecision{
 		ProposalID:      &proposalID,
 		DecidedByUserID: pulid.MustNew("usr_"),
-		Decision:        agent.DecisionAccepted,
+		Decision:        agentdecision.DecisionAccepted,
 		ReasonCode:      "looks_right",
 		TraceID:         validTraceID,
 	}

@@ -3,14 +3,14 @@ package agentmemoryports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // MemorySubjectRef names one record a memory can be about.
 type MemorySubjectRef struct {
-	Type agent.MemorySubjectType
+	Type agentmemory.MemorySubjectType
 	ID   pulid.ID
 }
 
@@ -47,7 +47,7 @@ type ListActiveAgentMemoriesRequest struct {
 	AgentDefinitionID pulid.ID
 	// Reader is the person the prompt is for. Memories kept for one person or
 	// one role reach only that person or the role's holders.
-	Reader           agent.MemoryReader
+	Reader           agentmemory.MemoryReader
 	Now              int64
 	OrganizationWide bool
 	Subjects         []MemorySubjectRef
@@ -61,14 +61,14 @@ type ListActiveAgentMemoriesRequest struct {
 type SearchAgentMemoriesRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
-	Reader            agent.MemoryReader
+	Reader            agentmemory.MemoryReader
 	Now               int64
 	Query             string
 	// Terms are the query's meaningful words. When no memory matches every
 	// word, a memory sharing two of them is found instead.
 	Terms    []string
 	IDs      []pulid.ID
-	Kind     agent.MemoryKind
+	Kind     agentmemory.MemoryKind
 	Subject  *MemorySubjectRef
 	ToolName string
 	Limit    int
@@ -89,7 +89,7 @@ type FindActiveAgentMemoryRequest struct {
 	Content           string
 	Subject           *MemorySubjectRef
 	ToolName          string
-	Scope             agent.MemoryScope
+	Scope             agentmemory.MemoryScope
 	AgentDefinitionID pulid.ID
 	OwnerUserID       pulid.ID
 	RoleID            pulid.ID
@@ -100,7 +100,7 @@ type FindActiveAgentMemoryRequest struct {
 type SetAgentMemoryStatusQuery struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
-	Status     agent.MemoryStatus
+	Status     agentmemory.MemoryStatus
 	ByUserID   pulid.ID
 	At         int64
 }
@@ -132,10 +132,10 @@ type ListAgentMemorySuggestionContextRequest struct {
 type ResolveAgentMemorySuggestionRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
-	Status     agent.MemoryStatus
-	Kind       agent.MemoryKind
+	Status     agentmemory.MemoryStatus
+	Kind       agentmemory.MemoryKind
 	Content    string
-	Scope      agent.MemoryScope
+	Scope      agentmemory.MemoryScope
 	// Reconsidered lets a suggestion its person turned down be accepted
 	// after all: the conversation's Undo of "Don't save".
 	Reconsidered bool
@@ -154,7 +154,7 @@ type ReviseAgentMemoryRequest struct {
 	ID          pulid.ID
 	TenantInfo  pagination.TenantInfo
 	Content     string
-	Scope       agent.MemoryScope
+	Scope       agentmemory.MemoryScope
 	OwnerUserID pulid.ID
 	RoleID      pulid.ID
 	Version     int64
@@ -172,8 +172,8 @@ type DeskMemoryCursor struct {
 // ever listed, and only those a person keeps: active or paused ones.
 type DeskMemoryFilter struct {
 	TenantInfo pagination.TenantInfo
-	Reader     agent.MemoryReader
-	Scope      agent.MemoryScope
+	Reader     agentmemory.MemoryReader
+	Scope      agentmemory.MemoryScope
 	RoleID     pulid.ID
 	Query      string
 }
@@ -187,7 +187,7 @@ type ListDeskMemoriesQuery struct {
 // DeskMemoryRow is a memory as the Desk lists it: with the title of the
 // conversation it was saved from and the name of the role it is kept for.
 type DeskMemoryRow struct {
-	Memory      *agent.Memory
+	Memory      *agentmemory.Memory
 	SourceTitle string
 	RoleName    string
 }
@@ -195,7 +195,7 @@ type DeskMemoryRow struct {
 // DeskMemoryCount is how many memories the reader keeps in one scope, and
 // for Role in one role.
 type DeskMemoryCountRow struct {
-	Scope  agent.MemoryScope
+	Scope  agentmemory.MemoryScope
 	RoleID pulid.ID
 	Count  int
 }
@@ -211,36 +211,39 @@ type GetAgentMemoryPreferenceRequest struct {
 }
 
 type AgentMemoryRepository interface {
-	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
-	Update(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
-	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agent.Memory, error)
-	ListByIDs(ctx context.Context, req ListAgentMemoriesByIDsRequest) ([]*agent.Memory, error)
+	Create(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
+	Update(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
+	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agentmemory.Memory, error)
+	ListByIDs(ctx context.Context, req ListAgentMemoriesByIDsRequest) ([]*agentmemory.Memory, error)
 	ListReplacements(
 		ctx context.Context,
 		req ListAgentMemoryReplacementsRequest,
-	) ([]*agent.Memory, error)
+	) ([]*agentmemory.Memory, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentMemoryConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Memory], error)
-	ListActive(ctx context.Context, req ListActiveAgentMemoriesRequest) ([]*agent.Memory, error)
-	Search(ctx context.Context, req SearchAgentMemoriesRequest) ([]*agent.Memory, error)
-	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agent.Memory, error)
+	) (*pagination.CursorListResult[*agentmemory.Memory], error)
+	ListActive(
+		ctx context.Context,
+		req ListActiveAgentMemoriesRequest,
+	) ([]*agentmemory.Memory, error)
+	Search(ctx context.Context, req SearchAgentMemoriesRequest) ([]*agentmemory.Memory, error)
+	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agentmemory.Memory, error)
 	CountActive(ctx context.Context, req CountActiveAgentMemoriesRequest) (int, error)
-	SetStatus(ctx context.Context, req SetAgentMemoryStatusQuery) (*agent.Memory, error)
+	SetStatus(ctx context.Context, req SetAgentMemoryStatusQuery) (*agentmemory.Memory, error)
 	// Review clears an Active or Paused memory's taint for the person who
 	// read it; a memory that does not taint, or that changed, is refused.
-	Review(ctx context.Context, req ReviewAgentMemoryQuery) (*agent.Memory, error)
+	Review(ctx context.Context, req ReviewAgentMemoryQuery) (*agentmemory.Memory, error)
 	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
 	ListSuggestionContext(
 		ctx context.Context,
 		req ListAgentMemorySuggestionContextRequest,
-	) ([]*agent.Memory, error)
+	) ([]*agentmemory.Memory, error)
 	ResolveSuggestion(
 		ctx context.Context,
 		req ResolveAgentMemorySuggestionRequest,
-	) (*agent.Memory, error)
-	Revise(ctx context.Context, req ReviseAgentMemoryRequest) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
+	Revise(ctx context.Context, req ReviseAgentMemoryRequest) (*agentmemory.Memory, error)
 	// ListDesk reads one page of the memories a person keeps, newest first.
 	ListDesk(ctx context.Context, req ListDeskMemoriesQuery) ([]*DeskMemoryRow, error)
 	// CountDesk counts what ListDesk would list with no scope chosen, per
@@ -254,9 +257,9 @@ type AgentMemoryRepository interface {
 	GetPreference(
 		ctx context.Context,
 		req GetAgentMemoryPreferenceRequest,
-	) (*agent.MemoryPreference, error)
+	) (*agentmemory.MemoryPreference, error)
 	SavePreference(
 		ctx context.Context,
-		entity *agent.MemoryPreference,
-	) (*agent.MemoryPreference, error)
+		entity *agentmemory.MemoryPreference,
+	) (*agentmemory.MemoryPreference, error)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -226,8 +227,8 @@ func wfOptions(fields ...string) []toolpreview.Option {
 func wfResult(
 	action, kind, idParam string,
 	id, workerID pulid.ID,
-) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   kind,
 		IDs:    map[string]string{idParam: id.String()},

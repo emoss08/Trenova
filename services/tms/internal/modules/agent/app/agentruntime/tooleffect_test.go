@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -45,11 +46,11 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 
 	rt := effectRuntime()
 
-	assert.Equal(t, agent.ToolEffectLookup, rt.ToolEffect("customer_list"))
-	assert.Equal(t, agent.ToolEffectChange, rt.ToolEffect("report_create"))
-	assert.Equal(t, agent.ToolEffectDiscover, rt.ToolEffect(findToolsName))
-	assert.Equal(t, agent.ToolEffectAsk, rt.ToolEffect(askUserName))
-	assert.Equal(t, agent.ToolEffectPresent, rt.ToolEffect(publishArtifactName))
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, rt.ToolEffect("customer_list"))
+	assert.Equal(t, agenttooltrust.ToolEffectChange, rt.ToolEffect("report_create"))
+	assert.Equal(t, agenttooltrust.ToolEffectDiscover, rt.ToolEffect(findToolsName))
+	assert.Equal(t, agenttooltrust.ToolEffectAsk, rt.ToolEffect(askUserName))
+	assert.Equal(t, agenttooltrust.ToolEffectPresent, rt.ToolEffect(publishArtifactName))
 	assert.Empty(t, rt.ToolEffect("retired_tool"), "a tool that no longer exists has no effect")
 }
 
@@ -70,9 +71,9 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 
 	rt.MarkToolEffects(messages)
 
-	assert.Equal(t, agent.ToolEffectLookup, messages[0].ToolCalls[0].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, messages[0].ToolCalls[0].Effect)
 	assert.Empty(t, messages[0].ToolCalls[1].Effect)
-	assert.Equal(t, agent.ToolEffectLookup, messages[1].ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, messages[1].ToolEffect)
 	assert.Empty(t, messages[2].ToolEffect)
 	assert.Empty(t, messages[3].ToolEffect)
 	assert.Empty(t, stored[0].Effect, "the slice the messages were read with is not rewritten")
@@ -255,7 +256,7 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	assert.Equal(t, int64(1_020), answered.CreatedAt)
 	assert.Equal(t, int64(1_030), reply.CreatedAt)
 
-	assert.Equal(t, agent.ToolEffectLookup, answered.ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, answered.ToolEffect)
 	assert.Equal(t, "Peak Distributing", answered.ToolSummary)
 	assert.Empty(t, asked.ToolCalls[0].Effect, "the call is stored as the model sent it")
 
@@ -276,11 +277,11 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	require.NotNil(t, started)
 	require.NotNil(t, finished)
 	require.NotNil(t, message)
-	assert.Equal(t, agent.ToolEffectLookup, started.Effect)
-	assert.Equal(t, agent.ToolEffectLookup, finished.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, started.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, finished.Effect)
 	assert.Equal(t, "Peak Distributing", finished.Summary)
 	require.Len(t, message.ToolCalls, 1)
-	assert.Equal(t, agent.ToolEffectLookup, message.ToolCalls[0].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, message.ToolCalls[0].Effect)
 }
 
 func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.T) {
@@ -314,10 +315,10 @@ func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.
 
 	require.NotNil(t, finished)
 	assert.True(t, finished.Proposed)
-	assert.Equal(t, agent.ToolEffectChange, finished.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, finished.Effect)
 	assert.Equal(t, "Late loads", finished.Summary)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, agent.ToolEffectChange, result.Messages[2].ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, result.Messages[2].ToolEffect)
 	assert.Equal(t, "Late loads", result.Messages[2].ToolSummary)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -41,7 +42,7 @@ func inboundTaint() *agent.RunTaint {
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
-		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityInboundMessage, ID: "imsg_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: agent.TaintEntityInboundMessage, ID: "imsg_1"},
 	})
 
 	return taint

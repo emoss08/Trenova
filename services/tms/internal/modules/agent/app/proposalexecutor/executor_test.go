@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -34,17 +36,17 @@ func (t *recordingTool) ParamSchema() map[string]any { return map[string]any{} }
 func (t *recordingTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.resource,
 		Operation:     t.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    t.requiresKey,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A recording stub.",
 	}
 }
@@ -75,7 +77,7 @@ type recordedExecution struct {
 	status     agent.ProposalStatus
 	executedAt *int64
 	errText    string
-	result     *agent.ToolExecutionResult
+	result     *agentrecord.ToolExecutionResult
 	egress     agent.EgressClass
 	by         pulid.ID
 	version    *int64

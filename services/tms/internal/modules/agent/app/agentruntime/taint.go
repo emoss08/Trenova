@@ -2,6 +2,8 @@ package agentruntime
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -66,12 +68,12 @@ func callTaint(
 ) []agent.TaintMark {
 	var refs []agent.SourcedRef
 	switch policy.ReadsExternal {
-	case agent.ExternalReadAlways:
+	case agenttooltrust.ExternalReadAlways:
 		refs = carriedRefs(&policy, data)
 		if len(refs) == 0 {
 			return []agent.TaintMark{callMark(call, policy.Source, nil, now)}
 		}
-	case agent.ExternalReadMarked:
+	case agenttooltrust.ExternalReadMarked:
 		refs = carriedRefs(&policy, data)
 		if len(refs) == 0 {
 			return nil
@@ -118,7 +120,7 @@ func carriedRefs(policy *agenttoolports.ToolPolicy, data any) []agent.SourcedRef
 func callMark(
 	call llmports.ToolCall,
 	source agent.TaintSource,
-	ref *agent.RecordRef,
+	ref *agentrecord.RecordRef,
 	now int64,
 ) agent.TaintMark {
 	return agent.TaintMark{

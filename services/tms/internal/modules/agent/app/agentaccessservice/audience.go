@@ -3,9 +3,9 @@ package agentaccessservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -190,7 +190,7 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 
 func HeldToolOf(policy agenttoolports.ToolPolicy) HeldTool {
 	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
-	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
+	if policy.Scope == agenttooltrust.ToolScopeSelf || policy.Resource == "" {
 		return held
 	}
 

@@ -10,6 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -76,7 +80,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		AgentType: agent.TypeGeneral, SubjectType: agent.SubjectShipment,
 		SubjectID: pulid.MustNew("shp_"), Status: agent.RunStatusCompleted,
 		PromptVersion: "v1", InputContextHash: "hash", StartedAt: now - 20,
-		Fingerprint: &agent.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
 	}
 	thread := &conversation.Thread{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
@@ -88,22 +92,22 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
 		StartedAt:   now - 15,
-		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	compaction := &conversation.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID,
 		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
-		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	insert(ctx, t, db, conversationdb.Threads.Handle, thread)
 	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
 	insert(ctx, t, db, agentdb.AgentRuns.Handle, run, stopped)
 	insert(ctx, t, db, conversationdb.AssistantTurns.Handle, turn, compaction)
-	insert(ctx, t, db, agentdb.AgentExceptions.Handle, &agent.AgentException{
+	insert(ctx, t, db, agentdb.AgentExceptions.Handle, &agentexception.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
-		Category: agent.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
-		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agent.EvidenceRef{},
+		Category: agentexception.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
+		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agentevidence.EvidenceRef{},
 	})
 
 	cost := decimal.RequireFromString("0.0123")
@@ -141,14 +145,14 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
 	backdateUsage(ctx, t, db, usage...)
 	insert(ctx, t, db, agentdb.AgentRunSteps.Handle,
-		&agent.AgentRunStep{
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,
 			), OwnerID: run.ID, Kind: "Tool", Status: "Completed",
 			StepKey: "k1", ToolName: "lookup_rate", Outcome: map[string]any{"verdict": "ran"},
 		},
-		&agent.AgentRunStep{
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,
@@ -159,7 +163,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 				"content": `"driver_id" must be a string`,
 			},
 		},
-		&agent.AgentRunStep{
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,

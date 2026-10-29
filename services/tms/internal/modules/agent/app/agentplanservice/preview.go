@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -15,7 +18,7 @@ import (
 // shownPlan is the plan preview an approval approved, and whether its
 // decider named its digest.
 type shownPlan struct {
-	preview  *agent.PlanPreview
+	preview  *agentpreview.PlanPreview
 	reviewed bool
 }
 
@@ -35,8 +38,8 @@ func (p *shownPlan) annotate(req *agentports.DecideAgentProposalRequest, proposa
 	req.StepPreviewReviewed = p.reviewed
 }
 
-func (p *preparedPlan) settledDigest(from agent.PlanStatus) string {
-	if from != agent.PlanStatusApproving {
+func (p *preparedPlan) settledDigest(from agentplan.PlanStatus) string {
+	if from != agentplan.PlanStatusApproving {
 		return p.shown.digest()
 	}
 
@@ -60,14 +63,14 @@ func (p *shownPlan) digest() string {
 func (s *Service) settlePreview(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 ) (*shownPlan, error) {
-	if req.Decision != agent.DecisionAccepted {
+	if req.Decision != agentdecision.DecisionAccepted {
 		return nil, nil //nolint:nilnil // no preview settles a rejection
 	}
-	gated := agent.PlanNeedsReview(steps)
+	gated := agentplan.PlanNeedsReview(steps)
 	if gated && (s.previews == nil || req.PreviewDigest == "") {
 		return nil, agent.ReviewRequiredError()
 	}
@@ -89,7 +92,7 @@ func (s *Service) settlePreview(
 	}
 
 	if req.PreviewDigest != "" && req.PreviewDigest != preview.Digest {
-		s.metrics.RecordConflict(agent.PlanToolName)
+		s.metrics.RecordConflict(agentplan.PlanToolName)
 
 		return nil, errortypes.NewConflictError(
 			"What this plan would do has changed since you reviewed it. " +

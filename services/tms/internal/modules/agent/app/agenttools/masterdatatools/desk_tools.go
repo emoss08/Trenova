@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -111,16 +112,16 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 func (t *EscalateDetentionTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Hands a detention clock to a person inside the organization.",
 	}
 }
@@ -271,15 +272,15 @@ func (t *ApproveDetentionTool) ParamSchema() map[string]any {
 func (t *ApproveDetentionTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Releases a held detention charge onto the customer's invoice; only a " +
 			"person approves it.",
 	}
@@ -464,16 +465,16 @@ func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 func (t *RequestCredentialRenewalTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWorkerCredential,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Sends a driver a renewal request the model wrote.",
 	}
 }
@@ -610,16 +611,16 @@ func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 func (t *PlaceWorkerDispatchHoldTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWorkerDispatchHold,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Keeps a driver off new freight inside Trenova; the driver is not messaged.",
 	}
 }
@@ -772,15 +773,15 @@ func (t *carrierIntelEventTool) Policy() agenttoolports.ToolPolicy {
 
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCarrierIntelligence,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     rationale,
 	}
 }

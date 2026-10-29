@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -114,7 +115,7 @@ func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
 	}
 	// A file read for a conversation is shown there whatever the plan says
 	// of automated agents: the person asked for it by attaching it.
-	if event.Kind == agent.EventDocumentExtracted {
+	if event.Kind == agenttrigger.EventDocumentExtracted {
 		if observers := p.attachments.Load(); observers != nil {
 			for _, observer := range *observers {
 				observer.AttachmentExtracted(ctx, &event)

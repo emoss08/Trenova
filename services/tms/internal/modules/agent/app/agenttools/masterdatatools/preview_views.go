@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
@@ -35,7 +35,7 @@ func savedViewAudience(visibility tableconfiguration.Visibility) string {
 func (t *SaveTableViewTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
@@ -107,8 +108,12 @@ func TestListBankReceiptExceptions_JoinsTheQueueEntryAndFiltersByText(t *testing
 	search, ok := result.(*bankReceiptSearch)
 	require.True(t, ok)
 	outcome := search.searchOutcome
-	assert.Equal(t, []agent.RecordRef{{EntityType: agent.TaintEntityBankReceipt, ID: first.ID.String()}},
-		search.TaintedRecords(), "the run's taint names each receipt it was shown")
+	assert.Equal(
+		t,
+		[]agentrecord.RecordRef{{EntityType: agent.TaintEntityBankReceipt, ID: first.ID.String()}},
+		search.TaintedRecords(),
+		"the run's taint names each receipt it was shown",
+	)
 	assert.Equal(t, 1, outcome.Count)
 	rows, ok := outcome.Items.([]bankReceiptRow)
 	require.True(t, ok)
@@ -165,8 +170,13 @@ func TestGetBankReceipt_ReturnsTheScoredCandidatesAndTheQueueEntry(t *testing.T)
 
 	row, ok := result.(*bankReceiptDetailRow)
 	require.True(t, ok)
-	assert.Equal(t, []agent.RecordRef{{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()}},
-		row.TaintedRecords())
+	assert.Equal(
+		t,
+		[]agentrecord.RecordRef{
+			{EntityType: agent.TaintEntityBankReceipt, ID: receipt.ID.String()},
+		},
+		row.TaintedRecords(),
+	)
 	assert.Equal(t, "Exception", row.Status)
 	require.Len(t, row.Suggestions, 1)
 	assert.Equal(t, paymentID.String(), row.Suggestions[0].CustomerPaymentID)

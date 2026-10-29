@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -133,7 +133,7 @@ func dropsParameter(policy *agenttoolports.ToolPolicy, known bool, key string) b
 		return false
 	}
 
-	return !known || policy.Scope == agent.ToolScopeSelf
+	return !known || policy.Scope == agenttooltrust.ToolScopeSelf
 }
 
 type argumentWalk struct {

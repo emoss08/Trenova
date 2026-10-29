@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
@@ -46,7 +46,7 @@ func TestUpsertDraft_PublishesDocumentExtractedEvent(t *testing.T) {
 	require.Equal(t, document.ShipmentDraftStatusReady, status)
 	events := recorder.Published()
 	require.Len(t, events, 1)
-	require.Equal(t, agent.EventDocumentExtracted, events[0].Kind)
+	require.Equal(t, agenttrigger.EventDocumentExtracted, events[0].Kind)
 	require.Equal(t, doc.ID, events[0].SubjectID)
 	require.Equal(t, doc.OrganizationID, events[0].TenantInfo.OrgID)
 	require.Equal(t, doc.BusinessUnitID, events[0].TenantInfo.BuID)

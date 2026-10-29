@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -53,7 +53,7 @@ func TestSettlementReads_AreBoundAndDeclareTheirTaint(t *testing.T) {
 		assert.Equal(t, graphQLVerbGet, read.Verb, spec.name)
 		assert.Equal(t, spec.resource.String(), read.Resource, spec.name)
 		if len(spec.outside) > 0 {
-			assert.Equal(t, agent.ExternalReadMarked, spec.reads, spec.name)
+			assert.Equal(t, agenttooltrust.ExternalReadMarked, spec.reads, spec.name)
 		}
 	}
 }

@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -222,7 +224,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		Render: func(
 			_ *alertEdit,
 			change *kernelports.RecordChange[tablechangealert.TCASubscription],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			built, err := toolpreview.Changed(alertRecord(change.Before),
 				alertViewOf(change.Before), alertViewOf(change.After),
 				toolpreview.Labels(alertViewLabels))
@@ -237,7 +239,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			edit *alertEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.Build(ctx, alerts, params)
 			if err != nil {
 				return nil, err
@@ -247,7 +249,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: masterdatatools.ActionUpdated,
 				Kind:   masterdatatools.AlertKind,
 				Name:   updated.Name,
@@ -318,7 +320,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 		Render: func(
 			change *alertStatusChange,
 			planned *kernelports.RecordChange[tablechangealert.TCASubscription],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			built, err := toolpreview.Changed(alertRecord(planned.Before),
 				alertViewOf(planned.Before), alertViewOf(planned.After),
 				toolpreview.Labels(alertViewLabels))
@@ -333,7 +335,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			ctx context.Context,
 			change *alertStatusChange,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			set := alerts.ResumeSubscription
 			if change.status == tablechangealert.SubscriptionStatusPaused {
 				set = alerts.PauseSubscription
@@ -343,7 +345,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: masterdatatools.ActionUpdated,
 				Kind:   masterdatatools.AlertKind,
 				Name:   updated.Name,
@@ -383,7 +385,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		Render: func(
 			_ pulid.ID,
 			subscription *tablechangealert.TCASubscription,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(alertRecord(subscription),
 				alertViewOf(subscription), toolpreview.Labels(alertViewLabels))
 			if err != nil {
@@ -397,12 +399,12 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := alerts.DeleteSubscription(ctx, id, toolparams.TenantFrom(*params)); err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
 				Kind:   masterdatatools.AlertKind,
 				IDs:    map[string]string{ParamAlertID: id.String()},

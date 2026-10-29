@@ -3,7 +3,8 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -282,7 +283,9 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
-	req.Records = []agent.EntityRef{{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"}}
+	req.Records = []agentpagecontext.EntityRef{
+		{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
+	}
 	req.Context.Anchors = []agentturn.RuntimeAnchor{
 		{Kind: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 		{Kind: "worker", ID: "wrk_01M4HYAB7FKYM27B5JC48Q68MD", Note: "withheld"},
@@ -292,7 +295,7 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 
 	require.Len(t, fx.calls, 1)
 	require.NotNil(t, fx.calls[0].Context)
-	assert.Equal(t, []agent.RecordRef{
+	assert.Equal(t, []agentrecord.RecordRef{
 		{EntityType: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
 		{EntityType: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 	}, fx.calls[0].Context.Records, "a record the person may not read is not handed over")
@@ -318,7 +321,7 @@ func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
 	require.NotNil(t, state.Directed)
 	assert.Equal(
 		t,
-		[]agent.RecordRef{{EntityType: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"}},
+		[]agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"}},
 		state.Directed.Records,
 	)
 

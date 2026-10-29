@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +30,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 		ID:       pulid.MustNew("ap_"),
 		ToolName: "report_create",
 		Status:   agent.ProposalStatusExecuted,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			Name:   "Shipments for Peak Distributing",
@@ -68,7 +70,7 @@ func TestDecisionNote_SaysNothingMadeBeforeTheWriteRuns(t *testing.T) {
 	proposal := &agent.AgentProposal{
 		ToolName: "report_create",
 		Status:   agent.ProposalStatusAccepted,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			IDs:    map[string]string{"definitionId": "rd_01"},
@@ -114,10 +116,10 @@ shows and by id on the agent's lines, step by step.
 func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	t.Parallel()
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:             pulid.MustNew("apl_"),
 		Title:          "Dispatch: 2 changes",
-		Status:         agent.PlanStatusCompleted,
+		Status:         agentplan.PlanStatusCompleted,
 		StepCount:      2,
 		CompletedSteps: 2,
 	}
@@ -128,7 +130,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 		Status:   agent.ProposalStatusExecuted,
 		PlanID:   &planID,
 		PlanStep: 1,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "voided", Kind: "shipment", Name: "PRO-1001",
 			IDs: map[string]string{"shipmentId": "shp_old"},
 		},
@@ -139,7 +141,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 		Status:   agent.ProposalStatusExecuted,
 		PlanID:   &planID,
 		PlanStep: 2,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created", Kind: "shipment", Name: "PRO-1002",
 			IDs: map[string]string{"shipmentId": "shp_new"},
 		},
@@ -148,7 +150,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	svc.proposals = &stubProposalRepo{byThread: []*agent.AgentProposal{
 		copied, voided, {ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move"},
 	}}
-	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
+	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{plan}}
 	actor := testActor()
 
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{

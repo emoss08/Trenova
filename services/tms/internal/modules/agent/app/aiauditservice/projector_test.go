@@ -7,6 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -72,7 +76,7 @@ func newScenario() *scenario {
 			Status:    conversation.AssistantTurnStatusCompleted,
 			Origin:    conversation.AssistantTurnOriginPerson,
 			StartedAt: testNow - 1000, CompletedAt: i64(testNow - 900),
-			Fingerprint: &agent.Fingerprint{DefinitionVersion: 3},
+			Fingerprint: &agentfingerprint.Fingerprint{DefinitionVersion: 3},
 			TraceID:     "4bf92f3577b34da6a3ce929d0e0e4736",
 			CreatedAt:   testNow - 1000, UpdatedAt: testNow - 900,
 		}},
@@ -106,7 +110,7 @@ func newScenario() *scenario {
 				CreatedAt: testNow - 970,
 			},
 		},
-		steps: []*agent.AgentRunStep{
+		steps: []*agentrunstep.AgentRunStep{
 			{
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
@@ -158,7 +162,7 @@ func newScenario() *scenario {
 				CreatedAt: testNow - 935, UpdatedAt: testNow - 934,
 			},
 		},
-		events: []*agent.AgentRunEvent{
+		events: []*agentrunevent.AgentRunEvent{
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 1,
@@ -203,10 +207,10 @@ func newScenario() *scenario {
 			ExecutedTargetVersion: i64(5),
 			CreatedAt:             testNow - 910, UpdatedAt: testNow - 800,
 		}},
-		decisions: []*agent.AgentDecision{{
+		decisions: []*agentdecision.AgentDecision{{
 			ID: pulid.MustNew("ad_"), OrganizationID: org, BusinessUnitID: bu,
 			ProposalID: &s.proposal, DecidedByUserID: s.approver,
-			Decision: agent.DecisionAccepted, ReasonCode: "looks_right",
+			Decision: agentdecision.DecisionAccepted, ReasonCode: "looks_right",
 			CreatedAt:            testNow - 805,
 			PreviewDigest:        previewDigest,
 			PreviewReviewed:      true,
@@ -379,13 +383,18 @@ func TestPreviewSummary_SaysWhetherTheDeciderReviewedWhatTheyApproved(t *testing
 
 	assert.Empty(
 		t,
-		previewSummary(&agent.AgentDecision{}),
+		previewSummary(&agentdecision.AgentDecision{}),
 		"a decision before previews says nothing",
 	)
 	assert.Equal(t, "Preview not reviewed; sha256:"+previewDigest,
-		previewSummary(&agent.AgentDecision{PreviewDigest: previewDigest}))
-	assert.Equal(t, "Reviewed preview sha256:"+previewDigest,
-		previewSummary(&agent.AgentDecision{PreviewDigest: previewDigest, PreviewReviewed: true}))
+		previewSummary(&agentdecision.AgentDecision{PreviewDigest: previewDigest}))
+	assert.Equal(
+		t,
+		"Reviewed preview sha256:"+previewDigest,
+		previewSummary(
+			&agentdecision.AgentDecision{PreviewDigest: previewDigest, PreviewReviewed: true},
+		),
+	)
 }
 
 func TestProjector_ChainsEveryTenantsRowsInOrder(t *testing.T) {

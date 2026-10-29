@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -257,7 +257,7 @@ func writeDomains(buf *bytes.Buffer, domains []string, byDomain map[string]*tall
 func writeUnusedTools(buf *bytes.Buffer, report *Report, used map[string]struct{}) {
 	unused := make([]string, 0)
 	for _, name := range report.ToolOrder {
-		if report.Tools[name].Kind != agent.ToolKindAction {
+		if report.Tools[name].Kind != agenttooltrust.ToolKindAction {
 			continue
 		}
 		if _, ok := used[name]; !ok {

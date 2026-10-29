@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -33,19 +33,19 @@ const (
 // words: the page, the files, and the records they named. It is stored on
 // the user turn and rendered into the prompt, and nowhere else.
 type turnContext struct {
-	page        *agent.PageContext
+	page        *agentpagecontext.PageContext
 	attachments []conversation.MessageAttachment
 	runtime     []agentturn.RuntimeAttachment
-	mentions    []agent.EntityRef
+	mentions    []agentpagecontext.EntityRef
 }
 
 // validateMentions bounds and checks the records a person named.
 func validateMentions(
-	mentions []agent.EntityRef,
+	mentions []agentpagecontext.EntityRef,
 	multiErr *errortypes.MultiError,
-) []agent.EntityRef {
-	normalized := agent.NormalizeEntityRefs(mentions)
-	agent.ValidateEntityRefs("mentions", normalized, multiErr)
+) []agentpagecontext.EntityRef {
+	normalized := agentpagecontext.NormalizeEntityRefs(mentions)
+	agentpagecontext.ValidateEntityRefs("mentions", normalized, multiErr)
 
 	return normalized
 }

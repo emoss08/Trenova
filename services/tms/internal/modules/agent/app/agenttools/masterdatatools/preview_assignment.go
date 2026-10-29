@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
@@ -58,7 +58,7 @@ func AssignmentOptions() []toolpreview.Option {
 func (t *AssignMoveTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (t *AssignMoveTool) Preview(
 	if check.RequiresOverride {
 		toolpreview.Warn(
 			preview,
-			agent.PreviewWarningWouldFail,
+			agentpreview.PreviewWarningWouldFail,
 			"The organization's dispatch rules block this driver for this move: "+
 				blockingFindings(check),
 		)
@@ -115,7 +115,7 @@ func (t *AssignMoveTool) Preview(
 	if len(plan.EquipmentInUse) > 0 {
 		toolpreview.Warn(
 			preview,
-			agent.PreviewWarningEquipmentInUse,
+			agentpreview.PreviewWarningEquipmentInUse,
 			equipmentInUseWarning(plan.EquipmentInUse),
 			equipmentInUseLoads(plan.EquipmentInUse)...,
 		)
@@ -127,7 +127,7 @@ func (t *AssignMoveTool) Preview(
 func (t *AssignMoveTool) assignmentChanges(
 	request *assignmentports.AssignShipmentMoveRequest,
 	plan *assignmentports.AssignmentPlan,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	shipmentLabel := plan.ShipmentBefore.ProNumber
 	assignment, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
@@ -146,7 +146,7 @@ func (t *AssignMoveTool) assignmentChanges(
 		return nil, err
 	}
 
-	return append([]*agent.RecordChange{assignment}, coverage...), nil
+	return append([]*agentpreview.RecordChange{assignment}, coverage...), nil
 }
 
 func (t *AssignMoveTool) check(

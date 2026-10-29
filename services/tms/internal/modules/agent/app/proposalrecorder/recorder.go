@@ -10,6 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -69,12 +73,12 @@ type ScriptStepReader interface {
 	Get(
 		ctx context.Context,
 		req *agentruntimeports.GetAgentRunStepRequest,
-	) (*agent.AgentRunStep, error)
+	) (*agentrunstep.AgentRunStep, error)
 }
 
 // PlanStore is the one write the recorder makes on plans.
 type PlanStore interface {
-	Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error)
+	Create(ctx context.Context, entity *agentplan.AgentPlan) (*agentplan.AgentPlan, error)
 }
 
 type Service struct {
@@ -148,7 +152,7 @@ type OpenRunRequest struct {
 	PromptVersion    string
 	InputContextHash string
 	Summary          string
-	Fingerprint      *agent.Fingerprint
+	Fingerprint      *agentfingerprint.Fingerprint
 	TraceID          string
 	TurnID           pulid.ID
 	ParentOwnerKind  agent.RunOwnerKind
@@ -156,7 +160,7 @@ type OpenRunRequest struct {
 	DelegateCallID   string
 }
 
-type EvidenceFunc func(action agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
+type EvidenceFunc func(action agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agentevidence.EvidenceRef
 
 type RecordRequest struct {
 	Actor      *permissionports.RequestActor
@@ -187,10 +191,10 @@ type RecordResult struct {
 	Run       *agent.AgentRun
 	Proposals []*agent.AgentProposal
 	// Plan is set when the run's pending proposals were grouped into one.
-	Plan *agent.AgentPlan
+	Plan *agentplan.AgentPlan
 	// Batches are the plans of a script's intents, one per script that
 	// prepared two or more; a script's single intent is a proposal.
-	Batches   []*agent.AgentPlan
+	Batches   []*agentplan.AgentPlan
 	Delegated []DelegatedRecord
 }
 
@@ -294,12 +298,12 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 // filedPlans are the decisions a record opened: the turn's own plan of the
 // model's calls, and one batch for each script that prepared several writes.
 type filedPlans struct {
-	turn    *agent.AgentPlan
-	batches []*agent.AgentPlan
+	turn    *agentplan.AgentPlan
+	batches []*agentplan.AgentPlan
 }
 
-func (p filedPlans) all() []*agent.AgentPlan {
-	all := make([]*agent.AgentPlan, 0, len(p.batches)+1)
+func (p filedPlans) all() []*agentplan.AgentPlan {
+	all := make([]*agentplan.AgentPlan, 0, len(p.batches)+1)
 	if p.turn != nil {
 		all = append(all, p.turn)
 	}
@@ -332,7 +336,7 @@ func recordResult(groups []*runGroup, plans filedPlans) *RecordResult {
 	return result
 }
 
-func planDefinition(groups []*runGroup, plan *agent.AgentPlan) *agentdefinition.Definition {
+func planDefinition(groups []*runGroup, plan *agentplan.AgentPlan) *agentdefinition.Definition {
 	if plan == nil {
 		return nil
 	}
@@ -463,12 +467,15 @@ type planOpening struct {
 	groups        []*runGroup
 	steps         []planStep
 	scriptStepKey string
-	script        *agent.ScriptOrigin
+	script        *agentplan.ScriptOrigin
 	title         string
 	now           int64
 }
 
-func (s *Service) planSteps(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+func (s *Service) planSteps(
+	ctx context.Context,
+	opening *planOpening,
+) (*agentplan.AgentPlan, error) {
 	plan, err := s.openPlan(ctx, opening)
 	if err != nil || plan == nil {
 		return nil, err
@@ -550,7 +557,10 @@ func (s planStep) at(callOrder map[string]int) int {
 // at least two of them, whichever agent filed each. One pending action is a
 // proposal, as before; two or more are a sequence, run in the order the
 // conversation asked for them.
-func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+func (s *Service) openPlan(
+	ctx context.Context,
+	opening *planOpening,
+) (*agentplan.AgentPlan, error) {
 	actor, groups, steps := opening.actor, opening.groups, opening.steps
 	scriptStepKey, now := opening.scriptStepKey, opening.now
 	if s.plans == nil || len(steps) < 2 {
@@ -573,13 +583,13 @@ func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.Ag
 		}
 	}
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          owner.run.ID,
 		Title:          planTitle(opening.title, owner.definition, len(steps), scriptStepKey != ""),
 		Summary:        planSummary(owner.run, rationale),
-		Status:         agent.PlanStatusPending,
+		Status:         agentplan.PlanStatusPending,
 		StepCount:      len(steps),
 		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
 		ScriptStepKey:  scriptStepKey,
@@ -601,7 +611,7 @@ func planTitle(
 	steps int,
 	fromScript bool,
 ) string {
-	if title, err := agent.NamedPlanTitle(named); err == nil {
+	if title, err := agentplan.NamedPlanTitle(named); err == nil {
 		return title
 	}
 
@@ -819,7 +829,7 @@ func (s *Service) announce(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	proposals []*agent.AgentProposal,
-	plans []*agent.AgentPlan,
+	plans []*agentplan.AgentPlan,
 ) {
 	if s.activity == nil {
 		return
@@ -837,7 +847,7 @@ func (s *Service) announce(
 func (s *Service) projectPlan(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 ) {
 	if s.watchtower == nil || plan == nil {
 		return
@@ -883,7 +893,7 @@ func (s *Service) scriptOrigin(
 	ctx context.Context,
 	req *RecordRequest,
 	scriptStepKey string,
-) *agent.ScriptOrigin {
+) *agentplan.ScriptOrigin {
 	if s.scripts == nil || scriptStepKey == "" {
 		return nil
 	}
@@ -915,7 +925,7 @@ func (s *Service) scriptOrigin(
 	return scriptOriginOf(step.Arguments)
 }
 
-func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
+func scriptOriginOf(arguments map[string]any) *agentplan.ScriptOrigin {
 	title, _ := arguments[codemode.ParamScriptTitle].(string)
 	purpose, _ := arguments[codemode.ParamScriptPurpose].(string)
 	code, _ := arguments[codemode.ParamScriptCode].(string)
@@ -923,5 +933,5 @@ func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
 		return nil
 	}
 
-	return &agent.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
+	return &agentplan.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
 }

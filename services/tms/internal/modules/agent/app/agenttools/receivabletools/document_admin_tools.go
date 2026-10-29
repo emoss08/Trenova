@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -145,8 +147,8 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 		Render: func(
 			_ *documentservice.BulkDeleteRequest,
 			plan *documentservice.DeletePlan,
-		) (*agent.ToolPreview, error) {
-			changes := make([]*agent.RecordChange, 0, len(plan.Documents))
+		) (*agentpreview.ToolPreview, error) {
+			changes := make([]*agentpreview.RecordChange, 0, len(plan.Documents))
 			for _, doc := range plan.Documents {
 				change, err := toolpreview.Delete(documentRecord(doc), documentViewOf(doc))
 				if err != nil {
@@ -168,7 +170,7 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *documentservice.BulkDeleteRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if len(req.IDs) == 1 {
 				if err := documents.Delete(ctx, documentports.DeleteDocumentRequest{
 					ID: req.IDs[0],
@@ -180,7 +182,7 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: changepreview.ActionDeleted,
 					Kind:   documentKind,
 					Name:   changepreview.CountOf(1, documentKind),
@@ -191,7 +193,7 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
 				Kind:   documentKind,
 				Name:   changepreview.CountOf(result.DeletedCount, "file"),
@@ -298,7 +300,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 		Refused: func(req *documentRestore) string {
 			return fmt.Sprintf("Would make version %d of the document current.", req.version)
 		},
-		Render: func(req *documentRestore, planned *restoreDocumentPlan) (*agent.ToolPreview, error) {
+		Render: func(req *documentRestore, planned *restoreDocumentPlan) (*agentpreview.ToolPreview, error) {
 			plan := planned.plan
 			before := &documentView{}
 			if plan.Current != nil {
@@ -320,7 +322,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			ctx context.Context,
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			tenant := toolparams.TenantFrom(*params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
 			if err != nil {
@@ -332,7 +334,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "restored",
 				Kind:   documentKind,
 				Name:   restored.OriginalName,

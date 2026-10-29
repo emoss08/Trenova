@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -438,7 +439,7 @@ func NewSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) agenttoolports.
 			ctx context.Context,
 			req *adjustmentSubmission,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			return runSubmission(ctx, adjustments, req, params)
 		},
 	})
@@ -641,7 +642,7 @@ func runSubmission(
 	adjustments invoiceAdjuster,
 	req *adjustmentSubmission,
 	params *agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	switch {
 	case req.draftID.IsNotNil():
 		submitted, err := adjustments.SubmitDraft(
@@ -675,7 +676,7 @@ func runSubmission(
 		if err != nil {
 			return nil, err
 		}
-		return &agent.ToolExecutionResult{
+		return &agentrecord.ToolExecutionResult{
 			Action: "submitted",
 			Kind:   "invoice adjustment batch",
 			IDs:    map[string]string{"batchId": batch.ID.String()},
@@ -683,16 +684,18 @@ func runSubmission(
 	}
 }
 
-func adjustmentResult(adjustment *invoiceadjustment.InvoiceAdjustment) *agent.ToolExecutionResult {
+func adjustmentResult(
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+) *agentrecord.ToolExecutionResult {
 	if adjustment == nil {
-		return &agent.ToolExecutionResult{Action: "submitted", Kind: "invoice adjustment"}
+		return &agentrecord.ToolExecutionResult{Action: "submitted", Kind: "invoice adjustment"}
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: strings.ToLower(string(adjustment.Status)),
 		Kind:   "invoice adjustment",
 		IDs:    map[string]string{ParamAdjustmentID: adjustment.ID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         adjustment.OriginalInvoiceID.String(),
 		},
@@ -757,16 +760,16 @@ func NewSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) agenttoolpor
 			ctx context.Context,
 			req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := adjustments.SaveDraft(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
 			}
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "saved",
 				Kind:   "invoice adjustment draft",
 				IDs:    map[string]string{ParamAdjustmentID: saved.ID.String()},
-				Record: &agent.RecordRef{
+				Record: &agentrecord.RecordRef{
 					EntityType: changepreview.InvoiceRecordEntity,
 					ID:         saved.OriginalInvoiceID.String(),
 				},
@@ -978,7 +981,7 @@ func newDecisionTool(
 				ctx context.Context,
 				req *adjustmentDecision,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				var err error
 				if req.approve {
 					_, err = adjustments.Approve(

@@ -6,8 +6,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -31,8 +34,8 @@ type frozenTurn struct {
 	messageID pulid.ID
 	input     string
 	history   []agentquality.HistoryMessage
-	page      *agent.PageContext
-	mentions  []agent.EntityRef
+	page      *agentpagecontext.PageContext
+	mentions  []agentpagecontext.EntityRef
 	fixtures  []agentquality.ToolFixture
 	called    []string
 }
@@ -102,8 +105,8 @@ func (s *Service) CreateFromProposal(
 		return nil, err
 	}
 
-	original := agent.NewOriginalProposal(proposal, decided)
-	rejected := original.Decision == agent.DecisionRejected
+	original := agentreplay.NewOriginalProposal(proposal, decided)
+	rejected := original.Decision == agentdecision.DecisionRejected
 	runID := run.ID
 	proposalID := proposal.ID
 	evalCase := &agentquality.EvalCase{
@@ -358,7 +361,7 @@ func (s *Service) proposalDecisions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	proposalID pulid.ID,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
 		agentports.ListAgentDecisionsByProposalsRequest{
@@ -370,7 +373,7 @@ func (s *Service) proposalDecisions(
 		return nil, err
 	}
 
-	return agent.DecisionsByProposal(decisions)[proposalID], nil
+	return agentreplay.DecisionsByProposal(decisions)[proposalID], nil
 }
 
 func (s *Service) backgroundInput(

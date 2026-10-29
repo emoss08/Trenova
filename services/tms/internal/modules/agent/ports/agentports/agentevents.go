@@ -3,14 +3,14 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type AgentEvent struct {
-	Kind       agent.EventKind
+	Kind       agenttrigger.EventKind
 	SubjectID  pulid.ID
 	TenantInfo pagination.TenantInfo
 	// Related are other records the event is about, such as the stop a move

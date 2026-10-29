@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
@@ -140,7 +143,7 @@ func TestCreateSchedule_KeepsTheRequestInThisConversationForThePerson(t *testing
 		result.Name,
 	)
 	assert.NotEmpty(t, result.IDs["scheduleId"])
-	assert.Equal(t, &agent.RecordRef{
+	assert.Equal(t, &agentrecord.RecordRef{
 		EntityType: "assistant_thread",
 		ID:         params.ThreadID.String(),
 	}, result.Record, "the result links to the conversation its answers post into")
@@ -163,7 +166,7 @@ func TestCreateSchedule_PreviewsWhatWouldRun(t *testing.T) {
 			"here every day at 9:30 AM, on America/New_York time")
 	assert.Empty(t, preview.Warnings)
 	require.Len(t, preview.Changes, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, preview.Changes[0].Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, preview.Changes[0].Operation)
 	assert.Empty(t, planner.created, "a preview keeps nothing")
 }
 
@@ -249,6 +252,6 @@ func TestCreateSchedule_AlwaysWaitsForAPerson(t *testing.T) {
 	policy := NewCreateScheduleTool(nil).Policy()
 	assert.Equal(t, agent.TierPropose, policy.DefaultTier)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
-	assert.Equal(t, agent.ToolScopeSelf, policy.Scope)
+	assert.Equal(t, agenttooltrust.ToolScopeSelf, policy.Scope)
 	assert.Equal(t, []agent.EgressClass{agent.EgressPersonal}, policy.Egress)
 }

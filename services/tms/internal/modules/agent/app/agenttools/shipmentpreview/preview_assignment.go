@@ -3,7 +3,7 @@ package shipmentpreview
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,9 +35,9 @@ func assignedMoveOf(entity *shipment.Shipment, moveID pulid.ID) *assignedMoveVie
 func CoverageChanges(
 	before, after *shipment.Shipment,
 	moveID pulid.ID,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	shipmentLabel := before.ProNumber
-	changes := make([]*agent.RecordChange, 0, 2)
+	changes := make([]*agentpreview.RecordChange, 0, 2)
 	move, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
 		ID:       moveID,
@@ -64,7 +64,7 @@ func CoverageChanges(
 
 // shipmentStatusChange is the shipment's status before and after, or nil when
 // the write leaves it where it is.
-func ShipmentStatusChange(before, after *shipment.Shipment) (*agent.RecordChange, error) {
+func ShipmentStatusChange(before, after *shipment.Shipment) (*agentpreview.RecordChange, error) {
 	if before.Status == after.Status {
 		return nil, nil //nolint:nilnil // an unmoved shipment is no change and no error
 	}

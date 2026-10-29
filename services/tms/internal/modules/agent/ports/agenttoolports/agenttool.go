@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -59,7 +61,7 @@ type TenantTimezoneReader interface {
 // does. The preview service runs it inside a read-only snapshot, so a write
 // it attempted would fail, and filters what it returns for each reader.
 type ToolPreviewer interface {
-	Preview(ctx context.Context, params ToolExecuteParams) (*agent.ToolPreview, error)
+	Preview(ctx context.Context, params ToolExecuteParams) (*agentpreview.ToolPreview, error)
 }
 
 // ToolValidator is a tool that can check its arguments before anything is
@@ -94,7 +96,7 @@ type ToolResultReporter interface {
 	ExecuteWithResult(
 		ctx context.Context,
 		params ToolExecuteParams,
-	) (*agent.ToolExecutionResult, error)
+	) (*agentrecord.ToolExecutionResult, error)
 }
 
 // ExecuteTool runs a write and returns what it reports making, bounded to
@@ -104,7 +106,7 @@ func ExecuteTool(
 	ctx context.Context,
 	tool AgentTool,
 	params ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	reporter, reports := tool.(ToolResultReporter)
 	if !reports {
 		return nil, tool.Execute(ctx, params)

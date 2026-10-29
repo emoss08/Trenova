@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,8 +31,8 @@ func toolResult(name string, failed bool, verdict string) conversation.Message {
 	}
 }
 
-func signalKinds(signals agent.ReflectionSignals) []agent.ReflectionSignalKind {
-	kinds := make([]agent.ReflectionSignalKind, 0, len(signals))
+func signalKinds(signals agentreflection.ReflectionSignals) []agentreflection.ReflectionSignalKind {
+	kinds := make([]agentreflection.ReflectionSignalKind, 0, len(signals))
 	for _, signal := range signals {
 		kinds = append(kinds, signal.Kind)
 	}
@@ -66,9 +67,9 @@ func TestReadSignals_AToolThatWorkedAfterFailingIsRecoveredNotFailed(t *testing.
 		},
 	})
 
-	assert.Equal(t, []agent.ReflectionSignalKind{
-		agent.ReflectionSignalToolRecovered,
-		agent.ReflectionSignalToolFailed,
+	assert.Equal(t, []agentreflection.ReflectionSignalKind{
+		agentreflection.ReflectionSignalToolRecovered,
+		agentreflection.ReflectionSignalToolFailed,
 	}, signalKinds(signals))
 	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
 	assert.Equal(t, "tender_load", signals[1].Detail)
@@ -105,16 +106,22 @@ func TestReadSignals_ACorrectionCountsOnlyAfterTheAgentAnswered(t *testing.T) {
 		},
 		HasPerson: true,
 	})
-	assert.Equal(t, []agent.ReflectionSignalKind{agent.ReflectionSignalPersonCorrected},
-		signalKinds(afterReply))
+	assert.Equal(
+		t,
+		[]agentreflection.ReflectionSignalKind{agentreflection.ReflectionSignalPersonCorrected},
+		signalKinds(afterReply),
+	)
 
 	continued := ReadSignals(&Window{
 		Messages:  []conversation.Message{person("That's not what I asked for")},
 		HasPerson: true,
 		Continues: true,
 	})
-	assert.Equal(t, []agent.ReflectionSignalKind{agent.ReflectionSignalPersonCorrected},
-		signalKinds(continued))
+	assert.Equal(
+		t,
+		[]agentreflection.ReflectionSignalKind{agentreflection.ReflectionSignalPersonCorrected},
+		signalKinds(continued),
+	)
 }
 
 func TestReadSignals_AStandingRequestIsHeardWithoutACorrection(t *testing.T) {
@@ -125,8 +132,11 @@ func TestReadSignals_AStandingRequestIsHeardWithoutACorrection(t *testing.T) {
 		HasPerson: true,
 	})
 
-	assert.Equal(t, []agent.ReflectionSignalKind{agent.ReflectionSignalStandingRequest},
-		signalKinds(signals))
+	assert.Equal(
+		t,
+		[]agentreflection.ReflectionSignalKind{agentreflection.ReflectionSignalStandingRequest},
+		signalKinds(signals),
+	)
 }
 
 func TestReadSignals_ARunWithNobodyInItReadsNoPersonSignals(t *testing.T) {
@@ -153,24 +163,24 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 	signals := ReadSignals(&Window{
 		Messages: messages,
 		Proposals: []DecidedProposal{
-			{ToolName: "dispatch_assign_move", Outcome: agent.TrustOutcomeModified},
-			{ToolName: "dispatch_assign_move", Outcome: agent.TrustOutcomeModified},
+			{ToolName: "dispatch_assign_move", Outcome: agenttooltrust.TrustOutcomeModified},
+			{ToolName: "dispatch_assign_move", Outcome: agenttooltrust.TrustOutcomeModified},
 			{
 				ToolName: "invoice_send",
-				Outcome:  agent.TrustOutcomeRejected,
+				Outcome:  agenttooltrust.TrustOutcomeRejected,
 				Reason:   "Wrong bill-to",
 			},
-			{ToolName: "update_stop", Outcome: agent.TrustOutcomeApproved},
+			{ToolName: "update_stop", Outcome: agenttooltrust.TrustOutcomeApproved},
 		},
 		NegativeRatings: 2,
 		HasPerson:       true,
 	})
 
-	assert.Equal(t, []agent.ReflectionSignalKind{
-		agent.ReflectionSignalProposalModified,
-		agent.ReflectionSignalProposalRejected,
-		agent.ReflectionSignalNegativeFeedback,
-		agent.ReflectionSignalLongTask,
+	assert.Equal(t, []agentreflection.ReflectionSignalKind{
+		agentreflection.ReflectionSignalProposalModified,
+		agentreflection.ReflectionSignalProposalRejected,
+		agentreflection.ReflectionSignalNegativeFeedback,
+		agentreflection.ReflectionSignalLongTask,
 	}, signalKinds(signals))
 	assert.Equal(t, 1, signals[0].Count)
 	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)

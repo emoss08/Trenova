@@ -4,7 +4,7 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
@@ -41,7 +41,7 @@ func (s *Service) concurrentReads(held []string) map[string]struct{} {
 	reads := make(map[string]struct{}, len(held))
 	for _, name := range held {
 		tool, ok := s.queryTools.Get(name)
-		if !ok || agenttoolports.EffectOf(tool) != agent.ToolEffectLookup {
+		if !ok || agenttoolports.EffectOf(tool) != agenttooltrust.ToolEffectLookup {
 			continue
 		}
 		reads[name] = struct{}{}

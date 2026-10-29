@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -155,7 +155,7 @@ func TestTransientFailuresBackOffExponentiallyThenDeadLetter(t *testing.T) {
 				"every push records an attempt")
 			events := h.events.Published()
 			require.Len(t, events, 1)
-			assert.Equal(t, agent.EventAccountingSyncFailed, events[0].Kind)
+			assert.Equal(t, agenttrigger.EventAccountingSyncFailed, events[0].Kind)
 			assert.Equal(t, record.ID, events[0].SubjectID)
 			assert.Equal(t, h.tenant.OrgID, events[0].TenantInfo.OrgID)
 		})
@@ -247,7 +247,7 @@ func TestNonRetryableProviderErrorsBlockWithTheirResolution(t *testing.T) {
 			assert.Equal(t, 1, blocked.AttemptCount)
 			events := h.events.Published()
 			require.Len(t, events, 1)
-			assert.Equal(t, agent.EventAccountingSyncBlocked, events[0].Kind)
+			assert.Equal(t, agenttrigger.EventAccountingSyncBlocked, events[0].Kind)
 			assert.Equal(t, record.ID, events[0].SubjectID)
 			attempts := h.records.attemptsFor(record.ID)
 			require.Len(t, attempts, 1)

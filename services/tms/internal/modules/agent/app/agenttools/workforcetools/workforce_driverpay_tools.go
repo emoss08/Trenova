@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -205,7 +207,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 		Render: func(
 			_ *disputeStart,
 			change *driversettlementservice.DisputeChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(disputeRecord(change.Before), change.Before,
 				change.After, wfOptions(changepreview.FieldStatus)...)
 			if err != nil {
@@ -218,7 +220,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 			ctx context.Context,
 			req *disputeStart,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := reviewer.StartDisputeReview(ctx, req.tenant, req.disputeID,
 				params.Actor)
 			if err != nil {
@@ -344,7 +346,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := reviewer.ResolveDispute(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -363,7 +365,7 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 func renderSettlementDisputeResolution(
 	req *driversettlementservice.ResolveDisputeRequest,
 	plan *driversettlementservice.ResolveDisputePlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		disputeRecord(plan.Dispute.Before),
 		plan.Dispute.Before,
@@ -375,7 +377,7 @@ func renderSettlementDisputeResolution(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{recorded}
+	changes := []*agentpreview.RecordChange{recorded}
 	verb := "deny"
 	if req.Approve {
 		verb = "approve"
@@ -389,14 +391,14 @@ func renderSettlementDisputeResolution(
 			},
 			toolpreview.MoneyBlock(
 				settlementCurrency(plan.AdjustmentTarget),
-				agent.MoneyLine{
+				agentpreview.MoneyLine{
 					Label: "Dispute adjustment",
 					After: changepreview.MinorAmount(req.Adjustment.AmountMinor),
 				},
 			),
 			toolpreview.SensitiveAs("amountMinor"),
 		)
-		adjustment.Operation = agent.PreviewOperationCreate
+		adjustment.Operation = agentpreview.PreviewOperationCreate
 		changes = append(changes, adjustment)
 		summary += fmt.Sprintf(" An adjustment of %s lands on %s.",
 			money.FormatMinor(req.Adjustment.AmountMinor,
@@ -482,7 +484,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 		Render: func(
 			req *driversettlementservice.ReviewExpenseRequest,
 			plan *driversettlementservice.ReviewExpensePlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(
 				expenseRecord(plan.Before),
 				plan.Before,
@@ -494,7 +496,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 			if err != nil {
 				return nil, err
 			}
-			changes := []*agent.RecordChange{recorded}
+			changes := []*agentpreview.RecordChange{recorded}
 			amount := money.FormatMinor(plan.Before.AmountMinor, plan.Before.CurrencyCode)
 			summary := fmt.Sprintf("Would reject the %s expense and tell the driver why.",
 				amount)
@@ -504,13 +506,13 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 						Resource: permission.ResourceDriverSettlement,
 						Label:    plan.Before.Description,
 					},
-					toolpreview.MoneyBlock(plan.Before.CurrencyCode, agent.MoneyLine{
+					toolpreview.MoneyBlock(plan.Before.CurrencyCode, agentpreview.MoneyLine{
 						Label: "Reimbursement",
 						After: changepreview.MinorAmount(plan.Before.AmountMinor),
 					}),
 					toolpreview.SensitiveAs("amountMinor"),
 				)
-				reimbursement.Operation = agent.PreviewOperationCreate
+				reimbursement.Operation = agentpreview.PreviewOperationCreate
 				changes = append(changes, reimbursement)
 				summary = fmt.Sprintf("Would reimburse the %s expense on %s and tell the "+
 					"driver.", amount, settlementTargetText(plan.ReimbursementTarget))
@@ -521,7 +523,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := reviewer.ReviewExpense(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err

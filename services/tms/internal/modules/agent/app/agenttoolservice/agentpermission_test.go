@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
@@ -45,7 +45,7 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 		out[policy.Name] = toolPermission{
 			resource:   policy.Resource,
 			operation:  policy.Operation,
-			selfScoped: policy.Scope == agent.ToolScopeSelf,
+			selfScoped: policy.Scope == agenttooltrust.ToolScopeSelf,
 		}
 	}
 	require.NotEmpty(t, out)

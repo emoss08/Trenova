@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -61,7 +61,12 @@ func TestGetMyHomeLayout_ReadsThePersonsOwnHomePage(t *testing.T) {
 	spec := homeLayoutGetSpec()
 	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
-	assert.Equal(t, agent.ToolScopeSelf, tool.Policy().Scope, "it reads only the caller's page")
+	assert.Equal(
+		t,
+		agenttooltrust.ToolScopeSelf,
+		tool.Policy().Scope,
+		"it reads only the caller's page",
+	)
 	assert.Empty(t, tool.ParamSchema()[toolschema.KeyRequired], "the page takes no id")
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))

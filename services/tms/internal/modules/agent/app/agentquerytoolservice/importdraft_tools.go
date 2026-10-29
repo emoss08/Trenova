@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -55,8 +55,8 @@ func importDraftToolProviders() []any {
 func draftPolicy(name string) agenttoolports.ToolPolicy {
 	return readPolicy(name, readSpec{
 		resource:  permission.ResourceDocument,
-		scope:     agent.ToolScopeSelf,
-		effect:    agent.ToolEffectPresent,
+		scope:     agenttooltrust.ToolScopeSelf,
+		effect:    agenttooltrust.ToolEffectPresent,
 		rationale: draftRationale,
 	})
 }

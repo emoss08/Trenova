@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -93,7 +96,10 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Only memories about one tool, such as corrections to dispatch_assign_move.",
 			},
-			paramLimit: limitSchema(agent.DefaultMemoryRecallLimit, agent.MaxMemoryRecallLimit),
+			paramLimit: limitSchema(
+				agentmemory.DefaultMemoryRecallLimit,
+				agentmemory.MaxMemoryRecallLimit,
+			),
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -102,7 +108,7 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 func (t *recallMemoryTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceMemory,
 		rationale: "Reads memories earlier runs saved, which carry the taint of the run that " +
 			"wrote them. It returns only what the reader's own prompt already reads, so it " +
@@ -118,14 +124,18 @@ func (t *recallMemoryTool) Query(
 		return nil, err
 	}
 
-	limit := readLimit(params.Params, agent.DefaultMemoryRecallLimit, agent.MaxMemoryRecallLimit)
+	limit := readLimit(
+		params.Params,
+		agentmemory.DefaultMemoryRecallLimit,
+		agentmemory.MaxMemoryRecallLimit,
+	)
 
 	req := agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),
 		AgentDefinitionID: params.AgentDefinitionID,
 		ReaderUserID:      params.Actor.PersonUserID(),
 		Query:             optionalString(params.Params, "query"),
-		Kind:              agent.MemoryKind(optionalString(params.Params, "kind")),
+		Kind:              agentmemory.MemoryKind(optionalString(params.Params, "kind")),
 		ToolName:          optionalString(params.Params, "toolName"),
 		Limit:             limit,
 	}
@@ -145,7 +155,7 @@ func (t *recallMemoryTool) Query(
 	// A type with no id names no record, so it narrows nothing: a model that
 	// fills every field sends one, and refusing it kept the search from ever
 	// running. An id with no type cannot be looked up.
-	subjectType := agent.MemorySubjectType(optionalString(params.Params, "subjectType"))
+	subjectType := agentmemory.MemorySubjectType(optionalString(params.Params, "subjectType"))
 	rawID := optionalString(params.Params, "subjectId")
 	if rawID == "" {
 		subjectType = ""
@@ -182,7 +192,7 @@ func (t *recallMemoryTool) Query(
 	}
 
 	rows := make([]memoryRow, 0, len(memories))
-	tainted := make([]agent.RecordRef, 0, len(memories))
+	tainted := make([]agentrecord.RecordRef, 0, len(memories))
 	ids := make([]pulid.ID, 0, len(memories))
 	for _, recalled := range memories {
 		memory := recalled.Memory
@@ -226,25 +236,25 @@ func (t *recallMemoryTool) Query(
 type recallOutcome struct {
 	searchOutcome
 
-	tainted  []agent.RecordRef
+	tainted  []agentrecord.RecordRef
 	recalled []pulid.ID
 }
 
-func (o recallOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o recallOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
 
 func (o recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
 
-func recordedBy(source agent.MemorySource) string {
+func recordedBy(source agentmemory.MemorySource) string {
 	switch source {
-	case agent.MemorySourceUser:
+	case agentmemory.MemorySourceUser:
 		return "a person"
-	case agent.MemorySourceAgent:
+	case agentmemory.MemorySourceAgent:
 		return "an agent"
-	case agent.MemorySourceDecision:
+	case agentmemory.MemorySourceDecision:
 		return "a decision on a proposal"
-	case agent.MemorySourceFeedback:
+	case agentmemory.MemorySourceFeedback:
 		return "people's ratings of an agent's work"
-	case agent.MemorySourceReflection:
+	case agentmemory.MemorySourceReflection:
 		return "an agent looking back over its own work"
 	default:
 		return string(source)

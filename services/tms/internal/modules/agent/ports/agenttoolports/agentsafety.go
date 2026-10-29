@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -26,11 +27,11 @@ type AgentToolPolicyView struct {
 	Leaves      bool
 	Explanation string
 	Declared    *ToolPolicy
-	Override    *agent.ToolRuleOverride
+	Override    *agenttooltrust.ToolRuleOverride
 }
 
 type ToolAutonomy struct {
-	Answer          agent.AutonomyAnswer
+	Answer          agenttooltrust.AutonomyAnswer
 	Tier            agent.AutonomyTier
 	HeldBy          []string
 	Earned          bool
@@ -67,8 +68,8 @@ type ListAgentSafetyRequest struct {
 
 type AssessAgentSafetyRequest struct {
 	Subject *AgentSafetySubject
-	Trust   []*agent.ToolTrust
-	Rules   map[string]*agent.ToolRuleOverride
+	Trust   []*agenttooltrust.ToolTrust
+	Rules   map[string]*agenttooltrust.ToolRuleOverride
 }
 
 type AgentReachRequest struct {

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
@@ -289,7 +291,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 			Render: func(
 				_ *workerdot.WorkerDOTTest,
 				planned *workerdot.WorkerDOTTest,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerDOTTest, pulid.Nil, "New test", 0),
 					planned, wfOptions(dotTestFields...)...)
@@ -306,7 +308,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 				ctx context.Context,
 				test *workerdot.WorkerDOTTest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := tests.RecordTest(ctx, test, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -376,7 +378,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 			Render: func(
 				_ *reasonedRecord,
 				change *workerdrugalcoholservice.TestChange,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				recorded, err := toolpreview.Changed(dotTestRecord(change.Before), change.Before,
 					change.After, wfOptions(changepreview.FieldStatus, "result", wfFieldNotes)...)
 				if err != nil {
@@ -389,7 +391,7 @@ func newCancelDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *reasonedRecord,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				cancelled, err := tests.CancelTest(ctx, req.tenant, req.id, req.reason, req.userID)
 				if err != nil {
 					return nil, err
@@ -471,7 +473,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 		Render: func(
 			_ *workerdrugalcoholservice.RunDrawRequest,
 			planned *dotrandom.DOTRandomDraw,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			label := "Random testing round " + planned.PeriodKey
 			if planned.Pool != nil {
 				label = planned.Pool.Name + " " + planned.PeriodKey
@@ -493,7 +495,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *workerdrugalcoholservice.RunDrawRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := draws.RunDraw(ctx, req)
 			return nil, err
 		},
@@ -516,8 +518,8 @@ func drawIDProperty() map[string]any {
 func renderDrawChange(summary string) func(
 	any,
 	*workerdrugalcoholservice.DrawChange,
-) (*agent.ToolPreview, error) {
-	return func(_ any, change *workerdrugalcoholservice.DrawChange) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
+	return func(_ any, change *workerdrugalcoholservice.DrawChange) (*agentpreview.ToolPreview, error) {
 		recorded, err := toolpreview.Changed(drawRecord(change.Before), change.Before,
 			change.After, wfOptions(changepreview.FieldStatus, "finalizedAt", wfFieldNotes)...)
 		if err != nil {
@@ -570,14 +572,14 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentT
 			Render: func(
 				req *drawDecision,
 				change *workerdrugalcoholservice.DrawChange,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return render(req, change)
 			},
 			Run: func(
 				ctx context.Context,
 				req *drawDecision,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				_, err := draws.FinalizeDraw(ctx, req.tenant, req.id, req.userID)
 				return nil, err
 			},
@@ -619,14 +621,14 @@ func newCancelDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentToo
 		Render: func(
 			req *reasonedRecord,
 			change *workerdrugalcoholservice.DrawChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return render(req, change)
 		},
 		Run: func(
 			ctx context.Context,
 			req *reasonedRecord,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := draws.CancelDraw(ctx, req.tenant, req.id, req.reason, req.userID)
 			return nil, err
 		},
@@ -695,7 +697,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 		Render: func(
 			_ *workerdrugalcoholservice.UpdateEntryRequest,
 			change *workerdrugalcoholservice.EntryChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(
 				wfRecord(permission.ResourceDOTRandomPool, change.Before.ID,
 					fmt.Sprintf("%s selection #%d", change.Before.Substance, change.Before.Rank),
@@ -713,7 +715,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 			ctx context.Context,
 			req *workerdrugalcoholservice.UpdateEntryRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := draws.UpdateDrawEntry(ctx, req)
 			if err != nil {
 				return nil, err

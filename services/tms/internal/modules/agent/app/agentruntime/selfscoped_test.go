@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -23,7 +24,7 @@ type selfScopedAction struct {
 
 func (a selfScopedAction) Policy() agenttoolports.ToolPolicy {
 	policy := a.StubActionTool.Policy()
-	policy.Scope = agent.ToolScopeSelf
+	policy.Scope = agenttooltrust.ToolScopeSelf
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
 
 	return policy

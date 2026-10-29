@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -177,13 +177,13 @@ func (s *Service) suiteEvaluationIndex(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	suiteRunID pulid.ID,
-) (map[pulid.ID]*agent.Evaluation, error) {
+) (map[pulid.ID]*agentevaluation.Evaluation, error) {
 	evaluations, err := s.suiteEvaluationsOf(ctx, tenant, suiteRunID)
 	if err != nil {
 		return nil, err
 	}
 
-	index := make(map[pulid.ID]*agent.Evaluation, len(evaluations))
+	index := make(map[pulid.ID]*agentevaluation.Evaluation, len(evaluations))
 	for _, evaluation := range evaluations {
 		index[evaluation.ID] = evaluation
 	}

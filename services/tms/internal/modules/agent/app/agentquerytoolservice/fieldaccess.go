@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -423,7 +424,7 @@ type gatedOutcome struct {
 	Withheld     []string `json:"withheldByAccess,omitempty"`
 	WithheldNote string   `json:"withheldNote,omitempty"`
 
-	tainted []agent.RecordRef
+	tainted []agentrecord.RecordRef
 }
 
 func gatedResult(outcome *searchOutcome, gate *fieldGate) *gatedOutcome {
@@ -451,13 +452,13 @@ func (o *gatedOutcome) CutPage(rows int) (any, bool) {
 	return &result, true
 }
 
-func (o *gatedOutcome) withTaint(refs []agent.RecordRef) *gatedOutcome {
+func (o *gatedOutcome) withTaint(refs []agentrecord.RecordRef) *gatedOutcome {
 	o.tainted = refs
 
 	return o
 }
 
-func (o *gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o *gatedOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
 
 type nestedRule struct {
 	idPrefix string
@@ -653,11 +654,11 @@ const withheldByAccessKey = "withheldByAccess"
 
 type gatedDocument struct {
 	tree    map[string]any
-	tainted []agent.RecordRef
+	tainted []agentrecord.RecordRef
 }
 
 func (d *gatedDocument) MarshalJSON() ([]byte, error) {
 	return sonic.Marshal(d.tree)
 }
 
-func (d *gatedDocument) TaintedRecords() []agent.RecordRef { return d.tainted }
+func (d *gatedDocument) TaintedRecords() []agentrecord.RecordRef { return d.tainted }

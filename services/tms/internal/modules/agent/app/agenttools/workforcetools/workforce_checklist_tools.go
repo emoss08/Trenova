@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
@@ -191,7 +193,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 		Render: func(
 			_ *workerchecklistservice.StartRequest,
 			plan *workerchecklistservice.StartPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			if plan.Existing {
 				return toolpreview.Build(fmt.Sprintf(
 					"%s is already open for the worker; nothing new would start.",
@@ -218,7 +220,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 			ctx context.Context,
 			req *workerchecklistservice.StartRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			started, err := checklists.Start(ctx, req)
 			if err != nil {
 				return nil, err
@@ -365,7 +367,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 		Render: func(
 			change *checklistItemChange,
 			plan *workerchecklistservice.ItemPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			item := plan.Item.Before
 			options := append(wfOptions(checklistItemFields...),
 				toolpreview.Volatile(wfFieldCompletedAt))
@@ -382,7 +384,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 			ctx context.Context,
 			change *checklistItemChange,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			checklist, err := change.run(ctx, checklists)
 			if err != nil {
 				return nil, err
@@ -488,7 +490,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 		Render: func(
 			_ *workerchecklistservice.CancelRequest,
 			change *workerchecklistservice.ChecklistChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(
 				checklistRecord(change.Before),
 				change.Before,
@@ -509,7 +511,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			ctx context.Context,
 			req *workerchecklistservice.CancelRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			cancelled, err := checklists.Cancel(ctx, req)
 			if err != nil {
 				return nil, err

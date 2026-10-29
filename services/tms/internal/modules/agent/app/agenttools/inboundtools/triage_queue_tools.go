@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -120,7 +122,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				req *inboundmessageservice.AssignRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				if req.OwnerID.IsNil() {
 					return renderQueuePlan(
 						"Would take "+countMessages(len(plan.Changes))+" off whoever has them",
@@ -137,7 +139,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.AssignRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Assign(ctx, req)
 				if err != nil {
 					return nil, err
@@ -210,7 +212,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				_ *inboundmessageservice.ReopenRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					"Would put "+countMessages(len(plan.Changes))+" back in the Triage queue",
 					plan,
@@ -220,7 +222,7 @@ func newReopenInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.ReopenRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Reopen(ctx, req)
 				if err != nil {
 					return nil, err
@@ -298,7 +300,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				req *inboundmessageservice.SnoozeRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				until := "until " + string(req.Event)
 				if req.Event == "" {
 					until = "until the time given"
@@ -314,7 +316,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.SnoozeRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.Snooze(ctx, req)
 				if err != nil {
 					return nil, err
@@ -424,7 +426,7 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				_ *inboundmessageservice.MessageActionRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				if len(plan.Changes) == 0 {
 					return refusedPreview(
 						"Would bring a parked message back to the Triage queue.",
@@ -439,7 +441,7 @@ func newWakeInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				parked, err := parkedAs(ctx, queue, req)
 				if err != nil {
 					return nil, err
@@ -553,7 +555,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				_ *inboundmessageservice.WaitForReplyRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					"Would park the message until its sender replies on the thread, or until "+
 						"the time given",
@@ -564,7 +566,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.WaitForReplyRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := queue.WaitForReply(ctx, req)
 				if err != nil {
 					return nil, err
@@ -649,7 +651,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				req *inboundmessageservice.UnlinkRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return renderQueuePlan(
 					fmt.Sprintf("Would remove the message's %s link", req.Record),
 					plan,
@@ -659,7 +661,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.UnlinkRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := queue.Unlink(ctx, req)
 				if err != nil {
 					return nil, err
@@ -732,7 +734,7 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			Render: func(
 				_ *inboundmessageservice.HandOffRequest,
 				plan *inboundmessageservice.QueuePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				count := countMessages(len(plan.Changes))
 				if plan.More {
 					count = "at least " + count
@@ -745,13 +747,13 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *inboundmessageservice.HandOffRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				result, err := queue.HandOff(ctx, req)
 				if err != nil {
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "handed off",
 					Kind:   "inbound messages",
 					Name:   countMessages(result.Affected),

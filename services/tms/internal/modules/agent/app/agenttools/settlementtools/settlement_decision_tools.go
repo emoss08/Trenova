@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -108,16 +109,16 @@ func (t *SettlementDecisionTool[E]) ParamSchema() map[string]any {
 func (t *SettlementDecisionTool[E]) Policy() agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.ledger.Resource,
 		Operation:     t.decision.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   t.decision.defaultTo,
 		MaxTier:       t.decision.maxTier,
 		Egress:        t.decision.egress,
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    t.decision.reversible,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     t.decision.rationale,
 	}
 	if len(t.decision.egress) > 1 {
@@ -196,52 +197,52 @@ func (t *SettlementDecisionTool[E]) withinBounds(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
 ) agenttoolports.MoneyBound {
 	if t.book == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	req, err := t.request(&params)
 	if err != nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	plan, err := t.book.PlanAction(ctx, req)
 	if err != nil || plan == nil || plan.Before == nil || t.ledger.Editable == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if !t.ledger.Editable(plan.Before) {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyRecordState)
 	}
 	if plan.Refused() {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if t.ledger.Facts == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	facts := t.ledger.Facts(plan.Before)
 	if facts == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 
 	switch t.decision.bound {
 	case addedLineBound:
 		if req.Adjustment == nil {
-			return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
 		return agenttoolports.WithinMoneyBound(req.Adjustment.AmountMinor, facts.Currency)
 	case removedLineBound:
 		if t.ledger.Line == nil {
-			return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
 		line, found := t.ledger.Line(plan.Before, req.LineID)
 		if !found || !line.Manual {
-			return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
 		if !line.AddedByAgent {
-			return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyAgentLine)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyAgentLine)
 		}
 		return agenttoolports.WithinMoneyBound(line.AmountMinor, facts.Currency)
 	case unbounded:
 	}
 
-	return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 }
 
 func (t *SettlementDecisionTool[E]) Validate(

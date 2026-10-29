@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -115,18 +117,18 @@ func (t *GuideProfileTool) ParamSchema() map[string]any {
 func (t *GuideProfileTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
-		Kind:                agent.ToolKindAction,
+		Kind:                agenttooltrust.ToolKindAction,
 		Resource:            permission.ResourceAssistant,
 		Operation:           permission.OpCreate,
-		Scope:               agent.ToolScopeTenant,
+		Scope:               agenttooltrust.ToolScopeTenant,
 		DefaultTier:         agent.TierActWithApproval,
 		MaxTier:             agent.TierAutoExecute,
 		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
 		Classify:            classifyGuideProfile,
 		PersonalRunsUnasked: true,
-		Effect:              agent.ToolEffectChange,
+		Effect:              agenttooltrust.ToolEffectChange,
 		Reversible:          true,
-		ReadsExternal:       agent.ExternalReadNever,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
 		CarriesTaint:        true,
 		TaintHold: &agenttoolports.TaintHold{
 			Description: "Guidance recorded after the run read text from outside the " +
@@ -229,7 +231,7 @@ var guidanceLabels = map[string]string{"subject": "About", changepreview.FieldCo
 func (t *GuideProfileTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err

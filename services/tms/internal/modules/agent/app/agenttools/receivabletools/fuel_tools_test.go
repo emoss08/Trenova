@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
@@ -289,13 +290,13 @@ func TestRecordFuelPurchase_PreviewsTheReceiptAndRecordsIt(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would record 100.500 gallons of Diesel bought in TX")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "TX (Texas)", agenttoolstest.FieldByPath(t, change, "jurisdiction").After)
 
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
@@ -344,7 +345,7 @@ func TestRecordFuelPurchase_RefusesWhatItCannotRecord(t *testing.T) {
 		agenttoolstest.ExecuteParams(purchaseParams()),
 	)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestCorrectFuelPurchase_KeepsWhatItIsNotGiven(t *testing.T) {
@@ -360,7 +361,7 @@ func TestCorrectFuelPurchase_KeepsWhatItIsNotGiven(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -401,13 +402,13 @@ func TestDeleteFuelPurchase_StopsAtAProposalWithTheVersionItRead(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -438,7 +439,7 @@ func TestAssignFuelCard_SaysWhenItActivatesTheCard(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -483,7 +484,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return commit.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
@@ -501,7 +502,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return resolve.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
@@ -516,7 +517,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		fuel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return discard.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -614,7 +615,7 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		prices.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return record.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -634,7 +635,7 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		prices.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return correct.(agenttoolports.ToolPreviewer).Preview(t.Context(), fix)
 		},
 	)

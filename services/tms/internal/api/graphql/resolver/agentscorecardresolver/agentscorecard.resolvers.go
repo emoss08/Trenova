@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ func (r *QueryResolver) AgentScorecard(ctx context.Context, input gqlmodel.Agent
 		return nil, err
 	}
 
-	window := agent.ScorecardWindow30d
+	window := agentevaluation.ScorecardWindow30d
 	if input.Window != nil {
 		window = *input.Window
 	}

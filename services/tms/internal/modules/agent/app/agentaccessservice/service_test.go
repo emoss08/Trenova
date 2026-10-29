@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -575,7 +576,7 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 		"agent_create_memory": {
 			Name:     "agent_create_memory",
 			Resource: "agent_memory",
-			Scope:    agent.ToolScopeSelf,
+			Scope:    agenttooltrust.ToolScopeSelf,
 			Egress:   []agent.EgressClass{agent.EgressPersonal},
 		},
 	}

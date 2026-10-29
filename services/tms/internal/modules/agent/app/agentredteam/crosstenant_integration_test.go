@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -80,12 +80,12 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	secret, err := repo.Create(owner.Ctx(ctx), &agent.Memory{
+	secret, err := repo.Create(owner.Ctx(ctx), &agentmemory.Memory{
 		OrganizationID: ownerTenant.OrgID,
 		BusinessUnitID: ownerTenant.BuID,
-		Kind:           agent.MemoryKindFact,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindFact,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        otherTenantSecret,
 	})
 	require.NoError(t, err)
@@ -162,6 +162,6 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		TenantInfo: ownerTenant,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryStatusActive, kept.Status,
+	assert.Equal(t, agentmemory.MemoryStatusActive, kept.Status,
 		"the owner's memory is untouched by another tenant's run")
 }

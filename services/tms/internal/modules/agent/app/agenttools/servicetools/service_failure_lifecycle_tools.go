@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -96,8 +98,8 @@ func serviceFailureRecord(failure *servicefailure.ServiceFailure) toolpreview.Re
 func serviceFailureResult(
 	action string,
 	failure *servicefailure.ServiceFailure,
-) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: action, Kind: kindServiceFailure}
+) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindServiceFailure}
 	if failure != nil {
 		result.Name = failure.Number
 		result.IDs = map[string]string{
@@ -307,7 +309,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 		Render: func(
 			_ *serviceFailureEdit,
 			plan *servicefailureports.ServiceFailureLifecyclePreview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				serviceFailureRecord(plan.Before),
 				plan.Before,
@@ -333,7 +335,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 			ctx context.Context,
 			edit *serviceFailureEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			current, err := getServiceFailure(ctx, failures, edit.id, edit.tenant)
 			if err != nil {
 				return nil, err
@@ -492,7 +494,7 @@ func newServiceFailureTransitionTool(
 		Render: func(
 			_ *serviceFailureTransition,
 			plan *servicefailureports.ServiceFailureLifecyclePreview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				serviceFailureRecord(plan.Before),
 				plan.Before,
@@ -517,7 +519,7 @@ func newServiceFailureTransitionTool(
 			ctx context.Context,
 			transition *serviceFailureTransition,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			current, err := getServiceFailure(ctx, failures, transition.id, transition.tenant)
 			if err != nil {
 				return nil, err

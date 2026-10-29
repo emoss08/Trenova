@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,12 +18,16 @@ func TestCreateLocation_PreviewMatchesWhatIsSaved(t *testing.T) {
 	params := fixture.params(nil)
 	params.IdempotencyKey = ""
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &fixture.creator.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&fixture.creator.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceLocation, change.Resource)
 	assert.Equal(t, "Reno Cold Storage", change.Label)
 	assert.Equal(t, "NV", agenttoolstest.FieldByPath(t, change, "state").After)
@@ -43,10 +47,14 @@ func TestCreateLocation_PreviewWarnsOnAnUnknownState(t *testing.T) {
 	fixture := newLocationFixture()
 	tool := fixture.tool.(*CreateLocationTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &fixture.creator.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), fixture.params(map[string]any{"state": "ZZ"}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&fixture.creator.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), fixture.params(map[string]any{"state": "ZZ"}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

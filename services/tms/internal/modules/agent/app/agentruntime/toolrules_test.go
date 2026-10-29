@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -15,7 +16,7 @@ import (
 )
 
 type fakeToolRules struct {
-	rules map[string]*agent.ToolRuleOverride
+	rules map[string]*agenttooltrust.ToolRuleOverride
 	err   error
 	asked []pagination.TenantInfo
 }
@@ -23,7 +24,7 @@ type fakeToolRules struct {
 func (f *fakeToolRules) For(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-) (map[string]*agent.ToolRuleOverride, error) {
+) (map[string]*agenttooltrust.ToolRuleOverride, error) {
 	f.asked = append(f.asked, tenantInfo)
 
 	return f.rules, f.err
@@ -32,10 +33,10 @@ func (f *fakeToolRules) For(
 func ruledPolicy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          "shipment_update",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 	}
 }
 
@@ -48,10 +49,10 @@ func ruledRequest() *agentruntimeports.RunRequest {
 func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 	t.Parallel()
 
-	rules := &fakeToolRules{rules: map[string]*agent.ToolRuleOverride{
+	rules := &fakeToolRules{rules: map[string]*agenttooltrust.ToolRuleOverride{
 		"shipment_update": {
 			MaxTier:       agent.TierActWithApproval,
-			ReadsExternal: agent.ExternalReadAlways,
+			ReadsExternal: agenttooltrust.ExternalReadAlways,
 		},
 	}}
 	s := &Service{rules: rules, logger: zap.NewNop()}
@@ -60,7 +61,7 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 
 	assert.Equal(t, agent.TierActWithApproval, got.MaxTier)
 	assert.Equal(t, agent.TierActWithApproval, got.DefaultTier)
-	assert.Equal(t, agent.ExternalReadAlways, got.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, got.ReadsExternal)
 	assert.Equal(t, []pagination.TenantInfo{{OrgID: "org_1", BuID: "bu_1"}}, rules.asked)
 }
 
@@ -81,6 +82,6 @@ func TestRuled_KeepsTheDeclaredRuleWithoutRules(t *testing.T) {
 	s := &Service{logger: zap.NewNop()}
 	assert.Equal(t, ruledPolicy(), s.ruled(t.Context(), ruledRequest(), ruledPolicy()))
 
-	s.rules = &fakeToolRules{rules: map[string]*agent.ToolRuleOverride{}}
+	s.rules = &fakeToolRules{rules: map[string]*agenttooltrust.ToolRuleOverride{}}
 	assert.Equal(t, ruledPolicy(), s.ruled(t.Context(), ruledRequest(), ruledPolicy()))
 }

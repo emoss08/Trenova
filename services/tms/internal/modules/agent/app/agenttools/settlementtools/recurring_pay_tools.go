@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -400,7 +400,7 @@ func (t *RecurringPayTool[E]) Execute(
 func (t *RecurringPayTool[E]) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -429,7 +429,7 @@ func (t *RecurringPayTool[E]) Preview(
 		changepreview.FieldRecurringEnd,
 		fieldEscrowAccountID,
 	}
-	var change *agent.RecordChange
+	var change *agentpreview.RecordChange
 	if t.update {
 		before := t.kind.facts(plan.before)
 		change, err = toolpreview.Changed(toolpreview.Record{
@@ -471,8 +471,11 @@ func (t *RecurringPayTool[E]) Preview(
 	return toolpreview.Build(summary, change), nil
 }
 
-func recurringMoney(before, after *recurringFacts) *agent.MoneyPreview {
-	amount := agent.MoneyLine{Label: "Each time", After: changepreview.MinorAmount(after.amount)}
+func recurringMoney(before, after *recurringFacts) *agentpreview.MoneyPreview {
+	amount := agentpreview.MoneyLine{
+		Label: "Each time",
+		After: changepreview.MinorAmount(after.amount),
+	}
 	if before != nil {
 		amount.Before = changepreview.MinorAmount(before.amount)
 	}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -277,14 +277,14 @@ func (p *AssistantTurnPayload) SendRequest() *assistantports.SendMessageRequest 
 
 // AssistantTurnRequest is what the person handed over with the message.
 type AssistantTurnRequest struct {
-	Page                  *agent.PageContext `json:"page,omitempty"`
-	Surface               agent.Surface      `json:"surface,omitempty"`
-	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
-	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
-	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`
-	ProviderChosen        bool               `json:"providerChosen"`
-	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
-	FollowUpPlanID        pulid.ID           `json:"followUpPlanId,omitempty"`
+	Page                  *agentpagecontext.PageContext `json:"page,omitempty"`
+	Surface               agentpagecontext.Surface      `json:"surface,omitempty"`
+	Mentions              []agentpagecontext.EntityRef  `json:"mentions,omitempty"`
+	AttachmentDocumentIDs []pulid.ID                    `json:"attachmentDocumentIds,omitempty"`
+	PreferredProviderID   pulid.ID                      `json:"preferredProviderId,omitempty"`
+	ProviderChosen        bool                          `json:"providerChosen"`
+	FollowUpProposalID    pulid.ID                      `json:"followUpProposalId,omitempty"`
+	FollowUpPlanID        pulid.ID                      `json:"followUpPlanId,omitempty"`
 	// ResumeWaitID asks for the turn that picks up work the agent parked on
 	// a wait, in place of content.
 	ResumeWaitID pulid.ID `json:"resumeWaitId,omitempty"`

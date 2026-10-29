@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,7 +63,7 @@ func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
 	)
 
-	require.ErrorIs(t, err, agent.ErrTargetChanged)
+	require.ErrorIs(t, err, agentplan.ErrTargetChanged)
 	assert.Contains(t, err.Error(), "version 5")
 	assert.Contains(t, err.Error(), "was at 3")
 	assert.Zero(t, tool.calls, "the tool never runs against a record that moved on")
@@ -120,7 +121,7 @@ func TestExecute_RefusesWhenTheRecordCannotBeRead(t *testing.T) {
 		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
 	)
 
-	require.ErrorIs(t, err, agent.ErrTargetChanged)
+	require.ErrorIs(t, err, agentplan.ErrTargetChanged)
 	assert.Zero(t, tool.calls)
 }
 

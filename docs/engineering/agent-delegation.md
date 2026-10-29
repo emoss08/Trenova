@@ -125,7 +125,7 @@ The same context is what `PreviewPrompt` shows in AI Control.
 | | |
 |---|---|
 | Name | `delegate_task` |
-| Effect | `delegate` (`agent.ToolEffectDelegate`) |
+| Effect | `delegate` (`agenttooltrust.ToolEffectDelegate`) |
 | Arguments | `agentId` (one of the turn's delegates), `task` (what to do and what to hand back, at most 4 000 characters), `records` (optional: the records the task is about, each `{entityType, id}`, at most 8), `shareResults` (optional: ids of calls this turn made whose results the delegate should work from, at most 4) |
 | Cost to the primary | one tool call of its own budget |
 | Limit | 3 per turn (`maxDelegationsPerTurn`); the fourth is refused and counted |
@@ -309,7 +309,7 @@ context is built.
 
 ### Record references
 
-A write's `result` is `agent.ToolExecutionResult`. `action`, `kind`, `name` and
+A write's `result` is `agentrecord.ToolExecutionResult`. `action`, `kind`, `name` and
 `ids` are for the model: `ids` names each id by the parameter the next tool
 takes it as. `record` is for a reader: the **one** record the write made or
 changed, as `entityType` — a key of the record-link registry

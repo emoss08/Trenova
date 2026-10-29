@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
@@ -28,7 +29,7 @@ const (
 	HeldByScriptIntent = "script_intent"
 )
 
-type MoneyAllowanceReader func(context.Context) (agent.MoneyAllowance, error)
+type MoneyAllowanceReader func(context.Context) (agenttooltrust.MoneyAllowance, error)
 
 type DecideInput struct {
 	Policy          agenttoolports.ToolPolicy
@@ -48,7 +49,7 @@ type Decision struct {
 	Tier          agent.AutonomyTier
 	Egress        agent.EgressClass
 	HeldBy        []string
-	Source        agent.TierSource
+	Source        agenttooltrust.TierSource
 	MoneyMinor    *int64
 	MoneyCurrency string
 }
@@ -63,7 +64,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 		return Decision{
 			Tier:   agent.TierAutoExecute,
 			Egress: policy.Classified(in.Params).Egress,
-			Source: agent.TierSourcePolicyDefault,
+			Source: agenttooltrust.TierSourcePolicyDefault,
 		}
 	}
 	decision := Decision{
@@ -99,7 +100,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 
 	if runsUnasked(in, call) {
 		decision.Tier = agent.TierAutoExecute
-		decision.Source = agent.TierSourcePersonalExemption
+		decision.Source = agenttooltrust.TierSourcePersonalExemption
 		decision.HeldBy = []string{HeldByPersonalExemption}
 		decision.lower(maxTier(policy), HeldByToolMax)
 	}
@@ -206,7 +207,7 @@ func ExplainTier(policy agenttoolports.ToolPolicy) string {
 func TierSetByPerson(
 	definition *agentdefinition.Definition,
 	toolName string,
-	trust *agent.ToolTrust,
+	trust *agenttooltrust.ToolTrust,
 ) bool {
 	if definition == nil || !definition.SetsToolTier(toolName) {
 		return false
@@ -220,7 +221,7 @@ func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds b
 		return false
 	}
 	if !in.Policy.Bounded() {
-		d.lower(agent.TierActWithApproval, agent.HeldByMoneyUnbounded)
+		d.lower(agent.TierActWithApproval, agenttooltrust.HeldByMoneyUnbounded)
 		return false
 	}
 	if taintHolds && !in.Policy.Condition.MayVouch(in.Taint) {
@@ -245,21 +246,21 @@ func (d *Decision) boundMoney(ctx context.Context, in *DecideInput, taintHolds b
 func moneyHeld(ctx context.Context, in *DecideInput) (string, agenttoolports.MoneyBound) {
 	check, proven := provenBound(ctx, in)
 	if !proven {
-		return agent.HeldByMoneyUnproven, check
+		return agenttooltrust.HeldByMoneyUnproven, check
 	}
 	if !check.Within {
-		if slices.Contains(agent.MoneyConditionHeldByKeys(), check.Held) {
+		if slices.Contains(agenttooltrust.MoneyConditionHeldByKeys(), check.Held) {
 			return check.Held, check
 		}
-		return agent.HeldByMoneyUnproven, check
+		return agenttooltrust.HeldByMoneyUnproven, check
 	}
 	if in.MoneyAllowance == nil {
-		return agent.HeldByMoneyLimitsUnread, check
+		return agenttooltrust.HeldByMoneyLimitsUnread, check
 	}
 
 	allowance, err := in.MoneyAllowance(ctx)
 	if err != nil {
-		return agent.HeldByMoneyLimitsUnread, check
+		return agenttooltrust.HeldByMoneyLimitsUnread, check
 	}
 
 	return allowance.Exceeded(check.AmountMinor, check.Currency), check
@@ -283,19 +284,19 @@ func (d *Decision) lower(limit agent.AutonomyTier, key string) {
 		return
 	}
 	d.Tier = limit
-	d.Source = agent.TierSourcePolicyDefault
+	d.Source = agenttooltrust.TierSourcePolicyDefault
 	d.hold(key)
 }
 
-func toolTierSource(in *DecideInput) agent.TierSource {
+func toolTierSource(in *DecideInput) agenttooltrust.TierSource {
 	if in.Definition == nil || !in.Definition.SetsToolTier(in.Policy.Name) {
-		return agent.TierSourcePolicyDefault
+		return agenttooltrust.TierSourcePolicyDefault
 	}
 	if in.TierSetByPerson {
-		return agent.TierSourcePersonSetting
+		return agenttooltrust.TierSourcePersonSetting
 	}
 
-	return agent.TierSourceTrustEarned
+	return agenttooltrust.TierSourceTrustEarned
 }
 
 func (d *Decision) hold(key string) {

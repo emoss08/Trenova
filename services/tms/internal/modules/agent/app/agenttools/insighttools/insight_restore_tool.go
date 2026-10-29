@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
@@ -97,7 +99,7 @@ func NewRestoreInsightTool(insights InsightRestorer) agenttoolports.AgentTool {
 		Render: func(
 			_ *insightports.RestoreInsightRequest,
 			change *kernelports.RecordChange[insight.Insight],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			built, err := toolpreview.Changed(toolpreview.Record{
 				Resource: permission.ResourceInsight,
 				ID:       change.Before.ID,
@@ -116,13 +118,13 @@ func NewRestoreInsightTool(insights InsightRestorer) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *insightports.RestoreInsightRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			restored, err := insights.Restore(ctx, *req)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "restored",
 				Kind:   "insight",
 				Name:   restored.Headline,

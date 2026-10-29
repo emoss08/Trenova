@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -146,7 +147,7 @@ func TestPostInvoice_PreviewShowsEverythingThePostWrites(t *testing.T) {
 
 	journal := agenttoolstest.PreviewChange(t, preview, 3)
 	assert.Equal(t, permission.ResourceJournalEntry, journal.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, journal.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, journal.Operation)
 	require.NotNil(t, agenttoolstest.FieldByPath(t, journal, "debitAccountId").AfterRef)
 	require.NotNil(t, journal.Money)
 	assert.True(t, journal.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("2100")))
@@ -170,7 +171,7 @@ func TestPostInvoice_ARefusedPostIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
 	err = tool.Validate(t.Context(), params)
@@ -263,9 +264,9 @@ func TestSendInvoice_PreviewIsTheEmailPlanSendLaysOut(t *testing.T) {
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelEmail, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, change.Message.Channel)
 	assert.Equal(t, []string{"ap@acmefoods.test"}, change.Message.To)
 	assert.Equal(t, []string{"billing@acmefoods.test"}, change.Message.Cc)
 	assert.Equal(t, "billing@carrier.test", change.Message.From)
@@ -299,7 +300,7 @@ func TestSendInvoice_RefusesASendThatCannotGo(t *testing.T) {
 			require.Error(t, tool.Validate(t.Context(), params))
 			preview, err := tool.Preview(t.Context(), params)
 			require.NoError(t, err)
-			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+			agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 			require.Error(t, tool.Execute(t.Context(), params))
 			assert.Nil(t, sender.sent)
 		})

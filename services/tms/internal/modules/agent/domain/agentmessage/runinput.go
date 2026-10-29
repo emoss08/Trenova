@@ -4,12 +4,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 )
 
 func BackgroundRunInput(
 	trigger agent.RunTrigger,
-	eventKind agent.EventKind,
+	eventKind agenttrigger.EventKind,
 	subject *agentturn.RuntimeSubject,
 ) string {
 	var builder strings.Builder

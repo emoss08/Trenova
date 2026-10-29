@@ -3,6 +3,8 @@
 package decisionsexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"context"
 	"errors"
 	"fmt"
@@ -36,7 +38,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.AgentPlan)
+					obj := o.(*agentplan.AgentPlan)
 					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").Run(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
@@ -48,7 +50,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PendingDecisionHold",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.AgentPlan)
+					obj := o.(*agentplan.AgentPlan)
 					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").Hold(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPendingDecisionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPendingDecisionHold),
@@ -522,8 +524,8 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAgentPlan interface {
-	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
-	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
+	Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type resolverAgentProposal interface {
@@ -570,7 +572,7 @@ func marshalAbstractPendingDecision(ctx context.Context, ec *gqlexec.Exec, sel a
 			return graphql.Null
 		}
 		return ec.MarshalType(ctx, sel, "AgentProposal", obj)
-	case *agent.AgentPlan:
+	case *agentplan.AgentPlan:
 		if obj == nil {
 			return graphql.Null
 		}
@@ -747,9 +749,9 @@ func unmarshalInputAgentProposalPreviewDigestInput(ctx context.Context, ec *gqle
 	return gqlexec.UnmarshalInput[gqlmodel.AgentProposalPreviewDigestInput](ctx, ec, "AgentProposalPreviewDigestInput", obj)
 }
 
-func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agent.DecisionType, error) {
+func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agentdecision.DecisionType, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := agent.DecisionType(tmp)
+	res := agentdecision.DecisionType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -813,7 +815,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.DecisionType) graphql.Marshaler {
+func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdecision.DecisionType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -985,7 +987,7 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentDecision) graphql.Marshaler {
+func marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdecision.AgentDecision) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

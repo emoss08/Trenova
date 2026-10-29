@@ -6,6 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -98,7 +101,10 @@ type proposalReader interface {
 }
 
 type planReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
+	GetByID(
+		ctx context.Context,
+		req agentports.GetAgentPlanByIDRequest,
+	) (*agentplan.AgentPlan, error)
 }
 
 type runReader interface {
@@ -112,7 +118,7 @@ type exceptionReader interface {
 	GetByID(
 		ctx context.Context,
 		req agentports.GetAgentExceptionByIDRequest,
-	) (*agent.AgentException, error)
+	) (*agentexception.AgentException, error)
 }
 
 type definitionReader interface {
@@ -123,11 +129,11 @@ type definitionReader interface {
 }
 
 type memoryStore interface {
-	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
+	Create(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
 		req agentmemoryports.ListAgentMemorySuggestionContextRequest,
-	) ([]*agent.Memory, error)
+	) ([]*agentmemory.Memory, error)
 }
 
 type retentionReader interface {

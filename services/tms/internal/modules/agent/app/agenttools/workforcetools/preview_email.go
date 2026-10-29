@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -94,7 +94,7 @@ func (t *RequestMissingDocsTool) compose(
 func (t *RequestMissingDocsTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return nil, err

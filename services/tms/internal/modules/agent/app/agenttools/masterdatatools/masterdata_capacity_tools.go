@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -328,7 +330,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			})
 		},
 		Refused: func(pulid.ID) string { return "Would remove a carrier capacity posting." },
-		Render: func(_ pulid.ID, posting *carriercapacity.Posting) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, posting *carriercapacity.Posting) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(capacityRecord.record(posting),
 				capacityRecord.viewOf(posting, nil), capacityRecord.options...)
 			if err != nil {
@@ -342,7 +344,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			tenant := toolparams.TenantFrom(*params)
 			current, err := keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 				ID:         id,
@@ -359,7 +361,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
 				Kind:   capacityKind,
 				IDs:    map[string]string{paramPostingID: id.String()},

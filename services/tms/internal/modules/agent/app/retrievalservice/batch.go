@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -144,7 +144,7 @@ func (b *indexBatch) readMemories(ctx context.Context) error {
 		return fmt.Errorf("read memories: %w", err)
 	}
 
-	found := make(map[pulid.ID]*agent.Memory, len(memories))
+	found := make(map[pulid.ID]*agentmemory.Memory, len(memories))
 	for _, memory := range memories {
 		found[memory.ID] = memory
 	}

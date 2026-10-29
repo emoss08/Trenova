@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -27,24 +29,24 @@ const (
 )
 
 type fingerprintPolicy struct {
-	Kind                agent.ToolKind       `json:"kind"`
-	Resource            permission.Resource  `json:"resource"`
-	Operation           permission.Operation `json:"operation"`
-	Scope               agent.ToolScope      `json:"scope"`
-	DefaultTier         agent.AutonomyTier   `json:"defaultTier"`
-	MaxTier             agent.AutonomyTier   `json:"maxTier"`
-	Egress              []agent.EgressClass  `json:"egress"`
-	Classified          bool                 `json:"classified"`
-	Condition           string               `json:"condition,omitempty"`
-	PersonalRunsUnasked bool                 `json:"personalRunsUnasked"`
-	Effect              agent.ToolEffect     `json:"effect"`
-	Artifact            string               `json:"artifact,omitempty"`
-	Reversible          bool                 `json:"reversible"`
-	Idempotent          bool                 `json:"idempotent"`
-	ReadsExternal       agent.ExternalRead   `json:"readsExternal"`
-	Source              agent.TaintSource    `json:"source,omitempty"`
-	CarriesTaint        bool                 `json:"carriesTaint"`
-	Rationale           string               `json:"rationale"`
+	Kind                agenttooltrust.ToolKind     `json:"kind"`
+	Resource            permission.Resource         `json:"resource"`
+	Operation           permission.Operation        `json:"operation"`
+	Scope               agenttooltrust.ToolScope    `json:"scope"`
+	DefaultTier         agent.AutonomyTier          `json:"defaultTier"`
+	MaxTier             agent.AutonomyTier          `json:"maxTier"`
+	Egress              []agent.EgressClass         `json:"egress"`
+	Classified          bool                        `json:"classified"`
+	Condition           string                      `json:"condition,omitempty"`
+	PersonalRunsUnasked bool                        `json:"personalRunsUnasked"`
+	Effect              agenttooltrust.ToolEffect   `json:"effect"`
+	Artifact            string                      `json:"artifact,omitempty"`
+	Reversible          bool                        `json:"reversible"`
+	Idempotent          bool                        `json:"idempotent"`
+	ReadsExternal       agenttooltrust.ExternalRead `json:"readsExternal"`
+	Source              agent.TaintSource           `json:"source,omitempty"`
+	CarriesTaint        bool                        `json:"carriesTaint"`
+	Rationale           string                      `json:"rationale"`
 }
 
 type fingerprintTool struct {
@@ -159,7 +161,7 @@ func (s *Service) Fingerprint(
 	definition *agentdefinition.Definition,
 	providerID pulid.ID,
 	model string,
-) *agent.Fingerprint {
+) *agentfingerprint.Fingerprint {
 	if definition == nil {
 		return nil
 	}
@@ -173,7 +175,7 @@ func (s *Service) Fingerprint(
 		canonicalRuntimeContext(s.summarize(definition, held)),
 	)
 
-	return &agent.Fingerprint{
+	return &agentfingerprint.Fingerprint{
 		DefinitionVersion: definition.Version,
 		PromptHash:        hashutils.SHA256Hex(prompt),
 		ToolSpecHash:      s.toolSpecHash(definition, sorted),

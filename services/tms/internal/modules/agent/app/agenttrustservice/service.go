@@ -16,7 +16,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -115,13 +117,13 @@ func New(p Params) agentports.AgentTrustService {
 func (s *Service) RecordDecision(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) error {
 	if proposal == nil || decision == nil {
 		return nil
 	}
 
-	outcome := agent.OutcomeOfDecision(decision.Decision, decision.Modifications)
+	outcome := agenttooltrust.OutcomeOfDecision(decision.Decision, decision.Modifications)
 
 	return s.record(ctx, proposal, outcome, decision.DecidedByUserID)
 }
@@ -134,20 +136,20 @@ func (s *Service) RecordExecutionFailure(ctx context.Context, proposal *agent.Ag
 		return nil
 	}
 
-	return s.record(ctx, proposal, agent.TrustOutcomeExecutionFailed, pulid.Nil)
+	return s.record(ctx, proposal, agenttooltrust.TrustOutcomeExecutionFailed, pulid.Nil)
 }
 
 func (s *Service) ListForDefinition(
 	ctx context.Context,
 	req agenttoolports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
 	return s.trust.ListByDefinition(ctx, req)
 }
 
 func (s *Service) record(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	outcome agent.TrustOutcome,
+	outcome agenttooltrust.TrustOutcome,
 	decidedBy pulid.ID,
 ) error {
 	tenantInfo := pagination.TenantInfo{
@@ -228,7 +230,7 @@ func (s *Service) record(
 type tierChange struct {
 	tenant     pagination.TenantInfo
 	definition *agentdefinition.Definition
-	row        *agent.ToolTrust
+	row        *agenttooltrust.ToolTrust
 	current    agent.AutonomyTier
 	decidedBy  pulid.ID
 	at         int64

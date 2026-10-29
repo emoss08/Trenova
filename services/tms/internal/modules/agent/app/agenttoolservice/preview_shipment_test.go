@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -124,7 +124,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 	require.Nil(t, writer.Updated, "a preview must not save")
 	assert.Equal(t, "BOL-1", writer.Existing.BOL, "a preview must not touch what it read")
 
-	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceShipment, change.Resource)
 	assert.Equal(t, int64(5), *change.Version)
 	bol := agenttoolstest.FindField(t, change, "bol")
@@ -134,8 +134,8 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 	require.NotNil(t, customer.AfterRef)
 	assert.Equal(t, permission.ResourceCustomer, customer.AfterRef.Resource)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
-	assert.Equal(t, agent.MessageChannelEDI, send.Message.Channel)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
+	assert.Equal(t, agentpreview.MessageChannelEDI, send.Message.Channel)
 	assert.Equal(t, []string{"Halstead Grocery EDI"}, send.Message.To)
 	assert.Equal(t, "Changed: bol.", send.Message.Body)
 	assert.Equal(t, "BOL-2", partners.updated.BOL)
@@ -163,7 +163,7 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	assert.Contains(t, preview.Summary, "SHP-3001")
 	assert.Contains(t, preview.Summary, "1 live tender would be withdrawn")
 
-	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, "Canceled", agenttoolstest.FindField(t, status, "status").After)
 	assert.Equal(
 		t,
@@ -172,7 +172,7 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	)
 	assert.True(t, agenttoolstest.FindField(t, status, "canceledAt").Volatile)
 
-	var channels []agent.MessageChannel
+	var channels []agentpreview.MessageChannel
 	for i := range preview.Changes {
 		if message := preview.Changes[i].Message; message != nil {
 			channels = append(channels, message.Channel)
@@ -180,11 +180,14 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 	}
 	assert.Equal(
 		t,
-		[]agent.MessageChannel{agent.MessageChannelEDI, agent.MessageChannelEmail},
+		[]agentpreview.MessageChannel{
+			agentpreview.MessageChannelEDI,
+			agentpreview.MessageChannelEmail,
+		},
 		channels,
 		"the linked partner is sent the 214, and only the carrier holding an offer is told",
 	)
-	withdrawn := agenttoolstest.FindChange(t, preview, agent.PreviewOperationArchive)
+	withdrawn := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationArchive)
 	assert.Equal(t, permission.ResourceTender, withdrawn.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -207,11 +210,11 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, comments.created, "a preview must not comment")
 
-	created := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
+	created := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationCreate)
 	assert.Equal(t, permission.ResourceShipmentComment, created.Resource)
 	assert.Equal(t, "Customer", agenttoolstest.FindField(t, created, "visibility").After)
-	shared := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
-	assert.Equal(t, agent.MessageChannelComment, shared.Message.Channel)
+	shared := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
+	assert.Equal(t, agentpreview.MessageChannelComment, shared.Message.Channel)
 	assert.Equal(t, "Customer", shared.Message.Visibility)
 	assert.Equal(t, []string{"The customer"}, shared.Message.To)
 

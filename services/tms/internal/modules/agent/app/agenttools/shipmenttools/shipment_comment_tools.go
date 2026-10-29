@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -139,8 +141,11 @@ func commentRecord(comment *shipment.ShipmentComment) toolpreview.Record {
 	}
 }
 
-func commentResult(action string, comment *shipment.ShipmentComment) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: action, Kind: kindComment}
+func commentResult(
+	action string,
+	comment *shipment.ShipmentComment,
+) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindComment}
 	if comment != nil {
 		result.IDs = map[string]string{
 			ParamCommentID:             comment.ID.String(),
@@ -177,11 +182,11 @@ func toggleCommentRequest(
 func renderCommentToggle(
 	verb string,
 	fields []string,
-) func(*shipmentcommentports.ToggleShipmentCommentRequest, *shipmentcommentports.ShipmentCommentChange) (*agent.ToolPreview, error) {
+) func(*shipmentcommentports.ToggleShipmentCommentRequest, *shipmentcommentports.ShipmentCommentChange) (*agentpreview.ToolPreview, error) {
 	return func(
 		_ *shipmentcommentports.ToggleShipmentCommentRequest,
 		plan *shipmentcommentports.ShipmentCommentChange,
-	) (*agent.ToolPreview, error) {
+	) (*agentpreview.ToolPreview, error) {
 		change, err := toolpreview.Changed(
 			commentRecord(plan.Before),
 			plan.Before,
@@ -263,7 +268,7 @@ func newCommentToggleTool(
 			ctx context.Context,
 			req *shipmentcommentports.ToggleShipmentCommentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			var (
 				saved *shipment.ShipmentComment
 				err   error
@@ -564,7 +569,7 @@ func NewEditShipmentCommentTool(
 			ctx context.Context,
 			edit *commentEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := commentUpdateRequest(ctx, comments, permissions, edit, params.Actor)
 			if err != nil {
 				return nil, err
@@ -589,7 +594,7 @@ func NewEditShipmentCommentTool(
 	}
 }
 
-func renderCommentEdit(_ *commentEdit, plan *commentEditPlan) (*agent.ToolPreview, error) {
+func renderCommentEdit(_ *commentEdit, plan *commentEditPlan) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		commentRecord(plan.change.Before),
 		plan.change.Before,
@@ -691,7 +696,7 @@ func NewDeleteShipmentCommentTool(
 		Render: func(
 			_ *commentDeletion,
 			plan *shipmentcommentports.ShipmentCommentDeletion,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(commentRecord(plan.Comment), plan.Comment,
 				toolpreview.Only(fieldCommentText, FieldCommentVisib, FieldPriority))
 			if err != nil {
@@ -709,7 +714,7 @@ func NewDeleteShipmentCommentTool(
 			ctx context.Context,
 			deletion *commentDeletion,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := commentDeleteRequest(ctx, comments, permissions, deletion, params.Actor)
 			if err != nil {
 				return nil, err
@@ -718,7 +723,7 @@ func NewDeleteShipmentCommentTool(
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "deleted",
 				Kind:   kindComment,
 				IDs: map[string]string{

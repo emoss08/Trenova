@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ type toolTrustLister interface {
 	ListByDefinitionIDs(
 		ctx context.Context,
 		req agenttoolports.ListToolTrustByDefinitionsRequest,
-	) (map[pulid.ID][]*agent.ToolTrust, error)
+	) (map[pulid.ID][]*agenttooltrust.ToolTrust, error)
 }
 
 type ToolTrustByAgentIDLoaderFactoryParams struct {
@@ -36,15 +36,15 @@ func NewToolTrustByAgentIDLoaderFactory(
 
 func newToolTrustByAgentIDLoader(f *ToolTrustByAgentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*agent.ToolTrust] {
+) *dataloadgen.Loader[string, []*agenttooltrust.ToolTrust] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *ToolTrustByAgentIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[[]*agent.ToolTrust] {
+) batchFetchFunc[[]*agenttooltrust.ToolTrust] {
 	return batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agent.ToolTrust, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
 			return f.trust.ListByDefinitionIDs(
 				ctx,
 				agenttoolports.ListToolTrustByDefinitionsRequest{

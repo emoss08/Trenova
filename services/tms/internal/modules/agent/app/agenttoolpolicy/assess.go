@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -21,7 +22,7 @@ const (
 type AssessInput struct {
 	Policy     agenttoolports.ToolPolicy
 	Definition *agentdefinition.Definition
-	Trust      *agent.ToolTrust
+	Trust      *agenttooltrust.ToolTrust
 	Control    *agentcontrol.AgentControl
 	Tainted    bool
 }
@@ -41,20 +42,20 @@ func Assess(ctx context.Context, in *AssessInput) agenttoolports.ToolAutonomy {
 		HeldBy: mergeHeld(best.HeldBy, worst.HeldBy),
 	}
 	if best.Tier == agent.TierAutoExecute && worst.Tier != agent.TierAutoExecute {
-		out.Answer = agent.AutonomyConditional
+		out.Answer = agenttooltrust.AutonomyConditional
 	} else {
-		out.Answer = agent.AnswerForTier(best.Tier)
+		out.Answer = agenttooltrust.AnswerForTier(best.Tier)
 	}
 
-	shadow := in.Policy.Kind == agent.ToolKindAction &&
+	shadow := in.Policy.Kind == agenttooltrust.ToolKindAction &&
 		definition.EffectiveShadow(in.Control != nil && in.Control.ShadowMode)
-	if in.Policy.Kind == agent.ToolKindAction {
+	if in.Policy.Kind == agenttooltrust.ToolKindAction {
 		if shadow {
-			out.Answer = agent.AutonomySimulated
+			out.Answer = agenttooltrust.AutonomySimulated
 			out.HeldBy = mergeHeld(out.HeldBy, []string{HeldByShadowMode})
 		}
 		if definition.SimulationMode {
-			out.Answer = agent.AutonomySimulated
+			out.Answer = agenttooltrust.AutonomySimulated
 			out.HeldBy = mergeHeld(out.HeldBy, []string{HeldBySimulationMode})
 		}
 	}
@@ -148,7 +149,8 @@ func worstCase(
 
 func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *int {
 	control := in.Control
-	if in.Policy.Kind != agent.ToolKindAction || control == nil || !control.EarnedAutonomy ||
+	if in.Policy.Kind != agenttooltrust.ToolKindAction || control == nil ||
+		!control.EarnedAutonomy ||
 		control.PromotionThreshold <= 0 {
 		return nil
 	}
@@ -187,13 +189,13 @@ func withinBounds(context.Context, agenttoolports.ToolExecuteParams) agenttoolpo
 }
 
 func outsideBounds(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
-	return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 }
 
-func unspentAllowance(context.Context) (agent.MoneyAllowance, error) {
-	return agent.MoneyAllowance{
+func unspentAllowance(context.Context) (agenttooltrust.MoneyAllowance, error) {
+	return agenttooltrust.MoneyAllowance{
 		Currency: representativeCurrency,
-		Limits: agent.MoneyLimits{
+		Limits: agenttooltrust.MoneyLimits{
 			CallCeilingMinor: math.MaxInt64,
 			RunCalls:         math.MaxInt,
 			RunAmountMinor:   math.MaxInt64,

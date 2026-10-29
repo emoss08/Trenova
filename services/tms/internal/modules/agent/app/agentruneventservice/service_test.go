@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -21,7 +21,7 @@ import (
 type fakeRepo struct {
 	mu sync.Mutex
 
-	appended  []*agent.AgentRunEvent
+	appended  []*agentrunevent.AgentRunEvent
 	next      int
 	appendErr error
 	seqErr    error
@@ -61,14 +61,14 @@ func (f *fakeRepo) NextSequence(
 func (f *fakeRepo) List(
 	_ context.Context,
 	_ agentruntimeports.ListAgentRunEventsRequest,
-) ([]*agent.AgentRunEvent, error) {
+) ([]*agentrunevent.AgentRunEvent, error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) ListConnection(
 	_ context.Context,
 	_ *agentruntimeports.ListAgentRunEventConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 	return nil, nil
 }
 
@@ -79,11 +79,11 @@ func (f *fakeRepo) Prune(
 	return 0, nil
 }
 
-func (f *fakeRepo) rows() []*agent.AgentRunEvent {
+func (f *fakeRepo) rows() []*agentrunevent.AgentRunEvent {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	return append([]*agent.AgentRunEvent(nil), f.appended...)
+	return append([]*agentrunevent.AgentRunEvent(nil), f.appended...)
 }
 
 func newRecorder(t *testing.T, repo *fakeRepo) agentruntimeports.AgentRunEventRecorder {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -73,7 +74,7 @@ func (n *needs) owner(kind string, id pulid.ID) {
 	}
 
 	switch {
-	case id.Prefix() == agent.EvaluationIDPrefix:
+	case id.Prefix() == agentevaluation.EvaluationIDPrefix:
 		n.evaluations[id] = struct{}{}
 	case kind == string(agent.RunOwnerAssistantTurn):
 		n.turns[id] = struct{}{}
@@ -110,7 +111,7 @@ type lookups struct {
 	turns       map[pulid.ID]*conversation.AssistantTurn
 	turnByRun   map[pulid.ID]*conversation.AssistantTurn
 	threads     map[pulid.ID]*conversation.Thread
-	evaluations map[pulid.ID]*agent.Evaluation
+	evaluations map[pulid.ID]*agentevaluation.Evaluation
 	proposals   map[pulid.ID]*agent.AgentProposal
 	threadTurns map[pulid.ID][]*conversation.AssistantTurn
 	users       map[pulid.ID]string
@@ -124,7 +125,7 @@ func emptyLookups() *lookups {
 		turns:       map[pulid.ID]*conversation.AssistantTurn{},
 		turnByRun:   map[pulid.ID]*conversation.AssistantTurn{},
 		threads:     map[pulid.ID]*conversation.Thread{},
-		evaluations: map[pulid.ID]*agent.Evaluation{},
+		evaluations: map[pulid.ID]*agentevaluation.Evaluation{},
 		proposals:   map[pulid.ID]*agent.AgentProposal{},
 		threadTurns: map[pulid.ID][]*conversation.AssistantTurn{},
 		users:       map[pulid.ID]string{},
@@ -292,7 +293,7 @@ func (l *lookups) ownerOf(kind string, id pulid.ID) owner {
 		return owner{principalType: aiaudit.PrincipalSystem, purpose: aiaudit.PurposeLive}
 	}
 
-	if id.Prefix() == agent.EvaluationIDPrefix {
+	if id.Prefix() == agentevaluation.EvaluationIDPrefix {
 		return l.evaluationOwner(id)
 	}
 	if kind == string(agent.RunOwnerAssistantTurn) {

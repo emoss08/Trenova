@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -9,9 +10,9 @@ import (
 type runtimePolicySpec struct {
 	name      string
 	operation permission.Operation
-	scope     agent.ToolScope
+	scope     agenttooltrust.ToolScope
 	egress    agent.EgressClass
-	effect    agent.ToolEffect
+	effect    agenttooltrust.ToolEffect
 	rationale string
 }
 
@@ -19,36 +20,36 @@ var runtimePolicySpecs = []runtimePolicySpec{
 	{
 		name:      findToolsName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
-		effect:    agent.ToolEffectDiscover,
+		effect:    agenttooltrust.ToolEffectDiscover,
 		rationale: "Loads more of the agent's own tools into the turn; it reads the " +
 			"catalog and changes nothing.",
 	},
 	{
 		name:      askUserName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
-		effect:    agent.ToolEffectAsk,
+		effect:    agenttooltrust.ToolEffectAsk,
 		rationale: "Asks the person in the conversation a question; nothing is saved " +
 			"or sent.",
 	},
 	{
 		name:      publishArtifactName,
 		operation: permission.OpCreate,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
-		effect:    agent.ToolEffectPresent,
+		effect:    agenttooltrust.ToolEffectPresent,
 		rationale: "Publishes a document into the caller's own conversation, where " +
 			"only they read it.",
 	},
 	{
 		name:      showBoardName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
-		effect:    agent.ToolEffectPresent,
+		effect:    agenttooltrust.ToolEffectPresent,
 		rationale: "Lays out an answer as a board in the caller's own conversation. It writes " +
 			"no business record, and every value on it is read again with the viewer's " +
 			"access when the board is opened.",
@@ -56,27 +57,27 @@ var runtimePolicySpecs = []runtimePolicySpec{
 	{
 		name:      requestDecisionName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
-		effect:    agent.ToolEffectAsk,
+		effect:    agenttooltrust.ToolEffectAsk,
 		rationale: "Opens, in the person's own conversation, the approval box on a " +
 			"proposal already waiting on them; it decides nothing and changes no record.",
 	},
 	{
 		name:      withdrawProposalName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
-		effect:    agent.ToolEffectAsk,
+		effect:    agenttooltrust.ToolEffectAsk,
 		rationale: "Takes back a proposal the agent filed earlier in the same turn, before " +
 			"anyone has seen it; it changes no record and only narrows what the person is asked.",
 	},
 	{
 		name:      namePlanName,
 		operation: permission.OpRead,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
-		effect:    agent.ToolEffectAsk,
+		effect:    agenttooltrust.ToolEffectAsk,
 		rationale: "Names the plan the person approves the turn's proposals as. It writes no " +
 			"business record: the name is kept only as the plan's own title, beside the " +
 			"previewed changes the approval rests on.",
@@ -84,9 +85,9 @@ var runtimePolicySpecs = []runtimePolicySpec{
 	{
 		name:      delegateTaskName,
 		operation: permission.OpCreate,
-		scope:     agent.ToolScopeRun,
+		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
-		effect:    agent.ToolEffectDelegate,
+		effect:    agenttooltrust.ToolEffectDelegate,
 		rationale: "Hands a task to another agent of the organization, which runs as " +
 			"the same person under its own tiers.",
 	},
@@ -114,7 +115,7 @@ func runtimePolicyNamed(name string) (agenttoolports.ToolPolicy, bool) {
 func (s runtimePolicySpec) policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          s.name,
-		Kind:          agent.ToolKindRuntime,
+		Kind:          agenttooltrust.ToolKindRuntime,
 		Resource:      permission.ResourceAssistant,
 		Operation:     s.operation,
 		Scope:         s.scope,
@@ -122,7 +123,7 @@ func (s runtimePolicySpec) policy() agenttoolports.ToolPolicy {
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{s.egress},
 		Effect:        s.effect,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     s.rationale,
 	}
 }

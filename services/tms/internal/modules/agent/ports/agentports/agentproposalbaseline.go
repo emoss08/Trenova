@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -29,14 +29,14 @@ type PurgeOrphanProposalBaselinesRequest struct {
 // was proposed, beside the proposal rather than on it.
 type AgentProposalBaselineRepository interface {
 	// Create keeps a baseline; one already kept for the proposal stays.
-	Create(ctx context.Context, baseline *agent.ProposalBaseline) error
+	Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error
 	GetByProposal(
 		ctx context.Context,
 		req GetProposalBaselineRequest,
-	) (*agent.ProposalBaseline, error)
+	) (*agentpreview.ProposalBaseline, error)
 	ListByProposals(
 		ctx context.Context,
 		req ListProposalBaselinesRequest,
-	) ([]*agent.ProposalBaseline, error)
+	) ([]*agentpreview.ProposalBaseline, error)
 	PurgeOrphans(ctx context.Context, req PurgeOrphanProposalBaselinesRequest) (int, error)
 }

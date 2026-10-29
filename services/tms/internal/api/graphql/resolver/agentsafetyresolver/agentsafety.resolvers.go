@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -153,7 +154,7 @@ func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*agenttoolports
 	return out, nil
 }
 
-func (r *AgentToolRuleResolver) MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error) {
+func (r *AgentToolRuleResolver) MaxTier(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agent.AutonomyTier, error) {
 	if obj == nil || obj.MaxTier == "" {
 		return nil, nil
 	}
@@ -162,7 +163,7 @@ func (r *AgentToolRuleResolver) MaxTier(ctx context.Context, obj *agent.ToolRule
 	return &tier, nil
 }
 
-func (r *AgentToolRuleResolver) ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error) {
+func (r *AgentToolRuleResolver) ReadsExternal(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agenttooltrust.ExternalRead, error) {
 	if obj == nil || obj.ReadsExternal == "" {
 		return nil, nil
 	}
@@ -171,7 +172,7 @@ func (r *AgentToolRuleResolver) ReadsExternal(ctx context.Context, obj *agent.To
 	return &read, nil
 }
 
-func (r *AgentToolRuleResolver) UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error) {
+func (r *AgentToolRuleResolver) UpdatedBy(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*tenant.User, error) {
 	if obj == nil {
 		return nil, nil
 	}

@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,7 +35,7 @@ type SaveAgentDefinitionRequest struct {
 	TriggerMode            agentdefinition.TriggerMode
 	CronExpression         string
 	CronTimezone           string
-	EventKinds             []agent.EventKind
+	EventKinds             []agenttrigger.EventKind
 	IntervalSeconds        int
 	EndsAt                 *int64
 	MaxConcurrentRuns      int
@@ -82,7 +84,7 @@ type AgentTemplateDescriptor struct {
 	StarterInstructions  string                            `json:"starterInstructions"`
 	StarterTools         []string                          `json:"starterTools"`
 	StarterTrigger       agentdefinition.TriggerMode       `json:"starterTrigger"`
-	StarterEvents        []agent.EventKind                 `json:"starterEvents"`
+	StarterEvents        []agenttrigger.EventKind          `json:"starterEvents"`
 	StarterCron          string                            `json:"starterCron"`
 	StarterCeiling       agent.AutonomyTier                `json:"starterCeiling"`
 	StarterDataAccess    agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
@@ -100,17 +102,17 @@ const ToolCatalogKindQuery = ToolCatalogKind("query")
 const ToolCatalogKindAction = ToolCatalogKind("action")
 
 type ToolCatalogEntry struct {
-	Name                string               `json:"name"`
-	Description         string               `json:"description"`
-	Parameters          map[string]any       `json:"parameters"`
-	Kind                ToolCatalogKind      `json:"kind"`
-	Resource            permission.Resource  `json:"resource"`
-	Operation           permission.Operation `json:"operation"`
-	DefaultAutonomyTier agent.AutonomyTier   `json:"defaultAutonomyTier"`
-	MaxAutonomyTier     agent.AutonomyTier   `json:"maxAutonomyTier,omitempty"`
-	Reversible          bool                 `json:"reversible"`
-	Core                bool                 `json:"core"`
-	Effect              agent.ToolEffect     `json:"effect"`
+	Name                string                    `json:"name"`
+	Description         string                    `json:"description"`
+	Parameters          map[string]any            `json:"parameters"`
+	Kind                ToolCatalogKind           `json:"kind"`
+	Resource            permission.Resource       `json:"resource"`
+	Operation           permission.Operation      `json:"operation"`
+	DefaultAutonomyTier agent.AutonomyTier        `json:"defaultAutonomyTier"`
+	MaxAutonomyTier     agent.AutonomyTier        `json:"maxAutonomyTier,omitempty"`
+	Reversible          bool                      `json:"reversible"`
+	Core                bool                      `json:"core"`
+	Effect              agenttooltrust.ToolEffect `json:"effect"`
 	// Prerequisites are the tools this one takes its arguments from. The
 	// reads among them are held by any agent holding this tool.
 	Prerequisites []string `json:"prerequisites"`
@@ -195,7 +197,7 @@ type AgentDefinitionService interface {
 	) ([]agentlint.Finding, error)
 	Templates() []AgentTemplateDescriptor
 	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
-	EventKinds() []agent.EventDescriptor
+	EventKinds() []agenttrigger.EventDescriptor
 	PreviewPrompt(ctx context.Context, req *PreviewPromptRequest) (string, error)
 	EnsureSystem(
 		ctx context.Context,

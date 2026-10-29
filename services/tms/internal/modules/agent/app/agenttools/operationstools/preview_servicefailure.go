@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -34,7 +34,7 @@ const EdiReadyForGeneration = "ready_for_generation"
 func (t *ResolveServiceFailureTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, existing, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -73,11 +73,11 @@ func (t *ResolveServiceFailureTool) Preview(
 
 func ServiceFailureLifecyclePreview(
 	summary string,
-	change *agent.RecordChange,
+	change *agentpreview.RecordChange,
 	preview *servicefailureports.ServiceFailureLifecyclePreview,
 	transition string,
-) *agent.ToolPreview {
-	changes := []*agent.RecordChange{change}
+) *agentpreview.ToolPreview {
+	changes := []*agentpreview.RecordChange{change}
 
 	switch edi := preview.EDI; {
 	case edi == nil:
@@ -94,8 +94,8 @@ func ServiceFailureLifecyclePreview(
 				ID:       edi.EDIPartnerID,
 				Label:    "Customer's EDI trading partner",
 			},
-			&agent.MessagePreview{
-				Channel: agent.MessageChannelEDI,
+			&agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelEDI,
 				To:      []string{"Customer's EDI trading partner"},
 				Subject: "EDI 214 service failure " + transition,
 				Body:    body,

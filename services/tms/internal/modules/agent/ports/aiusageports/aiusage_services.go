@@ -3,7 +3,7 @@ package aiusageports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,7 +46,7 @@ func (a *AIUsageAttribution) ResolvedPurpose() kernelports.AIUsagePurpose {
 const AIUsagePurposeEvaluation = kernelports.AIUsagePurpose("Evaluation")
 
 func UsagePurposeForRun(runID pulid.ID) kernelports.AIUsagePurpose {
-	if runID.Prefix() == agent.EvaluationIDPrefix {
+	if runID.Prefix() == agentevaluation.EvaluationIDPrefix {
 		return AIUsagePurposeEvaluation
 	}
 

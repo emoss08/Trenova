@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -185,7 +185,7 @@ func (a *Activities) raiseCoverageRisk(
 			a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
 		}
 		agentports.PublishAgentEvent(ctx, a.publisher, agentports.AgentEvent{
-			Kind:       agent.EventShipmentMoveCoverageAtRisk,
+			Kind:       agenttrigger.EventShipmentMoveCoverageAtRisk,
 			SubjectID:  move.MoveID,
 			TenantInfo: tenant,
 		})

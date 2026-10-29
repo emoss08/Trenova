@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -110,15 +111,15 @@ func (t *RecordStopActualTool) ParamSchema() map[string]any {
 func (t *RecordStopActualTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Records arrival and departure times on a stop; no model-written text " +
 			"leaves the organization.",
 	}

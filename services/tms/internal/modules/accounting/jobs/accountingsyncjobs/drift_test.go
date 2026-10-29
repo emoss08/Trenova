@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -232,7 +232,7 @@ func TestKickAndWeeklyVisitOnlyConnectionsThatAreSyncing(t *testing.T) {
 	assert.Equal(t, 1, announced.Connections)
 	published := events.Published()
 	require.Len(t, published, 1)
-	assert.Equal(t, agent.EventAccountingReconciliationDue, published[0].Kind)
+	assert.Equal(t, agenttrigger.EventAccountingReconciliationDue, published[0].Kind)
 	assert.Equal(t, syncing.ID, published[0].SubjectID)
 	assert.Equal(t, syncing.OrganizationID, published[0].TenantInfo.OrgID)
 }

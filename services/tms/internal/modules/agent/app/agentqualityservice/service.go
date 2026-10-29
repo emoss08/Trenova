@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -38,7 +38,7 @@ type fingerprinter interface {
 		definition *agentdefinition.Definition,
 		providerID pulid.ID,
 		model string,
-	) *agent.Fingerprint
+	) *agentfingerprint.Fingerprint
 }
 
 type regressionNotifier interface {

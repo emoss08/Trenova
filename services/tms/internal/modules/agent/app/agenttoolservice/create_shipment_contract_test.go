@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -398,7 +399,7 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	assert.Equal(t, "shipment", result.Kind)
 	assert.Equal(t, writer.Created.ProNumber, result.Name)
 	assert.Equal(t, map[string]string{"shipmentId": id}, result.IDs)
-	assert.Equal(t, &agent.RecordRef{EntityType: "shipment", ID: id}, result.Record)
+	assert.Equal(t, &agentrecord.RecordRef{EntityType: "shipment", ID: id}, result.Record)
 	assert.Contains(t, result.Describe(), `created the shipment "`+writer.Created.ProNumber+`"`)
 	assert.Contains(t, result.IDNote(), "shipmentId "+id)
 }
@@ -442,14 +443,14 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), createShipmentParams())
 		},
 	)
 
 	require.Len(t, preview.Warnings, 1)
 	warning := preview.Warnings[0]
-	assert.Equal(t, agent.PreviewWarningRateCoverage, warning.Code)
+	assert.Equal(t, agentpreview.PreviewWarningRateCoverage, warning.Code)
 	assert.Equal(t,
 		[]string{"No rate agreement covers this lane, so this shipment is priced at zero"},
 		warning.Args)

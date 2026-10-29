@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +59,7 @@ type CompleteAssistantTurnRequest struct {
 type RecordAssistantTurnFingerprintRequest struct {
 	ID          pulid.ID
 	TenantInfo  pagination.TenantInfo
-	Fingerprint *agent.Fingerprint
+	Fingerprint *agentfingerprint.Fingerprint
 }
 
 type AssistantTurnRepository interface {

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -279,7 +280,10 @@ func TestPostDriverSettlements_AForeignSettlementIsRefusedOnItsOwn(t *testing.T)
 func TestPostDriverSettlements_PreviewChecksTheFirstTwentyAndSaysSo(t *testing.T) {
 	t.Parallel()
 
-	book, ids := driverSettlementBatch(agent.MaxPreviewRecords+3, driversettlement.StatusApproved)
+	book, ids := driverSettlementBatch(
+		agentpreview.MaxPreviewRecords+3,
+		driversettlement.StatusApproved,
+	)
 	book.locked = true
 	tool := driverBulk(book, &postSettlements)
 
@@ -291,7 +295,7 @@ func TestPostDriverSettlements_PreviewChecksTheFirstTwentyAndSaysSo(t *testing.T
 	assert.True(t, preview.Partial)
 	assert.Contains(t, preview.Summary,
 		"Would post 23 driver settlements. Of the first 20 checked")
-	assert.Len(t, preview.Changes, agent.MaxPreviewRecords)
+	assert.Len(t, preview.Changes, agentpreview.MaxPreviewRecords)
 }
 
 func TestSettlementBulk_RefusesMoreThanFiftyAndDropsRepeats(t *testing.T) {

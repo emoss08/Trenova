@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -525,7 +525,7 @@ func (s *Service) SweepNoticesDue(
 			// read is a configuration problem and wakes nobody.
 			if policy != nil {
 				agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-					Kind:       agent.EventDetentionNoticeDue,
+					Kind:       agenttrigger.EventDetentionNoticeDue,
 					SubjectID:  occurrence.ID,
 					TenantInfo: tenantInfo,
 				})

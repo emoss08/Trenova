@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -42,24 +44,24 @@ func (f *fakeProposals) ListByThread(
 }
 
 type fakePlans struct {
-	plans []*agent.AgentPlan
+	plans []*agentplan.AgentPlan
 }
 
 func (f *fakePlans) ListByThread(
 	_ context.Context,
 	_ agentports.ListAgentPlansByThreadRequest,
-) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
 	return f.plans, nil
 }
 
 type fakeDecisions struct {
-	decisions []*agent.AgentDecision
+	decisions []*agentdecision.AgentDecision
 }
 
 func (f *fakeDecisions) ListByProposals(
 	_ context.Context,
 	_ agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
 
@@ -97,7 +99,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 		Status:   status,
 	}
 	f.proposals.proposals = append(f.proposals.proposals, proposal)
-	f.decisions.decisions = append(f.decisions.decisions, &agent.AgentDecision{
+	f.decisions.decisions = append(f.decisions.decisions, &agentdecision.AgentDecision{
 		ID:         pulid.MustNew("adec_"),
 		ProposalID: &proposal.ID,
 		CreatedAt:  at,
@@ -228,13 +230,13 @@ func TestResumeFollowUps_ReportsTheOldestDecisionFirst(t *testing.T) {
 	now := timeutils.NowUnix()
 	f.decide(agent.ProposalStatusExecuted, now)
 	older := now - 60
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:        pulid.MustNew("apl_"),
 		RunID:     f.runs.run.ID,
-		Status:    agent.PlanStatusFailed,
+		Status:    agentplan.PlanStatusFailed,
 		DecidedAt: &older,
 	}
-	f.plans.plans = []*agent.AgentPlan{plan}
+	f.plans.plans = []*agentplan.AgentPlan{plan}
 
 	f.resume(t)
 

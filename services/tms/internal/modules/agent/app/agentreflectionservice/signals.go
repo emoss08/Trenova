@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -41,7 +42,7 @@ var refusalVerdicts = []string{
 
 type DecidedProposal struct {
 	ToolName string
-	Outcome  agent.TrustOutcome
+	Outcome  agenttooltrust.TrustOutcome
 	Reason   string
 }
 
@@ -53,25 +54,29 @@ type Window struct {
 	Continues       bool
 }
 
-func ReadSignals(window *Window) agent.ReflectionSignals {
-	signals := make(agent.ReflectionSignals, 0, 8)
-	add := func(kind agent.ReflectionSignalKind, count int, detail string) {
+func ReadSignals(window *Window) agentreflection.ReflectionSignals {
+	signals := make(agentreflection.ReflectionSignals, 0, 8)
+	add := func(kind agentreflection.ReflectionSignalKind, count int, detail string) {
 		if count > 0 {
 			signals = append(
 				signals,
-				agent.ReflectionSignal{Kind: kind, Count: count, Detail: detail},
+				agentreflection.ReflectionSignal{Kind: kind, Count: count, Detail: detail},
 			)
 		}
 	}
 
 	failed, recovered, succeeded := readTools(window.Messages)
-	add(agent.ReflectionSignalToolRecovered, len(recovered), strings.Join(recovered, ", "))
-	add(agent.ReflectionSignalToolFailed, len(failed), strings.Join(failed, ", "))
+	add(
+		agentreflection.ReflectionSignalToolRecovered,
+		len(recovered),
+		strings.Join(recovered, ", "),
+	)
+	add(agentreflection.ReflectionSignalToolFailed, len(failed), strings.Join(failed, ", "))
 
 	if window.HasPerson {
 		corrected, standing := readPerson(window.Messages, window.Continues)
-		add(agent.ReflectionSignalPersonCorrected, corrected, "")
-		add(agent.ReflectionSignalStandingRequest, standing, "")
+		add(agentreflection.ReflectionSignalPersonCorrected, corrected, "")
+		add(agentreflection.ReflectionSignalStandingRequest, standing, "")
 	}
 
 	modified, rejected := make(
@@ -85,18 +90,26 @@ func ReadSignals(window *Window) agent.ReflectionSignals {
 	)
 	for _, proposal := range window.Proposals {
 		switch proposal.Outcome {
-		case agent.TrustOutcomeModified:
+		case agenttooltrust.TrustOutcomeModified:
 			modified = sliceutils.AppendIfMissing(modified, proposal.ToolName)
-		case agent.TrustOutcomeRejected:
+		case agenttooltrust.TrustOutcomeRejected:
 			rejected = sliceutils.AppendIfMissing(rejected, proposal.ToolName)
 		}
 	}
-	add(agent.ReflectionSignalProposalModified, len(modified), strings.Join(modified, ", "))
-	add(agent.ReflectionSignalProposalRejected, len(rejected), strings.Join(rejected, ", "))
-	add(agent.ReflectionSignalNegativeFeedback, window.NegativeRatings, "")
+	add(
+		agentreflection.ReflectionSignalProposalModified,
+		len(modified),
+		strings.Join(modified, ", "),
+	)
+	add(
+		agentreflection.ReflectionSignalProposalRejected,
+		len(rejected),
+		strings.Join(rejected, ", "),
+	)
+	add(agentreflection.ReflectionSignalNegativeFeedback, window.NegativeRatings, "")
 
 	if window.HasPerson && succeeded >= LongTaskToolCalls {
-		add(agent.ReflectionSignalLongTask, succeeded, "")
+		add(agentreflection.ReflectionSignalLongTask, succeeded, "")
 	}
 
 	return signals

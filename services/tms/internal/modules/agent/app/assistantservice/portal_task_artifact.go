@@ -3,7 +3,7 @@ package assistantservice
 import (
 	"maps"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -62,7 +62,7 @@ func portalTaskArtifact(callID string, result map[string]any) *assistantartifact
 // the card follows the run to what the portal said.
 func portalActionArtifact(
 	callID string,
-	executed *agent.ToolExecutionResult,
+	executed *agentrecord.ToolExecutionResult,
 ) *assistantartifact.Artifact {
 	if executed.Record == nil || executed.Record.EntityType != string(permission.KindPortalRun) {
 		return nil

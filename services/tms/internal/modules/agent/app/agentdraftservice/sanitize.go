@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -276,7 +277,7 @@ type sanitizedTrigger struct {
 	mode     agentdefinition.TriggerMode
 	cron     string
 	timezone string
-	events   []agent.EventKind
+	events   []agenttrigger.EventKind
 	interval int
 }
 
@@ -343,9 +344,9 @@ func (s *sanitizer) schedule(trigger *sanitizedTrigger) {
 }
 
 func (s *sanitizer) events(trigger *sanitizedTrigger) {
-	seen := make(map[agent.EventKind]struct{}, len(s.in.reply.EventKinds))
+	seen := make(map[agenttrigger.EventKind]struct{}, len(s.in.reply.EventKinds))
 	for _, raw := range s.in.reply.EventKinds {
-		kind := agent.EventKind(strings.TrimSpace(raw))
+		kind := agenttrigger.EventKind(strings.TrimSpace(raw))
 		if kind == "" {
 			continue
 		}

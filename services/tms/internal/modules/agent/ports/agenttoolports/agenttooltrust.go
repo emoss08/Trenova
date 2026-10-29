@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -14,7 +15,7 @@ type RecordToolTrustRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
 	ToolName          string
-	Outcome           agent.TrustOutcome
+	Outcome           agenttooltrust.TrustOutcome
 	At                int64
 }
 
@@ -55,12 +56,21 @@ type ListReadyToolTrustRequest struct {
 }
 
 type AgentToolTrustRepository interface {
-	ListReady(ctx context.Context, req ListReadyToolTrustRequest) ([]*agent.ToolTrust, error)
-	Record(ctx context.Context, req RecordToolTrustRequest) (*agent.ToolTrust, error)
-	ListByDefinition(ctx context.Context, req ListToolTrustRequest) ([]*agent.ToolTrust, error)
+	ListReady(
+		ctx context.Context,
+		req ListReadyToolTrustRequest,
+	) ([]*agenttooltrust.ToolTrust, error)
+	Record(ctx context.Context, req RecordToolTrustRequest) (*agenttooltrust.ToolTrust, error)
+	ListByDefinition(
+		ctx context.Context,
+		req ListToolTrustRequest,
+	) ([]*agenttooltrust.ToolTrust, error)
 	ListByDefinitionIDs(
 		ctx context.Context,
 		req ListToolTrustByDefinitionsRequest,
-	) (map[pulid.ID][]*agent.ToolTrust, error)
-	MarkTierChange(ctx context.Context, req MarkToolTierChangeRequest) (*agent.ToolTrust, error)
+	) (map[pulid.ID][]*agenttooltrust.ToolTrust, error)
+	MarkTierChange(
+		ctx context.Context,
+		req MarkToolTierChangeRequest,
+	) (*agenttooltrust.ToolTrust, error)
 }

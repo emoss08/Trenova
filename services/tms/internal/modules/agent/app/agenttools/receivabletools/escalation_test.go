@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +39,7 @@ func TestEscalation_RunsWhateverTheAgentsCeiling(t *testing.T) {
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
-		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	})
 
 	for name, policy := range escalationPolicies() {
@@ -84,7 +86,7 @@ func TestEscalation_KeepsATierAPersonSetOnTheAgent(t *testing.T) {
 		})
 
 		assert.Equal(t, agent.TierPropose, decision.Tier, name)
-		assert.Equal(t, agent.TierSourcePersonSetting, decision.Source, name)
+		assert.Equal(t, agenttooltrust.TierSourcePersonSetting, decision.Source, name)
 		assert.Equal(t, agent.TierPropose, agenttoolpolicy.StaticTier(definition, policy), name)
 	}
 }

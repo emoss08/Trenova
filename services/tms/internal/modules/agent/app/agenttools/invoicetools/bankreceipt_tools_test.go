@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
@@ -338,7 +338,7 @@ func TestMatchBankReceipt_PreviewRefusesAnAmountMismatch(t *testing.T) {
 	assert.Nil(t, receipts.matched, "a preview must not match")
 	assert.Contains(t, preview.Summary, "bank receipt ACH 4471")
 
-	matched := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	matched := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceBankReceipt, matched.Resource)
 	assert.Equal(t, "Matched", agenttoolstest.FindField(t, matched, "status").After)
 	payment := agenttoolstest.FindField(t, matched, "matchedCustomerPaymentId")
@@ -347,7 +347,7 @@ func TestMatchBankReceipt_PreviewRefusesAnAmountMismatch(t *testing.T) {
 	require.NotNil(t, matched.Money)
 	assert.True(t, matched.Money.Delta.Decimal.Equal(decimal.NewFromInt(-1250)))
 
-	closed := agenttoolstest.FindChange(t, preview, agent.PreviewOperationArchive)
+	closed := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationArchive)
 	assert.Equal(t, permission.ResourceBankReceiptWorkItem, closed.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -545,7 +545,7 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 	assert.Contains(t, preview.Summary, "leaving 250.00 USD unapplied")
 	assert.Contains(t, preview.Summary, "Bank receipt ACH 4471 would be matched")
 
-	created := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
+	created := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationCreate)
 	assert.Equal(t, permission.ResourceCustomerPayment, created.Resource)
 	assert.Equal(t, "ACH 4471", created.Label)
 	require.NotNil(t, created.Money)
@@ -553,7 +553,7 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 	require.Len(t, created.Money.Lines, 2)
 	assert.True(t, created.Money.Lines[1].After.Decimal.Equal(decimal.NewFromInt(250)))
 
-	var invoiceChange *agent.RecordChange
+	var invoiceChange *agentpreview.RecordChange
 	for i := range preview.Changes {
 		if preview.Changes[i].Resource == permission.ResourceInvoice {
 			invoiceChange = &preview.Changes[i]

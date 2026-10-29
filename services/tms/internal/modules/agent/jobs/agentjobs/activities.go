@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
@@ -852,14 +853,14 @@ func subjectEvidence(
 	subject *agentturn.RuntimeSubject,
 	runID pulid.ID,
 ) proposalrecorder.EvidenceFunc {
-	return func(action agentruntimeports.PendingAction, _ pulid.ID) []agent.EvidenceRef {
-		evidence := []agent.EvidenceRef{{
+	return func(action agentruntimeports.PendingAction, _ pulid.ID) []agentevidence.EvidenceRef {
+		evidence := []agentevidence.EvidenceRef{{
 			Type: "agent_run",
 			ID:   runID.String(),
 			Note: "proposed by " + action.ToolName,
 		}}
 		if subject != nil {
-			evidence = append(evidence, agent.EvidenceRef{
+			evidence = append(evidence, agentevidence.EvidenceRef{
 				Type: strings.ToLower(string(subject.Type)),
 				ID:   subject.ID,
 				Note: subject.Label,

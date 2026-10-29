@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
@@ -126,10 +127,10 @@ type shipmentReadsOutcome struct {
 	CommentsNote     string            `json:"commentsNote,omitempty"`
 	LeftOutForAccess string            `json:"leftOutForAccess,omitempty"`
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
-func (o *shipmentReadsOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+func (o *shipmentReadsOutcome) TaintedRecords() []agentrecord.RecordRef { return o.outside }
 
 func (t *getShipmentTool) withBatchReads(
 	holds shipmentports.ActiveHoldReader,
@@ -190,7 +191,7 @@ func (t *getShipmentTool) several(
 			commentRow, outside := commentRowOf(comment)
 			row.NewestComment = &commentRow
 			if outside {
-				outcome.outside = append(outcome.outside, agent.RecordRef{
+				outcome.outside = append(outcome.outside, agentrecord.RecordRef{
 					EntityType: agent.TaintEntityShipmentComment,
 					ID:         comment.ID.String(),
 				})

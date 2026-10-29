@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
@@ -17,13 +18,13 @@ import (
 type reportingTool struct {
 	recordingTool
 
-	result *agent.ToolExecutionResult
+	result *agentrecord.ToolExecutionResult
 }
 
 func (t *reportingTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := t.Execute(ctx, params); err != nil {
 		return nil, err
 	}
@@ -31,7 +32,7 @@ func (t *reportingTool) ExecuteWithResult(
 	return t.result, nil
 }
 
-func newReportingTool(result *agent.ToolExecutionResult, err error) *reportingTool {
+func newReportingTool(result *agentrecord.ToolExecutionResult, err error) *reportingTool {
 	return &reportingTool{
 		recordingTool: recordingTool{
 			name:      "report_create",
@@ -54,7 +55,7 @@ executed, so nothing can read it as executed without it.
 func TestExecute_RecordsWhatTheToolMade(t *testing.T) {
 	t.Parallel()
 
-	tool := newReportingTool(&agent.ToolExecutionResult{
+	tool := newReportingTool(&agentrecord.ToolExecutionResult{
 		Action: "created",
 		Kind:   "report",
 		Name:   "Shipments for\nPeak Distributing",
@@ -89,7 +90,7 @@ func TestExecute_BoundsWhatTheToolReports(t *testing.T) {
 	for _, key := range []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"} {
 		ids[key+"Id"] = strings.Repeat("x", 500)
 	}
-	tool := newReportingTool(&agent.ToolExecutionResult{
+	tool := newReportingTool(&agentrecord.ToolExecutionResult{
 		Action: "created",
 		Kind:   "report",
 		Name:   strings.Repeat("n", 5000),
@@ -123,7 +124,7 @@ func TestExecute_RecordsNoResultWhenTheToolFails(t *testing.T) {
 	t.Parallel()
 
 	tool := newReportingTool(
-		&agent.ToolExecutionResult{Action: "created", Kind: "report"},
+		&agentrecord.ToolExecutionResult{Action: "created", Kind: "report"},
 		errors.New("name taken"),
 	)
 	repo := &fakeProposalRepo{}

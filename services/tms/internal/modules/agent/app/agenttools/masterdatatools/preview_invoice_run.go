@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
@@ -62,8 +62,8 @@ func viewOfRun(run *invoicerun.InvoiceRun) *runView {
 	}
 }
 
-func runTotalMoney(change *agent.RecordChange, before, after *invoicerun.InvoiceRun) {
-	line := agent.MoneyLine{
+func runTotalMoney(change *agentpreview.RecordChange, before, after *invoicerun.InvoiceRun) {
+	line := agentpreview.MoneyLine{
 		Label: moneyLineRunTotal,
 		After: changepreview.KnownAmount(after.TotalAmount),
 	}
@@ -76,9 +76,9 @@ func runTotalMoney(change *agent.RecordChange, before, after *invoicerun.Invoice
 
 func proposedInvoiceChange(
 	plan *invoicerunports.InvoiceRunGroupPlan,
-	operation agent.PreviewOperation,
+	operation agentpreview.PreviewOperation,
 	before decimal.NullDecimal,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	view := &proposedInvoiceView{
 		CustomerID:    plan.CustomerID,
 		GroupLabel:    plan.GroupLabel,
@@ -102,11 +102,15 @@ func proposedInvoiceChange(
 		return nil, err
 	}
 	change.Operation = operation
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.CurrencyCode, agent.MoneyLine{
-		Label:  moneyLineRunTotal,
-		Before: before,
-		After:  changepreview.KnownAmount(plan.Total),
-	}), toolpreview.SensitiveAs("totalAmount"))
+	toolpreview.AttachMoney(
+		change,
+		toolpreview.MoneyBlock(plan.CurrencyCode, agentpreview.MoneyLine{
+			Label:  moneyLineRunTotal,
+			Before: before,
+			After:  changepreview.KnownAmount(plan.Total),
+		}),
+		toolpreview.SensitiveAs("totalAmount"),
+	)
 
 	return change, nil
 }
@@ -134,7 +138,7 @@ func groupPlansFromRun(run *invoicerun.InvoiceRun) []invoicerunports.InvoiceRunG
 func RenderBuiltRun(
 	_ *invoicerunports.PreviewInvoiceRunRequest,
 	run *invoicerun.InvoiceRun,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	header, err := toolpreview.Create(invoicepreview.RunRecord(run), viewOfRun(run),
 		toolpreview.Types(runDateTypes))
 	if err != nil {
@@ -142,12 +146,12 @@ func RenderBuiltRun(
 	}
 	runTotalMoney(header, nil, run)
 
-	changes := []*agent.RecordChange{header}
+	changes := []*agentpreview.RecordChange{header}
 	plans := groupPlansFromRun(run)
 	for idx := range plans {
 		change, changeErr := proposedInvoiceChange(
 			&plans[idx],
-			agent.PreviewOperationCreate,
+			agentpreview.PreviewOperationCreate,
 			decimal.NullDecimal{},
 		)
 		if changeErr != nil {
@@ -168,7 +172,7 @@ func RenderBuiltRun(
 func RenderMembership(
 	_ *invoicerunports.AdjustInvoiceRunMembershipRequest,
 	plan *invoicerunports.InvoiceRunChangePreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	header, err := toolpreview.Changed(
 		invoicepreview.RunRecord(plan.Before),
 		viewOfRun(plan.Before),
@@ -180,7 +184,7 @@ func RenderMembership(
 	}
 	runTotalMoney(header, plan.Before, plan.After)
 
-	changes := []*agent.RecordChange{header}
+	changes := []*agentpreview.RecordChange{header}
 	before := groupPlansFromRun(plan.Before)
 	afterPlans := groupPlansFromRun(plan.After)
 	for idx := range afterPlans {
@@ -193,7 +197,11 @@ func RenderMembership(
 		if idx < len(before) {
 			previous = changepreview.KnownAmount(before[idx].Total)
 		}
-		change, changeErr := proposedInvoiceChange(after, agent.PreviewOperationUpdate, previous)
+		change, changeErr := proposedInvoiceChange(
+			after,
+			agentpreview.PreviewOperationUpdate,
+			previous,
+		)
 		if changeErr != nil {
 			return nil, changeErr
 		}
@@ -231,13 +239,15 @@ func outcomeSummary(
 	return billed, total, notes
 }
 
-func groupChanges(plans []invoicerunports.InvoiceRunGroupPlan) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, len(plans))
+func groupChanges(
+	plans []invoicerunports.InvoiceRunGroupPlan,
+) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plans))
 	for idx := range plans {
 		plan := &plans[idx]
-		operation := agent.PreviewOperationCreate
+		operation := agentpreview.PreviewOperationCreate
 		if plan.Outcome != invoicerunports.InvoiceRunGroupBills {
-			operation = agent.PreviewOperationRun
+			operation = agentpreview.PreviewOperationRun
 		}
 		change, err := proposedInvoiceChange(plan, operation, decimal.NullDecimal{})
 		if err != nil {
@@ -252,7 +262,7 @@ func groupChanges(plans []invoicerunports.InvoiceRunGroupPlan) ([]*agent.RecordC
 func RenderCommit(
 	_ *invoicerunports.CommitInvoiceRunRequest,
 	plan *invoicerunports.InvoiceRunCommitPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if plan.AlreadyCommitted {
 		return toolpreview.Build(
 			invoicepreview.RunLabel(plan.Run) + " is already committed; committing it " +
@@ -283,13 +293,13 @@ func RenderCommit(
 	)
 
 	return toolpreview.Build(changepreview.WithNotes(summary, notes),
-		append([]*agent.RecordChange{header}, groups...)...), nil
+		append([]*agentpreview.RecordChange{header}, groups...)...), nil
 }
 
 func RenderStatementBill(
 	req *invoicerunports.BillStatementNowRequest,
 	plan *invoicerunports.StatementBillPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	header, err := toolpreview.Create(invoicepreview.RunRecord(plan.Run), viewOfRun(plan.Run),
 		toolpreview.Types(runDateTypes))
 	if err != nil {
@@ -311,5 +321,5 @@ func RenderStatementBill(
 	}
 
 	return toolpreview.Build(changepreview.WithNotes(summary, notes),
-		append([]*agent.RecordChange{header}, groups...)...), nil
+		append([]*agentpreview.RecordChange{header}, groups...)...), nil
 }

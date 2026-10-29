@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,7 +73,7 @@ func (r *MutationResolver) ReviseDeskMemory(ctx context.Context, id string, inpu
 	return deskMemoryToModel(revised), nil
 }
 
-func (r *MutationResolver) SetDeskMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*gqlmodel.DeskMemory, error) {
+func (r *MutationResolver) SetDeskMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*gqlmodel.DeskMemory, error) {
 	actor, err := r.deskActor(ctx, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (r *MutationResolver) DismissDeskMemory(ctx context.Context, id string) (*g
 	return deskMemoryToModel(dismissed), nil
 }
 
-func (r *MutationResolver) SetMemorySavingMode(ctx context.Context, mode agent.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error) {
+func (r *MutationResolver) SetMemorySavingMode(ctx context.Context, mode agentmemory.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error) {
 	actor, err := r.deskActor(ctx, permission.OpRead)
 	if err != nil {
 		return nil, err

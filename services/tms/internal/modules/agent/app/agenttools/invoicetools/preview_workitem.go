@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -41,7 +41,7 @@ func (a resolveWorkItemArgs) close(
 func (t *ResolveBankReceiptWorkItemTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	args, err := t.arguments(params)
 	if err != nil {
 		return nil, err

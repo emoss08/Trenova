@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -289,7 +290,7 @@ func (r *repository) ExpirePending(
 					plan.ID.EqCol(p.PlanID),
 					plan.OrganizationID.EqCol(p.OrganizationID),
 					plan.BusinessUnitID.EqCol(p.BusinessUnitID),
-					plan.Status.Eq(agent.PlanStatusApproving),
+					plan.Status.Eq(agentplan.PlanStatusApproving),
 				)),
 			).
 			Update(ctx, r.db.Keel(ctx), expiry()...)

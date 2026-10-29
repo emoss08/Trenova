@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -559,7 +561,7 @@ func TestOpenDelegate_HandsTheDelegateTheRecordsTheTurnIsAbout(t *testing.T) {
 	f := newDelegateFixture()
 	contexts := &capturingContexts{}
 	f.svc.contexts = contexts
-	f.request.Records = []agent.EntityRef{
+	f.request.Records = []agentpagecontext.EntityRef{
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
@@ -580,7 +582,7 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 
 	f := newDelegateFixture()
 	f.request.Call.Context = &agentruntime.DelegateContext{
-		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+		Records: []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		Results: []agentruntime.SharedResult{{
 			CallID:   "call_read",
 			ToolName: "shipment_get",

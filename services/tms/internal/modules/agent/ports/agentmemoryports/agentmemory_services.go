@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -18,9 +21,9 @@ import (
 // works out the agent from the run.
 type RememberRequest struct {
 	TenantInfo  pagination.TenantInfo
-	Kind        agent.MemoryKind
+	Kind        agentmemory.MemoryKind
 	Content     string
-	SubjectType agent.MemorySubjectType
+	SubjectType agentmemory.MemorySubjectType
 	SubjectID   pulid.ID
 	ToolName    string
 	ExpiresAt   *int64
@@ -29,7 +32,7 @@ type RememberRequest struct {
 	Taint       *agent.RunTaint
 	// Scope narrows who reads the memory; empty is the organization. A
 	// User memory is kept for OwnerUserID, a Role memory for RoleID.
-	Scope       agent.MemoryScope
+	Scope       agentmemory.MemoryScope
 	OwnerUserID pulid.ID
 	RoleID      pulid.ID
 	// Suggest keeps the memory as a suggestion rather than reading it into
@@ -42,17 +45,17 @@ type RememberRequest struct {
 	// up in, recorded as who it came from; only they accept a suggestion.
 	PersonUserID      pulid.ID
 	Replaces          pulid.ID
-	Source            agent.MemorySource
+	Source            agentmemory.MemorySource
 	AgentDefinitionID pulid.ID
 	ThreadID          pulid.ID
 	ReflectionID      pulid.ID
-	Evidence          *agent.MemoryEvidence
+	Evidence          *agentmemory.MemoryEvidence
 }
 
 type RememberPlan struct {
-	Memory   *agent.Memory
-	Existing *agent.Memory
-	Replaced *agent.Memory
+	Memory   *agentmemory.Memory
+	Existing *agentmemory.Memory
+	Replaced *agentmemory.Memory
 	Held     bool
 }
 
@@ -61,9 +64,9 @@ type RememberPlan struct {
 type UpdateAgentMemoryRequest struct {
 	ID          pulid.ID
 	TenantInfo  pagination.TenantInfo
-	Kind        agent.MemoryKind
+	Kind        agentmemory.MemoryKind
 	Content     string
-	SubjectType agent.MemorySubjectType
+	SubjectType agentmemory.MemorySubjectType
 	SubjectID   pulid.ID
 	ToolName    string
 	ExpiresAt   *int64
@@ -73,7 +76,7 @@ type UpdateAgentMemoryRequest struct {
 type SetAgentMemoryStatusRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
-	Status     agent.MemoryStatus
+	Status     agentmemory.MemoryStatus
 }
 
 // ReviewAgentMemoryRequest is a person saying they read a tainted memory and
@@ -94,8 +97,8 @@ type RecallAgentMemoriesRequest struct {
 	ReaderUserID pulid.ID
 	Query        string
 	IDs          []pulid.ID
-	Kind         agent.MemoryKind
-	SubjectType  agent.MemorySubjectType
+	Kind         agentmemory.MemoryKind
+	SubjectType  agentmemory.MemorySubjectType
 	SubjectID    pulid.ID
 	ToolName     string
 	Limit        int
@@ -106,8 +109,8 @@ type RecallAgentMemoriesRequest struct {
 // its words, and once retrieval can compare meanings, by that too. Match is
 // empty when nothing was searched for and the recall only narrowed.
 type RecalledMemory struct {
-	Memory *agent.Memory
-	Match  agent.MemoryMatch
+	Memory *agentmemory.Memory
+	Match  agentmemory.MemoryMatch
 }
 
 // MemoryContextRequest is the prompt builder's read: everything a run of
@@ -121,7 +124,7 @@ type MemoryContextRequest struct {
 	// in. Only their own memories and their roles' are read with the rest.
 	ReaderUserID pulid.ID
 	ToolNames    []string
-	Records      []agent.EntityRef
+	Records      []agentpagecontext.EntityRef
 	Query        retrievalports.QueryVector
 	// Text is what the turn asked, read for the words a memory shares with
 	// it when its meaning cannot be compared.
@@ -135,11 +138,11 @@ type MemoryContextRequest struct {
 // MemoryContext is what a prompt may carry, best first, and the records whose
 // memories it read. The prompt keeps as many as the agent's budget holds.
 type MemoryContext struct {
-	Memories []*agent.Memory
-	Subjects []agent.MemorySubject
+	Memories []*agentmemory.Memory
+	Subjects []agentmemory.MemorySubject
 	// Relevance is which of Memories bear on what the turn asked, by meaning
 	// or by shared words.
-	Relevance agent.MemoryRelevance
+	Relevance agentmemory.MemoryRelevance
 }
 
 // RecordMemoryUseRequest counts the memories a turn used: those that bore
@@ -154,7 +157,7 @@ type RecordMemoryUseRequest struct {
 type RankMemoriesRequest struct {
 	TenantInfo pagination.TenantInfo
 	Now        int64
-	Memories   []*agent.Memory
+	Memories   []*agentmemory.Memory
 	Query      retrievalports.QueryVector
 }
 
@@ -167,7 +170,7 @@ type MemoryRanker interface {
 // RankedMemories is the ranker's order and, when it could compare meanings,
 // the memories at or above the similarity floor for the turn's query.
 type RankedMemories struct {
-	Memories []*agent.Memory
+	Memories []*agentmemory.Memory
 	Similar  []pulid.ID
 	Semantic bool
 }
@@ -183,9 +186,9 @@ type AgentMemoryUsage struct {
 type ApproveAgentMemorySuggestionRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
-	Kind       agent.MemoryKind
+	Kind       agentmemory.MemoryKind
 	Content    string
-	Scope      agent.MemoryScope
+	Scope      agentmemory.MemoryScope
 	Version    int64
 }
 
@@ -210,12 +213,15 @@ type MemoryRecall interface {
 // in place of Execute when it runs in the turn; an approved proposal still
 // runs it through Execute.
 type MemoryRecordingTool interface {
-	Record(ctx context.Context, params agenttoolports.ToolExecuteParams) (*agent.Memory, error)
+	Record(
+		ctx context.Context,
+		params agenttoolports.ToolExecuteParams,
+	) (*agentmemory.Memory, error)
 }
 
 // DeskMemory is a memory as the person it is kept for sees it on the Desk.
 type DeskMemory struct {
-	Memory *agent.Memory
+	Memory *agentmemory.Memory
 	// SourceTitle is the conversation the memory was saved from; empty for
 	// one a person wrote themselves or one saved outside a conversation.
 	SourceTitle string
@@ -231,7 +237,7 @@ type DeskMemory struct {
 type DeskMemoryLink struct {
 	ID      pulid.ID
 	Content string
-	Status  agent.MemoryStatus
+	Status  agentmemory.MemoryStatus
 }
 
 // DeskMemoryRole is one of the person's roles, which the Desk offers as a
@@ -245,7 +251,7 @@ type DeskMemoryRole struct {
 
 // DeskMemoryCount is how many memories the person keeps in one scope.
 type DeskMemoryCount struct {
-	Scope  agent.MemoryScope
+	Scope  agentmemory.MemoryScope
 	RoleID pulid.ID
 	Label  string
 	Count  int
@@ -264,7 +270,7 @@ type DeskMemoryActor struct {
 
 type ListDeskMemoriesRequest struct {
 	Actor  *DeskMemoryActor
-	Scope  agent.MemoryScope
+	Scope  agentmemory.MemoryScope
 	RoleID pulid.ID
 	Query  string
 	After  string
@@ -281,7 +287,7 @@ type DeskMemoryPage struct {
 }
 
 type DeskMemorySettings struct {
-	SavingMode agent.MemorySavingMode
+	SavingMode agentmemory.MemorySavingMode
 	Roles      []DeskMemoryRole
 	// CanShareWithOrganization says the person may put a memory in front of
 	// the whole organization, kept at once or offered for an administrator.
@@ -294,7 +300,7 @@ type DeskMemorySettings struct {
 type CreateDeskMemoryRequest struct {
 	Actor   *DeskMemoryActor
 	Content string
-	Scope   agent.MemoryScope
+	Scope   agentmemory.MemoryScope
 	RoleID  pulid.ID
 }
 
@@ -304,7 +310,7 @@ type ReviseDeskMemoryRequest struct {
 	Actor   *DeskMemoryActor
 	ID      pulid.ID
 	Content string
-	Scope   agent.MemoryScope
+	Scope   agentmemory.MemoryScope
 	RoleID  pulid.ID
 	Version int64
 }
@@ -314,7 +320,7 @@ type ReviseDeskMemoryRequest struct {
 type SetDeskMemoryStatusRequest struct {
 	Actor  *DeskMemoryActor
 	ID     pulid.ID
-	Status agent.MemoryStatus
+	Status agentmemory.MemoryStatus
 }
 
 // ConfirmDeskMemoryRequest accepts a memory an agent offered, as the person
@@ -323,7 +329,7 @@ type ConfirmDeskMemoryRequest struct {
 	Actor   *DeskMemoryActor
 	ID      pulid.ID
 	Content string
-	Scope   agent.MemoryScope
+	Scope   agentmemory.MemoryScope
 	RoleID  pulid.ID
 	Version int64
 }
@@ -338,7 +344,7 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		req *RememberRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	PreviewRemember(
 		ctx context.Context,
 		req *RememberRequest,
@@ -348,19 +354,19 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		req *UpdateAgentMemoryRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	// PreviewSetStatus is the memory SetStatus would change, after the same
 	// checks, so a preview can say when the change would be refused.
 	PreviewSetStatus(
 		ctx context.Context,
 		req *SetAgentMemoryStatusRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	SetStatus(
 		ctx context.Context,
 		req SetAgentMemoryStatusRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	// Review clears a tainted memory's taint for the person who read it:
 	// from then on it is the organization's own, followed as written, and
 	// a turn that reads it is not tainted by it.
@@ -368,12 +374,12 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		req ReviewAgentMemoryRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
-	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
+	GetByID(ctx context.Context, req GetAgentMemoryByIDRequest) (*agentmemory.Memory, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentMemoryConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Memory], error)
+	) (*pagination.CursorListResult[*agentmemory.Memory], error)
 	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]RecalledMemory, error)
 	// MayManageShared reports whether the person holds agent-memory manage:
 	// the right to keep, change and approve what reaches other people's
@@ -391,31 +397,31 @@ type AgentMemoryService interface {
 	RecordCorrection(
 		ctx context.Context,
 		proposal *agent.AgentProposal,
-		decision *agent.AgentDecision,
-	) (*agent.Memory, error)
+		decision *agentdecision.AgentDecision,
+	) (*agentmemory.Memory, error)
 	ApproveSuggestion(
 		ctx context.Context,
 		req *ApproveAgentMemorySuggestionRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	DismissSuggestion(
 		ctx context.Context,
 		req DismissAgentMemorySuggestionRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Memory, error)
+	) (*agentmemory.Memory, error)
 	// Reader is who a person reads memories as: themselves and every role
 	// they hold, inherited ones included.
 	Reader(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		userID pulid.ID,
-	) (agent.MemoryReader, error)
+	) (agentmemory.MemoryReader, error)
 	// SavingMode is how the person wants what agents pick up kept.
 	SavingMode(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		userID pulid.ID,
-	) (agent.MemorySavingMode, error)
+	) (agentmemory.MemorySavingMode, error)
 
 	ListDesk(ctx context.Context, req *ListDeskMemoriesRequest) (*DeskMemoryPage, error)
 	// DeskByIDs reads the memories a conversation names, as many of them as
@@ -425,7 +431,7 @@ type AgentMemoryService interface {
 	SetSavingMode(
 		ctx context.Context,
 		actor *DeskMemoryActor,
-		mode agent.MemorySavingMode,
+		mode agentmemory.MemorySavingMode,
 	) (*DeskMemorySettings, error)
 	CreateDesk(ctx context.Context, req *CreateDeskMemoryRequest) (*DeskMemory, error)
 	ReviseDesk(ctx context.Context, req *ReviseDeskMemoryRequest) (*DeskMemory, error)

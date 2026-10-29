@@ -11,7 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -154,7 +154,7 @@ type graphQLListSpec struct {
 	// amounts shows each amount the record holds in minor units as the
 	// decimal a person reads, and filters it by that decimal (graphql_money.go).
 	amounts bool
-	marks   func(row map[string]any) (agent.RecordRef, bool)
+	marks   func(row map[string]any) (agentrecord.RecordRef, bool)
 
 	conditions []listCondition
 }
@@ -979,7 +979,7 @@ type graphQLListOutcome struct {
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 	// cursors are the edge cursors of items, in order, and window the call's
 	// cursor scope: what a page cut short resumes from. They are nil when the
 	// rows are not in the list's own order, so no cut can resume.
@@ -1010,7 +1010,7 @@ func (o graphQLListOutcome) CutPage(rows int) (any, bool) {
 }
 
 // keptRecords are the marked records among the rows a cut page kept.
-func keptRecords(marked []agent.RecordRef, items []map[string]any) []agent.RecordRef {
+func keptRecords(marked []agentrecord.RecordRef, items []map[string]any) []agentrecord.RecordRef {
 	if len(marked) == 0 {
 		return nil
 	}
@@ -1020,7 +1020,7 @@ func keptRecords(marked []agent.RecordRef, items []map[string]any) []agent.Recor
 			ids[id] = struct{}{}
 		}
 	}
-	out := make([]agent.RecordRef, 0, len(marked))
+	out := make([]agentrecord.RecordRef, 0, len(marked))
 	for _, ref := range marked {
 		if _, ok := ids[ref.ID]; ok {
 			out = append(out, ref)
@@ -1034,7 +1034,7 @@ func keptRecords(marked []agent.RecordRef, items []map[string]any) []agent.Recor
 // its callers and the runtime's taint carrier read it.
 //
 //nolint:gocritic // the outcome is passed by value wherever a list returns it
-func (o graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+func (o graphQLListOutcome) TaintedRecords() []agentrecord.RecordRef { return o.outside }
 
 // outsideRecords are the records among items that show text written outside
 // the organization in one of the fields named, each under its kind.
@@ -1042,11 +1042,11 @@ func outsideRecords(
 	resource permission.Resource,
 	fields []string,
 	items ...map[string]any,
-) []agent.RecordRef {
+) []agentrecord.RecordRef {
 	if len(fields) == 0 {
 		return nil
 	}
-	var out []agent.RecordRef
+	var out []agentrecord.RecordRef
 	for _, item := range items {
 		id, _ := item[recordIDField].(string)
 		if id == "" {
@@ -1054,7 +1054,7 @@ func outsideRecords(
 		}
 		for _, field := range fields {
 			if text, _ := item[field].(string); strings.TrimSpace(text) != "" {
-				out = append(out, agent.RecordRef{EntityType: resource.String(), ID: id})
+				out = append(out, agentrecord.RecordRef{EntityType: resource.String(), ID: id})
 				break
 			}
 		}
@@ -1063,7 +1063,7 @@ func outsideRecords(
 	return out
 }
 
-func markedRows(spec *graphQLListSpec, items []map[string]any) []agent.RecordRef {
+func markedRows(spec *graphQLListSpec, items []map[string]any) []agentrecord.RecordRef {
 	out := outsideRecords(spec.resource, spec.outside, items...)
 	if spec.marks == nil {
 		return out
@@ -1237,7 +1237,7 @@ func (p *besidePage) record() (map[string]any, error) {
 	return out, nil
 }
 
-func (p *besidePage) TaintedRecords() []agent.RecordRef { return p.page.outside }
+func (p *besidePage) TaintedRecords() []agentrecord.RecordRef { return p.page.outside }
 
 func (p *besidePage) PageRows() int { return p.page.PageRows() }
 

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -113,7 +113,7 @@ func (s *Service) Evaluate(
 	if result.Evaluated > 0 {
 		if !firstProposed.IsNil() {
 			agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-				Kind:       agent.EventAccountingPaymentProposed,
+				Kind:       agenttrigger.EventAccountingPaymentProposed,
 				SubjectID:  firstProposed,
 				TenantInfo: req.TenantInfo,
 			})

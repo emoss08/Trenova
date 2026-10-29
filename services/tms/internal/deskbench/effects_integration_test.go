@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -61,7 +64,7 @@ func (f *auditFixture) proposal(tool string, tier agent.AutonomyTier) *agent.Age
 		ToolName:       tool,
 		ToolParams:     map[string]any{},
 		Rationale:      "because",
-		Evidence:       []agent.EvidenceRef{},
+		Evidence:       []agentevidence.EvidenceRef{},
 		AutonomyTier:   tier,
 		Status:         agent.ProposalStatusExecuted,
 		ExecutedAt:     &executed,
@@ -73,14 +76,14 @@ func (f *auditFixture) decision(
 	proposal *agent.AgentProposal,
 	preview *int64,
 	undone bool,
-) *agent.AgentDecision {
+) *agentdecision.AgentDecision {
 	id := proposal.ID
-	decision := &agent.AgentDecision{
+	decision := &agentdecision.AgentDecision{
 		OrganizationID:       f.tenant.OrgID,
 		BusinessUnitID:       f.tenant.BuID,
 		ProposalID:           &id,
 		DecidedByUserID:      f.tenant.UserID,
-		Decision:             agent.DecisionAccepted,
+		Decision:             agentdecision.DecisionAccepted,
 		ReasonCode:           "approved",
 		PreviewTargetVersion: preview,
 	}
@@ -96,8 +99,8 @@ func (f *auditFixture) decision(
 func (f *auditFixture) step(
 	key, tool, callID, delegate string,
 	verdict string,
-) *agent.AgentRunStep {
-	return &agent.AgentRunStep{
+) *agentrunstep.AgentRunStep {
+	return &agentrunstep.AgentRunStep{
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
 		OwnerKind:      string(agent.RunOwnerAgentRun),
@@ -168,17 +171,20 @@ func TestAuditEffects_ReadsTheCasesRowsFromTheDatabase(t *testing.T) {
 
 	require.NoError(
 		t,
-		agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agent.AgentDecision{
+		agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agentdecision.AgentDecision{
 			f.decision(undone, nil, true),
 			f.decision(pinnedAtZero, version(1), false),
 			f.decision(directed, nil, false),
 		}),
 	)
-	require.NoError(t, agentdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agent.AgentRunStep{
-		f.step("fan", "delegate_task", "del_1", "", "ran"),
-		f.step("fanned", "shipment_hold", "w2", "del_1", "ran"),
-		f.step("directed", "dispatch_assign_move", "w3", "dir_1", "proposed"),
-	}))
+	require.NoError(
+		t,
+		agentdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agentrunstep.AgentRunStep{
+			f.step("fan", "delegate_task", "del_1", "", "ran"),
+			f.step("fanned", "shipment_hold", "w2", "del_1", "ran"),
+			f.step("directed", "dispatch_assign_move", "w3", "dir_1", "proposed"),
+		}),
+	)
 
 	bench := &Bench{deps: deps{
 		DB:          dbtest.NewRLSConnection(t, admin, dsn),

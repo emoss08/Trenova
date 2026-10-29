@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,14 +16,14 @@ import (
 
 type replacingRepo struct {
 	fakeMemoryRepo
-	stored  map[pulid.ID]*agent.Memory
+	stored  map[pulid.ID]*agentmemory.Memory
 	retired []pulid.ID
 }
 
 func (f *replacingRepo) GetByID(
 	_ context.Context,
 	req agentmemoryports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	memory, ok := f.stored[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("AgentMemory not found")
@@ -34,7 +35,7 @@ func (f *replacingRepo) GetByID(
 func (f *replacingRepo) SetStatus(
 	_ context.Context,
 	req agentmemoryports.SetAgentMemoryStatusQuery,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	f.retired = append(f.retired, req.ID)
 	memory := *f.stored[req.ID]
 	memory.Status = req.Status
@@ -51,8 +52,8 @@ func replacingService(repo *replacingRepo) *Service {
 	}
 }
 
-func newReplacingRepo(memories ...*agent.Memory) *replacingRepo {
-	repo := &replacingRepo{stored: make(map[pulid.ID]*agent.Memory, len(memories))}
+func newReplacingRepo(memories ...*agentmemory.Memory) *replacingRepo {
+	repo := &replacingRepo{stored: make(map[pulid.ID]*agentmemory.Memory, len(memories))}
 	for _, memory := range memories {
 		repo.stored[memory.ID] = memory
 	}
@@ -60,13 +61,13 @@ func newReplacingRepo(memories ...*agent.Memory) *replacingRepo {
 	return repo
 }
 
-func personalMemory(owner pulid.ID, status agent.MemoryStatus) *agent.Memory {
-	return &agent.Memory{
+func personalMemory(owner pulid.ID, status agentmemory.MemoryStatus) *agentmemory.Memory {
+	return &agentmemory.Memory{
 		ID:          pulid.MustNew("amem_"),
-		Kind:        agent.MemoryKindInstruction,
-		Source:      agent.MemorySourceAgent,
+		Kind:        agentmemory.MemoryKindInstruction,
+		Source:      agentmemory.MemorySourceAgent,
 		Status:      status,
-		Scope:       agent.MemoryScopeUser,
+		Scope:       agentmemory.MemoryScopeUser,
 		OwnerUserID: &owner,
 		Content:     "Show me the invoice",
 	}
@@ -76,23 +77,23 @@ func TestRemember_ReplacingThePersonsOwnMemoryKeepsItsReadersAndSavesAtOnce(t *t
 	t.Parallel()
 
 	person := pulid.MustNew("usr_")
-	old := personalMemory(person, agent.MemoryStatusActive)
+	old := personalMemory(person, agentmemory.MemoryStatusActive)
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
 	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:   tenant(),
-		Kind:         agent.MemoryKindInstruction,
+		Kind:         agentmemory.MemoryKindInstruction,
 		Content:      "Show me the queue item, not the invoice",
-		Scope:        agent.MemoryScopeOrganization,
+		Scope:        agentmemory.MemoryScopeOrganization,
 		PersonUserID: person,
 		Replaces:     old.ID,
 		RunID:        pulid.MustNew("arun_"),
 	}, userActor())
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.MemoryStatusActive, got.Status)
-	assert.Equal(t, agent.MemoryScopeUser, got.Scope)
+	assert.Equal(t, agentmemory.MemoryStatusActive, got.Status)
+	assert.Equal(t, agentmemory.MemoryScopeUser, got.Scope)
 	require.NotNil(t, got.OwnerUserID)
 	assert.Equal(t, person, *got.OwnerUserID)
 	require.NotNil(t, got.SupersedesID)
@@ -102,12 +103,12 @@ func TestRemember_ReplacingThePersonsOwnMemoryKeepsItsReadersAndSavesAtOnce(t *t
 func TestRemember_ReplacingAnOrganizationMemoryWaitsForSomeoneAllowedToChangeIt(t *testing.T) {
 	t.Parallel()
 
-	old := &agent.Memory{
+	old := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Source:  agent.MemorySourceUser,
-		Status:  agent.MemoryStatusActive,
-		Scope:   agent.MemoryScopeOrganization,
+		Kind:    agentmemory.MemoryKindFact,
+		Source:  agentmemory.MemorySourceUser,
+		Status:  agentmemory.MemoryStatusActive,
+		Scope:   agentmemory.MemoryScopeOrganization,
 		Content: "Acme's terms are net 30",
 	}
 	repo := newReplacingRepo(old)
@@ -122,15 +123,15 @@ func TestRemember_ReplacingAnOrganizationMemoryWaitsForSomeoneAllowedToChangeIt(
 	}, userActor())
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.MemoryStatusSuggested, got.Status)
-	assert.Equal(t, agent.MemoryScopeOrganization, got.Scope)
+	assert.Equal(t, agentmemory.MemoryStatusSuggested, got.Status)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, got.Scope)
 	assert.Empty(t, repo.retired)
 }
 
 func TestRemember_SomeoneElsesMemoryCannotBeReplaced(t *testing.T) {
 	t.Parallel()
 
-	old := personalMemory(pulid.MustNew("usr_"), agent.MemoryStatusActive)
+	old := personalMemory(pulid.MustNew("usr_"), agentmemory.MemoryStatusActive)
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
@@ -149,7 +150,7 @@ func TestRemember_ARetiredMemoryHasNothingLeftToReplace(t *testing.T) {
 	t.Parallel()
 
 	person := pulid.MustNew("usr_")
-	old := personalMemory(person, agent.MemoryStatusRetired)
+	old := personalMemory(person, agentmemory.MemoryStatusRetired)
 	repo := newReplacingRepo(old)
 	svc := replacingService(repo)
 
@@ -167,12 +168,12 @@ func TestRemember_AnAgentReplacesOnlyItsOwnAgentMemory(t *testing.T) {
 	t.Parallel()
 
 	owner := pulid.MustNew("agdef_")
-	old := &agent.Memory{
+	old := &agentmemory.Memory{
 		ID:                pulid.MustNew("amem_"),
-		Kind:              agent.MemoryKindProcedure,
-		Source:            agent.MemorySourceReflection,
-		Status:            agent.MemoryStatusActive,
-		Scope:             agent.MemoryScopeAgent,
+		Kind:              agentmemory.MemoryKindProcedure,
+		Source:            agentmemory.MemorySourceReflection,
+		Status:            agentmemory.MemoryStatusActive,
+		Scope:             agentmemory.MemoryScopeAgent,
 		AgentDefinitionID: &owner,
 		ReflectionID:      pulid.Must("arfl_"),
 		Content:           "Look up the move before assigning it",
@@ -185,23 +186,23 @@ func TestRemember_AnAgentReplacesOnlyItsOwnAgentMemory(t *testing.T) {
 
 	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:        tenant(),
-		Kind:              agent.MemoryKindProcedure,
+		Kind:              agentmemory.MemoryKindProcedure,
 		Content:           "Look up the move, then its stops, before assigning it",
 		AgentDefinitionID: owner,
-		Source:            agent.MemorySourceReflection,
+		Source:            agentmemory.MemorySourceReflection,
 		ReflectionID:      pulid.MustNew("arfl_"),
 		Replaces:          old.ID,
 	}, userActor())
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryStatusActive, got.Status)
-	assert.Equal(t, agent.MemoryScopeAgent, got.Scope)
+	assert.Equal(t, agentmemory.MemoryStatusActive, got.Status)
+	assert.Equal(t, agentmemory.MemoryScopeAgent, got.Scope)
 
 	_, err = svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo:        tenant(),
-		Kind:              agent.MemoryKindProcedure,
+		Kind:              agentmemory.MemoryKindProcedure,
 		Content:           "Something else",
 		AgentDefinitionID: pulid.MustNew("agdef_"),
-		Source:            agent.MemorySourceReflection,
+		Source:            agentmemory.MemorySourceReflection,
 		ReflectionID:      pulid.MustNew("arfl_"),
 		Replaces:          old.ID,
 	}, userActor())
@@ -212,8 +213,8 @@ func TestRemember_RestatingWhatAlreadyReplacedRetiresTheOldOne(t *testing.T) {
 	t.Parallel()
 
 	person := pulid.MustNew("usr_")
-	old := personalMemory(person, agent.MemoryStatusActive)
-	kept := personalMemory(person, agent.MemoryStatusActive)
+	old := personalMemory(person, agentmemory.MemoryStatusActive)
+	kept := personalMemory(person, agentmemory.MemoryStatusActive)
 	kept.Content = "Show me the queue item"
 	repo := newReplacingRepo(old, kept)
 	repo.found = kept
@@ -240,21 +241,28 @@ func TestReplacedFreely(t *testing.T) {
 	agentID := pulid.MustNew("agdef_")
 	role := pulid.MustNew("rol_")
 
-	assert.True(t, ReplacedFreely(personalMemory(person, agent.MemoryStatusActive), person, nil))
+	assert.True(
+		t,
+		ReplacedFreely(personalMemory(person, agentmemory.MemoryStatusActive), person, nil),
+	)
 	assert.False(
 		t,
-		ReplacedFreely(personalMemory(person, agent.MemoryStatusActive), pulid.Nil, nil),
+		ReplacedFreely(personalMemory(person, agentmemory.MemoryStatusActive), pulid.Nil, nil),
 	)
-	assert.True(t, ReplacedFreely(&agent.Memory{
-		Scope:             agent.MemoryScopeAgent,
+	assert.True(t, ReplacedFreely(&agentmemory.Memory{
+		Scope:             agentmemory.MemoryScopeAgent,
 		AgentDefinitionID: &agentID,
 	}, pulid.Nil, &agentID))
-	assert.False(t, ReplacedFreely(&agent.Memory{
-		Scope:  agent.MemoryScopeRole,
+	assert.False(t, ReplacedFreely(&agentmemory.Memory{
+		Scope:  agentmemory.MemoryScopeRole,
 		RoleID: &role,
 	}, person, &agentID))
 	assert.False(
 		t,
-		ReplacedFreely(&agent.Memory{Scope: agent.MemoryScopeOrganization}, person, &agentID),
+		ReplacedFreely(
+			&agentmemory.Memory{Scope: agentmemory.MemoryScopeOrganization},
+			person,
+			&agentID,
+		),
 	)
 }

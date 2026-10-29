@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -124,7 +125,7 @@ func parityInput() *transcriptInput {
 				AutonomyTier: agent.TierActWithApproval,
 				Status:       agent.ProposalStatusExecuted,
 				ExecutedAt:   &executedAt,
-				ExecutionResult: &agent.ToolExecutionResult{
+				ExecutionResult: &agentrecord.ToolExecutionResult{
 					Action: "created",
 					Kind:   "report",
 					Name:   "Revenue by customer",

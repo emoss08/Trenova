@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
@@ -79,9 +81,9 @@ type deskSeedRefs struct {
 	readerID    pulid.ID
 	messages    []*inboundmessage.InboundMessage
 	proposals   []*agent.AgentProposal
-	plans       []*agent.AgentPlan
+	plans       []*agentplan.AgentPlan
 	failedRuns  []*agent.AgentRun
-	exceptions  []*agent.AgentException
+	exceptions  []*agentexception.AgentException
 	insights    []*insight.Insight
 	agentNames  map[pulid.ID]string
 	definitions map[agenttemplate.Template]*agentdefinition.Definition
@@ -167,11 +169,11 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, db *keel.DB) error {
 		return fmt.Errorf("load pending proposals: %w", err)
 	}
 
-	r.plans = make([]*agent.AgentPlan, 0, 2)
+	r.plans = make([]*agentplan.AgentPlan, 0, 2)
 	if r.plans, err = agentdb.AgentPlans.AllTenants().Where(
 		agentdb.AgentPlans.OrganizationID.Eq(r.org.ID),
 		agentdb.AgentPlans.BusinessUnitID.Eq(r.org.BusinessUnitID),
-		agentdb.AgentPlans.Status.Eq(agent.PlanStatusPending),
+		agentdb.AgentPlans.Status.Eq(agentplan.PlanStatusPending),
 	).All(ctx, db); err != nil {
 		return fmt.Errorf("load pending plans: %w", err)
 	}
@@ -185,11 +187,11 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, db *keel.DB) error {
 		return fmt.Errorf("load failed runs: %w", err)
 	}
 
-	r.exceptions = make([]*agent.AgentException, 0, 2)
+	r.exceptions = make([]*agentexception.AgentException, 0, 2)
 	if r.exceptions, err = agentdb.AgentExceptions.AllTenants().Where(
 		agentdb.AgentExceptions.OrganizationID.Eq(r.org.ID),
 		agentdb.AgentExceptions.BusinessUnitID.Eq(r.org.BusinessUnitID),
-		agentdb.AgentExceptions.ResolutionState.Eq(agent.ResolutionStateOpen),
+		agentdb.AgentExceptions.ResolutionState.Eq(agentexception.ResolutionStateOpen),
 	).All(ctx, db); err != nil {
 		return fmt.Errorf("load open exceptions: %w", err)
 	}

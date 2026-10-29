@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -33,12 +33,12 @@ type queueListResponse struct {
 }
 
 type enqueueRequest struct {
-	Content               string              `json:"content"`
-	Context               *pageContextRequest `json:"context"`
-	Surface               agent.Surface       `json:"surface"`
-	ProviderID            *pulid.ID           `json:"providerId"`
-	AttachmentDocumentIDs []pulid.ID          `json:"attachmentDocumentIds"`
-	Mentions              []agent.EntityRef   `json:"mentions"`
+	Content               string                       `json:"content"`
+	Context               *pageContextRequest          `json:"context"`
+	Surface               agentpagecontext.Surface     `json:"surface"`
+	ProviderID            *pulid.ID                    `json:"providerId"`
+	AttachmentDocumentIDs []pulid.ID                   `json:"attachmentDocumentIds"`
+	Mentions              []agentpagecontext.EntityRef `json:"mentions"`
 	// DirectedAgentID hands the message to another agent the person may use,
 	// once the conversation is free.
 	DirectedAgentID pulid.ID `json:"directedAgentId"`

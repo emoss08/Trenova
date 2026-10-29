@@ -5,7 +5,7 @@ import { limitUtf8Bytes } from "@trenova/shared/lib/utils";
 import { AgentSubjectRecordKind } from "@trenova/shared/types/generated/record-kinds";
 import { formatFactTime } from "./lanes";
 
-/** The bounds the server holds a page's title and figures to, in UTF-8 bytes (agent.PageContext). */
+/** The bounds the server holds a page's title and figures to, in UTF-8 bytes (agentpagecontext.PageContext). */
 const MAX_KPIS = 12;
 const MAX_KPI_LABEL = 80;
 const MAX_KPI_VALUE = 60;

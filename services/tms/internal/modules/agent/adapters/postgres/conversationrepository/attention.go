@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -37,7 +38,7 @@ func threadAttentionQuery(
 	pendingPlans := keel.Scalar(pl.Join(run, run.ID.EqCol(pl.RunID)).
 		Pick(keel.Count()).
 		Where(
-			pl.Status.Eq(agent.PlanStatusPending),
+			pl.Status.Eq(agentplan.PlanStatusPending),
 			run.SubjectType.Eq(agent.SubjectAssistantThread),
 			run.SubjectID.EqCol(th.ID),
 		))

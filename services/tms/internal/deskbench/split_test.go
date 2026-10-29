@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/deskbench"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -97,7 +97,9 @@ func TestLoadScenarios_AssignsTheSameSplitWhenOneFileIsLoaded(t *testing.T) {
 		want[scenario.Name] = scenario.Split
 	}
 
-	one, err := deskbench.LoadScenarios([]string{filepath.Join(scenarioDir, "unattended-monitor.yaml")})
+	one, err := deskbench.LoadScenarios(
+		[]string{filepath.Join(scenarioDir, "unattended-monitor.yaml")},
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, one)
 	for _, scenario := range one {
@@ -124,7 +126,7 @@ func TestScenarioStratum_GroupsAnUnattendedScenarioByItsTemplate(t *testing.T) {
 			Name: "unattended-" + event,
 			Steps: []deskbench.Step{{Fire: &deskbench.Fire{
 				Agent: "BillingException",
-				Event: agent.EventKind(event),
+				Event: agenttrigger.EventKind(event),
 			}}},
 		}
 	}

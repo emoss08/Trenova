@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/safetydoc"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,10 +73,10 @@ func TestRenderEscapesTableCells(t *testing.T) {
 
 	doc := string(safetydoc.Render([]agenttoolports.ToolPolicy{{
 		Name:          "pipe_tool",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		MaxTier:       agent.TierAutoExecute,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Splits a | b\nacross lines",
 	}}))
 

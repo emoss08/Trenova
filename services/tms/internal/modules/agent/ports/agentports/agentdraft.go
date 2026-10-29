@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -34,7 +35,7 @@ type AgentDraft struct {
 	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
 	CronExpression         string                            `json:"cronExpression"`
 	CronTimezone           string                            `json:"cronTimezone"`
-	EventKinds             []agent.EventKind                 `json:"eventKinds"`
+	EventKinds             []agenttrigger.EventKind          `json:"eventKinds"`
 	IntervalSeconds        int                               `json:"intervalSeconds"`
 	ToolNames              []string                          `json:"toolNames"`
 	ToolTiers              map[string]agent.AutonomyTier     `json:"toolTiers"`

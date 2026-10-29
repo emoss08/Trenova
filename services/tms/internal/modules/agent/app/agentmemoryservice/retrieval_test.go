@@ -6,7 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -61,7 +62,7 @@ func TestRememberQueuesTheNewMemoryForIndexing(t *testing.T) {
 
 	memory, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
-		Kind:       agent.MemoryKindFact,
+		Kind:       agentmemory.MemoryKindFact,
 		Content:    "Acme closes at 3 PM on Fridays.",
 	}, userActor())
 	require.NoError(t, err)
@@ -73,13 +74,13 @@ func TestRememberDoesNotQueueAMemoryItAlreadyHad(t *testing.T) {
 	t.Parallel()
 
 	indexer := &fakeIndexer{}
-	existing := &agent.Memory{ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact}
+	existing := &agentmemory.Memory{ID: pulid.MustNew("amem_"), Kind: agentmemory.MemoryKindFact}
 	svc := newService(&fakeMemoryRepo{found: existing}, &fakeRuns{}, &fakeLabeler{})
 	svc.indexer = indexer
 
 	_, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
-		Kind:       agent.MemoryKindFact,
+		Kind:       agentmemory.MemoryKindFact,
 		Content:    "Acme closes at 3 PM on Fridays.",
 	}, userActor())
 	require.NoError(t, err)
@@ -95,7 +96,7 @@ func TestAnIndexingFailureNeverFailsTheWrite(t *testing.T) {
 
 	memory, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
 		TenantInfo: tenant(),
-		Kind:       agent.MemoryKindInstruction,
+		Kind:       agentmemory.MemoryKindInstruction,
 		Content:    "Always book Globex with an appointment.",
 	}, userActor())
 	require.NoError(t, err)
@@ -113,8 +114,8 @@ func TestRecordCorrectionQueuesTheCorrection(t *testing.T) {
 	memory, err := svc.RecordCorrection(
 		t.Context(),
 		proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"}),
-		&agent.AgentDecision{
-			Decision:        agent.DecisionModified,
+		&agentdecision.AgentDecision{
+			Decision:        agentdecision.DecisionModified,
 			Modifications:   map[string]any{"workerId": "wrk_b"},
 			DecidedByUserID: pulid.MustNew("usr_"),
 		},
@@ -127,21 +128,21 @@ func TestRecordCorrectionQueuesTheCorrection(t *testing.T) {
 type searchingMemoryRepo struct {
 	fakeMemoryRepo
 
-	byWords  []*agent.Memory
-	eligible []*agent.Memory
+	byWords  []*agentmemory.Memory
+	eligible []*agentmemory.Memory
 	searches []agentmemoryports.SearchAgentMemoriesRequest
 }
 
 func (f *searchingMemoryRepo) Search(
 	_ context.Context,
 	req agentmemoryports.SearchAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
 	f.searches = append(f.searches, req)
 	if req.Query != "" {
 		return f.byWords, nil
 	}
 
-	return slices.DeleteFunc(slices.Clone(f.eligible), func(memory *agent.Memory) bool {
+	return slices.DeleteFunc(slices.Clone(f.eligible), func(memory *agentmemory.Memory) bool {
 		return !slices.Contains(req.IDs, memory.ID)
 	}), nil
 }
@@ -161,8 +162,12 @@ func (f *fakeVectors) SimilarMemories(
 	return f.similar, f.err
 }
 
-func memoryNamed(content string) *agent.Memory {
-	return &agent.Memory{ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact, Content: content}
+func memoryNamed(content string) *agentmemory.Memory {
+	return &agentmemory.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agentmemory.MemoryKindFact,
+		Content: content,
+	}
 }
 
 func TestRecallFusesWordsAndMeaning(t *testing.T) {
@@ -175,8 +180,8 @@ func TestRecallFusesWordsAndMeaning(t *testing.T) {
 	hidden := memoryNamed("Kept for another agent.")
 
 	repo := &searchingMemoryRepo{
-		byWords:  []*agent.Memory{both, words},
-		eligible: []*agent.Memory{both, words, meaning, weak},
+		byWords:  []*agentmemory.Memory{both, words},
+		eligible: []*agentmemory.Memory{both, words, meaning, weak},
 	}
 	vectors := &fakeVectors{similar: retrievalports.SimilarMemories{
 		Memories: []retrievalports.MemorySimilarity{
@@ -202,14 +207,14 @@ func TestRecallFusesWordsAndMeaning(t *testing.T) {
 	require.Len(t, recalled, 3, "a memory the filters refuse or under the floor is left out")
 
 	assert.Equal(t, both.ID, recalled[0].Memory.ID)
-	assert.Equal(t, agent.MemoryMatchBoth, recalled[0].Match)
+	assert.Equal(t, agentmemory.MemoryMatchBoth, recalled[0].Match)
 
-	matches := make(map[pulid.ID]agent.MemoryMatch, len(recalled))
+	matches := make(map[pulid.ID]agentmemory.MemoryMatch, len(recalled))
 	for _, memory := range recalled {
 		matches[memory.Memory.ID] = memory.Match
 	}
-	assert.Equal(t, agent.MemoryMatchWords, matches[words.ID])
-	assert.Equal(t, agent.MemoryMatchMeaning, matches[meaning.ID])
+	assert.Equal(t, agentmemory.MemoryMatchWords, matches[words.ID])
+	assert.Equal(t, agentmemory.MemoryMatchMeaning, matches[meaning.ID])
 
 	require.Len(t, repo.searches, 2)
 	assert.ElementsMatch(t, []pulid.ID{meaning.ID, hidden.ID}, repo.searches[1].IDs,
@@ -224,7 +229,7 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 	t.Parallel()
 
 	found := memoryNamed("Globex allows two hours of free time.")
-	repo := &searchingMemoryRepo{byWords: []*agent.Memory{found}}
+	repo := &searchingMemoryRepo{byWords: []*agentmemory.Memory{found}}
 
 	cases := map[string]*fakeVectors{
 		"meaning unavailable": {similar: retrievalports.SimilarMemories{
@@ -248,12 +253,12 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Len(t, recalled, 1)
-			assert.Equal(t, agent.MemoryMatchWords, recalled[0].Match)
+			assert.Equal(t, agentmemory.MemoryMatchWords, recalled[0].Match)
 		})
 	}
 
 	svc := newService(&repo.fakeMemoryRepo, &fakeRuns{}, &fakeLabeler{})
-	svc.repo = &searchingMemoryRepo{eligible: []*agent.Memory{found}}
+	svc.repo = &searchingMemoryRepo{eligible: []*agentmemory.Memory{found}}
 	vectors := &fakeVectors{}
 	svc.vectors = vectors
 	listed, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
@@ -270,7 +275,7 @@ func TestFuseRecallHonoursTheLimit(t *testing.T) {
 	t.Parallel()
 
 	first, second, third := memoryNamed("a"), memoryNamed("b"), memoryNamed("c")
-	byID := map[pulid.ID]*agent.Memory{first.ID: first, second.ID: second, third.ID: third}
+	byID := map[pulid.ID]*agentmemory.Memory{first.ID: first, second.ID: second, third.ID: third}
 
 	recalled := FuseRecall(byID,
 		[]pulid.ID{first.ID, second.ID},
@@ -279,5 +284,5 @@ func TestFuseRecallHonoursTheLimit(t *testing.T) {
 	)
 	require.Len(t, recalled, 2)
 	assert.Equal(t, second.ID, recalled[0].Memory.ID)
-	assert.Equal(t, agent.MemoryMatchBoth, recalled[0].Match)
+	assert.Equal(t, agentmemory.MemoryMatchBoth, recalled[0].Match)
 }

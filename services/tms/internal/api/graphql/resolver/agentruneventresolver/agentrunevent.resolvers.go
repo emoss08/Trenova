@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -21,7 +21,7 @@ import (
 // constraint rather than a postgres enum -- the table takes far more writes
 // than it takes new event kinds, and a native enum would make every added kind
 // a non-transactional migration.
-func (r *AgentRunEventResolver) OwnerKind(ctx context.Context, obj *agent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error) {
+func (r *AgentRunEventResolver) OwnerKind(ctx context.Context, obj *agentrunevent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error) {
 	kind := gqlmodel.AgentRunEventOwnerKind(obj.OwnerKind)
 	if !kind.IsValid() {
 		return "", fmt.Errorf("unknown agent run event owner kind: %s", obj.OwnerKind)

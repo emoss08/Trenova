@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func TestProvenanceFields_RoundTrip(t *testing.T) {
 		ProposalID:      pulid.ID("ap_1"),
 		TraceID:         "4bf92f3577b34da6a3ce929d0e0e4736",
 		SpanID:          "00f067aa0ba902b7",
-		TierSource:      agent.TierSourceTrustEarned,
+		TierSource:      agenttooltrust.TierSourceTrustEarned,
 		ExecutedVersion: &executed,
 	}
 	attribution := aiusageports.AIUsageAttribution{

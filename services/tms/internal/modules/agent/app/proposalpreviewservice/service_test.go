@@ -8,6 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,14 +21,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func changeOf(t *testing.T, preview *agent.ProposalPreview) *agent.RecordChange {
+func changeOf(t *testing.T, preview *agentpreview.ProposalPreview) *agentpreview.RecordChange {
 	t.Helper()
 	require.NotEmpty(t, preview.Changes)
 
 	return &preview.Changes[0]
 }
 
-func fieldOf(t *testing.T, change *agent.RecordChange, path string) *agent.PreviewFieldChange {
+func fieldOf(
+	t *testing.T,
+	change *agentpreview.RecordChange,
+	path string,
+) *agentpreview.PreviewFieldChange {
 	t.Helper()
 	for i := range change.Fields {
 		if change.Fields[i].Path == path {
@@ -52,7 +60,7 @@ func TestForProposal_PreviewsInAReadOnlySnapshotAndDigestsWhatWasShown(t *testin
 	assert.True(t, f.db.opts[0].ReadOnly, "a preview never writes")
 	assert.Equal(t, sql.LevelRepeatableRead, f.db.opts[0].Isolation)
 
-	assert.Equal(t, agent.PreviewCoverageFull, preview.Coverage)
+	assert.Equal(t, agentpreview.PreviewCoverageFull, preview.Coverage)
 	assert.Equal(t, "Would set PRO PRO-100 to Cancelled.", preview.Summary)
 	assert.False(t, preview.IsStale())
 	require.NotNil(t, preview.TargetVersion)
@@ -133,20 +141,23 @@ func TestForProposal_LabelsTheRecordsItNames(t *testing.T) {
 func TestForProposal_WithholdsWhatTheReaderMayNotSee(t *testing.T) {
 	t.Parallel()
 
-	customerChange := &agent.RecordChange{
+	customerChange := &agentpreview.RecordChange{
 		Resource:  permission.ResourceCustomer,
 		EntityID:  pulid.MustNew("cus_"),
 		Label:     "Acme Foods",
-		Operation: agent.PreviewOperationSend,
-		Message:   &agent.MessagePreview{Channel: agent.MessageChannelEmail, Body: "Hello"},
+		Operation: agentpreview.PreviewOperationSend,
+		Message: &agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelEmail,
+			Body:    "Hello",
+		},
 	}
-	preview := &agent.ProposalPreview{Changes: []agent.RecordChange{
+	preview := &agentpreview.ProposalPreview{Changes: []agentpreview.RecordChange{
 		{
 			Resource:  permission.ResourceShipment,
 			EntityID:  pulid.MustNew("shp_"),
 			Label:     "PRO-100",
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{
 				{
 					Path:        "status",
 					Before:      "New",
@@ -163,13 +174,13 @@ func TestForProposal_WithholdsWhatTheReaderMayNotSee(t *testing.T) {
 					Path:   "customerId",
 					Before: "cus_1",
 					After:  "cus_2",
-					AfterRef: &agent.PreviewRef{
+					AfterRef: &agentpreview.PreviewRef{
 						Resource: permission.ResourceCustomer,
 						Label:    "Acme",
 					},
 				},
 			},
-			Money: &agent.MoneyPreview{Sensitivity: permission.SensitivityRestricted},
+			Money: &agentpreview.MoneyPreview{Sensitivity: permission.SensitivityRestricted},
 		},
 		*customerChange,
 	}}
@@ -202,7 +213,7 @@ func TestForProposal_WithholdsWhatTheReaderMayNotSee(t *testing.T) {
 	assert.True(t, customer.EntityID.IsNil())
 
 	assert.Equal(t, 4, preview.WithheldCount)
-	assert.True(t, preview.HasWarning(agent.PreviewWarningWithheld))
+	assert.True(t, preview.HasWarning(agentpreview.PreviewWarningWithheld))
 }
 
 func TestForProposal_WithheldValuesAreNotInTheDigest(t *testing.T) {
@@ -238,13 +249,13 @@ func TestForProposal_IsStaleWhenThePinnedRecordMoved(t *testing.T) {
 	f.versions.versions[f.tool.state.ID] = 4
 	f.tool.state.Status = "Hold"
 	proposal := f.proposal(f.cancelParams())
-	f.baselines.stored = []*agent.ProposalBaseline{{
+	f.baselines.stored = []*agentpreview.ProposalBaseline{{
 		ProposalID: proposal.ID,
-		Preview: &agent.ToolPreview{Changes: []agent.RecordChange{{
+		Preview: &agentpreview.ToolPreview{Changes: []agentpreview.RecordChange{{
 			Resource:  permission.ResourceShipment,
 			EntityID:  f.tool.state.ID,
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{
 				{Path: "status", Before: "New", After: "Cancelled"},
 			},
 		}}},
@@ -259,7 +270,7 @@ func TestForProposal_IsStaleWhenThePinnedRecordMoved(t *testing.T) {
 	assert.True(t, preview.IsStale())
 	assert.Equal(t, int64(3), preview.Staleness.ProposedVersion)
 	assert.Equal(t, int64(4), preview.Staleness.CurrentVersion)
-	assert.True(t, preview.HasWarning(agent.PreviewWarningTargetChanged))
+	assert.True(t, preview.HasWarning(agentpreview.PreviewWarningTargetChanged))
 
 	status := fieldOf(t, changeOf(t, preview), "status")
 	assert.True(t, status.ChangedSinceProposed)
@@ -281,7 +292,7 @@ func TestForProposal_IsStaleWhenThePinnedRecordIsGone(t *testing.T) {
 
 	assert.True(t, preview.IsStale())
 	assert.True(t, preview.Staleness.Missing)
-	assert.True(t, preview.HasWarning(agent.PreviewWarningRecordMissing))
+	assert.True(t, preview.HasWarning(agentpreview.PreviewWarningRecordMissing))
 }
 
 func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
@@ -301,10 +312,10 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PreviewCoverageUnavailable, preview.Coverage)
+	assert.Equal(t, agentpreview.PreviewCoverageUnavailable, preview.Coverage)
 	assert.Contains(t, preview.Summary, "Would run agent_raise_exception")
 	change := changeOf(t, preview)
-	assert.Equal(t, agent.PreviewOperationRun, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationRun, change.Operation)
 	assert.Equal(t, "x", fieldOf(t, change, "status").After)
 	assert.False(t, preview.IsStale(), "staleness is still read without a preview")
 	assert.Len(t, preview.Digest, 64)
@@ -325,8 +336,8 @@ func TestForProposal_APreviewThatRunsOutOfTimeIsUnavailable(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Less(t, time.Since(started), time.Second)
-	assert.Equal(t, agent.PreviewCoverageUnavailable, preview.Coverage)
-	require.True(t, preview.HasWarning(agent.PreviewWarningPreviewFailed))
+	assert.Equal(t, agentpreview.PreviewCoverageUnavailable, preview.Coverage)
+	require.True(t, preview.HasWarning(agentpreview.PreviewWarningPreviewFailed))
 	assert.Contains(t, preview.Warnings[0].Message, "took too long")
 	assert.NotNil(t, preview.Staleness, "the pin was read before the preview ran out of time")
 }
@@ -348,7 +359,7 @@ func TestForProposal_AFailingValidationIsAWarning(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.True(t, preview.HasWarning(agent.PreviewWarningWouldFail))
+	require.True(t, preview.HasWarning(agentpreview.PreviewWarningWouldFail))
 }
 
 func TestForProposal_RefusesChangesThatCouldNotRun(t *testing.T) {
@@ -373,7 +384,7 @@ func TestForProposal_ASelfScopedPreviewIsTheOwnersAlone(t *testing.T) {
 	personal := &previewingTool{baseTool: baseTool{
 		name:     "home_add_widget",
 		resource: permission.ResourceShipment,
-		scope:    agent.ToolScopeSelf,
+		scope:    agenttooltrust.ToolScopeSelf,
 	}}
 	f := newFixture(personal)
 	personal.state = f.tool.state
@@ -404,22 +415,22 @@ func TestForProposal_ReturnsTheRecordedPreviewOnceDecided(t *testing.T) {
 	f := newFixture()
 	proposal := f.proposal(f.cancelParams())
 	proposal.Status = agent.ProposalStatusExecuted
-	recorded := &agent.ProposalPreview{
-		Schema:     agent.PreviewSchemaVersion,
+	recorded := &agentpreview.ProposalPreview{
+		Schema:     agentpreview.PreviewSchemaVersion,
 		ProposalID: proposal.ID,
 		Summary:    "Would cancel PRO-100.",
-		Coverage:   agent.PreviewCoverageFull,
-		Changes: []agent.RecordChange{{
+		Coverage:   agentpreview.PreviewCoverageFull,
+		Changes: []agentpreview.RecordChange{{
 			Resource:  permission.ResourceShipment,
 			EntityID:  f.tool.state.ID,
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{{
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{{
 				Path: "status", Before: "New", After: "Cancelled",
 				Sensitivity: permission.SensitivityInternal,
 			}},
 		}},
 	}
-	f.decisions.decisions = []*agent.AgentDecision{{
+	f.decisions.decisions = []*agentdecision.AgentDecision{{
 		ID:             pulid.MustNew("ad_"),
 		OrganizationID: f.org,
 		BusinessUnitID: f.bu,
@@ -465,23 +476,26 @@ func TestForProposal_NamesTheRecordsARecordedPreviewLeftUnlabelled(t *testing.T)
 	}
 	proposal := f.proposal(f.cancelParams())
 	proposal.Status = agent.ProposalStatusExecuted
-	recorded := &agent.ProposalPreview{
-		Schema:     agent.PreviewSchemaVersion,
+	recorded := &agentpreview.ProposalPreview{
+		Schema:     agentpreview.PreviewSchemaVersion,
 		ProposalID: proposal.ID,
-		Coverage:   agent.PreviewCoverageFull,
-		Changes: []agent.RecordChange{{
+		Coverage:   agentpreview.PreviewCoverageFull,
+		Changes: []agentpreview.RecordChange{{
 			Resource:  permission.ResourceBillingQueue,
 			EntityID:  item,
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{{
-				Path:        "assignedBillerId",
-				After:       biller.String(),
-				AfterRef:    &agent.PreviewRef{Resource: permission.ResourceUser, ID: biller},
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{{
+				Path:  "assignedBillerId",
+				After: biller.String(),
+				AfterRef: &agentpreview.PreviewRef{
+					Resource: permission.ResourceUser,
+					ID:       biller,
+				},
 				Sensitivity: permission.SensitivityInternal,
 			}},
 		}},
 	}
-	f.decisions.decisions = []*agent.AgentDecision{{
+	f.decisions.decisions = []*agentdecision.AgentDecision{{
 		ID:             pulid.MustNew("ad_"),
 		OrganizationID: f.org,
 		BusinessUnitID: f.bu,
@@ -515,7 +529,7 @@ func TestForPlan_ProjectsLaterStepsFromEarlierOnes(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:             pulid.MustNew("apl_"),
 		OrganizationID: f.org,
 		BusinessUnitID: f.bu,
@@ -539,9 +553,9 @@ func TestForPlan_ProjectsLaterStepsFromEarlierOnes(t *testing.T) {
 	assert.Equal(t, "Hold", status.Before, "step 2 starts from what step 1 leaves")
 	assert.Equal(t, 1, status.ProjectedFromStep)
 	assert.Equal(t, 1, changeOf(t, later).DependsOnStep)
-	assert.True(t, later.HasWarning(agent.PreviewWarningDependsOnStep))
+	assert.True(t, later.HasWarning(agentpreview.PreviewWarningDependsOnStep))
 
-	want, err := agent.PlanPreviewDigest(plan.ID, preview.StepDigests())
+	want, err := agentpreview.PlanPreviewDigest(plan.ID, preview.StepDigests())
 	require.NoError(t, err)
 	assert.Equal(t, want, preview.Digest)
 	assert.False(t, preview.Stale)
@@ -653,9 +667,9 @@ func TestForProposal_AWouldFailNamesTheParameterEachReasonIsAbout(t *testing.T) 
 
 	require.Len(t, preview.Warnings, 1)
 	warning := preview.Warnings[0]
-	assert.Equal(t, agent.PreviewWarningWouldFail, warning.Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, warning.Code)
 	require.Len(t, warning.Reasons, 1)
-	assert.Equal(t, agent.PreviewReason{
+	assert.Equal(t, agentpreview.PreviewReason{
 		Field:   "status",
 		Label:   "Status",
 		Message: "A delivered shipment cannot be cancelled",
@@ -680,9 +694,9 @@ func TestForProposal_AFailingValidationNamesItsReasons(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	var refusal *agent.PreviewWarning
+	var refusal *agentpreview.PreviewWarning
 	for i := range preview.Warnings {
-		if preview.Warnings[i].Code == agent.PreviewWarningWouldFail {
+		if preview.Warnings[i].Code == agentpreview.PreviewWarningWouldFail {
 			refusal = &preview.Warnings[i]
 		}
 	}
@@ -800,7 +814,11 @@ func TestForPlan_EachStepSaysWhetherItMustBeReviewed(t *testing.T) {
 
 	f := newFixture()
 	f.checker.byClass = true
-	plan := &agent.AgentPlan{ID: pulid.MustNew("apl_"), OrganizationID: f.org, BusinessUnitID: f.bu}
+	plan := &agentplan.AgentPlan{
+		ID:             pulid.MustNew("apl_"),
+		OrganizationID: f.org,
+		BusinessUnitID: f.bu,
+	}
 	internal := f.proposal(map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "Hold"})
 	internal.PlanID, internal.PlanStep, internal.EgressClass = &plan.ID, 1, agent.EgressInternal
 	money := f.proposal(f.cancelParams())

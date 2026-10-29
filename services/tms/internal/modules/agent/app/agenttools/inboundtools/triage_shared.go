@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
@@ -244,8 +245,8 @@ func describeQueueState(state *inboundmessageports.QueueState) string {
 func renderQueuePlan(
 	summary string,
 	plan *inboundmessageservice.QueuePlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Changes))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Changes))
 	for _, change := range plan.Changes {
 		built, err := toolpreview.Changed(
 			toolpreview.Record{
@@ -302,8 +303,8 @@ func skippedNote(plan *inboundmessageservice.QueuePlan) string {
 func messageResult(
 	action string,
 	message *inboundmessage.InboundMessage,
-) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "inbound message",
 		Name:   describeInboundMessage(message),
@@ -312,8 +313,11 @@ func messageResult(
 	}
 }
 
-func bulkResult(action string, result *inboundmessageports.BulkResult) *agent.ToolExecutionResult {
-	out := &agent.ToolExecutionResult{
+func bulkResult(
+	action string,
+	result *inboundmessageports.BulkResult,
+) *agentrecord.ToolExecutionResult {
+	out := &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "inbound messages",
 		Name:   countMessages(result.Affected),
@@ -336,10 +340,10 @@ func bulkResult(action string, result *inboundmessageports.BulkResult) *agent.To
 func inboundMessageChange(
 	before, after *inboundmessage.InboundMessage,
 	opts ...toolpreview.Option,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(inboundMessageRecord(before), before, after, opts...)
 }
 
-func refusedPreview(summary string, err error) *agent.ToolPreview {
+func refusedPreview(summary string, err error) *agentpreview.ToolPreview {
 	return changepreview.WarnWouldFail(toolpreview.Build(summary), err)
 }

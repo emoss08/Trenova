@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -132,7 +132,7 @@ func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), approved)
 		},
 	)
@@ -190,7 +190,7 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
 		},
 	)
@@ -280,7 +280,7 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), unpinned)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 }
 
 func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *testing.T) {
@@ -302,7 +302,7 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

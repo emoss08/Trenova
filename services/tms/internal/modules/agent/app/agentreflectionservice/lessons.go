@@ -8,7 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -57,8 +58,8 @@ func ParseReply(text string) (*reflectionReply, error) {
 			err.Error(),
 		)
 	}
-	if len(reply.Lessons) > agent.MaxReflectionLessons {
-		reply.Lessons = reply.Lessons[:agent.MaxReflectionLessons]
+	if len(reply.Lessons) > agentreflection.MaxReflectionLessons {
+		reply.Lessons = reply.Lessons[:agentreflection.MaxReflectionLessons]
 	}
 
 	return &reply, nil
@@ -101,7 +102,7 @@ func (s *Service) Finish(
 		return outcomeOf(reflection), nil
 	}
 
-	changes := make([]agent.ReflectionChange, 0, len(reply.Lessons))
+	changes := make([]agentreflection.ReflectionChange, 0, len(reply.Lessons))
 	for idx := range reply.Lessons {
 		change, applyErr := s.apply(ctx, plan, &reply.Lessons[idx])
 		if applyErr != nil {
@@ -126,12 +127,12 @@ func (s *Service) apply(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
 	in *lesson,
-) (agent.ReflectionChange, error) {
-	change := agent.ReflectionChange{
-		Kind: agent.MemoryKind(in.Kind),
+) (agentreflection.ReflectionChange, error) {
+	change := agentreflection.ReflectionChange{
+		Kind: agentmemory.MemoryKind(in.Kind),
 		Content: stringutils.Ellipsize(
 			strings.TrimSpace(in.Content),
-			agent.MaxReflectionLessonChars,
+			agentreflection.MaxReflectionLessonChars,
 		),
 	}
 
@@ -140,7 +141,7 @@ func (s *Service) apply(
 		return change, err
 	}
 	if reason != "" {
-		change.Action = agent.ReflectionActionRefused
+		change.Action = agentreflection.ReflectionActionRefused
 		change.Reason = reason
 
 		return change, nil
@@ -152,8 +153,11 @@ func (s *Service) apply(
 		if !refused(err) {
 			return change, fmt.Errorf("keep a lesson: %w", err)
 		}
-		change.Action = agent.ReflectionActionRefused
-		change.Reason = stringutils.Ellipsize(err.Error(), agent.MaxReflectionChangeReason)
+		change.Action = agentreflection.ReflectionActionRefused
+		change.Reason = stringutils.Ellipsize(
+			err.Error(),
+			agentreflection.MaxReflectionChangeReason,
+		)
 
 		return change, nil
 	}
@@ -163,11 +167,11 @@ func (s *Service) apply(
 	change.SupersedesID = pulid.ClonePointer(memory.SupersedesID)
 	switch {
 	case memory.Refreshed:
-		change.Action = agent.ReflectionActionRefreshed
-	case memory.Status == agent.MemoryStatusSuggested:
-		change.Action = agent.ReflectionActionSuggested
+		change.Action = agentreflection.ReflectionActionRefreshed
+	case memory.Status == agentmemory.MemoryStatusSuggested:
+		change.Action = agentreflection.ReflectionActionSuggested
 	default:
-		change.Action = agent.ReflectionActionSaved
+		change.Action = agentreflection.ReflectionActionSaved
 	}
 
 	return change, nil
@@ -179,10 +183,10 @@ func (s *Service) lessonRequest(
 	in *lesson,
 ) (*agentmemoryports.RememberRequest, string, error) {
 	person := plan.PersonUserID
-	kind := agent.MemoryKind(strings.TrimSpace(in.Kind))
+	kind := agentmemory.MemoryKind(strings.TrimSpace(in.Kind))
 	switch kind {
-	case agent.MemoryKindProcedure, agent.MemoryKindFact:
-	case agent.MemoryKindInstruction:
+	case agentmemory.MemoryKindProcedure, agentmemory.MemoryKindFact:
+	case agentmemory.MemoryKindInstruction:
 		if person.IsNil() {
 			return nil, "An agent working with nobody in the work keeps no instructions", nil
 		}
@@ -194,8 +198,8 @@ func (s *Service) lessonRequest(
 	if content == "" {
 		return nil, "The lesson said nothing to keep", nil
 	}
-	if utf8.RuneCountInString(content) > agent.MaxReflectionLessonChars {
-		content = stringutils.Ellipsize(content, agent.MaxReflectionLessonChars)
+	if utf8.RuneCountInString(content) > agentreflection.MaxReflectionLessonChars {
+		content = stringutils.Ellipsize(content, agentreflection.MaxReflectionLessonChars)
 	}
 
 	req := &agentmemoryports.RememberRequest{
@@ -205,11 +209,11 @@ func (s *Service) lessonRequest(
 		RunID:             plan.RunID,
 		Taint:             plan.Taint.Clone(),
 		PersonUserID:      person,
-		Source:            agent.MemorySourceReflection,
+		Source:            agentmemory.MemorySourceReflection,
 		AgentDefinitionID: plan.AgentDefinitionID,
 		ThreadID:          plan.ThreadID,
 		ReflectionID:      plan.ReflectionID,
-		Evidence: &agent.MemoryEvidence{
+		Evidence: &agentmemory.MemoryEvidence{
 			Reason:  stringutils.Ellipsize(strings.TrimSpace(in.Why), maxWhyChars),
 			Quotes:  quotes(in.Evidence),
 			Signals: plan.Signals.Kinds(),
@@ -251,7 +255,7 @@ func subjectOf(
 		return ""
 	}
 
-	subjectType := agent.MemorySubjectType(strings.TrimSpace(in.SubjectType))
+	subjectType := agentmemory.MemorySubjectType(strings.TrimSpace(in.SubjectType))
 	id, err := pulid.Parse(raw)
 	if err != nil || !subjectType.IsValid() ||
 		!slices.Contains(plan.Subjects, agentports.ReflectionSubjectRef{
@@ -276,9 +280,9 @@ func (s *Service) audience(
 	suggest := plan.Tainted()
 
 	if person.IsNil() {
-		req.Scope = agent.MemoryScopeAgent
+		req.Scope = agentmemory.MemoryScopeAgent
 		if audience == audienceOrganization {
-			req.Scope = agent.MemoryScopeOrganization
+			req.Scope = agentmemory.MemoryScopeOrganization
 		}
 		req.Suggest = true
 
@@ -287,25 +291,25 @@ func (s *Service) audience(
 
 	switch audience {
 	case audienceAgent:
-		req.Scope = agent.MemoryScopeAgent
+		req.Scope = agentmemory.MemoryScopeAgent
 	case audienceTeam:
 		reader, err := s.memories.Reader(ctx, plan.TenantInfo, person)
 		if err != nil {
 			return "", err
 		}
 		if len(reader.RoleIDs) == 0 {
-			req.Scope = agent.MemoryScopeUser
+			req.Scope = agentmemory.MemoryScopeUser
 			req.OwnerUserID = person
 			break
 		}
-		req.Scope = agent.MemoryScopeRole
+		req.Scope = agentmemory.MemoryScopeRole
 		req.RoleID = reader.RoleIDs[0]
 		suggest = true
 	case audienceOrganization:
-		req.Scope = agent.MemoryScopeOrganization
+		req.Scope = agentmemory.MemoryScopeOrganization
 		suggest = true
 	default:
-		req.Scope = agent.MemoryScopeUser
+		req.Scope = agentmemory.MemoryScopeUser
 		req.OwnerUserID = person
 	}
 
@@ -314,7 +318,7 @@ func (s *Service) audience(
 		if err != nil {
 			return "", err
 		}
-		suggest = mode == agent.MemorySavingAskFirst
+		suggest = mode == agentmemory.MemorySavingAskFirst
 	}
 	req.Suggest = suggest
 
@@ -324,7 +328,7 @@ func (s *Service) audience(
 func (s *Service) attach(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
-	changes []agent.ReflectionChange,
+	changes []agentreflection.ReflectionChange,
 ) {
 	if plan.ThreadID.IsNil() || plan.ReplyMessageID.IsNil() {
 		return
@@ -337,7 +341,7 @@ func (s *Service) attach(
 		}
 		saved = append(saved, conversation.SavedMemory{
 			ID:      *change.MemoryID,
-			Pending: change.Action == agent.ReflectionActionSuggested,
+			Pending: change.Action == agentreflection.ReflectionActionSuggested,
 		})
 	}
 	if len(saved) == 0 {
@@ -360,7 +364,7 @@ func (s *Service) attach(
 func (s *Service) announce(
 	ctx context.Context,
 	plan *agentports.ReflectionPlan,
-	reflection *agent.Reflection,
+	reflection *agentreflection.Reflection,
 ) {
 	kept := reflection.KeptMemoryIDs()
 	if s.realtime == nil || plan.PersonUserID.IsNil() || len(kept) == 0 {
@@ -407,18 +411,18 @@ func quotes(evidence string) []string {
 	return []string{stringutils.Ellipsize(evidence, maxEvidenceChars)}
 }
 
-func outcomeOf(reflection *agent.Reflection) *agentports.ReflectionOutcome {
+func outcomeOf(reflection *agentreflection.Reflection) *agentports.ReflectionOutcome {
 	outcome := &agentports.ReflectionOutcome{
 		ReflectionID: reflection.ID,
 		Status:       reflection.Status,
 	}
 	for _, change := range reflection.Changes {
 		switch change.Action {
-		case agent.ReflectionActionSaved, agent.ReflectionActionRefreshed:
+		case agentreflection.ReflectionActionSaved, agentreflection.ReflectionActionRefreshed:
 			outcome.Kept++
-		case agent.ReflectionActionSuggested:
+		case agentreflection.ReflectionActionSuggested:
 			outcome.Offered++
-		case agent.ReflectionActionRefused:
+		case agentreflection.ReflectionActionRefused:
 			outcome.Refused++
 		}
 	}

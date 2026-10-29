@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,17 +28,17 @@ func testPolicies() fakePolicies {
 	return fakePolicies{
 		"update_worker": {
 			Name:     "update_worker",
-			Kind:     agent.ToolKindAction,
+			Kind:     agenttooltrust.ToolKindAction,
 			Resource: permission.ResourceWorker,
 		},
 		"pin_my_home": {
 			Name:  "pin_my_home",
-			Kind:  agent.ToolKindAction,
-			Scope: agent.ToolScopeSelf,
+			Kind:  agenttooltrust.ToolKindAction,
+			Scope: agenttooltrust.ToolScopeSelf,
 		},
 		"shipment_get": {
 			Name:     "shipment_get",
-			Kind:     agent.ToolKindQuery,
+			Kind:     agenttooltrust.ToolKindQuery,
 			Resource: permission.ResourceShipment,
 		},
 	}
@@ -180,7 +180,7 @@ func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
 		permissioncatalog.NewRegistry(),
 		fakePolicies{"report_create_table_change_alert": {
 			Name:     "report_create_table_change_alert",
-			Kind:     agent.ToolKindAction,
+			Kind:     agenttooltrust.ToolKindAction,
 			Resource: permission.ResourceTableChangeAlert,
 		}},
 		auditservice.NewSensitiveDataManager(config.EncryptionConfig{}),

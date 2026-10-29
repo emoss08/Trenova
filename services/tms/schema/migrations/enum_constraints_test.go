@@ -13,9 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
@@ -354,39 +357,39 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "chk_agent_evaluations_status",
-			values: stringsOf(agent.AllEvaluationStatuses()),
+			values: stringsOf(agentevaluation.AllEvaluationStatuses()),
 		},
 		{
 			name:   "chk_agent_memories_kind",
-			values: stringsOf(agent.AllMemoryKinds()),
+			values: stringsOf(agentmemory.AllMemoryKinds()),
 		},
 		{
 			name:   "chk_agent_memories_source",
-			values: stringsOf(agent.AllMemorySources()),
+			values: stringsOf(agentmemory.AllMemorySources()),
 		},
 		{
 			name:   "chk_agent_memories_status",
-			values: stringsOf(agent.AllMemoryStatuses()),
+			values: stringsOf(agentmemory.AllMemoryStatuses()),
 		},
 		{
 			name:   "chk_agent_memories_scope",
-			values: stringsOf(agent.AllMemoryScopes()),
+			values: stringsOf(agentmemory.AllMemoryScopes()),
 		},
 		{
 			name:   "chk_agent_memory_preferences_saving_mode",
-			values: stringsOf(agent.AllMemorySavingModes()),
+			values: stringsOf(agentmemory.AllMemorySavingModes()),
 		},
 		{
 			name:   "ck_agent_reflections_subject_type",
-			values: stringsOf(agent.AllReflectionSubjects()),
+			values: stringsOf(agentreflection.AllReflectionSubjects()),
 		},
 		{
 			name:   "ck_agent_reflections_status",
-			values: stringsOf(agent.AllReflectionStatuses()),
+			values: stringsOf(agentreflection.AllReflectionStatuses()),
 		},
 		{
 			name:   "ck_agent_reflections_skip_reason",
-			values: stringsOf(agent.AllReflectionSkips()),
+			values: stringsOf(agentreflection.AllReflectionSkips()),
 		},
 		{
 			name:   "ck_agent_profiles_subject",

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -178,7 +178,7 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -191,14 +191,14 @@ func TestEvaluateServiceFailures_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.Len(t, preview.Changes, 3)
 
 	refreshed := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationUpdate, refreshed.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, refreshed.Operation)
 	assert.Equal(t, existing.ID, refreshed.EntityID)
 	assert.Equal(t, "SF-3", refreshed.Label)
 	arrived := agenttoolstest.FieldByPath(t, refreshed, "actualArrival")
 	assert.Equal(t, "Arrived", arrived.Label)
 
 	opened := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, opened.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, opened.Operation)
 	assert.Equal(t, permission.ResourceServiceFailure, opened.Resource)
 	assert.Equal(t, "Late delivery, Delivery at Warehouse 12", opened.Label)
 	assert.Equal(t, "LateDelivery", agenttoolstest.FieldByPath(t, opened, "type").After)
@@ -238,7 +238,7 @@ func TestEvaluateServiceFailures_PreviewSaysWhenNothingIsLate(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), evaluateParams(entity))
 		},
 	)
@@ -261,11 +261,11 @@ func TestEvaluateServiceFailures_PreviewWarnsWhenTheShipmentIsRefused(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), evaluateParams(entity))
 		},
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

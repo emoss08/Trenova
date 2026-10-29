@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -442,7 +442,7 @@ func (s *service) announceCreated(
 	)
 
 	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
-		Kind:      agent.EventShipmentCreated,
+		Kind:      agenttrigger.EventShipmentCreated,
 		SubjectID: created.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: created.OrganizationID,

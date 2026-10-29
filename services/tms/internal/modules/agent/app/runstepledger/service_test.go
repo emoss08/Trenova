@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,15 +15,15 @@ import (
 )
 
 type fakeStepRepo struct {
-	claimed []*agent.AgentRunStep
+	claimed []*agentrunstep.AgentRunStep
 	settled []agentruntimeports.SettleAgentRunStepRequest
-	rows    []*agent.AgentRunStep
+	rows    []*agentrunstep.AgentRunStep
 }
 
 func (f *fakeStepRepo) Claim(
 	_ context.Context,
-	step *agent.AgentRunStep,
-) (*agent.AgentRunStep, error) {
+	step *agentrunstep.AgentRunStep,
+) (*agentrunstep.AgentRunStep, error) {
 	f.claimed = append(f.claimed, step)
 
 	return step, nil
@@ -38,19 +38,19 @@ func (f *fakeStepRepo) Settle(
 	return nil
 }
 
-func (f *fakeStepRepo) Record(context.Context, *agent.AgentRunStep) error { return nil }
+func (f *fakeStepRepo) Record(context.Context, *agentrunstep.AgentRunStep) error { return nil }
 
 func (f *fakeStepRepo) List(
 	context.Context,
 	agentruntimeports.ListAgentRunStepsRequest,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	return f.rows, nil
 }
 
 func (f *fakeStepRepo) Get(
 	context.Context,
 	*agentruntimeports.GetAgentRunStepRequest,
-) (*agent.AgentRunStep, error) {
+) (*agentrunstep.AgentRunStep, error) {
 	return nil, errors.New("not used")
 }
 
@@ -127,7 +127,7 @@ func TestLoaded_ReadsTheProvenanceBack(t *testing.T) {
 	t.Parallel()
 
 	version := int64(4)
-	repo := &fakeStepRepo{rows: []*agent.AgentRunStep{{
+	repo := &fakeStepRepo{rows: []*agentrunstep.AgentRunStep{{
 		OwnerKind:              string(agentruntimeports.RunStepOwnerAgentRun),
 		OwnerID:                pulid.MustNew("ar_"),
 		Kind:                   string(agentruntimeports.RunStepTool),

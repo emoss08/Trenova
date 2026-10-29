@@ -6,7 +6,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 )
 
@@ -25,7 +25,7 @@ func (RecencyRanker) RankMemories(
 	req *agentmemoryports.RankMemoriesRequest,
 ) (agentmemoryports.RankedMemories, error) {
 	if req == nil {
-		return agentmemoryports.RankedMemories{Memories: []*agent.Memory{}}, nil
+		return agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{}}, nil
 	}
 
 	return agentmemoryports.RankedMemories{
@@ -34,11 +34,11 @@ func (RecencyRanker) RankMemories(
 }
 
 type scoredMemory struct {
-	memory *agent.Memory
+	memory *agentmemory.Memory
 	score  float64
 }
 
-func RankByRecencyAndUse(memories []*agent.Memory, now int64) []*agent.Memory {
+func RankByRecencyAndUse(memories []*agentmemory.Memory, now int64) []*agentmemory.Memory {
 	mostUsed := 0
 	for _, memory := range memories {
 		if memory != nil {
@@ -69,7 +69,7 @@ func RankByRecencyAndUse(memories []*agent.Memory, now int64) []*agent.Memory {
 		return cmp.Compare(a.memory.ID.String(), b.memory.ID.String())
 	})
 
-	ranked := make([]*agent.Memory, 0, len(scored))
+	ranked := make([]*agentmemory.Memory, 0, len(scored))
 	for _, entry := range scored {
 		ranked = append(ranked, entry.memory)
 	}
@@ -77,7 +77,7 @@ func RankByRecencyAndUse(memories []*agent.Memory, now int64) []*agent.Memory {
 	return ranked
 }
 
-func recencyScore(memory *agent.Memory, now int64) float64 {
+func recencyScore(memory *agentmemory.Memory, now int64) float64 {
 	touched := max(memory.CreatedAt, memory.UpdatedAt)
 	age := max(now-touched, 0)
 

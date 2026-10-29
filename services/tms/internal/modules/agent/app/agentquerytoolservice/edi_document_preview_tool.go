@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
@@ -112,7 +114,7 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 func (t *previewEDIDocumentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceEDI,
 		rationale: "Renders the X12 a send would produce from records already in Trenova, " +
 			"with what the partner's Lading version found; nothing is saved and nothing is sent.",
@@ -135,10 +137,10 @@ type ediDocumentPreviewView struct {
 	rawX12Excerpt
 	Note string `json:"note"`
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
-func (v *ediDocumentPreviewView) TaintedRecords() []agent.RecordRef { return v.outside }
+func (v *ediDocumentPreviewView) TaintedRecords() []agentrecord.RecordRef { return v.outside }
 
 type documentPreviewCall struct {
 	set        edidocument.TransactionSet
@@ -185,7 +187,7 @@ func (t *previewEDIDocumentTool) Query(
 			return nil, vErr
 		}
 		view.Response = string(answered.Choice)
-		view.outside = []agent.RecordRef{
+		view.outside = []agentrecord.RecordRef{
 			{EntityType: ediTransferEntity, ID: call.transferID.String()},
 		}
 

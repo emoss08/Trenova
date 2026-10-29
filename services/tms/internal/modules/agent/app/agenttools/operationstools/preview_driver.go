@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptopreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -38,7 +38,7 @@ type ptoRejecter interface {
 func (t *NotifyDriverTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (t *NotifyDriverTool) Preview(
 func (t *RejectWorkerPTOTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (t *RejectWorkerPTOTool) Preview(
 func (t *CancelWorkerPTOTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func PtoDecisionOptions() []toolpreview.Option {
 func ptoDecisionPreview(
 	summary string,
 	decision *workerptoports.WorkerPTOTransitionPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	status, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceWorkerPTO,
@@ -136,7 +136,7 @@ func ptoDecisionPreview(
 		return nil, err
 	}
 
-	changes := []*agent.RecordChange{status}
+	changes := []*agentpreview.RecordChange{status}
 	if decision.Driver != nil {
 		changes = append(changes, outboundpreview.DriverMessageSend(decision.Driver))
 	}
@@ -147,8 +147,8 @@ func ptoDecisionPreview(
 				ID:       decision.Before.WorkerID,
 				Label:    outboundpreview.DriverName(decision.Driver),
 			},
-			&agent.MessagePreview{
-				Channel: agent.MessageChannelSMS,
+			&agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelSMS,
 				To:      []string{decision.SMS.PhoneNumber},
 				Body:    decision.SMS.Message,
 			},

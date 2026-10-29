@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -51,7 +51,7 @@ func DetectedFailureOptions() []toolpreview.Option {
 func (t *EvaluateServiceFailuresTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plans, err := t.plans(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -65,7 +65,7 @@ func (t *EvaluateServiceFailuresTool) Preview(
 	}
 
 	summaries := make([]string, 0, len(plans))
-	changes := make([]*agent.RecordChange, 0, len(plans))
+	changes := make([]*agentpreview.RecordChange, 0, len(plans))
 	for _, plan := range plans {
 		planChanges, changeErr := detectedFailureChanges(plan)
 		if changeErr != nil {
@@ -147,8 +147,8 @@ func restrictDetectionToStop(
 
 func detectedFailureChanges(
 	plan *servicefailureports.ServiceFailureDetectionPlan,
-) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Detected)+1)
+) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Detected)+1)
 	for idx := range plan.Detected {
 		change, err := detectedFailureChange(plan.Shipment, &plan.Detected[idx])
 		if err != nil {
@@ -178,7 +178,7 @@ func detectedFailureChanges(
 func detectedFailureChange(
 	source *shipment.Shipment,
 	detected *servicefailureports.DetectedServiceFailure,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	label := fmt.Sprintf(
 		"%s, %s",
 		stringutils.HumanizeCamelCaseSentence(string(detected.Failure.Type)),

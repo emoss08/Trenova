@@ -6,6 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -107,7 +110,7 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 		Summary:     stringutils.FirstNonEmpty(entity.Recommendation, entity.Narrative),
 		SubjectType: agent.SubjectInsight,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventInsightDetected,
+		EventKind:   agenttrigger.EventInsightDetected,
 		Path:        path,
 		OccurredAt:  entity.DetectedAt,
 	}
@@ -149,7 +152,10 @@ func DescribeProposal(
 }
 
 // DescribePlan is a plan waiting on a person, decided as one.
-func DescribePlan(entity *agent.AgentPlan, agentName string) watchtowerports.WatchtowerItemInput {
+func DescribePlan(
+	entity *agentplan.AgentPlan,
+	agentName string,
+) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -226,9 +232,9 @@ func DescribeFailedRun(
 
 // DescribeException is what an agent raised because it could not do its
 // work the way it was asked.
-func DescribeException(entity *agent.AgentException) watchtowerports.WatchtowerItemInput {
+func DescribeException(entity *agentexception.AgentException) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
-	if entity.Severity == agent.SeverityCritical {
+	if entity.Severity == agentexception.SeverityCritical {
 		severity = watchtower.SeverityCritical
 	}
 
@@ -282,7 +288,7 @@ func DescribeServiceFailure(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   entity.ShipmentID,
-		EventKind:   agent.EventServiceFailureDetected,
+		EventKind:   agenttrigger.EventServiceFailureDetected,
 		Path:        panelPath(pathServiceFailures, entity.ID.String()),
 		Record:      resourceRecord(permission.ResourceServiceFailure, entity.Number),
 		Facts: []watchtower.Fact{
@@ -335,7 +341,7 @@ func DescribeCarrierIntelEvent(
 		Summary:     entity.Summary,
 		SubjectType: agent.SubjectCarrierIntelEvent,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventCarrierIntelEventOpened,
+		EventKind:   agenttrigger.EventCarrierIntelEventOpened,
 		Path:        pathCarrierMonitor + "?tab=events&event=" + entity.ID.String(),
 		Record:      resourceRecord(permission.ResourceCarrier, name),
 		Facts: []watchtower.Fact{
@@ -451,7 +457,7 @@ func DescribeQuarantinedFile(
 		Summary:     entity.FailureReason,
 		SubjectType: agent.SubjectEDIInboundFile,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventEDIFileQuarantined,
+		EventKind:   agenttrigger.EventEDIFileQuarantined,
 		Path:        panelPath(pathEDIInbound, entity.ID.String()),
 		Record:      kindRecord(permission.KindEDIInboundFile, entity.FileName),
 		Facts: []watchtower.Fact{
@@ -484,7 +490,7 @@ func DescribeBillingException(
 		Summary:     entity.ExceptionNotes,
 		SubjectType: agent.SubjectBillingQueueItem,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventBillingQueueItemException,
+		EventKind:   agenttrigger.EventBillingQueueItemException,
 		Path:        panelPath(pathBillingQueue, entity.ID.String()),
 		Facts: []watchtower.Fact{
 			fact("Reason", reason),
@@ -564,7 +570,7 @@ func DescribeDetentionOccurrence(
 		Summary:     summary,
 		SubjectType: agent.SubjectDetentionOccurrence,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventDetentionOccurrenceOpened,
+		EventKind:   agenttrigger.EventDetentionOccurrenceOpened,
 		Path:        pathDetentionDesk + "?occurrence=" + entity.ID.String(),
 		Record:      shipmentRecord(entity.ShipmentProNumber),
 		Facts:       facts,
@@ -646,7 +652,7 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 		Summary:     strings.Join(parts, ", "),
 		SubjectType: agent.SubjectWorker,
 		SubjectID:   entity.WorkerID,
-		EventKind:   agent.EventWorkerCredentialExpiring,
+		EventKind:   agenttrigger.EventWorkerCredentialExpiring,
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
 		Record:      resourceRecord(permission.ResourceWorker, who),
 		Facts:       facts,
@@ -719,7 +725,7 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   entity.MoveID,
-		EventKind:   agent.EventShipmentMoveCoverageAtRisk,
+		EventKind:   agenttrigger.EventShipmentMoveCoverageAtRisk,
 		Path:        pathDispatchConsole,
 		Record:      resourceRecord(permission.ResourceShipmentMove, entity.ProNumber),
 		Facts: []watchtower.Fact{
@@ -756,7 +762,7 @@ func DescribeInboundMessage(
 		Summary:     inboundMessageSummary(entity),
 		SubjectType: agent.SubjectInboundMessage,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventInboundMessageClassified,
+		EventKind:   agenttrigger.EventInboundMessageClassified,
 		Path:        pathInbox + "?message=" + entity.ID.String(),
 		Record: resourceRecord(
 			permission.ResourceInboundMessage,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -123,7 +123,7 @@ func forOwner(kind kernelports.RunStepOwnerKind, id pulid.ID, delegateCallID str
 
 	switch kind {
 	case agentruntimeports.RunStepOwnerAgentRun:
-		if id.Prefix() == agent.EvaluationIDPrefix {
+		if id.Prefix() == agentevaluation.EvaluationIDPrefix {
 			return AnchorFor(AnchorEvaluation, id.String())
 		}
 		return AnchorFor(AnchorAgentRun, id.String())

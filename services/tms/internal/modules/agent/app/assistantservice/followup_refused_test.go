@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -51,7 +53,7 @@ func refusedProposal() *agent.AgentProposal {
 		ExecutionError: fmt.Errorf(
 			"%w: the shipment SEED-BENCH-CM-01 was at version 4 when this was proposed and is "+
 				"at version 5 now, so nothing was changed",
-			agent.ErrTargetChanged,
+			agentplan.ErrTargetChanged,
 		).Error(),
 	}
 }
@@ -98,10 +100,10 @@ func TestSendMessageStream_SaysNothingInAPlanRanWhenARecordMoved(t *testing.T) {
 	t.Parallel()
 
 	failedStep := 2
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:           pulid.MustNew("apl_"),
 		Title:        "Dock 4 notes for tomorrow",
-		Status:       agent.PlanStatusFailed,
+		Status:       agentplan.PlanStatusFailed,
 		StepCount:    3,
 		FailedStep:   &failedStep,
 		FailureError: "nothing ran, because a record the plan changes moved on after it was proposed",
@@ -119,7 +121,7 @@ func TestSendMessageStream_SaysNothingInAPlanRanWhenARecordMoved(t *testing.T) {
 	}
 	svc, conversations, completion := followUpService(t, moved)
 	svc.proposals = &stubProposalRepo{byThread: steps}
-	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
+	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{plan}}
 	anchors := &recordedAnchors{}
 	svc.anchors = anchors
 	actor := testActor()
@@ -156,7 +158,7 @@ func TestAnchorChanged_ReadsOnlyTheRefusedRecordsNotAlreadyInPlay(t *testing.T) 
 
 	got := svc.anchorChanged(t.Context(),
 		[]agentturn.RuntimeAnchor{{Kind: "shipment", ID: inPlay}},
-		[]agent.EntityRef{{ID: inPlay}, {ID: unread}, {ID: unread}},
+		[]agentpagecontext.EntityRef{{ID: inPlay}, {ID: unread}, {ID: unread}},
 		actor, actor.TenantInfo())
 
 	require.Len(t, anchors.asked, 1)

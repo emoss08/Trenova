@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -64,16 +65,16 @@ func (t *TransitionToInReviewTool) ParamSchema() map[string]any {
 func (t *TransitionToInReviewTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeRun,
+		Scope:         agenttooltrust.ToolScopeRun,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Condition: &agenttoolports.TierCondition{
 			Description: inReviewConditionDescription,
 			Limit:       t.tierLimit,

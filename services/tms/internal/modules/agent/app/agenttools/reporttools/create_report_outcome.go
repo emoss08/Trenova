@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -43,7 +44,7 @@ func classifyReportVisibility(params agenttoolports.ToolExecuteParams) agenttool
 func (t *CreateReportTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	save, err := t.prepare(params)
 	if err != nil {
 		return nil, err
@@ -55,7 +56,7 @@ func (t *CreateReportTool) ExecuteWithResult(
 	}
 
 	if created == nil {
-		return &agent.ToolExecutionResult{
+		return &agentrecord.ToolExecutionResult{
 			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil
@@ -66,12 +67,12 @@ func (t *CreateReportTool) ExecuteWithResult(
 
 // reportResult names a report definition a tool created, by the id the
 // report tools take and as the record it opens as.
-func reportResult(id, name string) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+func reportResult(id, name string) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: changepreview.ResultCreated,
 		Kind:   reportRecordEntity,
 		Name:   name,
 		IDs:    map[string]string{"definitionId": id},
-		Record: &agent.RecordRef{EntityType: reportRecordEntity, ID: id},
+		Record: &agentrecord.RecordRef{EntityType: reportRecordEntity, ID: id},
 	}
 }

@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -171,7 +173,7 @@ type DelegateCall struct {
 	Context              *DelegateContext `json:"context,omitempty"`
 	// MoneySpent is what the delegating turn's automatic money writes have
 	// moved and not yet recorded, which the delegate's own caps count.
-	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
+	MoneySpent agenttooltrust.MoneyUse `json:"moneySpent,omitzero"`
 	// Directed says the person chose the agent from the conversation rather
 	// than its agent asking for it, so the agent need not be on the
 	// conversation's agent's list. Only the runtime sets it, from a task the
@@ -180,8 +182,8 @@ type DelegateCall struct {
 }
 
 type DelegateContext struct {
-	Records []agent.RecordRef `json:"records,omitempty"`
-	Results []SharedResult    `json:"results,omitempty"`
+	Records []agentrecord.RecordRef `json:"records,omitempty"`
+	Results []SharedResult          `json:"results,omitempty"`
 }
 
 type SharedResult struct {
@@ -551,12 +553,12 @@ func (t *Turn) handedOver(
 	return handed, ""
 }
 
-func delegateRecords(raw any) (records []agent.RecordRef, refusal string) {
+func delegateRecords(raw any) (records []agentrecord.RecordRef, refusal string) {
 	items, _ := raw.([]any)
-	records = make([]agent.RecordRef, 0, len(items))
+	records = make([]agentrecord.RecordRef, 0, len(items))
 	for idx, item := range items {
 		fields, _ := item.(map[string]any)
-		record := agent.RecordRef{
+		record := agentrecord.RecordRef{
 			EntityType: stringArg(fields, "entityType"),
 			ID:         strings.TrimSpace(stringArg(fields, "id")),
 		}

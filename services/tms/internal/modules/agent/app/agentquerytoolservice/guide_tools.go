@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
@@ -83,8 +83,8 @@ func (t *findInTrenovaTool) ParamSchema() map[string]any {
 func (t *findInTrenovaTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
-		scope:    agent.ToolScopeSelf,
-		effect:   agent.ToolEffectDiscover,
+		scope:    agenttooltrust.ToolScopeSelf,
+		effect:   agenttooltrust.ToolEffectDiscover,
 		rationale: "Searches the product guide for the caller; nothing changes and nothing is " +
 			"sent.",
 	})
@@ -266,8 +266,8 @@ func (t *openPageTool) ParamSchema() map[string]any {
 func (t *openPageTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceAssistant,
-		scope:     agent.ToolScopeSelf,
-		effect:    agent.ToolEffectNavigate,
+		scope:     agenttooltrust.ToolScopeSelf,
+		effect:    agenttooltrust.ToolEffectNavigate,
 		rationale: "Opens a page in the caller's own browser; nothing changes and nothing is sent.",
 	})
 }

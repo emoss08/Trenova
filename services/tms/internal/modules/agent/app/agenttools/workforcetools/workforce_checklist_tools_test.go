@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
@@ -179,7 +180,7 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		checklists.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -193,7 +194,7 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		checklists.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -215,7 +216,7 @@ func TestUpdateWorkerChecklistItem_RoutesEachMove(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		checklists.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), complete)
 		},
 	)
@@ -258,7 +259,7 @@ func TestCancelWorkerChecklist_KeepsTheReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		checklists.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

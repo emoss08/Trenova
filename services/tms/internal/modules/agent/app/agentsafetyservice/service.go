@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -135,7 +136,7 @@ func PolicyView(policy agenttoolports.ToolPolicy) agenttoolports.AgentToolPolicy
 
 func OverriddenView(
 	declared agenttoolports.ToolPolicy,
-	override *agent.ToolRuleOverride,
+	override *agenttooltrust.ToolRuleOverride,
 ) agenttoolports.AgentToolPolicyView {
 	view := PolicyView(agenttoolpolicy.ApplyOverride(declared, override))
 	if override != nil {
@@ -150,9 +151,9 @@ func OverriddenView(
 func (s *Service) overridesFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (map[string]*agent.ToolRuleOverride, error) {
+) (map[string]*agenttooltrust.ToolRuleOverride, error) {
 	if s.rules == nil || tenantInfo.OrgID.IsNil() {
-		return map[string]*agent.ToolRuleOverride{}, nil
+		return map[string]*agenttooltrust.ToolRuleOverride{}, nil
 	}
 
 	rules, err := s.rules.For(ctx, tenantInfo)
@@ -208,7 +209,7 @@ func (s *Service) Assess(
 		return []agenttoolports.AgentToolSafety{}
 	}
 
-	trustByTool := make(map[string]*agent.ToolTrust, len(req.Trust))
+	trustByTool := make(map[string]*agenttooltrust.ToolTrust, len(req.Trust))
 	for _, row := range req.Trust {
 		if row != nil {
 			trustByTool[row.ToolName] = row
@@ -222,7 +223,7 @@ func (s *Service) Assess(
 			BuID:  req.Subject.Agent.BusinessUnitID,
 		})
 		if err != nil {
-			loaded = map[string]*agent.ToolRuleOverride{}
+			loaded = map[string]*agenttooltrust.ToolRuleOverride{}
 		}
 		rules = loaded
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -115,7 +115,7 @@ func TestResolveException_PreviewsThenResolves(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		exceptions.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -162,13 +162,13 @@ func TestAssignException_GivesTheItemToTheNamedPerson(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		exceptions.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationUpdate,
+		agentpreview.PreviewOperationUpdate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Nil(t, exceptions.saved)
@@ -187,9 +187,13 @@ func TestCommentOnException_PreviewsWithoutWriting(t *testing.T) {
 		paramCommentBody:      "Spot carrier quoting now",
 	})
 
-	agenttoolstest.PreviewWithoutWrites(t, exceptions.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	agenttoolstest.PreviewWithoutWrites(
+		t,
+		exceptions.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Empty(t, exceptions.comments)
 
 	require.NoError(t, tool.Execute(t.Context(), params))

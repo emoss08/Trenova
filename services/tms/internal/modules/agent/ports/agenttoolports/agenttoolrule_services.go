@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,12 +14,12 @@ type ToolRuleOverrides interface {
 	For(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (map[string]*agent.ToolRuleOverride, error)
+	) (map[string]*agenttooltrust.ToolRuleOverride, error)
 }
 
 type ToolRuleChange struct {
 	MaxTier       agent.AutonomyTier
-	ReadsExternal agent.ExternalRead
+	ReadsExternal agenttooltrust.ExternalRead
 }
 
 type SaveToolRuleRequest struct {
@@ -38,12 +39,12 @@ type ToolRuleImpactRequest struct {
 type AgentToolRuleImpact struct {
 	AgentID   pulid.ID
 	AgentName string
-	Before    agent.AutonomyAnswer
-	After     agent.AutonomyAnswer
+	Before    agenttooltrust.AutonomyAnswer
+	After     agenttooltrust.AutonomyAnswer
 }
 
 type SaveToolRuleResult struct {
-	Override *agent.ToolRuleOverride
+	Override *agenttooltrust.ToolRuleOverride
 	Affected []AgentToolRuleImpact
 }
 
@@ -53,7 +54,7 @@ type AgentToolRuleService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		toolName string,
-	) (*agent.ToolRuleOverride, error)
+	) (*agenttooltrust.ToolRuleOverride, error)
 	Impact(ctx context.Context, req *ToolRuleImpactRequest) ([]AgentToolRuleImpact, error)
 	Save(
 		ctx context.Context,

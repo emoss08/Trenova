@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
@@ -140,10 +142,10 @@ func (t *MatchBankReceiptTool) ParamSchema() map[string]any {
 func (t *MatchBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
-		Kind:        agent.ToolKindAction,
+		Kind:        agenttooltrust.ToolKindAction,
 		Resource:    permission.ResourceBankReceipt,
 		Operation:   permission.OpUpdate,
-		Scope:       agent.ToolScopeTenant,
+		Scope:       agenttooltrust.ToolScopeTenant,
 		DefaultTier: agent.TierActWithApproval,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
@@ -152,8 +154,8 @@ func (t *MatchBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 			Bounds:      t.withinBounds,
 			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
 		},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Matches a bank receipt to a posted payment, closing its reconciliation.",
 	}
 }
@@ -330,10 +332,10 @@ func (t *PostCustomerPaymentTool) ParamSchema() map[string]any {
 func (t *PostCustomerPaymentTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
-		Kind:        agent.ToolKindAction,
+		Kind:        agenttooltrust.ToolKindAction,
 		Resource:    permission.ResourceCustomerPayment,
 		Operation:   permission.OpCreate,
-		Scope:       agent.ToolScopeTenant,
+		Scope:       agenttooltrust.ToolScopeTenant,
 		DefaultTier: agent.TierActWithApproval,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
@@ -342,9 +344,9 @@ func (t *PostCustomerPaymentTool) Policy() agenttoolports.ToolPolicy {
 			Bounds:      t.withinBounds,
 			Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
 		},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Records a customer payment and applies it to invoices.",
 		Artifact:      changepreview.CustomerRecordEntity,
 	}
@@ -381,7 +383,7 @@ func (t *PostCustomerPaymentTool) Execute(
 func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return nil, err
@@ -391,7 +393,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	if err != nil {
 		return nil, err
 	}
-	result := &agent.ToolExecutionResult{
+	result := &agentrecord.ToolExecutionResult{
 		Action: "posted",
 		Kind:   "customer payment",
 		Name:   payment.ReferenceNumber,
@@ -399,7 +401,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 			"customerPaymentId": payment.ID.String(),
 			"customerId":        payment.CustomerID.String(),
 		},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.CustomerRecordEntity,
 			ID:         payment.CustomerID.String(),
 		},
@@ -421,7 +423,7 @@ func (t *PostCustomerPaymentTool) ExecuteWithResult(
 	if err != nil {
 		result.State += "; the bank receipt was not matched to it"
 		result.Total = 1
-		result.Failed = []agent.ExecutionItemFail{{
+		result.Failed = []agentrecord.ExecutionItemFail{{
 			ID:     args.receiptID.String(),
 			Label:  "bank receipt",
 			Reason: fmt.Sprintf("could not be matched to payment %s: %s", payment.ID, err),
@@ -654,15 +656,15 @@ func (t *ResolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 func (t *ResolveBankReceiptWorkItemTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceBankReceiptWorkItem,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Closes a reconciliation work item without moving money; the note is read " +
 			"inside the organization.",
 	}

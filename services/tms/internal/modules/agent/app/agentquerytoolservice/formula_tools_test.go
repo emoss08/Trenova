@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -139,7 +139,7 @@ func TestFormulaTools_Policies(t *testing.T) {
 	workbench := &fakeWorkbench{}
 	describe := (&describeFormulaLanguageTool{workbench: workbench}).Policy()
 	assert.Equal(t, permission.ResourceFormulaTemplate, describe.Resource)
-	assert.Equal(t, agent.ToolEffectLookup, describe.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, describe.Effect)
 
 	for _, policy := range []string{
 		(&checkFormulaTool{workbench: workbench}).Policy().Name,
@@ -148,11 +148,11 @@ func TestFormulaTools_Policies(t *testing.T) {
 		assert.NotEmpty(t, policy)
 	}
 	preview := (&previewFormulaTool{workbench: workbench}).Policy()
-	assert.Equal(t, agent.ToolKindQuery, preview.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindQuery, preview.Kind)
 
 	formula := newProposeSourceTool(&proposeFormulaSpec, workbench, &fakePermissions{})
-	assert.Equal(t, agent.ToolScopeSelf, formula.Policy().Scope)
-	assert.Equal(t, agent.ToolEffectPresent, formula.Policy().Effect)
+	assert.Equal(t, agenttooltrust.ToolScopeSelf, formula.Policy().Scope)
+	assert.Equal(t, agenttooltrust.ToolEffectPresent, formula.Policy().Effect)
 	assert.Equal(t, permission.ResourceFormulaTemplate, formula.Policy().Resource)
 	assert.True(t, pagedraft.IsEditTool(formula.Name()))
 
@@ -448,7 +448,7 @@ func TestGetFormulaTemplate_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
 	}}
 	tool := formulaGetTool(t, formulaTemplateGetSpec(), reader)
 	assert.Equal(t, permission.ResourceFormulaTemplate, tool.Policy().Resource)
-	assert.Equal(t, agent.ToolKindQuery, tool.Policy().Kind)
+	assert.Equal(t, agenttooltrust.ToolKindQuery, tool.Policy().Kind)
 
 	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"formulaTemplateId": id}))
 	require.NoError(t, err)

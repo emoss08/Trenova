@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -52,7 +53,7 @@ type shipmentActivity struct {
 	CommentsNote     string               `json:"commentsNote,omitempty"`
 	LeftOutForAccess string               `json:"leftOutForAccess,omitempty"`
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
 func newShipmentActivity(
@@ -74,7 +75,7 @@ func newShipmentActivity(
 		}
 		row, outside := commentRowOf(comment)
 		if outside {
-			activity.outside = append(activity.outside, agent.RecordRef{
+			activity.outside = append(activity.outside, agentrecord.RecordRef{
 				EntityType: agent.TaintEntityShipmentComment,
 				ID:         comment.ID.String(),
 			})
@@ -88,7 +89,7 @@ func newShipmentActivity(
 	return activity
 }
 
-func (a *shipmentActivity) TaintedRecords() []agent.RecordRef { return a.outside }
+func (a *shipmentActivity) TaintedRecords() []agentrecord.RecordRef { return a.outside }
 
 func commentRowOf(comment *shipment.ShipmentComment) (shipmentCommentRow, bool) {
 	outside := comment.WrittenOutside()

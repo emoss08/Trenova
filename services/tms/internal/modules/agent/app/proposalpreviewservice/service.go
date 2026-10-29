@@ -19,6 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -59,7 +62,7 @@ type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
 		req agentports.ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+	) ([]*agentdecision.AgentDecision, error)
 }
 
 type stepReader interface {
@@ -70,11 +73,11 @@ type stepReader interface {
 }
 
 type baselineStore interface {
-	Create(ctx context.Context, baseline *agent.ProposalBaseline) error
+	Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error
 	ListByProposals(
 		ctx context.Context,
 		req agentports.ListProposalBaselinesRequest,
-	) ([]*agent.ProposalBaseline, error)
+	) ([]*agentpreview.ProposalBaseline, error)
 }
 
 type Params struct {
@@ -153,7 +156,7 @@ func New(p Params) agentruntimeports.ProposalPreviewService {
 func (s *Service) ForProposal(
 	ctx context.Context,
 	req *agentruntimeports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	if req == nil || req.Proposal == nil {
 		return nil, errortypes.NewNotFoundError("Proposal not found")
 	}
@@ -202,7 +205,7 @@ func (s *Service) forProposal(
 	ctx context.Context,
 	req *agentruntimeports.ProposalPreviewRequest,
 	actor *permissionports.RequestActor,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	proposal := req.Proposal
 	reader := s.accessFor(req.Viewer)
 	if proposal.Status != agent.ProposalStatusPending {
@@ -228,7 +231,7 @@ func (s *Service) forProposal(
 func (s *Service) ForPlan(
 	ctx context.Context,
 	req *agentruntimeports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
+) (*agentpreview.PlanPreview, error) {
 	if req == nil || req.Plan == nil {
 		return nil, errortypes.NewNotFoundError("Agent plan not found")
 	}
@@ -244,11 +247,11 @@ func (s *Service) ForPlan(
 	}
 
 	reader := s.accessFor(req.Viewer)
-	preview := &agent.PlanPreview{
+	preview := &agentpreview.PlanPreview{
 		PlanID:         plan.ID,
-		Steps:          make([]agent.PlanStepPreview, 0, len(steps)),
+		Steps:          make([]agentpreview.PlanStepPreview, 0, len(steps)),
 		ComputedAt:     s.now(),
-		ReviewRequired: agent.PlanNeedsReview(steps),
+		ReviewRequired: agentplan.PlanNeedsReview(steps),
 	}
 
 	pending := make([]*draft, 0, len(steps))
@@ -266,7 +269,7 @@ func (s *Service) ForPlan(
 	s.chain(pending)
 
 	digests := make([]string, 0, len(pending))
-	byProposal := make(map[pulid.ID]*agent.ProposalPreview, len(pending))
+	byProposal := make(map[pulid.ID]*agentpreview.ProposalPreview, len(pending))
 	for _, d := range pending {
 		finished, finishErr := s.finish(ctx, d, reader)
 		if finishErr != nil {
@@ -288,7 +291,7 @@ func (s *Service) ForPlan(
 		stepPreview.ReviewRequired = step.Status == agent.ProposalStatusPending &&
 			s.reviewRequired(step, nil)
 		preview.WithheldCount += stepPreview.WithheldCount
-		preview.Steps = append(preview.Steps, agent.PlanStepPreview{
+		preview.Steps = append(preview.Steps, agentpreview.PlanStepPreview{
 			ProposalID: step.ID,
 			Step:       step.PlanStep,
 			Preview:    stepPreview,
@@ -296,7 +299,7 @@ func (s *Service) ForPlan(
 	}
 
 	if len(pending) > 0 {
-		preview.Digest, err = agent.PlanPreviewDigest(plan.ID, digests)
+		preview.Digest, err = agentpreview.PlanPreviewDigest(plan.ID, digests)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +336,7 @@ func (s *Service) draftStep(
 
 func (s *Service) planSteps(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	given []*agent.AgentProposal,
 ) ([]*agent.AgentProposal, error) {
 	steps := given
@@ -369,9 +372,9 @@ func (s *Service) planSteps(
 
 func (s *Service) ForDecision(
 	ctx context.Context,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	viewer *agentruntimeports.PreviewViewer,
-) *agent.ProposalPreview {
+) *agentpreview.ProposalPreview {
 	if decision == nil || decision.Preview == nil {
 		return nil
 	}
@@ -386,7 +389,7 @@ func (s *Service) ForDecision(
 func (s *Service) observe(
 	span trace.Span,
 	tool string,
-	preview *agent.ProposalPreview,
+	preview *agentpreview.ProposalPreview,
 	started time.Time,
 ) {
 	if preview == nil {

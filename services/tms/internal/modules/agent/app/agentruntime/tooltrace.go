@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -144,7 +144,7 @@ func derivedVerdict(failed bool, action *agentruntimeports.PendingAction) string
 func stampAction(
 	ctx context.Context,
 	action *agentruntimeports.PendingAction,
-	source agent.TierSource,
+	source agenttooltrust.TierSource,
 	stepKey string,
 ) {
 	action.ProposalID = pulid.MustNew("ap_")

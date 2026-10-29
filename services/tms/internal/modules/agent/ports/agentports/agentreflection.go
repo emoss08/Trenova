@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -25,9 +25,15 @@ type ListAgentReflectionConnectionRequest struct {
 }
 
 type AgentReflectionRepository interface {
-	Claim(ctx context.Context, entity *agent.Reflection) (*agent.Reflection, error)
-	GetByID(ctx context.Context, req GetAgentReflectionRequest) (*agent.Reflection, error)
-	Update(ctx context.Context, entity *agent.Reflection) (*agent.Reflection, error)
+	Claim(
+		ctx context.Context,
+		entity *agentreflection.Reflection,
+	) (*agentreflection.Reflection, error)
+	GetByID(ctx context.Context, req GetAgentReflectionRequest) (*agentreflection.Reflection, error)
+	Update(
+		ctx context.Context,
+		entity *agentreflection.Reflection,
+	) (*agentreflection.Reflection, error)
 	ThreadReflectedThrough(
 		ctx context.Context,
 		req ThreadReflectedThroughRequest,
@@ -35,5 +41,5 @@ type AgentReflectionRepository interface {
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentReflectionConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Reflection], error)
+	) (*pagination.CursorListResult[*agentreflection.Reflection], error)
 }

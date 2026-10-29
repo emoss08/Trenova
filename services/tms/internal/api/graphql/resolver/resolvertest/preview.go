@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -85,8 +87,8 @@ func (p *PreviewPlans) AssertOwnPlan(
 func (p *PreviewPlans) GetByID(
 	_ context.Context,
 	req agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
-	return &agent.AgentPlan{ID: req.ID}, nil
+) (*agentplan.AgentPlan, error) {
+	return &agentplan.AgentPlan{ID: req.ID}, nil
 }
 
 type PreviewService struct {
@@ -96,25 +98,25 @@ type PreviewService struct {
 	Plans     int
 	Viewer    *agentruntimeports.PreviewViewer
 	Mods      map[string]any
-	Warnings  []agent.PreviewWarning
+	Warnings  []agentpreview.PreviewWarning
 }
 
 func (s *PreviewService) ForProposal(
 	_ context.Context,
 	req *agentruntimeports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	s.Proposals++
 	s.Viewer = req.Viewer
 	s.Mods = req.Modifications
 
-	return &agent.ProposalPreview{ProposalID: req.Proposal.ID, Warnings: s.Warnings}, nil
+	return &agentpreview.ProposalPreview{ProposalID: req.Proposal.ID, Warnings: s.Warnings}, nil
 }
 
 func (s *PreviewService) ForPlan(
 	_ context.Context,
 	req *agentruntimeports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
+) (*agentpreview.PlanPreview, error) {
 	s.Plans++
 
-	return &agent.PlanPreview{PlanID: req.Plan.ID}, nil
+	return &agentpreview.PlanPreview{PlanID: req.Plan.ID}, nil
 }

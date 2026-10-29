@@ -2,8 +2,8 @@ package aianalyticsrepository
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
@@ -209,7 +209,7 @@ func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.Wo
 		Group(keys...)
 }
 
-func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agent.AgentDecision] {
+func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agentdecision.AgentDecision] {
 	d := agentdb.AgentDecisions
 	p := agentdb.AgentProposals
 	w := aianalyticsdb.WorkUnits
@@ -218,9 +218,9 @@ func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agent.AgentDec
 	return d.Join(p, p.ID.EqCol(d.ProposalID)).
 		Join(w, w.DecisionRunID.EqCol(p.RunID)).
 		Pick(append(append([]keel.Expr{}, keys...),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionAccepted)),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionModified)),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionRejected)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionAccepted)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionModified)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionRejected)),
 		)...).
 		Where(append(unitScope(w, filter),
 			d.CreatedAt.Gte(filter.Since),

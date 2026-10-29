@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,9 +42,9 @@ type Item struct {
 	// SubjectType and SubjectID name the record an agent would work on if
 	// the item is handed to one; EventKind is the event that hand-off
 	// publishes. Empty when the source has no agent subject.
-	SubjectType agent.SubjectType `json:"subjectType" keel:"subject_type,nullzero"`
-	SubjectID   pulid.ID          `json:"subjectId"   keel:"subject_id,nullzero"`
-	EventKind   agent.EventKind   `json:"eventKind"   keel:"event_kind,nullzero"`
+	SubjectType agent.SubjectType      `json:"subjectType" keel:"subject_type,nullzero"`
+	SubjectID   pulid.ID               `json:"subjectId"   keel:"subject_id,nullzero"`
+	EventKind   agenttrigger.EventKind `json:"eventKind"   keel:"event_kind,nullzero"`
 
 	// Path opens the source record. It is built by the server and validated
 	// like an insight's link, so a stored path can only be an application path.
@@ -87,9 +88,9 @@ type Item struct {
 	Seen bool `json:"seen"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-" keel:"inserted,computed"`
+	Inserted bool `json:"-"    keel:"inserted,computed"`
 	// Reopened is set by an upsert that brought a resolved item back.
-	Reopened  bool `json:"-" keel:"reopened,computed"`
+	Reopened  bool `json:"-"    keel:"reopened,computed"`
 	Unchanged bool `json:"-"`
 }
 

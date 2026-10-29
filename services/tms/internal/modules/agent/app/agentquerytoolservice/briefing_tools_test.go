@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -128,5 +128,5 @@ func TestGetDailyBriefing_PolicyIsAPlainRead(t *testing.T) {
 	policy := briefingTool(t, &keyedReader{}).Policy()
 
 	assert.Equal(t, permission.ResourceBriefing, policy.Resource)
-	assert.Equal(t, agent.ExternalReadNever, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadNever, policy.ReadsExternal)
 }

@@ -3,6 +3,14 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -1098,7 +1106,7 @@ type AgentEvaluationConnection struct {
 }
 
 type AgentEvaluationEdge struct {
-	Node   *agent.Evaluation `json:"node"`
+	Node   *agentevaluation.Evaluation `json:"node"`
 	Cursor string            `json:"cursor"`
 }
 
@@ -1111,12 +1119,12 @@ type AgentExceptionConnection struct {
 }
 
 type AgentExceptionEdge struct {
-	Node   *agent.AgentException `json:"node"`
+	Node   *agentexception.AgentException `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
 type AgentExceptionResolveInput struct {
-	ResolutionState agent.ResolutionState `json:"resolutionState"`
+	ResolutionState agentexception.ResolutionState `json:"resolutionState"`
 	ResolutionNotes *string               `json:"resolutionNotes,omitempty"`
 }
 
@@ -1152,15 +1160,15 @@ type AgentMemoryConnection struct {
 }
 
 type AgentMemoryEdge struct {
-	Node   *agent.Memory `json:"node"`
+	Node   *agentmemory.Memory `json:"node"`
 	Cursor string        `json:"cursor"`
 }
 
 type AgentMemoryInput struct {
-	Kind    agent.MemoryKind `json:"kind"`
+	Kind    agentmemory.MemoryKind `json:"kind"`
 	Content string           `json:"content"`
 	// With subjectId, the record the memory is about; both or neither.
-	SubjectType *agent.MemorySubjectType `json:"subjectType,omitempty"`
+	SubjectType *agentmemory.MemorySubjectType `json:"subjectType,omitempty"`
 	SubjectID   *string                  `json:"subjectId,omitempty"`
 	ToolName    *string                  `json:"toolName,omitempty"`
 	ExpiresAt   *int                     `json:"expiresAt,omitempty"`
@@ -1178,7 +1186,7 @@ type AgentPlanConnection struct {
 
 type AgentPlanDecisionInput struct {
 	// Accepted runs every step in order; Rejected rejects them all.
-	Decision   agent.DecisionType `json:"decision"`
+	Decision   agentdecision.DecisionType `json:"decision"`
 	ReasonCode string             `json:"reasonCode"`
 	// The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
 	PreviewDigest *string `json:"previewDigest,omitempty"`
@@ -1189,7 +1197,7 @@ type AgentPlanDecisionInput struct {
 // What came of deciding a plan.
 type AgentPlanDecisionResult struct {
 	// The plan as the decision left it: waiting out its undo window, run, failed at a step, or rejected.
-	Plan *agent.AgentPlan `json:"plan"`
+	Plan *agentplan.AgentPlan `json:"plan"`
 	// The approval was recorded but refused before any step ran, because a
 	// record a step changes moved on since the plan was proposed. Nothing was
 	// changed; the plan's failureError says what moved, and the conversation that
@@ -1198,7 +1206,7 @@ type AgentPlanDecisionResult struct {
 }
 
 type AgentPlanEdge struct {
-	Node   *agent.AgentPlan `json:"node"`
+	Node   *agentplan.AgentPlan `json:"node"`
 	Cursor string           `json:"cursor"`
 }
 
@@ -1227,7 +1235,7 @@ type AgentProposalConnection struct {
 }
 
 type AgentProposalDecisionInput struct {
-	Decision      agent.DecisionType `json:"decision"`
+	Decision      agentdecision.DecisionType `json:"decision"`
 	Modifications map[string]any     `json:"modifications,omitempty"`
 	ReasonCode    string             `json:"reasonCode"`
 	// The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
@@ -1240,7 +1248,7 @@ type AgentProposalDecisionInput struct {
 type AgentProposalDecisionResult struct {
 	ProposalID string `json:"proposalId"`
 	// The decision recorded; absent when this one could not be decided.
-	Decision *agent.AgentDecision `json:"decision,omitempty"`
+	Decision *agentdecision.AgentDecision `json:"decision,omitempty"`
 	// Why this one could not be decided, its write failed or its approval was refused, written for the person; absent when it went through.
 	Error *string `json:"error,omitempty"`
 	// The approved write ran. False for a rejection and for an approval still in its undo window.
@@ -1292,7 +1300,7 @@ type AgentReflectionConnection struct {
 }
 
 type AgentReflectionEdge struct {
-	Node   *agent.Reflection `json:"node"`
+	Node   *agentreflection.Reflection `json:"node"`
 	Cursor string            `json:"cursor"`
 }
 
@@ -1318,7 +1326,7 @@ type AgentRunEventConnection struct {
 }
 
 type AgentRunEventEdge struct {
-	Node   *agent.AgentRunEvent `json:"node"`
+	Node   *agentrunevent.AgentRunEvent `json:"node"`
 	Cursor string               `json:"cursor"`
 }
 
@@ -1327,7 +1335,7 @@ type AgentRunEventEdge struct {
 // with the rows a person can audit.
 type AgentScorecard struct {
 	AgentDefinitionID string                `json:"agentDefinitionId"`
-	Window            agent.ScorecardWindow `json:"window"`
+	Window            agentevaluation.ScorecardWindow `json:"window"`
 	// The start of the window.
 	Since             int `json:"since"`
 	Runs              int `json:"runs"`
@@ -1353,16 +1361,16 @@ type AgentScorecard struct {
 	// and labelled as one wherever it is shown: it prices finding the record and
 	// typing the change, never deciding whether the change was right.
 	EstimatedMinutesSaved int                       `json:"estimatedMinutesSaved"`
-	ByTool                []*agent.ToolOutcomeCount `json:"byTool"`
+	ByTool                []*agentevaluation.ToolOutcomeCount `json:"byTool"`
 	// How each tool's calls ended, by tool and verdict, with the commonest reasons.
-	ToolVerdicts []*agent.ToolVerdictCount `json:"toolVerdicts"`
-	Trend        []*agent.ScorecardPoint   `json:"trend"`
+	ToolVerdicts []*agentevaluation.ToolVerdictCount `json:"toolVerdicts"`
+	Trend        []*agentevaluation.ScorecardPoint   `json:"trend"`
 	ToolTrust    []*AgentToolTrust         `json:"toolTrust"`
 }
 
 type AgentScorecardInput struct {
 	AgentDefinitionID string                 `json:"agentDefinitionId"`
-	Window            *agent.ScorecardWindow `json:"window,omitempty"`
+	Window            *agentevaluation.ScorecardWindow `json:"window,omitempty"`
 }
 
 type AgentSuiteRunCaseConnection struct {
@@ -1375,7 +1383,7 @@ type AgentSuiteRunCaseConnection struct {
 
 // One case of a suite run: its replay, with the checks, scores and judge's note.
 type AgentSuiteRunCaseEdge struct {
-	Node   *agent.Evaluation `json:"node"`
+	Node   *agentevaluation.Evaluation `json:"node"`
 	Cursor string            `json:"cursor"`
 }
 
@@ -1398,10 +1406,10 @@ type AgentToolPolicy struct {
 	ID    string         `json:"id"`
 	Name  string         `json:"name"`
 	Title string         `json:"title"`
-	Kind  agent.ToolKind `json:"kind"`
+	Kind  agenttooltrust.ToolKind `json:"kind"`
 	// Null for a tool that acts only on the caller's own records and needs no grant.
 	Needs       *AgentToolRequirement `json:"needs,omitempty"`
-	Scope       agent.ToolScope       `json:"scope"`
+	Scope       agenttooltrust.ToolScope       `json:"scope"`
 	DefaultTier agent.AutonomyTier    `json:"defaultTier"`
 	MaxTier     agent.AutonomyTier    `json:"maxTier"`
 	// The most any agent may run it at: its max tier, held to approval when its work leaves the organization.
@@ -1416,12 +1424,12 @@ type AgentToolPolicy struct {
 	ConditionDescription *string `json:"conditionDescription,omitempty"`
 	// A call that changes only the caller's own records runs without a decision while they are present.
 	PersonalExemption bool             `json:"personalExemption"`
-	Effect            agent.ToolEffect `json:"effect"`
+	Effect            agenttooltrust.ToolEffect `json:"effect"`
 	// The record the tool produces or changes; empty when none.
 	Artifact      string             `json:"artifact"`
 	Reversible    bool               `json:"reversible"`
 	Idempotent    bool               `json:"idempotent"`
-	ReadsExternal agent.ExternalRead `json:"readsExternal"`
+	ReadsExternal agenttooltrust.ExternalRead `json:"readsExternal"`
 	// Where outside text in its result comes from; null when it reads none.
 	Source *agent.TaintSource `json:"source,omitempty"`
 	// Its result can carry outside text into a later run.
@@ -1436,9 +1444,9 @@ type AgentToolPolicy struct {
 	// The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower.
 	DeclaredMaxTier agent.AutonomyTier `json:"declaredMaxTier"`
 	// How much of its result the declared rule treats as outside text.
-	DeclaredReadsExternal agent.ExternalRead `json:"declaredReadsExternal"`
+	DeclaredReadsExternal agenttooltrust.ExternalRead `json:"declaredReadsExternal"`
 	// The organization's own rule for the tool; null when it keeps the declared one.
-	Rule *agent.ToolRuleOverride `json:"rule,omitempty"`
+	Rule *agenttooltrust.ToolRuleOverride `json:"rule,omitempty"`
 	// The version of the organization's rule an edit is made against; 0 when there is none yet.
 	RuleVersion int `json:"ruleVersion"`
 }
@@ -1466,7 +1474,7 @@ type AgentToolRequirement struct {
 // An organization's rule for one tool. Absent fields keep what the tool declares.
 type AgentToolRuleInput struct {
 	MaxTier       *agent.AutonomyTier `json:"maxTier,omitempty"`
-	ReadsExternal *agent.ExternalRead `json:"readsExternal,omitempty"`
+	ReadsExternal *agenttooltrust.ExternalRead `json:"readsExternal,omitempty"`
 	// Why it changed; required when the most freedom changes, and kept in the audit trail.
 	Reason *string `json:"reason,omitempty"`
 }
@@ -1570,9 +1578,9 @@ type ApproveAgentMemorySuggestionInput struct {
 	// The memory as it should read once approved.
 	Content string `json:"content"`
 	// Defaults to the suggestion's kind.
-	Kind *agent.MemoryKind `json:"kind,omitempty"`
+	Kind *agentmemory.MemoryKind `json:"kind,omitempty"`
 	// Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt.
-	Scope   *agent.MemoryScope `json:"scope,omitempty"`
+	Scope   *agentmemory.MemoryScope `json:"scope,omitempty"`
 	Version int                `json:"version"`
 }
 
@@ -2570,7 +2578,7 @@ type ConfirmAccountingMappingInput struct {
 type ConfirmDeskMemoryInput struct {
 	// The memory as the person edited it.
 	Content string            `json:"content"`
-	Scope   agent.MemoryScope `json:"scope"`
+	Scope   agentmemory.MemoryScope `json:"scope"`
 	RoleID  *string           `json:"roleId,omitempty"`
 	Version int               `json:"version"`
 }
@@ -2693,7 +2701,7 @@ type CreateCarrierInvoiceMatchInput struct {
 type CreateDeskMemoryInput struct {
 	Content string `json:"content"`
 	// User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
-	Scope  agent.MemoryScope `json:"scope"`
+	Scope  agentmemory.MemoryScope `json:"scope"`
 	RoleID *string           `json:"roleId,omitempty"`
 }
 
@@ -3053,7 +3061,7 @@ type DataTableSeriesInput struct {
 
 type DecideAgentProposalsInput struct {
 	// Accepted or Rejected. A change applies to one proposal, from its own card.
-	Decision   agent.DecisionType `json:"decision"`
+	Decision   agentdecision.DecisionType `json:"decision"`
 	ReasonCode *string            `json:"reasonCode,omitempty"`
 	// The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
 	PreviewDigests []*AgentProposalPreviewDigestInput `json:"previewDigests,omitempty"`
@@ -3276,7 +3284,7 @@ type DeskMemoriesInput struct {
 	First *int    `json:"first,omitempty"`
 	After *string `json:"after,omitempty"`
 	// Only this scope; every scope when left out.
-	Scope *agent.MemoryScope `json:"scope,omitempty"`
+	Scope *agentmemory.MemoryScope `json:"scope,omitempty"`
 	// With scope Role, only this role.
 	RoleID *string `json:"roleId,omitempty"`
 	// Words the memory says.
@@ -3291,15 +3299,15 @@ type DeskMemory struct {
 	ID      string `json:"id"`
 	Content string `json:"content"`
 	// Instruction, Fact, Correction or Procedure.
-	Kind agent.MemoryKind `json:"kind"`
+	Kind agentmemory.MemoryKind `json:"kind"`
 	// User (Just you), Role (the person's team), Organization, or Agent for a lesson kept for everyone using the agent.
-	Scope agent.MemoryScope `json:"scope"`
+	Scope agentmemory.MemoryScope `json:"scope"`
 	// The role a Role memory is kept for.
 	RoleID   *string `json:"roleId,omitempty"`
 	RoleName string  `json:"roleName"`
 	// Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
-	Status agent.MemoryStatus `json:"status"`
-	Source agent.MemorySource `json:"source"`
+	Status agentmemory.MemoryStatus `json:"status"`
+	Source agentmemory.MemorySource `json:"source"`
 	// The conversation the memory was saved from; empty for one a person wrote down.
 	SourceTitle string `json:"sourceTitle"`
 	// How many prompts and recalls have used it.
@@ -3321,7 +3329,7 @@ type DeskMemory struct {
 
 // How many memories the person keeps in one scope; Role is counted per role.
 type DeskMemoryCount struct {
-	Scope  agent.MemoryScope `json:"scope"`
+	Scope  agentmemory.MemoryScope `json:"scope"`
 	RoleID *string           `json:"roleId,omitempty"`
 	Count  int               `json:"count"`
 }
@@ -3330,7 +3338,7 @@ type DeskMemoryCount struct {
 type DeskMemoryLink struct {
 	ID      string             `json:"id"`
 	Content string             `json:"content"`
-	Status  agent.MemoryStatus `json:"status"`
+	Status  agentmemory.MemoryStatus `json:"status"`
 }
 
 type DeskMemoryPage struct {
@@ -3353,7 +3361,7 @@ type DeskMemoryRole struct {
 }
 
 type DeskMemorySettings struct {
-	SavingMode agent.MemorySavingMode `json:"savingMode"`
+	SavingMode agentmemory.MemorySavingMode `json:"savingMode"`
 	// The person's roles by name.
 	Roles []*DeskMemoryRole `json:"roles"`
 	// The person may write memories for the whole organization: kept at once when they manage agent memory, offered to an administrator otherwise.
@@ -7624,7 +7632,7 @@ type ReadyToBillCustomer struct {
 // A decision on a proposal, with the proposal and the person who made it.
 type RecentDecision struct {
 	ID         string             `json:"id"`
-	Decision   agent.DecisionType `json:"decision"`
+	Decision   agentdecision.DecisionType `json:"decision"`
 	ReasonCode string             `json:"reasonCode"`
 	// What the decider told the agent; empty when they said nothing.
 	Note            string `json:"note"`
@@ -8534,7 +8542,7 @@ type ReviewRatingInput struct {
 // Changes what a memory says, who it is kept for, or both; what is left out stays.
 type ReviseDeskMemoryInput struct {
 	Content *string            `json:"content,omitempty"`
-	Scope   *agent.MemoryScope `json:"scope,omitempty"`
+	Scope   *agentmemory.MemoryScope `json:"scope,omitempty"`
 	RoleID  *string            `json:"roleId,omitempty"`
 	Version int                `json:"version"`
 }

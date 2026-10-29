@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -81,9 +81,13 @@ func TestLinkInboundMessage_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"reason":     "The PRO in the subject is this load's.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &desk.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&desk.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceInboundMessage, change.Resource)
@@ -108,16 +112,20 @@ func TestLinkInboundMessage_PreviewWarnsOnARecordTheServiceCannotFind(t *testing
 	}
 	tool := NewLinkInboundMessageTool(desk).(*LinkInboundMessageTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &desk.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
-			"messageId":  desk.message.ID.String(),
-			"shipmentId": pulid.MustNew("shp_").String(),
-			"reason":     "Guessing.",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&desk.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
+				"messageId":  desk.message.ID.String(),
+				"shipmentId": pulid.MustNew("shp_").String(),
+				"reason":     "Guessing.",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestMarkInboundMessage_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -133,15 +141,23 @@ func TestMarkInboundMessage_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"note":      "A newsletter; nothing to do.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &desk.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&desk.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, "InReview", agenttoolstest.FieldByPath(t, change, "status").Before)
 	assert.Equal(t, "Ignored", agenttoolstest.FieldByPath(t, change, "status").After)
-	assert.Equal(t, "A newsletter; nothing to do.", agenttoolstest.FieldByPath(t, change, "reviewNote").After)
+	assert.Equal(
+		t,
+		"A newsletter; nothing to do.",
+		agenttoolstest.FieldByPath(t, change, "reviewNote").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireUpdateParity(t, change, &before, desk.message,
@@ -156,14 +172,18 @@ func TestMarkInboundMessage_PreviewWarnsOnAQuarantinedMessage(t *testing.T) {
 	desk := &savingInboundDesk{message: message}
 	tool := NewMarkInboundMessageTool(desk).(*MarkInboundMessageTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &desk.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
-			"messageId": message.ID.String(),
-			"status":    "Actioned",
-			"note":      "done",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&desk.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
+				"messageId": message.ID.String(),
+				"status":    "Actioned",
+				"note":      "done",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

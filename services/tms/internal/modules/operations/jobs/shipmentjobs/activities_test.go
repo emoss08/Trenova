@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -98,8 +98,8 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	assert.Equal(t, sourceID, result.SourceShipmentID)
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	assert.Equal(t, []agentports.AgentEvent{
-		{Kind: agent.EventShipmentCreated, SubjectID: copyOne, TenantInfo: tenant},
-		{Kind: agent.EventShipmentCreated, SubjectID: copyTwo, TenantInfo: tenant},
+		{Kind: agenttrigger.EventShipmentCreated, SubjectID: copyOne, TenantInfo: tenant},
+		{Kind: agenttrigger.EventShipmentCreated, SubjectID: copyTwo, TenantInfo: tenant},
 	}, agentEvents.events)
 }
 

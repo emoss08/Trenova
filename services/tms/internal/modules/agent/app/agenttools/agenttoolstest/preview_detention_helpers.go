@@ -3,15 +3,15 @@ package agenttoolstest
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/stretchr/testify/require"
 )
 
 func FindChange(
 	t *testing.T,
-	preview *agent.ToolPreview,
-	operation agent.PreviewOperation,
-) *agent.RecordChange {
+	preview *agentpreview.ToolPreview,
+	operation agentpreview.PreviewOperation,
+) *agentpreview.RecordChange {
 	t.Helper()
 
 	for i := range preview.Changes {
@@ -24,7 +24,11 @@ func FindChange(
 	return nil
 }
 
-func FindField(t *testing.T, change *agent.RecordChange, path string) agent.PreviewFieldChange {
+func FindField(
+	t *testing.T,
+	change *agentpreview.RecordChange,
+	path string,
+) agentpreview.PreviewFieldChange {
 	t.Helper()
 
 	for _, field := range change.Fields {
@@ -34,5 +38,5 @@ func FindField(t *testing.T, change *agent.RecordChange, path string) agent.Prev
 	}
 	require.Failf(t, "no field", "the change has no %q field", path)
 
-	return agent.PreviewFieldChange{}
+	return agentpreview.PreviewFieldChange{}
 }

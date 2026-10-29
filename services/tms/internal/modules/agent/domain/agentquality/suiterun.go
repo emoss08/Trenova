@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -83,15 +83,15 @@ type SuiteRun struct {
 	BusinessUnitID pulid.ID `keel:"business_unit_id,pk,tenant" json:"businessUnitId"`
 	OrganizationID pulid.ID `keel:"organization_id,pk,tenant"  json:"organizationId"`
 
-	AgentDefinitionID  pulid.ID                  `json:"agentDefinitionId"  keel:"agent_definition_id"`
-	Trigger            SuiteRunTrigger           `json:"trigger"            keel:"trigger"`
-	SweepKey           string                    `json:"sweepKey"           keel:"sweep_key,nullzero"`
-	Fingerprint        *agent.Fingerprint        `json:"fingerprint"        keel:"fingerprint,jsonb"`
-	FingerprintHash    string                    `json:"fingerprintHash"    keel:"fingerprint_hash"`
-	FingerprintChanges []agent.FingerprintChange `json:"fingerprintChanges" keel:"fingerprint_changes,jsonb"`
-	SuiteRevision      string                    `json:"suiteRevision"      keel:"suite_revision"`
-	SampleSeed         int64                     `json:"sampleSeed"         keel:"sample_seed"`
-	Status             SuiteRunStatus            `json:"status"             keel:"status"`
+	AgentDefinitionID  pulid.ID                             `json:"agentDefinitionId"  keel:"agent_definition_id"`
+	Trigger            SuiteRunTrigger                      `json:"trigger"            keel:"trigger"`
+	SweepKey           string                               `json:"sweepKey"           keel:"sweep_key,nullzero"`
+	Fingerprint        *agentfingerprint.Fingerprint        `json:"fingerprint"        keel:"fingerprint,jsonb"`
+	FingerprintHash    string                               `json:"fingerprintHash"    keel:"fingerprint_hash"`
+	FingerprintChanges []agentfingerprint.FingerprintChange `json:"fingerprintChanges" keel:"fingerprint_changes,jsonb"`
+	SuiteRevision      string                               `json:"suiteRevision"      keel:"suite_revision"`
+	SampleSeed         int64                                `json:"sampleSeed"         keel:"sample_seed"`
+	Status             SuiteRunStatus                       `json:"status"             keel:"status"`
 
 	CasesTotal   int `json:"casesTotal"   keel:"cases_total"`
 	CasesPassed  int `json:"casesPassed"  keel:"cases_passed"`
@@ -133,7 +133,7 @@ func (r *SuiteRun) BeforeCreate(_ context.Context) error {
 		r.Trigger = SuiteRunTriggerScheduled
 	}
 	if r.FingerprintChanges == nil {
-		r.FingerprintChanges = []agent.FingerprintChange{}
+		r.FingerprintChanges = []agentfingerprint.FingerprintChange{}
 	}
 	if r.StartedAt == 0 {
 		r.StartedAt = now

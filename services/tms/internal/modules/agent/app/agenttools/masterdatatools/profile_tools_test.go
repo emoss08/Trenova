@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -109,7 +110,7 @@ func TestGuideProfile_PreviewSaysWhatItWouldAdd(t *testing.T) {
 
 	tool := NewGuideProfileTool(&fakeProfileGuide{})
 	previewer, ok := tool.(interface {
-		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agent.ToolPreview, error)
+		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
 	})
 	require.True(t, ok)
 
@@ -128,7 +129,7 @@ func TestGuideProfile_PreviewSaysWhenItWouldBeOffered(t *testing.T) {
 
 	tool := NewGuideProfileTool(&fakeProfileGuide{offers: true})
 	previewer, ok := tool.(interface {
-		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agent.ToolPreview, error)
+		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
 	})
 	require.True(t, ok)
 

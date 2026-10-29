@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -94,15 +96,15 @@ func (t *ApplyConnectionDraftTool) ParamSchema() map[string]any {
 func (t *ApplyConnectionDraftTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceEDI,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadAlways,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadAlways,
 		Source:        agent.TaintSourceAttachment,
 		Artifact:      ediPartnerRecordEntity,
 		Rationale: "Sets up a trading partner from a guide the partner wrote, so a person " +
@@ -191,7 +193,7 @@ func (t *ApplyConnectionDraftTool) Execute(
 func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -219,7 +221,7 @@ func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 
 func appliedResult(
 	applied *ediconnectiondraftports.AppliedConnectionDraft,
-) *agent.ToolExecutionResult {
+) *agentrecord.ToolExecutionResult {
 	action := "updated"
 	if applied.Created {
 		action = "created"
@@ -228,12 +230,12 @@ func appliedResult(
 	if applied.Draft != nil {
 		name = draftPartnerName(applied.Draft)
 	}
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "EDI connection",
 		Name:   name,
 		IDs:    map[string]string{"ediPartnerId": applied.PartnerID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: ediPartnerRecordEntity,
 			ID:         applied.PartnerID.String(),
 		},

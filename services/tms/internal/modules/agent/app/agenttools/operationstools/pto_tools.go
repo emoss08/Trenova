@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -64,16 +65,16 @@ func (t *ApproveWorkerPTOTool) ParamSchema() map[string]any {
 func (t *ApproveWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
 		Operation:     permission.OpApprove,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Books approved time off; the worker is told it was approved but reads no " +
 			"text the model wrote.",
 	}
@@ -139,15 +140,15 @@ func (t *RejectWorkerPTOTool) ParamSchema() map[string]any {
 func (t *RejectWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
 		Operation:     permission.OpReject,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "The worker is sent the rejection reason by push notice and text message.",
 	}
 }
@@ -213,15 +214,15 @@ func (t *CancelWorkerPTOTool) ParamSchema() map[string]any {
 func (t *CancelWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
 		Operation:     permission.OpCancel,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "The worker is sent the cancellation reason by push notice and text " +
 			"message.",
 	}

@@ -3,7 +3,8 @@ package agentplanservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,7 +48,7 @@ func TestDecide_ARejectionRecordsItsNoteAndNoDigestEvenWhenOneIsSent(t *testing.
 
 	h := newHarness(t, 2, false)
 	h.svc.previews = &fakePreviews{}
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 	h.req.Note = "Hold off. I'm calling Tyson myself."
 	h.req.PreviewDigest = "a-digest-nobody-checked"
 
@@ -55,7 +56,7 @@ func TestDecide_ARejectionRecordsItsNoteAndNoDigestEvenWhenOneIsSent(t *testing.
 	require.NoError(t, err)
 
 	require.Len(t, h.plans.statuses, 1)
-	assert.Equal(t, agent.PlanStatusRejected, h.plans.statuses[0].Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, h.plans.statuses[0].Status)
 	assert.Equal(t, "Hold off. I'm calling Tyson myself.", h.plans.statuses[0].Approval.Note)
 	assert.Empty(t, h.plans.statuses[0].Approval.PreviewDigest)
 }
@@ -78,7 +79,7 @@ func TestCommitApproval_KeepsTheDigestStoredAtApprovalWhenNoPreviewSettlesAtComm
 
 	h := newHarness(t, 2, false)
 	commitsAt := int64(1_800_000_000)
-	h.plans.plan.Status = agent.PlanStatusApproving
+	h.plans.plan.Status = agentplan.PlanStatusApproving
 	h.plans.plan.CommitsAt = &commitsAt
 	h.plans.plan.ApprovalPreviewDigest = "sha256:stored-at-approval"
 

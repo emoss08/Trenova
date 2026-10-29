@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -315,7 +317,7 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 			Render: func(
 				_ *workerleave.WorkerLeaveCase,
 				planned *workerleave.WorkerLeaveCase,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerLeave, pulid.Nil, "New leave case", 0),
 					planned, append(wfOptions(leaveCaseFields...),
@@ -331,7 +333,7 @@ func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.Ag
 				ctx context.Context,
 				entity *workerleave.WorkerLeaveCase,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := cases.OpenCase(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -413,9 +415,9 @@ func renderLeaveCaseChange(
 	summary string,
 	volatile []string,
 	fields ...string,
-) func(*workerleaveservice.CaseChange) (*agent.ToolPreview, error) {
+) func(*workerleaveservice.CaseChange) (*agentpreview.ToolPreview, error) {
 	options := append(wfOptions(fields...), toolpreview.Volatile(volatile...))
-	return func(change *workerleaveservice.CaseChange) (*agent.ToolPreview, error) {
+	return func(change *workerleaveservice.CaseChange) (*agentpreview.ToolPreview, error) {
 		recorded, err := toolpreview.Changed(leaveCaseRecord(change.Before), change.Before,
 			change.After, options...)
 		if err != nil {
@@ -466,14 +468,14 @@ func newUpdateLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.
 		Render: func(
 			_ *workerleaveservice.UpdateCaseRequest,
 			change *workerleaveservice.CaseChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return render(change)
 		},
 		Run: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateCaseRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := cases.UpdateCase(ctx, req)
 			if err != nil {
 				return nil, err
@@ -520,14 +522,14 @@ func newCloseLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				return cases.PlanCloseCase(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would close a leave case." },
-			Render: func(_ *recordDelete, change *workerleaveservice.CaseChange) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, change *workerleaveservice.CaseChange) (*agentpreview.ToolPreview, error) {
 				return render(change)
 			},
 			Run: func(
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				closed, err := cases.CloseCase(ctx, req.tenant, req.id, req.userID)
 				if err != nil {
 					return nil, err
@@ -602,14 +604,14 @@ func newRequestLeaveCertificationTool(
 		Render: func(
 			_ *workerleaveservice.RequestCertificationRequest,
 			change *workerleaveservice.CaseChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return render(change)
 		},
 		Run: func(
 			ctx context.Context,
 			req *workerleaveservice.RequestCertificationRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := cases.RequestCertification(ctx, req)
 			if err != nil {
 				return nil, err
@@ -717,7 +719,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 		Render: func(
 			_ *workerleaveservice.RecordDayRequest,
 			planned *workerleave.WorkerLeaveEntry,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerLeave, pulid.Nil,
 					"Leave on "+changepreview.DayText(planned.UsedOn), 0),
@@ -737,7 +739,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			ctx context.Context,
 			req *workerleaveservice.RecordDayRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := cases.RecordDay(ctx, req)
 			if err != nil {
 				return nil, err
@@ -826,7 +828,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 		Render: func(
 			_ *workerleaveservice.UpdateDayRequest,
 			change *workerleaveservice.EntryChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(leaveDayRecord(change.Before), change.Before,
 				change.After, leaveDayOptions()...)
 			if err != nil {
@@ -838,7 +840,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			ctx context.Context,
 			req *workerleaveservice.UpdateDayRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := cases.UpdateDay(ctx, req)
 			if err != nil {
 				return nil, err
@@ -883,7 +885,7 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				return cases.PlanDeleteDay(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a day of leave." },
-			Render: func(_ *recordDelete, entry *workerleave.WorkerLeaveEntry) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, entry *workerleave.WorkerLeaveEntry) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(
 					leaveDayRecord(entry),
 					entry,
@@ -899,7 +901,7 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, cases.DeleteDay(ctx, req.tenant, req.id, req.userID)
 			},
 		},

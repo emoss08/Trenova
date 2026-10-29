@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -723,7 +723,7 @@ func (s *RemittanceService) announceStaged(
 		return
 	}
 	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-		Kind:       agent.EventFactoringRemittanceStaged,
+		Kind:       agenttrigger.EventFactoringRemittanceStaged,
 		SubjectID:  rem.ID,
 		TenantInfo: remittanceTenant(rem),
 		Related:    []pulid.ID{rem.FactoringCompanyID},

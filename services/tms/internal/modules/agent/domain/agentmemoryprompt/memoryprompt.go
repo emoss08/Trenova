@@ -5,8 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,14 +38,17 @@ const (
 // was only on hand, which become used when the turn calls it. HeldBack
 // counts the candidates left out, each still a agent_list_memories call away.
 type MemoryFit struct {
-	Carried  []*agent.Memory
+	Carried  []*agentmemory.Memory
 	Used     []pulid.ID
 	ByTool   map[string][]pulid.ID
 	HeldBack int
 }
 
 // FitMemories picks what the prompt carries.
-func FitMemories(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) []*agent.Memory {
+func FitMemories(
+	d *agentdefinition.Definition,
+	rc *agentturn.RuntimeContext,
+) []*agentmemory.Memory {
 	return PlanMemories(d, rc).Carried
 }
 
@@ -60,13 +63,17 @@ func PlanMemories(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) M
 		return MemoryFit{HeldBack: heldBack(rc, 0)}
 	}
 
-	ranked := rankMemoriesForPrompt(rc, agent.WithoutStaleMemories(rc.Memories))
+	ranked := rankMemoriesForPrompt(rc, agentmemory.WithoutStaleMemories(rc.Memories))
 	budget := d.EffectiveMemoryTokenBudget()
 	spent := 0
 	headed := make(map[string]struct{}, len(ranked))
 	fit := MemoryFit{
-		Carried: make([]*agent.Memory, 0, min(len(ranked), agentdefinition.MaxPromptMemories)),
-		Used:    make([]pulid.ID, 0, min(len(ranked), agentdefinition.MaxPromptMemories)),
+		Carried: make(
+			[]*agentmemory.Memory,
+			0,
+			min(len(ranked), agentdefinition.MaxPromptMemories),
+		),
+		Used: make([]pulid.ID, 0, min(len(ranked), agentdefinition.MaxPromptMemories)),
 	}
 	for _, entry := range ranked {
 		if len(fit.Carried) == agentdefinition.MaxPromptMemories {
@@ -130,13 +137,16 @@ func (f *MemoryFit) note(rc *agentturn.RuntimeContext, entry rankedMemory) {
 }
 
 type rankedMemory struct {
-	memory   *agent.Memory
+	memory   *agentmemory.Memory
 	tier     memoryTier
 	rank     int
 	relevant bool
 }
 
-func rankMemoriesForPrompt(rc *agentturn.RuntimeContext, memories []*agent.Memory) []rankedMemory {
+func rankMemoriesForPrompt(
+	rc *agentturn.RuntimeContext,
+	memories []*agentmemory.Memory,
+) []rankedMemory {
 	relations := memoryRelations(rc.MemorySubjects)
 	loaded := loadedToolNames(rc)
 
@@ -176,15 +186,17 @@ func rankMemoriesForPrompt(rc *agentturn.RuntimeContext, memories []*agent.Memor
 }
 
 type subjectKey struct {
-	kind agent.MemorySubjectType
+	kind agentmemory.MemorySubjectType
 	id   pulid.ID
 }
 
-func memoryRelations(subjects []agent.MemorySubject) map[subjectKey]agent.MemoryRelation {
-	relations := make(map[subjectKey]agent.MemoryRelation, len(subjects))
+func memoryRelations(
+	subjects []agentmemory.MemorySubject,
+) map[subjectKey]agentmemory.MemoryRelation {
+	relations := make(map[subjectKey]agentmemory.MemoryRelation, len(subjects))
 	for _, subject := range subjects {
 		key := subjectKey{kind: subject.Type, id: subject.ID}
-		if existing, ok := relations[key]; ok && existing == agent.MemoryRelationDirect {
+		if existing, ok := relations[key]; ok && existing == agentmemory.MemoryRelationDirect {
 			continue
 		}
 		relations[key] = subject.Relation
@@ -205,15 +217,15 @@ func loadedToolNames(rc *agentturn.RuntimeContext) map[string]struct{} {
 }
 
 func tierOf(
-	memory *agent.Memory,
-	relations map[subjectKey]agent.MemoryRelation,
+	memory *agentmemory.Memory,
+	relations map[subjectKey]agentmemory.MemoryRelation,
 	loaded map[string]struct{},
 ) memoryTier {
 	if memory.SubjectType != "" && memory.SubjectID != nil {
 		switch relations[subjectKey{kind: memory.SubjectType, id: *memory.SubjectID}] {
-		case agent.MemoryRelationDirect:
+		case agentmemory.MemoryRelationDirect:
 			return memoryTierDirectSubject
-		case agent.MemoryRelationRelated:
+		case agentmemory.MemoryRelationRelated:
 			return memoryTierRelatedSubject
 		default:
 			return memoryTierRest
@@ -226,14 +238,14 @@ func tierOf(
 
 		return memoryTierRest
 	}
-	if memory.Kind == agent.MemoryKindInstruction {
+	if memory.Kind == agentmemory.MemoryKindInstruction {
 		return memoryTierOrganizationInstruction
 	}
 
 	return memoryTierRest
 }
 
-func memoryGroupKey(memory *agent.Memory) string {
+func memoryGroupKey(memory *agentmemory.Memory) string {
 	switch {
 	case memory.SubjectType != "" && memory.SubjectID != nil:
 		return string(memory.SubjectType) + ":" + memory.SubjectID.String()
@@ -247,28 +259,28 @@ func memoryGroupKey(memory *agent.Memory) string {
 // memoryHeading says what a group of memories is about, or, for one about
 // nothing in particular, who it is for: a person's own preference must not
 // read as a rule for the whole organization.
-func memoryHeading(memory *agent.Memory) string {
+func memoryHeading(memory *agentmemory.Memory) string {
 	if about := memory.About(); about != "" {
 		return "About " + about
 	}
 
 	switch memory.Scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		return personalMemoryHeading
-	case agent.MemoryScopeRole:
+	case agentmemory.MemoryScopeRole:
 		return roleMemoryHeading
-	case agent.MemoryScopeAgent:
+	case agentmemory.MemoryScopeAgent:
 		return agentMemoryHeading
 	default:
 		return organizationMemoryHeading
 	}
 }
 
-func memoryLine(memory *agent.Memory) string {
+func memoryLine(memory *agentmemory.Memory) string {
 	return "- [" + string(memory.Kind) + "] " + memoryPromptContent(memory)
 }
 
-func outsideMemoryLine(memory *agent.Memory) string {
+func outsideMemoryLine(memory *agentmemory.Memory) string {
 	line := "- (recorded as " + strings.ToLower(string(memory.Kind)) + ") "
 	if about := memory.About(); about != "" {
 		line += about + ": "
@@ -277,23 +289,23 @@ func outsideMemoryLine(memory *agent.Memory) string {
 	return line + memoryPromptContent(memory)
 }
 
-func memoryPromptContent(memory *agent.Memory) string {
+func memoryPromptContent(memory *agentmemory.Memory) string {
 	content := strings.TrimSpace(memory.Content)
-	if utf8.RuneCountInString(content) <= agent.MemoryPromptExcerptChars {
+	if utf8.RuneCountInString(content) <= agentmemory.MemoryPromptExcerptChars {
 		return content
 	}
 
-	return stringutils.Ellipsize(content, agent.MemoryPromptExcerptChars) +
+	return stringutils.Ellipsize(content, agentmemory.MemoryPromptExcerptChars) +
 		" (cut short: call agent_list_memories with id " + memory.ID.String() +
 		" to read all of it)"
 }
 
 type memoryGroup struct {
 	heading  string
-	memories []*agent.Memory
+	memories []*agentmemory.Memory
 }
 
-func groupMemories(memories []*agent.Memory) []memoryGroup {
+func groupMemories(memories []*agentmemory.Memory) []memoryGroup {
 	groups := make([]memoryGroup, 0, len(memories))
 	index := make(map[string]int, len(memories))
 	for _, memory := range memories {
@@ -308,7 +320,7 @@ func groupMemories(memories []*agent.Memory) []memoryGroup {
 	}
 
 	for idx := range groups {
-		slices.SortStableFunc(groups[idx].memories, func(a, b *agent.Memory) int {
+		slices.SortStableFunc(groups[idx].memories, func(a, b *agentmemory.Memory) int {
 			return a.Kind.Rank() - b.Kind.Rank()
 		})
 	}

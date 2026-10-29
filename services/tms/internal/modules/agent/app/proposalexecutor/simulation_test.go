@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -52,8 +54,8 @@ func (f *fakeBudgets) CheckTool(
 func (f *fakeBudgets) MoneyAllowance(
 	context.Context,
 	agentports.MoneyAllowanceRequest,
-) (agent.MoneyAllowance, error) {
-	return agent.MoneyAllowance{}, nil
+) (agenttooltrust.MoneyAllowance, error) {
+	return agenttooltrust.MoneyAllowance{}, nil
 }
 
 func (f *fakeBudgets) Status(
@@ -180,10 +182,10 @@ type snapshotPreviewTool struct {
 func (t *snapshotPreviewTool) Preview(
 	ctx context.Context,
 	_ agenttoolports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	t.readOnly = kernelports.IsReadOnly(ctx)
 
-	return &agent.ToolPreview{Summary: "Would cancel PRO-100."}, nil
+	return &agentpreview.ToolPreview{Summary: "Would cancel PRO-100."}, nil
 }
 
 // An approved write for an agent in simulation is previewed inside a

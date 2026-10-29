@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,9 +43,9 @@ func New(p Params) agentruntimeports.AgentRunStepRepository {
 // twice.
 func (r *repository) Claim(
 	ctx context.Context,
-	step *agent.AgentRunStep,
-) (*agent.AgentRunStep, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRunStep, error) {
+	step *agentrunstep.AgentRunStep,
+) (*agentrunstep.AgentRunStep, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentrunstep.AgentRunStep, error) {
 		log := r.l.With(
 			zap.String("operation", "Claim"),
 			zap.String("owner", step.OwnerID.String()),
@@ -82,9 +82,9 @@ func (r *repository) Claim(
 
 func (r *repository) byKey(
 	ctx context.Context,
-	step *agent.AgentRunStep,
-) (*agent.AgentRunStep, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRunStep, error) {
+	step *agentrunstep.AgentRunStep,
+) (*agentrunstep.AgentRunStep, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentrunstep.AgentRunStep, error) {
 		s := agentdb.AgentRunSteps
 		held, err := s.Where(s.OwnerID.Eq(step.OwnerID), s.StepKey.Eq(step.StepKey)).
 			One(ctx, r.db.Keel(ctx))
@@ -99,8 +99,8 @@ func (r *repository) byKey(
 func (r *repository) Get(
 	ctx context.Context,
 	req *agentruntimeports.GetAgentRunStepRequest,
-) (*agent.AgentRunStep, error) {
-	return r.byKey(ctx, &agent.AgentRunStep{
+) (*agentrunstep.AgentRunStep, error) {
+	return r.byKey(ctx, &agentrunstep.AgentRunStep{
 		OrganizationID: req.TenantInfo.OrgID,
 		OwnerID:        req.OwnerID,
 		StepKey:        req.StepKey,
@@ -140,7 +140,7 @@ func (r *repository) Settle(
 	})
 }
 
-func (r *repository) Record(ctx context.Context, step *agent.AgentRunStep) error {
+func (r *repository) Record(ctx context.Context, step *agentrunstep.AgentRunStep) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := agentdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step); err != nil {
 			r.l.Error("failed to record an agent run step",
@@ -159,8 +159,8 @@ func (r *repository) Record(ctx context.Context, step *agent.AgentRunStep) error
 func (r *repository) List(
 	ctx context.Context,
 	req agentruntimeports.ListAgentRunStepsRequest,
-) ([]*agent.AgentRunStep, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		s := agentdb.AgentRunSteps
 		steps, err := s.Where(s.OwnerKind.Eq(req.OwnerKind), s.OwnerID.Eq(req.OwnerID)).
 			Order(s.CreatedAt.Asc()).

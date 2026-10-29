@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -63,7 +63,7 @@ func TestAddDriverSettlementAdjustmentBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency, "the settlement's currency is what moves")
 				return
 			}
-			assert.Equal(t, agent.HeldByMoneyRecordState, bound.Held)
+			assert.Equal(t, agenttooltrust.HeldByMoneyRecordState, bound.Held)
 		})
 	}
 }
@@ -112,25 +112,25 @@ func TestRemoveSettlementAdjustmentBounds(t *testing.T) {
 			name:   "a line a person added",
 			status: driversettlement.StatusDraft,
 			line:   personLine,
-			held:   agent.HeldByMoneyAgentLine,
+			held:   agenttooltrust.HeldByMoneyAgentLine,
 		},
 		{
 			name:   "a computed line",
 			status: driversettlement.StatusDraft,
 			line:   earning,
-			held:   agent.HeldByMoneyUnproven,
+			held:   agenttooltrust.HeldByMoneyUnproven,
 		},
 		{
 			name:   "a line not on the settlement",
 			status: driversettlement.StatusDraft,
 			line:   pulid.MustNew("dstll_"),
-			held:   agent.HeldByMoneyUnproven,
+			held:   agenttooltrust.HeldByMoneyUnproven,
 		},
 		{
 			name:   "an approved settlement",
 			status: driversettlement.StatusApproved,
 			line:   agentLine,
-			held:   agent.HeldByMoneyRecordState,
+			held:   agenttooltrust.HeldByMoneyRecordState,
 		},
 	}
 
@@ -218,7 +218,7 @@ func TestSettlementAdjustmentRefusedByItsPlanIsUnproven(t *testing.T) {
 	})
 	assert.Equal(t, entity.ID, book.planned.SettlementID)
 	assert.False(t, bound.Within)
-	assert.Equal(t, agent.HeldByMoneyUnproven, bound.Held)
+	assert.Equal(t, agenttooltrust.HeldByMoneyUnproven, bound.Held)
 }
 
 func TestAddedAdjustmentsAreMarkedAsAnAgents(t *testing.T) {

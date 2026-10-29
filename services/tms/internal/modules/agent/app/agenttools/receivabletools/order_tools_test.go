@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -369,12 +370,12 @@ func TestCreateOrder_PreviewsTheDraftAndCreates(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "PO-77", agenttoolstest.FieldByPath(t, change, paramPONumber).After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -423,7 +424,7 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -467,7 +468,7 @@ func TestAttachOrderShipments_ShowsOnlyTheShipmentsThatMove(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -498,13 +499,13 @@ func TestDetachOrderShipment_ShowsTheOrderItMovesTo(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Contains(t, preview.Summary, "PRO-9")
@@ -525,7 +526,7 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -547,7 +548,7 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 	closer := NewCloseOrderTool(refused)
 	refusedPreview, err := closer.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, refusedPreview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, refusedPreview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, closer.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -568,7 +569,7 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -614,12 +615,12 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	require.NotNil(t, change.Money)
 	assert.Equal(t, "2 payers: 60% / 40%", agenttoolstest.FieldByPath(t, change, "split").After)
 
@@ -684,7 +685,7 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -720,7 +721,7 @@ func TestSetOrderChargeAllocations_AnEmptySplitBillsTheOrdersCustomer(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -746,13 +747,13 @@ func TestRemoveOrderCharge_PreviewsTheDeletion(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		orders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 

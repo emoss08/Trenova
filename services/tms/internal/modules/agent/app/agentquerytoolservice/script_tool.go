@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -197,7 +199,7 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 func (t *runScriptTool) Policy() agenttoolports.ToolPolicy {
 	policy := readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceCodeMode,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceRecordNote,
 		rationale: "Runs a short script in an interpreter that cannot reach the network or a " +
 			"file; every read it makes is one of the agent's own reads, run as the person under " +
@@ -307,7 +309,7 @@ type scriptAnswer struct {
 	NotShown         int                       `json:"notShown,omitempty"`
 	Note             string                    `json:"note"`
 
-	attachments  []agent.RecordRef
+	attachments  []agentrecord.RecordRef
 	continuation codemode.Continuation
 }
 
@@ -322,7 +324,7 @@ type scriptDatasetAnswer struct {
 
 // TaintedRecords names the attached files the script read: what the person
 // attached may have been written outside the organization.
-func (a *scriptAnswer) TaintedRecords() []agent.RecordRef { return a.attachments }
+func (a *scriptAnswer) TaintedRecords() []agentrecord.RecordRef { return a.attachments }
 
 // ScriptCompleted reports a script that ran to its end, the only one whose
 // prepared changes are proposed.

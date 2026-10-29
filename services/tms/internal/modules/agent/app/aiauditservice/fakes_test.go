@@ -8,6 +8,10 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -432,12 +436,12 @@ type fakeSource struct {
 	runs        []*agent.AgentRun
 	turns       []*conversation.AssistantTurn
 	usage       []*aiusage.AIUsageRecord
-	steps       []*agent.AgentRunStep
-	events      []*agent.AgentRunEvent
+	steps       []*agentrunstep.AgentRunStep
+	events      []*agentrunevent.AgentRunEvent
 	proposals   []*agent.AgentProposal
-	decisions   []*agent.AgentDecision
+	decisions   []*agentdecision.AgentDecision
 	threads     []*conversation.Thread
-	evaluations []*agent.Evaluation
+	evaluations []*agentevaluation.Evaluation
 	users       map[pulid.ID]string
 	agents      map[pulid.ID]string
 }
@@ -498,22 +502,22 @@ func (f *fakeSource) ListUsage(
 func (f *fakeSource) ListSteps(
 	_ context.Context,
 	req aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	return page(
 		f.steps,
-		func(r *agent.AgentRunStep) int64 { return r.UpdatedAt },
-		func(r *agent.AgentRunStep) string { return r.ID.String() },
+		func(r *agentrunstep.AgentRunStep) int64 { return r.UpdatedAt },
+		func(r *agentrunstep.AgentRunStep) string { return r.ID.String() },
 		req,
-		func(r *agent.AgentRunStep) bool { return r.Kind == string(agentruntimeports.RunStepTool) },
+		func(r *agentrunstep.AgentRunStep) bool { return r.Kind == string(agentruntimeports.RunStepTool) },
 	), nil
 }
 
 func (f *fakeSource) ListEvents(
 	_ context.Context,
 	req aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunEvent, error) {
-	return page(f.events, func(r *agent.AgentRunEvent) int64 { return r.CreatedAt },
-		func(r *agent.AgentRunEvent) string { return r.ID.String() }, req, nil), nil
+) ([]*agentrunevent.AgentRunEvent, error) {
+	return page(f.events, func(r *agentrunevent.AgentRunEvent) int64 { return r.CreatedAt },
+		func(r *agentrunevent.AgentRunEvent) string { return r.ID.String() }, req, nil), nil
 }
 
 func (f *fakeSource) ListProposals(
@@ -527,9 +531,9 @@ func (f *fakeSource) ListProposals(
 func (f *fakeSource) ListDecisions(
 	_ context.Context,
 	req aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentDecision, error) {
-	return page(f.decisions, func(r *agent.AgentDecision) int64 { return r.CreatedAt },
-		func(r *agent.AgentDecision) string { return r.ID.String() }, req, nil), nil
+) ([]*agentdecision.AgentDecision, error) {
+	return page(f.decisions, func(r *agentdecision.AgentDecision) int64 { return r.CreatedAt },
+		func(r *agentdecision.AgentDecision) string { return r.ID.String() }, req, nil), nil
 }
 
 func byIDs[T any](rows []T, id func(T) pulid.ID, ids []pulid.ID) []T {
@@ -587,8 +591,12 @@ func (f *fakeSource) EvaluationsByIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*agent.Evaluation, error) {
-	return byIDs(f.evaluations, func(r *agent.Evaluation) pulid.ID { return r.ID }, ids), nil
+) ([]*agentevaluation.Evaluation, error) {
+	return byIDs(
+		f.evaluations,
+		func(r *agentevaluation.Evaluation) pulid.ID { return r.ID },
+		ids,
+	), nil
 }
 
 func (f *fakeSource) ProposalsByIDs(
@@ -603,8 +611,8 @@ func (f *fakeSource) StartedToolSteps(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	owners []pulid.ID,
-) ([]*agent.AgentRunStep, error) {
-	out := make([]*agent.AgentRunStep, 0)
+) ([]*agentrunstep.AgentRunStep, error) {
+	out := make([]*agentrunstep.AgentRunStep, 0)
 	for _, step := range f.steps {
 		if slices.Contains(owners, step.OwnerID) &&
 			step.Status == string(agentruntimeports.RunStepStarted) &&

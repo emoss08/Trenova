@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -77,15 +78,15 @@ type Definition struct {
 	ShadowMode             bool      `json:"shadowMode"             keel:"shadow_mode"`
 	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" keel:"decision_timeout_seconds"`
 
-	TriggerMode       TriggerMode       `json:"triggerMode"       keel:"trigger_mode"`
-	CronExpression    string            `json:"cronExpression"    keel:"cron_expression,nullzero"`
-	CronTimezone      string            `json:"cronTimezone"      keel:"cron_timezone,nullzero"`
-	EventKinds        []agent.EventKind `json:"eventKinds"        keel:"event_kinds,nullzero"`
-	IntervalSeconds   int               `json:"intervalSeconds"   keel:"interval_seconds,nullzero"`
-	EndsAt            *int64            `json:"endsAt"            keel:"ends_at"`
-	MaxConcurrentRuns int               `json:"maxConcurrentRuns" keel:"max_concurrent_runs"`
-	RunTimeoutSeconds int               `json:"runTimeoutSeconds" keel:"run_timeout_seconds"`
-	MaxToolCalls      int               `json:"maxToolCalls"      keel:"max_tool_calls"`
+	TriggerMode       TriggerMode              `json:"triggerMode"       keel:"trigger_mode"`
+	CronExpression    string                   `json:"cronExpression"    keel:"cron_expression,nullzero"`
+	CronTimezone      string                   `json:"cronTimezone"      keel:"cron_timezone,nullzero"`
+	EventKinds        []agenttrigger.EventKind `json:"eventKinds"        keel:"event_kinds,nullzero"`
+	IntervalSeconds   int                      `json:"intervalSeconds"   keel:"interval_seconds,nullzero"`
+	EndsAt            *int64                   `json:"endsAt"            keel:"ends_at"`
+	MaxConcurrentRuns int                      `json:"maxConcurrentRuns" keel:"max_concurrent_runs"`
+	RunTimeoutSeconds int                      `json:"runTimeoutSeconds" keel:"run_timeout_seconds"`
+	MaxToolCalls      int                      `json:"maxToolCalls"      keel:"max_tool_calls"`
 
 	// MonthlyBudgetUSD caps what the agent's runs may cost in a calendar
 	// month; nil is no cap. DailyRunLimit caps how many runs it may start in

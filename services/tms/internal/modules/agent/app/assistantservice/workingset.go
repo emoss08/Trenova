@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -102,7 +104,7 @@ func touchedRecords(turn *workingTurn) []conversation.WorkingRecord {
 // madeRecord is the one record an executed write made or changed, so a load
 // the person approved into being is what the conversation is about next,
 // though no turn ran the write.
-func madeRecord(result *agent.ToolExecutionResult) (id, label string) {
+func madeRecord(result *agentrecord.ToolExecutionResult) (id, label string) {
 	if result == nil || result.Record == nil || result.Record.ID == "" {
 		return "", ""
 	}
@@ -146,23 +148,27 @@ func (s *Service) keepWorkingSet(
 
 type anchorScope struct {
 	thread   *conversation.Thread
-	page     *agent.PageContext
-	mentions []agent.EntityRef
+	page     *agentpagecontext.PageContext
+	mentions []agentpagecontext.EntityRef
 	actor    *permissionports.RequestActor
 	tenant   pagination.TenantInfo
 }
 
-func anchorRefs(scope *anchorScope) []agent.EntityRef {
-	refs := make([]agent.EntityRef, 0, len(scope.mentions)+len(scope.thread.WorkingSet)+1)
+func anchorRefs(scope *anchorScope) []agentpagecontext.EntityRef {
+	refs := make(
+		[]agentpagecontext.EntityRef,
+		0,
+		len(scope.mentions)+len(scope.thread.WorkingSet)+1,
+	)
 	subject := ""
 	if scope.thread.HasSubject() {
 		subject = scope.thread.SubjectID.String()
 	}
-	add := func(ref agent.EntityRef) {
+	add := func(ref agentpagecontext.EntityRef) {
 		if ref.ID == "" || ref.ID == subject ||
 			slices.ContainsFunc(
 				refs,
-				func(known agent.EntityRef) bool { return known.ID == ref.ID },
+				func(known agentpagecontext.EntityRef) bool { return known.ID == ref.ID },
 			) {
 			return
 		}
@@ -171,7 +177,7 @@ func anchorRefs(scope *anchorScope) []agent.EntityRef {
 
 	for _, mention := range scope.mentions {
 		add(
-			agent.EntityRef{
+			agentpagecontext.EntityRef{
 				Type:  mention.Type,
 				ID:    strings.TrimSpace(mention.ID),
 				Label: mention.Label,
@@ -179,7 +185,7 @@ func anchorRefs(scope *anchorScope) []agent.EntityRef {
 		)
 	}
 	if scope.page != nil {
-		add(agent.EntityRef{
+		add(agentpagecontext.EntityRef{
 			Type:  scope.page.EntityType,
 			ID:    strings.TrimSpace(scope.page.EntityID),
 			Label: scope.page.Title,

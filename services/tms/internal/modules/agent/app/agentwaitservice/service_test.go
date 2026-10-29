@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
@@ -513,7 +514,7 @@ func TestNotifyEvent_EndsOnlyTheWaitOnThatStop(t *testing.T) {
 	h := newHarness(atHere, atThere, anyStop, leaving)
 
 	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
-		Kind:       agent.EventShipmentMoveArrived,
+		Kind:       agenttrigger.EventShipmentMoveArrived,
 		SubjectID:  move,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		Related:    []pulid.ID{here},
@@ -536,7 +537,7 @@ func TestNotifyEvent_AReplyMatchedToTheCarrierEndsItsWait(t *testing.T) {
 	h := newHarness(waiting)
 
 	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
-		Kind:       agent.EventInboundMessageClassified,
+		Kind:       agenttrigger.EventInboundMessageClassified,
 		SubjectID:  pulid.MustNew("inm_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		Related:    []pulid.ID{pulid.MustNew("shp_"), carrier},

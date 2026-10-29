@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -35,14 +37,14 @@ type planLister interface {
 	ListByThread(
 		ctx context.Context,
 		req agentports.ListAgentPlansByThreadRequest,
-	) ([]*agent.AgentPlan, error)
+	) ([]*agentplan.AgentPlan, error)
 }
 
 type decisionLister interface {
 	ListByProposals(
 		ctx context.Context,
 		req agentports.ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+	) ([]*agentdecision.AgentDecision, error)
 }
 
 // decidedReader reads what a conversation raised that a person has decided.
@@ -228,9 +230,9 @@ func proposalAwaitsReport(status agent.ProposalStatus) bool {
 	}
 }
 
-func planAwaitsReport(status agent.PlanStatus) bool {
+func planAwaitsReport(status agentplan.PlanStatus) bool {
 	switch status {
-	case agent.PlanStatusCompleted, agent.PlanStatusFailed, agent.PlanStatusRejected:
+	case agentplan.PlanStatusCompleted, agentplan.PlanStatusFailed, agentplan.PlanStatusRejected:
 		return true
 	default:
 		return false

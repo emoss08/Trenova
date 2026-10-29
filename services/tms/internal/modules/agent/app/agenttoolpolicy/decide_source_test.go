@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -14,15 +15,15 @@ import (
 func writePolicy(egress agent.EgressClass) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          "dispatch_assign_move",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A move assignment.",
 	}
 }
@@ -39,7 +40,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 		name   string
 		in     agenttoolpolicy.DecideInput
 		tier   agent.AutonomyTier
-		source agent.TierSource
+		source agenttooltrust.TierSource
 	}{
 		{
 			name: "the tool's own default",
@@ -50,7 +51,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:      clean(),
 			},
 			tier:   agent.TierActWithApproval,
-			source: agent.TierSourcePolicyDefault,
+			source: agenttooltrust.TierSourcePolicyDefault,
 		},
 		{
 			name: "a tier a person chose on the agent",
@@ -64,7 +65,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:           clean(),
 			},
 			tier:   agent.TierAutoExecute,
-			source: agent.TierSourcePersonSetting,
+			source: agenttooltrust.TierSourcePersonSetting,
 		},
 		{
 			name: "a tier the tool earned through clean approvals",
@@ -78,7 +79,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:           clean(),
 			},
 			tier:   agent.TierAutoExecute,
-			source: agent.TierSourceTrustEarned,
+			source: agenttooltrust.TierSourceTrustEarned,
 		},
 		{
 			name: "a person's tier that the agent's ceiling lowered is the ceiling's",
@@ -92,7 +93,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:           clean(),
 			},
 			tier:   agent.TierPropose,
-			source: agent.TierSourcePolicyDefault,
+			source: agenttooltrust.TierSourcePolicyDefault,
 		},
 		{
 			name: "a private write for the person in the conversation",
@@ -103,7 +104,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:      clean(),
 			},
 			tier:   agent.TierAutoExecute,
-			source: agent.TierSourcePersonalExemption,
+			source: agenttooltrust.TierSourcePersonalExemption,
 		},
 		{
 			name: "an earned tier that taint held back is the policy's",
@@ -116,7 +117,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint: tainted(),
 			},
 			tier:   agent.TierActWithApproval,
-			source: agent.TierSourcePolicyDefault,
+			source: agenttooltrust.TierSourcePolicyDefault,
 		},
 		{
 			name: "no agent at all",
@@ -126,7 +127,7 @@ func TestDecide_SaysWhatSetTheTier(t *testing.T) {
 				Taint:  clean(),
 			},
 			tier:   agent.TierActWithApproval,
-			source: agent.TierSourcePolicyDefault,
+			source: agenttooltrust.TierSourcePolicyDefault,
 		},
 	}
 

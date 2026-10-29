@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -207,7 +208,7 @@ func TestPostInvoices_AnAlreadyPostedOrForeignInvoiceIsRefusedOnItsOwn(t *testin
 func TestPostInvoices_PreviewChecksTheFirstTwentyAndSaysSo(t *testing.T) {
 	t.Parallel()
 
-	poster, ids, numbers := batchOfDrafts(agent.MaxPreviewRecords + 3)
+	poster, ids, numbers := batchOfDrafts(agentpreview.MaxPreviewRecords + 3)
 	tool := NewPostInvoicesTool(poster, numbers).(*PostInvoicesTool)
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{

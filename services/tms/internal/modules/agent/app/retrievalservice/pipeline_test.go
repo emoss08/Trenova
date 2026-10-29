@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -216,19 +216,19 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:     pulid.MustNew("amem_"),
-		Kind:   agent.MemoryKindFact,
-		Status: agent.MemoryStatusActive,
+		Kind:   agentmemory.MemoryKindFact,
+		Status: agentmemory.MemoryStatusActive,
 	}
 	memory.Content = "Acme closes at 3 PM on Fridays."
-	unchanged := &agent.Memory{
+	unchanged := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Globex allows two hours of free time.",
 	}
-	svc.sources.memories = []*agent.Memory{memory, unchanged}
+	svc.sources.memories = []*agentmemory.Memory{memory, unchanged}
 	svc.repo.hashes[unchanged.ID] = []retrievalports.EmbeddingChunkHash{
 		{ChunkIndex: 0, ContentHash: ChunkMemory(unchanged)[0].Hash},
 	}
@@ -269,10 +269,10 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	retired := &agent.Memory{
+	retired := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusRetired,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusRetired,
 		Content: "Old fact.",
 	}
 	workerDoc := documentSource("Medical examiner's certificate for J. Doe.")
@@ -283,7 +283,7 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 	unknownOwner.Document.ResourceType = "mystery_record"
 	unread := documentSource()
 
-	svc.sources.memories = []*agent.Memory{retired}
+	svc.sources.memories = []*agentmemory.Memory{retired}
 	svc.sources.documents = []*retrievalports.RetrievalDocumentSource{
 		workerDoc, oldVersion, unknownOwner, unread,
 	}
@@ -355,13 +355,13 @@ func TestIndexBatchRecordsAnEmbeddingFailureForARetry(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errors.New("provider timed out")
 
@@ -381,13 +381,13 @@ func TestIndexBatchFailsAConfigurationErrorForGood(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errortypes.NewBusinessError("the provider returned 512 dimensions").
 		WithInternal(aiusageports.ErrEmbeddingDimensionMismatch)
@@ -406,13 +406,13 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 
 	svc := newTestService(activeSettings())
 	svc.usage.spent = decimal.RequireFromString("9.995")
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 
 	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{

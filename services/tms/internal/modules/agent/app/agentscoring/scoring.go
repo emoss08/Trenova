@@ -1,8 +1,9 @@
 package agentscoring
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/shared/floatutils"
 )
 
@@ -35,17 +36,17 @@ const (
 type Input struct {
 	Case          *agentquality.EvalCase
 	Reply         string
-	Calls         []agent.ObservedCall
-	Actions       []agent.ReplayAction
+	Calls         []agentevaluation.ObservedCall
+	Actions       []agentreplay.ReplayAction
 	Refused       bool
-	Judge         *agent.JudgeVerdict
+	Judge         *agentevaluation.JudgeVerdict
 	TaintedEgress *bool
 	Trace         []TracedCall
 	ObservedText  []string
 }
 
-func (in *Input) agentCalls() []agent.ObservedCall {
-	calls := make([]agent.ObservedCall, 0, len(in.Calls))
+func (in *Input) agentCalls() []agentevaluation.ObservedCall {
+	calls := make([]agentevaluation.ObservedCall, 0, len(in.Calls))
 	for _, call := range in.Calls {
 		if !agentquality.IsRuntimeTool(call.ToolName) {
 			calls = append(calls, call)
@@ -126,9 +127,9 @@ func New(opts ...Option) *Scorer {
 	return scorer
 }
 
-func (s *Scorer) Score(in *Input) *agent.CaseChecks {
-	out := &agent.CaseChecks{
-		Checks:  make([]agent.CaseCheck, 0, len(s.hard)+len(s.soft)),
+func (s *Scorer) Score(in *Input) *agentevaluation.CaseChecks {
+	out := &agentevaluation.CaseChecks{
+		Checks:  make([]agentevaluation.CaseCheck, 0, len(s.hard)+len(s.soft)),
 		Calls:   in.Calls,
 		Refused: in.Refused,
 	}
@@ -139,9 +140,9 @@ func (s *Scorer) Score(in *Input) *agent.CaseChecks {
 		if verdict.Passed {
 			score = 1
 		}
-		out.Checks = append(out.Checks, agent.CaseCheck{
+		out.Checks = append(out.Checks, agentevaluation.CaseCheck{
 			Name:     check.Name(),
-			Kind:     agent.CheckKindHard,
+			Kind:     agentevaluation.CheckKindHard,
 			Applies:  verdict.Applies,
 			Passed:   verdict.Passed,
 			Score:    score,
@@ -156,9 +157,9 @@ func (s *Scorer) Score(in *Input) *agent.CaseChecks {
 	weighted, weights := 0.0, 0.0
 	for _, check := range s.soft {
 		result := check.evaluate(in)
-		out.Checks = append(out.Checks, agent.CaseCheck{
+		out.Checks = append(out.Checks, agentevaluation.CaseCheck{
 			Name:     check.name,
-			Kind:     agent.CheckKindSoft,
+			Kind:     agentevaluation.CheckKindSoft,
 			Applies:  result.applies,
 			Passed:   result.applies && result.score >= PassThreshold,
 			Score:    result.score,
@@ -185,7 +186,7 @@ func (s *Scorer) Score(in *Input) *agent.CaseChecks {
 	return out
 }
 
-func Blend(deterministic float64, judge *agent.JudgeVerdict) float64 {
+func Blend(deterministic float64, judge *agentevaluation.JudgeVerdict) float64 {
 	deterministic = floatutils.Clamp(deterministic, 0, 1)
 	if judge == nil || !floatutils.IsFinite(judge.Score) {
 		return deterministic

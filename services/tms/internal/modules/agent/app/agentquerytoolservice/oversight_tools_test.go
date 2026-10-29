@@ -5,6 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -81,16 +85,16 @@ func (f *fakeProposalsByID) ListByIDs(
 type fakePlansByID struct {
 	agentports.AgentPlanRepository
 
-	plans map[pulid.ID]*agent.AgentPlan
+	plans map[pulid.ID]*agentplan.AgentPlan
 	calls int
 }
 
 func (f *fakePlansByID) ListByIDs(
 	_ context.Context,
 	req agentports.ListAgentPlansByIDsRequest,
-) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
 	f.calls++
-	out := make([]*agent.AgentPlan, 0, len(req.IDs))
+	out := make([]*agentplan.AgentPlan, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if plan, ok := f.plans[id]; ok {
 			out = append(out, plan)
@@ -103,16 +107,16 @@ func (f *fakePlansByID) ListByIDs(
 type fakeExceptionsByID struct {
 	agentports.AgentExceptionRepository
 
-	exceptions map[pulid.ID]*agent.AgentException
+	exceptions map[pulid.ID]*agentexception.AgentException
 	calls      int
 }
 
 func (f *fakeExceptionsByID) ListByIDs(
 	_ context.Context,
 	req agentports.ListAgentExceptionsByIDsRequest,
-) ([]*agent.AgentException, error) {
+) ([]*agentexception.AgentException, error) {
 	f.calls++
-	out := make([]*agent.AgentException, 0, len(req.IDs))
+	out := make([]*agentexception.AgentException, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if exception, ok := f.exceptions[id]; ok {
 			out = append(out, exception)
@@ -138,8 +142,8 @@ func newTowerFixture(items ...*watchtower.Item) *towerFixture {
 		}},
 		runs:       &fakeRunsByID{runs: map[pulid.ID]*agent.AgentRun{}},
 		proposals:  &fakeProposalsByID{proposals: map[pulid.ID]*agent.AgentProposal{}},
-		plans:      &fakePlansByID{plans: map[pulid.ID]*agent.AgentPlan{}},
-		exceptions: &fakeExceptionsByID{exceptions: map[pulid.ID]*agent.AgentException{}},
+		plans:      &fakePlansByID{plans: map[pulid.ID]*agentplan.AgentPlan{}},
+		exceptions: &fakeExceptionsByID{exceptions: map[pulid.ID]*agentexception.AgentException{}},
 	}
 }
 
@@ -210,9 +214,9 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 		RunID: proposalRun,
 	}
 	planID := pulid.MustNew("apl_")
-	fixture.plans.plans[planID] = &agent.AgentPlan{ID: planID, RunID: planRun}
+	fixture.plans.plans[planID] = &agentplan.AgentPlan{ID: planID, RunID: planRun}
 	exceptionID := pulid.MustNew("aex_")
-	fixture.exceptions.exceptions[exceptionID] = &agent.AgentException{
+	fixture.exceptions.exceptions[exceptionID] = &agentexception.AgentException{
 		ID:    exceptionID,
 		RunID: exceptionRun,
 	}
@@ -238,27 +242,30 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 	marks := marksByRow(feed)
 	assert.Equal(t, agent.SourcedRef{
 		Source: agent.TaintSourceInboundMessage,
-		Ref:    agent.RecordRef{EntityType: agent.TaintEntityInboundMessage, ID: "imsg_1"},
+		Ref:    agentrecord.RecordRef{EntityType: agent.TaintEntityInboundMessage, ID: "imsg_1"},
 	}, marks["imsg_1"])
 	assert.Equal(t, agent.SourcedRef{
 		Source: agent.TaintSourceEDI,
-		Ref:    agent.RecordRef{EntityType: agent.TaintEntityEDIInboundFile, ID: "edi_1"},
+		Ref:    agentrecord.RecordRef{EntityType: agent.TaintEntityEDIInboundFile, ID: "edi_1"},
 	}, marks["edi_1"])
 	assert.Equal(t, agent.SourcedRef{
 		Source: agent.TaintSourceWeather,
-		Ref:    agent.RecordRef{EntityType: agent.TaintEntityWeatherAlert, ID: "wxa_1"},
+		Ref:    agentrecord.RecordRef{EntityType: agent.TaintEntityWeatherAlert, ID: "wxa_1"},
 	}, marks["wxa_1"])
 	for _, runID := range []pulid.ID{taintedFailure, proposalRun, exceptionRun} {
 		assert.Equal(t, agent.SourcedRef{
 			Source: agent.TaintSourceRunRecord,
-			Ref:    agent.RecordRef{EntityType: agent.TaintEntityAgentRun, ID: runID.String()},
+			Ref: agentrecord.RecordRef{
+				EntityType: agent.TaintEntityAgentRun,
+				ID:         runID.String(),
+			},
 		}, marks[runID.String()])
 	}
 	assert.NotContains(t, marks, cleanFailure.String(), "a clean run's record is not outside text")
 	assert.NotContains(t, marks, planRun.String())
 	assert.Equal(t, agent.SourcedRef{
 		Source: agent.TaintSourceRunRecord,
-		Ref: agent.RecordRef{
+		Ref: agentrecord.RecordRef{
 			EntityType: agent.TaintEntityWatchtowerItem,
 			ID:         orphan.ID.String(),
 		},
@@ -305,7 +312,7 @@ func TestListWatchtowerItems_AnInboundEmailOnTheTowerTaintsTheRun(t *testing.T) 
 	assert.Equal(t, agent.TaintSourceInboundMessage, feed.TaintedMarks()[0].Source)
 	assert.Equal(t, "imsg_attack", feed.TaintedMarks()[0].Ref.ID)
 	assert.True(t, feed.Items[0].FromOutside)
-	assert.Equal(t, agent.ExternalReadMarked, fixture.tool().Policy().ReadsExternal,
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, fixture.tool().Policy().ReadsExternal,
 		"a marked read is what turns the row's mark into the run's taint")
 	assert.Empty(t, fixture.runs.requests, "a row from outside needs no run lookup")
 }
@@ -408,7 +415,7 @@ func TestListWatchtowerItems_PolicyNamesEverySourceARowMayCarry(t *testing.T) {
 	policy := newTowerFixture().tool().Policy()
 
 	assert.Equal(t, permission.ResourceWatchtower, policy.Resource)
-	assert.Equal(t, agent.ExternalReadMarked, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceInboundMessage, policy.Source)
 	assert.ElementsMatch(t, []agent.TaintSource{
 		agent.TaintSourceEDI,

@@ -14,6 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -43,16 +46,16 @@ var errNoWaitService = errors.New("waits are not available here")
 func waitPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAgentRun,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeRun,
+		Scope:         agenttooltrust.ToolScopeRun,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		// A wait is part of the agent's own runs: what it reports is read
 		// beside them in AI Control.
@@ -163,7 +166,7 @@ func (t *waitUntilTool) Validate(
 func (t *waitUntilTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -198,7 +201,7 @@ func (t *waitUntilTool) Execute(
 func (t *waitUntilTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -215,7 +218,7 @@ func (t *waitUntilTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "set",
 		Kind:   "wait",
 		Name:   wait.Description,
@@ -366,7 +369,7 @@ func (t *cancelWaitTool) Validate(
 func (t *cancelWaitTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}

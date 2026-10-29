@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type StatusChange struct {
-	Status   agent.MemoryStatus
+	Status   agentmemory.MemoryStatus
 	ByUserID pulid.ID
 	At       int64
 }
@@ -24,7 +24,7 @@ func StatusActor(actor *permissionports.RequestActor) pulid.ID {
 	return pulid.Nil
 }
 
-func PlanStatus(entity *agent.Memory, change StatusChange) error {
+func PlanStatus(entity *agentmemory.Memory, change StatusChange) error {
 	if err := checkStatusTarget(change.Status); err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func PlanStatus(entity *agent.Memory, change StatusChange) error {
 	}
 
 	entity.Status = change.Status
-	if change.Status != agent.MemoryStatusRetired {
+	if change.Status != agentmemory.MemoryStatusRetired {
 		entity.RetiredAt = nil
 		entity.RetiredByUserID = nil
 
@@ -61,7 +61,7 @@ func PlanStatus(entity *agent.Memory, change StatusChange) error {
 	return nil
 }
 
-func checkStatusTarget(status agent.MemoryStatus) error {
+func checkStatusTarget(status agentmemory.MemoryStatus) error {
 	if !status.IsValid() {
 		return errortypes.NewValidationError(
 			"status",
@@ -81,13 +81,13 @@ func checkStatusTarget(status agent.MemoryStatus) error {
 }
 
 // statusComment is what the audit log says a status change did.
-func statusComment(from, to agent.MemoryStatus) string {
+func statusComment(from, to agentmemory.MemoryStatus) string {
 	switch {
-	case to == agent.MemoryStatusPaused:
+	case to == agentmemory.MemoryStatusPaused:
 		return "Agent memory paused"
-	case to == agent.MemoryStatusRetired:
+	case to == agentmemory.MemoryStatusRetired:
 		return "Agent memory retired"
-	case from == agent.MemoryStatusPaused:
+	case from == agentmemory.MemoryStatusPaused:
 		return "Agent memory resumed"
 	default:
 		return "Agent memory restored"

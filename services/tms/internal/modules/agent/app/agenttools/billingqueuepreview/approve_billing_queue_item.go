@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -20,7 +20,7 @@ type ApprovalInvoicePlanner interface {
 }
 
 // draftInvoiceChange is the draft approval creates, with its totals.
-func DraftInvoiceChange(draft *invoice.Invoice) (*agent.RecordChange, error) {
+func DraftInvoiceChange(draft *invoice.Invoice) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceInvoice,
@@ -44,11 +44,11 @@ func DraftInvoiceChange(draft *invoice.Invoice) (*agent.RecordChange, error) {
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		draft.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: MoneyLineFreight,
 			After: changepreview.KnownAmount(draft.SubtotalAmount),
 		},
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: MoneyLineAccessorials,
 			After: changepreview.KnownAmount(draft.OtherAmount),
 		},

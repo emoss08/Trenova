@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -72,7 +73,7 @@ func TestStartFreshRun_StopsTheRunAnEarlierBenchLeftAndFiresAgain(t *testing.T) 
 		Tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	}
 	definition := &agentdefinition.Definition{ID: pulid.MustNew("agdef_")}
-	fire := &Fire{Event: agent.EventKind("insight.detected")}
+	fire := &Fire{Event: agenttrigger.EventKind("insight.detected")}
 
 	fired, err := bench.startFreshRun(
 		t.Context(), session, definition, fire, pulid.MustNew("inst_"), "case")

@@ -3,6 +3,15 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -822,8 +831,8 @@ type AgentControlResolver interface {
 }
 
 type AgentDecisionResolver interface {
-	TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error)
-	Preview(ctx context.Context, obj *agent.AgentDecision) (*agent.ProposalPreview, error)
+	TraceURL(ctx context.Context, obj *agentdecision.AgentDecision) (*string, error)
+	Preview(ctx context.Context, obj *agentdecision.AgentDecision) (*agentpreview.ProposalPreview, error)
 }
 
 type AgentDefinitionResolver interface {
@@ -856,12 +865,12 @@ type AgentEvalCaseResolver interface {
 }
 
 type AgentEvaluationResolver interface {
-	SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error)
-	Actions(ctx context.Context, obj *agent.Evaluation) ([]map[string]any, error)
-	Comparison(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+	SubjectType(ctx context.Context, obj *agentevaluation.Evaluation) (string, error)
+	Actions(ctx context.Context, obj *agentevaluation.Evaluation) ([]map[string]any, error)
+	Comparison(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Checks(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Judge(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Fingerprint(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
 }
 
 type AgentInstructionFindingResolver interface {
@@ -870,47 +879,47 @@ type AgentInstructionFindingResolver interface {
 }
 
 type AgentMemoryResolver interface {
-	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
-	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	Supersedes(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
 }
 
 type AgentPlanResolver interface {
-	DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error)
-	RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error)
-	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
-	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
+	DecidedBy(ctx context.Context, obj *agentplan.AgentPlan) (*tenant.User, error)
+	RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error)
+	Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
-	Type(ctx context.Context, obj *agent.PreviewFieldChange) (string, error)
+	Type(ctx context.Context, obj *agentpreview.PreviewFieldChange) (string, error)
 }
 
 type AgentPreviewMessageResolver interface {
-	TemplateVersionID(ctx context.Context, obj *agent.MessagePreview) (*string, error)
+	TemplateVersionID(ctx context.Context, obj *agentpreview.MessagePreview) (*string, error)
 }
 
 type AgentPreviewMoneyResolver interface {
-	TotalBefore(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
-	TotalAfter(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
-	Delta(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
+	TotalBefore(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
+	TotalAfter(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
+	Delta(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
 }
 
 type AgentPreviewMoneyLineResolver interface {
-	Before(ctx context.Context, obj *agent.MoneyLine) (*string, error)
-	After(ctx context.Context, obj *agent.MoneyLine) (*string, error)
+	Before(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
+	After(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
 }
 
 type AgentPreviewRecordChangeResolver interface {
-	Resource(ctx context.Context, obj *agent.RecordChange) (string, error)
-	EntityID(ctx context.Context, obj *agent.RecordChange) (*string, error)
+	Resource(ctx context.Context, obj *agentpreview.RecordChange) (string, error)
+	EntityID(ctx context.Context, obj *agentpreview.RecordChange) (*string, error)
 }
 
 type AgentPreviewRefResolver interface {
-	Resource(ctx context.Context, obj *agent.PreviewRef) (string, error)
+	Resource(ctx context.Context, obj *agentpreview.PreviewRef) (string, error)
 }
 
 type AgentPreviewWarningResolver interface {
-	Code(ctx context.Context, obj *agent.PreviewWarning) (string, error)
+	Code(ctx context.Context, obj *agentpreview.PreviewWarning) (string, error)
 }
 
 type AgentProfileGuidanceResolver interface {
@@ -949,7 +958,7 @@ type AgentQualityControlResolver interface {
 }
 
 type AgentReflectionResolver interface {
-	Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error)
+	Signals(ctx context.Context, obj *agentreflection.Reflection) ([]*agentreflection.ReflectionSignal, error)
 }
 
 type AgentRunResolver interface {
@@ -961,7 +970,7 @@ type AgentRunResolver interface {
 }
 
 type AgentRunEventResolver interface {
-	OwnerKind(ctx context.Context, obj *agent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error)
+	OwnerKind(ctx context.Context, obj *agentrunevent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error)
 }
 
 type AgentSafetyResolver interface {
@@ -988,9 +997,9 @@ type AgentToolHoldersResolver interface {
 }
 
 type AgentToolRuleResolver interface {
-	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
-	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
-	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
+	MaxTier(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agenttooltrust.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*tenant.User, error)
 }
 
 type AgentToolSafetyResolver interface {
@@ -2030,14 +2039,14 @@ type MutationResolver interface {
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
-	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
-	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
-	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
-	SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error)
-	ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error)
-	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
-	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
-	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
+	ReplayAgentRun(ctx context.Context, runID string) (*agentevaluation.Evaluation, error)
+	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
+	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
+	SetAgentMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*agentmemory.Memory, error)
+	ReviewAgentMemory(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
+	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agentmemory.Memory, error)
+	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
+	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agentexception.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -2058,7 +2067,7 @@ type MutationResolver interface {
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
-	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
+	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
 	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
@@ -2162,10 +2171,10 @@ type MutationResolver interface {
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
-	SetDeskMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*gqlmodel.DeskMemory, error)
+	SetDeskMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*gqlmodel.DeskMemory, error)
 	ConfirmDeskMemory(ctx context.Context, id string, input gqlmodel.ConfirmDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	DismissDeskMemory(ctx context.Context, id string) (*gqlmodel.DeskMemory, error)
-	SetMemorySavingMode(ctx context.Context, mode agent.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
+	SetMemorySavingMode(ctx context.Context, mode agentmemory.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -2804,15 +2813,15 @@ type QueryResolver interface {
 	AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error)
 	AgentProposal(ctx context.Context, id string) (*agent.AgentProposal, error)
 	AgentPlans(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentPlanConnection, error)
-	AgentPlan(ctx context.Context, id string) (*agent.AgentPlan, error)
+	AgentPlan(ctx context.Context, id string) (*agentplan.AgentPlan, error)
 	AgentMemories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentMemoryConnection, error)
 	AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error)
-	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
-	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
+	AgentEvaluation(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
+	AgentMemory(ctx context.Context, id string) (*agentmemory.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
 	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
-	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
+	AgentException(ctx context.Context, id string) (*agentexception.AgentException, error)
 	AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
@@ -2832,10 +2841,10 @@ type QueryResolver interface {
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
-	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
-	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
-	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
-	MyPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
+	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
+	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
+	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
+	MyPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
 	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)

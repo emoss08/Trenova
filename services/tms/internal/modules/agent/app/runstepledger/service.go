@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -209,7 +209,7 @@ func toEntity(
 	tenant pagination.TenantInfo,
 	step agentruntimeports.RunStep,
 	status agentruntimeports.RunStepStatus,
-) *agent.AgentRunStep {
+) *agentrunstep.AgentRunStep {
 	args := step.Args
 	if args == nil {
 		args = map[string]any{}
@@ -220,7 +220,7 @@ func toEntity(
 		attempt = 1
 	}
 
-	return &agent.AgentRunStep{
+	return &agentrunstep.AgentRunStep{
 		OrganizationID:         tenant.OrgID,
 		BusinessUnitID:         tenant.BuID,
 		OwnerKind:              string(step.OwnerKind),
@@ -274,7 +274,10 @@ func encodeOutcome(outcome agentruntimeports.RunStepOutcome) (map[string]any, er
 	return decoded, nil
 }
 
-func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) agentruntimeports.RunStepOutcome {
+func decodeOutcome(
+	logger *zap.Logger,
+	row *agentrunstep.AgentRunStep,
+) agentruntimeports.RunStepOutcome {
 	if len(row.Outcome) == 0 {
 		return agentruntimeports.RunStepOutcome{}
 	}

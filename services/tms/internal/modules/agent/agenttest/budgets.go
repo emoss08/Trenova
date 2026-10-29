@@ -4,24 +4,24 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type StubMoneyBudgets struct {
 	agentports.AgentBudgetService
 
-	Limits agent.MoneyLimits
-	Used   agent.MoneyUse
+	Limits agenttooltrust.MoneyLimits
+	Used   agenttooltrust.MoneyUse
 	Err    error
 
 	mu    sync.Mutex
 	asked []agentports.MoneyAllowanceRequest
 }
 
-func RoomyMoneyLimits() agent.MoneyLimits {
-	return agent.MoneyLimits{
+func RoomyMoneyLimits() agenttooltrust.MoneyLimits {
+	return agenttooltrust.MoneyLimits{
 		CallCeilingMinor: 100_000,
 		RunCalls:         10,
 		RunAmountMinor:   1_000_000,
@@ -33,15 +33,15 @@ func RoomyMoneyLimits() agent.MoneyLimits {
 func (b *StubMoneyBudgets) MoneyAllowance(
 	_ context.Context,
 	req agentports.MoneyAllowanceRequest,
-) (agent.MoneyAllowance, error) {
+) (agenttooltrust.MoneyAllowance, error) {
 	b.mu.Lock()
 	b.asked = append(b.asked, req)
 	b.mu.Unlock()
 	if b.Err != nil {
-		return agent.MoneyAllowance{}, b.Err
+		return agenttooltrust.MoneyAllowance{}, b.Err
 	}
 
-	return agent.MoneyAllowance{
+	return agenttooltrust.MoneyAllowance{
 		Limits:   b.Limits,
 		Currency: StubFunctionalCurrency,
 		Run:      req.Unrecorded,

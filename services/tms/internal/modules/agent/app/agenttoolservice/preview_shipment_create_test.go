@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -108,7 +108,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -121,7 +121,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.Len(t, preview.Changes, 3)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Shipment with BOL BOL-778", created.Label)
 	customer := agenttoolstest.FieldByPath(t, created, "customerId")
 	require.NotNil(t, customer.AfterRef)
@@ -164,7 +164,7 @@ func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), createShipmentParams())
 		},
 	)
@@ -181,13 +181,13 @@ func TestCreateShipment_PreviewWarnsWhenTheShipmentWouldBeRefused(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), createShipmentParams())
 		},
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "BOL")
 }
 
@@ -209,7 +209,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&shipments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), createShipmentParams())
 		},
 	)
@@ -223,7 +223,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 		refusal.Message,
 	)
 	require.Len(t, refusal.Reasons, 1)
-	assert.Equal(t, agent.PreviewReason{
+	assert.Equal(t, agentpreview.PreviewReason{
 		Field:   "bol",
 		Label:   "BOL",
 		Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",

@@ -20,7 +20,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -113,7 +113,7 @@ type writer struct {
 
 	mu       sync.Mutex
 	sequence int
-	buffered []*agent.AgentRunEvent
+	buffered []*agentrunevent.AgentRunEvent
 }
 
 // Record files one event. It never blocks on postgres except when the buffer
@@ -173,7 +173,7 @@ func (w *writer) Flush(ctx context.Context) {
 	w.service.metrics.RecordTrajectoryWritten(string(w.owner.Kind), len(pending))
 }
 
-func (w *writer) rowFor(event kernelports.StreamEvent) *agent.AgentRunEvent {
+func (w *writer) rowFor(event kernelports.StreamEvent) *agentrunevent.AgentRunEvent {
 	payload, truncated := encodePayload(event.Data)
 
 	w.mu.Lock()
@@ -181,7 +181,7 @@ func (w *writer) rowFor(event kernelports.StreamEvent) *agent.AgentRunEvent {
 	w.sequence++
 	w.mu.Unlock()
 
-	return &agent.AgentRunEvent{
+	return &agentrunevent.AgentRunEvent{
 		OrganizationID: w.tenant.OrgID,
 		BusinessUnitID: w.tenant.BuID,
 		OwnerKind:      string(w.owner.Kind),

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -19,9 +19,9 @@ const (
 	pageDraftCloseTag   = "</page_draft>"
 )
 
-func DescribeSurface(surface agent.Surface, guide *agentturn.RuntimePage) string {
+func DescribeSurface(surface agentpagecontext.Surface, guide *agentturn.RuntimePage) string {
 	switch surface {
-	case agent.SurfaceDesk:
+	case agentpagecontext.SurfaceDesk:
 		line := "- Where the person is talking to you: the Desk, Trenova's full-page workspace " +
 			"for conversations with its AI agents, at /desk. They are in the Desk now, not on " +
 			"another page of Trenova."
@@ -30,12 +30,12 @@ func DescribeSurface(surface agent.Surface, guide *agentturn.RuntimePage) string
 		}
 
 		return line + " What the Desk is for:\n" + strings.TrimSpace(guide.Summary)
-	case agent.SurfaceAssistant:
+	case agentpagecontext.SurfaceAssistant:
 		return "- Where the person is talking to you: the assistant panel, which opens over " +
 			"whichever page of Trenova they are on and can float in a corner, dock to the side " +
 			"or fill the screen. Open in Desk carries the conversation over to the Desk, " +
 			"Trenova's full-page workspace for conversations with its AI agents, at /desk."
-	case agent.SurfacePalette:
+	case agentpagecontext.SurfacePalette:
 		return "- Where the person is talking to you: the command palette (Ctrl+K, or ⌘K on a " +
 			"Mac), the box that opens over whichever page of Trenova they are on to find " +
 			"records, pages and commands across the whole organization. A question typed into " +
@@ -56,13 +56,13 @@ func DescribeSurface(surface agent.Surface, guide *agentturn.RuntimePage) string
 func DescribePage(
 	page *agentturn.PageContext,
 	guide *agentturn.RuntimePage,
-	surface agent.Surface,
+	surface agentpagecontext.Surface,
 ) string {
 	var builder strings.Builder
 	switch surface { //nolint:exhaustive // the assistant panel and no named surface both sit on the page
-	case agent.SurfaceDesk:
+	case agentpagecontext.SurfaceDesk:
 		builder.WriteString("- The page of Trenova the person had open before the Desk:\n")
-	case agent.SurfacePalette:
+	case agentpagecontext.SurfacePalette:
 		builder.WriteString("- The page of Trenova open under the command palette. It is where " +
 			"the person was when they asked, not what they asked about:\n")
 	default:
@@ -107,9 +107,9 @@ func DescribePage(
 // answered by running the same query, not by reading the filters as facts.
 // Under the palette the table is only where the person was, so its query is
 // run only for a question that points at it.
-func DescribePageView(view *agent.PageView, surface agent.Surface) string {
+func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.Surface) string {
 	var builder strings.Builder
-	if surface == agent.SurfacePalette {
+	if surface == agentpagecontext.SurfacePalette {
 		builder.WriteString(
 			"- The table on that page, as the person has it filtered. Only when the " +
 				"question points at these rows, call the matching list tool with the same " +
@@ -194,7 +194,7 @@ func describeFilter(filter domaintypes.FieldFilter) string {
 	) + " " + string(
 		filter.Operator,
 	)
-	if value := agent.FormatFilterValue(filter.Value); value != "" {
+	if value := agentpagecontext.FormatFilterValue(filter.Value); value != "" {
 		line += " " + stringutils.FenceText(value, pageViewCloseTag)
 	}
 

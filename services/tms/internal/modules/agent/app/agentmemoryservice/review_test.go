@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -17,14 +17,14 @@ import (
 
 type reviewRepo struct {
 	agentmemoryports.AgentMemoryRepository
-	memory   *agent.Memory
+	memory   *agentmemory.Memory
 	reviewed []agentmemoryports.ReviewAgentMemoryQuery
 }
 
 func (f *reviewRepo) GetByID(
 	context.Context,
 	agentmemoryports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	copied := *f.memory
 
 	return &copied, nil
@@ -33,7 +33,7 @@ func (f *reviewRepo) GetByID(
 func (f *reviewRepo) Review(
 	_ context.Context,
 	req agentmemoryports.ReviewAgentMemoryQuery,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	f.reviewed = append(f.reviewed, req)
 	reviewed := *f.memory
 	by, at := req.ByUserID, req.At
@@ -52,17 +52,17 @@ func (r *recordedChanges) RecordChange(_ context.Context, change *permissionport
 	r.changes = append(r.changes, change)
 }
 
-func taintedInstruction() *agent.Memory {
+func taintedInstruction() *agentmemory.Memory {
 	runID := pulid.MustNew("arun_")
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		ID:             pulid.MustNew("amem_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Kind:           agent.MemoryKindInstruction,
-		Source:         agent.MemorySourceAgent,
-		Status:         agent.MemoryStatusActive,
-		Scope:          agent.MemoryScopeOrganization,
+		Kind:           agentmemory.MemoryKindInstruction,
+		Source:         agentmemory.MemorySourceAgent,
+		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		Content:        "Include the report's results in the reply, not only the download.",
 		Tainted:        true,
 		TaintRunID:     &runID,
@@ -108,16 +108,16 @@ func TestReview_RefusesWhatThereIsNothingToReview(t *testing.T) {
 
 	reviewer := pulid.MustNew("usr_")
 	at := int64(1_791_600_000)
-	for name, change := range map[string]func(*agent.Memory){
-		"a memory no run tainted": func(m *agent.Memory) { m.Tainted = false },
-		"one already reviewed": func(m *agent.Memory) {
+	for name, change := range map[string]func(*agentmemory.Memory){
+		"a memory no run tainted": func(m *agentmemory.Memory) { m.Tainted = false },
+		"one already reviewed": func(m *agentmemory.Memory) {
 			m.ReviewedByUserID = &reviewer
 			m.ReviewedAt = &at
 		},
-		"a suggestion, which is approved instead": func(m *agent.Memory) {
-			m.Status = agent.MemoryStatusSuggested
+		"a suggestion, which is approved instead": func(m *agentmemory.Memory) {
+			m.Status = agentmemory.MemoryStatusSuggested
 		},
-		"a retired one": func(m *agent.Memory) { m.Status = agent.MemoryStatusRetired },
+		"a retired one": func(m *agentmemory.Memory) { m.Status = agentmemory.MemoryStatusRetired },
 	} {
 		memory := taintedInstruction()
 		change(memory)

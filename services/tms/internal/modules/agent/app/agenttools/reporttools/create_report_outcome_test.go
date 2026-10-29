@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -161,8 +162,12 @@ func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	assert.Equal(t, "report", result.Kind)
 	assert.Equal(t, "Shipments for Peak Distributing", result.Name)
 	assert.Equal(t, map[string]string{"definitionId": writer.id.String()}, result.IDs)
-	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: writer.id.String()}, result.Record,
-		"the saved report is named as the record it opens as")
+	assert.Equal(
+		t,
+		&agentrecord.RecordRef{EntityType: "report", ID: writer.id.String()},
+		result.Record,
+		"the saved report is named as the record it opens as",
+	)
 }
 
 // The record a report tool names must be one the app can open: an entity the

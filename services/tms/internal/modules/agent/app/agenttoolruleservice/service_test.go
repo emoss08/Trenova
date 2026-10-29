@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,23 +21,26 @@ const shipmentTool = "shipment_update"
 
 type fakeRepo struct {
 	mu    sync.Mutex
-	rows  map[string]*agent.ToolRuleOverride
+	rows  map[string]*agenttooltrust.ToolRuleOverride
 	lists int
 	err   error
 }
 
 func newFakeRepo() *fakeRepo {
-	return &fakeRepo{rows: map[string]*agent.ToolRuleOverride{}}
+	return &fakeRepo{rows: map[string]*agenttooltrust.ToolRuleOverride{}}
 }
 
-func (f *fakeRepo) List(context.Context, pagination.TenantInfo) ([]*agent.ToolRuleOverride, error) {
+func (f *fakeRepo) List(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*agenttooltrust.ToolRuleOverride, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.lists++
 	if f.err != nil {
 		return nil, f.err
 	}
-	out := make([]*agent.ToolRuleOverride, 0, len(f.rows))
+	out := make([]*agenttooltrust.ToolRuleOverride, 0, len(f.rows))
 	for _, row := range f.rows {
 		copied := *row
 		out = append(out, &copied)
@@ -48,7 +52,7 @@ func (f *fakeRepo) List(context.Context, pagination.TenantInfo) ([]*agent.ToolRu
 func (f *fakeRepo) Get(
 	_ context.Context,
 	req agenttoolports.GetToolRuleOverrideRequest,
-) (*agent.ToolRuleOverride, error) {
+) (*agenttooltrust.ToolRuleOverride, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[req.ToolName]
@@ -62,12 +66,12 @@ func (f *fakeRepo) Get(
 
 func (f *fakeRepo) Create(
 	_ context.Context,
-	override *agent.ToolRuleOverride,
-) (*agent.ToolRuleOverride, error) {
+	override *agenttooltrust.ToolRuleOverride,
+) (*agenttooltrust.ToolRuleOverride, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	saved := *override
-	saved.ID = pulid.MustNew(agent.ToolRuleOverrideIDPrefix)
+	saved.ID = pulid.MustNew(agenttooltrust.ToolRuleOverrideIDPrefix)
 	f.rows[saved.ToolName] = &saved
 	copied := saved
 
@@ -76,8 +80,8 @@ func (f *fakeRepo) Create(
 
 func (f *fakeRepo) Update(
 	_ context.Context,
-	override *agent.ToolRuleOverride,
-) (*agent.ToolRuleOverride, error) {
+	override *agenttooltrust.ToolRuleOverride,
+) (*agenttooltrust.ToolRuleOverride, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	saved := *override
@@ -105,12 +109,12 @@ func (f *fakeImpact) RuleImpact(
 	req *agenttoolports.RuleImpactRequest,
 ) ([]agenttoolports.AgentToolRuleImpact, error) {
 	f.requests = append(f.requests, *req)
-	answer := func(policy agenttoolports.ToolPolicy) agent.AutonomyAnswer {
+	answer := func(policy agenttoolports.ToolPolicy) agenttooltrust.AutonomyAnswer {
 		if policy.MaxTier == agent.TierAutoExecute {
-			return agent.AutonomyRunsOnItsOwn
+			return agenttooltrust.AutonomyRunsOnItsOwn
 		}
 
-		return agent.AutonomyNeedsApproval
+		return agenttooltrust.AutonomyNeedsApproval
 	}
 
 	return []agenttoolports.AgentToolRuleImpact{
@@ -123,8 +127,8 @@ func (f *fakeImpact) RuleImpact(
 		{
 			AgentID:   "agd_same",
 			AgentName: "Clerk",
-			Before:    agent.AutonomyNeedsApproval,
-			After:     agent.AutonomyNeedsApproval,
+			Before:    agenttooltrust.AutonomyNeedsApproval,
+			After:     agenttooltrust.AutonomyNeedsApproval,
 		},
 	}, nil
 }
@@ -158,10 +162,10 @@ func newFixture(t *testing.T) *fixture {
 			loader: newLoader(repo),
 			policies: fakePolicies{shipmentTool: {
 				Name:          shipmentTool,
-				Kind:          agent.ToolKindAction,
+				Kind:          agenttooltrust.ToolKindAction,
 				DefaultTier:   agent.TierActWithApproval,
 				MaxTier:       agent.TierAutoExecute,
-				ReadsExternal: agent.ExternalReadNever,
+				ReadsExternal: agenttooltrust.ExternalReadNever,
 			}},
 			impact:  impact,
 			auditor: auditor,
@@ -207,8 +211,8 @@ func TestSave_HoldsAToolLowerAndRecordsWhoItMoves(t *testing.T) {
 	assert.Equal(t, pulid.ID("usr_1"), result.Override.UpdatedByID)
 	require.Len(t, result.Affected, 1, "only agents whose answer moved are returned")
 	assert.Equal(t, pulid.ID("agd_moved"), result.Affected[0].AgentID)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, result.Affected[0].Before)
-	assert.Equal(t, agent.AutonomyNeedsApproval, result.Affected[0].After)
+	assert.Equal(t, agenttooltrust.AutonomyRunsOnItsOwn, result.Affected[0].Before)
+	assert.Equal(t, agenttooltrust.AutonomyNeedsApproval, result.Affected[0].After)
 
 	require.Len(t, f.auditor.changes, 1)
 	change := f.auditor.changes[0]
@@ -242,10 +246,10 @@ func TestSave_TakesOutsideTextWithoutAReason(t *testing.T) {
 
 	f := newFixture(t)
 	result, err := f.save(t, &agenttoolports.SaveToolRuleRequest{
-		Change: agenttoolports.ToolRuleChange{ReadsExternal: agent.ExternalReadAlways},
+		Change: agenttoolports.ToolRuleChange{ReadsExternal: agenttooltrust.ExternalReadAlways},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.ExternalReadAlways, result.Override.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, result.Override.ReadsExternal)
 	assert.Empty(t, result.Override.MaxTier, "the declared most freedom is kept")
 }
 
@@ -303,7 +307,7 @@ func TestSave_RefusesLooseningAndUnknownTools(t *testing.T) {
 	f := newFixture(t)
 	_, err := f.save(t, &agenttoolports.SaveToolRuleRequest{
 		Change: agenttoolports.ToolRuleChange{
-			ReadsExternal: agent.ExternalReadNever,
+			ReadsExternal: agenttooltrust.ExternalReadNever,
 			MaxTier:       "Anything",
 		},
 		Reason: "loosen",
@@ -364,7 +368,7 @@ func TestLoader_IndexesTheTenantsOverridesByTool(t *testing.T) {
 	t.Parallel()
 
 	repo := newFakeRepo()
-	repo.rows[shipmentTool] = &agent.ToolRuleOverride{
+	repo.rows[shipmentTool] = &agenttooltrust.ToolRuleOverride{
 		ToolName: shipmentTool,
 		MaxTier:  agent.TierPropose,
 	}

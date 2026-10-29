@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -21,12 +22,12 @@ type readyTrustRepo struct {
 func (r readyTrustRepo) ListReady(
 	_ context.Context,
 	req agenttoolports.ListReadyToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
 	if r.row.Streak < req.MinStreak {
 		return nil, nil
 	}
 	read := *r.row
-	return []*agent.ToolTrust{&read}, nil
+	return []*agenttooltrust.ToolTrust{&read}, nil
 }
 
 type listingDefinitions struct {
@@ -45,7 +46,7 @@ func readyHarness(t *testing.T, streak int, ceiling agent.AutonomyTier) *harness
 
 	h := newHarness(t, harnessOptions{
 		ceiling: ceiling,
-		row:     &agent.ToolTrust{Streak: streak, Version: 4},
+		row:     &agenttooltrust.ToolTrust{Streak: streak, Version: 4},
 	})
 	h.trust.row.ToolName = "dispatch_assign_move"
 	h.trust.row.AgentDefinitionID = h.definitions.definition.ID

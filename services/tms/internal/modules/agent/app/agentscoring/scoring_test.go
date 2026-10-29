@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,7 +48,7 @@ func goodInput() *Input {
 	return &Input{
 		Case:  holdCase(),
 		Reply: "S-100 is on hold until the $12,400.50 invoice is paid.",
-		Calls: []agent.ObservedCall{
+		Calls: []agentevaluation.ObservedCall{
 			{ToolName: "find_tools"},
 			{ToolName: "shipment_get", Arguments: map[string]any{"proNumber": "S-100"}},
 			{
@@ -57,7 +59,11 @@ func goodInput() *Input {
 	}
 }
 
-func check(t *testing.T, checks *agent.CaseChecks, name string) agent.CaseCheck {
+func check(
+	t *testing.T,
+	checks *agentevaluation.CaseChecks,
+	name string,
+) agentevaluation.CaseCheck {
 	t.Helper()
 
 	for _, candidate := range checks.Checks {
@@ -67,7 +73,7 @@ func check(t *testing.T, checks *agent.CaseChecks, name string) agent.CaseCheck 
 	}
 	require.FailNow(t, "no check named "+name)
 
-	return agent.CaseCheck{}
+	return agentevaluation.CaseCheck{}
 }
 
 func TestScore_AGoodReplayPasses(t *testing.T) {
@@ -94,14 +100,20 @@ func TestScore_HardChecksScoreTheCaseZero(t *testing.T) {
 		{
 			name: "tool outside held tools",
 			mutate: func(in *Input) {
-				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "customer_update"})
+				in.Calls = append(
+					in.Calls,
+					agentevaluation.ObservedCall{ToolName: "customer_update"},
+				)
 			},
 			failed: CheckHeldTools,
 		},
 		{
 			name: "forbidden tool",
 			mutate: func(in *Input) {
-				in.Calls = append(in.Calls, agent.ObservedCall{ToolName: "shipment_cancel"})
+				in.Calls = append(
+					in.Calls,
+					agentevaluation.ObservedCall{ToolName: "shipment_cancel"},
+				)
 			},
 			failed: CheckForbiddenTools,
 		},
@@ -153,8 +165,8 @@ func TestScore_RuntimeToolsAreNeverOutsideTheHeldSet(t *testing.T) {
 
 	in := goodInput()
 	in.Calls = append(in.Calls,
-		agent.ObservedCall{ToolName: "publish_artifact"},
-		agent.ObservedCall{ToolName: "delegate_task"},
+		agentevaluation.ObservedCall{ToolName: "publish_artifact"},
+		agentevaluation.ObservedCall{ToolName: "delegate_task"},
 	)
 
 	assert.True(t, check(t, New().Score(in), CheckHeldTools).Passed)
@@ -181,21 +193,21 @@ func TestScore_JudgeBlendsButNeverOverridesAHardFailure(t *testing.T) {
 	t.Parallel()
 
 	in := goodInput()
-	in.Judge = &agent.JudgeVerdict{Score: 0.5}
+	in.Judge = &agentevaluation.JudgeVerdict{Score: 0.5}
 	blended := New().Score(in)
 	assert.InDelta(t, 0.7*1.0+0.3*0.5, blended.Final, 1e-9)
 	assert.InDelta(t, 1.0, blended.Deterministic, 1e-9)
 	assert.True(t, blended.Passed, "0.85 clears the pass mark")
 
 	failing := goodInput()
-	failing.Judge = &agent.JudgeVerdict{Score: 1}
-	failing.Calls = append(failing.Calls, agent.ObservedCall{ToolName: "shipment_cancel"})
+	failing.Judge = &agentevaluation.JudgeVerdict{Score: 1}
+	failing.Calls = append(failing.Calls, agentevaluation.ObservedCall{ToolName: "shipment_cancel"})
 	hard := New().Score(failing)
 	assert.Zero(t, hard.Final)
 	assert.False(t, hard.Passed)
 
 	assert.InDelta(t, 1.0, Blend(1.4, nil), 1e-9)
-	assert.InDelta(t, 0.7, Blend(1, &agent.JudgeVerdict{Score: -3}), 1e-9)
+	assert.InDelta(t, 0.7, Blend(1, &agentevaluation.JudgeVerdict{Score: -3}), 1e-9)
 }
 
 func TestScore_WeightsRenormaliseOverTheChecksThatApply(t *testing.T) {
@@ -237,12 +249,12 @@ func TestScore_NothingToCheckScoresFull(t *testing.T) {
 func TestScore_ToolChoiceModes(t *testing.T) {
 	t.Parallel()
 
-	calls := []agent.ObservedCall{
+	calls := []agentevaluation.ObservedCall{
 		{ToolName: "shipment_place_hold"},
 		{ToolName: "shipment_get"},
 	}
 	tools := []agentquality.ExpectedTool{{Name: "shipment_get"}, {Name: "shipment_place_hold"}}
-	score := func(mode agentquality.ToolMatchMode, called []agent.ObservedCall) float64 {
+	score := func(mode agentquality.ToolMatchMode, called []agentevaluation.ObservedCall) float64 {
 		in := &Input{
 			Case: &agentquality.EvalCase{
 				Expected: agentquality.Expected{ToolMode: mode, Tools: tools},
@@ -258,7 +270,7 @@ func TestScore_ToolChoiceModes(t *testing.T) {
 	assert.InDelta(t, 0.5, score(agentquality.ToolMatchAnyOrder, calls[:1]), 1e-9)
 	assert.InDelta(t, 1.0, score(agentquality.ToolMatchSubset, calls[:1]), 1e-9)
 	assert.InDelta(t, 0.5, score(agentquality.ToolMatchSubset, append(
-		[]agent.ObservedCall{{ToolName: "customer_list"}},
+		[]agentevaluation.ObservedCall{{ToolName: "customer_list"}},
 		calls[:1]...,
 	)), 1e-9)
 	assert.InDelta(t, 1.0, score(agentquality.ToolMatchSubset, nil), 1e-9)
@@ -308,7 +320,7 @@ func proposalScore(t *testing.T, evalCase *agentquality.EvalCase, rate float64) 
 
 	in := &Input{Case: evalCase}
 	if rate > 0 {
-		in.Actions = []agent.ReplayAction{{
+		in.Actions = []agentreplay.ReplayAction{{
 			ToolName:  "update_rate",
 			Arguments: map[string]any{"shipmentId": "shp_1", "rate": rate},
 		}}

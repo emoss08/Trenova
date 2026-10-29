@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -189,7 +190,7 @@ func TestHoldDriverPayEvent_TellsTheDriverWhyInTheirPortal(t *testing.T) {
 	)
 	message := agenttoolstest.PreviewChange(t, preview, 1).Message
 	require.NotNil(t, message)
-	assert.Equal(t, agent.MessageChannelDash, message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelDash, message.Channel)
 	assert.Equal(t, "Proof of delivery is missing for this load", message.Body)
 
 	events.locked = false
@@ -211,7 +212,7 @@ func TestHoldDriverPayEvent_SettledPayCannotBeHeld(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.Validate(t.Context(), params))
 }
 
@@ -302,7 +303,7 @@ func TestDetachPayEvent_RefusesAnythingButADraft(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.Validate(t.Context(), params))
 
 	settlement.Status = driversettlement.StatusDraft

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ func TestDecide_RecordsTheNoteOnEveryRejectedStep(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 3, false)
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 	h.req.Note = "Do the second load first; the first can wait for Monday."
 
 	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
@@ -46,8 +46,8 @@ func TestDecide_RefusesAnOverlongNoteBeforeClaimingThePlan(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 2, false)
-	h.req.Decision = agent.DecisionRejected
-	h.req.Note = strings.Repeat("x", agent.MaxDecisionNoteLength+1)
+	h.req.Decision = agentdecision.DecisionRejected
+	h.req.Note = strings.Repeat("x", agentdecision.MaxDecisionNoteLength+1)
 
 	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
 

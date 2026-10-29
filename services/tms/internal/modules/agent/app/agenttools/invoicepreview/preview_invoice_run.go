@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,7 +32,7 @@ func RunRecord(run *invoicerun.InvoiceRun) toolpreview.Record {
 func RenderCancel(
 	_ *invoicerunports.CancelInvoiceRunRequest,
 	plan *invoicerunports.InvoiceRunChangePreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		RunRecord(plan.Before),
 		plan.Before,
@@ -46,7 +46,7 @@ func RenderCancel(
 	if err != nil {
 		return nil, err
 	}
-	change.Operation = agent.PreviewOperationArchive
+	change.Operation = agentpreview.PreviewOperationArchive
 
 	return toolpreview.Build(fmt.Sprintf(
 		"Would cancel %s (now %s); its %s stay approved for the next run.",

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -350,7 +351,7 @@ func (s *ExceptionSource) Snapshot(
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	filter := tenantQuery(tenant, snapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
-		filterEq("resolutionState", string(agent.ResolutionStateOpen)),
+		filterEq("resolutionState", string(agentexception.ResolutionStateOpen)),
 	}
 
 	result, err := s.repo.List(ctx, &agentports.ListAgentExceptionRequest{Filter: filter})

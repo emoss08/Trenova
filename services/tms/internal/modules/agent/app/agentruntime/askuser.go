@@ -9,7 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -640,7 +640,7 @@ func askValueType(spec map[string]any) (valueType, recordKind string, ok bool) {
 	}
 
 	recordKind = strings.ToLower(strings.TrimSpace(stringArg(spec, askPropRecordKind)))
-	if !agent.IsKnownPageEntityType(recordKind) {
+	if !agentpagecontext.IsKnownPageEntityType(recordKind) {
 		return "", "", false
 	}
 

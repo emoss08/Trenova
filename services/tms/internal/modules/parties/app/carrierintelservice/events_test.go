@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -107,7 +107,7 @@ func TestPublishEventsToAgents_MatchesTheTowerFilter(t *testing.T) {
 			}
 
 			require.Len(t, publisher.events, 1)
-			require.Equal(t, agent.EventCarrierIntelEventOpened, publisher.events[0].Kind)
+			require.Equal(t, agenttrigger.EventCarrierIntelEventOpened, publisher.events[0].Kind)
 			require.Equal(t, tc.event.ID, publisher.events[0].SubjectID)
 			require.Equal(t, tenant, publisher.events[0].TenantInfo)
 		})

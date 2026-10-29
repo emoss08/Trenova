@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -29,7 +30,7 @@ func paymentTool() *agenttest.StubActionTool {
 	}
 }
 
-func receiptTool(reads agent.ExternalRead) *agenttest.StubQueryTool {
+func receiptTool(reads agenttooltrust.ExternalRead) *agenttest.StubQueryTool {
 	return &agenttest.StubQueryTool{
 		ToolName: "receivable_get_bank_receipt",
 		Result:   map[string]any{"memo": "Apply to invoice 88."},
@@ -105,7 +106,7 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	t.Parallel()
 
 	drive := func(
-		reads agent.ExternalRead,
+		reads agenttooltrust.ExternalRead,
 	) ([]string, *turnResult, *agenttest.StubActionTool) {
 		pay := paymentTool()
 		h := newHarness(t, harnessParams{
@@ -133,8 +134,8 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 		return started, result, pay
 	}
 
-	cleanStarted, clean, cleanPay := drive(agent.ExternalReadNever)
-	taintedStarted, tainted, taintedPay := drive(agent.ExternalReadAlways)
+	cleanStarted, clean, cleanPay := drive(agenttooltrust.ExternalReadNever)
+	taintedStarted, tainted, taintedPay := drive(agenttooltrust.ExternalReadAlways)
 
 	assert.Equal(t, cleanStarted, taintedStarted, "the same activities, in the same order")
 	tools := slices.DeleteFunc(slices.Clone(cleanStarted), func(name string) bool {

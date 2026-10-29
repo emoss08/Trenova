@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -181,7 +182,7 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		dqf.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -223,7 +224,7 @@ func TestUpdateEmploymentVerification_RecordsTheAnswer(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		dqf.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -249,7 +250,7 @@ func TestLogEmploymentVerificationRequest_CountsFollowUps(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		dqf.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), followUp)
 		},
 	)
@@ -275,13 +276,13 @@ func TestDeleteEmploymentVerification_IsOnlyProposed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		dqf.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))

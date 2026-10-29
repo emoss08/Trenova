@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
@@ -19,15 +21,15 @@ func moneyPolicy(
 ) agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          "receivable_post_customer_payment",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCustomerPayment,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Records a customer payment.",
 	}
 	if bounds != nil {
@@ -51,7 +53,7 @@ func boundAt(
 func boundIn(
 	amountMinor int64,
 	currency string,
-	reread ...agent.RecordRef,
+	reread ...agentrecord.RecordRef,
 ) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 	return func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		bound := agenttoolports.WithinMoneyBound(amountMinor, currency)
@@ -79,8 +81,8 @@ func provenWithin(policy agenttoolports.ToolPolicy) agenttoolports.ToolPolicy {
 	return policy
 }
 
-func limits() agent.MoneyLimits {
-	return agent.MoneyLimits{
+func limits() agenttooltrust.MoneyLimits {
+	return agenttooltrust.MoneyLimits{
 		CallCeilingMinor: 100_000,
 		RunCalls:         3,
 		RunAmountMinor:   200_000,
@@ -89,16 +91,21 @@ func limits() agent.MoneyLimits {
 	}
 }
 
-func allowance(run, day agent.MoneyUse) agenttoolpolicy.MoneyAllowanceReader {
+func allowance(run, day agenttooltrust.MoneyUse) agenttoolpolicy.MoneyAllowanceReader {
 	return allowanceWithin(limits(), run, day)
 }
 
 func allowanceWithin(
-	bounds agent.MoneyLimits,
-	run, day agent.MoneyUse,
+	bounds agenttooltrust.MoneyLimits,
+	run, day agenttooltrust.MoneyUse,
 ) agenttoolpolicy.MoneyAllowanceReader {
-	return func(context.Context) (agent.MoneyAllowance, error) {
-		return agent.MoneyAllowance{Limits: bounds, Currency: functional, Run: run, Day: day}, nil
+	return func(context.Context) (agenttooltrust.MoneyAllowance, error) {
+		return agenttooltrust.MoneyAllowance{
+			Limits:   bounds,
+			Currency: functional,
+			Run:      run,
+			Day:      day,
+		}, nil
 	}
 }
 
@@ -119,7 +126,7 @@ func moneyInput(
 func TestDecide_MoneyRunsOnItsOwnOnlyWithinBounds(t *testing.T) {
 	t.Parallel()
 
-	none := agent.MoneyUse{}
+	none := agenttooltrust.MoneyUse{}
 	cases := []struct {
 		name   string
 		in     agenttoolpolicy.DecideInput
@@ -130,7 +137,7 @@ func TestDecide_MoneyRunsOnItsOwnOnlyWithinBounds(t *testing.T) {
 			name:   "a money tool that proves nothing asks first",
 			in:     moneyInput(moneyPolicy(nil), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyUnbounded},
+			heldBy: []string{agenttooltrust.HeldByMoneyUnbounded},
 		},
 		{
 			name: "a call within every bound runs",
@@ -145,86 +152,86 @@ func TestDecide_MoneyRunsOnItsOwnOnlyWithinBounds(t *testing.T) {
 		{
 			name: "a call its condition does not prove asks first",
 			in: moneyInput(
-				moneyPolicy(outside(agent.HeldByMoneyExactMatch)),
+				moneyPolicy(outside(agenttooltrust.HeldByMoneyExactMatch)),
 				allowance(none, none),
 			),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyExactMatch},
+			heldBy: []string{agenttooltrust.HeldByMoneyExactMatch},
 		},
 		{
 			name:   "a condition naming no known bound is held as unproven",
 			in:     moneyInput(moneyPolicy(outside("whatever")), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyUnproven},
+			heldBy: []string{agenttooltrust.HeldByMoneyUnproven},
 		},
 		{
 			name:   "limits nobody could read hold the call",
 			in:     moneyInput(moneyPolicy(boundAt(1)), nil),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyLimitsUnread},
+			heldBy: []string{agenttooltrust.HeldByMoneyLimitsUnread},
 		},
 		{
 			name: "limits that fail to read hold the call",
 			in: moneyInput(
 				moneyPolicy(boundAt(1)),
-				func(context.Context) (agent.MoneyAllowance, error) {
-					return agent.MoneyAllowance{}, errors.New("database down")
+				func(context.Context) (agenttooltrust.MoneyAllowance, error) {
+					return agenttooltrust.MoneyAllowance{}, errors.New("database down")
 				},
 			),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyLimitsUnread},
+			heldBy: []string{agenttooltrust.HeldByMoneyLimitsUnread},
 		},
 		{
 			name:   "a call past the ceiling asks first",
 			in:     moneyInput(moneyPolicy(boundAt(100_001)), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyCallCeiling},
+			heldBy: []string{agenttooltrust.HeldByMoneyCallCeiling},
 		},
 		{
 			name:   "a refund past the ceiling asks first",
 			in:     moneyInput(moneyPolicy(boundAt(-100_001)), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyCallCeiling},
+			heldBy: []string{agenttooltrust.HeldByMoneyCallCeiling},
 		},
 		{
 			name: "a call past the run's count asks first",
 			in: moneyInput(moneyPolicy(boundAt(1)),
-				allowance(agent.MoneyUse{Calls: 3, AmountMinor: 3}, none)),
+				allowance(agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 3}, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyRunCalls},
+			heldBy: []string{agenttooltrust.HeldByMoneyRunCalls},
 		},
 		{
 			name: "a call past the run's total asks first",
 			in: moneyInput(moneyPolicy(boundAt(50_001)),
-				allowance(agent.MoneyUse{Calls: 2, AmountMinor: 150_000}, none)),
+				allowance(agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 150_000}, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyRunAmount},
+			heldBy: []string{agenttooltrust.HeldByMoneyRunAmount},
 		},
 		{
 			name: "a call past the day's count asks first",
 			in: moneyInput(moneyPolicy(boundAt(1)),
-				allowance(none, agent.MoneyUse{Calls: 10, AmountMinor: 10})),
+				allowance(none, agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 10})),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyDayCalls},
+			heldBy: []string{agenttooltrust.HeldByMoneyDayCalls},
 		},
 		{
 			name: "a call past the day's total asks first",
 			in: moneyInput(moneyPolicy(boundAt(50_000)),
-				allowance(none, agent.MoneyUse{Calls: 9, AmountMinor: 450_001})),
+				allowance(none, agenttooltrust.MoneyUse{Calls: 9, AmountMinor: 450_001})),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyDayAmount},
+			heldBy: []string{agenttooltrust.HeldByMoneyDayAmount},
 		},
 		{
 			name:   "a call in another currency asks first",
 			in:     moneyInput(moneyPolicy(boundIn(1, "CAD")), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyCurrency},
+			heldBy: []string{agenttooltrust.HeldByMoneyCurrency},
 		},
 		{
 			name:   "a call that names no currency asks first",
 			in:     moneyInput(moneyPolicy(boundIn(1, "")), allowance(none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyCurrency},
+			heldBy: []string{agenttooltrust.HeldByMoneyCurrency},
 		},
 		{
 			name: "the functional currency is matched whatever its case",
@@ -234,20 +241,20 @@ func TestDecide_MoneyRunsOnItsOwnOnlyWithinBounds(t *testing.T) {
 		{
 			name: "a ceiling of zero holds even a call that moves nothing",
 			in: moneyInput(moneyPolicy(boundAt(0)), allowanceWithin(
-				agent.MoneyLimits{
+				agenttooltrust.MoneyLimits{
 					RunCalls:       3,
 					RunAmountMinor: 200_000,
 					DayCalls:       10,
 					DayAmountMinor: 500_000,
 				}, none, none)),
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyCallCeiling},
+			heldBy: []string{agenttooltrust.HeldByMoneyCallCeiling},
 		},
 		{
 			name: "a call landing exactly on every cap runs",
 			in: moneyInput(moneyPolicy(boundAt(50_000)), allowance(
-				agent.MoneyUse{Calls: 2, AmountMinor: 150_000},
-				agent.MoneyUse{Calls: 9, AmountMinor: 450_000},
+				agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 150_000},
+				agenttooltrust.MoneyUse{Calls: 9, AmountMinor: 450_000},
 			)),
 			tier: agent.TierAutoExecute,
 		},
@@ -280,9 +287,9 @@ func TestDecide_MoneyBoundsAreNotReadForACallAlreadyHeld(t *testing.T) {
 		t.Error("bounds were read for a call that could not run on its own")
 		return agenttoolports.MoneyBound{}
 	}
-	noAllowance := func(context.Context) (agent.MoneyAllowance, error) {
+	noAllowance := func(context.Context) (agenttooltrust.MoneyAllowance, error) {
 		t.Error("the allowance was read for a call that could not run on its own")
-		return agent.MoneyAllowance{}, nil
+		return agenttooltrust.MoneyAllowance{}, nil
 	}
 
 	taintedRun := moneyInput(moneyPolicy(unread), noAllowance)
@@ -304,7 +311,7 @@ func TestDecide_MoneyBoundsAreNotReadForACallAlreadyHeld(t *testing.T) {
 	})
 	decision = agenttoolpolicy.Decide(t.Context(), proposing)
 	assert.Equal(t, agent.TierPropose, decision.Tier)
-	assert.NotContains(t, decision.HeldBy, agent.HeldByMoneyUnproven)
+	assert.NotContains(t, decision.HeldBy, agenttooltrust.HeldByMoneyUnproven)
 }
 
 func TestDecide_ABoundedMoneyCallHeldByItsOwnLimitRecordsNoAmount(t *testing.T) {
@@ -317,7 +324,7 @@ func TestDecide_ABoundedMoneyCallHeldByItsOwnLimitRecordsNoAmount(t *testing.T) 
 
 	decision := agenttoolpolicy.Decide(
 		t.Context(),
-		moneyInput(policy, allowance(agent.MoneyUse{}, agent.MoneyUse{})),
+		moneyInput(policy, allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{})),
 	)
 	assert.Equal(t, agent.TierPropose, decision.Tier)
 	assert.Nil(t, decision.MoneyMinor)
@@ -331,8 +338,8 @@ func TestPromotable_ABoundedMoneyToolMayEarnAutomatic(t *testing.T) {
 	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(moneyPolicy(nil)))
 }
 
-func receipt(id string) agent.RecordRef {
-	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id}
+func receipt(id string) agentrecord.RecordRef {
+	return agentrecord.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id}
 }
 
 func receiptMark(id string) agent.TaintMark {
@@ -374,13 +381,13 @@ func vouchingPolicy(
 func TestDecide_ABoundThatRereadsTheReceiptVouchesForHavingReadIt(t *testing.T) {
 	t.Parallel()
 
-	none := agent.MoneyUse{}
+	none := agenttooltrust.MoneyUse{}
 	rereads := boundIn(40_000, functional, receipt("brcpt_a"))
 	cases := []struct {
 		name   string
 		policy agenttoolports.ToolPolicy
 		taint  *agent.RunTaint
-		use    agent.MoneyUse
+		use    agenttooltrust.MoneyUse
 		tier   agent.AutonomyTier
 		heldBy []string
 	}{
@@ -456,9 +463,9 @@ func TestDecide_ABoundThatRereadsTheReceiptVouchesForHavingReadIt(t *testing.T) 
 			name:   "a vouched call still keeps to the run's caps",
 			policy: vouchingPolicy(rereads),
 			taint:  receiptRead(),
-			use:    agent.MoneyUse{Calls: 3, AmountMinor: 3},
+			use:    agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 3},
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyRunCalls, agenttoolpolicy.HeldByTainted},
+			heldBy: []string{agenttooltrust.HeldByMoneyRunCalls, agenttoolpolicy.HeldByTainted},
 		},
 	}
 
@@ -491,7 +498,10 @@ func TestDecide_ABoundIsNotReadWhenTheRunHoldsContentItCannotVouchFor(t *testing
 		return agenttoolports.MoneyBound{}
 	}
 
-	in := moneyInput(vouchingPolicy(unread), allowance(agent.MoneyUse{}, agent.MoneyUse{}))
+	in := moneyInput(
+		vouchingPolicy(unread),
+		allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
+	)
 	in.Taint = receiptAndWebRead()
 	decision := agenttoolpolicy.Decide(t.Context(), in)
 	assert.Equal(t, agent.TierActWithApproval, decision.Tier)
@@ -542,7 +552,7 @@ func TestDecide_SixteenReceiptsThenAnEmailHoldsThePost(t *testing.T) {
 	require.True(t, taint.Has(agent.TaintSourceInboundMessage), "the source is still known")
 
 	in := moneyInput(vouchingPolicy(boundIn(40_000, functional, receipt("brcpt_a"))),
-		allowance(agent.MoneyUse{}, agent.MoneyUse{}))
+		allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}))
 	in.Taint = taint
 	decision := agenttoolpolicy.Decide(t.Context(), in)
 	assert.Equal(t, agent.TierActWithApproval, decision.Tier)

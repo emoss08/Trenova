@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -95,7 +98,7 @@ type dispatchParams struct {
 	// before the tool read them, told back to the model with the result.
 	argumentNote  string
 	proposedSoFar []agentruntimeports.PendingAction
-	moneySpent    agent.MoneyUse
+	moneySpent    agenttooltrust.MoneyUse
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
 	idempotencyKey string
@@ -298,7 +301,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 	source := decision.Source
 	if heldForExternal || heldForHours {
-		source = agent.TierSourcePolicyDefault
+		source = agenttooltrust.TierSourcePolicyDefault
 	}
 	stampAction(ctx, action, source, p.stepKey)
 
@@ -496,13 +499,13 @@ func (s *Service) withinBudget(
 
 func (s *Service) moneyAllowance(
 	req *agentruntimeports.RunRequest,
-	spent agent.MoneyUse,
+	spent agenttooltrust.MoneyUse,
 ) agenttoolpolicy.MoneyAllowanceReader {
 	if s.budgets == nil {
 		return nil
 	}
 
-	return func(ctx context.Context) (agent.MoneyAllowance, error) {
+	return func(ctx context.Context) (agenttooltrust.MoneyAllowance, error) {
 		allowance, err := s.budgets.MoneyAllowance(ctx, agentports.MoneyAllowanceRequest{
 			Definition: req.Definition,
 			RunID:      req.RunID,
@@ -517,7 +520,7 @@ func (s *Service) moneyAllowance(
 	}
 }
 
-func (t *Turn) moneySpent() agent.MoneyUse {
+func (t *Turn) moneySpent() agenttooltrust.MoneyUse {
 	spent := unrecordedMoney(t.result.Actions)
 	for idx := range t.result.Delegations {
 		spent = spent.Plus(unrecordedMoney(t.result.Delegations[idx].Actions))
@@ -529,8 +532,8 @@ func (t *Turn) moneySpent() agent.MoneyUse {
 	return spent
 }
 
-func unrecordedMoney(actions []agentruntimeports.PendingAction) agent.MoneyUse {
-	use := agent.MoneyUse{}
+func unrecordedMoney(actions []agentruntimeports.PendingAction) agenttooltrust.MoneyUse {
+	use := agenttooltrust.MoneyUse{}
 	for i := range actions {
 		action := &actions[i]
 		if movedMoney(action) {
@@ -824,13 +827,13 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	writeCtx, write := s.startWrite(ctx, &a, false)
 	action.ExecutedAt = timeutils.NowUnix()
 	var (
-		result    *agent.ToolExecutionResult
+		result    *agentrecord.ToolExecutionResult
 		saved     *agentmemoryports.SavedMemory
-		refreshed *agent.Memory
+		refreshed *agentmemory.Memory
 		err       error
 	)
 	if recorder, records := a.tool.(agentmemoryports.MemoryRecordingTool); records {
-		var memory *agent.Memory
+		var memory *agentmemory.Memory
 		memory, err = recorder.Record(writeCtx, a.executeParams())
 		if err == nil && memory != nil {
 			saved, refreshed = savedOrRefreshed(memory, call.ID)
@@ -950,27 +953,27 @@ func heldReason(heldBy []string, egress agent.EgressClass) string {
 }
 
 var moneyHeldReasons = map[string]string{
-	agent.HeldByMoneyUnbounded: "this tool moves money and cannot show that a call is " +
+	agenttooltrust.HeldByMoneyUnbounded: "this tool moves money and cannot show that a call is " +
 		"within the limits it may run in on its own",
-	agent.HeldByMoneyUnproven: "it could not be shown that this change is within the " +
+	agenttooltrust.HeldByMoneyUnproven: "it could not be shown that this change is within the " +
 		"limits it may run in on its own",
-	agent.HeldByMoneyExactMatch: "the money does not match its records exactly by " +
+	agenttooltrust.HeldByMoneyExactMatch: "the money does not match its records exactly by " +
 		"amount and reference",
-	agent.HeldByMoneyRecordState: "the record is past the point where an agent may " +
+	agenttooltrust.HeldByMoneyRecordState: "the record is past the point where an agent may " +
 		"change its money on its own",
-	agent.HeldByMoneyAgentLine:    "a person added that line, so a person removes it",
-	agent.HeldByMoneyLimitsUnread: "the organization's money limits for agents could not be read",
-	agent.HeldByMoneyCurrency: "the amount is not in the organization's functional currency, " +
+	agenttooltrust.HeldByMoneyAgentLine:    "a person added that line, so a person removes it",
+	agenttooltrust.HeldByMoneyLimitsUnread: "the organization's money limits for agents could not be read",
+	agenttooltrust.HeldByMoneyCurrency: "the amount is not in the organization's functional currency, " +
 		"which its money limits for agents are set in",
-	agent.HeldByMoneyCallCeiling: "the amount is more than one automatic change may " +
+	agenttooltrust.HeldByMoneyCallCeiling: "the amount is more than one automatic change may " +
 		"move",
-	agent.HeldByMoneyRunCalls: "this run has already made as many automatic money " +
+	agenttooltrust.HeldByMoneyRunCalls: "this run has already made as many automatic money " +
 		"changes as it may",
-	agent.HeldByMoneyRunAmount: "it would take this run past the money it may move on " +
+	agenttooltrust.HeldByMoneyRunAmount: "it would take this run past the money it may move on " +
 		"its own",
-	agent.HeldByMoneyDayCalls: "the organization's agents have made as many automatic " +
+	agenttooltrust.HeldByMoneyDayCalls: "the organization's agents have made as many automatic " +
 		"money changes today as they may",
-	agent.HeldByMoneyDayAmount: "it would take the organization's agents past the money " +
+	agenttooltrust.HeldByMoneyDayAmount: "it would take the organization's agents past the money " +
 		"they may move on their own today",
 }
 
@@ -994,9 +997,9 @@ func egressReason(egress agent.EgressClass) string {
 // nothing new was kept, and undoing would retire the memory they already had,
 // so the turn names it as a memory it used instead.
 func savedOrRefreshed(
-	memory *agent.Memory,
+	memory *agentmemory.Memory,
 	callID string,
-) (*agentmemoryports.SavedMemory, *agent.Memory) {
+) (*agentmemoryports.SavedMemory, *agentmemory.Memory) {
 	if memory.Refreshed {
 		return nil, memory
 	}
@@ -1004,14 +1007,14 @@ func savedOrRefreshed(
 	return &agentmemoryports.SavedMemory{
 		ID:      memory.ID,
 		CallID:  callID,
-		Pending: memory.Status == agent.MemoryStatusSuggested,
+		Pending: memory.Status == agentmemory.MemoryStatusSuggested,
 	}, nil
 }
 
 // refreshedContent tells the model that what it asked to save was already
 // remembered, so it says so to the person rather than announcing a new memory
 // and does not try again with other words.
-func refreshedContent(name string, memory *agent.Memory) string {
+func refreshedContent(name string, memory *agentmemory.Memory) string {
 	return fmt.Sprintf(
 		"Tool %q ran successfully. This was already remembered as memory %s, so that "+
 			"memory was refreshed instead of saving a duplicate; nothing new was recorded.",
@@ -1068,7 +1071,7 @@ func (s *Service) versionAfter(
 // ranContent tells the model a write ran and, when the tool says what it
 // made, which record that is and the id to refer to it by, so the next call
 // does not have to go looking for it.
-func ranContent(name string, result *agent.ToolExecutionResult) string {
+func ranContent(name string, result *agentrecord.ToolExecutionResult) string {
 	content := fmt.Sprintf("Tool %q ran successfully.", name)
 	if describe := result.Describe(); describe != "" {
 		content += " " + describe
@@ -1142,7 +1145,7 @@ func (s *Service) ruled(
 			zap.String("tool", policy.Name),
 			zap.Error(err),
 		)
-		return agenttoolpolicy.ApplyOverride(policy, &agent.ToolRuleOverride{
+		return agenttoolpolicy.ApplyOverride(policy, &agenttooltrust.ToolRuleOverride{
 			ToolName: policy.Name,
 			MaxTier:  agent.TierPropose,
 		})

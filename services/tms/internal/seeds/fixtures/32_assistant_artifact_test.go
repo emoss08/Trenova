@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -34,7 +35,7 @@ func artifactRefs(t *testing.T) *artifactSeedRefs {
 			{ID: pulid.MustNew("thr_")},
 		},
 		shipments: shipments,
-		plan: &agent.AgentPlan{
+		plan: &agentplan.AgentPlan{
 			ID:        pulid.MustNew("apln_"),
 			Title:     "Ready S00002 for invoicing",
 			Summary:   "Three things have to happen first.",

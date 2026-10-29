@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -78,7 +78,7 @@ func (s *LedgerService) RecordFunding(
 		invoiceIDs,
 	)
 	if draft.plan.FundedCount > 0 {
-		s.publishEvent(ctx, req.TenantInfo, agent.EventFactoringSubmissionFunded, updated.ID,
+		s.publishEvent(ctx, req.TenantInfo, agenttrigger.EventFactoringSubmissionFunded, updated.ID,
 			[]pulid.ID{updated.FactoringCompanyID},
 			"Schedule "+updated.Number+" funded: "+strconv.Itoa(draft.plan.FundedCount)+
 				" invoices funded, "+strconv.Itoa(draft.plan.RejectCount)+" rejected",

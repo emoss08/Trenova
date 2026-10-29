@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -74,10 +74,10 @@ func DecisionResult(
 	return out
 }
 
-func PlanDecisionResult(plan *agent.AgentPlan) *gqlmodel.AgentPlanDecisionResult {
+func PlanDecisionResult(plan *agentplan.AgentPlan) *gqlmodel.AgentPlanDecisionResult {
 	return &gqlmodel.AgentPlanDecisionResult{
 		Plan:    plan,
-		Refused: agent.PlanTargetChanged(plan),
+		Refused: agentplan.PlanTargetChanged(plan),
 	}
 }
 

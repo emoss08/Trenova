@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/money"
@@ -20,7 +20,7 @@ import (
 func ChargeEditMoney(
 	ctx context.Context,
 	before, after *shipment.Shipment,
-) (*agent.MoneyPreview, error) {
+) (*agentpreview.MoneyPreview, error) {
 	freightBefore := before.FreightChargeAmount.Decimal
 	freightAfter := after.FreightChargeAmount.Decimal
 	totalsBefore, err := chargeallocation.ChargeTotalsByCharge(ctx, before)
@@ -34,11 +34,11 @@ func ChargeEditMoney(
 	names := accessorialLabels(before.AdditionalCharges, after.AdditionalCharges)
 
 	lines := make(
-		[]agent.MoneyLine,
+		[]agentpreview.MoneyLine,
 		0,
 		len(before.AdditionalCharges)+len(after.AdditionalCharges)+1,
 	)
-	lines = append(lines, agent.MoneyLine{
+	lines = append(lines, agentpreview.MoneyLine{
 		Label:  "Freight",
 		Before: changepreview.KnownAmount(freightBefore),
 		After:  changepreview.KnownAmount(freightAfter),
@@ -55,7 +55,7 @@ func ChargeEditMoney(
 		if charge == nil {
 			continue
 		}
-		line := agent.MoneyLine{
+		line := agentpreview.MoneyLine{
 			Label:  names[charge.AccessorialChargeID],
 			Before: changepreview.KnownAmount(totalsBefore[charge]),
 		}
@@ -79,7 +79,7 @@ func ChargeEditMoney(
 		if _, ok := existing[charge.ID]; ok && charge.ID.IsNotNil() {
 			continue
 		}
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: names[charge.AccessorialChargeID],
 			After: changepreview.KnownAmount(totalsAfter[charge]),
 		})

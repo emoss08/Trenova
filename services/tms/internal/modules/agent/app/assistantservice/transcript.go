@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -624,7 +625,7 @@ func writeTranscriptProposal(b *strings.Builder, p *agent.AgentProposal) {
 
 // transcriptResult is what an executed proposal made, with its ids in code
 // so they can be copied: It created the report "Lanes" (definitionId `rd_…`).
-func transcriptResult(result *agent.ToolExecutionResult) string {
+func transcriptResult(result *agentrecord.ToolExecutionResult) string {
 	made := result.Describe()
 	keys := result.IDKeys()
 	if len(keys) == 0 {

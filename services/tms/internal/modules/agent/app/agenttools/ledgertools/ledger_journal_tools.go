@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -471,8 +472,11 @@ func manualJournalRequestFrom(
 	}, nil
 }
 
-func manualJournalResult(action string, entity *manualjournal.Request) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+func manualJournalResult(
+	action string,
+	entity *manualjournal.Request,
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   manualJournalKind,
 		Name:   entity.RequestNumber,
@@ -570,7 +574,7 @@ func newDraftManualJournalTool(
 			ctx context.Context,
 			req *manualjournalports.CreateManualJournalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := journals.CreateDraft(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -623,7 +627,7 @@ func newReviseManualJournalDraftTool(
 			ctx context.Context,
 			revision *journalpreview.JournalRevision,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := revisedDraft(ctx, journals, revision, params)
 			if err != nil {
 				return nil, err
@@ -693,7 +697,7 @@ func newSubmitManualJournalTool(
 			ctx context.Context,
 			req *manualjournalports.GetManualJournalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if _, err := plannedSubmit(ctx, journals, req, params); err != nil {
 				return nil, err
 			}
@@ -771,7 +775,7 @@ func newCancelManualJournalTool(
 			ctx context.Context,
 			req *manualjournalports.CancelManualJournalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := journals.Cancel(ctx, req, params.Actor)
 
 			return nil, err
@@ -819,7 +823,7 @@ func newPostManualJournalTool(
 			ctx context.Context,
 			req *manualjournalports.GetManualJournalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := journals.Post(ctx, req, params.Actor)
 
 			return nil, err
@@ -927,13 +931,13 @@ func newRequestJournalReversalTool(
 				ctx context.Context,
 				req *journalreversalports.CreateJournalReversalRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := reversals.Create(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "requested",
 					Kind:   journalReversalKind,
 					IDs:    map[string]string{paramJournalReversalID: created.ID.String()},
@@ -1017,7 +1021,7 @@ func newCancelJournalReversalTool(
 			ctx context.Context,
 			req *journalreversalports.CancelJournalReversalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reversals.Cancel(ctx, req, params.Actor)
 
 			return nil, err
@@ -1077,7 +1081,7 @@ func newPostJournalReversalTool(
 			ctx context.Context,
 			req *journalreversalports.GetJournalReversalRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reversals.Post(ctx, req, params.Actor)
 
 			return nil, err

@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -215,7 +218,7 @@ func TestListAgentRuns_MarksEachRunThatReadOutsideContent(t *testing.T) {
 
 	outcome := queryRuns(t, newListAgentRunsTool(runs), params)
 
-	assert.Equal(t, []agent.RecordRef{{
+	assert.Equal(t, []agentrecord.RecordRef{{
 		EntityType: agent.TaintEntityAgentRun,
 		ID:         dirty.ID.String(),
 	}}, outcome.TaintedRecords())
@@ -252,7 +255,7 @@ func TestListAgentRuns_DeclaresAMarkedRunRecordRead(t *testing.T) {
 
 	assert.Equal(t, "agent_list_runs", tool.Name())
 	assert.Equal(t, permission.ResourceAgentRun, policy.Resource)
-	assert.Equal(t, agent.ExternalReadMarked, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceRunRecord, policy.Source)
 	properties, ok := tool.ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
@@ -306,7 +309,7 @@ func (f *fakeRunProposals) ListByRun(
 
 type fakeRunEvents struct {
 	next     int
-	events   []*agent.AgentRunEvent
+	events   []*agentrunevent.AgentRunEvent
 	requests []agentruntimeports.ListAgentRunEventsRequest
 }
 
@@ -322,7 +325,7 @@ func (f *fakeRunEvents) NextSequence(
 func (f *fakeRunEvents) List(
 	_ context.Context,
 	req agentruntimeports.ListAgentRunEventsRequest,
-) ([]*agent.AgentRunEvent, error) {
+) ([]*agentrunevent.AgentRunEvent, error) {
 	f.requests = append(f.requests, req)
 
 	return f.events, nil
@@ -416,7 +419,7 @@ func TestGetAgentRun_ReadsABackgroundRunAndMarksItsTaint(t *testing.T) {
 
 	assert.True(t, detail.ReadOutsideContent)
 	assert.Equal(t, []string{"inbound_message", "weather"}, detail.TaintSources)
-	assert.Equal(t, []agent.RecordRef{{
+	assert.Equal(t, []agentrecord.RecordRef{{
 		EntityType: agent.TaintEntityAgentRun,
 		ID:         run.ID.String(),
 	}}, detail.TaintedRecords())
@@ -443,7 +446,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 		})
 	}
 	fixture.events.next = 121
-	fixture.events.events = []*agent.AgentRunEvent{
+	fixture.events.events = []*agentrunevent.AgentRunEvent{
 		{
 			Sequence: 71,
 			Kind:     assistantports.AssistantEventToolStarted,
@@ -537,14 +540,14 @@ func TestGetAgentRun_TheIDNamesWhereItComesFrom(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Contains(t, runID["description"], "agent_list_runs")
-	assert.Equal(t, agent.ExternalReadMarked, tool.Policy().ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, tool.Policy().ReadsExternal)
 	assert.Equal(t, agent.TaintSourceRunRecord, tool.Policy().Source)
 }
 
 func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 	t.Parallel()
 
-	view := agentRunEventViewFrom(&agent.AgentRunEvent{
+	view := agentRunEventViewFrom(&agentrunevent.AgentRunEvent{
 		Sequence: 4,
 		Kind:     assistantports.AssistantEventToolFinished,
 		CallID:   "call_1",
@@ -560,7 +563,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 	assert.True(t, view.Failed)
 	assert.Equal(t, "denied", view.Verdict)
 
-	ran := agentRunEventViewFrom(&agent.AgentRunEvent{
+	ran := agentRunEventViewFrom(&agentrunevent.AgentRunEvent{
 		Kind:    assistantports.AssistantEventToolStarted,
 		Payload: map[string]any{"name": "shipment_get"},
 	})

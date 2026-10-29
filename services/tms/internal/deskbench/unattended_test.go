@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -29,7 +30,7 @@ func TestFire_Validation(t *testing.T) {
 
 	event := &Fire{
 		Agent:   string(agenttemplate.TemplateBillingException),
-		Event:   agent.EventBillingQueueItemException,
+		Event:   agenttrigger.EventBillingQueueItemException,
 		Subject: "select id from billing_queue_items limit 1",
 	}
 	require.NoError(t, fireScenario(event).Validate())
@@ -42,15 +43,17 @@ func TestFire_Validation(t *testing.T) {
 		"an event the template does not answer": {
 			Agent: string(
 				agenttemplate.TemplateBillingException,
-			), Event: agent.EventShipmentCreated,
+			), Event: agenttrigger.EventShipmentCreated,
 			Subject: "select 1",
 		},
 		"an event run with no subject": {
 			Agent: string(agenttemplate.TemplateBillingException),
-			Event: agent.EventBillingQueueItemException,
+			Event: agenttrigger.EventBillingQueueItemException,
 		},
 		"a scheduled agent fired by an event": {
-			Agent: string(agenttemplate.TemplateLoadMonitor), Event: agent.EventShipmentCreated,
+			Agent: string(
+				agenttemplate.TemplateLoadMonitor,
+			), Event: agenttrigger.EventShipmentCreated,
 		},
 		"a chat agent": {
 			Agent:    string(agenttemplate.TemplateDispatchAssistant),
@@ -59,7 +62,7 @@ func TestFire_Validation(t *testing.T) {
 		"an unknown template": {Agent: "NoSuchDesk", Schedule: true},
 		"a subject that writes": {
 			Agent: string(agenttemplate.TemplateBillingException),
-			Event: agent.EventBillingQueueItemException, Subject: "delete from shipments",
+			Event: agenttrigger.EventBillingQueueItemException, Subject: "delete from shipments",
 		},
 		"a ceiling that is no tier": {
 			Agent: string(
@@ -83,7 +86,7 @@ func TestFire_Validation(t *testing.T) {
 
 	shaped := &Fire{
 		Agent:   string(agenttemplate.TemplateBillingException),
-		Event:   agent.EventBillingQueueItemException,
+		Event:   agenttrigger.EventBillingQueueItemException,
 		Subject: "select id from billing_queue_items limit 1",
 		Ceiling: agent.TierPropose,
 		ToolTiers: map[string]agent.AutonomyTier{

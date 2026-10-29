@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +46,7 @@ func TestDescribeAccountingConnectionHealth(t *testing.T) {
 		assert.Equal(t, watchtower.SourceAccountingSync, item.SourceKind)
 		assert.Equal(t, conn.ID.String(), item.SourceID)
 		assert.Equal(t, agent.SubjectAccountingConnection, item.SubjectType)
-		assert.Equal(t, agent.EventAccountingConnectionDegraded, item.EventKind)
+		assert.Equal(t, agenttrigger.EventAccountingConnectionDegraded, item.EventKind)
 		assert.Equal(t, "/admin/integrations?type=QuickBooksOnline", item.Path)
 		assert.Equal(t, *conn.LastFailureAt, item.OccurredAt)
 		assert.Contains(t, item.Title, "QuickBooks Online")

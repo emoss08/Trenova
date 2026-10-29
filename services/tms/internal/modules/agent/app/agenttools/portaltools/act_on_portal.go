@@ -14,6 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -92,16 +95,16 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 func (t *ActOnPortalTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourcePortalAutomation,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      string(permission.KindPortalRun),
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Acts on a third-party portal in the organization's name, which another " +
 			"company then relies on; what it books or submits is undone, if at all, on that " +
 			"portal. A person always decides.",
@@ -170,7 +173,7 @@ func (t *ActOnPortalTool) Validate(
 func (t *ActOnPortalTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would ask a browser to act on a portal."
 	req, err := t.request(&params)
 	if err != nil {
@@ -191,8 +194,8 @@ func (t *ActOnPortalTool) Preview(
 		Resource: permission.ResourcePortalAutomation,
 		ID:       plan.Site.ID,
 		Label:    plan.Site.Name,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelPortal,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelPortal,
 		To:      plan.Site.Domains,
 		Subject: plan.Instruction,
 		Body:    plan.SentTask,
@@ -225,7 +228,7 @@ func (t *ActOnPortalTool) Execute(
 func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -242,12 +245,12 @@ func (t *ActOnPortalTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	result := &agent.ToolExecutionResult{
+	result := &agentrecord.ToolExecutionResult{
 		Action: "started",
 		Kind:   resultKind,
 		Name:   started.Site.Name,
 		IDs:    map[string]string{resultRunID: started.RunID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: string(permission.KindPortalRun),
 			ID:         started.RunID.String(),
 		},

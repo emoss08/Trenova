@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
@@ -184,7 +185,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		customers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), idempotentParams(args))
 		},
 	)
@@ -323,7 +324,7 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		commodities.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -355,7 +356,7 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	})
 	statusPreview, err := status.(agenttoolports.ToolPreviewer).Preview(t.Context(), statusParams)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, statusPreview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, statusPreview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeHazmats struct {
@@ -447,7 +448,7 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		materials.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return update.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -538,7 +539,7 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		locations.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -691,7 +692,7 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tractors.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -704,7 +705,7 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 	)
 	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, refused, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeTrailers struct {
@@ -804,7 +805,7 @@ func TestLocateTrailer_ShowsTheReRatedShipmentAndWaitsForAPerson(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		trailers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(args),

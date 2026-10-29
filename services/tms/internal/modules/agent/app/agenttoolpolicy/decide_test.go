@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -68,7 +70,7 @@ func tainted() *agent.RunTaint {
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
-		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	})
 
 	return taint
@@ -382,7 +384,7 @@ func TestDecide_SelfScopedTools(t *testing.T) {
 	t.Parallel()
 
 	policy := registeredPolicy(t, "home_add_widget")
-	assert.Equal(t, agent.ToolScopeSelf, policy.Scope)
+	assert.Equal(t, agenttooltrust.ToolScopeSelf, policy.Scope)
 
 	runDecideCases(t, []decideCase{
 		{
@@ -481,7 +483,7 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 				Params:         call(agentPrincipal(), nil),
 				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
-				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+				MoneyAllowance: allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
 			},
 			tier: agent.TierAutoExecute,
 		},
@@ -492,10 +494,10 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 				Params:         call(agentPrincipal(), nil),
 				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
-				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+				MoneyAllowance: allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
 			},
 			tier:   agent.TierActWithApproval,
-			heldBy: []string{agent.HeldByMoneyUnproven},
+			heldBy: []string{agenttooltrust.HeldByMoneyUnproven},
 		},
 		{
 			name: "a tainted run waits",
@@ -613,8 +615,8 @@ func TestTierSetByPerson(t *testing.T) {
 	d := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
 		"report_create": agent.TierAutoExecute,
 	})
-	earned := &agent.ToolTrust{EarnedTier: agent.TierAutoExecute}
-	chosen := &agent.ToolTrust{EarnedTier: agent.TierActWithApproval}
+	earned := &agenttooltrust.ToolTrust{EarnedTier: agent.TierAutoExecute}
+	chosen := &agenttooltrust.ToolTrust{EarnedTier: agent.TierActWithApproval}
 
 	assert.False(t, agenttoolpolicy.TierSetByPerson(d, "report_create", earned))
 	assert.True(t, agenttoolpolicy.TierSetByPerson(d, "report_create", chosen))

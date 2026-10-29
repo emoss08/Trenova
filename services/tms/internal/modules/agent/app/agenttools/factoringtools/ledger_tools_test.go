@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
@@ -229,7 +230,7 @@ func TestRecordFactoringFunding_PreviewsTheJournalAndRunsOnlyWhenApproved(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&ledger.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

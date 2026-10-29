@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -127,15 +129,15 @@ func (t *PostInvoiceTool) ParamSchema() map[string]any {
 func (t *PostInvoiceTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInvoice,
 		Operation:     permission.OpPost,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Artifact:      changepreview.InvoiceRecordEntity,
 		Rationale: "Books a receivable to the ledger and queues it for the accounting system " +
 			"and the customer's EDI; only a person posts, and hands-off posting is the " +
@@ -197,7 +199,7 @@ func (t *PostInvoiceTool) Execute(
 func (t *PostInvoiceTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -218,14 +220,17 @@ func (t *PostInvoiceTool) ExecuteWithResult(
 }
 
 // postedInvoiceResult names a posted invoice and where it stands.
-func postedInvoiceResult(posted *invoice.Invoice) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: "posted", Kind: changepreview.InvoiceRecordEntity}
+func postedInvoiceResult(posted *invoice.Invoice) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{
+		Action: "posted",
+		Kind:   changepreview.InvoiceRecordEntity,
+	}
 	if posted == nil || posted.ID.IsNil() {
 		return result
 	}
 	result.Name = posted.Number
 	result.IDs = map[string]string{toolparams.ParamInvoiceID: posted.ID.String()}
-	result.Record = &agent.RecordRef{
+	result.Record = &agentrecord.RecordRef{
 		EntityType: changepreview.InvoiceRecordEntity,
 		ID:         posted.ID.String(),
 	}
@@ -270,15 +275,15 @@ func (t *SendInvoiceTool) ParamSchema() map[string]any {
 func (t *SendInvoiceTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInvoice,
 		Operation:     permission.OpSubmit,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Emails the customer their invoice; only a person sends it, to the " +
 			"recipients the customer's billing profile names.",
 	}

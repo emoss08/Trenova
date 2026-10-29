@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -20,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func eventOwners(events []*agent.AgentRunEvent) []pulid.ID {
+func eventOwners(events []*agentrunevent.AgentRunEvent) []pulid.ID {
 	owners := make([]pulid.ID, 0, len(events))
 	for _, event := range events {
 		owners = append(owners, event.OwnerID)
@@ -72,9 +73,9 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 	shipmentRun := newRun(agent.SubjectShipment, pulid.MustNew("shp_"))
 
 	runOwner := string(agentruntimeports.RunStepOwnerAgentRun)
-	events := make([]*agent.AgentRunEvent, 0, 2)
+	events := make([]*agentrunevent.AgentRunEvent, 0, 2)
 	for _, run := range []*agent.AgentRun{conversationRun, shipmentRun} {
-		events = append(events, &agent.AgentRunEvent{
+		events = append(events, &agentrunevent.AgentRunEvent{
 			ID:             pulid.MustNew("are_"),
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,

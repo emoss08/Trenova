@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -37,13 +39,13 @@ func (s *Service) approveDeferred(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
-	prepared, err := s.prepare(ctx, req, actor, agent.PlanStatusPending)
+) (*agentplan.AgentPlan, error) {
+	prepared, err := s.prepare(ctx, req, actor, agentplan.PlanStatusPending)
 	if err != nil {
 		return nil, err
 	}
 	if prepared.shown.stale() {
-		return s.claimAndRun(ctx, req, actor, prepared, agent.PlanStatusPending)
+		return s.claimAndRun(ctx, req, actor, prepared, agentplan.PlanStatusPending)
 	}
 
 	now := time.Now()
@@ -51,8 +53,8 @@ func (s *Service) approveDeferred(
 	plan, err := s.plans.UpdateStatus(ctx, agentports.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
-		Status:          agent.PlanStatusApproving,
-		FromStatus:      agent.PlanStatusPending,
+		Status:          agentplan.PlanStatusApproving,
+		FromStatus:      agentplan.PlanStatusPending,
 		DecidedByUserID: actor.UserID,
 		DecidedAt:       now.Unix(),
 		CommitsAt:       commitsAt,
@@ -116,20 +118,20 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 	if err != nil {
 		return err
 	}
-	if plan.Status != agent.PlanStatusApproving || plan.CommitsAt == nil ||
+	if plan.Status != agentplan.PlanStatusApproving || plan.CommitsAt == nil ||
 		(req.CommitsAt != 0 && *plan.CommitsAt != req.CommitsAt) {
 		return nil
 	}
 
 	decideReq := &agentports.DecideAgentPlanRequest{
 		PlanID:        plan.ID,
-		Decision:      agent.DecisionAccepted,
+		Decision:      agentdecision.DecisionAccepted,
 		ReasonCode:    stringutils.FirstNonEmpty(req.ReasonCode, plan.ApprovalReasonCode),
 		Note:          stringutils.FirstNonEmpty(req.Note, plan.ApprovalNote),
 		TenantInfo:    tenant,
 		PreviewDigest: stringutils.FirstNonEmpty(req.PreviewDigest, plan.ApprovalPreviewDigest),
 	}
-	prepared, err := s.prepare(ctx, decideReq, actor, agent.PlanStatusApproving)
+	prepared, err := s.prepare(ctx, decideReq, actor, agentplan.PlanStatusApproving)
 	if err != nil {
 		if agent.IsReviewRequired(err) {
 			s.l.Warn("a plan approved in its undo window came to commit without its preview",
@@ -155,7 +157,7 @@ func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitAppr
 		decideReq,
 		actor,
 		prepared,
-		agent.PlanStatusApproving,
+		agentplan.PlanStatusApproving,
 	); err != nil {
 		if errortypes.IsVersionMismatchError(err) {
 			// Undone in the moment between the read and the claim.
@@ -179,7 +181,7 @@ func (s *Service) UndoOwnApproval(
 	if err != nil {
 		return err
 	}
-	if plan.Status != agent.PlanStatusApproving {
+	if plan.Status != agentplan.PlanStatusApproving {
 		return errAlreadyCommitted()
 	}
 
@@ -213,8 +215,8 @@ func (s *Service) CommitOwnApprovalNow(
 		return err
 	}
 	switch plan.Status {
-	case agent.PlanStatusApproving:
-	case agent.PlanStatusPending:
+	case agentplan.PlanStatusApproving:
+	case agentplan.PlanStatusPending:
 		return errortypes.NewConflictError(
 			"This approval was undone; approve the plan again to run it",
 		)
@@ -252,7 +254,7 @@ func (s *Service) ownApproving(
 	ctx context.Context,
 	req *agentports.SettleApprovalRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	if req.PlanID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"planId", errortypes.ErrRequired, "Name the plan whose approval this is",
@@ -283,7 +285,7 @@ func (s *Service) ownApproving(
 // a plan that already started to run did not.
 func (s *Service) reopenPlan(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	actor *permissionports.RequestActor,
 	undo bool,
 ) bool {
@@ -291,8 +293,8 @@ func (s *Service) reopenPlan(
 	update := agentports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: tenant,
-		Status:     agent.PlanStatusPending,
-		FromStatus: agent.PlanStatusApproving,
+		Status:     agentplan.PlanStatusPending,
+		FromStatus: agentplan.PlanStatusApproving,
 		Reopen:     true,
 	}
 	if undo {
@@ -321,7 +323,7 @@ func (s *Service) reopenPlan(
 	return true
 }
 
-func (s *Service) logUndo(plan *agent.AgentPlan, actor *permissionports.RequestActor) {
+func (s *Service) logUndo(plan *agentplan.AgentPlan, actor *permissionports.RequestActor) {
 	if s.audit == nil {
 		return
 	}
@@ -349,6 +351,6 @@ func errAlreadyCommitted() error {
 	)
 }
 
-func planTenant(plan *agent.AgentPlan) pagination.TenantInfo {
+func planTenant(plan *agentplan.AgentPlan) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: plan.OrganizationID, BuID: plan.BusinessUnitID}
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/memtable"
 )
@@ -225,9 +226,9 @@ func policyKindField[T any](
 		Name: "kind",
 		Kind: memtable.KindEnum,
 		Values: []string{
-			agent.ToolKindQuery.String(),
-			agent.ToolKindAction.String(),
-			agent.ToolKindRuntime.String(),
+			agenttooltrust.ToolKindQuery.String(),
+			agenttooltrust.ToolKindAction.String(),
+			agenttooltrust.ToolKindRuntime.String(),
 		},
 		Filterable: true,
 		Sortable:   true,
@@ -242,16 +243,16 @@ func policyExternalReadField[T any](
 		Name: "readsExternal",
 		Kind: memtable.KindEnum,
 		Values: []string{
-			agent.ExternalReadNever.String(),
-			agent.ExternalReadAlways.String(),
-			agent.ExternalReadMarked.String(),
+			agenttooltrust.ExternalReadNever.String(),
+			agenttooltrust.ExternalReadAlways.String(),
+			agenttooltrust.ExternalReadMarked.String(),
 		},
 		Filterable: true,
 		Sortable:   true,
 		Text: func(row *T) string {
 			read := view(row).Policy.ReadsExternal
 			if !read.IsValid() {
-				return agent.ExternalReadNever.String()
+				return agenttooltrust.ExternalReadNever.String()
 			}
 
 			return read.String()
@@ -265,11 +266,11 @@ func policyExternalReadField[T any](
 	}
 }
 
-func externalReadRank(read agent.ExternalRead) int {
+func externalReadRank(read agenttooltrust.ExternalRead) int {
 	switch read {
-	case agent.ExternalReadMarked:
+	case agenttooltrust.ExternalReadMarked:
 		return 1
-	case agent.ExternalReadAlways:
+	case agenttooltrust.ExternalReadAlways:
 		return 2
 	default:
 		return 0

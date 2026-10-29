@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -190,22 +192,22 @@ type EvalCase struct {
 	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
 	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" keel:"source_feedback_id"`
 
-	Input        string             `json:"input"        keel:"input"`
-	History      []HistoryMessage   `json:"history"      keel:"history,jsonb"`
-	PageContext  *agent.PageContext `json:"pageContext"  keel:"page_context,jsonb"`
-	Mentions     []agent.EntityRef  `json:"mentions"     keel:"mentions,jsonb"`
-	SubjectType  agent.SubjectType  `json:"subjectType"  keel:"subject_type,nullzero"`
-	SubjectID    pulid.ID           `json:"subjectId"    keel:"subject_id,nullzero"`
-	HeldTools    []string           `json:"heldTools"    keel:"held_tools"`
-	ToolFixtures []ToolFixture      `json:"toolFixtures" keel:"tool_fixtures,jsonb"`
+	Input        string                        `json:"input"        keel:"input"`
+	History      []HistoryMessage              `json:"history"      keel:"history,jsonb"`
+	PageContext  *agentpagecontext.PageContext `json:"pageContext"  keel:"page_context,jsonb"`
+	Mentions     []agentpagecontext.EntityRef  `json:"mentions"     keel:"mentions,jsonb"`
+	SubjectType  agent.SubjectType             `json:"subjectType"  keel:"subject_type,nullzero"`
+	SubjectID    pulid.ID                      `json:"subjectId"    keel:"subject_id,nullzero"`
+	HeldTools    []string                      `json:"heldTools"    keel:"held_tools"`
+	ToolFixtures []ToolFixture                 `json:"toolFixtures" keel:"tool_fixtures,jsonb"`
 
-	Expected            Expected           `json:"expected"            keel:"expected,jsonb"`
-	Rubric              string             `json:"rubric"              keel:"rubric,nullzero"`
-	Redaction           *Redaction         `json:"redaction"           keel:"redaction,jsonb"`
-	ContentHash         string             `json:"contentHash"         keel:"content_hash"`
-	CapturedFingerprint *agent.Fingerprint `json:"capturedFingerprint" keel:"captured_fingerprint,jsonb"`
-	ExpiresAt           *int64             `json:"expiresAt"           keel:"expires_at"`
-	CreatedByUserID     *pulid.ID          `json:"createdByUserId"     keel:"created_by_user_id"`
+	Expected            Expected                      `json:"expected"            keel:"expected,jsonb"`
+	Rubric              string                        `json:"rubric"              keel:"rubric,nullzero"`
+	Redaction           *Redaction                    `json:"redaction"           keel:"redaction,jsonb"`
+	ContentHash         string                        `json:"contentHash"         keel:"content_hash"`
+	CapturedFingerprint *agentfingerprint.Fingerprint `json:"capturedFingerprint" keel:"captured_fingerprint,jsonb"`
+	ExpiresAt           *int64                        `json:"expiresAt"           keel:"expires_at"`
+	CreatedByUserID     *pulid.ID                     `json:"createdByUserId"     keel:"created_by_user_id"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -223,7 +225,7 @@ func (c *EvalCase) BeforeCreate(_ context.Context) error {
 		c.History = []HistoryMessage{}
 	}
 	if c.Mentions == nil {
-		c.Mentions = []agent.EntityRef{}
+		c.Mentions = []agentpagecontext.EntityRef{}
 	}
 	if c.HeldTools == nil {
 		c.HeldTools = []string{}
@@ -296,7 +298,7 @@ func (c *EvalCase) Validate(multiErr *errortypes.MultiError) {
 			)
 		}
 	}
-	agent.ValidateEntityRefs("mentions", c.Mentions, multiErr)
+	agentpagecontext.ValidateEntityRefs("mentions", c.Mentions, multiErr)
 	if c.ExpiresAt != nil && *c.ExpiresAt <= 0 {
 		multiErr.Add("expiresAt", errortypes.ErrInvalid, "Expiry must be a moment in time")
 	}
@@ -372,13 +374,13 @@ func (c *EvalCase) IsChat() bool {
 }
 
 type contentKey struct {
-	AgentDefinitionID pulid.ID           `json:"agentDefinitionId"`
-	Input             string             `json:"input"`
-	History           []HistoryMessage   `json:"history"`
-	PageContext       *agent.PageContext `json:"pageContext"`
-	Mentions          []agent.EntityRef  `json:"mentions"`
-	SubjectType       agent.SubjectType  `json:"subjectType"`
-	SubjectID         pulid.ID           `json:"subjectId"`
+	AgentDefinitionID pulid.ID                      `json:"agentDefinitionId"`
+	Input             string                        `json:"input"`
+	History           []HistoryMessage              `json:"history"`
+	PageContext       *agentpagecontext.PageContext `json:"pageContext"`
+	Mentions          []agentpagecontext.EntityRef  `json:"mentions"`
+	SubjectType       agent.SubjectType             `json:"subjectType"`
+	SubjectID         pulid.ID                      `json:"subjectId"`
 }
 
 func (c *EvalCase) ComputeContentHash() (string, error) {
@@ -463,7 +465,7 @@ func (c *EvalCase) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 func FingerprintOf(
 	definition *agentdefinition.Definition,
 	promptVersion string,
-) *agent.Fingerprint {
+) *agentfingerprint.Fingerprint {
 	if definition == nil {
 		return nil
 	}
@@ -471,7 +473,7 @@ func FingerprintOf(
 	tools := slices.Clone(definition.EffectiveToolNames())
 	slices.Sort(tools)
 
-	return &agent.Fingerprint{
+	return &agentfingerprint.Fingerprint{
 		DefinitionVersion: definition.Version,
 		PromptVersion:     promptVersion,
 		ProviderID:        definition.PreferredProviderID,

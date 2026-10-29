@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
@@ -165,14 +167,14 @@ func renderCollectionPlan(
 	customerID pulid.ID,
 	plan *collectionports.AccountChangePlan,
 	summary string,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	name := collectionCustomerName(plan)
 	opts := []toolpreview.Option{
 		toolpreview.Labels(collectionLabels),
 		toolpreview.Types(collectionDateTypes),
 		toolpreview.WithRefs(collectionRefs),
 	}
-	changes := make([]*agent.RecordChange, 0, 2)
+	changes := make([]*agentpreview.RecordChange, 0, 2)
 	if plan.Activity != nil {
 		entry, err := toolpreview.Create(toolpreview.Record{
 			Resource: permission.ResourceCustomer,
@@ -205,8 +207,8 @@ func collectionResult(
 	action string,
 	customerID pulid.ID,
 	view *collectionports.AccountView,
-) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "collections account",
 		IDs:    map[string]string{toolparams.ParamCustomerID: customerID.String()},
@@ -220,8 +222,11 @@ func collectionResult(
 	return result
 }
 
-func customerRecord(customerID pulid.ID) *agent.RecordRef {
-	return &agent.RecordRef{EntityType: changepreview.CustomerRecordEntity, ID: customerID.String()}
+func customerRecord(customerID pulid.ID) *agentrecord.RecordRef {
+	return &agentrecord.RecordRef{
+		EntityType: changepreview.CustomerRecordEntity,
+		ID:         customerID.String(),
+	}
 }
 
 func NewLogCollectionActivityTool(collections collectionports.Service) agenttoolports.AgentTool {
@@ -304,7 +309,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 			Render: func(
 				req *collectionports.LogActivityRequest,
 				plan *collectionports.AccountChangePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				summary := fmt.Sprintf("Would log a %s with %s.",
 					activityNoun(req.Kind), collectionCustomerName(plan))
 				return renderCollectionPlan(req.CustomerID, plan, summary)
@@ -313,7 +318,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 				ctx context.Context,
 				req *collectionports.LogActivityRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				view, err := collections.LogActivity(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -482,7 +487,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 			Render: func(
 				req *collectionports.AssignCollectorRequest,
 				plan *collectionports.AccountChangePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				name := collectionCustomerName(plan)
 				summary := fmt.Sprintf("Would give %s's overdue receivables to %s.",
 					name, plan.After.CollectorName)
@@ -505,7 +510,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 				ctx context.Context,
 				req *collectionports.AssignCollectorRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				view, err := collections.AssignCollector(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -597,7 +602,7 @@ func NewScheduleCollectionFollowUpTool(
 			Render: func(
 				req *collectionports.ScheduleFollowUpRequest,
 				plan *collectionports.AccountChangePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				summary := fmt.Sprintf("Would schedule when %s is next chased.",
 					collectionCustomerName(plan))
 				if req.FollowUpOn == nil {
@@ -610,7 +615,7 @@ func NewScheduleCollectionFollowUpTool(
 				ctx context.Context,
 				req *collectionports.ScheduleFollowUpRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				view, err := collections.ScheduleFollowUp(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err

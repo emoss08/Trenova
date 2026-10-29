@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -119,7 +119,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 		}
 
 		agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
-			Kind:      agent.EventShipmentCreated,
+			Kind:      agenttrigger.EventShipmentCreated,
 			SubjectID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
@@ -78,7 +79,7 @@ func (t *inspectX12Tool) ParamSchema() map[string]any {
 func (t *inspectX12Tool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceEDI,
-		reads:           agent.ExternalReadAlways,
+		reads:           agenttooltrust.ExternalReadAlways,
 		source:          agent.TaintSourceEDI,
 		capsLaterWrites: true,
 		rationale: "Parses X12 a person handed the agent, which a trading partner wrote; " +

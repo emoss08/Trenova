@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -121,7 +122,7 @@ func evalCaseCurated(
 		request.Trigger = *input.Trigger
 	}
 	if input.PageContext != nil {
-		request.PageContext = new(agent.PageContext)
+		request.PageContext = new(agentpagecontext.PageContext)
 		if err = jsonutils.Convert(input.PageContext, request.PageContext); err != nil {
 			return nil, invalidJSON(
 				"pageContext",
@@ -136,7 +137,7 @@ func evalCaseCurated(
 				"Mentions must be records with a type, id and label",
 			)
 		}
-		request.Mentions = agent.NormalizeEntityRefs(request.Mentions)
+		request.Mentions = agentpagecontext.NormalizeEntityRefs(request.Mentions)
 	}
 	if input.SubjectType != nil && *input.SubjectType != "" {
 		request.SubjectType = agent.SubjectType(*input.SubjectType)

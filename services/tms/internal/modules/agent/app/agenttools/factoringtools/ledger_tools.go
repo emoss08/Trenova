@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -93,7 +94,7 @@ func (t *ledgerTool) movementChanges(
 	tenant pagination.TenantInfo,
 	currency string,
 	movements []*factoringledgerports.PlannedMovement,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	journals := make([]*kernelports.JournalPreview, 0, len(movements))
 	sets := make([][]kernelports.JournalLinePreview, 0, len(movements))
 	for _, movement := range movements {
@@ -108,7 +109,7 @@ func (t *ledgerTool) movementChanges(
 	if err != nil {
 		return nil, err
 	}
-	changes := make([]*agent.RecordChange, 0, len(journals))
+	changes := make([]*agentpreview.RecordChange, 0, len(journals))
 	idx := 0
 	for _, movement := range movements {
 		if movement == nil || len(movement.Lines) == 0 {
@@ -387,7 +388,7 @@ func (t *RecordFactoringFundingTool) Execute(
 func (t *RecordFactoringFundingTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would record the factor's funding of a schedule and book it to the ledger."
 	req, err := t.request(&params)
 	if err != nil {
@@ -427,7 +428,7 @@ func (t *RecordFactoringFundingTool) Preview(
 	sentences = append(sentences, bookingSentences(plan.Movements)...)
 	return toolpreview.Build(
 		strings.Join(sentences, " "),
-		append([]*agent.RecordChange{scheduleChange}, entries...)...,
+		append([]*agentpreview.RecordChange{scheduleChange}, entries...)...,
 	), nil
 }
 
@@ -599,7 +600,7 @@ func itemViewOf(item *factoringsubmission.SubmissionItem) *itemView {
 func (t *ReserveMovementTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return refused(t.spec.refusal, err)
@@ -627,7 +628,7 @@ func (t *ReserveMovementTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{itemChange}
+	changes := []*agentpreview.RecordChange{itemChange}
 	movements := []*factoringledgerports.PlannedMovement{plan.Movement}
 	entries, err := t.movementChanges(ctx, req.TenantInfo, plan.After.CurrencyCode, movements)
 	if err != nil {

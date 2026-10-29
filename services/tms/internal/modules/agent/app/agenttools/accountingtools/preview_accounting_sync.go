@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -121,7 +121,7 @@ func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) to
 	}
 }
 
-func refusedSync(summary string, err error) (*agent.ToolPreview, error) {
+func refusedSync(summary string, err error) (*agentpreview.ToolPreview, error) {
 	if changepreview.IsRefusal(err) {
 		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
@@ -132,7 +132,7 @@ func refusedSync(summary string, err error) (*agent.ToolPreview, error) {
 func (t *RetryAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return refusedSync("Would send documents to the accounting system again.", err)
@@ -158,7 +158,7 @@ func (t *RetryAccountingSyncTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	changes := make([]*agent.RecordChange, 0, len(plan.records))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.records))
 	for _, record := range plan.records {
 		change, cErr := toolpreview.Update(
 			syncRecordRecord(record),
@@ -210,7 +210,7 @@ func (t *RetryAccountingSyncTool) Preview(
 func (t *SkipAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, record, err := t.request(ctx, &params)
 	if err != nil {
 		return refusedSync("Would keep a document out of the accounting system.", err)
@@ -239,7 +239,7 @@ func (t *SkipAccountingSyncTool) Preview(
 func (t *redateAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, redatePlan, err := t.request(ctx, &params)
 	if err != nil {
 		return refusedSync(
@@ -272,7 +272,7 @@ func (t *redateAccountingSyncTool) Preview(
 func (t *PauseAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, summary, err := t.request(ctx, &params)
 	if err != nil {
 		return refusedSync("Would pause sending to the accounting system.", err)
@@ -304,7 +304,7 @@ func (t *PauseAccountingSyncTool) Preview(
 func (t *ResumeAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	_, summary, err := t.request(ctx, &params)
 	if err != nil {
 		return refusedSync("Would resume sending to the accounting system.", err)
@@ -355,7 +355,7 @@ func (p *backfillPlan) backfill() *accountingbackfill.AccountingBackfill {
 func (t *RequestAccountingBackfillTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return refusedSync("Would send earlier documents to the accounting system.", err)

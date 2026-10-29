@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -46,7 +49,7 @@ type ProposalPreviewRequest struct {
 // PlanPreviewRequest asks what every pending step of a plan would do, in
 // order.
 type PlanPreviewRequest struct {
-	Plan   *agent.AgentPlan
+	Plan   *agentplan.AgentPlan
 	Steps  []*agent.AgentProposal
 	Viewer *PreviewViewer
 }
@@ -72,7 +75,7 @@ type ProposalBaselineRequest struct {
 // why it failed.
 type ProposalBaselineResult struct {
 	Target     *ProposalTarget
-	Preview    *agent.ToolPreview
+	Preview    *agentpreview.ToolPreview
 	PreviewErr error
 }
 
@@ -170,16 +173,19 @@ type ProposalPreviewService interface {
 	// ForProposal previews a pending proposal as its reader would approve it,
 	// or returns the preview recorded when it was decided, filtered for this
 	// reader.
-	ForProposal(ctx context.Context, req *ProposalPreviewRequest) (*agent.ProposalPreview, error)
+	ForProposal(
+		ctx context.Context,
+		req *ProposalPreviewRequest,
+	) (*agentpreview.ProposalPreview, error)
 	// ForPlan previews a plan's pending steps, each projected from the ones
 	// before it.
-	ForPlan(ctx context.Context, req *PlanPreviewRequest) (*agent.PlanPreview, error)
+	ForPlan(ctx context.Context, req *PlanPreviewRequest) (*agentpreview.PlanPreview, error)
 	// ForDecision is a decision's recorded preview, filtered for the reader.
 	ForDecision(
 		ctx context.Context,
-		decision *agent.AgentDecision,
+		decision *agentdecision.AgentDecision,
 		viewer *PreviewViewer,
-	) *agent.ProposalPreview
+	) *agentpreview.ProposalPreview
 	// Baseline pins the target and previews the write in one read-only
 	// snapshot. It never fails the proposal: whatever could not be read is
 	// left out.

@@ -483,7 +483,7 @@ what a filed change does not hold, or stated money or a percentage nothing the c
 the detail lists the figures and fields). A decide step takes `decide: approve`
 or `decide: reject`, an optional `note` (on a rejection, what the agent is told), `tool` to
 decide only that tool's proposals, and `modifications` to approve with changed arguments.
-`page` and `mentions` take the shapes the Desk sends (`agent.PageContext`, `agent.EntityRef`).
+`page` and `mentions` take the shapes the Desk sends (`agentpagecontext.PageContext`, `agentpagecontext.EntityRef`).
 A seeded record's id changes with every reseed, so a mention may give `find:` in place of `id`:
 one `SELECT` whose single row is the id, run before the message the way a fact query runs
 (`find: select id from shipments where pro_number = 'SEED-PAY-002'`).

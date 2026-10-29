@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestPublishAgentEventPublishesAtOnceOutsideATransaction(t *testing.T) {
 	t.Parallel()
 
 	publisher := &recordingAgentEventPublisher{}
-	event := AgentEvent{Kind: agent.EventShipmentCreated, SubjectID: pulid.MustNew("shp_")}
+	event := AgentEvent{Kind: agenttrigger.EventShipmentCreated, SubjectID: pulid.MustNew("shp_")}
 
 	PublishAgentEvent(t.Context(), publisher, event)
 
@@ -36,7 +36,7 @@ func TestPublishAgentEventWaitsForTheTransactionToCommit(t *testing.T) {
 
 	publisher := &recordingAgentEventPublisher{}
 	ctx, hooks := kernelports.WithAfterCommitHooks(t.Context())
-	event := AgentEvent{Kind: agent.EventShipmentCreated, SubjectID: pulid.MustNew("shp_")}
+	event := AgentEvent{Kind: agenttrigger.EventShipmentCreated, SubjectID: pulid.MustNew("shp_")}
 
 	PublishAgentEvent(ctx, publisher, event)
 	assert.Empty(t, publisher.events)
@@ -53,7 +53,7 @@ func TestPublishAgentEventIsDroppedWhenTheTransactionRollsBack(t *testing.T) {
 	publisher := &recordingAgentEventPublisher{}
 	ctx, _ := kernelports.WithAfterCommitHooks(t.Context())
 
-	PublishAgentEvent(ctx, publisher, AgentEvent{Kind: agent.EventShipmentCreated})
+	PublishAgentEvent(ctx, publisher, AgentEvent{Kind: agenttrigger.EventShipmentCreated})
 
 	assert.Empty(t, publisher.events)
 }
@@ -64,7 +64,7 @@ func TestPublishAgentEventToleratesANilPublisher(t *testing.T) {
 	ctx, hooks := kernelports.WithAfterCommitHooks(t.Context())
 
 	assert.NotPanics(t, func() {
-		PublishAgentEvent(ctx, nil, AgentEvent{Kind: agent.EventShipmentCreated})
+		PublishAgentEvent(ctx, nil, AgentEvent{Kind: agenttrigger.EventShipmentCreated})
 		hooks.Run(t.Context())
 	})
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
@@ -81,7 +82,7 @@ type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
 		req agentports.ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+	) ([]*agentdecision.AgentDecision, error)
 }
 
 type runReader interface {

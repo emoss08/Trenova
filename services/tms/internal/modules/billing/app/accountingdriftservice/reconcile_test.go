@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -166,7 +166,7 @@ func TestReconcileOpensAFindingWithBothValuesAndTheEditor(t *testing.T) {
 
 	events := h.events.Published()
 	require.Len(t, events, 1)
-	assert.Equal(t, agent.EventAccountingDriftDetected, events[0].Kind)
+	assert.Equal(t, agenttrigger.EventAccountingDriftDetected, events[0].Kind)
 	assert.Equal(t, finding.ID, events[0].SubjectID)
 }
 

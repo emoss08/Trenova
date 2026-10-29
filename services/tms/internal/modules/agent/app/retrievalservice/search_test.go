@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -523,12 +523,12 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	assert.Equal(t, airetrieval.UnavailableReasonDisabled, off.Semantics.Reason)
 }
 
-func memoriesByAge(count int) []*agent.Memory {
-	memories := make([]*agent.Memory, 0, count)
+func memoriesByAge(count int) []*agentmemory.Memory {
+	memories := make([]*agentmemory.Memory, 0, count)
 	for idx := range count {
-		memories = append(memories, &agent.Memory{
+		memories = append(memories, &agentmemory.Memory{
 			ID:        pulid.MustNew("amem_"),
-			Kind:      agent.MemoryKindFact,
+			Kind:      agentmemory.MemoryKindFact,
 			Content:   "memory",
 			CreatedAt: int64(1_000 + idx*100),
 			UpdatedAt: int64(1_000 + idx*100),
@@ -581,7 +581,7 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	)
 }
 
-func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
+func recencyOrder(t *testing.T, memories []*agentmemory.Memory) []*agentmemory.Memory {
 	t.Helper()
 
 	ranked, err := NewMemoryRankerFrom(nil, DefaultSearchTuning(), zap.NewNop()).

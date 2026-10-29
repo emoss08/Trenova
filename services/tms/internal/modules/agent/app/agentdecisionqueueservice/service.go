@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -159,7 +161,7 @@ func (s *Service) loadEntries(
 		}
 	}
 
-	plansByID := make(map[pulid.ID]*agent.AgentPlan, len(planIDs))
+	plansByID := make(map[pulid.ID]*agentplan.AgentPlan, len(planIDs))
 	if len(planIDs) > 0 {
 		plans, err := s.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
 			IDs:        planIDs,
@@ -434,22 +436,22 @@ func validateBatch(req *agentports.DecideAgentProposalsRequest) error {
 		seen[id] = struct{}{}
 	}
 	switch req.Decision {
-	case agent.DecisionAccepted, agent.DecisionRejected:
-	case agent.DecisionModified:
+	case agentdecision.DecisionAccepted, agentdecision.DecisionRejected:
+	case agentdecision.DecisionModified:
 		multiErr.Add("decision", errortypes.ErrInvalid,
 			"A change applies to one proposal; approve with changes from its card")
 	default:
 		multiErr.Add("decision", errortypes.ErrInvalid, "Decision is invalid")
 	}
-	if strings.TrimSpace(req.ReasonCode) == "" && req.Decision == agent.DecisionRejected {
+	if strings.TrimSpace(req.ReasonCode) == "" && req.Decision == agentdecision.DecisionRejected {
 		multiErr.Add("reasonCode", errortypes.ErrRequired, "Say why these are rejected")
 	}
-	if err := agent.CheckDecisionNote(agent.NormalizeDecisionNote(req.Note)); err != nil {
+	if err := agentdecision.CheckDecisionNote(agentdecision.NormalizeDecisionNote(req.Note)); err != nil {
 		multiErr.Add(
 			"note",
 			errortypes.ErrInvalid,
 			"A note to the agent can be at most {0} characters",
-			agent.MaxDecisionNoteLength,
+			agentdecision.MaxDecisionNoteLength,
 		)
 	}
 	if multiErr.HasErrors() {

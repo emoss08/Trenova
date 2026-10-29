@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -57,10 +57,13 @@ type queryWord struct {
 // words, and the one before it only when the message is too short to say
 // what it is about. With neither a vector nor a word to go on, nothing is
 // judged and every candidate bears.
-func Relevance(focus, text string, ranked agentmemoryports.RankedMemories) agent.MemoryRelevance {
+func Relevance(
+	focus, text string,
+	ranked agentmemoryports.RankedMemories,
+) agentmemory.MemoryRelevance {
 	words := turnWords(focus, text)
 	if !ranked.Semantic && len(words) == 0 {
-		return agent.MemoryRelevance{}
+		return agentmemory.MemoryRelevance{}
 	}
 
 	ids := make(map[pulid.ID]struct{}, len(ranked.Similar)+len(ranked.Memories)/4)
@@ -68,7 +71,7 @@ func Relevance(focus, text string, ranked agentmemoryports.RankedMemories) agent
 		ids[id] = struct{}{}
 	}
 	if len(words) == 0 {
-		return agent.MemoryRelevance{Judged: true, IDs: ids}
+		return agentmemory.MemoryRelevance{Judged: true, IDs: ids}
 	}
 
 	tokens := make([]map[string]struct{}, len(ranked.Memories))
@@ -92,7 +95,7 @@ func Relevance(focus, text string, ranked agentmemoryports.RankedMemories) agent
 		}
 	}
 
-	return agent.MemoryRelevance{Judged: true, IDs: ids}
+	return agentmemory.MemoryRelevance{Judged: true, IDs: ids}
 }
 
 func turnWords(focus, text string) []queryWord {
@@ -144,7 +147,7 @@ func recallTerms(query string) []string {
 	return terms
 }
 
-func memoryTokens(memory *agent.Memory) map[string]struct{} {
+func memoryTokens(memory *agentmemory.Memory) map[string]struct{} {
 	tokens := agentsearch.TokenSet(memory.Content)
 	for _, text := range [...]string{
 		memory.SubjectLabel,

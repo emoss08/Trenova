@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,7 +22,7 @@ import (
 type savingExceptions struct {
 	agentports.AgentExceptionService
 
-	saved *agent.AgentException
+	saved *agentexception.AgentException
 	guard agenttoolstest.WriteGuard
 }
 
@@ -27,7 +30,7 @@ func (f *savingExceptions) Flag(
 	_ context.Context,
 	req *agentports.FlagAgentExceptionRequest,
 	_ *permissionports.RequestActor,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -53,13 +56,13 @@ func TestRaiseException_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&exceptions.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceAgentException, change.Resource)
 	about := agenttoolstest.FieldByPath(t, change, "subjectId")
 	assert.Equal(t, "About", about.Label)
@@ -86,13 +89,13 @@ func TestRaiseException_PreviewWarnsOutsideARun(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&exceptions.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
@@ -104,8 +107,8 @@ func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
 	itemID := pulid.MustNew("bqi_")
 	documentID := pulid.MustNew("doc_")
 	params := raiseExceptionParams("BillingQueueItem", itemID)
-	params.Params["category"] = string(agent.CategoryIncorrectRates)
-	params.Params["severity"] = string(agent.SeverityHigh)
+	params.Params["category"] = string(agentexception.CategoryIncorrectRates)
+	params.Params["severity"] = string(agentexception.SeverityHigh)
 	params.Params["attemptSummary"] = "The rate confirmation and the invoice disagree by $120."
 	params.Params["evidence"] = []any{map[string]any{
 		"type": "document",
@@ -116,7 +119,7 @@ func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&exceptions.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -137,9 +140,9 @@ func TestRaiseException_FlagsABillingQueueItemWithItsEvidence(t *testing.T) {
 	saved := exceptions.saved
 	assert.Equal(t, agent.SubjectBillingQueueItem, saved.SubjectType)
 	assert.Equal(t, itemID, saved.SubjectID)
-	assert.Equal(t, agent.CategoryIncorrectRates, saved.Category)
+	assert.Equal(t, agentexception.CategoryIncorrectRates, saved.Category)
 	assert.Equal(t, params.RunID, saved.RunID, "the run is the runtime's, never the model's")
-	assert.Equal(t, []agent.EvidenceRef{
+	assert.Equal(t, []agentevidence.EvidenceRef{
 		{Type: "agent_run", ID: params.RunID.String(), Note: "raised by the agent"},
 		{Type: "document", ID: documentID.String(), Note: "rate confirmation"},
 	}, saved.Evidence, "the run comes first, then the records the agent named")
@@ -157,7 +160,7 @@ func TestRaiseException_KeepsTheRunAsEvidenceWhenNoneIsGiven(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 
 	require.NotNil(t, exceptions.saved)
-	assert.Equal(t, []agent.EvidenceRef{
+	assert.Equal(t, []agentevidence.EvidenceRef{
 		{Type: "agent_run", ID: params.RunID.String(), Note: "raised by the agent"},
 	}, exceptions.saved.Evidence)
 }

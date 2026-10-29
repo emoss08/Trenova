@@ -3,7 +3,7 @@ package agentprompt_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ func TestBuildSystemPrompt_SaysThePersonIsInTheDeskWithWhatItIsFor(t *testing.T)
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Surface = agent.SurfaceDesk
+	rc.Surface = agentpagecontext.SurfaceDesk
 	rc.SurfaceGuide = &agentturn.RuntimePage{
 		Name:    "Desk",
 		Summary: "The Desk is where you talk to Trenova's AI agents.",
@@ -36,7 +36,7 @@ func TestBuildSystemPrompt_NamesTheDeskWithoutItsGuide(t *testing.T) {
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Surface = agent.SurfaceDesk
+	rc.Surface = agentpagecontext.SurfaceDesk
 
 	prompt := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
@@ -48,7 +48,7 @@ func TestBuildSystemPrompt_SaysThePersonIsInTheAssistantOverAPage(t *testing.T) 
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Surface = agent.SurfaceAssistant
+	rc.Surface = agentpagecontext.SurfaceAssistant
 
 	prompt := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
@@ -70,7 +70,7 @@ func TestBuildSystemPrompt_SaysThePersonAskedFromThePaletteAboutWhatTheyNamed(t 
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Surface = agent.SurfacePalette
+	rc.Surface = agentpagecontext.SurfacePalette
 
 	prompt := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
@@ -90,15 +90,15 @@ func TestBuildSystemPrompt_RunsThePageTableUnderThePaletteOnlyWhenAskedAboutIt(t
 	t.Parallel()
 
 	rc := fullContext()
-	rc.Page.View = &agent.PageView{Resource: "agentRun", Query: "harbor"}
+	rc.Page.View = &agentpagecontext.PageView{Resource: "agentRun", Query: "harbor"}
 
-	rc.Surface = agent.SurfacePalette
+	rc.Surface = agentpagecontext.SurfacePalette
 	palette := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
 	assert.Contains(t, palette, "Only when the question points at these rows, call the matching")
 	assert.NotContains(t, palette, "To answer about these rows")
 
-	rc.Surface = agent.SurfaceAssistant
+	rc.Surface = agentpagecontext.SurfaceAssistant
 	assistant := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
 	assert.Contains(t, assistant, "To answer about these rows, call the matching list tool")

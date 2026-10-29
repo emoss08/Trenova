@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/deskbench"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ func TestValidate_APaletteScenarioLeavesTheChoiceOfAgentToThePalette(t *testing.
 	require.ErrorContains(t, handedOver.Validate(), "asked from the palette")
 
 	onDesk := paletteScenario()
-	onDesk.Steps[0].Surface = agent.SurfaceDesk
+	onDesk.Steps[0].Surface = agentpagecontext.SurfaceDesk
 	require.ErrorContains(t, onDesk.Validate(), "asked from the palette")
 
 	studio := paletteScenario()
@@ -73,11 +73,19 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 				proposed[proposal.Tool] = true
 			}
 			for _, attachment := range step.Attach {
-				assert.FileExists(t, filepath.Join("../../deskbench/scenarios", attachment), scenario.Name)
+				assert.FileExists(
+					t,
+					filepath.Join("../../deskbench/scenarios", attachment),
+					scenario.Name,
+				)
 			}
 		}
 	}
-	assert.True(t, proposed["edi_apply_connection_draft"], "no EDI scenario saves a drafted connection")
+	assert.True(
+		t,
+		proposed["edi_apply_connection_draft"],
+		"no EDI scenario saves a drafted connection",
+	)
 	for _, tool := range []string{
 		"edi_get_ack_health", "edi_list_messages", "edi_inspect_x12", "edi_preview_x12",
 		"edi_draft_connection",
@@ -170,7 +178,9 @@ func TestValidate_AStepSetupChangesRowsBeforeItsStepAndNeverBeforeAFire(t *testi
 			{Say: "hold the acme load"},
 			{
 				Decide: deskbench.DecisionApprove,
-				Setup:  []string{"UPDATE shipments SET version = version + 1 WHERE pro_number = 'X'"},
+				Setup: []string{
+					"UPDATE shipments SET version = version + 1 WHERE pro_number = 'X'",
+				},
 			},
 		},
 	}

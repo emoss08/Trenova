@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -254,7 +256,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 			ctx context.Context,
 			patch *holdPatch,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			current, err := holds.GetByID(ctx, &patch.get)
 			if err != nil {
 				return nil, err
@@ -264,7 +266,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "updated",
 				Kind:   "shipment hold",
 				Name:   holdLabel(saved),
@@ -290,7 +292,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 	}
 }
 
-func renderHoldUpdate(_ *holdPatch, plan *holdUpdatePlan) (*agent.ToolPreview, error) {
+func renderHoldUpdate(_ *holdPatch, plan *holdUpdatePlan) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentHold,
 		ID:       plan.before.ID,

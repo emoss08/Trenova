@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -44,9 +44,9 @@ func New(p Params) agentports.AgentReflectionRepository {
 
 func (r *repository) Claim(
 	ctx context.Context,
-	entity *agent.Reflection,
-) (*agent.Reflection, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
+	entity *agentreflection.Reflection,
+) (*agentreflection.Reflection, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
 			return agentdb.Reflections.Create(ctx, r.db.Keel(ctx), entity)
 		})
@@ -73,14 +73,14 @@ func idIs(col keelkinds.PulidIDCol, id *pulid.ID) keel.Pred {
 
 func (r *repository) claimed(
 	ctx context.Context,
-	entity *agent.Reflection,
-) (*agent.Reflection, error) {
+	entity *agentreflection.Reflection,
+) (*agentreflection.Reflection, error) {
 	rf := agentdb.Reflections
 	subject := keel.And(
 		idIs(rf.ThreadID, entity.ThreadID),
 		rf.ThroughSequence.Eq(int64(entity.ThroughSequence)),
 	)
-	if entity.SubjectType == agent.ReflectionSubjectRun {
+	if entity.SubjectType == agentreflection.ReflectionSubjectRun {
 		subject = idIs(rf.RunID, entity.RunID)
 	}
 
@@ -95,8 +95,8 @@ func (r *repository) claimed(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentReflectionRequest,
-) (*agent.Reflection, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
+) (*agentreflection.Reflection, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
 		entity, err := agentdb.Reflections.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, reflectionErrors.Map(err, req.ID.String())
@@ -108,9 +108,9 @@ func (r *repository) GetByID(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *agent.Reflection,
-) (*agent.Reflection, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
+	entity *agentreflection.Reflection,
+) (*agentreflection.Reflection, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
 		rf := agentdb.Reflections
 		err := rf.Save(
 			ctx,
@@ -149,9 +149,9 @@ func (r *repository) ThreadReflectedThrough(
 		rf := agentdb.Reflections
 		latest, err := rf.Pick(rf.ThroughSequence).
 			Where(
-				rf.SubjectType.Eq(agent.ReflectionSubjectThread),
+				rf.SubjectType.Eq(agentreflection.ReflectionSubjectThread),
 				rf.ThreadID.Eq(req.ThreadID),
-				rf.Status.Ne(agent.ReflectionStatusFailed),
+				rf.Status.Ne(agentreflection.ReflectionStatusFailed),
 			).
 			Order(rf.ThroughSequence.Desc()).
 			First(ctx, r.db.Keel(ctx))
@@ -169,16 +169,16 @@ func (r *repository) ThreadReflectedThrough(
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentReflectionConnectionRequest,
-) (*pagination.CursorListResult[*agent.Reflection], error) {
+) (*pagination.CursorListResult[*agentreflection.Reflection], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agent.Reflection], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*agentreflection.Reflection], error) {
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				agentdb.Reflections.Query(),
-				&listquery.Request[agent.Reflection]{
+				&listquery.Request[agentreflection.Reflection]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.Columns,

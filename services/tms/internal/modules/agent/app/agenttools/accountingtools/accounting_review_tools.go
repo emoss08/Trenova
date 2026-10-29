@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -218,7 +220,7 @@ func NewConfirmAccountingMappingProposalsTool(
 			ctx context.Context,
 			req *accountingmappingports.ConfirmAccountingMappingsRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := mappings.Confirm(ctx, req)
 
 			return nil, err
@@ -273,7 +275,7 @@ func NewRejectAccountingMappingProposalTool(
 			ctx context.Context,
 			req *accountingmappingports.AccountingMappingActionRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := mappings.Reject(ctx, req)
 
 			return nil, err
@@ -380,7 +382,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 			ctx context.Context,
 			req *accountingsyncports.ReleaseAccountingSyncRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if _, err := planRelease(ctx, sync, req); err != nil {
 				return nil, err
 			}
@@ -506,7 +508,7 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 			ctx context.Context,
 			req *accountingsyncports.ChangeAccountingBackfillRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			change, err := planBackfillChange(ctx, sync, req, params)
 			if err != nil {
 				return nil, err
@@ -521,8 +523,8 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 func renderMappingConfirmations(
 	req *accountingmappingports.ConfirmAccountingMappingsRequest,
 	plan *accountingmappingports.AccountingMappingConfirmPlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Changes))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Changes))
 	for _, change := range plan.Changes {
 		recorded, err := toolpreview.Changed(
 			mappingRecord(change.Before),
@@ -550,7 +552,7 @@ func renderMappingConfirmations(
 func renderMappingRejection(
 	_ *accountingmappingports.AccountingMappingActionRequest,
 	change *accountingmappingports.AccountingMappingChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		mappingRecord(change.Before),
 		change.Before,
@@ -573,8 +575,8 @@ func renderMappingRejection(
 func renderRelease(
 	_ *accountingsyncports.ReleaseAccountingSyncRequest,
 	plan *releasePlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.records))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.records))
 	for _, record := range plan.records {
 		change, err := toolpreview.Update(
 			syncRecordRecord(record),
@@ -602,7 +604,7 @@ func renderRelease(
 func renderBackfillChange(
 	req *accountingsyncports.ChangeAccountingBackfillRequest,
 	change *backfillChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceAccountingIntegration,

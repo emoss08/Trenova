@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -194,7 +194,7 @@ func (t *IssuePayAdvanceTool) Execute(
 func (t *IssuePayAdvanceTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	entity, err := t.entity(&params)
 	if err != nil {
 		return nil, err
@@ -230,8 +230,12 @@ func (t *IssuePayAdvanceTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(entity.CurrencyCode,
-		agent.MoneyLine{Label: "Advance", After: changepreview.MinorAmount(entity.AmountMinor)},
+	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
+		entity.CurrencyCode,
+		agentpreview.MoneyLine{
+			Label: "Advance",
+			After: changepreview.MinorAmount(entity.AmountMinor),
+		},
 	), toolpreview.SensitiveAs(advanceSensitiveMark))
 
 	return toolpreview.Build(summary, change), nil
@@ -380,7 +384,7 @@ func (t *WriteOffPayAdvanceTool) Execute(
 func (t *WriteOffPayAdvanceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -411,7 +415,7 @@ func (t *WriteOffPayAdvanceTool) Preview(
 		return nil, err
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.before.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label:  "Still owed",
 			Before: changepreview.MinorAmount(outstanding),
 			After:  changepreview.MinorAmount(plan.after.OutstandingMinor()),

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -267,18 +267,18 @@ func SeedMessages(t *testing.T, ctx context.Context, db *keel.DB, seed MessageSe
 type MemorySeed struct {
 	Tenant            pagination.TenantInfo
 	Items             []agentevalgate.RetrievalItem
-	Status            agent.MemoryStatus
-	Scope             agent.MemoryScope
+	Status            agentmemory.MemoryStatus
+	Scope             agentmemory.MemoryScope
 	AgentDefinitionID pulid.ID
 	ExpiresAt         *int64
 }
 
-func MemoryFor(item agentevalgate.RetrievalItem) *agent.Memory {
-	return &agent.Memory{
-		Kind:     agent.MemoryKind(item.Kind),
-		Source:   agent.MemorySourceUser,
-		Status:   agent.MemoryStatusActive,
-		Scope:    agent.MemoryScopeOrganization,
+func MemoryFor(item agentevalgate.RetrievalItem) *agentmemory.Memory {
+	return &agentmemory.Memory{
+		Kind:     agentmemory.MemoryKind(item.Kind),
+		Source:   agentmemory.MemorySourceUser,
+		Status:   agentmemory.MemoryStatusActive,
+		Scope:    agentmemory.MemoryScopeOrganization,
 		ToolName: item.Tool,
 		Content:  item.Content,
 	}

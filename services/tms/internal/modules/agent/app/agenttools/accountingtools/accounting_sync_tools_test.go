@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -304,7 +305,7 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -351,7 +352,7 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -426,7 +427,7 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -495,7 +496,7 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -572,7 +573,7 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -620,7 +621,7 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -653,14 +654,14 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&operator.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "2026-01-15 to 2026-02-10")
 	assert.Contains(t, preview.Summary, "arrive twice")
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Backfill to QuickBooks Online", created.Label)
 	assert.Nil(t, operator.backfilled)
 
@@ -747,7 +748,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {

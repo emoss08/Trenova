@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +36,7 @@ func transcriptMessages() []conversation.Message {
 			Role:      conversation.RoleUser,
 			Content:   "Run the revenue report for the last year.",
 			CreatedAt: 1_790_000_000,
-			PageContext: &agent.PageContext{
+			PageContext: &agentpagecontext.PageContext{
 				Path:  "/reports",
 				Title: "Reports",
 			},

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -113,7 +113,7 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -145,7 +145,7 @@ func TestRecordStopActual_PreviewMarksNowAsVolatile(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"moveId": move.ID.String(),
 				"stopId": move.Stops[0].ID.String(),
@@ -177,7 +177,7 @@ func TestRecordStopActual_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"moveId": move.ID.String(),
 				"stopId": move.Stops[0].ID.String(),
@@ -187,5 +187,5 @@ func TestRecordStopActual_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -72,7 +72,7 @@ func (h *Handler) list(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*agent.AgentException], error) {
+		func() (*pagination.ListResult[*agentexception.AgentException], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&agentports.ListAgentExceptionRequest{Filter: req},
@@ -82,8 +82,8 @@ func (h *Handler) list(c *gin.Context) {
 }
 
 type resolveExceptionRequest struct {
-	ResolutionState agent.ResolutionState `json:"resolutionState"`
-	ResolutionNotes string                `json:"resolutionNotes"`
+	ResolutionState agentexception.ResolutionState `json:"resolutionState"`
+	ResolutionNotes string                         `json:"resolutionNotes"`
 }
 
 func (h *Handler) resolve(c *gin.Context) {

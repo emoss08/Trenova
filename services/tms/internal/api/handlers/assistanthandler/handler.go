@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
@@ -699,15 +700,15 @@ type pageContextRequest struct {
 	EntityID   string `json:"entityId"`
 	Title      string `json:"title"`
 	// View is the table the page was showing, when it was one.
-	View *agent.PageView `json:"view"`
+	View *agentpagecontext.PageView `json:"view"`
 }
 
-func (r *pageContextRequest) page() *agent.PageContext {
+func (r *pageContextRequest) page() *agentpagecontext.PageContext {
 	if r == nil {
 		return nil
 	}
 
-	return &agent.PageContext{
+	return &agentpagecontext.PageContext{
 		Path:       r.Path,
 		EntityType: r.EntityType,
 		EntityID:   r.EntityID,
@@ -717,9 +718,9 @@ func (r *pageContextRequest) page() *agent.PageContext {
 }
 
 type sendMessageRequest struct {
-	Content string              `json:"content"`
-	Context *pageContextRequest `json:"context"`
-	Surface agent.Surface       `json:"surface"`
+	Content string                   `json:"content"`
+	Context *pageContextRequest      `json:"context"`
+	Surface agentpagecontext.Surface `json:"surface"`
 	// ProviderID is the model the person picked in the composer. Empty leaves
 	// the choice to the organization's priority order. It is resolved against
 	// the providers this organization has assigned to the assistant before it
@@ -727,8 +728,8 @@ type sendMessageRequest struct {
 	ProviderID *pulid.ID `json:"providerId"`
 	// AttachmentDocumentIDs are the files uploaded for this message, and
 	// Mentions the records named from the composer.
-	AttachmentDocumentIDs []pulid.ID        `json:"attachmentDocumentIds"`
-	Mentions              []agent.EntityRef `json:"mentions"`
+	AttachmentDocumentIDs []pulid.ID                   `json:"attachmentDocumentIds"`
+	Mentions              []agentpagecontext.EntityRef `json:"mentions"`
 	// FollowUpProposalID asks for the turn that follows a decision on one of
 	// the thread's proposals, in place of content.
 	FollowUpProposalID pulid.ID `json:"followUpProposalId"`
@@ -744,9 +745,9 @@ type sendMessageRequest struct {
 // page under the palette, and the records named. There is no thread yet; the
 // answer makes one. It names no surface: this route is the palette's.
 type askRequest struct {
-	Content  string              `json:"content"`
-	Context  *pageContextRequest `json:"context"`
-	Mentions []agent.EntityRef   `json:"mentions"`
+	Content  string                       `json:"content"`
+	Context  *pageContextRequest          `json:"context"`
+	Mentions []agentpagecontext.EntityRef `json:"mentions"`
 }
 
 func (r *sendMessageRequest) provider() (pulid.ID, bool) {
@@ -757,7 +758,7 @@ func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 	return *r.ProviderID, true
 }
 
-func (r *sendMessageRequest) page() *agent.PageContext {
+func (r *sendMessageRequest) page() *agentpagecontext.PageContext {
 	return r.Context.page()
 }
 

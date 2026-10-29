@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
@@ -124,7 +125,7 @@ type scriptDatasets struct {
 
 type resolvedDatasets struct {
 	datasets    []scriptports.Dataset
-	attachments []agent.RecordRef
+	attachments []agentrecord.RecordRef
 }
 
 func (d *scriptDatasets) resolve(
@@ -134,7 +135,7 @@ func (d *scriptDatasets) resolve(
 ) (*resolvedDatasets, error) {
 	resolved := &resolvedDatasets{
 		datasets:    make([]scriptports.Dataset, 0, len(requests)),
-		attachments: make([]agent.RecordRef, 0),
+		attachments: make([]agentrecord.RecordRef, 0),
 	}
 	if len(requests) == 0 {
 		return resolved, nil
@@ -167,7 +168,7 @@ func (d *scriptDatasets) resolve(
 		default:
 			dataset, size, err = d.fileDataset(ctx, params, person, request)
 			if err == nil {
-				resolved.attachments = append(resolved.attachments, agent.RecordRef{
+				resolved.attachments = append(resolved.attachments, agentrecord.RecordRef{
 					EntityType: agent.TaintEntityDocument,
 					ID:         request.documentID.String(),
 				})

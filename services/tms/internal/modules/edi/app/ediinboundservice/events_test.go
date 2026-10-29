@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -67,7 +67,7 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 			require.Equal(t, tc.wantStatus, file.Status)
 			require.Len(t, publisher.events, tc.wantEvents)
 			for _, event := range publisher.events {
-				require.Equal(t, agent.EventEDIFileQuarantined, event.Kind)
+				require.Equal(t, agenttrigger.EventEDIFileQuarantined, event.Kind)
 				require.Equal(t, fixture.file.ID, event.SubjectID)
 				require.Equal(t, fixture.tenantInfo(), event.TenantInfo)
 			}
@@ -113,7 +113,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 	require.NoError(t, err)
 	require.Equal(t, ediinboundfile.InboundFileStatusPartiallyProcessed, file.Status)
 	require.Len(t, publisher.events, 1)
-	require.Equal(t, agent.EventEDITenderReceived, publisher.events[0].Kind)
+	require.Equal(t, agenttrigger.EventEDITenderReceived, publisher.events[0].Kind)
 	require.Equal(t, fixture.file.ID, publisher.events[0].SubjectID)
 	require.Equal(t, fixture.tenantInfo(), publisher.events[0].TenantInfo)
 }

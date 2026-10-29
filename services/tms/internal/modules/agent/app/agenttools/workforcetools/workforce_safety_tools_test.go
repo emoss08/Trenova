@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
@@ -293,13 +294,13 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Contains(t, preview.Summary, "major accident")
@@ -356,7 +357,7 @@ func TestUpdateWorkerSafetyEvent_ChangesOnlyWhatIsNamed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -399,7 +400,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -435,13 +436,13 @@ func TestDeleteWorkerSafetyEvent_RefusesAClosedEvent(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
@@ -467,7 +468,7 @@ func TestGiveWorkerRecognition_TellsTheDriver(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -492,7 +493,7 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		events.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return record.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

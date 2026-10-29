@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -177,7 +178,7 @@ func NewApplyCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Agen
 			ctx context.Context,
 			req *customerpaymentports.ApplyCustomerPaymentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := payments.ApplyUnapplied(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -254,7 +255,7 @@ func NewReverseCustomerPaymentTool(payments receivablesKeeper) agenttoolports.Ag
 			ctx context.Context,
 			req *customerpaymentports.ReverseCustomerPaymentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := payments.Reverse(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -334,7 +335,7 @@ func NewApplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTool
 			ctx context.Context,
 			req *customerpaymentports.ApplyCreditMemoRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := payments.ApplyCreditMemo(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -424,7 +425,7 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTo
 			ctx context.Context,
 			req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := payments.UnapplyCreditMemoApplication(ctx, req, params.Actor)
 			return nil, err
 		},

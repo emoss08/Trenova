@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +19,7 @@ func TestDecisionOutcomeResult(t *testing.T) {
 	refusal := fmt.Errorf(
 		"%w: the shipment S-1 was at version 3 when this was proposed and is at version 5 now, "+
 			"so nothing was changed",
-		agent.ErrTargetChanged,
+		agentplan.ErrTargetChanged,
 	)
 
 	tests := []struct {
@@ -29,22 +30,22 @@ func TestDecisionOutcomeResult(t *testing.T) {
 		{
 			name: "an approval that ran",
 			outcome: DecisionOutcome{
-				Decision: &agent.AgentDecision{Decision: agent.DecisionAccepted},
+				Decision: &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted},
 			},
 			want: AgentProposalDecisionResult{Executed: true},
 		},
 		{
 			name: "an approval with changes that ran",
 			outcome: DecisionOutcome{
-				Decision: &agent.AgentDecision{Decision: agent.DecisionModified},
+				Decision: &agentdecision.AgentDecision{Decision: agentdecision.DecisionModified},
 			},
 			want: AgentProposalDecisionResult{Executed: true},
 		},
 		{
 			name: "an approval waiting out its undo window has not run",
 			outcome: DecisionOutcome{
-				Decision: &agent.AgentDecision{
-					Decision:  agent.DecisionAccepted,
+				Decision: &agentdecision.AgentDecision{
+					Decision:  agentdecision.DecisionAccepted,
 					CommitsAt: &commitsAt,
 				},
 			},
@@ -53,14 +54,16 @@ func TestDecisionOutcomeResult(t *testing.T) {
 		{
 			name: "a rejection runs nothing",
 			outcome: DecisionOutcome{
-				Decision: &agent.AgentDecision{Decision: agent.DecisionRejected},
+				Decision: &agentdecision.AgentDecision{Decision: agentdecision.DecisionRejected},
 			},
 			want: AgentProposalDecisionResult{},
 		},
 		{
 			name: "an approval refused because its record moved on",
 			outcome: DecisionOutcome{
-				Decision:       &agent.AgentDecision{Decision: agent.DecisionAccepted},
+				Decision: &agentdecision.AgentDecision{
+					Decision: agentdecision.DecisionAccepted,
+				},
 				ExecutionError: refusal,
 			},
 			want: AgentProposalDecisionResult{Error: refusal.Error(), Refused: true},
@@ -68,7 +71,9 @@ func TestDecisionOutcomeResult(t *testing.T) {
 		{
 			name: "an approval whose write failed is not a refusal",
 			outcome: DecisionOutcome{
-				Decision:       &agent.AgentDecision{Decision: agent.DecisionAccepted},
+				Decision: &agentdecision.AgentDecision{
+					Decision: agentdecision.DecisionAccepted,
+				},
 				ExecutionError: errors.New("the customer is on credit hold"),
 			},
 			want: AgentProposalDecisionResult{Error: "the customer is on credit hold"},

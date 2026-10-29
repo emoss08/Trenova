@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -80,9 +80,9 @@ func TestImportDraftTools_HandTheChangeToThePersonsOwnPage(t *testing.T) {
 	for _, tool := range tools {
 		assert.True(t, pagedraft.IsEditTool(tool.Name()), tool.Name())
 		policy := tool.Policy()
-		assert.Equal(t, agent.ToolKindQuery, policy.Kind, tool.Name())
-		assert.Equal(t, agent.ToolScopeSelf, policy.Scope, tool.Name())
-		assert.Equal(t, agent.ToolEffectPresent, policy.Effect, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolScopeSelf, policy.Scope, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolEffectPresent, policy.Effect, tool.Name())
 		assert.Equal(t, permission.ResourceDocument, policy.Resource, tool.Name())
 		assert.Equal(t, permission.OpRead, policy.Operation, tool.Name())
 	}

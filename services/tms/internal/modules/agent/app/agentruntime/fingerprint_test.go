@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -88,13 +89,13 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		change func(w *fingerprintWorld) *agent.Fingerprint
+		change func(w *fingerprintWorld) *agentfingerprint.Fingerprint
 		prompt bool
 		tools  bool
 	}{
 		{
 			name: "a tool's description",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.lookup.Desc = "Finds shipments by status and customer."
 				return w.service().Fingerprint(
 					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
@@ -104,7 +105,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "a tool's schema",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.write.Schema = map[string]any{
 					"type": "object",
 					"properties": map[string]any{
@@ -120,7 +121,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "a tool's default tier",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.write.Tier = agent.TierAutoExecute
 				return w.service().Fingerprint(
 					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
@@ -130,7 +131,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "the tier the agent sets for a tool",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				definition := testDefinition("find_shipments", "assign_driver")
 				definition.ToolTiers = map[string]agent.AutonomyTier{
 					"assign_driver": agent.TierActWithApproval,
@@ -141,7 +142,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "the instructions",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				definition := testDefinition("find_shipments", "assign_driver")
 				definition.Instructions = "Help dispatch, and be brief."
 				return w.service().Fingerprint(definition, pulid.Nil, "model-a")
@@ -150,7 +151,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "the tools it holds",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				return w.service().Fingerprint(
 					testDefinition("find_shipments"), pulid.Nil, "model-a",
 				)
@@ -159,7 +160,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "the model",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				return w.service().Fingerprint(
 					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-b",
 				)
@@ -167,7 +168,7 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 		},
 		{
 			name: "the saved version",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				definition := testDefinition("find_shipments", "assign_driver")
 				definition.Version = 2
 				return w.service().Fingerprint(definition, pulid.Nil, "model-a")
@@ -203,13 +204,13 @@ func TestFingerprint_ChangesNameWhatMoved(t *testing.T) {
 	after := world.service().Fingerprint(definition, pulid.Nil, "model-b")
 
 	changes := after.Changes(before)
-	fields := make([]agent.FingerprintField, 0, len(changes))
+	fields := make([]agentfingerprint.FingerprintField, 0, len(changes))
 	for _, change := range changes {
 		fields = append(fields, change.Field)
 	}
-	assert.Equal(t, []agent.FingerprintField{
-		agent.FingerprintFieldDefinition,
-		agent.FingerprintFieldModel,
+	assert.Equal(t, []agentfingerprint.FingerprintField{
+		agentfingerprint.FingerprintFieldDefinition,
+		agentfingerprint.FingerprintFieldModel,
 	}, fields)
 	assert.Empty(t, after.Changes(after))
 }

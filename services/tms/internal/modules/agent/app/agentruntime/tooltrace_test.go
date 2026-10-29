@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -137,11 +138,15 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	assert.Equal(t, string(agent.TierPropose), stringAttr(t, span, aitrace.AITier))
 	assert.Equal(
 		t,
-		string(agent.TierSourcePolicyDefault),
+		string(agenttooltrust.TierSourcePolicyDefault),
 		stringAttr(t, span, aitrace.AITierSource),
 	)
 	assert.Equal(t, "call_hold", stringAttr(t, span, aitrace.GenAIToolCallID))
-	assert.Equal(t, string(agent.ToolEffectChange), stringAttr(t, span, aitrace.AIToolEffect))
+	assert.Equal(
+		t,
+		string(agenttooltrust.ToolEffectChange),
+		stringAttr(t, span, aitrace.AIToolEffect),
+	)
 	assert.Contains(t, span.Attributes, aitrace.AIHeldBy.StringSlice(action.HeldBy))
 	assert.Contains(t, span.Attributes, aitrace.AITainted.Bool(false))
 	assert.Equal(t, codes.Unset, span.Status.Code)
@@ -151,7 +156,7 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	assert.Equal(t, action.ProposalID.String(), stringAttr(t, span, aitrace.AIProposalID))
 	assert.Equal(t, span.SpanContext.TraceID().String(), action.TraceID)
 	assert.Equal(t, span.SpanContext.SpanID().String(), action.SpanID)
-	assert.Equal(t, agent.TierSourcePolicyDefault, action.TierSource)
+	assert.Equal(t, agenttooltrust.TierSourcePolicyDefault, action.TierSource)
 	assert.Equal(t, step.Key, action.StepKey)
 	require.NotNil(t, action.Target)
 	assert.Equal(t, int64(7), action.Target.Version)

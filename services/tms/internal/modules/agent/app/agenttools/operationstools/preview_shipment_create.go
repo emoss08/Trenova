@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -91,7 +91,7 @@ func EnteredStopOptions() []toolpreview.Option {
 func (t *CreateShipmentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -131,21 +131,21 @@ func (t *CreateShipmentTool) Preview(
 	return preview, nil
 }
 
-func warnRateCoverage(preview *agent.ToolPreview, advisories []*errortypes.AdvisoryError) {
+func warnRateCoverage(preview *agentpreview.ToolPreview, advisories []*errortypes.AdvisoryError) {
 	for _, advisory := range advisories {
 		if advisory == nil || advisory.RuleKey != shipment.RateCoverageRuleKey {
 			continue
 		}
 
 		reason := i18n.Format(advisory.Message, advisory.Args...)
-		toolpreview.Warn(preview, agent.PreviewWarningRateCoverage,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningRateCoverage,
 			"The rate needs review: "+reason+".", reason)
 	}
 }
 
 func EnteredShipmentChanges(
 	plan *shipmentserviceports.ShipmentCreatePlan,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	entity := plan.Shipment
 	label := "New shipment"
 	if entity.BOL != "" {
@@ -165,7 +165,7 @@ func EnteredShipmentChanges(
 		toolpreview.SensitiveAs(shipmentChargeFields...),
 	)
 
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 	for _, move := range entity.Moves {
 		if move == nil {
 			continue
@@ -191,7 +191,7 @@ func EnteredShipmentChanges(
 func enteredShipmentMoney(
 	entity *shipment.Shipment,
 	rating *shipmentserviceports.ShipmentRatingOutcome,
-) *agent.MoneyPreview {
+) *agentpreview.MoneyPreview {
 	currency := money.DefaultCurrencyCode
 	if rating != nil && rating.Currency != "" {
 		currency = rating.Currency
@@ -199,8 +199,8 @@ func enteredShipmentMoney(
 
 	return toolpreview.MoneyBlock(
 		currency,
-		agent.MoneyLine{Label: "Linehaul", After: entity.FreightChargeAmount},
-		agent.MoneyLine{Label: "Other charges", After: entity.OtherChargeAmount},
+		agentpreview.MoneyLine{Label: "Linehaul", After: entity.FreightChargeAmount},
+		agentpreview.MoneyLine{Label: "Other charges", After: entity.OtherChargeAmount},
 	)
 }
 

@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func TestBatchDecisionRequest_CarriesTheNoteToTheService(t *testing.T) {
 	reason := "rejected_in_conversation"
 
 	req, err := BatchDecisionRequest([]string{id.String()}, &gqlmodel.DecideAgentProposalsInput{
-		Decision:   agent.DecisionRejected,
+		Decision:   agentdecision.DecisionRejected,
 		ReasonCode: &reason,
 		Note:       &note,
 	}, pagination.TenantInfo{})
@@ -36,7 +37,7 @@ func TestBatchDecisionRequest_LeavesTheNoteEmptyWhenAbsent(t *testing.T) {
 
 	req, err := BatchDecisionRequest(
 		[]string{pulid.MustNew("ap_").String()},
-		&gqlmodel.DecideAgentProposalsInput{Decision: agent.DecisionAccepted},
+		&gqlmodel.DecideAgentProposalsInput{Decision: agentdecision.DecisionAccepted},
 		pagination.TenantInfo{},
 	)
 	require.NoError(t, err)
@@ -48,7 +49,7 @@ func TestDecisionResult_SaysAnApprovalWasRefusedAndWhy(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("ap_")
-	decision := &agent.AgentDecision{Decision: agent.DecisionAccepted}
+	decision := &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted}
 	why := "the record changed since this was proposed: the shipment S-1 was at version 3 " +
 		"when this was proposed and is at version 5 now, so nothing was changed"
 
@@ -74,7 +75,7 @@ func TestDecisionResult_LeavesTheErrorAbsentWhenTheWriteRan(t *testing.T) {
 	id := pulid.MustNew("ap_")
 	got := DecisionResult(&agentports.AgentProposalDecisionResult{
 		ProposalID: id,
-		Decision:   &agent.AgentDecision{Decision: agent.DecisionAccepted},
+		Decision:   &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted},
 		Executed:   true,
 	})
 
@@ -86,15 +87,15 @@ func TestDecisionResult_LeavesTheErrorAbsentWhenTheWriteRan(t *testing.T) {
 func TestPlanDecisionResult_RefusedOnlyForAPlanWhoseRecordMovedOn(t *testing.T) {
 	t.Parallel()
 
-	refused := &agent.AgentPlan{
-		Status:       agent.PlanStatusFailed,
-		FailureError: agent.ErrPlanTargetChanged.Error() + "; step 1: the shipment S-1 moved on",
+	refused := &agentplan.AgentPlan{
+		Status:       agentplan.PlanStatusFailed,
+		FailureError: agentplan.ErrPlanTargetChanged.Error() + "; step 1: the shipment S-1 moved on",
 	}
-	failed := &agent.AgentPlan{
-		Status:       agent.PlanStatusFailed,
+	failed := &agentplan.AgentPlan{
+		Status:       agentplan.PlanStatusFailed,
 		FailureError: "1 of 2 steps did not run; step 2: the customer is on credit hold",
 	}
-	waiting := &agent.AgentPlan{Status: agent.PlanStatusApproving}
+	waiting := &agentplan.AgentPlan{Status: agentplan.PlanStatusApproving}
 
 	assert.Equal(t, &gqlmodel.AgentPlanDecisionResult{Plan: refused, Refused: true},
 		PlanDecisionResult(refused))

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -41,7 +42,7 @@ type OpenDelegateRequest struct {
 	Call      agentruntime.DelegateCall
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
-	Records []agent.EntityRef
+	Records []agentpagecontext.EntityRef
 	// Inline says the parent's reply is read with nothing beside it, so the
 	// delegate keeps nothing beside it either.
 	Inline bool

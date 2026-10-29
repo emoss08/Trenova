@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -94,7 +95,7 @@ func (t *draftEDIConnectionTool) ParamSchema() map[string]any {
 func (t *draftEDIConnectionTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceEDI,
-		reads:           agent.ExternalReadAlways,
+		reads:           agenttooltrust.ExternalReadAlways,
 		source:          agent.TaintSourceAttachment,
 		capsLaterWrites: true,
 		rationale: "Reads a trading partner's guide the person attached and plans the " +

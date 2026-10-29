@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -87,7 +87,7 @@ func (t *BillingQueueDecisionTool) planned(
 func (t *BillingQueueDecisionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, item, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -111,8 +111,8 @@ func (t *BillingQueueDecisionTool) Preview(
 		Resource: permission.ResourceShipment,
 		ID:       item.ShipmentID,
 		Label:    billingqueuepreview.ShipmentLabel(item),
-	}, &agent.MessagePreview{
-		Channel:    agent.MessageChannelComment,
+	}, &agentpreview.MessagePreview{
+		Channel:    agentpreview.MessageChannelComment,
 		Body:       comment.Comment,
 		Visibility: string(comment.Visibility),
 	})
@@ -151,7 +151,7 @@ func decisionVerb(status billingqueue.Status) string {
 func (t *AssignBillerTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, asker, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err

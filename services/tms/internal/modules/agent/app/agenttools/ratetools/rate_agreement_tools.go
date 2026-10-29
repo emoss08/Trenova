@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -864,8 +866,8 @@ func agreementRecord(entity *rateagreement.RateAgreement) toolpreview.Record {
 func agreementResult(
 	action string,
 	entity *rateagreement.RateAgreement,
-) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   rateAgreementKind,
 		Name:   entity.Code,
@@ -995,7 +997,7 @@ func NewDraftRateAgreementTool(
 		Refused: func(agreementDraft) string {
 			return "Would draft a rate agreement."
 		},
-		Render: func(_ agreementDraft, planned *rateagreement.RateAgreement) (*agent.ToolPreview, error) {
+		Render: func(_ agreementDraft, planned *rateagreement.RateAgreement) (*agentpreview.ToolPreview, error) {
 			record := agreementRecord(planned)
 			record.Version = nil
 			change, err := toolpreview.Create(
@@ -1022,7 +1024,7 @@ func NewDraftRateAgreementTool(
 			ctx context.Context,
 			draft agreementDraft,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := draft.Build(ctx, lanes)
 			if err != nil {
 				return nil, err
@@ -1138,7 +1140,7 @@ func NewReviseRateAgreementDraftTool(
 		Render: func(
 			_ agreementRevision,
 			plan *rateagreementservice.UpdatePlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				agreementRecord(plan.Before),
 				agreementViewOf(plan.Before),
@@ -1161,7 +1163,7 @@ func NewReviseRateAgreementDraftTool(
 			ctx context.Context,
 			revision agreementRevision,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			revised, err := revision.Build(ctx, agreements, lanes, params)
 			if err != nil {
 				return nil, err
@@ -1238,7 +1240,7 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 		Render: func(
 			_ *rateagreementservice.DuplicateRateAgreementRequest,
 			plan *rateagreementservice.DuplicatePlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			record := agreementRecord(plan.Copy)
 			record.Version = nil
 			change, err := toolpreview.Create(
@@ -1260,7 +1262,7 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 			ctx context.Context,
 			req *rateagreementservice.DuplicateRateAgreementRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := agreements.Duplicate(ctx, req, params.Actor.UserID)
 			if err != nil {
 				return nil, err
@@ -1361,7 +1363,7 @@ func NewAgreementReviewTool(
 			Render: func(
 				_ *rateagreementservice.ApprovalActionRequest,
 				plan *rateagreementservice.AgreementChange,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Changed(
 					agreementRecord(plan.Before),
 					agreementViewOf(plan.Before),
@@ -1382,7 +1384,7 @@ func NewAgreementReviewTool(
 				ctx context.Context,
 				req *rateagreementservice.ApprovalActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				_, err := agreements.Review(ctx, step.review, req)
 
 				return nil, err
@@ -1576,7 +1578,7 @@ func NewAmendRateAgreementRulesTool(
 			ctx context.Context,
 			amendment *ruleAmendment,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := amendment.request(ctx, agreements, lanes, params)
 			if err != nil {
 				return nil, err
@@ -1599,16 +1601,16 @@ func laneRateLabel(rule *rateagreement.RateAgreementRule) string {
 func renderRuleAmendment(
 	_ *ruleAmendment,
 	plan *rateagreementservice.AmendmentPlan,
-) (*agent.ToolPreview, error) {
-	lines := make([]agent.MoneyLine, 0, len(plan.Superseded)+len(plan.Rules))
+) (*agentpreview.ToolPreview, error) {
+	lines := make([]agentpreview.MoneyLine, 0, len(plan.Superseded)+len(plan.Rules))
 	for _, rule := range plan.Superseded {
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label:  laneRateLabel(rule) + " (closed out)",
 			Before: headlineRate(rule.Inputs),
 		})
 	}
 	for _, rule := range plan.Rules {
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: laneRateLabel(rule) + " (new)",
 			After: headlineRate(rule.Inputs),
 		})
@@ -1728,7 +1730,7 @@ func rateAdjustmentLabel(adjustment rateagreementservice.RateAdjustment) string 
 func renderRateIncrease(
 	req *rateagreementservice.RateIncreaseRequest,
 	plan *rateagreementservice.RateIncreasePlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	samples := make([]string, 0, min(len(plan.Lines), maxPreviewLanes))
 	for _, line := range plan.Lines[:min(len(plan.Lines), maxPreviewLanes)] {
 		label := line.Label
@@ -1810,7 +1812,7 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agenttoolports.Age
 			ctx context.Context,
 			req *rateagreementservice.RateIncreaseRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := agreements.ApplyRateIncrease(ctx, req, params.Actor.UserID)
 
 			return nil, err

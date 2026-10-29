@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -24,10 +24,10 @@ type GetAgentExceptionByIDRequest struct {
 }
 
 type UpdateAgentExceptionResolutionRequest struct {
-	ID              pulid.ID              `json:"id"`
-	ResolutionState agent.ResolutionState `json:"resolutionState"`
-	ResolutionNotes string                `json:"resolutionNotes"`
-	TenantInfo      pagination.TenantInfo `json:"-"`
+	ID              pulid.ID                       `json:"id"`
+	ResolutionState agentexception.ResolutionState `json:"resolutionState"`
+	ResolutionNotes string                         `json:"resolutionNotes"`
+	TenantInfo      pagination.TenantInfo          `json:"-"`
 }
 
 type ListAgentExceptionsByIDsRequest struct {
@@ -39,19 +39,25 @@ type AgentExceptionRepository interface {
 	List(
 		ctx context.Context,
 		req *ListAgentExceptionRequest,
-	) (*pagination.ListResult[*agent.AgentException], error)
+	) (*pagination.ListResult[*agentexception.AgentException], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentExceptionConnectionRequest,
-	) (*pagination.CursorListResult[*agent.AgentException], error)
-	GetByID(ctx context.Context, req GetAgentExceptionByIDRequest) (*agent.AgentException, error)
+	) (*pagination.CursorListResult[*agentexception.AgentException], error)
+	GetByID(
+		ctx context.Context,
+		req GetAgentExceptionByIDRequest,
+	) (*agentexception.AgentException, error)
 	ListByIDs(
 		ctx context.Context,
 		req ListAgentExceptionsByIDsRequest,
-	) ([]*agent.AgentException, error)
-	Create(ctx context.Context, entity *agent.AgentException) (*agent.AgentException, error)
+	) ([]*agentexception.AgentException, error)
+	Create(
+		ctx context.Context,
+		entity *agentexception.AgentException,
+	) (*agentexception.AgentException, error)
 	UpdateResolution(
 		ctx context.Context,
 		req UpdateAgentExceptionResolutionRequest,
-	) (*agent.AgentException, error)
+	) (*agentexception.AgentException, error)
 }

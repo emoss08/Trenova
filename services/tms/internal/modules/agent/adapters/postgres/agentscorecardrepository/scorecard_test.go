@@ -3,7 +3,7 @@ package agentscorecardrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestFoldVerdicts_OneCountPerToolAndVerdict(t *testing.T) {
 		limitReason  = "limit: want integer"
 		statusReason = "status: not one of the allowed values"
 	)
-	none := []agent.ToolVerdictReason{}
+	none := []agentevaluation.ToolVerdictReason{}
 
 	got := foldVerdicts([]verdictRow{
 		{ToolName: "invoice_get", Verdict: "ran", Calls: 40, Total: 40},
@@ -28,13 +28,13 @@ func TestFoldVerdicts_OneCountPerToolAndVerdict(t *testing.T) {
 		{ToolName: "shipment_list", Verdict: "ran", Calls: 12, Total: 12},
 	})
 
-	assert.Equal(t, []agent.ToolVerdictCount{
+	assert.Equal(t, []agentevaluation.ToolVerdictCount{
 		{ToolName: "invoice_get", Verdict: "ran", Calls: 40, TopReasons: none},
 		{
 			ToolName: "shipment_list",
 			Verdict:  "invalid",
 			Calls:    8,
-			TopReasons: []agent.ToolVerdictReason{
+			TopReasons: []agentevaluation.ToolVerdictReason{
 				{Reason: limitReason, Calls: 5},
 				{Reason: statusReason, Calls: 2},
 			},

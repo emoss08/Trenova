@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
@@ -120,10 +122,10 @@ func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool 
 		Render: func(
 			_ *rateimportservice.CommitRequest,
 			plan *rateimportservice.CommitPlan,
-		) (*agent.ToolPreview, error) {
-			lines := make([]agent.MoneyLine, 0, len(plan.Rules))
+		) (*agentpreview.ToolPreview, error) {
+			lines := make([]agentpreview.MoneyLine, 0, len(plan.Rules))
 			for _, rule := range plan.Rules {
-				lines = append(lines, agent.MoneyLine{
+				lines = append(lines, agentpreview.MoneyLine{
 					Label: laneRateLabel(rule),
 					After: headlineRate(rule.Inputs),
 				})
@@ -149,7 +151,7 @@ func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := imports.Commit(ctx, req)
 
 			return nil, err
@@ -194,7 +196,7 @@ func NewDiscardRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool
 		Render: func(
 			_ *rateimportservice.CommitRequest,
 			plan *rateimportservice.BatchChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				rateImportRecord(plan.Before),
 				&rateImportView{Status: string(plan.Before.Status)},
@@ -213,7 +215,7 @@ func NewDiscardRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := imports.Discard(ctx, req)
 
 			return nil, err
@@ -340,7 +342,7 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 		Render: func(
 			_ *ratesimulation.RateSimulation,
 			plan *ratesimulationservice.CreatePlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return toolpreview.Build(fmt.Sprintf(
 				"Would replay %s shipments shipped %s to %s against the %s rate agreement %s, "+
 					"in the background; nothing is re-rated.",
@@ -355,13 +357,13 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 			ctx context.Context,
 			simulation *ratesimulation.RateSimulation,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := simulations.Create(ctx, simulation, params.Actor.UserID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "started",
 				Kind:   "rate simulation",
 				Name:   created.Name,

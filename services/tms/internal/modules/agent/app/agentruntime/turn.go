@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -192,8 +193,8 @@ type DispatchCall struct {
 	Earlier              []string `json:"earlier,omitempty"`
 	// MoneySpent is what the turn's automatic money writes, its delegates'
 	// and the delegating turn's, have moved and not yet recorded.
-	MoneySpent agent.MoneyUse     `json:"moneySpent,omitzero"`
-	Beyond     agent.AutonomyTier `json:"beyond,omitempty"`
+	MoneySpent agenttooltrust.MoneyUse `json:"moneySpent,omitzero"`
+	Beyond     agent.AutonomyTier      `json:"beyond,omitempty"`
 	// Model, Provider and ProviderID are what answered the completion that
 	// asked for the call, and ScriptPosition is how many scripts the turn has
 	// asked for up to and including this one; the code-mode gate reads the

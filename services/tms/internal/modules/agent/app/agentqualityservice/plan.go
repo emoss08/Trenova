@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -35,14 +37,14 @@ type SweepRequest struct {
 }
 
 type PlannedAgent struct {
-	AgentDefinitionID pulid.ID           `json:"agentDefinitionId"`
-	Name              string             `json:"name"`
-	Fingerprint       *agent.Fingerprint `json:"fingerprint"`
-	FingerprintHash   string             `json:"fingerprintHash"`
-	SuiteRevision     string             `json:"suiteRevision"`
-	ActiveCases       int                `json:"activeCases"`
-	Skip              bool               `json:"skip"`
-	SkipReason        string             `json:"skipReason,omitempty"`
+	AgentDefinitionID pulid.ID                      `json:"agentDefinitionId"`
+	Name              string                        `json:"name"`
+	Fingerprint       *agentfingerprint.Fingerprint `json:"fingerprint"`
+	FingerprintHash   string                        `json:"fingerprintHash"`
+	SuiteRevision     string                        `json:"suiteRevision"`
+	ActiveCases       int                           `json:"activeCases"`
+	Skip              bool                          `json:"skip"`
+	SkipReason        string                        `json:"skipReason,omitempty"`
 }
 
 type SweepPlan struct {
@@ -228,7 +230,7 @@ type planAgentParams struct {
 func (s *Service) fingerprint(
 	definition *agentdefinition.Definition,
 	provider resolvedProvider,
-) *agent.Fingerprint {
+) *agentfingerprint.Fingerprint {
 	providerID, model := provider.forAgent(definition.PreferredProviderID)
 	if s.runtime == nil {
 		return agentquality.FingerprintOf(definition, "").Served(model, providerID)
@@ -467,21 +469,21 @@ func (s *Service) newSuiteRun(p newSuiteRunParams) *agentquality.SuiteRun {
 func suiteEvaluations(
 	run *agentquality.SuiteRun,
 	sample []agentquality.SamplingCase,
-	fingerprint *agent.Fingerprint,
-) []*agent.Evaluation {
-	evaluations := make([]*agent.Evaluation, 0, len(sample))
+	fingerprint *agentfingerprint.Fingerprint,
+) []*agentevaluation.Evaluation {
+	evaluations := make([]*agentevaluation.Evaluation, 0, len(sample))
 	for idx, evalCase := range sample {
 		caseID := evalCase.ID
 		suiteRunID := run.ID
 		ordinal := idx + 1
-		evaluationID := pulid.MustNew(agent.EvaluationIDPrefix)
-		evaluations = append(evaluations, &agent.Evaluation{
+		evaluationID := pulid.MustNew(agentevaluation.EvaluationIDPrefix)
+		evaluations = append(evaluations, &agentevaluation.Evaluation{
 			ID:                evaluationID,
 			OrganizationID:    run.OrganizationID,
 			BusinessUnitID:    run.BusinessUnitID,
 			AgentDefinitionID: run.AgentDefinitionID,
 			EvalCaseID:        &caseID,
-			Status:            agent.EvaluationStatusPending,
+			Status:            agentevaluation.EvaluationStatusPending,
 			Trigger:           evalCase.Trigger,
 			SubjectType:       evalCase.SubjectType,
 			SubjectID:         evalCase.SubjectID,
@@ -491,14 +493,14 @@ func suiteEvaluations(
 			RequestedByUserID: run.RequestedByUserID,
 			SuiteRunID:        &suiteRunID,
 			SuiteOrdinal:      &ordinal,
-			Actions:           []agent.ReplayAction{},
+			Actions:           []agentreplay.ReplayAction{},
 		})
 	}
 
 	return evaluations
 }
 
-func fingerprintVersion(fingerprint *agent.Fingerprint) int64 {
+func fingerprintVersion(fingerprint *agentfingerprint.Fingerprint) int64 {
 	if fingerprint == nil {
 		return 0
 	}
@@ -509,7 +511,7 @@ func fingerprintVersion(fingerprint *agent.Fingerprint) int64 {
 func (s *Service) createSuite(
 	ctx context.Context,
 	run *agentquality.SuiteRun,
-	evaluations []*agent.Evaluation,
+	evaluations []*agentevaluation.Evaluation,
 ) (*agentquality.SuiteRun, error) {
 	var created *agentquality.SuiteRun
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {

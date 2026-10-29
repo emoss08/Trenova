@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -115,7 +116,7 @@ func TestHoldBillingQueueItem_AnAgentHoldsAnItemWithItsNote(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -147,7 +148,7 @@ func TestSendBackToOps_PreviewsTheNoteOperationsWillSee(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -164,7 +165,7 @@ func TestSendBackToOps_PreviewsTheNoteOperationsWillSee(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, note.Resource)
 	assert.Equal(t, queue.item.ShipmentID, note.EntityID)
 	require.NotNil(t, note.Message)
-	assert.Equal(t, agent.MessageChannelComment, note.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelComment, note.Message.Channel)
 	assert.Equal(
 		t,
 		"Sent back from billing: WeightDiscrepancy\n\nThe BOL says 42,000 lb; the shipment says 24,000",
@@ -279,7 +280,7 @@ func TestApproveBillingQueueItem_PreviewShowsTheDraftInvoiceAndAutoPost(t *testi
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -292,7 +293,7 @@ func TestApproveBillingQueueItem_PreviewShowsTheDraftInvoiceAndAutoPost(t *testi
 	assert.Equal(t, "Approved", agenttoolstest.FieldByPath(t, item, "status").After)
 	draft := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceInvoice, draft.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, draft.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, draft.Operation)
 	require.NotNil(t, draft.Money)
 	assert.True(t, draft.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("1650.00")))
 }
@@ -316,11 +317,11 @@ func TestApproveBillingQueueItem_RefusesAnItemADetentionChargeHolds(t *testing.T
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 // A flagged check nobody settled holds the item too. Proposing the approval
@@ -346,11 +347,11 @@ func TestApproveBillingQueueItem_RefusesAnItemWithAnOpenFlaggedCheck(t *testing.
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 // Approval is a person's decision: the agent's own call is refused, and the
@@ -415,7 +416,7 @@ func TestCancelBillingQueueItem_IsProposedAndRunsAsTheApprover(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), approved)
 		},
 	)
@@ -449,7 +450,7 @@ func TestAssignBillingQueueBiller_MovesAWaitingItemIntoReview(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)

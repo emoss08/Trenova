@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +22,7 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 
 	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			Name:   "Shipments for Peak Distributing",
@@ -62,7 +63,7 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	text := proposalOutcomeText("report_create", agentruntimeports.ProposalOutcome{
 		Status:       agent.ProposalStatusExecuted,
 		AutonomyTier: agent.TierAutoExecute,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			Name:   "Lanes",

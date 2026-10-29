@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -77,7 +78,7 @@ func TestAgentSubjectTypeParity_EverySubjectIsValid(t *testing.T) {
 func TestAgentSubjectTypeParity_EveryEventNamesAKnownSubject(t *testing.T) {
 	t.Parallel()
 
-	for _, descriptor := range agent.KnownEvents() {
+	for _, descriptor := range agenttrigger.KnownEvents() {
 		assert.Truef(t, descriptor.SubjectType.IsValid(),
 			"event %q names subject type %q, which is not valid",
 			descriptor.Kind, descriptor.SubjectType)

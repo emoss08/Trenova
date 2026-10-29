@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
@@ -164,7 +166,7 @@ func newDraftInboundReplyTool(
 				ctx context.Context,
 				call *draftReplyCall,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				var (
 					reply *triage.Reply
 					err   error
@@ -178,7 +180,7 @@ func newDraftInboundReplyTool(
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "drafted",
 					Kind:   "reply draft",
 					Name:   reply.Subject,
@@ -229,7 +231,7 @@ func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCal
 func renderReplyDraft(
 	call *draftReplyCall,
 	plan *inboundreplyservice.DraftPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	opts := []toolpreview.Option{toolpreview.Labels(replyDraftLabels)}
 	summary := "Would save the reply as the message's draft for a person to review and send"
 	if call.write != nil {
@@ -242,7 +244,7 @@ func renderReplyDraft(
 	}
 
 	var (
-		change *agent.RecordChange
+		change *agentpreview.RecordChange
 		err    error
 	)
 	if plan.Current == nil {
@@ -310,7 +312,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			Render: func(
 				_ *inboundmessageservice.MessageActionRequest,
 				plan *inboundreplyservice.DraftPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				summary := "Would throw away the reply draft on " +
 					describeInboundMessage(plan.Message) + "."
 				if plan.Current == nil {
@@ -328,7 +330,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				plan, err := replies.PlanDiscardDraft(ctx, req.TenantInfo, req.MessageID)
 				if err != nil {
 					return nil, err

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
@@ -214,7 +215,7 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tests.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -259,7 +260,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tests.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -291,7 +292,7 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		draws.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -346,7 +347,7 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		draws.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

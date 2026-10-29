@@ -10,6 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -120,10 +123,10 @@ type tenantRows struct {
 	runs      map[pulid.ID]*agent.AgentRun
 	turns     map[pulid.ID]*conversation.AssistantTurn
 	usage     map[pulid.ID]*aiusage.AIUsageRecord
-	steps     map[pulid.ID]*agent.AgentRunStep
-	events    map[pulid.ID]*agent.AgentRunEvent
+	steps     map[pulid.ID]*agentrunstep.AgentRunStep
+	events    map[pulid.ID]*agentrunevent.AgentRunEvent
 	proposals map[pulid.ID]*agent.AgentProposal
-	decisions map[pulid.ID]*agent.AgentDecision
+	decisions map[pulid.ID]*agentdecision.AgentDecision
 }
 
 func newTenantRows(tenant pagination.TenantInfo) *tenantRows {
@@ -132,10 +135,10 @@ func newTenantRows(tenant pagination.TenantInfo) *tenantRows {
 		runs:      map[pulid.ID]*agent.AgentRun{},
 		turns:     map[pulid.ID]*conversation.AssistantTurn{},
 		usage:     map[pulid.ID]*aiusage.AIUsageRecord{},
-		steps:     map[pulid.ID]*agent.AgentRunStep{},
-		events:    map[pulid.ID]*agent.AgentRunEvent{},
+		steps:     map[pulid.ID]*agentrunstep.AgentRunStep{},
+		events:    map[pulid.ID]*agentrunevent.AgentRunEvent{},
 		proposals: map[pulid.ID]*agent.AgentProposal{},
-		decisions: map[pulid.ID]*agent.AgentDecision{},
+		decisions: map[pulid.ID]*agentdecision.AgentDecision{},
 	}
 }
 

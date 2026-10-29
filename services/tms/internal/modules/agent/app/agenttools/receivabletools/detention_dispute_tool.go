@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -88,7 +90,7 @@ func NewDisputeDetentionTool(
 		Render: func(
 			req *detentionservice.DisputeParams,
 			change *detentionservice.OccurrenceChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			summary := fmt.Sprintf(
 				"Would mark the %s %s detention charge %s disputed and hold it from billing: %s",
 				change.Before.BillableAmount.StringFixed(2),
@@ -103,13 +105,13 @@ func NewDisputeDetentionTool(
 			ctx context.Context,
 			req *detentionservice.DisputeParams,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := detentions.Dispute(ctx, *req)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "disputed",
 				Kind:   kindDetention,
 				Record: changepreview.RecordOf(changepreview.DetentionRecordEntity, saved.ID),

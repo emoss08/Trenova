@@ -8,6 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -126,11 +129,11 @@ func (s *Service) PrepareThread(
 	}
 
 	person := thread.UserID
-	reflection, err := s.claim(ctx, &agent.Reflection{
+	reflection, err := s.claim(ctx, &agentreflection.Reflection{
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		AgentDefinitionID: thread.AgentDefinitionID,
-		SubjectType:       agent.ReflectionSubjectThread,
+		SubjectType:       agentreflection.ReflectionSubjectThread,
 		ThreadID:          pulid.PtrOrNil(thread.ID),
 		UserID:            pulid.PtrOrNil(person),
 		FromSequence:      messages[0].Sequence,
@@ -143,7 +146,7 @@ func (s *Service) PrepareThread(
 	plan := &agentports.ReflectionPlan{
 		TenantInfo:        tenant,
 		ReflectionID:      reflection.ID,
-		Subject:           agent.ReflectionSubjectThread,
+		Subject:           agentreflection.ReflectionSubjectThread,
 		AgentDefinitionID: thread.AgentDefinitionID,
 		ThreadID:          thread.ID,
 		PersonUserID:      person,
@@ -197,11 +200,11 @@ func (s *Service) PrepareRun(
 		return &agentports.ReflectionPlan{TenantInfo: tenant}, nil
 	}
 
-	reflection, err := s.claim(ctx, &agent.Reflection{
+	reflection, err := s.claim(ctx, &agentreflection.Reflection{
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		AgentDefinitionID: run.AgentDefinitionID,
-		SubjectType:       agent.ReflectionSubjectRun,
+		SubjectType:       agentreflection.ReflectionSubjectRun,
 		RunID:             pulid.PtrOrNil(run.ID),
 	})
 	if err != nil || reflection == nil {
@@ -211,7 +214,7 @@ func (s *Service) PrepareRun(
 	plan := &agentports.ReflectionPlan{
 		TenantInfo:        tenant,
 		ReflectionID:      reflection.ID,
-		Subject:           agent.ReflectionSubjectRun,
+		Subject:           agentreflection.ReflectionSubjectRun,
 		AgentDefinitionID: run.AgentDefinitionID,
 		RunID:             run.ID,
 		Taint:             runTaint(run),
@@ -230,7 +233,7 @@ func (s *Service) PrepareRun(
 		return nil, err
 	}
 	if len(messages) == 0 {
-		return s.skip(ctx, reflection, plan, agent.ReflectionSkipNothingToRead)
+		return s.skip(ctx, reflection, plan, agentreflection.ReflectionSkipNothingToRead)
 	}
 
 	return s.ready(ctx, &readyParams{
@@ -247,7 +250,7 @@ func (s *Service) PrepareRun(
 }
 
 type readyParams struct {
-	reflection *agent.Reflection
+	reflection *agentreflection.Reflection
 	plan       *agentports.ReflectionPlan
 	definition *agentdefinition.Definition
 	window     *Window
@@ -261,10 +264,10 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 	plan.Signals = signals
 	p.reflection.Signals = signals
 	if len(signals) == 0 {
-		return s.skip(ctx, p.reflection, plan, agent.ReflectionSkipNoSignal)
+		return s.skip(ctx, p.reflection, plan, agentreflection.ReflectionSkipNoSignal)
 	}
 	if s.overBudget(ctx, p.definition) {
-		return s.skip(ctx, p.reflection, plan, agent.ReflectionSkipOverBudget)
+		return s.skip(ctx, p.reflection, plan, agentreflection.ReflectionSkipOverBudget)
 	}
 
 	toolNames := windowToolNames(p.window.Messages)
@@ -290,7 +293,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 		if memory.DrawnFromOutside() {
 			plan.Taint.Add(agent.TaintMark{
 				Source: agent.TaintSourceMemory,
-				Ref: &agent.RecordRef{
+				Ref: &agentrecord.RecordRef{
 					EntityType: agent.TaintEntityAgentMemory,
 					ID:         memory.ID.String(),
 				},
@@ -340,8 +343,11 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 	return plan, nil
 }
 
-func (s *Service) claim(ctx context.Context, entity *agent.Reflection) (*agent.Reflection, error) {
-	entity.Status = agent.ReflectionStatusRunning
+func (s *Service) claim(
+	ctx context.Context,
+	entity *agentreflection.Reflection,
+) (*agentreflection.Reflection, error) {
+	entity.Status = agentreflection.ReflectionStatusRunning
 	me := errortypes.NewMultiError()
 	entity.Validate(me)
 	if me.HasErrors() {
@@ -355,8 +361,8 @@ func (s *Service) claim(ctx context.Context, entity *agent.Reflection) (*agent.R
 	if claimed.Status.Settled() {
 		return nil, nil
 	}
-	if claimed.Status == agent.ReflectionStatusFailed {
-		claimed.Status = agent.ReflectionStatusRunning
+	if claimed.Status == agentreflection.ReflectionStatusFailed {
+		claimed.Status = agentreflection.ReflectionStatusRunning
 		claimed.ErrorMessage = ""
 		claimed.FinishedAt = nil
 		if claimed, err = s.repo.Update(ctx, claimed); err != nil {
@@ -369,9 +375,9 @@ func (s *Service) claim(ctx context.Context, entity *agent.Reflection) (*agent.R
 
 func (s *Service) skip(
 	ctx context.Context,
-	reflection *agent.Reflection,
+	reflection *agentreflection.Reflection,
 	plan *agentports.ReflectionPlan,
-	reason agent.ReflectionSkip,
+	reason agentreflection.ReflectionSkip,
 ) (*agentports.ReflectionPlan, error) {
 	reflection.Skip(reason, s.now())
 	reflection.Tainted = plan.Tainted()
@@ -387,13 +393,13 @@ func (s *Service) usableAgent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
-) (*agentdefinition.Definition, agent.ReflectionSkip, error) {
+) (*agentdefinition.Definition, agentreflection.ReflectionSkip, error) {
 	control, err := s.controls.GetOrCreate(ctx, tenant)
 	if err != nil {
 		return nil, "", fmt.Errorf("read the organization's agent control: %w", err)
 	}
 	if control.LearningOff || control.ShadowMode {
-		return nil, agent.ReflectionSkipLearningOff, nil
+		return nil, agentreflection.ReflectionSkipLearningOff, nil
 	}
 
 	definition, err := s.definitions.GetByID(
@@ -405,16 +411,16 @@ func (s *Service) usableAgent(
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, agent.ReflectionSkipAgentUnavailable, nil
+			return nil, agentreflection.ReflectionSkipAgentUnavailable, nil
 		}
 
 		return nil, "", fmt.Errorf("read the agent: %w", err)
 	}
 	if !definition.Enabled {
-		return definition, agent.ReflectionSkipAgentUnavailable, nil
+		return definition, agentreflection.ReflectionSkipAgentUnavailable, nil
 	}
 	if definition.LearningOff {
-		return definition, agent.ReflectionSkipLearningOff, nil
+		return definition, agentreflection.ReflectionSkipLearningOff, nil
 	}
 
 	return definition, "", nil
@@ -463,7 +469,7 @@ func (s *Service) Fail(ctx context.Context, req *agentports.FailReflectionReques
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentReflectionConnectionRequest,
-) (*pagination.CursorListResult[*agent.Reflection], error) {
+) (*pagination.CursorListResult[*agentreflection.Reflection], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
@@ -500,7 +506,7 @@ func runTaint(run *agent.AgentRun) *agent.RunTaint {
 	if run.Tainted && !taint.Tainted() {
 		taint.Add(agent.TaintMark{
 			Source: agent.TaintSourceRunRecord,
-			Ref:    &agent.RecordRef{EntityType: "agent_run", ID: run.ID.String()},
+			Ref:    &agentrecord.RecordRef{EntityType: "agent_run", ID: run.ID.String()},
 			At:     timeutils.NowUnix(),
 		})
 	}
@@ -530,7 +536,7 @@ func lastReply(messages []conversation.Message) pulid.ID {
 	return pulid.Nil
 }
 
-func memoryIDs(memories []*agent.Memory) []pulid.ID {
+func memoryIDs(memories []*agentmemory.Memory) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(memories))
 	for _, memory := range memories {
 		ids = append(ids, memory.ID)
@@ -539,7 +545,7 @@ func memoryIDs(memories []*agent.Memory) []pulid.ID {
 	return ids
 }
 
-func subjectRefs(subjects []agent.MemorySubject) []agentports.ReflectionSubjectRef {
+func subjectRefs(subjects []agentmemory.MemorySubject) []agentports.ReflectionSubjectRef {
 	refs := make([]agentports.ReflectionSubjectRef, 0, len(subjects))
 	for _, subject := range subjects {
 		refs = append(refs, agentports.ReflectionSubjectRef{Type: subject.Type, ID: subject.ID})

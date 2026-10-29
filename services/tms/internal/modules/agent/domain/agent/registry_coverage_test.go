@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/stretchr/testify/require"
 )
@@ -42,13 +43,13 @@ func TestEveryDeclaredEventKindIsRegistered(t *testing.T) {
 	matches := pattern.FindAllStringSubmatch(readSource(t, eventsSource), -1)
 	require.NotEmpty(t, matches)
 
-	registered := make(map[agent.EventKind]agent.SubjectType, len(matches))
-	for _, event := range agent.KnownEvents() {
+	registered := make(map[agenttrigger.EventKind]agent.SubjectType, len(matches))
+	for _, event := range agenttrigger.KnownEvents() {
 		registered[event.Kind] = event.SubjectType
 	}
 
 	for _, match := range matches {
-		kind := agent.EventKind(match[1])
+		kind := agenttrigger.EventKind(match[1])
 		subject, ok := registered[kind]
 		require.Truef(t, ok, "event kind %q is declared but missing from knownEvents", kind)
 		require.Truef(t, subject.IsValid(), "event kind %q resolves an unknown subject", kind)

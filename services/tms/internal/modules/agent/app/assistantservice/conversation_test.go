@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -139,7 +139,7 @@ func TestSendMessageStream_StoresThePageContextOnTheUserTurn(t *testing.T) {
 	result, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this shipment?",
-		Page: &agent.PageContext{
+		Page: &agentpagecontext.PageContext{
 			Path:       " /shipments?panelEntityId=shp_1 ",
 			EntityType: "shipment",
 			EntityID:   "shp_1",
@@ -183,7 +183,7 @@ func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID: conversations.thread.ID,
 		Content:  "Where is this?",
-		Page: &agent.PageContext{
+		Page: &agentpagecontext.PageContext{
 			Path:       "https://evil.example/steal",
 			EntityType: "user_credential",
 			EntityID:   "1",

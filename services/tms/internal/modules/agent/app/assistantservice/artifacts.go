@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -357,7 +358,10 @@ func (r *artifactRecorder) adopt(artifacts []*assistantartifact.Artifact) {
 
 // fromProposals views the turn's recorded proposals as drafts and its plan
 // as a checklist, so a person decides them where they can read them.
-func (r *artifactRecorder) fromProposals(proposals []*agent.AgentProposal, plan *agent.AgentPlan) {
+func (r *artifactRecorder) fromProposals(
+	proposals []*agent.AgentProposal,
+	plan *agentplan.AgentPlan,
+) {
 	if r == nil {
 		return
 	}
@@ -864,7 +868,7 @@ func planDecisionArtifact(
 	)
 	artifact.Payload[payloadPlanID] = planID.String()
 	artifact.Payload[payloadProposalIDs] = proposalIDStrings(steps)
-	artifact.Payload[payloadToolName] = agent.PlanToolName
+	artifact.Payload[payloadToolName] = agentplan.PlanToolName
 
 	return artifact, nil
 }
@@ -1780,7 +1784,7 @@ func draftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 }
 
 func planArtifact(
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	proposals []*agent.AgentProposal,
 ) *assistantartifact.Artifact {
 	ordered := make([]*agent.AgentProposal, 0, len(proposals))
@@ -1850,13 +1854,13 @@ func decisionStatus(status agent.ProposalStatus) assistantartifact.Status {
 	}
 }
 
-func planStatus(status agent.PlanStatus) assistantartifact.Status {
+func planStatus(status agentplan.PlanStatus) assistantartifact.Status {
 	switch status {
-	case agent.PlanStatusCompleted:
+	case agentplan.PlanStatusCompleted:
 		return assistantartifact.StatusReady
-	case agent.PlanStatusFailed, agent.PlanStatusRejected, agent.PlanStatusExpired:
+	case agentplan.PlanStatusFailed, agentplan.PlanStatusRejected, agentplan.PlanStatusExpired:
 		return assistantartifact.StatusFailed
-	case agent.PlanStatusPending, agent.PlanStatusApproved:
+	case agentplan.PlanStatusPending, agentplan.PlanStatusApproved:
 		return assistantartifact.StatusPending
 	default:
 		return assistantartifact.StatusPending
@@ -1998,7 +2002,7 @@ func (s *Service) followDecisions(
 		if err != nil {
 			s.logger.Warn("artifact statuses could not follow plans", zap.Error(err))
 		} else {
-			byID := make(map[pulid.ID]agent.PlanStatus, len(plans))
+			byID := make(map[pulid.ID]agentplan.PlanStatus, len(plans))
 			for _, plan := range plans {
 				byID[plan.ID] = plan.Status
 			}

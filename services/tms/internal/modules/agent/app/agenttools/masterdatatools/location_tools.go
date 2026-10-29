@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -117,16 +119,16 @@ func (t *CreateLocationTool) ParamSchema() map[string]any {
 func (t *CreateLocationTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceLocation,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Artifact:      locationRecordEntity,
 		Rationale: "A new location is where colleagues will book freight, and its address is " +
 			"usually read from a document someone outside sent, so a person approves it first.",
@@ -205,7 +207,7 @@ func (t *CreateLocationTool) Execute(
 func (t *CreateLocationTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -222,12 +224,12 @@ func (t *CreateLocationTool) ExecuteWithResult(
 
 	id := created.ID.String()
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "created",
 		Kind:   "location",
 		Name:   created.Name,
 		IDs:    map[string]string{"locationId": id},
-		Record: &agent.RecordRef{EntityType: locationRecordEntity, ID: id},
+		Record: &agentrecord.RecordRef{EntityType: locationRecordEntity, ID: id},
 	}, nil
 }
 

@@ -3,8 +3,8 @@
 package mappers
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,8 +13,8 @@ func AgentToolRuleFromInput(
 	input gqlmodel.AgentToolRuleInput,
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
-) (*agent.ToolRuleOverride, error) {
-	entity := &agent.ToolRuleOverride{
+) (*agenttooltrust.ToolRuleOverride, error) {
+	entity := &agenttooltrust.ToolRuleOverride{
 		ID:             id,
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,

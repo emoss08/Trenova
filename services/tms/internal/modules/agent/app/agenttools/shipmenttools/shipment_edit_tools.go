@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -98,16 +100,16 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 func (t *rescheduleStopTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "A changed appointment is sent as an EDI tender change to the trading " +
 			"partners the load was tendered to.",
 	}
@@ -249,7 +251,7 @@ func scheduleViewOf(stop *shipment.Stop, zone *time.Location) stopScheduleView {
 func (t *rescheduleStopTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -288,7 +290,9 @@ func (t *rescheduleStopTool) Preview(
 	summary := fmt.Sprintf("Would move the %s on shipment %s to open %s (%s).",
 		shipmentpreview.StopLabel(plan.stop), plan.before.ProNumber, now.WindowStart, zoneName)
 
-	return toolpreview.Build(summary, append([]*agent.RecordChange{change}, changes...)...), nil
+	return toolpreview.Build(
+		summary,
+		append([]*agentpreview.RecordChange{change}, changes...)...), nil
 }
 
 func (t *rescheduleStopTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
@@ -360,16 +364,16 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 func (t *addShipmentChargeTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Adds to what the customer is billed for the shipment.",
 	}
 }
@@ -532,7 +536,7 @@ func shipmentChargeViewOf(plan *shipmentChargePlan) *shipmentChargeView {
 func (t *addShipmentChargeTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {

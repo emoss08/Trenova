@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -105,12 +105,12 @@ func (s *Service) publishOutcome(
 	record *accountingsync.AccountingSyncRecord,
 	outcome accountingsync.SyncAttemptOutcome,
 ) {
-	var kind agent.EventKind
+	var kind agenttrigger.EventKind
 	switch outcome {
 	case accountingsync.SyncAttemptBlocked:
-		kind = agent.EventAccountingSyncBlocked
+		kind = agenttrigger.EventAccountingSyncBlocked
 	case accountingsync.SyncAttemptDeadLettered:
-		kind = agent.EventAccountingSyncFailed
+		kind = agenttrigger.EventAccountingSyncFailed
 	case accountingsync.SyncAttemptSynced,
 		accountingsync.SyncAttemptRetrying,
 		accountingsync.SyncAttemptWaiting:

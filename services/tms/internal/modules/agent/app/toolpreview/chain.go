@@ -3,7 +3,7 @@ package toolpreview
 import (
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -12,7 +12,7 @@ import (
 // world as it is before any step runs.
 type ChainStep struct {
 	Step    int
-	Preview *agent.ProposalPreview
+	Preview *agentpreview.ProposalPreview
 }
 
 type chainKey struct {
@@ -23,7 +23,7 @@ type chainKey struct {
 type projectedValue struct {
 	step  int
 	value any
-	ref   *agent.PreviewRef
+	ref   *agentpreview.PreviewRef
 }
 
 type chainedRecord struct {
@@ -47,7 +47,7 @@ func Chain(steps []ChainStep) {
 
 		for i := range preview.Changes {
 			change := &preview.Changes[i]
-			if change.EntityID.IsNil() || change.Operation == agent.PreviewOperationCreate {
+			if change.EntityID.IsNil() || change.Operation == agentpreview.PreviewOperationCreate {
 				continue
 			}
 			key := chainKey{resource: change.Resource, id: change.EntityID}
@@ -62,8 +62,8 @@ func Chain(steps []ChainStep) {
 						field.ProjectedFromStep = value.step
 					}
 				}
-				preview.AddWarning(agent.PreviewWarning{
-					Code: agent.PreviewWarningDependsOnStep,
+				preview.AddWarning(agentpreview.PreviewWarning{
+					Code: agentpreview.PreviewWarningDependsOnStep,
 					Args: []string{strconv.Itoa(earlier.step)},
 					Message: "This step changes a record step " + strconv.Itoa(earlier.step) +
 						" changes first; it is shown as it would be after that step.",
@@ -88,7 +88,7 @@ func Chain(steps []ChainStep) {
 	}
 }
 
-func cloneRef(ref *agent.PreviewRef) *agent.PreviewRef {
+func cloneRef(ref *agentpreview.PreviewRef) *agentpreview.PreviewRef {
 	if ref == nil {
 		return nil
 	}

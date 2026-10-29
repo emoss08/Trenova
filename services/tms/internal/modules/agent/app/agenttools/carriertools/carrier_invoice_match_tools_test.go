@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -131,7 +132,7 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 		).After,
 	)
 	adjustment := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, adjustment.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, adjustment.Operation)
 	require.NotNil(t, adjustment.Money)
 	assert.True(t, adjustment.Money.TotalAfter.Decimal.Equal(decimal.NewFromInt(150)))
 
@@ -155,7 +156,7 @@ func TestAcceptCarrierInvoiceMatch_RefusesAVariance(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	matches.match.Status = carriersettlement.InvoiceMatchStatusMatched
 	matches.match.VarianceMinor = 0
@@ -245,7 +246,7 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	assert.Contains(t, preview.Summary, "against 1500.00 USD expected: Variance.")
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -255,7 +256,7 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	creator.plan.Refusal = errortypes.NewBusinessError("The invoice is already matched")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeInvoiceLinker struct {
@@ -322,6 +323,6 @@ func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
 	linker.refusal = errortypes.NewNotFoundError("Carrier not found")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 }

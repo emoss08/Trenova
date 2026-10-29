@@ -9,7 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -43,9 +45,9 @@ type DecisionAction string
 
 type Utterance struct {
 	Content     string
-	Page        *agent.PageContext
-	Mentions    []agent.EntityRef
-	Surface     agent.Surface
+	Page        *agentpagecontext.PageContext
+	Mentions    []agentpagecontext.EntityRef
+	Surface     agentpagecontext.Surface
 	Directed    pulid.ID
 	Attachments []string
 }
@@ -134,14 +136,14 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 
 	surface := u.Surface
 	if surface == "" {
-		surface = agent.SurfaceDesk
+		surface = agentpagecontext.SurfaceDesk
 	}
 	if c.formula != nil {
 		u.Page = c.formula.page()
-		surface = agent.SurfaceAssistant
+		surface = agentpagecontext.SurfaceAssistant
 	}
 	if c.palette {
-		surface = agent.SurfacePalette
+		surface = agentpagecontext.SurfacePalette
 	}
 
 	attached, err := c.attach(ctx, u.Attachments)
@@ -512,15 +514,15 @@ func (c *Conversation) pending(ctx context.Context, tool string) ([]*ProposalRec
 	return pending, nil
 }
 
-func (d Decide) decision() agent.DecisionType {
+func (d Decide) decision() agentdecision.DecisionType {
 	if d.Action == DecisionReject {
-		return agent.DecisionRejected
+		return agentdecision.DecisionRejected
 	}
 	if len(d.Modifications) > 0 {
-		return agent.DecisionModified
+		return agentdecision.DecisionModified
 	}
 
-	return agent.DecisionAccepted
+	return agentdecision.DecisionAccepted
 }
 
 func (c *Conversation) decideProposal(
@@ -544,7 +546,7 @@ func (c *Conversation) decideProposal(
 		Note:          d.Note,
 		TenantInfo:    c.session.Tenant,
 	}
-	if decision != agent.DecisionRejected {
+	if decision != agentdecision.DecisionRejected {
 		digest, err := c.proposalDigest(ctx, proposal, d.Modifications)
 		if err != nil {
 			record.Error = "preview: " + err.Error()
@@ -557,7 +559,7 @@ func (c *Conversation) decideProposal(
 		record.Error = err.Error()
 		return record
 	}
-	if decision == agent.DecisionRejected {
+	if decision == agentdecision.DecisionRejected {
 		return record
 	}
 
@@ -578,8 +580,8 @@ func (c *Conversation) decidePlan(
 ) *DecisionRecord {
 	bench := c.session.bench
 	decision := d.decision()
-	if decision == agent.DecisionModified {
-		decision = agent.DecisionAccepted
+	if decision == agentdecision.DecisionModified {
+		decision = agentdecision.DecisionAccepted
 	}
 	record := &DecisionRecord{
 		PlanID:   proposal.PlanID,
@@ -594,7 +596,7 @@ func (c *Conversation) decidePlan(
 		Note:       d.Note,
 		TenantInfo: c.session.Tenant,
 	}
-	if decision != agent.DecisionRejected {
+	if decision != agentdecision.DecisionRejected {
 		digest, err := c.planDigest(ctx, proposal.PlanID)
 		if err != nil {
 			record.Error = "preview: " + err.Error()
@@ -606,7 +608,7 @@ func (c *Conversation) decidePlan(
 		record.Error = err.Error()
 		return record
 	}
-	if decision == agent.DecisionRejected {
+	if decision == agentdecision.DecisionRejected {
 		return record
 	}
 

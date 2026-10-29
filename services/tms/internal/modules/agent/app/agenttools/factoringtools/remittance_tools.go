@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -265,7 +266,7 @@ func (t *ResolveFactoringRemittanceLineTool) Execute(
 func (t *ResolveFactoringRemittanceLineTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would change how a remittance line is matched."
 	req, err := t.request(&params)
 	if err != nil {
@@ -394,7 +395,7 @@ func (t *RematchFactoringRemittanceTool) Execute(
 func (t *RematchFactoringRemittanceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would match the remittance's open lines again."
 	if err := t.Validate(ctx, params); err != nil {
 		return refused(summary, err)
@@ -500,7 +501,7 @@ func (t *ApplyFactoringRemittanceTool) Execute(
 func (t *ApplyFactoringRemittanceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would book the remittance's matched lines to the ledger."
 	req, err := t.request(&params)
 	if err != nil {
@@ -645,7 +646,7 @@ func (t *DiscardFactoringRemittanceTool) Execute(
 func (t *DiscardFactoringRemittanceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would discard the remittance."
 	req, err := t.request(&params)
 	if err != nil {

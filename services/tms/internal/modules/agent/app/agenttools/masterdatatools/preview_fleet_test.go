@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,13 +32,17 @@ func TestUpdateTractorStatus_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"status":     "OutOfService",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tractors.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tractors.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceTractor, change.Resource)
-	assert.Equal(t, agent.PreviewOperationUpdate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, change.Operation)
 	assert.Equal(t, "T-4471", change.Label)
 	require.NotNil(t, change.Version)
 	assert.Equal(t, int64(7), *change.Version)
@@ -67,9 +71,13 @@ func TestUpdateTrailerStatus_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"status":     "Available",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &trailers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&trailers.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "R-220", change.Label)
 
@@ -85,15 +93,19 @@ func TestUpdateTractorStatus_PreviewNamesAUnitThatIsNotThere(t *testing.T) {
 	tractors := &fakeTractorStatusUpdater{units: map[pulid.ID]*tractor.Tractor{unit.ID: unit}}
 	tool := NewUpdateTractorStatusTool(tractors).(*UpdateTractorStatusTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &tractors.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"tractorIds": []any{unit.ID.String(), missing.String()},
-			"status":     "Sold",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&tractors.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"tractorIds": []any{unit.ID.String(), missing.String()},
+				"status":     "Sold",
+			}))
+		},
+	)
 
 	require.Len(t, preview.Changes, 1)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Args, missing.String())
 	assert.Contains(t, preview.Summary, "2 tractors")
 }

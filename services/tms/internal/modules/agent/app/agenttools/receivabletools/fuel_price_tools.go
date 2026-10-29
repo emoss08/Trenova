@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
@@ -174,7 +175,7 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Age
 		Render: func(
 			_ *fuelsurcharge.FuelIndexPrice,
 			planned *fuelsurcharge.FuelIndexPrice,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(toolpreview.Record{
 				Resource: permission.ResourceFuelSurchargeProgram,
 				Label:    "Fuel index price for " + planned.PriceDate,
@@ -193,7 +194,7 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Age
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := prices.AddManualPrice(ctx, entity, params.Actor.UserID)
 
 			return nil, err
@@ -229,7 +230,7 @@ func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Ag
 		Render: func(
 			_ *fuelsurcharge.FuelIndexPrice,
 			plan *fuelsurchargeservice.PriceChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(toolpreview.Record{
 				Resource: permission.ResourceFuelSurchargeProgram,
 				ID:       plan.Before.ID,
@@ -250,7 +251,7 @@ func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Ag
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := prices.UpdateManualPrice(ctx, entity, params.Actor.UserID)
 
 			return nil, err

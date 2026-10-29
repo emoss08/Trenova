@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -100,9 +100,9 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentruntimeports.RunR
 // recordsInPlay hands the conversation's subject and the records it has been
 // working on to the agent the person turned to. Without them "bill it" reached
 // the billing agent as two words, and it went looking for which load.
-func recordsInPlay(req *agentruntimeports.RunRequest) []agent.RecordRef {
+func recordsInPlay(req *agentruntimeports.RunRequest) []agentrecord.RecordRef {
 	watched := watchedRecords(req)
-	records := make([]agent.RecordRef, 0, min(len(watched), maxDelegateRecords))
+	records := make([]agentrecord.RecordRef, 0, min(len(watched), maxDelegateRecords))
 	for _, record := range watched {
 		if len(records) == maxDelegateRecords {
 			break
@@ -110,7 +110,7 @@ func recordsInPlay(req *agentruntimeports.RunRequest) []agent.RecordRef {
 		if record.Type == "" || record.ID == "" {
 			continue
 		}
-		records = append(records, agent.RecordRef{EntityType: record.Type, ID: record.ID})
+		records = append(records, agentrecord.RecordRef{EntityType: record.Type, ID: record.ID})
 	}
 	if len(records) == 0 {
 		return nil
@@ -119,7 +119,7 @@ func recordsInPlay(req *agentruntimeports.RunRequest) []agent.RecordRef {
 	return records
 }
 
-func handedRecords(records []agent.RecordRef) *DelegateContext {
+func handedRecords(records []agentrecord.RecordRef) *DelegateContext {
 	if len(records) == 0 {
 		return nil
 	}

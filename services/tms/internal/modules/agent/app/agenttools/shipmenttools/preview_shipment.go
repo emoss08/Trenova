@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -31,7 +31,7 @@ type liveTenderReader interface {
 func (t *AddShipmentCommentTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	entity, err := t.comment(&params)
 	if err != nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (t *AddShipmentCommentTool) Preview(
 			ID:       entity.ShipmentID,
 			Label:    commentAudience(entity.Visibility),
 		},
-		&agent.MessagePreview{
-			Channel:    agent.MessageChannelComment,
+		&agentpreview.MessagePreview{
+			Channel:    agentpreview.MessageChannelComment,
 			To:         []string{commentAudience(entity.Visibility)},
 			Body:       entity.Comment,
 			Visibility: string(entity.Visibility),
@@ -104,7 +104,7 @@ func commentAudience(visibility shipment.CommentVisibility) string {
 func (t *CancelShipmentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (t *CancelShipmentTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 
 	if t.partners != nil {
 		notices, nErr := t.partners.PreviewCancelNotices(
@@ -178,8 +178,8 @@ func (t *CancelShipmentTool) Preview(
 
 // tenderWithdrawalChanges is a live tender cancelled with the shipment: the
 // tender itself, and a withdrawal for every carrier holding an offer.
-func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, len(entity.Offers)+1)
+func tenderWithdrawalChanges(entity *tender.Tender) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(entity.Offers)+1)
 	canceled := *entity
 	canceled.Status = tender.StatusCanceled
 	record, err := toolpreview.Changed(
@@ -195,7 +195,7 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, erro
 	if err != nil {
 		return nil, err
 	}
-	record.Operation = agent.PreviewOperationArchive
+	record.Operation = agentpreview.PreviewOperationArchive
 	changes = append(changes, record)
 
 	for _, offer := range entity.Offers {
@@ -206,10 +206,10 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, erro
 		if !moves || next != tender.OfferStatusWithdrawn {
 			continue
 		}
-		channel := agent.MessageChannelEmail
+		channel := agentpreview.MessageChannelEmail
 		to := offer.RecipientEmail
 		if offer.Channel == tender.ChannelEDI {
-			channel = agent.MessageChannelEDI
+			channel = agentpreview.MessageChannelEDI
 			to = CarrierNameOfOffer(offer) + " (EDI)"
 		}
 		changes = append(changes, toolpreview.Send(
@@ -218,7 +218,7 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, erro
 				ID:       offer.CarrierID,
 				Label:    CarrierNameOfOffer(offer),
 			},
-			&agent.MessagePreview{
+			&agentpreview.MessagePreview{
 				Channel: channel,
 				To:      []string{to},
 				Subject: "Tender offer withdrawn",

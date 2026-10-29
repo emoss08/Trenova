@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
@@ -96,7 +97,7 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		imports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return commit.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -117,7 +118,7 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		imports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return discard.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -177,7 +178,7 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		simulations.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

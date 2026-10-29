@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
@@ -290,7 +290,7 @@ func (a *recordingPreparable) Target(params map[string]any) (agenttoolports.Tool
 func (a *recordingPreparable) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	previewer, _ := a.inner.(agenttoolports.ToolPreviewer)
 
 	return previewer.Preview(ctx, params)

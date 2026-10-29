@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -165,7 +166,7 @@ func TestReleaseBillingQueueItem_PreviewsTheStatusTheHoldFoundThenReleases(t *te
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &review.guard, func() (
-		*agent.ToolPreview,
+		*agentpreview.ToolPreview,
 		error,
 	) {
 		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
@@ -197,7 +198,7 @@ func TestReleaseBillingQueueItem_RefusesAnItemThatIsNotOnHold(t *testing.T) {
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 }
 
 func TestResolveBillingQueueIssue_RunsOnlyFromAPersonsApproval(t *testing.T) {
@@ -266,7 +267,7 @@ func TestResolveBillingQueueIssue_PreviewShowsTheSettlementAndTheChargeItRemoves
 	tool := newResolveBillingQueueIssueTool(review)
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &review.guard, func() (
-		*agent.ToolPreview,
+		*agentpreview.ToolPreview,
 		error,
 	) {
 		return tool.(agenttoolports.ToolPreviewer).Preview(
@@ -278,7 +279,7 @@ func TestResolveBillingQueueIssue_PreviewShowsTheSettlementAndTheChargeItRemoves
 	check := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, checkStateSettled, agenttoolstest.FieldByPath(t, check, "state").After)
 	removed := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationDelete, removed.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, removed.Operation)
 	assert.Contains(t, preview.Summary, "Remove detention")
 	assert.Contains(t, preview.Summary, "removing")
 }
@@ -309,7 +310,7 @@ func TestResolveBillingQueueIssue_AskingTheDriverPreviewsTheirMessage(t *testing
 	tool := newResolveBillingQueueIssueTool(review)
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &review.guard, func() (
-		*agent.ToolPreview,
+		*agentpreview.ToolPreview,
 		error,
 	) {
 		return tool.(agenttoolports.ToolPreviewer).Preview(
@@ -318,9 +319,9 @@ func TestResolveBillingQueueIssue_AskingTheDriverPreviewsTheirMessage(t *testing
 		)
 	})
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelDash, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelDash, change.Message.Channel)
 	assert.Equal(t, "Signed POD needed for PRO-881", change.Message.Subject)
 	assert.Contains(t, change.Label, "Sam Ortiz")
 	assert.Contains(t, preview.Summary, "stays open")
@@ -340,7 +341,7 @@ func TestResolveBillingQueueIssue_AChoiceTheCheckDoesNotOfferWouldFail(t *testin
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -365,7 +366,7 @@ func TestUndoBillingQueueIssue_PreviewPutsTheRemovedChargeBack(t *testing.T) {
 	params := issueParams(item, issue, "")
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, &review.guard, func() (
-		*agent.ToolPreview,
+		*agentpreview.ToolPreview,
 		error,
 	) {
 		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
@@ -374,7 +375,7 @@ func TestUndoBillingQueueIssue_PreviewPutsTheRemovedChargeBack(t *testing.T) {
 	check := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, checkStateOpen, agenttoolstest.FieldByPath(t, check, "state").After)
 	restored := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, restored.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, restored.Operation)
 	assert.Contains(t, preview.Summary, "Detention removed")
 
 	require.Error(t, tool.Execute(t.Context(), params))

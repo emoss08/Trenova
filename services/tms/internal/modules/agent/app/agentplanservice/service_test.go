@@ -8,6 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -21,7 +24,7 @@ import (
 type fakePlans struct {
 	agentports.AgentPlanRepository
 
-	plan     *agent.AgentPlan
+	plan     *agentplan.AgentPlan
 	statuses []agentports.UpdateAgentPlanStatusRequest
 	progress []agentports.RecordAgentPlanProgressRequest
 }
@@ -29,14 +32,14 @@ type fakePlans struct {
 func (f *fakePlans) GetByID(
 	context.Context,
 	agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	return f.plan, nil
 }
 
 func (f *fakePlans) UpdateStatus(
 	_ context.Context,
 	req agentports.UpdateAgentPlanStatusRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	f.statuses = append(f.statuses, req)
 	f.plan.Status = req.Status
 	if req.CommitsAt != 0 {
@@ -57,7 +60,7 @@ func (f *fakePlans) UpdateStatus(
 func (f *fakePlans) RecordProgress(
 	_ context.Context,
 	req agentports.RecordAgentPlanProgressRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	f.progress = append(f.progress, req)
 	f.plan.Status = req.Status
 	f.plan.CompletedSteps = req.CompletedSteps
@@ -103,12 +106,14 @@ func (f *fakeDecider) DecideWithOutcome(
 	_ *permissionports.RequestActor,
 ) (*agentports.DecisionOutcome, error) {
 	f.decided = append(f.decided, *req)
-	outcome := &agentports.DecisionOutcome{Decision: &agent.AgentDecision{ID: pulid.MustNew("ad_")}}
+	outcome := &agentports.DecisionOutcome{
+		Decision: &agentdecision.AgentDecision{ID: pulid.MustNew("ad_")},
+	}
 	if req.ProposalID == f.failAt {
 		outcome.ExecutionError = errors.New("the record changed since this was proposed")
 	}
 	if req.StepPreview.IsStale() {
-		outcome.ExecutionError = fmt.Errorf("%w: the shipment moved on", agent.ErrTargetChanged)
+		outcome.ExecutionError = fmt.Errorf("%w: the shipment moved on", agentplan.ErrTargetChanged)
 	}
 
 	return outcome, nil
@@ -117,7 +122,7 @@ func (f *fakeDecider) DecideWithOutcome(
 func (f *fakeDecider) SignalRun(
 	_ context.Context,
 	req *agentports.DecideAgentProposalRequest,
-	_ *agent.AgentDecision,
+	_ *agentdecision.AgentDecision,
 	_ pulid.ID,
 ) error {
 	f.signals++
@@ -174,9 +179,9 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	runID := pulid.MustNew("arun_")
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID: pulid.MustNew("apl_"), OrganizationID: orgID, BusinessUnitID: buID, RunID: runID,
-		Title: "Dispatch coverage: 3 changes", Status: agent.PlanStatusPending, StepCount: stepCount,
+		Title: "Dispatch coverage: 3 changes", Status: agentplan.PlanStatusPending, StepCount: stepCount,
 	}
 	steps := make([]*agent.AgentProposal, 0, stepCount)
 	for i := 1; i <= stepCount; i++ {
@@ -196,7 +201,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 			UserID: pulid.MustNew("usr_"), OrganizationID: orgID, BusinessUnitID: buID,
 		},
 		req: &agentports.DecideAgentPlanRequest{
-			PlanID: plan.ID, Decision: agent.DecisionAccepted, ReasonCode: "looks right",
+			PlanID: plan.ID, Decision: agentdecision.DecisionAccepted, ReasonCode: "looks right",
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
 	}
@@ -214,23 +219,23 @@ func TestDecide_ApprovesEveryStepInOrderAndSignalsOnce(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 	assert.Equal(t, 3, plan.CompletedSteps)
 
 	require.Len(t, h.decider.decided, 3)
 	for i, decided := range h.decider.decided {
 		assert.Equal(t, h.steps.steps[i].ID, decided.ProposalID, "steps run in plan order")
-		assert.Equal(t, agent.DecisionAccepted, decided.Decision)
+		assert.Equal(t, agentdecision.DecisionAccepted, decided.Decision)
 		assert.True(t, decided.WithinPlan)
 		assert.Contains(t, decided.ReasonCode, "looks right (plan ")
 	}
 	assert.Equal(t, 1, h.decider.signals, "the run hears once, not once per step")
 
 	require.Len(t, h.plans.statuses, 1)
-	assert.Equal(t, agent.PlanStatusApproved, h.plans.statuses[0].Status)
+	assert.Equal(t, agentplan.PlanStatusApproved, h.plans.statuses[0].Status)
 	assert.Equal(
 		t,
-		agent.PlanStatusPending,
+		agentplan.PlanStatusPending,
 		h.plans.statuses[0].FromStatus,
 		"the claim is conditional",
 	)
@@ -246,7 +251,7 @@ func TestDecide_StopsAtTheFirstFailedStepAndSkipsTheRest(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err, "a failed step is the plan's outcome, not an error to the caller")
 
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	assert.Equal(t, 1, plan.CompletedSteps)
 	require.NotNil(t, plan.FailedStep)
 	assert.Equal(t, 2, *plan.FailedStep)
@@ -262,15 +267,15 @@ func TestDecide_RejectsEveryPendingStep(t *testing.T) {
 
 	h := newHarness(t, 2, false)
 	h.steps.steps[0].Status = agent.ProposalStatusExecuted
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusRejected, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, plan.Status)
 	require.Len(t, h.decider.decided, 1, "a step already decided on its own is left alone")
 	assert.Equal(t, h.steps.steps[1].ID, h.decider.decided[0].ProposalID)
-	assert.Equal(t, agent.DecisionRejected, h.decider.decided[0].Decision)
+	assert.Equal(t, agentdecision.DecisionRejected, h.decider.decided[0].Decision)
 	assert.Equal(t, 1, h.decider.signals)
 }
 
@@ -283,12 +288,12 @@ func TestDecide_RefusesWhatCannotBeDecided(t *testing.T) {
 	assert.Empty(t, shadowed.decider.decided)
 
 	decided := newHarness(t, 2, false)
-	decided.plans.plan.Status = agent.PlanStatusCompleted
+	decided.plans.plan.Status = agentplan.PlanStatusCompleted
 	_, err = decided.svc.Decide(t.Context(), decided.req, decided.actor)
 	require.ErrorContains(t, err, "already been decided")
 
 	modified := newHarness(t, 2, false)
-	modified.req.Decision = agent.DecisionModified
+	modified.req.Decision = agentdecision.DecisionModified
 	_, err = modified.svc.Decide(t.Context(), modified.req, modified.actor)
 	require.ErrorContains(t, err, "as a whole")
 
@@ -319,8 +324,8 @@ func TestDecide_RefusesAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
 func (f *fakeSteps) SumAutomaticMoney(
 	context.Context,
 	*agentports.SumAutomaticMoneyRequest,
-) (agent.MoneyUse, error) {
-	return agent.MoneyUse{}, nil
+) (agenttooltrust.MoneyUse, error) {
+	return agenttooltrust.MoneyUse{}, nil
 }
 
 func TestDecide_AGatedPlanApprovedUnseenIsRefusedBeforeAnyStep(t *testing.T) {
@@ -352,7 +357,7 @@ func TestDecide_AGatedPlanCanAlwaysBeRejectedUnseen(t *testing.T) {
 
 	h := newHarness(t, 2, false)
 	h.steps.steps[0].EgressClass = agent.EgressExternalRecipient
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 
 	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
@@ -361,8 +366,10 @@ func TestDecide_AGatedPlanCanAlwaysBeRejectedUnseen(t *testing.T) {
 func (f *fakePlans) ListConnection(
 	context.Context,
 	*agentports.ListAgentPlanConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-	return &pagination.CursorListResult[*agent.AgentPlan]{Items: []*agent.AgentPlan{f.plan}}, nil
+) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
+	return &pagination.CursorListResult[*agentplan.AgentPlan]{
+		Items: []*agentplan.AgentPlan{f.plan},
+	}, nil
 }
 
 /*
@@ -379,7 +386,7 @@ func TestListConnectionAndGetByID_KeepAPlanTheOrganizationPauseHolds(t *testing.
 		Filter: &pagination.QueryOptions{TenantInfo: h.req.TenantInfo},
 	})
 	require.NoError(t, err)
-	require.Equal(t, []*agent.AgentPlan{h.plans.plan}, listed.Items)
+	require.Equal(t, []*agentplan.AgentPlan{h.plans.plan}, listed.Items)
 
 	found, err := h.svc.GetByID(t.Context(), agentports.GetAgentPlanByIDRequest{
 		ID:         h.plans.plan.ID,
@@ -422,7 +429,11 @@ func TestPlanHolds_HoldsAPlanByAStepAnotherRunRaisedAsDecideRefusesIt(t *testing
 	h.steps.steps[1].PlanID = &planID
 	h.svc.shadow = fakeShadow{runs: map[pulid.ID]bool{delegateRun: true}}
 
-	holds, err := h.svc.PlanHolds(t.Context(), h.req.TenantInfo, []*agent.AgentPlan{h.plans.plan})
+	holds, err := h.svc.PlanHolds(
+		t.Context(),
+		h.req.TenantInfo,
+		[]*agentplan.AgentPlan{h.plans.plan},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, map[pulid.ID]*assistantports.ProposalHold{
 		planID: {Reason: string(agentshadow.CauseDefinition), AgentName: "Shipment Desk"},
@@ -436,9 +447,13 @@ func TestPlanHolds_LeavesADecidedPlanAndAFreeOneUnheld(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 1, true)
-	h.plans.plan.Status = agent.PlanStatusRejected
+	h.plans.plan.Status = agentplan.PlanStatusRejected
 
-	holds, err := h.svc.PlanHolds(t.Context(), h.req.TenantInfo, []*agent.AgentPlan{h.plans.plan})
+	holds, err := h.svc.PlanHolds(
+		t.Context(),
+		h.req.TenantInfo,
+		[]*agentplan.AgentPlan{h.plans.plan},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, holds)
 
@@ -446,7 +461,7 @@ func TestPlanHolds_LeavesADecidedPlanAndAFreeOneUnheld(t *testing.T) {
 	holds, err = free.svc.PlanHolds(
 		t.Context(),
 		free.req.TenantInfo,
-		[]*agent.AgentPlan{free.plans.plan},
+		[]*agentplan.AgentPlan{free.plans.plan},
 	)
 	require.NoError(t, err)
 	assert.Empty(t, holds)

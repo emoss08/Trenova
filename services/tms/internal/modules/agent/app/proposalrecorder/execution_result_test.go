@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func TestRecord_KeepsWhatAnAutomaticWriteMade(t *testing.T) {
 	executed := pendingAction("report_create")
 	executed.Tier = agent.TierAutoExecute
 	executed.Executed = true
-	executed.ExecutionResult = &agent.ToolExecutionResult{
+	executed.ExecutionResult = &agentrecord.ToolExecutionResult{
 		Action: "created",
 		Kind:   "report",
 		Name:   "Lane revenue",
@@ -28,7 +29,7 @@ func TestRecord_KeepsWhatAnAutomaticWriteMade(t *testing.T) {
 	failed.Tier = agent.TierAutoExecute
 	failed.Executed = true
 	failed.ExecutionError = "name taken"
-	failed.ExecutionResult = &agent.ToolExecutionResult{Action: "created", Kind: "report"}
+	failed.ExecutionResult = &agentrecord.ToolExecutionResult{Action: "created", Kind: "report"}
 
 	result := recordActions(t, &capturingPlans{}, executed, failed)
 

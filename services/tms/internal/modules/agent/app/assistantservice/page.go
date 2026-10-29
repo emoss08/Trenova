@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -291,7 +292,7 @@ func draftFits(
 func (s *Service) assertPageTurn(
 	ctx context.Context,
 	thread *conversation.Thread,
-	page *agent.PageContext,
+	page *agentpagecontext.PageContext,
 	actor *permissionports.RequestActor,
 ) error {
 	draft := pagedraft.Surface("")

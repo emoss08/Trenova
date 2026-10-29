@@ -6,8 +6,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -34,10 +34,10 @@ func (fakeQueryTool) ParamSchema() map[string]any { return nil }
 func (t fakeQueryTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindQuery,
+		Kind:          agenttooltrust.ToolKindQuery,
 		Resource:      t.resource,
 		Operation:     permission.OpRead,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 	}
 }
 func (fakeQueryTool) Query(context.Context, *agenttoolports.QueryToolParams) (any, error) {

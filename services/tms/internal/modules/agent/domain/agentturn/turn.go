@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -46,15 +48,15 @@ type RuntimeAttachment struct {
 	Shown string
 }
 
-func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
-	records := make([]agent.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
-	seen := make(map[agent.EntityRef]struct{}, cap(records))
+func (rc *RuntimeContext) MemoryRecords() []agentpagecontext.EntityRef {
+	records := make([]agentpagecontext.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
+	seen := make(map[agentpagecontext.EntityRef]struct{}, cap(records))
 	add := func(kind, id string) {
 		kind, id = strings.TrimSpace(kind), strings.TrimSpace(id)
 		if kind == "" || id == "" {
 			return
 		}
-		ref := agent.EntityRef{Type: kind, ID: id}
+		ref := agentpagecontext.EntityRef{Type: kind, ID: id}
 		if _, ok := seen[ref]; ok {
 			return
 		}
@@ -87,7 +89,7 @@ type RuntimeUser struct {
 	Timezone string
 }
 
-type PageContext = agent.PageContext
+type PageContext = agentpagecontext.PageContext
 
 type RuntimeSubject struct {
 	Type            agent.SubjectType
@@ -98,7 +100,7 @@ type RuntimeSubject struct {
 }
 
 // RuntimeMention is a record the person pointed at by name while asking.
-type RuntimeMention = agent.EntityRef
+type RuntimeMention = agentpagecontext.EntityRef
 
 type ToolSummary struct {
 	Name        string
@@ -137,7 +139,7 @@ type RuntimeContext struct {
 	Timezone         string
 	Now              int64
 	Trigger          agent.RunTrigger
-	Surface          agent.Surface
+	Surface          agentpagecontext.Surface
 	SurfaceGuide     *RuntimePage
 	User             *RuntimeUser
 	Subject          *RuntimeSubject
@@ -155,21 +157,21 @@ type RuntimeContext struct {
 	// turn may read, best first: the organization-wide ones, any about this
 	// agent's tools, and any about the records the turn is about.
 	// BuildSystemPrompt carries as many as the agent's memory budget holds.
-	Memories []*agent.Memory
+	Memories []*agentmemory.Memory
 	// MemorySubjects are the records whose memories the turn reads, each
 	// marked as the record the turn is about or one it names.
-	MemorySubjects []agent.MemorySubject
+	MemorySubjects []agentmemory.MemorySubject
 	// MemoryRelevance says which of Memories bear on what the turn asked.
 	// Facts and Corrections to tools not in play are carried only when they
 	// do, and only those that do are counted and shown as used.
-	MemoryRelevance agent.MemoryRelevance
+	MemoryRelevance agentmemory.MemoryRelevance
 	// MemoriesHeldBack counts the candidates the fit left out, so the prompt
 	// can say agent_list_memories still finds them after Memories is narrowed to
 	// what was carried.
 	MemoriesHeldBack int
 	// DelegatorRecords are the records the turn that handed this one its
 	// task was about, so their memories reach the agent doing the task.
-	DelegatorRecords []agent.EntityRef
+	DelegatorRecords []agentpagecontext.EntityRef
 	// ToolsDisclosed reports that the turn opened with a subset of the agent's
 	// tools and can load the rest on demand. The prompt has to say so, because
 	// the alternative is a model that reads a short tool list as the limit of

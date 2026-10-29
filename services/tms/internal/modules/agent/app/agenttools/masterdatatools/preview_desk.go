@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -35,7 +35,7 @@ func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpr
 func (t *EscalateDetentionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (t *EscalateDetentionTool) Preview(
 func (t *PlaceWorkerDispatchHoldTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func carrierIntelRecord(event *carrierintel.CarrierIntelEvent) toolpreview.Recor
 func (t *carrierIntelEventTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (t *carrierIntelEventTool) previewAcknowledge(
 	request *carrierintelservice.ResolveEventRequest,
 	now int64,
 	opts []toolpreview.Option,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := fmt.Sprintf(
 		"Would mark the %s carrier finding %q as seen: %s",
 		event.Severity,

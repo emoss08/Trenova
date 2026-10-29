@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -83,7 +84,7 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 func (t *getDocumentSummaryTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceDocument,
 		rationale: "Reads text extracted from a document someone outside sent; nothing changes " +
 			"and nothing is sent.",

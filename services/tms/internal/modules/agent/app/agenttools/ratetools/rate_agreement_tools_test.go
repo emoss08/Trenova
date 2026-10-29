@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -280,7 +281,7 @@ func TestDraftRateAgreement_DraftsLanesItCanReadAndPricesNothing(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -362,9 +363,13 @@ func TestReviseRateAgreementDraft_KeepsNamedLanesAndRevisesOnlyDrafts(t *testing
 		}},
 	})
 
-	agenttoolstest.PreviewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	agenttoolstest.PreviewWithoutWrites(
+		t,
+		agreements.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, agreements.updated.Rules, 1)
@@ -406,7 +411,7 @@ func TestDuplicateRateAgreement_CopiesIntoADraft(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -448,7 +453,7 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return approve.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -524,7 +529,7 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -558,7 +563,7 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

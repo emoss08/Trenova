@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -95,7 +97,9 @@ func actionStateOf(message *inboundmessage.InboundMessage) *actionStateView {
 	}
 }
 
-func actionStateChange(before, after *inboundmessage.InboundMessage) (*agent.RecordChange, error) {
+func actionStateChange(
+	before, after *inboundmessage.InboundMessage,
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(
 		inboundMessageRecord(before),
 		actionStateOf(before),
@@ -186,7 +190,7 @@ func newLogInboundExceptionTool(
 				ctx context.Context,
 				req *triageworkservice.LogExceptionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := disputes.LogException(ctx, req)
 				if err != nil {
 					return nil, err
@@ -201,7 +205,7 @@ func newLogInboundExceptionTool(
 func renderLoggedException(
 	_ *triageworkservice.LogExceptionRequest,
 	plan *triageworkservice.ExceptionPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	hold, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceShipmentHold,
@@ -365,7 +369,7 @@ func newSettleDetentionDisputeTool(
 				ctx context.Context,
 				req *triageworkservice.DecideStopsRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := disputes.DecideStops(ctx, req)
 				if err != nil {
 					return nil, err
@@ -380,7 +384,7 @@ func newSettleDetentionDisputeTool(
 func renderStopsDecision(
 	req *triageworkservice.DecideStopsRequest,
 	decided *stopsDecisionPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	verb := "stand by"
 	if req.Decision == inboundmessage.StopsDecisionWaive {
 		verb = "waive"
@@ -394,7 +398,7 @@ func renderStopsDecision(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{decision}
+	changes := []*agentpreview.RecordChange{decision}
 
 	if waivesBilledDetention(req.Decision, decided.times) {
 		money, moneyErr := detentionMoney(decided.times)
@@ -440,7 +444,7 @@ func waivesBilledDetention(
 		times.BilledDetentionAmount != nil && times.OccurrenceID.IsNotNil()
 }
 
-func detentionMoney(times *inboundmessageports.StopTimes) (*agent.RecordChange, error) {
+func detentionMoney(times *inboundmessageports.StopTimes) (*agentpreview.RecordChange, error) {
 	amount, err := decimal.NewFromString(*times.BilledDetentionAmount)
 	if err != nil {
 		return nil, fmt.Errorf("read the billed detention amount: %w", err)
@@ -461,7 +465,7 @@ func detentionMoney(times *inboundmessageports.StopTimes) (*agent.RecordChange, 
 	}
 	toolpreview.AttachMoney(
 		change,
-		toolpreview.MoneyBlock(times.Currency, agent.MoneyLine{
+		toolpreview.MoneyBlock(times.Currency, agentpreview.MoneyLine{
 			Label:  label,
 			Before: changepreview.KnownAmount(amount),
 			After:  changepreview.KnownAmount(decimal.Zero),

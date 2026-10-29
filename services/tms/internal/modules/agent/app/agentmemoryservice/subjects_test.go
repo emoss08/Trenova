@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,9 +15,9 @@ import (
 )
 
 type fakeLinks struct {
-	links map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
+	links map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
 	asked []agentmemoryports.ListMemoryRecordLinksRequest
-	fail  agent.MemoryRecordKind
+	fail  agentmemory.MemoryRecordKind
 }
 
 func (f *fakeLinks) ListRecordLinks(
@@ -41,7 +43,9 @@ func (f *fakeLinks) ListRecordLinks(
 	return out, nil
 }
 
-func ref(kind, id string) agent.EntityRef { return agent.EntityRef{Type: kind, ID: id} }
+func ref(kind, id string) agentpagecontext.EntityRef {
+	return agentpagecontext.EntityRef{Type: kind, ID: id}
+}
 
 func TestResolve_AMasterRecordIsItsOwnSubject(t *testing.T) {
 	t.Parallel()
@@ -50,7 +54,9 @@ func TestResolve_AMasterRecordIsItsOwnSubject(t *testing.T) {
 	worker, carrier := pulid.MustNew("wrk_"), pulid.MustNew("car_")
 	links := &fakeLinks{}
 
-	got, err := NewSubjectResolver(links).Resolve(t.Context(), tenant(), []agent.EntityRef{
+	got, err := NewSubjectResolver(
+		links,
+	).Resolve(t.Context(), tenant(), []agentpagecontext.EntityRef{
 		ref("customer", customer.String()),
 		ref("Location", location.String()),
 		ref(string(agent.SubjectWorker), worker.String()),
@@ -59,11 +65,27 @@ func TestResolve_AMasterRecordIsItsOwnSubject(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, []agent.MemorySubject{
-		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationDirect},
-		{Type: agent.MemorySubjectWorker, ID: worker, Relation: agent.MemoryRelationDirect},
-		{Type: agent.MemorySubjectCarrier, ID: carrier, Relation: agent.MemoryRelationDirect},
+	assert.Equal(t, []agentmemory.MemorySubject{
+		{
+			Type:     agentmemory.MemorySubjectCustomer,
+			ID:       customer,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
+		{
+			Type:     agentmemory.MemorySubjectLocation,
+			ID:       location,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
+		{
+			Type:     agentmemory.MemorySubjectWorker,
+			ID:       worker,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
+		{
+			Type:     agentmemory.MemorySubjectCarrier,
+			ID:       carrier,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
 	}, got)
 	assert.Empty(t, links.asked, "a master record names nobody else")
 }
@@ -75,30 +97,36 @@ func TestResolve_AShipmentNamesItsCustomerStopsWorkersAndCarrier(t *testing.T) {
 	customer := pulid.MustNew("cus_")
 	origin, destination := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	driver, carrier := pulid.MustNew("wrk_"), pulid.MustNew("car_")
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
-		agent.MemoryRecordShipment: {
-			{From: shipment, Kind: agent.MemoryRecordCustomer, ID: customer},
-			{From: shipment, Kind: agent.MemoryRecordLocation, ID: origin},
-			{From: shipment, Kind: agent.MemoryRecordLocation, ID: destination},
-			{From: shipment, Kind: agent.MemoryRecordWorker, ID: driver},
-			{From: shipment, Kind: agent.MemoryRecordCarrier, ID: carrier},
+	links := &fakeLinks{links: map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
+		agentmemory.MemoryRecordShipment: {
+			{From: shipment, Kind: agentmemory.MemoryRecordCustomer, ID: customer},
+			{From: shipment, Kind: agentmemory.MemoryRecordLocation, ID: origin},
+			{From: shipment, Kind: agentmemory.MemoryRecordLocation, ID: destination},
+			{From: shipment, Kind: agentmemory.MemoryRecordWorker, ID: driver},
+			{From: shipment, Kind: agentmemory.MemoryRecordCarrier, ID: carrier},
 		},
 	}}
 
-	got, err := NewSubjectResolver(links).Resolve(t.Context(), tenant(), []agent.EntityRef{
+	got, err := NewSubjectResolver(
+		links,
+	).Resolve(t.Context(), tenant(), []agentpagecontext.EntityRef{
 		ref(string(agent.SubjectShipment), shipment.String()),
 	})
 	require.NoError(t, err)
 
-	related := func(kind agent.MemorySubjectType, id pulid.ID) agent.MemorySubject {
-		return agent.MemorySubject{Type: kind, ID: id, Relation: agent.MemoryRelationRelated}
+	related := func(kind agentmemory.MemorySubjectType, id pulid.ID) agentmemory.MemorySubject {
+		return agentmemory.MemorySubject{
+			Type:     kind,
+			ID:       id,
+			Relation: agentmemory.MemoryRelationRelated,
+		}
 	}
-	assert.Equal(t, []agent.MemorySubject{
-		related(agent.MemorySubjectCustomer, customer),
-		related(agent.MemorySubjectLocation, origin),
-		related(agent.MemorySubjectLocation, destination),
-		related(agent.MemorySubjectWorker, driver),
-		related(agent.MemorySubjectCarrier, carrier),
+	assert.Equal(t, []agentmemory.MemorySubject{
+		related(agentmemory.MemorySubjectCustomer, customer),
+		related(agentmemory.MemorySubjectLocation, origin),
+		related(agentmemory.MemorySubjectLocation, destination),
+		related(agentmemory.MemorySubjectWorker, driver),
+		related(agentmemory.MemorySubjectCarrier, carrier),
 	}, got)
 }
 
@@ -110,30 +138,32 @@ func TestResolve_FollowsADocumentOrMessageThroughTheRecordItNames(t *testing.T) 
 	invoice, queued := pulid.MustNew("inv_"), pulid.MustNew("bqi_")
 	customer, billTo := pulid.MustNew("cus_"), pulid.MustNew("cus_")
 	matchedCarrier, stop := pulid.MustNew("car_"), pulid.MustNew("loc_")
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
-		agent.MemoryRecordDocument: {
-			{From: document, Kind: agent.MemoryRecordShipmentMove, ID: move},
+	links := &fakeLinks{links: map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
+		agentmemory.MemoryRecordDocument: {
+			{From: document, Kind: agentmemory.MemoryRecordShipmentMove, ID: move},
 		},
-		agent.MemoryRecordInboundMessage: {
-			{From: message, Kind: agent.MemoryRecordCarrier, ID: matchedCarrier},
-			{From: message, Kind: agent.MemoryRecordShipment, ID: shipment},
+		agentmemory.MemoryRecordInboundMessage: {
+			{From: message, Kind: agentmemory.MemoryRecordCarrier, ID: matchedCarrier},
+			{From: message, Kind: agentmemory.MemoryRecordShipment, ID: shipment},
 		},
-		agent.MemoryRecordShipmentMove: {
-			{From: move, Kind: agent.MemoryRecordShipment, ID: shipment},
+		agentmemory.MemoryRecordShipmentMove: {
+			{From: move, Kind: agentmemory.MemoryRecordShipment, ID: shipment},
 		},
-		agent.MemoryRecordShipment: {
-			{From: shipment, Kind: agent.MemoryRecordCustomer, ID: customer},
-			{From: shipment, Kind: agent.MemoryRecordLocation, ID: stop},
+		agentmemory.MemoryRecordShipment: {
+			{From: shipment, Kind: agentmemory.MemoryRecordCustomer, ID: customer},
+			{From: shipment, Kind: agentmemory.MemoryRecordLocation, ID: stop},
 		},
-		agent.MemoryRecordInvoice: {
-			{From: invoice, Kind: agent.MemoryRecordCustomer, ID: customer},
+		agentmemory.MemoryRecordInvoice: {
+			{From: invoice, Kind: agentmemory.MemoryRecordCustomer, ID: customer},
 		},
-		agent.MemoryRecordBillingQueueItem: {
-			{From: queued, Kind: agent.MemoryRecordCustomer, ID: billTo},
+		agentmemory.MemoryRecordBillingQueueItem: {
+			{From: queued, Kind: agentmemory.MemoryRecordCustomer, ID: billTo},
 		},
 	}}
 
-	got, err := NewSubjectResolver(links).Resolve(t.Context(), tenant(), []agent.EntityRef{
+	got, err := NewSubjectResolver(
+		links,
+	).Resolve(t.Context(), tenant(), []agentpagecontext.EntityRef{
 		ref("document", document.String()),
 		ref(string(agent.SubjectInboundMessage), message.String()),
 		ref("invoice", invoice.String()),
@@ -143,7 +173,7 @@ func TestResolve_FollowsADocumentOrMessageThroughTheRecordItNames(t *testing.T) 
 
 	ids := make([]pulid.ID, 0, len(got))
 	for _, subject := range got {
-		assert.Equal(t, agent.MemoryRelationRelated, subject.Relation)
+		assert.Equal(t, agentmemory.MemoryRelationRelated, subject.Relation)
 		ids = append(ids, subject.ID)
 	}
 	assert.Equal(t, []pulid.ID{matchedCarrier, customer, billTo, stop}, ids,
@@ -151,7 +181,7 @@ func TestResolve_FollowsADocumentOrMessageThroughTheRecordItNames(t *testing.T) 
 
 	shipmentReads := 0
 	for _, asked := range links.asked {
-		if asked.Kind == agent.MemoryRecordShipment {
+		if asked.Kind == agentmemory.MemoryRecordShipment {
 			shipmentReads++
 			assert.Equal(t, []pulid.ID{shipment}, asked.IDs,
 				"a shipment reached two ways is read once")
@@ -167,14 +197,14 @@ func TestResolve_StopsAtTwelveDirectRecordsFirst(t *testing.T) {
 	stops := make([]agentmemoryports.MemoryRecordLink, 0, 20)
 	for range 20 {
 		stops = append(stops, agentmemoryports.MemoryRecordLink{
-			From: shipment, Kind: agent.MemoryRecordLocation, ID: pulid.MustNew("loc_"),
+			From: shipment, Kind: agentmemory.MemoryRecordLocation, ID: pulid.MustNew("loc_"),
 		})
 	}
-	links := &fakeLinks{links: map[agent.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
-		agent.MemoryRecordShipment: stops,
+	links := &fakeLinks{links: map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink{
+		agentmemory.MemoryRecordShipment: stops,
 	}}
 
-	records := []agent.EntityRef{ref("shipment", shipment.String())}
+	records := []agentpagecontext.EntityRef{ref("shipment", shipment.String())}
 	direct := make([]pulid.ID, 0, 3)
 	for range 3 {
 		id := pulid.MustNew("cus_")
@@ -185,30 +215,36 @@ func TestResolve_StopsAtTwelveDirectRecordsFirst(t *testing.T) {
 	got, err := NewSubjectResolver(links).Resolve(t.Context(), tenant(), records)
 	require.NoError(t, err)
 
-	require.Len(t, got, agent.MaxMemorySubjectsPerTurn)
+	require.Len(t, got, agentmemory.MaxMemorySubjectsPerTurn)
 	for idx, id := range direct {
 		assert.Equal(t, id, got[idx].ID)
-		assert.Equal(t, agent.MemoryRelationDirect, got[idx].Relation,
+		assert.Equal(t, agentmemory.MemoryRelationDirect, got[idx].Relation,
 			"what the person is looking at comes before what it names")
 	}
-	assert.Equal(t, agent.MemoryRelationRelated, got[len(got)-1].Relation)
+	assert.Equal(t, agentmemory.MemoryRelationRelated, got[len(got)-1].Relation)
 }
 
 func TestResolve_IgnoresUnknownKindsAndBadIDsAndKeepsWhatItReadOnFailure(t *testing.T) {
 	t.Parallel()
 
 	customer, shipment := pulid.MustNew("cus_"), pulid.MustNew("shp_")
-	links := &fakeLinks{fail: agent.MemoryRecordShipment}
+	links := &fakeLinks{fail: agentmemory.MemoryRecordShipment}
 
-	got, err := NewSubjectResolver(links).Resolve(t.Context(), tenant(), []agent.EntityRef{
+	got, err := NewSubjectResolver(
+		links,
+	).Resolve(t.Context(), tenant(), []agentpagecontext.EntityRef{
 		ref("tractor", pulid.MustNew("tr_").String()),
 		ref("customer", "not-an-id"),
 		ref("customer", customer.String()),
 		ref("shipment", shipment.String()),
 	})
 	require.Error(t, err)
-	assert.Equal(t, []agent.MemorySubject{
-		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+	assert.Equal(t, []agentmemory.MemorySubject{
+		{
+			Type:     agentmemory.MemorySubjectCustomer,
+			ID:       customer,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
 	}, got)
 }
 
@@ -216,7 +252,7 @@ func TestResolve_WithoutALinkReaderReadsOnlyDirectRecords(t *testing.T) {
 	t.Parallel()
 
 	customer := pulid.MustNew("cus_")
-	got, err := NewSubjectResolver(nil).Resolve(t.Context(), tenant(), []agent.EntityRef{
+	got, err := NewSubjectResolver(nil).Resolve(t.Context(), tenant(), []agentpagecontext.EntityRef{
 		ref("customer", customer.String()),
 		ref("shipment", pulid.MustNew("shp_").String()),
 	})

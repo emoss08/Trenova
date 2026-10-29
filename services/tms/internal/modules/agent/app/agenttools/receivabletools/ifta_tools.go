@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -264,7 +266,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentToo
 		Render: func(
 			req *iftaservice.GenerateReturnRequest,
 			planned *ifta.Return,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(toolpreview.Record{
 				Resource: permission.ResourceIFTAReturn,
 				Label:    req.Period.Label() + " IFTA return",
@@ -282,7 +284,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentToo
 			ctx context.Context,
 			req *iftaservice.GenerateReturnRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := returns.Generate(ctx, req)
 
 			return nil, err
@@ -353,7 +355,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTo
 		Refused: func(pulid.ID) string {
 			return "Would recompute an IFTA return."
 		},
-		Render: func(_ pulid.ID, plan *iftaservice.ReturnChange) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *iftaservice.ReturnChange) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				iftaReturnRecord(plan.Before),
 				iftaReturnViewOf(plan.Before),
@@ -372,7 +374,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTo
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
 				return nil, err
@@ -441,7 +443,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 		Render: func(
 			_ *iftaservice.AmendReturnRequest,
 			plan *iftaservice.ReturnAmendment,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(toolpreview.Record{
 				Resource: permission.ResourceIFTAReturn,
 				Label: fmt.Sprintf("Amendment %d of the %s IFTA return",
@@ -461,7 +463,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *iftaservice.AmendReturnRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := returns.Amend(ctx, req)
 
 			return nil, err
@@ -502,7 +504,7 @@ func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool 
 		Refused: func(pulid.ID) string {
 			return "Would delete a draft IFTA return."
 		},
-		Render: func(_ pulid.ID, planned *ifta.Return) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, planned *ifta.Return) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(iftaReturnRecord(planned), iftaReturnViewOf(planned))
 			if err != nil {
 				return nil, err
@@ -516,7 +518,7 @@ func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := returnActionRequest(ctx, returns, params, id)
 			if err != nil {
 				return nil, err
@@ -723,7 +725,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 		Render: func(
 			_ *ifta.JurisdictionMileageEntry,
 			plan *labelledMileage,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			record := iftaMileageRecord(plan.entry)
 			record.ID = pulid.Nil
 			record.Version = nil
@@ -745,7 +747,7 @@ func NewRecordIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 			ctx context.Context,
 			entry *ifta.JurisdictionMileageEntry,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := entries.CreateMileageEntry(ctx, entry, params.Actor.UserID)
 
 			return nil, err
@@ -853,7 +855,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Ag
 		Render: func(
 			_ *mileageCorrection,
 			plan *labelledMileageChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				iftaMileageRecord(plan.change.Before),
 				iftaMileageViewOf(plan.change.Before, plan.before),
@@ -874,7 +876,7 @@ func NewCorrectIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Ag
 			ctx context.Context,
 			correction *mileageCorrection,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entry, err := correction.entry(ctx, entries, params)
 			if err != nil {
 				return nil, err
@@ -949,7 +951,7 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 		Refused: func(pulid.ID) string {
 			return "Would delete a jurisdiction mileage entry."
 		},
-		Render: func(_ pulid.ID, plan *labelledMileage) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *labelledMileage) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				iftaMileageRecord(plan.entry),
 				iftaMileageViewOf(plan.entry, plan.jurisdiction),
@@ -968,7 +970,7 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := deleteMileageRequest(ctx, entries, params, id)
 			if err != nil {
 				return nil, err
@@ -1039,7 +1041,7 @@ func NewRecalculateMoveJurisdictionMilesTool(
 		Render: func(
 			_ shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 			plan *shipmentdistanceports.MoveJurisdictionMilesPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return toolpreview.Build(fmt.Sprintf(
 				"Would ask the routing provider for the state-by-state miles of the move "+
 					"across %s and replace its %s; its distance stays as it is.",
@@ -1051,7 +1053,7 @@ func NewRecalculateMoveJurisdictionMilesTool(
 			ctx context.Context,
 			req shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := router.RecalculateMoveJurisdictionMiles(ctx, req)
 
 			return nil, err
@@ -1148,7 +1150,7 @@ func NewBackfillJurisdictionMilesTool(
 		Render: func(
 			req *backfillRequest,
 			result *shipmentdistanceports.BackfillJurisdictionMilesResult,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			if result.UnattributedMoves == 0 {
 				return toolpreview.Build(fmt.Sprintf(
 					"Every completed move in %s already has jurisdiction miles; nothing would "+
@@ -1168,7 +1170,7 @@ func NewBackfillJurisdictionMilesTool(
 			ctx context.Context,
 			req *backfillRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			started, err := req.service(ctx, returns, params, false)
 			if err != nil {
 				return nil, err

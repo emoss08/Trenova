@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 func (t *ApproveDetentionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, detail, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err

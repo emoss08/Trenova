@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -100,7 +102,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 		Render: func(
 			_ pulid.ID,
 			change *kernelports.RecordChange[watchtower.Item],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			built, err := toolpreview.Changed(toolpreview.Record{
 				Resource: permission.ResourceWatchtower,
 				ID:       change.Before.ID,
@@ -111,7 +113,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 			if err != nil {
 				return nil, err
 			}
-			built.Operation = agent.PreviewOperationArchive
+			built.Operation = agentpreview.PreviewOperationArchive
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would take %q off the watchtower feed; the record behind it is unchanged.",
@@ -122,13 +124,13 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			dismissed, err := items.Dismiss(ctx, toolparams.TenantFrom(*params), id, params.Actor)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "dismissed",
 				Kind:   "watchtower item",
 				Name:   dismissed.Title,

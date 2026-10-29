@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -46,7 +46,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 				h.env.SignalWorkflow(agentflowcontract.SteerSignal, agentruntime.Steer{
 					ID:      pulid.ID("aqm_01J9STEERSTEERSTEERSTEER00"),
 					Content: "Actually the carrier is Werner, not JB Hunt.",
-					Mentions: []agent.EntityRef{
+					Mentions: []agentpagecontext.EntityRef{
 						{Type: "carrier", ID: "car_01J9WERNERWERNERWERNER000", Label: "Werner"},
 					},
 				})

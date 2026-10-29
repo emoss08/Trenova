@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,18 +26,18 @@ type AgentEvaluationService interface {
 		ctx context.Context,
 		req *ReplayAgentEvalCaseRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Evaluation, error)
+	) (*agentevaluation.Evaluation, error)
 	Replay(
 		ctx context.Context,
 		req *ReplayAgentRunRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.Evaluation, error)
+	) (*agentevaluation.Evaluation, error)
 	GetByID(
 		ctx context.Context,
 		req GetAgentEvaluationByIDRequest,
-	) (*agent.Evaluation, error)
+	) (*agentevaluation.Evaluation, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentEvaluationConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Evaluation], error)
+	) (*pagination.CursorListResult[*agentevaluation.Evaluation], error)
 }

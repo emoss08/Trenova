@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -37,9 +37,9 @@ func TestReplyToInboundMessagePreview_IsTheReplyExecuteSends(t *testing.T) {
 	assert.Equal(t, inboundmessage.StatusInReview, desk.message.Status,
 		"a preview must not touch the message it read")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, []string{"dana@shipper.example"}, send.Message.To)
-	settled := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	settled := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, "Actioned", agenttoolstest.FindField(t, settled, "status").After)
 	note := agenttoolstest.FindField(t, settled, "reviewNote")
 

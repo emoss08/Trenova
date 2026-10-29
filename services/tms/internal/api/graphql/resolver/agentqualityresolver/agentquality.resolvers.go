@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -221,7 +221,7 @@ func (r *MutationResolver) SetAgentEvalCaseStatus(ctx context.Context, id string
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error) {
+func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpCreate)
 	if err != nil {
 		return nil, err

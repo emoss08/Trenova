@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +30,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 		TraceID:    provenanceTraceID,
 		SpanID:     provenanceSpanID,
 		StepKey:    "step-key-1",
-		TierSource: agent.TierSourcePersonSetting,
+		TierSource: agenttooltrust.TierSourcePersonSetting,
 	})
 
 	assert.Equal(t, minted, proposal.ID, "the step, the trace and the proposal name one record")

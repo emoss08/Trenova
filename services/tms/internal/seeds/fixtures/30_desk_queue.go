@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -46,7 +47,7 @@ type queueSeedSpec struct {
 	impact    []string
 	trail     []string
 	subject   queueSeedSubject
-	eventKind agent.EventKind
+	eventKind agenttrigger.EventKind
 	seen      bool
 	agent     *queueSeedAgent
 }
@@ -294,7 +295,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			facts:     seedFacts("On-time this month", "91%", "Contract minimum", "95%"),
 			impact:    []string{"Harbor Supply", "95% on-time clause"},
 			subject:   r.shipmentSubject("SEED-SHP-004"),
-			eventKind: agent.EventServiceFailureDetected,
+			eventKind: agenttrigger.EventServiceFailureDetected,
 			seen:      true,
 		},
 		{
@@ -330,7 +331,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			due:       minutes(46 * 24 * 60),
 			dueLabel:  "Endorsement renews",
 			subject:   tomSubject,
-			eventKind: agent.EventWorkerCredentialExpiring,
+			eventKind: agenttrigger.EventWorkerCredentialExpiring,
 			seen:      true,
 		},
 		{

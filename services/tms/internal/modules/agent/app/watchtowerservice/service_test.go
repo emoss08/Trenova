@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -548,7 +549,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
-	in.EventKind = agent.EventServiceFailureDetected
+	in.EventKind = agenttrigger.EventServiceFailureDetected
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
 	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 
@@ -574,7 +575,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	assert.Empty(t, events.published)
 	require.Len(t, result.Candidates, 1, "a chat agent is not a candidate to run on a record")
 	assert.Equal(t, "Load monitor", result.Candidates[0].Name)
-	assert.Equal(t, agent.EventServiceFailureDetected, definitions.lastTrigger.EventKind)
+	assert.Equal(t, agenttrigger.EventServiceFailureDetected, definitions.lastTrigger.EventKind)
 
 	// A subscriber: the event is published to it.
 	definitions.subscribers = []*agentdefinition.Definition{{Name: "Service desk"}}
@@ -606,21 +607,21 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		event    agent.EventKind
+		event    agenttrigger.EventKind
 		source   watchtower.SourceKind
 		template agenttemplate.Template
 	}{
-		{agent.EventShipmentCreated, watchtower.SourceServiceFailure,
+		{agenttrigger.EventShipmentCreated, watchtower.SourceServiceFailure,
 			agenttemplate.TemplateLoadEntryCheck},
-		{agent.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
+		{agenttrigger.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
 			agenttemplate.TemplateDispatchAssignment},
-		{agent.EventServiceFailureDetected, watchtower.SourceServiceFailure,
+		{agenttrigger.EventServiceFailureDetected, watchtower.SourceServiceFailure,
 			agenttemplate.TemplateServiceFailureDesk},
-		{agent.EventInsightDetected, watchtower.SourceInsight,
+		{agenttrigger.EventInsightDetected, watchtower.SourceInsight,
 			agenttemplate.TemplateInsightAnalyst},
-		{agent.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
+		{agenttrigger.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
 			agenttemplate.TemplateEDIDesk},
-		{agent.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
+		{agenttrigger.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
 			agenttemplate.TemplateBillingException},
 	}
 

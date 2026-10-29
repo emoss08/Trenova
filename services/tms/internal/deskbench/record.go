@@ -4,6 +4,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -101,19 +104,19 @@ func (u *Usage) add(other Usage) {
 }
 
 type ProposalRecord struct {
-	ID        pulid.ID                   `json:"id"`
-	PlanID    pulid.ID                   `json:"planId,omitempty"`
-	PlanStep  int                        `json:"planStep,omitempty"`
-	Tool      string                     `json:"tool"`
-	Arguments map[string]any             `json:"arguments,omitempty"`
-	Rationale string                     `json:"rationale,omitempty"`
-	Tier      agent.AutonomyTier         `json:"tier,omitempty"`
-	Status    agent.ProposalStatus       `json:"status"`
-	HeldBy    []string                   `json:"heldBy,omitempty"`
-	Preview   *agent.ProposalPreview     `json:"preview,omitempty"`
-	Simulated *agent.ToolSimulation      `json:"simulation,omitempty"`
-	Error     string                     `json:"error,omitempty"`
-	Executed  *agent.ToolExecutionResult `json:"executionResult,omitempty"`
+	ID        pulid.ID                         `json:"id"`
+	PlanID    pulid.ID                         `json:"planId,omitempty"`
+	PlanStep  int                              `json:"planStep,omitempty"`
+	Tool      string                           `json:"tool"`
+	Arguments map[string]any                   `json:"arguments,omitempty"`
+	Rationale string                           `json:"rationale,omitempty"`
+	Tier      agent.AutonomyTier               `json:"tier,omitempty"`
+	Status    agent.ProposalStatus             `json:"status"`
+	HeldBy    []string                         `json:"heldBy,omitempty"`
+	Preview   *agentpreview.ProposalPreview    `json:"preview,omitempty"`
+	Simulated *agent.ToolSimulation            `json:"simulation,omitempty"`
+	Error     string                           `json:"error,omitempty"`
+	Executed  *agentrecord.ToolExecutionResult `json:"executionResult,omitempty"`
 }
 
 type TurnRecord struct {
@@ -182,14 +185,14 @@ type CallSummary struct {
 }
 
 type DecisionRecord struct {
-	ProposalID     pulid.ID                   `json:"proposalId,omitempty"`
-	PlanID         pulid.ID                   `json:"planId,omitempty"`
-	Tool           string                     `json:"tool,omitempty"`
-	Decision       agent.DecisionType         `json:"decision"`
-	Note           string                     `json:"note,omitempty"`
-	Error          string                     `json:"error,omitempty"`
-	StatusAfter    agent.ProposalStatus       `json:"statusAfter,omitempty"`
-	ExecutionError string                     `json:"executionError,omitempty"`
-	Executed       bool                       `json:"executed"`
-	Result         *agent.ToolExecutionResult `json:"executionResult,omitempty"`
+	ProposalID     pulid.ID                         `json:"proposalId,omitempty"`
+	PlanID         pulid.ID                         `json:"planId,omitempty"`
+	Tool           string                           `json:"tool,omitempty"`
+	Decision       agentdecision.DecisionType       `json:"decision"`
+	Note           string                           `json:"note,omitempty"`
+	Error          string                           `json:"error,omitempty"`
+	StatusAfter    agent.ProposalStatus             `json:"statusAfter,omitempty"`
+	ExecutionError string                           `json:"executionError,omitempty"`
+	Executed       bool                             `json:"executed"`
+	Result         *agentrecord.ToolExecutionResult `json:"executionResult,omitempty"`
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
@@ -334,10 +334,10 @@ func (s *service) publishStopActualEvent(
 	ctx context.Context,
 	req *shipmentmoveports.RecordStopActualRequest,
 ) {
-	kind := agent.EventShipmentMoveArrived
+	kind := agenttrigger.EventShipmentMoveArrived
 	verb := "Arrived at"
 	if req.Action == shipmentmoveports.StopActualActionDepart {
-		kind = agent.EventShipmentMoveDeparted
+		kind = agenttrigger.EventShipmentMoveDeparted
 		verb = "Left"
 	}
 	at := timeutils.NowUnix()

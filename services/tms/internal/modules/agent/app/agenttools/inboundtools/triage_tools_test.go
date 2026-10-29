@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
@@ -276,7 +278,7 @@ func TestTriageTools_DeclareTheirSchemaAndPolicy(t *testing.T) {
 
 			policy := tool.Policy()
 			assert.Equal(t, tc.name, policy.Name)
-			assert.Equal(t, agent.ToolKindAction, policy.Kind)
+			assert.Equal(t, agenttooltrust.ToolKindAction, policy.Kind)
 			assert.Equal(t, tc.resource, policy.Resource)
 			assert.Equal(t, tc.operation, policy.Operation)
 			assert.Equal(t, []agent.EgressClass{tc.egress}, policy.Egress)
@@ -431,7 +433,7 @@ func TestQueueTools_WarnWhenNothingWouldChange(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestQueueTools_RefuseASelectionPastTheBound(t *testing.T) {
@@ -510,7 +512,7 @@ func TestWakeInboundMessage_CallsTheWakeThatFitsHowItIsParked(t *testing.T) {
 	f.message.Parked = ""
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errInboundNotParked)
 	assert.Len(t, f.written, 2)
 }
@@ -622,7 +624,7 @@ func TestUnblockInboundSender_NamesTheSenderByTheirMessage(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errSenderNotBlocked)
 	assert.Empty(t, f.written, "a sender who is not blocked is not unblocked")
 

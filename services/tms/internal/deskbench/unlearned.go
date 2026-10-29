@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 )
@@ -35,7 +36,11 @@ type untrusted struct {
 	agentports.AgentTrustService
 }
 
-func (untrusted) RecordDecision(context.Context, *agent.AgentProposal, *agent.AgentDecision) error {
+func (untrusted) RecordDecision(
+	context.Context,
+	*agent.AgentProposal,
+	*agentdecision.AgentDecision,
+) error {
 	return nil
 }
 

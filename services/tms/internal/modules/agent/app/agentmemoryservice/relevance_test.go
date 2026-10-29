@@ -3,14 +3,14 @@ package agentmemoryservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
-func relevanceMemory(content string) *agent.Memory {
-	return &agent.Memory{ID: pulid.MustNew("amem_"), Content: content}
+func relevanceMemory(content string) *agentmemory.Memory {
+	return &agentmemory.Memory{ID: pulid.MustNew("amem_"), Content: content}
 }
 
 func TestRelevance_NothingToJudgeByLeavesEveryMemoryBearing(t *testing.T) {
@@ -21,7 +21,7 @@ func TestRelevance_NothingToJudgeByLeavesEveryMemoryBearing(t *testing.T) {
 	relevance := Relevance(
 		"",
 		"",
-		agentmemoryports.RankedMemories{Memories: []*agent.Memory{memory}},
+		agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{memory}},
 	)
 
 	assert.False(t, relevance.Judged)
@@ -38,7 +38,7 @@ func TestRelevance_SharedWordsBear(t *testing.T) {
 	relevance := Relevance(
 		"",
 		"Let the customer know shipment SEED-PAY-001 has delivered.",
-		agentmemoryports.RankedMemories{Memories: []*agent.Memory{eld, report, notify}},
+		agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{eld, report, notify}},
 	)
 
 	assert.True(t, relevance.Judged)
@@ -55,7 +55,7 @@ func TestRelevance_TheOperatorsWordReachesTheSchemasWord(t *testing.T) {
 	relevance := Relevance(
 		"",
 		"Which drivers can take this load?",
-		agentmemoryports.RankedMemories{Memories: []*agent.Memory{memory}},
+		agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{memory}},
 	)
 
 	assert.True(t, relevance.Bears(memory.ID))
@@ -68,7 +68,7 @@ func TestRelevance_AMemoryNearInMeaningBearsWithoutSharedWords(t *testing.T) {
 	far := relevanceMemory("The yard closes at six.")
 
 	relevance := Relevance("", "When is the invoice due?", agentmemoryports.RankedMemories{
-		Memories: []*agent.Memory{near, far},
+		Memories: []*agentmemory.Memory{near, far},
 		Similar:  []pulid.ID{near.ID},
 		Semantic: true,
 	})
@@ -81,17 +81,17 @@ func TestRelevance_AMemoryNearInMeaningBearsWithoutSharedWords(t *testing.T) {
 func TestRelevance_ASubjectOrToolNameIsReadToo(t *testing.T) {
 	t.Parallel()
 
-	about := &agent.Memory{
+	about := &agentmemory.Memory{
 		ID: pulid.MustNew("amem_"), Content: "Pays on the 15th.", SubjectLabel: "Acme Foods",
 	}
-	tool := &agent.Memory{
+	tool := &agentmemory.Memory{
 		ID: pulid.MustNew(
 			"amem_",
 		), Content: "Prefer the closest tractor.", ToolName: "dispatch_assign_move",
 	}
 
 	relevance := Relevance("", "Assign a move for Acme", agentmemoryports.RankedMemories{
-		Memories: []*agent.Memory{about, tool},
+		Memories: []*agentmemory.Memory{about, tool},
 	})
 
 	assert.True(t, relevance.Bears(about.ID))
@@ -101,7 +101,7 @@ func TestRelevance_ASubjectOrToolNameIsReadToo(t *testing.T) {
 func TestRelevance_ACommonWordAloneDoesNotBear(t *testing.T) {
 	t.Parallel()
 
-	pool := make([]*agent.Memory, 0, 12)
+	pool := make([]*agentmemory.Memory, 0, 12)
 	for range 10 {
 		pool = append(
 			pool,
@@ -127,7 +127,7 @@ func TestRelevance_ACommonWordAloneDoesNotBear(t *testing.T) {
 func TestRelevance_TwoSharedWordsBearEvenWhenBothAreCommon(t *testing.T) {
 	t.Parallel()
 
-	pool := make([]*agent.Memory, 0, 21)
+	pool := make([]*agentmemory.Memory, 0, 21)
 	for range 20 {
 		pool = append(pool, relevanceMemory("Each customer shipment is checked before dispatch."))
 	}
@@ -149,7 +149,7 @@ func TestRelevance_TheTurnsOwnMessageIsReadBeforeTheOneBeforeIt(t *testing.T) {
 	relevance := Relevance(
 		"Which tractors are due for inspection?",
 		"Which tractors are due for inspection?\nSend the Acme invoices out.",
-		agentmemoryports.RankedMemories{Memories: []*agent.Memory{earlier, current}},
+		agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{earlier, current}},
 	)
 
 	assert.True(t, relevance.Bears(current.ID))
@@ -166,7 +166,7 @@ func TestRelevance_AShortReplyIsReadWithTheMessageBeforeIt(t *testing.T) {
 	relevance := Relevance(
 		"yes, go ahead and send it",
 		"yes, go ahead and send it\nSend the Acme invoices out.",
-		agentmemoryports.RankedMemories{Memories: []*agent.Memory{acme, other}},
+		agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{acme, other}},
 	)
 
 	assert.True(t, relevance.Bears(acme.ID))
@@ -179,7 +179,7 @@ func TestRelevance_ConversationalWordsAreNotATopic(t *testing.T) {
 	memory := relevanceMemory("Now that the yard is full, send drivers to the overflow lot.")
 
 	relevance := Relevance("ok thanks, now what?", "", agentmemoryports.RankedMemories{
-		Memories: []*agent.Memory{memory},
+		Memories: []*agentmemory.Memory{memory},
 		Semantic: true,
 	})
 
@@ -203,7 +203,7 @@ func TestRelevance_AWordMostOfAFewMemoriesShareIsNotRare(t *testing.T) {
 	third := relevanceMemory("Pay drivers on Friday.")
 
 	relevance := Relevance("Where is my shipment to Dallas?", "", agentmemoryports.RankedMemories{
-		Memories: []*agent.Memory{first, second, third},
+		Memories: []*agentmemory.Memory{first, second, third},
 	})
 
 	assert.True(t, relevance.Judged)

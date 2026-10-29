@@ -3,6 +3,7 @@
 package agentsafetyexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"context"
 	"errors"
 
@@ -726,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.ToolRuleOverride)
+					obj := o.(*agenttooltrust.ToolRuleOverride)
 					return gqlexec.Resolver[resolverAgentToolRule](ec, "AgentToolRule").MaxTier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyTier),
@@ -737,7 +738,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.ToolRuleOverride)
+					obj := o.(*agenttooltrust.ToolRuleOverride)
 					return gqlexec.Resolver[resolverAgentToolRule](ec, "AgentToolRule").ReadsExternal(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead),
@@ -747,7 +748,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.ToolRuleOverride)
+					obj := o.(*agenttooltrust.ToolRuleOverride)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -757,7 +758,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.ToolRuleOverride)
+					obj := o.(*agenttooltrust.ToolRuleOverride)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -769,7 +770,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agent.ToolRuleOverride)
+					obj := o.(*agenttooltrust.ToolRuleOverride)
 					return gqlexec.Resolver[resolverAgentToolRule](ec, "AgentToolRule").UpdatedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1114,9 +1115,9 @@ type resolverAgentToolHolders interface {
 }
 
 type resolverAgentToolRule interface {
-	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
-	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
-	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
+	MaxTier(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agenttooltrust.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*tenant.User, error)
 }
 
 type resolverAgentToolSafety interface {
@@ -1301,19 +1302,19 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 }
 
 var (
-	enumUnmarshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer = map[string]agent.AutonomyAnswer{
-		"RUNS_ON_ITS_OWN": agent.AutonomyRunsOnItsOwn,
-		"CONDITIONAL":     agent.AutonomyConditional,
-		"NEEDS_APPROVAL":  agent.AutonomyNeedsApproval,
-		"PROPOSE_ONLY":    agent.AutonomyProposeOnly,
-		"SIMULATED":       agent.AutonomySimulated,
+	enumUnmarshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer = map[string]agenttooltrust.AutonomyAnswer{
+		"RUNS_ON_ITS_OWN": agenttooltrust.AutonomyRunsOnItsOwn,
+		"CONDITIONAL":     agenttooltrust.AutonomyConditional,
+		"NEEDS_APPROVAL":  agenttooltrust.AutonomyNeedsApproval,
+		"PROPOSE_ONLY":    agenttooltrust.AutonomyProposeOnly,
+		"SIMULATED":       agenttooltrust.AutonomySimulated,
 	}
-	enumMarshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer = map[agent.AutonomyAnswer]string{
-		agent.AutonomyRunsOnItsOwn:  "RUNS_ON_ITS_OWN",
-		agent.AutonomyConditional:   "CONDITIONAL",
-		agent.AutonomyNeedsApproval: "NEEDS_APPROVAL",
-		agent.AutonomyProposeOnly:   "PROPOSE_ONLY",
-		agent.AutonomySimulated:     "SIMULATED",
+	enumMarshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer = map[agenttooltrust.AutonomyAnswer]string{
+		agenttooltrust.AutonomyRunsOnItsOwn:  "RUNS_ON_ITS_OWN",
+		agenttooltrust.AutonomyConditional:   "CONDITIONAL",
+		agenttooltrust.AutonomyNeedsApproval: "NEEDS_APPROVAL",
+		agenttooltrust.AutonomyProposeOnly:   "PROPOSE_ONLY",
+		agenttooltrust.AutonomySimulated:     "SIMULATED",
 	}
 )
 
@@ -1339,75 +1340,75 @@ var (
 )
 
 var (
-	enumUnmarshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[string]agent.ExternalRead{
-		"Never":  agent.ExternalReadNever,
-		"Always": agent.ExternalReadAlways,
-		"Marked": agent.ExternalReadMarked,
+	enumUnmarshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[string]agenttooltrust.ExternalRead{
+		"Never":  agenttooltrust.ExternalReadNever,
+		"Always": agenttooltrust.ExternalReadAlways,
+		"Marked": agenttooltrust.ExternalReadMarked,
 	}
-	enumMarshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[agent.ExternalRead]string{
-		agent.ExternalReadNever:  "Never",
-		agent.ExternalReadAlways: "Always",
-		agent.ExternalReadMarked: "Marked",
-	}
-)
-
-var (
-	enumUnmarshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect = map[string]agent.ToolEffect{
-		"Lookup":   agent.ToolEffectLookup,
-		"Change":   agent.ToolEffectChange,
-		"Navigate": agent.ToolEffectNavigate,
-		"Discover": agent.ToolEffectDiscover,
-		"Present":  agent.ToolEffectPresent,
-		"Ask":      agent.ToolEffectAsk,
-		"Delegate": agent.ToolEffectDelegate,
-	}
-	enumMarshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect = map[agent.ToolEffect]string{
-		agent.ToolEffectLookup:   "Lookup",
-		agent.ToolEffectChange:   "Change",
-		agent.ToolEffectNavigate: "Navigate",
-		agent.ToolEffectDiscover: "Discover",
-		agent.ToolEffectPresent:  "Present",
-		agent.ToolEffectAsk:      "Ask",
-		agent.ToolEffectDelegate: "Delegate",
+	enumMarshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[agenttooltrust.ExternalRead]string{
+		agenttooltrust.ExternalReadNever:  "Never",
+		agenttooltrust.ExternalReadAlways: "Always",
+		agenttooltrust.ExternalReadMarked: "Marked",
 	}
 )
 
 var (
-	enumUnmarshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[string]agent.ToolKind{
-		"Query":   agent.ToolKindQuery,
-		"Action":  agent.ToolKindAction,
-		"Runtime": agent.ToolKindRuntime,
+	enumUnmarshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect = map[string]agenttooltrust.ToolEffect{
+		"Lookup":   agenttooltrust.ToolEffectLookup,
+		"Change":   agenttooltrust.ToolEffectChange,
+		"Navigate": agenttooltrust.ToolEffectNavigate,
+		"Discover": agenttooltrust.ToolEffectDiscover,
+		"Present":  agenttooltrust.ToolEffectPresent,
+		"Ask":      agenttooltrust.ToolEffectAsk,
+		"Delegate": agenttooltrust.ToolEffectDelegate,
 	}
-	enumMarshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[agent.ToolKind]string{
-		agent.ToolKindQuery:   "Query",
-		agent.ToolKindAction:  "Action",
-		agent.ToolKindRuntime: "Runtime",
-	}
-)
-
-var (
-	enumUnmarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope = map[string]agent.ToolScope{
-		"Tenant": agent.ToolScopeTenant,
-		"Self":   agent.ToolScopeSelf,
-		"Run":    agent.ToolScopeRun,
-	}
-	enumMarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope = map[agent.ToolScope]string{
-		agent.ToolScopeTenant: "Tenant",
-		agent.ToolScopeSelf:   "Self",
-		agent.ToolScopeRun:    "Run",
+	enumMarshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect = map[agenttooltrust.ToolEffect]string{
+		agenttooltrust.ToolEffectLookup:   "Lookup",
+		agenttooltrust.ToolEffectChange:   "Change",
+		agenttooltrust.ToolEffectNavigate: "Navigate",
+		agenttooltrust.ToolEffectDiscover: "Discover",
+		agenttooltrust.ToolEffectPresent:  "Present",
+		agenttooltrust.ToolEffectAsk:      "Ask",
+		agenttooltrust.ToolEffectDelegate: "Delegate",
 	}
 )
 
 var (
-	enumUnmarshalOAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[string]agent.ExternalRead{
-		"Never":  agent.ExternalReadNever,
-		"Always": agent.ExternalReadAlways,
-		"Marked": agent.ExternalReadMarked,
+	enumUnmarshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[string]agenttooltrust.ToolKind{
+		"Query":   agenttooltrust.ToolKindQuery,
+		"Action":  agenttooltrust.ToolKindAction,
+		"Runtime": agenttooltrust.ToolKindRuntime,
 	}
-	enumMarshalOAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[agent.ExternalRead]string{
-		agent.ExternalReadNever:  "Never",
-		agent.ExternalReadAlways: "Always",
-		agent.ExternalReadMarked: "Marked",
+	enumMarshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind = map[agenttooltrust.ToolKind]string{
+		agenttooltrust.ToolKindQuery:   "Query",
+		agenttooltrust.ToolKindAction:  "Action",
+		agenttooltrust.ToolKindRuntime: "Runtime",
+	}
+)
+
+var (
+	enumUnmarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope = map[string]agenttooltrust.ToolScope{
+		"Tenant": agenttooltrust.ToolScopeTenant,
+		"Self":   agenttooltrust.ToolScopeSelf,
+		"Run":    agenttooltrust.ToolScopeRun,
+	}
+	enumMarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope = map[agenttooltrust.ToolScope]string{
+		agenttooltrust.ToolScopeTenant: "Tenant",
+		agenttooltrust.ToolScopeSelf:   "Self",
+		agenttooltrust.ToolScopeRun:    "Run",
+	}
+)
+
+var (
+	enumUnmarshalOAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[string]agenttooltrust.ExternalRead{
+		"Never":  agenttooltrust.ExternalReadNever,
+		"Always": agenttooltrust.ExternalReadAlways,
+		"Marked": agenttooltrust.ExternalReadMarked,
+	}
+	enumMarshalOAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead = map[agenttooltrust.ExternalRead]string{
+		agenttooltrust.ExternalReadNever:  "Never",
+		agenttooltrust.ExternalReadAlways: "Always",
+		agenttooltrust.ExternalReadMarked: "Marked",
 	}
 )
 
@@ -1476,7 +1477,7 @@ func unmarshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, v any) (*agent.ExternalRead, error) {
+func unmarshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, v any) (*agenttooltrust.ExternalRead, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1508,7 +1509,7 @@ func marshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.AutonomyAnswer) graphql.Marshaler {
+func marshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agenttooltrust.AutonomyAnswer) graphql.Marshaler {
 	res := graphql.MarshalString(enumMarshalNAgentAutonomyAnswer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAutonomyAnswer[v])
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1560,7 +1561,7 @@ func marshalNAgentEgressCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.ExternalRead) graphql.Marshaler {
+func marshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agenttooltrust.ExternalRead) graphql.Marshaler {
 	res := graphql.MarshalString(enumMarshalNAgentExternalRead2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead[v])
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1628,7 +1629,7 @@ func marshalNAgentToolAutonomy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "AgentToolAutonomy", &v)
 }
 
-func marshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.ToolEffect) graphql.Marshaler {
+func marshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agenttooltrust.ToolEffect) graphql.Marshaler {
 	res := graphql.MarshalString(enumMarshalNAgentToolEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolEffect[v])
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1652,7 +1653,7 @@ func marshalNAgentToolHolders2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "AgentToolHolders", v)
 }
 
-func marshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.ToolKind) graphql.Marshaler {
+func marshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agenttooltrust.ToolKind) graphql.Marshaler {
 	res := graphql.MarshalString(enumMarshalNAgentToolKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolKind[v])
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1756,7 +1757,7 @@ func marshalNAgentToolSafetyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentToolSafetyEdge", v)
 }
 
-func marshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.ToolScope) graphql.Marshaler {
+func marshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agenttooltrust.ToolScope) graphql.Marshaler {
 	res := graphql.MarshalString(enumMarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolScope[v])
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1862,7 +1863,7 @@ func marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ExternalRead) graphql.Marshaler {
+func marshalOAgentExternalRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExternalRead(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttooltrust.ExternalRead) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1885,7 +1886,7 @@ func marshalOAgentToolRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AgentToolRequirement", v)
 }
 
-func marshalOAgentToolRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolRuleOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ToolRuleOverride) graphql.Marshaler {
+func marshalOAgentToolRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐToolRuleOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttooltrust.ToolRuleOverride) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

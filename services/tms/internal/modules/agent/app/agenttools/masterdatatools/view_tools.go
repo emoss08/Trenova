@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -96,18 +97,18 @@ func (t *SaveTableViewTool) ParamSchema() map[string]any {
 func (t *SaveTableViewTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
-		Kind:                agent.ToolKindAction,
+		Kind:                agenttooltrust.ToolKindAction,
 		Resource:            permission.ResourceTableConfiguration,
 		Operation:           permission.OpCreate,
-		Scope:               agent.ToolScopeTenant,
+		Scope:               agenttooltrust.ToolScopeTenant,
 		DefaultTier:         agent.TierPropose,
 		MaxTier:             agent.TierAutoExecute,
 		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
 		Classify:            classifyTableView,
 		PersonalRunsUnasked: true,
-		Effect:              agent.ToolEffectChange,
+		Effect:              agenttooltrust.ToolEffectChange,
 		Reversible:          true,
-		ReadsExternal:       agent.ExternalReadNever,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
 		Rationale: "A private view is the caller's own picker entry; a shared one " +
 			"appears for every colleague, and nothing leaves the organization.",
 	}

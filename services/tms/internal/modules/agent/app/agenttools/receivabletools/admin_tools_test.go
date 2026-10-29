@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -140,13 +141,13 @@ func TestDeleteDocuments_OneGoesThroughDeleteAndMoreThroughBulk(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		documents.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), one)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NoError(t, tool.Execute(t.Context(), one))
@@ -183,7 +184,7 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		documents.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -263,7 +264,7 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		insights.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -412,7 +413,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		alerts.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return update.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -449,7 +450,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	deletePreview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		alerts.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return remove.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
@@ -459,7 +460,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, deletePreview, 0).Operation,
 	)
 	require.NoError(t, remove.Execute(t.Context(), agenttoolstest.ExecuteParams(
@@ -518,13 +519,13 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		items.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationArchive,
+		agentpreview.PreviewOperationArchive,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -692,7 +693,7 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		captures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), one)
 		},
 	)
@@ -741,13 +742,13 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		captures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return item.(agenttoolports.ToolPreviewer).Preview(t.Context(), itemParams)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationArchive,
+		agentpreview.PreviewOperationArchive,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	require.NoError(t, item.Execute(t.Context(), itemParams))
@@ -760,7 +761,7 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	batchPreview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		captures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return batch.(agenttoolports.ToolPreviewer).Preview(t.Context(), batchParams)
 		},
 	)

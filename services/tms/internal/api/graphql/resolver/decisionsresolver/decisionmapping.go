@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -96,8 +97,11 @@ func proposalHold(
 	return loadHold(ctx, proposal.OrganizationID, proposal.RunID)
 }
 
-func planHold(ctx context.Context, plan *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
-	if plan.Status != agent.PlanStatusPending || !loaders.Available(ctx) {
+func planHold(
+	ctx context.Context,
+	plan *agentplan.AgentPlan,
+) (*gqlmodel.PendingDecisionHold, error) {
+	if plan.Status != agentplan.PlanStatusPending || !loaders.Available(ctx) {
 		return nil, nil //nolint:nilnil // a decided plan is held by nothing
 	}
 

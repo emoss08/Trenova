@@ -9,7 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -113,7 +113,7 @@ func (t *composeTableViewTool) entities() []string {
 func (t *composeTableViewTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
-		effect:   agent.ToolEffectPresent,
+		effect:   agenttooltrust.ToolEffectPresent,
 	})
 }
 

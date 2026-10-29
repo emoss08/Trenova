@@ -3,7 +3,7 @@ package agenttoolports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -13,8 +13,20 @@ type GetToolRuleOverrideRequest struct {
 }
 
 type AgentToolRuleOverrideRepository interface {
-	List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*agent.ToolRuleOverride, error)
-	Get(ctx context.Context, req GetToolRuleOverrideRequest) (*agent.ToolRuleOverride, error)
-	Create(ctx context.Context, override *agent.ToolRuleOverride) (*agent.ToolRuleOverride, error)
-	Update(ctx context.Context, override *agent.ToolRuleOverride) (*agent.ToolRuleOverride, error)
+	List(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*agenttooltrust.ToolRuleOverride, error)
+	Get(
+		ctx context.Context,
+		req GetToolRuleOverrideRequest,
+	) (*agenttooltrust.ToolRuleOverride, error)
+	Create(
+		ctx context.Context,
+		override *agenttooltrust.ToolRuleOverride,
+	) (*agenttooltrust.ToolRuleOverride, error)
+	Update(
+		ctx context.Context,
+		override *agenttooltrust.ToolRuleOverride,
+	) (*agenttooltrust.ToolRuleOverride, error)
 }

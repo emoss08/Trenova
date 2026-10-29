@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -62,7 +63,7 @@ type RecordBatch struct {
 
 type batchItem struct {
 	id      pulid.ID
-	change  *agent.RecordChange
+	change  *agentpreview.RecordChange
 	refusal error
 }
 
@@ -158,7 +159,7 @@ func (b *RecordBatch) Preview(
 	ctx context.Context,
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	ids, err := b.ids(tool, params)
 	if err != nil {
 		return nil, err
@@ -167,7 +168,7 @@ func (b *RecordBatch) Preview(
 		return b.Single.Preview(ctx, b.singleParams(params, ids[0]))
 	}
 
-	checked := ids[:min(len(ids), agent.MaxPreviewRecords)]
+	checked := ids[:min(len(ids), agentpreview.MaxPreviewRecords)]
 	items := make([]batchItem, 0, len(checked))
 	for _, id := range checked {
 		item, itemErr := b.previewOne(ctx, params, id)
@@ -188,7 +189,7 @@ func (b *RecordBatch) Preview(
 	})
 
 	refused := make([]batchItem, 0, len(items))
-	changes := make([]*agent.RecordChange, 0, len(items))
+	changes := make([]*agentpreview.RecordChange, 0, len(items))
 	for idx := range items {
 		changes = append(changes, items[idx].change)
 		if items[idx].refusal != nil {
@@ -243,7 +244,10 @@ func (b *RecordBatch) previewOne(
 	return batchItem{id: id, change: primary}, nil
 }
 
-func (b *RecordBatch) primaryChange(preview *agent.ToolPreview, id pulid.ID) *agent.RecordChange {
+func (b *RecordBatch) primaryChange(
+	preview *agentpreview.ToolPreview,
+	id pulid.ID,
+) *agentpreview.RecordChange {
 	for idx := range preview.Changes {
 		change := preview.Changes[idx]
 		if change.Resource == b.Resource && change.EntityID == id {
@@ -258,20 +262,20 @@ func (b *RecordBatch) refusedItem(id pulid.ID, label string, refusal error) batc
 	return batchItem{
 		id:      id,
 		refusal: refusal,
-		change: &agent.RecordChange{
+		change: &agentpreview.RecordChange{
 			Resource:  b.Resource,
 			EntityID:  id,
 			Label:     label,
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{
 				outcomeField("Refused: " + strings.TrimSpace(refusal.Error())),
 			},
 		},
 	}
 }
 
-func outcomeField(text string) agent.PreviewFieldChange {
-	return agent.PreviewFieldChange{
+func outcomeField(text string) agentpreview.PreviewFieldChange {
+	return agentpreview.PreviewFieldChange{
 		Path:  BulkOutcomeField,
 		Label: bulkOutcomeLabel,
 		Type:  assistantartifact.DisplayText,
@@ -366,7 +370,7 @@ func (b *RecordBatch) Execute(
 	ctx context.Context,
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(tool, *params); err != nil {
 		return nil, err
 	}
@@ -397,7 +401,7 @@ func (b *RecordBatch) Execute(
 		return nil, errors.New(outcome)
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: b.Past,
 		Kind:   b.Nouns,
 		Name:   outcome,
@@ -413,13 +417,13 @@ func (b *RecordBatch) executeOne(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	result, err := agenttoolports.ExecuteTool(ctx, b.Single, b.singleParams(params, id))
 	if err != nil || result != nil {
 		return result, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: b.Past,
 		Kind:   b.Nouns,
 		Name:   b.outcome(ctx, params, 1, nil),
@@ -433,14 +437,14 @@ func (b *RecordBatch) failedItems(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	failures []batchFailure,
-) []agent.ExecutionItemFail {
+) []agentrecord.ExecutionItemFail {
 	if len(failures) == 0 {
 		return nil
 	}
 	names := b.failedLabels(ctx, params, failures)
-	out := make([]agent.ExecutionItemFail, 0, len(failures))
+	out := make([]agentrecord.ExecutionItemFail, 0, len(failures))
 	for _, failure := range failures {
-		out = append(out, agent.ExecutionItemFail{
+		out = append(out, agentrecord.ExecutionItemFail{
 			ID:     failure.id.String(),
 			Label:  names[failure.id],
 			Reason: strings.TrimSpace(failure.cause.Error()),

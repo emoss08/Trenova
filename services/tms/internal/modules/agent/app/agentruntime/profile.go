@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -92,7 +93,7 @@ func (s *Service) looksUp(name string) bool {
 	}
 	tool, ok := s.queryTools.Get(name)
 
-	return ok && agenttoolports.EffectOf(tool) == agent.ToolEffectLookup
+	return ok && agenttoolports.EffectOf(tool) == agenttooltrust.ToolEffectLookup
 }
 
 func reachesBeyond(req *agentruntimeports.RunRequest, mode ProfileMode) bool {

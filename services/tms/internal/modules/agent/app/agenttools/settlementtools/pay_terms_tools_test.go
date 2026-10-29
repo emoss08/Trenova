@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
@@ -87,7 +87,7 @@ func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Equal(t, current.ID, agenttoolstest.PreviewChange(t, preview, 1).EntityID)
@@ -104,7 +104,7 @@ func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 	raw[toolparams.ParamEffectiveFrom] = "2023-01-01"
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	assigner.failure = errPayStoreDown
 	_, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -154,7 +154,7 @@ func TestEndWorkerPayAssignment_EndsAfterItStarts(t *testing.T) {
 	}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(early))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	raw := map[string]any{
 		paytools.ParamAssignmentID: ender.assignment.ID.String(),
@@ -261,7 +261,7 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	book.refusal = errortypes.NewNotFoundError("Pay code not found")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	book.refusal = errPayStoreDown
 	require.ErrorIs(

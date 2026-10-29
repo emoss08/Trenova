@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -728,8 +728,8 @@ func (t *proposeSourceTool) ParamSchema() map[string]any {
 func (t *proposeSourceTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: t.spec.resource,
-		scope:    agent.ToolScopeSelf,
-		effect:   agent.ToolEffectPresent,
+		scope:    agenttooltrust.ToolScopeSelf,
+		effect:   agenttooltrust.ToolEffectPresent,
 		rationale: "Changes the person's own editor, which they can undo; nothing is saved " +
 			"and nothing is sent.",
 	})

@@ -23,7 +23,7 @@ to it by the typecheck, a generator, or a test.
 
 Read from those, never copied:
 
-- **Page context and mentions.** `agent.IsKnownPageEntityType` accepts any kind
+- **Page context and mentions.** `agentpagecontext.IsKnownPageEntityType` accepts any kind
   the permission registry knows except `assistant_thread`.
 - **Subjects.** Their prefixes and nouns are read from the permission
   registry, and their articles from `stringutils.WithArticle`.

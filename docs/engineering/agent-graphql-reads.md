@@ -560,7 +560,7 @@ A root with no arguments at all that returns one record is a get too: `home_get_
 `homeLayout`, the caller's own page, and takes no parameter. Such a root is usually the caller's
 own record, whose resolver checks no resource and is listed in `selfscoped.Resolvers`; the
 generator binds it as `SelfScoped`, and its tool's policy must be scoped to the caller
-(`scope: agent.ToolScopeSelf` on the spec), since that policy is the only check the read meets.
+(`scope: agenttooltrust.ToolScopeSelf` on the spec), since that policy is the only check the read meets.
 A get whose operation reads one page of a list the record holds (a rate matrix's
 `cells(offset: $cellOffset)`) names it in `pages`: the result adds `cellsHasMore` and, while more
 follow, `nextCellOffset`. A variable sent to a field's argument below the root is described by

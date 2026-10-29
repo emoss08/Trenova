@@ -4,18 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,14 +66,14 @@ func (f *fakeSuiteRuns) History(
 
 type fakeEvaluations struct {
 	agentports.AgentEvaluationRepository
-	bySuite map[pulid.ID][]*agent.Evaluation
+	bySuite map[pulid.ID][]*agentevaluation.Evaluation
 }
 
 func (f *fakeEvaluations) ListBySuiteRun(
 	_ context.Context,
 	req agentports.ListSuiteEvaluationsRequest,
-) ([]*agent.Evaluation, error) {
-	out := make([]*agent.Evaluation, 0)
+) ([]*agentevaluation.Evaluation, error) {
+	out := make([]*agentevaluation.Evaluation, 0)
 	for _, evaluation := range f.bySuite[req.SuiteRunID] {
 		if *evaluation.SuiteOrdinal > req.AfterOrdinal {
 			out = append(out, evaluation)
@@ -168,7 +169,12 @@ type regressionWorld struct {
 	baseline *agentquality.SuiteRun
 }
 
-func scoredEvaluation(caseID pulid.ID, ordinal int, score float64, hard bool) *agent.Evaluation {
+func scoredEvaluation(
+	caseID pulid.ID,
+	ordinal int,
+	score float64,
+	hard bool,
+) *agentevaluation.Evaluation {
 	id := caseID
 	suiteOrdinal := ordinal
 	final := score
@@ -176,13 +182,13 @@ func scoredEvaluation(caseID pulid.ID, ordinal int, score float64, hard bool) *a
 		final = 0
 	}
 
-	return &agent.Evaluation{
-		ID:           pulid.MustNew(agent.EvaluationIDPrefix),
+	return &agentevaluation.Evaluation{
+		ID:           pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		EvalCaseID:   &id,
-		Status:       agent.EvaluationStatusCompleted,
+		Status:       agentevaluation.EvaluationStatusCompleted,
 		SuiteOrdinal: &suiteOrdinal,
 		CaseScore:    &final,
-		Checks: &agent.CaseChecks{
+		Checks: &agentevaluation.CaseChecks{
 			Deterministic: score,
 			Final:         final,
 			HardFailure:   hard,
@@ -225,13 +231,13 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 		CasesTotal:        12,
 		StartedAt:         now - 600,
 		BaselineRunID:     &baselineID,
-		FingerprintChanges: []agent.FingerprintChange{{
-			Field: agent.FingerprintFieldModel, From: "model-a", To: "model-b",
+		FingerprintChanges: []agentfingerprint.FingerprintChange{{
+			Field: agentfingerprint.FingerprintFieldModel, From: "model-a", To: "model-b",
 		}},
 	}
 
-	baselineCases := make([]*agent.Evaluation, 0, len(caseIDs))
-	currentCases := make([]*agent.Evaluation, 0, len(caseIDs))
+	baselineCases := make([]*agentevaluation.Evaluation, 0, len(caseIDs))
+	currentCases := make([]*agentevaluation.Evaluation, 0, len(caseIDs))
 	for idx, caseID := range caseIDs {
 		baselineCases = append(baselineCases, scoredEvaluation(caseID, idx+1, 0.9, false))
 		currentCases = append(currentCases,
@@ -262,7 +268,7 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 		service: &Service{
 			l:         zap.NewNop(),
 			suiteRuns: runs,
-			evaluations: &fakeEvaluations{bySuite: map[pulid.ID][]*agent.Evaluation{
+			evaluations: &fakeEvaluations{bySuite: map[pulid.ID][]*agentevaluation.Evaluation{
 				run.ID:      currentCases,
 				baseline.ID: baselineCases,
 			}},

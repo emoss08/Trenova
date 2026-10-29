@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -46,7 +46,7 @@ func (r *Deps) ProposalPreview(
 	authCtx *authctx.AuthContext,
 	proposalID pulid.ID,
 	modifications map[string]any,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	previews, err := r.previewService()
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (r *Deps) PlanPreview(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
 	planID pulid.ID,
-) (*agent.PlanPreview, error) {
+) (*agentpreview.PlanPreview, error) {
 	previews, err := r.previewService()
 	if err != nil {
 		return nil, err

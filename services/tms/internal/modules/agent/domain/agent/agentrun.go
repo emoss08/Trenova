@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -27,24 +29,24 @@ type AgentRun struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	AgentDefinitionID pulid.ID     `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	Trigger           RunTrigger   `json:"trigger"           keel:"trigger"`
-	Summary           string       `json:"summary"           keel:"summary,nullzero"`
-	AgentType         Type         `json:"agentType"         keel:"agent_type"`
-	SubjectType       SubjectType  `json:"subjectType"       keel:"subject_type"`
-	SubjectID         pulid.ID     `json:"subjectId"         keel:"subject_id"`
-	Status            RunStatus    `json:"status"            keel:"status"`
-	WorkflowID        string       `json:"workflowId"        keel:"workflow_id,nullzero"`
-	ModelIdentifier   string       `json:"modelIdentifier"   keel:"model_identifier,nullzero"`
-	PromptVersion     string       `json:"promptVersion"     keel:"prompt_version"`
-	InputContextHash  string       `json:"inputContextHash"  keel:"input_context_hash"`
-	StartedAt         int64        `json:"startedAt"         keel:"started_at,nullzero"`
-	CompletedAt       *int64       `json:"completedAt"       keel:"completed_at"`
-	ErrorMessage      string       `json:"errorMessage"      keel:"error_message,nullzero"`
-	Tainted           bool         `json:"tainted"           keel:"tainted"`
-	Taint             *RunTaint    `json:"taint"             keel:"taint,jsonb"`
-	TaintedAt         *int64       `json:"taintedAt"         keel:"tainted_at"`
-	Fingerprint       *Fingerprint `json:"fingerprint"       keel:"fingerprint,jsonb"`
+	AgentDefinitionID pulid.ID                      `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	Trigger           RunTrigger                    `json:"trigger"           keel:"trigger"`
+	Summary           string                        `json:"summary"           keel:"summary,nullzero"`
+	AgentType         Type                          `json:"agentType"         keel:"agent_type"`
+	SubjectType       SubjectType                   `json:"subjectType"       keel:"subject_type"`
+	SubjectID         pulid.ID                      `json:"subjectId"         keel:"subject_id"`
+	Status            RunStatus                     `json:"status"            keel:"status"`
+	WorkflowID        string                        `json:"workflowId"        keel:"workflow_id,nullzero"`
+	ModelIdentifier   string                        `json:"modelIdentifier"   keel:"model_identifier,nullzero"`
+	PromptVersion     string                        `json:"promptVersion"     keel:"prompt_version"`
+	InputContextHash  string                        `json:"inputContextHash"  keel:"input_context_hash"`
+	StartedAt         int64                         `json:"startedAt"         keel:"started_at,nullzero"`
+	CompletedAt       *int64                        `json:"completedAt"       keel:"completed_at"`
+	ErrorMessage      string                        `json:"errorMessage"      keel:"error_message,nullzero"`
+	Tainted           bool                          `json:"tainted"           keel:"tainted"`
+	Taint             *RunTaint                     `json:"taint"             keel:"taint,jsonb"`
+	TaintedAt         *int64                        `json:"taintedAt"         keel:"tainted_at"`
+	Fingerprint       *agentfingerprint.Fingerprint `json:"fingerprint"       keel:"fingerprint,jsonb"`
 
 	Transcript *RunTranscript `json:"-" keel:"transcript,jsonb"`
 
@@ -160,12 +162,12 @@ func (r *AgentRun) RecordTaint(taint *RunTaint, now int64) bool {
 	return changed
 }
 
-func (r *AgentRun) TaintedRecords() []RecordRef {
+func (r *AgentRun) TaintedRecords() []agentrecord.RecordRef {
 	if r == nil || !r.Tainted {
 		return nil
 	}
 
-	return []RecordRef{{EntityType: TaintEntityAgentRun, ID: r.ID.String()}}
+	return []agentrecord.RecordRef{{EntityType: TaintEntityAgentRun, ID: r.ID.String()}}
 }
 
 func (r *AgentRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

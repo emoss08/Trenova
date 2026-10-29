@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
@@ -16,15 +17,15 @@ func validAction() Spec {
 		ToolName: "dispatch_assign_move",
 		Policy: agenttoolports.ToolPolicy{
 			Name:          "dispatch_assign_move",
-			Kind:          agent.ToolKindAction,
+			Kind:          agenttooltrust.ToolKindAction,
 			Resource:      permission.ResourceShipmentMove,
 			Operation:     permission.OpUpdate,
-			Scope:         agent.ToolScopeTenant,
+			Scope:         agenttooltrust.ToolScopeTenant,
 			DefaultTier:   agent.TierActWithApproval,
 			MaxTier:       agent.TierAutoExecute,
 			Egress:        []agent.EgressClass{agent.EgressInternal},
-			Effect:        agent.ToolEffectChange,
-			ReadsExternal: agent.ExternalReadNever,
+			Effect:        agenttooltrust.ToolEffectChange,
+			ReadsExternal: agenttooltrust.ExternalReadNever,
 			Rationale:     "Assigns a driver and tractor inside Trenova.",
 		},
 	}
@@ -35,15 +36,15 @@ func validQuery() Spec {
 		ToolName: "shipment_get",
 		Policy: agenttoolports.ToolPolicy{
 			Name:          "shipment_get",
-			Kind:          agent.ToolKindQuery,
+			Kind:          agenttooltrust.ToolKindQuery,
 			Resource:      permission.ResourceShipment,
 			Operation:     permission.OpRead,
-			Scope:         agent.ToolScopeTenant,
+			Scope:         agenttooltrust.ToolScopeTenant,
 			DefaultTier:   agent.TierAutoExecute,
 			MaxTier:       agent.TierAutoExecute,
 			Egress:        []agent.EgressClass{agent.EgressNone},
-			Effect:        agent.ToolEffectLookup,
-			ReadsExternal: agent.ExternalReadNever,
+			Effect:        agenttooltrust.ToolEffectLookup,
+			ReadsExternal: agenttooltrust.ExternalReadNever,
 			Rationale:     "Reads a shipment.",
 		},
 	}
@@ -266,7 +267,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a self-scoped write is personal",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Scope = agent.ToolScopeSelf
+				spec.Policy.Scope = agenttooltrust.ToolScopeSelf
 				return []Spec{spec}
 			},
 			reason: "acts only on the caller's own records",
@@ -284,7 +285,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "reading outside text names its source",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadAlways
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadAlways
 				return []Spec{spec}
 			},
 			reason: "names the taint source",
@@ -320,7 +321,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a further source is a real one",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadMarked
 				spec.Policy.Source = agent.TaintSourceInboundMessage
 				spec.Policy.Sources = []agent.TaintSource{"gossip"}
 				return []Spec{spec}
@@ -331,7 +332,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a further source is not named twice",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadMarked
 				spec.Policy.Source = agent.TaintSourceInboundMessage
 				spec.Policy.Sources = []agent.TaintSource{
 					agent.TaintSourceWeather,
@@ -452,7 +453,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a runtime tool never leaves",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Kind = agent.ToolKindRuntime
+				spec.Policy.Kind = agenttooltrust.ToolKindRuntime
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
 				return []Spec{spec}
 			},

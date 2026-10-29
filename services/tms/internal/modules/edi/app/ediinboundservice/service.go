@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -484,7 +484,7 @@ func (s *Service) processInboundFile(
 	}
 	if tendered {
 		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-			Kind:       agent.EventEDITenderReceived,
+			Kind:       agenttrigger.EventEDITenderReceived,
 			SubjectID:  updated.ID,
 			TenantInfo: inboundFileTenant(updated),
 		})
@@ -523,7 +523,7 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *ediinboundfil
 	}
 
 	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-		Kind:       agent.EventEDIFileQuarantined,
+		Kind:       agenttrigger.EventEDIFileQuarantined,
 		SubjectID:  file.ID,
 		TenantInfo: inboundFileTenant(file),
 	})

@@ -11,6 +11,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -72,7 +75,7 @@ const refusedInstruction = "A change approved here was refused because its recor
 type decisionFollowUp struct {
 	note    string
 	decided []*agent.AgentProposal
-	changed []agent.EntityRef
+	changed []agentpagecontext.EntityRef
 }
 
 type decisionNoteParams struct {
@@ -164,7 +167,7 @@ func refusedOverChange(proposals []*agent.AgentProposal) []*agent.AgentProposal 
 	refused := make([]*agent.AgentProposal, 0, 1)
 	for _, proposal := range proposals {
 		if proposal != nil && proposal.Status == agent.ProposalStatusExecutionFailed &&
-			agent.TargetChanged(proposal.ExecutionError) {
+			agentplan.TargetChanged(proposal.ExecutionError) {
 			refused = append(refused, proposal)
 		}
 	}
@@ -172,13 +175,13 @@ func refusedOverChange(proposals []*agent.AgentProposal) []*agent.AgentProposal 
 	return refused
 }
 
-func changedTargets(refused []*agent.AgentProposal) []agent.EntityRef {
-	refs := make([]agent.EntityRef, 0, len(refused))
+func changedTargets(refused []*agent.AgentProposal) []agentpagecontext.EntityRef {
+	refs := make([]agentpagecontext.EntityRef, 0, len(refused))
 	for _, proposal := range refused {
 		if proposal.TargetID.IsNil() {
 			continue
 		}
-		refs = append(refs, agent.EntityRef{
+		refs = append(refs, agentpagecontext.EntityRef{
 			Type: proposal.TargetResource,
 			ID:   proposal.TargetID.String(),
 		})
@@ -194,14 +197,14 @@ func refusedAsk(note string) string {
 
 	return agentruntime.FenceUntrusted(
 		decisionNoteHeader,
-		stringutils.TruncateRunes(note, agent.MaxDecisionNoteLength),
+		stringutils.TruncateRunes(note, agentdecision.MaxDecisionNoteLength),
 	) + "\n" + personNoteGuard + " Answer what they said as well. " + refusedInstruction
 }
 
 func (s *Service) anchorChanged(
 	ctx context.Context,
 	anchors []agentturn.RuntimeAnchor,
-	changed []agent.EntityRef,
+	changed []agentpagecontext.EntityRef,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) []agentturn.RuntimeAnchor {
@@ -209,11 +212,11 @@ func (s *Service) anchorChanged(
 		return anchors
 	}
 
-	unread := make([]agent.EntityRef, 0, len(changed))
+	unread := make([]agentpagecontext.EntityRef, 0, len(changed))
 	anchored := func(id string) bool {
 		return slices.ContainsFunc(anchors, func(a agentturn.RuntimeAnchor) bool {
 			return a.ID == id
-		}) || slices.ContainsFunc(unread, func(r agent.EntityRef) bool { return r.ID == id })
+		}) || slices.ContainsFunc(unread, func(r agentpagecontext.EntityRef) bool { return r.ID == id })
 	}
 	for _, ref := range changed {
 		if anchored(ref.ID) {
@@ -252,7 +255,7 @@ func (s *Service) decisionsOn(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	proposalIDs []pulid.ID,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	if s.decisions == nil || len(proposalIDs) == 0 {
 		return nil, nil
 	}
@@ -266,13 +269,13 @@ func (s *Service) decisionsOn(
 	)
 }
 
-func noteFrom(decisions []*agent.AgentDecision, proposalIDs []pulid.ID) string {
+func noteFrom(decisions []*agentdecision.AgentDecision, proposalIDs []pulid.ID) string {
 	for _, id := range proposalIDs {
 		for _, decision := range decisions {
 			if decision == nil || decision.ProposalID == nil || *decision.ProposalID != id {
 				continue
 			}
-			if note := agent.NormalizeDecisionNote(decision.Note); note != "" {
+			if note := agentdecision.NormalizeDecisionNote(decision.Note); note != "" {
 				return note
 			}
 		}
@@ -286,7 +289,7 @@ func noteFrom(decisions []*agent.AgentDecision, proposalIDs []pulid.ID) string {
 // proposed), leaving out ids and the agent's own rationale. "Approved
 // shipment_update, and it ran" left the agent nothing to tell the person, and
 // it wrote that the weight change had run without saying the weight.
-func ranWith(proposal *agent.AgentProposal, decisions []*agent.AgentDecision) string {
+func ranWith(proposal *agent.AgentProposal, decisions []*agentdecision.AgentDecision) string {
 	if proposal.Status != agent.ProposalStatusExecuted ||
 		proposal.ExecutionResult.Describe() != "" || len(proposal.ToolParams) == 0 {
 		return ""
@@ -339,7 +342,7 @@ func followUpAsk(declined bool, note string) string {
 
 	return agentruntime.FenceUntrusted(
 		header,
-		stringutils.TruncateRunes(note, agent.MaxDecisionNoteLength),
+		stringutils.TruncateRunes(note, agentdecision.MaxDecisionNoteLength),
 	) + "\n" + personNoteGuard + " " + instruction
 }
 
@@ -397,7 +400,7 @@ func decisionLine(proposal *agent.AgentProposal) string {
 		return fmt.Sprintf("Approved %s, and it ran.", tool)
 	case agent.ProposalStatusExecutionFailed:
 		reason := executionFailureReason(proposal.ExecutionError)
-		if agent.TargetChanged(proposal.ExecutionError) {
+		if agentplan.TargetChanged(proposal.ExecutionError) {
 			return fmt.Sprintf("Approved %s, but it was not carried out: %s", tool, reason)
 		}
 		if reason == "" {
@@ -471,7 +474,7 @@ func (s *Service) planDecisionNote(
 		return decisionFollowUp{}, err
 	}
 
-	var plan *agent.AgentPlan
+	var plan *agentplan.AgentPlan
 	for _, candidate := range plans {
 		if candidate != nil && candidate.ID == p.planID {
 			plan = candidate
@@ -485,7 +488,7 @@ func (s *Service) planDecisionNote(
 	}
 
 	multiErr := errortypes.NewMultiError()
-	if plan.Status == agent.PlanStatusPending {
+	if plan.Status == agentplan.PlanStatusPending {
 		multiErr.Add("followUpPlanId", errortypes.ErrInvalid, "That plan has not been decided yet")
 	}
 	if alreadyFollowedUp(p.history, "plan "+plan.ID.String()) {
@@ -510,11 +513,11 @@ func (s *Service) planDecisionNote(
 		return decisionFollowUp{}, err
 	}
 	line := planDecisionLine(plan, steps)
-	ask := followUpAsk(plan.Status == agent.PlanStatusRejected, note)
+	ask := followUpAsk(plan.Status == agentplan.PlanStatusRejected, note)
 	refused := refusedOverChange(steps)
 	if len(refused) > 0 {
 		ask = refusedAsk(note)
-		if plan.Status == agent.PlanStatusFailed && noneRan(steps) {
+		if plan.Status == agentplan.PlanStatusFailed && noneRan(steps) {
 			line = planRefusedLine(plan, refused)
 		}
 	}
@@ -533,7 +536,7 @@ func noneRan(steps []*agent.AgentProposal) bool {
 	})
 }
 
-func planRefusedLine(plan *agent.AgentPlan, refused []*agent.AgentProposal) string {
+func planRefusedLine(plan *agentplan.AgentPlan, refused []*agent.AgentProposal) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Approved the plan %q, but nothing ran: a record it changes moved on "+
 		"after it was proposed.", plan.Title)
@@ -607,16 +610,16 @@ func stepsMade(steps []*agent.AgentProposal) string {
 
 // planDecisionLine says in one line what was decided on a plan and how far
 // its steps got.
-func planDecisionLine(plan *agent.AgentPlan, steps []*agent.AgentProposal) string {
+func planDecisionLine(plan *agentplan.AgentPlan, steps []*agent.AgentProposal) string {
 	return planOutcomeLine(plan) + stepsMade(steps)
 }
 
-func planOutcomeLine(plan *agent.AgentPlan) string {
+func planOutcomeLine(plan *agentplan.AgentPlan) string {
 	title := plan.Title
 	switch plan.Status {
-	case agent.PlanStatusCompleted:
+	case agentplan.PlanStatusCompleted:
 		return fmt.Sprintf("Approved the plan %q, and all %d steps ran.", title, plan.StepCount)
-	case agent.PlanStatusFailed:
+	case agentplan.PlanStatusFailed:
 		reason := executionFailureReason(plan.FailureError)
 		step := plan.CompletedSteps + 1
 		if plan.FailedStep != nil {
@@ -628,12 +631,12 @@ func planOutcomeLine(plan *agent.AgentPlan) string {
 		}
 		return fmt.Sprintf("Approved the plan %q, but step %d failed (%s) and the steps after "+
 			"it were skipped.", title, step, reason)
-	case agent.PlanStatusApproved:
+	case agentplan.PlanStatusApproved:
 		return fmt.Sprintf("Approved the plan %q; %d of %d steps have run so far.",
 			title, plan.CompletedSteps, plan.StepCount)
-	case agent.PlanStatusRejected:
+	case agentplan.PlanStatusRejected:
 		return fmt.Sprintf("Rejected the plan %q.", title)
-	case agent.PlanStatusExpired:
+	case agentplan.PlanStatusExpired:
 		return fmt.Sprintf("The plan %q expired before anyone decided it.", title)
 	default:
 		return fmt.Sprintf("The plan %q is now %s.", title, plan.Status)

@@ -3,7 +3,7 @@ package shipmentpreview
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
@@ -13,7 +13,7 @@ func TenderChangeNotices(
 	partners ShipmentPartnerNotices,
 	before, after *shipment.Shipment,
 	actor *permissionports.RequestActor,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	if partners == nil {
 		return nil, nil
 	}
@@ -23,7 +23,7 @@ func TenderChangeNotices(
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(notices))
+	changes := make([]*agentpreview.RecordChange, 0, len(notices))
 	for _, notice := range notices {
 		changes = append(changes, PartnerNoticeSend(notice, ""))
 	}

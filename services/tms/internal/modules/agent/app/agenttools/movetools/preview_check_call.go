@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -97,7 +97,7 @@ func checkCallOptions(request *checkcallports.LogCheckCallRequest) []toolpreview
 func (t *LogCheckCallTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -145,8 +145,8 @@ func (t *LogCheckCallTool) previewStopVisit(
 	request *checkcallports.LogCheckCallRequest,
 	planned *checkcallports.CheckCallPreview,
 	summary string,
-	created *agent.RecordChange,
-) (*agent.ToolPreview, error) {
+	created *agentpreview.RecordChange,
+) (*agentpreview.ToolPreview, error) {
 	reportedAt := planned.CheckCall.ReportedAt
 	stopRequest := &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: request.TenantInfo,

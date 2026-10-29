@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -108,7 +109,7 @@ func TestRaiseDueDrivers_OncePerDriverHoweverManyPapers(t *testing.T) {
 	activities.raiseDueDrivers(t.Context(), state)
 
 	require.Len(t, publisher.events, 1)
-	require.Equal(t, agent.EventWorkerCredentialExpiring, publisher.events[0].Kind)
+	require.Equal(t, agenttrigger.EventWorkerCredentialExpiring, publisher.events[0].Kind)
 	require.Equal(t, workerID, publisher.events[0].SubjectID)
 	require.Equal(t, tenantInfo, publisher.events[0].TenantInfo)
 	require.Equal(t, 1, state.result.DriversRaised)

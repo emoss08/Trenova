@@ -13,7 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -77,7 +81,7 @@ type persistProposalsParams struct {
 	Artifacts *artifactRecorder
 	// Taint is the outside content the turn that proposed read.
 	Taint       *agent.RunTaint
-	Fingerprint *agent.Fingerprint
+	Fingerprint *agentfingerprint.Fingerprint
 	Delegations []agentruntimeports.DelegatedRun
 }
 
@@ -87,7 +91,7 @@ type chatRun struct {
 	failed         bool
 	model          string
 	input          string
-	fingerprint    *agent.Fingerprint
+	fingerprint    *agentfingerprint.Fingerprint
 }
 
 // persistProposals records the turn's proposed writes so they can be approved.
@@ -142,7 +146,7 @@ func (s *Service) persistProposals(
 		OpenEmptyRuns:    true,
 		CallOrder:        callOrder(params.Saved),
 		SourceMessageIDs: sourceMessageIndex(params.Saved),
-		Evidence: func(_ agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
+		Evidence: func(_ agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agentevidence.EvidenceRef {
 			return chatEvidence(params.Thread, sourceMessageID)
 		},
 	})
@@ -308,16 +312,16 @@ func sourceMessageIndex(saved []conversation.Message) map[string]pulid.ID {
 // The thread is always known. The message is cited only when the tool call could
 // be matched to a saved turn: pointing at an id that is not there would be worse
 // than citing one thing accurately.
-func chatEvidence(thread *conversation.Thread, messageID pulid.ID) []agent.EvidenceRef {
-	evidence := make([]agent.EvidenceRef, 0, 2)
-	evidence = append(evidence, agent.EvidenceRef{
+func chatEvidence(thread *conversation.Thread, messageID pulid.ID) []agentevidence.EvidenceRef {
+	evidence := make([]agentevidence.EvidenceRef, 0, 2)
+	evidence = append(evidence, agentevidence.EvidenceRef{
 		Type: evidenceTypeThread,
 		ID:   thread.ID.String(),
 		Note: threadEvidenceNote(thread),
 	})
 
 	if !messageID.IsNil() {
-		evidence = append(evidence, agent.EvidenceRef{
+		evidence = append(evidence, agentevidence.EvidenceRef{
 			Type: evidenceTypeMessage,
 			ID:   messageID.String(),
 			Note: "The assistant turn that asked for this action",
@@ -496,7 +500,7 @@ func (s *Service) decisionsFor(
 	ctx context.Context,
 	stored []*agent.AgentProposal,
 	tenant pagination.TenantInfo,
-) map[pulid.ID]*agent.AgentDecision {
+) map[pulid.ID]*agentdecision.AgentDecision {
 	if s.decisions == nil {
 		return nil
 	}
@@ -524,7 +528,7 @@ func (s *Service) decisionsFor(
 		return nil
 	}
 
-	out := make(map[pulid.ID]*agent.AgentDecision, len(decisions))
+	out := make(map[pulid.ID]*agentdecision.AgentDecision, len(decisions))
 	for _, decision := range decisions {
 		if decision == nil || decision.ProposalID == nil {
 			continue
@@ -538,8 +542,8 @@ func (s *Service) decisionsFor(
 	return out
 }
 
-func modificationsOf(decision *agent.AgentDecision) map[string]any {
-	if decision == nil || decision.Decision != agent.DecisionModified ||
+func modificationsOf(decision *agentdecision.AgentDecision) map[string]any {
+	if decision == nil || decision.Decision != agentdecision.DecisionModified ||
 		len(decision.Modifications) == 0 {
 		return nil
 	}
@@ -551,7 +555,7 @@ type chatPlanStore interface {
 	ListByThread(
 		ctx context.Context,
 		req agentports.ListAgentPlansByThreadRequest,
-	) ([]*agent.AgentPlan, error)
+	) ([]*agentplan.AgentPlan, error)
 	ExpirePendingByThread(
 		ctx context.Context,
 		req agentports.ExpireAgentPlansByThreadRequest,
@@ -622,7 +626,7 @@ func (s *Service) ListThreadPlans(
 	for _, plan := range stored {
 		planSteps := steps[plan.ID]
 		out := toAssistantPlan(plan, planVerdict(verdicts, plan, stepRuns(planSteps)).Hold())
-		out.RunMode = agent.PlanRunModeOf(planSteps)
+		out.RunMode = agentplan.PlanRunModeOf(planSteps)
 		out.DecidedByName = names[out.DecidedByUserID]
 		if by, ok := proposers[plan.RunID]; ok {
 			out.AgentID, out.AgentName = by.id, by.name
@@ -707,7 +711,7 @@ func (s *Service) userNames(
 
 func planVerdict(
 	verdicts map[pulid.ID]agentshadow.Verdict,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	stepRuns []pulid.ID,
 ) agentshadow.Verdict {
 	if !plan.Status.Decidable() {
@@ -717,7 +721,7 @@ func planVerdict(
 }
 
 func toAssistantPlan(
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	hold *assistantports.ProposalHold,
 ) assistantports.AssistantPlan {
 	decidedBy := pulid.Nil
@@ -742,7 +746,7 @@ func toAssistantPlan(
 		ExpiresAt:       plan.ExpiresAt,
 		CommitsAt:       plan.CommitsAt,
 		UndoneAt:        plan.UndoneAt,
-		RunMode:         agent.PlanRunModeInOrder,
+		RunMode:         agentplan.PlanRunModeInOrder,
 		Hold:            hold,
 		CreatedAt:       plan.CreatedAt,
 		Script:          plan.Script,

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -239,7 +241,7 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 		Render: func(
 			_ *workercredentialservice.CreateRequest,
 			plan *workercredentialservice.CreatePlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			created, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerCredential, pulid.Nil,
 					credentialRecord(plan.Credential).Label, 0),
@@ -247,7 +249,7 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 			if err != nil {
 				return nil, err
 			}
-			changes := []*agent.RecordChange{created}
+			changes := []*agentpreview.RecordChange{created}
 			summary := fmt.Sprintf("Would record %s on the worker's file.",
 				credentialRecord(plan.Credential).Label)
 			if plan.Superseded != nil {
@@ -267,7 +269,7 @@ func newRecordWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 			ctx context.Context,
 			req *workercredentialservice.CreateRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := credentials.Create(ctx, req)
 			if err != nil {
 				return nil, err
@@ -337,7 +339,7 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 		Render: func(
 			_ *credentialEdit,
 			change *workercredentialservice.CredentialChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(credentialRecord(change.After), change.Before,
 				change.After, wfOptions(credentialFields...)...)
 			if err != nil {
@@ -353,7 +355,7 @@ func newUpdateWorkerCredentialTool(credentials CredentialKeeper) agenttoolports.
 			ctx context.Context,
 			edit *credentialEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, credentials)
 			if err != nil {
 				return nil, err
@@ -417,7 +419,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 		Render: func(
 			_ *workercredentialservice.AttachDocumentRequest,
 			change *workercredentialservice.CredentialChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(credentialRecord(change.Before), change.Before,
 				change.After, wfOptions(wfFieldDocument, "verifiedById", "verifiedAt")...)
 			if err != nil {
@@ -430,7 +432,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 			ctx context.Context,
 			req *workercredentialservice.AttachDocumentRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := credentials.AttachDocument(ctx, req)
 			if err != nil {
 				return nil, err
@@ -478,7 +480,7 @@ func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agenttoolports
 		Render: func(
 			_ *reasonedRecord,
 			change *workercredentialservice.CredentialChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(
 				credentialRecord(change.Before),
 				change.Before,
@@ -499,7 +501,7 @@ func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agenttoolports
 			ctx context.Context,
 			req *reasonedRecord,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			archived, err := credentials.Archive(ctx, &workercredentialservice.StatusRequest{
 				ID:         req.id,
 				TenantInfo: req.tenant,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -101,7 +101,7 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -115,9 +115,9 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Empty(t, preview.Warnings)
 	require.Len(t, preview.Changes, 2)
 	told := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationSend, told.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, told.Operation)
 	require.NotNil(t, told.Message)
-	assert.Equal(t, agent.MessageChannelDash, told.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelDash, told.Message.Channel)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireUpdateParity(
@@ -139,7 +139,7 @@ func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(map[string]any{"ptoId": pto.ID.String()}),
@@ -148,7 +148,7 @@ func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestApproveWorkerPTO_PreviewWarnsWhenAnAgentWouldApprove(t *testing.T) {
@@ -162,11 +162,11 @@ func TestApproveWorkerPTO_PreviewWarnsWhenAnAgentWouldApprove(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&fake.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

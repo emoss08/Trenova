@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -171,9 +172,9 @@ func (s *Session) loadSource(
 	return id, nil
 }
 
-func (f *formulaState) page() *agent.PageContext {
+func (f *formulaState) page() *agentpagecontext.PageContext {
 	if f.library {
-		return &agent.PageContext{
+		return &agentpagecontext.PageContext{
 			Path:  libraryPagePath,
 			Title: libraryPageTitle,
 			Draft: &pagedraft.Draft{
@@ -188,7 +189,7 @@ func (f *formulaState) page() *agent.PageContext {
 		}
 	}
 
-	return &agent.PageContext{
+	return &agentpagecontext.PageContext{
 		Path:  formulaPagePath,
 		Title: formulaPageTitle,
 		Draft: &pagedraft.Draft{

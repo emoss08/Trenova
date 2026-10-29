@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -644,8 +647,11 @@ func (f *FiscalPeriodsByFiscalYearIDLoaderFactory) Attach(
 	})
 }
 
-func AgentDecisionsByProposalID(ctx context.Context, key string) ([]*agent.AgentDecision, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agent.AgentDecision] {
+func AgentDecisionsByProposalID(
+	ctx context.Context,
+	key string,
+) ([]*agentdecision.AgentDecision, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agentdecision.AgentDecision] {
 		return s.agentDecisionsByProposalID
 	})
 }
@@ -689,8 +695,8 @@ func (f *AgentRunTranscriptByIDLoaderFactory) Attach(
 	})
 }
 
-func AgentMemoryByID(ctx context.Context, key string) (*agent.Memory, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *agent.Memory] {
+func AgentMemoryByID(ctx context.Context, key string) (*agentmemory.Memory, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *agentmemory.Memory] {
 		return s.agentMemoryByID
 	})
 }
@@ -704,8 +710,8 @@ func (f *AgentMemoryByIDLoaderFactory) Attach(
 	})
 }
 
-func AgentMemoryReplacement(ctx context.Context, key string) (*agent.Memory, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *agent.Memory] {
+func AgentMemoryReplacement(ctx context.Context, key string) (*agentmemory.Memory, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *agentmemory.Memory] {
 		return s.agentMemoryReplacement
 	})
 }
@@ -876,8 +882,8 @@ func (f *AgentsByRoleIDLoaderFactory) Attach(
 	})
 }
 
-func ToolTrustByAgentID(ctx context.Context, key string) ([]*agent.ToolTrust, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agent.ToolTrust] {
+func ToolTrustByAgentID(ctx context.Context, key string) ([]*agenttooltrust.ToolTrust, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, []*agenttooltrust.ToolTrust] {
 		return s.toolTrustByAgentID
 	})
 }

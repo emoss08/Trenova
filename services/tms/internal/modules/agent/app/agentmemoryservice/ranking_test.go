@@ -3,7 +3,7 @@ package agentmemoryservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -12,8 +12,8 @@ import (
 
 const day = int64(24 * 60 * 60)
 
-func memoryAt(createdAt int64, uses int) *agent.Memory {
-	return &agent.Memory{
+func memoryAt(createdAt int64, uses int) *agentmemory.Memory {
+	return &agentmemory.Memory{
 		ID:        pulid.MustNew("amem_"),
 		CreatedAt: createdAt,
 		UpdatedAt: createdAt,
@@ -29,9 +29,9 @@ func TestRankByRecencyAndUse_PrefersRecentAndUsedMemories(t *testing.T) {
 	fresh := memoryAt(now-day, 0)
 	wellUsed := memoryAt(now-90*day, 400)
 
-	ranked := RankByRecencyAndUse([]*agent.Memory{stale, wellUsed, fresh}, now)
+	ranked := RankByRecencyAndUse([]*agentmemory.Memory{stale, wellUsed, fresh}, now)
 
-	assert.Equal(t, []*agent.Memory{fresh, wellUsed, stale}, ranked)
+	assert.Equal(t, []*agentmemory.Memory{fresh, wellUsed, stale}, ranked)
 }
 
 func TestRankByRecencyAndUse_AnEditCountsAsRecent(t *testing.T) {
@@ -42,19 +42,19 @@ func TestRankByRecencyAndUse_AnEditCountsAsRecent(t *testing.T) {
 	edited.UpdatedAt = now - day
 	untouched := memoryAt(now-100*day, 0)
 
-	assert.Equal(t, []*agent.Memory{edited, untouched},
-		RankByRecencyAndUse([]*agent.Memory{untouched, edited}, now))
+	assert.Equal(t, []*agentmemory.Memory{edited, untouched},
+		RankByRecencyAndUse([]*agentmemory.Memory{untouched, edited}, now))
 }
 
 func TestRankByRecencyAndUse_IsStableForEqualScores(t *testing.T) {
 	t.Parallel()
 
 	now := int64(1_800_000_000)
-	first := &agent.Memory{ID: pulid.ID("amem_A"), CreatedAt: now, UpdatedAt: now}
-	second := &agent.Memory{ID: pulid.ID("amem_B"), CreatedAt: now, UpdatedAt: now}
+	first := &agentmemory.Memory{ID: pulid.ID("amem_A"), CreatedAt: now, UpdatedAt: now}
+	second := &agentmemory.Memory{ID: pulid.ID("amem_B"), CreatedAt: now, UpdatedAt: now}
 
-	assert.Equal(t, []*agent.Memory{first, second},
-		RankByRecencyAndUse([]*agent.Memory{second, nil, first}, now),
+	assert.Equal(t, []*agentmemory.Memory{first, second},
+		RankByRecencyAndUse([]*agentmemory.Memory{second, nil, first}, now),
 		"ties break by id so the same memories always rank the same way")
 }
 
@@ -67,9 +67,9 @@ func TestRecencyRanker_RanksThroughThePort(t *testing.T) {
 	ranked, err := NewRecencyRanker().RankMemories(t.Context(), &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: tenant(),
 		Now:        now,
-		Memories:   []*agent.Memory{old, recent},
+		Memories:   []*agentmemory.Memory{old, recent},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []*agent.Memory{recent, old}, ranked.Memories)
+	assert.Equal(t, []*agentmemory.Memory{recent, old}, ranked.Memories)
 	assert.False(t, ranked.Semantic)
 }

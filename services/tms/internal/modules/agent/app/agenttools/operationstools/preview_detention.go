@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -16,7 +16,7 @@ import (
 func (t *WaiveDetentionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (t *WaiveDetentionTool) Preview(
 func (t *SendDetentionNoticeTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (t *SendDetentionNoticeTool) Preview(
 		return nil, err
 	}
 
-	message := &agent.MessagePreview{
+	message := &agentpreview.MessagePreview{
 		To:      notice.Recipients,
 		Subject: notice.Content.Subject,
 		Body:    notice.Content.Text,

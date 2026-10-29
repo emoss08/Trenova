@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
@@ -24,7 +24,7 @@ import (
 func (t *MatchBankReceiptTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (t *MatchBankReceiptTool) Preview(
 func (t *PostCustomerPaymentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (t *PostCustomerPaymentTool) Preview(
 	}
 
 	payment := posted.Payment
-	changes := make([]*agent.RecordChange, 0, len(posted.InvoicesAfter)+3)
+	changes := make([]*agentpreview.RecordChange, 0, len(posted.InvoicesAfter)+3)
 	created, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceCustomerPayment,
@@ -140,7 +140,9 @@ func (t *PostCustomerPaymentTool) Preview(
 
 // bankMatchChanges is a receipt matched to a payment, and the reconciliation
 // work item the match closes.
-func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordChange, error) {
+func bankMatchChanges(
+	match *bankreceiptservice.MatchPreview,
+) ([]*agentpreview.RecordChange, error) {
 	receipt, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceBankReceipt,
@@ -161,13 +163,13 @@ func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordCh
 	}
 
 	currency := match.Payment.CurrencyCode
-	toolpreview.AttachMoney(receipt, toolpreview.MoneyBlock(currency, agent.MoneyLine{
+	toolpreview.AttachMoney(receipt, toolpreview.MoneyBlock(currency, agentpreview.MoneyLine{
 		Label:  "Unreconciled cash",
 		Before: changepreview.KnownAmount(money.DecimalFromMinor(match.ReceiptBefore.AmountMinor)),
 		After:  changepreview.KnownAmount(decimal.Zero),
 	}))
 
-	changes := []*agent.RecordChange{receipt}
+	changes := []*agentpreview.RecordChange{receipt}
 	if match.WorkItemAfter == nil {
 		return changes, nil
 	}
@@ -189,15 +191,15 @@ func bankMatchChanges(match *bankreceiptservice.MatchPreview) ([]*agent.RecordCh
 	if err != nil {
 		return nil, err
 	}
-	item.Operation = agent.PreviewOperationArchive
+	item.Operation = agentpreview.PreviewOperationArchive
 
 	return append(changes, item), nil
 }
 
 // paymentMoney splits a new payment into what it pays and what stays on the
 // customer's account; together they are the payment.
-func paymentMoney(payment *customerpayment.Payment) *agent.MoneyPreview {
-	lines := []agent.MoneyLine{
+func paymentMoney(payment *customerpayment.Payment) *agentpreview.MoneyPreview {
+	lines := []agentpreview.MoneyLine{
 		{
 			Label: "Applied to invoices",
 			After: changepreview.KnownAmount(money.DecimalFromMinor(payment.AppliedAmountMinor)),

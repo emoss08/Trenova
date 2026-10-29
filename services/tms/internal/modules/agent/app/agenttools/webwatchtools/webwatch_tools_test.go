@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -150,7 +152,7 @@ func TestWatchingTheWebRunsOnItsOwnAndIsHeldAfterOutsideContent(t *testing.T) {
 
 	policy := NewWatchWebTool(newFakeWatcher(), &fakeWaits{}, nil).Policy()
 
-	assert.Equal(t, agent.ToolKindAction, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindAction, policy.Kind)
 	assert.Equal(t, agent.TierAutoExecute, policy.DefaultTier)
 	assert.Equal(t, permission.ResourceWebResearch, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
@@ -219,7 +221,7 @@ func TestSettingAWatchParksTheConversationOnIt(t *testing.T) {
 
 	assert.Equal(t, "set", result.Action)
 	assert.Equal(t, watcher.watchID.String(), result.IDs["webWatchId"])
-	assert.Equal(t, &agent.RecordRef{
+	assert.Equal(t, &agentrecord.RecordRef{
 		EntityType: string(permission.KindWebWatch),
 		ID:         watcher.watchID.String(),
 	}, result.Record)

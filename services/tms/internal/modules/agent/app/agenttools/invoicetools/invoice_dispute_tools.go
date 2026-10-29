@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -140,14 +142,14 @@ func NewOpenInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.AgentToo
 		Render: func(
 			_ *invoiceports.OpenInvoiceDisputeRequest,
 			plan *invoiceports.InvoiceDisputePreview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return disputePreview(plan, "Would open a dispute on %[3]s for %[2]s (%[1]s).")
 		},
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.OpenInvoiceDisputeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := disputes.Open(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -235,7 +237,7 @@ func NewResolveInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agent
 		Render: func(
 			_ *invoiceports.ResolveInvoiceDisputeRequest,
 			plan *invoiceports.InvoiceDisputePreview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return disputePreview(plan, "Would resolve the dispute on %[3]s for %[2]s (%[1]s) as "+
 				string(plan.After.Resolution)+".")
 		},
@@ -243,7 +245,7 @@ func NewResolveInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agent
 			ctx context.Context,
 			req *invoiceports.ResolveInvoiceDisputeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := disputes.Resolve(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -322,14 +324,14 @@ func NewWithdrawInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agen
 		Render: func(
 			_ *invoiceports.WithdrawInvoiceDisputeRequest,
 			plan *invoiceports.InvoiceDisputePreview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return disputePreview(plan, "Would withdraw the dispute on %[3]s for %[2]s (%[1]s).")
 		},
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.WithdrawInvoiceDisputeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := disputes.Withdraw(ctx, req, params.Actor)
 			return nil, err
 		},

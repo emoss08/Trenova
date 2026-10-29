@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -276,14 +277,14 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.True(t, preview.Partial)
 	assert.Equal(
 		t,
-		agent.PreviewOperationRun,
+		agentpreview.PreviewOperationRun,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Contains(t, preview.Summary, "is charged")
@@ -325,7 +326,7 @@ func TestVetCustomerBroker_ChecksTheCustomer(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -351,7 +352,7 @@ func TestSetCarrierMonitoring_ShowsOnlyTheCarriersThatChange(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -390,7 +391,7 @@ func TestMarkCarrierIntelReviewed_IsAPersonsSignOff(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -423,7 +424,7 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -472,13 +473,13 @@ func TestImportSourcedCarrier_NeedsTheCarrierCreateGrantToo(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -511,7 +512,7 @@ func TestVerifyCarrierEquipment_RecordsTheCheck(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		intel.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

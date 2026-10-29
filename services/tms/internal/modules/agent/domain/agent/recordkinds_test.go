@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,13 +44,13 @@ func TestEveryAgentSubjectIsAKindOfRecord(t *testing.T) {
 func TestEveryMemoryRecordKindIsAKindOfRecord(t *testing.T) {
 	t.Parallel()
 
-	for _, kind := range agent.AllMemoryRecordKinds() {
+	for _, kind := range agentmemory.AllMemoryRecordKinds() {
 		recordKind := permission.RecordKind(kind)
 		if !assert.True(t, recordKind.Known(), kind) {
 			continue
 		}
 		prefix, _ := recordKind.IDPrefix()
-		got, ok := agent.MemoryRecordKindOfID(pulid.MustNew(prefix))
+		got, ok := agentmemory.MemoryRecordKindOfID(pulid.MustNew(prefix))
 		assert.True(t, ok, kind)
 		assert.Equal(t, kind, got)
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -43,7 +43,7 @@ func adjustmentLabel(kind invoiceadjustment.Kind, invoiceNumber string) string {
 }
 
 func adjustmentMoney(
-	change *agent.RecordChange,
+	change *agentpreview.RecordChange,
 	figures *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	currency string,
 ) {
@@ -52,11 +52,11 @@ func adjustmentMoney(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		currency,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Credited",
 			After: changepreview.KnownAmount(figures.CreditTotalAmount.Abs()),
 		},
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Rebilled",
 			After: changepreview.KnownAmount(figures.RebillTotalAmount),
 		},
@@ -89,8 +89,11 @@ func figureWarnings(figures *invoiceadjustmentports.InvoiceAdjustmentPreview) st
 	return " Policy notes: " + strings.Join(figures.Warnings, "; ") + "."
 }
 
-func renderSubmission(req *adjustmentSubmission, plan *submissionPlan) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.figures))
+func renderSubmission(
+	req *adjustmentSubmission,
+	plan *submissionPlan,
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.figures))
 	credited := decimal.Zero
 	outcomes := make(map[string]int, 2)
 	var notes strings.Builder
@@ -161,7 +164,7 @@ func describeOutcomes(outcomes map[string]int) string {
 func renderDraft(
 	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
 	plan *invoiceadjustmentports.InvoiceAdjustmentDraftPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	after := &adjustmentView{
 		InvoiceID:      plan.After.OriginalInvoiceID,
 		Kind:           string(plan.After.Kind),
@@ -176,7 +179,7 @@ func renderDraft(
 	}
 
 	var (
-		change *agent.RecordChange
+		change *agentpreview.RecordChange
 		err    error
 	)
 	if plan.Before == nil {
@@ -212,7 +215,7 @@ func renderDraft(
 func renderDecision(
 	req *adjustmentDecision,
 	plan *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	adjustment := plan.Adjustment
 	before := &adjustmentView{
 		InvoiceID:      adjustment.OriginalInvoiceID,

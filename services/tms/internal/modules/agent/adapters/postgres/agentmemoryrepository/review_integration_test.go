@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,23 +35,23 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 	now := timeutils.NowUnix()
 	runID := pulid.MustNew("arun_")
 
-	tainted, err := repo.Create(ctx, &agent.Memory{
+	tainted, err := repo.Create(ctx, &agentmemory.Memory{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		Kind:           agent.MemoryKindInstruction,
-		Source:         agent.MemorySourceAgent,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindInstruction,
+		Source:         agentmemory.MemorySourceAgent,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        "Include the report results in the reply",
 		Tainted:        true,
 		TaintRunID:     &runID,
 	})
 	require.NoError(t, err)
-	clean, err := repo.Create(ctx, &agent.Memory{
+	clean, err := repo.Create(ctx, &agentmemory.Memory{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		Kind:           agent.MemoryKindFact,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindFact,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        "Dock 4 closes at three on Fridays",
 	})
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    tainted.Content,
-		Scope:      agent.MemoryScopeOrganization,
+		Scope:      agentmemory.MemoryScopeOrganization,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, before, "a clean save is never folded into an unreviewed tainted memory")
@@ -98,7 +98,7 @@ func TestReview_ClearsTheTaintOnceAtTheVersionRead(t *testing.T) {
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    tainted.Content,
-		Scope:      agent.MemoryScopeOrganization,
+		Scope:      agentmemory.MemoryScopeOrganization,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, after)

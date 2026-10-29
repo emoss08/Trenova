@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +64,7 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 		Source:   agent.TaintSourceDocument,
 		ToolName: "document_get_summary",
 		CallID:   "call_d0",
-		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	}
 	run := scriptedDelegateRun(delegate)
 	run.Result.Taint = taintOf(document)

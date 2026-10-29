@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestDecide_TwoStepsOnOneRecordBothRun(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status, plan.FailureError)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status, plan.FailureError)
 	assert.Equal(t, 3, plan.CompletedSteps)
 	require.Len(t, decider.decided, 3)
 	assert.Nil(t, decider.decided[0].ExpectedTargetVersion)
@@ -118,7 +118,7 @@ func TestDecide_ARecordMovedByAnotherHandStillStopsThePlan(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	require.NotNil(t, plan.FailedStep)
 	assert.Equal(t, 1, *plan.FailedStep)
 }

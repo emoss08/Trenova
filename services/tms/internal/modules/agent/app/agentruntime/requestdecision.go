@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -221,7 +221,7 @@ func (t *Turn) requestPlanDecision(planID pulid.ID) toolOutcome {
 		ProposalID:  steps[0],
 		ProposalIDs: steps,
 		PlanID:      planID,
-		ToolName:    agent.PlanToolName,
+		ToolName:    agentplan.PlanToolName,
 	})
 }
 

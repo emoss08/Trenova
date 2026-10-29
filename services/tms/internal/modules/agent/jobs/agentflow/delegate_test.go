@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -294,7 +296,7 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 	t.Parallel()
 
-	records := []agent.EntityRef{
+	records := []agentpagecontext.EntityRef{
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
@@ -341,6 +343,6 @@ func TestRunHandsTheDelegateTheRecordsTheTaskIsAbout(t *testing.T) {
 	require.Empty(t, result.Err)
 	require.Len(t, opener.calls, 1)
 	require.NotNil(t, opener.calls[0].Context)
-	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+	assert.Equal(t, []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		opener.calls[0].Context.Records)
 }

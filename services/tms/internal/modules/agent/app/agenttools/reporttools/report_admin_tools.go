@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -143,7 +145,7 @@ func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentToo
 		Refused: func(*reporting.GetRunRequest) string {
 			return "Would cancel a report run."
 		},
-		Render: func(_ *reporting.GetRunRequest, plan *reporting.RunChange) (*agent.ToolPreview, error) {
+		Render: func(_ *reporting.GetRunRequest, plan *reporting.RunChange) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				toolpreview.Record{
 					Resource: permission.ResourceReport,
@@ -166,7 +168,7 @@ func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentToo
 			ctx context.Context,
 			req *reporting.GetRunRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reports.CancelRun(ctx, req)
 
 			return nil, err
@@ -221,7 +223,7 @@ func NewDeleteReportTool(reports ReportAdministrator) agenttoolports.AgentTool {
 		Render: func(
 			_ *reporting.GetDefinitionRequest,
 			existing *report.ReportDefinition,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				reportRecord(existing),
 				reportViewOf(existing),
@@ -240,7 +242,7 @@ func NewDeleteReportTool(reports ReportAdministrator) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			return nil, reports.DeleteDefinition(ctx, req)
 		},
 	})
@@ -279,7 +281,7 @@ func NewResetReportForkTool(reports ReportAdministrator) agenttoolports.AgentToo
 		Render: func(
 			_ *reporting.GetDefinitionRequest,
 			plan *reporting.DefinitionChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				reportRecord(plan.Before),
 				reportViewOf(plan.Before),
@@ -300,7 +302,7 @@ func NewResetReportForkTool(reports ReportAdministrator) agenttoolports.AgentToo
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reports.ResetCannedFork(ctx, req)
 
 			return nil, err
@@ -350,7 +352,7 @@ func NewDeleteDashboardTool(reports ReportAdministrator) agenttoolports.AgentToo
 		Refused: func(*reporting.GetDashboardRequest) string {
 			return "Would delete a dashboard."
 		},
-		Render: func(_ *reporting.GetDashboardRequest, existing *report.Dashboard) (*agent.ToolPreview, error) {
+		Render: func(_ *reporting.GetDashboardRequest, existing *report.Dashboard) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				toolpreview.Record{
 					Resource: permission.ResourceDashboard,
@@ -372,7 +374,7 @@ func NewDeleteDashboardTool(reports ReportAdministrator) agenttoolports.AgentToo
 			ctx context.Context,
 			req *reporting.GetDashboardRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			return nil, reports.DeleteDashboard(ctx, req)
 		},
 	})
@@ -601,7 +603,7 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agenttoolports.Age
 			ctx context.Context,
 			edit scheduleEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := edit.request(ctx, reports, params)
 			if err != nil {
 				return nil, err
@@ -616,7 +618,7 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agenttoolports.Age
 func renderReportScheduleUpdate(
 	_ scheduleEdit,
 	plan *reporting.ScheduleChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		reportScheduleRecord(plan.Before),
 		reportScheduleViewOf(plan.Before),
@@ -679,7 +681,7 @@ func NewDeleteReportScheduleTool(reports ReportAdministrator) agenttoolports.Age
 		Render: func(
 			_ *reporting.GetScheduleRequest,
 			existing *report.ReportSchedule,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				reportScheduleRecord(existing),
 				reportScheduleViewOf(existing),
@@ -697,7 +699,7 @@ func NewDeleteReportScheduleTool(reports ReportAdministrator) agenttoolports.Age
 			ctx context.Context,
 			req *reporting.GetScheduleRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			return nil, reports.DeleteSchedule(ctx, req)
 		},
 	})

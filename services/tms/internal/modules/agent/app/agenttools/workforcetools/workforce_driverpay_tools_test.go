@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -175,7 +176,7 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -213,7 +214,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(approve),
@@ -283,7 +284,7 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(approve),
@@ -307,7 +308,7 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(reject),

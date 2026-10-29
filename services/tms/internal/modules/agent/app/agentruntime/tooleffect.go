@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -21,7 +21,7 @@ var (
 	collectionPrefixes = []string{"list_", "search_", "get_"}
 )
 
-func (s *Service) ToolEffect(name string) agent.ToolEffect {
+func (s *Service) ToolEffect(name string) agenttooltrust.ToolEffect {
 	if policy, ok := runtimePolicyNamed(name); ok {
 		return policy.Effect
 	}

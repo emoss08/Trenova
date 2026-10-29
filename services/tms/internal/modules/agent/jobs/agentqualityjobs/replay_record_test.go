@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -88,9 +87,9 @@ func TestRecordQualityHistories(t *testing.T) {
 
 func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 	cases := []agentqualityservice.SuiteCase{
-		{EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix), Ordinal: 1},
-		{EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix), Ordinal: 2},
-		{EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix), Ordinal: 3},
+		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 1},
+		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 2},
+		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 3},
 	}
 	listed := false
 	w.RegisterActivityWithOptions(func(

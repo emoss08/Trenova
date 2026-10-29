@@ -7,7 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -154,12 +156,14 @@ func (f fakeProposals) GetByID(
 	return f.proposal, nil
 }
 
-type fakeDecisions struct{ decisions []*agent.AgentDecision }
+type fakeDecisions struct {
+	decisions []*agentdecision.AgentDecision
+}
 
 func (f fakeDecisions) ListByProposals(
 	context.Context,
 	agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
 
@@ -257,7 +261,7 @@ type world struct {
 	service    *Service
 }
 
-func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
+func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -300,8 +304,8 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 			ID:          pulid.MustNew("amsg_"),
 			Role:        conversation.RoleUser,
 			Content:     "Rate S-100 at 1,200",
-			PageContext: &agent.PageContext{Path: "/shipments/S-100"},
-			Mentions: []agent.EntityRef{
+			PageContext: &agentpagecontext.PageContext{Path: "/shipments/S-100"},
+			Mentions: []agentpagecontext.EntityRef{
 				{Type: "shipment", ID: pulid.MustNew("shp_").String(), Label: "S-100"},
 			},
 			CreatedAt: 200,
@@ -371,7 +375,7 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 		SourceMessageID: proposing,
 	}
 
-	decisions := []*agent.AgentDecision{}
+	decisions := []*agentdecision.AgentDecision{}
 	if decision != nil {
 		decision.ProposalID = &proposal.ID
 		decisions = append(decisions, decision)
@@ -441,8 +445,8 @@ func (w *world) fromProposal(t *testing.T) *agentports.EvalCaseCapture {
 func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{
-		Decision:      agent.DecisionModified,
+	w := newWorld(t, &agentdecision.AgentDecision{
+		Decision:      agentdecision.DecisionModified,
 		Modifications: map[string]any{"rate": float64(1350)},
 	})
 	captured := w.fromProposal(t)
@@ -488,7 +492,7 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 func TestCreateFromProposal_RejectionIsExpectedToStayDropped(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{Decision: agent.DecisionRejected})
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionRejected})
 	evalCase := w.fromProposal(t).Case
 
 	require.Len(t, evalCase.Expected.Proposals, 1)
@@ -514,7 +518,7 @@ func TestCreateFromProposal_UndecidedIsRefused(t *testing.T) {
 func TestCreateFromProposal_DedupesByProposal(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{Decision: agent.DecisionAccepted})
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	first := w.fromProposal(t)
 	second := w.fromProposal(t)
 
@@ -527,7 +531,7 @@ func TestCreateFromProposal_DedupesByProposal(t *testing.T) {
 func TestCreateFromMessage_DedupesByContentHash(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{Decision: agent.DecisionAccepted})
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	liked := w.messages[7].ID
 	request := &agentports.CreateEvalCaseFromMessageRequest{
 		ThreadID:   w.thread.ID,
@@ -666,7 +670,7 @@ func TestCreateCurated_ValidatesBeforeSaving(t *testing.T) {
 func TestSetStatus_FollowsTheWorkflow(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{Decision: agent.DecisionAccepted})
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	evalCase := w.fromProposal(t).Case
 
 	active, err := w.service.SetStatus(t.Context(), &agentports.SetEvalCaseStatusRequest{
@@ -695,7 +699,7 @@ func TestSetStatus_FollowsTheWorkflow(t *testing.T) {
 func TestCaptureCandidates_CountsWhatHappened(t *testing.T) {
 	t.Parallel()
 
-	w := newWorld(t, &agent.AgentDecision{Decision: agent.DecisionAccepted})
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
 	candidate := agentqualityports.EvalCaseCaptureCandidate{
 		OrganizationID:    w.tenant.OrgID,
 		BusinessUnitID:    w.tenant.BuID,

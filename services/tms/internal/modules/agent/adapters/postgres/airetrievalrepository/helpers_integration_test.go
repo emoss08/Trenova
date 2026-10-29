@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -123,15 +123,15 @@ func (h *harness) as(tenant pagination.TenantInfo) context.Context {
 	return dbscope.WithTenant(h.ctx, tenant.DBTenant())
 }
 
-func (h *harness) insertMemory(t *testing.T, content string) *agent.Memory {
+func (h *harness) insertMemory(t *testing.T, content string) *agentmemory.Memory {
 	t.Helper()
 
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
-		Kind:           agent.MemoryKindFact,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindFact,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        content,
 	}
 	require.NoError(t, agentdb.Memories.Create(h.ctx, h.db, memory))

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -73,7 +75,7 @@ func conflictLabel(kind inboundmessage.ConflictKind) string {
 func renderConflictPlan(
 	summary string,
 	plan *triageconflictservice.ConflictPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceInboundMessage,
@@ -184,7 +186,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			Render: func(
 				req *triageconflictservice.ResolveRequest,
 				plan *triageconflictservice.ConflictPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return renderConflictPlan(
 					"Would settle the "+strings.ToLower(conflictLabel(plan.Before.Kind))+
 						" conflict as "+string(req.Resolution)+".",
@@ -195,7 +197,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 				ctx context.Context,
 				req *triageconflictservice.ResolveRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := conflicts.Resolve(ctx, req)
 				if err != nil {
 					return nil, err
@@ -283,7 +285,7 @@ func newReopenInboundConflictTool(
 			Render: func(
 				_ *triageconflictservice.ReopenRequest,
 				plan *triageconflictservice.ConflictPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				return renderConflictPlan(
 					"Would reopen the "+strings.ToLower(conflictLabel(plan.Before.Kind))+
 						" conflict, settled as "+string(plan.Before.Resolution)+", so it can "+
@@ -295,7 +297,7 @@ func newReopenInboundConflictTool(
 				ctx context.Context,
 				req *triageconflictservice.ReopenRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := conflicts.Reopen(ctx, req)
 				if err != nil {
 					return nil, err

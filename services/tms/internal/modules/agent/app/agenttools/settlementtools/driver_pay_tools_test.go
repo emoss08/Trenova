@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -193,7 +194,7 @@ func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	advance.Status = driverpay.AdvanceStatusRecovered
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeEscrow struct {
@@ -311,7 +312,7 @@ func TestOpenEscrowAccount_OneActiveAccountPerDriver(t *testing.T) {
 	assert.Contains(t, preview.Summary, "a 2500.00 USD target, earning 2.5% a year")
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -325,7 +326,7 @@ func TestOpenEscrowAccount_OneActiveAccountPerDriver(t *testing.T) {
 	escrow.active = true
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestUpdateEscrowAccount_ChangesOnlyTheTerms(t *testing.T) {
@@ -369,7 +370,7 @@ func TestAdjustEscrowAccount_NeverDrawsBelowZero(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	raw[settlementpreview.ParamDriverPayAmount] = "-300.00"
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))

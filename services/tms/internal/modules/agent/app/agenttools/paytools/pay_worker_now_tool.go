@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -84,17 +87,17 @@ func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 func (t *PayWorkerNowTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpApprove,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible, agent.EgressMoney},
 		Classify:      settlementpreview.ClassifyAsMoney,
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      settlementpreview.DriverSettlementEntity,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Approves, posts and records a payment to a driver in one step; only a " +
 			"person pays someone.",
 	}
@@ -166,7 +169,7 @@ func (t *PayWorkerNowTool) Validate(
 func (t *PayWorkerNowTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -197,7 +200,7 @@ func (t *PayWorkerNowTool) Execute(
 func (t *PayWorkerNowTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -219,7 +222,7 @@ func (t *PayWorkerNowTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 	if plan.Journal != nil {
 		journal, journalErr := settlementpreview.SettlementJournalChange(
 			plan.Journal,

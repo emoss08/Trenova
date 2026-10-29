@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"go.uber.org/fx"
 )
@@ -91,7 +91,7 @@ func (c *Catalog) All() []agenttoolports.ToolPolicy {
 
 func ApplyOverride(
 	policy agenttoolports.ToolPolicy,
-	override *agent.ToolRuleOverride,
+	override *agenttooltrust.ToolRuleOverride,
 ) agenttoolports.ToolPolicy {
 	if override.Empty() {
 		return policy
@@ -101,9 +101,9 @@ func ApplyOverride(
 		policy.DefaultTier = policy.DefaultTier.AtMost(override.MaxTier)
 	}
 	if override.ReadsExternal.IsValid() &&
-		agent.ExternalReadRank(
+		agenttooltrust.ExternalReadRank(
 			override.ReadsExternal,
-		) > agent.ExternalReadRank(
+		) > agenttooltrust.ExternalReadRank(
 			policy.ReadsExternal,
 		) {
 		policy.ReadsExternal = override.ReadsExternal
@@ -114,7 +114,7 @@ func ApplyOverride(
 
 func ApplyOverrides(
 	policy agenttoolports.ToolPolicy,
-	overrides map[string]*agent.ToolRuleOverride,
+	overrides map[string]*agenttooltrust.ToolRuleOverride,
 ) agenttoolports.ToolPolicy {
 	return ApplyOverride(policy, overrides[policy.Name])
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
@@ -44,7 +44,7 @@ func newSuggestedAgentByEventKindLoader(
 			values := make([]*agentdefinition.Definition, len(keys))
 			errs := make([]error, len(keys))
 
-			kinds := make([]agent.EventKind, 0, len(keys))
+			kinds := make([]agenttrigger.EventKind, 0, len(keys))
 			seen := make(map[string]struct{}, len(keys))
 			for _, key := range keys {
 				key = strings.TrimSpace(key)
@@ -55,7 +55,7 @@ func newSuggestedAgentByEventKindLoader(
 					continue
 				}
 				seen[key] = struct{}{}
-				kinds = append(kinds, agent.EventKind(key))
+				kinds = append(kinds, agenttrigger.EventKind(key))
 			}
 			if len(kinds) == 0 {
 				return values, errs
@@ -73,7 +73,7 @@ func newSuggestedAgentByEventKindLoader(
 				return values, errs
 			}
 
-			first := make(map[agent.EventKind]*agentdefinition.Definition, len(kinds))
+			first := make(map[agenttrigger.EventKind]*agentdefinition.Definition, len(kinds))
 			for _, definition := range definitions {
 				if definition == nil {
 					continue
@@ -85,7 +85,7 @@ func newSuggestedAgentByEventKindLoader(
 				}
 			}
 			for i, key := range keys {
-				values[i] = first[agent.EventKind(strings.TrimSpace(key))]
+				values[i] = first[agenttrigger.EventKind(strings.TrimSpace(key))]
 			}
 
 			return values, errs

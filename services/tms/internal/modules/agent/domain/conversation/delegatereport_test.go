@@ -6,6 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,12 +22,12 @@ func TestDelegateReport_BoundedKeepsTheRowSmall(t *testing.T) {
 			CallID:   "call_1",
 			Tier:     agent.TierAutoExecute,
 			Summary:  "On-time\nthis month " + strings.Repeat("s", 1000),
-			Result: &agent.ToolExecutionResult{
+			Result: &agentrecord.ToolExecutionResult{
 				Action: "created",
 				Kind:   "report",
 				Name:   strings.Repeat("n", 1000),
 				IDs:    map[string]string{"definitionId": "rd_1"},
-				Record: &agent.RecordRef{EntityType: "report", ID: "rd_1"},
+				Record: &agentrecord.RecordRef{EntityType: "report", ID: "rd_1"},
 			},
 			Error: strings.Repeat("e", 2000),
 		})
@@ -81,7 +82,7 @@ func TestDelegateReport_BoundedKeepsTheRowSmall(t *testing.T) {
 	assert.LessOrEqual(t, len([]rune(write.Error)), maxWriteErrorRunes+1)
 	require.NotNil(t, write.Result)
 	assert.Less(t, len([]rune(write.Result.Name)), 1000, "the result is bounded as a proposal's")
-	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: "rd_1"}, write.Result.Record)
+	assert.Equal(t, &agentrecord.RecordRef{EntityType: "report", ID: "rd_1"}, write.Result.Record)
 	assert.LessOrEqual(t, len([]rune(bounded.Published[0].Title)), maxReportNameRunes)
 
 	encoded, err := sonic.Marshal(bounded)

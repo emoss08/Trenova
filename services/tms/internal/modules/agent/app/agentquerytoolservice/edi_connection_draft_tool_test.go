@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -173,10 +174,10 @@ func TestDraftEDIConnection_CapsEveryLaterWriteInTheTurn(t *testing.T) {
 	t.Parallel()
 
 	policy := newDraftEDIConnectionTool(&fakeDraftPlanner{}, &fakeGuideReader{}).Policy()
-	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind)
 	assert.Equal(t, permission.ResourceEDI, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
-	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceAttachment, policy.Source)
 	assert.True(t, policy.CapsLaterWrites)
 }

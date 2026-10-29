@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,8 +26,8 @@ func (g *WriteGuard) Write() error {
 func PreviewWithoutWrites(
 	t *testing.T,
 	guard *WriteGuard,
-	run func() (*agent.ToolPreview, error),
-) *agent.ToolPreview {
+	run func() (*agentpreview.ToolPreview, error),
+) *agentpreview.ToolPreview {
 	t.Helper()
 
 	guard.locked = true
@@ -47,7 +47,7 @@ type stableField struct {
 	After  any
 }
 
-func stableFields(fields []agent.PreviewFieldChange) []stableField {
+func stableFields(fields []agentpreview.PreviewFieldChange) []stableField {
 	out := make([]stableField, 0, len(fields))
 	for i := range fields {
 		if fields[i].Volatile {
@@ -65,7 +65,7 @@ func stableFields(fields []agent.PreviewFieldChange) []stableField {
 
 func RequireUpdateParity[T any](
 	t *testing.T,
-	change *agent.RecordChange,
+	change *agentpreview.RecordChange,
 	before, saved *T,
 	opts ...toolpreview.Option,
 ) {
@@ -83,21 +83,25 @@ func RequireUpdateParity[T any](
 
 func RequireCreateParity[T any](
 	t *testing.T,
-	change *agent.RecordChange,
+	change *agentpreview.RecordChange,
 	saved *T,
 	opts ...toolpreview.Option,
 ) {
 	t.Helper()
 
 	require.NotNil(t, change)
-	require.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	require.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	want, err := toolpreview.Create(toolpreview.Record{Resource: change.Resource}, saved, opts...)
 	require.NoError(t, err)
 	require.NotEmpty(t, stableFields(want.Fields))
 	require.Equal(t, stableFields(want.Fields), stableFields(change.Fields))
 }
 
-func PreviewChange(t *testing.T, preview *agent.ToolPreview, index int) *agent.RecordChange {
+func PreviewChange(
+	t *testing.T,
+	preview *agentpreview.ToolPreview,
+	index int,
+) *agentpreview.RecordChange {
 	t.Helper()
 
 	require.Greater(t, len(preview.Changes), index)
@@ -107,9 +111,9 @@ func PreviewChange(t *testing.T, preview *agent.ToolPreview, index int) *agent.R
 
 func FieldByPath(
 	t *testing.T,
-	change *agent.RecordChange,
+	change *agentpreview.RecordChange,
 	path string,
-) *agent.PreviewFieldChange {
+) *agentpreview.PreviewFieldChange {
 	t.Helper()
 
 	for i := range change.Fields {
@@ -122,7 +126,11 @@ func FieldByPath(
 	return nil
 }
 
-func RequireWarning(t *testing.T, preview *agent.ToolPreview, code agent.PreviewWarningCode) {
+func RequireWarning(
+	t *testing.T,
+	preview *agentpreview.ToolPreview,
+	code agentpreview.PreviewWarningCode,
+) {
 	t.Helper()
 
 	for _, warning := range preview.Warnings {

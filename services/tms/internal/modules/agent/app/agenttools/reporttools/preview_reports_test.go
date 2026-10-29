@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
@@ -89,13 +89,13 @@ func TestCreateReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceReport, change.Resource)
 	assert.Equal(t, "Revenue by customer", change.Label)
 	assert.Equal(t, "shipment", agenttoolstest.FieldByPath(t, change, "source").After)
@@ -119,7 +119,7 @@ func TestCreateReport_PreviewWarnsWhenTheDefinitionWouldNotCompile(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"name":       "Broken",
 				"definition": definitionArgument(),
@@ -128,7 +128,7 @@ func TestCreateReport_PreviewWarnsWhenTheDefinitionWouldNotCompile(t *testing.T)
 	)
 
 	require.Len(t, preview.Changes, 1)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestUpdateReport_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -149,7 +149,7 @@ func TestUpdateReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -204,7 +204,7 @@ func TestForkReport_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)

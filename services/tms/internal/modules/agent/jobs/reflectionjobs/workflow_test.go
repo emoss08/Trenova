@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,7 +36,7 @@ func readyPlan() *agentports.ReflectionPlan {
 	return &agentports.ReflectionPlan{
 		TenantInfo:   tenant(),
 		ReflectionID: pulid.ID("arfl_a"),
-		Subject:      agent.ReflectionSubjectThread,
+		Subject:      agentreflection.ReflectionSubjectThread,
 		Request:      &llmports.StructuredCompletionRequest{TenantInfo: tenant()},
 	}
 }

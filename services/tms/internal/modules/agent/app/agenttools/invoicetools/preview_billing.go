@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -15,7 +15,7 @@ import (
 func (t *CorrectChargeCodeTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (t *CorrectChargeCodeTool) Preview(
 	)
 	preview := toolpreview.Build(summary, change)
 	if plan.ConvertedSplits > 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail, fmt.Sprintf(
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail, fmt.Sprintf(
 			"%d split(s) by amount would be rewritten as percentages.", plan.ConvertedSplits,
 		))
 	}

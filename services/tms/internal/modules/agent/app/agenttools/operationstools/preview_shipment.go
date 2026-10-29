@@ -7,14 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 func (t *UpdateShipmentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	before, after, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (t *UpdateShipmentTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := append([]*agent.RecordChange{change}, notices...)
+	changes := append([]*agentpreview.RecordChange{change}, notices...)
 
 	summary := fmt.Sprintf("Would change %s on shipment %s.",
 		changepreview.CountOf(len(change.Fields), "field"), before.ProNumber)

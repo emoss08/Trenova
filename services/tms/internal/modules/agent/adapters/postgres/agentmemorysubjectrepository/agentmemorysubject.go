@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
@@ -80,22 +80,22 @@ func (r *repository) ListRecordLinks(
 		err   error
 	)
 	switch req.Kind {
-	case agent.MemoryRecordShipment:
+	case agentmemory.MemoryRecordShipment:
 		links, err = r.shipmentLinks(ctx, req.IDs)
-	case agent.MemoryRecordShipmentMove:
+	case agentmemory.MemoryRecordShipmentMove:
 		links, err = r.moveLinks(ctx, req.IDs)
-	case agent.MemoryRecordInvoice:
+	case agentmemory.MemoryRecordInvoice:
 		links, err = r.invoiceLinks(ctx, req.IDs)
-	case agent.MemoryRecordBillingQueueItem:
+	case agentmemory.MemoryRecordBillingQueueItem:
 		links, err = r.billingQueueLinks(ctx, req.IDs)
-	case agent.MemoryRecordInboundMessage:
+	case agentmemory.MemoryRecordInboundMessage:
 		links, err = r.inboundMessageLinks(ctx, req.IDs)
-	case agent.MemoryRecordDocument:
+	case agentmemory.MemoryRecordDocument:
 		links, err = r.documentLinks(ctx, req.IDs)
-	case agent.MemoryRecordCustomer,
-		agent.MemoryRecordLocation,
-		agent.MemoryRecordWorker,
-		agent.MemoryRecordCarrier:
+	case agentmemory.MemoryRecordCustomer,
+		agentmemory.MemoryRecordLocation,
+		agentmemory.MemoryRecordWorker,
+		agentmemory.MemoryRecordCarrier:
 		return []agentmemoryports.MemoryRecordLink{}, nil
 	default:
 		return []agentmemoryports.MemoryRecordLink{}, nil
@@ -169,11 +169,11 @@ func (r *repository) shipmentLinks(
 				0,
 				len(customers)*2+len(stops)+len(workers)*2+len(carriers),
 			)
-			links = appendPairs(links, customers, agent.MemoryRecordCustomer)
-			links = appendLinks(links, stops, agent.MemoryRecordLocation)
-			links = appendPairs(links, workers, agent.MemoryRecordWorker)
+			links = appendPairs(links, customers, agentmemory.MemoryRecordCustomer)
+			links = appendLinks(links, stops, agentmemory.MemoryRecordLocation)
+			links = appendPairs(links, workers, agentmemory.MemoryRecordWorker)
 
-			return appendLinks(links, carriers, agent.MemoryRecordCarrier), nil
+			return appendLinks(links, carriers, agentmemory.MemoryRecordCarrier), nil
 		},
 	)
 }
@@ -197,7 +197,7 @@ func (r *repository) moveLinks(
 			return appendLinks(
 				make([]agentmemoryports.MemoryRecordLink, 0, len(rows)),
 				rows,
-				agent.MemoryRecordShipment,
+				agentmemory.MemoryRecordShipment,
 			), nil
 		},
 	)
@@ -222,7 +222,7 @@ func (r *repository) invoiceLinks(
 			return appendLinks(
 				make([]agentmemoryports.MemoryRecordLink, 0, len(rows)),
 				rows,
-				agent.MemoryRecordCustomer,
+				agentmemory.MemoryRecordCustomer,
 			), nil
 		},
 	)
@@ -247,7 +247,7 @@ func (r *repository) billingQueueLinks(
 			return appendLinks(
 				make([]agentmemoryports.MemoryRecordLink, 0, len(rows)),
 				rows,
-				agent.MemoryRecordCustomer,
+				agentmemory.MemoryRecordCustomer,
 			), nil
 		},
 	)
@@ -276,9 +276,9 @@ func (r *repository) inboundMessageLinks(
 
 			links := make([]agentmemoryports.MemoryRecordLink, 0, len(rows)*3)
 			for _, row := range rows {
-				links = appendLink(links, row.FromID, agent.MemoryRecordCustomer, row.First)
-				links = appendLink(links, row.FromID, agent.MemoryRecordCarrier, row.Second)
-				links = appendLink(links, row.FromID, agent.MemoryRecordShipment, row.Third)
+				links = appendLink(links, row.FromID, agentmemory.MemoryRecordCustomer, row.First)
+				links = appendLink(links, row.FromID, agentmemory.MemoryRecordCarrier, row.Second)
+				links = appendLink(links, row.FromID, agentmemory.MemoryRecordShipment, row.Third)
 			}
 
 			return links, nil
@@ -304,8 +304,8 @@ func (r *repository) documentLinks(
 
 			links := make([]agentmemoryports.MemoryRecordLink, 0, len(rows))
 			for _, row := range rows {
-				owner, ok := agent.MemoryRecordRefOf(row.ResourceType, row.ResourceID)
-				if !ok || owner.Kind == agent.MemoryRecordDocument {
+				owner, ok := agentmemory.MemoryRecordRefOf(row.ResourceType, row.ResourceID)
+				if !ok || owner.Kind == agentmemory.MemoryRecordDocument {
 					continue
 				}
 				links = append(links, agentmemoryports.MemoryRecordLink{
@@ -323,7 +323,7 @@ func (r *repository) documentLinks(
 func appendLink(
 	links []agentmemoryports.MemoryRecordLink,
 	from pulid.ID,
-	kind agent.MemoryRecordKind,
+	kind agentmemory.MemoryRecordKind,
 	id *pulid.ID,
 ) []agentmemoryports.MemoryRecordLink {
 	if id == nil || id.IsNil() {
@@ -336,7 +336,7 @@ func appendLink(
 func appendLinks(
 	links []agentmemoryports.MemoryRecordLink,
 	rows []linkRow,
-	kind agent.MemoryRecordKind,
+	kind agentmemory.MemoryRecordKind,
 ) []agentmemoryports.MemoryRecordLink {
 	for _, row := range rows {
 		links = appendLink(links, row.FromID, kind, row.LinkedID)
@@ -348,7 +348,7 @@ func appendLinks(
 func appendPairs(
 	links []agentmemoryports.MemoryRecordLink,
 	rows []pairRow,
-	kind agent.MemoryRecordKind,
+	kind agentmemory.MemoryRecordKind,
 ) []agentmemoryports.MemoryRecordLink {
 	for _, row := range rows {
 		links = appendLink(links, row.FromID, kind, row.First)

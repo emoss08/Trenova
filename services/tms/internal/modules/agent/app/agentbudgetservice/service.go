@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -65,7 +65,7 @@ type moneyCounter interface {
 	SumAutomaticMoney(
 		ctx context.Context,
 		req *agentports.SumAutomaticMoneyRequest,
-	) (agent.MoneyUse, error)
+	) (agenttooltrust.MoneyUse, error)
 }
 
 type controlReader interface {
@@ -202,23 +202,23 @@ func (s *Service) CheckTool(
 func (s *Service) MoneyAllowance(
 	ctx context.Context,
 	req agentports.MoneyAllowanceRequest,
-) (agent.MoneyAllowance, error) {
+) (agenttooltrust.MoneyAllowance, error) {
 	if req.Definition == nil {
-		return agent.MoneyAllowance{}, errNoDefinition
+		return agenttooltrust.MoneyAllowance{}, errNoDefinition
 	}
 
 	tenantInfo := tenantOf(req.Definition)
 	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
-		return agent.MoneyAllowance{}, fmt.Errorf("read agent money limits: %w", err)
+		return agenttooltrust.MoneyAllowance{}, fmt.Errorf("read agent money limits: %w", err)
 	}
 	currency, err := s.functionalCurrency(ctx, tenantInfo)
 	if err != nil {
-		return agent.MoneyAllowance{}, err
+		return agenttooltrust.MoneyAllowance{}, err
 	}
 	dayStart, err := s.moneyDayStart(ctx, tenantInfo)
 	if err != nil {
-		return agent.MoneyAllowance{}, err
+		return agenttooltrust.MoneyAllowance{}, err
 	}
 
 	day, err := s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
@@ -227,11 +227,11 @@ func (s *Service) MoneyAllowance(
 		Since:      dayStart,
 	})
 	if err != nil {
-		return agent.MoneyAllowance{}, err
+		return agenttooltrust.MoneyAllowance{}, err
 	}
 
 	simulated := req.Definition.SimulationMode
-	run := agent.MoneyUse{}
+	run := agenttooltrust.MoneyUse{}
 	if req.RunID.IsNotNil() {
 		if run, err = s.money.SumAutomaticMoney(ctx, &agentports.SumAutomaticMoneyRequest{
 			TenantInfo: tenantInfo,
@@ -239,15 +239,15 @@ func (s *Service) MoneyAllowance(
 			RunID:      req.RunID,
 			Simulated:  simulated,
 		}); err != nil {
-			return agent.MoneyAllowance{}, err
+			return agenttooltrust.MoneyAllowance{}, err
 		}
 	}
 	if simulated {
 		day = day.Plus(run)
 	}
 
-	return agent.MoneyAllowance{
-		Limits: agent.MoneyLimits{
+	return agenttooltrust.MoneyAllowance{
+		Limits: agenttooltrust.MoneyLimits{
 			CallCeilingMinor: control.AgentMoneyCallCeilingMinor,
 			RunCalls:         control.AgentMoneyRunCalls,
 			RunAmountMinor:   control.AgentMoneyRunAmountMinor,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -290,7 +290,7 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 func (t *planDispatchTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipmentMove,
-		effect:   agent.ToolEffectPresent,
+		effect:   agenttooltrust.ToolEffectPresent,
 	})
 }
 

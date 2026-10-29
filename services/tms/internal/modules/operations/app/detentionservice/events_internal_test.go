@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,11 +24,11 @@ func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEv
 	r.events = append(r.events, event)
 }
 
-func (r *recordingPublisher) kinds() []agent.EventKind {
+func (r *recordingPublisher) kinds() []agenttrigger.EventKind {
 	if len(r.events) == 0 {
 		return nil
 	}
-	out := make([]agent.EventKind, 0, len(r.events))
+	out := make([]agenttrigger.EventKind, 0, len(r.events))
 	for _, event := range r.events {
 		out = append(out, event.Kind)
 	}
@@ -66,12 +66,12 @@ func TestPublishOccurrenceOpened_FiresOnlyWhenTheClockStarts(t *testing.T) {
 		name     string
 		saved    *detention.DetentionOccurrence
 		existing *detention.DetentionOccurrence
-		want     []agent.EventKind
+		want     []agenttrigger.EventKind
 	}{
 		{
 			name:  "a clock that has just started wakes the desk",
 			saved: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			want:  []agent.EventKind{agent.EventDetentionOccurrenceOpened},
+			want:  []agenttrigger.EventKind{agenttrigger.EventDetentionOccurrenceOpened},
 		},
 		{
 			name:     "a clock that was already running is not news",
@@ -89,7 +89,7 @@ func TestPublishOccurrenceOpened_FiresOnlyWhenTheClockStarts(t *testing.T) {
 			name:     "an occurrence reopened after closing is news again",
 			saved:    &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
 			existing: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: false},
-			want:     []agent.EventKind{agent.EventDetentionOccurrenceOpened},
+			want:     []agenttrigger.EventKind{agenttrigger.EventDetentionOccurrenceOpened},
 		},
 	}
 
@@ -148,7 +148,7 @@ func TestSweepNoticesDue_RaisesTheNoticesItLeavesOnTheDesk(t *testing.T) {
 	cases := []struct {
 		name   string
 		policy *detention.DetentionPolicy
-		want   []agent.EventKind
+		want   []agenttrigger.EventKind
 	}{
 		{
 			name: "a policy that leaves sending to a person wakes the desk",
@@ -156,7 +156,7 @@ func TestSweepNoticesDue_RaisesTheNoticesItLeavesOnTheDesk(t *testing.T) {
 				ID:             policyID,
 				AutoSendNotice: false,
 			},
-			want: []agent.EventKind{agent.EventDetentionNoticeDue},
+			want: []agenttrigger.EventKind{agenttrigger.EventDetentionNoticeDue},
 		},
 		{
 			name:   "a policy that could not be read wakes nobody",

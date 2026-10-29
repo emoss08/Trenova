@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -74,7 +74,7 @@ func mappingOptions() []toolpreview.Option {
 func (t *CheckAccountingConnectionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	conn, err := t.connection(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -119,7 +119,7 @@ func (t *CheckAccountingConnectionTool) Preview(
 func (t *SetAccountingMappingTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, row, ref, err := t.request(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -173,7 +173,7 @@ func (t *SetAccountingMappingTool) Preview(
 func (t *ClearAccountingMappingTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -221,7 +221,7 @@ type accountingRecordDraft struct {
 func (t *CreateAccountingReferenceRecordTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -298,7 +298,7 @@ func (t *CreateAccountingReferenceRecordTool) requestedName(
 func (t *RefreshAccountingReferenceDataTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	_, summary, err := t.setup(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
@@ -318,11 +318,11 @@ func (t *RefreshAccountingReferenceDataTool) Preview(
 			"mappings and the books are left alone.",
 		summary.ProviderName,
 		summary.Connection.ExternalCompanyName,
-	), &agent.RecordChange{
+	), &agentpreview.RecordChange{
 		Resource:  record.Resource,
 		EntityID:  record.ID,
 		Label:     record.Label,
-		Operation: agent.PreviewOperationRun,
+		Operation: agentpreview.PreviewOperationRun,
 		Version:   record.Version,
 	})
 	preview.Partial = true

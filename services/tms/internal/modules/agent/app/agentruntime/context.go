@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -236,7 +237,7 @@ func (b *ContextBuilder) describeOrganization(
 func (b *ContextBuilder) readMemories(
 	ctx context.Context,
 	req *agentruntimeports.RuntimeContextRequest,
-	records []agent.EntityRef,
+	records []agentpagecontext.EntityRef,
 	toolNames []string,
 	tenant pagination.TenantInfo,
 ) *agentmemoryports.MemoryContext {
@@ -279,7 +280,7 @@ func (b *ContextBuilder) describeTrenova(
 		req.Actor.PrincipalType == permissionports.PrincipalTypeUser &&
 		slices.Contains(req.Definition.EffectiveToolNames(), agentdefinition.CoreToolFindInTrenova)
 
-	if req.Surface == agent.SurfaceDesk {
+	if req.Surface == agentpagecontext.SurfaceDesk {
 		rc.SurfaceGuide = b.runtimePage(deskPath)
 	}
 

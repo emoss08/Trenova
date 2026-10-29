@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -43,9 +44,9 @@ func New(p Params) agentports.AgentPlanRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *agent.AgentPlan,
-) (*agent.AgentPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+	entity *agentplan.AgentPlan,
+) (*agentplan.AgentPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		if err := agentdb.AgentPlans.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent plan", zap.Error(err))
 
@@ -59,10 +60,10 @@ func (r *repository) Create(
 func (r *repository) ListByIDs(
 	ctx context.Context,
 	req agentports.ListAgentPlansByIDsRequest,
-) ([]*agent.AgentPlan, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentplan.AgentPlan, error) {
 		if len(req.IDs) == 0 {
-			return []*agent.AgentPlan{}, nil
+			return []*agentplan.AgentPlan{}, nil
 		}
 
 		p := agentdb.AgentPlans
@@ -78,8 +79,8 @@ func (r *repository) ListByIDs(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		entity, err := agentdb.AgentPlans.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, planErrors.Map(err, req.ID.String())
@@ -94,8 +95,8 @@ func (r *repository) GetByID(
 func (r *repository) ListByThread(
 	ctx context.Context,
 	req agentports.ListAgentPlansByThreadRequest,
-) ([]*agent.AgentPlan, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentplan.AgentPlan, error) {
 		p := agentdb.AgentPlans
 		run := p.Run()
 		plans, err := p.Where(
@@ -117,16 +118,16 @@ func (r *repository) ListByThread(
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentPlanConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				agentdb.AgentPlans.Query(),
-				&listquery.Request[agent.AgentPlan]{
+				&listquery.Request[agentplan.AgentPlan]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.Columns,
@@ -193,8 +194,8 @@ func statusAssignments(req *agentports.UpdateAgentPlanStatusRequest) []keel.Assi
 func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req agentports.UpdateAgentPlanStatusRequest,
-) (*agent.AgentPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentdb.AgentPlans
 		rows, err := p.Where(
 			p.ID.Eq(req.ID),
@@ -214,8 +215,8 @@ func (r *repository) UpdateStatus(
 func (r *repository) RecordProgress(
 	ctx context.Context,
 	req agentports.RecordAgentPlanProgressRequest,
-) (*agent.AgentPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
 		p := agentdb.AgentPlans
 		failedStep := p.FailedStep.ToNull()
 		if req.FailedStep != nil {
@@ -250,14 +251,14 @@ func (r *repository) ExpirePending(
 		p := agentdb.AgentPlans
 		n, err := p.AllTenants().
 			Where(
-				p.Status.Eq(agent.PlanStatusPending),
+				p.Status.Eq(agentplan.PlanStatusPending),
 				p.ExpiresAt.IsNotNull(),
 				p.ExpiresAt.Lte(req.Before),
 			).
 			Update(
 				ctx,
 				r.db.Keel(ctx),
-				p.Status.To(agent.PlanStatusExpired),
+				p.Status.To(agentplan.PlanStatusExpired),
 				p.Version.ToExpr(p.Version),
 			)
 		if err != nil {
@@ -318,8 +319,8 @@ func (r *repository) expireByRuns(
 	runs *keel.Query[*agent.AgentRun],
 ) (int, error) {
 	p := agentdb.AgentPlans
-	n, err := p.Where(p.Status.Eq(agent.PlanStatusPending), p.RunID.InQuery(runs)).
-		Update(ctx, r.db.Keel(ctx), p.Status.To(agent.PlanStatusExpired))
+	n, err := p.Where(p.Status.Eq(agentplan.PlanStatusPending), p.RunID.InQuery(runs)).
+		Update(ctx, r.db.Keel(ctx), p.Status.To(agentplan.PlanStatusExpired))
 	if err != nil {
 		return 0, err
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func assertPlaybook(t *testing.T, name string, playbook *agenttaskframe.Playbook
 func TestEventPlaybook_EveryEventAnAgentCanStartOnHasOne(t *testing.T) {
 	t.Parallel()
 
-	for _, event := range agent.KnownEvents() {
+	for _, event := range agenttrigger.KnownEvents() {
 		playbook, ok := agenttaskframe.EventPlaybook(event.Kind)
 		require.True(t, ok, "%s has no playbook", event.Kind)
 		assertPlaybook(t, string(event.Kind), &playbook)
@@ -62,7 +63,7 @@ func TestBackgroundFrame_IsBuiltFromWhatStartedTheRun(t *testing.T) {
 	t.Parallel()
 
 	event := agenttaskframe.BackgroundFrame(agent.RunTriggerEvent,
-		agent.EventBankReceiptException, agenttemplate.TemplateCashApplication)
+		agenttrigger.EventBankReceiptException, agenttemplate.TemplateCashApplication)
 	require.NotNil(t, event)
 	assert.Equal(t, "apply-a-bank-receipt", event.Playbook)
 	assert.False(t, event.Inferred, "a frame read off the trigger is not a guess")
@@ -85,7 +86,7 @@ func TestBackgroundFrame_IsBuiltFromWhatStartedTheRun(t *testing.T) {
 	assert.Nil(t, agenttaskframe.BackgroundFrame(agent.RunTriggerManual, "",
 		agenttemplate.TemplateLoadMonitor), "a person who started a run says what it is for")
 	assert.Nil(t, agenttaskframe.BackgroundFrame(agent.RunTriggerEvent,
-		agent.EventKind("shipment.teleported"), ""))
+		agenttrigger.EventKind("shipment.teleported"), ""))
 }
 
 func TestChatFrame_KeepsTheClassifierToOneLineEach(t *testing.T) {
@@ -106,7 +107,7 @@ func TestBuildSystemPrompt_PutsTheTaskInTheTurnsOwnPart(t *testing.T) {
 
 	d := definitionWithInstructions("Cover moves.")
 	frame := agenttaskframe.BackgroundFrame(agent.RunTriggerEvent,
-		agent.EventShipmentMoveUnassigned, agenttemplate.TemplateDispatchAssignment)
+		agenttrigger.EventShipmentMoveUnassigned, agenttemplate.TemplateDispatchAssignment)
 	parts := agentprompt.BuildSystemPromptParts(d, &agentturn.RuntimeContext{
 		Trigger: agent.RunTriggerEvent,
 		Frame:   frame,

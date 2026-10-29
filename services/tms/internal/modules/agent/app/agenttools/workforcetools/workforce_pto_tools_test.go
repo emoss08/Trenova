@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -167,7 +168,7 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		requests.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -178,7 +179,7 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		requests.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -225,7 +226,7 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		requests.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -262,7 +263,7 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		ledger.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(raw),

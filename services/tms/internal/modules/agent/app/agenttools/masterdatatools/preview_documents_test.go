@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -73,9 +73,13 @@ func TestAttachDocument_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"shipmentId": shipmentID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &attacher.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&attacher.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceDocument, change.Resource)
@@ -103,12 +107,16 @@ func TestAttachDocument_PreviewSaysWhenItIsAlreadyThere(t *testing.T) {
 	attacher := &savingAttacher{doc: doc}
 	tool := NewAttachDocumentTool(attacher).(*AttachDocumentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &attacher.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"documentId": doc.ID.String(),
-			"shipmentId": shipmentID.String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&attacher.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"documentId": doc.ID.String(),
+				"shipmentId": shipmentID.String(),
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
 	assert.Contains(t, preview.Summary, "already attached")

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -104,7 +105,7 @@ func TestCheckAccountingConnection_PolicyStaysInside(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
 	assert.Equal(t, agent.TierAutoExecute, policy.DefaultTier)
 	assert.False(t, policy.Reversible)
-	assert.Equal(t, agent.ExternalReadNever, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadNever, policy.ReadsExternal)
 }
 
 func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {

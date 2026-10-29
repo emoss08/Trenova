@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -236,7 +237,7 @@ type saveAgentRequest struct {
 	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
 	CronExpression         string                            `json:"cronExpression"`
 	CronTimezone           string                            `json:"cronTimezone"`
-	EventKinds             []agent.EventKind                 `json:"eventKinds"`
+	EventKinds             []agenttrigger.EventKind          `json:"eventKinds"`
 	IntervalSeconds        int                               `json:"intervalSeconds"`
 	EndsAt                 *int64                            `json:"endsAt"`
 	MaxConcurrentRuns      int                               `json:"maxConcurrentRuns"`

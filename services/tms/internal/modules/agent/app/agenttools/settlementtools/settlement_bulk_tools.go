@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -191,7 +192,7 @@ func (t *SettlementBulkTool[E]) Policy() agenttoolports.ToolPolicy {
 func (t *SettlementBulkTool[E]) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
@@ -218,7 +219,7 @@ func (t *SettlementBulkTool[E]) Execute(
 func (t *SettlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }
 

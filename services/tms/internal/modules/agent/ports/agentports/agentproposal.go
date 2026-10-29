@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,7 +44,7 @@ type RecordAgentProposalExecutionRequest struct {
 	ExecutionError string               `json:"executionError"`
 	// ExecutionResult is what the run made, when the tool reported it. It
 	// is written with the status, so a failure clears an earlier result.
-	ExecutionResult *agent.ToolExecutionResult `json:"executionResult"`
+	ExecutionResult *agentrecord.ToolExecutionResult `json:"executionResult"`
 	// EgressClass is where the write reached as it ran, with any change the
 	// approver made. Empty leaves the proposal's as it was.
 	EgressClass           agent.EgressClass     `json:"egressClass"`
@@ -226,5 +228,8 @@ type AgentProposalRepository interface {
 		req SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 	CountExecutedTool(ctx context.Context, req CountExecutedToolRequest) (int, error)
-	SumAutomaticMoney(ctx context.Context, req *SumAutomaticMoneyRequest) (agent.MoneyUse, error)
+	SumAutomaticMoney(
+		ctx context.Context,
+		req *SumAutomaticMoneyRequest,
+	) (agenttooltrust.MoneyUse, error)
 }

@@ -31,7 +31,7 @@ export type RegisteredKpi = {
   sub?: string;
 };
 
-/** The server's bounds on a view (domain/agent/pagecontext.go). */
+/** The server's bounds on a view (domain/agentpagecontext/pagecontext.go). */
 export const PAGE_VIEW_LIMITS = {
   fieldFilters: 20,
   filterGroups: 5,

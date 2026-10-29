@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -256,11 +257,11 @@ func TestOpenPageThread_ALibraryHasItsOwnConversationWithTheFormulaAssistant(t *
 	assert.Equal(t, agentdefinition.SystemKeyFormulaAssistant,
 		fixture.provisioner.asked[0].SystemKey)
 
-	libraryPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+	libraryPage := &agentpagecontext.PageContext{Path: "/", Draft: &pagedraft.Draft{
 		Surface:        pagedraft.SurfaceFormulaLibrary,
 		FormulaLibrary: &pagedraft.FormulaLibrary{Source: "library \"org.accessorials\"\n"},
 	}}
-	templatePage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+	templatePage := &agentpagecontext.PageContext{Path: "/", Draft: &pagedraft.Draft{
 		Surface: pagedraft.SurfaceFormula,
 		Formula: &pagedraft.Formula{Source: "tariff \"Per Mile\"\n"},
 	}}
@@ -366,8 +367,8 @@ func pageThread(origin conversation.ThreadOrigin, subject agent.SubjectType) *co
 	return thread
 }
 
-func importDraft() *agent.PageContext {
-	return &agent.PageContext{
+func importDraft() *agentpagecontext.PageContext {
+	return &agentpagecontext.PageContext{
 		Path: "/shipment-management/shipments/import",
 		Draft: &pagedraft.Draft{
 			Surface:        pagedraft.SurfaceShipmentImport,
@@ -386,11 +387,11 @@ func TestAssertPageTurn(t *testing.T) {
 	require.NoError(t, fixture.svc.assertPageTurn(ctx, importThread, importDraft(), fixture.actor))
 	require.NoError(t, fixture.svc.assertPageTurn(ctx, importThread, nil, fixture.actor))
 
-	formulaPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+	formulaPage := &agentpagecontext.PageContext{Path: "/", Draft: &pagedraft.Draft{
 		Surface: pagedraft.SurfaceFormula,
 		Formula: &pagedraft.Formula{Source: "tariff \"Per Mile\"\n"},
 	}}
-	libraryPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+	libraryPage := &agentpagecontext.PageContext{Path: "/", Draft: &pagedraft.Draft{
 		Surface:        pagedraft.SurfaceFormulaLibrary,
 		FormulaLibrary: &pagedraft.FormulaLibrary{Source: "library \"org.accessorials\"\n"},
 	}}

@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
@@ -347,7 +347,7 @@ func TestEnqueue_SteersTheReplyUnderWay(t *testing.T) {
 		Scope:   h.scope,
 		Content: "  Actually the carrier is Werner.  ",
 		Request: conversation.QueuedRequest{
-			Mentions: []agent.EntityRef{
+			Mentions: []agentpagecontext.EntityRef{
 				{Type: "carrier", ID: pulid.MustNew("car_").String(), Label: "Werner"},
 			},
 		},

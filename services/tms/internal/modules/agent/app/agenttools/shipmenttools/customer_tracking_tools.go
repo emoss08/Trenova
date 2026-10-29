@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
@@ -131,7 +133,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 				ctx context.Context,
 				req *customertrackingports.IssueLinkRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return shareLink(ctx, tracking, req)
 			},
 		},
@@ -141,7 +143,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 func renderSharedLink(
 	_ *customertrackingports.IssueLinkRequest,
 	plan *customertrackingports.LinkPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	created, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       plan.ShipmentID,
@@ -167,12 +169,12 @@ func shareLink(
 	ctx context.Context,
 	tracking customerTrackingLinker,
 	req *customertrackingports.IssueLinkRequest,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	issued, err := tracking.IssueLink(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	result := &agent.ToolExecutionResult{
+	result := &agentrecord.ToolExecutionResult{
 		Action: "shared",
 		Kind:   "customer tracking link",
 		Name:   issued.URL,
@@ -256,7 +258,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 			Render: func(
 				req *customertrackingports.RevokeLinkRequest,
 				links []*customertracking.Link,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				sentTo := make([]string, 0, len(links))
 				for _, link := range links {
 					if link.RecipientEmail != "" {
@@ -280,12 +282,12 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 				ctx context.Context,
 				req *customertrackingports.RevokeLinkRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				revoked, err := tracking.RevokeLink(ctx, req)
 				if err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "revoked",
 					Kind:   "customer tracking link",
 					Name:   fmt.Sprintf("%d link(s)", revoked),

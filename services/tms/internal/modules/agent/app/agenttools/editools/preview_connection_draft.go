@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -43,7 +43,7 @@ var (
 func (t *ApplyConnectionDraftTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -77,9 +77,9 @@ func pinned(id pulid.ID, version int64) *int64 {
 
 func draftChanges(
 	plan *ediconnectiondraftports.ConnectionDraftPlan,
-) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, 3+len(plan.Mappings))
-	add := func(change *agent.RecordChange, err error) error {
+) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, 3+len(plan.Mappings))
+	add := func(change *agentpreview.RecordChange, err error) error {
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ func writeChange[T any](
 	record toolpreview.Record,
 	before, after *T,
 	fields []string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	if before == nil {
 		return toolpreview.Create(record, after, toolpreview.Only(fields...))
 	}

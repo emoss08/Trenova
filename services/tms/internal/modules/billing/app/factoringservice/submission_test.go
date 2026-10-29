@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -300,7 +300,7 @@ func TestPrepareAndDeliverSendsTheScheduleAndPackets(t *testing.T) {
 	assert.Equal(t, factoringsubmission.SubmissionStatusSent, stored.Status)
 	assert.Equal(t, 2, stored.Attempts)
 	assert.Equal(t, "ref-1", stored.TransportReference)
-	assert.Equal(t, []string{string(agent.EventFactoringSubmissionSent)}, h.events.kinds())
+	assert.Equal(t, []string{string(agenttrigger.EventFactoringSubmissionSent)}, h.events.kinds())
 
 	skipped, err := h.svc.Deliver(t.Context(), req)
 	require.NoError(t, err)
@@ -359,7 +359,7 @@ func TestFailedScheduleCanBeRetriedOrCancelled(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, factoringsubmission.SubmissionStatusFailed, current.Status)
 	assert.Equal(t, "connection refused", current.LastError)
-	assert.Equal(t, []string{string(agent.EventFactoringSubmissionFailed)}, h.events.kinds())
+	assert.Equal(t, []string{string(agenttrigger.EventFactoringSubmissionFailed)}, h.events.kinds())
 
 	_, err = h.svc.Retry(t.Context(), &factoringsubmissionports.SubmissionActionRequest{
 		TenantInfo: h.tenant, SubmissionID: created.ID, Version: current.Version - 1,

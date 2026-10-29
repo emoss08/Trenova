@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -27,12 +27,12 @@ var (
 )
 
 type QueuedRequest struct {
-	Page                  *agent.PageContext `json:"page,omitempty"`
-	Surface               agent.Surface      `json:"surface,omitempty"`
-	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
-	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
-	ProviderID            pulid.ID           `json:"providerId,omitempty"`
-	ProviderChosen        bool               `json:"providerChosen,omitempty"`
+	Page                  *agentpagecontext.PageContext `json:"page,omitempty"`
+	Surface               agentpagecontext.Surface      `json:"surface,omitempty"`
+	Mentions              []agentpagecontext.EntityRef  `json:"mentions,omitempty"`
+	AttachmentDocumentIDs []pulid.ID                    `json:"attachmentDocumentIds,omitempty"`
+	ProviderID            pulid.ID                      `json:"providerId,omitempty"`
+	ProviderChosen        bool                          `json:"providerChosen,omitempty"`
 	// DirectedAgentID hands the message to another agent the person chose,
 	// once the conversation is free. It is a task for that agent, never a
 	// word to the reply under way, so it cannot steer.
@@ -72,7 +72,7 @@ func (m *QueuedMessage) Normalize() {
 		m.Request = &QueuedRequest{}
 	}
 	m.Request.Page = m.Request.Page.Normalized()
-	m.Request.Mentions = agent.NormalizeEntityRefs(m.Request.Mentions)
+	m.Request.Mentions = agentpagecontext.NormalizeEntityRefs(m.Request.Mentions)
 }
 
 func (m *QueuedMessage) Validate(multiErr *errortypes.MultiError) {
@@ -90,7 +90,7 @@ func (m *QueuedMessage) Validate(multiErr *errortypes.MultiError) {
 		m.Request.Page.Validate("context", multiErr)
 	}
 	m.Request.Surface.Validate("surface", multiErr)
-	agent.ValidateEntityRefs("mentions", m.Request.Mentions, multiErr)
+	agentpagecontext.ValidateEntityRefs("mentions", m.Request.Mentions, multiErr)
 	if len(m.Request.AttachmentDocumentIDs) > MaxMessageAttachments {
 		multiErr.Add("attachmentDocumentIds", errortypes.ErrInvalid,
 			fmt.Sprintf("At most %d files can be attached to one message", MaxMessageAttachments))

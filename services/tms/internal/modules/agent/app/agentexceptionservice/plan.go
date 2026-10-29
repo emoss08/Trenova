@@ -1,13 +1,15 @@
 package agentexceptionservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func PlanException(req *agentports.FlagAgentExceptionRequest) (*agent.AgentException, error) {
-	entity := &agent.AgentException{
+func PlanException(
+	req *agentports.FlagAgentExceptionRequest,
+) (*agentexception.AgentException, error) {
+	entity := &agentexception.AgentException{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		RunID:           req.RunID,
@@ -18,7 +20,7 @@ func PlanException(req *agentports.FlagAgentExceptionRequest) (*agent.AgentExcep
 		AttemptSummary:  req.AttemptSummary,
 		Evidence:        req.Evidence,
 		BlastRadius:     req.BlastRadius,
-		ResolutionState: agent.ResolutionStateOpen,
+		ResolutionState: agentexception.ResolutionStateOpen,
 	}
 
 	me := errortypes.NewMultiError()

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
@@ -67,7 +67,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	assert.Contains(t, preview.Summary, "425.00 USD")
 	assert.Contains(t, preview.Summary, "at Memphis DC on SHP-1001")
 
-	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceDetention, change.Resource)
 	assert.Equal(t, before.ID, change.EntityID)
 	assert.Equal(t, int64(4), *change.Version)
@@ -123,9 +123,9 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, det.Noticed, "a preview must not send")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	require.NotNil(t, send.Message)
-	assert.Equal(t, agent.MessageChannelEmail, send.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, send.Message.Channel)
 	assert.Equal(t, "Carrier Billing <notices@carrier.test>", send.Message.From)
 	assert.Equal(t, []string{"ap@acme.test"}, send.Message.To)
 	assert.Equal(t, "Detention charges started", send.Message.Subject)
@@ -135,10 +135,10 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	assert.Equal(t, permission.ResourceCustomer, send.Resource)
 	assert.Equal(t, "Acme Foods", send.Label)
 
-	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, "Sent", agenttoolstest.FindField(t, status, "notificationStatus").After)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, *det.PreviewedNotice, *det.Noticed)

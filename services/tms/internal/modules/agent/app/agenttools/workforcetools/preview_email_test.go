@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,10 +33,10 @@ func TestEmailCustomerPreview_IsTheEmailExecuteSends(t *testing.T) {
 	require.Nil(t, comments.Created, "a preview must not record")
 	assert.Empty(t, preview.Warnings)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, permission.ResourceCustomer, send.Resource)
 	assert.Equal(t, "Acme Freight", send.Label)
-	recorded := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
+	recorded := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationCreate)
 	assert.Equal(t, permission.ResourceShipmentComment, recorded.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -71,7 +71,7 @@ func TestEmailCustomerPreview_SaysNothingGoesToACustomerAlreadyTold(t *testing.T
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningAlreadyToldCustomer, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningAlreadyToldCustomer, preview.Warnings[0].Code)
 	assert.Nil(t, renderer.Req, "nothing is rendered for a send that will not happen")
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), outboundpreview.ErrCustomerAlreadyTold)
@@ -97,13 +97,13 @@ func TestEmailCustomerPreview_WarnsOfSuppressedRecipientsAndSensitiveText(t *tes
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 
-	codes := make([]agent.PreviewWarningCode, 0, len(preview.Warnings))
+	codes := make([]agentpreview.PreviewWarningCode, 0, len(preview.Warnings))
 	for _, warning := range preview.Warnings {
 		codes = append(codes, warning.Code)
 	}
-	assert.ElementsMatch(t, []agent.PreviewWarningCode{
-		agent.PreviewWarningWouldFail,
-		agent.PreviewWarningSensitiveContent,
+	assert.ElementsMatch(t, []agentpreview.PreviewWarningCode{
+		agentpreview.PreviewWarningWouldFail,
+		agentpreview.PreviewWarningSensitiveContent,
 	}, codes)
 }
 
@@ -123,7 +123,7 @@ func TestEmailCustomerPreview_WarnsThatASuppressedCopyIsSkipped(t *testing.T) {
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningRecipientSkipped, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningRecipientSkipped, preview.Warnings[0].Code)
 	assert.Equal(t, []string{"cc@acme.example"}, preview.Warnings[0].Args)
 }
 
@@ -153,7 +153,7 @@ func TestRequestMissingDocsPreview_IsTheEmailExecuteSends(t *testing.T) {
 	assert.Contains(t, preview.Summary, "Signed POD")
 	assert.Contains(t, preview.Summary, "SHP-1001")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, "Halstead Grocery Group", send.Label)
 
 	require.NoError(t, tool.Execute(t.Context(), params))

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -23,7 +23,7 @@ type RecordRead struct {
 func (s *Service) ReadRecord(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-	ref *agent.RecordRef,
+	ref *agentrecord.RecordRef,
 ) (*RecordRead, bool) {
 	if ref == nil || s.queryTools == nil {
 		return nil, false

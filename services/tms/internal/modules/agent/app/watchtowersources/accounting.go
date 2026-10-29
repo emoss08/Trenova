@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -153,7 +154,7 @@ func DescribeAccountingConnectionHealth(
 		Summary:     stringutils.OneLine(summary, 500),
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
-		EventKind:   agent.EventAccountingConnectionDegraded,
+		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
 		OccurredAt:  occurredAt,
 	}, true
@@ -187,7 +188,7 @@ func DescribeAccountingReconnect(
 		Summary:     summary,
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
-		EventKind:   agent.EventAccountingConnectionDegraded,
+		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
 		OccurredAt:  conn.RefreshTokenAbsoluteExpiresAt - conn.ReconnectWarningSeconds(),
 	}, true

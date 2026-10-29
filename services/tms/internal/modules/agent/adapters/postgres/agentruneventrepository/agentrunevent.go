@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentrunrepository"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -93,7 +93,9 @@ func (r *repository) NextSequence(
 	})
 }
 
-func listQuery(req *agentruntimeports.ListAgentRunEventsRequest) *keel.Query[*agent.AgentRunEvent] {
+func listQuery(
+	req *agentruntimeports.ListAgentRunEventsRequest,
+) *keel.Query[*agentrunevent.AgentRunEvent] {
 	e := agentdb.AgentRunEvents
 
 	return e.Where(
@@ -107,12 +109,12 @@ func listQuery(req *agentruntimeports.ListAgentRunEventsRequest) *keel.Query[*ag
 func (r *repository) List(
 	ctx context.Context,
 	req agentruntimeports.ListAgentRunEventsRequest,
-) ([]*agent.AgentRunEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
+) ([]*agentrunevent.AgentRunEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
 		q := listQuery(&req)
 
 		var (
-			events []*agent.AgentRunEvent
+			events []*agentrunevent.AgentRunEvent
 			err    error
 		)
 		if req.Limit > 0 {
@@ -136,11 +138,11 @@ func (r *repository) List(
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentruntimeports.ListAgentRunEventConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 			e := agentdb.AgentRunEvents
 			result, err := listquery.Connection(
 				ctx,
@@ -149,7 +151,7 @@ func (r *repository) ListConnection(
 					keel.When(req.OwnerKind != "", e.OwnerKind.Eq(req.OwnerKind)),
 					ofReadableRuns(req.Reader),
 				),
-				&listquery.Request[agent.AgentRunEvent]{
+				&listquery.Request[agentrunevent.AgentRunEvent]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.Columns,

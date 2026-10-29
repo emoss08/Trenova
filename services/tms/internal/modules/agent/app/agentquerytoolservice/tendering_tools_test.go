@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -93,9 +93,17 @@ func TestListShipmentTenders_ReadsNothingTheCarrierWrote(t *testing.T) {
 		if !field.Selected {
 			continue
 		}
-		assert.NotContains(t,
-			[]string{"declineReason", "counterNote", "recipientEmail", "deliveryError", "revokeReason"},
-			field.Name)
+		assert.NotContains(
+			t,
+			[]string{
+				"declineReason",
+				"counterNote",
+				"recipientEmail",
+				"deliveryError",
+				"revokeReason",
+			},
+			field.Name,
+		)
 	}
 
 	specs := graphQLListSpecs()
@@ -105,7 +113,7 @@ func TestListShipmentTenders_ReadsNothingTheCarrierWrote(t *testing.T) {
 	require.GreaterOrEqual(t, at, 0)
 	tool, err := newGraphQLReadTool(&specs[at], &keyedReader{}, nil)
 	require.NoError(t, err)
-	assert.Equal(t, agent.ExternalReadNever, tool.Policy().ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadNever, tool.Policy().ReadsExternal)
 }
 
 func TestListRateConfirmations_ListsTheMovesRevisions(t *testing.T) {

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,15 +35,15 @@ func (approveOnlyTool) ParamSchema() map[string]any { return map[string]any{} }
 func (approveOnlyTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          "approve_only",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
 		Operation:     permission.OpApprove,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "An approval stub.",
 	}
 }
@@ -101,9 +103,9 @@ func (f *fakeExceptionService) Flag(
 	_ context.Context,
 	req *agentports.FlagAgentExceptionRequest,
 	_ *permissionports.RequestActor,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	f.flagged = append(f.flagged, req)
-	return &agent.AgentException{ID: pulid.MustNew("aexc_")}, nil
+	return &agentexception.AgentException{ID: pulid.MustNew("aexc_")}, nil
 }
 
 // The move, the driver and the equipment all come from the model; the tenant
@@ -202,8 +204,8 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	require.Equal(t, orgID, flagged.TenantInfo.OrgID)
 	require.Equal(t, agent.SubjectBillingQueueItem, flagged.SubjectType)
 	require.Equal(t, subjectID, flagged.SubjectID)
-	require.Equal(t, agent.CategoryMissingDocumentation, flagged.Category)
-	require.Equal(t, agent.SeverityHigh, flagged.Severity)
+	require.Equal(t, agentexception.CategoryMissingDocumentation, flagged.Category)
+	require.Equal(t, agentexception.SeverityHigh, flagged.Severity)
 	require.Equal(t, 1, flagged.BlastRadius)
 	require.Equal(t, agent.TierAutoExecute, tool.Policy().DefaultTier)
 }

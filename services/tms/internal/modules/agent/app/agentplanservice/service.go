@@ -18,7 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -52,7 +54,7 @@ type stepDecider interface {
 	SignalRun(
 		ctx context.Context,
 		req *agentports.DecideAgentProposalRequest,
-		decision *agent.AgentDecision,
+		decision *agentdecision.AgentDecision,
 		runID pulid.ID,
 	) error
 }
@@ -189,14 +191,14 @@ func New(p Params) agentports.AgentPlanService {
 func (s *Service) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	return s.plans.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentPlanConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+) (*pagination.CursorListResult[*agentplan.AgentPlan], error) {
 	return s.plans.ListConnection(ctx, req)
 }
 
@@ -210,19 +212,19 @@ func (s *Service) Decide(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
-	prepared, err := s.prepare(ctx, req, actor, agent.PlanStatusPending)
+) (*agentplan.AgentPlan, error) {
+	prepared, err := s.prepare(ctx, req, actor, agentplan.PlanStatusPending)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.claimAndRun(ctx, req, actor, prepared, agent.PlanStatusPending)
+	return s.claimAndRun(ctx, req, actor, prepared, agentplan.PlanStatusPending)
 }
 
 // preparedPlan is a plan checked for deciding: its steps and, for an
 // approval, the preview the decider approved.
 type preparedPlan struct {
-	plan  *agent.AgentPlan
+	plan  *agentplan.AgentPlan
 	steps []*agent.AgentProposal
 	shown *shownPlan
 }
@@ -234,7 +236,7 @@ func (s *Service) prepare(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
-	from agent.PlanStatus,
+	from agentplan.PlanStatus,
 ) (*preparedPlan, error) {
 	if !actor.IsUser() {
 		return nil, errortypes.NewValidationError(
@@ -243,7 +245,8 @@ func (s *Service) prepare(
 			"Only a human user can decide on agent plans",
 		)
 	}
-	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionRejected {
+	if req.Decision != agentdecision.DecisionAccepted &&
+		req.Decision != agentdecision.DecisionRejected {
 		return nil, errortypes.NewValidationError(
 			"decision",
 			errortypes.ErrInvalid,
@@ -255,7 +258,7 @@ func (s *Service) prepare(
 			"Plans cannot be decided: no decision service is wired",
 		)
 	}
-	if err := agent.CheckDecisionNote(agent.NormalizeDecisionNote(req.Note)); err != nil {
+	if err := agentdecision.CheckDecisionNote(agentdecision.NormalizeDecisionNote(req.Note)); err != nil {
 		return nil, err
 	}
 
@@ -266,7 +269,7 @@ func (s *Service) prepare(
 	if err != nil {
 		return nil, err
 	}
-	if from == agent.PlanStatusPending {
+	if from == agentplan.PlanStatusPending {
 		if err = decidable(plan); err != nil {
 			return nil, err
 		}
@@ -311,12 +314,12 @@ func (s *Service) claimAndRun(
 	req *agentports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
 	prepared *preparedPlan,
-	from agent.PlanStatus,
-) (*agent.AgentPlan, error) {
+	from agentplan.PlanStatus,
+) (*agentplan.AgentPlan, error) {
 	now := timeutils.NowUnix()
-	claimed := agent.PlanStatusApproved
-	if req.Decision == agent.DecisionRejected {
-		claimed = agent.PlanStatusRejected
+	claimed := agentplan.PlanStatusApproved
+	if req.Decision == agentdecision.DecisionRejected {
+		claimed = agentplan.PlanStatusRejected
 	}
 	plan, err := s.plans.UpdateStatus(ctx, agentports.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
@@ -327,7 +330,7 @@ func (s *Service) claimAndRun(
 		DecidedAt:       now,
 		Approval: agentports.PlanApproval{
 			ReasonCode:    req.ReasonCode,
-			Note:          agent.NormalizeDecisionNote(req.Note),
+			Note:          agentdecision.NormalizeDecisionNote(req.Note),
 			PreviewDigest: prepared.settledDigest(from),
 		},
 	})
@@ -337,7 +340,7 @@ func (s *Service) claimAndRun(
 
 	s.clearFromWatchtower(ctx, plan, req.TenantInfo)
 
-	if req.Decision == agent.DecisionRejected {
+	if req.Decision == agentdecision.DecisionRejected {
 		s.rejectSteps(ctx, req, prepared.steps, actor)
 		s.logDecision(plan, prepared.steps, actor, "Agent plan rejected")
 		s.announce(ctx, plan, actor, agentports.ActivityUpdated)
@@ -362,7 +365,7 @@ func (s *Service) claimAndRun(
 	}
 	s.logDecision(plan, prepared.steps, actor, comment)
 	action := agentports.ActivityUpdated
-	if from == agent.PlanStatusApproving {
+	if from == agentplan.PlanStatusApproving {
 		action = agentports.ActivityCommitted
 	}
 	s.announce(ctx, plan, actor, action)
@@ -379,14 +382,14 @@ func (s *Service) DecideOwn(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
 
 	// An approval from the person's own conversation waits out the undo
 	// window; no step runs until the window closes.
-	if req.Decision == agent.DecisionAccepted && s.defers() {
+	if req.Decision == agentdecision.DecisionAccepted && s.defers() {
 		return s.approveDeferred(ctx, req, actor)
 	}
 
@@ -475,7 +478,7 @@ func (s *Service) AssertOwnPlan(
 func (s *Service) stepRuns(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	planRun *agent.AgentRun,
 ) ([]*agent.AgentRun, error) {
 	steps, err := s.proposals.ListByPlan(ctx, agentports.ListAgentProposalsByPlanRequest{
@@ -502,7 +505,7 @@ func (s *Service) stepRuns(
 	return runs, nil
 }
 
-func otherStepRuns(plan *agent.AgentPlan, steps []*agent.AgentProposal) []pulid.ID {
+func otherStepRuns(plan *agentplan.AgentPlan, steps []*agent.AgentProposal) []pulid.ID {
 	seen := map[pulid.ID]struct{}{plan.RunID: {}}
 	runs := make([]pulid.ID, 0, len(steps))
 	for _, step := range steps {
@@ -522,7 +525,7 @@ func otherStepRuns(plan *agent.AgentPlan, steps []*agent.AgentProposal) []pulid.
 func (s *Service) refuseShadowedSteps(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	steps []*agent.AgentProposal,
 ) error {
 	stepRuns := otherStepRuns(plan, steps)
@@ -540,12 +543,12 @@ func (s *Service) refuseShadowedSteps(
 func (s *Service) PlanHolds(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	plans []*agent.AgentPlan,
+	plans []*agentplan.AgentPlan,
 ) (map[pulid.ID]*assistantports.ProposalHold, error) {
 	holds := make(map[pulid.ID]*assistantports.ProposalHold, len(plans))
 	waiting := make([]pulid.ID, 0, len(plans))
 	for _, plan := range plans {
-		if plan != nil && plan.Status == agent.PlanStatusPending {
+		if plan != nil && plan.Status == agentplan.PlanStatusPending {
 			waiting = append(waiting, plan.ID)
 		}
 	}
@@ -570,7 +573,7 @@ func (s *Service) PlanHolds(
 	runs := make([]pulid.ID, 0, len(waiting))
 	stepRuns := make(map[pulid.ID][]pulid.ID, len(waiting))
 	for _, plan := range plans {
-		if plan == nil || plan.Status != agent.PlanStatusPending {
+		if plan == nil || plan.Status != agentplan.PlanStatusPending {
 			continue
 		}
 		stepRuns[plan.ID] = otherStepRuns(plan, stepsByPlan[plan.ID])
@@ -583,7 +586,7 @@ func (s *Service) PlanHolds(
 	}
 
 	for _, plan := range plans {
-		if plan == nil || plan.Status != agent.PlanStatusPending {
+		if plan == nil || plan.Status != agentplan.PlanStatusPending {
 			continue
 		}
 		hold := agentshadow.PlanVerdict(verdicts, plan.RunID, stepRuns[plan.ID]).Hold()
@@ -642,7 +645,7 @@ func (s *Service) assertMayUseAgent(
 // WithinPlan set, so the steps start none of their own.
 func (s *Service) followUp(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	tenant pagination.TenantInfo,
 ) {
 	if s.followUps == nil || plan == nil {
@@ -660,7 +663,7 @@ func (s *Service) followUp(
 // never on it on their own, so nothing else needs clearing.
 func (s *Service) clearFromWatchtower(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	tenant pagination.TenantInfo,
 ) {
 	if s.watchtower == nil || plan == nil {
@@ -674,7 +677,7 @@ func (s *Service) clearFromWatchtower(
 // and the pane shows its steps ticking or where it stopped.
 func (s *Service) announce(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	actor *permissionports.RequestActor,
 	action string,
 ) {
@@ -689,7 +692,7 @@ func (s *Service) announce(
 // the preview they approved.
 type stepRun struct {
 	req     *agentports.DecideAgentPlanRequest
-	plan    *agent.AgentPlan
+	plan    *agentplan.AgentPlan
 	steps   []*agent.AgentProposal
 	actor   *permissionports.RequestActor
 	preview *shownPlan
@@ -709,14 +712,14 @@ type recordKey struct {
 // version that step left it at. Its own pin was taken before either ran, so
 // comparing against it refused the second of two changes to one record every
 // time, although the approver approved both together.
-func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
-	if agent.PlanRunModeOf(r.steps) == agent.PlanRunModeEachStep {
+func (s *Service) runSteps(ctx context.Context, r *stepRun) *agentplan.AgentPlan {
+	if agentplan.PlanRunModeOf(r.steps) == agentplan.PlanRunModeEachStep {
 		return s.runIndependent(ctx, r)
 	}
 
 	req, plan := r.req, r.plan
 	completed := plan.CompletedSteps
-	var last *agent.AgentDecision
+	var last *agentdecision.AgentDecision
 	var lastReq *agentports.DecideAgentProposalRequest
 	left := make(map[recordKey]int64, len(r.steps))
 
@@ -745,8 +748,8 @@ type stepFailure struct {
 	cause error
 }
 
-func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan {
-	var last *agent.AgentDecision
+func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agentplan.AgentPlan {
+	var last *agentdecision.AgentDecision
 	var lastReq *agentports.DecideAgentProposalRequest
 	refusals := make([]stepFailure, 0, 1)
 	firstPending := 0
@@ -764,7 +767,7 @@ func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan 
 
 		stepReq := &agentports.DecideAgentProposalRequest{
 			ProposalID: step.ID,
-			Decision:   agent.DecisionAccepted,
+			Decision:   agentdecision.DecisionAccepted,
 			ReasonCode: planReason(r.req.ReasonCode, r.plan.ID),
 			Note:       r.req.Note,
 			TenantInfo: r.req.TenantInfo,
@@ -772,7 +775,7 @@ func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan 
 		}
 		r.preview.annotate(stepReq, step.ID)
 
-		cause := agent.ErrTargetChanged
+		cause := agentplan.ErrTargetChanged
 		outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, r.actor)
 		switch {
 		case err != nil:
@@ -787,7 +790,10 @@ func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan 
 		refusals = append(refusals, stepFailure{step: step.PlanStep, cause: cause})
 	}
 	if len(refusals) == 0 {
-		refusals = append(refusals, stepFailure{step: firstPending, cause: agent.ErrTargetChanged})
+		refusals = append(
+			refusals,
+			stepFailure{step: firstPending, cause: agentplan.ErrTargetChanged},
+		)
 	}
 
 	s.signal(ctx, r.plan, last, lastReq)
@@ -798,7 +804,7 @@ func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan 
 
 func staleFailure(refusals []stepFailure) error {
 	var b strings.Builder
-	b.WriteString(agent.ErrPlanTargetChanged.Error())
+	b.WriteString(agentplan.ErrPlanTargetChanged.Error())
 	for idx, refusal := range refusals {
 		if idx == maxReportedStepFailures {
 			fmt.Fprintf(&b, "; and %d more", len(refusals)-idx)
@@ -811,9 +817,9 @@ func staleFailure(refusals []stepFailure) error {
 	return errors.New(b.String())
 }
 
-func (s *Service) runIndependent(ctx context.Context, r *stepRun) *agent.AgentPlan {
+func (s *Service) runIndependent(ctx context.Context, r *stepRun) *agentplan.AgentPlan {
 	completed := r.plan.CompletedSteps
-	var last *agent.AgentDecision
+	var last *agentdecision.AgentDecision
 	var lastReq *agentports.DecideAgentProposalRequest
 	failures := make([]stepFailure, 0, len(r.steps))
 	left := make(map[recordKey]int64, len(r.steps))
@@ -878,7 +884,7 @@ func (s *Service) runStep(
 	key := recordKey{resource: step.TargetResource, id: step.TargetID}
 	stepReq := &agentports.DecideAgentProposalRequest{
 		ProposalID: step.ID,
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		ReasonCode: planReason(r.req.ReasonCode, r.plan.ID),
 		Note:       r.req.Note,
 		TenantInfo: r.req.TenantInfo,
@@ -907,13 +913,13 @@ func (s *Service) complete(
 	ctx context.Context,
 	r *stepRun,
 	completed int,
-	last *agent.AgentDecision,
+	last *agentdecision.AgentDecision,
 	lastReq *agentports.DecideAgentProposalRequest,
-) *agent.AgentPlan {
+) *agentplan.AgentPlan {
 	progressed, err := s.plans.RecordProgress(ctx, agentports.RecordAgentPlanProgressRequest{
 		ID:             r.plan.ID,
 		TenantInfo:     r.req.TenantInfo,
-		Status:         agent.PlanStatusCompleted,
+		Status:         agentplan.PlanStatusCompleted,
 		CompletedSteps: completed,
 	})
 	if err != nil {
@@ -929,8 +935,8 @@ func (s *Service) complete(
 
 func (s *Service) signal(
 	ctx context.Context,
-	plan *agent.AgentPlan,
-	last *agent.AgentDecision,
+	plan *agentplan.AgentPlan,
+	last *agentdecision.AgentDecision,
 	lastReq *agentports.DecideAgentProposalRequest,
 ) {
 	if last == nil || lastReq == nil {
@@ -944,11 +950,11 @@ func (s *Service) signal(
 func (s *Service) failAt(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	step int,
 	completed int,
 	cause error,
-) *agent.AgentPlan {
+) *agentplan.AgentPlan {
 	s.l.Warn("agent plan stopped at a failed step",
 		zap.String("plan", plan.ID.String()),
 		zap.Int("step", step),
@@ -970,7 +976,7 @@ func (s *Service) failAt(
 	progressed, err := s.plans.RecordProgress(ctx, agentports.RecordAgentPlanProgressRequest{
 		ID:             plan.ID,
 		TenantInfo:     req.TenantInfo,
-		Status:         agent.PlanStatusFailed,
+		Status:         agentplan.PlanStatusFailed,
 		CompletedSteps: completed,
 		FailedStep:     &failedStep,
 		FailureError:   cause.Error(),
@@ -994,7 +1000,7 @@ func (s *Service) rejectSteps(
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 ) {
-	var last *agent.AgentDecision
+	var last *agentdecision.AgentDecision
 	var stepReq *agentports.DecideAgentProposalRequest
 	for _, step := range steps {
 		if step.Status != agent.ProposalStatusPending {
@@ -1002,7 +1008,7 @@ func (s *Service) rejectSteps(
 		}
 		stepReq = &agentports.DecideAgentProposalRequest{
 			ProposalID: step.ID,
-			Decision:   agent.DecisionRejected,
+			Decision:   agentdecision.DecisionRejected,
 			ReasonCode: planReason(req.ReasonCode, req.PlanID),
 			Note:       req.Note,
 			TenantInfo: req.TenantInfo,
@@ -1026,7 +1032,7 @@ func (s *Service) rejectSteps(
 }
 
 func (s *Service) logDecision(
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 	comment string,
@@ -1064,7 +1070,7 @@ func planReason(reason string, planID pulid.ID) string {
 	return reason + " (plan " + planID.String() + ")"
 }
 
-func decidable(plan *agent.AgentPlan) error {
+func decidable(plan *agentplan.AgentPlan) error {
 	if !plan.Status.Decidable() {
 		return errortypes.NewBusinessError(
 			"This plan has already been decided: it is {0}",
@@ -1099,7 +1105,7 @@ func shadowRefusal(verdict agentshadow.Verdict) error {
 // decisionState is the plan as decided and, when any step was decided after
 // its run read outside content, that content's marks: the trail says what
 // may have steered the changes, a script's batch above all.
-func decisionState(plan *agent.AgentPlan, steps []*agent.AgentProposal) map[string]any {
+func decisionState(plan *agentplan.AgentPlan, steps []*agent.AgentProposal) map[string]any {
 	state := jsonutils.MustToJSON(plan)
 	tainted := false
 	taint := &agent.RunTaint{}

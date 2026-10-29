@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
@@ -76,9 +76,13 @@ func TestSaveTableView_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"shared":      true,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &views.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&views.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Zero(t, composer.composed, "a preview does not ask a model to compose the filters")
 	assert.True(t, preview.Partial)
@@ -98,14 +102,18 @@ func TestSaveTableView_PreviewWarnsOnAnUnknownTable(t *testing.T) {
 	views := &savingViews{}
 	tool := savedViewTool(views, &composingViews{})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &views.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"entity":      "spaceships",
-			"name":        "x",
-			"description": "y",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&views.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"entity":      "spaceships",
+				"name":        "x",
+				"description": "y",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

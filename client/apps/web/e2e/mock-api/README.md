@@ -382,7 +382,7 @@ scenarios and the panels each one opens. The AI control data is the design hando
 kinds in `fixtures/ai/` are dumped from the Go service, so names and labels are the real ones.
 Regenerate them after the registry changes with a throwaway test that marshals
 `aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
-`agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
+`agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agenttrigger.KnownEvents()`.
 
 The Analytics tab (`?tab=analytics`, shots named `analytics-*`) reads `agentAnalytics` and
 `agentAnalyticsToolFailures` from `handlers/aianalytics.mjs`, which ports the Go service's rules

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,7 @@ func TestDecide_ScriptIntentsNeverRunOnTheirOwn(t *testing.T) {
 				Params:         call(agentPrincipal(), nil),
 				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
-				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+				MoneyAllowance: allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
 				FromScript:     true,
 			},
 			tier:   agent.TierActWithApproval,
@@ -58,12 +59,12 @@ func TestDecide_ScriptIntentsNeverRunOnTheirOwn(t *testing.T) {
 				Params:         call(agentPrincipal(), nil),
 				Definition:     actsAlone("receivable_post_customer_payment"),
 				Taint:          clean(),
-				MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+				MoneyAllowance: allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
 				FromScript:     true,
 			},
 			tier: agent.TierActWithApproval,
 			heldBy: []string{
-				agent.HeldByMoneyUnproven,
+				agenttooltrust.HeldByMoneyUnproven,
 				agenttoolpolicy.HeldByScriptIntent,
 			},
 		},
@@ -124,9 +125,13 @@ func TestDecide_ScriptIntentHoldsNoMoneyAllowance(t *testing.T) {
 			"receivable_post_customer_payment": agent.TierAutoExecute,
 		}),
 		Taint:          clean(),
-		MoneyAllowance: allowance(agent.MoneyUse{}, agent.MoneyUse{}),
+		MoneyAllowance: allowance(agenttooltrust.MoneyUse{}, agenttooltrust.MoneyUse{}),
 		FromScript:     true,
 	})
 
-	assert.Nil(t, decision.MoneyMinor, "a held write spends nothing of the run's or the day's allowance")
+	assert.Nil(
+		t,
+		decision.MoneyMinor,
+		"a held write spends nothing of the run's or the day's allowance",
+	)
 }

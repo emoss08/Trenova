@@ -3,13 +3,13 @@ package agentmemoryservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
 
-func (s *Service) queueForRetrieval(ctx context.Context, memory *agent.Memory) {
+func (s *Service) queueForRetrieval(ctx context.Context, memory *agentmemory.Memory) {
 	if s.indexer == nil || memory == nil {
 		return
 	}

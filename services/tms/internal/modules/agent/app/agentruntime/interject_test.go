@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -93,7 +93,9 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 		Definition: testDefinition("customer_get"),
 		Actor:      actor,
 		Input:      "Is S-1001 ready to bill?",
-		Records:    []agent.EntityRef{{Type: "shipment", ID: watchedShipment, Label: "S-1001"}},
+		Records: []agentpagecontext.EntityRef{
+			{Type: "shipment", ID: watchedShipment, Label: "S-1001"},
+		},
 	})
 	require.NotNil(t, turn.world, "a turn with records and a feed watches them")
 	fx := &clockedEffects{
@@ -149,7 +151,7 @@ func TestDrive_DoesNotCheckBeforeACheckIsDue(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Where is S-1001?",
-		Records:    []agent.EntityRef{{Type: "shipment", ID: watchedShipment}},
+		Records:    []agentpagecontext.EntityRef{{Type: "shipment", ID: watchedShipment}},
 	})
 	fx := &clockedEffects{
 		localEffects: &localEffects{
@@ -175,7 +177,7 @@ func TestOpenTurn_DelegatedTurnWatchesNothing(t *testing.T) {
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Check the carrier.",
-		Records:    []agent.EntityRef{{Type: "shipment", ID: watchedShipment}},
+		Records:    []agentpagecontext.EntityRef{{Type: "shipment", ID: watchedShipment}},
 		Delegation: &agentruntimeports.Delegation{},
 	})
 
@@ -214,7 +216,11 @@ func TestWorldState_ReadsWatchTheRecordsAGetCallNamed(t *testing.T) {
 func TestWorldState_ItsOwnWriteIsNotNews(t *testing.T) {
 	t.Parallel()
 
-	world := openWorld("0.1-0", []agent.EntityRef{{Type: "shipment", ID: watchedShipment}}, 100)
+	world := openWorld(
+		"0.1-0",
+		[]agentpagecontext.EntityRef{{Type: "shipment", ID: watchedShipment}},
+		100,
+	)
 	world.wrote(&agentruntimeports.PendingAction{
 		Executed: true,
 		Target: &agentruntimeports.ProposalTarget{
@@ -249,7 +255,7 @@ func TestWorldState_ItsOwnWriteIsNotNews(t *testing.T) {
 func TestWorldState_DueOnlyAfterTheInterval(t *testing.T) {
 	t.Parallel()
 
-	world := openWorld("0.1-0", []agent.EntityRef{{ID: watchedShipment}}, 100)
+	world := openWorld("0.1-0", []agentpagecontext.EntityRef{{ID: watchedShipment}}, 100)
 	assert.Nil(t, world.due(100+worldCheckEvery-1))
 	require.NotNil(t, world.due(100+worldCheckEvery))
 
@@ -281,7 +287,7 @@ func TestReplayHistory_FramesASteerAndKeepsItInsideItsTurn(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "Find a carrier for S-1001."},
 		{Role: conversation.RoleAssistant, Content: "Looking."},
 		{Role: conversation.RoleUser, Kind: conversation.MessageKindSteer, Content: "Only Werner.",
-			Mentions: []agent.EntityRef{
+			Mentions: []agentpagecontext.EntityRef{
 				{Type: "carrier", ID: "car_01J9WERNERWERNERWERNER000", Label: "Werner"},
 			}},
 		{Role: conversation.RoleUser, Kind: conversation.MessageKindWorldChange, Content: "notice"},

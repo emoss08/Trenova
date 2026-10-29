@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
@@ -146,31 +146,31 @@ func (s *Scenario) deriveLabels() {
 }
 
 type Step struct {
-	Say           string           `yaml:"say"           json:"say,omitempty"`
-	Agent         string           `yaml:"agent"         json:"agent,omitempty"`
-	Page          map[string]any   `yaml:"page"          json:"page,omitempty"`
-	Mentions      []map[string]any `yaml:"mentions"      json:"mentions,omitempty"`
-	Surface       agent.Surface    `yaml:"surface"       json:"surface,omitempty"`
-	Decide        DecisionAction   `yaml:"decide"        json:"decide,omitempty"`
-	Note          string           `yaml:"note"          json:"note,omitempty"`
-	Tool          string           `yaml:"tool"          json:"tool,omitempty"`
-	Modifications map[string]any   `yaml:"modifications" json:"modifications,omitempty"`
-	Attach        []string         `yaml:"attach"        json:"attach,omitempty"`
-	Fire          *Fire            `yaml:"fire"          json:"fire,omitempty"`
-	Setup         []string         `yaml:"setup"         json:"setup,omitempty"`
-	Expect        Expect           `yaml:"expect"        json:"expect"`
+	Say           string                   `yaml:"say"           json:"say,omitempty"`
+	Agent         string                   `yaml:"agent"         json:"agent,omitempty"`
+	Page          map[string]any           `yaml:"page"          json:"page,omitempty"`
+	Mentions      []map[string]any         `yaml:"mentions"      json:"mentions,omitempty"`
+	Surface       agentpagecontext.Surface `yaml:"surface"       json:"surface,omitempty"`
+	Decide        DecisionAction           `yaml:"decide"        json:"decide,omitempty"`
+	Note          string                   `yaml:"note"          json:"note,omitempty"`
+	Tool          string                   `yaml:"tool"          json:"tool,omitempty"`
+	Modifications map[string]any           `yaml:"modifications" json:"modifications,omitempty"`
+	Attach        []string                 `yaml:"attach"        json:"attach,omitempty"`
+	Fire          *Fire                    `yaml:"fire"          json:"fire,omitempty"`
+	Setup         []string                 `yaml:"setup"         json:"setup,omitempty"`
+	Expect        Expect                   `yaml:"expect"        json:"expect"`
 }
 
 func (s *Step) Utterance() (Utterance, error) {
 	utterance := Utterance{Content: s.Say, Surface: s.Surface, Attachments: s.Attach}
 	if len(s.Page) > 0 {
-		utterance.Page = new(agent.PageContext)
+		utterance.Page = new(agentpagecontext.PageContext)
 		if err := jsonutils.Convert(s.Page, utterance.Page); err != nil {
 			return Utterance{}, fmt.Errorf("page: %w", err)
 		}
 	}
 	if len(s.Mentions) > 0 {
-		utterance.Mentions = make([]agent.EntityRef, 0, len(s.Mentions))
+		utterance.Mentions = make([]agentpagecontext.EntityRef, 0, len(s.Mentions))
 		if err := jsonutils.Convert(s.Mentions, &utterance.Mentions); err != nil {
 			return Utterance{}, fmt.Errorf("mentions: %w", err)
 		}
@@ -734,7 +734,8 @@ func (s *Scenario) validatePalette() error {
 	}
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
-		if step.Agent != "" || (step.Surface != "" && step.Surface != agent.SurfacePalette) {
+		if step.Agent != "" ||
+			(step.Surface != "" && step.Surface != agentpagecontext.SurfacePalette) {
 			return fmt.Errorf(
 				"%s step %d: every message in a palette scenario is asked from the palette",
 				s.Name, idx+1,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -92,8 +93,8 @@ func (t *readAttachmentTool) ParamSchema() map[string]any {
 func (t *readAttachmentTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAssistant,
-		scope:    agent.ToolScopeSelf,
-		reads:    agent.ExternalReadAlways,
+		scope:    agenttooltrust.ToolScopeSelf,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceAttachment,
 		rationale: "Reads text from a file the person attached to their own conversation; " +
 			"nothing changes and nothing is sent.",

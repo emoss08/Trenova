@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -87,7 +89,7 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 	assert.Empty(t, rows[1].FileName, "a file name above the caller's ceiling is left out")
 	assert.Equal(t, "meaning", rows[1].Match)
 
-	assert.Equal(t, []agent.RecordRef{
+	assert.Equal(t, []agentrecord.RecordRef{
 		{EntityType: agent.TaintEntityDocument, ID: first.ID.String()},
 		{EntityType: agent.TaintEntityDocument, ID: second.ID.String()},
 	}, outcome.TaintedRecords())
@@ -134,14 +136,14 @@ func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
 
 	documents := newSearchDocumentsTool(nil, nil, nil).Policy()
 	assert.Equal(t, permission.ResourceDocument, documents.Resource)
-	assert.Equal(t, agent.ExternalReadAlways, documents.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, documents.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceDocument, documents.Source)
 
 	inbox, err := provideListInboundMessagesTool(&keyedReader{}, nil, nil)
 	require.NoError(t, err)
 	messages := inbox.Policy()
 	assert.Equal(t, permission.ResourceInboundMessage, messages.Resource)
-	assert.Equal(t, agent.ExternalReadAlways, messages.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, messages.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceInboundMessage, messages.Source)
 }
 

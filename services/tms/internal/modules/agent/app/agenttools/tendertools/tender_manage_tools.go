@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -115,15 +116,15 @@ func (t *CancelTenderTool) ParamSchema() map[string]any {
 func (t *CancelTenderTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceTender,
 		Operation:     permission.OpCancel,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Condition: &agenttoolports.TierCondition{
 			Description: "A tender waiting on review holds a carrier's acceptance, so " +
 				"withdrawing it is a proposal a person decides, as is one the service would " +
@@ -278,10 +279,10 @@ func (t *RecordTenderResponseTool) ParamSchema() map[string]any {
 func (t *RecordTenderResponseTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:      t.Name(),
-		Kind:      agent.ToolKindAction,
+		Kind:      agenttooltrust.ToolKindAction,
 		Resource:  permission.ResourceTender,
 		Operation: permission.OpUpdate,
-		Scope:     agent.ToolScopeTenant,
+		Scope:     agenttooltrust.ToolScopeTenant,
 		// An acceptance is a proposal a person decides whatever the agent's
 		// setting; a decline runs once a person approves it.
 		DefaultTier: agent.TierPropose,
@@ -291,8 +292,8 @@ func (t *RecordTenderResponseTool) Policy() agenttoolports.ToolPolicy {
 			agent.EgressMoney,
 		},
 		Classify:      classifyTenderResponse,
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Condition: &agenttoolports.TierCondition{
 			Description: "Recording an acceptance, a counter or a carrier backing out moves " +
 				"money or the carrier off the move, so it is a proposal a person decides; a " +

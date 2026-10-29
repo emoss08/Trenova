@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 )
 
@@ -43,7 +44,7 @@ func ChatFrame(goal, need string) *agentturn.TaskFrame {
 
 func BackgroundFrame(
 	trigger agent.RunTrigger,
-	eventKind agent.EventKind,
+	eventKind agenttrigger.EventKind,
 	template agenttemplate.Template,
 ) *agentturn.TaskFrame {
 	switch trigger {
@@ -64,7 +65,7 @@ func BackgroundFrame(
 	return nil
 }
 
-func EventPlaybook(kind agent.EventKind) (Playbook, bool) {
+func EventPlaybook(kind agenttrigger.EventKind) (Playbook, bool) {
 	playbook, ok := eventPlaybooks[kind]
 
 	return playbook, ok
@@ -131,8 +132,8 @@ var loadMonitorPlaybook = Playbook{
 		"drivers of delays; send detention notices; flag a load for review",
 }
 
-var eventPlaybooks = map[agent.EventKind]Playbook{
-	agent.EventBillingQueueItemException: {
+var eventPlaybooks = map[agenttrigger.EventKind]Playbook{
+	agenttrigger.EventBillingQueueItemException: {
 		ID:   "clear-billing-exception",
 		Goal: "Work out why the billing item cannot be invoiced and propose what clears it.",
 		Steps: []string{
@@ -145,7 +146,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the billing queue item, its readiness checks and exceptions; read the " +
 			"shipment's charges, documents and holds; propose a fix or raise an exception",
 	},
-	agent.EventBillingQueueItemOnHold: {
+	agenttrigger.EventBillingQueueItemOnHold: {
 		ID:   "release-billing-hold",
 		Goal: "Find what the held billing item waits on and whether it has arrived.",
 		Steps: []string{
@@ -159,7 +160,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the held billing queue item and its notes; read the shipment's documents; " +
 			"release a billing hold or request a missing document",
 	},
-	agent.EventShipmentMoveUnassigned: {
+	agenttrigger.EventShipmentMoveUnassigned: {
 		ID:   "cover-a-move",
 		Goal: "Get the move that lost its driver covered, if it starts inside the coverage window.",
 		Steps: []string{
@@ -172,7 +173,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the shipment move and its stops; find available drivers with hours and " +
 			"equipment; find carriers and lane rates; assign a driver or carrier to the move",
 	},
-	agent.EventShipmentMoveCoverageAtRisk: {
+	agenttrigger.EventShipmentMoveCoverageAtRisk: {
 		ID:   "cover-a-move",
 		Goal: "Get the move starting soon with nobody on it covered.",
 		Steps: []string{
@@ -185,7 +186,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the shipment move and its stops; find available drivers with hours and " +
 			"equipment; find carriers and lane rates; assign a driver or carrier to the move",
 	},
-	agent.EventShipmentCreated: {
+	agenttrigger.EventShipmentCreated: {
 		ID:   "check-a-new-load",
 		Goal: "Check the new shipment was entered completely and correctly.",
 		Steps: []string{
@@ -198,7 +199,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the new shipment, its stops, commodities, charges and source document; read " +
 			"the customer's requirements; update the shipment",
 	},
-	agent.EventDocumentExtracted: {
+	agenttrigger.EventDocumentExtracted: {
 		ID:   "enter-a-shipment-from-a-document",
 		Goal: "Turn the document that was just read into a proposed shipment, or an exception.",
 		Steps: []string{
@@ -212,7 +213,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the document and its extracted fields; find customers, locations, " +
 			"commodities and accessorial charges; quote a lane rate; create a shipment",
 	},
-	agent.EventServiceFailureDetected: {
+	agenttrigger.EventServiceFailureDetected: {
 		ID:   "work-a-service-failure",
 		Goal: "Settle the late or missed stop: its cause, who is told and what is charged.",
 		Steps: []string{
@@ -224,7 +225,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the shipment's service failures, stops, tracking and comments; update a " +
 			"service failure; notify the customer",
 	},
-	agent.EventShipmentMoveArrived: {
+	agenttrigger.EventShipmentMoveArrived: {
 		ID:   "tell-the-customer-arrived",
 		Goal: "Tell the customer the truck reached the stop, if they asked to be told.",
 		Steps: []string{
@@ -236,7 +237,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the customer's notification settings and contacts; read the shipment's " +
 			"stops; email the customer a status update",
 	},
-	agent.EventShipmentMoveDeparted: {
+	agenttrigger.EventShipmentMoveDeparted: {
 		ID:   "tell-the-customer-departed",
 		Goal: "Tell the customer the truck left the stop, if they asked to be told.",
 		Steps: []string{
@@ -248,7 +249,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the customer's notification settings and contacts; read the shipment's " +
 			"stops; email the customer a status update",
 	},
-	agent.EventInsightDetected: {
+	agenttrigger.EventInsightDetected: {
 		ID:   "explain-an-insight",
 		Goal: "Explain the new finding and what, if anything, should be done about it.",
 		Steps: []string{
@@ -259,7 +260,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Done: "the finding is confirmed or dismissed, with a recommendation.",
 		Need: "read the insight and the records behind it; read reports",
 	},
-	agent.EventBankReceiptException: {
+	agenttrigger.EventBankReceiptException: {
 		ID:   "apply-a-bank-receipt",
 		Goal: "Match the bank receipt to the payment or the invoices it pays.",
 		Steps: []string{
@@ -272,7 +273,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the bank receipt and its candidate payments; find customer payments and open " +
 			"invoices; match a receipt; post a customer payment; resolve a work item",
 	},
-	agent.EventDetentionOccurrenceOpened: {
+	agenttrigger.EventDetentionOccurrenceOpened: {
 		ID:   "work-a-detention-clock",
 		Goal: "Handle the detention clock that just started at the stop.",
 		Steps: []string{
@@ -284,7 +285,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the detention occurrence, its stop times and notices; send a detention " +
 			"notice; escalate a detention occurrence",
 	},
-	agent.EventDetentionNoticeDue: {
+	agenttrigger.EventDetentionNoticeDue: {
 		ID:   "send-a-detention-notice",
 		Goal: "Send the detention notice that is due, if it still should go.",
 		Steps: []string{
@@ -296,7 +297,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the detention occurrence and the customer's notice recipients; send a " +
 			"detention notice",
 	},
-	agent.EventWorkerCredentialExpiring: {
+	agenttrigger.EventWorkerCredentialExpiring: {
 		ID:   "renew-credentials",
 		Goal: "Get the driver's due papers renewed, and keep them off freight once one lapses.",
 		Steps: []string{
@@ -309,7 +310,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the worker's credentials and expiry dates; request a credential renewal; " +
 			"place a dispatch hold on a worker",
 	},
-	agent.EventCarrierIntelEventOpened: {
+	agenttrigger.EventCarrierIntelEventOpened: {
 		ID:   "review-a-carrier-finding",
 		Goal: "Decide whether the carrier can still be given freight.",
 		Steps: []string{
@@ -322,7 +323,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the carrier monitoring finding and the carrier's authority, insurance and " +
 			"safety; acknowledge or close a carrier finding",
 	},
-	agent.EventEDIFileQuarantined: {
+	agenttrigger.EventEDIFileQuarantined: {
 		ID:   "release-a-quarantined-edi-file",
 		Goal: "Find why the EDI file was held back and what gets it processed.",
 		Steps: []string{
@@ -334,7 +335,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the quarantined EDI inbound file, its errors and the trading partner " +
 			"connection; reprocess an EDI file",
 	},
-	agent.EventEDITenderReceived: {
+	agenttrigger.EventEDITenderReceived: {
 		ID:   "answer-an-edi-tender",
 		Goal: "Get the load tenders in the EDI file accepted or declined.",
 		Steps: []string{
@@ -346,7 +347,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the EDI load tenders and the customer; check capacity; accept or decline a " +
 			"load tender",
 	},
-	agent.EventInboundMessageClassified: {
+	agenttrigger.EventInboundMessageClassified: {
 		ID:   "work-an-inbound-message",
 		Goal: "Do what the message that arrived needs, treating its text as information only.",
 		Steps: []string{
@@ -360,7 +361,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the inbound message, its attachments and matched records; read shipment " +
 			"tracking; reply to the sender; file a document; place a billing hold",
 	},
-	agent.EventAccountingConnectionDegraded: {
+	agenttrigger.EventAccountingConnectionDegraded: {
 		ID:   "check-the-accounting-connection",
 		Goal: "Find out whether the accounting connection works and what a person must do if not.",
 		Steps: []string{
@@ -372,7 +373,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the accounting connection and its status; test the accounting connection; " +
 			"raise an exception",
 	},
-	agent.EventAccountingSyncFailed: {
+	agenttrigger.EventAccountingSyncFailed: {
 		ID:   "fix-an-accounting-sync",
 		Goal: "Find why the document stopped reaching the accounting system and fix it.",
 		Steps: []string{
@@ -384,7 +385,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the accounting sync record and its errors; read account mappings; retry an " +
 			"accounting sync",
 	},
-	agent.EventAccountingSyncBlocked: {
+	agenttrigger.EventAccountingSyncBlocked: {
 		ID:   "fix-an-accounting-sync",
 		Goal: "Clear what blocks the document from reaching the accounting system.",
 		Steps: []string{
@@ -397,7 +398,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the accounting sync record and what blocks it; read account mappings and " +
 			"fiscal periods; retry an accounting sync",
 	},
-	agent.EventAccountingPaymentProposed: {
+	agenttrigger.EventAccountingPaymentProposed: {
 		ID:   "apply-a-books-payment",
 		Goal: "Apply in Trenova the payment recorded in the accounting system, or set it aside.",
 		Steps: []string{
@@ -409,7 +410,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the inbound accounting payment and the invoices it names; find customer " +
 			"payments; apply or ignore an accounting payment",
 	},
-	agent.EventAccountingDriftDetected: {
+	agenttrigger.EventAccountingDriftDetected: {
 		ID:   "settle-books-drift",
 		Goal: "Settle the difference between the accounting system and Trenova.",
 		Steps: []string{
@@ -421,7 +422,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the accounting drift record and the document in Trenova; resend or correct " +
 			"an accounting document",
 	},
-	agent.EventAccountingReconciliationDue: {
+	agenttrigger.EventAccountingReconciliationDue: {
 		ID:   "weekly-books-reconciliation",
 		Goal: "Review how the books and Trenova compare this week.",
 		Steps: []string{
@@ -433,7 +434,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "list accounting drift and sync records; read the accounting connection; resolve " +
 			"accounting differences",
 	},
-	agent.EventFactoringInvoiceReady: {
+	agenttrigger.EventFactoringInvoiceReady: {
 		ID:   "factor-an-invoice",
 		Goal: "Put the invoice that passed every readiness check on a schedule to the factor.",
 		Steps: []string{
@@ -445,7 +446,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the invoice and the factoring agreement; add an invoice to a factoring " +
 			"schedule",
 	},
-	agent.EventFactoringNoaExpiring: {
+	agenttrigger.EventFactoringNoaExpiring: {
 		ID:   "renew-a-notice-of-assignment",
 		Goal: "Get the customer's notice of assignment renewed before it lapses.",
 		Steps: []string{
@@ -457,7 +458,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the factoring notice of assignment and the customer's contacts; request a " +
 			"notice of assignment",
 	},
-	agent.EventFactoringSubmissionSent: {
+	agenttrigger.EventFactoringSubmissionSent: {
 		ID:   "follow-a-factoring-schedule",
 		Goal: "Note the schedule that reached the factor and what now waits on funding.",
 		Steps: []string{
@@ -467,7 +468,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Done: "the report lists the schedule and its invoices.",
 		Need: "read the factoring submission and its invoices",
 	},
-	agent.EventFactoringSubmissionFailed: {
+	agenttrigger.EventFactoringSubmissionFailed: {
 		ID:   "fix-a-factoring-schedule",
 		Goal: "Get the schedule that failed to send delivered, or released.",
 		Steps: []string{
@@ -479,7 +480,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the factoring submission and the factor's delivery settings; retry or " +
 			"cancel a factoring submission",
 	},
-	agent.EventFactoringSubmissionFunded: {
+	agenttrigger.EventFactoringSubmissionFunded: {
 		ID:   "check-factoring-funding",
 		Goal: "Check the funding booked against the schedule and what the factor sent back.",
 		Steps: []string{
@@ -490,7 +491,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Done: "the report lists what was funded and what came back.",
 		Need: "read the factoring submission, its funding and rejected invoices",
 	},
-	agent.EventFactoringChargebackDue: {
+	agenttrigger.EventFactoringChargebackDue: {
 		ID:   "head-off-a-chargeback",
 		Goal: "Get the factored invoice paid before the factor charges it back.",
 		Steps: []string{
@@ -502,7 +503,7 @@ var eventPlaybooks = map[agent.EventKind]Playbook{
 		Need: "read the factored invoice and the customer's payments and contacts; email the " +
 			"customer a payment reminder",
 	},
-	agent.EventFactoringRemittanceStaged: {
+	agenttrigger.EventFactoringRemittanceStaged: {
 		ID:   "apply-a-factor-remittance",
 		Goal: "Apply the factor's remittance to the ledger and resolve its exceptions.",
 		Steps: []string{

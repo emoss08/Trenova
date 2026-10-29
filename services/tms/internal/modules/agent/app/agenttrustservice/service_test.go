@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -29,8 +31,8 @@ import (
 // decided from, and a reader is handed a copy of the row as it stood.
 type fakeTrustRepo struct {
 	agenttoolports.AgentToolTrustRepository
-	row      *agent.ToolTrust
-	recorded []agent.TrustOutcome
+	row      *agenttooltrust.ToolTrust
+	recorded []agenttooltrust.TrustOutcome
 	marks    []agenttoolports.MarkToolTierChangeRequest
 	// beforeMark runs once, as the first tier change is about to be made, so
 	// a test can land another decision in between.
@@ -40,21 +42,21 @@ type fakeTrustRepo struct {
 func (f *fakeTrustRepo) Record(
 	_ context.Context,
 	req agenttoolports.RecordToolTrustRequest,
-) (*agent.ToolTrust, error) {
+) (*agenttooltrust.ToolTrust, error) {
 	f.recorded = append(f.recorded, req.Outcome)
 	f.row.ToolName = req.ToolName
 	f.row.AgentDefinitionID = req.AgentDefinitionID
 	switch req.Outcome {
-	case agent.TrustOutcomeApproved:
+	case agenttooltrust.TrustOutcomeApproved:
 		f.row.Streak++
 		f.row.Approvals++
-	case agent.TrustOutcomeModified:
+	case agenttooltrust.TrustOutcomeModified:
 		f.row.Streak = 0
 		f.row.Modifications++
-	case agent.TrustOutcomeRejected:
+	case agenttooltrust.TrustOutcomeRejected:
 		f.row.Streak = 0
 		f.row.Rejections++
-	case agent.TrustOutcomeExecutionFailed:
+	case agenttooltrust.TrustOutcomeExecutionFailed:
 		f.row.Streak = 0
 		f.row.ExecutionFailures++
 	}
@@ -68,7 +70,7 @@ func (f *fakeTrustRepo) Record(
 func (f *fakeTrustRepo) MarkTierChange(
 	_ context.Context,
 	req agenttoolports.MarkToolTierChangeRequest,
-) (*agent.ToolTrust, error) {
+) (*agenttooltrust.ToolTrust, error) {
 	if hook := f.beforeMark; hook != nil {
 		f.beforeMark = nil
 		hook()
@@ -167,15 +169,15 @@ func trustPolicy(
 ) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          "dispatch_assign_move",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       maxTier,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A trust stub.",
 	}
 }
@@ -240,7 +242,7 @@ type harnessOptions struct {
 	threshold int
 	ceiling   agent.AutonomyTier
 	toolTiers map[string]agent.AutonomyTier
-	row       *agent.ToolTrust
+	row       *agenttooltrust.ToolTrust
 }
 
 func newHarness(t *testing.T, opts harnessOptions) *harness {
@@ -253,7 +255,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 
 	row := opts.row
 	if row == nil {
-		row = &agent.ToolTrust{}
+		row = &agenttooltrust.ToolTrust{}
 	}
 	row.ID = pulid.MustNew("att_")
 	if opts.ceiling == "" {
@@ -305,9 +307,9 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 	return h
 }
 
-func accepted(mods map[string]any) *agent.AgentDecision {
-	return &agent.AgentDecision{
-		Decision:        agent.DecisionAccepted,
+func accepted(mods map[string]any) *agentdecision.AgentDecision {
+	return &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionAccepted,
 		Modifications:   mods,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}
@@ -351,8 +353,12 @@ func TestRecordDecision_NeverPromotesWhenTheOrganizationHasNotOptedIn(t *testing
 
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
-	assert.Equal(t, []agent.TrustOutcome{agent.TrustOutcomeApproved}, h.trust.recorded,
-		"the ledger still counts so the switch can be turned on later with history")
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{agenttooltrust.TrustOutcomeApproved},
+		h.trust.recorded,
+		"the ledger still counts so the switch can be turned on later with history",
+	)
 	assert.Empty(t, h.definitions.tiers)
 	assert.Empty(t, h.notifier.created)
 }
@@ -378,7 +384,7 @@ func TestRecordDecision_ModificationResetsWithoutDemoting(t *testing.T) {
 		earned:    true,
 		threshold: 5,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
 	})
 
 	require.NoError(
@@ -403,11 +409,11 @@ func TestRecordDecision_RejectionTakesBackAnEarnedTier(t *testing.T) {
 		// the ledger granted is still the ledger's to take back.
 		earned:    false,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
-	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-		Decision:        agent.DecisionRejected,
+	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionRejected,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}))
 
@@ -427,11 +433,11 @@ func TestRecordDecision_RejectionLeavesAChosenTierAlone(t *testing.T) {
 		earned:    true,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		// Nothing was earned: a person set automatic by hand.
-		row: &agent.ToolTrust{},
+		row: &agenttooltrust.ToolTrust{},
 	})
 
-	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-		Decision:        agent.DecisionRejected,
+	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionRejected,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}))
 
@@ -445,12 +451,16 @@ func TestRecordExecutionFailure_DemotesWithoutAPerson(t *testing.T) {
 	h := newHarness(t, harnessOptions{
 		earned:    true,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
 	require.NoError(t, h.svc.RecordExecutionFailure(t.Context(), h.proposal))
 
-	assert.Equal(t, []agent.TrustOutcome{agent.TrustOutcomeExecutionFailed}, h.trust.recorded)
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{agenttooltrust.TrustOutcomeExecutionFailed},
+		h.trust.recorded,
+	)
 	require.Len(t, h.definitions.tiers, 1)
 	assert.Equal(t, agent.TierActWithApproval, h.definitions.tiers[0].Tier)
 	require.Len(t, h.audit.entries, 1)
@@ -532,7 +542,7 @@ func TestRecordDecision_ConcurrentApprovalsPromoteOnce(t *testing.T) {
 		earned:    true,
 		threshold: 3,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
-		row:       &agent.ToolTrust{Streak: 2},
+		row:       &agenttooltrust.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
 		require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
@@ -557,19 +567,26 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 		earned:    true,
 		threshold: 3,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
-		row:       &agent.ToolTrust{Streak: 2},
+		row:       &agenttooltrust.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
-		require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-			Decision:        agent.DecisionRejected,
-			DecidedByUserID: pulid.MustNew("usr_"),
-		}))
+		require.NoError(
+			t,
+			h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+				Decision:        agentdecision.DecisionRejected,
+				DecidedByUserID: pulid.MustNew("usr_"),
+			}),
+		)
 	}
 
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
-	assert.Equal(t,
-		[]agent.TrustOutcome{agent.TrustOutcomeApproved, agent.TrustOutcomeRejected},
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{
+			agenttooltrust.TrustOutcomeApproved,
+			agenttooltrust.TrustOutcomeRejected,
+		},
 		h.trust.recorded,
 	)
 	assert.Empty(t, h.definitions.tiers, "the streak the promotion was decided from is gone")

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,16 +23,16 @@ import (
 )
 
 type fakeTrust struct {
-	rows  map[pulid.ID][]*agent.ToolTrust
+	rows  map[pulid.ID][]*agenttooltrust.ToolTrust
 	calls int
 }
 
 func (f *fakeTrust) ListByDefinitionIDs(
 	_ context.Context,
 	req agenttoolports.ListToolTrustByDefinitionsRequest,
-) (map[pulid.ID][]*agent.ToolTrust, error) {
+) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
 	f.calls++
-	out := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
+	out := make(map[pulid.ID][]*agenttooltrust.ToolTrust, len(req.AgentDefinitionIDs))
 	for _, id := range req.AgentDefinitionIDs {
 		if rows, ok := f.rows[id]; ok {
 			out[id] = rows
@@ -46,7 +47,7 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 	for idx := count - 1; idx >= 0; idx-- {
 		policies = append(policies, policy(
 			fmt.Sprintf("tool_%03d", idx),
-			agent.ToolKindAction,
+			agenttooltrust.ToolKindAction,
 			agent.EgressInternal,
 		))
 	}
@@ -62,16 +63,20 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 }
 
 func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
-	lookup := policy("shipment_get", agent.ToolKindQuery, agent.EgressNone)
-	lookup.Effect = agent.ToolEffectLookup
-	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
-	personal.Scope = agent.ToolScopeSelf
+	lookup := policy("shipment_get", agenttooltrust.ToolKindQuery, agent.EgressNone)
+	lookup.Effect = agenttooltrust.ToolEffectLookup
+	personal := policy("home_add_widget", agenttooltrust.ToolKindAction, agent.EgressPersonal)
+	personal.Scope = agenttooltrust.ToolScopeSelf
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
 			lookup,
-			policy("dispatch_assign_move", agent.ToolKindAction, agent.EgressInternal),
-			policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
+			policy("dispatch_assign_move", agenttooltrust.ToolKindAction, agent.EgressInternal),
+			policy(
+				"customer_send_email",
+				agenttooltrust.ToolKindAction,
+				agent.EgressExternalRecipient,
+			),
 			personal,
 		),
 		holder:      fakeHolder{},

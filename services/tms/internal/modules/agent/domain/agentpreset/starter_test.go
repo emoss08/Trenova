@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -124,45 +125,45 @@ func TestTemplates_OutwardFacingDesksStartAtPropose(t *testing.T) {
 func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 	t.Parallel()
 
-	cases := map[agenttemplate.Template][]agent.EventKind{
+	cases := map[agenttemplate.Template][]agenttrigger.EventKind{
 		agenttemplate.TemplateDetentionDesk: {
-			agent.EventDetentionOccurrenceOpened,
-			agent.EventDetentionNoticeDue,
+			agenttrigger.EventDetentionOccurrenceOpened,
+			agenttrigger.EventDetentionNoticeDue,
 		},
 		agenttemplate.TemplateCredentialDesk: {
-			agent.EventWorkerCredentialExpiring,
+			agenttrigger.EventWorkerCredentialExpiring,
 		},
 		agenttemplate.TemplateCustomerUpdateDesk: {
-			agent.EventShipmentMoveArrived,
-			agent.EventShipmentMoveDeparted,
+			agenttrigger.EventShipmentMoveArrived,
+			agenttrigger.EventShipmentMoveDeparted,
 		},
 		agenttemplate.TemplateCarrierRiskDesk: {
-			agent.EventCarrierIntelEventOpened,
+			agenttrigger.EventCarrierIntelEventOpened,
 		},
 		agenttemplate.TemplateDispatchAssignment: {
-			agent.EventShipmentMoveCoverageAtRisk,
-			agent.EventShipmentMoveUnassigned,
+			agenttrigger.EventShipmentMoveCoverageAtRisk,
+			agenttrigger.EventShipmentMoveUnassigned,
 		},
 		agenttemplate.TemplateIntakeDesk: {
-			agent.EventInboundMessageClassified,
-			agent.EventEDITenderReceived,
+			agenttrigger.EventInboundMessageClassified,
+			agenttrigger.EventEDITenderReceived,
 		},
 		agenttemplate.TemplateBillingException: {
-			agent.EventBillingQueueItemException,
-			agent.EventBillingQueueItemOnHold,
-			agent.EventAccountingConnectionDegraded,
+			agenttrigger.EventBillingQueueItemException,
+			agenttrigger.EventBillingQueueItemOnHold,
+			agenttrigger.EventAccountingConnectionDegraded,
 		},
 		agenttemplate.TemplateLoadEntryCheck: {
-			agent.EventShipmentCreated,
+			agenttrigger.EventShipmentCreated,
 		},
 		agenttemplate.TemplateServiceFailureDesk: {
-			agent.EventServiceFailureDetected,
+			agenttrigger.EventServiceFailureDetected,
 		},
 		agenttemplate.TemplateInsightAnalyst: {
-			agent.EventInsightDetected,
+			agenttrigger.EventInsightDetected,
 		},
 		agenttemplate.TemplateEDIDesk: {
-			agent.EventEDIFileQuarantined,
+			agenttrigger.EventEDIFileQuarantined,
 		},
 	}
 
@@ -235,14 +236,14 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 func TestTemplates_EveryEventIsHeardByAStarter(t *testing.T) {
 	t.Parallel()
 
-	heard := make(map[agent.EventKind][]agenttemplate.Template)
+	heard := make(map[agenttrigger.EventKind][]agenttemplate.Template)
 	for _, template := range agenttemplate.AllTemplates() {
 		for _, kind := range agentpreset.StarterEvents(template) {
 			heard[kind] = append(heard[kind], template)
 		}
 	}
 
-	for _, event := range agent.KnownEvents() {
+	for _, event := range agenttrigger.KnownEvents() {
 		require.NotEmptyf(t, heard[event.Kind],
 			"nothing starts from %q, so a hand-off from the watchtower suggests no agent for it",
 			event.Kind,

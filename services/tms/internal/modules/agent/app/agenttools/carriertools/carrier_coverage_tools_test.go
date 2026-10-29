@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
@@ -293,7 +294,7 @@ func TestAssignMoveToCarrier_PreviewShowsTheAssignmentThePayAndTheCover(t *testi
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
@@ -302,7 +303,7 @@ func TestAssignMoveToCarrier_PreviewShowsTheAssignmentThePayAndTheCover(t *testi
 	)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Carrier on S-3001: Ridgeline Freight", created.Label)
 	assert.Equal(t, "1800", agenttoolstest.FieldByPath(t, created, "baseRate").After)
 	require.NotNil(t, created.Money)
@@ -325,7 +326,7 @@ func TestAssignMoveToCarrier_PreviewShowsTheCarrierItReplaces(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(carriers.assignParams(map[string]any{
@@ -337,7 +338,7 @@ func TestAssignMoveToCarrier_PreviewShowsTheCarrierItReplaces(t *testing.T) {
 	)
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationArchive, canceled.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, canceled.Operation)
 	assert.Equal(
 		t,
 		"Canceled",
@@ -364,7 +365,7 @@ func TestAssignMoveToCarrier_PreviewWarnsWhatTheServiceRefuses(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
@@ -373,7 +374,7 @@ func TestAssignMoveToCarrier_PreviewWarnsWhatTheServiceRefuses(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
@@ -455,7 +456,7 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&carriers.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
 				changepreview.FieldReason:                "Carrier fell off",

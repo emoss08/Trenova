@@ -6,8 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -66,15 +70,15 @@ type SendMessageRequest struct {
 	Content  string
 	// Page is what the person was looking at when they asked, if the client
 	// sent it. It is validated and stored with the user turn.
-	Page       *agent.PageContext
-	Surface    agent.Surface
+	Page       *agentpagecontext.PageContext
+	Surface    agentpagecontext.Surface
 	TenantInfo pagination.TenantInfo
 	// AttachmentDocumentIDs are files the person uploaded for this message.
 	// Each must be a document they uploaded to this thread; anything else is
 	// refused rather than read.
 	AttachmentDocumentIDs []pulid.ID
 	// Mentions are the records the person named from the composer.
-	Mentions []agent.EntityRef
+	Mentions []agentpagecontext.EntityRef
 	// PreferredProviderID is the model the person picked in the composer. It is
 	// validated against the providers this organization has assigned to the
 	// assistant before it is stored, so a stale or foreign id is dropped rather
@@ -110,8 +114,8 @@ type SendMessageRequest struct {
 // assistant, so the answer can be kept as a conversation afterwards.
 type AskRequest struct {
 	Content    string
-	Page       *agent.PageContext
-	Mentions   []agent.EntityRef
+	Page       *agentpagecontext.PageContext
+	Mentions   []agentpagecontext.EntityRef
 	TenantInfo pagination.TenantInfo
 }
 
@@ -158,7 +162,7 @@ type AssistantProposal struct {
 	ExecutionError string `json:"executionError"`
 	// ExecutionResult is what the run made, and for a write over many
 	// records each one that did not go through.
-	ExecutionResult *agent.ToolExecutionResult `json:"executionResult,omitempty"`
+	ExecutionResult *agentrecord.ToolExecutionResult `json:"executionResult,omitempty"`
 	// ExpiresAt is when a pending proposal stops being decidable. Zero means
 	// it was made before expiry existed.
 	ExpiresAt int64 `json:"expiresAt"`
@@ -208,32 +212,32 @@ type ProposalEdits struct {
 // AssistantPlan is several of a turn's proposals as one decision, as the
 // client shows it: approve or reject all of them, in order.
 type AssistantPlan struct {
-	ID              pulid.ID          `json:"id"`
-	RunID           pulid.ID          `json:"runId"`
-	Title           string            `json:"title"`
-	Summary         string            `json:"summary"`
-	Status          agent.PlanStatus  `json:"status"`
-	StepCount       int               `json:"stepCount"`
-	CompletedSteps  int               `json:"completedSteps"`
-	FailedStep      *int              `json:"failedStep"`
-	FailureError    string            `json:"failureError"`
-	DecidedAt       *int64            `json:"decidedAt"`
-	DecidedByUserID pulid.ID          `json:"decidedByUserId"`
-	DecidedByName   string            `json:"decidedByName"`
-	DecisionNote    string            `json:"decisionNote"`
-	PreviewDigest   string            `json:"previewDigest"`
-	ExpiresAt       int64             `json:"expiresAt"`
-	CommitsAt       *int64            `json:"commitsAt"`
-	UndoneAt        *int64            `json:"undoneAt"`
-	RunMode         agent.PlanRunMode `json:"runMode"`
-	Hold            *ProposalHold     `json:"hold"`
-	CreatedAt       int64             `json:"createdAt"`
+	ID              pulid.ID              `json:"id"`
+	RunID           pulid.ID              `json:"runId"`
+	Title           string                `json:"title"`
+	Summary         string                `json:"summary"`
+	Status          agentplan.PlanStatus  `json:"status"`
+	StepCount       int                   `json:"stepCount"`
+	CompletedSteps  int                   `json:"completedSteps"`
+	FailedStep      *int                  `json:"failedStep"`
+	FailureError    string                `json:"failureError"`
+	DecidedAt       *int64                `json:"decidedAt"`
+	DecidedByUserID pulid.ID              `json:"decidedByUserId"`
+	DecidedByName   string                `json:"decidedByName"`
+	DecisionNote    string                `json:"decisionNote"`
+	PreviewDigest   string                `json:"previewDigest"`
+	ExpiresAt       int64                 `json:"expiresAt"`
+	CommitsAt       *int64                `json:"commitsAt"`
+	UndoneAt        *int64                `json:"undoneAt"`
+	RunMode         agentplan.PlanRunMode `json:"runMode"`
+	Hold            *ProposalHold         `json:"hold"`
+	CreatedAt       int64                 `json:"createdAt"`
 	// AgentID and AgentName are the agent whose proposals the plan groups.
 	AgentID   pulid.ID `json:"agentId,omitempty"`
 	AgentName string   `json:"agentName,omitempty"`
 	// Script is the script whose prepared changes are the plan's steps;
 	// absent for a plan of the model's own calls.
-	Script *agent.ScriptOrigin `json:"script,omitempty"`
+	Script *agentplan.ScriptOrigin `json:"script,omitempty"`
 }
 
 // AssistantArtifact is what a turn produced besides words, as the Desk shows
@@ -460,9 +464,9 @@ const AssistantEventWorldChanged = "world_changed"
 const AssistantEventNextTurn = "next_turn"
 
 type AssistantSteeredEvent struct {
-	ID       pulid.ID          `json:"id"`
-	Content  string            `json:"content"`
-	Mentions []agent.EntityRef `json:"mentions,omitempty"`
+	ID       pulid.ID                     `json:"id"`
+	Content  string                       `json:"content"`
+	Mentions []agentpagecontext.EntityRef `json:"mentions,omitempty"`
 }
 
 type AssistantWorldChangedEvent struct {
@@ -760,10 +764,10 @@ type AssistantMessageEvent struct {
 
 // AssistantToolStartedEvent says a tool is running with these arguments.
 type AssistantToolStartedEvent struct {
-	CallID    string           `json:"callId"`
-	Name      string           `json:"name"`
-	Arguments map[string]any   `json:"arguments"`
-	Effect    agent.ToolEffect `json:"effect,omitempty"`
+	CallID    string                    `json:"callId"`
+	Name      string                    `json:"name"`
+	Arguments map[string]any            `json:"arguments"`
+	Effect    agenttooltrust.ToolEffect `json:"effect,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
@@ -773,14 +777,14 @@ type AssistantToolStartedEvent struct {
 // AssistantToolFinishedEvent carries what the tool returned. Proposed means the
 // tool was a write and became a proposal rather than running.
 type AssistantToolFinishedEvent struct {
-	CallID   string           `json:"callId"`
-	Name     string           `json:"name"`
-	Failed   bool             `json:"failed"`
-	Proposed bool             `json:"proposed"`
-	Content  string           `json:"content"`
-	Effect   agent.ToolEffect `json:"effect,omitempty"`
-	Summary  string           `json:"summary,omitempty"`
-	Verdict  string           `json:"verdict,omitempty"`
+	CallID   string                    `json:"callId"`
+	Name     string                    `json:"name"`
+	Failed   bool                      `json:"failed"`
+	Proposed bool                      `json:"proposed"`
+	Content  string                    `json:"content"`
+	Effect   agenttooltrust.ToolEffect `json:"effect,omitempty"`
+	Summary  string                    `json:"summary,omitempty"`
+	Verdict  string                    `json:"verdict,omitempty"`
 	// HandOffAgents are the person's other agents a find_tools answer named
 	// as holding what this agent could not load, the same ids the saved
 	// tool message keeps, so a reader can offer the hand-off while the turn
@@ -788,7 +792,7 @@ type AssistantToolFinishedEvent struct {
 	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty"`
 	// Records are the records the call's result described, for a reader to
 	// show as what the answer was built from.
-	Records []agent.EntityRef `json:"records,omitempty"`
+	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`

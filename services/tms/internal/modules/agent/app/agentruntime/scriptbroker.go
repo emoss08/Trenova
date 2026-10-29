@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptoutbox"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -248,7 +249,7 @@ func (b *scriptBroker) refusal(call codemode.Call) (codemode.Reply, bool) {
 		}, true
 	}
 	if tool, isQuery := b.s.queryTools.Get(call.Tool); isQuery &&
-		tool.Policy().EffectiveEffect() != agent.ToolEffectLookup {
+		tool.Policy().EffectiveEffect() != agenttooltrust.ToolEffectLookup {
 		return codemode.Reply{
 			Status:  codemode.CallInvalid,
 			Message: fmt.Sprintf(scriptWriteRefusal, call.Tool),

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -125,8 +127,10 @@ func chargeLabel(ord *order.Order, charge *order.OrderCharge) string {
 	return fmt.Sprintf("Order %s charge %q", ord.OrderNumber, charge.Description)
 }
 
-func renderChargePlan(verb string) func(any, *orderservice.ChargePlan) (*agent.ToolPreview, error) {
-	return func(_ any, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+func renderChargePlan(
+	verb string,
+) func(any, *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
+	return func(_ any, plan *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
 		shown := plan.After
 		if shown == nil {
 			shown = plan.Before
@@ -139,7 +143,7 @@ func renderChargePlan(verb string) func(any, *orderservice.ChargePlan) (*agent.T
 		}
 
 		var (
-			change *agent.RecordChange
+			change *agentpreview.RecordChange
 			err    error
 		)
 		switch {
@@ -155,7 +159,7 @@ func renderChargePlan(verb string) func(any, *orderservice.ChargePlan) (*agent.T
 			return nil, err
 		}
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.Order.CurrencyCode,
-			agent.MoneyLine{
+			agentpreview.MoneyLine{
 				Label:  shown.Description,
 				Before: chargeAmount(plan.Before),
 				After:  chargeAmount(plan.After),
@@ -264,14 +268,14 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 		Refused: func(*orderservice.AddChargeRequest) string {
 			return "Would add a charge to the order."
 		},
-		Render: func(req *orderservice.AddChargeRequest, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+		Render: func(req *orderservice.AddChargeRequest, plan *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
 			return renderChargePlan("add")(req, plan)
 		},
 		Run: func(
 			ctx context.Context,
 			req *orderservice.AddChargeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := charges.AddChargeWithAllocations(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -450,14 +454,14 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 				return charges.PlanUpdateCharge(ctx, req)
 			},
 			Refused: func(*chargeRef) string { return "Would change a charge on the order." },
-			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
 				return renderChargePlan("change")(ref, plan)
 			},
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				req, err := ref.updateRequest(ctx, charges)
 				if err != nil {
 					return nil, err
@@ -526,14 +530,14 @@ func NewSetOrderChargeAllocationsTool(charges orderChargeKeeper) agenttoolports.
 				return charges.PlanSetChargeAllocations(ctx, req)
 			},
 			Refused: func(*chargeRef) string { return "Would change who pays a charge on the order." },
-			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
 				return renderChargePlan("re-split")(ref, plan)
 			},
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				req, err := ref.allocationRequest(ctx, charges)
 				if err != nil {
 					return nil, err
@@ -576,14 +580,14 @@ func NewRemoveOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 				return charges.PlanRemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID)
 			},
 			Refused: func(*chargeRef) string { return "Would remove a charge from the order." },
-			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agent.ToolPreview, error) {
+			Render: func(ref *chargeRef, plan *orderservice.ChargePlan) (*agentpreview.ToolPreview, error) {
 				return renderChargePlan("remove")(ref, plan)
 			},
 			Run: func(
 				ctx context.Context,
 				ref *chargeRef,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				updated, err := charges.RemoveCharge(ctx, ref.tenant, ref.orderID, ref.chargeID,
 					params.Actor)
 				if err != nil {

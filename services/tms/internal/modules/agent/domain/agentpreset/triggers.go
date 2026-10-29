@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 )
 
 func StarterTrigger(t agenttemplate.Template) agentdefinition.TriggerMode {
@@ -35,68 +36,68 @@ func StarterTrigger(t agenttemplate.Template) agentdefinition.TriggerMode {
 	}
 }
 
-func StarterEvents(t agenttemplate.Template) []agent.EventKind {
+func StarterEvents(t agenttemplate.Template) []agenttrigger.EventKind {
 	switch t {
 	case agenttemplate.TemplateBillingException:
-		return []agent.EventKind{
-			agent.EventBillingQueueItemException,
-			agent.EventBillingQueueItemOnHold,
-			agent.EventAccountingConnectionDegraded,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventBillingQueueItemException,
+			agenttrigger.EventBillingQueueItemOnHold,
+			agenttrigger.EventAccountingConnectionDegraded,
 		}
 	case agenttemplate.TemplateShipmentIntake:
-		return []agent.EventKind{agent.EventDocumentExtracted}
+		return []agenttrigger.EventKind{agenttrigger.EventDocumentExtracted}
 	case agenttemplate.TemplateCashApplication:
-		return []agent.EventKind{agent.EventBankReceiptException}
+		return []agenttrigger.EventKind{agenttrigger.EventBankReceiptException}
 	case agenttemplate.TemplateDispatchAssignment:
-		return []agent.EventKind{
-			agent.EventShipmentMoveCoverageAtRisk,
-			agent.EventShipmentMoveUnassigned,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventShipmentMoveCoverageAtRisk,
+			agenttrigger.EventShipmentMoveUnassigned,
 		}
 	case agenttemplate.TemplateDetentionDesk:
-		return []agent.EventKind{
-			agent.EventDetentionOccurrenceOpened,
-			agent.EventDetentionNoticeDue,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventDetentionOccurrenceOpened,
+			agenttrigger.EventDetentionNoticeDue,
 		}
 	case agenttemplate.TemplateCredentialDesk:
-		return []agent.EventKind{agent.EventWorkerCredentialExpiring}
+		return []agenttrigger.EventKind{agenttrigger.EventWorkerCredentialExpiring}
 	case agenttemplate.TemplateCustomerUpdateDesk:
-		return []agent.EventKind{
-			agent.EventShipmentMoveArrived,
-			agent.EventShipmentMoveDeparted,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventShipmentMoveArrived,
+			agenttrigger.EventShipmentMoveDeparted,
 		}
 	case agenttemplate.TemplateCarrierRiskDesk:
-		return []agent.EventKind{agent.EventCarrierIntelEventOpened}
+		return []agenttrigger.EventKind{agenttrigger.EventCarrierIntelEventOpened}
 	case agenttemplate.TemplateIntakeDesk:
-		return []agent.EventKind{
-			agent.EventInboundMessageClassified,
-			agent.EventEDITenderReceived,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventInboundMessageClassified,
+			agenttrigger.EventEDITenderReceived,
 		}
 	case agenttemplate.TemplateLoadEntryCheck:
-		return []agent.EventKind{agent.EventShipmentCreated}
+		return []agenttrigger.EventKind{agenttrigger.EventShipmentCreated}
 	case agenttemplate.TemplateServiceFailureDesk:
-		return []agent.EventKind{agent.EventServiceFailureDetected}
+		return []agenttrigger.EventKind{agenttrigger.EventServiceFailureDetected}
 	case agenttemplate.TemplateInsightAnalyst:
-		return []agent.EventKind{agent.EventInsightDetected}
+		return []agenttrigger.EventKind{agenttrigger.EventInsightDetected}
 	case agenttemplate.TemplateEDIDesk:
-		return []agent.EventKind{agent.EventEDIFileQuarantined}
+		return []agenttrigger.EventKind{agenttrigger.EventEDIFileQuarantined}
 	case agenttemplate.TemplateFactoringClerk:
-		return []agent.EventKind{
-			agent.EventFactoringInvoiceReady,
-			agent.EventFactoringNoaExpiring,
-			agent.EventFactoringSubmissionSent,
-			agent.EventFactoringSubmissionFailed,
-			agent.EventFactoringSubmissionFunded,
-			agent.EventFactoringChargebackDue,
-			agent.EventFactoringRemittanceStaged,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventFactoringInvoiceReady,
+			agenttrigger.EventFactoringNoaExpiring,
+			agenttrigger.EventFactoringSubmissionSent,
+			agenttrigger.EventFactoringSubmissionFailed,
+			agenttrigger.EventFactoringSubmissionFunded,
+			agenttrigger.EventFactoringChargebackDue,
+			agenttrigger.EventFactoringRemittanceStaged,
 		}
 	case agenttemplate.TemplateBooksKeeper:
-		return []agent.EventKind{
-			agent.EventAccountingSyncFailed,
-			agent.EventAccountingSyncBlocked,
-			agent.EventAccountingConnectionDegraded,
-			agent.EventAccountingPaymentProposed,
-			agent.EventAccountingDriftDetected,
-			agent.EventAccountingReconciliationDue,
+		return []agenttrigger.EventKind{
+			agenttrigger.EventAccountingSyncFailed,
+			agenttrigger.EventAccountingSyncBlocked,
+			agenttrigger.EventAccountingConnectionDegraded,
+			agenttrigger.EventAccountingPaymentProposed,
+			agenttrigger.EventAccountingDriftDetected,
+			agenttrigger.EventAccountingReconciliationDue,
 		}
 	default:
 		return nil

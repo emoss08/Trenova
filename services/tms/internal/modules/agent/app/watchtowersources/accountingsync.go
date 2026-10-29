@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -92,11 +93,11 @@ func DescribeAccountingSyncAttention(
 
 	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	severity := watchtower.SeverityWarning
-	eventKind := agent.EventAccountingSyncBlocked
+	eventKind := agenttrigger.EventAccountingSyncBlocked
 	title := documentsLabel(total) + " blocked from " + provider
 	if key == accountingDeadLetterKey {
 		severity = watchtower.SeverityCritical
-		eventKind = agent.EventAccountingSyncFailed
+		eventKind = agenttrigger.EventAccountingSyncFailed
 		title = documentsLabel(total) + " stopped retrying to reach " + provider
 	}
 
@@ -145,7 +146,7 @@ func DescribeAccountingSyncPaused(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
-		EventKind:   agent.EventAccountingConnectionDegraded,
+		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        AccountingSyncLedgerPath,
 		OccurredAt:  *conn.PausedAt,
 	}, true
@@ -169,7 +170,7 @@ func DescribeAccountingSafetyNet(
 			"A posting path skipped the queue; report it so it can be fixed.",
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
-		EventKind:   agent.EventAccountingConnectionDegraded,
+		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        AccountingSyncLedgerPath,
 		OccurredAt:  at,
 	}, true

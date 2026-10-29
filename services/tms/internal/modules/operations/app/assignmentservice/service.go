@@ -4,7 +4,7 @@ package assignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
@@ -414,7 +414,7 @@ func (s *service) Unassign(
 		)
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
 		agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
-			Kind:      agent.EventShipmentMoveUnassigned,
+			Kind:      agenttrigger.EventShipmentMoveUnassigned,
 			SubjectID: ref.MoveID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: req.TenantInfo.OrgID,

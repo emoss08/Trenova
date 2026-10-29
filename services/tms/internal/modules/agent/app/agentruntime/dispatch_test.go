@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -17,7 +18,7 @@ import (
 type echoPreviews struct {
 	agentruntimeports.ProposalPreviewService
 
-	preview *agent.ToolPreview
+	preview *agentpreview.ToolPreview
 }
 
 func (p echoPreviews) Baseline(
@@ -87,10 +88,10 @@ func shipmentSchema() map[string]any {
 func TestDispatch_FilingEchoesThePreviewTheCardShows(t *testing.T) {
 	t.Parallel()
 
-	content := filedContent(t, echoPreviews{preview: &agent.ToolPreview{
+	content := filedContent(t, echoPreviews{preview: &agentpreview.ToolPreview{
 		Summary: "Creates a shipment for Acme from Dallas to Tulsa, rated at $1,250.00.",
-		Warnings: []agent.PreviewWarning{{
-			Code:    agent.PreviewWarningCode("rate_coverage"),
+		Warnings: []agentpreview.PreviewWarning{{
+			Code:    agentpreview.PreviewWarningCode("rate_coverage"),
 			Message: "No rate agreement covers this lane; the formula template rates it.",
 		}},
 	}}, shipmentSchema(), map[string]any{"customerId": "cus_1"})

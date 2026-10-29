@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -48,9 +49,9 @@ var (
 	SpotTenderModes     = Source("tender.spotMode", tender.SpotModeValues())
 	ExceptionCategories = Source(
 		"agent.exceptionCategory",
-		agent.AllExceptionCategories(),
+		agentexception.AllExceptionCategories(),
 	)
-	Severities   = Source("agent.severity", agent.SeverityValues())
+	Severities   = Source("agent.severity", agentexception.SeverityValues())
 	PTOTypes     = Source("worker.ptoType", worker.PTOTypeValues())
 	SubjectTypes = Source("agent.subjectType", agent.AllSubjectTypes())
 

@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,8 +30,8 @@ type ListAgentPlanConnectionRequest struct {
 type UpdateAgentPlanStatusRequest struct {
 	ID              pulid.ID
 	TenantInfo      pagination.TenantInfo
-	Status          agent.PlanStatus
-	FromStatus      agent.PlanStatus
+	Status          agentplan.PlanStatus
+	FromStatus      agentplan.PlanStatus
 	DecidedByUserID pulid.ID
 	DecidedAt       int64
 	// CommitsAt, when set, is when an approval in its undo window goes
@@ -59,7 +59,7 @@ type PlanApproval struct {
 type RecordAgentPlanProgressRequest struct {
 	ID             pulid.ID
 	TenantInfo     pagination.TenantInfo
-	Status         agent.PlanStatus
+	Status         agentplan.PlanStatus
 	CompletedSteps int
 	FailedStep     *int
 	FailureError   string
@@ -82,19 +82,25 @@ type ListAgentPlansByIDsRequest struct {
 }
 
 type AgentPlanRepository interface {
-	ListByIDs(ctx context.Context, req ListAgentPlansByIDsRequest) ([]*agent.AgentPlan, error)
-	Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error)
-	GetByID(ctx context.Context, req GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
-	ListByThread(ctx context.Context, req ListAgentPlansByThreadRequest) ([]*agent.AgentPlan, error)
+	ListByIDs(ctx context.Context, req ListAgentPlansByIDsRequest) ([]*agentplan.AgentPlan, error)
+	Create(ctx context.Context, entity *agentplan.AgentPlan) (*agentplan.AgentPlan, error)
+	GetByID(ctx context.Context, req GetAgentPlanByIDRequest) (*agentplan.AgentPlan, error)
+	ListByThread(
+		ctx context.Context,
+		req ListAgentPlansByThreadRequest,
+	) ([]*agentplan.AgentPlan, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentPlanConnectionRequest,
-	) (*pagination.CursorListResult[*agent.AgentPlan], error)
-	UpdateStatus(ctx context.Context, req UpdateAgentPlanStatusRequest) (*agent.AgentPlan, error)
+	) (*pagination.CursorListResult[*agentplan.AgentPlan], error)
+	UpdateStatus(
+		ctx context.Context,
+		req UpdateAgentPlanStatusRequest,
+	) (*agentplan.AgentPlan, error)
 	RecordProgress(
 		ctx context.Context,
 		req RecordAgentPlanProgressRequest,
-	) (*agent.AgentPlan, error)
+	) (*agentplan.AgentPlan, error)
 	ExpirePending(ctx context.Context, req ExpireAgentPlansRequest) (int, error)
 	ExpirePendingByDefinition(
 		ctx context.Context,

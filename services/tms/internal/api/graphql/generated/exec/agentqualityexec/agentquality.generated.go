@@ -3,6 +3,7 @@
 package agentqualityexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"context"
 	"errors"
 
@@ -2153,7 +2154,7 @@ type resolverMutation interface {
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
-	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
+	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
 }
@@ -3126,7 +3127,7 @@ func marshalNAgentEvalCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.Evaluation) graphql.Marshaler {
+func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

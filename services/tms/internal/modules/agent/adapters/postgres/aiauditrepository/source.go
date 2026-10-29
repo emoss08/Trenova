@@ -9,7 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -122,12 +126,12 @@ func (r *sourceRepository) ListUsage(
 func (r *sourceRepository) ListSteps(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project agent steps into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		step := agentdb.AgentRunSteps
 		rows, err := keyset(
 			step.Where(step.Kind.Eq(string(agentruntimeports.RunStepTool))),
@@ -144,12 +148,12 @@ func (r *sourceRepository) ListSteps(
 func (r *sourceRepository) ListEvents(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunEvent, error) {
+) ([]*agentrunevent.AgentRunEvent, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project agent events into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
 		event := agentdb.AgentRunEvents
 		rows, err := keyset(
 			event.Where(event.Kind.In(projectedEventKinds...)),
@@ -185,12 +189,12 @@ func (r *sourceRepository) ListProposals(
 func (r *sourceRepository) ListDecisions(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project proposal decisions into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		d := agentdb.AgentDecisions
 		rows, err := keyset(
 			d.Omit(d.Preview).Where(d.ProposalID.IsNotNull()),
@@ -318,10 +322,10 @@ func (r *sourceRepository) EvaluationsByIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*agent.Evaluation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
+) ([]*agentevaluation.Evaluation, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentevaluation.Evaluation, error) {
 		if len(ids) == 0 {
-			return []*agent.Evaluation{}, nil
+			return []*agentevaluation.Evaluation{}, nil
 		}
 
 		ev := agentdb.Evaluations
@@ -368,14 +372,14 @@ func (r *sourceRepository) StartedToolSteps(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	ownerIDs []pulid.ID,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project started tool steps into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		if len(ownerIDs) == 0 {
-			return []*agent.AgentRunStep{}, nil
+			return []*agentrunstep.AgentRunStep{}, nil
 		}
 
 		step := agentdb.AgentRunSteps

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -283,7 +284,7 @@ func TestGenerateRateConfirmation_PreviewShowsTheRevisionAndWhatItVoids(t *testi
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&rateCons.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				changepreview.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
 			}))
@@ -291,7 +292,7 @@ func TestGenerateRateConfirmation_PreviewShowsTheRevisionAndWhatItVoids(t *testi
 	)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Rate confirmation revision 2 for S-4001", created.Label)
 	require.NotNil(t, created.Money)
 	assert.True(t, decimal.NewFromInt(2000).Equal(created.Money.TotalAfter.Decimal))
@@ -348,7 +349,7 @@ func TestSendRateConfirmation_PreviewIsTheMessageWithItsRecipientsAndAttachment(
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&rateCons.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				fieldRateConfirmationID: rateCons.entity.ID.String(),
 			}))
@@ -356,9 +357,9 @@ func TestSendRateConfirmation_PreviewIsTheMessageWithItsRecipientsAndAttachment(
 	)
 
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationSend, sent.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, sent.Operation)
 	require.NotNil(t, sent.Message)
-	assert.Equal(t, agent.MessageChannelEmail, sent.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, sent.Message.Channel)
 	assert.Equal(t, []string{"dispatch@eastline.test"}, sent.Message.To)
 	assert.Equal(t, "Rate confirmation S-4001", sent.Message.Subject)
 	assert.Equal(t, []string{"rate-confirmation-rev1.pdf"}, sent.Message.Attachments)
@@ -379,7 +380,7 @@ func TestSendRateConfirmation_PreviewWarnsOfARevisionItCannotSend(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&rateCons.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				fieldRateConfirmationID: rateCons.entity.ID.String(),
 			}))
@@ -387,7 +388,7 @@ func TestSendRateConfirmation_PreviewWarnsOfARevisionItCannotSend(t *testing.T) 
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestVoidRateConfirmation_VoidsWithTheReason(t *testing.T) {
@@ -442,7 +443,7 @@ func TestVoidRateConfirmation_PreviewShowsTheAssignmentGoingBackToPending(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&rateCons.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				fieldRateConfirmationID:   rateCons.entity.ID.String(),
 				changepreview.FieldReason: "Wrong rate",
@@ -451,7 +452,7 @@ func TestVoidRateConfirmation_PreviewShowsTheAssignmentGoingBackToPending(t *tes
 	)
 
 	record := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationArchive, record.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, record.Operation)
 	assert.Equal(
 		t,
 		"Voided",
@@ -502,7 +503,7 @@ func TestRecordRateConfirmationConfirmed_PreviewShowsTheAgreementExecuted(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&rateCons.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				fieldRateConfirmationID:             rateCons.entity.ID.String(),
 				carrierpreview.FieldConfirmedByName: "Dana Ruiz",

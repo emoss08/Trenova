@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,13 +14,13 @@ import (
 )
 
 type stubMemoryReplacements struct {
-	list func(context.Context, agentmemoryports.ListAgentMemoryReplacementsRequest) ([]*agent.Memory, error)
+	list func(context.Context, agentmemoryports.ListAgentMemoryReplacementsRequest) ([]*agentmemory.Memory, error)
 }
 
 func (s *stubMemoryReplacements) ListReplacements(
 	ctx context.Context,
 	req agentmemoryports.ListAgentMemoryReplacementsRequest,
-) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
 	return s.list(ctx, req)
 }
 
@@ -30,21 +30,21 @@ func TestReplacementBatch_GivesEachMemoryTheNewestThatTookEffect(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	replaced := pulid.MustNew("amem_")
 	untouched := pulid.MustNew("amem_")
-	older := &agent.Memory{
+	older := &agentmemory.Memory{
 		ID:           pulid.MustNew("amem_"),
-		Status:       agent.MemoryStatusRetired,
+		Status:       agentmemory.MemoryStatusRetired,
 		SupersedesID: &replaced,
 		CreatedAt:    100,
 	}
-	newer := &agent.Memory{
+	newer := &agentmemory.Memory{
 		ID:           pulid.MustNew("amem_"),
-		Status:       agent.MemoryStatusActive,
+		Status:       agentmemory.MemoryStatusActive,
 		SupersedesID: &replaced,
 		CreatedAt:    200,
 	}
-	waiting := &agent.Memory{
+	waiting := &agentmemory.Memory{
 		ID:           pulid.MustNew("amem_"),
-		Status:       agent.MemoryStatusSuggested,
+		Status:       agentmemory.MemoryStatusSuggested,
 		SupersedesID: &replaced,
 		CreatedAt:    300,
 	}
@@ -52,10 +52,10 @@ func TestReplacementBatch_GivesEachMemoryTheNewestThatTookEffect(t *testing.T) {
 		list: func(
 			_ context.Context,
 			req agentmemoryports.ListAgentMemoryReplacementsRequest,
-		) ([]*agent.Memory, error) {
+		) ([]*agentmemory.Memory, error) {
 			assert.Equal(t, tenant, req.TenantInfo)
 			assert.Equal(t, []pulid.ID{replaced, untouched}, req.ReplacedIDs)
-			return []*agent.Memory{older, waiting, newer}, nil
+			return []*agentmemory.Memory{older, waiting, newer}, nil
 		},
 	}
 
@@ -83,7 +83,7 @@ func TestReplacementBatch_AFailedReadFailsEveryKey(t *testing.T) {
 		list: func(
 			context.Context,
 			agentmemoryports.ListAgentMemoryReplacementsRequest,
-		) ([]*agent.Memory, error) {
+		) ([]*agentmemory.Memory, error) {
 			return nil, failure
 		},
 	}

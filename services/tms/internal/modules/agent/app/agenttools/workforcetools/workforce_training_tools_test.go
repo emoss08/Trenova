@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -221,7 +222,7 @@ func TestAssignWorkerTraining_RoutesOnePairToAssign(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		training.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -250,7 +251,7 @@ func TestAssignWorkerTraining_SendsSeveralToBulkAssign(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		training.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -276,7 +277,7 @@ func TestAssignRequiredWorkerTraining_CountsTheMissingCourses(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		training.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -299,7 +300,7 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		training.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -317,13 +318,13 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		training.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), direct)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 

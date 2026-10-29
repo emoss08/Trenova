@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
@@ -211,8 +213,8 @@ func (a *trainingAssignment) plan(
 func renderTrainingAssignment(
 	_ *trainingAssignment,
 	plan *workertrainingservice.BulkAssignPlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Records))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Records))
 	for _, record := range plan.Records {
 		change, err := toolpreview.Create(
 			wfRecord(permission.ResourceWorkerTraining, pulid.Nil, trainingRecord(record).Label, 0),
@@ -280,7 +282,7 @@ func newAssignWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentTo
 			ctx context.Context,
 			assignment *trainingAssignment,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if assignment.single != nil {
 				_, err := training.Assign(ctx, assignment.single)
 				return nil, err
@@ -331,8 +333,8 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 			Refused: func(*requiredTraining) string {
 				return "Would assign the worker their required training."
 			},
-			Render: func(req *requiredTraining, courses []*workertraining.TrainingCourse) (*agent.ToolPreview, error) {
-				changes := make([]*agent.RecordChange, 0, len(courses))
+			Render: func(req *requiredTraining, courses []*workertraining.TrainingCourse) (*agentpreview.ToolPreview, error) {
+				changes := make([]*agentpreview.RecordChange, 0, len(courses))
 				for _, course := range courses {
 					change, err := toolpreview.Create(
 						wfRecord(permission.ResourceWorkerTraining, pulid.Nil, course.Name, 0),
@@ -358,12 +360,12 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 				ctx context.Context,
 				req *requiredTraining,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				if _, err := training.AssignRequired(ctx, req.tenant, req.workerID,
 					req.userID); err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "assigned required training to",
 					Kind:   "worker",
 					IDs:    map[string]string{toolparams.ParamWorkerID: req.workerID.String()},
@@ -516,8 +518,8 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 		Render: func(
 			_ *workertrainingservice.CompleteRequest,
 			change *workertrainingservice.RecordChange,
-		) (*agent.ToolPreview, error) {
-			var recorded *agent.RecordChange
+		) (*agentpreview.ToolPreview, error) {
+			var recorded *agentpreview.RecordChange
 			var err error
 			if change.Before == nil {
 				recorded, err = toolpreview.Create(
@@ -542,7 +544,7 @@ func newRecordTrainingCompletionTool(training TrainingKeeper) agenttoolports.Age
 			ctx context.Context,
 			req *workertrainingservice.CompleteRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := training.Complete(ctx, req)
 			if err != nil {
 				return nil, err
@@ -601,7 +603,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agenttoolports
 		Render: func(
 			_ *workertrainingservice.AttachDocumentRequest,
 			change *workertrainingservice.RecordChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(trainingRecord(change.Before), change.Before,
 				change.After, wfOptions(wfFieldDocument)...)
 			if err != nil {
@@ -614,7 +616,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agenttoolports
 			ctx context.Context,
 			req *workertrainingservice.AttachDocumentRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := training.AttachDocument(ctx, req)
 			if err != nil {
 				return nil, err
@@ -700,7 +702,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 		Render: func(
 			closing *trainingClosing,
 			change *workertrainingservice.RecordChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(trainingRecord(change.Before), change.Before,
 				change.After, wfOptions(changepreview.FieldStatus, "waivedReason", wfFieldNotes)...)
 			if err != nil {
@@ -714,7 +716,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 			ctx context.Context,
 			closing *trainingClosing,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			var saved *workertraining.WorkerTrainingRecord
 			var err error
 			action := "waived"

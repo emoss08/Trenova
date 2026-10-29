@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -218,12 +219,12 @@ func TestPinShipmentComment_PreviewsThePinAndWrites(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		comments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationUpdate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, change.Operation)
 	assert.NotNil(t, agenttoolstest.FieldByPath(t, change, shipmenttools.FieldPinnedByID).After)
 
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
@@ -251,7 +252,7 @@ func TestUnpinShipmentComment_ClearsThePin(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		comments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -286,7 +287,7 @@ func TestResolveShipmentComment_ResolvesByDefaultAndReopensOnFalse(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		comments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), reopen)
 		},
 	)
@@ -310,7 +311,7 @@ func TestPinShipmentComment_AReplyIsAWouldFail(t *testing.T) {
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(),
 		commentParams(comments, nil))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	err = tool.Execute(
 		t.Context(),
@@ -336,7 +337,7 @@ func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		comments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -454,14 +455,14 @@ func TestDeleteShipmentComment_SaysWhenAPlaceholderStays(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		comments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "placeholder")
 	assert.Equal(
 		t,
-		agent.PreviewOperationDelete,
+		agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 

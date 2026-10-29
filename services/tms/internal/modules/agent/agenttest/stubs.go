@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -123,7 +124,7 @@ type StubQueryTool struct {
 	LastTenant dbscope.Tenant
 	Resource   permission.Resource
 	// Reads and Source declare the tool as one that reads outside content.
-	Reads   agent.ExternalRead
+	Reads   agenttooltrust.ExternalRead
 	Source  agent.TaintSource
 	Sources []agent.TaintSource
 	// Schema stands in for the tool's declared parameters when set.
@@ -154,19 +155,19 @@ func (t *StubQueryTool) Policy() agenttoolports.ToolPolicy {
 
 	reads := t.Reads
 	if reads == "" {
-		reads = agent.ExternalReadNever
+		reads = agenttooltrust.ExternalReadNever
 	}
 
 	return agenttoolports.ToolPolicy{
 		Name:          t.ToolName,
-		Kind:          agent.ToolKindQuery,
+		Kind:          agenttooltrust.ToolKindQuery,
 		Resource:      resource,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressNone},
-		Effect:        agent.ToolEffectLookup,
+		Effect:        agenttooltrust.ToolEffectLookup,
 		Reversible:    true,
 		Idempotent:    true,
 		ReadsExternal: reads,
@@ -266,19 +267,19 @@ func (t *StubActionTool) Policy() agenttoolports.ToolPolicy {
 
 	policy := agenttoolports.ToolPolicy{
 		Name:          t.ToolName,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      resource,
 		Operation:     operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       agent.TierAutoExecute,
 		CarriesTaint:  t.CarriesTaint,
 		Escalates:     t.Escalates,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A stub write.",
 	}
 	if egress == agent.EgressMoney && t.MoneyMinor != nil {

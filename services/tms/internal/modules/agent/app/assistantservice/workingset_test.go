@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -75,7 +77,7 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 
 	touched := touchedRecords(&workingTurn{
 		thread: thread,
-		plan: &TurnPlan{Mentions: []agent.EntityRef{
+		plan: &TurnPlan{Mentions: []agentpagecontext.EntityRef{
 			{Type: "worker", ID: mentioned.String(), Label: "Jane Doe"},
 		}},
 		saved:   saved,
@@ -118,8 +120,12 @@ func TestAnchorRefs_PutsThisTurnFirstAndLeavesOutTheSubject(t *testing.T) {
 			SubjectID:   subject,
 			WorkingSet:  []conversation.WorkingRecord{subjectRecord, older},
 		},
-		mentions: []agent.EntityRef{{Type: "worker", ID: mentioned, Label: "Jane Doe"}},
-		page:     &agent.PageContext{EntityType: "invoice", EntityID: older.ID, Title: "INV-1"},
+		mentions: []agentpagecontext.EntityRef{{Type: "worker", ID: mentioned, Label: "Jane Doe"}},
+		page: &agentpagecontext.PageContext{
+			EntityType: "invoice",
+			EntityID:   older.ID,
+			Title:      "INV-1",
+		},
 	})
 
 	require.Len(t, refs, 2)
@@ -149,23 +155,23 @@ func TestTouchedRecords_KeepsWhatAnApprovedOrAutomaticWriteMade(t *testing.T) {
 			{
 				Status:     agent.ProposalStatusExecuted,
 				ExecutedAt: &later,
-				ExecutionResult: &agent.ToolExecutionResult{
+				ExecutionResult: &agentrecord.ToolExecutionResult{
 					Name:   "S2610",
-					Record: &agent.RecordRef{EntityType: "shipment", ID: approved},
+					Record: &agentrecord.RecordRef{EntityType: "shipment", ID: approved},
 				},
 			},
 			{
 				Status:     agent.ProposalStatusExecuted,
 				ExecutedAt: &earlier,
-				ExecutionResult: &agent.ToolExecutionResult{
-					Record: &agent.RecordRef{EntityType: "shipment", ID: older},
+				ExecutionResult: &agentrecord.ToolExecutionResult{
+					Record: &agentrecord.RecordRef{EntityType: "shipment", ID: older},
 				},
 			},
 		}},
 		actions: []agentruntimeports.PendingAction{{
 			Executed: true,
-			ExecutionResult: &agent.ToolExecutionResult{
-				Record: &agent.RecordRef{EntityType: "location", ID: automatic},
+			ExecutionResult: &agentrecord.ToolExecutionResult{
+				Record: &agentrecord.RecordRef{EntityType: "location", ID: automatic},
 			},
 		}},
 		at: 2_100,

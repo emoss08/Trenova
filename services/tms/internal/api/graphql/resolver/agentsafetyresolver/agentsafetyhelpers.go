@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,10 +39,10 @@ func ToolPolicyViewToModel(view *agenttoolports.AgentToolPolicyView) *gqlmodel.A
 		Explanation:        view.Explanation,
 	}
 	if !out.Effect.IsValid() {
-		out.Effect = agent.ToolEffectLookup
+		out.Effect = agenttooltrust.ToolEffectLookup
 	}
 	if !out.ReadsExternal.IsValid() {
-		out.ReadsExternal = agent.ExternalReadNever
+		out.ReadsExternal = agenttooltrust.ExternalReadNever
 	}
 	if view.Needs != nil {
 		out.Needs = &gqlmodel.AgentToolRequirement{
@@ -70,7 +71,7 @@ func applyRule(out *gqlmodel.AgentToolPolicy, view *agenttoolports.AgentToolPoli
 	out.DeclaredMaxTier = tierOr(declared.MaxTier, agent.TierAutoExecute)
 	out.DeclaredReadsExternal = declared.ReadsExternal
 	if !out.DeclaredReadsExternal.IsValid() {
-		out.DeclaredReadsExternal = agent.ExternalReadNever
+		out.DeclaredReadsExternal = agenttooltrust.ExternalReadNever
 	}
 	if view.Override == nil {
 		return

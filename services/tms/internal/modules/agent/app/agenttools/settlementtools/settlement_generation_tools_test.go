@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -96,7 +97,7 @@ func TestGenerateDriverSettlement_DefaultsToTheCurrentPeriod(t *testing.T) {
 	assert.Contains(t, preview.Summary, "It raises 1 exception for review.")
 	assert.Contains(t, preview.Summary, "approves a clean settlement")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	require.NotNil(t, change.Money)
 
 	result, err := tool.ExecuteWithResult(t.Context(), params)
@@ -155,7 +156,7 @@ func TestGenerateDriverSettlement_ReadsAPeriodAsWholeDays(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Summary, "Sep 1, 2026 through Sep 7, 2026")
 }
 
@@ -217,7 +218,7 @@ func TestGenerateDriverSettlementBatch_PreviewsEachDriverStillToSettle(t *testin
 	batch.plan.Refusal = errortypes.NewBusinessError("The batch for this period is completed")
 	preview, err = tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.Validate(t.Context(), params))
 }
 
@@ -357,7 +358,7 @@ func TestPayWorkerNow_OnlyAPersonPaysSomeone(t *testing.T) {
 	payer.plan.Refusal = errNoInstantPayFixture
 	preview, err = tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 var errNoInstantPayFixture = errortypes.NewValidationError(

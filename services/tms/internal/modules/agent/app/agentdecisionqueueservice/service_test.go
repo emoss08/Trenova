@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -87,14 +89,14 @@ func (r *stubProposals) ListByIDs(
 type stubPlans struct {
 	agentports.AgentPlanRepository
 
-	byID map[pulid.ID]*agent.AgentPlan
+	byID map[pulid.ID]*agentplan.AgentPlan
 }
 
 func (r *stubPlans) ListByIDs(
 	_ context.Context,
 	req agentports.ListAgentPlansByIDsRequest,
-) ([]*agent.AgentPlan, error) {
-	out := make([]*agent.AgentPlan, 0, len(req.IDs))
+) ([]*agentplan.AgentPlan, error) {
+	out := make([]*agentplan.AgentPlan, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if plan, ok := r.byID[id]; ok {
 			out = append(out, plan)
@@ -114,7 +116,7 @@ type stubDecider struct {
 	execErr map[pulid.ID]error
 }
 
-func (d *stubDecider) Defers(agent.DecisionType) bool {
+func (d *stubDecider) Defers(agentdecision.DecisionType) bool {
 	return false
 }
 
@@ -134,7 +136,10 @@ func (d *stubDecider) DecideWithOutcome(
 	proposalID := req.ProposalID
 
 	return &agentports.DecisionOutcome{
-		Decision:       &agent.AgentDecision{ProposalID: &proposalID, Decision: req.Decision},
+		Decision: &agentdecision.AgentDecision{
+			ProposalID: &proposalID,
+			Decision:   req.Decision,
+		},
 		ExecutionError: d.execErr[req.ProposalID],
 	}, nil
 }
@@ -193,7 +198,7 @@ func TestDecideMany_RefusesAMixedBatchBeforeDecidingAnything(t *testing.T) {
 
 	_, err := svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, second.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "one tool at a time")
@@ -201,7 +206,7 @@ func TestDecideMany_RefusesAMixedBatchBeforeDecidingAnything(t *testing.T) {
 
 	_, err = svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, step.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "decide the plan")
@@ -209,7 +214,7 @@ func TestDecideMany_RefusesAMixedBatchBeforeDecidingAnything(t *testing.T) {
 
 	_, err = svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, pulid.MustNew("ap_")},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.Error(t, err)
 	assert.True(t, errortypes.IsMultiError(err))
@@ -237,7 +242,7 @@ func TestDecideMany_ReportsEachOutcomeAndCarriesOn(t *testing.T) {
 
 	results, err := svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, second.ID, third.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.NoError(t, err)
 	require.Len(t, results, 3)
@@ -278,7 +283,7 @@ func TestDecideMany_ChecksEachProposalAgainstItsOwnPreview(t *testing.T) {
 
 	results, err := svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, second.ID, third.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 		PreviewDigests: map[pulid.ID]string{
 			first.ID:  "digest-one",
 			second.ID: "digest-two",
@@ -311,7 +316,7 @@ func TestDecideMany_KeepsInternalFaultsOutOfTheRow(t *testing.T) {
 
 	results, err := svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{only.ID},
-		Decision:    agent.DecisionRejected,
+		Decision:    agentdecision.DecisionRejected,
 		ReasonCode:  "not_now",
 	}, actor())
 	require.NoError(t, err)
@@ -329,27 +334,27 @@ func TestValidateBatch(t *testing.T) {
 		want string
 	}{
 		"empty": {
-			agentports.DecideAgentProposalsRequest{Decision: agent.DecisionAccepted},
+			agentports.DecideAgentProposalsRequest{Decision: agentdecision.DecisionAccepted},
 			"at least one",
 		},
 		"duplicate": {
 			agentports.DecideAgentProposalsRequest{
 				ProposalIDs: []pulid.ID{id, id},
-				Decision:    agent.DecisionAccepted,
+				Decision:    agentdecision.DecisionAccepted,
 			},
 			"listed twice",
 		},
 		"modified": {
 			agentports.DecideAgentProposalsRequest{
 				ProposalIDs: []pulid.ID{id},
-				Decision:    agent.DecisionModified,
+				Decision:    agentdecision.DecisionModified,
 			},
 			"one proposal",
 		},
 		"reject without reason": {
 			agentports.DecideAgentProposalsRequest{
 				ProposalIDs: []pulid.ID{id},
-				Decision:    agent.DecisionRejected,
+				Decision:    agentdecision.DecisionRejected,
 			},
 			"Say why",
 		},
@@ -360,9 +365,9 @@ func TestValidateBatch(t *testing.T) {
 		"note past the bound": {
 			agentports.DecideAgentProposalsRequest{
 				ProposalIDs: []pulid.ID{id},
-				Decision:    agent.DecisionRejected,
+				Decision:    agentdecision.DecisionRejected,
 				ReasonCode:  "rejected_in_conversation",
-				Note:        strings.Repeat("x", agent.MaxDecisionNoteLength+1),
+				Note:        strings.Repeat("x", agentdecision.MaxDecisionNoteLength+1),
 			},
 			"at most",
 		},
@@ -383,14 +388,14 @@ func TestValidateBatch(t *testing.T) {
 	err := validateBatch(
 		&agentports.DecideAgentProposalsRequest{
 			ProposalIDs: tooMany,
-			Decision:    agent.DecisionAccepted,
+			Decision:    agentdecision.DecisionAccepted,
 		},
 	)
 	require.Error(t, err)
 
 	require.NoError(t, validateBatch(&agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{id},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}))
 }
 
@@ -401,10 +406,10 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	t.Parallel()
 
 	first := proposal("dispatch_assign_move")
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:     pulid.MustNew("apl_"),
 		Title:  "Cover the move",
-		Status: agent.PlanStatusPending,
+		Status: agentplan.PlanStatusPending,
 	}
 	gone := pulid.MustNew("ap_")
 	queue := &stubQueue{
@@ -422,7 +427,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 		l:         zap.NewNop(),
 		queue:     queue,
 		proposals: &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{first.ID: first}},
-		plans:     &stubPlans{byID: map[pulid.ID]*agent.AgentPlan{plan.ID: plan}},
+		plans:     &stubPlans{byID: map[pulid.ID]*agentplan.AgentPlan{plan.ID: plan}},
 		shadow:    stubShadow{},
 	}
 
@@ -518,7 +523,7 @@ func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {
 
 	_, err := svc.DecideMany(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, second.ID},
-		Decision:    agent.DecisionRejected,
+		Decision:    agentdecision.DecisionRejected,
 		ReasonCode:  "rejected_in_conversation",
 		Note:        "These customers are on credit hold.",
 	}, actor())
@@ -536,7 +541,13 @@ func TestRecent_PairsEachDecisionWithItsProposalAndDropsTheGone(t *testing.T) {
 	kept := proposal("invoice_post")
 	gone := pulid.MustNew("ap_")
 	queue := &stubQueue{recent: []agentports.RecentDecisionEntry{
-		{DecisionID: pulid.MustNew("adec_"), ProposalID: kept.ID, Decision: "Accepted", DecidedByName: "Jordan Pike", DecidedAt: 50},
+		{
+			DecisionID:    pulid.MustNew("adec_"),
+			ProposalID:    kept.ID,
+			Decision:      "Accepted",
+			DecidedByName: "Jordan Pike",
+			DecidedAt:     50,
+		},
 		{DecisionID: pulid.MustNew("adec_"), ProposalID: gone, Decision: "Rejected", DecidedAt: 40},
 	}}
 	svc := &Service{
@@ -545,7 +556,10 @@ func TestRecent_PairsEachDecisionWithItsProposalAndDropsTheGone(t *testing.T) {
 		proposals: &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{kept.ID: kept}},
 	}
 
-	recent, err := svc.Recent(t.Context(), agentports.ListRecentDecisionsRequest{Since: 10, First: 5})
+	recent, err := svc.Recent(
+		t.Context(),
+		agentports.ListRecentDecisionsRequest{Since: 10, First: 5},
+	)
 	require.NoError(t, err)
 	require.Len(t, recent, 1)
 	assert.Equal(t, kept, recent[0].Proposal)

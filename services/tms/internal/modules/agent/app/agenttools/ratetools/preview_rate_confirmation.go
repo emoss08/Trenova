@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
@@ -20,7 +20,7 @@ import (
 func (t *GenerateRateConfirmationTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	moveID, err := t.moveID(&params)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 		toolpreview.SensitiveAs("totalCost"),
 	)
 
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 	summary = fmt.Sprintf(
 		"Would generate revision %d of the rate confirmation for %s on shipment %s, "+
 			"rendered as a PDF and filed on the shipment. Nothing is sent to the carrier.",
@@ -91,7 +91,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 		if vErr != nil {
 			return nil, vErr
 		}
-		voided.Operation = agent.PreviewOperationArchive
+		voided.Operation = agentpreview.PreviewOperationArchive
 		changes = append(changes, voided)
 		summary += fmt.Sprintf(" Revision %d, which is %s, would be voided and its sign "+
 			"link stop working.", plan.SupersededBefore.Revision,
@@ -104,7 +104,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 func (t *SendRateConfirmationTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	id, err := rateConfirmationArg(t, &params)
 	if err != nil {
 		return nil, err
@@ -125,8 +125,8 @@ func (t *SendRateConfirmationTool) Preview(
 		Resource: permission.ResourceCarrier,
 		ID:       plan.Before.CarrierID,
 		Label:    carrier,
-	}, &agent.MessagePreview{
-		Channel:     agent.MessageChannelEmail,
+	}, &agentpreview.MessagePreview{
+		Channel:     agentpreview.MessageChannelEmail,
 		To:          plan.Recipients,
 		Attachments: []string{plan.Attachment},
 		Subject:     plan.Subject,
@@ -154,7 +154,7 @@ func (t *SendRateConfirmationTool) Preview(
 func (t *VoidRateConfirmationTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	id, reason, err := t.arguments(&params)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (t *VoidRateConfirmationTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes[0].Operation = agent.PreviewOperationArchive
+	changes[0].Operation = agentpreview.PreviewOperationArchive
 
 	summary = fmt.Sprintf(
 		"Would void revision %d of the rate confirmation for %s, which "+
@@ -206,7 +206,7 @@ func (t *VoidRateConfirmationTool) Preview(
 func (t *RecordRateConfirmationConfirmedTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	id, name, err := t.arguments(&params)
 	if err != nil {
 		return nil, err
@@ -247,12 +247,12 @@ func (t *RecordRateConfirmationConfirmedTool) Preview(
 func rateConfirmationChanges(
 	plan *rateconfirmationservice.ChangePreview,
 	fields ...string,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	record, err := carrierpreview.RateConfirmationChange(plan.Before, plan.After, "", fields...)
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{record}
+	changes := []*agentpreview.RecordChange{record}
 	if plan.AssignmentAfter == nil {
 		return changes, nil
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 )
@@ -41,7 +41,7 @@ func settlementVerb(action settlementshared.Action) string {
 func (t *SettlementDecisionTool[E]) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (t *SettlementDecisionTool[E]) Preview(
 		toolpreview.SensitiveAs(t.ledger.Sensitive...),
 	)
 
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 	sentences := []string{summary}
 	if plan.Journal != nil {
 		journal, journalErr := settlementpreview.SettlementJournalChange(plan.Journal, before)

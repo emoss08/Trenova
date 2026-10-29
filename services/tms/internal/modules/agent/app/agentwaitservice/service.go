@@ -17,6 +17,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
@@ -421,7 +422,7 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 	detail := event.Detail
 	switch {
 	case detail != "":
-	case event.Kind == agent.EventDocumentExtracted:
+	case event.Kind == agenttrigger.EventDocumentExtracted:
 		detail = fmt.Sprintf("Its reading finished at %s.", stamp(s.now()))
 	default:
 		detail = fmt.Sprintf("Seen at %s.", stamp(s.now()))
@@ -435,13 +436,13 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 
 func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 	switch event.Kind { //nolint:exhaustive // only these events end a wait
-	case agent.EventShipmentMoveArrived:
+	case agenttrigger.EventShipmentMoveArrived:
 		return []agentwait.Kind{agentwait.KindStopArrival}, []pulid.ID{event.SubjectID}
-	case agent.EventShipmentMoveDeparted:
+	case agenttrigger.EventShipmentMoveDeparted:
 		return []agentwait.Kind{agentwait.KindStopDeparture}, []pulid.ID{event.SubjectID}
-	case agent.EventInboundMessageClassified:
+	case agenttrigger.EventInboundMessageClassified:
 		return []agentwait.Kind{agentwait.KindReply}, event.Related
-	case agent.EventDocumentExtracted:
+	case agenttrigger.EventDocumentExtracted:
 		return []agentwait.Kind{agentwait.KindDocumentRead}, []pulid.ID{event.SubjectID}
 	default:
 		return nil, nil

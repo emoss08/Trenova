@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -257,7 +259,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		Render: func(
 			_ *employment.WorkerEmploymentVerification,
 			planned *employment.WorkerEmploymentVerification,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceQualification, pulid.Nil, planned.EmployerName, 0),
 				planned, wfOptions(verificationFields...)...)
@@ -272,7 +274,7 @@ func newRecordEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 			ctx context.Context,
 			entity *employment.WorkerEmploymentVerification,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := dqf.RecordVerification(ctx, entity, params.Actor.UserID)
 			if err != nil {
 				return nil, err
@@ -476,7 +478,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		Render: func(
 			_ *workerdqfservice.UpdateVerificationRequest,
 			change *workerdqfservice.VerificationChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(verificationRecord(change.Before),
 				change.Before, change.After, wfOptions(verificationFields...)...)
 			if err != nil {
@@ -489,7 +491,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 			ctx context.Context,
 			req *workerdqfservice.UpdateVerificationRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := dqf.UpdateVerification(ctx, req)
 			if err != nil {
 				return nil, err
@@ -564,7 +566,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 		Render: func(
 			log *verificationRequestLog,
 			change *workerdqfservice.VerificationChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			options := append(
 				wfOptions(
 					changepreview.FieldStatus,
@@ -591,7 +593,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 			ctx context.Context,
 			log *verificationRequestLog,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			var saved *employment.WorkerEmploymentVerification
 			var err error
 			action := "marked requested"
@@ -640,7 +642,7 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 			Render: func(
 				_ *recordDelete,
 				entity *employment.WorkerEmploymentVerification,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(verificationRecord(entity), entity,
 					wfOptions(verificationFields...)...)
 				if err != nil {
@@ -655,7 +657,7 @@ func newDeleteEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, dqf.DeleteVerification(ctx, req.tenant, req.id, req.userID)
 			},
 		},

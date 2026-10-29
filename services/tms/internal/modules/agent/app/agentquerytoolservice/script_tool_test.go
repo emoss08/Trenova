@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -259,8 +261,12 @@ func TestRunScriptReadsAFileThePersonAttachedAndCarriesItsTaint(t *testing.T) {
 		{"Acme", 1200.5, "2026-09-01"},
 		{"Peak", 80.0, "2026-09-02"},
 	}, dataset.Rows, "a spreadsheet's money reads as a number")
-	assert.Equal(t, []agent.RecordRef{{EntityType: agent.TaintEntityDocument, ID: docID.String()}},
-		answer.TaintedRecords(), "what the person attached may have been written outside")
+	assert.Equal(
+		t,
+		[]agentrecord.RecordRef{{EntityType: agent.TaintEntityDocument, ID: docID.String()}},
+		answer.TaintedRecords(),
+		"what the person attached may have been written outside",
+	)
 }
 
 func TestRunScriptReadsATextFileAsItsText(t *testing.T) {
@@ -524,7 +530,7 @@ func TestRunScriptDeclaresWhatItReads(t *testing.T) {
 
 	policy := newScriptHarness().tool.Policy()
 	assert.Equal(t, permission.ResourceCodeMode, policy.Resource)
-	assert.Equal(t, agent.ExternalReadMarked, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadMarked, policy.ReadsExternal)
 	assert.Contains(t, policy.Sources, agent.TaintSourceAttachment,
 		"an attached file it reads is outside text")
 }

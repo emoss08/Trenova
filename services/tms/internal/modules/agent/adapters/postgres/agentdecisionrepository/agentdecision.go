@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,8 +40,8 @@ func New(p Params) agentports.AgentDecisionRepository {
 func (r *repository) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentDecisionByIDRequest,
-) (*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
+) (*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
 		entity, err := agentdb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			r.l.Error(
@@ -58,9 +58,9 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *agent.AgentDecision,
-) (*agent.AgentDecision, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
+	entity *agentdecision.AgentDecision,
+) (*agentdecision.AgentDecision, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
 		if err := agentdb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent decision", zap.Error(err))
 			return nil, decisionErrors.Map(err, entity.ID.String())
@@ -73,10 +73,10 @@ func (r *repository) Create(
 func (r *repository) ListByProposals(
 	ctx context.Context,
 	req agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		if len(req.ProposalIDs) == 0 {
-			return []*agent.AgentDecision{}, nil
+			return []*agentdecision.AgentDecision{}, nil
 		}
 
 		d := agentdb.AgentDecisions
@@ -96,10 +96,10 @@ func (r *repository) ListByProposals(
 func (r *repository) ListByCommitWorkflow(
 	ctx context.Context,
 	req agentports.ListAgentDecisionsByCommitWorkflowRequest,
-) ([]*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		if req.WorkflowID == "" {
-			return []*agent.AgentDecision{}, nil
+			return []*agentdecision.AgentDecision{}, nil
 		}
 
 		d := agentdb.AgentDecisions

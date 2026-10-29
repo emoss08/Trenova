@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -567,7 +567,7 @@ func TestRemittanceStageReadsMatchesAndAnnounces(t *testing.T) {
 	)
 	assert.True(t, lineByInvoice(rem, "MYSTERY").MatchStatus.IsException())
 
-	assert.Equal(t, []string{string(agent.EventFactoringRemittanceStaged)}, h.events.kinds())
+	assert.Equal(t, []string{string(agenttrigger.EventFactoringRemittanceStaged)}, h.events.kinds())
 	assert.Empty(t, h.remittances.saved, "a guessed layout is not saved as the factor's")
 }
 

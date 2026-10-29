@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -23,7 +24,7 @@ func (t selfScopedTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func selfScopedPolicy(policy agenttoolports.ToolPolicy) agenttoolports.ToolPolicy {
-	policy.Scope = agent.ToolScopeSelf
+	policy.Scope = agenttooltrust.ToolScopeSelf
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
 	policy.MaxTier = agent.TierAutoExecute
 

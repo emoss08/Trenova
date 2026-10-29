@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -124,7 +125,7 @@ func TestAssignBillingQueueBiller_DefaultsToThePersonAsking(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -197,7 +198,7 @@ func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testi
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return previewer.Preview(t.Context(), params)
 		},
 	)
@@ -279,7 +280,7 @@ func TestTransitionToInReview_NamesThePersonAskingWhenTheItemHasNoBiller(t *test
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -346,7 +347,7 @@ func TestTransitionItemsToInReview_MovesEveryItemInOneCall(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		queue.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return previewer.Preview(t.Context(), params)
 		},
 	)

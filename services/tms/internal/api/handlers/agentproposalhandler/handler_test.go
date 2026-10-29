@@ -12,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -42,7 +45,10 @@ func (d *recordingDecisions) DecideWithOutcome(
 	}
 
 	return &agentports.DecisionOutcome{
-		Decision:       &agent.AgentDecision{ID: pulid.MustNew("adec_"), Decision: req.Decision},
+		Decision: &agentdecision.AgentDecision{
+			ID:       pulid.MustNew("adec_"),
+			Decision: req.Decision,
+		},
 		ExecutionError: d.execErr,
 	}, nil
 }
@@ -69,10 +75,10 @@ type digestPreviews struct {
 func (p *digestPreviews) ForProposal(
 	_ context.Context,
 	req *agentruntimeports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	p.asked = req
 
-	return &agent.ProposalPreview{
+	return &agentpreview.ProposalPreview{
 		ProposalID: req.Proposal.ID,
 		Tool:       req.Proposal.ToolName,
 		Digest:     strings.Repeat("a", 64),
@@ -114,7 +120,7 @@ func TestResolve_EchoesThePreviewDigestAndNote(t *testing.T) {
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + proposalID.String() + "/resolve/").
 		WithJSONBody(map[string]any{
-			"decision":      agent.DecisionAccepted,
+			"decision":      agentdecision.DecisionAccepted,
 			"reasonCode":    "looks_right",
 			"note":          "Matches the remittance",
 			"previewDigest": digest,
@@ -137,7 +143,7 @@ func TestResolve_AnApprovalThatRanSaysSo(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + proposalID.String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(&recordingDecisions{}, &storedProposals{}, nil).
 		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -152,7 +158,7 @@ func TestResolve_AnApprovalThatRanSaysSo(t *testing.T) {
 	assert.NotContains(t, body, "error")
 	decision, ok := body["decision"].(map[string]any)
 	require.True(t, ok, "the recorded decision is returned: %v", body["decision"])
-	assert.Equal(t, string(agent.DecisionAccepted), decision["decision"])
+	assert.Equal(t, string(agentdecision.DecisionAccepted), decision["decision"])
 }
 
 func TestResolve_AnApprovalRefusedOverAChangedRecordIsTheOutcomeNotAnError(t *testing.T) {
@@ -161,12 +167,12 @@ func TestResolve_AnApprovalRefusedOverAChangedRecordIsTheOutcomeNotAnError(t *te
 	refusal := fmt.Errorf(
 		"%w: the shipment S-1 was at version 3 when this was proposed and is at version 5 now, "+
 			"so nothing was changed",
-		agent.ErrTargetChanged,
+		agentplan.ErrTargetChanged,
 	)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + pulid.MustNew("ap_").String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(&recordingDecisions{execErr: refusal}, &storedProposals{}, nil).
 		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -188,7 +194,7 @@ func TestResolve_AGatedApprovalWithoutADigestIsRefused(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + pulid.MustNew("ap_").String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(decisions, &storedProposals{}, nil).RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)

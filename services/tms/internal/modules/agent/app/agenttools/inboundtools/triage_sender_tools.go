@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
@@ -51,7 +53,7 @@ type blockedSendersView struct {
 	BlockedSenders []string `json:"blockedSenders"`
 }
 
-func mailboxSendersChange(plan *triageworkservice.SenderPlan) (*agent.RecordChange, error) {
+func mailboxSendersChange(plan *triageworkservice.SenderPlan) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceInboundMailbox,
@@ -126,7 +128,7 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 			Render: func(
 				_ *triageworkservice.BlockSenderRequest,
 				plan *triageworkservice.SenderPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				mailbox, err := mailboxSendersChange(plan)
 				if err != nil {
 					return nil, err
@@ -150,7 +152,7 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *triageworkservice.BlockSenderRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := senders.BlockSender(ctx, req)
 				if err != nil {
 					return nil, err
@@ -224,7 +226,7 @@ func newUnblockInboundSenderTool(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				unblock, err := unblockRequest(ctx, inbox, req)
 				if err != nil {
 					return nil, err
@@ -241,7 +243,7 @@ func newUnblockInboundSenderTool(
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "unblocked",
 					Kind:   "sender",
 					Name:   unblock.Sender + " on " + mailbox.Address,
@@ -280,7 +282,7 @@ func unblockRequest(
 func renderUnblockSender(
 	_ *inboundmessageservice.MessageActionRequest,
 	plan *triageworkservice.SenderPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would let mail from " + plan.Sender + " on " + plan.Mailbox.Address +
 		" reach the Triage queue again."
 	if !plan.Changed {

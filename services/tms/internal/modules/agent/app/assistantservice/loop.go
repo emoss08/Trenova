@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -32,7 +33,7 @@ type TurnRequest struct {
 	History    []conversation.Message
 	Input      string
 	Page       *agentturn.PageContext
-	Surface    agent.Surface
+	Surface    agentpagecontext.Surface
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
 	// ThreadID is the conversation, for attributing what the turn cost.

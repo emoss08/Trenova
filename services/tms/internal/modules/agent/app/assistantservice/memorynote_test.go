@@ -3,7 +3,7 @@ package assistantservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,19 +15,21 @@ func TestMemoryNote_CarriesWhyAndWhatItReplaced(t *testing.T) {
 
 	old := pulid.MustNew("amem_")
 	note := memoryNote(&agentmemoryports.DeskMemory{
-		Memory: &agent.Memory{
-			ID:       pulid.MustNew("amem_"),
-			Kind:     agent.MemoryKindProcedure,
-			Source:   agent.MemorySourceReflection,
-			Status:   agent.MemoryStatusActive,
-			Scope:    agent.MemoryScopeAgent,
-			Content:  "Read the move before assigning it.",
-			Evidence: &agent.MemoryEvidence{Reason: "Assigning failed until the move was read."},
+		Memory: &agentmemory.Memory{
+			ID:      pulid.MustNew("amem_"),
+			Kind:    agentmemory.MemoryKindProcedure,
+			Source:  agentmemory.MemorySourceReflection,
+			Status:  agentmemory.MemoryStatusActive,
+			Scope:   agentmemory.MemoryScopeAgent,
+			Content: "Read the move before assigning it.",
+			Evidence: &agentmemory.MemoryEvidence{
+				Reason: "Assigning failed until the move was read.",
+			},
 		},
 		Replaces: &agentmemoryports.DeskMemoryLink{
 			ID:      old,
 			Content: "Assign the move straight away.",
-			Status:  agent.MemoryStatusRetired,
+			Status:  agentmemory.MemoryStatusRetired,
 		},
 	})
 
@@ -43,7 +45,10 @@ func TestMemoryNote_AMemoryWithoutEvidenceHasNoWhy(t *testing.T) {
 	t.Parallel()
 
 	note := memoryNote(&agentmemoryports.DeskMemory{
-		Memory: &agent.Memory{ID: pulid.MustNew("amem_"), Source: agent.MemorySourceUser},
+		Memory: &agentmemory.Memory{
+			ID:     pulid.MustNew("amem_"),
+			Source: agentmemory.MemorySourceUser,
+		},
 	})
 
 	assert.Empty(t, note.Reason)

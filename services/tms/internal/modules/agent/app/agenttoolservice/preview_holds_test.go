@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
@@ -148,13 +148,13 @@ func TestPlaceShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&holds.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceShipmentHold, change.Resource)
 	assert.Equal(t, true, agenttoolstest.FieldByPath(t, change, "blocksDispatch").After)
 	shipmentField := agenttoolstest.FieldByPath(t, change, "shipmentId")
@@ -175,7 +175,7 @@ func TestPlaceShipmentHold_PreviewWarnsOnAnInactiveReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&holds.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"shipmentId":   pulid.MustNew("shp_").String(),
 				"holdReasonId": holds.reason.ID.String(),
@@ -184,7 +184,7 @@ func TestPlaceShipmentHold_PreviewWarnsOnAnInactiveReason(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -209,13 +209,13 @@ func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&holds.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, current.ID, change.EntityID)
 	assert.True(t, agenttoolstest.FieldByPath(t, change, "releasedAt").Volatile)
 	assert.Contains(t, preview.Summary, "blocks delivery")
@@ -239,7 +239,7 @@ func TestReleaseShipmentHold_PreviewWarnsOnAHoldAlreadyReleased(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&holds.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"shipmentId": pulid.MustNew("shp_").String(),
 				"holdId":     current.ID.String(),
@@ -248,10 +248,10 @@ func TestReleaseShipmentHold_PreviewWarnsOnAHoldAlreadyReleased(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
-func fieldPaths(fields []agent.PreviewFieldChange) []string {
+func fieldPaths(fields []agentpreview.PreviewFieldChange) []string {
 	paths := make([]string, 0, len(fields))
 	for i := range fields {
 		paths = append(paths, fields[i].Path)

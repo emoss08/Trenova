@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -71,9 +71,13 @@ func TestCreateTableChangeAlert_PreviewMatchesWhatIsSaved(t *testing.T) {
 	tool := &CreateTableChangeAlertTool{alerts: alerts}
 	params := agenttoolstest.ExecuteParams(alertParams())
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &alerts.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&alerts.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -83,7 +87,12 @@ func TestCreateTableChangeAlert_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Contains(t, preview.Summary, "added or changed")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireCreateParity(t, change, alertViewOf(alerts.saved), toolpreview.Labels(alertViewLabels))
+	agenttoolstest.RequireCreateParity(
+		t,
+		change,
+		alertViewOf(alerts.saved),
+		toolpreview.Labels(alertViewLabels),
+	)
 }
 
 func TestCreateTableChangeAlert_PreviewWarnsOnATableThatCannotBeWatched(t *testing.T) {
@@ -92,10 +101,14 @@ func TestCreateTableChangeAlert_PreviewWarnsOnATableThatCannotBeWatched(t *testi
 	alerts := &savingAlerts{}
 	tool := &CreateTableChangeAlertTool{alerts: alerts}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &alerts.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(alertParams()))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&alerts.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(alertParams()))
+		},
+	)
 
 	require.Len(t, preview.Changes, 1)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

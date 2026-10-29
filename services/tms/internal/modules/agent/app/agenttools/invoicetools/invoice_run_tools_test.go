@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
@@ -182,7 +183,7 @@ func TestBuildInvoiceRun_PreviewsTheProposedInvoicesAndBuildsIt(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -199,7 +200,7 @@ func TestBuildInvoiceRun_PreviewsTheProposedInvoicesAndBuildsIt(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 1).Operation,
 	)
 
@@ -255,7 +256,7 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -310,7 +311,7 @@ func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -352,7 +353,7 @@ func TestCancelInvoiceRun_CancelsWithAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -397,7 +398,7 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

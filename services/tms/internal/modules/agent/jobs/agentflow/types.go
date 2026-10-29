@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
@@ -125,7 +125,7 @@ type RunContext struct {
 	Delegation *agentruntimeports.Delegation `json:"delegation,omitempty"`
 	// Records are the records the turn is about, so an agent it hands a task
 	// to reads their memories too.
-	Records []agent.EntityRef `json:"records,omitempty"`
+	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// Inline says the reply is read with nothing beside it, so no tool result
 	// is kept as an artifact.
 	Inline bool `json:"inline,omitempty"`

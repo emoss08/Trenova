@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -134,8 +135,8 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 	return nil
 }
 
-func permitResult(action string, entity *permit.Permit) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+func permitResult(action string, entity *permit.Permit) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   kindPermit,
 		Name:   entity.PermitNumber,
@@ -203,7 +204,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 				return permits.PlanCreatePermit(ctx, &planned)
 			},
 			Refused: func(*permit.Permit) string { return "Would record a permit on the shipment." },
-			Render: func(_ *permit.Permit, planned *permit.Permit) (*agent.ToolPreview, error) {
+			Render: func(_ *permit.Permit, planned *permit.Permit) (*agentpreview.ToolPreview, error) {
 				created, err := toolpreview.Create(permitRecord(planned, pulid.Nil), planned,
 					permitOptions()...)
 				if err != nil {
@@ -216,7 +217,7 @@ func newRecordShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 				ctx context.Context,
 				entity *permit.Permit,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := permits.CreatePermit(ctx, entity, params.Actor)
 				if err != nil {
 					return nil, err
@@ -301,7 +302,7 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 		Render: func(
 			_ *permitEdit,
 			change *kernelports.RecordChange[permit.Permit],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(permitRecord(change.Before, change.Before.ID),
 				change.Before, change.After, permitOptions()...)
 			if err != nil {
@@ -314,7 +315,7 @@ func newUpdateShipmentPermitTool(permits permitports.PermitService) agenttoolpor
 			ctx context.Context,
 			edit *permitEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, permits)
 			if err != nil {
 				return nil, err

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -247,9 +247,9 @@ func TestReadPortalDeclaresWhatItBringsIn(t *testing.T) {
 	t.Parallel()
 
 	policy := newReadPortalTool(&stubPortals{}, nil).Policy()
-	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal)
 	assert.True(t, policy.CapsLaterWrites)
 
 	listed := newListPortalSitesTool(&stubPortals{}).Policy()
-	assert.NotEqual(t, agent.ExternalReadAlways, listed.ReadsExternal)
+	assert.NotEqual(t, agenttooltrust.ExternalReadAlways, listed.ReadsExternal)
 }

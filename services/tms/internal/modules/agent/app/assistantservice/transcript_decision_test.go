@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/stretchr/testify/assert"
@@ -80,7 +81,7 @@ func TestTranscript_ListsWhatAnExecutedProposalMade(t *testing.T) {
 		Rationale:    "Asked for a saved report.",
 		AutonomyTier: agent.TierAutoExecute,
 		Status:       agent.ProposalStatusExecuted,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			Name:   "Lanes",

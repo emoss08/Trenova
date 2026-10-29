@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -58,7 +58,7 @@ func (k equipmentKind[T]) PlanPreview(
 	ids []pulid.ID,
 	status domaintypes.EquipmentStatus,
 	units []*T,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	byID := make(map[pulid.ID]*T, len(units))
 	for _, unit := range units {
 		if unit != nil {
@@ -67,7 +67,7 @@ func (k equipmentKind[T]) PlanPreview(
 	}
 
 	mutate := k.setStatus(status)
-	changes := make([]*agent.RecordChange, 0, len(ids))
+	changes := make([]*agentpreview.RecordChange, 0, len(ids))
 	missing := make([]string, 0)
 	for _, id := range ids {
 		unit, found := byID[id]
@@ -97,7 +97,7 @@ func (k equipmentKind[T]) PlanPreview(
 
 	return toolpreview.Warn(
 		preview,
-		agent.PreviewWarningWouldFail,
+		agentpreview.PreviewWarningWouldFail,
 		fmt.Sprintf(
 			"This would be refused as it stands: %s matches nothing in this organization.",
 			changepreview.CountOf(len(missing), k.noun+" id"),
@@ -109,7 +109,7 @@ func (k equipmentKind[T]) PlanPreview(
 func (t *UpdateTractorStatusTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (t *UpdateTractorStatusTool) Preview(
 func (t *UpdateTrailerStatusTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}

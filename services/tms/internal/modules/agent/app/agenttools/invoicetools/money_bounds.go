@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -48,20 +50,20 @@ func (t *PostCustomerPaymentTool) withinBounds(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
 ) agenttoolports.MoneyBound {
 	if t.payments == nil || t.receipts == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	args, err := t.arguments(ctx, params)
 	if err != nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	posted, err := t.payments.PreviewPostAndApply(ctx, args.request, params.Actor)
 	if err != nil || posted == nil || posted.Payment == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 
 	if args.receipt == nil || !recordsTheReceipt(args.request, args.receipt) ||
 		!remittanceMatches(args.receipt, posted) {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyExactMatch)
 	}
 
 	return agenttoolports.WithinMoneyBound(args.request.AmountMinor, posted.Payment.CurrencyCode).
@@ -90,8 +92,8 @@ func sameDay(a, b int64) bool {
 		time.Unix(b, 0).UTC().Format(time.DateOnly)
 }
 
-func receiptRef(id pulid.ID) agent.RecordRef {
-	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
+func receiptRef(id pulid.ID) agentrecord.RecordRef {
+	return agentrecord.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
 }
 
 func remittanceMatches(
@@ -128,20 +130,20 @@ func (t *MatchBankReceiptTool) withinBounds(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
 ) agenttoolports.MoneyBound {
 	if t.receipts == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	request, err := t.request(params)
 	if err != nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	match, err := t.receipts.PreviewMatch(ctx, request, params.Actor)
 	if err != nil || match == nil || match.ReceiptBefore == nil || match.Payment == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 
 	receipt, payment := match.ReceiptBefore, match.Payment
 	if !exactReceiptMatch(receipt, payment) {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyExactMatch)
 	}
 
 	candidates, err := t.receipts.PaymentsOfReceiptAmount(
@@ -153,10 +155,10 @@ func (t *MatchBankReceiptTool) withinBounds(
 		},
 	)
 	if err != nil || len(candidates) > matchCandidateLimit {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if !onlyExactCandidate(receipt, payment, candidates) {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyExactMatch)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyExactMatch)
 	}
 
 	return agenttoolports.WithinMoneyBound(receipt.AmountMinor, payment.CurrencyCode).
@@ -194,21 +196,21 @@ func (t *CorrectChargeCodeTool) withinBounds(
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
 ) agenttoolports.MoneyBound {
 	if t.billing == nil || t.profiles == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	request, err := t.request(&params)
 	if err != nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	plan, err := t.billing.PreviewUpdateCharges(ctx, request, params.Actor)
 	if err != nil || plan == nil || plan.Item == nil || plan.Before == nil || plan.After == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if !uninvoiced(plan.Item) {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyRecordState)
 	}
 	if plan.Item.BillToCustomerID.IsNil() {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	profile, err := t.profiles.GetBillingProfile(
 		ctx,
@@ -221,13 +223,13 @@ func (t *CorrectChargeCodeTool) withinBounds(
 		},
 	)
 	if err != nil || profile == nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	payer := customer.Customer{BillingProfile: profile}
 
 	gross, err := grossChargeChange(ctx, plan.Before, plan.After)
 	if err != nil {
-		return agenttoolports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 
 	return agenttoolports.WithinMoneyBound(money.MinorUnits(gross), payer.BillingCurrencyCode())

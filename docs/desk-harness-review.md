@@ -624,7 +624,7 @@ each call. 13 tools are marked "a person always decides".
 8. Simulation or the daily tool budget, for a call that runs automatically.
 
 **Approvals are bound to what the person saw.** The preview digest is SHA-256 over these
-inputs (`domain/agent/preview.go:368-440`):
+inputs (`domain/agentpreview/preview.go:368-440`):
 
 - the proposal and the tool;
 - the parameters as they would run;

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -187,9 +187,16 @@ func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
 			continue
 		}
 		if read.SelfScoped {
-			assert.Equalf(t, agent.ToolScopeSelf, tool.Policy().Scope, "%s reads %s, whose "+
-				"resolver acts only on the caller's own record, so the tool must be scoped to "+
-				"the caller", tool.Name(), read.Operation)
+			assert.Equalf(
+				t,
+				agenttooltrust.ToolScopeSelf,
+				tool.Policy().Scope,
+				"%s reads %s, whose "+
+					"resolver acts only on the caller's own record, so the tool must be scoped to "+
+					"the caller",
+				tool.Name(),
+				read.Operation,
+			)
 			continue
 		}
 		assert.Equalf(t, read.Resource, tool.Policy().Resource.String(),

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -253,7 +255,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			filing *captureFiling,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entries, err := filing.versioned(ctx, captures)
 			if err != nil {
 				return nil, err
@@ -263,7 +265,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "filed",
 					Kind:   changepreview.ScannedDocument,
 					Name:   changepreview.CountOf(1, changepreview.ScannedDocument),
@@ -281,7 +283,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 				return nil, errors.New(capturedOutcome(result))
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "filed",
 				Kind:   changepreview.ScannedDocument,
 				Name:   capturedOutcome(result),
@@ -337,8 +339,8 @@ func captureFilingProperties() map[string]any {
 func renderCaptureFiling(
 	_ *captureFiling,
 	plans []*captureservice.FilePlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plans))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plans))
 	for _, plan := range plans {
 		change, err := toolpreview.Changed(captureItemRecord(plan.Item),
 			captureItemBefore(plan.Item), &captureItemView{
@@ -428,7 +430,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			return captures.PlanDiscardItem(ctx, in)
 		},
 		Refused: func(pulid.ID) string { return "Would discard a scanned document." },
-		Render: func(_ pulid.ID, plan *captureservice.DiscardItemPlan) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *captureservice.DiscardItemPlan) (*agentpreview.ToolPreview, error) {
 			after := captureItemBefore(plan.Item)
 			after.Status = string(capture.ItemDiscarded)
 			change, err := toolpreview.Changed(captureItemRecord(plan.Item),
@@ -436,7 +438,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			if err != nil {
 				return nil, err
 			}
-			change.Operation = agent.PreviewOperationArchive
+			change.Operation = agentpreview.PreviewOperationArchive
 
 			return toolpreview.Build(fmt.Sprintf(
 				"Would discard %s of %s without filing it.",
@@ -451,7 +453,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
 				return nil, err
@@ -460,7 +462,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "discarded",
 				Kind:   changepreview.ScannedDocument,
 				IDs:    map[string]string{paramCaptureItemIDOne: id.String()},
@@ -541,7 +543,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
 				return nil, err
@@ -550,7 +552,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{Action: "discarded", Kind: "scanned stack",
+			return &agentrecord.ToolExecutionResult{Action: "discarded", Kind: "scanned stack",
 				IDs: map[string]string{paramCaptureBatchID: id.String()}}, nil
 		},
 	})
@@ -559,7 +561,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 func renderCaptureDiscard(
 	_ pulid.ID,
 	plan *captureservice.DiscardBatchPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	status := capture.BatchDiscarded
 	if plan.Batch.FiledItemCount > 0 {
 		status = capture.BatchFiled

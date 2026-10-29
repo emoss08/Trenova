@@ -4,19 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -50,7 +49,7 @@ type artifactSeedRefs struct {
 	org       *tenant.Organization
 	threads   []*conversation.Thread
 	shipments []*shipment.Shipment
-	plan      *agent.AgentPlan
+	plan      *agentplan.AgentPlan
 	steps     []*agent.AgentProposal
 	// draft is the proposal the email artifact is a view over. An email draft
 	// without one is refused by the domain, and rightly: a draft that is not
@@ -111,7 +110,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		return nil, fmt.Errorf("need three seeded shipments: %w", errFixtureMissing)
 	}
 
-	refs.plan = new(agent.AgentPlan)
+	refs.plan = new(agentplan.AgentPlan)
 	if refs.plan, err = agentdb.AgentPlans.AllTenants().Where(
 		agentdb.AgentPlans.OrganizationID.Eq(org.ID),
 		agentdb.AgentPlans.BusinessUnitID.Eq(org.BusinessUnitID),

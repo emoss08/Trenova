@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -135,8 +135,8 @@ func loadEscrow(
 	})
 }
 
-func escrowBalanceMoney(before, after *driverpay.EscrowAccount) *agent.MoneyPreview {
-	return toolpreview.MoneyBlock(after.CurrencyCode, agent.MoneyLine{
+func escrowBalanceMoney(before, after *driverpay.EscrowAccount) *agentpreview.MoneyPreview {
+	return toolpreview.MoneyBlock(after.CurrencyCode, agentpreview.MoneyLine{
 		Label:  "Balance",
 		Before: changepreview.MinorAmount(before.BalanceMinor),
 		After:  changepreview.MinorAmount(after.BalanceMinor),
@@ -274,7 +274,7 @@ func (t *OpenEscrowAccountTool) Execute(
 func (t *OpenEscrowAccountTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -306,7 +306,7 @@ func (t *OpenEscrowAccountTool) Preview(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		entity.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Target",
 			After: changepreview.MinorAmount(entity.TargetAmountMinor),
 		},
@@ -440,7 +440,7 @@ func (t *UpdateEscrowAccountTool) Execute(
 func (t *UpdateEscrowAccountTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -456,7 +456,7 @@ func (t *UpdateEscrowAccountTool) Preview(
 		return nil, err
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(plan.after.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label:  "Target",
 			Before: changepreview.MinorAmount(plan.before.TargetAmountMinor),
 			After:  changepreview.MinorAmount(plan.after.TargetAmountMinor),
@@ -634,7 +634,7 @@ func (t *AdjustEscrowAccountTool) Execute(
 func (t *AdjustEscrowAccountTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -761,7 +761,7 @@ func (t *CloseEscrowAccountTool) Execute(
 func (t *CloseEscrowAccountTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err

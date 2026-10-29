@@ -20,6 +20,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -34,15 +40,15 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func (r *AgentDecisionResolver) TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error) {
+func (r *AgentDecisionResolver) TraceURL(ctx context.Context, obj *agentdecision.AgentDecision) (*string, error) {
 	return r.TraceURLOf(obj.TraceID), nil
 }
 
-func (r *AgentEvaluationResolver) SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error) {
+func (r *AgentEvaluationResolver) SubjectType(ctx context.Context, obj *agentevaluation.Evaluation) (string, error) {
 	return string(obj.SubjectType), nil
 }
 
-func (r *AgentEvaluationResolver) Actions(ctx context.Context, obj *agent.Evaluation) ([]map[string]any, error) {
+func (r *AgentEvaluationResolver) Actions(ctx context.Context, obj *agentevaluation.Evaluation) ([]map[string]any, error) {
 	out := make([]map[string]any, 0, len(obj.Actions))
 	for i := range obj.Actions {
 		out = append(out, jsonutils.MustToJSON(&obj.Actions[i]))
@@ -51,7 +57,7 @@ func (r *AgentEvaluationResolver) Actions(ctx context.Context, obj *agent.Evalua
 	return out, nil
 }
 
-func (r *AgentEvaluationResolver) Comparison(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+func (r *AgentEvaluationResolver) Comparison(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error) {
 	if obj.Comparison == nil {
 		return nil, nil
 	}
@@ -59,7 +65,7 @@ func (r *AgentEvaluationResolver) Comparison(ctx context.Context, obj *agent.Eva
 	return jsonutils.MustToJSON(obj.Comparison), nil
 }
 
-func (r *AgentEvaluationResolver) Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+func (r *AgentEvaluationResolver) Checks(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error) {
 	if obj.Checks == nil {
 		return nil, nil
 	}
@@ -67,7 +73,7 @@ func (r *AgentEvaluationResolver) Checks(ctx context.Context, obj *agent.Evaluat
 	return jsonutils.MustToJSON(obj.Checks), nil
 }
 
-func (r *AgentEvaluationResolver) Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+func (r *AgentEvaluationResolver) Judge(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error) {
 	if obj.Judge == nil {
 		return nil, nil
 	}
@@ -75,7 +81,7 @@ func (r *AgentEvaluationResolver) Judge(ctx context.Context, obj *agent.Evaluati
 	return jsonutils.MustToJSON(obj.Judge), nil
 }
 
-func (r *AgentEvaluationResolver) Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+func (r *AgentEvaluationResolver) Fingerprint(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error) {
 	if obj.Fingerprint == nil {
 		return nil, nil
 	}
@@ -130,7 +136,7 @@ func (r *AgentProposalResolver) Modifications(ctx context.Context, obj *agent.Ag
 		return nil, err
 	}
 	for _, decision := range decisions {
-		if decision != nil && decision.Decision == agent.DecisionModified && len(decision.Modifications) > 0 {
+		if decision != nil && decision.Decision == agentdecision.DecisionModified && len(decision.Modifications) > 0 {
 			return decision.Modifications, nil
 		}
 	}
@@ -340,7 +346,7 @@ func (r *MutationResolver) CommitMyDecisionNow(ctx context.Context, proposalID *
 	return true, nil
 }
 
-func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error) {
+func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agentevaluation.Evaluation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -357,7 +363,7 @@ func (r *MutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*a
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
+func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -379,7 +385,7 @@ func (r *MutationResolver) CreateAgentMemory(ctx context.Context, input gqlmodel
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error) {
+func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -416,7 +422,7 @@ func (r *MutationResolver) UpdateAgentMemory(ctx context.Context, id string, inp
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error) {
+func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -434,7 +440,7 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error) {
+func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, version int) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -452,7 +458,7 @@ func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, ver
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error) {
+func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -463,12 +469,12 @@ func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 		return nil, err
 	}
 
-	kind := agent.MemoryKind("")
+	kind := agentmemory.MemoryKind("")
 	if input.Kind != nil {
 		kind = *input.Kind
 	}
 
-	scope := agent.MemoryScopeAgent
+	scope := agentmemory.MemoryScopeAgent
 	if input.Scope != nil {
 		scope = *input.Scope
 	}
@@ -483,7 +489,7 @@ func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error) {
+func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -501,7 +507,7 @@ func (r *MutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error) {
+func (r *MutationResolver) ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agentexception.AgentException, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentException, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -687,7 +693,7 @@ func (r *QueryResolver) AgentPlans(ctx context.Context, input gqlmodel.DataTable
 	return agentPlanConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentPlan(ctx context.Context, id string) (*agent.AgentPlan, error) {
+func (r *QueryResolver) AgentPlan(ctx context.Context, id string) (*agentplan.AgentPlan, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAgentProposal,
@@ -786,7 +792,7 @@ func (r *QueryResolver) AgentEvaluations(ctx context.Context, input gqlmodel.Dat
 	return agentEvaluationConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error) {
+func (r *QueryResolver) AgentEvaluation(ctx context.Context, id string) (*agentevaluation.Evaluation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -803,7 +809,7 @@ func (r *QueryResolver) AgentEvaluation(ctx context.Context, id string) (*agent.
 	})
 }
 
-func (r *QueryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memory, error) {
+func (r *QueryResolver) AgentMemory(ctx context.Context, id string) (*agentmemory.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -859,7 +865,7 @@ func (r *QueryResolver) AgentExceptions(ctx context.Context, input gqlmodel.Data
 	return agentExceptionConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentException(ctx context.Context, id string) (*agent.AgentException, error) {
+func (r *QueryResolver) AgentException(ctx context.Context, id string) (*agentexception.AgentException, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAgentException,
@@ -899,15 +905,15 @@ func (r *AgentRunResolver) Transcript(ctx context.Context, obj *agent.AgentRun) 
 	return runTranscript(ctx, obj)
 }
 
-func (r *AgentReflectionResolver) Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error) {
+func (r *AgentReflectionResolver) Signals(ctx context.Context, obj *agentreflection.Reflection) ([]*agentreflection.ReflectionSignal, error) {
 	return reflectionSignals(obj), nil
 }
 
-func (r *AgentMemoryResolver) Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+func (r *AgentMemoryResolver) Supersedes(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error) {
 	return supersededMemory(ctx, obj)
 }
 
-func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error) {
+func (r *AgentMemoryResolver) ReplacedBy(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error) {
 	return replacingMemory(ctx, obj)
 }
 
@@ -977,7 +983,7 @@ func (r *AgentControlResolver) AgentMoneyCurrency(ctx context.Context, obj *agen
 	return strings.ToUpper(strings.TrimSpace(books.FunctionalCurrencyCode)), nil
 }
 
-func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error) {
+func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agentplan.AgentPlan) (*tenant.User, error) {
 	if obj.DecidedByUserID == nil {
 		return nil, nil
 	}
@@ -994,7 +1000,7 @@ func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agent.AgentPlan)
 	return user, nil
 }
 
-func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error) {
+func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error) {
 	if !loaders.Available(ctx) {
 		return "", errortypes.NewBusinessError("The plan's steps cannot be read here")
 	}
@@ -1004,5 +1010,5 @@ func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agent.AgentPlan) (
 		return "", err
 	}
 
-	return agent.PlanRunModeOf(steps), nil
+	return agentplan.PlanRunModeOf(steps), nil
 }

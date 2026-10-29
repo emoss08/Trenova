@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
@@ -162,7 +163,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoicerunports.PreviewInvoiceRunRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := runs.Preview(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -304,7 +305,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 			ctx context.Context,
 			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := runs.AdjustMembership(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -470,7 +471,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoicerunports.CommitInvoiceRunRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := runs.Commit(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -534,7 +535,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoicerunports.CancelInvoiceRunRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := runs.Cancel(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -606,7 +607,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoicerunports.BillStatementNowRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := runs.BillStatementNow(ctx, req, params.Actor)
 			return nil, err
 		},

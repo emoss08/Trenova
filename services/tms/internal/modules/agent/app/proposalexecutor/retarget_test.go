@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -155,5 +155,5 @@ func TestRun_HonoursTheVersionAnEarlierStepLeft(t *testing.T) {
 		Actor:                 testActor(again.OrganizationID, again.BusinessUnitID),
 		ExpectedTargetVersion: &stale,
 	})
-	require.ErrorIs(t, err, agent.ErrTargetChanged)
+	require.ErrorIs(t, err, agentplan.ErrTargetChanged)
 }

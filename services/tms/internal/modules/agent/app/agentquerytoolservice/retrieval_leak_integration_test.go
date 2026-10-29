@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -300,7 +301,7 @@ func assertNoLeak(t *testing.T, check leakCheck) {
 	}
 }
 
-func taintedIDs(refs []agent.RecordRef, entity string) map[string]struct{} {
+func taintedIDs(refs []agentrecord.RecordRef, entity string) map[string]struct{} {
 	ids := make(map[string]struct{}, len(refs))
 	for _, ref := range refs {
 		if ref.EntityType == entity {

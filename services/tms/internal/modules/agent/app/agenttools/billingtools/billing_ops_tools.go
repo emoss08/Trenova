@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -114,12 +116,12 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 			ctx context.Context,
 			req *billingqueueports.ReassignChargeRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			result, err := billing.ReassignCharge(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
 			}
-			out := &agent.ToolExecutionResult{
+			out := &agentrecord.ToolExecutionResult{
 				Action: "charge reassigned",
 				Kind:   "billing queue item",
 				IDs:    map[string]string{toolparams.ParamItemID: req.ItemID.String()},
@@ -189,8 +191,8 @@ type queueItemStatusView struct {
 func renderReassignment(
 	_ *billingqueueports.ReassignChargeRequest,
 	plan *billingqueueports.ReassignChargePreview,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.ToCreate)+len(plan.ToCancel))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.ToCreate)+len(plan.ToCancel))
 	refs := toolpreview.WithRefs(map[string]permission.Resource{
 		changepreview.FieldCustomerID: permission.ResourceCustomer,
 	})
@@ -358,7 +360,7 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 			ctx context.Context,
 			call *transferRunCall,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			var (
 				run *billingtransfer.BillingTransferRun
 				err error
@@ -372,7 +374,7 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: map[transferRunAction]string{
 					transferRunStop:  "stop requested",
 					transferRunRetry: "retry started",
@@ -405,7 +407,7 @@ func transferRunViewOf(run *billingtransfer.BillingTransferRun) *transferRunView
 func renderTransferRun(
 	call *transferRunCall,
 	plan *billingtransferservice.RunPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	refs := toolpreview.WithRefs(map[string]permission.Resource{
 		"cancelRequestedById": permission.ResourceUser,
 	})

@@ -4,7 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,12 +27,12 @@ func RefusalOrFailure(err error) (refusal, failure error) {
 	}
 }
 
-func RecordOf(entity string, id pulid.ID) *agent.RecordRef {
+func RecordOf(entity string, id pulid.ID) *agentrecord.RecordRef {
 	if id.IsNil() {
 		return nil
 	}
 
-	return &agent.RecordRef{EntityType: entity, ID: id.String()}
+	return &agentrecord.RecordRef{EntityType: entity, ID: id.String()}
 }
 
 func WithNotes(summary string, notes []string) string {
@@ -50,7 +51,10 @@ func KnownAmount(amount decimal.Decimal) decimal.NullDecimal {
 	return decimal.NewNullDecimal(amount)
 }
 
-func WouldFail(preview *agent.ToolPreview, refusal error) (*agent.ToolPreview, error) {
+func WouldFail(
+	preview *agentpreview.ToolPreview,
+	refusal error,
+) (*agentpreview.ToolPreview, error) {
 	return WarnWouldFail(preview, refusal), nil
 }
 

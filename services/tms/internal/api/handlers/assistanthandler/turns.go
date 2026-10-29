@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -284,7 +284,7 @@ func (h *Handler) ask(c *gin.Context) {
 	turn, _, err := h.askWorker(c, thread.ID, &sendMessageRequest{
 		Content:  body.Content,
 		Context:  body.Context,
-		Surface:  agent.SurfacePalette,
+		Surface:  agentpagecontext.SurfacePalette,
 		Mentions: body.Mentions,
 	})
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -81,11 +82,23 @@ func TestAmountParams_TakeADecimalAndFilterTheMinorUnits(t *testing.T) {
 	}, filtercatalog.NewClock("UTC"))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []map[string]any{
-		{paramField: "netPayMinor", filterOperator: string(dbtype.OpGreaterThanOrEqual), filterValue: int64(125050)},
-		{paramField: "netPayMinor", filterOperator: string(dbtype.OpLessThanOrEqual), filterValue: int64(200000)},
+		{
+			paramField:     "netPayMinor",
+			filterOperator: string(dbtype.OpGreaterThanOrEqual),
+			filterValue:    int64(125050),
+		},
+		{
+			paramField:     "netPayMinor",
+			filterOperator: string(dbtype.OpLessThanOrEqual),
+			filterValue:    int64(200000),
+		},
 	}, filters)
 
-	_, err = compileFilters(params, map[string]any{"netPayMin": "a lot"}, filtercatalog.NewClock("UTC"))
+	_, err = compileFilters(
+		params,
+		map[string]any{"netPayMin": "a lot"},
+		filtercatalog.NewClock("UTC"),
+	)
 	require.Error(t, err)
 }
 
@@ -109,7 +122,7 @@ func TestOutsideRecords_MarkOnlyRecordsThatShowTheText(t *testing.T) {
 		map[string]any{"id": "dexp_3", "description": "  "},
 	)
 
-	assert.Equal(t, []agent.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}, got)
+	assert.Equal(t, []agentrecord.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}, got)
 	assert.Empty(t, outsideRecords(permission.ResourceDriverExpense, nil,
 		map[string]any{"id": "dexp_1", "description": "x"}))
 }
@@ -117,7 +130,7 @@ func TestOutsideRecords_MarkOnlyRecordsThatShowTheText(t *testing.T) {
 func TestWithBeside_KeepsThePagesMarks(t *testing.T) {
 	t.Parallel()
 
-	marks := []agent.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}
+	marks := []agentrecord.RecordRef{{EntityType: "driver_expense", ID: "dexp_1"}}
 	combined, err := withBeside(&graphQLListOutcome{
 		Count:   1,
 		Items:   []map[string]any{{"id": "dexp_1", "description": "Lumper at the dock"}},

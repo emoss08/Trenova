@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -140,7 +141,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentToo
 			ctx context.Context,
 			req *shipmentports.UncancelShipmentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := shipments.Uncancel(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -212,7 +213,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agenttoolports
 			ctx context.Context,
 			req *ownershipRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := shipments.TransferOwnership(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -291,7 +292,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *shipmentserviceports.AutoRateShipmentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, application, err := shipments.AutoRate(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -362,12 +363,12 @@ func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agenttoolpor
 			ctx context.Context,
 			req *distanceRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			response, err := shipments.RecalculateDistance(ctx, req.shipmentID, req.tenant)
 			if err != nil {
 				return nil, err
 			}
-			result := &agent.ToolExecutionResult{
+			result := &agentrecord.ToolExecutionResult{
 				Action: actionRecalculated,
 				Kind:   shipmentpreview.KindShipment,
 				IDs:    map[string]string{toolparams.ParamShipmentID: req.shipmentID.String()},
@@ -454,12 +455,12 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agenttoolports.AgentTo
 			ctx context.Context,
 			req *shipmentports.BulkDuplicateShipmentRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			started, err := shipments.Duplicate(ctx, req)
 			if err != nil {
 				return nil, err
 			}
-			result := &agent.ToolExecutionResult{
+			result := &agentrecord.ToolExecutionResult{
 				Action: actionDuplicateSent,
 				Kind:   shipmentpreview.KindShipment,
 				Name:   changepreview.CountOf(req.Count, "copy"),

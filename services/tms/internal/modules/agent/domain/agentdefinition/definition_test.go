@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -177,10 +178,10 @@ func TestValidate_EventNeedsAtLeastOneKnownEvent(t *testing.T) {
 	d.TriggerMode = agentdefinition.TriggerEvent
 	assert.True(t, fieldErrors(t, d)["eventKinds"])
 
-	d.EventKinds = []agent.EventKind{"shipment.teleported"}
+	d.EventKinds = []agenttrigger.EventKind{"shipment.teleported"}
 	assert.True(t, fieldErrors(t, d)["eventKinds[0]"])
 
-	d.EventKinds = []agent.EventKind{agent.EventBillingQueueItemException}
+	d.EventKinds = []agenttrigger.EventKind{agenttrigger.EventBillingQueueItemException}
 	assert.Empty(t, fieldErrors(t, d))
 }
 
@@ -421,7 +422,7 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 	assert.Contains(
 		t,
 		agentpreset.StarterEvents(agenttemplate.TemplateBillingException),
-		agent.EventBillingQueueItemException,
+		agenttrigger.EventBillingQueueItemException,
 	)
 	assert.Empty(t, agentpreset.StarterTools(agenttemplate.TemplateGeneralAssistant))
 }

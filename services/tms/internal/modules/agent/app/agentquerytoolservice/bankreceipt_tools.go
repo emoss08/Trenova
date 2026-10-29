@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -178,7 +180,7 @@ func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 func (t *listBankReceiptExceptionsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceBankReceipt,
 		rationale: "Lists bank receipts whose memos the payers wrote; nothing changes and " +
 			"nothing is sent.",
@@ -222,7 +224,7 @@ func (t *listBankReceiptExceptionsTool) Query(
 	}
 
 	rows := make([]bankReceiptRow, 0, len(receipts))
-	shown := make([]agent.RecordRef, 0, limit)
+	shown := make([]agentrecord.RecordRef, 0, limit)
 	matched := 0
 	for _, receipt := range receipts {
 		if receipt == nil || !receiptMatchesQuery(receipt, query) {
@@ -246,13 +248,13 @@ func (t *listBankReceiptExceptionsTool) Query(
 type bankReceiptSearch struct {
 	searchOutcome
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
-func (s *bankReceiptSearch) TaintedRecords() []agent.RecordRef { return s.outside }
+func (s *bankReceiptSearch) TaintedRecords() []agentrecord.RecordRef { return s.outside }
 
-func bankReceiptRef(id pulid.ID) agent.RecordRef {
-	return agent.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
+func bankReceiptRef(id pulid.ID) agentrecord.RecordRef {
+	return agentrecord.RecordRef{EntityType: agent.TaintEntityBankReceipt, ID: id.String()}
 }
 
 func receiptMatchesQuery(receipt *bankreceipt.BankReceipt, query string) bool {
@@ -276,10 +278,10 @@ type bankReceiptDetailRow struct {
 	Suggestions []matchSuggestionRow `json:"suggestions"`
 	Note        string               `json:"note,omitempty"`
 
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
-func (r *bankReceiptDetailRow) TaintedRecords() []agent.RecordRef { return r.outside }
+func (r *bankReceiptDetailRow) TaintedRecords() []agentrecord.RecordRef { return r.outside }
 
 type matchSuggestionRow struct {
 	CustomerPaymentID string `json:"customerPaymentId"`
@@ -328,7 +330,7 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 func (t *getBankReceiptTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceBankReceipt,
 		rationale: "Reads a bank receipt whose memo the payer wrote; nothing changes and nothing " +
 			"is sent.",
@@ -363,7 +365,7 @@ func (t *getBankReceiptTool) Query(
 	row := &bankReceiptDetailRow{
 		bankReceiptRow: bankReceiptRowFrom(receipt, item),
 		Suggestions:    []matchSuggestionRow{},
-		outside:        []agent.RecordRef{bankReceiptRef(receipt.ID)},
+		outside:        []agentrecord.RecordRef{bankReceiptRef(receipt.ID)},
 	}
 	if receipt.Status == bankreceipt.StatusMatched {
 		row.Note = "This receipt is already matched; nothing further is needed."

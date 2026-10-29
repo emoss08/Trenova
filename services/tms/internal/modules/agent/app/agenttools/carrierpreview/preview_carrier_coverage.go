@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -22,7 +22,7 @@ func RateConfirmationChange(
 	before, after *rateconfirmation.RateConfirmation,
 	shipmentLabel string,
 	fields ...string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceRateConfirmation,
 		ID:       before.ID,
@@ -46,14 +46,14 @@ func RateConfirmationLabel(entity *rateconfirmation.RateConfirmation, shipmentLa
 
 // carrierPay is the pay an assignment commits, line by line as the carrier's
 // settlement reads it.
-func CarrierPay(assignment *shipment.CarrierAssignment) *agent.MoneyPreview {
-	lines := make([]agent.MoneyLine, 0, len(assignment.Accessorials)+2)
-	lines = append(lines, agent.MoneyLine{
+func CarrierPay(assignment *shipment.CarrierAssignment) *agentpreview.MoneyPreview {
+	lines := make([]agentpreview.MoneyLine, 0, len(assignment.Accessorials)+2)
+	lines = append(lines, agentpreview.MoneyLine{
 		Label: "Linehaul (" + RateMethodWords(assignment.RateMethod) + ")",
 		After: changepreview.KnownAmount(assignment.BaseAmount),
 	})
 	if !assignment.FuelSurcharge.IsZero() {
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: "Fuel surcharge",
 			After: changepreview.KnownAmount(assignment.FuelSurcharge),
 		})
@@ -62,7 +62,7 @@ func CarrierPay(assignment *shipment.CarrierAssignment) *agent.MoneyPreview {
 		if accessorial == nil {
 			continue
 		}
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: accessorial.Description,
 			After: changepreview.KnownAmount(accessorial.Amount),
 		})

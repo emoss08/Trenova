@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 )
@@ -23,10 +23,10 @@ var outboundScanner sensitiveTextScanner = auditservice.NewSensitiveDataManager(
 	config.EncryptionConfig{},
 )
 
-func WarnSensitiveContent(preview *agent.ToolPreview, texts ...string) {
+func WarnSensitiveContent(preview *agentpreview.ToolPreview, texts ...string) {
 	for _, text := range texts {
 		if _, found := outboundScanner.MaskText(text); found {
-			toolpreview.Warn(preview, agent.PreviewWarningSensitiveContent,
+			toolpreview.Warn(preview, agentpreview.PreviewWarningSensitiveContent,
 				"The message contains text that looks sensitive, such as an account "+
 					"number, a key or a personal identifier. Read it before it goes out.")
 
@@ -50,29 +50,29 @@ func ResolveEmailSender(
 	return senders.ResolveSender(ctx, req)
 }
 
-func WarnSuppressedRecipients(preview *agent.ToolPreview, sender *emailports.EmailSender) {
+func WarnSuppressedRecipients(preview *agentpreview.ToolPreview, sender *emailports.EmailSender) {
 	if sender == nil || len(sender.Suppressed) == 0 {
 		return
 	}
 
 	listed := strings.Join(sender.Suppressed, ", ")
 	if sender.Refused {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"The email would not be sent: every recipient ("+listed+
 				") is on the organization's suppression list.",
 			sender.Suppressed...)
 		return
 	}
-	toolpreview.Warn(preview, agent.PreviewWarningRecipientSkipped,
+	toolpreview.Warn(preview, agentpreview.PreviewWarningRecipientSkipped,
 		listed+" is on the organization's suppression list and would be skipped.",
 		sender.Suppressed...)
 }
 
 func EmailMessagePreview(
 	sender *emailports.EmailSender,
-	message *agent.MessagePreview,
-) *agent.MessagePreview {
-	message.Channel = agent.MessageChannelEmail
+	message *agentpreview.MessagePreview,
+) *agentpreview.MessagePreview {
+	message.Channel = agentpreview.MessageChannelEmail
 	if sender != nil {
 		message.From = sender.Address()
 	}

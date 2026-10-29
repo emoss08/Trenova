@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,16 +24,16 @@ func (t plainTool) ParamSchema() map[string]any { return map[string]any{} }
 func (t plainTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A plain stub.",
 	}
 }
@@ -42,7 +44,7 @@ func (t plainTool) Execute(context.Context, agenttoolports.ToolExecuteParams) er
 
 type previewingTool struct {
 	plainTool
-	record   *agent.ToolPreview
+	record   *agentpreview.ToolPreview
 	failed   error
 	readOnly *bool
 }
@@ -50,7 +52,7 @@ type previewingTool struct {
 func (t previewingTool) Preview(
 	ctx context.Context,
 	_ agenttoolports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if t.readOnly != nil {
 		*t.readOnly = kernelports.IsReadOnly(ctx)
 	}
@@ -58,13 +60,13 @@ func (t previewingTool) Preview(
 	return t.record, t.failed
 }
 
-func cancelPreview() *agent.ToolPreview {
-	return &agent.ToolPreview{
+func cancelPreview() *agentpreview.ToolPreview {
+	return &agentpreview.ToolPreview{
 		Summary: "Would cancel PRO-100.",
-		Changes: []agent.RecordChange{{
-			Operation: agent.PreviewOperationUpdate,
+		Changes: []agentpreview.RecordChange{{
+			Operation: agentpreview.PreviewOperationUpdate,
 			Label:     "PRO-100",
-			Fields: []agent.PreviewFieldChange{
+			Fields: []agentpreview.PreviewFieldChange{
 				{Path: "status", Label: "Status", Before: "New", After: "Canceled"},
 			},
 		}},

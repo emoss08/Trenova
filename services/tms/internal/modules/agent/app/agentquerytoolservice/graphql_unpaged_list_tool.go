@@ -11,7 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -500,14 +500,14 @@ func (t *graphQLUnpagedListTool) Query(
 // list matches itself keeps only some of them.
 type offsetPage struct {
 	record    map[string]any
-	outside   []agent.RecordRef
+	outside   []agentrecord.RecordRef
 	positions []int
 	window    offsetWindow
 }
 
 func (p *offsetPage) MarshalJSON() ([]byte, error) { return sonic.Marshal(p.record) }
 
-func (p *offsetPage) TaintedRecords() []agent.RecordRef { return p.outside }
+func (p *offsetPage) TaintedRecords() []agentrecord.RecordRef { return p.outside }
 
 func (p *offsetPage) items() []map[string]any {
 	items, _ := p.record[outcomeItems].([]map[string]any)

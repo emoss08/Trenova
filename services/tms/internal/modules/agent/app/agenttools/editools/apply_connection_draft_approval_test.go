@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -163,7 +164,7 @@ func TestApplyConnectionDraft_ReportsWhatItSavedAndWhatIsLeftToEnter(t *testing.
 	assert.Equal(t, "Acme Retail Group", result.Name)
 	assert.Equal(t, map[string]string{"ediPartnerId": partnerID.String()}, result.IDs)
 	assert.Equal(t,
-		&agent.RecordRef{EntityType: "edi_partner", ID: partnerID.String()}, result.Record)
+		&agentrecord.RecordRef{EntityType: "edi_partner", ID: partnerID.String()}, result.Record)
 	assert.Equal(t,
 		"Saved inactive: 1 partner, 1 communication profile, 4 document profiles, 1 control "+
 			"number. Before turning it on, enter: AS2 private key for your signing certificate.",

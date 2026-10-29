@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -91,7 +91,7 @@ func TestForRun_NamesTheUnitOfWork(t *testing.T) {
 
 	runID := pulid.MustNew("ar_")
 	turnID := pulid.MustNew("atrn_")
-	evaluationID := pulid.MustNew(agent.EvaluationIDPrefix)
+	evaluationID := pulid.MustNew(agentevaluation.EvaluationIDPrefix)
 
 	tests := []struct {
 		name       string

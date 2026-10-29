@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -36,7 +37,7 @@ func TestAgentProposal_Validate_RequiresEvidence(t *testing.T) {
 
 func TestAgentProposal_Validate_RejectsEvidenceWithBlankFields(t *testing.T) {
 	proposal := baseProposal()
-	proposal.Evidence = []agent.EvidenceRef{{Type: "", ID: ""}}
+	proposal.Evidence = []agentevidence.EvidenceRef{{Type: "", ID: ""}}
 
 	me := errortypes.NewMultiError()
 	proposal.Validate(me)
@@ -46,7 +47,7 @@ func TestAgentProposal_Validate_RejectsEvidenceWithBlankFields(t *testing.T) {
 
 func TestAgentProposal_Validate_PassesWithEvidence(t *testing.T) {
 	proposal := baseProposal()
-	proposal.Evidence = []agent.EvidenceRef{
+	proposal.Evidence = []agentevidence.EvidenceRef{
 		{Type: "billing_queue_item", ID: "bqi_123", Note: "blocked item"},
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +34,7 @@ func TestTraceURL_LinksARecordToItsTraceWhenABackendIsConfigured(t *testing.T) {
 	require.NotNil(t, proposal)
 
 	decision, err := (&AgentDecisionResolver{r}).TraceURL(t.Context(),
-		&agent.AgentDecision{TraceID: linkedTraceID})
+		&agentdecision.AgentDecision{TraceID: linkedTraceID})
 	require.NoError(t, err)
 	require.NotNil(t, decision)
 

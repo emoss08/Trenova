@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -229,7 +229,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 			))
 		}
 		agentports.PublishAgentEvent(tenantCtx, a.publisher, agentports.AgentEvent{
-			Kind:       agent.EventWorkerCredentialExpiring,
+			Kind:       agenttrigger.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,
 		})

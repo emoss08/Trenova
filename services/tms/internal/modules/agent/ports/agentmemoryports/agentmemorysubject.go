@@ -3,7 +3,7 @@ package agentmemoryports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,7 +13,7 @@ import (
 // message was matched to.
 type MemoryRecordLink struct {
 	From pulid.ID
-	Kind agent.MemoryRecordKind
+	Kind agentmemory.MemoryRecordKind
 	ID   pulid.ID
 }
 
@@ -23,7 +23,7 @@ type MemoryRecordLink struct {
 // assigned, then its carriers.
 type ListMemoryRecordLinksRequest struct {
 	TenantInfo pagination.TenantInfo
-	Kind       agent.MemoryRecordKind
+	Kind       agentmemory.MemoryRecordKind
 	IDs        []pulid.ID
 }
 

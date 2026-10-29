@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,21 +26,21 @@ type ReflectOnRunRequest struct {
 }
 
 type ReflectionSubjectRef struct {
-	Type agent.MemorySubjectType `json:"type"`
-	ID   pulid.ID                `json:"id"`
+	Type agentmemory.MemorySubjectType `json:"type"`
+	ID   pulid.ID                      `json:"id"`
 }
 
 type ReflectionPlan struct {
 	TenantInfo        pagination.TenantInfo                 `json:"tenantInfo"`
 	ReflectionID      pulid.ID                              `json:"reflectionId"`
-	Subject           agent.ReflectionSubject               `json:"subject"`
+	Subject           agentreflection.ReflectionSubject     `json:"subject"`
 	AgentDefinitionID pulid.ID                              `json:"agentDefinitionId"`
 	ThreadID          pulid.ID                              `json:"threadId,omitempty"`
 	RunID             pulid.ID                              `json:"runId,omitempty"`
 	PersonUserID      pulid.ID                              `json:"personUserId,omitempty"`
 	ReplyMessageID    pulid.ID                              `json:"replyMessageId,omitempty"`
 	Taint             *agent.RunTaint                       `json:"taint,omitempty"`
-	Signals           agent.ReflectionSignals               `json:"signals"`
+	Signals           agentreflection.ReflectionSignals     `json:"signals"`
 	Subjects          []ReflectionSubjectRef                `json:"subjects,omitempty"`
 	ToolNames         []string                              `json:"toolNames,omitempty"`
 	KnownMemoryIDs    []pulid.ID                            `json:"knownMemoryIds,omitempty"`
@@ -54,11 +56,11 @@ func (p *ReflectionPlan) Tainted() bool {
 }
 
 type ReflectionOutcome struct {
-	ReflectionID pulid.ID               `json:"reflectionId"`
-	Status       agent.ReflectionStatus `json:"status"`
-	Kept         int                    `json:"kept"`
-	Offered      int                    `json:"offered"`
-	Refused      int                    `json:"refused"`
+	ReflectionID pulid.ID                         `json:"reflectionId"`
+	Status       agentreflection.ReflectionStatus `json:"status"`
+	Kept         int                              `json:"kept"`
+	Offered      int                              `json:"offered"`
+	Refused      int                              `json:"refused"`
 }
 
 type FailReflectionRequest struct {
@@ -78,7 +80,7 @@ type AgentReflectionService interface {
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentReflectionConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Reflection], error)
+	) (*pagination.CursorListResult[*agentreflection.Reflection], error)
 }
 
 type AgentReflectionScheduler interface {

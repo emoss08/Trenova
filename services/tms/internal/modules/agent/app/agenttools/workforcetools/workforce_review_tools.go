@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
@@ -207,7 +209,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 		Render: func(
 			_ *performancereviewservice.CreateReviewRequest,
 			planned *workerreview.PerformanceReview,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourcePerformanceReview, pulid.Nil, planned.Title, 0),
 				planned, wfOptions(reviewFields...)...)
@@ -222,7 +224,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 			ctx context.Context,
 			req *performancereviewservice.CreateReviewRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := reviews.CreateReview(ctx, req)
 			if err != nil {
 				return nil, err
@@ -469,7 +471,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 		Render: func(
 			_ *reviewDraft,
 			change *performancereviewservice.ReviewChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(reviewRecord(change.Before), change.Before,
 				change.After, wfOptions(reviewFields...)...)
 			if err != nil {
@@ -482,7 +484,7 @@ func newDraftPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 			ctx context.Context,
 			draft *reviewDraft,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := draft.request(ctx, reviews)
 			if err != nil {
 				return nil, err
@@ -521,7 +523,7 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTo
 				return reviews.PlanDeleteReview(ctx, req.tenant, req.id)
 			},
 			Refused: func(*recordDelete) string { return "Would delete a draft review." },
-			Render: func(_ *recordDelete, review *workerreview.PerformanceReview) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, review *workerreview.PerformanceReview) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(reviewRecord(review), review,
 					wfOptions(reviewFields...)...)
 				if err != nil {
@@ -534,7 +536,7 @@ func newDeletePerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentTo
 				ctx context.Context,
 				req *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, reviews.DeleteReview(ctx, req.tenant, req.id, req.userID)
 			},
 		},

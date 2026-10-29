@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -158,16 +161,16 @@ func (t *RaiseExceptionTool) ParamSchema() map[string]any {
 func (t *RaiseExceptionTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAgentException,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeRun,
+		Scope:         agenttooltrust.ToolScopeRun,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Escalates:     true,
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Records an exception against the run itself for a person inside the " +
 			"organization.",
 	}
@@ -215,7 +218,7 @@ func (t *RaiseExceptionTool) request(
 		return nil, err
 	}
 	if !given {
-		category = agent.CategoryOther
+		category = agentexception.CategoryOther
 	}
 	severity, given, err := toolparams.OptionalEnum(
 		params.Params, "severity", agenttoolschema.Severities.Values,
@@ -224,14 +227,14 @@ func (t *RaiseExceptionTool) request(
 		return nil, err
 	}
 	if !given {
-		severity = agent.SeverityMedium
+		severity = agentexception.SeverityMedium
 	}
 	named, err := givenEvidence(params.Params)
 	if err != nil {
 		return nil, err
 	}
-	evidence := make([]agent.EvidenceRef, 0, len(named)+1)
-	evidence = append(evidence, agent.EvidenceRef{
+	evidence := make([]agentevidence.EvidenceRef, 0, len(named)+1)
+	evidence = append(evidence, agentevidence.EvidenceRef{
 		Type: "agent_run",
 		ID:   params.RunID.String(),
 		Note: "raised by the agent",
@@ -270,12 +273,12 @@ func (t *RaiseExceptionTool) Validate(
 	return err
 }
 
-func givenEvidence(params map[string]any) ([]agent.EvidenceRef, error) {
+func givenEvidence(params map[string]any) ([]agentevidence.EvidenceRef, error) {
 	if raw, ok := params[changepreview.FieldEvidence]; !ok || raw == nil {
 		return nil, nil
 	}
 
-	var evidence []agent.EvidenceRef
+	var evidence []agentevidence.EvidenceRef
 	if err := toolparams.DecodeParam(params, changepreview.FieldEvidence, &evidence); err != nil {
 		return nil, err
 	}

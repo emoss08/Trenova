@@ -7,7 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -37,11 +38,11 @@ var recordIDPattern = regexp.MustCompile(`\b[a-z][a-z0-9]{0,10}_[0-9A-HJKMNP-TV-
 type promptInput struct {
 	AgentName   string
 	Description string
-	Subject     agent.ReflectionSubject
+	Subject     agentreflection.ReflectionSubject
 	HasPerson   bool
 	Trigger     string
-	Signals     agent.ReflectionSignals
-	Memories    []*agent.Memory
+	Signals     agentreflection.ReflectionSignals
+	Memories    []*agentmemory.Memory
 	Subjects    []agentports.ReflectionSubjectRef
 	ToolNames   []string
 	Proposals   []DecidedProposal
@@ -120,13 +121,13 @@ func systemPrompt(in *promptInput) string {
 	fmt.Fprintf(
 		&b,
 		"understands, at most %d characters. evidence is a short quote from, or ",
-		agent.MaxReflectionLessonChars,
+		agentreflection.MaxReflectionLessonChars,
 	)
 	b.WriteString("pointer to, what taught it; why is one sentence on how it helps next time.\n")
 	fmt.Fprintf(
 		&b,
 		"Return at most %d lessons, best first, and notes: one sentence on what you ",
-		agent.MaxReflectionLessons,
+		agentreflection.MaxReflectionLessons,
 	)
 	b.WriteString("looked at and what you kept, or why nothing was worth keeping.")
 
@@ -211,7 +212,7 @@ func contextSections(in *promptInput) llmports.DelimitedContext {
 	return llmports.DelimitedContext{Sections: sections}
 }
 
-func memoryLines(memories []*agent.Memory) string {
+func memoryLines(memories []*agentmemory.Memory) string {
 	if len(memories) == 0 {
 		return "None that bear on this work."
 	}
@@ -233,13 +234,13 @@ func memoryLines(memories []*agent.Memory) string {
 	return strings.Join(lines, "\n")
 }
 
-func audienceOf(scope agent.MemoryScope) string {
+func audienceOf(scope agentmemory.MemoryScope) string {
 	switch scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		return "this person"
-	case agent.MemoryScopeRole:
+	case agentmemory.MemoryScopeRole:
 		return "a team"
-	case agent.MemoryScopeAgent:
+	case agentmemory.MemoryScopeAgent:
 		return "this agent"
 	default:
 		return "the organization"
@@ -361,14 +362,14 @@ func recordIDsIn(text string) []pulid.ID {
 }
 
 func outputSchema(hasPerson bool) map[string]any {
-	kinds := []string{string(agent.MemoryKindProcedure), string(agent.MemoryKindFact)}
+	kinds := []string{string(agentmemory.MemoryKindProcedure), string(agentmemory.MemoryKindFact)}
 	audiences := []string{audienceAgent, audienceOrganization}
 	if hasPerson {
-		kinds = append([]string{string(agent.MemoryKindInstruction)}, kinds...)
+		kinds = append([]string{string(agentmemory.MemoryKindInstruction)}, kinds...)
 		audiences = []string{audienceMe, audienceAgent, audienceTeam, audienceOrganization}
 	}
 	subjectTypes := []string{""}
-	for _, subjectType := range agent.AllMemorySubjectTypes() {
+	for _, subjectType := range agentmemory.AllMemorySubjectTypes() {
 		subjectTypes = append(subjectTypes, string(subjectType))
 	}
 
@@ -381,7 +382,7 @@ func outputSchema(hasPerson bool) map[string]any {
 		"properties": map[string]any{
 			"lessons": map[string]any{
 				"type":     "array",
-				"maxItems": agent.MaxReflectionLessons,
+				"maxItems": agentreflection.MaxReflectionLessons,
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -298,7 +299,7 @@ func TestDraftFactoringNoa_DraftsForTheNamedCustomerAndFactor(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -328,7 +329,7 @@ func TestSendFactoringNoa_PreviewsTheLetterAndSendsThePinnedVersion(t *testing.T
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -339,7 +340,7 @@ func TestSendFactoringNoa_PreviewsTheLetterAndSendsThePinnedVersion(t *testing.T
 		if change.Message != nil {
 			message = true
 		}
-		if change.Operation == agent.PreviewOperationUpdate {
+		if change.Operation == agentpreview.PreviewOperationUpdate {
 			update = true
 			agenttoolstest.FieldByPath(t, change, "status")
 		}
@@ -375,7 +376,7 @@ func TestSendFactoringNoa_WarnsAboutSuppressedRecipients(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -396,7 +397,7 @@ func TestSendFactoringNoa_RefusesAReleasedNotice(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -423,7 +424,7 @@ func TestRecordFactoringNoaAcknowledgement_RecordsTheSignedCopy(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -457,7 +458,7 @@ func TestRecordFactoringNoaAcknowledgement_RefusesAFutureSignature(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -487,7 +488,7 @@ func TestReleaseFactoringNoa_NeedsAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&noas.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -533,7 +534,7 @@ func TestSetInvoiceFactoringOverride_PreviewsTheExclusion(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&readiness.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -563,7 +564,7 @@ func TestSetInvoiceFactoringOverride_SaysWhenNothingChanges(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&readiness.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -597,7 +598,7 @@ func TestRequestMissingFactoringDocument_PreviewsTheEmailToTheDriver(t *testing.
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&readiness.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

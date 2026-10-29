@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -32,7 +33,7 @@ func (s *Service) heldVerdict(
 func (s *Service) withdrawHeld(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	group []*agent.AgentDecision,
+	group []*agentdecision.AgentDecision,
 	open []pulid.ID,
 	actor kernelports.AuditActor,
 ) ([]pulid.ID, error) {

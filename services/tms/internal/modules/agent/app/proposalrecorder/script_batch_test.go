@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,13 +118,13 @@ func TestRecord_LeavesAScriptsSingleIntentAProposal(t *testing.T) {
 
 type scriptLedger struct {
 	asked []agentruntimeports.GetAgentRunStepRequest
-	step  *agent.AgentRunStep
+	step  *agentrunstep.AgentRunStep
 }
 
 func (l *scriptLedger) Get(
 	_ context.Context,
 	req *agentruntimeports.GetAgentRunStepRequest,
-) (*agent.AgentRunStep, error) {
+) (*agentrunstep.AgentRunStep, error) {
 	l.asked = append(l.asked, *req)
 	if l.step == nil {
 		return nil, errors.New("not found")
@@ -137,7 +138,7 @@ func TestRecord_KeepsTheScriptABatchCameFromOnItsPlan(t *testing.T) {
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	runID := pulid.MustNew("arun_")
-	ledger := &scriptLedger{step: &agent.AgentRunStep{
+	ledger := &scriptLedger{step: &agentrunstep.AgentRunStep{
 		StepKey: scriptStep,
 		Arguments: map[string]any{
 			"title":   "Hold Range's uncovered loads",

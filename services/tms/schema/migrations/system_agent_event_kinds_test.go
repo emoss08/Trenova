@@ -6,17 +6,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/stretchr/testify/assert"
 )
 
 type eventKindsMove struct {
 	migration string
 	systemKey string
-	from      []agent.EventKind
-	to        []agent.EventKind
+	from      []agenttrigger.EventKind
+	to        []agenttrigger.EventKind
 }
 
 var systemAgentTemplates = map[string]agenttemplate.Template{
@@ -29,38 +29,38 @@ func systemAgentEventKindMoves() []eventKindsMove {
 		{
 			migration: "20261231006510_system_agent_event_kinds",
 			systemKey: "billing_exception",
-			from:      []agent.EventKind{agent.EventBillingQueueItemException},
-			to: []agent.EventKind{
-				agent.EventBillingQueueItemException,
-				agent.EventBillingQueueItemOnHold,
+			from:      []agenttrigger.EventKind{agenttrigger.EventBillingQueueItemException},
+			to: []agenttrigger.EventKind{
+				agenttrigger.EventBillingQueueItemException,
+				agenttrigger.EventBillingQueueItemOnHold,
 			},
 		},
 		{
 			migration: "20261231006510_system_agent_event_kinds",
 			systemKey: "dispatch_assignment",
-			from:      []agent.EventKind{agent.EventShipmentMoveCoverageAtRisk},
-			to: []agent.EventKind{
-				agent.EventShipmentMoveCoverageAtRisk,
-				agent.EventShipmentMoveUnassigned,
+			from:      []agenttrigger.EventKind{agenttrigger.EventShipmentMoveCoverageAtRisk},
+			to: []agenttrigger.EventKind{
+				agenttrigger.EventShipmentMoveCoverageAtRisk,
+				agenttrigger.EventShipmentMoveUnassigned,
 			},
 		},
 		{
 			migration: "20261231006640_billing_exception_accounting_event",
 			systemKey: "billing_exception",
-			from: []agent.EventKind{
-				agent.EventBillingQueueItemException,
-				agent.EventBillingQueueItemOnHold,
+			from: []agenttrigger.EventKind{
+				agenttrigger.EventBillingQueueItemException,
+				agenttrigger.EventBillingQueueItemOnHold,
 			},
-			to: []agent.EventKind{
-				agent.EventBillingQueueItemException,
-				agent.EventBillingQueueItemOnHold,
-				agent.EventAccountingConnectionDegraded,
+			to: []agenttrigger.EventKind{
+				agenttrigger.EventBillingQueueItemException,
+				agenttrigger.EventBillingQueueItemOnHold,
+				agenttrigger.EventAccountingConnectionDegraded,
 			},
 		},
 	}
 }
 
-func textArray(kinds []agent.EventKind) string {
+func textArray(kinds []agenttrigger.EventKind) string {
 	quoted := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
 		quoted = append(quoted, "'"+string(kind)+"'")
@@ -87,7 +87,7 @@ func TestSystemAgentEventKindsMigrations_MoveOnlyRowsStillOnThePreviousDefault(t
 func TestSystemAgentEventKindsMigrations_EndOnWhatEachTemplateListensFor(t *testing.T) {
 	t.Parallel()
 
-	latest := make(map[string][]agent.EventKind, len(systemAgentTemplates))
+	latest := make(map[string][]agenttrigger.EventKind, len(systemAgentTemplates))
 	for _, move := range systemAgentEventKindMoves() {
 		latest[move.systemKey] = move.to
 	}

@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -129,7 +131,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			invoices: []*invoice.Invoice{openInvoice(customerID, "INV-1001", 100_000)},
 			applied:  []string{"1000.00"},
 			amount:   "1000.00",
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name: "an invoice the remittance does not name is not an exact match",
@@ -141,7 +143,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			applied: []string{"1000.00", "500.00"},
 			amount:  "1500.00",
 			receipt: true,
-			held:    agent.HeldByMoneyExactMatch,
+			held:    agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a part payment is not an exact match",
@@ -150,7 +152,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			applied:  []string{"900.00"},
 			amount:   "900.00",
 			receipt:  true,
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "an unapplied remainder is not an exact match",
@@ -159,7 +161,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			applied:  []string{"1000.00"},
 			amount:   "1100.00",
 			receipt:  true,
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a short pay is not an exact match",
@@ -169,7 +171,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			amount:   "1000.00",
 			shortPay: true,
 			receipt:  true,
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a payment dated otherwise than its receipt is not the receipt",
@@ -179,7 +181,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			amount:   "1000.00",
 			receipt:  true,
 			override: map[string]any{"paymentDate": "2026-09-30"},
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a reference other than the receipt's is not the receipt",
@@ -189,7 +191,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			amount:   "1000.00",
 			receipt:  true,
 			override: map[string]any{"referenceNumber": "INV-1001"},
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a memo other than the receipt's is not the receipt",
@@ -199,7 +201,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			amount:   "1000.00",
 			receipt:  true,
 			override: map[string]any{"memo": "Paid in full, thanks"},
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "a method a bank receipt does not arrive by is not the receipt",
@@ -209,7 +211,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			amount:   "1000.00",
 			receipt:  true,
 			override: map[string]any{"paymentMethod": "Check"},
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:     "the receipt's own reference and memo, written out, are the receipt",
@@ -228,7 +230,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 			applied:  []string{"1000.00"},
 			amount:   "1000.00",
 			receipt:  true,
-			held:     agent.HeldByMoneyExactMatch,
+			held:     agenttooltrust.HeldByMoneyExactMatch,
 		},
 	}
 
@@ -277,7 +279,7 @@ func TestPostCustomerPaymentBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency)
 				assert.Equal(t, []agent.SourcedRef{{
 					Source: agent.TaintSourceBankReceipt,
-					Ref: agent.RecordRef{
+					Ref: agentrecord.RecordRef{
 						EntityType: agent.TaintEntityBankReceipt,
 						ID:         receipt.ID.String(),
 					},
@@ -322,7 +324,7 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 			name:       "a payment with another reference is not exact",
 			paymentRef: "ACH-99999",
 			candidates: []*customerpayment.Payment{exact},
-			held:       agent.HeldByMoneyExactMatch,
+			held:       agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:       "a second payment that matches exactly makes it ambiguous",
@@ -331,7 +333,7 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 				exact,
 				postedPayment(pulid.MustNew("cpay_"), "ACH-88213", 120_000),
 			},
-			held: agent.HeldByMoneyExactMatch,
+			held: agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:       "a second payment writing the reference another way makes it ambiguous",
@@ -340,13 +342,13 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 				exact,
 				postedPayment(pulid.MustNew("cpay_"), "ach.88213", 120_000),
 			},
-			held: agent.HeldByMoneyExactMatch,
+			held: agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:       "a payment the candidates do not include is not exact",
 			paymentRef: "ACH-88213",
 			candidates: nil,
-			held:       agent.HeldByMoneyExactMatch,
+			held:       agenttooltrust.HeldByMoneyExactMatch,
 		},
 		{
 			name:       "a list holding exactly the limit is complete",
@@ -358,7 +360,7 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 			name:       "a list past the limit cannot prove there is only one",
 			paymentRef: "ACH-88213",
 			candidates: candidatesOf(exact, matchCandidateLimit+5),
-			held:       agent.HeldByMoneyUnproven,
+			held:       agenttooltrust.HeldByMoneyUnproven,
 		},
 	}
 
@@ -393,7 +395,7 @@ func TestMatchBankReceiptBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency)
 				assert.Equal(t, []agent.SourcedRef{{
 					Source: agent.TaintSourceBankReceipt,
-					Ref: agent.RecordRef{
+					Ref: agentrecord.RecordRef{
 						EntityType: agent.TaintEntityBankReceipt,
 						ID:         receipt.ID.String(),
 					},
@@ -426,7 +428,7 @@ func TestMatchBankReceiptBounds_CandidatesThatCannotBeReadProveNothing(t *testin
 		"customerPaymentId": paymentID.String(),
 	}))
 	assert.False(t, bound.Within)
-	assert.Equal(t, agent.HeldByMoneyUnproven, bound.Held)
+	assert.Equal(t, agenttooltrust.HeldByMoneyUnproven, bound.Held)
 }
 
 func TestBankReceiptTools_VouchOnlyForTheReceiptsTheyReread(t *testing.T) {
@@ -540,14 +542,14 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 			item: &billingqueue.BillingQueueItem{
 				Status: billingqueue.StatusInReview, InvoiceID: invoiceID, BillToCustomerID: payer,
 			},
-			held: agent.HeldByMoneyRecordState,
+			held: agenttooltrust.HeldByMoneyRecordState,
 		},
 		{
 			name: "a correction of a posted invoice is not",
 			item: &billingqueue.BillingQueueItem{
 				Status: billingqueue.StatusInReview, SourceInvoiceID: &invoiceID, BillToCustomerID: payer,
 			},
-			held: agent.HeldByMoneyRecordState,
+			held: agenttooltrust.HeldByMoneyRecordState,
 		},
 		{
 			name: "a posted item is not",
@@ -555,12 +557,12 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 				Status:           billingqueue.StatusPosted,
 				BillToCustomerID: payer,
 			},
-			held: agent.HeldByMoneyRecordState,
+			held: agenttooltrust.HeldByMoneyRecordState,
 		},
 		{
 			name: "an item with no payer proves nothing",
 			item: &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview},
-			held: agent.HeldByMoneyUnproven,
+			held: agenttooltrust.HeldByMoneyUnproven,
 		},
 		{
 			name: "a payer whose billing profile cannot be read proves nothing",
@@ -569,7 +571,7 @@ func TestCorrectChargeCodeBounds(t *testing.T) {
 				BillToCustomerID: payer,
 			},
 			books: &payerBooks{err: errors.New("database down")},
-			held:  agent.HeldByMoneyUnproven,
+			held:  agenttooltrust.HeldByMoneyUnproven,
 		},
 	}
 

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -590,7 +592,7 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 			return tractors.PlanLocate(ctx, build(req, params))
 		},
 		Refused: func(*locateRequest) string { return "Would locate a tractor." },
-		Render: func(req *locateRequest, plan *tractorservice.LocatePlan) (*agent.ToolPreview, error) {
+		Render: func(req *locateRequest, plan *tractorservice.LocatePlan) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				tractorRecord.record(plan.Tractor),
 				placeOf(nil, currentPlace(plan.Current)),
@@ -607,12 +609,12 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *locateRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if _, err := tractors.Locate(ctx, build(req, params)); err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "located",
 				Kind:   tractorRecordEntity,
 				IDs:    map[string]string{toolparams.ParamTractorID: req.unitID.String()},
@@ -668,12 +670,12 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *locateRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if _, err := trailers.Locate(ctx, build(req, params), params.Actor); err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "located",
 				Kind:   trailerRecordEntity,
 				IDs:    map[string]string{paramTrailerID: req.unitID.String()},
@@ -686,7 +688,7 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 func renderTrailerLocate(
 	req *locateRequest,
 	plan *trailerservice.LocatePlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	moved, err := toolpreview.Changed(
 		trailerRecord.record(plan.Trailer),
 		placeOf(nil, currentPlace(plan.Current)),
@@ -701,7 +703,7 @@ func renderTrailerLocate(
 		ID:       plan.Previous.ID,
 		Label:    plan.Previous.ProNumber,
 		Version:  changepreview.PinnedVersion(plan.Previous.Version),
-	}, toolpreview.MoneyBlock(money.DefaultCurrencyCode, agent.MoneyLine{
+	}, toolpreview.MoneyBlock(money.DefaultCurrencyCode, agentpreview.MoneyLine{
 		Label:  "Total charge",
 		Before: plan.Previous.TotalChargeAmount,
 		After:  plan.Updated.TotalChargeAmount,

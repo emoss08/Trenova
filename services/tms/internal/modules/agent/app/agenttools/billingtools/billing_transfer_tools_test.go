@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -192,7 +193,7 @@ func TestTransferToBilling_PreviewWarnsWhenNothingWouldGo(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Summary, "1 would stay with operations")
 }
 

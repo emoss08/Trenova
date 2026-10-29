@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -150,10 +152,10 @@ func (r *masterRecord[T]) viewOf(entity *T, states map[pulid.ID]string) *any {
 	return &view
 }
 
-func (r *masterRecord[T]) result(action string, entity *T) *agent.ToolExecutionResult {
+func (r *masterRecord[T]) result(action string, entity *T) *agentrecord.ToolExecutionResult {
 	id := r.id(entity)
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   r.kind,
 		Name:   r.label(entity),
@@ -781,7 +783,7 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agenttoolports.AgentT
 		Render: func(
 			_ *agenttoolports.ToolExecuteParams,
 			planned *masterPlanned[T],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(record.record(planned.entity),
 				record.viewOf(planned.entity, planned.states), record.options...)
 			if err != nil {
@@ -795,7 +797,7 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agenttoolports.AgentT
 			ctx context.Context,
 			_ *agenttoolports.ToolExecuteParams,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
 			}
@@ -914,7 +916,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agenttoolports.AgentT
 		Refused: func(*masterEdit) string {
 			return fmt.Sprintf("Would change a %s.", record.kind)
 		},
-		Render: func(_ *masterEdit, plan *masterChanged[T]) (*agent.ToolPreview, error) {
+		Render: func(_ *masterEdit, plan *masterChanged[T]) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(record.record(plan.change.Before),
 				record.viewOf(plan.change.Before, plan.states),
 				record.viewOf(plan.change.After, plan.states), record.options...)
@@ -929,7 +931,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agenttoolports.AgentT
 			ctx context.Context,
 			edit *masterEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
 			}
@@ -1047,8 +1049,8 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 		Render: func(
 			change *masterStatusChange[S],
 			plan *masterStatusPlanned[T],
-		) (*agent.ToolPreview, error) {
-			changes := make([]*agent.RecordChange, 0, len(plan.changes))
+		) (*agentpreview.ToolPreview, error) {
+			changes := make([]*agentpreview.RecordChange, 0, len(plan.changes))
 			for idx := range plan.changes {
 				built, err := toolpreview.Changed(record.record(plan.changes[idx].Before),
 					record.viewOf(plan.changes[idx].Before, plan.states),
@@ -1072,7 +1074,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 			ctx context.Context,
 			change *masterStatusChange[S],
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := spec.run(ctx, toolparams.TenantFrom(*params), change.ids, change.status)
 			if err != nil {
 				return nil, err
@@ -1082,7 +1084,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentto
 				ids[fmt.Sprintf("%s[%d]", record.idsParam, idx)] = record.id(entity).String()
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: ActionUpdated,
 				Kind:   record.kind,
 				Name:   changepreview.CountOf(len(updated), record.kind),

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -253,7 +253,7 @@ func (s *LedgerService) finish(
 func (s *LedgerService) publishEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	kind agent.EventKind,
+	kind agenttrigger.EventKind,
 	subjectID pulid.ID,
 	related []pulid.ID,
 	detail string,

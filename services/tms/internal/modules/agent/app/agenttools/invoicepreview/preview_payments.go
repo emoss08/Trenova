@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/money"
@@ -13,7 +13,7 @@ import (
 
 // invoicePaymentChange is one invoice the payment pays: what has been applied
 // to it and its open balance, before and after.
-func InvoicePaymentChange(before, after *invoice.Invoice) (*agent.RecordChange, error) {
+func InvoicePaymentChange(before, after *invoice.Invoice) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceInvoice,
@@ -29,11 +29,15 @@ func InvoicePaymentChange(before, after *invoice.Invoice) (*agent.RecordChange, 
 		return nil, err
 	}
 
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(before.CurrencyCode, agent.MoneyLine{
-		Label:  "Open balance",
-		Before: changepreview.KnownAmount(money.DecimalFromMinor(before.OpenBalanceMinor())),
-		After:  changepreview.KnownAmount(money.DecimalFromMinor(after.OpenBalanceMinor())),
-	}), toolpreview.SensitiveAs("totalAmount", "appliedAmount"))
+	toolpreview.AttachMoney(
+		change,
+		toolpreview.MoneyBlock(before.CurrencyCode, agentpreview.MoneyLine{
+			Label:  "Open balance",
+			Before: changepreview.KnownAmount(money.DecimalFromMinor(before.OpenBalanceMinor())),
+			After:  changepreview.KnownAmount(money.DecimalFromMinor(after.OpenBalanceMinor())),
+		}),
+		toolpreview.SensitiveAs("totalAmount", "appliedAmount"),
+	)
 
 	return change, nil
 }

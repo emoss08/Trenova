@@ -16,6 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -53,17 +56,17 @@ var (
 func watchPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWebResearch,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Artifact:      string(permission.KindWebWatch),
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		Rationale:     rationale,
 	}
@@ -208,7 +211,7 @@ func (t *WatchWebTool) Validate(
 func (t *WatchWebTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -263,7 +266,7 @@ func (t *WatchWebTool) Execute(
 func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -309,12 +312,12 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, fmt.Errorf("park the work on the web watch: %w", err)
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "set",
 		Kind:   resultKind,
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: string(permission.KindWebWatch),
 			ID:         view.ID.String(),
 		},
@@ -395,7 +398,7 @@ func (t *StopWebWatchTool) Validate(
 func (t *StopWebWatchTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -419,7 +422,7 @@ func (t *StopWebWatchTool) Execute(
 func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -439,12 +442,12 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 		})
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "stopped",
 		Kind:   resultKind,
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: string(permission.KindWebWatch),
 			ID:         view.ID.String(),
 		},

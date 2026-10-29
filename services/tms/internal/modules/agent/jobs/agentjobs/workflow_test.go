@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -179,7 +180,7 @@ func (s *AgentRunWorkflowTestSuite) tenant() pagination.TenantInfo {
 func (s *AgentRunWorkflowTestSuite) decide() {
 	s.env.SignalWorkflow(agentcontract.AgentDecisionSignalName, agentcontract.DecisionSignal{
 		ProposalID:      pulid.MustNew("agp_"),
-		Decision:        agent.DecisionAccepted,
+		Decision:        agentdecision.DecisionAccepted,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	})
 }

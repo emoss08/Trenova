@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -21,7 +21,7 @@ import (
 func TenderPreview(
 	summary string,
 	planned *tenderservice.TenderPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	entity := planned.Tender
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceTender, Label: tenderLabel(planned)},
@@ -41,9 +41,9 @@ func TenderPreview(
 		return nil, err
 	}
 
-	lines := make([]agent.MoneyLine, 0, len(entity.Offers))
+	lines := make([]agentpreview.MoneyLine, 0, len(entity.Offers))
 	for _, offer := range entity.Offers {
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: fmt.Sprintf(
 				"%d. %s (%s)",
 				offer.Rank,
@@ -59,7 +59,7 @@ func TenderPreview(
 	block.Delta = decimal.NullDecimal{}
 	toolpreview.AttachMoney(created, block)
 
-	changes := make([]*agent.RecordChange, 0, len(entity.Offers)+1)
+	changes := make([]*agentpreview.RecordChange, 0, len(entity.Offers)+1)
 	changes = append(changes, created)
 	for index, offer := range entity.Offers {
 		changes = append(changes, tenderOfferSend(planned, offer, index))
@@ -74,8 +74,8 @@ func tenderOfferSend(
 	planned *tenderservice.TenderPreview,
 	offer *tender.TenderOffer,
 	index int,
-) *agent.RecordChange {
-	message := &agent.MessagePreview{
+) *agentpreview.RecordChange {
+	message := &agentpreview.MessagePreview{
 		Subject: "Load tender offer",
 		Body: fmt.Sprintf("%s %s offered, to be accepted within %s.",
 			money.FormatMinor(money.MinorUnits(offer.Rate), money.DefaultCurrencyCode),
@@ -88,13 +88,13 @@ func tenderOfferSend(
 
 	switch offer.Channel {
 	case tender.ChannelEDI:
-		message.Channel = agent.MessageChannelEDI
+		message.Channel = agentpreview.MessageChannelEDI
 		message.To = []string{offerCarrierName(planned, offer) + " (EDI 204)"}
 	case tender.ChannelEmail:
-		message.Channel = agent.MessageChannelEmail
+		message.Channel = agentpreview.MessageChannelEmail
 		message.To = []string{offer.RecipientEmail}
 	default:
-		message.Channel = agent.MessageChannelEmail
+		message.Channel = agentpreview.MessageChannelEmail
 		message.To = []string{offer.RecipientEmail}
 	}
 

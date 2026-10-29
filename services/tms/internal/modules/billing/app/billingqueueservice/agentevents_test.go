@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -104,7 +104,7 @@ func TestUpdateStatus_PublishesExceptionEvent(t *testing.T) {
 	require.NoError(t, err)
 	events := recorder.Published()
 	require.Len(t, events, 1)
-	require.Equal(t, agent.EventBillingQueueItemException, events[0].Kind)
+	require.Equal(t, agenttrigger.EventBillingQueueItemException, events[0].Kind)
 	require.Equal(t, item.ID, events[0].SubjectID)
 	require.Equal(t, tenantInfo.OrgID, events[0].TenantInfo.OrgID)
 	require.Equal(t, tenantInfo.BuID, events[0].TenantInfo.BuID)
@@ -124,7 +124,7 @@ func TestUpdateStatus_PublishesOnHoldEvent(t *testing.T) {
 	require.NoError(t, err)
 	events := recorder.Published()
 	require.Len(t, events, 1)
-	require.Equal(t, agent.EventBillingQueueItemOnHold, events[0].Kind)
+	require.Equal(t, agenttrigger.EventBillingQueueItemOnHold, events[0].Kind)
 }
 
 func TestUpdateStatus_DoesNotPublishForOtherTransitions(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 		t.Context(),
 		proposal,
 		&agentports.DecideAgentProposalRequest{
-			Decision: agent.DecisionModified,
+			Decision: agentdecision.DecisionModified,
 			Modifications: map[string]any{
 				"workerId": "wrk_1",
 				"message":  "Call in",
@@ -36,14 +37,14 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 		nil,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, agent.DecisionAccepted, unchanged.Decision)
+	assert.Equal(t, agentdecision.DecisionAccepted, unchanged.Decision)
 	assert.Nil(t, unchanged.Modifications)
 
 	changed, err := service.settleModifications(
 		t.Context(),
 		proposal,
 		&agentports.DecideAgentProposalRequest{
-			Decision: agent.DecisionModified,
+			Decision: agentdecision.DecisionModified,
 			Modifications: map[string]any{
 				"workerId": "wrk_1",
 				"message":  "Call dispatch now",
@@ -53,14 +54,17 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 		nil,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, agent.DecisionModified, changed.Decision)
+	assert.Equal(t, agentdecision.DecisionModified, changed.Decision)
 	assert.Equal(t, map[string]any{"message": "Call dispatch now"}, changed.Modifications)
 }
 
 func TestSettleModifications_LeavesOtherDecisionsAlone(t *testing.T) {
 	t.Parallel()
 
-	req := &agentports.DecideAgentProposalRequest{Decision: agent.DecisionRejected, ReasonCode: "no"}
+	req := &agentports.DecideAgentProposalRequest{
+		Decision:   agentdecision.DecisionRejected,
+		ReasonCode: "no",
+	}
 	settled, err := (&Service{}).settleModifications(t.Context(), &agent.AgentProposal{}, req, nil)
 
 	require.NoError(t, err)

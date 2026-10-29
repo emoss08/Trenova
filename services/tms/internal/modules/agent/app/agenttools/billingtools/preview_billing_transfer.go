@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -36,7 +36,7 @@ var transferLabels = map[string]string{
 func (t *TransferToBillingTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (t *TransferToBillingTool) Preview(
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.Decisions))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Decisions))
 	for _, decision := range refusalsFirst(plan.Decisions) {
 		change, changeErr := transferChange(decision)
 		if changeErr != nil {
@@ -61,7 +61,7 @@ func (t *TransferToBillingTool) Preview(
 		preview.Partial = true
 	}
 	if plan.Transfer == 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"None of the checked shipments would transfer as they stand.")
 	}
 
@@ -120,7 +120,7 @@ func refusalsFirst(
 
 func transferChange(
 	decision *shipmentbillingports.BillingTransferDecision,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	stage := string(decision.BillingTransferStatus)
 	if stage == "" {
 		stage = "Not transferred"

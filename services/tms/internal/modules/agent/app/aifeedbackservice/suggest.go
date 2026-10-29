@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -323,7 +323,7 @@ func (c *ratingCluster) dominantTarget() aifeedback.TargetType {
 	return best
 }
 
-func (c *ratingCluster) coveredBy(memories []*agent.Memory) bool {
+func (c *ratingCluster) coveredBy(memories []*agentmemory.Memory) bool {
 	for _, memory := range memories {
 		if memory == nil {
 			continue
@@ -333,7 +333,7 @@ func (c *ratingCluster) coveredBy(memories []*agent.Memory) bool {
 				return true
 			}
 		}
-		if memory.Status != agent.MemoryStatusActive || len(c.tokens) < minCommentTokens {
+		if memory.Status != agentmemory.MemoryStatusActive || len(c.tokens) < minCommentTokens {
 			continue
 		}
 		if setutils.Jaccard(agentsearch.TokenSet(memory.Content), c.tokens) >=
@@ -351,13 +351,13 @@ type clusterMemoryParams struct {
 	agentName string
 }
 
-func (c *ratingCluster) memory(p clusterMemoryParams) *agent.Memory {
+func (c *ratingCluster) memory(p clusterMemoryParams) *agentmemory.Memory {
 	ordered := slices.Clone(c.ratings)
 	slices.SortFunc(ordered, func(a, b *aifeedback.Feedback) int {
 		return cmp.Or(cmp.Compare(b.CreatedAt, a.CreatedAt), cmp.Compare(a.ID, b.ID))
 	})
 
-	evidence := &agent.MemoryEvidence{
+	evidence := &agentmemory.MemoryEvidence{
 		FeedbackIDs:     make([]pulid.ID, 0, min(len(ordered), maxEvidenceIDs)),
 		PatternKey:      c.dominantPatternKey(),
 		RatingCount:     len(ordered),
@@ -374,12 +374,12 @@ func (c *ratingCluster) memory(p clusterMemoryParams) *agent.Memory {
 
 	agentID := p.agentID
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		OrganizationID:    p.tenant.OrgID,
 		BusinessUnitID:    p.tenant.BuID,
-		Kind:              agent.MemoryKindCorrection,
-		Source:            agent.MemorySourceFeedback,
-		Status:            agent.MemoryStatusSuggested,
+		Kind:              agentmemory.MemoryKindCorrection,
+		Source:            agentmemory.MemorySourceFeedback,
+		Status:            agentmemory.MemoryStatusSuggested,
 		AgentDefinitionID: &agentID,
 		Content: SuggestionText(SuggestionTextParams{
 			AgentName:   p.agentName,
@@ -458,7 +458,7 @@ func SuggestionText(p SuggestionTextParams) string {
 		b.WriteString(".")
 	}
 
-	return stringutils.Ellipsize(b.String(), agent.MaxMemoryContentChars)
+	return stringutils.Ellipsize(b.String(), agentmemory.MaxMemoryContentChars)
 }
 
 func plural(count int, one, other string) string {

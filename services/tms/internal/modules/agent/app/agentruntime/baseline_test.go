@@ -9,6 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -38,9 +39,9 @@ func (p *recordingPreviews) Baseline(
 	p.asked = append(p.asked, req)
 	p.mu.Unlock()
 
-	fields := make([]agent.PreviewFieldChange, 0, 40)
+	fields := make([]agentpreview.PreviewFieldChange, 0, 40)
 	for range 40 {
-		fields = append(fields, agent.PreviewFieldChange{
+		fields = append(fields, agentpreview.PreviewFieldChange{
 			Path:  "notes",
 			Label: "Notes",
 			After: strings.Repeat("n", 1000),
@@ -49,10 +50,10 @@ func (p *recordingPreviews) Baseline(
 
 	return &agentruntimeports.ProposalBaselineResult{
 		Target: p.target,
-		Preview: &agent.ToolPreview{
+		Preview: &agentpreview.ToolPreview{
 			Summary: bulkySummary,
-			Changes: []agent.RecordChange{
-				{Operation: agent.PreviewOperationUpdate, Fields: fields},
+			Changes: []agentpreview.RecordChange{
+				{Operation: agentpreview.PreviewOperationUpdate, Fields: fields},
 			},
 		},
 	}
@@ -179,8 +180,8 @@ func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 	require.True(t, action.Simulated)
 	require.NotNil(t, action.Simulation)
 	assert.Equal(t, bulkySummary, action.Simulation.Summary)
-	assert.LessOrEqual(t, agent.EncodedPreviewSize(action.Simulation),
-		agent.MaxPreviewSimulationBytes+1024, "the simulation on the action stays bounded")
+	assert.LessOrEqual(t, agentpreview.EncodedPreviewSize(action.Simulation),
+		agentpreview.MaxPreviewSimulationBytes+1024, "the simulation on the action stays bounded")
 	assert.Zero(t, tool.Calls, "nothing ran")
 	require.Len(t, previews.asked, 1)
 	assert.False(t, previews.asked[0].Persist, "a simulated write files no baseline")
@@ -217,10 +218,10 @@ type countingPreviewTool struct {
 func (t *countingPreviewTool) Preview(
 	context.Context,
 	agenttoolports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	t.previews++
 
-	return &agent.ToolPreview{Summary: "previewed where its write would land"}, nil
+	return &agentpreview.ToolPreview{Summary: "previewed where its write would land"}, nil
 }
 
 // A preview the snapshot refused is reported as failed. Asking the tool again
@@ -291,13 +292,13 @@ func (p *refusingPreviews) Baseline(
 			ID:       pulid.ID(shipmentID),
 			Version:  7,
 		},
-		Preview: &agent.ToolPreview{Summary: "Would change the shipment."},
+		Preview: &agentpreview.ToolPreview{Summary: "Would change the shipment."},
 	}
 	if req.Tool.Name() == p.refuseTool {
-		result.Preview.Warnings = []agent.PreviewWarning{{
-			Code:    agent.PreviewWarningWouldFail,
+		result.Preview.Warnings = []agentpreview.PreviewWarning{{
+			Code:    agentpreview.PreviewWarningWouldFail,
 			Message: "This would be refused as it stands: validation failed:\n- BOL is already in use",
-			Reasons: []agent.PreviewReason{{
+			Reasons: []agentpreview.PreviewReason{{
 				Field:   "bol",
 				Label:   "BOL",
 				Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",

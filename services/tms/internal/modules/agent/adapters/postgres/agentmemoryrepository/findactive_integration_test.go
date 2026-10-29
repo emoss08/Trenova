@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,13 +17,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func activeMemory(tenant pagination.TenantInfo, content string) *agent.Memory {
-	return &agent.Memory{
+func activeMemory(tenant pagination.TenantInfo, content string) *agentmemory.Memory {
+	return &agentmemory.Memory{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		Kind:           agent.MemoryKindInstruction,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindInstruction,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        content,
 	}
 }
@@ -48,7 +48,7 @@ func TestFindActive_IgnoresAnExpiredRow(t *testing.T) {
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "  call ahead before a friday delivery ",
-		Scope:      agent.MemoryScopeOrganization,
+		Scope:      agentmemory.MemoryScopeOrganization,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, found, "an expired memory is never read, so re-recording it is a new memory")
@@ -63,7 +63,7 @@ func TestFindActive_IgnoresAnExpiredRow(t *testing.T) {
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "Call ahead before a Monday delivery",
-		Scope:      agent.MemoryScopeOrganization,
+		Scope:      agentmemory.MemoryScopeOrganization,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, found)
@@ -82,12 +82,12 @@ func TestFindActive_MatchesOnlyARowKeptForTheSameReaders(t *testing.T) {
 	now := timeutils.NowUnix()
 
 	kept := activeMemory(tenant, "State which rate table a quote came from")
-	kept.Scope = agent.MemoryScopeAgent
+	kept.Scope = agentmemory.MemoryScopeAgent
 	kept.AgentDefinitionID = &rateDesk
 	forRateDesk, err := repo.Create(ctx, kept)
 	require.NoError(t, err)
 
-	find := func(scope agent.MemoryScope, agentID pulid.ID) *agent.Memory {
+	find := func(scope agentmemory.MemoryScope, agentID pulid.ID) *agentmemory.Memory {
 		found, findErr := repo.FindActive(ctx, agentmemoryports.FindActiveAgentMemoryRequest{
 			TenantInfo:        tenant,
 			Now:               now,
@@ -100,13 +100,13 @@ func TestFindActive_MatchesOnlyARowKeptForTheSameReaders(t *testing.T) {
 		return found
 	}
 
-	assert.Nil(t, find(agent.MemoryScopeOrganization, pulid.Nil),
+	assert.Nil(t, find(agentmemory.MemoryScopeOrganization, pulid.Nil),
 		"an organization-wide remember never lands on another agent's own memory")
-	assert.Nil(t, find(agent.MemoryScopeOrganization, dispatch))
-	assert.Nil(t, find(agent.MemoryScopeAgent, dispatch),
+	assert.Nil(t, find(agentmemory.MemoryScopeOrganization, dispatch))
+	assert.Nil(t, find(agentmemory.MemoryScopeAgent, dispatch),
 		"a memory kept for the rate desk is not the dispatch agent's")
 
-	same := find(agent.MemoryScopeAgent, rateDesk)
+	same := find(agentmemory.MemoryScopeAgent, rateDesk)
 	require.NotNil(t, same)
 	assert.Equal(t, forRateDesk.ID, same.ID)
 }
@@ -122,8 +122,8 @@ func TestFindActive_NeverHandsATaintedRowToACleanWrite(t *testing.T) {
 	now := timeutils.NowUnix()
 
 	dirty := activeMemory(tenant, "Deliveries to Acme go to dock 9")
-	dirty.Source = agent.MemorySourceAgent
-	dirty.Kind = agent.MemoryKindFact
+	dirty.Source = agentmemory.MemorySourceAgent
+	dirty.Kind = agentmemory.MemoryKindFact
 	dirty.Tainted = true
 	tainted, err := repo.Create(ctx, dirty)
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestFindActive_NeverHandsATaintedRowToACleanWrite(t *testing.T) {
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "Deliveries to Acme go to dock 9",
-		Scope:      agent.MemoryScopeOrganization,
+		Scope:      agentmemory.MemoryScopeOrganization,
 	}
 
 	found, err := repo.FindActive(ctx, request)
@@ -170,12 +170,12 @@ func TestFindActive_MatchesTheSameWordsWhateverTheCaseSpacingOrPunctuation(t *te
 	created, err := repo.Create(ctx, activeMemory(tenant, "Quote Acme in dollars, never euros."))
 	require.NoError(t, err)
 
-	find := func(content string) *agent.Memory {
+	find := func(content string) *agentmemory.Memory {
 		found, findErr := repo.FindActive(ctx, agentmemoryports.FindActiveAgentMemoryRequest{
 			TenantInfo: tenant,
 			Now:        now,
 			Content:    content,
-			Scope:      agent.MemoryScopeOrganization,
+			Scope:      agentmemory.MemoryScopeOrganization,
 		})
 		require.NoError(t, findErr)
 

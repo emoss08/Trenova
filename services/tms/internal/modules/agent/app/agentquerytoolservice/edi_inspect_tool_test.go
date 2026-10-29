@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -127,10 +128,10 @@ func TestInspectX12_IsAReadThatHoldsEveryLaterWrite(t *testing.T) {
 	t.Parallel()
 
 	policy := newInspectX12Tool(&recordingInspector{}).Policy()
-	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind)
 	assert.Equal(t, permission.ResourceEDI, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
-	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceEDI, policy.Source)
 	assert.True(t, policy.CapsLaterWrites)
 }

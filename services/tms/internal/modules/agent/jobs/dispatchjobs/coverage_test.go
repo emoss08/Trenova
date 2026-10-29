@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
@@ -138,7 +139,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			require.Len(t, publisher.events, tc.wantCount)
 			require.Len(t, projector.items, tc.wantCount)
 			for _, event := range publisher.events {
-				require.Equal(t, agent.EventShipmentMoveCoverageAtRisk, event.Kind)
+				require.Equal(t, agenttrigger.EventShipmentMoveCoverageAtRisk, event.Kind)
 			}
 			for _, item := range projector.items {
 				require.Equal(t, watchtower.SourceMoveCoverage, item.SourceKind)

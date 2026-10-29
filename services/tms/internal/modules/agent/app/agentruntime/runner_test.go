@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -1000,7 +1001,7 @@ func TestRun_AttributesAReplayToEvaluationNotTheLiveAgent(t *testing.T) {
 
 	for name, req := range map[string]*agentruntimeports.RunRequest{
 		"by purpose": {UsagePurpose: aiusageports.AIUsagePurposeEvaluation},
-		"by run id":  {RunID: pulid.MustNew(agent.EvaluationIDPrefix)},
+		"by run id":  {RunID: pulid.MustNew(agentevaluation.EvaluationIDPrefix)},
 	} {
 		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 			{Text: "Replayed.", ModelIdentifier: "test-model"},

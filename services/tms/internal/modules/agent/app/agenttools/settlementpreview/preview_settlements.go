@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -30,10 +30,13 @@ func PayeeClause(payee string) string {
 	return " for " + payee
 }
 
-func SettlementMoney(before, after *SettlementFacts) *agent.MoneyPreview {
-	lines := make([]agent.MoneyLine, 0, max(len(before.Totals), len(after.Totals)))
+func SettlementMoney(before, after *SettlementFacts) *agentpreview.MoneyPreview {
+	lines := make([]agentpreview.MoneyLine, 0, max(len(before.Totals), len(after.Totals)))
 	for idx, total := range after.Totals {
-		line := agent.MoneyLine{Label: total.Label, After: changepreview.MinorAmount(total.Minor)}
+		line := agentpreview.MoneyLine{
+			Label: total.Label,
+			After: changepreview.MinorAmount(total.Minor),
+		}
 		if idx < len(before.Totals) {
 			line.Before = changepreview.MinorAmount(before.Totals[idx].Minor)
 		}
@@ -57,7 +60,7 @@ func JournalSentence(plan *settlementshared.JournalPlan) string {
 func SettlementJournalChange(
 	plan *settlementshared.JournalPlan,
 	settlement *SettlementFacts,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceJournalEntry,
@@ -82,10 +85,10 @@ func SettlementJournalChange(
 		return nil, err
 	}
 
-	lines := make([]agent.MoneyLine, 0, len(plan.Lines))
+	lines := make([]agentpreview.MoneyLine, 0, len(plan.Lines))
 	for _, line := range plan.Lines {
 		if line.DebitMinor > 0 {
-			lines = append(lines, agent.MoneyLine{
+			lines = append(lines, agentpreview.MoneyLine{
 				Label: "Debit",
 				After: changepreview.MinorAmount(line.DebitMinor),
 			})

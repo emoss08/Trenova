@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -104,6 +104,6 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 		assert.Equal(t, false, tool.ParamSchema()["additionalProperties"], tool.Name())
 		policy := tool.Policy()
 		assert.Equal(t, permission.OpRead, policy.Operation, tool.Name())
-		assert.Equal(t, agent.ToolKindQuery, policy.Kind, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind, tool.Name())
 	}
 }

@@ -396,7 +396,7 @@ findings:
       were reviewed as admin@trenova.app through that mutation.
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: no turn tainted by a reviewed memory. Since then two stale tainted lessons were retired and three sound ones reviewed, leaving no Active memory that taints"
     files:
-      - services/tms/internal/modules/agent/domain/agent/agentmemory.go
+      - services/tms/internal/modules/agent/domain/agentmemory/agentmemory.go
       - services/tms/internal/modules/agent/app/agentmemoryservice/
       - services/tms/internal/api/graphql/schema/agent.graphqls
       - client/apps/web/src/routes/agent-control/_components/memory/

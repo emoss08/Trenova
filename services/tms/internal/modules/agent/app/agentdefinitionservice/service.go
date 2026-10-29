@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -384,8 +385,8 @@ func (s *Service) activeExtensions(
 	return extensionState(active), nil
 }
 
-func (s *Service) EventKinds() []agent.EventDescriptor {
-	return agent.KnownEvents()
+func (s *Service) EventKinds() []agenttrigger.EventDescriptor {
+	return agenttrigger.KnownEvents()
 }
 
 func (s *Service) PreviewPrompt(

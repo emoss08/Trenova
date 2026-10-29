@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -219,7 +220,7 @@ func TestCancelReportRun_StopsARunWithoutChangingAnything(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -241,7 +242,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return report.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -256,7 +257,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return dashboard.(agenttoolports.ToolPreviewer).Preview(t.Context(), board)
 		},
 	)
@@ -274,7 +275,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return schedule.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
 		},
 	)
@@ -303,7 +304,7 @@ func TestResetReportFork_ShowsWhatTheBuiltInPutsBack(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -326,7 +327,7 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reports.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

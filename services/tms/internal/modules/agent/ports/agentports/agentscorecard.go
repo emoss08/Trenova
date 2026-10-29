@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,5 +26,5 @@ type ScorecardRequest struct {
 type AgentScorecardRepository interface {
 	// Aggregate counts the runs, the proposals by tool and outcome, the
 	// exceptions, and what the model cost.
-	Aggregate(ctx context.Context, req ScorecardRequest) (*agent.ScorecardTotals, error)
+	Aggregate(ctx context.Context, req ScorecardRequest) (*agentevaluation.ScorecardTotals, error)
 }

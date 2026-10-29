@@ -113,7 +113,7 @@ target pin (proposal-previews.md, "Tools that take one record or many");
 sketches the batch as one proposal of `RecordBatch` items. That proposal shape has three faults
 for a script:
 
-- `RecordBatch` previews at most 20 records (`agent.MaxPreviewRecords`), so records past the
+- `RecordBatch` previews at most 20 records (`agentpreview.MaxPreviewRecords`), so records past the
   20th would be approved unseen;
 - it holds one tool, but a script's batch mixes tools;
 - one digest covers the whole call, so "the step whose preview changed" cannot be named.
@@ -216,7 +216,7 @@ turn's own calls:
 
 **The plan keeps the script that wrote it.** The recorder reads the script's ledger step
 (`ScriptStepReader`, `AgentRunStepRepository.Get`) and copies its title, purpose and code onto
-the plan's `script` column (`agent.ScriptOrigin`, JSONB, migration `…_agent_plan_script`). 5a
+the plan's `script` column (`agentplan.ScriptOrigin`, JSONB, migration `…_agent_plan_script`). 5a
 keeps no separate script-run table, and a ledger step is purged with the run, so the plan carries
 its own copy for as long as it is kept. A step that cannot be read leaves `script` empty and is
 logged; the batch is still filed, because the steps' own previews are what the person approves

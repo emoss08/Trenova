@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -47,10 +47,10 @@ func (s *Service) toolTrust(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
 	toolName string,
-) (*agent.ToolTrust, error) {
+) (*agenttooltrust.ToolTrust, error) {
 	if s.trust == nil || definition.ID.IsNil() || definition.OrganizationID.IsNil() ||
 		definition.BusinessUnitID.IsNil() {
-		return new(agent.ToolTrust), nil
+		return new(agenttooltrust.ToolTrust), nil
 	}
 
 	rows, err := s.trust.ListByDefinition(ctx, agenttoolports.ListToolTrustRequest{
@@ -70,5 +70,5 @@ func (s *Service) toolTrust(
 		}
 	}
 
-	return new(agent.ToolTrust), nil
+	return new(agenttooltrust.ToolTrust), nil
 }

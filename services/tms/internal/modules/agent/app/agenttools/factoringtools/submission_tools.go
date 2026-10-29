@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -202,7 +203,7 @@ func (t *SubmitInvoicesToFactorTool) Execute(
 func (t *SubmitInvoicesToFactorTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would send a schedule of accounts to the factor."
 	req, err := t.request(&params)
 	if err != nil {
@@ -231,7 +232,7 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	}
 	toolpreview.AttachMoney(created, planMoney(plan))
 
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 	if plan.TransportMethod == factoringsubmission.TransportMethodEmail {
 		changes = append(changes, toolpreview.Send(toolpreview.Record{
 			Resource: permission.ResourceFactoringSubmission,
@@ -249,32 +250,39 @@ func (t *SubmitInvoicesToFactorTool) Preview(
 	), nil
 }
 
-func planMoney(plan *factoringsubmissionports.SubmissionPlan) *agent.MoneyPreview {
-	lines := make([]agent.MoneyLine, 0, len(plan.Items)+3)
+func planMoney(plan *factoringsubmissionports.SubmissionPlan) *agentpreview.MoneyPreview {
+	lines := make([]agentpreview.MoneyLine, 0, len(plan.Items)+3)
 	for _, item := range plan.Items {
-		lines = append(lines, agent.MoneyLine{
+		lines = append(lines, agentpreview.MoneyLine{
 			Label: item.InvoiceNumber + " · " + item.CustomerName,
 			After: minorDecimal(item.Funding.FaceMinor),
 		})
 	}
 	block := toolpreview.MoneyBlock(plan.CurrencyCode, lines...)
-	block.Lines = append(block.Lines,
-		agent.MoneyLine{Label: "Expected advance", After: minorDecimal(plan.ExpectedAdvanceMinor)},
-		agent.MoneyLine{Label: "Expected fee", After: minorDecimal(plan.ExpectedFeeMinor)},
-		agent.MoneyLine{Label: "Expected reserve", After: minorDecimal(plan.ExpectedReserveMinor)},
+	block.Lines = append(
+		block.Lines,
+		agentpreview.MoneyLine{
+			Label: "Expected advance",
+			After: minorDecimal(plan.ExpectedAdvanceMinor),
+		},
+		agentpreview.MoneyLine{Label: "Expected fee", After: minorDecimal(plan.ExpectedFeeMinor)},
+		agentpreview.MoneyLine{
+			Label: "Expected reserve",
+			After: minorDecimal(plan.ExpectedReserveMinor),
+		},
 	)
 	return block
 }
 
-func planMessage(plan *factoringsubmissionports.SubmissionPlan) *agent.MessagePreview {
+func planMessage(plan *factoringsubmissionports.SubmissionPlan) *agentpreview.MessagePreview {
 	attachments := []string{"Schedule of accounts (PDF)", "Schedule of accounts (CSV)"}
 	if plan.AttachPackets {
 		for _, item := range plan.Items {
 			attachments = append(attachments, item.InvoiceNumber+".pdf")
 		}
 	}
-	return &agent.MessagePreview{
-		Channel:     agent.MessageChannelEmail,
+	return &agentpreview.MessagePreview{
+		Channel:     agentpreview.MessageChannelEmail,
 		To:          strings.Split(plan.TransportTarget, ", "),
 		Subject:     "Schedule of accounts",
 		Attachments: attachments,
@@ -381,7 +389,7 @@ func (t *RetryFactoringSubmissionTool) Execute(
 func (t *RetryFactoringSubmissionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would send the failed schedule to the factor again."
 	req, err := t.request(&params)
 	if err != nil {
@@ -505,7 +513,7 @@ func (t *CancelFactoringSubmissionTool) Execute(
 func (t *CancelFactoringSubmissionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would cancel the failed schedule and release its invoices."
 	req, err := t.request(&params)
 	if err != nil {

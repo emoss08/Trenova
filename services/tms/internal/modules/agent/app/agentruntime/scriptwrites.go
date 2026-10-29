@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptoutbox"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -237,7 +238,7 @@ type scriptSettlement struct {
 	taint         *agent.RunTaint
 	afterExternal bool
 	beyond        agent.AutonomyTier
-	moneySpent    agent.MoneyUse
+	moneySpent    agenttooltrust.MoneyUse
 }
 
 // settle closes the script's outbox and returns the batch to file: nothing

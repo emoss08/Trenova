@@ -10,7 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -315,7 +315,7 @@ func (t *graphQLGetTool) several(
 func (t *graphQLGetTool) gathered(ids []pulid.ID, records []any) any {
 	items := make([]map[string]any, 0, len(ids))
 	var missing, withheld []string
-	var outside []agent.RecordRef
+	var outside []agentrecord.RecordRef
 	for idx, read := range records {
 		record, found := read.(map[string]any)
 		if mark, ok := read.(*markedRecord); ok {
@@ -363,12 +363,12 @@ func (t *graphQLGetTool) gathered(ids []pulid.ID, records []any) any {
 // what it read.
 type markedRecord struct {
 	record  map[string]any
-	outside []agent.RecordRef
+	outside []agentrecord.RecordRef
 }
 
 func (r *markedRecord) MarshalJSON() ([]byte, error) { return sonic.Marshal(r.record) }
 
-func (r *markedRecord) TaintedRecords() []agent.RecordRef { return r.outside }
+func (r *markedRecord) TaintedRecords() []agentrecord.RecordRef { return r.outside }
 
 // variables are what the read sends: the id the call names, parsed so a
 // paraphrased id is refused rather than read as a missing record, and the

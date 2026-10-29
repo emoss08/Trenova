@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -49,11 +49,11 @@ type AgentRunStepRepository interface {
 	// Claim inserts a Started step. A key that is already taken returns
 	// ErrRunStepClaimed together with the row that holds it, so the caller can
 	// tell a finished step from one that was only begun.
-	Claim(ctx context.Context, step *agent.AgentRunStep) (*agent.AgentRunStep, error)
+	Claim(ctx context.Context, step *agentrunstep.AgentRunStep) (*agentrunstep.AgentRunStep, error)
 	Settle(ctx context.Context, req SettleAgentRunStepRequest) error
 	// Record files a step that needs no claim, such as a model reply.
-	Record(ctx context.Context, step *agent.AgentRunStep) error
-	List(ctx context.Context, req ListAgentRunStepsRequest) ([]*agent.AgentRunStep, error)
-	Get(ctx context.Context, req *GetAgentRunStepRequest) (*agent.AgentRunStep, error)
+	Record(ctx context.Context, step *agentrunstep.AgentRunStep) error
+	List(ctx context.Context, req ListAgentRunStepsRequest) ([]*agentrunstep.AgentRunStep, error)
+	Get(ctx context.Context, req *GetAgentRunStepRequest) (*agentrunstep.AgentRunStep, error)
 	Prune(ctx context.Context, req PruneAgentRunStepsRequest) (int, error)
 }

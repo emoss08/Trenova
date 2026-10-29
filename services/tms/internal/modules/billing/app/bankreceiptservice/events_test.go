@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -119,7 +119,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 	assert.Equal(t, bankreceiptworkitem.StatusOpen, opened.Status)
 
 	require.Len(t, events.published, 1)
-	assert.Equal(t, agent.EventBankReceiptException, events.published[0].Kind)
+	assert.Equal(t, agenttrigger.EventBankReceiptException, events.published[0].Kind)
 	assert.Equal(t, stored.ID, events.published[0].SubjectID)
 	assert.Equal(t, pagination.TenantInfo{OrgID: orgID, BuID: buID}, events.published[0].TenantInfo)
 }

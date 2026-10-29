@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -310,7 +310,7 @@ func (s *Service) announce(
 			break
 		}
 		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-			Kind:       agent.EventAccountingDriftDetected,
+			Kind:       agenttrigger.EventAccountingDriftDetected,
 			SubjectID:  finding.ID,
 			TenantInfo: tenant,
 		})

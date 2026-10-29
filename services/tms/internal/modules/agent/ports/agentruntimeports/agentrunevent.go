@@ -3,7 +3,7 @@ package agentruntimeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -15,7 +15,7 @@ import (
 // would make recording the work slower than doing it.
 type AppendAgentRunEventsRequest struct {
 	TenantInfo pagination.TenantInfo
-	Events     []*agent.AgentRunEvent
+	Events     []*agentrunevent.AgentRunEvent
 }
 
 // ListAgentRunEventsRequest reads one owner's account of itself, in sequence.
@@ -61,10 +61,10 @@ type AgentRunEventRepository interface {
 		ownerKind string,
 		ownerID pulid.ID,
 	) (int, error)
-	List(ctx context.Context, req ListAgentRunEventsRequest) ([]*agent.AgentRunEvent, error)
+	List(ctx context.Context, req ListAgentRunEventsRequest) ([]*agentrunevent.AgentRunEvent, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentRunEventConnectionRequest,
-	) (*pagination.CursorListResult[*agent.AgentRunEvent], error)
+	) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error)
 	Prune(ctx context.Context, req PruneAgentRunEventsRequest) (int, error)
 }

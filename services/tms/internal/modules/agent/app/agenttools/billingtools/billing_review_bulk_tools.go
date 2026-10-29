@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -113,7 +115,7 @@ func (t *AssignBillersTool) Policy() agenttoolports.ToolPolicy {
 func (t *AssignBillersTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
@@ -140,7 +142,7 @@ func (t *AssignBillersTool) Execute(
 func (t *AssignBillersTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }
 
@@ -240,7 +242,7 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 func (t *TransitionItemsToInReviewTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
@@ -269,6 +271,6 @@ func (t *TransitionItemsToInReviewTool) Execute(
 func (t *TransitionItemsToInReviewTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params)
 }

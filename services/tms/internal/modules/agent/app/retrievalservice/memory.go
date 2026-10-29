@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -157,7 +157,7 @@ func (r *MemoryRanker) RankMemories(
 	req *agentmemoryports.RankMemoriesRequest,
 ) (agentmemoryports.RankedMemories, error) {
 	if req == nil {
-		return agentmemoryports.RankedMemories{Memories: []*agent.Memory{}}, nil
+		return agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{}}, nil
 	}
 
 	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
@@ -186,7 +186,7 @@ func (r *MemoryRanker) RankMemories(
 }
 
 func similarCandidates(
-	candidates []*agent.Memory,
+	candidates []*agentmemory.Memory,
 	similar []retrievalports.MemorySimilarity,
 	floor float64,
 ) []pulid.ID {
@@ -207,10 +207,10 @@ func similarCandidates(
 }
 
 func FuseMemoryRanking(
-	recency []*agent.Memory,
+	recency []*agentmemory.Memory,
 	similar []retrievalports.MemorySimilarity,
 	tuning SearchTuning,
-) []*agent.Memory {
+) []*agentmemory.Memory {
 	tuning = tuning.normalized()
 
 	return fuseBySimilarity(
@@ -220,7 +220,11 @@ func FuseMemoryRanking(
 	)
 }
 
-func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int) []*agent.Memory {
+func fuseBySimilarity(
+	recency []*agentmemory.Memory,
+	similarOrder []pulid.ID,
+	rrfk int,
+) []*agentmemory.Memory {
 	if len(similarOrder) == 0 {
 		return recency
 	}
@@ -232,7 +236,7 @@ func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int
 
 	scores := rankfusion.Reciprocal(rrfk, similarOrder, recencyOrder)
 	ranked := slices.Clone(recency)
-	slices.SortStableFunc(ranked, func(a, b *agent.Memory) int {
+	slices.SortStableFunc(ranked, func(a, b *agentmemory.Memory) int {
 		switch left, right := scores[a.ID], scores[b.ID]; {
 		case left > right:
 			return -1

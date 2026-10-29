@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -105,13 +106,13 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tenders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
-	assert.Equal(t, agent.MessageChannelEDI, sent.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, sent.Message.Channel)
 	assert.Equal(t, []string{"Acme Brokerage"}, sent.Message.To)
 	assert.Contains(t, sent.Message.Body, "Dallas DC")
 	marked := agenttoolstest.PreviewChange(t, preview, 1)
@@ -147,7 +148,7 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tenders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), args)
 		},
 	)
@@ -161,11 +162,11 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 	refused := agenttoolstest.PreviewWithoutWrites(
 		t,
 		tenders.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), args)
 		},
 	)
-	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, refused, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeDocuments struct {
@@ -229,7 +230,7 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		documents.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)

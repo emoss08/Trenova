@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -44,7 +44,7 @@ func disputeLabel(inv *invoice.Invoice) string {
 func disputePreview(
 	plan *invoiceports.InvoiceDisputePreview,
 	summary string,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	record := toolpreview.Record{
 		Resource: permission.ResourceInvoiceDispute,
 		Label:    disputeLabel(plan.InvoiceBefore),
@@ -56,7 +56,7 @@ func disputePreview(
 	}
 
 	var (
-		change *agent.RecordChange
+		change *agentpreview.RecordChange
 		err    error
 	)
 	if plan.Before == nil {
@@ -71,13 +71,13 @@ func disputePreview(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		plan.InvoiceBefore.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Disputed",
 			After: changepreview.KnownAmount(plan.After.DisputedAmount),
 		},
 	), toolpreview.SensitiveAs(paramDisputedAmount))
 
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 	if plan.InvoiceBefore.DisputeStatus != plan.InvoiceAfter.DisputeStatus {
 		flag, flagErr := toolpreview.Changed(toolpreview.Record{
 			Resource: permission.ResourceInvoice,

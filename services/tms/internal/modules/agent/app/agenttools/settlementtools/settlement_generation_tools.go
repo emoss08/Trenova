@@ -12,6 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -146,16 +149,16 @@ func (t *GenerateDriverSettlementTool) ParamSchema() map[string]any {
 func (t *GenerateDriverSettlementTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      settlementpreview.DriverSettlementEntity,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Drafts a settlement from pay already accrued inside Trenova; nothing is " +
 			"paid until a person approves it, and hands-off approval is only the settlement " +
 			"control's clean-settlement rule.",
@@ -256,7 +259,7 @@ func (t *GenerateDriverSettlementTool) Validate(
 func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -287,7 +290,7 @@ func (t *GenerateDriverSettlementTool) Execute(
 func (t *GenerateDriverSettlementTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -348,15 +351,15 @@ func batchSchema() map[string]any {
 func batchPolicy(text batchText) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          text.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      text.resource,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     text.rationale,
 	}
 }
@@ -504,7 +507,7 @@ type plannedWorkerSettlement struct {
 func (t *GenerateDriverBatchTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -524,7 +527,7 @@ func (t *GenerateDriverBatchTool) Preview(
 		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.Workers))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Workers))
 	for _, worker := range plan.Workers {
 		if worker == nil || worker.HasSettlement || worker.EventCount == 0 {
 			continue
@@ -559,7 +562,7 @@ func (t *GenerateDriverBatchTool) Preview(
 func plannedWorkerChange(
 	worker *driversettlementports.UnsettledWorkerSummary,
 	bounds driversettlementservice.PeriodBounds,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	label := worker.WorkerName
 	if label == "" {
 		label = "Driver settlement"
@@ -584,7 +587,7 @@ func plannedWorkerChange(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		money.DefaultCurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Accrued earnings",
 			After: changepreview.MinorAmount(worker.GrossAmountMinor),
 		},
@@ -706,7 +709,7 @@ func (t *GenerateCarrierBatchTool) Execute(
 func (t *GenerateCarrierBatchTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -722,7 +725,7 @@ func (t *GenerateCarrierBatchTool) Preview(
 		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.Settlements))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Settlements))
 	for _, settlement := range plan.Settlements {
 		change, changeErr := toolpreview.Create(
 			toolpreview.Record{

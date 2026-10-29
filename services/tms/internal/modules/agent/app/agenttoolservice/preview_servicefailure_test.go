@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,15 +31,15 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 	assert.Contains(t, preview.Summary, "SF-7")
 	assert.Contains(t, preview.Summary, "LATE_SHIPPER (Shipper closed early)")
 
-	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceServiceFailure, change.Resource)
 	assert.Equal(t, "Resolved", agenttoolstest.FindField(t, change, "status").After)
 	reason := agenttoolstest.FindField(t, change, "reasonCodeId")
 	require.NotNil(t, reason.AfterRef)
 	assert.Equal(t, permission.ResourceServiceFailureReasonCode, reason.AfterRef.Resource)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
-	assert.Equal(t, agent.MessageChannelEDI, send.Message.Channel)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
+	assert.Equal(t, agentpreview.MessageChannelEDI, send.Message.Channel)
 	assert.Contains(t, send.Message.Body, "Shipper closed early; driver waited")
 
 	require.NoError(t, tool.Execute(t.Context(), params))

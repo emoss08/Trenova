@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -97,7 +97,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 		Content:               "Does this match what we quoted?",
 		TenantInfo:            actor.TenantInfo(),
 		AttachmentDocumentIDs: []pulid.ID{doc.ID, doc.ID},
-		Mentions: []agent.EntityRef{
+		Mentions: []agentpagecontext.EntityRef{
 			{Type: "customer", ID: customer.String(), Label: " Acme Foods "},
 		},
 	}, actor, nil)
@@ -113,7 +113,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	require.Len(t, user.Mentions, 1)
 	assert.Equal(
 		t,
-		agent.EntityRef{Type: "customer", ID: customer.String(), Label: "Acme Foods"},
+		agentpagecontext.EntityRef{Type: "customer", ID: customer.String(), Label: "Acme Foods"},
 		user.Mentions[0],
 	)
 	for _, message := range conversations.appended[1:] {
@@ -202,7 +202,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 		ThreadID:   conversations.thread.ID,
 		Content:    "Who is this",
 		TenantInfo: actor.TenantInfo(),
-		Mentions:   []agent.EntityRef{{Type: "user_secret", ID: "not-an-id"}},
+		Mentions:   []agentpagecontext.EntityRef{{Type: "user_secret", ID: "not-an-id"}},
 	}, actor, nil)
 	require.ErrorAs(t, err, &multiErr)
 	fields := make(map[string]bool, len(multiErr.Errors))
@@ -264,9 +264,9 @@ func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 		ThreadID:   conversations.thread.ID,
 		Content:    "Why are these late?",
 		TenantInfo: actor.TenantInfo(),
-		Page: &agent.PageContext{
+		Page: &agentpagecontext.PageContext{
 			Path: "/shipments",
-			View: &agent.PageView{
+			View: &agentpagecontext.PageView{
 				Resource: "shipment",
 				Sort: []domaintypes.SortField{
 					{Field: "createdAt", Direction: dbtype.SortDirectionDesc},
@@ -390,7 +390,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	result, err := svc.ask(t.Context(), &assistantports.AskRequest{
 		Content:    "How many loads are late today?",
 		TenantInfo: actor.TenantInfo(),
-		Page:       &agent.PageContext{Path: "/dispatch"},
+		Page:       &agentpagecontext.PageContext{Path: "/dispatch"},
 	}, actor, func(event kernelports.StreamEvent) {
 		events = append(events, event.Event)
 		if event.Event == assistantports.AssistantEventThread {

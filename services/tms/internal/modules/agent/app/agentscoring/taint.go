@@ -3,7 +3,7 @@ package agentscoring
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
@@ -76,7 +76,8 @@ func (c *taintedEgressCheck) caseTainted(in *Input) bool {
 }
 
 func readsOutside(policy agenttoolports.ToolPolicy) bool {
-	return policy.ReadsExternal.IsValid() && policy.ReadsExternal != agent.ExternalReadNever
+	return policy.ReadsExternal.IsValid() &&
+		policy.ReadsExternal != agenttooltrust.ExternalReadNever
 }
 
 func leaves(policy agenttoolports.ToolPolicy, arguments map[string]any) bool {

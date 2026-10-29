@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -197,7 +198,7 @@ func (m *fiscalPeriodMove) request(
 func (m *fiscalPeriodMove) render(
 	_ *fiscalperiodservice.TransitionRequest,
 	plan *fiscalperiodservice.TransitionPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	before := plan.Before
 	change, err := toolpreview.Changed(
 		toolpreview.Record{
@@ -279,7 +280,7 @@ func newFiscalPeriodTool(
 			ctx context.Context,
 			req *fiscalperiodservice.TransitionRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := periods.Transition(ctx, req, params.Actor.UserID)
 
 			return nil, err

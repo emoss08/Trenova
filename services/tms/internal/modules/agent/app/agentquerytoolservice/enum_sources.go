@@ -2,7 +2,7 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -69,19 +69,19 @@ var (
 		[]string{"Customer", "Carrier"},
 	)
 	reportRunFormats = agenttoolschema.Source("report.format", report.AllFormats())
-	memoryKinds      = agenttoolschema.Source("agent.memoryKind", []agent.MemoryKind{
-		agent.MemoryKindInstruction,
-		agent.MemoryKindFact,
-		agent.MemoryKindCorrection,
-		agent.MemoryKindProcedure,
+	memoryKinds      = agenttoolschema.Source("agent.memoryKind", []agentmemory.MemoryKind{
+		agentmemory.MemoryKindInstruction,
+		agentmemory.MemoryKindFact,
+		agentmemory.MemoryKindCorrection,
+		agentmemory.MemoryKindProcedure,
 	})
 	memoryFilterSubjectTypes = agenttoolschema.Source(
 		"agent.memoryFilterSubjectType",
-		[]agent.MemorySubjectType{
-			agent.MemorySubjectCustomer,
-			agent.MemorySubjectLocation,
-			agent.MemorySubjectWorker,
-			agent.MemorySubjectCarrier,
+		[]agentmemory.MemorySubjectType{
+			agentmemory.MemorySubjectCustomer,
+			agentmemory.MemorySubjectLocation,
+			agentmemory.MemorySubjectWorker,
+			agentmemory.MemorySubjectCarrier,
 		},
 	)
 	listSortDirections   = agenttoolschema.Source("list.sortDirection", []string{"asc", "desc"})

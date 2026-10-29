@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -40,16 +40,22 @@ type SettleAgentDecisionsRequest struct {
 }
 
 type AgentDecisionRepository interface {
-	GetByID(ctx context.Context, req GetAgentDecisionByIDRequest) (*agent.AgentDecision, error)
-	Create(ctx context.Context, entity *agent.AgentDecision) (*agent.AgentDecision, error)
+	GetByID(
+		ctx context.Context,
+		req GetAgentDecisionByIDRequest,
+	) (*agentdecision.AgentDecision, error)
+	Create(
+		ctx context.Context,
+		entity *agentdecision.AgentDecision,
+	) (*agentdecision.AgentDecision, error)
 	ListByProposals(
 		ctx context.Context,
 		req ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+	) ([]*agentdecision.AgentDecision, error)
 	ListByCommitWorkflow(
 		ctx context.Context,
 		req ListAgentDecisionsByCommitWorkflowRequest,
-	) ([]*agent.AgentDecision, error)
+	) ([]*agentdecision.AgentDecision, error)
 	// MarkCommitted and MarkUndone return the decisions they settled.
 	MarkCommitted(ctx context.Context, req SettleAgentDecisionsRequest) ([]pulid.ID, error)
 	MarkUndone(ctx context.Context, req SettleAgentDecisionsRequest) ([]pulid.ID, error)

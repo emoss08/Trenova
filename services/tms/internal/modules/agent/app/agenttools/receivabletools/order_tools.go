@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -141,8 +143,8 @@ func orderRecord(entity *order.Order) toolpreview.Record {
 	}
 }
 
-func orderResult(action string, entity *order.Order) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: action, Kind: kindOrder}
+func orderResult(action string, entity *order.Order) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindOrder}
 	if entity != nil {
 		result.Name = entity.OrderNumber
 		result.IDs = map[string]string{toolparams.ParamOrderID: entity.ID.String()}
@@ -269,8 +271,8 @@ func applyOptionalAmount(params map[string]any, key string, target *decimal.Null
 func renderOrderChange(verb string) func(
 	*order.Order,
 	*orderservice.OrderChange,
-) (*agent.ToolPreview, error) {
-	return func(_ *order.Order, plan *orderservice.OrderChange) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
+	return func(_ *order.Order, plan *orderservice.OrderChange) (*agentpreview.ToolPreview, error) {
 		if plan.Before == nil {
 			change, err := toolpreview.Create(
 				orderRecord(plan.After),
@@ -359,7 +361,7 @@ func NewCreateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			entity *order.Order,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := orders.Create(ctx, entity, params.Actor)
 			if err != nil {
 				return nil, err
@@ -441,14 +443,14 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			return orders.PlanUpdate(ctx, entity)
 		},
 		Refused: func(*orderEdit) string { return "Would change the order." },
-		Render: func(_ *orderEdit, plan *orderservice.OrderChange) (*agent.ToolPreview, error) {
+		Render: func(_ *orderEdit, plan *orderservice.OrderChange) (*agentpreview.ToolPreview, error) {
 			return renderOrderChange("change")(nil, plan)
 		},
 		Run: func(
 			ctx context.Context,
 			edit *orderEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, orders)
 			if err != nil {
 				return nil, err
@@ -557,7 +559,7 @@ func NewAttachOrderShipmentsTool(orders orderKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *orderMembership,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := orders.AttachShipments(ctx, req.tenant, req.orderID,
 				req.shipmentIDs, params.Actor)
 			if err != nil {
@@ -576,7 +578,7 @@ type shipmentOrderView struct {
 func renderAttachShipments(
 	req *orderMembership,
 	plan *orderservice.MembershipPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if len(plan.ShipmentIDs) == 0 {
 		return toolpreview.Build(fmt.Sprintf(
 			"Would leave order %s as it is: every shipment named is already on it.",
@@ -584,7 +586,7 @@ func renderAttachShipments(
 		)), nil
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.ShipmentIDs))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.ShipmentIDs))
 	for _, shipmentID := range plan.ShipmentIDs {
 		change, err := toolpreview.Changed(
 			toolpreview.Record{Resource: permission.ResourceShipment, ID: shipmentID},
@@ -664,7 +666,7 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 			return orders.PlanDetachShipment(ctx, req.tenant, req.orderID, req.shipmentID)
 		},
 		Refused: func(*orderLeg) string { return "Would detach the shipment from the order." },
-		Render: func(_ *orderLeg, plan *orderservice.DetachPlan) (*agent.ToolPreview, error) {
+		Render: func(_ *orderLeg, plan *orderservice.DetachPlan) (*agentpreview.ToolPreview, error) {
 			created, err := toolpreview.Create(
 				orderRecord(plan.Replacement),
 				plan.Replacement,
@@ -689,7 +691,7 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *orderLeg,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := orders.DetachShipment(ctx, req.tenant, req.orderID, req.shipmentID,
 				params.Actor)
 			if err != nil {
@@ -755,14 +757,14 @@ func NewCloseOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			return orders.PlanClose(ctx, req.tenant, req.orderID)
 		},
 		Refused: func(*orderOnly) string { return "Would close the order." },
-		Render: func(_ *orderOnly, plan *orderservice.OrderChange) (*agent.ToolPreview, error) {
+		Render: func(_ *orderOnly, plan *orderservice.OrderChange) (*agentpreview.ToolPreview, error) {
 			return renderOrderChange("close")(nil, plan)
 		},
 		Run: func(
 			ctx context.Context,
 			req *orderOnly,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			closed, err := orders.Close(ctx, req.tenant, req.orderID, params.Actor)
 			if err != nil {
 				return nil, err
@@ -813,7 +815,7 @@ func NewCancelOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *orderOnly,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			canceled, err := orders.Cancel(ctx, req.tenant, req.orderID, req.reason, params.Actor)
 			if err != nil {
 				return nil, err
@@ -828,8 +830,11 @@ type legStatusView struct {
 	Status shipment.Status `json:"status"`
 }
 
-func renderCancelOrder(req *orderOnly, plan *orderservice.CancelPlan) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Legs))
+func renderCancelOrder(
+	req *orderOnly,
+	plan *orderservice.CancelPlan,
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Legs))
 	for _, leg := range plan.Legs {
 		change, err := toolpreview.Changed(
 			shipmentpreview.ShipmentRecord(leg),

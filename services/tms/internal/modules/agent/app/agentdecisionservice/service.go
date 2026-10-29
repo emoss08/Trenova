@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -216,7 +218,7 @@ func (s *Service) DecideWithOutcome(
 // Pending, before anything it decided has run.
 type recorded struct {
 	proposal *agent.AgentProposal
-	decision *agent.AgentDecision
+	decision *agentdecision.AgentDecision
 	// req is the request as settled: an approval with nothing changed is
 	// an approval as proposed.
 	req     *agentports.DecideAgentProposalRequest
@@ -303,7 +305,7 @@ func (s *Service) record(
 		aitrace.MarkFailed(span, previewRefusalStale)
 	}
 
-	decision := &agent.AgentDecision{
+	decision := &agentdecision.AgentDecision{
 		OrganizationID:       req.TenantInfo.OrgID,
 		BusinessUnitID:       req.TenantInfo.BuID,
 		ProposalID:           &proposal.ID,
@@ -311,7 +313,7 @@ func (s *Service) record(
 		Decision:             req.Decision,
 		Modifications:        req.Modifications,
 		ReasonCode:           reasonCodeFor(req.Decision, req.ReasonCode),
-		Note:                 agent.NormalizeDecisionNote(req.Note),
+		Note:                 agentdecision.NormalizeDecisionNote(req.Note),
 		Preview:              shown.preview,
 		PreviewDigest:        shown.digest,
 		PreviewReviewed:      shown.reviewed,
@@ -448,14 +450,14 @@ func (s *Service) settleModifications(
 	req *agentports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
 ) (*agentports.DecideAgentProposalRequest, error) {
-	if req.Decision != agent.DecisionModified {
+	if req.Decision != agentdecision.DecisionModified {
 		return req, nil
 	}
 
 	settled := *req
 	settled.Modifications = toolschema.Changed(proposal.ToolParams, req.Modifications)
 	if len(settled.Modifications) == 0 {
-		settled.Decision = agent.DecisionAccepted
+		settled.Decision = agentdecision.DecisionAccepted
 		settled.Modifications = nil
 
 		return &settled, nil
@@ -480,7 +482,7 @@ func (s *Service) settleModifications(
 func (s *Service) SignalRun(
 	ctx context.Context,
 	req *agentports.DecideAgentProposalRequest,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	runID pulid.ID,
 ) error {
 	return s.signalWorkflow(ctx, runID, req, decision)
@@ -548,7 +550,8 @@ func (s *Service) executeIfApproved(
 	actor *permissionports.RequestActor,
 ) (*int64, error) {
 	proposal, req := rec.proposal, rec.req
-	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+	if req.Decision != agentdecision.DecisionAccepted &&
+		req.Decision != agentdecision.DecisionModified {
 		return nil, nil //nolint:nilnil // a rejection runs nothing and leaves no version
 	}
 	if rec.refusal != nil {
@@ -608,10 +611,10 @@ func decisionAuditComment(rec *recorded) string {
 func (s *Service) recordTrust(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	execErr error,
 ) {
-	if s.trust == nil || errors.Is(execErr, agent.ErrTargetChanged) {
+	if s.trust == nil || errors.Is(execErr, agentplan.ErrTargetChanged) {
 		return
 	}
 
@@ -633,7 +636,7 @@ func (s *Service) recordTrust(
 func (s *Service) recordCorrection(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) {
 	if s.memories == nil {
 		return
@@ -652,7 +655,7 @@ func (s *Service) signalWorkflow(
 	ctx context.Context,
 	runID pulid.ID,
 	req *agentports.DecideAgentProposalRequest,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) error {
 	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
@@ -684,28 +687,28 @@ func (s *Service) signalWorkflow(
 // chat card asks for a click, not a reason, and a decision refused for the
 // lack of a reason nobody was asked for is a button that does nothing. A
 // filled-in code is a code, not a reason: memory ignores it as such.
-func reasonCodeFor(decision agent.DecisionType, reason string) string {
+func reasonCodeFor(decision agentdecision.DecisionType, reason string) string {
 	if trimmed := strings.TrimSpace(reason); trimmed != "" {
 		return trimmed
 	}
 
 	switch decision {
-	case agent.DecisionAccepted:
+	case agentdecision.DecisionAccepted:
 		return "approved_without_reason"
-	case agent.DecisionModified:
+	case agentdecision.DecisionModified:
 		return "modified_without_reason"
 	default:
 		return "rejected_without_reason"
 	}
 }
 
-func proposalStatusFor(decision agent.DecisionType) agent.ProposalStatus {
+func proposalStatusFor(decision agentdecision.DecisionType) agent.ProposalStatus {
 	switch decision {
-	case agent.DecisionAccepted:
+	case agentdecision.DecisionAccepted:
 		return agent.ProposalStatusAccepted
-	case agent.DecisionModified:
+	case agentdecision.DecisionModified:
 		return agent.ProposalStatusModified
-	case agent.DecisionRejected:
+	case agentdecision.DecisionRejected:
 		return agent.ProposalStatusRejected
 	default:
 		return agent.ProposalStatusRejected

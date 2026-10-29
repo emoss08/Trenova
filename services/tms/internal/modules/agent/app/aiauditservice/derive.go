@@ -8,6 +8,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -330,7 +334,10 @@ func decodeOutcome(raw map[string]any) agentruntimeports.RunStepOutcome {
 
 // stepEvent is a settled tool call: what it was asked, how it was decided,
 // what it did.
-func (d *deriver) stepEvent(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAuditEvent, error) {
+func (d *deriver) stepEvent(
+	l *lookups,
+	step *agentrunstep.AgentRunStep,
+) (*aiaudit.AIAuditEvent, error) {
 	outcome := decodeOutcome(step.Outcome)
 	event, err := d.stepBase(l, step)
 	if err != nil {
@@ -355,7 +362,7 @@ func (d *deriver) stepEvent(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAu
 // turn that has ended: whether it ran cannot be known.
 func (d *deriver) unknownStepEvent(
 	l *lookups,
-	step *agent.AgentRunStep,
+	step *agentrunstep.AgentRunStep,
 ) (*aiaudit.AIAuditEvent, error) {
 	event, err := d.stepBase(l, step)
 	if err != nil {
@@ -367,7 +374,10 @@ func (d *deriver) unknownStepEvent(
 	return event, nil
 }
 
-func (d *deriver) stepBase(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAuditEvent, error) {
+func (d *deriver) stepBase(
+	l *lookups,
+	step *agentrunstep.AgentRunStep,
+) (*aiaudit.AIAuditEvent, error) {
 	o := l.ownerOf(step.OwnerKind, step.OwnerID)
 
 	event := d.base(&o)
@@ -410,7 +420,7 @@ func (d *deriver) stepBase(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAud
 }
 
 func stepOutcome(
-	step *agent.AgentRunStep,
+	step *agentrunstep.AgentRunStep,
 	outcome *agentruntimeports.RunStepOutcome,
 ) aiaudit.Outcome {
 	if action := outcome.Action; action != nil {
@@ -497,7 +507,7 @@ func (d *deriver) applyAction(
 	)
 }
 
-func resultRecord(result *agent.ToolExecutionResult) *agent.RecordRef {
+func resultRecord(result *agentrecord.ToolExecutionResult) *agentrecord.RecordRef {
 	if result == nil {
 		return nil
 	}
@@ -505,7 +515,7 @@ func resultRecord(result *agent.ToolExecutionResult) *agent.RecordRef {
 	return result.Record.Bounded()
 }
 
-func executionSummary(result *agent.ToolExecutionResult, executionError string) string {
+func executionSummary(result *agentrecord.ToolExecutionResult, executionError string) string {
 	if executionError != "" {
 		return executionError
 	}
@@ -545,7 +555,10 @@ func (d *deriver) recordArguments(
 // runEventEvent reads the edges of a delegated task, and a tool call that
 // finished failed with no step behind it: refused before anything was
 // claimed, so the step ledger never saw it.
-func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.AIAuditEvent {
+func (d *deriver) runEventEvent(
+	l *lookups,
+	row *agentrunevent.AgentRunEvent,
+) *aiaudit.AIAuditEvent {
 	o := l.ownerOf(row.OwnerKind, row.OwnerID)
 	payload := row.Payload
 	at := int64Of(payload[payloadKeyAt])
@@ -851,7 +864,7 @@ func ranInRun(o *owner, proposal *agent.AgentProposal) bool {
 
 func (d *deriver) decisionEvent(
 	l *lookups,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) (*aiaudit.AIAuditEvent, error) {
 	if decision.ProposalID == nil || decision.ProposalID.IsNil() {
 		return nil, nil //nolint:nilnil // an exception's decision is not a proposal's
@@ -919,7 +932,7 @@ func (d *deriver) decisionEvent(
 // decision named no preview and the one it ran against is recorded instead.
 // It rides the event's result summary, a field the hashed row already has, so
 // recording it changes no hash version.
-func previewSummary(decision *agent.AgentDecision) string {
+func previewSummary(decision *agentdecision.AgentDecision) string {
 	if decision.PreviewDigest == "" {
 		return ""
 	}
@@ -930,13 +943,13 @@ func previewSummary(decision *agent.AgentDecision) string {
 	return "Preview not reviewed; sha256:" + decision.PreviewDigest
 }
 
-func decisionOutcome(decision agent.DecisionType) aiaudit.Outcome {
+func decisionOutcome(decision agentdecision.DecisionType) aiaudit.Outcome {
 	switch decision {
-	case agent.DecisionModified:
+	case agentdecision.DecisionModified:
 		return aiaudit.OutcomeModified
-	case agent.DecisionRejected:
+	case agentdecision.DecisionRejected:
 		return aiaudit.OutcomeRejected
-	case agent.DecisionAccepted:
+	case agentdecision.DecisionAccepted:
 		return aiaudit.OutcomeAccepted
 	default:
 		return aiaudit.OutcomeAccepted

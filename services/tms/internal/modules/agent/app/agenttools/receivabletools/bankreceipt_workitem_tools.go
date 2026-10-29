@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -198,7 +200,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.Agent
 			ctx context.Context,
 			route *workItemRoute,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			return nil, route.run(ctx, items)
 		},
 	})
@@ -207,7 +209,7 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.Agent
 func renderWorkItemRoute(
 	route *workItemRoute,
 	change *bankreceiptworkitemports.BankReceiptWorkItemChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		toolpreview.Record{
 			Resource: permission.ResourceBankReceiptWorkItem,

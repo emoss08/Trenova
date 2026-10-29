@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -79,7 +79,7 @@ func applyDriftFix(
 func (t *ResolveAccountingDriftTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would fix a difference between the accounting system and Trenova."
 
 	_, fix, err := t.plan(ctx, &params)
@@ -108,7 +108,7 @@ func (t *ResolveAccountingDriftTool) Preview(
 func (t *DismissAccountingDriftTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would dismiss a difference between the accounting system and Trenova."
 
 	req, fix, err := t.plan(ctx, &params)
@@ -137,7 +137,7 @@ func (t *DismissAccountingDriftTool) Preview(
 func (t *CheckAccountingDriftTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const refusedSummary = "Would compare the accounting system with Trenova now."
 
 	_, overview, err := t.setup(ctx, &params)
@@ -149,11 +149,11 @@ func (t *CheckAccountingDriftTool) Preview(
 		"Would read every document Trenova sent to "+overview.ProviderName+
 			" back from it now, in the background, and raise or resolve differences. "+
 			"Nothing changes in the books or in Trenova.",
-		&agent.RecordChange{
+		&agentpreview.RecordChange{
 			Resource:  permission.ResourceAccountingIntegration,
 			EntityID:  overview.ConnectionID,
 			Label:     overview.ProviderName,
-			Operation: agent.PreviewOperationRun,
+			Operation: agentpreview.PreviewOperationRun,
 		},
 	)
 	preview.Partial = true

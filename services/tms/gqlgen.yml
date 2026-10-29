@@ -2270,16 +2270,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ProposalStatus
   AgentPlanStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.PlanStatus
   AgentPlanRunMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanRunMode
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.PlanRunMode
   AgentPlanScript:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScriptOrigin
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.ScriptOrigin
   AgentPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentPlan
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.AgentPlan
     fields:
       run:
         resolver: true
@@ -2293,49 +2293,49 @@ models:
         fieldName: ApprovalPreviewDigest
   AgentMemoryKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryKind
   AgentMemorySource:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySource
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySource
   AgentMemoryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryStatus
   AgentMemorySubjectType:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySubjectType
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySubjectType
   AgentMemory:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Memory
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.Memory
   AgentMemoryEvidence:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryEvidence
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryEvidence
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.AgentMemoryUsage
   AgentReflection:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Reflection
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.Reflection
   AgentReflectionSignal:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSignal
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSignal
   AgentReflectionChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionChange
   AgentReflectionSubject:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSubject
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSubject
   AgentReflectionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionStatus
   AgentReflectionSkip:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSkip
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSkip
   AgentReflectionSignalKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSignalKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSignalKind
   AgentReflectionAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionAction
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionAction
   AICorrection:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection.Correction
@@ -2487,10 +2487,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports.AgentFeedbackWorstRated
   AgentEvaluationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EvaluationStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.EvaluationStatus
   AgentEvaluation:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Evaluation
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.Evaluation
   AgentEvalCaseSource:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.CaseSource
@@ -2549,7 +2549,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolPromotion
   AgentRunEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentRunEvent
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent.AgentRunEvent
   AIAuditEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit.AIAuditEvent
@@ -2616,34 +2616,34 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports.AIAuditExportDownload
   AgentScorecardWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScorecardWindow
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ScorecardWindow
   AgentToolOutcome:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolOutcomeCount
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolOutcomeCount
   AgentToolVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolVerdictCount
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolVerdictCount
   AgentToolVerdictReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolVerdictReason
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolVerdictReason
   AgentScorecardPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScorecardPoint
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ScorecardPoint
   AgentSeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Severity
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.Severity
   AgentResolutionState:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ResolutionState
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.ResolutionState
   AgentDecisionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.DecisionType
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision.DecisionType
   AgentExceptionCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExceptionCategory
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.ExceptionCategory
   AgentEvidenceRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EvidenceRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence.EvidenceRef
   AgentRun:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentRun
@@ -2664,13 +2664,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintMark
   AgentTaintRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord.RecordRef
   AgentMemoryScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryScope
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryScope
   AgentMemorySavingMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySavingMode
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySavingMode
   AIProvider:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Provider
@@ -2859,52 +2859,52 @@ models:
         value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.EgressMoney
   AgentToolKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKind
     enum_values:
       Query:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindQuery
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindQuery
       Action:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindAction
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindAction
       Runtime:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindRuntime
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindRuntime
   AgentToolScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScope
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScope
     enum_values:
       Tenant:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeTenant
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeTenant
       Self:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeSelf
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeSelf
       Run:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeRun
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeRun
   AgentToolEffect:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffect
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffect
     enum_values:
       Lookup:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectLookup
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectLookup
       Change:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectChange
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectChange
       Navigate:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectNavigate
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectNavigate
       Discover:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectDiscover
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectDiscover
       Present:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectPresent
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectPresent
       Ask:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectAsk
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectAsk
       Delegate:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectDelegate
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectDelegate
   AgentExternalRead:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalRead
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalRead
     enum_values:
       Never:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadNever
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadNever
       Always:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadAlways
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadAlways
       Marked:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadMarked
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadMarked
   AgentTaintSource:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintSource
@@ -2931,18 +2931,18 @@ models:
         value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintSourceRecordNote
   AgentAutonomyAnswer:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyAnswer
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyAnswer
     enum_values:
       RUNS_ON_ITS_OWN:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyRunsOnItsOwn
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyRunsOnItsOwn
       CONDITIONAL:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyConditional
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyConditional
       NEEDS_APPROVAL:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyNeedsApproval
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyNeedsApproval
       PROPOSE_ONLY:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyProposeOnly
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyProposeOnly
       SIMULATED:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomySimulated
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomySimulated
   AgentReachWarningKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentreach.ReachWarningKind
@@ -2968,7 +2968,7 @@ models:
         resolver: true
   AgentToolRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolRuleOverride
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolRuleOverride
     fields:
       maxTier:
         resolver: true
@@ -3038,7 +3038,7 @@ models:
       - github.com/emoss08/trenova/pkg/toolschema.Kind
   AgentException:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentException
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.AgentException
   Briefing:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Briefing
@@ -3811,46 +3811,46 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.CustomerPeek
   AgentDecision:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentDecision
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision.AgentDecision
     fields:
       preview:
         resolver: true
   AgentPreviewCoverage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewCoverage
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewCoverage
   AgentPreviewOperation:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewOperation
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewOperation
   AgentPreviewMessageChannel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannel
   AgentPreviewWarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewWarning
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewWarning
   AgentPreviewReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewReason
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewReason
   AgentPreviewRecordLink:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord.RecordRef
   AgentPreviewRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewRef
   AgentPreviewFieldChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewFieldChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewFieldChange
     fields:
       valueType:
         fieldName: Type
   AgentPreviewMessage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessagePreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessagePreview
     fields:
       templateVersionId:
         resolver: true
   AgentPreviewMoneyLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyLine
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyLine
     fields:
       before:
         resolver: true
@@ -3858,7 +3858,7 @@ models:
         resolver: true
   AgentPreviewMoney:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyPreview
     fields:
       totalBefore:
         resolver: true
@@ -3868,16 +3868,16 @@ models:
         resolver: true
   AgentPreviewRecordChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.RecordChange
     fields:
       entityId:
         resolver: true
   AgentPreviewStaleness:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewStaleness
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewStaleness
   AgentProposalPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ProposalPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.ProposalPreview
     fields:
       stale:
         fieldName: IsStale
@@ -3885,10 +3885,10 @@ models:
         fieldName: Staleness
   AgentPlanStepPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStepPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PlanStepPreview
   AgentPlanPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PlanPreview
   AgentControl:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol.AgentControl

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -50,7 +50,7 @@ func (s *Service) Flag(
 	ctx context.Context,
 	req *agentports.FlagAgentExceptionRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	entity, err := PlanException(req)
 	if err != nil {
 		return nil, err
@@ -72,21 +72,21 @@ func (s *Service) Flag(
 func (s *Service) List(
 	ctx context.Context,
 	req *agentports.ListAgentExceptionRequest,
-) (*pagination.ListResult[*agent.AgentException], error) {
+) (*pagination.ListResult[*agentexception.AgentException], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentExceptionConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentException], error) {
+) (*pagination.CursorListResult[*agentexception.AgentException], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentExceptionByIDRequest,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
@@ -94,7 +94,7 @@ func (s *Service) Resolve(
 	ctx context.Context,
 	req *agentports.ResolveAgentExceptionRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	if !req.ResolutionState.IsValid() {
 		return nil, errortypes.NewValidationError(
 			"resolutionState",
@@ -114,7 +114,7 @@ func (s *Service) Resolve(
 	}
 
 	s.logAction(actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
-	if s.watchtower != nil && updated.ResolutionState != agent.ResolutionStateOpen {
+	if s.watchtower != nil && updated.ResolutionState != agentexception.ResolutionStateOpen {
 		s.watchtower.Resolve(
 			ctx,
 			req.TenantInfo,
@@ -129,8 +129,8 @@ func (s *Service) Resolve(
 func (s *Service) logAction(
 	actor *permissionports.RequestActor,
 	op permission.Operation,
-	entity *agent.AgentException,
-	previous *agent.AgentException,
+	entity *agentexception.AgentException,
+	previous *agentexception.AgentException,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()

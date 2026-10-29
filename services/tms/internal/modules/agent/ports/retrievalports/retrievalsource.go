@@ -3,7 +3,7 @@ package retrievalports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -76,7 +76,7 @@ type RetrievalSourceRepository interface {
 		req AverageRetrievalSourceCharsRequest,
 	) (RetrievalSourceChars, error)
 	ListModelKeys(ctx context.Context, req ListRetrievalModelKeysRequest) ([]string, error)
-	GetMemories(ctx context.Context, req RetrievalSourcesRequest) ([]*agent.Memory, error)
+	GetMemories(ctx context.Context, req RetrievalSourcesRequest) ([]*agentmemory.Memory, error)
 	GetDocuments(
 		ctx context.Context,
 		req *RetrievalDocumentsRequest,

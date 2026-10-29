@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -749,7 +749,7 @@ func (s *Service) afterHealthChange(
 		}
 		if worsened(before, conn.Status) {
 			agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-				Kind:       agent.EventAccountingConnectionDegraded,
+				Kind:       agenttrigger.EventAccountingConnectionDegraded,
 				SubjectID:  conn.ID,
 				TenantInfo: tenant,
 			})

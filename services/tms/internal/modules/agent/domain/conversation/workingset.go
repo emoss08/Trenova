@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -32,8 +32,8 @@ type WorkingRecord struct {
 	TouchedAt int64                 `json:"touchedAt"`
 }
 
-func (r WorkingRecord) Ref() agent.EntityRef {
-	return agent.EntityRef{Type: string(r.Kind), ID: r.ID, Label: r.Label}
+func (r WorkingRecord) Ref() agentpagecontext.EntityRef {
+	return agentpagecontext.EntityRef{Type: string(r.Kind), ID: r.ID, Label: r.Label}
 }
 
 func NewWorkingRecord(id, label string, source WorkingSource, at int64) (WorkingRecord, bool) {

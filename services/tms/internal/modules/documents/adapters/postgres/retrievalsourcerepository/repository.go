@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -99,11 +99,11 @@ func sourceIDs(tenantInfo pagination.TenantInfo, ids []pulid.ID) ([]pulid.ID, er
 func (r *repository) GetMemories(
 	ctx context.Context,
 	req retrievalports.RetrievalSourcesRequest,
-) ([]*agent.Memory, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentmemory.Memory, error) {
 		ids, err := sourceIDs(req.TenantInfo, req.IDs)
 		if err != nil || len(ids) == 0 {
-			return []*agent.Memory{}, err
+			return []*agentmemory.Memory{}, err
 		}
 
 		m := agentdb.Memories
@@ -112,7 +112,7 @@ func (r *repository) GetMemories(
 			return nil, fmt.Errorf("read memories to index: %w", err)
 		}
 		if memories == nil {
-			memories = []*agent.Memory{}
+			memories = []*agentmemory.Memory{}
 		}
 
 		return memories, nil

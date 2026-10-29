@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
@@ -522,7 +524,7 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 			Render: func(
 				_ *workersafety.WorkerSafetyEvent,
 				planned *workersafety.WorkerSafetyEvent,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerSafetyEvent, pulid.Nil,
 						"New safety event", 0),
@@ -542,7 +544,7 @@ func newOpenWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentTool 
 				ctx context.Context,
 				entity *workersafety.WorkerSafetyEvent,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := events.CreateEvent(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -630,7 +632,7 @@ func newUpdateWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 			Render: func(
 				_ *safetyEventEdit,
 				change *workersafetyservice.EventChange,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				recorded, err := toolpreview.Changed(safetyEventRecord(change.Before),
 					change.Before, change.After, wfOptions(safetyEventFields...)...)
 				if err != nil {
@@ -642,7 +644,7 @@ func newUpdateWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 				ctx context.Context,
 				edit *safetyEventEdit,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				entity, err := edit.entity(ctx, events)
 				if err != nil {
 					return nil, err
@@ -764,7 +766,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 				ctx context.Context,
 				move *safetyEventStatusMove,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				saved, err := move.run(ctx, events)
 				if err != nil {
 					return nil, err
@@ -778,7 +780,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 func renderSafetyEventStatusMove(
 	move *safetyEventStatusMove,
 	change *workersafetyservice.EventChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		safetyEventRecord(change.Before),
 		change.Before,
@@ -850,7 +852,7 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 			Refused: func(*recordDelete) string {
 				return "Would delete a safety event from the driver's record."
 			},
-			Render: func(_ *recordDelete, event *workersafety.WorkerSafetyEvent) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, event *workersafety.WorkerSafetyEvent) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(safetyEventRecord(event), event,
 					wfOptions(safetyEventFields...)...)
 				if err != nil {
@@ -864,7 +866,7 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, events.DeleteEvent(ctx, del.tenant, del.id, del.userID)
 			},
 		},
@@ -968,7 +970,7 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 			Render: func(
 				_ *workerdiscipline.WorkerRecognition,
 				planned *workerdiscipline.WorkerRecognition,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerRecognition, pulid.Nil, planned.Title, 0),
 					planned, wfOptions(recognitionFields...)...)
@@ -985,7 +987,7 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 				ctx context.Context,
 				entity *workerdiscipline.WorkerRecognition,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := events.GiveRecognition(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -1028,7 +1030,7 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 				return events.PlanDeleteRecognition(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a recognition." },
-			Render: func(_ *recordDelete, rec *workerdiscipline.WorkerRecognition) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, rec *workerdiscipline.WorkerRecognition) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(
 					wfRecord(permission.ResourceWorkerRecognition, rec.ID, rec.Title, rec.Version),
 					rec, wfOptions(recognitionFields...)...)
@@ -1042,7 +1044,7 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, events.DeleteRecognition(ctx, del.tenant, del.id, del.userID)
 			},
 		},
@@ -1163,7 +1165,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 		Render: func(
 			_ *workersafetyservice.RecordViolationRequest,
 			planned *fleetsafety.WorkerSafetyViolation,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerSafetyEvent, pulid.Nil, "New violation", 0),
 				planned, wfOptions(violationFields...)...)
@@ -1178,7 +1180,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *workersafetyservice.RecordViolationRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := events.RecordViolation(ctx, req)
 			if err != nil {
 				return nil, err
@@ -1285,7 +1287,7 @@ func newUpdateSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			Render: func(
 				_ *violationEdit,
 				change *workersafetyservice.ViolationChange,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				recorded, err := toolpreview.Changed(violationRecord(change.Before),
 					change.Before, change.After, wfOptions(violationFields...)...)
 				if err != nil {
@@ -1297,7 +1299,7 @@ func newUpdateSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 				ctx context.Context,
 				edit *violationEdit,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				req, err := edit.request(ctx, events)
 				if err != nil {
 					return nil, err
@@ -1342,7 +1344,7 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			Render: func(
 				_ *recordDelete,
 				violation *fleetsafety.WorkerSafetyViolation,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Delete(violationRecord(violation), violation,
 					wfOptions(violationFields...)...)
 				if err != nil {
@@ -1355,7 +1357,7 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				return nil, events.DeleteViolation(ctx, del.tenant, del.id, del.userID)
 			},
 		},

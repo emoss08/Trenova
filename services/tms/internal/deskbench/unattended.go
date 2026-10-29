@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -44,7 +46,7 @@ var unattendedContext = []agentdefinition.ContextProvider{
 
 type Fire struct {
 	Agent            string                        `yaml:"agent"            json:"agent"`
-	Event            agent.EventKind               `yaml:"event"            json:"event,omitempty"`
+	Event            agenttrigger.EventKind        `yaml:"event"            json:"event,omitempty"`
 	Subject          string                        `yaml:"subject"          json:"subject,omitempty"`
 	Schedule         bool                          `yaml:"schedule"         json:"schedule,omitempty"`
 	Ceiling          agent.AutonomyTier            `yaml:"ceiling"          json:"ceiling,omitempty"`
@@ -899,7 +901,7 @@ func (b *Bench) settleRun(
 		}
 		reject := &agentports.DecideAgentProposalRequest{
 			ProposalID: proposal.ID,
-			Decision:   agent.DecisionRejected,
+			Decision:   agentdecision.DecisionRejected,
 			Note:       runCleanupNote,
 			TenantInfo: session.Tenant,
 		}

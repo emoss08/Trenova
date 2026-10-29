@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -138,7 +139,7 @@ func settlementStatementSpecs() []graphQLListSpec {
 			resource:   permission.ResourceDriverExpense,
 			amounts:    true,
 			reads: readSpec{
-				reads:  agent.ExternalReadMarked,
+				reads:  agenttooltrust.ExternalReadMarked,
 				source: agent.TaintSourceRecordNote,
 				rationale: "Reads expenses whose descriptions drivers wrote in the driver " +
 					"portal; nothing changes and nothing is sent.",
@@ -315,7 +316,7 @@ func settlementGetSpecs() []getSpec {
 			paramName: "disputeId",
 			idSource: "from settlement_get_driver's disputes, the page you are on, or this " +
 				"run's subject",
-			reads:  agent.ExternalReadMarked,
+			reads:  agenttooltrust.ExternalReadMarked,
 			source: agent.TaintSourceRecordNote,
 			rationale: "Reads a pay dispute whose description a driver wrote in the driver " +
 				"portal; nothing changes and nothing is sent.",

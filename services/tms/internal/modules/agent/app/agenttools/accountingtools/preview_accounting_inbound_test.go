@@ -6,20 +6,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func previewField(change *agent.RecordChange, path string) (agent.PreviewFieldChange, bool) {
+func previewField(
+	change *agentpreview.RecordChange,
+	path string,
+) (agentpreview.PreviewFieldChange, bool) {
 	for _, field := range change.Fields {
 		if field.Path == path {
 			return field, true
 		}
 	}
-	return agent.PreviewFieldChange{}, false
+	return agentpreview.PreviewFieldChange{}, false
 }
 
 func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
@@ -72,7 +75,7 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 	assert.Contains(t, preview.Warnings[0].Message, "was paid in Trenova")
 }
 
@@ -113,5 +116,5 @@ func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 }

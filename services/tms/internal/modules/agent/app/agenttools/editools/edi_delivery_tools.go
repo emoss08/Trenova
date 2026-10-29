@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -97,15 +99,15 @@ func ediRecordSubset(description string) map[string]any {
 func ediOutboundPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceEDI,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     rationale + ediDecisionRationaleEnd,
 	}
 }
@@ -183,7 +185,7 @@ func (t *RetryEDIMessageDeliveryTool) Execute(
 func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -207,7 +209,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "queued",
 		Kind:   "EDI messages",
 		Name:   bulkOutcome(result, "queued to send again"),
@@ -366,7 +368,7 @@ func (t *ReprocessEDIInboundFilesTool) Execute(
 func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -390,7 +392,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "reprocessed",
 		Kind:   "EDI inbound files",
 		Name:   bulkOutcome(result, "processed again"),

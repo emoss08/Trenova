@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -32,23 +34,23 @@ type AgentProposal struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RunID        pulid.ID        `json:"runId"        keel:"run_id"`
-	ToolName     string          `json:"toolName"     keel:"tool_name"`
-	ToolParams   map[string]any  `json:"toolParams"   keel:"tool_params,jsonb"`
-	Confidence   decimal.Decimal `json:"confidence"   keel:"confidence"`
-	Rationale    string          `json:"rationale"    keel:"rationale"`
-	Evidence     []EvidenceRef   `json:"evidence"     keel:"evidence,jsonb"`
-	AutonomyTier AutonomyTier    `json:"autonomyTier" keel:"autonomy_tier"`
-	Status       ProposalStatus  `json:"status"       keel:"status"`
+	RunID        pulid.ID                    `json:"runId"        keel:"run_id"`
+	ToolName     string                      `json:"toolName"     keel:"tool_name"`
+	ToolParams   map[string]any              `json:"toolParams"   keel:"tool_params,jsonb"`
+	Confidence   decimal.Decimal             `json:"confidence"   keel:"confidence"`
+	Rationale    string                      `json:"rationale"    keel:"rationale"`
+	Evidence     []agentevidence.EvidenceRef `json:"evidence"     keel:"evidence,jsonb"`
+	AutonomyTier AutonomyTier                `json:"autonomyTier" keel:"autonomy_tier"`
+	Status       ProposalStatus              `json:"status"       keel:"status"`
 
 	// ExecutedAt and ExecutionError record what happened after approval. An
 	// accepted proposal with neither set has been approved but has not run.
 	// ExecutionResult is what a successful run made, when the tool says: the
 	// record and its id, so later turns refer to it and not to the proposal.
-	ExecutedAt      *int64               `json:"executedAt"      keel:"executed_at"`
-	ExecutionError  string               `json:"executionError"  keel:"execution_error,nullzero"`
-	ExecutionResult *ToolExecutionResult `json:"executionResult" keel:"execution_result,jsonb"`
-	SourceMessageID pulid.ID             `json:"sourceMessageId" keel:"source_message_id,nullzero"`
+	ExecutedAt      *int64                           `json:"executedAt"      keel:"executed_at"`
+	ExecutionError  string                           `json:"executionError"  keel:"execution_error,nullzero"`
+	ExecutionResult *agentrecord.ToolExecutionResult `json:"executionResult" keel:"execution_result,jsonb"`
+	SourceMessageID pulid.ID                         `json:"sourceMessageId" keel:"source_message_id,nullzero"`
 
 	// ExpiresAt is when a pending proposal stops being decidable. A proposal
 	// is a judgement about the world as it was; past this point that world is
@@ -155,7 +157,7 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	validateEvidence("evidence", p.Evidence, multiErr)
+	agentevidence.ValidateRefs("evidence", p.Evidence, multiErr)
 
 	if p.EgressClass != "" && !p.EgressClass.IsValid() {
 		multiErr.Add("egressClass", errortypes.ErrInvalid, "Egress class is invalid")

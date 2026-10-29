@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -20,13 +21,13 @@ import (
 )
 
 type capturingPlanStore struct {
-	created []*agent.AgentPlan
+	created []*agentplan.AgentPlan
 }
 
 func (s *capturingPlanStore) Create(
 	_ context.Context,
-	plan *agent.AgentPlan,
-) (*agent.AgentPlan, error) {
+	plan *agentplan.AgentPlan,
+) (*agentplan.AgentPlan, error) {
 	plan.ID = pulid.MustNew("apl_")
 	s.created = append(s.created, plan)
 
@@ -189,13 +190,13 @@ func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 }
 
 type threadPlans struct {
-	plans []*agent.AgentPlan
+	plans []*agentplan.AgentPlan
 }
 
 func (s *threadPlans) ListByThread(
 	context.Context,
 	agentports.ListAgentPlansByThreadRequest,
-) ([]*agent.AgentPlan, error) {
+) ([]*agentplan.AgentPlan, error) {
 	return s.plans, nil
 }
 
@@ -216,11 +217,11 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 		parentRun.ID:   parentRun,
 		delegateRun.ID: delegateRun,
 	}}
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:        pulid.MustNew("apl_"),
 		RunID:     parentRun.ID,
 		Title:     "Dispatch: 2 changes",
-		Status:    agent.PlanStatusPending,
+		Status:    agentplan.PlanStatusPending,
 		StepCount: 2,
 	}
 	planID := plan.ID
@@ -231,7 +232,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	svc := newProposalServiceBehind(runs, proposals,
 		&stubConversationRepo{thread: thread}, shadowSwitches{definition: delegate})
-	svc.plans = &threadPlans{plans: []*agent.AgentPlan{plan}}
+	svc.plans = &threadPlans{plans: []*agentplan.AgentPlan{plan}}
 
 	listed, err := svc.ListThreadPlans(t.Context(), assistantports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)

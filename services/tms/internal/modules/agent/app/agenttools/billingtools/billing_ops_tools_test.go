@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -95,14 +96,14 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		billing.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Equal(
@@ -229,7 +230,7 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
 		},
 	)
@@ -244,14 +245,14 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	retryPreview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		runs.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), retry)
 		},
 	)
 	assert.Contains(t, retryPreview.Summary, "4 shipments")
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, retryPreview, 0).Operation,
 	)
 	require.NoError(t, tool.Execute(t.Context(), retry))
@@ -266,7 +267,7 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	)
 	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, refused, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(

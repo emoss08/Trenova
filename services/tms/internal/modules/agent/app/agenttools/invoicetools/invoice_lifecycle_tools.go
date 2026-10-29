@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -267,7 +268,7 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agenttoolports.Agent
 			ctx context.Context,
 			req *invoiceports.UpdateInvoiceDraftRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := invoices.UpdateDraft(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -480,7 +481,7 @@ func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agenttoolports.Agen
 			ctx context.Context,
 			req *invoiceports.InvoicePreviewRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if _, err := plan(ctx, req, params); err != nil {
 				return nil, err
 			}
@@ -550,7 +551,7 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *createInvoicesRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			var (
 				made *invoiceports.CreateInvoicesResult
 				err  error
@@ -609,19 +610,19 @@ func createInvoicesRequestFrom(
 	return &createInvoicesRequest{plan: req}, nil
 }
 
-func invoiceResult(action string, entity *invoice.Invoice) *agent.ToolExecutionResult {
+func invoiceResult(action string, entity *invoice.Invoice) *agentrecord.ToolExecutionResult {
 	if entity == nil || entity.ID.IsNil() {
-		return &agent.ToolExecutionResult{Action: action, Kind: "invoice"}
+		return &agentrecord.ToolExecutionResult{Action: action, Kind: "invoice"}
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   strings.ToLower(string(entity.BillType)),
 		IDs: map[string]string{
 			toolparams.ParamInvoiceID: entity.ID.String(),
 			"number":                  entity.Number,
 		},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         entity.ID.String(),
 		},
@@ -717,7 +718,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 			ctx context.Context,
 			req *invoiceports.CreateMemoRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := invoices.CreateMemo(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -883,7 +884,7 @@ func NewVoidInvoiceTool(invoices invoiceVoider) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoiceports.VoidInvoiceRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			result, err := invoices.VoidInvoice(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -979,7 +980,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoiceports.SendInvoiceEDIRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := invoices.SendEDI(ctx, req, params.Actor)
 			return nil, err
 		},

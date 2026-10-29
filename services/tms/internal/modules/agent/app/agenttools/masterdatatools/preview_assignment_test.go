@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -139,7 +139,7 @@ func TestAssignMove_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&assignments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -150,7 +150,7 @@ func TestAssignMove_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.Len(t, preview.Changes, 3)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	driver := agenttoolstest.FieldByPath(t, created, "primaryWorkerId")
 	assert.Equal(t, "Driver", driver.Label)
 	require.NotNil(t, driver.AfterRef)
@@ -192,12 +192,12 @@ func TestAssignMove_PreviewWarnsWhenDispatchRulesBlockTheDriver(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&assignments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "Driver is out of drive time")
 }
 
@@ -228,12 +228,12 @@ func TestAssignMove_PreviewWarnsForEquipmentOnALoadInProgress(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&assignments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningEquipmentInUse)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningEquipmentInUse)
 	assert.Nil(t, preview.Refusal(), "booking a unit's next load while it runs this one is allowed")
 	require.Len(t, preview.Warnings, 1)
 	warning := preview.Warnings[0]
@@ -258,13 +258,13 @@ func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&assignments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 /*

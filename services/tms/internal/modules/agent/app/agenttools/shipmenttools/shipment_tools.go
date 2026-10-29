@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -70,10 +71,10 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 func (t *AddShipmentCommentTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
-		Kind:        agent.ToolKindAction,
+		Kind:        agenttooltrust.ToolKindAction,
 		Resource:    permission.ResourceShipmentComment,
 		Operation:   permission.OpCreate,
-		Scope:       agent.ToolScopeTenant,
+		Scope:       agenttooltrust.ToolScopeTenant,
 		DefaultTier: agent.TierAutoExecute,
 		MaxTier:     agent.TierAutoExecute,
 		Egress: []agent.EgressClass{
@@ -82,9 +83,9 @@ func (t *AddShipmentCommentTool) Policy() agenttoolports.ToolPolicy {
 			agent.EgressDriverVisible,
 		},
 		Classify:      shipmentpreview.ClassifyCommentVisibility,
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		Rationale: "An internal note stays inside the organization; a customer or driver " +
 			"note is read outside it, so its visibility argument decides. A note written " +
@@ -244,16 +245,16 @@ func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 func (t *PlaceShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentHold,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Places a hold on a shipment inside Trenova; no customer or EDI notice is " +
 			"sent.",
 	}
@@ -338,15 +339,15 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 func (t *ReleaseShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentHold,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Releases a hold on a shipment inside Trenova; no customer or EDI notice " +
 			"is sent.",
 	}
@@ -433,15 +434,15 @@ func (t *CancelShipmentTool) ParamSchema() map[string]any {
 func (t *CancelShipmentTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpCancel,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Cancelling withdraws live tenders from carriers and sends the model's " +
 			"cancel reason to a linked partner over EDI.",
 	}

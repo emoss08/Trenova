@@ -4,7 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -20,20 +21,20 @@ var SettlementDateTypes = map[string]assistantartifact.DisplayType{
 	FieldPayDate:                   assistantartifact.DisplayDate,
 }
 
-func SettlementResult(created *driversettlement.Settlement) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+func SettlementResult(created *driversettlement.Settlement) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: changepreview.ResultCreated,
 		Kind:   NounDriverSettlement,
 		Name:   created.SettlementNumber,
 		IDs:    map[string]string{ParamSettlementID: created.ID.String()},
-		Record: &agent.RecordRef{EntityType: DriverSettlementEntity, ID: created.ID.String()},
+		Record: &agentrecord.RecordRef{EntityType: DriverSettlementEntity, ID: created.ID.String()},
 	}
 }
 
 func NewSettlementChange(
 	settlement *driversettlement.Settlement,
 	label string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceDriverSettlement, Label: label},
 		settlement,

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
@@ -87,10 +88,13 @@ type memoryRepository struct {
 
 	rec      *recorder
 	mu       sync.Mutex
-	memories []*agent.Memory
+	memories []*agentmemory.Memory
 }
 
-func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
+func (r *memoryRepository) Create(
+	_ context.Context,
+	entity *agentmemory.Memory,
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Create", pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -99,7 +103,7 @@ func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*age
 	created := *entity
 	created.ID = pulid.MustNew("amem_")
 	if created.Scope == "" {
-		created.Scope = agent.MemoryScopeOrganization
+		created.Scope = agentmemory.MemoryScopeOrganization
 	}
 
 	r.mu.Lock()
@@ -113,7 +117,7 @@ func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*age
 func (r *memoryRepository) FindActive(
 	_ context.Context,
 	req agentmemoryports.FindActiveAgentMemoryRequest,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "FindActive", req.TenantInfo)
 
 	r.mu.Lock()
@@ -121,7 +125,7 @@ func (r *memoryRepository) FindActive(
 
 	for _, memory := range r.memories {
 		if sameTenant(memory, req.TenantInfo) &&
-			memory.Status == agent.MemoryStatusActive &&
+			memory.Status == agentmemory.MemoryStatusActive &&
 			memory.Content == strings.TrimSpace(req.Content) &&
 			memory.ToolName == req.ToolName {
 			return memory, nil
@@ -150,7 +154,7 @@ func (r *memoryRepository) MarkUsed(
 func (r *memoryRepository) GetPreference(
 	_ context.Context,
 	req agentmemoryports.GetAgentMemoryPreferenceRequest,
-) (*agent.MemoryPreference, error) {
+) (*agentmemory.MemoryPreference, error) {
 	r.rec.read(ReadMemoryRepo, "GetPreference", req.TenantInfo)
 
 	return nil, nil //nolint:nilnil // a person who never chose has no preference row
@@ -159,7 +163,7 @@ func (r *memoryRepository) GetPreference(
 func (r *memoryRepository) GetByID(
 	_ context.Context,
 	req agentmemoryports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "GetByID", req.TenantInfo)
 
 	r.mu.Lock()
@@ -177,7 +181,7 @@ func (r *memoryRepository) GetByID(
 func (r *memoryRepository) Search(
 	_ context.Context,
 	req agentmemoryports.SearchAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Search", req.TenantInfo)
 
 	return nil, nil
@@ -186,13 +190,13 @@ func (r *memoryRepository) Search(
 func (r *memoryRepository) ListActive(
 	_ context.Context,
 	req agentmemoryports.ListActiveAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "ListActive", req.TenantInfo)
 
 	return nil, nil
 }
 
-func sameTenant(memory *agent.Memory, tenant pagination.TenantInfo) bool {
+func sameTenant(memory *agentmemory.Memory, tenant pagination.TenantInfo) bool {
 	return memory.OrganizationID == tenant.OrgID && memory.BusinessUnitID == tenant.BuID
 }
 

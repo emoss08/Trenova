@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -48,12 +51,12 @@ type ReceivablePlan[R, P any] struct {
 	Settle  func(ctx context.Context, req R, params *agenttoolports.ToolExecuteParams) error      `json:"-"`
 	Plan    func(ctx context.Context, req R, params *agenttoolports.ToolExecuteParams) (P, error) `json:"-"`
 	Refused func(req R) string                                                                    `json:"-"`
-	Render  func(req R, plan P) (*agent.ToolPreview, error)                                       `json:"-"`
+	Render  func(req R, plan P) (*agentpreview.ToolPreview, error)                                `json:"-"`
 	Run     func(
 		ctx context.Context,
 		req R,
 		params *agenttoolports.ToolExecuteParams,
-	) (*agent.ToolExecutionResult, error) `json:"-"`
+	) (*agentrecord.ToolExecutionResult, error) `json:"-"`
 }
 
 type ReceivableTool[R, P any] struct {
@@ -105,17 +108,17 @@ func (t *ReceivableTool[R, P]) ParamSchema() map[string]any {
 func (t *ReceivableTool[R, P]) Policy() agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          t.spec.Name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.spec.Resource,
 		Operation:     t.spec.Operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   t.spec.DefaultTier,
 		MaxTier:       t.spec.MaxTier,
 		Egress:        append([]agent.EgressClass{t.spec.Egress}, t.spec.AlsoEgress...),
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    t.spec.Reversible,
 		Idempotent:    t.spec.Idempotent,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Artifact:      t.spec.Artifact,
 		Rationale:     t.spec.Rationale,
 		Condition:     t.spec.Condition,
@@ -179,7 +182,7 @@ func (t *ReceivableTool[R, P]) Validate(
 func (t *ReceivableTool[R, P]) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -208,7 +211,7 @@ func (t *ReceivableTool[R, P]) Execute(
 func (t *ReceivableTool[R, P]) execute(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if t.spec.PersonOnly && !params.ApprovedFromProposal() {
 		return nil, fmt.Errorf("%s: %w", t.spec.Name, ErrNeedsAPersonsApproval)
 	}
@@ -230,6 +233,6 @@ func (t *ReceivableTool[R, P]) execute(
 func (t ReportingReceivableTool[R, P]) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	return t.execute(ctx, &params)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -77,7 +78,7 @@ func TestAgentPlanDecidedBy_ReadsTheDeciderThroughTheRequestsUserLoader(t *testi
 	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), tenantInfo)
 
-	got, err := planFieldsResolver().DecidedBy(ctx, &agent.AgentPlan{DecidedByUserID: &deciderID})
+	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{DecidedByUserID: &deciderID})
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "Elena Ruiz", got.Name)
@@ -94,7 +95,7 @@ func TestAgentPlanDecidedBy_ADeciderTheReaderCannotSeeIsNull(t *testing.T) {
 	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), planFieldsTenant())
 
-	got, err := planFieldsResolver().DecidedBy(ctx, &agent.AgentPlan{DecidedByUserID: &deciderID})
+	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{DecidedByUserID: &deciderID})
 	require.NoError(t, err)
 	assert.Nil(t, got)
 }
@@ -106,7 +107,7 @@ func TestAgentPlanDecidedBy_AWaitingPlanHasNoDecider(t *testing.T) {
 	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), planFieldsTenant())
 
-	got, err := planFieldsResolver().DecidedBy(ctx, &agent.AgentPlan{})
+	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{})
 	require.NoError(t, err)
 	assert.Nil(t, got)
 	assert.Empty(t, users.requests)
@@ -116,8 +117,8 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 	t.Parallel()
 
 	tenantInfo := planFieldsTenant()
-	inOrder := &agent.AgentPlan{ID: pulid.MustNew("apl_")}
-	eachStep := &agent.AgentPlan{ID: pulid.MustNew("apl_")}
+	inOrder := &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}
+	eachStep := &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}
 	inOrderID, eachStepID := inOrder.ID, eachStep.ID
 	shipment := pulid.MustNew("shp_")
 	lister := &planStepLister{steps: []*agent.AgentProposal{
@@ -141,17 +142,17 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 	).Attach(t.Context(), tenantInfo)
 
 	type result struct {
-		mode agent.PlanRunMode
+		mode agentplan.PlanRunMode
 		err  error
 	}
 	results := make(chan result, 2)
-	for _, plan := range []*agent.AgentPlan{inOrder, eachStep} {
+	for _, plan := range []*agentplan.AgentPlan{inOrder, eachStep} {
 		go func() {
 			mode, err := planFieldsResolver().RunMode(ctx, plan)
 			results <- result{mode: mode, err: err}
 		}()
 	}
-	modes := make([]agent.PlanRunMode, 0, 2)
+	modes := make([]agentplan.PlanRunMode, 0, 2)
 	for range 2 {
 		got := <-results
 		require.NoError(t, got.err)
@@ -160,7 +161,7 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 
 	assert.ElementsMatch(
 		t,
-		[]agent.PlanRunMode{agent.PlanRunModeInOrder, agent.PlanRunModeEachStep},
+		[]agentplan.PlanRunMode{agentplan.PlanRunModeInOrder, agentplan.PlanRunModeEachStep},
 		modes,
 	)
 	require.NotEmpty(t, lister.requests)
@@ -180,6 +181,6 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 func TestAgentPlanRunMode_RefusesWithoutTheRequestsLoaders(t *testing.T) {
 	t.Parallel()
 
-	_, err := planFieldsResolver().RunMode(t.Context(), &agent.AgentPlan{ID: pulid.MustNew("apl_")})
+	_, err := planFieldsResolver().RunMode(t.Context(), &agentplan.AgentPlan{ID: pulid.MustNew("apl_")})
 	require.Error(t, err)
 }

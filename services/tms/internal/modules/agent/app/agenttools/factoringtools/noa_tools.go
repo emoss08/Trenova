@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -53,22 +55,22 @@ func policy(name string, spec *policySpec) agenttoolports.ToolPolicy {
 	}
 	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      spec.resource,
 		Operation:     spec.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   spec.defaultTier,
 		MaxTier:       spec.maxTier,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    spec.reversible,
 		Idempotent:    spec.idempotent,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     spec.rationale,
 	}
 }
 
-func refused(summary string, err error) (*agent.ToolPreview, error) {
+func refused(summary string, err error) (*agentpreview.ToolPreview, error) {
 	if changepreview.IsRefusal(err) {
 		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
@@ -237,7 +239,7 @@ func (t *DraftFactoringNoaTool) Execute(
 func (t *DraftFactoringNoaTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would draft a notice of assignment for the customer. Nothing is sent."
 	req, err := t.request(&params)
 	if err != nil {
@@ -371,7 +373,7 @@ func (t *SendFactoringNoaTool) Execute(
 func (t *SendFactoringNoaTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email the customer the notice of assignment."
 	req, err := t.request(&params)
 	if err != nil {
@@ -557,7 +559,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 func (t *RecordFactoringNoaAcknowledgementTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would record that the customer signed the notice of assignment."
 	planned, err := t.plan(ctx, &params)
 	if err != nil {
@@ -682,7 +684,7 @@ func (t *ReleaseFactoringNoaTool) Execute(
 func (t *ReleaseFactoringNoaTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would release the notice of assignment."
 	planned, err := t.plan(ctx, &params)
 	if err != nil {

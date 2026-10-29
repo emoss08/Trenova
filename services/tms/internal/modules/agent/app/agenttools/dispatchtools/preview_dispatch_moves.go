@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -24,13 +24,13 @@ type moveStatusView struct {
 func (t *UnassignMovesTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	requests, err := t.requests(&params)
 	if err != nil {
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(requests)*3)
+	changes := make([]*agentpreview.RecordChange, 0, len(requests)*3)
 	shipments := make([]string, 0, len(requests))
 	refusals := make([]string, 0)
 	for _, request := range requests {
@@ -76,7 +76,7 @@ func (t *UnassignMovesTool) Preview(
 
 	preview := toolpreview.Build(summary, changes...)
 	if len(refusals) > 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"These moves would be refused and left as they are: "+strings.Join(refusals, "; "))
 	}
 
@@ -86,7 +86,7 @@ func (t *UnassignMovesTool) Preview(
 func (t *UpdateMoveStatusTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,11 @@ func (t *UpdateMoveStatusTool) Preview(
 		pros[entity.ID] = entity.ProNumber
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.MovesBefore)+len(plan.ShipmentsBefore))
+	changes := make(
+		[]*agentpreview.RecordChange,
+		0,
+		len(plan.MovesBefore)+len(plan.ShipmentsBefore),
+	)
 	for idx, before := range plan.MovesBefore {
 		change, cErr := toolpreview.Changed(toolpreview.Record{
 			Resource: permission.ResourceShipmentMove,

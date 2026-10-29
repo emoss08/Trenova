@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -27,7 +28,7 @@ func paymentTurns(count int) []*llmports.ChatCompletionResult {
 	return turns
 }
 
-func tenPaymentLimits() agent.MoneyLimits {
+func tenPaymentLimits() agenttooltrust.MoneyLimits {
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 10
 
@@ -36,7 +37,7 @@ func tenPaymentLimits() agent.MoneyLimits {
 
 func delegatedPayments(
 	definition *agentdefinition.Definition,
-	spent agent.MoneyUse,
+	spent agenttooltrust.MoneyUse,
 ) *agentruntimeports.RunRequest {
 	return &agentruntimeports.RunRequest{
 		Definition: definition,
@@ -90,8 +91,12 @@ func TestRun_TheDelegateIsHandedWhatTheTurnHasAlreadyMoved(t *testing.T) {
 
 	assert.Equal(t, 10, pay.Calls)
 	require.Len(t, fx.calls, 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, fx.calls[0].MoneySpent,
-		"the delegate's caps start from what the turn moved")
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		fx.calls[0].MoneySpent,
+		"the delegate's caps start from what the turn moved",
+	)
 }
 
 func TestRun_ADelegateHandedTenPaymentsIsHeldAtTheEleventh(t *testing.T) {
@@ -109,14 +114,18 @@ func TestRun_ADelegateHandedTenPaymentsIsHeldAtTheEleventh(t *testing.T) {
 
 	run := runTainted(t, rt, delegatedPayments(
 		autoDefinition("apply_payment"),
-		agent.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
 	))
 
 	assert.Zero(t, pay.Calls)
 	require.Len(t, run.result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, run.result.Actions[0].HeldBy)
 	require.Len(t, budgets.Asked(), 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, budgets.Asked()[0].Unrecorded)
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		budgets.Asked()[0].Unrecorded,
+	)
 }
 
 func TestRun_ADelegateIsHeldWhereTheTurnAndItTogetherPassTheRunTotal(t *testing.T) {
@@ -135,12 +144,12 @@ func TestRun_ADelegateIsHeldWhereTheTurnAndItTogetherPassTheRunTotal(t *testing.
 
 	run := runTainted(t, rt, delegatedPayments(
 		autoDefinition("apply_payment"),
-		agent.MoneyUse{Calls: 1, AmountMinor: 45_000},
+		agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 45_000},
 	))
 
 	assert.Zero(t, pay.Calls, "10,000 more would take the two past 50,000")
 	require.Len(t, run.result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunAmount}, run.result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunAmount}, run.result.Actions[0].HeldBy)
 }
 
 func TestRun_WhatADelegateMovedCountsAgainstTheTurnAfterIt(t *testing.T) {
@@ -166,9 +175,13 @@ func TestRun_WhatADelegateMovedCountsAgainstTheTurnAfterIt(t *testing.T) {
 
 	assert.Zero(t, pay.Calls)
 	require.Len(t, result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, result.Actions[0].HeldBy)
 	require.Len(t, budgets.Asked(), 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, budgets.Asked()[0].Unrecorded)
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		budgets.Asked()[0].Unrecorded,
+	)
 }
 
 func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) {
@@ -196,7 +209,7 @@ func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) 
 
 	assert.Equal(t, 2, failing.Calls, "the failed write left the run's one change unspent")
 	require.Len(t, budgets.Asked(), 2)
-	assert.Equal(t, agent.MoneyUse{}, budgets.Asked()[1].Unrecorded)
+	assert.Equal(t, agenttooltrust.MoneyUse{}, budgets.Asked()[1].Unrecorded)
 	require.Len(t, run.result.Actions, 2)
 	assert.NotEmpty(t, run.result.Actions[0].ExecutionError)
 }
@@ -228,5 +241,5 @@ func TestRun_ASimulatedRunIsHeldWhereTheRealRunWouldBe(t *testing.T) {
 	require.Len(t, run.result.Actions, 2)
 	assert.True(t, run.result.Actions[0].Simulated)
 	assert.False(t, run.result.Actions[1].Simulated)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
 }

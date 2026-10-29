@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,14 +37,22 @@ func TestResolveBankReceiptWorkItem_PreviewMatchesWhatIsSaved(t *testing.T) {
 				"note":       "Bank interest; not a customer payment.",
 			})
 
-			preview := agenttoolstest.PreviewWithoutWrites(t, &items.guard, func() (*agent.ToolPreview, error) {
-				return tool.Preview(t.Context(), params)
-			})
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				&items.guard,
+				func() (*agentpreview.ToolPreview, error) {
+					return tool.Preview(t.Context(), params)
+				},
+			)
 
 			change := agenttoolstest.PreviewChange(t, preview, 0)
 			assert.Equal(t, permission.ResourceBankReceiptWorkItem, change.Resource)
-			assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
-			assert.Equal(t, resolution, agenttoolstest.FieldByPath(t, change, "resolutionType").After)
+			assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
+			assert.Equal(
+				t,
+				resolution,
+				agenttoolstest.FieldByPath(t, change, "resolutionType").After,
+			)
 			assert.Equal(t, "Bank interest; not a customer payment.",
 				agenttoolstest.FieldByPath(t, change, "resolutionNote").After)
 
@@ -65,14 +73,18 @@ func TestResolveBankReceiptWorkItem_PreviewWarnsOnAClosedItem(t *testing.T) {
 	items := &fakeWorkItemResolver{item: item}
 	tool := NewResolveBankReceiptWorkItemTool(items).(*ResolveBankReceiptWorkItemTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &items.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
-			"workItemId": item.ID.String(),
-			"resolution": "MarkedFalsePositive",
-			"note":       "x",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&items.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
+				"workItemId": item.ID.String(),
+				"resolution": "MarkedFalsePositive",
+				"note":       "x",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

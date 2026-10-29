@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -292,7 +292,7 @@ func TestRecordFundingSale(t *testing.T) {
 	)
 	assert.Equal(t, "Debtor over limit", stored.Item(h.second.ID).RejectionReason)
 
-	assert.Equal(t, []string{string(agent.EventFactoringSubmissionFunded)}, h.events.kinds())
+	assert.Equal(t, []string{string(agenttrigger.EventFactoringSubmissionFunded)}, h.events.kinds())
 	require.Len(t, h.requester.targets, 1)
 	assert.ElementsMatch(
 		t,
@@ -678,7 +678,7 @@ func TestSweepWarnsOnceAboutChargebacksComingDue(t *testing.T) {
 	require.NotNil(t, attention.req)
 	assert.True(t, attention.req.UnwarnedOnly)
 	assert.Equal(t, testNow+7*timeutils.SecondsPerDay, attention.req.Before)
-	assert.Equal(t, []string{string(agent.EventFactoringChargebackDue)}, events.kinds())
+	assert.Equal(t, []string{string(agenttrigger.EventFactoringChargebackDue)}, events.kinds())
 
 	warned, err = svc.warnChargebacksDue(t.Context(), h.tenantInfo)
 	require.NoError(t, err)

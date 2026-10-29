@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
@@ -74,8 +76,8 @@ func payrollExportRecord(export *timesheet.PayrollExport) toolpreview.Record {
 func payrollExportResult(
 	action string,
 	export *timesheet.PayrollExport,
-) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   kindPayrollExport,
 		IDs:    map[string]string{paramPayrollExportID: export.ID.String()},
@@ -157,7 +159,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 		Render: func(
 			_ *timesheetservice.GenerateExportRequest,
 			plan *timesheetservice.ExportPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			record := payrollExportRecord(plan.Export)
 			record.ID = pulid.Nil
 			record.Version = nil
@@ -175,7 +177,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 			ctx context.Context,
 			req *timesheetservice.GenerateExportRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			export, err := exporter.GenerateExport(ctx, req)
 			if err != nil {
 				return nil, err
@@ -244,7 +246,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 		Render: func(
 			_ *timesheetservice.VoidExportRequest,
 			change *timesheetservice.ExportChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(
 				payrollExportRecord(change.Before),
 				change.Before,
@@ -264,7 +266,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 			ctx context.Context,
 			req *timesheetservice.VoidExportRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			export, err := exporter.VoidExport(ctx, req)
 			if err != nil {
 				return nil, err

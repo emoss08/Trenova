@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -125,7 +125,7 @@ func (s *Service) showFinishedAttachments(
 // reply, in the conversation the file was sent in, read as the person who
 // sent it. A file uploaded and never sent gets no card.
 func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.AgentEvent) {
-	if event == nil || event.Kind != agent.EventDocumentExtracted ||
+	if event == nil || event.Kind != agenttrigger.EventDocumentExtracted ||
 		s.documents == nil || s.artifacts == nil {
 		return
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -134,7 +135,7 @@ func TestRun_APrivateWriteKeepsAnAgentsOwnSettingAndNeedsAPerson(t *testing.T) {
 type ledgerTrust struct {
 	agenttoolports.AgentToolTrustRepository
 
-	rows []*agent.ToolTrust
+	rows []*agenttooltrust.ToolTrust
 	err  error
 	asks int
 }
@@ -142,7 +143,7 @@ type ledgerTrust struct {
 func (l *ledgerTrust) ListByDefinition(
 	_ context.Context,
 	_ agenttoolports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
 	l.asks++
 
 	return l.rows, l.err
@@ -170,7 +171,7 @@ func TestRun_APrivateWriteKeepsItsExemptionThroughATierTrustEarned(t *testing.T)
 		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        true,
 	}
-	ledger := &ledgerTrust{rows: []*agent.ToolTrust{
+	ledger := &ledgerTrust{rows: []*agenttooltrust.ToolTrust{
 		{ToolName: "dispatch_assign_move", EarnedTier: agent.TierPropose},
 		{ToolName: "report_create", EarnedTier: agent.TierActWithApproval},
 	}}
@@ -186,10 +187,10 @@ func TestRun_APrivateWriteKeepsATierAPersonMovedAfterTrust(t *testing.T) {
 	t.Parallel()
 
 	for name, ledger := range map[string]*ledgerTrust{
-		"a person moved it since": {rows: []*agent.ToolTrust{
+		"a person moved it since": {rows: []*agenttooltrust.ToolTrust{
 			{ToolName: "report_create", EarnedTier: agent.TierAutoExecute},
 		}},
-		"trust never earned a tier": {rows: []*agent.ToolTrust{{ToolName: "report_create"}}},
+		"trust never earned a tier": {rows: []*agenttooltrust.ToolTrust{{ToolName: "report_create"}}},
 		"the ledger has no row":     {},
 		"the ledger cannot be read": {err: errors.New("connection refused")},
 	} {
@@ -234,5 +235,5 @@ func TestRun_OnlyATierTheAgentNamesReadsTheLedger(t *testing.T) {
 	}
 	result = runPrivateWithTrust(t, unset, unnamed, nil)
 	assert.Zero(t, unnamed.asks)
-	assert.Equal(t, agent.TierSourcePersonalExemption, result.Actions[0].TierSource)
+	assert.Equal(t, agenttooltrust.TierSourcePersonalExemption, result.Actions[0].TierSource)
 }

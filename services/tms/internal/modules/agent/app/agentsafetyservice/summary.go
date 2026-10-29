@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ type toolTrustLister interface {
 	ListByDefinitionIDs(
 		ctx context.Context,
 		req agenttoolports.ListToolTrustByDefinitionsRequest,
-	) (map[pulid.ID][]*agent.ToolTrust, error)
+	) (map[pulid.ID][]*agenttooltrust.ToolTrust, error)
 }
 
 type safetySurvey struct {
@@ -58,7 +59,7 @@ func (s *Service) egressCounts() []agenttoolports.AgentEgressCount {
 	counts := make(map[agent.EgressClass]int, len(agent.EgressClasses()))
 	for idx := range s.entries {
 		policy := s.entries[idx].view.Policy
-		if policy.EffectiveEffect() != agent.ToolEffectChange {
+		if policy.EffectiveEffect() != agenttooltrust.ToolEffectChange {
 			continue
 		}
 		counts[widestEgress(policy.Egress)]++
@@ -147,14 +148,14 @@ func (s *Service) survey(
 type surveyAgentInput struct {
 	definition *agentdefinition.Definition
 	control    *agentcontrol.AgentControl
-	trust      []*agent.ToolTrust
-	rules      map[string]*agent.ToolRuleOverride
+	trust      []*agenttooltrust.ToolTrust
+	rules      map[string]*agenttooltrust.ToolRuleOverride
 	out        *safetySurvey
 }
 
 func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	held := s.heldPolicies(in.definition)
-	trustByTool := make(map[string]*agent.ToolTrust, len(in.trust))
+	trustByTool := make(map[string]*agenttooltrust.ToolTrust, len(in.trust))
 	for _, row := range in.trust {
 		if row != nil {
 			trustByTool[row.ToolName] = row
@@ -166,7 +167,7 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 
 	for idx := range held {
 		policy := agenttoolpolicy.ApplyOverrides(held[idx], in.rules)
-		if policy.EffectiveEffect() != agent.ToolEffectChange {
+		if policy.EffectiveEffect() != agenttooltrust.ToolEffectChange {
 			continue
 		}
 		if _, known := in.out.unattended[policy.Name]; known {
@@ -185,17 +186,18 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	}
 }
 
-func RunsWithoutPerson(answer agent.AutonomyAnswer) bool {
-	return answer == agent.AutonomyRunsOnItsOwn || answer == agent.AutonomyConditional
+func RunsWithoutPerson(answer agenttooltrust.AutonomyAnswer) bool {
+	return answer == agenttooltrust.AutonomyRunsOnItsOwn ||
+		answer == agenttooltrust.AutonomyConditional
 }
 
 func (s *Service) trustFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	definitions []*agentdefinition.Definition,
-) (map[pulid.ID][]*agent.ToolTrust, error) {
+) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
 	if s.trust == nil {
-		return map[pulid.ID][]*agent.ToolTrust{}, nil
+		return map[pulid.ID][]*agenttooltrust.ToolTrust{}, nil
 	}
 
 	ids := make([]pulid.ID, 0, len(definitions))
@@ -284,13 +286,13 @@ func (s *Service) RuleImpact(
 	}
 
 	for _, definition := range holders {
-		var held *agent.ToolTrust
+		var held *agenttooltrust.ToolTrust
 		for _, row := range trust[definition.ID] {
 			if row != nil && row.ToolName == req.ToolName {
 				held = row
 			}
 		}
-		answer := func(policy agenttoolports.ToolPolicy) agent.AutonomyAnswer {
+		answer := func(policy agenttoolports.ToolPolicy) agenttooltrust.AutonomyAnswer {
 			return agenttoolpolicy.Assess(ctx, &agenttoolpolicy.AssessInput{
 				Policy:     policy,
 				Definition: definition,

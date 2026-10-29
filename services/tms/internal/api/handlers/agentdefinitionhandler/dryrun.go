@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -47,7 +47,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	runID := pulid.MustNew(agent.EvaluationIDPrefix)
+	runID := pulid.MustNew(agentevaluation.EvaluationIDPrefix)
 	run, err := assistantcontract.StartDryRunWorkflow(
 		ctx,
 		h.workflows,

@@ -6,16 +6,18 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/money"
 )
 
 type ToolPolicy struct {
 	Name                string
-	Kind                agent.ToolKind
+	Kind                agenttooltrust.ToolKind
 	Resource            permission.Resource
 	Operation           permission.Operation
-	Scope               agent.ToolScope
+	Scope               agenttooltrust.ToolScope
 	DefaultTier         agent.AutonomyTier
 	MaxTier             agent.AutonomyTier
 	Egress              []agent.EgressClass
@@ -24,11 +26,11 @@ type ToolPolicy struct {
 	TaintHold           *TaintHold
 	PersonalRunsUnasked bool
 	Escalates           bool
-	Effect              agent.ToolEffect
+	Effect              agenttooltrust.ToolEffect
 	Artifact            string
 	Reversible          bool
 	Idempotent          bool
-	ReadsExternal       agent.ExternalRead
+	ReadsExternal       agenttooltrust.ExternalRead
 	Source              agent.TaintSource
 	Sources             []agent.TaintSource
 	CarriesTaint        bool
@@ -52,10 +54,10 @@ const (
 // read and reads nothing from outside the organization a script could relay
 // into a later write.
 func (p *ToolPolicy) CallableFromScript() bool {
-	return p.Kind == agent.ToolKindQuery &&
-		p.EffectiveEffect() == agent.ToolEffectLookup &&
+	return p.Kind == agenttooltrust.ToolKindQuery &&
+		p.EffectiveEffect() == agenttooltrust.ToolEffectLookup &&
 		p.Script == ScriptCallable &&
-		p.Scope != agent.ToolScopeSelf
+		p.Scope != agenttooltrust.ToolScopeSelf
 }
 
 // PreparableFromScript says a script may prepare the tool's write as an
@@ -63,10 +65,10 @@ func (p *ToolPolicy) CallableFromScript() bool {
 // records that does not escalate, hold for taint on its own terms or belong
 // to the agent's own work (its waits, memories and exceptions).
 func (p *ToolPolicy) PreparableFromScript() bool {
-	return p.Kind == agent.ToolKindAction &&
-		p.EffectiveEffect() != agent.ToolEffectLookup &&
+	return p.Kind == agenttooltrust.ToolKindAction &&
+		p.EffectiveEffect() != agenttooltrust.ToolEffectLookup &&
 		p.Script == ScriptCallable &&
-		p.Scope == agent.ToolScopeTenant &&
+		p.Scope == agenttooltrust.ToolScopeTenant &&
 		!p.Escalates &&
 		p.TaintHold == nil &&
 		!strings.HasPrefix(p.Name, agentNamespacePrefix)
@@ -89,17 +91,17 @@ func (p ToolPolicy) Classified(params ToolExecuteParams) CallPolicy {
 	return CallPolicy{Egress: p.HighestEgress()}
 }
 
-func (p ToolPolicy) EffectiveEffect() agent.ToolEffect {
+func (p ToolPolicy) EffectiveEffect() agenttooltrust.ToolEffect {
 	if p.Effect.IsValid() {
 		return p.Effect
 	}
 
 	switch p.Kind {
-	case agent.ToolKindAction:
-		return agent.ToolEffectChange
-	case agent.ToolKindQuery:
-		return agent.ToolEffectLookup
-	case agent.ToolKindRuntime:
+	case agenttooltrust.ToolKindAction:
+		return agenttooltrust.ToolEffectChange
+	case agenttooltrust.ToolKindQuery:
+		return agenttooltrust.ToolEffectLookup
+	case agenttooltrust.ToolKindRuntime:
 	}
 
 	return ""
@@ -230,7 +232,7 @@ func WithinMoneyBound(amountMinor int64, currency string) MoneyBound {
 
 // Rereading says the bound read this record again from the organization's own
 // records and took what it counts from it rather than from the call.
-func (b MoneyBound) Rereading(source agent.TaintSource, ref agent.RecordRef) MoneyBound {
+func (b MoneyBound) Rereading(source agent.TaintSource, ref agentrecord.RecordRef) MoneyBound {
 	b.Reread = append(slices.Clip(b.Reread), agent.SourcedRef{Source: source, Ref: ref})
 
 	return b
@@ -264,7 +266,7 @@ func egressRank(class agent.EgressClass) int {
 	return slices.Index(agent.EgressClasses(), class)
 }
 
-func EffectOf(tool any) agent.ToolEffect {
+func EffectOf(tool any) agenttooltrust.ToolEffect {
 	policy, ok := PolicyOf(tool)
 	if !ok {
 		return ""
@@ -276,5 +278,5 @@ func EffectOf(tool any) agent.ToolEffect {
 func IsSelfScoped(tool any) bool {
 	policy, ok := PolicyOf(tool)
 
-	return ok && policy.Scope == agent.ToolScopeSelf
+	return ok && policy.Scope == agenttooltrust.ToolScopeSelf
 }

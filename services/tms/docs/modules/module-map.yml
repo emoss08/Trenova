@@ -847,25 +847,41 @@ modules:
     domain:
       - accountingbrief
       - agent
+      - agentdecision
       - agentdefinition
       - agentdryrun
+      - agentevaluation
+      - agentevidence
+      - agentexception
       - agentextension
+      - agentfingerprint
       - agentinstructions
       - agentlint
       - agentmark
+      - agentmemory
       - agentmemoryprompt
       - agentmessage
+      - agentpagecontext
       - agentpageprompt
+      - agentplan
       - agentpreset
+      - agentpreview
       - agentprompt
       - agentquality
       - agentreach
+      - agentrecord
+      - agentreflection
+      - agentreplay
       - agentroster
+      - agentrunevent
+      - agentrunstep
       - agentshadow
       - agentstarter
       - agenttaskframe
       - agenttemplate
       - agenttestprompt
+      - agenttooltrust
+      - agenttrigger
       - agentturn
       - agentversion
       - agentwait

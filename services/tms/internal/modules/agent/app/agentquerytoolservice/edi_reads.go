@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -58,7 +59,7 @@ var ediPartnerReference = idReference{
 // the files, messages and tenders carry the partner's own text.
 func ediReadsExternal(rationale string) readSpec {
 	return readSpec{
-		reads:     agent.ExternalReadAlways,
+		reads:     agenttooltrust.ExternalReadAlways,
 		source:    agent.TaintSourceEDI,
 		rationale: rationale,
 	}
@@ -241,7 +242,7 @@ func ediGetSpecs() []getSpec {
 			kinds:       []permission.RecordKind{permission.KindEDIInboundFile},
 			paramName:   paramInboundFileID,
 			idSource:    "from edi_list_inbound_files or this run's subject",
-			reads:       agent.ExternalReadAlways,
+			reads:       agenttooltrust.ExternalReadAlways,
 			source:      agent.TaintSourceEDI,
 			rationale: "Reads an EDI file a trading partner sent, raw X12 included on " +
 				"request; nothing changes and nothing is sent.",
@@ -264,7 +265,7 @@ func ediGetSpecs() []getSpec {
 			kinds:     []permission.RecordKind{permission.KindEDIMessage},
 			paramName: paramEDIMessageID,
 			idSource:  "from edi_list_messages, edi_get_inbound_file or the page you are on",
-			reads:     agent.ExternalReadAlways,
+			reads:     agenttooltrust.ExternalReadAlways,
 			source:    agent.TaintSourceEDI,
 			rationale: "Reads one EDI document, the errors and acknowledgment a partner's " +
 				"system returned for it, and its raw X12 on request; nothing changes and " +
@@ -288,7 +289,7 @@ func ediGetSpecs() []getSpec {
 			paramName: paramEDITransferID,
 			idSource: "from edi_list_transfers, a transferId in edi_get_inbound_file, or " +
 				"this run's subject",
-			reads:  agent.ExternalReadAlways,
+			reads:  agenttooltrust.ExternalReadAlways,
 			source: agent.TaintSourceEDI,
 			rationale: "Reads a load tender a trading partner wrote, stops and references " +
 				"included; nothing changes and nothing is sent.",
@@ -319,7 +320,7 @@ func ackHealthGetSpec() getSpec {
 			"acks overdue", "ack health", "not acknowledged yet", "keeping up with acks",
 		},
 		resource: permission.ResourceEDI,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceEDI,
 		rationale: "Reads how partners have acknowledged what was sent, with the delivery " +
 			"errors their systems returned; nothing changes and nothing is sent.",

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
@@ -53,8 +55,11 @@ func workingStatuses() []agent.RunStatus {
 	}
 }
 
-func openResolutionStates() []agent.ResolutionState {
-	return []agent.ResolutionState{agent.ResolutionStateOpen, agent.ResolutionStateInReview}
+func openResolutionStates() []agentexception.ResolutionState {
+	return []agentexception.ResolutionState{
+		agentexception.ResolutionStateOpen,
+		agentexception.ResolutionStateInReview,
+	}
 }
 
 func (r *repository) Totals(
@@ -91,9 +96,9 @@ func (r *repository) Totals(
 				&openCount,
 			),
 			keel.IntoValue(decisions.Pick(
-				keel.Count().Filter(decisions.Decision.Eq(agent.DecisionAccepted)),
-				keel.Count().Filter(decisions.Decision.Eq(agent.DecisionModified)),
-				keel.Count().Filter(decisions.Decision.Eq(agent.DecisionRejected)),
+				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionAccepted)),
+				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionModified)),
+				keel.Count().Filter(decisions.Decision.Eq(agentdecision.DecisionRejected)),
 			).Where(
 				decisions.ProposalID.IsNotNull(),
 				decisions.UndoneAt.IsNull(),

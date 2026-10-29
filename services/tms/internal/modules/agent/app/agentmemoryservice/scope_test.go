@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +50,7 @@ func TestApproveSuggestion_KeepsItForItsAgentByDefault(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, repo.resolved, 1)
-	assert.Equal(t, agent.MemoryScopeAgent, repo.resolved[0].Scope,
+	assert.Equal(t, agentmemory.MemoryScopeAgent, repo.resolved[0].Scope,
 		"a suggestion drawn from one agent's ratings reaches that agent alone")
 }
 
@@ -63,7 +65,7 @@ func TestApproveSuggestion_AnAdministratorMayWidenItToTheOrganization(t *testing
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "State only rates a tool returned.",
-			Scope:      agent.MemoryScopeOrganization,
+			Scope:      agentmemory.MemoryScopeOrganization,
 			Version:    2,
 		},
 		userActor(),
@@ -71,7 +73,7 @@ func TestApproveSuggestion_AnAdministratorMayWidenItToTheOrganization(t *testing
 	require.NoError(t, err)
 
 	require.Len(t, repo.resolved, 1)
-	assert.Equal(t, agent.MemoryScopeOrganization, repo.resolved[0].Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, repo.resolved[0].Scope)
 }
 
 func TestApproveSuggestion_WithoutAnAgentItIsTheOrganizations(t *testing.T) {
@@ -87,13 +89,13 @@ func TestApproveSuggestion_WithoutAnAgentItIsTheOrganizations(t *testing.T) {
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "State only rates a tool returned.",
-			Scope:      agent.MemoryScopeAgent,
+			Scope:      agentmemory.MemoryScopeAgent,
 			Version:    2,
 		},
 		userActor(),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, repo.resolved[0].Scope,
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, repo.resolved[0].Scope,
 		"a memory kept for one agent names that agent")
 }
 
@@ -116,7 +118,7 @@ func TestRemember_AnAgentsMemoryStillReachesEveryAgent(t *testing.T) {
 
 	require.NotNil(t, created.AgentDefinitionID)
 	assert.Equal(t, definitionID, *created.AgentDefinitionID)
-	assert.NotEqual(t, agent.MemoryScopeAgent, created.Scope)
+	assert.NotEqual(t, agentmemory.MemoryScopeAgent, created.Scope)
 	assert.False(t, created.AgentScoped())
 }
 
@@ -154,7 +156,7 @@ func TestRemember_AMemoryWrittenByATaintedRunKeepsTheTaint(t *testing.T) {
 		if tc.tainted {
 			require.NotNil(t, created.TaintRunID, name)
 			assert.Equal(t, runID, *created.TaintRunID, name)
-			assert.Equal(t, []agent.RecordRef{{
+			assert.Equal(t, []agentrecord.RecordRef{{
 				EntityType: agent.TaintEntityAgentMemory,
 				ID:         created.ID.String(),
 			}}, created.TaintedRecords(), name)
@@ -168,13 +170,13 @@ func TestRemember_AMemoryWrittenByATaintedRunKeepsTheTaint(t *testing.T) {
 func TestMemoryValidate_AnAgentScopedMemoryNamesItsAgent(t *testing.T) {
 	t.Parallel()
 
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Kind:           agent.MemoryKindFact,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
-		Scope:          agent.MemoryScopeAgent,
+		Kind:           agentmemory.MemoryKindFact,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeAgent,
 		Content:        "Only for one agent.",
 	}
 

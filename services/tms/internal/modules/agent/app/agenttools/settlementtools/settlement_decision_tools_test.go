@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -283,7 +284,7 @@ func TestPostDriverSettlement_PreviewShowsTheStatusMoneyAndJournal(t *testing.T)
 
 	entry := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceJournalEntry, entry.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, entry.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, entry.Operation)
 	require.NotNil(t, entry.Money)
 	assert.True(t, entry.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("1800")))
 }
@@ -304,7 +305,7 @@ func TestSettlementDecision_ARefusalIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
 	err = tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)

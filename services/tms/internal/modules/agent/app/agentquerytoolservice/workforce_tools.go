@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -32,7 +33,7 @@ type workforceRead struct {
 	searchTerms []string
 	resource    permission.Resource
 	rationale   string
-	reads       agent.ExternalRead
+	reads       agenttooltrust.ExternalRead
 	source      agent.TaintSource
 	properties  map[string]any
 	required    []string

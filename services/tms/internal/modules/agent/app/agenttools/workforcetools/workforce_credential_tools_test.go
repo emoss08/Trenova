@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -178,7 +179,7 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		credentials.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -204,7 +205,7 @@ func TestUpdateWorkerCredential_SaysWhenVerificationClears(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		credentials.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -249,7 +250,7 @@ func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		credentials.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

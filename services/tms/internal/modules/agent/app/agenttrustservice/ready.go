@@ -3,8 +3,8 @@ package agenttrustservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -19,7 +19,7 @@ const maxReadyTools = 500
 
 type readyTool struct {
 	promotion  agentports.ToolPromotion
-	row        *agent.ToolTrust
+	row        *agenttooltrust.ToolTrust
 	definition *agentdefinition.Definition
 }
 

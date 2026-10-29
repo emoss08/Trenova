@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -159,8 +161,8 @@ func seriesRecord(series *recurringshipment.RecurringShipment) toolpreview.Recor
 func seriesResult(
 	action string,
 	series *recurringshipment.RecurringShipment,
-) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: action, Kind: kindRecurringShipment}
+) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindRecurringShipment}
 	if series != nil {
 		result.Name = series.Name
 		result.IDs = map[string]string{paramRecurringShipmentID: series.ID.String()}
@@ -402,7 +404,7 @@ func optionalLocalDay(
 func renderSeriesChange(
 	verb string,
 	plan *recurringshipmentservice.SeriesChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	options := []toolpreview.Option{
 		toolpreview.Only(seriesFields...),
 		toolpreview.WithRefs(seriesRefs),
@@ -496,14 +498,14 @@ func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 		Render: func(
 			_ *recurringshipment.RecurringShipment,
 			plan *recurringshipmentservice.SeriesChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return renderSeriesChange("start", plan)
 		},
 		Run: func(
 			ctx context.Context,
 			entity *recurringshipment.RecurringShipment,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := series.Create(ctx, entity, params.Actor.UserID)
 			if err != nil {
 				return nil, err
@@ -593,14 +595,14 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 		Render: func(
 			_ *seriesEdit,
 			plan *recurringshipmentservice.SeriesChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return renderSeriesChange("change", plan)
 		},
 		Run: func(
 			ctx context.Context,
 			edit *seriesEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, series)
 			if err != nil {
 				return nil, err
@@ -698,14 +700,14 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttool
 		Render: func(
 			change *seriesStatusChange,
 			plan *recurringshipmentservice.SeriesChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return renderSeriesChange("set "+string(change.status), plan)
 		},
 		Run: func(
 			ctx context.Context,
 			change *seriesStatusChange,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := change.request(ctx, series)
 			if err != nil {
 				return nil, err
@@ -781,7 +783,7 @@ func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolp
 			ctx context.Context,
 			req *recurringshipmentports.GenerateRecurringShipmentRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			generated, err := series.Generate(ctx, req)
 			if err != nil {
 				return nil, err
@@ -807,7 +809,7 @@ func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolp
 func renderGenerate(
 	_ *recurringshipmentports.GenerateRecurringShipmentRequest,
 	plan *recurringshipmentports.RecurringShipmentGenerationPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	slot := time.Unix(plan.Occurrence.At, 0).UTC().Format(time.RFC3339)
 	if plan.AlreadyGenerated {
 		return toolpreview.Build(fmt.Sprintf(

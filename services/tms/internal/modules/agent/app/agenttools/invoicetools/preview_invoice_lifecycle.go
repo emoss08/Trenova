@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -63,7 +63,7 @@ func invoiceRecord(entity *invoice.Invoice) toolpreview.Record {
 func renderDraftUpdate(
 	req *invoiceports.UpdateInvoiceDraftRequest,
 	plan *invoiceports.InvoiceDraftUpdatePreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		invoiceRecord(plan.Before),
 		draftDeliveryOf(plan.Before, len(plan.AttachmentsBefore)),
@@ -97,7 +97,7 @@ func renderDraftUpdate(
 func renderPDFGeneration(
 	_ *invoiceports.InvoicePreviewRequest,
 	plan *invoiceports.InvoicePDFGenerationPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := fmt.Sprintf("Would render the PDF of %s from what it says now and file it on "+
 		"the invoice", invoicepreview.InvoiceLabel(plan.Invoice))
 	if plan.Invoice.PDFDocumentID.IsNotNil() {
@@ -112,8 +112,8 @@ func renderPDFGeneration(
 func renderCreateInvoices(
 	_ *createInvoicesRequest,
 	plan *invoiceports.CreateInvoicesPlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Drafts))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Drafts))
 	payers := make([]string, 0, len(plan.Drafts))
 	for _, draft := range plan.Drafts {
 		change, err := billingqueuepreview.DraftInvoiceChange(draft)
@@ -141,7 +141,7 @@ func renderCreateInvoices(
 func renderMemo(
 	req *invoiceports.CreateMemoRequest,
 	memo *invoice.Invoice,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := billingqueuepreview.DraftInvoiceChange(memo)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func dispositionSentence(disposition invoice.VoidDisposition) string {
 func renderVoid(
 	_ *invoiceports.VoidInvoiceRequest,
 	plan *invoiceports.InvoiceVoidPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	label := invoicepreview.InvoiceLabel(plan.Before)
 	fields := []string{changepreview.FieldVoidReason, "voidDisposition"}
 	if !plan.Posted {
@@ -229,7 +229,7 @@ func renderVoid(
 func renderEDISend(
 	req *invoiceports.SendInvoiceEDIRequest,
 	plan *invoiceports.InvoiceEDISendPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	label := invoicepreview.InvoiceLabel(plan.Invoice)
 	partner := plan.Plan.PartnerName
 	summary := fmt.Sprintf("Would send %s to %s as an EDI 210", label, partner)
@@ -240,8 +240,8 @@ func renderEDISend(
 		summary += "; it was sent before, and this sends it again"
 	}
 
-	change := toolpreview.Send(invoiceRecord(plan.Invoice), &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	change := toolpreview.Send(invoiceRecord(plan.Invoice), &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{partner},
 		Subject: "EDI 210 for " + label,
 		Body: fmt.Sprintf("%s billed to %s for %s", label, plan.Invoice.BillToName,

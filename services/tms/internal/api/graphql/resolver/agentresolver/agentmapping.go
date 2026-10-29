@@ -11,6 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,12 +53,12 @@ func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscri
 	}
 }
 
-func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
+func reflectionSignals(reflection *agentreflection.Reflection) []*agentreflection.ReflectionSignal {
 	if reflection == nil {
-		return []*agent.ReflectionSignal{}
+		return []*agentreflection.ReflectionSignal{}
 	}
 
-	out := make([]*agent.ReflectionSignal, 0, len(reflection.Signals))
+	out := make([]*agentreflection.ReflectionSignal, 0, len(reflection.Signals))
 	for idx := range reflection.Signals {
 		out = append(out, &reflection.Signals[idx])
 	}
@@ -61,7 +66,10 @@ func reflectionSignals(reflection *agent.Reflection) []*agent.ReflectionSignal {
 	return out
 }
 
-func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+func supersededMemory(
+	ctx context.Context,
+	memory *agentmemory.Memory,
+) (*agentmemory.Memory, error) {
 	if !loaders.Available(ctx) || !memory.Replaces() {
 		return nil, nil
 	}
@@ -77,7 +85,7 @@ func supersededMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory,
 	}
 }
 
-func replacingMemory(ctx context.Context, memory *agent.Memory) (*agent.Memory, error) {
+func replacingMemory(ctx context.Context, memory *agentmemory.Memory) (*agentmemory.Memory, error) {
 	if !loaders.Available(ctx) || memory == nil || memory.ID.IsNil() {
 		return nil, nil
 	}
@@ -98,11 +106,11 @@ func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func agentEvaluationConnectionToModel(
-	result *pagination.CursorListResult[*agent.Evaluation],
+	result *pagination.CursorListResult[*agentevaluation.Evaluation],
 ) (*gqlmodel.AgentEvaluationConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.Evaluation, cursor string) *gqlmodel.AgentEvaluationEdge {
+		func(node *agentevaluation.Evaluation, cursor string) *gqlmodel.AgentEvaluationEdge {
 			return &gqlmodel.AgentEvaluationEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentEvaluationEdge) string { return edge.Cursor },
@@ -135,11 +143,11 @@ func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func agentMemoryConnectionToModel(
-	result *pagination.CursorListResult[*agent.Memory],
+	result *pagination.CursorListResult[*agentmemory.Memory],
 ) (*gqlmodel.AgentMemoryConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.Memory, cursor string) *gqlmodel.AgentMemoryEdge {
+		func(node *agentmemory.Memory, cursor string) *gqlmodel.AgentMemoryEdge {
 			return &gqlmodel.AgentMemoryEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentMemoryEdge) string { return edge.Cursor },
@@ -169,11 +177,11 @@ func agentReflectionColumns(ctx context.Context, nodePathPrefix string) []string
 }
 
 func agentReflectionConnectionToModel(
-	result *pagination.CursorListResult[*agent.Reflection],
+	result *pagination.CursorListResult[*agentreflection.Reflection],
 ) (*gqlmodel.AgentReflectionConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
+		func(node *agentreflection.Reflection, cursor string) *gqlmodel.AgentReflectionEdge {
 			return &gqlmodel.AgentReflectionEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentReflectionEdge) string { return edge.Cursor },
@@ -194,7 +202,7 @@ func agentReflectionConnectionToModel(
 // refusing half of one.
 func agentMemorySubject(
 	input gqlmodel.AgentMemoryInput,
-) (agent.MemorySubjectType, pulid.ID, error) {
+) (agentmemory.MemorySubjectType, pulid.ID, error) {
 	hasType := input.SubjectType != nil && *input.SubjectType != ""
 	hasID := input.SubjectID != nil && strings.TrimSpace(*input.SubjectID) != ""
 	switch {
@@ -238,11 +246,11 @@ func agentPlanColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func agentPlanConnectionToModel(
-	result *pagination.CursorListResult[*agent.AgentPlan],
+	result *pagination.CursorListResult[*agentplan.AgentPlan],
 ) (*gqlmodel.AgentPlanConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.AgentPlan, cursor string) *gqlmodel.AgentPlanEdge {
+		func(node *agentplan.AgentPlan, cursor string) *gqlmodel.AgentPlanEdge {
 			return &gqlmodel.AgentPlanEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentPlanEdge) string { return edge.Cursor },
@@ -316,11 +324,11 @@ func agentProposalConnectionToModel(
 }
 
 func agentExceptionConnectionToModel(
-	result *pagination.CursorListResult[*agent.AgentException],
+	result *pagination.CursorListResult[*agentexception.AgentException],
 ) (*gqlmodel.AgentExceptionConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.AgentException, cursor string) *gqlmodel.AgentExceptionEdge {
+		func(node *agentexception.AgentException, cursor string) *gqlmodel.AgentExceptionEdge {
 			return &gqlmodel.AgentExceptionEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentExceptionEdge) string { return edge.Cursor },

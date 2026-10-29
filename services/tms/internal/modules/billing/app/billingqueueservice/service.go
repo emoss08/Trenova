@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -904,12 +904,12 @@ func (s *service) publishStatusAgentEvent(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 ) {
-	var kind agent.EventKind
+	var kind agenttrigger.EventKind
 	switch item.Status {
 	case billingqueue.StatusException:
-		kind = agent.EventBillingQueueItemException
+		kind = agenttrigger.EventBillingQueueItemException
 	case billingqueue.StatusOnHold:
-		kind = agent.EventBillingQueueItemOnHold
+		kind = agenttrigger.EventBillingQueueItemOnHold
 	default:
 		return
 	}

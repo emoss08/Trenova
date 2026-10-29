@@ -3,7 +3,8 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,7 +13,7 @@ import (
 type AgentScorecardRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
-	Window            agent.ScorecardWindow
+	Window            agentevaluation.ScorecardWindow
 }
 
 // AgentScorecardResult is the counted record and the trust ladder behind it.
@@ -22,8 +23,8 @@ type AgentScorecardRequest struct {
 // it would describe a different ladder from the one deciding what runs
 // without asking.
 type AgentScorecardResult struct {
-	Scorecard *agent.Scorecard
-	ToolTrust []*agent.ToolTrust
+	Scorecard *agentevaluation.Scorecard
+	ToolTrust []*agenttooltrust.ToolTrust
 }
 
 type AgentScorecardService interface {

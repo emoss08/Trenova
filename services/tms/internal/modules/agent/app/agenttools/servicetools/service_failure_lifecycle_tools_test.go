@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -175,7 +176,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -228,7 +229,7 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -252,7 +253,7 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	failures.refusal = errortypes.NewBusinessError("a reason code is required")
 	refused, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, refused, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -269,7 +270,7 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		failures.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -340,7 +341,7 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		detentions.Guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

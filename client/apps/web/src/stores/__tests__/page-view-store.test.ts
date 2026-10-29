@@ -15,7 +15,7 @@ const table: RegisteredTableView = {
 };
 
 /**
- * The view is what the server's PageView accepts (domain/agent/pagecontext.go):
+ * The view is what the server's PageView accepts (domain/agentpagecontext/pagecontext.go):
  * a known resource, bounded lists, and figures as the person read them. The
  * client composes it from what the table and the strip registered, and never
  * sends more than the server would take.

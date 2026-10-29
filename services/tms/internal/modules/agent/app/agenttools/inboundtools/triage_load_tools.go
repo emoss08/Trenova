@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -160,7 +162,7 @@ func newDraftInboundLoadTool(
 			Render: func(
 				_ *triageworkservice.LoadRequest,
 				plan *triageworkservice.LoadDraftPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				if plan.NeedsNova {
 					preview := toolpreview.Build(
 						"Would have Nova read the load from the message body into a draft on " +
@@ -191,7 +193,7 @@ func newDraftInboundLoadTool(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				message, err := loads.DraftLoad(ctx, req)
 				if err != nil {
 					return nil, err
@@ -277,7 +279,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 				ctx context.Context,
 				req *triageworkservice.CreateLoadRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				plan, err := loads.PlanCreateLoad(ctx, req)
 				if err != nil {
 					return nil, err
@@ -292,7 +294,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 				}
 				shipmentID := message.ActionState.CreatedShipmentID
 
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "created",
 					Kind:   "shipment",
 					Name:   "Shipment from " + describeInboundMessage(message),
@@ -358,7 +360,7 @@ func createLoadRequest(
 func renderCreateLoad(
 	_ *triageworkservice.CreateLoadRequest,
 	plan *triageworkservice.CreateLoadPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would create a shipment from " + describeInboundMessage(plan.Message)
 	if plan.AlreadyCreated {
 		return refusedPreview(summary+".", errLoadAlreadyCreated(plan.Message)), nil
@@ -433,7 +435,7 @@ func newDiscardInboundLoadTool(
 			Render: func(
 				_ *triageworkservice.LoadRequest,
 				plan *triageworkservice.LoadDiscardPlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				summary := "Would throw away the load drafted from " +
 					describeInboundMessage(plan.Message) + "."
 				if plan.Message.LoadDraft == nil {
@@ -454,7 +456,7 @@ func newDiscardInboundLoadTool(
 				ctx context.Context,
 				req *triageworkservice.LoadRequest,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				plan, err := loads.PlanDiscardLoad(ctx, req)
 				if err != nil {
 					return nil, err

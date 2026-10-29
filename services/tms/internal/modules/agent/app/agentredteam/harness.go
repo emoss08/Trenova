@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -209,7 +210,7 @@ func reopen(
 	p reopenRequest,
 ) {
 	rec.mu.Lock()
-	written := make([]*agent.Memory, 0, len(rec.memories))
+	written := make([]*agentmemory.Memory, 0, len(rec.memories))
 	for _, record := range rec.memories {
 		written = append(written, record.Memory)
 	}
@@ -345,7 +346,7 @@ func contextFor(
 		}}
 	}
 	if source.Memory != nil {
-		rc.Memories = []*agent.Memory{memoryFor(*source.Memory, tenant)}
+		rc.Memories = []*agentmemory.Memory{memoryFor(*source.Memory, tenant)}
 	}
 	if !c.Agent.Unattended {
 		for idx := range c.Delegates {
@@ -361,24 +362,24 @@ func contextFor(
 	return rc
 }
 
-func memoryFor(spec MemorySpec, tenant Tenant) *agent.Memory {
+func memoryFor(spec MemorySpec, tenant Tenant) *agentmemory.Memory {
 	id := pulid.ID(spec.ID)
 	if id.IsNil() {
 		id = pulid.ID("amem_01JREDTEAMMEM0RY0000000000")
 	}
-	kind := agent.MemoryKind(spec.Kind)
+	kind := agentmemory.MemoryKind(spec.Kind)
 	if !kind.IsValid() {
-		kind = agent.MemoryKindInstruction
+		kind = agentmemory.MemoryKindInstruction
 	}
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		ID:             id,
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		Kind:           kind,
-		Source:         agent.MemorySourceAgent,
-		Status:         agent.MemoryStatusActive,
-		Scope:          agent.MemoryScopeOrganization,
+		Source:         agentmemory.MemorySourceAgent,
+		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		Content:        strings.TrimSpace(spec.Content),
 		Tainted:        spec.Tainted,
 	}

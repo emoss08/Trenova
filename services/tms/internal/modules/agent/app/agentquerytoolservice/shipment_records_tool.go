@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -164,7 +164,7 @@ func (t *findShipmentRecordsTool) ParamSchema() map[string]any {
 func (t *findShipmentRecordsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
-		effect:   agent.ToolEffectLookup,
+		effect:   agenttooltrust.ToolEffectLookup,
 		rationale: "Matches the records a new shipment names against the organization's own; " +
 			"nothing changes and nothing is sent.",
 	})

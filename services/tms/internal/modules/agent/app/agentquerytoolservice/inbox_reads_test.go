@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -176,7 +177,7 @@ func TestInboundMessages_RankByWhatTheMailSaysWhenGivenWords(t *testing.T) {
 	assert.Equal(t, "We dispute the detention.", rows[0].Snippet)
 	assert.True(t, rows[0].NeedsReview)
 	assert.Equal(t, "words", rows[0].Match)
-	assert.Equal(t, []agent.RecordRef{
+	assert.Equal(t, []agentrecord.RecordRef{
 		{EntityType: agent.TaintEntityInboundMessage, ID: message.ID.String()},
 	}, outcome.TaintedRecords(), "every message returned is marked as outside text")
 	assert.Contains(t, outcome.SearchedFor, `text matching "detention dispute"`)

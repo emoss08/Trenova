@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -289,7 +291,7 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentto
 			ctx context.Context,
 			req *schedulingservice.AssignShiftRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := scope.require(
 				ctx,
 				params,
@@ -303,7 +305,7 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentto
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "assigned",
 				Kind:   kindShiftAssignment,
 				IDs: map[string]string{
@@ -319,8 +321,8 @@ func NewAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentto
 func renderAssignShift(
 	_ *schedulingservice.AssignShiftRequest,
 	plan *schedulingservice.ShiftAssignmentPlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(plan.Ended)+1)
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Ended)+1)
 	created, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceWorkerSchedule,
@@ -435,7 +437,7 @@ func NewEndWorkerShiftAssignmentTool(
 			ctx context.Context,
 			end *assignmentEnd,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := requireAssignmentScope(ctx, schedules, scope, end, params); err != nil {
 				return nil, err
 			}
@@ -444,7 +446,7 @@ func NewEndWorkerShiftAssignmentTool(
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "ended",
 				Kind:   kindShiftAssignment,
 				IDs:    map[string]string{paramShiftAssignmentID: ended.ID.String()},
@@ -457,7 +459,7 @@ func NewEndWorkerShiftAssignmentTool(
 func renderShiftAssignmentEnd(
 	_ *assignmentEnd,
 	plan *schedulingservice.AssignmentChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(shiftAssignmentRecord(plan.Before), plan.Before,
 		plan.After, scheduleOptions(changepreview.FieldEffectiveTo)...)
 	if err != nil {
@@ -547,7 +549,7 @@ func NewSetWorkerAvailabilityPreferenceTool(
 			ctx context.Context,
 			req *schedulingservice.SetPreferenceRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := scope.require(
 				ctx,
 				params,
@@ -561,7 +563,7 @@ func NewSetWorkerAvailabilityPreferenceTool(
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "recorded " + string(saved.Preference),
 				Kind:   "availability preference",
 				Name:   time.Weekday(saved.DayOfWeek).String(),
@@ -580,7 +582,7 @@ type preferenceView struct {
 func renderPreference(
 	req *schedulingservice.SetPreferenceRequest,
 	plan *schedulingservice.PreferenceChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	day := time.Weekday(req.Entity.DayOfWeek).String()
 	rec := toolpreview.Record{
 		Resource: permission.ResourceWorker,
@@ -590,7 +592,7 @@ func renderPreference(
 	after := &preferenceView{Preference: plan.After.Preference, Note: plan.After.Note}
 
 	var (
-		change *agent.RecordChange
+		change *agentpreview.RecordChange
 		err    error
 	)
 	if plan.Before == nil {
@@ -671,13 +673,13 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *schedulingservice.ProposeSwapRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := schedules.ProposeSwap(ctx, req)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: "proposed",
 				Kind:   kindShiftSwap,
 				IDs:    map[string]string{paramSwapID: created.ID.String()},
@@ -693,7 +695,7 @@ func NewProposeShiftSwapTool(schedules scheduleKeeper) agenttoolports.AgentTool 
 func renderShiftSwapProposal(
 	_ *schedulingservice.ProposeSwapRequest,
 	swap *workerschedule.ShiftSwapRequest,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceShiftSwap, Label: "New shift swap"},
 		swap,
@@ -834,7 +836,7 @@ func newSwapDecisionTool(
 		Render: func(
 			_ *schedulingservice.TransitionSwapRequest,
 			plan *schedulingservice.SwapChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				swapRecord(plan.Before),
 				plan.Before,
@@ -865,13 +867,13 @@ func newSwapDecisionTool(
 			ctx context.Context,
 			req *schedulingservice.TransitionSwapRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			updated, err := schedules.TransitionSwap(ctx, req)
 			if err != nil {
 				return nil, err
 			}
 
-			return &agent.ToolExecutionResult{
+			return &agentrecord.ToolExecutionResult{
 				Action: strings.ToLower(string(updated.Status)),
 				Kind:   kindShiftSwap,
 				IDs:    map[string]string{paramSwapID: updated.ID.String()},

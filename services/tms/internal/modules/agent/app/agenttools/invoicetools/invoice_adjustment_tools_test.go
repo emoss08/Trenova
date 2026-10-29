@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -215,7 +216,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		adjuster.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -299,7 +300,7 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 	assert.Contains(t, err.Error(), "Only posted invoices may be adjusted")
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
@@ -379,7 +380,7 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		adjuster.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -390,7 +391,7 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -438,7 +439,7 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		adjuster.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -491,7 +492,7 @@ func TestRejectInvoiceAdjustment_RecordsTheReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		adjuster.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

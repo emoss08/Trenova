@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -26,16 +27,16 @@ type stubScorecards struct {
 	agentports.AgentScorecardRepository
 
 	asked  agentports.ScorecardRequest
-	totals *agent.ScorecardTotals
+	totals *agentevaluation.ScorecardTotals
 }
 
 func (s *stubScorecards) Aggregate(
 	_ context.Context,
 	req agentports.ScorecardRequest,
-) (*agent.ScorecardTotals, error) {
+) (*agentevaluation.ScorecardTotals, error) {
 	s.asked = req
 	if s.totals == nil {
-		return &agent.ScorecardTotals{CostUSD: decimal.Zero}, nil
+		return &agentevaluation.ScorecardTotals{CostUSD: decimal.Zero}, nil
 	}
 
 	return s.totals, nil
@@ -44,13 +45,13 @@ func (s *stubScorecards) Aggregate(
 type stubTrust struct {
 	agenttoolports.AgentToolTrustRepository
 
-	rows []*agent.ToolTrust
+	rows []*agenttooltrust.ToolTrust
 }
 
 func (s *stubTrust) ListByDefinition(
 	_ context.Context,
 	_ agenttoolports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
 	return s.rows, nil
 }
 
@@ -99,7 +100,7 @@ func actor() *permissionports.RequestActor {
 	}
 }
 
-func request(window agent.ScorecardWindow) agentports.AgentScorecardRequest {
+func request(window agentevaluation.ScorecardWindow) agentports.AgentScorecardRequest {
 	return agentports.AgentScorecardRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -122,7 +123,7 @@ func TestGet_RefusesAReaderWhoCannotReadTheAgent(t *testing.T) {
 	cards := &stubScorecards{}
 	svc := newService(perms, cards, &stubTrust{}, &stubDefinitions{})
 
-	_, err := svc.Get(t.Context(), request(agent.ScorecardWindow30d), actor())
+	_, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow30d), actor())
 
 	require.Error(t, err)
 	assert.Zero(t, cards.asked.AgentDefinitionID, "counted rows for a reader who was refused")
@@ -145,7 +146,7 @@ func TestGet_AnAgentFromAnotherOrganizationIsNotFound(t *testing.T) {
 		&stubDefinitions{missing: true},
 	)
 
-	_, err := svc.Get(t.Context(), request(agent.ScorecardWindow30d), actor())
+	_, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow30d), actor())
 
 	require.Error(t, err)
 	assert.Zero(t, cards.asked.AgentDefinitionID, "counted rows before the agent was found")
@@ -157,7 +158,7 @@ func TestGet_CountsFromTheStartOfTheWindow(t *testing.T) {
 	cards := &stubScorecards{}
 	svc := newService(&agenttest.StubPermissions{}, cards, &stubTrust{}, &stubDefinitions{})
 
-	result, err := svc.Get(t.Context(), request(agent.ScorecardWindow7d), actor())
+	result, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow7d), actor())
 
 	require.NoError(t, err)
 	assert.Equal(t, int64(fixedNow-7*secondsPerDay), cards.asked.Since)
@@ -172,10 +173,14 @@ func TestGet_AnUnknownWindowFallsBackToAMonth(t *testing.T) {
 	cards := &stubScorecards{}
 	svc := newService(&agenttest.StubPermissions{}, cards, &stubTrust{}, &stubDefinitions{})
 
-	result, err := svc.Get(t.Context(), request(agent.ScorecardWindow("Forever")), actor())
+	result, err := svc.Get(
+		t.Context(),
+		request(agentevaluation.ScorecardWindow("Forever")),
+		actor(),
+	)
 
 	require.NoError(t, err)
-	assert.Equal(t, agent.ScorecardWindow30d, result.Scorecard.Window)
+	assert.Equal(t, agentevaluation.ScorecardWindow30d, result.Scorecard.Window)
 	assert.Equal(t, int64(fixedNow-30*secondsPerDay), cards.asked.Since)
 }
 
@@ -188,7 +193,9 @@ runs without anybody being asked.
 func TestGet_TheLadderIgnoresTheWindow(t *testing.T) {
 	t.Parallel()
 
-	trust := &stubTrust{rows: []*agent.ToolTrust{{ToolName: "dispatch_assign_move", Streak: 9}}}
+	trust := &stubTrust{
+		rows: []*agenttooltrust.ToolTrust{{ToolName: "dispatch_assign_move", Streak: 9}},
+	}
 	svc := newService(
 		&agenttest.StubPermissions{},
 		&stubScorecards{},
@@ -196,9 +203,9 @@ func TestGet_TheLadderIgnoresTheWindow(t *testing.T) {
 		&stubDefinitions{},
 	)
 
-	short, err := svc.Get(t.Context(), request(agent.ScorecardWindow7d), actor())
+	short, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow7d), actor())
 	require.NoError(t, err)
-	long, err := svc.Get(t.Context(), request(agent.ScorecardWindow90d), actor())
+	long, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow90d), actor())
 	require.NoError(t, err)
 
 	assert.Equal(t, short.ToolTrust, long.ToolTrust)
@@ -211,21 +218,21 @@ func TestGet_TheLadderIgnoresTheWindow(t *testing.T) {
 func TestGet_CarriesHowEachToolsCallsEnded(t *testing.T) {
 	t.Parallel()
 
-	verdicts := []agent.ToolVerdictCount{{
+	verdicts := []agentevaluation.ToolVerdictCount{{
 		ToolName: "shipment_list",
 		Verdict:  "invalid",
 		Calls:    4,
-		TopReasons: []agent.ToolVerdictReason{
+		TopReasons: []agentevaluation.ToolVerdictReason{
 			{Reason: "limit: got string, want integer", Calls: 4},
 		},
 	}}
-	cards := &stubScorecards{totals: &agent.ScorecardTotals{
+	cards := &stubScorecards{totals: &agentevaluation.ScorecardTotals{
 		CostUSD:      decimal.Zero,
 		ToolVerdicts: verdicts,
 	}}
 	svc := newService(&agenttest.StubPermissions{}, cards, &stubTrust{}, &stubDefinitions{})
 
-	result, err := svc.Get(t.Context(), request(agent.ScorecardWindow30d), actor())
+	result, err := svc.Get(t.Context(), request(agentevaluation.ScorecardWindow30d), actor())
 
 	require.NoError(t, err)
 	assert.Equal(t, verdicts, result.Scorecard.ToolVerdicts)

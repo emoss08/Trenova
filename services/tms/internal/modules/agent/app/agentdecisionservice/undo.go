@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -41,8 +42,8 @@ func newUndoWindow(key pulid.ID, now time.Time) *undoWindow {
 // Defers says whether an approval waits out the undo window. Only an
 // approval does, and only when there is a workflow engine to hold it; without
 // one it goes through at once, as it always has.
-func (s *Service) Defers(decision agent.DecisionType) bool {
-	if decision != agent.DecisionAccepted && decision != agent.DecisionModified {
+func (s *Service) Defers(decision agentdecision.DecisionType) bool {
+	if decision != agentdecision.DecisionAccepted && decision != agentdecision.DecisionModified {
 		return false
 	}
 
@@ -239,7 +240,7 @@ func (s *Service) windowDecisions(
 	tenant pagination.TenantInfo,
 	workflowID string,
 	commitsAt int64,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	all, err := s.decisionRepo.ListByCommitWorkflow(ctx,
 		agentports.ListAgentDecisionsByCommitWorkflowRequest{
 			WorkflowID: workflowID,
@@ -249,7 +250,7 @@ func (s *Service) windowDecisions(
 		return nil, err
 	}
 
-	group := make([]*agent.AgentDecision, 0, len(all))
+	group := make([]*agentdecision.AgentDecision, 0, len(all))
 	for _, decision := range all {
 		if decision.CommitsAt != nil && (commitsAt == 0 || *decision.CommitsAt == commitsAt) {
 			group = append(group, decision)
@@ -266,7 +267,7 @@ func (s *Service) windowDecisions(
 func (s *Service) commitOne(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	actor *permissionports.RequestActor,
 ) {
 	if decision.ProposalID == nil {
@@ -386,7 +387,7 @@ func (s *Service) UndoOwnApproval(
 			zap.String("workflow", window[0].CommitWorkflowID), zap.Error(err))
 	}
 
-	byID := make(map[pulid.ID]*agent.AgentDecision, len(window))
+	byID := make(map[pulid.ID]*agentdecision.AgentDecision, len(window))
 	for _, decision := range window {
 		byID[decision.ID] = decision
 	}
@@ -461,7 +462,7 @@ func (s *Service) ownWindow(
 	ctx context.Context,
 	req *agentports.SettleApprovalRequest,
 	actor *permissionports.RequestActor,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	if req.ProposalID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"proposalId", errortypes.ErrRequired, "Name the proposal whose approval this is",
@@ -513,7 +514,7 @@ func errAlreadyCommitted() error {
 	)
 }
 
-func (s *Service) logUndo(decision *agent.AgentDecision, actor kernelports.AuditActor) {
+func (s *Service) logUndo(decision *agentdecision.AgentDecision, actor kernelports.AuditActor) {
 	if s.audit == nil || decision.ProposalID == nil {
 		return
 	}

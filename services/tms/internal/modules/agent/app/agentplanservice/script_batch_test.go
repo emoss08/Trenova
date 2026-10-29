@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,11 +54,16 @@ func TestDecide_AnUnchangedScriptBatchCommitsEveryStepOnItsDigest(t *testing.T) 
 
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 
 	require.Len(t, h.decider.decided, 3)
 	for idx, decided := range h.decider.decided {
-		assert.Equal(t, h.steps.steps[idx].ID, decided.ProposalID, "steps run in the order prepared")
+		assert.Equal(
+			t,
+			h.steps.steps[idx].ID,
+			decided.ProposalID,
+			"steps run in the order prepared",
+		)
 		require.NotNil(t, decided.StepPreview)
 		assert.Equal(t, "step-"+h.steps.steps[idx].ID.String(), decided.StepPreview.Digest)
 		assert.True(t, decided.StepPreviewReviewed)
@@ -74,7 +82,7 @@ func TestDecide_AScriptBatchWithAStepThatMovedIsRefusedWhole(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	require.Len(t, h.decider.decided, 1, "no step commits on stale authority")
 	assert.Equal(t, h.steps.steps[1].ID, h.decider.decided[0].ProposalID,
 		"only the moved step is recorded, as refused")
@@ -120,18 +128,21 @@ func TestDecide_AScriptBatchCanAlwaysBeRejectedUnseen(t *testing.T) {
 
 	h := newScriptHarness(t, 2)
 	h.svc.previews = &fakePreviews{stale: true}
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusRejected, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, plan.Status)
 }
 
 type recordedAudit struct {
 	entries []*auditports.LogActionParams
 }
 
-func (a *recordedAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (a *recordedAudit) LogAction(
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
+) error {
 	a.entries = append(a.entries, params)
 
 	return nil
@@ -171,7 +182,7 @@ func TestDecide_AScriptBatchThatReadOutsideContentNamesItInTheAudit(t *testing.T
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
 		CallID:   "script-step:3",
-		Ref:      &agent.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	})
 	for _, step := range h.steps.steps {
 		step.Tainted, step.Taint = true, taint

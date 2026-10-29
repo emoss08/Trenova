@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -35,10 +37,10 @@ type retrievalOutcome struct {
 
 	SearchedBy string `json:"searchedBy"`
 
-	tainted []agent.RecordRef
+	tainted []agentrecord.RecordRef
 }
 
-func (o *retrievalOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o *retrievalOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
 
 func searchedBy(semantics retrievalports.RetrievalSemantics) string {
 	if semantics.Used {
@@ -147,7 +149,7 @@ func (t *searchDocumentsTool) ParamSchema() map[string]any {
 func (t *searchDocumentsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceDocument,
 		rationale: "Searches text extracted from documents, many of which someone outside " +
 			"wrote; each record returned is checked against what the caller may read, and " +
@@ -190,7 +192,7 @@ func (t *searchDocumentsTool) Query(
 	}
 
 	rows := make([]documentSearchRow, 0, len(result.Hits))
-	tainted := make([]agent.RecordRef, 0, len(result.Hits))
+	tainted := make([]agentrecord.RecordRef, 0, len(result.Hits))
 	for _, hit := range result.Hits {
 		doc := hit.Document
 		row := documentSearchRow{
@@ -207,7 +209,7 @@ func (t *searchDocumentsTool) Query(
 			row.AttachedTo = doc.ResourceType + " " + doc.ResourceID
 		}
 		rows = append(rows, row)
-		tainted = append(tainted, agent.RecordRef{
+		tainted = append(tainted, agentrecord.RecordRef{
 			EntityType: agent.TaintEntityDocument,
 			ID:         doc.ID.String(),
 		})

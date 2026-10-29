@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -77,7 +78,7 @@ func (t *webSearchTool) ParamSchema() map[string]any {
 func (t *webSearchTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceWebResearch,
-		reads:           agent.ExternalReadAlways,
+		reads:           agenttooltrust.ExternalReadAlways,
 		source:          agent.TaintSourceWeb,
 		capsLaterWrites: true,
 		rationale: "Searches the public web through the organization's extension; it changes " +
@@ -210,7 +211,7 @@ func (t *webReadTool) ParamSchema() map[string]any {
 func (t *webReadTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:        permission.ResourceWebResearch,
-		reads:           agent.ExternalReadAlways,
+		reads:           agenttooltrust.ExternalReadAlways,
 		source:          agent.TaintSourceWeb,
 		capsLaterWrites: true,
 		rationale: "Reads a page a web search returned; it changes nothing in Trenova and " +

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -202,7 +203,7 @@ func TestDescribeFactoringReadyUnsubmitted(t *testing.T) {
 	assert.Contains(t, item.Summary, "Submit it to Summit Capital")
 	assert.Equal(t, agent.SubjectInvoice, item.SubjectType)
 	assert.Equal(t, state.InvoiceID, item.SubjectID)
-	assert.Equal(t, agent.EventFactoringInvoiceReady, item.EventKind)
+	assert.Equal(t, agenttrigger.EventFactoringInvoiceReady, item.EventKind)
 	assert.Equal(t, *state.ReadySince+factoringreadiness.ReadyUnsubmittedSeconds, item.OccurredAt)
 	assert.Equal(t, tenant, item.TenantInfo)
 	assert.Contains(t, item.Path, "/billing/invoices")
@@ -412,7 +413,7 @@ func TestDescribeFactoringNoaExpiring(t *testing.T) {
 	assert.Contains(t, item.Summary, "Get a renewed notice signed")
 	assert.Equal(t, agent.SubjectFactoringNoa, item.SubjectType)
 	assert.Equal(t, row.NoaID, item.SubjectID)
-	assert.Equal(t, agent.EventFactoringNoaExpiring, item.EventKind)
+	assert.Equal(t, agenttrigger.EventFactoringNoaExpiring, item.EventKind)
 	assert.Equal(t, row.ExpiresAt-FactoringNoaWarningSeconds(), item.OccurredAt)
 	assert.Contains(t, item.Path, row.CustomerID.String())
 	assertStorable(t, item)
@@ -548,7 +549,7 @@ func TestDescribeFactoringSendFailed(t *testing.T) {
 	assert.Equal(t, watchtower.SeverityCritical, item.Severity)
 	assert.Equal(t, agent.SubjectFactoringSubmission, item.SubjectType)
 	assert.Equal(t, row.SubmissionID, item.SubjectID)
-	assert.Equal(t, agent.EventFactoringSubmissionFailed, item.EventKind)
+	assert.Equal(t, agenttrigger.EventFactoringSubmissionFailed, item.EventKind)
 	assert.Equal(t, "Schedule FS2610000004 could not be sent to Lone Star Funding", item.Title)
 	assert.Contains(t, item.Summary, "550 mailbox unavailable")
 	assert.Contains(t, item.Summary, "4500.00 USD")
@@ -628,7 +629,7 @@ func TestDescribeFactoringChargebackDue(t *testing.T) {
 	assert.Equal(t, watchtower.SeverityCritical, item.Severity)
 	assert.Equal(t, agent.SubjectInvoice, item.SubjectType)
 	assert.Equal(t, row.InvoiceID, item.SubjectID)
-	assert.Equal(t, agent.EventFactoringChargebackDue, item.EventKind)
+	assert.Equal(t, agenttrigger.EventFactoringChargebackDue, item.EventKind)
 	assert.Equal(t, "Invoice INV-0042 can be charged back in 5 days", item.Title)
 	assert.Contains(t, item.Summary, "930.00 USD")
 	assert.Contains(t, item.Summary, "Acme Foods has not paid it")

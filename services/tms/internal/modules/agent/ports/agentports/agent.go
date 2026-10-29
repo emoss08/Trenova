@@ -6,7 +6,14 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -32,7 +39,7 @@ type StartAgentRunForDefinitionRequest struct {
 	SubjectType  agent.SubjectType
 	SubjectID    pulid.ID
 	Trigger      agent.RunTrigger
-	EventKind    agent.EventKind
+	EventKind    agenttrigger.EventKind
 	// Slot is the schedule slot the run fills. It keys the workflow id, so a
 	// slot starts one run however often its start is retried.
 	Slot       int64
@@ -102,19 +109,19 @@ type AgentProposalService interface {
 
 type FlagAgentExceptionRequest struct {
 	RunID          pulid.ID
-	Category       agent.ExceptionCategory
-	Severity       agent.Severity
+	Category       agentexception.ExceptionCategory
+	Severity       agentexception.Severity
 	SubjectType    agent.SubjectType
 	SubjectID      pulid.ID
 	AttemptSummary string
-	Evidence       []agent.EvidenceRef
+	Evidence       []agentevidence.EvidenceRef
 	BlastRadius    int
 	TenantInfo     pagination.TenantInfo
 }
 
 type ResolveAgentExceptionRequest struct {
 	ID              pulid.ID
-	ResolutionState agent.ResolutionState
+	ResolutionState agentexception.ResolutionState
 	ResolutionNotes string
 	TenantInfo      pagination.TenantInfo
 }
@@ -124,29 +131,29 @@ type AgentExceptionService interface {
 		ctx context.Context,
 		req *FlagAgentExceptionRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.AgentException, error)
+	) (*agentexception.AgentException, error)
 	List(
 		ctx context.Context,
 		req *ListAgentExceptionRequest,
-	) (*pagination.ListResult[*agent.AgentException], error)
+	) (*pagination.ListResult[*agentexception.AgentException], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentExceptionConnectionRequest,
-	) (*pagination.CursorListResult[*agent.AgentException], error)
+	) (*pagination.CursorListResult[*agentexception.AgentException], error)
 	GetByID(
 		ctx context.Context,
 		req GetAgentExceptionByIDRequest,
-	) (*agent.AgentException, error)
+	) (*agentexception.AgentException, error)
 	Resolve(
 		ctx context.Context,
 		req *ResolveAgentExceptionRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.AgentException, error)
+	) (*agentexception.AgentException, error)
 }
 
 type DecideAgentProposalRequest struct {
 	ProposalID    pulid.ID
-	Decision      agent.DecisionType
+	Decision      agentdecision.DecisionType
 	Modifications map[string]any
 	ReasonCode    string
 	Note          string
@@ -164,7 +171,7 @@ type DecideAgentProposalRequest struct {
 	// by the plan service, never from a request: the step's preview projected
 	// with the plan, whether the plan's digest was reviewed, and the version
 	// the step's target is expected at once the steps before it have run.
-	StepPreview           *agent.ProposalPreview
+	StepPreview           *agentpreview.ProposalPreview
 	StepPreviewReviewed   bool
 	ExpectedTargetVersion *int64
 }
@@ -172,7 +179,7 @@ type DecideAgentProposalRequest struct {
 // DecideAgentPlanRequest decides every pending step of a plan at once.
 type DecideAgentPlanRequest struct {
 	PlanID     pulid.ID
-	Decision   agent.DecisionType
+	Decision   agentdecision.DecisionType
 	ReasonCode string
 	Note       string
 	TenantInfo pagination.TenantInfo
@@ -185,23 +192,23 @@ type AgentPlanService interface {
 		ctx context.Context,
 		req *DecideAgentPlanRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.AgentPlan, error)
+	) (*agentplan.AgentPlan, error)
 	// DecideOwn decides a plan raised in one of the actor's own
 	// conversations, by an agent they may use. Someone else's is not found.
 	DecideOwn(
 		ctx context.Context,
 		req *DecideAgentPlanRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.AgentPlan, error)
-	GetByID(ctx context.Context, req GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
+	) (*agentplan.AgentPlan, error)
+	GetByID(ctx context.Context, req GetAgentPlanByIDRequest) (*agentplan.AgentPlan, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentPlanConnectionRequest,
-	) (*pagination.CursorListResult[*agent.AgentPlan], error)
+	) (*pagination.CursorListResult[*agentplan.AgentPlan], error)
 	PlanHolds(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
-		plans []*agent.AgentPlan,
+		plans []*agentplan.AgentPlan,
 	) (map[pulid.ID]*assistantports.ProposalHold, error)
 	// AssertOwnPlan refuses a plan not raised in one of the actor's own
 	// conversations, or by an agent they may no longer use, as not found.
@@ -284,20 +291,20 @@ type AgentTrustService interface {
 	RecordDecision(
 		ctx context.Context,
 		proposal *agent.AgentProposal,
-		decision *agent.AgentDecision,
+		decision *agentdecision.AgentDecision,
 	) error
 	RecordExecutionFailure(ctx context.Context, proposal *agent.AgentProposal) error
 	ListForDefinition(
 		ctx context.Context,
 		req agenttoolports.ListToolTrustRequest,
-	) ([]*agent.ToolTrust, error)
+	) ([]*agenttooltrust.ToolTrust, error)
 }
 
 // DecisionOutcome is a recorded decision plus what happened when it ran.
 // The decision is the durable fact and is recorded whatever the tool did;
 // ExecutionError is set when an approval's write did not go through.
 type DecisionOutcome struct {
-	Decision       *agent.AgentDecision
+	Decision       *agentdecision.AgentDecision
 	ExecutionError error
 	// ExecutedTargetVersion is the version the approved write left its
 	// target at, when the target is pinned and could be read.
@@ -312,14 +319,14 @@ func (o *DecisionOutcome) Result(proposalID pulid.ID) AgentProposalDecisionResul
 	result := AgentProposalDecisionResult{ProposalID: proposalID, Decision: o.Decision}
 	if o.ExecutionError != nil {
 		result.Error = o.ExecutionError.Error()
-		result.Refused = errors.Is(o.ExecutionError, agent.ErrTargetChanged)
+		result.Refused = errors.Is(o.ExecutionError, agentplan.ErrTargetChanged)
 
 		return result
 	}
 
 	result.Executed = o.Decision != nil && o.Decision.CommitsAt == nil &&
-		(o.Decision.Decision == agent.DecisionAccepted ||
-			o.Decision.Decision == agent.DecisionModified)
+		(o.Decision.Decision == agentdecision.DecisionAccepted ||
+			o.Decision.Decision == agentdecision.DecisionModified)
 
 	return result
 }
@@ -351,7 +358,7 @@ type AgentDecisionService interface {
 		actor *permissionports.RequestActor,
 	) error
 	// Defers says whether an approval of this kind waits out the undo window.
-	Defers(decision agent.DecisionType) bool
+	Defers(decision agentdecision.DecisionType) bool
 	// ApproveDeferred records approvals that commit together when one undo
 	// window closes. Each is checked on its own and reports its own outcome.
 	ApproveDeferred(
@@ -366,7 +373,7 @@ type AgentDecisionService interface {
 // the decision recorded for it, or why it was refused.
 type DeferredApproval struct {
 	ProposalID     pulid.ID
-	Decision       *agent.AgentDecision
+	Decision       *agentdecision.AgentDecision
 	Err            error
 	ExecutionError error
 }
@@ -482,7 +489,7 @@ type AgentMoneyLimitsUpdate struct {
 type MoneyAllowanceRequest struct {
 	Definition *agentdefinition.Definition
 	RunID      pulid.ID
-	Unrecorded agent.MoneyUse
+	Unrecorded agenttooltrust.MoneyUse
 }
 
 // AgentBudgetService enforces an agent's caps and reports where it stands.
@@ -491,7 +498,10 @@ type AgentBudgetService interface {
 	CheckRun(ctx context.Context, definition *agentdefinition.Definition) (BudgetRefusal, error)
 	// CheckTool says whether the agent may execute the tool once more today.
 	CheckTool(ctx context.Context, req CheckToolBudgetRequest) (BudgetRefusal, error)
-	MoneyAllowance(ctx context.Context, req MoneyAllowanceRequest) (agent.MoneyAllowance, error)
+	MoneyAllowance(
+		ctx context.Context,
+		req MoneyAllowanceRequest,
+	) (agenttooltrust.MoneyAllowance, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
 	// WithinBusinessHours says whether the agent may make a change on its
 	// own now, reading its business-hours window in its own zone or the
@@ -513,7 +523,7 @@ type AgentActivityPublisher interface {
 	)
 	PlanChanged(
 		ctx context.Context,
-		plan *agent.AgentPlan,
+		plan *agentplan.AgentPlan,
 		actor kernelports.AuditActor,
 		action string,
 	)
@@ -551,7 +561,7 @@ const ActivityReopened = "reopened"
 // on its own, or a plan decided as a whole. Exactly one of the two is set.
 type PendingDecision struct {
 	Proposal  *agent.AgentProposal
-	Plan      *agent.AgentPlan
+	Plan      *agentplan.AgentPlan
 	CreatedAt int64
 	Hold      *assistantports.ProposalHold
 	// Cursor is where a page continues from after this entry.
@@ -601,7 +611,7 @@ type PendingDecisionsPage struct {
 // that proposal alone.
 type DecideAgentProposalsRequest struct {
 	ProposalIDs []pulid.ID
-	Decision    agent.DecisionType
+	Decision    agentdecision.DecisionType
 	ReasonCode  string
 	Note        string
 	TenantInfo  pagination.TenantInfo
@@ -616,11 +626,11 @@ type DecideAgentProposalsRequest struct {
 // Refused says the approval was recorded but refused because the record it
 // changes moved on since it was proposed, so nothing was changed.
 type AgentProposalDecisionResult struct {
-	ProposalID pulid.ID             `json:"proposalId"`
-	Decision   *agent.AgentDecision `json:"decision"`
-	Error      string               `json:"error,omitempty"`
-	Executed   bool                 `json:"executed"`
-	Refused    bool                 `json:"refused"`
+	ProposalID pulid.ID                     `json:"proposalId"`
+	Decision   *agentdecision.AgentDecision `json:"decision"`
+	Error      string                       `json:"error,omitempty"`
+	Executed   bool                         `json:"executed"`
+	Refused    bool                         `json:"refused"`
 }
 
 type AgentDecisionQueueService interface {

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
@@ -31,7 +31,7 @@ var tenderOfferLabels = map[string]string{
 func (t *CancelTenderTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (t *CancelTenderTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	tenderChange.Operation = agent.PreviewOperationArchive
+	tenderChange.Operation = agentpreview.PreviewOperationArchive
 
 	offers, err := tenderOfferChanges(plan.Before, plan.After)
 	if err != nil {
@@ -87,13 +87,13 @@ func (t *CancelTenderTool) Preview(
 
 	return toolpreview.Build(
 		summary,
-		append([]*agent.RecordChange{tenderChange}, offers...)...), nil
+		append([]*agentpreview.RecordChange{tenderChange}, offers...)...), nil
 }
 
 func (t *RecordTenderResponseTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
 		if err != nil {
 			return nil, err
@@ -116,7 +116,7 @@ func (t *RecordTenderResponseTool) Preview(
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.Tender.Offers)+2)
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Tender.Offers)+2)
 	if plan.Tender.Status != plan.TenderAfter.Status {
 		tenderChange, tErr := tenderStateChange(plan.Tender, plan.TenderAfter,
 			changepreview.FieldStatus, "acceptedOfferId", "acceptedAt", "exhaustedAt")
@@ -193,7 +193,7 @@ func (t *RecordTenderResponseTool) Preview(
 func (t *RecordTenderResponseTool) previewBounce(
 	ctx context.Context,
 	request *tenderservice.BounceTenderRequest,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would record that the carrier backed out of its acceptance. Reason: " +
 		request.Reason
 	plan, err := t.tenders.PreviewBounce(ctx, request)
@@ -214,7 +214,7 @@ func (t *RecordTenderResponseTool) previewBounce(
 	if err != nil {
 		return nil, err
 	}
-	changes := append([]*agent.RecordChange{tenderChange}, offers...)
+	changes := append([]*agentpreview.RecordChange{tenderChange}, offers...)
 
 	carrier := shipmenttools.CarrierNameOfOffer(plan.Revoked)
 	summary = fmt.Sprintf("Would record that %s backed out of the tender it accepted.", carrier)
@@ -255,7 +255,7 @@ func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
 func tenderStateChange(
 	before, after *tender.Tender,
 	fields ...string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceTender,
 		ID:       before.ID,
@@ -272,7 +272,7 @@ func tenderStateChange(
 
 // tenderOfferChanges is every offer the write moves, in rank order, each as
 // its own record; an offer left where it was is left out.
-func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, error) {
+func tenderOfferChanges(before, after *tender.Tender) ([]*agentpreview.RecordChange, error) {
 	previous := make(map[pulid.ID]*tender.TenderOffer, len(before.Offers))
 	for _, offer := range before.Offers {
 		if offer != nil {
@@ -280,7 +280,7 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 		}
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(after.Offers))
+	changes := make([]*agentpreview.RecordChange, 0, len(after.Offers))
 	for _, offer := range after.Offers {
 		prior, ok := previous[offer.ID]
 		if !ok || prior.Status == offer.Status {
@@ -322,16 +322,16 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 
 // tenderOfferSendChange is the offer a sequential tender sends next: by
 // email to the address it was addressed to, or over the carrier's EDI link.
-func tenderOfferSendChange(offer *tender.TenderOffer) *agent.RecordChange {
-	message := &agent.MessagePreview{
-		Channel: agent.MessageChannelEmail,
+func tenderOfferSendChange(offer *tender.TenderOffer) *agentpreview.RecordChange {
+	message := &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEmail,
 		To:      []string{offer.RecipientEmail},
 		Subject: "Load tender offer",
 		Body: money.FormatMinor(money.MinorUnits(offer.Rate), money.DefaultCurrencyCode) +
 			" " + carrierpreview.RateMethodWords(offer.RateMethod) + " offered.",
 	}
 	if offer.Channel == tender.ChannelEDI {
-		message.Channel = agent.MessageChannelEDI
+		message.Channel = agentpreview.MessageChannelEDI
 		message.To = []string{shipmenttools.CarrierNameOfOffer(offer) + " (EDI 204)"}
 	}
 
@@ -345,7 +345,11 @@ func tenderOfferSendChange(offer *tender.TenderOffer) *agent.RecordChange {
 // attachOfferPay puts a flat offer's rate on the answered offer's change as
 // the pay the acceptance commits. A per-mile rate is not a total, so it is
 // named in the summary instead.
-func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, carrier string) {
+func attachOfferPay(
+	changes []*agentpreview.RecordChange,
+	offer *tender.TenderOffer,
+	carrier string,
+) {
 	if offer.RateMethod == shipment.CarrierRateMethodPerMile {
 		return
 	}
@@ -355,7 +359,7 @@ func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, ca
 		}
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 			money.DefaultCurrencyCode,
-			agent.MoneyLine{
+			agentpreview.MoneyLine{
 				Label: "Carrier pay to " + carrier,
 				After: changepreview.KnownAmount(offer.AgreedRate()),
 			},

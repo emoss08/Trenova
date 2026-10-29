@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -496,7 +496,7 @@ func TestCheckHealthMarksARevokedAuthorization(t *testing.T) {
 
 	events := h.events.Published()
 	require.Len(t, events, 1)
-	assert.Equal(t, agent.EventAccountingConnectionDegraded, events[0].Kind)
+	assert.Equal(t, agenttrigger.EventAccountingConnectionDegraded, events[0].Kind)
 	assert.Equal(t, conn.ID, events[0].SubjectID)
 
 	item, ok := h.watchtower.get(conn.ID.String())
@@ -682,7 +682,7 @@ func TestSessionRecordsARevokedAuthorizationAndRefuses(t *testing.T) {
 		h.connections.rows[conn.ID].Status,
 	)
 	require.Len(t, h.events.Published(), 1)
-	assert.Equal(t, agent.EventAccountingConnectionDegraded, h.events.Published()[0].Kind)
+	assert.Equal(t, agenttrigger.EventAccountingConnectionDegraded, h.events.Published()[0].Kind)
 }
 
 func TestReportCallFailureRevokesOnlyForAuthorizationFailures(t *testing.T) {

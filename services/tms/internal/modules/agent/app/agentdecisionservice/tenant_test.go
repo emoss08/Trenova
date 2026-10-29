@@ -3,7 +3,7 @@ package agentdecisionservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ func TestDecideWithOutcome_RefusesATenantThatIsNotTheDeciders(t *testing.T) {
 
 	_, err := (&Service{}).DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: pulid.MustNew("ap_"),
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: actor.BusinessUnitID},
 	}, actor)
 

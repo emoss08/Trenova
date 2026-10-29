@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -22,12 +22,12 @@ const judgeReply = `{"score":0.9,"rationale":"It answered from the records."}`
 
 type judgedEvaluations struct {
 	agentports.AgentEvaluationRepository
-	stored  map[pulid.ID]*agent.Evaluation
+	stored  map[pulid.ID]*agentevaluation.Evaluation
 	order   []pulid.ID
 	updates int
 }
 
-func (f *judgedEvaluations) clone(id pulid.ID) *agent.Evaluation {
+func (f *judgedEvaluations) clone(id pulid.ID) *agentevaluation.Evaluation {
 	stored := *f.stored[id]
 	if stored.Checks != nil {
 		checks := *stored.Checks
@@ -40,8 +40,8 @@ func (f *judgedEvaluations) clone(id pulid.ID) *agent.Evaluation {
 func (f *judgedEvaluations) ListBySuiteRun(
 	_ context.Context,
 	req agentports.ListSuiteEvaluationsRequest,
-) ([]*agent.Evaluation, error) {
-	out := make([]*agent.Evaluation, 0, len(f.order))
+) ([]*agentevaluation.Evaluation, error) {
+	out := make([]*agentevaluation.Evaluation, 0, len(f.order))
 	for _, id := range f.order {
 		if *f.stored[id].SuiteOrdinal > req.AfterOrdinal {
 			out = append(out, f.clone(id))
@@ -54,7 +54,7 @@ func (f *judgedEvaluations) ListBySuiteRun(
 func (f *judgedEvaluations) GetByID(
 	_ context.Context,
 	req agentports.GetAgentEvaluationByIDRequest,
-) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
 	if _, ok := f.stored[req.ID]; !ok {
 		return nil, errortypes.NewNotFoundError("Evaluation not found")
 	}
@@ -64,8 +64,8 @@ func (f *judgedEvaluations) GetByID(
 
 func (f *judgedEvaluations) Update(
 	_ context.Context,
-	entity *agent.Evaluation,
-) (*agent.Evaluation, error) {
+	entity *agentevaluation.Evaluation,
+) (*agentevaluation.Evaluation, error) {
 	f.updates++
 	saved := *entity
 	f.stored[entity.ID] = &saved
@@ -186,7 +186,7 @@ func newJudgeFixture(t *testing.T, count int) *judgeFixture {
 		AgentDefinitionID: agentID,
 	}
 
-	evaluations := &judgedEvaluations{stored: map[pulid.ID]*agent.Evaluation{}}
+	evaluations := &judgedEvaluations{stored: map[pulid.ID]*agentevaluation.Evaluation{}}
 	cases := &judgedCases{}
 	ids := make([]pulid.ID, 0, count)
 	for idx := range count {
@@ -198,15 +198,15 @@ func newJudgeFixture(t *testing.T, count int) *judgeFixture {
 			Rubric:            "Names every late load.",
 		})
 		ordinal := idx + 1
-		evaluation := &agent.Evaluation{
-			ID:                pulid.MustNew(agent.EvaluationIDPrefix),
+		evaluation := &agentevaluation.Evaluation{
+			ID:                pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 			OrganizationID:    tenant.OrgID,
 			BusinessUnitID:    tenant.BuID,
 			AgentDefinitionID: agentID,
 			EvalCaseID:        &caseID,
-			Status:            agent.EvaluationStatusCompleted,
+			Status:            agentevaluation.EvaluationStatusCompleted,
 			Reply:             "Loads 41 and 42 are late.",
-			Checks:            &agent.CaseChecks{Deterministic: 0.8},
+			Checks:            &agentevaluation.CaseChecks{Deterministic: 0.8},
 			SuiteRunID:        &run.ID,
 			SuiteOrdinal:      &ordinal,
 		}
@@ -342,7 +342,10 @@ func TestSubmitJudgeBatch_LeavesOutWhatIsNotToBeJudged(t *testing.T) {
 
 	f := newJudgeFixture(t, 3)
 	f.evaluations.stored[f.ids[0]].Checks.HardFailure = true
-	f.evaluations.stored[f.ids[1]].Judge = &agent.JudgeVerdict{Score: 1, Rationale: "Done."}
+	f.evaluations.stored[f.ids[1]].Judge = &agentevaluation.JudgeVerdict{
+		Score:     1,
+		Rationale: "Done.",
+	}
 
 	batch := f.submit(t, "0")
 	require.True(t, batch.Batched())

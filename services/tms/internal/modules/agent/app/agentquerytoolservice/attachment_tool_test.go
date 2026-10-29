@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -279,7 +280,7 @@ func TestReadAttachment_IsThePersonsOwnRead(t *testing.T) {
 	policy := readAttachment(nil, nil).Policy()
 
 	assert.Equal(t, permission.ResourceAssistant, policy.Resource)
-	assert.Equal(t, agent.ToolScopeSelf, policy.Scope)
-	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ToolScopeSelf, policy.Scope)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceAttachment, policy.Source)
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -156,17 +158,17 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 func (t *TransferToBillingTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      billingQueueRecordEntity,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Hands delivered shipments to the billing queue inside Trenova, by the " +
 			"checks the transfer dialog makes; a biller, or the organization's own " +
 			"auto-approve rule, still decides every item.",
@@ -402,7 +404,7 @@ func (t *TransferToBillingTool) Execute(
 func (t *TransferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -431,7 +433,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "transferred",
 		Kind:   "shipments",
 		Name:   transferOutcome(response),
@@ -442,7 +444,7 @@ func (t *TransferToBillingTool) startRun(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 	request transferRequest,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{
 		TenantInfo:                  toolparams.TenantFrom(*params),
 		Scope:                       billingtransfer.RunScopeSelected,
@@ -454,7 +456,7 @@ func (t *TransferToBillingTool) startRun(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "started",
 		Kind:   "billing transfer",
 		Name: fmt.Sprintf(

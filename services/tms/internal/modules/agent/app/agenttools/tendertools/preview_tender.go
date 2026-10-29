@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 )
@@ -16,7 +16,7 @@ import (
 func (t *TenderToRoutingGuideTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (t *TenderToRoutingGuideTool) Preview(
 func (t *TenderToCarriersTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,11 @@ func (t *TenderToCarriersTool) Preview(
 		return nil, err
 	}
 	if planned.RefusalError != nil {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail, planned.RefusalError.Error())
+		toolpreview.Warn(
+			preview,
+			agentpreview.PreviewWarningWouldFail,
+			planned.RefusalError.Error(),
+		)
 	}
 
 	return preview, nil

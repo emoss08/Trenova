@@ -7,7 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -196,22 +198,22 @@ func proposals(in *Input) softResult {
 		return softResult{}
 	}
 
-	originals := make([]agent.OriginalProposal, 0, len(expected))
+	originals := make([]agentreplay.OriginalProposal, 0, len(expected))
 	for _, proposal := range expected {
-		original := agent.OriginalProposal{
+		original := agentreplay.OriginalProposal{
 			ToolName: proposal.ToolName,
 			Params:   proposal.Params,
 			Status:   agent.ProposalStatusAccepted,
-			Decision: agent.DecisionAccepted,
+			Decision: agentdecision.DecisionAccepted,
 		}
 		if proposal.Rejected {
 			original.Status = agent.ProposalStatusRejected
-			original.Decision = agent.DecisionRejected
+			original.Decision = agentdecision.DecisionRejected
 		}
 		originals = append(originals, original)
 	}
 
-	comparison := agent.CompareReplay(originals, in.Actions)
+	comparison := agentreplay.CompareReplay(originals, in.Actions)
 	passed := 0
 	findings := make([]string, 0)
 	for i, proposal := range expected {
@@ -231,11 +233,11 @@ func proposals(in *Input) softResult {
 	}
 }
 
-func proposalPasses(proposal agentquality.ExpectedProposal, match agent.ReplayMatch) bool {
+func proposalPasses(proposal agentquality.ExpectedProposal, match agentreplay.ReplayMatch) bool {
 	switch match.Verdict {
-	case agent.VerdictAgreed, agent.VerdictImproved:
+	case agentreplay.VerdictAgreed, agentreplay.VerdictImproved:
 		return true
-	case agent.VerdictChanged:
+	case agentreplay.VerdictChanged:
 		within, _ := argumentsMatch(proposal.Params, proposal.Rules, match.ReplayParams)
 		return within != proposal.Rejected
 	default:

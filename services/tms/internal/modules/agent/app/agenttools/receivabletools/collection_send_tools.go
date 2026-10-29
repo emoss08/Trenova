@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
@@ -134,7 +136,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 				ctx context.Context,
 				req *paymentreminderports.SendNowRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				sent, err := reminders.SendNow(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -146,7 +148,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 						strings.Join(reminder.InvoiceNumbers, ", "),
 						strings.Join(reminder.SentTo, ", ")))
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "sent",
 					Kind:   "payment reminder",
 					IDs:    map[string]string{toolparams.ParamCustomerID: req.CustomerID.String()},
@@ -161,8 +163,8 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 func renderReminders(
 	req *paymentreminderports.SendNowRequest,
 	previews []*paymentreminderports.SendNowPreview,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(previews))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(previews))
 	totals := make([]string, 0, len(previews))
 	invoices := 0
 	name := "the customer"
@@ -187,7 +189,7 @@ func renderReminders(
 		if err != nil {
 			return nil, err
 		}
-		change.Operation = agent.PreviewOperationSend
+		change.Operation = agentpreview.PreviewOperationSend
 		change.Message = outboundpreview.PlannedEmailPreview(preview.Email)
 		changes = append(changes, change)
 	}
@@ -264,12 +266,12 @@ func NewSendCustomerStatementTool(
 				ctx context.Context,
 				req *customerstatementports.SendRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				sent, err := statements.Send(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "sent",
 					Kind:   "customer statement",
 					Name:   sent.FileName,
@@ -332,7 +334,7 @@ func optionalText(params map[string]any, key string) string {
 func renderStatement(
 	req *customerstatementports.SendRequest,
 	preview *customerstatementports.SendPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	view := &statementView{
 		PeriodStart:   preview.PeriodStart,
 		PeriodEnd:     preview.PeriodEnd,
@@ -354,7 +356,7 @@ func renderStatement(
 	if err != nil {
 		return nil, err
 	}
-	change.Operation = agent.PreviewOperationSend
+	change.Operation = agentpreview.PreviewOperationSend
 	change.Message = outboundpreview.PlannedEmailPreview(preview.Email)
 
 	summary := fmt.Sprintf("Would email %s its statement of account showing %s due.",

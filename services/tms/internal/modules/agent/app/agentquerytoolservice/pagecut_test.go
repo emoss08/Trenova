@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -206,7 +206,7 @@ func TestOffsetPage_ACutResumesAtTheRowAfter(t *testing.T) {
 	items := []map[string]any{{"id": "a"}, {"id": "c"}, {"id": "d"}}
 	page := &offsetPage{
 		record:    map[string]any{outcomeItems: items, outcomeCount: 3},
-		outside:   []agent.RecordRef{{EntityType: "x", ID: "d"}},
+		outside:   []agentrecord.RecordRef{{EntityType: "x", ID: "d"}},
 		positions: []int{0, 2, 3},
 		window:    offsetWindow{scope: "scope", offset: 10, limit: 4},
 	}

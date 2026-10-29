@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -33,13 +35,13 @@ import (
 
 type evalStore struct {
 	agentports.AgentEvaluationRepository
-	stored *agent.Evaluation
+	stored *agentevaluation.Evaluation
 }
 
 func (s *evalStore) GetByID(
 	context.Context,
 	agentports.GetAgentEvaluationByIDRequest,
-) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
 	copied := *s.stored
 
 	return &copied, nil
@@ -47,8 +49,8 @@ func (s *evalStore) GetByID(
 
 func (s *evalStore) Update(
 	_ context.Context,
-	entity *agent.Evaluation,
-) (*agent.Evaluation, error) {
+	entity *agentevaluation.Evaluation,
+) (*agentevaluation.Evaluation, error) {
 	entity.Version++
 	copied := *entity
 	s.stored = &copied
@@ -94,13 +96,13 @@ func (s *proposalStore) ListByRun(
 
 type decisionStore struct {
 	agentports.AgentDecisionRepository
-	decisions []*agent.AgentDecision
+	decisions []*agentdecision.AgentDecision
 }
 
 func (s *decisionStore) ListByProposals(
 	context.Context,
 	agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	return s.decisions, nil
 }
 
@@ -206,13 +208,13 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		ToolParams: map[string]any{"shipmentId": "shp_1", "rate": float64(1200)},
 		Status:     agent.ProposalStatusExecuted,
 	}
-	evaluation := &agent.Evaluation{
-		ID:                pulid.MustNew(agent.EvaluationIDPrefix),
+	evaluation := &agentevaluation.Evaluation{
+		ID:                pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		AgentDefinitionID: definition.ID,
 		SourceRunID:       run.ID,
-		Status:            agent.EvaluationStatusPending,
+		Status:            agentevaluation.EvaluationStatusPending,
 		Trigger:           agent.RunTriggerChat,
 		SubjectType:       agent.SubjectAssistantThread,
 		SubjectID:         thread.ID,
@@ -237,9 +239,9 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		Evaluations:  evaluations,
 		EvalCases:    cases,
 		Users:        users,
-		Decisions: &decisionStore{decisions: []*agent.AgentDecision{{
+		Decisions: &decisionStore{decisions: []*agentdecision.AgentDecision{{
 			ProposalID:    &proposal.ID,
-			Decision:      agent.DecisionModified,
+			Decision:      agentdecision.DecisionModified,
 			Modifications: map[string]any{"rate": float64(1350)},
 		}}},
 		Conversations: conversations,
@@ -298,7 +300,7 @@ func TestOpenReplay_AChatRunReplaysAsThePersonWhoAsked(t *testing.T) {
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.UsagePurpose)
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.AttributedPurpose())
 	assert.True(t, opened.request.Definition.SimulationMode)
-	assert.Equal(t, agent.EvaluationStatusRunning, w.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusRunning, w.evaluations.stored.Status)
 	require.NotNil(t, w.evaluations.stored.Fingerprint)
 	assert.Equal(t, int64(7), w.evaluations.stored.Fingerprint.DefinitionVersion)
 }
@@ -337,7 +339,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err := inactive.activities.openReplay(t.Context(), inactive.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, inactive.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, inactive.evaluations.stored.Status)
 	assert.Contains(t,
 		inactive.evaluations.stored.ErrorMessage,
 		"no longer has an active account",
@@ -352,7 +354,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err = removed.activities.openReplay(t.Context(), removed.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, removed.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, removed.evaluations.stored.Status)
 	assert.Contains(t, removed.evaluations.stored.ErrorMessage, "no longer belongs")
 
 	deleted := newReplayWorld(t)
@@ -360,7 +362,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err = deleted.activities.openReplay(t.Context(), deleted.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, deleted.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, deleted.evaluations.stored.Status)
 }
 
 func caseEvaluation(w *replayWorld, evalCase *agentquality.EvalCase) {
@@ -429,7 +431,7 @@ func TestOpenReplay_ADeletedCaseIsSkipped(t *testing.T) {
 	opened, err := w.activities.openReplay(t.Context(), w.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, w.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, w.evaluations.stored.Status)
 }
 
 func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
@@ -466,7 +468,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 	require.NoError(t, err)
 
 	stored := w.evaluations.stored
-	assert.Equal(t, agent.EvaluationStatusCompleted, stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusCompleted, stored.Status)
 	require.NotNil(t, stored.Checks)
 	require.NotNil(t, stored.CaseScore)
 	assert.False(t, stored.Checks.HardFailure, "a delegate's tools are not this agent's")

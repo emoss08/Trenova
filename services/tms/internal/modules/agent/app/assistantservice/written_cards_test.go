@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -36,7 +38,7 @@ func (r *shipmentReader) ParamSchema() map[string]any {
 
 func (r *shipmentReader) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name: "shipment_get", Kind: agent.ToolKindQuery,
+		Name: "shipment_get", Kind: agenttooltrust.ToolKindQuery,
 		Resource: permission.ResourceShipment, Operation: permission.OpRead,
 	}
 }
@@ -80,7 +82,7 @@ func writtenRecorder(
 
 func executedWrite(
 	tool string,
-	result *agent.ToolExecutionResult,
+	result *agentrecord.ToolExecutionResult,
 ) agentruntimeports.ToolObservation {
 	return agentruntimeports.ToolObservation{
 		Call: llmports.ToolCall{ID: "call_write", Name: tool},
@@ -107,10 +109,12 @@ func TestObserve_ShowsTheRecordAWriteMade(t *testing.T) {
 	recorder, repo := writtenRecorder(t, reader)
 	shipmentID := pulid.MustNew("shp_").String()
 
-	shown, err := recorder.observe(executedWrite("shipment_create", &agent.ToolExecutionResult{
-		Action: "created", Kind: "shipment", Name: "S26100125117880",
-		Record: &agent.RecordRef{EntityType: "shipment", ID: shipmentID},
-	}))
+	shown, err := recorder.observe(
+		executedWrite("shipment_create", &agentrecord.ToolExecutionResult{
+			Action: "created", Kind: "shipment", Name: "S26100125117880",
+			Record: &agentrecord.RecordRef{EntityType: "shipment", ID: shipmentID},
+		}),
+	)
 	require.NoError(t, err)
 
 	require.NotNil(t, shown)
@@ -131,10 +135,12 @@ func TestObserve_ShowsARecordWithNoReaderByWhatTheWriteSaid(t *testing.T) {
 	recorder, repo := writtenRecorder(t)
 	locationID := pulid.MustNew("loc_").String()
 
-	shown, err := recorder.observe(executedWrite("location_create", &agent.ToolExecutionResult{
-		Action: "created", Kind: "location", Name: "Harbor Line Cold Storage",
-		Record: &agent.RecordRef{EntityType: "location", ID: locationID},
-	}))
+	shown, err := recorder.observe(
+		executedWrite("location_create", &agentrecord.ToolExecutionResult{
+			Action: "created", Kind: "location", Name: "Harbor Line Cold Storage",
+			Record: &agentrecord.RecordRef{EntityType: "location", ID: locationID},
+		}),
+	)
 	require.NoError(t, err)
 
 	require.NotNil(t, shown)
@@ -176,8 +182,8 @@ func TestShowWritten_PointsTheFollowUpAtWhatTheApprovalMade(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_").String()
 	executed := &agent.AgentProposal{
 		ID: pulid.MustNew("ap_"), ToolName: "shipment_create", Status: agent.ProposalStatusExecuted,
-		ExecutionResult: &agent.ToolExecutionResult{
-			Action: "created", Record: &agent.RecordRef{EntityType: "shipment", ID: shipmentID},
+		ExecutionResult: &agentrecord.ToolExecutionResult{
+			Action: "created", Record: &agentrecord.RecordRef{EntityType: "shipment", ID: shipmentID},
 		},
 	}
 	declined := &agent.AgentProposal{ID: pulid.MustNew("ap_"), Status: agent.ProposalStatusRejected}

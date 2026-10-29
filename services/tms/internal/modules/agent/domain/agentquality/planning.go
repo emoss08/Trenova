@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -257,7 +258,7 @@ func committedNote(committed decimal.Decimal) string {
 	return ", and $" + committed.StringFixed(2) + " held for judge batches still running"
 }
 
-func DescribeChanges(changes []agent.FingerprintChange) string {
+func DescribeChanges(changes []agentfingerprint.FingerprintChange) string {
 	if len(changes) == 0 {
 		return "Nothing about the agent changed; its cases or the records they read did."
 	}
@@ -265,16 +266,16 @@ func DescribeChanges(changes []agent.FingerprintChange) string {
 	parts := make([]string, 0, len(changes))
 	for _, change := range changes {
 		switch change.Field {
-		case agent.FingerprintFieldDefinition:
+		case agentfingerprint.FingerprintFieldDefinition:
 			parts = append(parts, "the agent was saved (version "+change.From+" to "+change.To+")")
-		case agent.FingerprintFieldPrompt:
+		case agentfingerprint.FingerprintFieldPrompt:
 			parts = append(parts, "its instructions or prompt changed")
-		case agent.FingerprintFieldTools:
+		case agentfingerprint.FingerprintFieldTools:
 			parts = append(parts, "its tools or their rules changed")
-		case agent.FingerprintFieldModel:
+		case agentfingerprint.FingerprintFieldModel:
 			parts = append(parts, "its model changed from "+orNone(change.From)+" to "+
 				orNone(change.To))
-		case agent.FingerprintFieldProvider:
+		case agentfingerprint.FingerprintFieldProvider:
 			parts = append(parts, "it is served by a different provider")
 		}
 	}

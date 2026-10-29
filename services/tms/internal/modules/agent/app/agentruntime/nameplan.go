@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -36,10 +36,10 @@ func namePlanSpec() kernelports.ToolSpec {
 			toolschema.KeyProperties: map[string]any{
 				paramPlanTitle: map[string]any{
 					toolschema.KeyType:      toolschema.TypeString,
-					toolschema.KeyMaxLength: agent.MaxNamedPlanTitleLength,
+					toolschema.KeyMaxLength: agentplan.MaxNamedPlanTitleLength,
 					toolschema.KeyDescription: fmt.Sprintf("The plan's name: one line of plain "+
 						"text, at most %d characters, no markdown.",
-						agent.MaxNamedPlanTitleLength),
+						agentplan.MaxNamedPlanTitleLength),
 				},
 			},
 			toolschema.KeyRequired:             []string{paramPlanTitle},
@@ -57,7 +57,7 @@ func (s *Service) declareNamePlan(set *toolSet, delegated bool) {
 }
 
 func (t *Turn) namePlan(arguments map[string]any) toolOutcome {
-	title, err := agent.NamedPlanTitle(stringArg(arguments, paramPlanTitle))
+	title, err := agentplan.NamedPlanTitle(stringArg(arguments, paramPlanTitle))
 	if err != nil {
 		return failedOutcome("Tool %q was not run: %s", namePlanName, err.Error())
 	}

@@ -6,6 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
@@ -37,7 +41,7 @@ type PendingAction struct {
 	ExecutionError string `json:"executionError"`
 	// ExecutionResult is what an auto-executing tool made, when it reports
 	// it, recorded on the proposal the action becomes.
-	ExecutionResult *agent.ToolExecutionResult `json:"executionResult,omitempty"`
+	ExecutionResult *agentrecord.ToolExecutionResult `json:"executionResult,omitempty"`
 	// Simulated is set when the agent was in simulation and the write was
 	// previewed instead of made; Simulation is the preview.
 	Simulated  bool                  `json:"simulated"`
@@ -74,7 +78,7 @@ type PendingAction struct {
 	TraceID string `json:"traceId,omitempty"`
 	SpanID  string `json:"spanId,omitempty"`
 	// TierSource says what set the tier the call ran or was held at.
-	TierSource agent.TierSource `json:"tierSource,omitempty"`
+	TierSource agenttooltrust.TierSource `json:"tierSource,omitempty"`
 	// ExecutedVersion is the target record's version after an automatic
 	// write, when the tool reports it.
 	ExecutedVersion *int64 `json:"executedVersion,omitempty"`
@@ -175,7 +179,7 @@ type RunRequest struct {
 	// Records are the records the turn is about: its subject, the page, the
 	// records the person named. A turn it hands a task to reads their
 	// memories too.
-	Records   []agent.EntityRef
+	Records   []agentpagecontext.EntityRef
 	FileTexts map[string]string
 	// Directed is a task the person handed straight to another agent from
 	// this conversation. The turn runs that agent on it instead of asking
@@ -248,8 +252,8 @@ type Delegation struct {
 	StepScope string `json:"stepScope"`
 	// MoneySpent is what the delegating turn had moved in automatic money
 	// writes not yet recorded, so the run and day caps hold across both.
-	MoneySpent agent.MoneyUse `json:"moneySpent,omitzero"`
-	ReadOnly   bool           `json:"readOnly,omitempty"`
+	MoneySpent agenttooltrust.MoneyUse `json:"moneySpent,omitzero"`
+	ReadOnly   bool                    `json:"readOnly,omitempty"`
 }
 
 // Scope is how the turn's events and saved steps are tagged.
@@ -269,7 +273,7 @@ type DirectedTask struct {
 	// Records are the conversation's subject and records in play when the
 	// turn opened, handed to the agent with the task. They ride on the task
 	// because a restored turn's request does not carry the anchors.
-	Records []agent.RecordRef `json:"records,omitempty"`
+	Records []agentrecord.RecordRef `json:"records,omitempty"`
 }
 
 // ProposalOutcome is the current state of a proposal an earlier turn raised.
@@ -288,7 +292,7 @@ type ProposalOutcome struct {
 	ExecutedAt     *int64
 	// ExecutionResult is what the executed proposal made, when its tool
 	// reported it.
-	ExecutionResult *agent.ToolExecutionResult
+	ExecutionResult *agentrecord.ToolExecutionResult
 	// Modifications are what the approver changed before approving, so the
 	// model learns what actually ran rather than what it asked for.
 	Modifications map[string]any
@@ -457,9 +461,9 @@ type RunResult struct {
 	Delegations []DelegatedRun `json:",omitempty"`
 	// Taint is the outside content the turn read. Nil is a turn opened
 	// before taint was kept, which counts as tainted wherever it matters.
-	Taint       *agent.RunTaint    `json:",omitempty"`
-	Fingerprint *agent.Fingerprint `json:",omitempty"`
-	Usage       *RunUsage          `json:",omitempty"`
+	Taint       *agent.RunTaint               `json:",omitempty"`
+	Fingerprint *agentfingerprint.Fingerprint `json:",omitempty"`
+	Usage       *RunUsage                     `json:",omitempty"`
 	// UsedMemoryIDs are the memories the turn used: those its prompt
 	// carried, then those agent_list_memories read back. SavedMemories are what it
 	// kept or offered to keep. Both are kept on its reply.
@@ -475,7 +479,7 @@ type RunResult struct {
 	PlanTitle    string        `json:",omitempty"`
 }
 
-func (r *RunResult) ServedFingerprint() *agent.Fingerprint {
+func (r *RunResult) ServedFingerprint() *agentfingerprint.Fingerprint {
 	if r == nil {
 		return nil
 	}
@@ -599,7 +603,7 @@ type RuntimeContextRequest struct {
 	Trigger    agent.RunTrigger
 	Subject    *agentturn.RuntimeSubject
 	Page       *agentturn.PageContext
-	Surface    agent.Surface
+	Surface    agentpagecontext.Surface
 	// Attachments and Mentions are what the person handed over with the
 	// message that started this turn.
 	Attachments []agentturn.RuntimeAttachment
@@ -612,7 +616,7 @@ type RuntimeContextRequest struct {
 	DelegatedBy string
 	// DelegatorRecords are the records the turn that handed this one its task
 	// was about. The turn reads their memories as if it were about them too.
-	DelegatorRecords []agent.EntityRef
+	DelegatorRecords []agentpagecontext.EntityRef
 	Query            retrievalports.QueryVectorRequest
 }
 

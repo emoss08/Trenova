@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -100,15 +102,15 @@ func (t *CarrierInvoiceMatchTool) ParamSchema() map[string]any {
 func (t *CarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
 		Operation:     t.decision.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     t.decision.rationale,
 		TaintHold: &agenttoolports.TaintHold{
 			Description: "Its note is what accounts payable reads about the carrier's " +
@@ -214,21 +216,24 @@ func matchRecord(match *carriersettlement.InvoiceMatch) toolpreview.Record {
 	}
 }
 
-func matchMoney(match *carriersettlement.InvoiceMatch) *agent.MoneyPreview {
+func matchMoney(match *carriersettlement.InvoiceMatch) *agentpreview.MoneyPreview {
 	return toolpreview.MoneyBlock(
 		match.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Expected",
 			After: changepreview.MinorAmount(match.ExpectedTotalMinor),
 		},
-		agent.MoneyLine{Label: "Variance", After: changepreview.MinorAmount(match.VarianceMinor)},
+		agentpreview.MoneyLine{
+			Label: "Variance",
+			After: changepreview.MinorAmount(match.VarianceMinor),
+		},
 	)
 }
 
 func (t *CarrierInvoiceMatchTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -255,7 +260,7 @@ func (t *CarrierInvoiceMatchTool) Preview(
 		return nil, err
 	}
 	toolpreview.AttachMoney(change, matchMoney(plan.Before))
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 
 	switch {
 	case plan.Adjustment != nil:
@@ -264,13 +269,13 @@ func (t *CarrierInvoiceMatchTool) Preview(
 				Resource: permission.ResourceCarrierSettlement,
 				Label:    plan.Adjustment.Description,
 			},
-			toolpreview.MoneyBlock(plan.Adjustment.CurrencyCode, agent.MoneyLine{
+			toolpreview.MoneyBlock(plan.Adjustment.CurrencyCode, agentpreview.MoneyLine{
 				Label: "Variance adjustment",
 				After: changepreview.MinorAmount(plan.Adjustment.AmountMinor),
 			}),
 			toolpreview.SensitiveAs("amountMinor"),
 		)
-		adjustment.Operation = agent.PreviewOperationCreate
+		adjustment.Operation = agentpreview.PreviewOperationCreate
 		changes = append(changes, adjustment)
 		summary += " The variance is accrued as an adjustment on the carrier's next settlement."
 	case t.decision.decision == carriersettlementservice.MatchDecisionAccept:
@@ -405,15 +410,15 @@ func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 func (t *CreateCarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Records how a carrier's invoice compares with the expected cost inside " +
 			"Trenova; nothing is paid until a person accepts it.",
 	}
@@ -497,7 +502,7 @@ func (t *CreateCarrierInvoiceMatchTool) Execute(
 func (t *CreateCarrierInvoiceMatchTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -586,16 +591,16 @@ func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 func (t *LinkEDICarrierInvoiceTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCarrierInvoiceMatch,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Names which carrier an inbound invoice belongs to inside Trenova; nothing " +
 			"is paid and it is relinked the same way.",
 	}
@@ -668,7 +673,7 @@ func (t *LinkEDICarrierInvoiceTool) Execute(
 func (t *LinkEDICarrierInvoiceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err

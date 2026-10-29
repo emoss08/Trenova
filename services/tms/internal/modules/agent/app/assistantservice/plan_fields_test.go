@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -37,8 +38,8 @@ func (u *namedUsers) GetByIDs(
 type decidedPlanFixture struct {
 	svc       *Service
 	thread    *conversation.Thread
-	decided   *agent.AgentPlan
-	waiting   *agent.AgentPlan
+	decided   *agentplan.AgentPlan
+	waiting   *agentplan.AgentPlan
 	deciderID pulid.ID
 }
 
@@ -54,11 +55,11 @@ func newDecidedPlanFixture(users *namedUsers) decidedPlanFixture {
 		1_760_000_065,
 	)
 	failed := 3
-	decided := &agent.AgentPlan{
+	decided := &agentplan.AgentPlan{
 		ID:                    pulid.MustNew("apl_"),
 		RunID:                 run.ID,
 		Title:                 "Recover S-240201 after the Tyson dock delay",
-		Status:                agent.PlanStatusFailed,
+		Status:                agentplan.PlanStatusFailed,
 		StepCount:             4,
 		CompletedSteps:        2,
 		FailedStep:            &failed,
@@ -70,11 +71,11 @@ func newDecidedPlanFixture(users *namedUsers) decidedPlanFixture {
 		ApprovalNote:          "Go ahead, Samuel is already at the yard.",
 		ApprovalPreviewDigest: "7f3a9c21e",
 	}
-	waiting := &agent.AgentPlan{
+	waiting := &agentplan.AgentPlan{
 		ID:        pulid.MustNew("apl_"),
 		RunID:     run.ID,
 		Title:     "Dispatch: 2 changes",
-		Status:    agent.PlanStatusPending,
+		Status:    agentplan.PlanStatusPending,
 		StepCount: 2,
 	}
 	decidedID, waitingID := decided.ID, waiting.ID
@@ -93,7 +94,7 @@ func newDecidedPlanFixture(users *namedUsers) decidedPlanFixture {
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	svc := newProposalServiceBehind(runs, proposals,
 		&stubConversationRepo{thread: thread}, shadowSwitches{})
-	svc.plans = &threadPlans{plans: []*agent.AgentPlan{decided, waiting}}
+	svc.plans = &threadPlans{plans: []*agentplan.AgentPlan{decided, waiting}}
 	if users != nil {
 		svc.users = users
 	}
@@ -123,7 +124,7 @@ func TestListThreadPlans_SaysHowEachPlanRunsAndWhoDecidedItWithWhat(t *testing.T
 
 	decided := listed[0]
 	assert.Equal(t, fx.decided.ID, decided.ID)
-	assert.Equal(t, agent.PlanRunModeInOrder, decided.RunMode,
+	assert.Equal(t, agentplan.PlanRunModeInOrder, decided.RunMode,
 		"two steps change one shipment, so the plan stops at the first failure")
 	assert.Equal(t, fx.deciderID, decided.DecidedByUserID)
 	assert.Equal(t, "Elena Ruiz", decided.DecidedByName)
@@ -135,7 +136,7 @@ func TestListThreadPlans_SaysHowEachPlanRunsAndWhoDecidedItWithWhat(t *testing.T
 	assert.Equal(t, int64(1_760_000_065), *decided.UndoneAt)
 
 	waiting := listed[1]
-	assert.Equal(t, agent.PlanRunModeEachStep, waiting.RunMode,
+	assert.Equal(t, agentplan.PlanRunModeEachStep, waiting.RunMode,
 		"each step changes a different invoice, so every step runs")
 	assert.Empty(t, waiting.DecidedByName)
 	assert.Empty(t, waiting.DecisionNote)

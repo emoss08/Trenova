@@ -153,7 +153,7 @@ recorded at its decision). `plan-card-model.ts` holds every reading as pure func
 - **The track**: a segment a step under the plan's name (`CardHead`'s `under` slot), and the
   steps down a line, each node coloured by its own proposal's status (`stepTone`): waiting, up
   next, running, ran, did not go through, not run.
-- **How it runs**: `AssistantPlan.runMode` is `agent.PlanRunModeOf(steps)`, the same function
+- **How it runs**: `AssistantPlan.runMode` is `agentplan.PlanRunModeOf(steps)`, the same function
   the executor calls, so the card's "stops at the first failure" or "every step runs on its
   own" can never disagree with what runs.
 - **Folding**: before a decision, and while an approval can still be undone, every change is

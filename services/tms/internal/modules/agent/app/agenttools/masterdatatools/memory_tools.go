@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -76,7 +78,7 @@ func (t *RememberTool) ParamSchema() map[string]any {
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: fmt.Sprintf("One or two plain sentences, at most %d "+
 					"characters, written so a reader with no other context understands them.",
-					agent.MaxMemoryContentChars),
+					agentmemory.MaxMemoryContentChars),
 			},
 			changepreview.FieldKind: agenttoolschema.Enum(
 				"Instruction for a rule a person gave; Procedure for the steps a person gave for a "+
@@ -120,18 +122,18 @@ func (t *RememberTool) ParamSchema() map[string]any {
 func (t *RememberTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
-		Kind:                agent.ToolKindAction,
+		Kind:                agenttooltrust.ToolKindAction,
 		Resource:            permission.ResourceAssistant,
 		Operation:           permission.OpCreate,
-		Scope:               agent.ToolScopeTenant,
+		Scope:               agenttooltrust.ToolScopeTenant,
 		DefaultTier:         agent.TierActWithApproval,
 		MaxTier:             agent.TierAutoExecute,
 		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
 		Classify:            classifyRemember,
 		PersonalRunsUnasked: true,
-		Effect:              agent.ToolEffectChange,
+		Effect:              agenttooltrust.ToolEffectChange,
 		Reversible:          true,
-		ReadsExternal:       agent.ExternalReadNever,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
 		CarriesTaint:        true,
 		TaintHold: &agenttoolports.TaintHold{
 			Description: "An Instruction, a Procedure or a Correction recorded after the run " +
@@ -172,13 +174,13 @@ func rememberAudience(params agenttoolports.ToolExecuteParams) string {
 }
 
 func rememberHeldWhenTainted(params agenttoolports.ToolExecuteParams) bool {
-	return rememberKind(params.Params) != agent.MemoryKindFact
+	return rememberKind(params.Params) != agentmemory.MemoryKindFact
 }
 
-func rememberKind(params map[string]any) agent.MemoryKind {
-	kind := agent.MemoryKind(toolparams.OptionalString(params, "kind"))
+func rememberKind(params map[string]any) agentmemory.MemoryKind {
+	kind := agentmemory.MemoryKind(toolparams.OptionalString(params, "kind"))
 	if kind == "" {
-		return agent.MemoryKindFact
+		return agentmemory.MemoryKindFact
 	}
 
 	return kind
@@ -195,7 +197,7 @@ func (t *RememberTool) Execute(ctx context.Context, params agenttoolports.ToolEx
 func (t *RememberTool) Record(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	request, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -269,12 +271,12 @@ func (t *RememberTool) audience(
 	person := request.PersonUserID
 	switch audience := rememberAudience(*params); audience {
 	case visibleToOrganization:
-		request.Scope = agent.MemoryScopeOrganization
+		request.Scope = agentmemory.MemoryScopeOrganization
 	case visibleToMe:
 		if person.IsNil() {
 			return fmt.Errorf("visibleTo me needs a person in the conversation; use organization")
 		}
-		request.Scope = agent.MemoryScopeUser
+		request.Scope = agentmemory.MemoryScopeUser
 		request.OwnerUserID = person
 	case visibleToTeam:
 		if person.IsNil() {
@@ -289,7 +291,7 @@ func (t *RememberTool) audience(
 		if len(reader.RoleIDs) == 0 {
 			return fmt.Errorf("the person holds no role to keep this for; use me or organization")
 		}
-		request.Scope = agent.MemoryScopeRole
+		request.Scope = agentmemory.MemoryScopeRole
 		request.RoleID = reader.RoleIDs[0]
 	default:
 		return fmt.Errorf("visibleTo %q is not one of %s",
@@ -303,7 +305,7 @@ func (t *RememberTool) audience(
 	if err != nil {
 		return err
 	}
-	request.Suggest = mode == agent.MemorySavingAskFirst
+	request.Suggest = mode == agentmemory.MemorySavingAskFirst
 
 	return nil
 }
@@ -349,16 +351,16 @@ func (t *ForgetMemoryTool) ParamSchema() map[string]any {
 func (t *ForgetMemoryTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAssistant,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Retires an agent memory inside Trenova: one kept for the person in the " +
 			"conversation, or one shared with others when that person may manage shared " +
 			"memory. A run with nobody in it retires none.",
@@ -394,21 +396,21 @@ func (t *ForgetMemoryTool) request(
 	return agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
 		TenantInfo: toolparams.TenantFrom(*params),
-		Status:     agent.MemoryStatusRetired,
+		Status:     agentmemory.MemoryStatusRetired,
 	}, nil
 }
 
 var memorySubjectTypes = agenttoolschema.Source(
 	"agent.memorySubjectType",
-	agent.AllMemorySubjectTypes(),
+	agentmemory.AllMemorySubjectTypes(),
 )
 
 var rememberedMemoryKinds = agenttoolschema.Source(
 	"agent.rememberedMemoryKind",
-	[]agent.MemoryKind{
-		agent.MemoryKindInstruction,
-		agent.MemoryKindFact,
-		agent.MemoryKindProcedure,
+	[]agentmemory.MemoryKind{
+		agentmemory.MemoryKindInstruction,
+		agentmemory.MemoryKindFact,
+		agentmemory.MemoryKindProcedure,
 	},
 )
 
@@ -425,8 +427,8 @@ const fieldReplacesMemoryID = "replacesMemoryId"
 // nothing, so it is read as no subject: a model that fills every field sends
 // a type for a memory about no record, and refusing that kept it from ever
 // saving one. An id without a type cannot be looked up and is refused.
-func memorySubject(params map[string]any) (agent.MemorySubjectType, pulid.ID, error) {
-	subjectType := agent.MemorySubjectType(toolparams.OptionalString(params, "subjectType"))
+func memorySubject(params map[string]any) (agentmemory.MemorySubjectType, pulid.ID, error) {
+	subjectType := agentmemory.MemorySubjectType(toolparams.OptionalString(params, "subjectType"))
 	rawID := toolparams.OptionalString(params, "subjectId")
 
 	if rawID == "" {

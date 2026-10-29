@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -44,7 +44,7 @@ var carrierAssignmentLabels = map[string]string{
 func (t *AssignMoveToCarrierTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (t *AssignMoveToCarrierTool) Preview(
 		toolpreview.SensitiveAs("totalCost"),
 	)
 
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 	retired, err := retiredCoverageChanges(plan, shipmentLabel)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (t *AssignMoveToCarrierTool) Preview(
 func (t *CancelCarrierAssignmentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -172,12 +172,12 @@ func (t *CancelCarrierAssignmentTool) Preview(
 func retiredCoverageChanges(
 	plan *carrierassignmentservice.CoveragePlan,
 	shipmentLabel string,
-) ([]*agent.RecordChange, error) {
+) ([]*agentpreview.RecordChange, error) {
 	if plan.CanceledBefore == nil {
 		return nil, nil
 	}
 
-	changes := make([]*agent.RecordChange, 0, 2)
+	changes := make([]*agentpreview.RecordChange, 0, 2)
 	canceled, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
 		Label: "Carrier on " + shipmentLabel + ": " +
@@ -189,7 +189,7 @@ func retiredCoverageChanges(
 	if err != nil {
 		return nil, err
 	}
-	canceled.Operation = agent.PreviewOperationArchive
+	canceled.Operation = agentpreview.PreviewOperationArchive
 	changes = append(changes, canceled)
 
 	if plan.VoidedBefore == nil {
@@ -206,7 +206,7 @@ func retiredCoverageChanges(
 	if err != nil {
 		return nil, err
 	}
-	voided.Operation = agent.PreviewOperationArchive
+	voided.Operation = agentpreview.PreviewOperationArchive
 
 	return append(changes, voided), nil
 }

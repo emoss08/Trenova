@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -155,7 +156,7 @@ func (t *SetInvoiceFactoringOverrideTool) Execute(
 func (t *SetInvoiceFactoringOverrideTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would change whether the invoice is factored."
 	req, err := t.request(&params)
 	if err != nil {
@@ -332,7 +333,7 @@ func (t *RequestMissingFactoringDocumentTool) Execute(
 func (t *RequestMissingFactoringDocumentTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email a request for the invoice's missing documents."
 	req, err := t.request(&params)
 	if err != nil {

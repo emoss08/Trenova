@@ -3,8 +3,8 @@ package assistantservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -74,10 +74,10 @@ func TestArtifactFromObservation_APortalReadWithoutARunIsNotKept(t *testing.T) {
 func TestAnApprovedPortalActionIsAPortalTaskNamedForItsSite(t *testing.T) {
 	t.Parallel()
 
-	artifact := portalActionArtifact("decision:apr_01", &agent.ToolExecutionResult{
+	artifact := portalActionArtifact("decision:apr_01", &agentrecord.ToolExecutionResult{
 		Action: "started",
 		Name:   "Acme dock portal",
-		Record: &agent.RecordRef{EntityType: string(permission.KindPortalRun), ID: "aprn_02"},
+		Record: &agentrecord.RecordRef{EntityType: string(permission.KindPortalRun), ID: "aprn_02"},
 	})
 
 	require.NotNil(t, artifact)
@@ -94,9 +94,9 @@ func TestAnApprovedPortalActionIsAPortalTaskNamedForItsSite(t *testing.T) {
 func TestAWriteToAnotherRecordIsNotAPortalTask(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, portalActionArtifact("call_1", &agent.ToolExecutionResult{
+	assert.Nil(t, portalActionArtifact("call_1", &agentrecord.ToolExecutionResult{
 		Action: "updated",
-		Record: &agent.RecordRef{EntityType: "shipment", ID: "shp_01"},
+		Record: &agentrecord.RecordRef{EntityType: "shipment", ID: "shp_01"},
 	}))
 }
 

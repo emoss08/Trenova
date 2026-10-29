@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -923,7 +925,7 @@ func (s *Service) recordToolResult(
 	t.foldReplaced(outcome.shown)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
-	var records []agent.EntityRef
+	var records []agentpagecontext.EntityRef
 	if !outcome.failed {
 		records = citedRecords(outcome.content)
 	}
@@ -1172,7 +1174,7 @@ func (s *Service) summarize(
 				Name:        tool.Name(),
 				Description: tool.Description(),
 				Query:       true,
-				Lookup:      agenttoolports.EffectOf(tool) == agent.ToolEffectLookup,
+				Lookup:      agenttoolports.EffectOf(tool) == agenttooltrust.ToolEffectLookup,
 				Recipe:      recipeOf(tool),
 			})
 			continue

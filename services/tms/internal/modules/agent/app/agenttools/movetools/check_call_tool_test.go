@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -185,7 +186,7 @@ func TestLogCheckCall_PreviewOfAnUpdateMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&calls.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -216,7 +217,7 @@ func TestLogCheckCall_PreviewOfAnArrivalShowsTheStopItSettles(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"moveId":     move.ID.String(),
 				"kind":       "Arrival",
@@ -251,7 +252,7 @@ func TestLogCheckCall_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&calls.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"moveId": move.ID.String(),
 				"kind":   "Update",
@@ -260,7 +261,7 @@ func TestLogCheckCall_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestLogCheckCall_NeedsApprovalAndTargetsTheMove(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,7 +27,7 @@ func (r *recordedFollowUps) FollowUp(
 
 func (h *decideHarness) decideWithNote(
 	t *testing.T,
-	decision agent.DecisionType,
+	decision agentdecision.DecisionType,
 	note string,
 ) (*agentports.DecisionOutcome, error) {
 	t.Helper()
@@ -51,7 +51,7 @@ func TestDecide_RecordsWhatThePersonToldTheAgent(t *testing.T) {
 	followUps := &recordedFollowUps{}
 	h.service.followUps = followUps
 
-	_, err := h.decideWithNote(t, agent.DecisionRejected,
+	_, err := h.decideWithNote(t, agentdecision.DecisionRejected,
 		"  Hold it until the customer calls back, not today.  ")
 	require.NoError(t, err)
 
@@ -69,7 +69,7 @@ func TestDecide_KeepsNoNoteWhenNoneWasWritten(t *testing.T) {
 	t.Parallel()
 
 	h := newDecideHarness(t)
-	_, err := h.decideWithNote(t, agent.DecisionRejected, "   ")
+	_, err := h.decideWithNote(t, agentdecision.DecisionRejected, "   ")
 	require.NoError(t, err)
 
 	require.NotNil(t, h.decisions.created)
@@ -80,8 +80,8 @@ func TestDecide_RefusesANoteLongerThanTheBound(t *testing.T) {
 	t.Parallel()
 
 	h := newDecideHarness(t)
-	_, err := h.decideWithNote(t, agent.DecisionRejected,
-		strings.Repeat("é", agent.MaxDecisionNoteLength+1))
+	_, err := h.decideWithNote(t, agentdecision.DecisionRejected,
+		strings.Repeat("é", agentdecision.MaxDecisionNoteLength+1))
 
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
@@ -94,11 +94,11 @@ func TestDecide_TakesANoteOfExactlyTheBound(t *testing.T) {
 	t.Parallel()
 
 	h := newDecideHarness(t)
-	_, err := h.decideWithNote(t, agent.DecisionRejected,
-		strings.Repeat("é", agent.MaxDecisionNoteLength))
+	_, err := h.decideWithNote(t, agentdecision.DecisionRejected,
+		strings.Repeat("é", agentdecision.MaxDecisionNoteLength))
 	require.NoError(t, err)
 
 	require.NotNil(t, h.decisions.created)
-	assert.Equal(t, agent.MaxDecisionNoteLength, len([]rune(h.decisions.created.Note)),
+	assert.Equal(t, agentdecision.MaxDecisionNoteLength, len([]rune(h.decisions.created.Note)),
 		"the bound counts characters, not bytes")
 }

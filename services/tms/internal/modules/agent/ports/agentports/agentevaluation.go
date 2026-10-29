@@ -3,7 +3,7 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -35,17 +35,26 @@ type SkipPendingSuiteEvaluationsRequest struct {
 }
 
 type AgentEvaluationRepository interface {
-	Create(ctx context.Context, entity *agent.Evaluation) (*agent.Evaluation, error)
-	Update(ctx context.Context, entity *agent.Evaluation) (*agent.Evaluation, error)
-	GetByID(ctx context.Context, req GetAgentEvaluationByIDRequest) (*agent.Evaluation, error)
+	Create(
+		ctx context.Context,
+		entity *agentevaluation.Evaluation,
+	) (*agentevaluation.Evaluation, error)
+	Update(
+		ctx context.Context,
+		entity *agentevaluation.Evaluation,
+	) (*agentevaluation.Evaluation, error)
+	GetByID(
+		ctx context.Context,
+		req GetAgentEvaluationByIDRequest,
+	) (*agentevaluation.Evaluation, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentEvaluationConnectionRequest,
-	) (*pagination.CursorListResult[*agent.Evaluation], error)
-	CreateMany(ctx context.Context, entities []*agent.Evaluation) error
+	) (*pagination.CursorListResult[*agentevaluation.Evaluation], error)
+	CreateMany(ctx context.Context, entities []*agentevaluation.Evaluation) error
 	ListBySuiteRun(
 		ctx context.Context,
 		req ListSuiteEvaluationsRequest,
-	) ([]*agent.Evaluation, error)
+	) ([]*agentevaluation.Evaluation, error)
 	SkipPendingBySuiteRun(ctx context.Context, req SkipPendingSuiteEvaluationsRequest) (int, error)
 }

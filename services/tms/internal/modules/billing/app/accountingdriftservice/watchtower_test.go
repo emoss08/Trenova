@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -97,7 +98,7 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 	require.Contains(t, board.open, sourceID)
 	item := board.open[sourceID]
 	assert.Equal(t, agent.SubjectAccountingDrift, item.SubjectType)
-	assert.Equal(t, agent.EventAccountingDriftDetected, item.EventKind)
+	assert.Equal(t, agenttrigger.EventAccountingDriftDetected, item.EventKind)
 	assert.Equal(t, watchtowersources.AccountingDriftPath, item.Path)
 	assert.Contains(t, item.Title, "1 document")
 

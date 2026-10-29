@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
@@ -444,6 +445,6 @@ func (m *stubProposalRepo) ExpirePendingByThread(
 func (s *stubProposalRepo) SumAutomaticMoney(
 	context.Context,
 	*agentports.SumAutomaticMoneyRequest,
-) (agent.MoneyUse, error) {
-	return agent.MoneyUse{}, nil
+) (agenttooltrust.MoneyUse, error) {
+	return agenttooltrust.MoneyUse{}, nil
 }

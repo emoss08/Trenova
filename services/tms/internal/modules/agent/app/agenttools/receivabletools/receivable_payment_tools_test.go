@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -194,7 +195,7 @@ func TestApplyCustomerPayment_PreviewShowsThePaymentTheInvoicesAndTheEntry(t *te
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		receivables.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -295,7 +296,7 @@ func TestApplyCustomerPayment_ARefusalIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -329,7 +330,7 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		receivables.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -393,7 +394,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		receivables.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -410,7 +411,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 2).Operation,
 	)
 
@@ -451,7 +452,7 @@ func TestUnapplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		receivables.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

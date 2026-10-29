@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -638,7 +638,7 @@ func (s *Service) publishOccurrenceOpened(
 	}
 
 	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-		Kind:       agent.EventDetentionOccurrenceOpened,
+		Kind:       agenttrigger.EventDetentionOccurrenceOpened,
 		SubjectID:  saved.ID,
 		TenantInfo: p.tenantInfo,
 	})

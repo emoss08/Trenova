@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -17,8 +17,8 @@ import (
 
 const moneyLineCredit = "Credit remaining"
 
-func InvoiceBalanceChanges(before, after []*invoice.Invoice) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, len(after))
+func InvoiceBalanceChanges(before, after []*invoice.Invoice) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(after))
 	for idx, invAfter := range after {
 		if invAfter == nil || idx >= len(before) || before[idx] == nil {
 			continue
@@ -35,7 +35,7 @@ func InvoiceBalanceChanges(before, after []*invoice.Invoice) ([]*agent.RecordCha
 
 func creditMemoChange(
 	plan *customerpaymentports.CreditMemoApplicationPreview,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	before, after := plan.CreditMemoBefore, plan.CreditMemoAfter
 	change, err := toolpreview.Changed(
 		toolpreview.Record{
@@ -52,11 +52,17 @@ func creditMemoChange(
 		return nil, err
 	}
 
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(before.CurrencyCode, agent.MoneyLine{
-		Label:  moneyLineCredit,
-		Before: changepreview.KnownAmount(money.DecimalFromMinor(before.CreditRemainingMinor())),
-		After:  changepreview.KnownAmount(money.DecimalFromMinor(after.CreditRemainingMinor())),
-	}), toolpreview.SensitiveAs("totalAmount", "appliedAmount"))
+	toolpreview.AttachMoney(
+		change,
+		toolpreview.MoneyBlock(before.CurrencyCode, agentpreview.MoneyLine{
+			Label: moneyLineCredit,
+			Before: changepreview.KnownAmount(
+				money.DecimalFromMinor(before.CreditRemainingMinor()),
+			),
+			After: changepreview.KnownAmount(money.DecimalFromMinor(after.CreditRemainingMinor())),
+		}),
+		toolpreview.SensitiveAs("totalAmount", "appliedAmount"),
+	)
 
 	return change, nil
 }
@@ -74,7 +80,7 @@ var creditApplicationRefs = map[string]permission.Resource{
 func creditApplicationChange(
 	plan *customerpaymentports.CreditMemoApplicationPreview,
 	application *customerpayment.CreditMemoApplication,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	record := toolpreview.Record{
 		Resource: permission.ResourceCustomerPayment,
 		Label:    "Credit applied from " + creditMemoLabel(plan.CreditMemoBefore),
@@ -97,7 +103,7 @@ func creditApplicationChange(
 		if err != nil {
 			return nil, err
 		}
-		change.Operation = agent.PreviewOperationArchive
+		change.Operation = agentpreview.PreviewOperationArchive
 
 		return change, nil
 	}
@@ -121,7 +127,7 @@ func creditApplicationChange(
 	}
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		plan.CreditMemoBefore.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Applied",
 			After: changepreview.KnownAmount(
 				money.DecimalFromMinor(application.AppliedAmountMinor),
@@ -135,7 +141,7 @@ func creditApplicationChange(
 func creditPreview(
 	plan *customerpaymentports.CreditMemoApplicationPreview,
 	summary string,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	memo, err := creditMemoChange(plan)
 	if err != nil {
 		return nil, err
@@ -145,7 +151,7 @@ func creditPreview(
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(invoices)+len(plan.Applications)+1)
+	changes := make([]*agentpreview.RecordChange, 0, len(invoices)+len(plan.Applications)+1)
 	changes = append(changes, memo)
 	changes = append(changes, invoices...)
 	for _, application := range plan.Applications {
@@ -171,7 +177,7 @@ func creditAppliedMinor(plan *customerpaymentports.CreditMemoApplicationPreview)
 func RenderApplyCredit(
 	req *customerpaymentports.ApplyCreditMemoRequest,
 	plan *customerpaymentports.CreditMemoApplicationPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	currency := plan.CreditMemoBefore.CurrencyCode
 	return creditPreview(plan, fmt.Sprintf(
 		"Would apply %s of credit memo %s to %s, leaving %s of credit.",
@@ -185,7 +191,7 @@ func RenderApplyCredit(
 func RenderUnapplyCredit(
 	_ *customerpaymentports.UnapplyCreditMemoApplicationRequest,
 	plan *customerpaymentports.CreditMemoApplicationPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	target := "the invoice"
 	if len(plan.InvoicesBefore) > 0 && plan.InvoicesBefore[0] != nil {
 		target = InvoiceLabel(plan.InvoicesBefore[0])

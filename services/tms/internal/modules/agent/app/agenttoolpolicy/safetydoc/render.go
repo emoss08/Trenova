@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -264,9 +265,9 @@ func condition(policy *agenttoolports.ToolPolicy) string {
 func externalRead(policy *agenttoolports.ToolPolicy) string {
 	var read string
 	switch policy.ReadsExternal {
-	case agent.ExternalReadAlways:
+	case agenttooltrust.ExternalReadAlways:
 		read = "Always, from " + sourceLabels(policy)
-	case agent.ExternalReadMarked:
+	case agenttooltrust.ExternalReadMarked:
 		read = "When the record is marked, from " + sourceLabels(policy)
 	default:
 		read = ""

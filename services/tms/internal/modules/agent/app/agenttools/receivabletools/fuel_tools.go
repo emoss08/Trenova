@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -543,8 +545,8 @@ func fuelPurchaseRecord(purchase *fuelpurchase.FuelPurchase) toolpreview.Record 
 func fuelPurchaseResult(
 	action string,
 	purchase *fuelpurchase.FuelPurchase,
-) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   fuelPurchaseKind,
 		Name:   fuelPurchaseRecord(purchase).Label,
@@ -612,7 +614,7 @@ func NewRecordFuelPurchaseTool(
 		Render: func(
 			_ *fuelpurchaseservice.CreatePurchaseRequest,
 			plan *labelledPurchase,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				toolpreview.Record{
 					Resource: permission.ResourceFuelPurchase,
@@ -640,7 +642,7 @@ func NewRecordFuelPurchaseTool(
 			ctx context.Context,
 			req *fuelpurchaseservice.CreatePurchaseRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := purchases.CreatePurchase(ctx, req)
 			if err != nil {
 				return nil, err
@@ -762,7 +764,7 @@ func NewCorrectFuelPurchaseTool(
 		Render: func(
 			_ *fuelPurchaseCorrection,
 			plan *labelledPurchaseChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				fuelPurchaseRecord(plan.change.Before),
 				fuelPurchaseViewOf(plan.change.Before, plan.before),
@@ -785,7 +787,7 @@ func NewCorrectFuelPurchaseTool(
 			ctx context.Context,
 			correction *fuelPurchaseCorrection,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := correction.request(ctx, purchases, params)
 			if err != nil {
 				return nil, err
@@ -866,7 +868,7 @@ func NewDeleteFuelPurchaseTool(
 		Refused: func(pulid.ID) string {
 			return "Would delete a fuel purchase."
 		},
-		Render: func(_ pulid.ID, plan *labelledPurchase) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *labelledPurchase) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				fuelPurchaseRecord(plan.purchase),
 				fuelPurchaseViewOf(plan.purchase, plan.jurisdiction),
@@ -888,7 +890,7 @@ func NewDeleteFuelPurchaseTool(
 			ctx context.Context,
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := deleteFuelPurchaseRequest(ctx, purchases, params, id)
 			if err != nil {
 				return nil, err
@@ -1009,7 +1011,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
 		Render: func(
 			_ *fuelCardAssignment,
 			plan *fuelpurchaseservice.CardChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				toolpreview.Record{
 					Resource: permission.ResourceFuelCard,
@@ -1042,7 +1044,7 @@ func NewAssignFuelCardTool(cards FuelCardKeeper) agenttoolports.AgentTool {
 			ctx context.Context,
 			assignment *fuelCardAssignment,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := assignment.request(ctx, cards, params)
 			if err != nil {
 				return nil, err
@@ -1155,7 +1157,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 		Refused: func(pulid.ID) string {
 			return "Would commit a fuel purchase import."
 		},
-		Render: func(_ pulid.ID, plan *fuelpurchaseservice.CommitPlan) (*agent.ToolPreview, error) {
+		Render: func(_ pulid.ID, plan *fuelpurchaseservice.CommitPlan) (*agentpreview.ToolPreview, error) {
 			committed := *plan.Batch
 			committed.Status = fuelpurchase.ImportStatusCommitted
 			committed.CommittedCount = len(plan.Purchases)
@@ -1187,7 +1189,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 			ctx context.Context,
 			_ pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
 				return nil, err
@@ -1247,7 +1249,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 		Render: func(
 			_ pulid.ID,
 			plan *fuelpurchaseservice.ResolveRowsPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			outcome := "they wait for fuel_commit_purchase_import"
 			if plan.Batch.IsFeed() {
 				outcome = "the feed posts them as purchases"
@@ -1266,7 +1268,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 			ctx context.Context,
 			_ pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			batch, err := loadFuelImport(ctx, imports, params)
 			if err != nil {
 				return nil, err
@@ -1366,7 +1368,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 			ctx context.Context,
 			discard *fuelImportDiscard,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			req, err := discardRequest(ctx, discard, params)
 			if err != nil {
 				return nil, err
@@ -1381,7 +1383,7 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 func renderFuelImportDiscard(
 	_ *fuelImportDiscard,
 	plan *fuelpurchaseservice.ImportBatchChange,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		fuelImportRecord(plan.Before),
 		fuelImportViewOf(plan.Before),

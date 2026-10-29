@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -173,7 +176,7 @@ func (t *listAgentRunsTool) ParamSchema() map[string]any {
 func (t *listAgentRunsTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAgentRun,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceRunRecord,
 		rationale: "Lists agent runs, whose summaries may repeat outside text a run read; " +
 			"a run on a conversation is listed only to the person who owns it.",
@@ -200,10 +203,10 @@ type agentRunsOutcome struct {
 
 	Notes []string `json:"notes,omitempty"`
 
-	tainted []agent.RecordRef
+	tainted []agentrecord.RecordRef
 }
 
-func (o *agentRunsOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o *agentRunsOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
 
 func (t *listAgentRunsTool) Query(
 	ctx context.Context,
@@ -248,7 +251,7 @@ func (t *listAgentRunsTool) Query(
 	runs, more := trim(window, result.Items)
 
 	rows := make([]agentRunRow, 0, len(runs))
-	tainted := make([]agent.RecordRef, 0, len(runs))
+	tainted := make([]agentrecord.RecordRef, 0, len(runs))
 	for _, run := range runs {
 		rows = append(rows, agentRunRowFrom(run))
 		tainted = append(tainted, run.TaintedRecords()...)
@@ -350,7 +353,7 @@ type agentRunEventReader interface {
 	List(
 		ctx context.Context,
 		req agentruntimeports.ListAgentRunEventsRequest,
-	) ([]*agent.AgentRunEvent, error)
+	) ([]*agentrunevent.AgentRunEvent, error)
 }
 
 type getAgentRunParams struct {
@@ -417,7 +420,7 @@ func (t *getAgentRunTool) ParamSchema() map[string]any {
 func (t *getAgentRunTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceAgentRun,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceRunRecord,
 		rationale: "Reads a run's own record, whose summary may repeat outside text the " +
 			"run read.",
@@ -472,10 +475,10 @@ type agentRunDetail struct {
 	Events             []agentRunEventView    `json:"events,omitempty"`
 	Notes              []string               `json:"notes,omitempty"`
 
-	tainted []agent.RecordRef
+	tainted []agentrecord.RecordRef
 }
 
-func (d *agentRunDetail) TaintedRecords() []agent.RecordRef { return d.tainted }
+func (d *agentRunDetail) TaintedRecords() []agentrecord.RecordRef { return d.tainted }
 
 func (t *getAgentRunTool) Query(
 	ctx context.Context,
@@ -632,7 +635,7 @@ func (t *getAgentRunTool) addEvents(
 	return nil
 }
 
-func agentRunEventViewFrom(event *agent.AgentRunEvent) agentRunEventView {
+func agentRunEventViewFrom(event *agentrunevent.AgentRunEvent) agentRunEventView {
 	view := agentRunEventView{
 		Sequence:   event.Sequence,
 		Kind:       event.Kind,

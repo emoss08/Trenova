@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -324,19 +326,19 @@ func (t *CreateReportTool) ParamSchema() map[string]any {
 func (t *CreateReportTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
-		Kind:                agent.ToolKindAction,
+		Kind:                agenttooltrust.ToolKindAction,
 		Resource:            permission.ResourceReport,
 		Operation:           permission.OpCreate,
-		Scope:               agent.ToolScopeTenant,
+		Scope:               agenttooltrust.ToolScopeTenant,
 		DefaultTier:         agent.TierAutoExecute,
 		MaxTier:             agent.TierAutoExecute,
 		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
 		Classify:            classifyReportVisibility,
 		PersonalRunsUnasked: true,
-		Effect:              agent.ToolEffectChange,
+		Effect:              agenttooltrust.ToolEffectChange,
 		Artifact:            reportRecordEntity,
 		Reversible:          true,
-		ReadsExternal:       agent.ExternalReadNever,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
 		Rationale: "A private report is a saved query on the caller's own list; a " +
 			"shared one appears on every colleague's Reports page and waits for approval.",
 	}
@@ -451,16 +453,16 @@ func (t *UpdateReportTool) ParamSchema() map[string]any {
 func (t *UpdateReportTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Changes a saved report colleagues may open; nothing leaves the " +
 			"organization.",
 	}
@@ -661,17 +663,17 @@ func (t *ForkReportTool) ParamSchema() map[string]any {
 func (t *ForkReportTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      reportRecordEntity,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Saves a copy of a report inside Trenova; nothing leaves the organization.",
 	}
 }
@@ -690,7 +692,7 @@ func (t *ForkReportTool) Execute(
 func (t *ForkReportTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -706,7 +708,7 @@ func (t *ForkReportTool) ExecuteWithResult(
 	}
 
 	if forked == nil {
-		return &agent.ToolExecutionResult{
+		return &agentrecord.ToolExecutionResult{
 			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil

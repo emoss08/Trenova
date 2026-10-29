@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func WarnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
+func WarnWouldFail(preview *agentpreview.ToolPreview, err error) *agentpreview.ToolPreview {
 	if err == nil || preview == nil {
 		return preview
 	}
@@ -18,7 +18,7 @@ func WarnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
 	return preview
 }
 
-func WarnRefusal(preview *agent.ToolPreview, err error) (*agent.ToolPreview, error) {
+func WarnRefusal(preview *agentpreview.ToolPreview, err error) (*agentpreview.ToolPreview, error) {
 	switch {
 	case err == nil:
 		return preview, nil
@@ -41,7 +41,7 @@ func PreviewVersion(version int64) *int64 {
 	return &version
 }
 
-func LabelRefs(change *agent.RecordChange, labels map[string]string) {
+func LabelRefs(change *agentpreview.RecordChange, labels map[string]string) {
 	if change == nil {
 		return
 	}
@@ -58,7 +58,7 @@ func LabelRefs(change *agent.RecordChange, labels map[string]string) {
 }
 
 type PlannedChange struct {
-	change  *agent.RecordChange
+	change  *agentpreview.RecordChange
 	refused error
 }
 
@@ -81,7 +81,7 @@ func PlanArchive[T any](
 }
 
 func planned[T any](
-	build func(toolpreview.Record, *T, func(*T) error, ...toolpreview.Option) (*agent.RecordChange, error),
+	build func(toolpreview.Record, *T, func(*T) error, ...toolpreview.Option) (*agentpreview.RecordChange, error),
 	rec toolpreview.Record,
 	before *T,
 	plan func(*T) error,
@@ -108,13 +108,13 @@ func (p PlannedChange) Accepted() bool {
 
 func (p PlannedChange) PlanPreview(
 	summary string,
-	extra ...*agent.RecordChange,
-) *agent.ToolPreview {
+	extra ...*agentpreview.RecordChange,
+) *agentpreview.ToolPreview {
 	if p.refused != nil {
 		return WarnWouldFail(toolpreview.Build(summary), p.refused)
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(extra)+1)
+	changes := make([]*agentpreview.RecordChange, 0, len(extra)+1)
 	changes = append(changes, p.change)
 	changes = append(changes, extra...)
 

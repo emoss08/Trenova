@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordanchorservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -98,7 +98,7 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 
 	anchors := service.Anchor(t.Context(), &agentports.RecordAnchorRequest{
 		Actor: &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
-		Records: []agent.EntityRef{
+		Records: []agentpagecontext.EntityRef{
 			{ID: shipmentID.String(), Label: "the acme load"},
 			{ID: goneID.String()},
 			{ID: invoiceID.String(), Label: "INV-1"},
@@ -113,7 +113,12 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 	require.Len(t, anchors, 5)
 
 	assert.Equal(t, shipmentID.String(), anchors[0].ID)
-	assert.Equal(t, "SEED-DET-001", anchors[0].Label, "the record's own name replaces the label seen")
+	assert.Equal(
+		t,
+		"SEED-DET-001",
+		anchors[0].Label,
+		"the record's own name replaces the label seen",
+	)
 	require.NotEmpty(t, anchors[0].Facts)
 	assert.Equal(t, "InTransit for Acme Manufacturing", anchors[0].Facts[0].Value)
 	position := anchors[0].Facts[len(anchors[0].Facts)-1]

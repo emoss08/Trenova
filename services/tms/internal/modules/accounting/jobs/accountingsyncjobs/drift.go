@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -296,7 +296,7 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
 				a.publisher,
 				agentports.AgentEvent{
-					Kind:       agent.EventAccountingReconciliationDue,
+					Kind:       agenttrigger.EventAccountingReconciliationDue,
 					SubjectID:  connectionID,
 					TenantInfo: tenant,
 				},

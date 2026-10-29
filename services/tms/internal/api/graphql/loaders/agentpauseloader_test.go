@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,14 +16,14 @@ import (
 type holdPlans struct {
 	agentports.AgentPlanRepository
 
-	byID map[pulid.ID]*agent.AgentPlan
+	byID map[pulid.ID]*agentplan.AgentPlan
 }
 
 func (r *holdPlans) ListByIDs(
 	_ context.Context,
 	req agentports.ListAgentPlansByIDsRequest,
-) ([]*agent.AgentPlan, error) {
-	out := make([]*agent.AgentPlan, 0, len(req.IDs))
+) ([]*agentplan.AgentPlan, error) {
+	out := make([]*agentplan.AgentPlan, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if plan, ok := r.byID[id]; ok {
 			out = append(out, plan)
@@ -42,7 +42,7 @@ type holdPlanService struct {
 func (s *holdPlanService) PlanHolds(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	plans []*agent.AgentPlan,
+	plans []*agentplan.AgentPlan,
 ) (map[pulid.ID]*assistantports.ProposalHold, error) {
 	out := make(map[pulid.ID]*assistantports.ProposalHold, len(plans))
 	for _, plan := range plans {
@@ -58,12 +58,14 @@ func TestAgentPlanHold_ReadsThePlanServiceRuleForEachPlan(t *testing.T) {
 	t.Parallel()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	held := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
-	live := &agent.AgentPlan{ID: pulid.MustNew("apl_"), Status: agent.PlanStatusPending}
+	held := &agentplan.AgentPlan{ID: pulid.MustNew("apl_"), Status: agentplan.PlanStatusPending}
+	live := &agentplan.AgentPlan{ID: pulid.MustNew("apl_"), Status: agentplan.PlanStatusPending}
 	hold := &assistantports.ProposalHold{Reason: "AgentShadow", AgentName: "Billing exceptions"}
 	service := &holdPlanService{holds: map[pulid.ID]*assistantports.ProposalHold{held.ID: hold}}
 	ctx := NewAgentPlanHoldLoaderFactory(AgentPlanHoldLoaderFactoryParams{
-		Plans:       &holdPlans{byID: map[pulid.ID]*agent.AgentPlan{held.ID: held, live.ID: live}},
+		Plans: &holdPlans{
+			byID: map[pulid.ID]*agentplan.AgentPlan{held.ID: held, live.ID: live},
+		},
 		PlanService: service,
 	}).Attach(t.Context(), tenantInfo)
 

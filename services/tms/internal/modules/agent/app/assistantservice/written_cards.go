@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -23,7 +24,7 @@ const (
 
 func (r *artifactRecorder) written(
 	callID, writeTool string,
-	executed *agent.ToolExecutionResult,
+	executed *agentrecord.ToolExecutionResult,
 ) *assistantartifact.Artifact {
 	if r == nil || executed == nil || executed.Record == nil ||
 		strings.TrimSpace(executed.Record.ID) == "" {
@@ -44,7 +45,7 @@ func (r *artifactRecorder) written(
 
 func (r *artifactRecorder) writtenCard(
 	callID, writeTool string,
-	executed *agent.ToolExecutionResult,
+	executed *agentrecord.ToolExecutionResult,
 ) *assistantartifact.Artifact {
 	if card := portalActionArtifact(callID, executed); card != nil {
 		return card
@@ -78,7 +79,7 @@ func (r *artifactRecorder) writtenCard(
 
 func (r *artifactRecorder) readCard(
 	callID string,
-	ref *agent.RecordRef,
+	ref *agentrecord.RecordRef,
 ) *assistantartifact.Artifact {
 	if r.svc == nil || r.svc.runtime == nil {
 		return nil

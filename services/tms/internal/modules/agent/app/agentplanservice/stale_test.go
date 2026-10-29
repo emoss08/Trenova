@@ -3,7 +3,7 @@ package agentplanservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs/decisioncommitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +23,8 @@ func TestDecideOwn_AStalePlanIsRefusedAtOnceRatherThanHeldForItsWindow(t *testin
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
-	assert.True(t, agent.PlanTargetChanged(plan), "its decider is told it was refused")
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
+	assert.True(t, agentplan.PlanTargetChanged(plan), "its decider is told it was refused")
 	assert.Empty(t, window.started, "nothing is left waiting on an undo window")
 	require.Len(t, f.decider.decided, 1)
 	assert.Equal(t, f.steps.steps[0].ID, f.decider.decided[0].ProposalID)
@@ -53,7 +53,7 @@ func TestCommitApproval_APlanWhoseRecordMovedInItsWindowIsRefusedAndReportedOnce
 
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 	require.NoError(t, err)
-	require.Equal(t, agent.PlanStatusApproving, plan.Status)
+	require.Equal(t, agentplan.PlanStatusApproving, plan.Status)
 	require.NotNil(t, plan.CommitsAt)
 
 	previews.stale = true
@@ -68,7 +68,7 @@ func TestCommitApproval_APlanWhoseRecordMovedInItsWindowIsRefusedAndReportedOnce
 	}
 	require.NoError(t, f.svc.CommitApproval(t.Context(), commit))
 
-	assert.Equal(t, agent.PlanStatusFailed, f.plans.plan.Status,
+	assert.Equal(t, agentplan.PlanStatusFailed, f.plans.plan.Status,
 		"the plan is closed, not sent back to waiting")
 	require.NotNil(t, f.plans.plan.FailedStep)
 	assert.Equal(t, 2, *f.plans.plan.FailedStep)

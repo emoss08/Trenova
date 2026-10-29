@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -127,10 +127,10 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	require.Nil(t, drivers.sent, "a preview must not message the driver")
 	assert.Empty(t, preview.Warnings)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, permission.ResourceWorker, send.Resource)
 	require.NotNil(t, send.Message)
-	assert.Equal(t, agent.MessageChannelDash, send.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelDash, send.Message.Channel)
 	assert.Equal(t, []string{"Marcus Dell"}, send.Message.To)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -153,7 +153,7 @@ func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 }
 
 func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testing.T) {
@@ -171,7 +171,7 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 	require.Nil(t, pto.rejected, "a preview must not reject")
 	assert.Contains(t, preview.Summary, "Coverage gap on that route")
 
-	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceWorkerPTO, status.Resource)
 	assert.Equal(t, "Rejected", agenttoolstest.FindField(t, status, "status").After)
 	assert.Equal(
@@ -180,7 +180,7 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 		agenttoolstest.FindField(t, status, "rejectionReason").After,
 	)
 
-	var channels []agent.MessageChannel
+	var channels []agentpreview.MessageChannel
 	for i := range preview.Changes {
 		if preview.Changes[i].Message != nil {
 			channels = append(channels, preview.Changes[i].Message.Channel)
@@ -188,10 +188,13 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 	}
 	assert.Equal(
 		t,
-		[]agent.MessageChannel{agent.MessageChannelDash, agent.MessageChannelSMS},
+		[]agentpreview.MessageChannel{
+			agentpreview.MessageChannelDash,
+			agentpreview.MessageChannelSMS,
+		},
 		channels,
 	)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "Coverage gap on that route", pto.rejected.Reason)
@@ -230,11 +233,11 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 	require.Nil(t, stub.Asked, "a preview must not ask")
 	assert.Contains(t, preview.Summary, "CDL (expires 2026-09-21)")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, "Renew your CDL", send.Message.Subject)
 	assert.Equal(t, "Your CDL is due this month.", send.Message.Body)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 }
 
 /*

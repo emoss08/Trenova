@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -90,7 +92,7 @@ func (t *ApproveBillingQueueItemTool) draftRequest(
 func (t *ApproveBillingQueueItemTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, item, err := t.planned(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -147,7 +149,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := t.BillingQueueDecisionTool.Execute(ctx, params); err != nil {
 		return nil, err
 	}
@@ -159,18 +161,18 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	made, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil || made == nil || made.Invoice == nil || made.Invoice.ID.IsNil() {
 		//nolint:nilerr // the approval is made; not finding its invoice only costs the pointer
-		return &agent.ToolExecutionResult{
+		return &agentrecord.ToolExecutionResult{
 			Action: changepreview.PastApproved,
 			Kind:   "billing queue item",
 		}, nil
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: changepreview.ResultCreated,
 		Kind:   changepreview.InvoiceRecordEntity,
 		Name:   made.Invoice.Number,
 		IDs:    map[string]string{toolparams.ParamInvoiceID: made.Invoice.ID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         made.Invoice.ID.String(),
 		},

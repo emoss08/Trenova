@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
@@ -422,7 +422,7 @@ func (s *Service) markException(
 		}
 	}
 	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-		Kind:       agent.EventBankReceiptException,
+		Kind:       agenttrigger.EventBankReceiptException,
 		SubjectID:  updated.ID,
 		TenantInfo: tenantInfo,
 	})

@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -46,7 +47,7 @@ func (r *draftReader) ParamSchema() map[string]any {
 
 func (r *draftReader) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name: toolGetShipmentDraft, Kind: agent.ToolKindQuery,
+		Name: toolGetShipmentDraft, Kind: agenttooltrust.ToolKindQuery,
 		Resource: permission.ResourceDocument, Operation: permission.OpRead,
 	}
 }
@@ -431,7 +432,7 @@ func (c *attachmentConversations) GetThread(
 
 func extractedEvent(doc *document.Document) *agentports.AgentEvent {
 	return &agentports.AgentEvent{
-		Kind:       agent.EventDocumentExtracted,
+		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}

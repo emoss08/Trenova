@@ -7,6 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -48,7 +52,7 @@ func (s *Service) threadProposals(
 		ctx,
 		tenant,
 		stored,
-		func(proposal *agent.AgentProposal, decision *agent.AgentDecision) bool {
+		func(proposal *agent.AgentProposal, decision *agentdecision.AgentDecision) bool {
 			if _, ok := inWindow[proposal.SourceMessageID]; ok {
 				return true
 			}
@@ -76,16 +80,21 @@ func (s *Service) runProposals(
 		return nil
 	}
 
-	return s.decided(ctx, tenant, stored, func(*agent.AgentProposal, *agent.AgentDecision) bool {
-		return true
-	})
+	return s.decided(
+		ctx,
+		tenant,
+		stored,
+		func(*agent.AgentProposal, *agentdecision.AgentDecision) bool {
+			return true
+		},
+	)
 }
 
 func (s *Service) decided(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	stored []*agent.AgentProposal,
-	keep func(*agent.AgentProposal, *agent.AgentDecision) bool,
+	keep func(*agent.AgentProposal, *agentdecision.AgentDecision) bool,
 ) []DecidedProposal {
 	ids := make([]pulid.ID, 0, len(stored))
 	byID := make(map[pulid.ID]*agent.AgentProposal, len(stored))
@@ -121,8 +130,9 @@ func (s *Service) decided(
 		if !ok || !keep(proposal, decision) {
 			continue
 		}
-		outcome := agent.OutcomeOfDecision(decision.Decision, decision.Modifications)
-		if outcome != agent.TrustOutcomeModified && outcome != agent.TrustOutcomeRejected {
+		outcome := agenttooltrust.OutcomeOfDecision(decision.Decision, decision.Modifications)
+		if outcome != agenttooltrust.TrustOutcomeModified &&
+			outcome != agenttooltrust.TrustOutcomeRejected {
 			continue
 		}
 		reason := strings.TrimSpace(decision.Note)
@@ -216,14 +226,14 @@ func (s *Service) runMessages(
 	return nil, nil
 }
 
-func windowRecords(messages []conversation.Message) []agent.EntityRef {
-	records := make([]agent.EntityRef, 0, maxWindowRecords)
-	seen := make(map[agent.EntityRef]struct{}, maxWindowRecords)
+func windowRecords(messages []conversation.Message) []agentpagecontext.EntityRef {
+	records := make([]agentpagecontext.EntityRef, 0, maxWindowRecords)
+	seen := make(map[agentpagecontext.EntityRef]struct{}, maxWindowRecords)
 	add := func(kind, id string) {
 		if len(records) >= maxWindowRecords || kind == "" || id == "" {
 			return
 		}
-		ref := agent.EntityRef{Type: kind, ID: id}
+		ref := agentpagecontext.EntityRef{Type: kind, ID: id}
 		if _, ok := seen[ref]; ok {
 			return
 		}
@@ -232,7 +242,7 @@ func windowRecords(messages []conversation.Message) []agent.EntityRef {
 	}
 	addIDs := func(text string) {
 		for _, id := range recordIDsIn(text) {
-			if kind, ok := agent.MemoryRecordKindOfID(id); ok {
+			if kind, ok := agentmemory.MemoryRecordKindOfID(id); ok {
 				add(string(kind), id.String())
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -35,8 +36,8 @@ type CreateCuratedEvalCaseRequest struct {
 	Title             string
 	Trigger           agent.RunTrigger
 	Input             string
-	PageContext       *agent.PageContext
-	Mentions          []agent.EntityRef
+	PageContext       *agentpagecontext.PageContext
+	Mentions          []agentpagecontext.EntityRef
 	SubjectType       agent.SubjectType
 	SubjectID         pulid.ID
 	HeldTools         []string

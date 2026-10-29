@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -102,15 +103,15 @@ func TestFinishReplay_AnEvaluationIsItsOwnTraceMarkedAsOne(t *testing.T) {
 	aitracetest.Install()
 
 	started := int64(1_790_000_200)
-	evaluation := &agent.Evaluation{
-		ID:                pulid.MustNew(agent.EvaluationIDPrefix),
+	evaluation := &agentevaluation.Evaluation{
+		ID:                pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		DefinitionVersion: 6,
 		Trigger:           agent.RunTriggerEvent,
 		StartedAt:         &started,
 	}
 	emitEvaluationRoot(t.Context(), evaluation, &agentruntimeports.RunResult{ToolCallsUsed: 2},
-		agent.EvaluationStatusCompleted, "")
+		agentevaluation.EvaluationStatusCompleted, "")
 
 	anchor := aitrace.AnchorFor(aitrace.AnchorEvaluation, evaluation.ID.String())
 	assert.Equal(t, anchor, aitrace.ForAttribution(&aiusageports.AIUsageAttribution{

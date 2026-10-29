@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
@@ -114,7 +116,7 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 func (t *listEDITenderChangesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceEDI,
 		rationale: "Lists changes another organization wrote to loads tendered over EDI; " +
 			"nothing changes and nothing is sent.",
@@ -182,7 +184,7 @@ func (t *listEDITenderChangesTool) Query(
 
 	changes, more := trim(window, result.Items)
 	rows := make([]ediTenderChangeRow, 0, len(changes))
-	refs := make([]agent.RecordRef, 0, len(changes))
+	refs := make([]agentrecord.RecordRef, 0, len(changes))
 	for _, change := range changes {
 		if change == nil {
 			continue
@@ -203,7 +205,7 @@ func (t *listEDITenderChangesTool) Query(
 		})
 		refs = append(
 			refs,
-			agent.RecordRef{EntityType: ediTenderChangeEntity, ID: change.ID.String()},
+			agentrecord.RecordRef{EntityType: ediTenderChangeEntity, ID: change.ID.String()},
 		)
 	}
 
@@ -280,7 +282,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 func (t *listEDITransferChangesTool) Policy() agenttoolports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
-		reads:    agent.ExternalReadAlways,
+		reads:    agenttooltrust.ExternalReadAlways,
 		source:   agent.TaintSourceEDI,
 		rationale: "Lists statuses another organization reported on a linked load; " +
 			"nothing changes and nothing is sent.",
@@ -344,7 +346,7 @@ func (t *listEDITransferChangesTool) Query(
 
 	changes, more := trim(window, result.Items)
 	rows := make([]ediTransferChangeRow, 0, len(changes))
-	refs := make([]agent.RecordRef, 0, len(changes))
+	refs := make([]agentrecord.RecordRef, 0, len(changes))
 	for _, change := range changes {
 		if change == nil {
 			continue
@@ -364,7 +366,7 @@ func (t *listEDITransferChangesTool) Query(
 		})
 		refs = append(
 			refs,
-			agent.RecordRef{EntityType: ediTransferChgEntity, ID: change.ID.String()},
+			agentrecord.RecordRef{EntityType: ediTransferChgEntity, ID: change.ID.String()},
 		)
 	}
 

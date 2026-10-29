@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -292,7 +293,7 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		returns.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -300,7 +301,7 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 	assert.Contains(t, preview.Summary, "net due 412.20 USD")
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -322,7 +323,7 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 	)})
 	preview, err := blocked.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, blocked.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
@@ -341,7 +342,7 @@ func TestIFTAReturnTools_ActOnTheVersionTheyRead(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		returns.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return recompute.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -362,7 +363,7 @@ func TestIFTAReturnTools_ActOnTheVersionTheyRead(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		returns.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return remove.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -391,7 +392,7 @@ func TestAmendIFTAReturn_IsOnlyEverProposedWithAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		returns.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -442,7 +443,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		entries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return record.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -464,7 +465,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		entries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return correct.(agenttoolports.ToolPreviewer).Preview(t.Context(), fix)
 		},
 	)
@@ -485,7 +486,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		entries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return remove.(agenttoolports.ToolPreviewer).Preview(t.Context(), gone)
 		},
 	)
@@ -509,7 +510,7 @@ func TestRecalculateMoveJurisdictionMiles_AsksAgainOnlyOnExecute(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		router.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -532,7 +533,7 @@ func TestBackfillJurisdictionMiles_PreviewsWithADryRunAndStartsOnExecute(t *test
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		router.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -49,7 +49,7 @@ func (l *repositoryLabeler) Label(
 	ref agentmemoryports.MemorySubjectRef,
 ) (string, error) {
 	switch ref.Type {
-	case agent.MemorySubjectCustomer:
+	case agentmemory.MemorySubjectCustomer:
 		entity, err := l.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
@@ -59,7 +59,7 @@ func (l *repositoryLabeler) Label(
 		}
 
 		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
-	case agent.MemorySubjectLocation:
+	case agentmemory.MemorySubjectLocation:
 		entity, err := l.locations.GetByID(ctx, locationports.GetLocationByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
@@ -69,7 +69,7 @@ func (l *repositoryLabeler) Label(
 		}
 
 		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
-	case agent.MemorySubjectWorker:
+	case agentmemory.MemorySubjectWorker:
 		entity, err := l.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
@@ -79,7 +79,7 @@ func (l *repositoryLabeler) Label(
 		}
 
 		return strings.TrimSpace(entity.FirstName + " " + entity.LastName), nil
-	case agent.MemorySubjectCarrier:
+	case agentmemory.MemorySubjectCarrier:
 		entity, err := l.carriers.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,

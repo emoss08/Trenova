@@ -6,7 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -21,10 +24,13 @@ import (
 type storedPlans struct {
 	fakePlans
 
-	created []*agent.AgentPlan
+	created []*agentplan.AgentPlan
 }
 
-func (s *storedPlans) Create(_ context.Context, plan *agent.AgentPlan) (*agent.AgentPlan, error) {
+func (s *storedPlans) Create(
+	_ context.Context,
+	plan *agentplan.AgentPlan,
+) (*agentplan.AgentPlan, error) {
 	plan.ID = pulid.MustNew("apl_")
 	s.created = append(s.created, plan)
 	s.plan = plan
@@ -123,8 +129,8 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 			BusinessUnitID: buID,
 		},
 		Actions: actions,
-		Evidence: func(agentruntimeports.PendingAction, pulid.ID) []agent.EvidenceRef {
-			return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
+		Evidence: func(agentruntimeports.PendingAction, pulid.ID) []agentevidence.EvidenceRef {
+			return []agentevidence.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 		},
 	})
 	require.NoError(t, err)
@@ -148,7 +154,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 
 	plan, err := svc.Decide(t.Context(), &agentports.DecideAgentPlanRequest{
 		PlanID:     result.Plan.ID,
-		Decision:   agent.DecisionAccepted,
+		Decision:   agentdecision.DecisionAccepted,
 		ReasonCode: "approve all",
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, actor)
@@ -156,7 +162,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 
 	assert.Len(t, decider.decided, 5)
 	assert.Equal(t, 4, plan.CompletedSteps)
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	executed := 0
 	for _, step := range proposals.steps {
 		if step.Status == agent.ProposalStatusExecuted {

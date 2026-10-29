@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevents"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -45,12 +45,12 @@ func TestPublish_TellsAttachmentObserversOfEachExtraction(t *testing.T) {
 	extracted := pulid.MustNew("doc_")
 
 	publisher.Publish(t.Context(), agentports.AgentEvent{
-		Kind:       agent.EventDocumentExtracted,
+		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  extracted,
 		TenantInfo: tenantInfo,
 	})
 	publisher.Publish(t.Context(), agentports.AgentEvent{
-		Kind:       agent.EventBillingQueueItemException,
+		Kind:       agenttrigger.EventBillingQueueItemException,
 		SubjectID:  pulid.MustNew("bqi_"),
 		TenantInfo: tenantInfo,
 	})
@@ -71,7 +71,7 @@ func TestPublish_WithNoAttachmentObserversStillPublishes(t *testing.T) {
 
 	assert.NotPanics(t, func() {
 		publisher.Publish(t.Context(), agentports.AgentEvent{
-			Kind:       agent.EventDocumentExtracted,
+			Kind:       agenttrigger.EventDocumentExtracted,
 			SubjectID:  pulid.MustNew("doc_"),
 			TenantInfo: tenantInfo,
 		})

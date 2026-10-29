@@ -2,6 +2,7 @@ package aiauditservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -44,7 +45,7 @@ func proposalKeys(proposal *agent.AgentProposal) []string {
 	return keys
 }
 
-func stepKey(step *agent.AgentRunStep) string {
+func stepKey(step *agentrunstep.AgentRunStep) string {
 	return sourceKey("step", step.OwnerID.String(), step.StepKey)
 }
 

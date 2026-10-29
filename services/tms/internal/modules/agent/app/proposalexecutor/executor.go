@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -762,7 +764,7 @@ func (s *Service) assertTargetUnchanged(
 	if err != nil {
 		return fmt.Errorf(
 			"%w: the %s could not be read (%w)",
-			agent.ErrTargetChanged,
+			agentplan.ErrTargetChanged,
 			proposal.TargetResource,
 			err,
 		)
@@ -772,7 +774,7 @@ func (s *Service) assertTargetUnchanged(
 		return fmt.Errorf(
 			"%w: the %s is at version %d and was at %d when this was proposed. "+
 				"Review the current record and ask again",
-			agent.ErrTargetChanged, proposal.TargetResource, current, pinned,
+			agentplan.ErrTargetChanged, proposal.TargetResource, current, pinned,
 		)
 	}
 
@@ -964,7 +966,7 @@ type executionSuccess struct {
 	proposal      *agent.AgentProposal
 	actor         *permissionports.RequestActor
 	params        map[string]any
-	result        *agent.ToolExecutionResult
+	result        *agentrecord.ToolExecutionResult
 	targetVersion *int64
 }
 

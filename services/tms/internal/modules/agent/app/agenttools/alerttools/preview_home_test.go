@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -60,7 +60,7 @@ func TestHomeTools_PreviewMatchesWhatIsSaved(t *testing.T) {
 			preview := agenttoolstest.PreviewWithoutWrites(
 				t,
 				&layouts.guard,
-				func() (*agent.ToolPreview, error) {
+				func() (*agentpreview.ToolPreview, error) {
 					return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 				},
 			)
@@ -93,7 +93,7 @@ func TestRemoveHomeWidget_PreviewShowsWhatThePageKeeps(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&layouts.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), homeParams(map[string]any{
 				"version": float64(3), "widgetId": "widget_1",
 			}))
@@ -120,7 +120,7 @@ func TestHomeTools_PreviewWarnsOnAStaleVersion(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&layouts.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), homeParams(map[string]any{
 				"version": float64(2), "widgetId": "widget_1",
 			}))
@@ -128,5 +128,5 @@ func TestHomeTools_PreviewWarnsOnAStaleVersion(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

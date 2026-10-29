@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -44,9 +46,9 @@ type TurnPlan struct {
 	Decision agentguard.Decision `json:"decision"`
 	// Page, Attachments and Mentions are what the person handed over with
 	// the question. They are kept on the question when it is saved.
-	Page        *agent.PageContext               `json:"page,omitempty"`
+	Page        *agentpagecontext.PageContext    `json:"page,omitempty"`
 	Attachments []conversation.MessageAttachment `json:"attachments,omitempty"`
-	Mentions    []agent.EntityRef                `json:"mentions,omitempty"`
+	Mentions    []agentpagecontext.EntityRef     `json:"mentions,omitempty"`
 	// Timezone is the organization's, which is what a tool reads a bare date
 	// in.
 	Timezone string `json:"timezone,omitempty"`
@@ -55,7 +57,7 @@ type TurnPlan struct {
 	Proposals           []agentruntimeports.ProposalOutcome `json:"proposals,omitempty"`
 	// Records are the records the question is about, so an agent the turn
 	// hands a task to reads their memories too.
-	Records []agent.EntityRef `json:"records,omitempty"`
+	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// Inline says the answer is read with nothing beside it, so the turn's
 	// activities keep no tool result as an artifact. A plan recorded before it
 	// existed reads false and keeps its artifacts.
@@ -469,7 +471,10 @@ func turnTaint(plan *TurnPlan, run *agentruntimeports.RunResult) *agent.RunTaint
 	return plan.Turn.Result.Taint
 }
 
-func TurnFingerprint(plan *TurnPlan, run *agentruntimeports.RunResult) *agent.Fingerprint {
+func TurnFingerprint(
+	plan *TurnPlan,
+	run *agentruntimeports.RunResult,
+) *agentfingerprint.Fingerprint {
 	if run != nil && run.Fingerprint != nil {
 		return run.ServedFingerprint()
 	}

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -124,16 +126,16 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 func (t *PayEventHoldTool) Policy() agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Returns held pay to the settlement pool inside Trenova; nothing is paid " +
 			"until a settlement is approved, and the pay is held again the same way.",
 	}
@@ -248,7 +250,7 @@ func payEventDriver(event *driversettlement.PayEvent) string {
 func (t *PayEventHoldTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -285,11 +287,11 @@ func (t *PayEventHoldTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 	if t.hold {
 		changes = append(changes, toolpreview.Send(payEventRecord(plan.Before),
-			&agent.MessagePreview{
-				Channel: agent.MessageChannelDash,
+			&agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelDash,
 				To:      []string{payEventDriver(plan.Before)},
 				Body:    plan.After.HoldReason,
 			}))
@@ -393,16 +395,16 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 func (t *PayEventTransferTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Moves pay a driver already earned between the pool and a draft " +
 			"settlement inside Trenova; nothing is paid until a person approves it.",
 	}
@@ -503,7 +505,7 @@ func (t *PayEventTransferTool) Execute(
 func (t *PayEventTransferTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err

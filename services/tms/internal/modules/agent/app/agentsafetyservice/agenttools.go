@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -220,11 +220,11 @@ func answerField(
 		Name: name,
 		Kind: memtable.KindEnum,
 		Values: []string{
-			agent.AutonomyRunsOnItsOwn.String(),
-			agent.AutonomyConditional.String(),
-			agent.AutonomyNeedsApproval.String(),
-			agent.AutonomyProposeOnly.String(),
-			agent.AutonomySimulated.String(),
+			agenttooltrust.AutonomyRunsOnItsOwn.String(),
+			agenttooltrust.AutonomyConditional.String(),
+			agenttooltrust.AutonomyNeedsApproval.String(),
+			agenttooltrust.AutonomyProposeOnly.String(),
+			agenttooltrust.AutonomySimulated.String(),
 		},
 		Filterable: true,
 		Sortable:   true,
@@ -238,15 +238,15 @@ func answerField(
 	}
 }
 
-func answerExposure(answer agent.AutonomyAnswer) int {
+func answerExposure(answer agenttooltrust.AutonomyAnswer) int {
 	switch answer {
-	case agent.AutonomyRunsOnItsOwn:
+	case agenttooltrust.AutonomyRunsOnItsOwn:
 		return 4
-	case agent.AutonomyConditional:
+	case agenttooltrust.AutonomyConditional:
 		return 3
-	case agent.AutonomyNeedsApproval:
+	case agenttooltrust.AutonomyNeedsApproval:
 		return 2
-	case agent.AutonomyProposeOnly:
+	case agenttooltrust.AutonomyProposeOnly:
 		return 1
 	default:
 		return 0

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,7 +81,7 @@ func deskMemoryToModel(memory *agentmemoryports.DeskMemory) *gqlmodel.DeskMemory
 	return out
 }
 
-func deskEvidence(evidence *agent.MemoryEvidence) (string, []string) {
+func deskEvidence(evidence *agentmemory.MemoryEvidence) (string, []string) {
 	if evidence == nil || evidence.Quotes == nil {
 		return evidence.GetReason(), []string{}
 	}

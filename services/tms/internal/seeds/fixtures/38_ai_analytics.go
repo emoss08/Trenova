@@ -7,20 +7,20 @@ import (
 	"math/rand/v2"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -191,7 +191,7 @@ type analyticsSeedRefs struct {
 
 type analyticsDecision struct {
 	unitIndex int
-	decision  agent.DecisionType
+	decision  agentdecision.DecisionType
 	at        int64
 }
 
@@ -442,12 +442,12 @@ func buildAnalyticsSeed(refs *analyticsSeedRefs) *analyticsSeedData {
 					unit.DecisionRunID = pulid.ID(unitID)
 					if random.Float64() < analyticsSeedDecisionPc {
 						roll := random.Float64()
-						decision := agent.DecisionRejected
+						decision := agentdecision.DecisionRejected
 						switch {
 						case roll < deployment.approval:
-							decision = agent.DecisionAccepted
+							decision = agentdecision.DecisionAccepted
 						case roll < deployment.approval+(1-deployment.approval)*0.55:
-							decision = agent.DecisionModified
+							decision = agentdecision.DecisionModified
 						}
 						data.decisions = append(data.decisions, analyticsDecision{
 							unitIndex: len(data.units),
@@ -574,7 +574,11 @@ func (s *AIAnalyticsSeed) ensureBackupProvider(
 	return nil
 }
 
-func (s *AIAnalyticsSeed) loadRefs(ctx context.Context, db *keel.DB, refs *analyticsSeedRefs) error {
+func (s *AIAnalyticsSeed) loadRefs(
+	ctx context.Context,
+	db *keel.DB,
+	refs *analyticsSeedRefs,
+) error {
 	providers, err := aiproviderdb.Providers.AllTenants().Where(
 		aiproviderdb.Providers.OrganizationID.Eq(refs.org),
 		aiproviderdb.Providers.BusinessUnitID.Eq(refs.bu),
@@ -604,7 +608,13 @@ func (s *AIAnalyticsSeed) loadRefs(ctx context.Context, db *keel.DB, refs *analy
 	return nil
 }
 
-func insertChunks[T any](ctx context.Context, db *keel.DB, what string, h keel.Handle[*T], rows []*T) error {
+func insertChunks[T any](
+	ctx context.Context,
+	db *keel.DB,
+	what string,
+	h keel.Handle[*T],
+	rows []*T,
+) error {
 	if _, err := h.Copy(ctx, db, rows); err != nil {
 		return fmt.Errorf("insert %s: %w", what, err)
 	}
@@ -674,7 +684,7 @@ func (s *AIAnalyticsSeed) write(
 	}
 
 	proposals := make([]*agent.AgentProposal, 0, len(data.decisions))
-	decisions := make([]*agent.AgentDecision, 0, len(data.decisions))
+	decisions := make([]*agentdecision.AgentDecision, 0, len(data.decisions))
 	proposalIDs := make([]string, 0, len(data.decisions))
 	decisionIDs := make([]string, 0, len(data.decisions))
 	decidedAts := make([]int64, 0, len(data.decisions))
@@ -682,7 +692,7 @@ func (s *AIAnalyticsSeed) write(
 		unit := data.units[item.unitIndex]
 		proposalID := pulid.MustNew("ap_")
 		status := agent.ProposalStatusExecuted
-		if item.decision == agent.DecisionRejected {
+		if item.decision == agentdecision.DecisionRejected {
 			status = agent.ProposalStatusRejected
 		}
 		proposals = append(proposals, &agent.AgentProposal{
@@ -698,7 +708,7 @@ func (s *AIAnalyticsSeed) write(
 			Status:         status,
 			HeldBy:         []string{},
 		})
-		decision := &agent.AgentDecision{
+		decision := &agentdecision.AgentDecision{
 			ID:              pulid.MustNew("ad_"),
 			OrganizationID:  refs.org,
 			BusinessUnitID:  refs.bu,
@@ -707,7 +717,7 @@ func (s *AIAnalyticsSeed) write(
 			Decision:        item.decision,
 			ReasonCode:      "Seeded",
 		}
-		if item.decision == agent.DecisionModified {
+		if item.decision == agentdecision.DecisionModified {
 			decision.Modifications = map[string]any{"comment": "Seeded proposal, edited"}
 		}
 		decisions = append(decisions, decision)

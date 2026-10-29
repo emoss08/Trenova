@@ -3,7 +3,7 @@ package agentplanservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestDecide_IndependentStepsAllRunAndEachOutcomeIsReported(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, h.decider.decided, 5, "one bad invoice does not hold back the others")
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	assert.Equal(t, 4, plan.CompletedSteps)
 	require.NotNil(t, plan.FailedStep)
 	assert.Equal(t, 2, *plan.FailedStep)
@@ -48,7 +48,7 @@ func TestDecide_IndependentStepsThatAllRunCompleteThePlan(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 	assert.Equal(t, 3, plan.CompletedSteps)
 	assert.Zero(t, h.steps.skipped)
 }
@@ -65,7 +65,7 @@ func TestDecide_StepsOnOneRecordStillStopAtTheFirstFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, h.decider.decided, 1, "a later step on the same record depends on the first")
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	assert.Equal(t, 1, h.steps.skipped)
 }
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -21,7 +21,7 @@ const shipmentFieldTenderStatus = "tenderStatus"
 func (t *SendEDILoadTenderTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func (t *SendEDILoadTenderTool) Preview(
 		Resource: permission.ResourceEDI,
 		ID:       plan.SourcePartner.ID,
 		Label:    receiver,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{receiver},
 		Subject: "Load tender for shipment " + plan.SourceShipment.ProNumber,
 		Body:    tenderBody(&plan.Payload),
@@ -103,7 +103,7 @@ func tenderBody(payload *editransfer.LoadTenderPayload) string {
 func (t *SendEDIStatusUpdateTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -127,8 +127,8 @@ func (t *SendEDIStatusUpdateTool) Preview(
 		Resource: permission.ResourceEDI,
 		ID:       req.EDIPartnerID,
 		Label:    partner,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{partner},
 		Subject: "EDI 214 shipment status",
 		Body:    document.RawX12,

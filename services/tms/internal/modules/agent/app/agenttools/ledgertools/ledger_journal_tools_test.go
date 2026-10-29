@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -299,7 +300,7 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		journals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -307,7 +308,7 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	assert.Contains(t, preview.Summary, "Would draft the manual journal \"Accrue September fuel\"")
 	assert.Contains(t, preview.Summary, "Its debits and credits balance.")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceManualJournal, change.Resource)
 	require.NotNil(t, change.Money)
 	require.Len(t, change.Money.Lines, 2)
@@ -375,7 +376,7 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		journals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -441,7 +442,7 @@ func TestSubmitManualJournal_AnAgentSubmitsForApproval(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		journals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -476,7 +477,7 @@ func TestCancelManualJournal_NeedsAReason(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		journals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -500,7 +501,7 @@ func TestPostManualJournal_OnlyAPersonPostsAndThePreviewShowsTheEntry(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		journals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -547,7 +548,7 @@ func TestPostManualJournal_ARefusalIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeJournalReversals struct {
@@ -682,14 +683,14 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reversals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would request a reversal of journal entry JE-104")
 	assert.Contains(t, preview.Summary, "approved at once")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	require.NotNil(t, change.Money)
 	assert.Equal(t, "6100 Fuel expense (credit)", change.Money.Lines[0].Label)
 
@@ -727,7 +728,7 @@ func TestCancelJournalReversal_KeepsTheOriginalEntry(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reversals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -752,7 +753,7 @@ func TestPostJournalReversal_ShowsTheEntryAndTheOriginalReversed(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reversals.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

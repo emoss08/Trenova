@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -42,9 +42,9 @@ func New(p Params) agentports.AgentEvaluationRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *agent.Evaluation,
-) (*agent.Evaluation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
+	entity *agentevaluation.Evaluation,
+) (*agentevaluation.Evaluation, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
 		if err := agentdb.Evaluations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent evaluation", zap.Error(err))
 
@@ -59,9 +59,9 @@ func (r *repository) Create(
 // owns an evaluation from start to finish and nothing else edits it.
 func (r *repository) Update(
 	ctx context.Context,
-	entity *agent.Evaluation,
-) (*agent.Evaluation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
+	entity *agentevaluation.Evaluation,
+) (*agentevaluation.Evaluation, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
 		e := agentdb.Evaluations
 		err := e.Save(
 			ctx,
@@ -102,8 +102,8 @@ func (r *repository) Update(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req agentports.GetAgentEvaluationByIDRequest,
-) (*agent.Evaluation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
 		entity, err := agentdb.Evaluations.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, evaluationErrors.Map(err, req.ID.String())
@@ -116,17 +116,17 @@ func (r *repository) GetByID(
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentEvaluationConnectionRequest,
-) (*pagination.CursorListResult[*agent.Evaluation], error) {
+) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agent.Evaluation], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
 			e := agentdb.Evaluations
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				e.Where(keel.When(req.SuiteRunID.IsNotNil(), e.SuiteRunID.Eq(req.SuiteRunID))),
-				&listquery.Request[agent.Evaluation]{
+				&listquery.Request[agentevaluation.Evaluation]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.Columns,
@@ -143,7 +143,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluation) error {
+func (r *repository) CreateMany(ctx context.Context, entities []*agentevaluation.Evaluation) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
 			return nil
@@ -162,8 +162,8 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluatio
 func (r *repository) ListBySuiteRun(
 	ctx context.Context,
 	req agentports.ListSuiteEvaluationsRequest,
-) ([]*agent.Evaluation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
+) ([]*agentevaluation.Evaluation, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentevaluation.Evaluation, error) {
 		limit := req.Limit
 		if limit <= 0 || limit > maxSuitePage {
 			limit = maxSuitePage
@@ -190,11 +190,11 @@ func (r *repository) SkipPendingBySuiteRun(
 		e := agentdb.Evaluations
 		n, err := e.Where(
 			e.SuiteRunID.Eq(req.SuiteRunID),
-			e.Status.Eq(agent.EvaluationStatusPending),
+			e.Status.Eq(agentevaluation.EvaluationStatusPending),
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			e.Status.To(agent.EvaluationStatusSkipped),
+			e.Status.To(agentevaluation.EvaluationStatusSkipped),
 			e.ErrorMessage.To(req.Reason),
 			e.CompletedAt.To(req.At),
 			e.UpdatedAt.To(req.At),

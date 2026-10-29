@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -28,10 +28,10 @@ type recordingEventRepo struct {
 func (r *recordingEventRepo) ListConnection(
 	_ context.Context,
 	req *agentruntimeports.ListAgentRunEventConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 	r.requests = append(r.requests, req)
 
-	return &pagination.CursorListResult[*agent.AgentRunEvent]{}, nil
+	return &pagination.CursorListResult[*agentrunevent.AgentRunEvent]{}, nil
 }
 
 func TestAgentRunEvents_ReadForThePersonAsking(t *testing.T) {

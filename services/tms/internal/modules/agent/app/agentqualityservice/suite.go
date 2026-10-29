@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -48,9 +48,9 @@ func scoredStatuses() []agentquality.SuiteRunStatus {
 }
 
 type SuiteCase struct {
-	EvaluationID pulid.ID               `json:"evaluationId"`
-	Ordinal      int                    `json:"ordinal"`
-	Status       agent.EvaluationStatus `json:"status"`
+	EvaluationID pulid.ID                         `json:"evaluationId"`
+	Ordinal      int                              `json:"ordinal"`
+	Status       agentevaluation.EvaluationStatus `json:"status"`
 }
 
 type ListSuiteCasesRequest struct {
@@ -151,7 +151,7 @@ func (s *Service) CheckEvaluationBudget(
 }
 
 type suiteOutcome struct {
-	evaluations   []*agent.Evaluation
+	evaluations   []*agentevaluation.Evaluation
 	scored        []agentscoring.CaseResult
 	deterministic []agentscoring.CaseResult
 	judged        []float64
@@ -166,8 +166,8 @@ func (s *Service) suiteEvaluationsOf(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	suiteRunID pulid.ID,
-) ([]*agent.Evaluation, error) {
-	all := make([]*agent.Evaluation, 0, suiteReadPage)
+) ([]*agentevaluation.Evaluation, error) {
+	all := make([]*agentevaluation.Evaluation, 0, suiteReadPage)
 	after := 0
 	for {
 		page, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
@@ -214,13 +214,13 @@ func (s *Service) caseSources(
 }
 
 func outcomeOf(
-	evaluations []*agent.Evaluation,
+	evaluations []*agentevaluation.Evaluation,
 	sources map[pulid.ID]agentquality.CaseSource,
 ) *suiteOutcome {
 	out := &suiteOutcome{evaluations: evaluations}
 	for _, evaluation := range evaluations {
 		switch {
-		case evaluation.Status == agent.EvaluationStatusCompleted && evaluation.Checks != nil:
+		case evaluation.Status == agentevaluation.EvaluationStatusCompleted && evaluation.Checks != nil:
 			checks := evaluation.Checks
 			caseID := pulid.Nil
 			if evaluation.EvalCaseID != nil {
@@ -263,8 +263,8 @@ func outcomeOf(
 			} else {
 				out.failed++
 			}
-		case evaluation.Status == agent.EvaluationStatusFailed,
-			evaluation.Status == agent.EvaluationStatusCompleted:
+		case evaluation.Status == agentevaluation.EvaluationStatusFailed,
+			evaluation.Status == agentevaluation.EvaluationStatusCompleted:
 			out.failed++
 		default:
 			out.skipped++
@@ -404,14 +404,14 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 	return s.recordJudgement(ctx, evaluation, result.Text, result.ModelIdentifier)
 }
 
-func settledJudgement(evaluation *agent.Evaluation) *JudgedCase {
+func settledJudgement(evaluation *agentevaluation.Evaluation) *JudgedCase {
 	if evaluation.Judge != nil {
 		score := evaluation.Judge.Score
 
 		return &JudgedCase{Judged: true, Score: &score}
 	}
 	if evaluation.Checks == nil || evaluation.EvalCaseID == nil ||
-		evaluation.Status != agent.EvaluationStatusCompleted {
+		evaluation.Status != agentevaluation.EvaluationStatusCompleted {
 		return &JudgedCase{Note: "The case has no scored answer to judge."}
 	}
 	if evaluation.Checks.HardFailure {
@@ -421,7 +421,7 @@ func settledJudgement(evaluation *agent.Evaluation) *JudgedCase {
 	return nil
 }
 
-func judgeAttribution(evaluation *agent.Evaluation) aiusageports.AIUsageAttribution {
+func judgeAttribution(evaluation *agentevaluation.Evaluation) aiusageports.AIUsageAttribution {
 	return aiusageports.AIUsageAttribution{
 		AgentDefinitionID: evaluation.AgentDefinitionID,
 		RunID:             evaluation.ID,
@@ -432,7 +432,7 @@ func judgeAttribution(evaluation *agent.Evaluation) aiusageports.AIUsageAttribut
 
 func judgeRequest(
 	tenant pagination.TenantInfo,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	evalCase *agentquality.EvalCase,
 ) *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
@@ -449,7 +449,7 @@ func judgeRequest(
 
 func (s *Service) recordJudgement(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	text string,
 	model string,
 ) (*JudgedCase, error) {
@@ -468,7 +468,7 @@ func (s *Service) recordJudgement(
 		return &JudgedCase{Note: "The judge's answer could not be read."}, nil
 	}
 
-	verdict := &agent.JudgeVerdict{
+	verdict := &agentevaluation.JudgeVerdict{
 		Score:     decoded.Score,
 		Rationale: decoded.Rationale,
 		Model:     model,

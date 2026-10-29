@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -17,7 +17,7 @@ import (
 func (t *ScheduleReportTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -61,8 +61,8 @@ func (t *ScheduleReportTool) Preview(
 			ID:       definition.ID,
 			Label:    definition.Name,
 		},
-		&agent.MessagePreview{
-			Channel: agent.MessageChannelEmail,
+		&agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelEmail,
 			To:      recipients,
 			Subject: definition.Name,
 			Body:    scheduledReportBody(schedule, definition),

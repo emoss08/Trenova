@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestCheckAccountingConnection_PreviewMatchesWhatASuccessSaves(t *testing.T)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&checker.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -59,7 +59,7 @@ func TestCheckAccountingConnection_PreviewWarnsWhenNotConnected(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&checker.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"}),
@@ -68,7 +68,7 @@ func TestCheckAccountingConnection_PreviewWarnsWhenNotConnected(t *testing.T) {
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestSetAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -90,7 +90,7 @@ func TestSetAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&writer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -124,7 +124,7 @@ func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&writer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -156,8 +156,8 @@ func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T
 	setTool := newSetAccountingMappingTool(writer).(*SetAccountingMappingTool)
 	clearTool := newClearAccountingMappingTool(writer).(*ClearAccountingMappingTool)
 
-	for _, preview := range []*agent.ToolPreview{
-		agenttoolstest.PreviewWithoutWrites(t, &writer.guard, func() (*agent.ToolPreview, error) {
+	for _, preview := range []*agentpreview.ToolPreview{
+		agenttoolstest.PreviewWithoutWrites(t, &writer.guard, func() (*agentpreview.ToolPreview, error) {
 			return setTool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"system":     "QuickBooksOnline",
 				"mappingId":  row.ID.String(),
@@ -165,7 +165,7 @@ func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T
 				"reason":     "The LLC is the entity Acme invoices under.",
 			}))
 		}),
-		agenttoolstest.PreviewWithoutWrites(t, &writer.guard, func() (*agent.ToolPreview, error) {
+		agenttoolstest.PreviewWithoutWrites(t, &writer.guard, func() (*agentpreview.ToolPreview, error) {
 			return clearTool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				"system":    "QuickBooksOnline",
 				"mappingId": row.ID.String(),
@@ -173,7 +173,7 @@ func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T
 		}),
 	} {
 		assert.Empty(t, preview.Changes)
-		agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+		agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 		assert.Contains(t, preview.Warnings[0].Message, "already sent")
 	}
 }
@@ -197,7 +197,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&writer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -205,7 +205,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 	assert.True(t, preview.Partial)
 	require.Len(t, preview.Changes, 2)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Acme Logistics", agenttoolstest.FieldByPath(t, created, "name").After)
 	assert.Equal(t, "Customer", agenttoolstest.FieldByPath(t, created, "kind").After)
 	mapping := agenttoolstest.PreviewChange(t, preview, 1)
@@ -231,7 +231,7 @@ func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&writer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"}),
@@ -241,7 +241,7 @@ func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) 
 
 	assert.True(t, preview.Partial)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationRun, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationRun, change.Operation)
 	assert.Equal(t, writer.summary.Connection.ID, change.EntityID)
 	assert.Contains(t, preview.Summary, "Acme Freight")
 	assert.Nil(t, writer.refreshed)

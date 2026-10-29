@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -90,11 +90,11 @@ func agentSuiteRunConnectionToModel(
 }
 
 func agentSuiteRunCaseConnectionToModel(
-	result *pagination.CursorListResult[*agent.Evaluation],
+	result *pagination.CursorListResult[*agentevaluation.Evaluation],
 ) (*gqlmodel.AgentSuiteRunCaseConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agent.Evaluation, cursor string) *gqlmodel.AgentSuiteRunCaseEdge {
+		func(node *agentevaluation.Evaluation, cursor string) *gqlmodel.AgentSuiteRunCaseEdge {
 			return &gqlmodel.AgentSuiteRunCaseEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentSuiteRunCaseEdge) string { return edge.Cursor },

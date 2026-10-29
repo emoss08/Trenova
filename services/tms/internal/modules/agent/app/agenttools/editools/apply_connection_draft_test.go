@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -184,7 +186,7 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		drafts.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(
 				t.Context(),
 				onThread(agenttoolstest.AgentParamsFor(draftArgs(documentID)), thread),
@@ -202,7 +204,7 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 
 	require.Len(t, preview.Changes, 3, "the unchanged transport is left out")
 	partner := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationUpdate, partner.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, partner.Operation)
 	require.NotNil(t, partner.Version)
 	assert.Equal(t, int64(4), *partner.Version)
 	contact := agenttoolstest.FieldByPath(t, partner, "contactName")
@@ -210,12 +212,12 @@ func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {
 	assert.Equal(t, "Dana Whitfield", contact.After)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 1).Operation,
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 2).Operation,
 	)
 
@@ -262,7 +264,7 @@ func TestApplyConnectionDraft_WarnsWhenTheDraftCannotBeApplied(t *testing.T) {
 			preview, err := tool.Preview(t.Context(), params)
 			require.NoError(t, err)
 			require.NotEmpty(t, preview.Warnings)
-			assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+			assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 			assert.Contains(t, preview.Warnings[0].Message, tc.contains)
 
 			err = tool.Validate(t.Context(), params)
@@ -313,11 +315,11 @@ func TestApplyConnectionDraft_IsAlwaysAPersonsDecision(t *testing.T) {
 	t.Parallel()
 
 	policy := NewApplyConnectionDraftTool(nil, nil).Policy()
-	assert.Equal(t, agent.ToolKindAction, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindAction, policy.Kind)
 	assert.Equal(t, permission.ResourceEDI, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.DefaultTier)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
-	assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceAttachment, policy.Source)
 }

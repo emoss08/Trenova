@@ -15,7 +15,7 @@ package agentscorecardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -72,7 +72,7 @@ func (s *Service) Get(
 ) (*agentports.AgentScorecardResult, error) {
 	window := req.Window
 	if !window.IsValid() {
-		window = agent.ScorecardWindow30d
+		window = agentevaluation.ScorecardWindow30d
 	}
 
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -124,7 +124,7 @@ func (s *Service) Get(
 	}
 
 	return &agentports.AgentScorecardResult{
-		Scorecard: agent.NewScorecard(definition.ID.String(), window, since, totals),
+		Scorecard: agentevaluation.NewScorecard(definition.ID.String(), window, since, totals),
 		ToolTrust: ladder,
 	}, nil
 }

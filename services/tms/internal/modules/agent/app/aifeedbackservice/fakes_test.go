@@ -5,6 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -176,12 +179,12 @@ func (f *fakeProposals) GetByID(
 	return f.proposal, nil
 }
 
-type fakePlans struct{ plan *agent.AgentPlan }
+type fakePlans struct{ plan *agentplan.AgentPlan }
 
 func (f *fakePlans) GetByID(
 	context.Context,
 	agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	return f.plan, nil
 }
 
@@ -198,12 +201,14 @@ func (f *fakeRuns) GetByID(
 	return f.run, nil
 }
 
-type fakeExceptions struct{ exception *agent.AgentException }
+type fakeExceptions struct {
+	exception *agentexception.AgentException
+}
 
 func (f *fakeExceptions) GetByID(
 	context.Context,
 	agentports.GetAgentExceptionByIDRequest,
-) (*agent.AgentException, error) {
+) (*agentexception.AgentException, error) {
 	return f.exception, nil
 }
 
@@ -221,12 +226,15 @@ func (f *fakeDefinitions) GetByID(
 }
 
 type fakeMemories struct {
-	existing []*agent.Memory
-	created  []*agent.Memory
+	existing []*agentmemory.Memory
+	created  []*agentmemory.Memory
 	asked    []agentmemoryports.ListAgentMemorySuggestionContextRequest
 }
 
-func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
+func (f *fakeMemories) Create(
+	_ context.Context,
+	entity *agentmemory.Memory,
+) (*agentmemory.Memory, error) {
 	entity.ID = pulid.MustNew("amem_")
 	f.created = append(f.created, entity)
 
@@ -236,7 +244,7 @@ func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.M
 func (f *fakeMemories) ListSuggestionContext(
 	_ context.Context,
 	req agentmemoryports.ListAgentMemorySuggestionContextRequest,
-) ([]*agent.Memory, error) {
+) ([]*agentmemory.Memory, error) {
 	f.asked = append(f.asked, req)
 
 	return f.existing, nil

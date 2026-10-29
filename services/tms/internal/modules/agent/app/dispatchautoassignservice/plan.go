@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -125,11 +126,11 @@ func rationaleFor(
 func evidenceFor(
 	score *dispatchcandidateservice.CandidateScore,
 	move *dispatchboardports.BoardMove,
-) []agent.EvidenceRef {
-	evidence := make([]agent.EvidenceRef, 0, 3)
+) []agentevidence.EvidenceRef {
+	evidence := make([]agentevidence.EvidenceRef, 0, 3)
 
 	evidence = append(evidence,
-		agent.EvidenceRef{
+		agentevidence.EvidenceRef{
 			Type: evidenceTypeMove,
 			ID:   move.MoveID.String(),
 			Note: fmt.Sprintf(
@@ -139,7 +140,7 @@ func evidenceFor(
 				move.OriginWindowStart,
 			),
 		},
-		agent.EvidenceRef{
+		agentevidence.EvidenceRef{
 			Type: evidenceTypeHOS,
 			ID:   score.WorkerID.String(),
 			Note: fmt.Sprintf(
@@ -151,7 +152,7 @@ func evidenceFor(
 		})
 
 	if score.DeadheadMiles != nil {
-		evidence = append(evidence, agent.EvidenceRef{
+		evidence = append(evidence, agentevidence.EvidenceRef{
 			Type: evidenceTypeDeadhead,
 			ID:   score.TractorID.String(),
 			Note: fmt.Sprintf(

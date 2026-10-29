@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -90,7 +90,7 @@ func dependsOnEarlierStep(
 // refusedBeforeFiling is what the model is told when a write it proposed
 // would be refused as it stands: each reason and the parameter it is about,
 // and what to do instead of proposing the same call again.
-func refusedBeforeFiling(toolName string, refusal *agent.PreviewWarning) toolOutcome {
+func refusedBeforeFiling(toolName string, refusal *agentpreview.PreviewWarning) toolOutcome {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Tool %q was not proposed, because it would be refused as it stands:\n",
 		toolName)

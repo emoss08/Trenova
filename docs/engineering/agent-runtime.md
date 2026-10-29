@@ -777,7 +777,7 @@ also returns the candidates at or above the embedding model's similarity floor
 (`RankedMemories.Similar`; `SimilarMemories.Floor`, from `SearchTuning.FloorFor`).
 
 **What bears on the turn.** `agentmemoryservice.Relevance` marks a candidate as
-bearing on the turn (`agent.MemoryRelevance`, carried on
+bearing on the turn (`agentmemory.MemoryRelevance`, carried on
 `RuntimeContext.MemoryRelevance`) when it is at or above the similarity floor, or
 when its content, subject label or tool name shares enough of the turn's words.
 The words are read from the turn's own message (`QueryVectorRequest.Focus`,
@@ -863,7 +863,7 @@ returns 10 rows by default and at most 50, reads one memory whole by `id`, and
 marks each row a search found `match: "words"`.
 
 **Limits.** A memory holds at most 4,000 characters
-(`agent.MaxMemoryContentChars`). An organization should keep at most 5,000
+(`agentmemory.MaxMemoryContentChars`). An organization should keep at most 5,000
 active memories; `agentMemoryUsage` reports the count and AI Control's Memory
 section warns from 4,000. Recording the same sentence again returns the existing
 row only when it is unexpired, kept for the same readers (organization, or the
@@ -1090,7 +1090,7 @@ together.
 
 - **Unattended runs** are framed from what started them, with no model call:
   `BackgroundFrame(trigger, eventKind, template)` reads the event → playbook
-  table in `domain/agenttaskframe/taskframe.go`. Every `agent.EventKind` has a
+  table in `domain/agenttaskframe/taskframe.go`. Every `agenttrigger.EventKind` has a
   playbook (`TestEventPlaybook_EveryEventAnAgentCanStartOnHasOne`), a scheduled
   starter has its own (the load monitor's `watch-the-board`), any other
   schedule or continuous pass gets `scheduled-pass`, and a run a wait started
@@ -1634,7 +1634,7 @@ person declined:"; the agent answers it and may propose a different change.
 That turn is the rejection's own follow-up, so the note is never also sent as
 a message and the agent answers once.
 
-An approval refused because its record moved on (`agent.TargetChanged` on the
+An approval refused because its record moved on (`agentplan.TargetChanged` on the
 proposal's execution error, from the decision service or the executor) is followed up
 like any other: its note says it was not carried out and why, asks the agent not to
 retry it and to offer a proposal against the record as it is now when that still makes
@@ -1679,7 +1679,7 @@ above the person's message box. A call asks for one value in one of three shapes
 - **A typed value:** no options, a box only. `input` (`type`: `text`, `number`,
   `date`, `datetime` or `record`; `recordKind` for a record) says what the box takes.
   A record is picked from a search of one kind, and the kind is held to the
-  permission registry (`agent.IsKnownPageEntityType`); an unknown type, or a record
+  permission registry (`agentpagecontext.IsKnownPageEntityType`); an unknown type, or a record
   of no known kind, falls back to text. `otherHint` is the box's placeholder.
   A plain text value typed in the composer (no options, no `input`) may carry a
   `suggestion`: the value the model would use, which waits in the empty composer as
@@ -1780,8 +1780,8 @@ A plan's name is the line the person reads above its steps, on the plan card and
 approval box. It used to be "Dispatch: 4 changes" every time. Every turn that is offered
 `withdraw_proposal` is also given `name_plan {title}` (`agentruntime/nameplan.go`,
 `declareNamePlan`) from its first model call, so the tool array never changes mid-turn. The
-runtime answers it itself: `agent.NamedPlanTitle` drops control characters, folds the title to one line of plain text
-and refuses an empty one or one over `agent.MaxNamedPlanTitleLength` (80) characters, and the
+runtime answers it itself: `agentplan.NamedPlanTitle` drops control characters, folds the title to one line of plain text
+and refuses an empty one or one over `agentplan.MaxNamedPlanTitleLength` (80) characters, and the
 last name the turn gave rides `RunResult.PlanTitle` to the recorder (`RecordRequest.PlanTitle`),
 which names the turn's own plan with it when two or more writes are filed (`planTitle` in
 `proposalrecorder`). A turn with no name, or a script's batch, keeps "Agent: N changes". A

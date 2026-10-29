@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -266,7 +266,7 @@ func (s *Service) readBatch(
 }
 
 func (s *Service) plan(
-	records []agent.EntityRef,
+	records []agentpagecontext.EntityRef,
 ) ([]agentturn.RuntimeAnchor, []*kindBatch) {
 	anchors := make([]agentturn.RuntimeAnchor, 0, len(records))
 	batches := make([]*kindBatch, 0, 4)

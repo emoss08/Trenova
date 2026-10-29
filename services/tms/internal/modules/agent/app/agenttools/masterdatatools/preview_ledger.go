@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -125,13 +125,13 @@ func journalMoney(
 	currency string,
 	labels map[pulid.ID]string,
 	before, after []kernelports.JournalLinePreview,
-) *agent.MoneyPreview {
+) *agentpreview.MoneyPreview {
 	order := make([]string, 0, len(before)+len(after))
-	byLabel := make(map[string]*agent.MoneyLine, len(before)+len(after))
-	lineFor := func(label string) *agent.MoneyLine {
+	byLabel := make(map[string]*agentpreview.MoneyLine, len(before)+len(after))
+	lineFor := func(label string) *agentpreview.MoneyLine {
 		line, ok := byLabel[label]
 		if !ok {
-			line = &agent.MoneyLine{Label: label}
+			line = &agentpreview.MoneyLine{Label: label}
 			byLabel[label] = line
 			order = append(order, label)
 		}
@@ -151,7 +151,7 @@ func journalMoney(
 		line.After = accumulate(line.After, signedMinor(&after[idx]))
 	}
 
-	lines := make([]agent.MoneyLine, 0, len(order))
+	lines := make([]agentpreview.MoneyLine, 0, len(order))
 	for _, label := range order {
 		lines = append(lines, *byLabel[label])
 	}
@@ -196,7 +196,7 @@ func BookedEntryChange(
 	currency string,
 	label string,
 	labels map[pulid.ID]string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceJournalEntry, Label: label},
 		&bookedEntryView{
@@ -218,7 +218,7 @@ func BookedEntryChange(
 func RenderManualJournalDraft(
 	_ *manualjournalports.CreateManualJournalRequest,
 	plan *journalpreview.ManualJournalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	planned := plan.After
 	change, err := toolpreview.Create(
 		manualJournalRecord(planned),
@@ -251,7 +251,7 @@ func RenderManualJournalDraft(
 func manualJournalChangeOf(
 	plan *journalpreview.ManualJournalPlan,
 	withLines bool,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Changed(
 		manualJournalRecord(plan.Before),
 		manualJournalViewOf(plan.Before),
@@ -276,7 +276,7 @@ func manualJournalChangeOf(
 func RenderManualJournalRevision(
 	_ *journalpreview.JournalRevision,
 	plan *journalpreview.ManualJournalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, true)
 	if err != nil {
 		return nil, err
@@ -292,7 +292,7 @@ func RenderManualJournalRevision(
 func RenderManualJournalSubmit(
 	_ *manualjournalports.GetManualJournalRequest,
 	plan *journalpreview.ManualJournalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
 		return nil, err
@@ -316,7 +316,7 @@ func RenderManualJournalSubmit(
 func RenderManualJournalCancel(
 	_ *manualjournalports.CancelManualJournalRequest,
 	plan *journalpreview.ManualJournalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
 		return nil, err
@@ -332,7 +332,7 @@ func RenderManualJournalCancel(
 func RenderManualJournalPost(
 	_ *manualjournalports.GetManualJournalRequest,
 	plan *journalpreview.ManualJournalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
 	if err != nil {
 		return nil, err
@@ -388,7 +388,7 @@ func originalEntryNumber(change *journalreversalports.JournalReversalChange) str
 func RenderReversalRequest(
 	_ *journalreversalports.CreateJournalReversalRequest,
 	plan *journalpreview.ReversalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	after := plan.Change.After
 	label := "Reversal of " + originalEntryNumber(plan.Change)
 	change, err := toolpreview.Create(
@@ -423,7 +423,7 @@ func RenderReversalRequest(
 func RenderReversalCancel(
 	_ *journalreversalports.CancelJournalReversalRequest,
 	plan *journalpreview.ReversalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	before := plan.Change.Before
 	change, err := toolpreview.Changed(
 		reversalRecord(before, "Journal reversal "+before.ReasonCode),
@@ -444,7 +444,7 @@ func RenderReversalCancel(
 func RenderReversalPost(
 	_ *journalreversalports.GetJournalReversalRequest,
 	plan *journalpreview.ReversalPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	before := plan.Change.Before
 	label := "Reversal of " + originalEntryNumber(plan.Change)
 	change, err := toolpreview.Changed(
@@ -465,7 +465,7 @@ func RenderReversalPost(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change, entry}
+	changes := []*agentpreview.RecordChange{change, entry}
 	if original := plan.Change.OriginalEntry; original != nil {
 		reversed, reversedErr := toolpreview.Changed(
 			toolpreview.Record{

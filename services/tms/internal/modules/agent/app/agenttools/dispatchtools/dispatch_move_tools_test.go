@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
@@ -229,13 +230,13 @@ func TestUnassignMoves_PreviewShowsTheAssignmentComingOffAndWhatIsRefused(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&assignments.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
 
 	removed := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationDelete, removed.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, removed.Operation)
 	assert.Equal(t, "Assignment on S-1001", removed.Label)
 	move := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, covered.Moves[0].ID, move.EntityID)
@@ -250,7 +251,7 @@ func TestUnassignMoves_PreviewShowsTheAssignmentComingOffAndWhatIsRefused(t *tes
 		agenttoolstest.FieldByPath(t, shipmentChange, changepreview.FieldStatus).After,
 	)
 	assert.Contains(t, preview.Summary, "S-1001")
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, underway.String())
 }
 
@@ -435,7 +436,7 @@ func TestUpdateMoveStatus_PreviewShowsEachMoveAndTheShipmentItMoves(t *testing.T
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), params)
 		},
 	)
@@ -474,7 +475,7 @@ func TestUpdateMoveStatus_PreviewWarnsOfATransitionTheServiceRefuses(t *testing.
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		&moves.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				fieldMoveIDs:              moveIDsParam(moves.ids()...),
 				changepreview.FieldStatus: "InTransit",
@@ -483,5 +484,5 @@ func TestUpdateMoveStatus_PreviewWarnsOfATransitionTheServiceRefuses(t *testing.
 	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

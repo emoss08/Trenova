@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,8 +70,8 @@ func recordConflict() keel.Conflict {
 func (r *repository) Record(
 	ctx context.Context,
 	req agenttoolports.RecordToolTrustRequest,
-) (*agent.ToolTrust, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
+) (*agenttooltrust.ToolTrust, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agenttooltrust.ToolTrust, error) {
 		if !req.Outcome.IsValid() {
 			return nil, errortypes.NewValidationError(
 				"outcome",
@@ -81,7 +81,7 @@ func (r *repository) Record(
 		}
 
 		at := req.At
-		entity := &agent.ToolTrust{
+		entity := &agenttooltrust.ToolTrust{
 			OrganizationID:    req.TenantInfo.OrgID,
 			BusinessUnitID:    req.TenantInfo.BuID,
 			AgentDefinitionID: req.AgentDefinitionID,
@@ -89,14 +89,14 @@ func (r *repository) Record(
 			LastDecisionAt:    &at,
 		}
 		switch req.Outcome {
-		case agent.TrustOutcomeApproved:
+		case agenttooltrust.TrustOutcomeApproved:
 			entity.Streak = 1
 			entity.Approvals = 1
-		case agent.TrustOutcomeModified:
+		case agenttooltrust.TrustOutcomeModified:
 			entity.Modifications = 1
-		case agent.TrustOutcomeRejected:
+		case agenttooltrust.TrustOutcomeRejected:
 			entity.Rejections = 1
-		case agent.TrustOutcomeExecutionFailed:
+		case agenttooltrust.TrustOutcomeExecutionFailed:
 			entity.ExecutionFailures = 1
 		}
 
@@ -110,7 +110,7 @@ func (r *repository) Record(
 		inserted, err := t.Upsert(
 			ctx,
 			r.db.Keel(ctx),
-			[]*agent.ToolTrust{entity},
+			[]*agenttooltrust.ToolTrust{entity},
 			recordConflict(),
 		)
 		if err != nil {
@@ -141,8 +141,8 @@ func (r *repository) Record(
 func (r *repository) ListByDefinition(
 	ctx context.Context,
 	req agenttoolports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttooltrust.ToolTrust, error) {
 		t := agentdb.ToolTrusts
 		rows, err := t.Where(t.AgentDefinitionID.Eq(req.AgentDefinitionID)).
 			Order(t.ToolName.Asc()).
@@ -163,32 +163,36 @@ func (r *repository) ListByDefinition(
 func (r *repository) ListByDefinitionIDs(
 	ctx context.Context,
 	req agenttoolports.ListToolTrustByDefinitionsRequest,
-) (map[pulid.ID][]*agent.ToolTrust, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agent.ToolTrust, error) {
-		grouped := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
-		if len(req.AgentDefinitionIDs) == 0 {
+) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
+			grouped := make(map[pulid.ID][]*agenttooltrust.ToolTrust, len(req.AgentDefinitionIDs))
+			if len(req.AgentDefinitionIDs) == 0 {
+				return grouped, nil
+			}
+
+			t := agentdb.ToolTrusts
+			rows, err := t.Where(t.AgentDefinitionID.In(req.AgentDefinitionIDs...)).
+				Order(t.ToolName.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list tool trust for agents",
+					zap.Int("agents", len(req.AgentDefinitionIDs)),
+					zap.Error(err),
+				)
+
+				return nil, fmt.Errorf("list tool trust for agents: %w", err)
+			}
+
+			for _, row := range rows {
+				grouped[row.AgentDefinitionID] = append(grouped[row.AgentDefinitionID], row)
+			}
+
 			return grouped, nil
-		}
-
-		t := agentdb.ToolTrusts
-		rows, err := t.Where(t.AgentDefinitionID.In(req.AgentDefinitionIDs...)).
-			Order(t.ToolName.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list tool trust for agents",
-				zap.Int("agents", len(req.AgentDefinitionIDs)),
-				zap.Error(err),
-			)
-
-			return nil, fmt.Errorf("list tool trust for agents: %w", err)
-		}
-
-		for _, row := range rows {
-			grouped[row.AgentDefinitionID] = append(grouped[row.AgentDefinitionID], row)
-		}
-
-		return grouped, nil
-	})
+		},
+	)
 }
 
 // MarkTierChange moves the row's earned tier, conditioned on its version, so
@@ -197,8 +201,8 @@ func (r *repository) ListByDefinitionIDs(
 func (r *repository) MarkTierChange(
 	ctx context.Context,
 	req agenttoolports.MarkToolTierChangeRequest,
-) (*agent.ToolTrust, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
+) (*agenttooltrust.ToolTrust, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agenttooltrust.ToolTrust, error) {
 		t := agentdb.ToolTrusts
 		sets := []keel.Assignment{t.Streak.To(0), t.UpdatedAt.To(req.At)}
 		if req.Promoted {
@@ -223,8 +227,8 @@ func (r *repository) MarkTierChange(
 func (r *repository) ListReady(
 	ctx context.Context,
 	req agenttoolports.ListReadyToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
+) ([]*agenttooltrust.ToolTrust, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttooltrust.ToolTrust, error) {
 		t := agentdb.ToolTrusts
 		rows, err := t.Where(t.Streak.Gte(int64(max(req.MinStreak, 1)))).
 			Order(t.Streak.Desc()).

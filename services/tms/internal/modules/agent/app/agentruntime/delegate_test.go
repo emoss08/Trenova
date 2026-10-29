@@ -10,6 +10,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -150,12 +152,12 @@ func scriptedDelegateRun(delegate agentturn.RuntimeDelegate) DelegateRun {
 					Tier:       agent.TierAutoExecute,
 					Executed:   true,
 					Arguments:  map[string]any{"name": "On-time this month"},
-					ExecutionResult: &agent.ToolExecutionResult{
+					ExecutionResult: &agentrecord.ToolExecutionResult{
 						Action: "created",
 						Kind:   "report",
 						Name:   "On-time this month",
 						IDs:    map[string]string{"definitionId": "rd_123"},
-						Record: &agent.RecordRef{EntityType: "report", ID: "rd_123"},
+						Record: &agentrecord.RecordRef{EntityType: "report", ID: "rd_123"},
 					},
 				},
 				{
@@ -214,7 +216,7 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	answer := result.Messages[7]
 	assert.Equal(t, conversation.RoleTool, answer.Role)
 	assert.False(t, answer.Delegated(), "the call's own result is the turn's")
-	assert.Equal(t, agent.ToolEffectDelegate, answer.ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectDelegate, answer.ToolEffect)
 	assert.False(t, answer.ToolFailed)
 	assert.Contains(t, answer.Content, "rd_123", "the new report's id comes back")
 	assert.Contains(t, answer.Content, "share_report", "the waiting proposal is named")
@@ -231,7 +233,7 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	assert.Equal(t, "teal", saved.Accent)
 	assert.Equal(t, "I saved the report \"On-time this month\".", saved.Reply)
 	require.Len(t, saved.Made, 1)
-	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: "rd_123"},
+	assert.Equal(t, &agentrecord.RecordRef{EntityType: "report", ID: "rd_123"},
 		saved.Made[0].Result.Record)
 	require.Len(t, saved.Awaiting, 1)
 	assert.Len(t, saved.Published, 1)

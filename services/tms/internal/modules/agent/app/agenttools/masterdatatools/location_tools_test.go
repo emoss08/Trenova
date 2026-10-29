@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -148,13 +149,13 @@ func TestCreateLocation_IsProposedForApprovalAndStaysInternal(t *testing.T) {
 	t.Parallel()
 
 	policy := newLocationFixture().tool.Policy()
-	assert.Equal(t, agent.ToolKindAction, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindAction, policy.Kind)
 	assert.Equal(t, permission.ResourceLocation, policy.Resource)
 	assert.Equal(t, permission.OpCreate, policy.Operation)
 	assert.Equal(t, agent.TierActWithApproval, policy.DefaultTier)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
-	assert.Equal(t, agent.ToolEffectChange, policy.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, policy.Effect)
 	assert.True(t, policy.Idempotent)
 	assert.True(t, permission.IsAgentAllowed(permission.ResourceLocation, permission.OpCreate))
 }

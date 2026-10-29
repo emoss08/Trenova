@@ -17,6 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
@@ -130,17 +133,17 @@ func (t *CreateScheduleTool) ParamSchema() map[string]any {
 func (t *CreateScheduleTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAssistant,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeSelf,
+		Scope:         agenttooltrust.ToolScopeSelf,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressPersonal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		// The schedule is read beside the conversation its answers post into.
 		Artifact: threadEntity,
 		Rationale: "Repeats a request in the person's own conversation, asked as them with " +
@@ -235,7 +238,7 @@ func (t *CreateScheduleTool) Validate(
 func (t *CreateScheduleTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
@@ -283,7 +286,7 @@ func (t *CreateScheduleTool) Execute(
 func (t *CreateScheduleTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -308,12 +311,12 @@ func (t *CreateScheduleTool) ExecuteWithResult(
 		action, schedule = "found", kept.Existing
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "schedule",
 		Name:   schedule.Cadence + " · " + stringutils.Ellipsize(schedule.Prompt, labelRunes),
 		IDs:    map[string]string{paramScheduleID: schedule.ID.String()},
-		Record: &agent.RecordRef{EntityType: threadEntity, ID: schedule.ThreadID.String()},
+		Record: &agentrecord.RecordRef{EntityType: threadEntity, ID: schedule.ThreadID.String()},
 	}, nil
 }
 

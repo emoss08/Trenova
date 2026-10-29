@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -123,33 +124,37 @@ func (f *fakeControls) GetOrCreate(
 
 func policy(
 	name string,
-	kind agent.ToolKind,
+	kind agenttooltrust.ToolKind,
 	egress ...agent.EgressClass,
 ) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          kind,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        egress,
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     name + " rationale",
 	}
 }
 
 func testService(defs *fakeDefinitions, control *agentcontrol.AgentControl) *Service {
-	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
-	personal.Scope = agent.ToolScopeSelf
+	personal := policy("home_add_widget", agenttooltrust.ToolKindAction, agent.EgressPersonal)
+	personal.Scope = agenttooltrust.ToolScopeSelf
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
-			policy("shipment_get", agent.ToolKindQuery, agent.EgressNone),
-			policy("dispatch_assign_move", agent.ToolKindAction, agent.EgressInternal),
-			policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
+			policy("shipment_get", agenttooltrust.ToolKindQuery, agent.EgressNone),
+			policy("dispatch_assign_move", agenttooltrust.ToolKindAction, agent.EgressInternal),
+			policy(
+				"customer_send_email",
+				agenttooltrust.ToolKindAction,
+				agent.EgressExternalRecipient,
+			),
 			personal,
 		),
 		holder:      fakeHolder{},
@@ -215,12 +220,28 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 		byName[answer.PolicyName] = answer
 	}
 
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["shipment_get"].Tainted.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["dispatch_assign_move"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, byName["dispatch_assign_move"].Tainted.Answer)
-	assert.Equal(t, agent.AutonomyNeedsApproval, byName["customer_send_email"].Clean.Answer)
-	assert.Equal(t, agent.AutonomyNeedsApproval, byName["customer_send_email"].Tainted.Answer)
+	assert.Equal(t, agenttooltrust.AutonomyRunsOnItsOwn, byName["shipment_get"].Clean.Answer)
+	assert.Equal(t, agenttooltrust.AutonomyRunsOnItsOwn, byName["shipment_get"].Tainted.Answer)
+	assert.Equal(
+		t,
+		agenttooltrust.AutonomyRunsOnItsOwn,
+		byName["dispatch_assign_move"].Clean.Answer,
+	)
+	assert.Equal(
+		t,
+		agenttooltrust.AutonomyRunsOnItsOwn,
+		byName["dispatch_assign_move"].Tainted.Answer,
+	)
+	assert.Equal(
+		t,
+		agenttooltrust.AutonomyNeedsApproval,
+		byName["customer_send_email"].Clean.Answer,
+	)
+	assert.Equal(
+		t,
+		agenttooltrust.AutonomyNeedsApproval,
+		byName["customer_send_email"].Tainted.Answer,
+	)
 
 	simulated := agentWith("Rehearsal", "dispatch_assign_move", "shipment_get")
 	simulated.SimulationMode = true
@@ -231,8 +252,8 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 		},
 	})
 	require.Len(t, rehearsal, 2)
-	assert.Equal(t, agent.AutonomySimulated, rehearsal[0].Clean.Answer)
-	assert.Equal(t, agent.AutonomyRunsOnItsOwn, rehearsal[1].Clean.Answer)
+	assert.Equal(t, agenttooltrust.AutonomySimulated, rehearsal[0].Clean.Answer)
+	assert.Equal(t, agenttooltrust.AutonomyRunsOnItsOwn, rehearsal[1].Clean.Answer)
 
 	earner := agentWith("Earner", "dispatch_assign_move")
 	earner.ToolTiers = map[string]agent.AutonomyTier{
@@ -243,7 +264,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 			Agent:   earner,
 			Control: &agentcontrol.AgentControl{EarnedAutonomy: true, PromotionThreshold: 4},
 		},
-		Trust: []*agent.ToolTrust{{
+		Trust: []*agenttooltrust.ToolTrust{{
 			AgentDefinitionID: earner.ID,
 			ToolName:          "dispatch_assign_move",
 			Streak:            1,
@@ -251,7 +272,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 		}},
 	})
 	require.Len(t, earned, 1)
-	assert.Equal(t, agent.AutonomyNeedsApproval, earned[0].Clean.Answer)
+	assert.Equal(t, agenttooltrust.AutonomyNeedsApproval, earned[0].Clean.Answer)
 	assert.True(t, earned[0].Clean.Earned)
 	require.NotNil(t, earned[0].Clean.ApprovalsToNext)
 	assert.Equal(t, 3, *earned[0].Clean.ApprovalsToNext)

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
@@ -24,7 +24,7 @@ func previewOf(
 	t *testing.T,
 	tool agenttoolports.AgentTool,
 	params agenttoolports.ToolExecuteParams,
-) *agent.ToolPreview {
+) *agentpreview.ToolPreview {
 	t.Helper()
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
@@ -59,7 +59,7 @@ func TestDraftInboundReply_SavesTheBodyOrAsksTheDrafter(t *testing.T) {
 	preview := previewOf(t, tool, written)
 	assert.False(t, preview.Partial)
 	assert.Contains(t, preview.Summary, "Nothing is sent")
-	assert.Equal(t, agent.PreviewOperationCreate,
+	assert.Equal(t, agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation)
 	assert.Empty(t, f.written)
 
@@ -113,13 +113,17 @@ func TestDiscardInboundReplyDraft_ThrowsAwayOnlyADraftThatExists(t *testing.T) {
 	tool := newDiscardInboundReplyDraftTool(f)
 	params := agenttoolstest.DeskParams(map[string]any{"messageId": f.message.ID.String()})
 
-	agenttoolstest.RequireWarning(t, previewOf(t, tool, params), agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(
+		t,
+		previewOf(t, tool, params),
+		agentpreview.PreviewWarningWouldFail,
+	)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errNoReplyDraft)
 	assert.Empty(t, f.written)
 
 	f.draftPlan.Current = &triage.Reply{Subject: "Re: Where is 88213?", Body: "Draft"}
 	preview := previewOf(t, tool, params)
-	assert.Equal(t, agent.PreviewOperationDelete,
+	assert.Equal(t, agentpreview.PreviewOperationDelete,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -180,7 +184,7 @@ func TestCreateInboundLoad_CreatesFromTheCheckedFieldsOnce(t *testing.T) {
 
 	preview := previewOf(t, tool, params)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, permission.ResourceShipment, created.Resource)
 	assert.Empty(t, f.written)
 
@@ -200,7 +204,11 @@ func TestCreateInboundLoad_CreatesFromTheCheckedFieldsOnce(t *testing.T) {
 	})), "a field a load does not have is refused")
 
 	f.createLoad = &triageworkservice.CreateLoadPlan{Message: f.message, AlreadyCreated: true}
-	agenttoolstest.RequireWarning(t, previewOf(t, tool, params), agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(
+		t,
+		previewOf(t, tool, params),
+		agentpreview.PreviewWarningWouldFail,
+	)
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Len(t, f.written, 1, "a message that made its load does not make another")
 }
@@ -214,7 +222,11 @@ func TestDiscardInboundLoad_ThrowsAwayOnlyADraftThatExists(t *testing.T) {
 	tool := newDiscardInboundLoadTool(f, f)
 	params := agenttoolstest.DeskParams(map[string]any{"messageId": f.message.ID.String()})
 
-	agenttoolstest.RequireWarning(t, previewOf(t, tool, params), agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(
+		t,
+		previewOf(t, tool, params),
+		agentpreview.PreviewWarningWouldFail,
+	)
 	require.ErrorIs(t, tool.Execute(t.Context(), params), errNoDraftedLoad)
 	assert.Empty(t, f.written)
 
@@ -350,8 +362,8 @@ func TestUnfileInboundAttachment_SaysWhatASplitLoses(t *testing.T) {
 
 	preview := previewOf(t, tool, params)
 	require.Len(t, preview.Changes, 3)
-	assert.Equal(t, agent.PreviewOperationDelete, preview.Changes[1].Operation)
-	assert.Equal(t, agent.PreviewOperationDelete, preview.Changes[2].Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, preview.Changes[1].Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, preview.Changes[2].Operation)
 	assert.Contains(t, preview.Summary, "deleting the 2 documents")
 	assert.Empty(t, f.written)
 
@@ -387,7 +399,7 @@ func TestLogInboundException_HoldsTheShipmentWithTheCountGiven(t *testing.T) {
 	preview := previewOf(t, tool, params)
 	hold := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceShipmentHold, hold.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, hold.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, hold.Operation)
 	assert.Empty(t, f.written)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -458,7 +470,11 @@ func TestSettleDetentionDispute_ShowsTheMoneyAWaiverGivesUp(t *testing.T) {
 		After:     f.message,
 		Unchanged: true,
 	}
-	agenttoolstest.RequireWarning(t, previewOf(t, tool, stand), agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(
+		t,
+		previewOf(t, tool, stand),
+		agentpreview.PreviewWarningWouldFail,
+	)
 }
 
 func TestResolveInboundConflict_SettlesTheConflictNamed(t *testing.T) {

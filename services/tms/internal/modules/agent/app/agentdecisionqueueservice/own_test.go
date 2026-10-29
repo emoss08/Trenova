@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,7 +54,7 @@ func TestDecideManyOwn_DecidesTheCallersOwnProposalsOfOneTool(t *testing.T) {
 
 	results, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs:    []pulid.ID{first.ID, second.ID},
-		Decision:       agent.DecisionAccepted,
+		Decision:       agentdecision.DecisionAccepted,
 		PreviewDigests: map[pulid.ID]string{first.ID: "sha256:first"},
 	}, actor())
 	require.NoError(t, err)
@@ -80,7 +81,7 @@ func TestDecideManyOwn_RefusesTheWholeBatchWhenOneIsNotTheCallers(t *testing.T) 
 
 	_, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{mine.ID, theirs.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.Error(t, err)
 	assert.True(t, errortypes.IsMultiError(err))
@@ -101,7 +102,7 @@ func TestDecideManyOwn_KeepsTheBatchRules(t *testing.T) {
 
 	_, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, other.ID},
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.ErrorContains(t, err, "one tool at a time")
 	decider.checked = nil
@@ -112,7 +113,7 @@ func TestDecideManyOwn_KeepsTheBatchRules(t *testing.T) {
 	}
 	_, err = svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: many,
-		Decision:    agent.DecisionAccepted,
+		Decision:    agentdecision.DecisionAccepted,
 	}, actor())
 	require.ErrorContains(t, err, "at most 50")
 	assert.Empty(t, decider.checked, "an oversized batch is refused before any lookup")

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -84,13 +85,13 @@ func (p *traceProposals) RecordExecution(
 type traceDecisions struct {
 	agentports.AgentDecisionRepository
 
-	created *agent.AgentDecision
+	created *agentdecision.AgentDecision
 }
 
 func (d *traceDecisions) Create(
 	_ context.Context,
-	decision *agent.AgentDecision,
-) (*agent.AgentDecision, error) {
+	decision *agentdecision.AgentDecision,
+) (*agentdecision.AgentDecision, error) {
 	decision.ID = pulid.MustNew("ad_")
 	d.created = decision
 
@@ -198,7 +199,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 func (h *decideHarness) decide(
 	t *testing.T,
 	ctx context.Context,
-	decision agent.DecisionType,
+	decision agentdecision.DecisionType,
 ) *agentports.DecisionOutcome {
 	t.Helper()
 
@@ -221,7 +222,7 @@ func TestDecide_LinksBackToTheSpanThatProposedIt(t *testing.T) {
 
 	h := newDecideHarness(t)
 	ctx, request := otel.Tracer("agentdecisionservice-test").Start(t.Context(), "POST /graphql")
-	h.decide(t, ctx, agent.DecisionRejected)
+	h.decide(t, ctx, agentdecision.DecisionRejected)
 	request.End()
 
 	requestTrace := request.SpanContext().TraceID()
@@ -233,7 +234,7 @@ func TestDecide_LinksBackToTheSpanThatProposedIt(t *testing.T) {
 	assert.Equal(t, h.proposing.SpanID(), decide.Links[0].SpanContext.SpanID())
 	for _, want := range []attribute.KeyValue{
 		aitrace.AIProposalID.String(h.proposals.proposal.ID.String()),
-		aitrace.AIDecision.String(string(agent.DecisionRejected)),
+		aitrace.AIDecision.String(string(agentdecision.DecisionRejected)),
 		aitrace.UserID.String(h.actor.UserID.String()),
 		aitrace.GenAIToolName.String("shipment_place_hold"),
 	} {
@@ -252,7 +253,7 @@ func TestDecide_AnApprovalRunsTheWriteInsideItsExecuteSpan(t *testing.T) {
 
 	h := newDecideHarness(t)
 	ctx, request := otel.Tracer("agentdecisionservice-test").Start(t.Context(), "POST /graphql")
-	outcome := h.decide(t, ctx, agent.DecisionAccepted)
+	outcome := h.decide(t, ctx, agentdecision.DecisionAccepted)
 	request.End()
 	require.NoError(t, outcome.ExecutionError)
 

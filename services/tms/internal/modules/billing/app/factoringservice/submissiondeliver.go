@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -100,7 +100,7 @@ func (s *SubmissionService) Deliver(
 		comment:  "Schedule " + updated.Number + " sent to " + updated.TransportTarget,
 	})
 	s.rec.publish(ctx, submissionResource, updated, nil, submissionRealtimeEvent)
-	s.publishEvent(ctx, req.TenantInfo, updated, agent.EventFactoringSubmissionSent,
+	s.publishEvent(ctx, req.TenantInfo, updated, agenttrigger.EventFactoringSubmissionSent,
 		"Schedule "+updated.Number+" of "+strconv.Itoa(updated.InvoiceCount)+
 			" invoices was sent to "+updated.TransportTarget)
 
@@ -144,7 +144,7 @@ func (s *SubmissionService) MarkFailed(
 		comment:  "Schedule " + updated.Number + " could not be sent: " + updated.LastError,
 	})
 	s.rec.publish(ctx, submissionResource, updated, nil, submissionRealtimeEvent)
-	s.publishEvent(ctx, req.TenantInfo, updated, agent.EventFactoringSubmissionFailed,
+	s.publishEvent(ctx, req.TenantInfo, updated, agenttrigger.EventFactoringSubmissionFailed,
 		"Schedule "+updated.Number+" could not be sent to "+updated.TransportTarget+
 			": "+updated.LastError)
 	return nil

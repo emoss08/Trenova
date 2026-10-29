@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -104,7 +104,7 @@ func TestDelegate_HandsOverTheRecordsAndTheResultsItNames(t *testing.T) {
 	require.Len(t, fx.calls, 1)
 	handed := fx.calls[0].Context
 	require.NotNil(t, handed)
-	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}}, handed.Records)
+	assert.Equal(t, []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}}, handed.Records)
 	require.Len(t, handed.Results, 1)
 	assert.Equal(t, "call_read", handed.Results[0].CallID)
 	assert.Equal(t, "shipment_get", handed.Results[0].ToolName)
@@ -276,7 +276,7 @@ func TestDelegateInput_FencesWhatWasHandedOverAfterTheTask(t *testing.T) {
 	t.Parallel()
 
 	input := DelegateInput("Duplicate the shipment with new dates.", &DelegateContext{
-		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+		Records: []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		Results: []SharedResult{{
 			CallID:   "call_read",
 			ToolName: "shipment_get",

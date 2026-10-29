@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -54,7 +55,7 @@ type DelegationRecord struct {
 }
 
 type MemoryRecord struct {
-	Memory     *agent.Memory
+	Memory     *agentmemory.Memory
 	SourceRead bool
 }
 
@@ -62,7 +63,7 @@ type OpenedTurn struct {
 	Definition *agentdefinition.Definition
 	System     string
 	Taint      *agent.RunTaint
-	Memories   []*agent.Memory
+	Memories   []*agentmemory.Memory
 	Reopened   bool
 }
 
@@ -122,7 +123,7 @@ func (r *recorder) delegated(record *DelegationRecord) {
 	r.delegations = append(r.delegations, *record)
 }
 
-func (r *recorder) remembered(memory *agent.Memory) {
+func (r *recorder) remembered(memory *agentmemory.Memory) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

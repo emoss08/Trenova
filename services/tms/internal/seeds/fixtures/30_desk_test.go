@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -42,7 +43,9 @@ func deskRefs(t *testing.T) *deskSeedRefs {
 			{ID: pulid.MustNew("aprp_"), RunID: pulid.MustNew("arun_")},
 			{ID: pulid.MustNew("aprp_"), RunID: pulid.MustNew("arun_")},
 		},
-		plans:      []*agent.AgentPlan{{ID: pulid.MustNew("apln_"), RunID: pulid.MustNew("arun_")}},
+		plans: []*agentplan.AgentPlan{
+			{ID: pulid.MustNew("apln_"), RunID: pulid.MustNew("arun_")},
+		},
 		agentNames: map[pulid.ID]string{},
 		now:        1_800_000_000,
 	}

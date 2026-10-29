@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,7 +34,7 @@ var rememberedTypes = map[string]assistantartifact.DisplayType{
 
 var retiredMemoryFields = []string{changepreview.FieldStatus, "retiredAt"}
 
-func memoryRecord(memory *agent.Memory) toolpreview.Record {
+func memoryRecord(memory *agentmemory.Memory) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAgentMemory,
 		ID:       memory.ID,
@@ -45,7 +46,7 @@ func memoryRecord(memory *agent.Memory) toolpreview.Record {
 func (t *RememberTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -54,7 +55,7 @@ func (t *RememberTool) Preview(
 	plan, err := t.memories.PreviewRemember(ctx, request, params.Actor)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
-			summary := previewAudience(request.Scope, agent.MemoryStatusActive)
+			summary := previewAudience(request.Scope, agentmemory.MemoryStatusActive)
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
@@ -92,14 +93,14 @@ func (t *RememberTool) Preview(
 	}
 
 	retire := agentmemoryservice.StatusChange{
-		Status:   agent.MemoryStatusRetired,
+		Status:   agentmemory.MemoryStatusRetired,
 		ByUserID: agentmemoryservice.StatusActor(params.Actor),
 		At:       timeutils.NowUnix(),
 	}
 	archived, err := changepreview.PlanArchive(
 		memoryRecord(plan.Replaced),
 		plan.Replaced,
-		func(retired *agent.Memory) error {
+		func(retired *agentmemory.Memory) error {
 			return agentmemoryservice.PlanStatus(retired, retire)
 		},
 		toolpreview.Only(retiredMemoryFields...),
@@ -118,7 +119,7 @@ func (t *RememberTool) Preview(
 func (t *ForgetMemoryTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
@@ -143,7 +144,7 @@ func (t *ForgetMemoryTool) Preview(
 	plan, err := changepreview.PlanArchive(
 		memoryRecord(memory),
 		memory,
-		func(retired *agent.Memory) error {
+		func(retired *agentmemory.Memory) error {
 			return agentmemoryservice.PlanStatus(retired, change)
 		},
 		toolpreview.Only(retiredMemoryFields...),
@@ -163,16 +164,16 @@ func (t *ForgetMemoryTool) Preview(
 // it would be kept at once or offered: to the person, for one of their own
 // they asked to be asked about; to an administrator, for one shared beyond
 // them.
-func previewAudience(scope agent.MemoryScope, status agent.MemoryStatus) string {
-	offered := status == agent.MemoryStatusSuggested
+func previewAudience(scope agentmemory.MemoryScope, status agentmemory.MemoryStatus) string {
+	offered := status == agentmemory.MemoryStatusSuggested
 	switch scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		if offered {
 			return "Would offer a memory for this person to keep, read in their later conversations once they do."
 		}
 
 		return "Would record a memory read in this person's later conversations."
-	case agent.MemoryScopeRole:
+	case agentmemory.MemoryScopeRole:
 		if offered {
 			return "Would offer a memory for an administrator to keep, read in the later conversations of everyone in this person's role once they do."
 		}

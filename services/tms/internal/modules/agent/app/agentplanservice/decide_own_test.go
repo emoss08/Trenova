@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -144,7 +145,7 @@ func TestDecideOwn_ApprovesAPlanFromTheCallersOwnConversation(t *testing.T) {
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 	require.Len(t, f.decider.decided, 2, "every step goes through the decision service")
 	for _, decided := range f.decider.decided {
 		assert.True(t, decided.WithinPlan)

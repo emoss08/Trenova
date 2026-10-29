@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,10 +70,10 @@ func TestScheduleReportPreview_ShowsTheRecurringEmail(t *testing.T) {
 	require.Nil(t, schedules.created, "a preview must not schedule")
 	assert.Contains(t, preview.Summary, "Unbilled aging")
 
-	created := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
+	created := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationCreate)
 	assert.Equal(t, "0 7 * * 1", agenttoolstest.FindField(t, created, "cronExpression").After)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, []string{"ops@carrier.example"}, send.Message.To)
 	assert.Equal(t, `"0 7 * * 1" (America/Chicago)`, send.Message.Cadence)
 	assert.Equal(t, "The latest Unbilled aging report, attached as CSV.", send.Message.Body)

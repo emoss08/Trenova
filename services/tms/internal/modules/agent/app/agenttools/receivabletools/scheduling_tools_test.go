@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -226,14 +227,14 @@ func TestAssignWorkerShift_PreviewsTheNewPatternAndTheOneItEnds(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		schedules.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 	assert.Contains(t, preview.Summary, "Early days")
@@ -307,7 +308,7 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		schedules.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -343,7 +344,7 @@ func TestSetWorkerAvailabilityPreference_ReadsTheWeekdayByName(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		schedules.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -382,13 +383,13 @@ func TestProposeShiftSwap_RaisesATradeWithBothDays(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		schedules.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(
 		t,
-		agent.PreviewOperationCreate,
+		agentpreview.PreviewOperationCreate,
 		agenttoolstest.PreviewChange(t, preview, 0).Operation,
 	)
 
@@ -428,7 +429,7 @@ func TestShiftSwapDecisions_EachNamesItsOwnPermission(t *testing.T) {
 		preview := agenttoolstest.PreviewWithoutWrites(
 			t,
 			schedules.guard,
-			func() (*agent.ToolPreview, error) {
+			func() (*agentpreview.ToolPreview, error) {
 				return tc.tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 			},
 		)

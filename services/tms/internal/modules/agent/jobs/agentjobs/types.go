@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -123,16 +124,16 @@ type RemindPendingProposalsResult struct {
 // OpenReplayResult is an evaluation's replay as the workflow drives it. Done
 // is set for an evaluation that had already finished.
 type OpenReplayResult struct {
-	Done      bool                     `json:"done"`
-	Run       agentflow.RunContext     `json:"run"`
-	Turn      agentruntime.TurnState   `json:"turn"`
-	Originals []agent.OriginalProposal `json:"originals,omitempty"`
+	Done      bool                           `json:"done"`
+	Run       agentflow.RunContext           `json:"run"`
+	Turn      agentruntime.TurnState         `json:"turn"`
+	Originals []agentreplay.OriginalProposal `json:"originals,omitempty"`
 }
 
 // FinishReplayInput is what a replay's loop came to.
 type FinishReplayInput struct {
 	Payload   *agentcontract.AgentEvaluationPayload `json:"payload"`
-	Originals []agent.OriginalProposal              `json:"originals,omitempty"`
+	Originals []agentreplay.OriginalProposal        `json:"originals,omitempty"`
 	Run       *agentruntimeports.RunResult          `json:"run,omitempty"`
 }
 

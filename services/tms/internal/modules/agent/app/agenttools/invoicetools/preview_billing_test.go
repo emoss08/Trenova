@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -93,7 +93,7 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 	assert.Contains(t, preview.Summary, "BQ-10")
 	assert.Contains(t, preview.Summary, "from 2150.00 to 2200.00")
 
-	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceShipment, change.Resource)
 	assert.Equal(t, "SHP-2001", change.Label)
 	agenttoolstest.FindField(t, change, "totalChargeAmount")

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -101,7 +102,7 @@ func (p *Publisher) ProposalChanged(
 
 func (p *Publisher) PlanChanged(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	actor kernelports.AuditActor,
 	action string,
 ) {

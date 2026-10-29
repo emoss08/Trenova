@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -135,7 +135,7 @@ func reportAudience(visibility report.Visibility) string {
 func (t *CreateReportTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	save, err := t.prepare(params)
 	if err != nil {
 		return nil, err
@@ -162,9 +162,9 @@ func (t *CreateReportTool) Preview(
 func warnUnsaveableReport(
 	ctx context.Context,
 	reports reportDefinitionWriter,
-	preview *agent.ToolPreview,
+	preview *agentpreview.ToolPreview,
 	save *reporting.SaveDefinitionRequest,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if save.Definition == nil {
 		return preview, nil
 	}
@@ -175,7 +175,7 @@ func warnUnsaveableReport(
 func (t *UpdateReportTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	save, existing, err := t.prepare(ctx, params)
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (t *ForkReportTool) request(
 func (t *ForkReportTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}

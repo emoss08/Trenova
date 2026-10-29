@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -281,7 +281,7 @@ func (s *ReadinessService) announce(
 	}
 	related = append(related, state.CustomerID)
 	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-		Kind:       agent.EventFactoringInvoiceReady,
+		Kind:       agenttrigger.EventFactoringInvoiceReady,
 		SubjectID:  state.InvoiceID,
 		TenantInfo: tenantInfo,
 		Related:    related,
@@ -761,7 +761,7 @@ func (s *ReadinessService) warnChargebacksDue(
 			continue
 		}
 		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-			Kind:       agent.EventFactoringChargebackDue,
+			Kind:       agenttrigger.EventFactoringChargebackDue,
 			SubjectID:  row.InvoiceID,
 			TenantInfo: tenantInfo,
 			Related:    []pulid.ID{row.SubmissionID, row.FactoringCompanyID, row.CustomerID},
@@ -806,7 +806,7 @@ func (s *ReadinessService) warnExpiringNoas(
 			continue
 		}
 		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-			Kind:       agent.EventFactoringNoaExpiring,
+			Kind:       agenttrigger.EventFactoringNoaExpiring,
 			SubjectID:  noa.ID,
 			TenantInfo: tenantInfo,
 			Related:    []pulid.ID{noa.CustomerID, noa.FactoringCompanyID},

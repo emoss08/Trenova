@@ -4,7 +4,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -278,12 +281,12 @@ type set struct {
 	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*workerleave.WorkerLeaveEntry]
 	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*fleetsafety.WorkerSafetyViolation]
 	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
-	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
+	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agentdecision.AgentDecision]
 	agentPlanStepsByPlanID                    *dataloadgen.Loader[string, []*agent.AgentProposal]
 	agentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	agentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
-	agentMemoryByID                           *dataloadgen.Loader[string, *agent.Memory]
-	agentMemoryReplacement                    *dataloadgen.Loader[string, *agent.Memory]
+	agentMemoryByID                           *dataloadgen.Loader[string, *agentmemory.Memory]
+	agentMemoryReplacement                    *dataloadgen.Loader[string, *agentmemory.Memory]
 	agentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	agentsPaused                              *dataloadgen.Loader[string, bool]
 	agentPlanHold                             *dataloadgen.Loader[string, *assistantports.ProposalHold]
@@ -292,7 +295,7 @@ type set struct {
 	usableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
 	accessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
 	agentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
-	toolTrustByAgentID                        *dataloadgen.Loader[string, []*agent.ToolTrust]
+	toolTrustByAgentID                        *dataloadgen.Loader[string, []*agenttooltrust.ToolTrust]
 	documentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
 	iftaJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
 	iftaReturnByID                            *dataloadgen.Loader[string, *ifta.Return]

@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -116,16 +118,16 @@ func invoiceMatchesListSpec() graphQLListSpec {
 		references: map[string]idReference{paramCarrierID: carrierReference},
 		resource:   permission.ResourceCarrierInvoiceMatch,
 		reads: readSpec{
-			reads:  agent.ExternalReadMarked,
+			reads:  agenttooltrust.ExternalReadMarked,
 			source: agent.TaintSourceEDI,
 			rationale: "Lists carrier invoices, some of which a carrier sent over EDI with " +
 				"its own invoice text; nothing changes and nothing is sent.",
 		},
 		shape:   matchSource,
 		amounts: true,
-		marks: func(row map[string]any) (agent.RecordRef, bool) {
+		marks: func(row map[string]any) (agentrecord.RecordRef, bool) {
 			id := stringOf(row[fieldEDICarrierInvoiceID])
-			return agent.RecordRef{EntityType: carrierInvoiceEntity, ID: id}, id != ""
+			return agentrecord.RecordRef{EntityType: carrierInvoiceEntity, ID: id}, id != ""
 		},
 	}
 }

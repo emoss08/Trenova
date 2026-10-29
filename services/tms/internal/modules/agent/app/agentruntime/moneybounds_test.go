@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -16,7 +17,7 @@ import (
 
 type moneyBudgets = agenttest.StubMoneyBudgets
 
-func roomyMoneyLimits() agent.MoneyLimits { return agenttest.RoomyMoneyLimits() }
+func roomyMoneyLimits() agenttooltrust.MoneyLimits { return agenttest.RoomyMoneyLimits() }
 
 func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 	t.Parallel()
@@ -43,7 +44,7 @@ func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 	action := run.result.Actions[0]
 	assert.False(t, action.Executed)
 	assert.Equal(t, agent.TierActWithApproval, action.Tier)
-	assert.Equal(t, []string{agent.HeldByMoneyCallCeiling}, action.HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyCallCeiling}, action.HeldBy)
 	assert.Nil(t, action.MoneyMinor)
 }
 
@@ -73,9 +74,13 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 	require.Len(t, run.result.Actions, 2)
 	assert.True(t, run.result.Actions[0].Executed)
 	assert.False(t, run.result.Actions[1].Executed)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
 	require.Len(t, budgets.Asked(), 2)
-	assert.Equal(t, agent.MoneyUse{Calls: 1, AmountMinor: 10_000}, budgets.Asked()[1].Unrecorded)
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 10_000},
+		budgets.Asked()[1].Unrecorded,
+	)
 }
 
 func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
@@ -105,7 +110,11 @@ func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 
 			assert.Zero(t, pay.Calls)
 			require.Len(t, run.result.Actions, 1)
-			assert.Equal(t, []string{agent.HeldByMoneyLimitsUnread}, run.result.Actions[0].HeldBy)
+			assert.Equal(
+				t,
+				[]string{agenttooltrust.HeldByMoneyLimitsUnread},
+				run.result.Actions[0].HeldBy,
+			)
 		})
 	}
 }
@@ -132,13 +141,13 @@ func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 	assert.Zero(t, pay.Calls)
 	require.Len(t, run.result.Actions, 1)
 	assert.Equal(t, agent.TierActWithApproval, run.result.Actions[0].Tier)
-	assert.Equal(t, []string{agent.HeldByMoneyUnbounded}, run.result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyUnbounded}, run.result.Actions[0].HeldBy)
 }
 
 func TestHeldReason_ExplainsEveryMoneyBound(t *testing.T) {
 	t.Parallel()
 
-	for _, key := range agent.MoneyHeldByKeys() {
+	for _, key := range agenttooltrust.MoneyHeldByKeys() {
 		reason := heldReason([]string{key}, agent.EgressMoney)
 		assert.NotEmpty(t, reason, key)
 		assert.Contains(t, reason, moneyHeldReasons[key], key)

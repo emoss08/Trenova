@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,11 +24,11 @@ type fakeMemories struct {
 	agentmemoryports.AgentMemoryService
 	remembered *agentmemoryports.RememberRequest
 	status     *agentmemoryports.SetAgentMemoryStatusRequest
-	created    *agent.Memory
-	stored     map[pulid.ID]*agent.Memory
-	existing   *agent.Memory
+	created    *agentmemory.Memory
+	stored     map[pulid.ID]*agentmemory.Memory
+	existing   *agentmemory.Memory
 	guard      agenttoolstest.WriteGuard
-	mode       agent.MemorySavingMode
+	mode       agentmemory.MemorySavingMode
 	roleIDs    []pulid.ID
 	offers     bool
 	refuse     error
@@ -37,9 +38,9 @@ func (f *fakeMemories) SavingMode(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (agent.MemorySavingMode, error) {
+) (agentmemory.MemorySavingMode, error) {
 	if f.mode == "" {
-		return agent.MemorySavingAutomatic, nil
+		return agentmemory.MemorySavingAutomatic, nil
 	}
 
 	return f.mode, nil
@@ -49,15 +50,15 @@ func (f *fakeMemories) Reader(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	userID pulid.ID,
-) (agent.MemoryReader, error) {
-	return agent.MemoryReader{UserID: userID, RoleIDs: f.roleIDs}, nil
+) (agentmemory.MemoryReader, error) {
+	return agentmemory.MemoryReader{UserID: userID, RoleIDs: f.roleIDs}, nil
 }
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
 	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (f *fakeMemories) PreviewRemember(
 ) (*agentmemoryports.RememberPlan, error) {
 	planned := agentmemoryservice.NewMemory(req, actor)
 	if f.offers {
-		planned.Status = agent.MemoryStatusSuggested
+		planned.Status = agentmemory.MemoryStatusSuggested
 	}
 
 	return &agentmemoryports.RememberPlan{Memory: planned, Existing: f.existing}, nil
@@ -88,7 +89,7 @@ func (f *fakeMemories) PreviewSetStatus(
 	ctx context.Context,
 	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	_ *permissionports.RequestActor,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	if f.refuse != nil {
 		return nil, f.refuse
 	}
@@ -102,7 +103,7 @@ func (f *fakeMemories) PreviewSetStatus(
 func (f *fakeMemories) GetByID(
 	_ context.Context,
 	req agentmemoryports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	memory, ok := f.stored[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Agent memory not found")
@@ -116,14 +117,14 @@ func (f *fakeMemories) SetStatus(
 	_ context.Context,
 	req agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.status = &req
 	memory, ok := f.stored[req.ID]
 	if !ok {
-		return &agent.Memory{ID: req.ID, Status: req.Status}, nil
+		return &agentmemory.Memory{ID: req.ID, Status: req.Status}, nil
 	}
 	if err := agentmemoryservice.PlanStatus(memory, agentmemoryservice.StatusChange{
 		Status:   req.Status,
@@ -154,8 +155,8 @@ func TestRemember_PassesTheRunAndSubjectThrough(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 
 	assert.Equal(t, params.RunID, memories.remembered.RunID)
-	assert.Equal(t, agent.MemoryKindInstruction, memories.remembered.Kind)
-	assert.Equal(t, agent.MemorySubjectCustomer, memories.remembered.SubjectType)
+	assert.Equal(t, agentmemory.MemoryKindInstruction, memories.remembered.Kind)
+	assert.Equal(t, agentmemory.MemorySubjectCustomer, memories.remembered.SubjectType)
 	assert.Equal(t, customerID, memories.remembered.SubjectID)
 	require.NotNil(t, memories.remembered.ExpiresAt)
 	assert.Equal(t, int64(1798761600), *memories.remembered.ExpiresAt, "the end of the day named")
@@ -231,7 +232,7 @@ func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {
 	)
 
 	assert.Equal(t, memoryID, memories.status.ID)
-	assert.Equal(t, agent.MemoryStatusRetired, memories.status.Status)
+	assert.Equal(t, agentmemory.MemoryStatusRetired, memories.status.Status)
 	assert.True(t, tool.Policy().Reversible)
 }
 
@@ -248,10 +249,10 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	params := agenttoolstest.MemoryParams(map[string]any{"content": "Group AR by facility."})
 	memory, err := tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeUser, memory.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeUser, memory.Scope)
 	require.NotNil(t, memory.OwnerUserID)
 	assert.Equal(t, params.Actor.UserID, *memory.OwnerUserID)
-	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
+	assert.Equal(t, agentmemory.MemoryStatusActive, memory.Status)
 	assert.Equal(t, agent.EgressPersonal, tool.Policy().Classified(params).Egress)
 
 	team := agenttoolstest.MemoryParams(
@@ -259,7 +260,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	)
 	memory, err = tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), team)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeRole, memory.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeRole, memory.Scope)
 	require.NotNil(t, memory.RoleID)
 	assert.Equal(t, roleID, *memory.RoleID)
 	assert.Equal(t, agent.EgressInternal, tool.Policy().Classified(team).Egress)
@@ -269,7 +270,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	)
 	memory, err = tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), org)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, memory.Scope)
 	assert.Nil(t, memory.OwnerUserID)
 }
 
@@ -289,7 +290,7 @@ func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testin
 
 	memory, err := tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, memory.Scope)
 
 	params.Params["visibleTo"] = "me"
 	_, err = tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), params)
@@ -302,7 +303,7 @@ func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testin
 func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 	t.Parallel()
 
-	memories := &fakeMemories{mode: agent.MemorySavingAskFirst}
+	memories := &fakeMemories{mode: agentmemory.MemorySavingAskFirst}
 	tool := NewRememberTool(memories)
 
 	params := agenttoolstest.MemoryParams(
@@ -310,7 +311,7 @@ func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 	)
 	memory, err := tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryStatusSuggested, memory.Status)
+	assert.Equal(t, agentmemory.MemoryStatusSuggested, memory.Status)
 	require.NotNil(t, memory.CreatedByUserID)
 	assert.Equal(t, params.Actor.UserID, *memory.CreatedByUserID, "offered to the person who asked")
 
@@ -320,7 +321,7 @@ func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 	approved.ProposalID = pulid.MustNew("aprop_")
 	memory, err = tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), approved)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
+	assert.Equal(t, agentmemory.MemoryStatusActive, memory.Status)
 }
 
 // The tools a person uses through the assistant are gated on using the

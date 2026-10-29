@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
@@ -118,7 +119,7 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 			preview := agenttoolstest.PreviewWithoutWrites(
 				t,
 				periods.guard,
-				func() (*agent.ToolPreview, error) {
+				func() (*agentpreview.ToolPreview, error) {
 					return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 				},
 			)
@@ -184,7 +185,7 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeMappingReviewer struct {
@@ -290,7 +291,7 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviewer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -353,7 +354,7 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviewer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -461,7 +462,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		sync.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -523,7 +524,7 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		sync.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -646,7 +647,7 @@ func TestTriageBankReceiptWorkItem_AssignsOrMarksItUnderReview(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		items.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), assign)
 		},
 	)

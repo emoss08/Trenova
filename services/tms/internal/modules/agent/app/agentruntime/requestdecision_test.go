@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -310,7 +311,7 @@ func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
 		ProposalID:  first.ProposalID,
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
 		PlanID:      planID,
-		ToolName:    agent.PlanToolName,
+		ToolName:    agentplan.PlanToolName,
 	}, observer.seen[0].Data)
 	content, failed := toolResult(run.result, requestDecisionName)
 	assert.False(t, failed)

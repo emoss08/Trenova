@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -81,7 +82,7 @@ func DescribeAccountingInboundAttention(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectAccountingInbound,
 		SubjectID:   group.SampleID,
-		EventKind:   agent.EventAccountingPaymentProposed,
+		EventKind:   agenttrigger.EventAccountingPaymentProposed,
 		Path:        AccountingInboundPath,
 		OccurredAt:  group.OldestDetectedAt,
 	}, true

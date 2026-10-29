@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -91,7 +92,7 @@ func TestAssessLateCharges_PreviewsEachMemoAndOnlyAPersonAssesses(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		charges.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
@@ -101,7 +102,7 @@ func TestAssessLateCharges_PreviewsEachMemoAndOnlyAPersonAssesses(t *testing.T) 
 	require.Len(t, preview.Changes, 1)
 	memo := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceInvoice, memo.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, memo.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, memo.Operation)
 	require.NotNil(t, memo.Money)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
@@ -136,7 +137,7 @@ func TestAssessLateCharges_RefusesARunThatChargesNothing(t *testing.T) {
 	preview, err := NewAssessLateChargesTool(disabled).(agenttoolports.ToolPreviewer).
 		Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeSharer struct {
@@ -201,7 +202,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		sharer.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)

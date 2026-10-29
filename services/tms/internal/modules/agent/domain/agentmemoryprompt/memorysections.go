@@ -3,7 +3,7 @@ package agentmemoryprompt
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -14,9 +14,9 @@ const (
 	outsideMemoryCloseTag = "</memory_from_outside_content>"
 )
 
-func SplitMemories(memories []*agent.Memory) ([]*agent.Memory, []*agent.Memory) {
-	recorded := make([]*agent.Memory, 0, len(memories))
-	outside := make([]*agent.Memory, 0)
+func SplitMemories(memories []*agentmemory.Memory) ([]*agentmemory.Memory, []*agentmemory.Memory) {
+	recorded := make([]*agentmemory.Memory, 0, len(memories))
+	outside := make([]*agentmemory.Memory, 0)
 	for _, memory := range memories {
 		if memory == nil || strings.TrimSpace(memory.Content) == "" {
 			continue
@@ -41,7 +41,7 @@ func SplitMemories(memories []*agent.Memory) ([]*agent.Memory, []*agent.Memory) 
 // instruction is followed, a correction is a mistake not to repeat, and a
 // fact is weighed. Without that line a model treats a fact about last month
 // as an order for today.
-func MemorySection(memories []*agent.Memory) string {
+func MemorySection(memories []*agentmemory.Memory) string {
 	if len(memories) == 0 {
 		return ""
 	}
@@ -80,7 +80,7 @@ const HeldBackNote = "## What this organization has recorded for its agents\n" +
 	"When the task may depend on a preference, a rule or a past correction, call " +
 	"agent_list_memories before relying on what you assume."
 
-func OutsideMemorySection(memories []*agent.Memory) string {
+func OutsideMemorySection(memories []*agentmemory.Memory) string {
 	if len(memories) == 0 {
 		return ""
 	}

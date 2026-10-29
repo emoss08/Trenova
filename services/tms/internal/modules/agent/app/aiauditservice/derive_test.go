@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -91,7 +93,7 @@ func TestStepOutcome_FollowsTheVerdict(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			step := &agent.AgentRunStep{Status: string(agentruntimeports.RunStepCompleted)}
+			step := &agentrunstep.AgentRunStep{Status: string(agentruntimeports.RunStepCompleted)}
 			if tt.failed {
 				step.Status = string(agentruntimeports.RunStepFailed)
 			}
@@ -111,7 +113,7 @@ func TestStepOutcome_AnActionOutranksTheVerdict(t *testing.T) {
 	t.Parallel()
 
 	got := stepOutcome(
-		&agent.AgentRunStep{Status: string(agentruntimeports.RunStepCompleted)},
+		&agentrunstep.AgentRunStep{Status: string(agentruntimeports.RunStepCompleted)},
 		&agentruntimeports.RunStepOutcome{
 			Verdict: aitrace.OutcomeProposed,
 			Action:  &agentruntimeports.PendingAction{ToolName: "update_worker"},
@@ -150,7 +152,7 @@ func TestRunEventEvent_ARefusalFollowsItsVerdict(t *testing.T) {
 			if tt.verdict != nil {
 				payload[payloadKeyVerdict] = tt.verdict
 			}
-			row := &agent.AgentRunEvent{
+			row := &agentrunevent.AgentRunEvent{
 				ID:         pulid.MustNew("are_"),
 				OwnerKind:  string(agent.RunOwnerAgentRun),
 				OwnerID:    pulid.MustNew("ar_"),
@@ -179,7 +181,7 @@ func TestRunEventEvent_ARefusalWithAStepIsTheStepsRow(t *testing.T) {
 	lookups.calls[aiauditports.OwnerCall{OwnerID: owner, CallID: "call_1"}] = struct{}{}
 
 	d := &deriver{redactor: testRedactor()}
-	event := d.runEventEvent(lookups, &agent.AgentRunEvent{
+	event := d.runEventEvent(lookups, &agentrunevent.AgentRunEvent{
 		ID:        pulid.MustNew("are_"),
 		OwnerKind: string(agent.RunOwnerAgentRun),
 		OwnerID:   owner,

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -502,7 +503,7 @@ func TestProposePolicyProposesAMatchingPaymentAndRaisesTheEvent(t *testing.T) {
 
 	events := h.events.Published()
 	require.Len(t, events, 1)
-	assert.Equal(t, agent.EventAccountingPaymentProposed, events[0].Kind)
+	assert.Equal(t, agenttrigger.EventAccountingPaymentProposed, events[0].Kind)
 	assert.Equal(t, change.ID, events[0].SubjectID)
 }
 

@@ -4,21 +4,23 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -230,7 +232,7 @@ func proposal(
 	confidence float64,
 	rationale string,
 	params map[string]any,
-	evidence []agent.EvidenceRef,
+	evidence []agentevidence.EvidenceRef,
 ) *agent.AgentProposal {
 	return &agent.AgentProposal{
 		ToolName:     tool,
@@ -283,7 +285,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"hours":      4,
 			"subject":    "Detention accruing on " + refs.shipments[0].ProNumber,
 		},
-		[]agent.EvidenceRef{
+		[]agentevidence.EvidenceRef{
 			{
 				Type: "Shipment",
 				ID:   refs.shipments[0].ID.String(),
@@ -312,7 +314,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"body": "This load delivered at 14:22, inside the appointment window. " +
 				"The signed bill is attached to the shipment.",
 		},
-		[]agent.EvidenceRef{
+		[]agentevidence.EvidenceRef{
 			{Type: "Shipment", ID: refs.shipments[1].ID.String(), Note: "Delivered 14:22"},
 		},
 	)
@@ -330,7 +332,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"credentials": []string{"Medical card", "Hazmat endorsement", "Annual review"},
 			"dueWithin":   30,
 		},
-		[]agent.EvidenceRef{
+		[]agentevidence.EvidenceRef{
 			{
 				Type: "Worker",
 				ID:   refs.worker.ID.String(),
@@ -355,7 +357,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"hours":      2,
 			"subject":    "Detention accruing on " + refs.shipments[2].ProNumber,
 		},
-		[]agent.EvidenceRef{
+		[]agentevidence.EvidenceRef{
 			{Type: "Shipment", ID: refs.shipments[2].ID.String(), Note: "Free time expired 15:40"},
 		},
 	)
@@ -376,7 +378,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"comment":     "Customer notified of the two-hour delay at 11:05.",
 			"commentType": "CustomerUpdate",
 		},
-		[]agent.EvidenceRef{
+		[]agentevidence.EvidenceRef{
 			{Type: "Shipment", ID: refs.shipments[3].ID.String()},
 		},
 	)
@@ -393,8 +395,12 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 			"workerId": refs.worker.ID.String(),
 			"reason":   "Medical card expired",
 		},
-		[]agent.EvidenceRef{
-			{Type: "Worker", ID: refs.worker.ID.String(), Note: "Card renewed, paperwork not filed"},
+		[]agentevidence.EvidenceRef{
+			{
+				Type: "Worker",
+				ID:   refs.worker.ID.String(),
+				Note: "Card renewed, paperwork not filed",
+			},
 		},
 	)
 
@@ -495,7 +501,7 @@ func (s *AgentActivitySeed) insertPlan(
 		return err
 	}
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
 		RunID:          run.ID,
@@ -503,7 +509,7 @@ func (s *AgentActivitySeed) insertPlan(
 		Summary: "The rate disagrees with the agreement, the accessorial has no code, and " +
 			"nobody has asked the customer for the missing reference. Doing any one of " +
 			"them alone leaves the load still unbillable.",
-		Status:    agent.PlanStatusPending,
+		Status:    agentplan.PlanStatusPending,
 		StepCount: 3,
 		ExpiresAt: refs.now + 3*activitySeedDay,
 	}
@@ -523,7 +529,7 @@ func (s *AgentActivitySeed) insertPlan(
 				"shipmentId": refs.shipments[1].ID.String(),
 				"chargeCode": "DETENTION",
 			},
-			[]agent.EvidenceRef{{Type: "Shipment", ID: refs.shipments[1].ID.String()}},
+			[]agentevidence.EvidenceRef{{Type: "Shipment", ID: refs.shipments[1].ID.String()}},
 		),
 		proposal(
 			"customer_send_email",
@@ -539,7 +545,7 @@ func (s *AgentActivitySeed) insertPlan(
 				"body": "We are short the purchase order for this load and cannot invoice " +
 					"without it. Could you send it over?",
 			},
-			[]agent.EvidenceRef{{Type: "Customer", ID: refs.customers[1].ID.String()}},
+			[]agentevidence.EvidenceRef{{Type: "Customer", ID: refs.customers[1].ID.String()}},
 		),
 		proposal(
 			"shipment_add_comment",
@@ -553,7 +559,7 @@ func (s *AgentActivitySeed) insertPlan(
 				"comment":     "Charge code corrected; PO requested from the customer.",
 				"commentType": "Billing",
 			},
-			[]agent.EvidenceRef{{Type: "Shipment", ID: refs.shipments[1].ID.String()}},
+			[]agentevidence.EvidenceRef{{Type: "Shipment", ID: refs.shipments[1].ID.String()}},
 		),
 	}
 
@@ -616,39 +622,39 @@ func (s *AgentActivitySeed) insertFailures(
 		return err
 	}
 
-	exceptions := []*agent.AgentException{
+	exceptions := []*agentexception.AgentException{
 		{
 			OrganizationID: refs.org.ID,
 			BusinessUnitID: refs.org.BusinessUnitID,
 			RunID:          raised.ID,
-			Category:       agent.CategoryRateNotOnFile,
-			Severity:       agent.SeverityHigh,
+			Category:       agentexception.CategoryRateNotOnFile,
+			Severity:       agentexception.SeverityHigh,
 			SubjectType:    agent.SubjectShipment,
 			SubjectID:      refs.shipments[3].ID,
 			AttemptSummary: "The load prices at $2,840 and no agreement for this customer " +
 				"covers the lane. Guessing a rate is how a customer gets billed twice.",
-			Evidence: []agent.EvidenceRef{
+			Evidence: []agentevidence.EvidenceRef{
 				{Type: "Shipment", ID: refs.shipments[3].ID.String()},
 				{Type: "Customer", ID: refs.customers[0].ID.String(), Note: "No lane agreement"},
 			},
 			BlastRadius:     1,
-			ResolutionState: agent.ResolutionStateOpen,
+			ResolutionState: agentexception.ResolutionStateOpen,
 		},
 		{
 			OrganizationID: refs.org.ID,
 			BusinessUnitID: refs.org.BusinessUnitID,
 			RunID:          raised.ID,
-			Category:       agent.CategoryMissingBOL,
-			Severity:       agent.SeverityMedium,
+			Category:       agentexception.CategoryMissingBOL,
+			Severity:       agentexception.SeverityMedium,
 			SubjectType:    agent.SubjectShipment,
 			SubjectID:      refs.shipments[2].ID,
 			AttemptSummary: "No signed bill is attached, and the customer will not pay an " +
 				"invoice without one.",
-			Evidence: []agent.EvidenceRef{
+			Evidence: []agentevidence.EvidenceRef{
 				{Type: "Shipment", ID: refs.shipments[2].ID.String()},
 			},
 			BlastRadius:     1,
-			ResolutionState: agent.ResolutionStateResolved,
+			ResolutionState: agentexception.ResolutionStateResolved,
 			ResolutionNotes: "Driver sent the photo; billing attached it by hand.",
 		},
 	}
@@ -680,10 +686,10 @@ func (s *AgentActivitySeed) insertTrust(
 	return nil
 }
 
-func trustRows(refs *activitySeedRefs) []*agent.ToolTrust {
+func trustRows(refs *activitySeedRefs) []*agenttooltrust.ToolTrust {
 	at := func(offset int64) *int64 { value := refs.now - offset; return &value }
 
-	return []*agent.ToolTrust{
+	return []*agenttooltrust.ToolTrust{
 		{
 			OrganizationID:    refs.org.ID,
 			BusinessUnitID:    refs.org.BusinessUnitID,

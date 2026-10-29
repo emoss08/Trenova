@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
@@ -31,7 +31,7 @@ var tenderPayloadIgnored = []string{
 func (t *EdiChangeReviewTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
@@ -83,7 +83,7 @@ func describeTenderChangeReview(
 	if err != nil {
 		return err
 	}
-	plan.changes = []*agent.RecordChange{status}
+	plan.changes = []*agentpreview.RecordChange{status}
 	if !call.apply {
 		plan.summary += " The load stays as it is, and the other organization sees the " +
 			"change rejected."
@@ -149,7 +149,7 @@ func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPl
 	if err != nil {
 		return err
 	}
-	plan.changes = []*agent.RecordChange{status}
+	plan.changes = []*agentpreview.RecordChange{status}
 	if !call.apply {
 		plan.summary += " The shipment stays as it is."
 		return nil
@@ -195,7 +195,7 @@ func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPl
 func changeStatusRecord[T any](
 	record toolpreview.Record,
 	before, after *T,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(record, before, after,
 		toolpreview.Only(changepreview.FieldStatus, changeFieldReason),
 		toolpreview.Labels(changeReviewLabels),

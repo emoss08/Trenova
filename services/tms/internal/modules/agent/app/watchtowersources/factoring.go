@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -294,7 +295,7 @@ func DescribeFactoringChargebackDue(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectInvoice,
 		SubjectID:   row.InvoiceID,
-		EventKind:   agent.EventFactoringChargebackDue,
+		EventKind:   agenttrigger.EventFactoringChargebackDue,
 		Path:        factoringRecordPath("invoice", row.InvoiceID, pathFactoringInvoices),
 		OccurredAt:  max(row.DeadlineAt-FactoringChargebackWarningSeconds(), row.FundedOn, 1),
 	}, true
@@ -348,7 +349,7 @@ func DescribeFactoringSendFailed(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectFactoringSubmission,
 		SubjectID:   row.SubmissionID,
-		EventKind:   agent.EventFactoringSubmissionFailed,
+		EventKind:   agenttrigger.EventFactoringSubmissionFailed,
 		Path: factoringRecordPath(
 			"factoring_submission",
 			row.SubmissionID,
@@ -405,7 +406,7 @@ func DescribeFactoringReadyUnsubmitted(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectInvoice,
 		SubjectID:   state.InvoiceID,
-		EventKind:   agent.EventFactoringInvoiceReady,
+		EventKind:   agenttrigger.EventFactoringInvoiceReady,
 		Path:        factoringRecordPath("invoice", state.InvoiceID, pathFactoringInvoices),
 		OccurredAt:  *state.ReadySince + factoringreadiness.ReadyUnsubmittedSeconds,
 	}, true
@@ -514,7 +515,7 @@ func DescribeFactoringNoaExpiring(
 		Summary:     stringutils.OneLine(summary, maxSummaryLength),
 		SubjectType: agent.SubjectFactoringNoa,
 		SubjectID:   row.NoaID,
-		EventKind:   agent.EventFactoringNoaExpiring,
+		EventKind:   agenttrigger.EventFactoringNoaExpiring,
 		Path:        factoringRecordPath("customer", row.CustomerID, pathFactoringCustomers),
 		OccurredAt: max(
 			row.ExpiresAt-FactoringNoaWarningSeconds(),

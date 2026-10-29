@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -127,7 +129,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTo
 			ctx context.Context,
 			req *latechargeports.LateChargeAssessmentRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := charges.Assess(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -165,8 +167,8 @@ type lateChargeMemoView struct {
 func renderLateCharges(
 	_ *latechargeports.LateChargeAssessmentRequest,
 	result *latechargeports.LateChargeAssessmentResult,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(result.Customers))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(result.Customers))
 	notes := make([]string, 0, len(result.Customers))
 	for _, customer := range result.Customers {
 		if customer.Skipped {
@@ -202,7 +204,7 @@ func renderLateCharges(
 			return nil, err
 		}
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(customer.CurrencyCode,
-			agent.MoneyLine{
+			agentpreview.MoneyLine{
 				Label: "Late charge",
 				After: changepreview.KnownAmount(money.DecimalFromMinor(customer.TotalChargeMinor)),
 			},
@@ -272,7 +274,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 			ctx context.Context,
 			req *invoiceports.ShareInvoiceRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := shares.Share(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -321,9 +323,9 @@ type shareView struct {
 func renderShare(
 	_ *invoiceports.ShareInvoiceRequest,
 	plan *invoiceports.InvoiceSharePreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	label := invoicepreview.InvoiceLabel(plan.Invoice)
-	changes := make([]*agent.RecordChange, 0, len(plan.Recipients))
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Recipients))
 	names := make([]string, 0, len(plan.Recipients))
 	for _, recipient := range plan.Recipients {
 		names = append(names, recipient.Name)
@@ -341,8 +343,8 @@ func renderShare(
 			return nil, err
 		}
 		if recipient.Emailed {
-			change.Message = &agent.MessagePreview{
-				Channel: agent.MessageChannelEmail,
+			change.Message = &agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelEmail,
 				To:      []string{recipient.EmailAddress},
 				Subject: recipient.Subject,
 				Body:    recipient.Body,

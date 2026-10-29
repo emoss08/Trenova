@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
@@ -35,7 +35,7 @@ type journalView struct {
 func (t *PostInvoiceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	req, err := invoiceRequest(t, &params)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (t *PostInvoiceTool) Preview(
 		)), post.Refusal), nil
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(post.Legs)+3)
+	changes := make([]*agentpreview.RecordChange, 0, len(post.Legs)+3)
 	if !post.AlreadyPosted {
 		invoiceChange, changeErr := postedInvoiceChange(post)
 		if changeErr != nil {
@@ -103,7 +103,7 @@ func (t *PostInvoiceTool) Preview(
 	return toolpreview.Build(postSummary(post, label, total), changes...), nil
 }
 
-func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange, error) {
+func postedInvoiceChange(post *invoiceservice.PostPreview) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       post.Before.ID,
@@ -117,11 +117,11 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		post.Before.CurrencyCode,
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: billingqueuepreview.MoneyLineFreight,
 			After: changepreview.KnownAmount(post.Before.SubtotalAmount),
 		},
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: billingqueuepreview.MoneyLineAccessorials,
 			After: changepreview.KnownAmount(post.Before.OtherAmount),
 		},
@@ -134,14 +134,14 @@ func journalEntryChange(
 	journal *kernelports.JournalPreview,
 	currency string,
 	label string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	view := &journalView{
 		AccountingDate:   journal.AccountingDate,
 		FiscalPeriodID:   journal.FiscalPeriodID,
 		EntryStatus:      journal.EntryStatus,
 		RequiresApproval: journal.RequiresApproval,
 	}
-	lines := make([]agent.MoneyLine, 0, len(journal.Lines))
+	lines := make([]agentpreview.MoneyLine, 0, len(journal.Lines))
 	for _, line := range journal.Lines {
 		view.Description = line.Description
 		switch {
@@ -149,7 +149,7 @@ func journalEntryChange(
 			if view.DebitAccountID.IsNil() {
 				view.DebitAccountID = line.GLAccountID
 			}
-			lines = append(lines, agent.MoneyLine{
+			lines = append(lines, agentpreview.MoneyLine{
 				Label: "Debit",
 				After: changepreview.KnownAmount(money.DecimalFromMinor(line.DebitMinor)),
 			})
@@ -249,7 +249,7 @@ func ediSentence(plan *invoiceports.InvoiceEDISendPlan) string {
 func (t *SendInvoiceTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	send, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
@@ -271,8 +271,8 @@ func (t *SendInvoiceTool) Preview(
 	message := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       plan.InvoiceID,
-	}, &agent.MessagePreview{
-		Channel:     agent.MessageChannelEmail,
+	}, &agentpreview.MessagePreview{
+		Channel:     agentpreview.MessageChannelEmail,
 		From:        plan.FromEmail,
 		To:          plan.Recipients.To,
 		Cc:          plan.Recipients.CC,

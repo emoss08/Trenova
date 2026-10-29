@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -122,9 +122,9 @@ func (s *Service) notifyVisitWaits(
 		return
 	}
 
-	kind, verb := agent.EventShipmentMoveArrived, "entered"
+	kind, verb := agenttrigger.EventShipmentMoveArrived, "entered"
 	if event.visit == shipment.VisitDeparture {
-		kind, verb = agent.EventShipmentMoveDeparted, "left"
+		kind, verb = agenttrigger.EventShipmentMoveDeparted, "left"
 	}
 	at := event.record.OccurredAt
 	if at == 0 {

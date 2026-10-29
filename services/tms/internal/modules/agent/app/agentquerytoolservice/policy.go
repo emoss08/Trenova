@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -11,9 +12,9 @@ const readRationale = "Reads records the caller may already open; it changes not
 
 type readSpec struct {
 	resource        permission.Resource
-	scope           agent.ToolScope
-	effect          agent.ToolEffect
-	reads           agent.ExternalRead
+	scope           agenttooltrust.ToolScope
+	effect          agenttooltrust.ToolEffect
+	reads           agenttooltrust.ExternalRead
 	source          agent.TaintSource
 	capsLaterWrites bool
 	rationale       string
@@ -22,7 +23,7 @@ type readSpec struct {
 func readPolicy(name string, spec readSpec) agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:            name,
-		Kind:            agent.ToolKindQuery,
+		Kind:            agenttooltrust.ToolKindQuery,
 		Resource:        spec.resource,
 		Operation:       permission.OpRead,
 		Scope:           spec.scope,
@@ -38,13 +39,13 @@ func readPolicy(name string, spec readSpec) agenttoolports.ToolPolicy {
 		Rationale:       spec.rationale,
 	}
 	if policy.Scope == "" {
-		policy.Scope = agent.ToolScopeTenant
+		policy.Scope = agenttooltrust.ToolScopeTenant
 	}
 	if policy.Effect == "" {
-		policy.Effect = agent.ToolEffectLookup
+		policy.Effect = agenttooltrust.ToolEffectLookup
 	}
 	if policy.ReadsExternal == "" {
-		policy.ReadsExternal = agent.ExternalReadNever
+		policy.ReadsExternal = agenttooltrust.ExternalReadNever
 	}
 	if policy.Rationale == "" {
 		policy.Rationale = readRationale

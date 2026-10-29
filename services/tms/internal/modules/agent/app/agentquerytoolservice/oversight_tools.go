@@ -7,6 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -94,14 +98,14 @@ type agentPlansByIDs interface {
 	ListByIDs(
 		ctx context.Context,
 		req agentports.ListAgentPlansByIDsRequest,
-	) ([]*agent.AgentPlan, error)
+	) ([]*agentplan.AgentPlan, error)
 }
 
 type agentExceptionsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
 		req agentports.ListAgentExceptionsByIDsRequest,
-	) ([]*agent.AgentException, error)
+	) ([]*agentexception.AgentException, error)
 }
 
 type watchtowerRunLinks struct {
@@ -216,7 +220,7 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 func (t *listWatchtowerItemsTool) Policy() agenttoolports.ToolPolicy {
 	policy := readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWatchtower,
-		reads:    agent.ExternalReadMarked,
+		reads:    agenttooltrust.ExternalReadMarked,
 		source:   agent.TaintSourceInboundMessage,
 		rationale: "Reads the watchtower feed, whose headlines can quote an inbound email, " +
 			"an EDI file, a weather alert or a run that read outside text; it changes " +
@@ -489,14 +493,17 @@ func (l watchtowerRunLinks) marks(
 		if _, ok := tainted[runID]; ok {
 			marks[itemID] = agent.SourcedRef{
 				Source: agent.TaintSourceRunRecord,
-				Ref:    agent.RecordRef{EntityType: agent.TaintEntityAgentRun, ID: runID.String()},
+				Ref: agentrecord.RecordRef{
+					EntityType: agent.TaintEntityAgentRun,
+					ID:         runID.String(),
+				},
 			}
 		}
 	}
 	for itemID := range links.unlinked {
 		marks[itemID] = agent.SourcedRef{
 			Source: agent.TaintSourceRunRecord,
-			Ref: agent.RecordRef{
+			Ref: agentrecord.RecordRef{
 				EntityType: agent.TaintEntityWatchtowerItem,
 				ID:         itemID.String(),
 			},
@@ -549,7 +556,10 @@ func outsideMark(item *watchtower.Item) (agent.SourcedRef, bool) {
 		entity = agent.TaintEntityWatchtowerItem
 	}
 
-	return agent.SourcedRef{Source: source, Ref: agent.RecordRef{EntityType: entity, ID: id}}, true
+	return agent.SourcedRef{
+		Source: source,
+		Ref:    agentrecord.RecordRef{EntityType: entity, ID: id},
+	}, true
 }
 
 func (w *watchtowerRunIDs) add(item *watchtower.Item) {

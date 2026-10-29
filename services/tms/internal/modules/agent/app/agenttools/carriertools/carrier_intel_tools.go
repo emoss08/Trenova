@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -183,8 +185,8 @@ func targetCarrier(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return toolparams.TargetOf(params, toolparams.ParamCarrierID, permission.ResourceCarrier)
 }
 
-func carrierIntelResult(action string, ids map[string]string) *agent.ToolExecutionResult {
-	result := &agent.ToolExecutionResult{Action: action, Kind: kindCarrierIntel, IDs: ids}
+func carrierIntelResult(action string, ids map[string]string) *agentrecord.ToolExecutionResult {
+	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindCarrierIntel, IDs: ids}
 	if id, err := pulid.Parse(ids[toolparams.ParamCarrierID]); err == nil {
 		result.Record = changepreview.RecordOf(changepreview.CarrierRecordEntity, id)
 	} else if id, err = pulid.Parse(ids[changepreview.FieldCustomerID]); err == nil {
@@ -199,7 +201,7 @@ func vetPreview(
 	subjectID pulid.ID,
 	plan *carrierintelservice.VetPlan,
 	force bool,
-) *agent.ToolPreview {
+) *agentpreview.ToolPreview {
 	name := strings.TrimSpace(plan.Subject.Name)
 	if name == "" {
 		name = "DOT " + plan.Subject.DOTNumber
@@ -215,11 +217,11 @@ func vetPreview(
 	default:
 		summary += " A result still current is reused instead of charged again."
 	}
-	preview := toolpreview.Build(summary, &agent.RecordChange{
+	preview := toolpreview.Build(summary, &agentpreview.RecordChange{
 		Resource:  subjectResource,
 		EntityID:  subjectID,
 		Label:     name,
-		Operation: agent.PreviewOperationRun,
+		Operation: agentpreview.PreviewOperationRun,
 	})
 	preview.Partial = true
 
@@ -290,14 +292,14 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 		Render: func(
 			req *carrierintelservice.VetCarrierRequest,
 			plan *carrierintelservice.VetPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			return vetPreview(permission.ResourceCarrier, req.CarrierID, plan, req.Force), nil
 		},
 		Run: func(
 			ctx context.Context,
 			req *carrierintelservice.VetCarrierRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			result, err := intel.VetCarrier(ctx, req)
 			if err != nil {
 				return nil, err
@@ -314,7 +316,7 @@ func NewVetCarrierTool(intel carrierIntelOperator) agenttoolports.AgentTool {
 func fetchResult(
 	result *carrierintelservice.FetchResult,
 	ids map[string]string,
-) *agent.ToolExecutionResult {
+) *agentrecord.ToolExecutionResult {
 	out := carrierIntelResult("vetted", ids)
 	if result == nil || result.Snapshot == nil {
 		return out
@@ -392,14 +394,14 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 			return intel.PlanVetCustomerBroker(ctx, req.tenant, req.customerID)
 		},
 		Refused: func(*brokerVet) string { return "Would vet the broker." },
-		Render: func(req *brokerVet, plan *carrierintelservice.VetPlan) (*agent.ToolPreview, error) {
+		Render: func(req *brokerVet, plan *carrierintelservice.VetPlan) (*agentpreview.ToolPreview, error) {
 			return vetPreview(permission.ResourceCustomer, req.customerID, plan, req.force), nil
 		},
 		Run: func(
 			ctx context.Context,
 			req *brokerVet,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			result, err := intel.VetCustomerBroker(ctx, req.tenant, req.customerID, req.force)
 			if err != nil {
 				return nil, err
@@ -483,7 +485,7 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 			ctx context.Context,
 			req *carrierintelservice.EnrollSubjectsRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			changed, err := intel.SetManualEnrollment(ctx, req)
 			if err != nil {
 				return nil, err
@@ -503,8 +505,8 @@ func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.Agen
 func renderMonitoring(
 	req *carrierintelservice.EnrollSubjectsRequest,
 	changes []carrierintelservice.EnrollmentChange,
-) (*agent.ToolPreview, error) {
-	records := make([]*agent.RecordChange, 0, len(changes))
+) (*agentpreview.ToolPreview, error) {
+	records := make([]*agentpreview.RecordChange, 0, len(changes))
 	for idx := range changes {
 		change := &changes[idx]
 		if change.Before == change.After {
@@ -598,7 +600,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 		Render: func(
 			req *carrierintelservice.MarkReviewedRequest,
 			plan *carrierintelservice.SnapshotChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				toolpreview.Record{Resource: permission.ResourceCarrier, ID: req.CarrierID},
 				plan.Before,
@@ -626,7 +628,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelOperator) agenttoolports.
 			ctx context.Context,
 			req *carrierintelservice.MarkReviewedRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := intel.MarkReviewed(ctx, req); err != nil {
 				return nil, err
 			}
@@ -738,7 +740,7 @@ func NewApplyCarrierIntelSuggestionsTool(
 			ctx context.Context,
 			choice *suggestionChoice,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := requireCarrierGrant(
 				ctx,
 				permissions,
@@ -800,12 +802,12 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 func renderSuggestions(
 	_ *suggestionChoice,
 	plan *carrierintelservice.SuggestionPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	fields := make([]string, 0, len(plan.Fields))
 	for _, update := range plan.Fields {
 		fields = append(fields, update.Field.String())
 	}
-	changes := make([]*agent.RecordChange, 0, 1)
+	changes := make([]*agentpreview.RecordChange, 0, 1)
 	if len(fields) > 0 {
 		change, err := toolpreview.Changed(
 			toolpreview.Record{
@@ -897,7 +899,7 @@ func NewImportSourcedCarrierTool(
 			ctx context.Context,
 			req *carrierintelservice.ImportProspectRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			if err := requireCarrierGrant(
 				ctx,
 				permissions,
@@ -922,7 +924,7 @@ func NewImportSourcedCarrierTool(
 func renderSourcedCarrierImport(
 	_ *carrierintelservice.ImportProspectRequest,
 	plan *carrierintelservice.ImportPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceCarrier,
@@ -1006,7 +1008,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 		Render: func(
 			_ *carrierintelservice.VerifyEquipmentRequest,
 			plan *verificationPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				toolpreview.Record{
 					Resource: permission.ResourceEquipmentVerification,
@@ -1041,7 +1043,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 			ctx context.Context,
 			req *carrierintelservice.VerifyEquipmentRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			created, err := intel.VerifyEquipment(ctx, req)
 			if err != nil {
 				return nil, err

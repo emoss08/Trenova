@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -194,7 +196,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 				return pto.PlanCreate(ctx, entity, params.Actor.UserID)
 			},
 			Refused: func(*worker.WorkerPTO) string { return "Would file a time-off request." },
-			Render: func(_ *worker.WorkerPTO, planned *worker.WorkerPTO) (*agent.ToolPreview, error) {
+			Render: func(_ *worker.WorkerPTO, planned *worker.WorkerPTO) (*agentpreview.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerPTO, pulid.Nil,
 						ptoRecord(planned).Label, 0),
@@ -215,7 +217,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 				ctx context.Context,
 				entity *worker.WorkerPTO,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				created, err := pto.Create(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
@@ -297,7 +299,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 		Render: func(
 			_ *ptoEdit,
 			change *kernelports.RecordChange[worker.WorkerPTO],
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(ptoRecord(change.Before), change.Before,
 				change.After, wfOptions(ptoFields...)...)
 			if err != nil {
@@ -309,7 +311,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 			ctx context.Context,
 			edit *ptoEdit,
 			params *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, pto)
 			if err != nil {
 				return nil, err
@@ -418,7 +420,7 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 		Render: func(
 			req *ptoledgerservice.AdjustRequest,
 			plan *ptoledgerservice.AdjustPlan,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerPTO, pulid.Nil,
 					fmt.Sprintf("%s balance adjustment", req.PTOType), 0),
@@ -437,7 +439,7 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 			ctx context.Context,
 			req *ptoledgerservice.AdjustRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+		) (*agentrecord.ToolExecutionResult, error) {
 			entry, err := ledger.Adjust(ctx, req)
 			if err != nil {
 				return nil, err

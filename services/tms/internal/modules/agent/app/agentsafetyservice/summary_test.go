@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,26 +73,26 @@ func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 }
 
 type fakeRules struct {
-	rules map[string]*agent.ToolRuleOverride
+	rules map[string]*agenttooltrust.ToolRuleOverride
 }
 
 func (f *fakeRules) For(
 	context.Context,
 	pagination.TenantInfo,
-) (map[string]*agent.ToolRuleOverride, error) {
+) (map[string]*agenttooltrust.ToolRuleOverride, error) {
 	return f.rules, nil
 }
 
 func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	t.Parallel()
 
-	held := &agent.ToolRuleOverride{
+	held := &agenttooltrust.ToolRuleOverride{
 		ToolName: "dispatch_assign_move",
 		MaxTier:  agent.TierPropose,
 		Reason:   "hold",
 		Version:  3,
 	}
-	reset := &agent.ToolRuleOverride{
+	reset := &agenttooltrust.ToolRuleOverride{
 		ToolName: "customer_send_email",
 		Reason:   "released",
 		Version:  2,
@@ -102,7 +103,7 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 		&agentcontrol.AgentControl{},
 	)
 	svc.rules = &fakeRules{
-		rules: map[string]*agent.ToolRuleOverride{
+		rules: map[string]*agenttooltrust.ToolRuleOverride{
 			"dispatch_assign_move": held,
 			"customer_send_email":  reset,
 		},
@@ -151,7 +152,7 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	})
 	for _, tool := range assessed {
 		if tool.PolicyName == "dispatch_assign_move" {
-			assert.Equal(t, agent.AutonomyProposeOnly, tool.Clean.Answer)
+			assert.Equal(t, agenttooltrust.AutonomyProposeOnly, tool.Clean.Answer)
 			require.NotNil(t, tool.Policy)
 			assert.Same(t, held, tool.Policy.Override)
 		}
@@ -162,11 +163,15 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 		ToolName:   "customer_send_email",
 		Before: policy(
 			"customer_send_email",
-			agent.ToolKindAction,
+			agenttooltrust.ToolKindAction,
 			agent.EgressExternalRecipient,
 		),
 		After: func() agenttoolports.ToolPolicy {
-			p := policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient)
+			p := policy(
+				"customer_send_email",
+				agenttooltrust.ToolKindAction,
+				agent.EgressExternalRecipient,
+			)
 			p.MaxTier, p.DefaultTier = agent.TierPropose, agent.TierPropose
 			return p
 		}(),
@@ -175,5 +180,5 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	require.Len(t, impacts, 1)
 	assert.Equal(t, desk.ID, impacts[0].AgentID)
 	assert.NotEqual(t, impacts[0].Before, impacts[0].After)
-	assert.Equal(t, agent.AutonomyProposeOnly, impacts[0].After)
+	assert.Equal(t, agenttooltrust.AutonomyProposeOnly, impacts[0].After)
 }

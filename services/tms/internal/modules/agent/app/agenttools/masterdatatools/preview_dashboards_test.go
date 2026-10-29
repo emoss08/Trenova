@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -67,9 +67,13 @@ func TestCreateDashboard_PreviewMatchesWhatIsSaved(t *testing.T) {
 		},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &dashboards.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&dashboards.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -92,16 +96,23 @@ func TestCreateDashboard_PreviewWarnsOnAReportThatIsNotThere(t *testing.T) {
 	tool := NewCreateDashboardTool(nil).(*CreateDashboardTool)
 	tool.dashboards = dashboards
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &dashboards.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"name": "Broken",
-			"tiles": []any{
-				map[string]any{"kind": "table", "definitionId": pulid.MustNew("rdef_").String()},
-			},
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&dashboards.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"name": "Broken",
+				"tiles": []any{
+					map[string]any{
+						"kind":         "table",
+						"definitionId": pulid.MustNew("rdef_").String(),
+					},
+				},
+			}))
+		},
+	)
 
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestAddDashboardTile_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -129,9 +140,13 @@ func TestAddDashboardTile_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"tile":        map[string]any{"kind": "chart", "cannedKey": "on_time", "title": "On time"},
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &dashboards.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&dashboards.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -141,6 +156,11 @@ func TestAddDashboardTile_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Contains(t, tiles.After, "On time")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, DashboardViewOf(existing), DashboardViewOf(dashboards.saved),
-		toolpreview.Labels(dashboardViewLabels))
+	agenttoolstest.RequireUpdateParity(
+		t,
+		change,
+		DashboardViewOf(existing),
+		DashboardViewOf(dashboards.saved),
+		toolpreview.Labels(dashboardViewLabels),
+	)
 }

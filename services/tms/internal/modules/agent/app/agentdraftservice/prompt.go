@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -127,7 +128,7 @@ func describeTools(catalog []agentdefinitionports.ToolCatalogEntry) string {
 }
 
 func describeEvents() string {
-	events := agent.KnownEvents()
+	events := agenttrigger.KnownEvents()
 	var b strings.Builder
 	for idx := range events {
 		event := &events[idx]
@@ -159,7 +160,7 @@ func tierNames() []string {
 }
 
 func eventNames() []string {
-	events := agent.KnownEvents()
+	events := agenttrigger.KnownEvents()
 	names := make([]string, 0, len(events))
 	for idx := range events {
 		names = append(names, string(events[idx].Kind))

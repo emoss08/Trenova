@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -23,7 +23,7 @@ var documentLabelKeys = []string{"originalName", "fileName"}
 // own, or in the document viewer.
 // A reader shows them as the records the answer was built from, so they come
 // from what the tools returned and never from the reply's wording.
-func citedRecords(content string) []agent.EntityRef {
+func citedRecords(content string) []agentpagecontext.EntityRef {
 	if content == "" || len(content) > maxCitedContentBytes {
 		return nil
 	}
@@ -44,7 +44,7 @@ func citedRecords(content string) []agent.EntityRef {
 }
 
 type citedRecordCollector struct {
-	refs []agent.EntityRef
+	refs []agentpagecontext.EntityRef
 	seen map[string]struct{}
 }
 
@@ -108,7 +108,7 @@ func (c *citedRecordCollector) consider(record map[string]any) {
 		return
 	}
 	c.seen[key] = struct{}{}
-	c.refs = append(c.refs, agent.EntityRef{Type: kind, ID: id, Label: label})
+	c.refs = append(c.refs, agentpagecontext.EntityRef{Type: kind, ID: id, Label: label})
 }
 
 func citedRecordLabel(resource permission.Resource, record map[string]any) string {

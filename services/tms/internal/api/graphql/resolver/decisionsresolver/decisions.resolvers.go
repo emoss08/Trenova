@@ -15,14 +15,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *AgentPlanResolver) Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error) {
+func (r *AgentPlanResolver) Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error) {
 	return loadAgentRun(ctx, obj.RunID)
 }
 
@@ -239,7 +241,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 		item := recent[i]
 		out = append(out, &gqlmodel.RecentDecision{
 			ID:              item.DecisionID.String(),
-			Decision:        agent.DecisionType(item.Decision),
+			Decision:        agentdecision.DecisionType(item.Decision),
 			ReasonCode:      item.ReasonCode,
 			Note:            item.Note,
 			DecidedByUserID: item.DecidedByUserID.String(),
@@ -252,7 +254,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 	return out, nil
 }
 
-func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
+func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
 	return planHold(ctx, obj)
 }
 
@@ -264,7 +266,7 @@ func (r *PendingDecisionEdgeResolver) Hold(ctx context.Context, obj *gqlmodel.Pe
 	switch node := obj.Node.(type) {
 	case *agent.AgentProposal:
 		return proposalHold(ctx, node)
-	case *agent.AgentPlan:
+	case *agentplan.AgentPlan:
 		return planHold(ctx, node)
 	default:
 		return nil, nil //nolint:nilnil // only a proposal or a plan waits on a decision

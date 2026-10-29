@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -158,7 +159,7 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		deliveries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
@@ -173,7 +174,7 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 	queued := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, "Queued", agenttoolstest.FieldByPath(t, queued, "deliveryStatus").After)
 	require.NotNil(t, queued.Message)
-	assert.Equal(t, agent.MessageChannelEDI, queued.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, queued.Message.Channel)
 	assert.NotContains(t, queued.Message.Body, "SECRET-RATE", "the document's content stays out")
 	assert.Contains(t, preview.Summary, "1 of 2")
 
@@ -214,7 +215,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		deliveries.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)
@@ -301,7 +302,7 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		files.guard,
-		func() (*agent.ToolPreview, error) {
+		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
 		},
 	)

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -168,7 +170,7 @@ func newReleaseBillingQueueItemTool(
 			Render: func(
 				_ *billingqueueports.BillingQueueItemRequest,
 				plan *releasePlan,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				changed, err := toolpreview.Changed(
 					billingqueuepreview.QueueRecord(plan.before),
 					plan.before,
@@ -194,7 +196,7 @@ func newReleaseBillingQueueItemTool(
 				ctx context.Context,
 				req *billingqueueports.BillingQueueItemRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				released, err := review.Release(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -248,13 +250,13 @@ func planRelease(
 func queueItemResult(
 	action string,
 	item *billingqueue.BillingQueueItem,
-) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
+) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "billing queue item",
 		Name:   item.Number,
 		IDs:    map[string]string{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
-		Record: &agent.RecordRef{EntityType: billingQueueRecordEntity, ID: item.ID.String()},
+		Record: &agentrecord.RecordRef{EntityType: billingQueueRecordEntity, ID: item.ID.String()},
 		State:  string(item.Status),
 	}
 }
@@ -317,7 +319,7 @@ func checkRecord(plan *billingqueueports.IssueSettlementPlan) toolpreview.Record
 	return record
 }
 
-func chargeChange(plan *billingqueueports.IssueSettlementPlan) (*agent.RecordChange, error) {
+func chargeChange(plan *billingqueueports.IssueSettlementPlan) (*agentpreview.RecordChange, error) {
 	before, after := plan.ChargeBefore, plan.ChargeAfter
 	if before == nil && after == nil {
 		return nil, nil //nolint:nilnil // the choice changes no charge
@@ -474,7 +476,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 				ctx context.Context,
 				req *billingqueueports.ResolveBillingQueueIssueRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				item, err := review.ResolveIssue(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -503,8 +505,8 @@ func queueIssueIDs(params *agenttoolports.ToolExecuteParams) (itemID, issueID pu
 func renderResolveIssue(
 	_ *billingqueueports.ResolveBillingQueueIssueRequest,
 	plan *billingqueueports.IssueSettlementPlan,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, 2)
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, 2)
 	if plan.Option.Effect.Kind == billingqueue.EffectRequest {
 		summary := fmt.Sprintf("Would ask the driver on billing queue item %s's shipment for a "+
 			"signed POD; the check stays open until the paperwork arrives.", plan.Item.Number)
@@ -515,8 +517,8 @@ func renderResolveIssue(
 			Resource: permission.ResourceShipment,
 			ID:       plan.Item.ShipmentID,
 			Label:    driverLabel(plan.DriverName),
-		}, &agent.MessagePreview{
-			Channel: agent.MessageChannelDash,
+		}, &agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelDash,
 			Subject: plan.DriverMessageTitle,
 			Body:    plan.DriverMessage,
 		}))
@@ -627,7 +629,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 				ctx context.Context,
 				req *billingqueueports.UndoBillingQueueIssueRequest,
 				params *agenttoolports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+			) (*agentrecord.ToolExecutionResult, error) {
 				item, err := review.UndoIssue(ctx, req, params.Actor)
 				if err != nil {
 					return nil, err
@@ -641,7 +643,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 func renderUndoIssue(
 	_ *billingqueueports.UndoBillingQueueIssueRequest,
 	plan *billingqueueports.IssueSettlementPlan,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	reopened := *plan.Issue
 	reopened.ResolutionKey = nil
 	reopened.ResolutionText = ""
@@ -654,7 +656,7 @@ func renderUndoIssue(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{check}
+	changes := []*agentpreview.RecordChange{check}
 	charge, err := chargeChange(plan)
 	if err != nil {
 		return nil, err

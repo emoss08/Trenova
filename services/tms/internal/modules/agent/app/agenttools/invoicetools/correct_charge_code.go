@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -116,10 +117,10 @@ func chargeLineSchema() map[string]any {
 func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
-		Kind:        agent.ToolKindAction,
+		Kind:        agenttooltrust.ToolKindAction,
 		Resource:    permission.ResourceBillingQueue,
 		Operation:   permission.OpUpdate,
-		Scope:       agent.ToolScopeTenant,
+		Scope:       agenttooltrust.ToolScopeTenant,
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
@@ -127,9 +128,9 @@ func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
 			Description: correctChargeBoundText,
 			Bounds:      t.withinBounds,
 		},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Rewrites the accessorial charges a customer will be invoiced, so it " +
 			"moves money.",
 	}
