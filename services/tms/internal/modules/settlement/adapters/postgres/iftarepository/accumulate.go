@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/pkg/movecompletion"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/shopspring/decimal"
@@ -31,8 +32,9 @@ type moveMiles struct {
 }
 
 type accumulationSource struct {
-	inp *keel.CTETable
-	jm  *keel.CTETable
+	candidates *keel.CTETable
+	inp        *keel.CTETable
+	jm         *keel.CTETable
 }
 
 func inMiles(distance keel.Float64Col, units keel.StringCol) keel.Float64Expr {
@@ -54,13 +56,14 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
 	me := iftadb.JurisdictionMileageEntries
 
-	completedAt := keel.Int64Of(stp.ActualDeparture.Coalesce(stp.ActualArrival).Max()).
-		Coalesce(sm.UpdatedAt)
+	completedAt := movecompletion.At(sm, stp)
+	candidates := movecompletion.Candidates(req.Start, req.End)
 
 	inp := keel.CTE(
 		inputMovesCTE,
 		[]string{"id", "loaded", "distance", "completed_at"},
-		sm.LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
+		sm.Join(candidates, movecompletion.ID(candidates).EqCol(sm.ID)).
+			LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
 			Pick(sm.ID, sm.Loaded, inMiles(sm.Distance, sm.DistanceUnits), completedAt).
 			Where(sm.Status.Eq(shipmentvocab.MoveStatusCompleted)).
 			Group(sm.ID, sm.Loaded, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
@@ -89,7 +92,7 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 			Where(keel.NotExists(me.Where(me.ShipmentMoveID.EqCol(smjm.ShipmentMoveID)))),
 	)
 
-	return accumulationSource{inp: inp, jm: jm}
+	return accumulationSource{candidates: candidates, inp: inp, jm: jm}
 }
 
 func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
@@ -100,7 +103,7 @@ func (s accumulationSource) routeRows() *keel.Query[*keel.Row] {
 	loaded := keel.BoolOf(jm.Col("loaded"))
 
 	return jm.Query().
-		With(s.inp, jm).
+		With(s.candidates, s.inp, jm).
 		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
 		LeftJoin(ifj, ifj.CountryCode.EqCol(jm.Col("country_code")), ifj.Code.EqCol(jm.Col("jurisdiction_code"))).
 		Pick(
@@ -126,7 +129,7 @@ func (s accumulationSource) noTractor() *keel.Query[*keel.Row] {
 	a := shipmentdb.Assignments
 
 	return jm.Query().
-		With(s.inp, jm).
+		With(s.candidates, s.inp, jm).
 		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
 		Pick(jm.Col("shipment_move_id"), roundMiles(keel.NumericOf(jm.Col("miles").Sum()).Coalesce(0))).
 		Where(a.TractorID.IsNull()).
@@ -140,7 +143,7 @@ func (s accumulationSource) unattributed() *keel.Query[*keel.Row] {
 	me := iftadb.JurisdictionMileageEntries
 
 	return inp.Query().
-		With(inp).
+		With(s.candidates, inp).
 		Pick(inp.Col("id"), roundMiles(inp.Col("distance"))).
 		Where(
 			inp.Col("distance").Gt(0),
@@ -156,7 +159,7 @@ func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
 	attributed := keel.Float64Of(jm.Col("miles").Sum())
 
 	return jm.Query().
-		With(s.inp, jm).
+		With(s.candidates, s.inp, jm).
 		Pick(jm.Col("shipment_move_id"), roundMiles(moveDistance), roundMiles(attributed)).
 		Where(moveDistance.IsNotNull()).
 		Group(jm.Col("shipment_move_id"), jm.Col("move_distance")).

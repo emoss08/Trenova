@@ -23,8 +23,19 @@ func TestMissedStopsQuery(t *testing.T) {
 	assert.Contains(t, sql, `JOIN "shipments"`)
 	assert.Contains(t, sql, `LEFT JOIN "locations"`)
 	assert.Contains(t, sql, `"us_states"`)
-	assert.Contains(t, sql, "LIMIT 500")
+	assert.NotContains(t, sql, "LIMIT")
 	assert.Contains(t, args, int64(100))
+}
+
+func TestMissedStopsQuery_LimitsTheTenantWideRead(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, missedStopsQuery(&watchtowerports.ListMissedStopsRequest{
+		StopTypes:    []shipmentvocab.StopType{shipmentvocab.StopTypePickup},
+		ClosedBefore: 100,
+	}))
+
+	assert.Contains(t, sql, "LIMIT 500")
 }
 
 func TestMissingPODsQuery(t *testing.T) {

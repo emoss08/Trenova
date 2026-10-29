@@ -19,7 +19,7 @@ func MoveID(
 ) keel.Expr {
 	return keel.Scalar(
 		keel.Handle[*keel.Row]{Ref: moves.AssignmentMoveID.Ref}.
-			Pick(moves.AssignmentMoveID).
+			Pick(moves.AssignmentMoveID.Min()).
 			Join(
 				keel.Handle[*keel.Row]{Ref: moves.MoveID.Ref},
 				moves.MoveID.EqCol(moves.AssignmentMoveID),
@@ -28,9 +28,7 @@ func MoveID(
 				equipment.EqCol(equipmentID),
 				moves.AssignmentArchivedAt.IsNull(),
 				moves.MoveInProgress,
-			).
-			Order(moves.AssignmentMoveID.Asc()).
-			Limit(1),
+			),
 	)
 }
 

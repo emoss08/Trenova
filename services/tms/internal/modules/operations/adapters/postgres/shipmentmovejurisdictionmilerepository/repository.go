@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/movecompletion"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -133,14 +134,14 @@ func (r *repository) ListUnattributedMoves(
 				return nil, errortypes.NewBusinessError("Period start must be before period end")
 			}
 
-			mc := completedMovesWithoutBreakdown()
+			candidates, mc := completedMovesWithoutBreakdown(req.Start, req.End)
 			inPeriod := []keel.Pred{
 				mc.Col(completedAt).Gte(req.Start),
 				mc.Col(completedAt).Lt(req.End),
 			}
 
 			totals, err := keel.IntoOne[unattributedTotals](ctx, r.db.Keel(ctx), mc.Query().
-				With(mc).
+				With(candidates, mc).
 				Pick(
 					keel.Count(),
 					keel.CastNumeric(keel.NumericOf(mc.Col(completedMoveMiles).Sum()).Coalesce(0)).
@@ -162,7 +163,7 @@ func (r *repository) ListUnattributedMoves(
 			}
 
 			ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), mc.Query().
-				With(mc).
+				With(candidates, mc).
 				Pick(mc.Col(completedMoveID)).
 				Where(inPeriod...).
 				Order(mc.Col(completedMoveID).Asc()).
@@ -178,12 +179,14 @@ func (r *repository) ListUnattributedMoves(
 	)
 }
 
-func completedMovesWithoutBreakdown() *keel.CTETable {
+func completedMovesWithoutBreakdown(start, end int64) (candidates, completed *keel.CTETable) {
 	sm := shipmentdb.ShipmentMoves
 	st := shipmentdb.Stops
 	jm := shipmentdb.ShipmentMoveJurisdictionMiles
+	candidates = movecompletion.Candidates(start, end)
 
-	body := sm.LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
+	body := sm.Join(candidates, movecompletion.ID(candidates).EqCol(sm.ID)).
+		LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Where(
 			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
 			sm.Distance.Gt(0),
@@ -198,11 +201,10 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 					sm.Distance.Div(keel.Float64(kilometersPerMile)),
 				).
 				Else(sm.Distance),
-			keel.Int64Of(st.ActualDeparture.Coalesce(st.ActualArrival).Max()).
-				Coalesce(sm.UpdatedAt),
+			movecompletion.At(sm, st),
 		)
 
-	return keel.CTE(
+	return candidates, keel.CTE(
 		completedMovesCTE,
 		[]string{completedMoveID, completedMoveMiles, completedAt},
 		body,

@@ -79,7 +79,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 	ust := loc.State()
 	cutoff := stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart)
 
-	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
+	q := stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 		LeftJoin(loc, loc.ID.EqCol(stp.LocationID)).
 		Pick(
@@ -103,8 +103,11 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 			cutoff.Lt(req.ClosedBefore),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
 		).
-		Order(cutoff.Asc(), stp.ID.Asc()).
-		Limit(boundedLimit(req.Limit))
+		Order(cutoff.Asc(), stp.ID.Asc())
+	if len(req.ShipmentIDs) > 0 {
+		return q
+	}
+	return q.Limit(boundedLimit(req.Limit))
 }
 
 func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[*shipment.Stop] {
@@ -212,7 +215,7 @@ func (r *repository) ListMissedStops(
 		if err != nil {
 			return nil, fmt.Errorf("list missed stops: %w", err)
 		}
-		return sliceutils.Pointers(rows), nil
+		return sliceutils.Pointers(rows[:min(len(rows), boundedLimit(req.Limit))]), nil
 	})
 }
 
