@@ -145,6 +145,7 @@ type Service struct {
 	inliner       documenttemplateports.AssetInliner
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentproposalports.AgentProposalNotifier {
 	svc := &Service{
 		l:           p.Logger.Named("service.agentproposalnotifier"),

@@ -42,6 +42,7 @@ type Service struct {
 	l             *zap.Logger
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) assistantchapterports.AssistantChapterService {
 	return &Service{
 		chapters:      p.Chapters,

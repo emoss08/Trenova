@@ -108,6 +108,7 @@ type Service struct {
 	permissions permissionports.PermissionEngine
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentmemoryports.AgentMemoryService {
 	ranker := p.Ranker
 	if ranker == nil {

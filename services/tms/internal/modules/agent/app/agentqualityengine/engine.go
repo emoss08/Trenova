@@ -88,6 +88,7 @@ type Engine struct {
 	now         func() int64
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Engine {
 	var notifier regressionNotifier
 	if p.Notifications != nil {

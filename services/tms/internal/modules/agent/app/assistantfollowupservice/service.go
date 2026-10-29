@@ -67,12 +67,14 @@ type turnStarter interface {
 	) (*conversationturn.AssistantTurn, error)
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) assistantports.DecisionFollowUps {
 	return newService(p)
 }
 
 // NewResumer is the same service, as what a turn that ended asks to start the
 // follow-ups it kept out.
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewResumer(p Params) assistantports.DecisionFollowUpResumer {
 	return newService(p)
 }

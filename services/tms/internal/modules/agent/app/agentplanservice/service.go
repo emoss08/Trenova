@@ -159,6 +159,7 @@ type Service struct {
 	workflows  kernelports.WorkflowStarter
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentplanports.AgentPlanService {
 	decider, _ := p.Decisions.(stepDecider)
 

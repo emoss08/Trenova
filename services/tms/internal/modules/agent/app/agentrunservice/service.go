@@ -73,6 +73,7 @@ type Service struct {
 	plans       platformplanports.PlanService
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentruntimeports.AgentRunService {
 	return &Service{
 		l:           p.Logger.Named("service.agentrun"),

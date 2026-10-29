@@ -60,6 +60,7 @@ type Service struct {
 	now       func() int64
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	watchers := make(
 		map[agentextension.Type]agentextensionports.WebWatchProvider,

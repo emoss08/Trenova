@@ -63,6 +63,7 @@ type Service struct {
 	chapters      assistantchapterports.AssistantChapterService
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) assistantports.AssistantHandoffService {
 	return &Service{
 		l:             p.Logger.Named("service.assistant-handoff"),

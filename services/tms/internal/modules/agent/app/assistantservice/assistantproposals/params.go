@@ -33,6 +33,7 @@ type Params struct {
 	Users         tenantports.UserRepository           `optional:"true"`
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		logger:        p.Logger.Named("service.assistant"),

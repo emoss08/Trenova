@@ -135,6 +135,7 @@ type Service struct {
 	logger            *zap.Logger
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentruntimeports.AgentSubjectDescriber {
 	return &Service{
 		content:           p.Content,
