@@ -944,9 +944,11 @@ func newDecisionTool(
 					return nil, err
 				}
 				if req.approve {
-					if refusal := invoicepreview.FiguresRefusal([]*invoiceadjustmentports.InvoiceAdjustmentPreview{
-						plan.Figures,
-					}); refusal != nil {
+					if refusal := invoicepreview.FiguresRefusal(
+						[]*invoiceadjustmentports.InvoiceAdjustmentPreview{
+							plan.Figures,
+						},
+					); refusal != nil {
 						return nil, refusal
 					}
 				}

@@ -139,7 +139,7 @@ func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CorrectChargeCodeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {

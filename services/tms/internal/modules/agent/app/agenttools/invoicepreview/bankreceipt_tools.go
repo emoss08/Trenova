@@ -39,8 +39,8 @@ func ReadPaymentApplications(
 	seen := make(map[pulid.ID]struct{}, len(entries))
 	total := int64(0)
 	for idx, entry := range entries {
-		fields, ok := entry.(map[string]any)
-		if !ok {
+		fields, isObject := entry.(map[string]any)
+		if !isObject {
 			return nil, 0, fmt.Errorf(
 				"%s[%d] must be an object with invoiceId and amount",
 				key,

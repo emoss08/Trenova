@@ -194,7 +194,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 
 func (t *CreateLocationTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -203,7 +203,7 @@ func (t *CreateLocationTool) Execute(
 
 func (t *CreateLocationTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
@@ -305,7 +305,7 @@ func (t *CreateLocationTool) Build(
 
 func (t *CreateLocationTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if params.Actor == nil {
 		return toolguard.ErrMissingActor

@@ -41,7 +41,7 @@ func (t *ReplyToInboundMessageTool) compose(
 		return nil, err
 	}
 
-	reply, err := t.prepare(ctx, *params)
+	reply, err := t.prepare(ctx, params)
 	if err != nil {
 		return nil, err
 	}

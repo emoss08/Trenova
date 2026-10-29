@@ -151,7 +151,7 @@ func (t *NotifyDriverTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *NotifyDriverTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -254,7 +254,9 @@ type EmailCustomerTool struct {
 	Deps CustomerMailer `json:"-"`
 }
 
-func NewEmailCustomerTool(p emailCustomerParams) agenttoolports.AgentTool {
+func NewEmailCustomerTool(
+	p emailCustomerParams, //nolint:gocritic // fx params are passed by value
+) agenttoolports.AgentTool {
 	return &EmailCustomerTool{Deps: CustomerMailer{
 		Email:     p.Email,
 		Templates: p.Templates,
@@ -339,7 +341,7 @@ func (t *EmailCustomerTool) Target(params map[string]any) (agenttoolports.ToolTa
 
 func (t *EmailCustomerTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -464,7 +466,7 @@ func (t *SendDetentionNoticeTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SendDetentionNoticeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -561,7 +563,7 @@ func (t *WaiveDetentionTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *WaiveDetentionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

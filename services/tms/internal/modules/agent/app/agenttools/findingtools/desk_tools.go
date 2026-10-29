@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
@@ -35,11 +37,10 @@ const (
 	toolCarrierAcknowledgeIntelligenceEvent = "carrier_acknowledge_intelligence_event"
 )
 
-// A tender block is an override with a life: carrier records are
-// corrected, and a block nobody revisits outlives the problem.
-const tenderBlockDays = 30
-
-const secondsPerBlockDay = int64(86400)
+const (
+	paramOccurrenceID = "occurrenceId"
+	paramEventID      = "eventId"
+)
 
 // The longest a renewal can be asked for before the ask stops being a
 // reminder and becomes a plan.
@@ -94,21 +95,21 @@ func (t *EscalateDetentionTool) Description() string {
 
 func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"occurrenceId": agenttoolschema.KindID(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramOccurrenceID: agenttoolschema.KindID(
 				"The occurrence id, from detention_list_occurrences or "+
 					"detention_get_occurrence.",
 				recordkind.DetentionOccurrence,
 			),
 			toolparams.ParamReason: map[string]any{
-				"type": "string",
-				"description": "Why this needs a person, in a sentence they can act on: " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Why this needs a person, in a sentence they can act on: " +
 					"what is blocking the notice, and what the charge stands at.",
 			},
 		},
-		"required":             []string{"occurrenceId", toolparams.ParamReason},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramOccurrenceID, toolparams.ParamReason},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -130,13 +131,13 @@ func (t *EscalateDetentionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EscalateDetentionTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return "", "", err
 	}
 
-	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, paramOccurrenceID)
 	if err != nil {
 		return "", "", err
 	}
@@ -150,14 +151,14 @@ func (t *EscalateDetentionTool) arguments(
 
 func (t *EscalateDetentionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	occurrenceID, _, err := t.arguments(params)
+	occurrenceID, _, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
 
-	occurrence, err := t.occurrence(ctx, occurrenceID, params)
+	occurrence, err := t.occurrence(ctx, occurrenceID, &params)
 	if err != nil {
 		return err
 	}
@@ -168,13 +169,13 @@ func (t *EscalateDetentionTool) Validate(
 func (t *EscalateDetentionTool) occurrence(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*detention.DetentionOccurrence, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   toolparams.TenantFrom(params),
+			TenantInfo:   toolparams.TenantFrom(*params),
 		},
 	)
 	if err != nil {
@@ -186,9 +187,9 @@ func (t *EscalateDetentionTool) occurrence(
 
 func (t *EscalateDetentionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	occurrenceID, reason, err := t.arguments(params)
+	occurrenceID, reason, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -204,7 +205,7 @@ func (t *EscalateDetentionTool) Execute(
 }
 
 func (t *EscalateDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, "occurrenceId", permission.ResourceDetention)
+	return toolparams.TargetOf(params, paramOccurrenceID, permission.ResourceDetention)
 }
 
 type detentionApprover interface {
@@ -257,22 +258,22 @@ func (t *ApproveDetentionTool) Description() string {
 
 func (t *ApproveDetentionTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"occurrenceId": agenttoolschema.KindID(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramOccurrenceID: agenttoolschema.KindID(
 				"The occurrence id, from detention_list_occurrences or "+
 					"detention_get_occurrence.",
 				recordkind.DetentionOccurrence,
 			),
 			"evidence": map[string]any{
-				"type": "string",
-				"description": "What on the occurrence justifies billing it, in a sentence " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "What on the occurrence justifies billing it, in a sentence " +
 					"the approver can check: the times on record, the notice, and anything " +
 					"else on file that supports the charge.",
 			},
 		},
-		"required":             []string{"occurrenceId", "evidence"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramOccurrenceID, "evidence"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -294,13 +295,13 @@ func (t *ApproveDetentionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *ApproveDetentionTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return "", "", err
 	}
 
-	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, paramOccurrenceID)
 	if err != nil {
 		return "", "", err
 	}
@@ -315,13 +316,13 @@ func (t *ApproveDetentionTool) arguments(
 func (t *ApproveDetentionTool) pending(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*detentionreview.OccurrenceDetail, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   toolparams.TenantFrom(params),
+			TenantInfo:   toolparams.TenantFrom(*params),
 		},
 	)
 	if err != nil {
@@ -340,14 +341,14 @@ func (t *ApproveDetentionTool) pending(
 
 func (t *ApproveDetentionTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	occurrenceID, _, err := t.arguments(params)
+	occurrenceID, _, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.pending(ctx, occurrenceID, params)
+	_, err = t.pending(ctx, occurrenceID, &params)
 
 	return err
 }
@@ -357,7 +358,7 @@ func (t *ApproveDetentionTool) Validate(
 // as its note.
 func (t *ApproveDetentionTool) request(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (detentionreview.ApproveParams, *detentionreview.OccurrenceDetail, error) {
 	occurrenceID, evidence, err := t.arguments(params)
 	if err != nil {
@@ -371,7 +372,7 @@ func (t *ApproveDetentionTool) request(
 
 	return detentionreview.ApproveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(params),
+		TenantInfo:   toolparams.TenantFrom(*params),
 		UserID:       params.Actor.UserID,
 		Note:         evidence,
 	}, detail, nil
@@ -379,16 +380,16 @@ func (t *ApproveDetentionTool) request(
 
 func (t *ApproveDetentionTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if _, _, err := t.arguments(params); err != nil {
+	if _, _, err := t.arguments(&params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return detentionpreview.ErrApprovalNeedsAPerson
 	}
 
-	request, _, err := t.request(ctx, params)
+	request, _, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -399,7 +400,7 @@ func (t *ApproveDetentionTool) Execute(
 }
 
 func (t *ApproveDetentionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, "occurrenceId", permission.ResourceDetention)
+	return toolparams.TargetOf(params, paramOccurrenceID, permission.ResourceDetention)
 }
 
 type credentialActor interface {
@@ -440,32 +441,32 @@ func (t *RequestCredentialRenewalTool) SearchTerms() []string {
 
 func (t *RequestCredentialRenewalTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver whose papers are due, from worker_get.",
 			),
 			"credentialIds": agenttoolschema.OfResource(map[string]any{
-				"type": "array",
-				"description": "Every credential this ask covers, by the id " +
+				toolschema.KeyType: toolschema.TypeArray,
+				toolschema.KeyDescription: "Every credential this ask covers, by the id " +
 					"worker_list_credentials or worker_get_credential returns, or the one " +
 					"the event that started this run names. Never invent one.",
-				toolparams.SchemaItems: map[string]any{"type": "string"},
-				"minItems":             1,
+				toolparams.SchemaItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyMinItems: 1,
 			}, permission.ResourceWorkerCredential),
 			toolparams.ParamNote: map[string]any{
-				"type": "string",
-				"description": "What the driver is being asked for, in their words: " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "What the driver is being asked for, in their words: " +
 					"which papers, by when, and where to send them.",
 			},
 		},
-		"required": []string{
+		toolschema.KeyRequired: []string{
 			toolparams.ParamWorkerID,
 			"credentialIds",
 			toolparams.ParamNote,
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -487,10 +488,10 @@ func (t *RequestCredentialRenewalTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *RequestCredentialRenewalTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (workercredentialservice.RenewalRequest, error) {
 	var out workercredentialservice.RenewalRequest
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return out, err
 	}
 
@@ -530,7 +531,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 		WorkerID:      workerID,
 		CredentialIDs: credentialIDs,
 		Note:          strings.TrimSpace(note),
-		TenantInfo:    toolparams.TenantFrom(params),
+		TenantInfo:    toolparams.TenantFrom(*params),
 		RequestedByID: params.Actor.UserID,
 		CorrelationID: params.IdempotencyKey,
 	}, nil
@@ -538,18 +539,18 @@ func (t *RequestCredentialRenewalTool) arguments(
 
 func (t *RequestCredentialRenewalTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, err := t.arguments(params)
+	_, err := t.arguments(&params)
 
 	return err
 }
 
 func (t *RequestCredentialRenewalTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	request, err := t.arguments(params)
+	request, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -598,20 +599,23 @@ func (t *PlaceWorkerDispatchHoldTool) Description() string {
 
 func (t *PlaceWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver to hold, from worker_get.",
 			),
 			toolparams.ParamReason: map[string]any{
-				"type": "string",
-				"description": "Which paper lapsed and when, in a sentence a dispatcher " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Which paper lapsed and when, in a sentence a dispatcher " +
 					"can read on the board.",
 			},
 		},
-		"required":             []string{toolparams.ParamWorkerID, toolparams.ParamReason},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			toolparams.ParamWorkerID,
+			toolparams.ParamReason,
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -633,10 +637,10 @@ func (t *PlaceWorkerDispatchHoldTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *PlaceWorkerDispatchHoldTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (workerservice.DispatchHoldRequest, error) {
 	var out workerservice.DispatchHoldRequest
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return out, err
 	}
 
@@ -653,16 +657,16 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 		WorkerID:   workerID,
 		Held:       true,
 		Reason:     strings.TrimSpace(reason),
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Actor:      params.Actor,
 	}, nil
 }
 
 func (t *PlaceWorkerDispatchHoldTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	request, err := t.arguments(params)
+	request, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -683,9 +687,9 @@ func (t *PlaceWorkerDispatchHoldTool) Validate(
 
 func (t *PlaceWorkerDispatchHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	request, err := t.arguments(params)
+	request, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -816,24 +820,24 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 	}
 
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"eventId": agenttoolschema.KindID(
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramEventID: agenttoolschema.KindID(
 				"The finding id, from carrier_list_intelligence_events, carrier_get_intelligence_event "+
 					"or this run's subject. Never guess one.",
 				recordkind.CarrierIntelligenceEvent,
 			),
 			toolparams.ParamNote: map[string]any{
-				"type":        "string",
-				"description": "Why you are " + verb + " it, for the carrier's record.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Why you are " + verb + " it, for the carrier's record.",
 			},
 			changepreview.FieldResolution: agenttoolschema.Enum(
 				"What came of the finding. Only used when closing one.",
 				carrierFindingResolutions,
 			),
 		},
-		"required":             t.required(),
-		"additionalProperties": false,
+		toolschema.KeyRequired:             t.required(),
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -841,20 +845,20 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 // finding has to say what came of it, acknowledging one does not.
 func (t *carrierIntelEventTool) required() []string {
 	if t.resolves {
-		return []string{"eventId", "resolution", toolparams.ParamNote}
+		return []string{paramEventID, "resolution", toolparams.ParamNote}
 	}
 
-	return []string{"eventId", toolparams.ParamNote}
+	return []string{paramEventID, toolparams.ParamNote}
 }
 
 func (t *carrierIntelEventTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*carrierintelreviewservice.ResolveEventRequest, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	eventID, err := toolparams.RequirePulid(params.Params, "eventId")
+	eventID, err := toolparams.RequirePulid(params.Params, paramEventID)
 	if err != nil {
 		return nil, err
 	}
@@ -865,7 +869,7 @@ func (t *carrierIntelEventTool) arguments(
 
 	request := &carrierintelreviewservice.ResolveEventRequest{
 		EventID:    eventID,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		Note:       strings.TrimSpace(note),
 	}
 	if !t.resolves {
@@ -887,9 +891,9 @@ func (t *carrierIntelEventTool) arguments(
 
 func (t *carrierIntelEventTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	request, err := t.arguments(params)
+	request, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -907,9 +911,9 @@ func (t *carrierIntelEventTool) Validate(
 
 func (t *carrierIntelEventTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	request, err := t.arguments(params)
+	request, err := t.arguments(&params)
 	if err != nil {
 		return err
 	}
@@ -926,5 +930,5 @@ func (t *carrierIntelEventTool) Execute(
 }
 
 func (t *carrierIntelEventTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, "eventId", permission.ResourceCarrierIntelligence)
+	return toolparams.TargetOf(params, paramEventID, permission.ResourceCarrierIntelligence)
 }

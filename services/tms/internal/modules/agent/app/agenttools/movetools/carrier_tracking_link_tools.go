@@ -168,29 +168,7 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports
 			*checkcallports.IssueTrackingLinkRequest,
 			*checkcallports.TrackingLinkPreview,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*checkcallports.IssueTrackingLinkRequest, error) {
-				moveID, err := toolparams.RequirePulid(params.Params, ParamMoveID)
-				if err != nil {
-					return nil, err
-				}
-				recipient, err := toolparams.RequireBoundedText(
-					params.Params,
-					paramRecipientEmail,
-					checkcall.MaxRecipientLength,
-				)
-				if err != nil {
-					return nil, err
-				}
-				tenant := toolparams.TenantFrom(*params)
-				return &checkcallports.IssueTrackingLinkRequest{
-					TenantInfo:     tenant,
-					MoveID:         moveID,
-					RecipientEmail: recipient,
-					IssuedByID:     tenant.UserID,
-				}, nil
-			},
+			Request: issueTrackingLinkRequest,
 			Plan: func(
 				ctx context.Context,
 				req *checkcallports.IssueTrackingLinkRequest,
@@ -234,6 +212,30 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports
 			},
 		},
 	)
+}
+
+func issueTrackingLinkRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*checkcallports.IssueTrackingLinkRequest, error) {
+	moveID, err := toolparams.RequirePulid(params.Params, ParamMoveID)
+	if err != nil {
+		return nil, err
+	}
+	recipient, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramRecipientEmail,
+		checkcall.MaxRecipientLength,
+	)
+	if err != nil {
+		return nil, err
+	}
+	tenant := toolparams.TenantFrom(*params)
+	return &checkcallports.IssueTrackingLinkRequest{
+		TenantInfo:     tenant,
+		MoveID:         moveID,
+		RecipientEmail: recipient,
+		IssuedByID:     tenant.UserID,
+	}, nil
 }
 
 func renderIssuedLink(

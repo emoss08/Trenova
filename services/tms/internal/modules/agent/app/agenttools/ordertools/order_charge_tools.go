@@ -353,7 +353,11 @@ func (r *chargeRef) updateRequest(
 		req.Description = *text
 	}
 	if _, given := r.params[toolparams.ParamAmount]; given {
-		if req.Amount, err = toolparams.DecimalArg(r.params, toolparams.ParamAmount, true); err != nil {
+		if req.Amount, err = toolparams.DecimalArg(
+			r.params,
+			toolparams.ParamAmount,
+			true,
+		); err != nil {
 			return nil, err
 		}
 	}

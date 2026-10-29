@@ -2,6 +2,7 @@ package partytools
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
@@ -188,6 +189,10 @@ var carrierRecord = &masterdatakit.Record[carrier.Carrier]{
 }
 
 func carrierFields() []masterdatakit.Field[carrier.Carrier] {
+	return slices.Concat(carrierIdentityFields(), carrierContactFields(), carrierPaymentFields())
+}
+
+func carrierIdentityFields() []masterdatakit.Field[carrier.Carrier] {
 	return []masterdatakit.Field[carrier.Carrier]{
 		masterdatakit.Text(
 			masterdatakit.MdCode,
@@ -228,6 +233,11 @@ func carrierFields() []masterdatakit.Field[carrier.Carrier] {
 		),
 		masterdatakit.UpperText("scac", "The two to four letter SCAC.", carrierMaxSCAC,
 			func(c *carrier.Carrier) *string { return &c.SCAC }),
+	}
+}
+
+func carrierContactFields() []masterdatakit.Field[carrier.Carrier] {
+	return []masterdatakit.Field[carrier.Carrier]{
 		masterdatakit.Text(
 			masterdatakit.MdAddressLine1,
 			"The street address.",
@@ -274,6 +284,11 @@ func carrierFields() []masterdatakit.Field[carrier.Carrier] {
 			false,
 			func(c *carrier.Carrier) *string { return &c.Notes },
 		),
+	}
+}
+
+func carrierPaymentFields() []masterdatakit.Field[carrier.Carrier] {
+	return []masterdatakit.Field[carrier.Carrier]{
 		masterdatakit.Enum(carrierPaymentMethod, "How the carrier is paid. Defaults to Check. "+
 			"Payment details are only ever proposed and change on a person's approval.",
 			carrierPayMethods,

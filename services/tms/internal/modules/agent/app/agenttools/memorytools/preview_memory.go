@@ -179,11 +179,12 @@ func previewAudience(scope agentmemory.MemoryScope, status agentmemory.MemorySta
 		}
 
 		return "Would record a memory read in the later conversations of everyone in this person's role."
-	default:
-		if offered {
-			return "Would offer a memory for an administrator to keep, read by every later run of every agent once they do."
-		}
-
-		return "Would record a memory every later run of every agent reads."
+	case agentmemory.MemoryScopeOrganization, agentmemory.MemoryScopeAgent:
 	}
+
+	if offered {
+		return "Would offer a memory for an administrator to keep, read by every later run of every agent once they do."
+	}
+
+	return "Would record a memory every later run of every agent reads."
 }

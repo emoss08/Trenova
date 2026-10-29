@@ -3,6 +3,7 @@ package intaketools
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
@@ -156,102 +157,13 @@ func (t *CreateShipmentTool) ParamSchema() map[string]any {
 const paramAdditionalCharges = "additionalCharges"
 
 func shipmentDraftSchema() map[string]any {
+	properties := shipmentDraftTermsProperties()
+	maps.Copy(properties, shipmentDraftFreightProperties())
+
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeObject,
 		toolschema.KeyDescription: "The shipment to enter.",
-		toolschema.KeyProperties: map[string]any{
-			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
-				permission.ResourceCustomer,
-				"The customer, from customer_list.",
-			),
-			"billToCustomerId": agenttoolschema.RecordIDText(
-				permission.ResourceCustomer,
-				"Who is billed, when not the customer, from "+
-					"customer_list.",
-			),
-			changepreview.FieldServiceTypeID: agenttoolschema.RecordIDText(
-				permission.ResourceServiceType,
-				"From masterdata_list_service_types.",
-			),
-			changepreview.FieldShipmentTypeID: agenttoolschema.RecordIDText(
-				permission.ResourceShipmentType,
-				"From masterdata_list_shipment_types.",
-			),
-			"formulaTemplateId": agenttoolschema.RecordIDText(
-				permission.ResourceFormulaTemplate,
-				"The tariff that prices the freight, from formula_list_templates. Leave "+
-					"it out when the customer's rate agreement covers the lane, and the "+
-					"contract's is used, or when freightChargeAmount gives the price.",
-			),
-			"tariffInputs": agenttoolschema.StringMap("Values for the inputs the tariff declares, "+
-				"which formula_get_template lists, as the person gave them: $2,450 for a "+
-				"flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input "+
-				"out to take the tariff's default.", 4000),
-			changepreview.FieldFreightChargeAmount: toolparams.AmountProperty(
-				"The freight charge the person or the customer's rate confirmation gives, " +
-					"such as 2450. The shipment is then rated by hand at it and no tariff " +
-					"runs; leave formulaTemplateId out.",
-			),
-			"freightTerms": agenttoolschema.Enum(
-				"Who pays the freight. Defaults to Prepaid.",
-				agenttoolschema.FreightTerms,
-			),
-			changepreview.PreviewFieldTractorTypeID: agenttoolschema.RecordIDText(
-				permission.ResourceEquipmentType,
-				"A tractor equipment type, from equipment_list_types.",
-			),
-			changepreview.PreviewFieldTrailerTypeID: agenttoolschema.RecordIDText(
-				permission.ResourceEquipmentType,
-				"A trailer equipment type, from equipment_list_types.",
-			),
-			"bol": toolparams.StringProperty(
-				"The bill of lading number. It must be unique among open shipments, so "+
-					"never reuse one from another shipment. Optional unless the customer's "+
-					"billing requires a BOL; leave it out when none is known.",
-				100,
-			),
-			"externalReference": toolparams.StringProperty(
-				"The customer's own order or load number, "+
-					"as it appears on their tender, email or rate confirmation. It is checked apart "+
-					"from the BOL, only against this customer's other live shipments, so a second "+
-					"booking of the same order is refused; keep it as written unless that refusal "+
-					"comes back, and leave it out when the customer gave none.",
-				100,
-			),
-			changepreview.FieldPieces: toolparams.IntegerProperty(
-				"The total piece or handling-unit count.",
-				0,
-				1_000_000,
-			),
-			changepreview.FieldWeight: toolparams.IntegerProperty("Pounds.", 0, 10_000_000),
-			"temperatureMin": toolparams.IntegerProperty(
-				"Fahrenheit, for reefer freight.",
-				-100,
-				200,
-			),
-			"temperatureMax": toolparams.IntegerProperty(
-				"Fahrenheit, for reefer freight.",
-				-100,
-				200,
-			),
-			"moves": map[string]any{
-				toolschema.KeyType: toolschema.TypeArray,
-				toolschema.KeyDescription: "Usually one move, sequence 0. Each has its stops in " +
-					"travel order.",
-				toolschema.KeyMinItems: 1,
-				toolschema.KeyItems:    moveDraftSchema(),
-			},
-			"commodities": map[string]any{
-				toolschema.KeyType:        toolschema.TypeArray,
-				toolschema.KeyDescription: "What is hauled, one line per commodity.",
-				toolschema.KeyItems:       commodityDraftSchema(),
-			},
-			paramAdditionalCharges: map[string]any{
-				toolschema.KeyType:        toolschema.TypeArray,
-				toolschema.KeyDescription: "Accessorial charges agreed for the shipment.",
-				toolschema.KeyItems:       chargeLineDraftSchema(),
-			},
-		},
+		toolschema.KeyProperties:  properties,
 		toolschema.KeyRequired: []string{
 			toolparams.ParamCustomerID,
 			changepreview.FieldServiceTypeID,
@@ -259,6 +171,107 @@ func shipmentDraftSchema() map[string]any {
 			"moves",
 		},
 		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func shipmentDraftTermsProperties() map[string]any {
+	return map[string]any{
+		toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
+			permission.ResourceCustomer,
+			"The customer, from customer_list.",
+		),
+		"billToCustomerId": agenttoolschema.RecordIDText(
+			permission.ResourceCustomer,
+			"Who is billed, when not the customer, from "+
+				"customer_list.",
+		),
+		changepreview.FieldServiceTypeID: agenttoolschema.RecordIDText(
+			permission.ResourceServiceType,
+			"From masterdata_list_service_types.",
+		),
+		changepreview.FieldShipmentTypeID: agenttoolschema.RecordIDText(
+			permission.ResourceShipmentType,
+			"From masterdata_list_shipment_types.",
+		),
+		"formulaTemplateId": agenttoolschema.RecordIDText(
+			permission.ResourceFormulaTemplate,
+			"The tariff that prices the freight, from formula_list_templates. Leave "+
+				"it out when the customer's rate agreement covers the lane, and the "+
+				"contract's is used, or when freightChargeAmount gives the price.",
+		),
+		"tariffInputs": agenttoolschema.StringMap("Values for the inputs the tariff declares, "+
+			"which formula_get_template lists, as the person gave them: $2,450 for a "+
+			"flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input "+
+			"out to take the tariff's default.", 4000),
+		changepreview.FieldFreightChargeAmount: toolparams.AmountProperty(
+			"The freight charge the person or the customer's rate confirmation gives, " +
+				"such as 2450. The shipment is then rated by hand at it and no tariff " +
+				"runs; leave formulaTemplateId out.",
+		),
+		"freightTerms": agenttoolschema.Enum(
+			"Who pays the freight. Defaults to Prepaid.",
+			agenttoolschema.FreightTerms,
+		),
+		changepreview.PreviewFieldTractorTypeID: agenttoolschema.RecordIDText(
+			permission.ResourceEquipmentType,
+			"A tractor equipment type, from equipment_list_types.",
+		),
+		changepreview.PreviewFieldTrailerTypeID: agenttoolschema.RecordIDText(
+			permission.ResourceEquipmentType,
+			"A trailer equipment type, from equipment_list_types.",
+		),
+	}
+}
+
+func shipmentDraftFreightProperties() map[string]any {
+	return map[string]any{
+		"bol": toolparams.StringProperty(
+			"The bill of lading number. It must be unique among open shipments, so "+
+				"never reuse one from another shipment. Optional unless the customer's "+
+				"billing requires a BOL; leave it out when none is known.",
+			100,
+		),
+		"externalReference": toolparams.StringProperty(
+			"The customer's own order or load number, "+
+				"as it appears on their tender, email or rate confirmation. It is checked apart "+
+				"from the BOL, only against this customer's other live shipments, so a second "+
+				"booking of the same order is refused; keep it as written unless that refusal "+
+				"comes back, and leave it out when the customer gave none.",
+			100,
+		),
+		changepreview.FieldPieces: toolparams.IntegerProperty(
+			"The total piece or handling-unit count.",
+			0,
+			1_000_000,
+		),
+		changepreview.FieldWeight: toolparams.IntegerProperty("Pounds.", 0, 10_000_000),
+		"temperatureMin": toolparams.IntegerProperty(
+			"Fahrenheit, for reefer freight.",
+			-100,
+			200,
+		),
+		"temperatureMax": toolparams.IntegerProperty(
+			"Fahrenheit, for reefer freight.",
+			-100,
+			200,
+		),
+		"moves": map[string]any{
+			toolschema.KeyType: toolschema.TypeArray,
+			toolschema.KeyDescription: "Usually one move, sequence 0. Each has its stops in " +
+				"travel order.",
+			toolschema.KeyMinItems: 1,
+			toolschema.KeyItems:    moveDraftSchema(),
+		},
+		"commodities": map[string]any{
+			toolschema.KeyType:        toolschema.TypeArray,
+			toolschema.KeyDescription: "What is hauled, one line per commodity.",
+			toolschema.KeyItems:       commodityDraftSchema(),
+		},
+		paramAdditionalCharges: map[string]any{
+			toolschema.KeyType:        toolschema.TypeArray,
+			toolschema.KeyDescription: "Accessorial charges agreed for the shipment.",
+			toolschema.KeyItems:       chargeLineDraftSchema(),
+		},
 	}
 }
 
@@ -408,7 +421,7 @@ func (t *CreateShipmentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -597,8 +610,8 @@ func (t *UpdateShipmentTool) Description() string {
 
 func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to change, from the page, shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
@@ -612,31 +625,31 @@ func (t *UpdateShipmentTool) ParamSchema() map[string]any {
 			"trailerTypeId": agenttoolschema.RecordIDText(permission.ResourceEquipmentType,
 				"The new trailer equipment type, from equipment_list_types."),
 			"bol": map[string]any{
-				"type":        "string",
-				"description": "The customer's BOL or reference number.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The customer's BOL or reference number.",
 			},
 			"pieces": map[string]any{
-				"type":        "integer",
-				"minimum":     1,
-				"description": "The total piece or handling-unit count. Leave it out to keep it.",
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyMinimum:     1,
+				toolschema.KeyDescription: "The total piece or handling-unit count. Leave it out to keep it.",
 			},
 			"weight": map[string]any{
-				"type":        "integer",
-				"minimum":     1,
-				"description": "Pounds. Leave it out to keep it.",
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyMinimum:     1,
+				toolschema.KeyDescription: "Pounds. Leave it out to keep it.",
 			},
 			"temperatureMin": map[string]any{
-				"type": "integer",
-				"description": "Fahrenheit, with temperatureMax, for a load that needs temperature " +
+				toolschema.KeyType: toolschema.TypeInteger,
+				toolschema.KeyDescription: "Fahrenheit, with temperatureMax, for a load that needs temperature " +
 					"control. Leave both out to keep the load as it is.",
 			},
 			"temperatureMax": map[string]any{
-				"type":        "integer",
-				"description": "Fahrenheit, with temperatureMin.",
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyDescription: "Fahrenheit, with temperatureMin.",
 			},
 		},
-		"required":             []string{toolparams.ParamShipmentID},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{toolparams.ParamShipmentID},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -673,7 +686,7 @@ type shipmentPatch struct {
 	TemperatureMax *int16  `json:"temperatureMax"`
 }
 
-func (p shipmentPatch) empty() bool {
+func (p *shipmentPatch) empty() bool {
 	return p.CustomerID == nil && p.ServiceTypeID == nil && p.ShipmentTypeID == nil &&
 		p.TractorTypeID == nil && p.TrailerTypeID == nil && p.BOL == nil &&
 		p.Pieces == nil && p.Weight == nil && p.TemperatureMin == nil && p.TemperatureMax == nil
@@ -681,7 +694,7 @@ func (p shipmentPatch) empty() bool {
 
 func (t *UpdateShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, entity, err := t.plan(ctx, &params)
 	if err != nil {
@@ -732,14 +745,14 @@ func (t *UpdateShipmentTool) plan(
 	}
 
 	patched := *entity
-	if err = applyShipmentPatch(&patched, patch); err != nil {
+	if err = applyShipmentPatch(&patched, &patch); err != nil {
 		return nil, nil, err
 	}
 
 	return entity, &patched, nil
 }
 
-func applyShipmentPatch(entity *shipment.Shipment, patch shipmentPatch) error {
+func applyShipmentPatch(entity *shipment.Shipment, patch *shipmentPatch) error {
 	ids := []struct {
 		name  string
 		value *string
@@ -789,7 +802,7 @@ func applyShipmentPatch(entity *shipment.Shipment, patch shipmentPatch) error {
 	return nil
 }
 
-func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) error {
+func placeholderTemperatures(entity *shipment.Shipment, patch *shipmentPatch) error {
 	unset := entity.TemperatureMin == nil && entity.TemperatureMax == nil
 	zero := func(value *int16) bool { return value != nil && *value == 0 }
 	if unset && zero(patch.TemperatureMin) && zero(patch.TemperatureMax) {

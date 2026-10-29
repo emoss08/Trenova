@@ -30,7 +30,7 @@ func (t *AssignMoveTool) Name() string { return "dispatch_assign_move" }
 
 func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
-		"shipment_get",
+		toolShipmentGet,
 		"dispatch_rank_candidates",
 		"worker_list",
 		"equipment_list_tractors",
@@ -39,7 +39,7 @@ func (t *AssignMoveTool) Prerequisites() []string {
 }
 
 func (t *AssignMoveTool) Recipe() []string {
-	return []string{"shipment_get", "dispatch_rank_candidates", "dispatch_assign_move"}
+	return []string{toolShipmentGet, "dispatch_rank_candidates", "dispatch_assign_move"}
 }
 
 func (t *AssignMoveTool) Description() string {
@@ -53,7 +53,7 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"The move to cover, from dispatch_get_board (moveId), "+
 					"shipment_get (its moves) or dispatch_plan.",
@@ -78,7 +78,11 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 				"A second driver for a team move, from worker_list.",
 			),
 		},
-		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},
+		"required": []string{
+			toolparams.ParamShipmentMoveID,
+			"primaryWorkerId",
+			"tractorId",
+		},
 		"additionalProperties": false,
 	}
 }
@@ -103,7 +107,7 @@ func (t *AssignMoveTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AssignMoveTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -122,7 +126,7 @@ func (t *AssignMoveTool) Execute(
 func (t *AssignMoveTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*assignmentports.AssignShipmentMoveRequest, error) {
-	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +151,10 @@ func (t *AssignMoveTool) request(
 	} else if ok {
 		req.TrailerID = &trailerID
 	}
-	if secondID, ok, pErr := toolparams.OptionalPulid(params.Params, "secondaryWorkerId"); pErr != nil {
+	if secondID, ok, pErr := toolparams.OptionalPulid(
+		params.Params,
+		"secondaryWorkerId",
+	); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		req.SecondaryWorkerID = &secondID
@@ -159,5 +166,9 @@ func (t *AssignMoveTool) request(
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
 func (t *AssignMoveTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+	return toolparams.TargetOf(
+		params,
+		toolparams.ParamShipmentMoveID,
+		permission.ResourceShipmentMove,
+	)
 }

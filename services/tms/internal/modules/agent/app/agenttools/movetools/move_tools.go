@@ -59,7 +59,7 @@ func ProvideRecordStopActualTool(
 func (t *RecordStopActualTool) Name() string { return "dispatch_record_stop_actual" }
 
 func (t *RecordStopActualTool) Recipe() []string {
-	return []string{toolShipmentList, "shipment_get", "dispatch_record_stop_actual"}
+	return []string{toolShipmentList, toolShipmentGet, "dispatch_record_stop_actual"}
 }
 
 func (t *RecordStopActualTool) Description() string {
@@ -127,7 +127,7 @@ func (t *RecordStopActualTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err

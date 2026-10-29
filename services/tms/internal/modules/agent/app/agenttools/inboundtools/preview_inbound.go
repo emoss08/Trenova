@@ -64,11 +64,11 @@ func (t *LinkInboundMessageTool) Preview(
 		return nil, err
 	}
 
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
-	message, err := loadInboundMessage(ctx, t.inbox, params)
+	message, err := loadInboundMessage(ctx, t.inbox, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (t *MarkInboundMessageTool) Preview(
 		return nil, err
 	}
 
-	message, status, note, err := t.settle(ctx, params)
+	message, status, note, err := t.settle(ctx, &params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errors.Is(err, errInboundQuarantined) {
 			return changepreview.WarnWouldFail(

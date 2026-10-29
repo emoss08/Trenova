@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -20,14 +21,14 @@ import (
 )
 
 var checkCallLabels = map[string]string{
-	"shipmentMoveId":      "Move",
-	"stop":                "Stop",
-	fieldReportedAt:       "Reported at",
-	"location":            "Location",
-	"delayed":             "Running late",
-	"delayReason":         "Delay reason",
-	fieldEstimatedArrival: "Expected at next stop",
-	"contactName":         "Spoke to",
+	toolparams.ParamShipmentMoveID: "Move",
+	"stop":                         "Stop",
+	fieldReportedAt:                "Reported at",
+	"location":                     "Location",
+	"delayed":                      "Running late",
+	"delayReason":                  "Delay reason",
+	fieldEstimatedArrival:          "Expected at next stop",
+	"contactName":                  "Spoke to",
 }
 
 type checkCallView struct {
@@ -79,7 +80,7 @@ func checkCallOptions(request *checkcallports.LogCheckCallRequest) []toolpreview
 	opts := []toolpreview.Option{
 		toolpreview.Labels(checkCallLabels),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"shipmentMoveId": permission.ResourceShipmentMove,
+			toolparams.ParamShipmentMoveID: permission.ResourceShipmentMove,
 		}),
 		toolpreview.Types(map[string]assistantartifact.DisplayType{
 			fieldReportedAt:       assistantartifact.DisplayDateTime,

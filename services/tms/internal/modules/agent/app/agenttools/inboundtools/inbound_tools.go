@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -85,7 +87,7 @@ type inboundMessageDesk interface {
 func loadInboundMessage(
 	ctx context.Context,
 	desk MessageReader,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
 	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
@@ -94,7 +96,7 @@ func loadInboundMessage(
 
 	return desk.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	})
 }
 
@@ -106,7 +108,7 @@ func loadInboundMessage(
 func inboundTierLimit(
 	ctx context.Context,
 	desk MessageReader,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
 	if err != nil || message.Mailbox == nil ||
@@ -127,7 +129,7 @@ func MessageCondition(desk MessageReader) *agenttoolports.TierCondition {
 			ctx context.Context,
 			params agenttoolports.ToolExecuteParams,
 		) agent.AutonomyTier {
-			return inboundTierLimit(ctx, desk, params)
+			return inboundTierLimit(ctx, desk, &params)
 		},
 	}
 }
@@ -166,8 +168,8 @@ func (t *LinkInboundMessageTool) Description() string {
 
 func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
@@ -178,13 +180,13 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 			"carrierId": agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"Optional: the carrier who sent it or who it concerns, from carrier_list."),
 			"reason": map[string]any{
-				"type":        "string",
-				"maxLength":   inboundmessage.MaxMatchReasonLength,
-				"description": "Why these are the right records, in words a person can check.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyMaxLength:   inboundmessage.MaxMatchReasonLength,
+				toolschema.KeyDescription: "Why these are the right records, in words a person can check.",
 			},
 		},
-		"required":             []string{ParamMessageID, "reason"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "reason"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -212,7 +214,7 @@ func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.T
 }
 
 func (t *LinkInboundMessageTool) request(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundqueue.LinkRequest, error) {
 	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
@@ -221,7 +223,7 @@ func (t *LinkInboundMessageTool) request(
 
 	req := &inboundqueue.LinkRequest{
 		MessageID:  messageID,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
 		Reason:     toolparams.OptionalString(params.Params, "reason"),
 	}
@@ -243,13 +245,13 @@ func (t *LinkInboundMessageTool) request(
 
 func (t *LinkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return err
 	}
-	if _, err = loadInboundMessage(ctx, t.inbox, params); err != nil {
+	if _, err = loadInboundMessage(ctx, t.inbox, &params); err != nil {
 		return err
 	}
 
@@ -258,13 +260,13 @@ func (t *LinkInboundMessageTool) Validate(
 
 func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -303,8 +305,8 @@ func (t *MarkInboundMessageTool) Description() string {
 
 func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			changepreview.FieldStatus: agenttoolschema.Enum(
@@ -312,13 +314,13 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 				inboundReviewStatuses,
 			),
 			"note": map[string]any{
-				"type":        "string",
-				"maxLength":   maxInboundReviewNote,
-				"description": "What was done, or why nothing was, for the person reading the inbox.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyMaxLength:   maxInboundReviewNote,
+				toolschema.KeyDescription: "What was done, or why nothing was, for the person reading the inbox.",
 			},
 		},
-		"required":             []string{ParamMessageID, "status", "note"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "status", "note"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -345,7 +347,7 @@ func (t *MarkInboundMessageTool) Target(params map[string]any) (agenttoolports.T
 }
 
 func (t *MarkInboundMessageTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (inboundmessage.Status, string, error) {
 	status := inboundmessage.Status(toolparams.OptionalString(params.Params, "status"))
 	if status != inboundmessage.StatusActioned && status != inboundmessage.StatusIgnored {
@@ -369,7 +371,7 @@ func (t *MarkInboundMessageTool) arguments(
 
 func (t *MarkInboundMessageTool) settle(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, inboundmessage.Status, string, error) {
 	status, note, err := t.arguments(params)
 	if err != nil {
@@ -388,22 +390,22 @@ func (t *MarkInboundMessageTool) settle(
 
 func (t *MarkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, _, _, err := t.settle(ctx, params)
+	_, _, _, err := t.settle(ctx, &params)
 
 	return err
 }
 
 func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	message, status, note, err := t.settle(ctx, params)
+	message, status, note, err := t.settle(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -459,7 +461,9 @@ type ReplyToInboundMessageTool struct {
 	deps  inboundReplier
 }
 
-func NewReplyToInboundMessageTool(p replyToInboundMessageParams) agenttoolports.AgentTool {
+func NewReplyToInboundMessageTool(
+	p replyToInboundMessageParams, //nolint:gocritic // fx params are passed by value
+) agenttoolports.AgentTool {
 	return &ReplyToInboundMessageTool{
 		inbox: p.Inbox,
 		deps: inboundReplier{
@@ -500,8 +504,8 @@ func (t *ReplyToInboundMessageTool) Description() string {
 
 func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message being answered, from this run's subject or "+
 					"inbox_list_inbound_messages."),
@@ -509,14 +513,14 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 				"The email profile to send from, from inbox_list_email_profiles. Leave it out to "+
 					"send from the profile the organization assigns to operations email."),
 			"body": map[string]any{
-				"type":      "string",
-				"maxLength": MaxReplyBody,
-				"description": "The answer in plain prose. The template adds the greeting, the " +
+				toolschema.KeyType:      toolschema.TypeString,
+				toolschema.KeyMaxLength: MaxReplyBody,
+				toolschema.KeyDescription: "The answer in plain prose. The template adds the greeting, the " +
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{ParamMessageID, "body"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "body"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -553,7 +557,7 @@ type inboundReply struct {
 
 func (t *ReplyToInboundMessageTool) prepare(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundReply, error) {
 	profileID, err := toolparams.OptionalID(params.Params, "profileId")
 	if err != nil {
@@ -607,16 +611,16 @@ func replyable(message *inboundmessage.InboundMessage) error {
 
 func (t *ReplyToInboundMessageTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	_, err := t.prepare(ctx, params)
+	_, err := t.prepare(ctx, &params)
 
 	return err
 }
 
 func (t *ReplyToInboundMessageTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {

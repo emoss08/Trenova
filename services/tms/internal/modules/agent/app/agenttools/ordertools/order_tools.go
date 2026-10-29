@@ -44,8 +44,14 @@ const maxOrderChargeText = 255
 const maxOrderAttachments = 50
 
 var orderFields = []string{
-	changepreview.FieldCustomerID, toolparams.ParamOwnerID, paramPONumber, changepreview.FieldBol, toolparams.ParamCurrencyCode,
-	paramQuotedAmount, paramBaseAmount, changepreview.FieldStatus,
+	changepreview.FieldCustomerID,
+	toolparams.ParamOwnerID,
+	paramPONumber,
+	changepreview.FieldBol,
+	toolparams.ParamCurrencyCode,
+	paramQuotedAmount,
+	paramBaseAmount,
+	changepreview.FieldStatus,
 }
 
 var orderRefs = map[string]permission.Resource{
@@ -328,7 +334,10 @@ func NewCreateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		Required:   []string{changepreview.FieldCustomerID},
 	}, toolspec.ReceivablePlan[*order.Order, *orderservice.OrderChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*order.Order, error) {
-			if _, err := toolparams.RequirePulid(params.Params, changepreview.FieldCustomerID); err != nil {
+			if _, err := toolparams.RequirePulid(
+				params.Params,
+				changepreview.FieldCustomerID,
+			); err != nil {
 				return nil, err
 			}
 			entity := &order.Order{

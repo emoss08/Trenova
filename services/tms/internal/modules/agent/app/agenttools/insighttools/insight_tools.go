@@ -100,9 +100,9 @@ func (t *DismissInsightTool) Target(params map[string]any) (agenttoolports.ToolT
 
 func (t *DismissInsightTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (t *DismissInsightTool) Execute(
 }
 
 func (t *DismissInsightTool) request(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (insightports.DismissInsightRequest, error) {
 	id, reason, err := t.arguments(params)
 	if err != nil {
@@ -124,14 +124,14 @@ func (t *DismissInsightTool) request(
 		ID:         id,
 		UserID:     params.Actor.UserID,
 		Reason:     reason,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 	}, nil
 }
 
 func (t *DismissInsightTool) arguments(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return "", "", err
 	}
 

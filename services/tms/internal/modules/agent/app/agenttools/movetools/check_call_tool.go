@@ -80,7 +80,7 @@ func ProvideLogCheckCallTool(
 func (t *LogCheckCallTool) Name() string { return "dispatch_record_check_call" }
 
 func (t *LogCheckCallTool) Recipe() []string {
-	return []string{toolShipmentList, "shipment_get", "dispatch_record_check_call"}
+	return []string{toolShipmentList, toolShipmentGet, "dispatch_record_check_call"}
 }
 
 func (t *LogCheckCallTool) Description() string {

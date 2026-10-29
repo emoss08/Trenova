@@ -2,6 +2,7 @@ package memorytools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -151,9 +152,11 @@ func (t *RememberTool) Policy() agenttoolports.ToolPolicy {
 // classifyRemember calls a memory for the person in the conversation alone
 // personal: it reaches nobody else's conversations. Anything wider, or any
 // memory recorded with nobody in the conversation, is internal.
-func classifyRemember(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+func classifyRemember(
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if rememberAudience(params) != visibleToMe || actor == nil ||
+	if rememberAudience(&params) != visibleToMe || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
@@ -163,7 +166,7 @@ func classifyRemember(params agenttoolports.ToolExecuteParams) agenttoolports.Ca
 
 // rememberAudience is who the call keeps the memory for, defaulting to the
 // person when there is one.
-func rememberAudience(params agenttoolports.ToolExecuteParams) string {
+func rememberAudience(params *agenttoolports.ToolExecuteParams) string {
 	if audience := toolparams.OptionalString(params.Params, fieldVisibleTo); audience != "" {
 		return audience
 	}
@@ -174,7 +177,9 @@ func rememberAudience(params agenttoolports.ToolExecuteParams) string {
 	return visibleToOrganization
 }
 
-func rememberHeldWhenTainted(params agenttoolports.ToolExecuteParams) bool {
+func rememberHeldWhenTainted(
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // TaintHold.Applies passes params by value
+) bool {
 	return rememberKind(params.Params) != agentmemory.MemoryKindFact
 }
 
@@ -187,7 +192,10 @@ func rememberKind(params map[string]any) agentmemory.MemoryKind {
 	return kind
 }
 
-func (t *RememberTool) Execute(ctx context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *RememberTool) Execute(
+	ctx context.Context,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+) error {
 	_, err := t.Record(ctx, params)
 
 	return err
@@ -197,7 +205,7 @@ func (t *RememberTool) Execute(ctx context.Context, params agenttoolports.ToolEx
 // person what was kept and let them edit or undo it.
 func (t *RememberTool) Record(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the MemoryRecordingTool interface passes params by value
 ) (*agentmemory.Memory, error) {
 	request, err := t.request(ctx, &params)
 	if err != nil {
@@ -270,18 +278,18 @@ func (t *RememberTool) audience(
 	request *agentmemoryports.RememberRequest,
 ) error {
 	person := request.PersonUserID
-	switch audience := rememberAudience(*params); audience {
+	switch audience := rememberAudience(params); audience {
 	case visibleToOrganization:
 		request.Scope = agentmemory.MemoryScopeOrganization
 	case visibleToMe:
 		if person.IsNil() {
-			return fmt.Errorf("visibleTo me needs a person in the conversation; use organization")
+			return errors.New("visibleTo me needs a person in the conversation; use organization")
 		}
 		request.Scope = agentmemory.MemoryScopeUser
 		request.OwnerUserID = person
 	case visibleToTeam:
 		if person.IsNil() {
-			return fmt.Errorf("visibleTo team needs a person in the conversation; use organization")
+			return errors.New("visibleTo team needs a person in the conversation; use organization")
 		}
 		reader, err := t.memories.Reader(ctx, request.TenantInfo, person)
 		if err != nil {
@@ -290,7 +298,7 @@ func (t *RememberTool) audience(
 		// The team is the first of the person's own roles by name; a person
 		// with several can move the memory to another on the Desk.
 		if len(reader.RoleIDs) == 0 {
-			return fmt.Errorf("the person holds no role to keep this for; use me or organization")
+			return errors.New("the person holds no role to keep this for; use me or organization")
 		}
 		request.Scope = agentmemory.MemoryScopeRole
 		request.RoleID = reader.RoleIDs[0]
@@ -370,7 +378,7 @@ func (t *ForgetMemoryTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ForgetMemoryTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -458,7 +466,7 @@ func memorySubject(params map[string]any) (agentmemory.MemorySubjectType, pulid.
 func memoryExpiry(raw string) (*int64, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a memory with no expiry date never expires
 	}
 
 	day, err := time.Parse("2006-01-02", raw)

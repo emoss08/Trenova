@@ -13,7 +13,7 @@ func (t *ApproveDetentionTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agentpreview.ToolPreview, error) {
-	request, detail, err := t.request(ctx, params)
+	request, detail, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
