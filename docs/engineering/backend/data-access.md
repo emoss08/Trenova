@@ -565,7 +565,12 @@ against the generated tables (never raw SQL):
   account `admin` / `admin123!`, the Trenova Logistics and Trenova Transportation
   organizations, workers, equipment, shipments, ledgers, agent activity). Only `trenova-devdb`
   links them; each runs once per database, and a database marked production refuses them.
-  `requireDevelopment` refuses publicly known credentials on staging too.
+  `requireDevelopment` refuses publicly known credentials on staging too. Every fixture is
+  declared in `fixtures/fixtures.go`, in the order it registers; its `Run` lives in a domain
+  package under `fixtures/` (`workforcefixtures`, `shipmentfixtures`, …), with the shared
+  organization and user lookups in `tenantfixtures`. Seeds run in `After` order and, between
+  seeds `After` leaves free, in registration order, so a new fixture goes after every seed whose
+  rows it reads, and names in `After` the ones it cannot run without.
 
 Seed tenancy comes from `seedenv.Env`: the system scope for bookkeeping and global seeds, and an
 RLS tenant scope per organization for `PerTenant` seeds, with the loaded configuration on the
@@ -573,8 +578,9 @@ context (`seedenv.Config`). `task db-migrate` (`trenova-devdb up -env developmen
 applies every changed seed, `task db-seed [name=x]` applies seeds alone, `task db-seed-plan` says
 which would run and why, and `task db-reset` recreates the database from the migrated template
 (which carries the reference seeds) and applies the fixtures. To add a seed, add it to the right
-registry with `Seeds.Add(seed.Seed{…})`, name its `After` dependencies, and list any data file
-under `Inputs` so editing the file reruns it.
+registry with `Seeds.Add(seed.Seed{…})` (a fixture to `fixtures/fixtures.go`, its `Run` in the
+domain package it fills), name its `After` dependencies, and list any data file under `Inputs`
+so editing the file reruns it.
 
 Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
 seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
