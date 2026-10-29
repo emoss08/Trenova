@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recurringshipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -466,8 +466,8 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 		req.DefinitionID = id
 	}
 	for key, target := range map[string]*string{
-		receivabletools.ParamCronExpression: &req.CronExpression,
-		receivabletools.ParamTimezone:       &req.Timezone,
+		recurringshipmenttools.ParamCronExpression: &req.CronExpression,
+		recurringshipmenttools.ParamTimezone:       &req.Timezone,
 	} {
 		if _, given := e.values[key]; given {
 			text, err := toolparams.RequireString(e.values, key)
@@ -547,12 +547,12 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agenttoolports.Age
 				"The saved report it runs, from report_list. "+
 					"Leave it out to keep it.",
 			),
-			receivabletools.ParamCronExpression: toolparams.StringProperty(
+			recurringshipmenttools.ParamCronExpression: toolparams.StringProperty(
 				"When it runs, as five cron fields, such as "+
 					"\"0 7 * * 1\" for 07:00 every Monday.",
 				0,
 			),
-			receivabletools.ParamTimezone: toolparams.StringProperty(
+			recurringshipmenttools.ParamTimezone: toolparams.StringProperty(
 				"The zone the schedule is read in, as an IANA name "+
 					"such as America/New_York.",
 				0,

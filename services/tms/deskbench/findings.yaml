@@ -783,7 +783,7 @@ findings:
     fix: >
       totalAmount is optional when unitPrice is given; the tool works out quantity x unit price to
       the cent, and refuses with both names when neither is given. To verify in a run.
-    files: [services/tms/internal/modules/agent/app/agenttools/receivabletools/fuel_tools.go]
+    files: [services/tms/internal/modules/agent/app/agenttools/fueltools/fuel_tools.go]
     fixedIn: .deskbench/runs/20261009-203702-run
 
   - id: DB-034
@@ -1095,7 +1095,7 @@ findings:
       purchasedAt takes a day alone (2026-10-08, yesterday), recorded at noon in the
       organization's time zone; a local time without an offset is still refused, since the pump's
       zone is not known. To verify in a run.
-    files: [services/tms/internal/modules/agent/app/agenttools/receivabletools/fuel_tools.go]
+    files: [services/tms/internal/modules/agent/app/agenttools/fueltools/fuel_tools.go]
     fixedIn: .deskbench/runs/20261009-203702-run
 
   - id: DB-047

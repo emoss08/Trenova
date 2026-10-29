@@ -43,7 +43,7 @@ Shipment event ─▶ ShipmentExceptionObserver ─▶ ReconcileSubject for that
 | Escalation and wake | `escalation.go`, `ExceptionAttentionWorkflow` in `agent/jobs/watchtowerjobs` |
 | Automatic sources and observer | `agent/app/watchtowersources/shipment_exceptions.go`, `shipment_exception_observer.go` |
 | GraphQL | `watchtower.graphqls`, resolvers in `resolver/watchtowerresolver` |
-| Agent tools | `agent/app/agenttools/receivabletools/exception_tools.go` |
+| Agent tools | `agent/app/agenttools/exceptiontools/exception_tools.go` |
 | Web | Desk watchtower (`routes/desk/_components/watchtower`), dispatch controls "Exception queue" card |
 
 ## The workflow

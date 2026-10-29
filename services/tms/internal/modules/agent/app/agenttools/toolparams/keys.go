@@ -79,3 +79,9 @@ const ParamPayCodeID = "payCodeId"
 const ParamGLAccountID = "glAccountId"
 
 const MaxAdjustmentDescription = 255
+
+const ParamJurisdictionID = "jurisdictionId"
+
+const SearchTermIFTA = "ifta"
+
+const ParamCurrencyCode = "currencyCode"

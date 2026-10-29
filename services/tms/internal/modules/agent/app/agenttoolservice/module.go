@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
@@ -116,7 +117,7 @@ func ToolProviders() []any {
 		workforcetools.NewRequestMissingDocsTool,
 		provideAttachDocumentTool,
 		masterdatatools.NewAssignMoveTool,
-		receivabletools.NewRaiseExceptionTool,
+		exceptiontools.NewRaiseExceptionTool,
 		carriertools.NewWaitUntilTool,
 		carriertools.NewCancelWaitTool,
 		scheduletools.NewCreateScheduleTool,

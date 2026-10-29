@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ledgertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
@@ -19,16 +18,16 @@ func ledgerToolProviders() []any {
 		ledgertools.ProvideRequestJournalReversalTool,
 		ledgertools.ProvideCancelJournalReversalTool,
 		ledgertools.ProvidePostJournalReversalTool,
-		receivabletools.ProvideCloseFiscalPeriodTool,
-		receivabletools.ProvideLockFiscalPeriodTool,
-		receivabletools.ProvideUnlockFiscalPeriodTool,
-		receivabletools.ProvideReopenFiscalPeriodTool,
-		receivabletools.ProvideOpenFiscalPeriodTool,
+		ledgertools.ProvideCloseFiscalPeriodTool,
+		ledgertools.ProvideLockFiscalPeriodTool,
+		ledgertools.ProvideUnlockFiscalPeriodTool,
+		ledgertools.ProvideReopenFiscalPeriodTool,
+		ledgertools.ProvideOpenFiscalPeriodTool,
 		provideConfirmAccountingMappingProposalsTool,
 		provideRejectAccountingMappingProposalTool,
 		provideReleaseAccountingSyncTool,
 		provideChangeAccountingBackfillTool,
-		receivabletools.ProvideTriageBankReceiptWorkItemTool,
+		ledgertools.ProvideTriageBankReceiptWorkItemTool,
 	}
 }
 

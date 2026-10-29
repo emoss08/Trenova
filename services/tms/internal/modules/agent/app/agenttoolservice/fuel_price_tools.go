@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/fueltools"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 )
 
-var _ receivabletools.FuelIndexPriceKeeper = (*fuelsurchargeservice.Service)(nil)
+var _ fueltools.FuelIndexPriceKeeper = (*fuelsurchargeservice.Service)(nil)

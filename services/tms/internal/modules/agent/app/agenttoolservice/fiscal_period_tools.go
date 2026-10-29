@@ -2,7 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ledgertools"
 )
 
-var _ receivabletools.FiscalPeriodKeeper = (*fiscalperiodservice.Service)(nil)
+var _ ledgertools.FiscalPeriodKeeper = (*fiscalperiodservice.Service)(nil)

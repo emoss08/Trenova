@@ -45,7 +45,6 @@ debt:
   services/tms/internal/modules/agent/app/agenttools/invoicetools: 6336
   services/tms/internal/modules/agent/app/agenttools/masterdatatools: 9474
   services/tms/internal/modules/agent/app/agenttools/operationstools: 3373
-  services/tms/internal/modules/agent/app/agenttools/receivabletools: 10553
   services/tms/internal/modules/agent/app/agenttools/settlementtools: 3663
   services/tms/internal/modules/agent/app/agenttools/shipmenttools: 3956
   services/tms/internal/modules/agent/app/agenttools/workforcetools: 8777

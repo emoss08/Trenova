@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -78,5 +79,5 @@ func provideSendCustomerStatementTool(
 func provideWakeExceptionTool(
 	exceptions watchtowerports.ExceptionService,
 ) agenttoolports.AgentTool {
-	return receivabletools.NewWakeExceptionTool(exceptions)
+	return exceptiontools.NewWakeExceptionTool(exceptions)
 }
