@@ -45,7 +45,7 @@ func TestCanServe_FalseWhenAIIsOff(t *testing.T) {
 	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	svc := newTestService(t, provider)
 	off := false
-	svc.ai = &aiconfig.Config{Enabled: &off}
+	svc.AI = &aiconfig.Config{Enabled: &off}
 
 	ok, err := svc.CanServe(t.Context(), aitask.TaskDocumentExtraction, availabilityTenant())
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestCanServe_ReportsARepositoryFailure(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.repo = &fakeRepo{err: errors.New("database unavailable")}
+	svc.Repo = &fakeRepo{Err: errors.New("database unavailable")}
 
 	_, err := svc.CanServe(t.Context(), aitask.TaskDocumentExtraction, availabilityTenant())
 	require.Error(t, err, "a failure to look is not the same as nothing found")

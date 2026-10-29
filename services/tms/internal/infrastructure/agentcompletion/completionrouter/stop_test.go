@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/shared/llmtokens"
@@ -55,10 +56,10 @@ func stallingStreamServer(
 
 // charged reports whether the breaker holds any failure against a provider.
 func charged(service *Service, id pulid.ID) bool {
-	service.health.mu.Lock()
-	defer service.health.mu.Unlock()
+	service.Health.mu.Lock()
+	defer service.Health.mu.Unlock()
 
-	_, ok := service.health.entries[id]
+	_, ok := service.Health.Entries[id]
 
 	return ok
 }
@@ -99,9 +100,9 @@ func TestStreamChat_AStoppedReplyIsAnErrorNotAFinishedReply(t *testing.T) {
 	fallback, _, fallbackCalls := stallingStreamServer(t, []string{"Never asked."})
 	first := priced(chatProvider("stopped", stalling.URL, 10), "1", "10")
 	service := newTestService(t, first, chatProvider("fallback", fallback.URL, 20))
-	service.health = newProviderHealth(nil)
+	service.Health = completionengine.NewProviderHealth(nil)
 	usage := &fakeUsage{}
-	service.usage = usage
+	service.Usage = usage
 
 	ctx, stop := context.WithCancel(t.Context())
 	defer stop()
@@ -141,9 +142,9 @@ func TestStreamChat_AStopBeforeTheFirstWordAsksNoOtherProvider(t *testing.T) {
 	first := chatProvider("stopped", stalling.URL, 10)
 	second := chatProvider("fallback", fallback.URL, 20)
 	service := newTestService(t, first, second)
-	service.health = newProviderHealth(nil)
+	service.Health = completionengine.NewProviderHealth(nil)
 	usage := &fakeUsage{}
-	service.usage = usage
+	service.Usage = usage
 
 	ctx, stop := context.WithCancel(t.Context())
 	defer stop()
@@ -178,11 +179,11 @@ func TestStreamChat_ACallersDeadlineDoesNotRestTheProvider(t *testing.T) {
 	fallback, _, fallbackCalls := stallingStreamServer(t, []string{"Never asked."})
 	first := chatProvider("slow", stalling.URL, 10)
 	service := newTestService(t, first, chatProvider("fallback", fallback.URL, 20))
-	service.health = newProviderHealth(nil)
+	service.Health = completionengine.NewProviderHealth(nil)
 	usage := &fakeUsage{}
-	service.usage = usage
+	service.Usage = usage
 
-	for range breakerThreshold {
+	for range completionengine.BreakerThreshold {
 		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
 		_, err := service.StreamChat(ctx, chatRequest(pulid.Nil), func(string) {})
 		cancel()
@@ -191,12 +192,12 @@ func TestStreamChat_ACallersDeadlineDoesNotRestTheProvider(t *testing.T) {
 		assert.True(t, errors.Is(err, context.DeadlineExceeded), "%v", err)
 	}
 
-	_, resting := service.health.Resting(first.ID)
+	_, resting := service.Health.Resting(first.ID)
 	assert.False(t, resting, "the caller's deadline says nothing about the provider")
 	counted := charged(service, first.ID)
 	assert.False(t, counted)
 	assert.Zero(t, fallbackCalls.Load())
-	onlyRows(t, usage, breakerThreshold)
+	onlyRows(t, usage, completionengine.BreakerThreshold)
 }
 
 // A structured call follows the same rule: a caller that has gone is not
@@ -219,9 +220,9 @@ func TestCompleteStructured_AStoppedCallAsksNoOtherProvider(t *testing.T) {
 
 	first := openAIChatProvider("stopped", stalling.URL, 10)
 	service := newTestService(t, first, openAIChatProvider("secondary", healthy.URL, 20))
-	service.health = newProviderHealth(nil)
+	service.Health = completionengine.NewProviderHealth(nil)
 	usage := &fakeUsage{}
-	service.usage = usage
+	service.Usage = usage
 
 	ctx, stop := context.WithCancel(t.Context())
 	defer stop()
@@ -241,21 +242,4 @@ func TestCompleteStructured_AStoppedCallAsksNoOtherProvider(t *testing.T) {
 
 	row := onlyRows(t, usage, 1)[0]
 	assert.Equal(t, "cancelled", row.ErrorClass)
-}
-
-func TestStopped(t *testing.T) {
-	t.Parallel()
-
-	live := t.Context()
-	gone, cancel := context.WithCancel(t.Context())
-	cancel()
-
-	cause := errors.New("unexpected EOF")
-	assert.NoError(t, stopped(gone, nil))
-	assert.Same(t, cause, stopped(live, cause), "a live caller's error is left alone")
-
-	wrapped := stopped(gone, cause)
-	assert.ErrorIs(t, wrapped, context.Canceled)
-	assert.ErrorIs(t, wrapped, cause, "the provider's own account is kept")
-	assert.Same(t, context.Canceled, stopped(gone, context.Canceled))
 }

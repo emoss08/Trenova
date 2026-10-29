@@ -1,4 +1,4 @@
-package completionrouter
+package completionembed
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
@@ -73,12 +74,18 @@ func batchEmbeddingInputs(inputs []string, limits embeddingBatchLimits) []embedd
 	return batches
 }
 
-func (s *Service) Embed(
+type Embedder struct {
+	*completionengine.Engine
+}
+
+func (s *Embedder) Embed(
 	ctx context.Context,
 	req *aiusageports.EmbedRequest,
 ) (aiusageports.EmbedResult, error) {
-	if !s.ai.AIEnabled() {
-		return aiusageports.EmbedResult{}, errortypes.NewBusinessError(aiDisabledMessage)
+	if !s.AI.AIEnabled() {
+		return aiusageports.EmbedResult{}, errortypes.NewBusinessError(
+			completionengine.AIDisabledMessage,
+		)
 	}
 	if req == nil {
 		return aiusageports.EmbedResult{}, errortypes.NewValidationError(
@@ -124,8 +131,8 @@ func (s *Service) Embed(
 
 		result.Vectors = append(result.Vectors, served.vectors...)
 		result.InputTokens += served.tokens
-		result.ProviderID = served.provider.ID
-		result.ProviderKind = served.provider.Kind
+		result.ProviderID = served.Provider.ID
+		result.ProviderKind = served.Provider.Kind
 		result.Model = served.model
 		if served.cost == nil {
 			priced = false
@@ -142,15 +149,15 @@ func (s *Service) Embed(
 	return result, nil
 }
 
-func (s *Service) ConfiguredModelKey(
+func (s *Embedder) ConfiguredModelKey(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (string, error) {
-	if !s.ai.AIEnabled() {
-		return "", errortypes.NewBusinessError(aiDisabledMessage)
+	if !s.AI.AIEnabled() {
+		return "", errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
 
-	usable, err := s.usableFor(ctx, aitask.TaskEmbedding, tenant)
+	usable, err := s.UsableFor(ctx, aitask.TaskEmbedding, tenant)
 	if err != nil {
 		return "", err
 	}
@@ -206,12 +213,12 @@ func validateEmbedRequest(req *aiusageports.EmbedRequest) error {
 	return nil
 }
 
-func (s *Service) embeddingCandidates(
+func (s *Embedder) embeddingCandidates(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	pinned string,
 ) ([]*aiprovider.Provider, string, error) {
-	usable, err := s.usableFor(ctx, aitask.TaskEmbedding, tenant)
+	usable, err := s.UsableFor(ctx, aitask.TaskEmbedding, tenant)
 	if err != nil {
 		return nil, "", err
 	}
@@ -234,11 +241,11 @@ func (s *Service) embeddingCandidates(
 		).WithInternal(llmports.ErrNoProviderConfigured)
 	}
 
-	ready, err := s.awake(ctx, sameModel)
+	ready, err := s.Awake(ctx, sameModel)
 	if err != nil {
 		return nil, "", err
 	}
-	if ready, err = s.underCap(ctx, tenant, ready); err != nil {
+	if ready, err = s.UnderCap(ctx, tenant, ready); err != nil {
 		return nil, "", err
 	}
 
@@ -250,10 +257,10 @@ type servedBatch struct {
 	tokens   int
 	cost     *decimal.Decimal
 	model    string
-	provider *aiprovider.Provider
+	Provider *aiprovider.Provider
 }
 
-func (s *Service) embedBatch(
+func (s *Embedder) embedBatch(
 	ctx context.Context,
 	candidates []*aiprovider.Provider,
 	req *aiusageports.EmbedRequest,
@@ -265,41 +272,48 @@ func (s *Service) embedBatch(
 			return nil, err
 		}
 
-		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
-			operation:   aitrace.OperationEmbeddings,
-			provider:    provider,
-			attempt:     idx + 1,
-			failover:    idx > 0,
-			attribution: req.Attribution,
+		attemptCtx, span := s.StartAttempt(ctx, &completionengine.AttemptSpec{
+			Operation:   aitrace.OperationEmbeddings,
+			Provider:    provider,
+			Attempt:     idx + 1,
+			Failover:    idx > 0,
+			Attribution: req.Attribution,
 		})
 		started := time.Now()
 		served, attemptErr := s.attemptEmbed(
-			lastCandidate(attemptCtx, idx, len(candidates)), provider, req.Purpose, batch,
+			completionengine.LastCandidate(
+				attemptCtx,
+				idx,
+				len(candidates),
+			),
+			provider,
+			req.Purpose,
+			batch,
 		)
 		latency := time.Since(started)
-		attemptErr = stopped(ctx, attemptErr)
-		s.observe(ctx, provider, attemptErr)
+		attemptErr = completionengine.Stopped(ctx, attemptErr)
+		s.Observe(ctx, provider, attemptErr)
 
-		var outcome *runOutcome
+		var outcome *completionengine.RunOutcome
 		if served != nil {
-			outcome = &runOutcome{Model: served.model, InputTokens: served.tokens}
+			outcome = &completionengine.RunOutcome{Model: served.model, InputTokens: served.tokens}
 		}
-		s.settleAttempt(attemptCtx, span, &usageAttempt{
-			provider:    provider,
-			task:        aitask.TaskEmbedding,
-			surface:     surfaceFor(req.ResolvedSurface(), req.Attribution),
-			attribution: req.Attribution,
-			tenant:      req.TenantInfo,
-			latency:     latency,
-			outcome:     outcome,
-			err:         attemptErr,
-			operation:   aitrace.OperationEmbeddings,
-			attempt:     idx + 1,
-			failover:    idx > 0,
+		s.SettleAttempt(attemptCtx, span, &completionengine.UsageAttempt{
+			Provider:    provider,
+			Task:        aitask.TaskEmbedding,
+			Surface:     completionengine.SurfaceFor(req.ResolvedSurface(), req.Attribution),
+			Attribution: req.Attribution,
+			Tenant:      req.TenantInfo,
+			Latency:     latency,
+			Outcome:     outcome,
+			Err:         attemptErr,
+			Operation:   aitrace.OperationEmbeddings,
+			Attempt:     idx + 1,
+			Failover:    idx > 0,
 		})
 
 		if attemptErr == nil {
-			s.touchKey(ctx, provider, req.TenantInfo)
+			s.TouchKey(ctx, provider, req.TenantInfo)
 			served.cost = aipricing.InputCostFor(
 				provider,
 				aipricing.TokenUsage{Input: served.tokens},
@@ -312,7 +326,7 @@ func (s *Service) embedBatch(
 		}
 
 		lastErr = attemptErr
-		s.logger.Warn("embedding provider attempt failed, falling through",
+		s.Logger.Warn("embedding provider attempt failed, falling through",
 			zap.String("provider", provider.Name),
 			zap.String("kind", string(provider.Kind)),
 			zap.Int("inputs", len(batch.inputs)),
@@ -327,19 +341,19 @@ func (s *Service) embedBatch(
 	)
 }
 
-func (s *Service) attemptEmbed(
+func (s *Embedder) attemptEmbed(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	purpose aiusageports.EmbeddingPurpose,
 	batch embeddingBatch,
 ) (*servedBatch, error) {
-	embedder, err := s.adapters.Embedder(provider.Kind)
+	embedder, err := s.Adapters.Embedder(provider.Kind)
 	if err != nil {
 		return nil, err
 	}
 
 	timeout := provider.ResolvedTimeout()
-	release, err := s.claimSlot(ctx, provider, timeout)
+	release, err := s.ClaimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -347,18 +361,18 @@ func (s *Service) attemptEmbed(
 
 	call := &modeladapter.EmbedCall{
 		Provider: provider,
-		Client:   s.clientFor(provider),
+		Client:   s.ClientFor(provider),
 		Purpose:  purpose,
 		Inputs:   batch.inputs,
 	}
 
-	limited := s.withDeadline(ctx, timeout)
+	limited := s.WithDeadline(ctx, timeout)
 	var resp *modeladapter.EmbedResponse
-	if err = limited.finish(s.withKeyFallback(provider, func(apiKey string) error {
+	if err = limited.Finish(s.WithKeyFallback(provider, func(apiKey string) error {
 		call.APIKey = apiKey
-		return s.retrying(limited.ctx, func() error {
+		return s.Retrying(limited.Ctx, func() error {
 			var callErr error
-			resp, callErr = embedder.Embed(limited.ctx, call)
+			resp, callErr = embedder.Embed(limited.Ctx, call)
 
 			return callErr
 		}, nil)
@@ -375,6 +389,6 @@ func (s *Service) attemptEmbed(
 		vectors:  resp.Vectors,
 		tokens:   tokens,
 		model:    resp.ModelIdentifier,
-		provider: provider,
+		Provider: provider,
 	}, nil
 }

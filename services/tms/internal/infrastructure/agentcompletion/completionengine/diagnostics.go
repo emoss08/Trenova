@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
@@ -11,7 +11,7 @@ import (
 // missed against the call before this one, for an operator who turned cache
 // diagnostics on. A changed prompt is the harness's to fix and is logged as
 // such; a call with nothing to compare against is logged only for debugging.
-func (s *Service) noteCacheDiagnosis(
+func (s *Engine) NoteCacheDiagnosis(
 	provider *aiprovider.Provider,
 	req *llmports.ChatCompletionRequest,
 	resp *modeladapter.Response,
@@ -35,8 +35,8 @@ func (s *Service) noteCacheDiagnosis(
 		zap.String("run", req.Attribution.RunID.String()),
 	}
 	if diagnosis.Changed() {
-		s.logger.Info("the prompt stopped matching the call before it", fields...)
+		s.Logger.Info("the prompt stopped matching the call before it", fields...)
 		return
 	}
-	s.logger.Debug("the prompt was not compared with the call before it", fields...)
+	s.Logger.Debug("the prompt was not compared with the call before it", fields...)
 }

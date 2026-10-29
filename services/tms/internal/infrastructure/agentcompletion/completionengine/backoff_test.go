@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 func TestRetryDelay_DoublesFromHalfASecondAndStopsAtFive(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, 500*time.Millisecond, retryDelay(0))
-	assert.Equal(t, time.Second, retryDelay(1))
-	assert.Equal(t, 2*time.Second, retryDelay(2))
-	assert.Equal(t, 4*time.Second, retryDelay(3))
-	assert.Equal(t, 5*time.Second, retryDelay(4))
-	assert.Equal(t, 5*time.Second, retryDelay(40), "no overflow, whatever the attempt")
+	assert.Equal(t, 500*time.Millisecond, RetryDelay(0))
+	assert.Equal(t, time.Second, RetryDelay(1))
+	assert.Equal(t, 2*time.Second, RetryDelay(2))
+	assert.Equal(t, 4*time.Second, RetryDelay(3))
+	assert.Equal(t, 5*time.Second, RetryDelay(4))
+	assert.Equal(t, 5*time.Second, RetryDelay(40), "no overflow, whatever the attempt")
 }
 
 // A person who stopped a reply is not kept waiting for a backoff to elapse.

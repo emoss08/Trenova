@@ -50,7 +50,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 
 ## What is recorded
 
-- **Model calls.** Each attempt writes an `ai_usage_records` row. `completionrouter.classifyError`
+- **Model calls.** Each attempt writes an `ai_usage_records` row. `completionengine.ClassifyError`
   names the failure:
 
   | Class | When |

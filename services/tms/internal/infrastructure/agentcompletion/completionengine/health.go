@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -19,14 +19,14 @@ const (
 	// a provider. One failure is weather; three in a row is an outage, and
 	// every further attempt is a prompt's worth of tokens sent to a provider
 	// that will not answer.
-	breakerThreshold = 3
+	BreakerThreshold = 3
 	// breakerCooldown is how long a rested provider is left alone. Long
 	// enough for a rate limit to clear or a deploy to finish; short enough
 	// that a recovered provider is back in the order within the minute.
-	breakerCooldown = time.Minute
+	BreakerCooldown = time.Minute
 
 	sharedBreakerTimeout = 250 * time.Millisecond
-	sharedBreakerBackoff = 30 * time.Second
+	SharedBreakerBackoff = 30 * time.Second
 )
 
 // providerHealth rests a provider that keeps failing.
@@ -41,13 +41,13 @@ const (
 // Only unavailability counts: a 429, a 5xx, a timeout, an unreachable host.
 // A 4xx is the request being wrong, and a request that is wrong on this
 // provider costs nothing to be refused and says nothing about its health.
-type providerHealth struct {
+type ProviderHealth struct {
 	mu      sync.Mutex
 	clock   func() time.Time
-	entries map[pulid.ID]*healthEntry
+	Entries map[pulid.ID]*healthEntry
 
 	shared      llmports.ProviderBreakerRepository
-	logger      *zap.Logger
+	Logger      *zap.Logger
 	sharedAfter time.Time
 	sharedDown  bool
 }
@@ -57,25 +57,25 @@ type healthEntry struct {
 	openUntil time.Time
 }
 
-func newProviderHealth(clock func() time.Time) *providerHealth {
+func NewProviderHealth(clock func() time.Time) *ProviderHealth {
 	if clock == nil {
 		clock = time.Now
 	}
 
-	return &providerHealth{
+	return &ProviderHealth{
 		clock:   clock,
-		entries: make(map[pulid.ID]*healthEntry),
-		logger:  zap.NewNop(),
+		Entries: make(map[pulid.ID]*healthEntry),
+		Logger:  zap.NewNop(),
 	}
 }
 
-func (h *providerHealth) share(
+func (h *ProviderHealth) Share(
 	store llmports.ProviderBreakerRepository,
 	logger *zap.Logger,
-) *providerHealth {
+) *ProviderHealth {
 	h.shared = store
 	if logger != nil {
-		h.logger = logger
+		h.Logger = logger
 	}
 
 	return h
@@ -83,7 +83,7 @@ func (h *providerHealth) share(
 
 // now is the breaker's clock, so a wait is measured against the same clock
 // that set it.
-func (h *providerHealth) now() time.Time {
+func (h *ProviderHealth) now() time.Time {
 	if h == nil {
 		return time.Now()
 	}
@@ -92,7 +92,7 @@ func (h *providerHealth) now() time.Time {
 }
 
 // Resting reports whether a provider is being left alone, and until when.
-func (h *providerHealth) Resting(id pulid.ID) (time.Time, bool) {
+func (h *ProviderHealth) Resting(id pulid.ID) (time.Time, bool) {
 	if h == nil {
 		return time.Time{}, false
 	}
@@ -103,14 +103,14 @@ func (h *providerHealth) Resting(id pulid.ID) (time.Time, bool) {
 	return h.restingLocked(id, h.clock())
 }
 
-func (h *providerHealth) restingLocked(id pulid.ID, now time.Time) (time.Time, bool) {
-	entry, ok := h.entries[id]
+func (h *ProviderHealth) restingLocked(id pulid.ID, now time.Time) (time.Time, bool) {
+	entry, ok := h.Entries[id]
 	if !ok || entry.openUntil.IsZero() {
 		return time.Time{}, false
 	}
 	if !now.Before(entry.openUntil) {
 		// The rest is over; the next failure starts a fresh count.
-		delete(h.entries, id)
+		delete(h.Entries, id)
 
 		return time.Time{}, false
 	}
@@ -121,45 +121,45 @@ func (h *providerHealth) restingLocked(id pulid.ID, now time.Time) (time.Time, b
 // Observe records how an attempt went. Success clears the count; an
 // unavailability failure raises it and, at the threshold, rests the
 // provider. Any other failure leaves the count alone.
-func (h *providerHealth) Observe(ctx context.Context, id pulid.ID, err error) {
+func (h *ProviderHealth) Observe(ctx context.Context, id pulid.ID, err error) {
 	if h == nil || id.IsNil() {
 		return
 	}
 
-	if h.record(id, err) {
+	if h.Record(id, err) {
 		h.publish(ctx, id)
 	}
 }
 
-func (h *providerHealth) record(id pulid.ID, err error) bool {
+func (h *ProviderHealth) Record(id pulid.ID, err error) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	if err == nil {
-		delete(h.entries, id)
+		delete(h.Entries, id)
 
 		return false
 	}
-	if !unavailability(err) {
+	if !Unavailability(err) {
 		return false
 	}
 
-	entry, ok := h.entries[id]
+	entry, ok := h.Entries[id]
 	if !ok {
 		entry = &healthEntry{}
-		h.entries[id] = entry
+		h.Entries[id] = entry
 	}
 	entry.failures++
-	if entry.failures < breakerThreshold {
+	if entry.failures < BreakerThreshold {
 		return false
 	}
-	entry.openUntil = h.clock().Add(breakerCooldown)
+	entry.openUntil = h.clock().Add(BreakerCooldown)
 	entry.failures = 0
 
 	return true
 }
 
-func (h *providerHealth) publish(ctx context.Context, id pulid.ID) {
+func (h *ProviderHealth) publish(ctx context.Context, id pulid.ID) {
 	if !h.sharedReady() {
 		return
 	}
@@ -167,10 +167,10 @@ func (h *providerHealth) publish(ctx context.Context, id pulid.ID) {
 	bounded, cancel := context.WithTimeout(context.WithoutCancel(ctx), sharedBreakerTimeout)
 	defer cancel()
 
-	h.settleShared(h.shared.Rest(bounded, id, breakerCooldown), "write")
+	h.settleShared(h.shared.Rest(bounded, id, BreakerCooldown), "write")
 }
 
-func (h *providerHealth) consult(ctx context.Context, ids []pulid.ID) {
+func (h *ProviderHealth) consult(ctx context.Context, ids []pulid.ID) {
 	if len(ids) == 0 || !h.sharedReady() {
 		return
 	}
@@ -195,11 +195,11 @@ func (h *providerHealth) consult(ctx context.Context, ids []pulid.ID) {
 		if rest <= 0 {
 			continue
 		}
-		until := now.Add(min(rest, breakerCooldown))
-		entry, ok := h.entries[id]
+		until := now.Add(min(rest, BreakerCooldown))
+		entry, ok := h.Entries[id]
 		if !ok {
 			entry = &healthEntry{}
-			h.entries[id] = entry
+			h.Entries[id] = entry
 		}
 		if until.After(entry.openUntil) {
 			entry.openUntil = until
@@ -208,7 +208,7 @@ func (h *providerHealth) consult(ctx context.Context, ids []pulid.ID) {
 	}
 }
 
-func (h *providerHealth) sharedReady() bool {
+func (h *ProviderHealth) sharedReady() bool {
 	if h.shared == nil {
 		return false
 	}
@@ -219,13 +219,13 @@ func (h *providerHealth) sharedReady() bool {
 	return !h.clock().Before(h.sharedAfter)
 }
 
-func (h *providerHealth) settleShared(err error, op string) {
+func (h *ProviderHealth) settleShared(err error, op string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	if err == nil {
 		if h.sharedDown {
-			h.logger.Info("shared provider breaker store is answering again")
+			h.Logger.Info("shared provider breaker store is answering again")
 		}
 		h.sharedDown = false
 		h.sharedAfter = time.Time{}
@@ -233,9 +233,9 @@ func (h *providerHealth) settleShared(err error, op string) {
 		return
 	}
 
-	h.sharedAfter = h.clock().Add(sharedBreakerBackoff)
+	h.sharedAfter = h.clock().Add(SharedBreakerBackoff)
 	if h.sharedDown {
-		h.logger.Debug("shared provider breaker store still failing; using memory alone",
+		h.Logger.Debug("shared provider breaker store still failing; using memory alone",
 			zap.String("op", op),
 			zap.Error(err),
 		)
@@ -243,9 +243,9 @@ func (h *providerHealth) settleShared(err error, op string) {
 		return
 	}
 	h.sharedDown = true
-	h.logger.Warn("shared provider breaker store failed; using memory alone",
+	h.Logger.Warn("shared provider breaker store failed; using memory alone",
 		zap.String("op", op),
-		zap.Duration("retryAfter", sharedBreakerBackoff),
+		zap.Duration("retryAfter", SharedBreakerBackoff),
 		zap.Error(err),
 	)
 }
@@ -254,18 +254,18 @@ func (h *providerHealth) settleShared(err error, op string) {
 // time it returned. An attempt cut short by its own caller says nothing about
 // the provider, whatever the severed connection surfaced as: a reset or a
 // deadline it did not set would otherwise rest a provider that was answering.
-func (s *Service) observe(ctx context.Context, provider *aiprovider.Provider, err error) {
+func (s *Engine) Observe(ctx context.Context, provider *aiprovider.Provider, err error) {
 	if err != nil && ctx.Err() != nil {
 		return
 	}
 
-	s.health.Observe(ctx, provider.ID, err)
+	s.Health.Observe(ctx, provider.ID, err)
 }
 
 // unavailability reports a failure that says the provider, not the request,
 // is the problem. A cancellation is the person's doing and counts for
 // nothing.
-func unavailability(err error) bool {
+func Unavailability(err error) bool {
 	if err == nil || errors.Is(err, context.Canceled) {
 		return false
 	}
@@ -287,7 +287,7 @@ func unavailability(err error) bool {
 }
 
 // rested splits providers into the ones worth asking and the ones resting.
-func (h *providerHealth) rested(
+func (h *ProviderHealth) Rested(
 	ctx context.Context,
 	providers []*aiprovider.Provider,
 ) (ready, resting []*aiprovider.Provider, until time.Time) {
@@ -310,7 +310,7 @@ func (h *providerHealth) rested(
 	return ready, resting, until
 }
 
-func (h *providerHealth) awakeIDs(providers []*aiprovider.Provider) []pulid.ID {
+func (h *ProviderHealth) awakeIDs(providers []*aiprovider.Provider) []pulid.ID {
 	if h == nil || h.shared == nil {
 		return nil
 	}

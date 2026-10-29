@@ -39,7 +39,7 @@ func TestEveryModelEntryRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
 
 	tenant := plantest.Tenant()
 	svc := newTestService(t)
-	svc.quota = spentGuard(t, tenant)
+	svc.Quota = spentGuard(t, tenant)
 
 	_, err := svc.CompleteStructured(
 		t.Context(),
@@ -61,7 +61,7 @@ func TestAssertWithinSpendSkipsCallsWithoutATenant(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.quota = platformplanportsmock.NewMockQuotaGuard(t)
+	svc.Quota = platformplanportsmock.NewMockQuotaGuard(t)
 
-	require.NoError(t, svc.assertWithinSpend(t.Context(), pagination.TenantInfo{}))
+	require.NoError(t, svc.AssertWithinSpend(t.Context(), pagination.TenantInfo{}))
 }

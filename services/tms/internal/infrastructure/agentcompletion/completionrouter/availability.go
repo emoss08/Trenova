@@ -14,11 +14,11 @@ func (s *Service) CanServe(
 	task aitask.Task,
 	tenant pagination.TenantInfo,
 ) (bool, error) {
-	if !s.ai.AIEnabled() {
+	if !s.AI.AIEnabled() {
 		return false, nil
 	}
 
-	if _, err := s.usableFor(ctx, task, tenant); err != nil {
+	if _, err := s.UsableFor(ctx, task, tenant); err != nil {
 		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return false, nil
 		}

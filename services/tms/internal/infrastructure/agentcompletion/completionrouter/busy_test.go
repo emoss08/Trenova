@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func busyThenOK(
 
 func recordingPauses(service *Service) *[]time.Duration {
 	waits := &[]time.Duration{}
-	service.pause = func(_ context.Context, wait time.Duration) error {
+	service.Pause = func(_ context.Context, wait time.Duration) error {
 		*waits = append(*waits, wait)
 
 		return nil
@@ -107,7 +108,7 @@ func TestCompleteChat_BoundsTheWaitOnABusyProvider(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(
 		t,
-		[]time.Duration{maxRetryWait},
+		[]time.Duration{completionengine.MaxRetryWait},
 		*waits,
 		"one capped wait fits the budget; a second would not",
 	)
@@ -135,15 +136,15 @@ func TestRetryWait_UsesTheConfiguredAttemptsForOtherRetryableFailures(t *testing
 	t.Parallel()
 
 	service := newTestService(t)
-	service.ai.MaxRetries = 2
+	service.AI.MaxRetries = 2
 
-	wait, again := service.retryWait(context.DeadlineExceeded, 0, 0)
+	wait, again := service.RetryWait(context.DeadlineExceeded, 0, 0)
 	assert.True(t, again, "a timeout is the provider being busy")
-	assert.Equal(t, retryDelay(0), wait)
+	assert.Equal(t, completionengine.RetryDelay(0), wait)
 
-	_, again = service.retryWait(assert.AnError, 1, 0)
+	_, again = service.RetryWait(assert.AnError, 1, 0)
 	assert.False(t, again, "an unclassified failure gets only the configured attempts")
-	wait, again = service.retryWait(assert.AnError, 0, 0)
+	wait, again = service.RetryWait(assert.AnError, 0, 0)
 	assert.True(t, again)
-	assert.Equal(t, retryDelay(0), wait)
+	assert.Equal(t, completionengine.RetryDelay(0), wait)
 }

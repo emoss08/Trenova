@@ -53,10 +53,10 @@ func TestCompleteChat_ReportsWhyThePromptCacheMissed(t *testing.T) {
 	provider.Kind = aiprovider.KindAnthropicMessages
 	provider.Model = "claude-opus-5-5"
 	svc := newTestService(t, provider)
-	svc.ai.CacheDiagnostics = true
+	svc.AI.CacheDiagnostics = true
 	core, logs := observer.New(zapcore.DebugLevel)
-	svc.logger = zap.New(core)
-	key, err := svc.encryption.EncryptString("sk-ant-test")
+	svc.Logger = zap.New(core)
+	key, err := svc.Encryption.EncryptString("sk-ant-test")
 	require.NoError(t, err)
 	provider.APIKey = key
 	attribution := turnAttribution()
@@ -100,10 +100,10 @@ func TestCompleteChat_KeepsAnUncomparedCallOutOfTheOperatorsLog(t *testing.T) {
 		provider.Kind = aiprovider.KindAnthropicMessages
 		provider.Model = "claude-opus-5-5"
 		svc := newTestService(t, provider)
-		svc.ai.CacheDiagnostics = true
+		svc.AI.CacheDiagnostics = true
 		core, logs := observer.New(zapcore.DebugLevel)
-		svc.logger = zap.New(core)
-		key, err := svc.encryption.EncryptString("sk-ant-test")
+		svc.Logger = zap.New(core)
+		key, err := svc.Encryption.EncryptString("sk-ant-test")
 		require.NoError(t, err)
 		provider.APIKey = key
 
@@ -168,11 +168,11 @@ func TestCompleteChat_AsksTheClaudeAPIAboutTheCallBeforeWhenTurnedOn(t *testing.
 		provider.Kind = aiprovider.KindAnthropicMessages
 		provider.Model = "claude-opus-5-5"
 		svc := newTestService(t, provider)
-		svc.ai.CacheDiagnostics = enabled
+		svc.AI.CacheDiagnostics = enabled
 		client := &http.Client{Timeout: 5 * time.Second, Transport: toClaudeAPI{target: target}}
-		svc.clients = map[bool]*http.Client{true: client, false: client}
-		svc.streamClients = map[bool]*http.Client{true: client, false: client}
-		key, err := svc.encryption.EncryptString("sk-ant-test")
+		svc.Clients = map[bool]*http.Client{true: client, false: client}
+		svc.StreamClients = map[bool]*http.Client{true: client, false: client}
+		key, err := svc.Encryption.EncryptString("sk-ant-test")
 		require.NoError(t, err)
 		provider.APIKey = key
 		req := chatRequest(pulid.Nil)

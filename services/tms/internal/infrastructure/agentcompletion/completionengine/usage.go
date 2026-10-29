@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -18,35 +18,34 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
 // usageAttempt is everything one attempt is known by once it has returned.
-type usageAttempt struct {
-	provider    *aiprovider.Provider
-	task        aitask.Task
-	surface     aiusage.Surface
-	attribution aiusageports.AIUsageAttribution
-	tenant      pagination.TenantInfo
-	latency     time.Duration
+type UsageAttempt struct {
+	Provider    *aiprovider.Provider
+	Task        aitask.Task
+	Surface     aiusage.Surface
+	Attribution aiusageports.AIUsageAttribution
+	Tenant      pagination.TenantInfo
+	Latency     time.Duration
 	// firstToken is how long the attempt took to stream its first text or
 	// thinking; zero when it streamed none.
-	firstToken time.Duration
-	streamed   bool
-	operation  string
-	attempt    int
-	failover   bool
+	FirstToken time.Duration
+	Streamed   bool
+	Operation  string
+	Attempt    int
+	Failover   bool
 	// outcome is nil when the attempt failed before the provider wrote
 	// anything; tokens then stay zero. An attempt that failed or was stopped
 	// partway carries what was counted from its stream.
-	outcome *runOutcome
-	err     error
+	Outcome *RunOutcome
+	Err     error
 }
 
-func surfaceFor(
+func SurfaceFor(
 	surface aiusage.Surface,
 	attribution aiusageports.AIUsageAttribution,
 ) aiusage.Surface {
@@ -68,21 +67,21 @@ const recordTimeout = 5 * time.Second
 // happens after the reply is on its way, so a slow or failing usage table
 // never slows an answer or turns a success into an error. Its failure is
 // logged and nothing else: the row is telemetry, not the transaction.
-func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
-	if s.usage == nil || attempt.provider == nil {
+func (s *Engine) Record(ctx context.Context, attempt *UsageAttempt) {
+	if s.Usage == nil || attempt.Provider == nil {
 		return
 	}
 
-	row := usageRow(ctx, attempt)
-	providerName := attempt.provider.Name
+	row := UsageRow(ctx, attempt)
+	providerName := attempt.Provider.Name
 	detached, cancel := context.WithTimeout(
-		dbscope.WithValidTenant(context.WithoutCancel(ctx), attempt.tenant.DBTenant()),
+		dbscope.WithValidTenant(context.WithoutCancel(ctx), attempt.Tenant.DBTenant()),
 		recordTimeout,
 	)
 	go func() {
 		defer cancel()
-		if err := s.usage.Create(detached, row); err != nil {
-			s.logger.Warn("ai usage record dropped",
+		if err := s.Usage.Create(detached, row); err != nil {
+			s.Logger.Warn("ai usage record dropped",
 				zap.String("provider", providerName),
 				zap.Error(err),
 			)
@@ -90,55 +89,55 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 	}()
 }
 
-func usageRow(ctx context.Context, attempt *usageAttempt) *aiusage.AIUsageRecord {
+func UsageRow(ctx context.Context, attempt *UsageAttempt) *aiusage.AIUsageRecord {
 	row := &aiusage.AIUsageRecord{
-		OrganizationID:    attempt.tenant.OrgID,
-		BusinessUnitID:    attempt.tenant.BuID,
-		ProviderID:        attempt.provider.ID,
-		ProviderKind:      attempt.provider.Kind,
-		Model:             attempt.provider.Model,
-		Task:              attempt.task,
-		Surface:           attempt.surface,
-		UserID:            attempt.attribution.UserID,
-		AgentDefinitionID: attempt.attribution.AgentDefinitionID,
-		ThreadID:          attempt.attribution.ThreadID,
-		RunID:             attempt.attribution.RunID,
-		Feature:           attempt.attribution.Feature,
-		Succeeded:         attempt.err == nil,
-		ErrorClass:        classifyError(attempt.err),
-		ErrorMessage:      failureMessage(attempt.err),
-		Streamed:          attempt.streamed,
-		LatencyMs:         attempt.latency.Milliseconds(),
-		OwnerKind:         agent.RunOwnerKind(attempt.attribution.OwnerKind),
-		OwnerID:           attempt.attribution.OwnerID,
-		DelegateCallID:    attempt.attribution.DelegateCallID,
-		Attempt:           attempt.attempt,
-		Failover:          attempt.failover,
+		OrganizationID:    attempt.Tenant.OrgID,
+		BusinessUnitID:    attempt.Tenant.BuID,
+		ProviderID:        attempt.Provider.ID,
+		ProviderKind:      attempt.Provider.Kind,
+		Model:             attempt.Provider.Model,
+		Task:              attempt.Task,
+		Surface:           attempt.Surface,
+		UserID:            attempt.Attribution.UserID,
+		AgentDefinitionID: attempt.Attribution.AgentDefinitionID,
+		ThreadID:          attempt.Attribution.ThreadID,
+		RunID:             attempt.Attribution.RunID,
+		Feature:           attempt.Attribution.Feature,
+		Succeeded:         attempt.Err == nil,
+		ErrorClass:        ClassifyError(attempt.Err),
+		ErrorMessage:      failureMessage(attempt.Err),
+		Streamed:          attempt.Streamed,
+		LatencyMs:         attempt.Latency.Milliseconds(),
+		OwnerKind:         agent.RunOwnerKind(attempt.Attribution.OwnerKind),
+		OwnerID:           attempt.Attribution.OwnerID,
+		DelegateCallID:    attempt.Attribution.DelegateCallID,
+		Attempt:           attempt.Attempt,
+		Failover:          attempt.Failover,
 		AgentDefinitionVersion: intutils.ClonePointer(
-			attempt.attribution.DefinitionVersion,
+			attempt.Attribution.DefinitionVersion,
 		),
 	}
-	if attempt.firstToken > 0 {
-		row.FirstTokenMs = new(attempt.firstToken.Milliseconds())
+	if attempt.FirstToken > 0 {
+		row.FirstTokenMs = new(attempt.FirstToken.Milliseconds())
 	}
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		row.TraceID = sc.TraceID().String()
 		row.SpanID = sc.SpanID().String()
 	}
-	if subject := attempt.attribution.Subject; subject.Recordable() {
+	if subject := attempt.Attribution.Subject; subject.Recordable() {
 		row.SubjectType = subject.Type
 		row.SubjectID = subject.ID
 	}
-	if attempt.outcome != nil {
-		row.Model = stringutils.FirstNonEmpty(attempt.outcome.Model, row.Model)
-		row.InputTokens = attempt.outcome.InputTokens
-		row.OutputTokens = attempt.outcome.OutputTokens
-		row.ReasoningTokens = attempt.outcome.ReasoningTokens
-		row.CacheReadTokens = attempt.outcome.CacheReadTokens
-		row.CacheWriteTokens = attempt.outcome.CacheWriteTokens
-		row.CostUSD = attempt.outcome.cost(attempt.provider, attempt.task)
-		row.Batched = attempt.outcome.Batched
-		recordAdvisor(row, attempt.outcome.Advisor, attempt.provider.Kind)
+	if attempt.Outcome != nil {
+		row.Model = stringutils.FirstNonEmpty(attempt.Outcome.Model, row.Model)
+		row.InputTokens = attempt.Outcome.InputTokens
+		row.OutputTokens = attempt.Outcome.OutputTokens
+		row.ReasoningTokens = attempt.Outcome.ReasoningTokens
+		row.CacheReadTokens = attempt.Outcome.CacheReadTokens
+		row.CacheWriteTokens = attempt.Outcome.CacheWriteTokens
+		row.CostUSD = attempt.Outcome.Cost(attempt.Provider, attempt.Task)
+		row.Batched = attempt.Outcome.Batched
+		recordAdvisor(row, attempt.Outcome.Advisor, attempt.Provider.Kind)
 	}
 
 	return row
@@ -163,11 +162,11 @@ func recordAdvisor(
 
 // classifyError names a failure in one of a handful of words, so a summary
 // can say what went wrong without storing every message.
-func classifyError(err error) string {
+func ClassifyError(err error) string {
 	switch {
 	case err == nil:
 		return ""
-	case errors.Is(err, errRefused):
+	case errors.Is(err, ErrRefused):
 		return aiusage.ErrorClassRefused
 	case errors.Is(err, context.DeadlineExceeded):
 		return aiusage.ErrorClassTimeout
@@ -218,24 +217,4 @@ func failureMessage(err error) string {
 	}
 
 	return stringutils.TruncateRunes(strings.TrimSpace(err.Error()), maxFailureMessageChars)
-}
-
-// streamedOutcome is what an attempt that failed or was stopped after the
-// provider began writing consumed. The provider's own count arrives with the
-// end of the stream, so a stream that never got there reported nothing; the
-// reply and the thinking it did write were billed all the same, and are
-// counted from what arrived rather than recorded as free. Nil when nothing
-// arrived.
-func streamedOutcome(provider *aiprovider.Provider, streamed chatStream, cause error) *runOutcome {
-	if streamed.text == "" && streamed.reasoningRunes == 0 {
-		return nil
-	}
-
-	reasoning := llmtokens.FromRunes(streamed.reasoningRunes)
-
-	return &runOutcome{
-		Model:           modeladapter.ServedModel(cause, provider.Model),
-		OutputTokens:    llmtokens.Estimate(streamed.text) + reasoning,
-		ReasoningTokens: reasoning,
-	}
 }

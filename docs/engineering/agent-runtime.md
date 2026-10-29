@@ -106,7 +106,7 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   OpenAI protocols' `"none"`, so the history's tool calls still name declared
   tools and the cached prefix holds; an OpenAI-compatible endpoint that refuses it with a 400
   or 422 naming `tool_choice` is asked once more with the tools and no `tool_choice`, logged
-  as a warning, by `refusedToolChoice` in `completionrouter`), which says to tell the person what was refused and what they
+  as a warning, by `refusedToolChoice` in `completionchat`), which says to tell the person what was refused and what they
   can do instead (`stuckReply` when that answer cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
@@ -166,7 +166,7 @@ cookbook's retry-from-HTTP-response recipe:
 
 ### A rested provider is rested on every worker
 
-The completion router (`completionrouter/health.go`) rests a provider after
+The completion router (`completionengine/health.go`) rests a provider after
 three unavailability failures in a row (a 429, a 5xx, a timeout, an unreachable
 host) for a one-minute cooldown, so a turn stops paying for attempts on a
 provider that is down. The count of failures is per process; the rest is
@@ -429,7 +429,7 @@ Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, whi
   advisor may advise which model: that is the Anthropic API's to say, and it refuses with a
   400. Every save is audited and kept in the provider's change history ("Advisor"), as other
   provider changes are.
-- **Declared on every chat call to the provider.** `completionrouter` (`advisor.go`,
+- **Declared on every chat call to the provider.** `completionchat` (`advisor.go`,
   `attemptChat` in `chat.go`) declares the provider's advisor on every chat call routed to it
   (`advisorFor`, from `Provider.ResolvedAdvisorModel`). A request that names its own advisor
   (`ChatCompletionRequest.Advisor`: model, max uses, max tokens) overrides the setting; the desk

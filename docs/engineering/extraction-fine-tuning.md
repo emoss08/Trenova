@@ -58,7 +58,7 @@ to say; that is the recipe's job.
 - The system and user messages come from the same code production calls:
   `aidocumentservice.Contract.CompletionRequest` builds the extraction request, with its
   2,500-byte page limit.
-- `completionrouter.PromptRenderer` renders it through the router's own `structuredRun` and
+- `completionrouter.PromptRenderer` renders it through the router's own `completionengine.StructuredRun` and
   `structuredSystem`. That includes the untrusted-data fencing, and the schema instruction a
   `Prompted` or `JSONMode` provider is given.
 - `TestRenderedPromptMatchesWhatTheRouterSends` holds the two paths together.

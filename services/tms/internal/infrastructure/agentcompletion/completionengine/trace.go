@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -21,53 +21,53 @@ const (
 	finishReasonContentFilter = "content_filter"
 )
 
-type attemptSpec struct {
-	operation   string
-	provider    *aiprovider.Provider
-	attempt     int
-	failover    bool
-	maxTokens   int
-	attribution aiusageports.AIUsageAttribution
+type AttemptSpec struct {
+	Operation   string
+	Provider    *aiprovider.Provider
+	Attempt     int
+	Failover    bool
+	MaxTokens   int
+	Attribution aiusageports.AIUsageAttribution
 }
 
-func (s *Service) startAttempt(
+func (s *Engine) StartAttempt(
 	ctx context.Context,
-	spec *attemptSpec,
+	spec *AttemptSpec,
 ) (context.Context, trace.Span) {
 	return aitrace.StartAttempt(ctx, &aitrace.AttemptSpec{
-		Anchor:        aitrace.ForAttribution(&spec.attribution),
-		Operation:     spec.operation,
-		ProviderKind:  spec.provider.Kind,
-		ProviderID:    spec.provider.ID,
-		Model:         spec.provider.Model,
-		MaxTokens:     spec.maxTokens,
-		ServerAddress: serverAddress(spec.provider),
-		Attempt:       spec.attempt,
-		Feature:       string(spec.attribution.Feature),
-		Attrs:         []attribute.KeyValue{aitrace.AIFailover.Bool(spec.failover)},
+		Anchor:        aitrace.ForAttribution(&spec.Attribution),
+		Operation:     spec.Operation,
+		ProviderKind:  spec.Provider.Kind,
+		ProviderID:    spec.Provider.ID,
+		Model:         spec.Provider.Model,
+		MaxTokens:     spec.MaxTokens,
+		ServerAddress: serverAddress(spec.Provider),
+		Attempt:       spec.Attempt,
+		Feature:       string(spec.Attribution.Feature),
+		Attrs:         []attribute.KeyValue{aitrace.AIFailover.Bool(spec.Failover)},
 	})
 }
 
-func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *usageAttempt) {
+func (s *Engine) SettleAttempt(ctx context.Context, span trace.Span, attempt *UsageAttempt) {
 	defer span.End()
 
-	provider := attempt.provider
+	provider := attempt.Provider
 	cost := attemptCost(attempt)
-	if provider != nil && s.health != nil && attempt.err != nil {
-		if _, resting := s.health.Resting(provider.ID); resting {
+	if provider != nil && s.Health != nil && attempt.Err != nil {
+		if _, resting := s.Health.Resting(provider.ID); resting {
 			aitrace.RecordResting(span)
 		}
 	}
 
-	s.record(ctx, attempt)
+	s.Record(ctx, attempt)
 
 	usage := attemptUsage(attempt, cost)
 	aitrace.RecordUsage(span, usage)
-	if attempt.firstToken > 0 {
-		span.SetAttributes(aitrace.AIFirstTokenMs.Int64(attempt.firstToken.Milliseconds()))
+	if attempt.FirstToken > 0 {
+		span.SetAttributes(aitrace.AIFirstTokenMs.Int64(attempt.FirstToken.Milliseconds()))
 	}
-	errorType := classifyError(attempt.err)
-	if attempt.err != nil {
+	errorType := ClassifyError(attempt.Err)
+	if attempt.Err != nil {
 		aitrace.MarkFailed(span, errorType)
 	}
 
@@ -75,7 +75,7 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		ProviderID:       provider.ID.String(),
 		ProviderName:     aitrace.ProviderName(provider.Kind),
 		Model:            usage.ResponseModel,
-		Failover:         attempt.failover,
+		Failover:         attempt.Failover,
 		CostUSD:          cost,
 		InputTokens:      usage.InputTokens,
 		OutputTokens:     usage.OutputTokens,
@@ -83,8 +83,8 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		CacheWriteTokens: usage.CacheWriteTokens,
 	})
 
-	s.genAI.RecordCall(ctx, &aimetrics.GenAICall{
-		Operation:     attempt.operation,
+	s.GenAI.RecordCall(ctx, &aimetrics.GenAICall{
+		Operation:     attempt.Operation,
 		Provider:      aitrace.ProviderName(provider.Kind),
 		RequestModel:  provider.Model,
 		ResponseModel: usage.ResponseModel,
@@ -92,29 +92,29 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		ErrorType:     errorType,
 		InputTokens:   usage.InputTokens,
 		OutputTokens:  usage.OutputTokens,
-		Duration:      attempt.latency,
-		Task:          string(attempt.task),
-		FirstToken:    attempt.firstToken,
+		Duration:      attempt.Latency,
+		Task:          string(attempt.Task),
+		FirstToken:    attempt.FirstToken,
 	})
 }
 
-func attemptCost(attempt *usageAttempt) *decimal.Decimal {
-	if attempt.outcome == nil || attempt.provider == nil {
+func attemptCost(attempt *UsageAttempt) *decimal.Decimal {
+	if attempt.Outcome == nil || attempt.Provider == nil {
 		return nil
 	}
 
-	return attempt.outcome.cost(attempt.provider, attempt.task)
+	return attempt.Outcome.Cost(attempt.Provider, attempt.Task)
 }
 
-func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
+func attemptUsage(attempt *UsageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage := &aitrace.Usage{CostUSD: cost}
-	outcome := attempt.outcome
+	outcome := attempt.Outcome
 	if outcome == nil {
 		return usage
 	}
 
 	input := int64(outcome.InputTokens)
-	if attempt.provider.Kind.CachesOutsideInput() {
+	if attempt.Provider.Kind.CachesOutsideInput() {
 		input += int64(outcome.CacheReadTokens + outcome.CacheWriteTokens)
 	}
 	usage.ResponseModel = outcome.Model
@@ -134,13 +134,13 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	}
 	if outcome.Advisor.Used() {
 		usage.Advisor = outcome.Advisor
-		usage.AdvisorCostUSD = outcome.Advisor.Cost(attempt.provider.Kind)
+		usage.AdvisorCostUSD = outcome.Advisor.Cost(attempt.Provider.Kind)
 	}
 
 	return usage
 }
 
-func finishReason(resp *modeladapter.Response) string {
+func FinishReason(resp *modeladapter.Response) string {
 	switch {
 	case resp == nil:
 		return ""
@@ -163,6 +163,6 @@ func serverAddress(provider *aiprovider.Provider) string {
 	return provider.Host()
 }
 
-func recordBusyWait(ctx context.Context, wait time.Duration) {
+func RecordBusyWait(ctx context.Context, wait time.Duration) {
 	aitrace.RecordBusyWait(trace.SpanFromContext(ctx), wait)
 }

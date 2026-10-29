@@ -234,7 +234,7 @@ was sampled, so the audit trail can always name it.
 | `agent_decisions.trace_id` | `agentdecisionservice`, the `decide` span's trace | when the decision is recorded |
 | `agent_decisions.preview`, `.preview_digest`, `.preview_reviewed`, `.preview_target_version` | `agentdecisionservice`, from the preview settled for the decider (a plan's step: the plan's) | same |
 | `agent_proposal_baselines` | `proposalpreviewservice.Baseline`, from the dispatch activity, keyed by `PendingAction.ProposalID` | when a held write is decided, before the proposal is filed |
-| `ai_usage_records.trace_id`, `.span_id` | `completionrouter.record`, the attempt's `chat` span | per attempt, off the request path |
+| `ai_usage_records.trace_id`, `.span_id` | `completionengine.Engine.Record`, the attempt's `chat` span | per attempt, off the request path |
 | `ai_usage_records.owner_kind`, `.owner_id`, `.delegate_call_id`, `.agent_definition_version` | the same, from `AIUsageAttribution`, set in `Turn.completionRequest()` | same |
 | `ai_usage_records.attempt`, `.failover`, `.cache_read_tokens`, `.cache_write_tokens` | the same | same |
 | `agent_run_events.occurred_at` | `agentruneventservice`, from `StreamItem.At` (the workflow's clock) or now | when the account is written |

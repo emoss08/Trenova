@@ -1,4 +1,4 @@
-package completionrouter
+package completionchat
 
 import (
 	"errors"

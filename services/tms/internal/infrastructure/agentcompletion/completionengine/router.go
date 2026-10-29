@@ -1,7 +1,7 @@
-// Package completionrouter resolves which configured provider serves a given
+// Package completionengine resolves which configured provider serves a given
 // task and calls it through the adapter for its protocol, falling through the
 // remaining candidates when one cannot produce a usable answer.
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -67,113 +67,77 @@ type Params struct {
 	Files conversationports.MessageFileReader `optional:"true"`
 }
 
-type Service struct {
-	logger *zap.Logger
+type Engine struct {
+	Logger *zap.Logger
 	// ai is the whole AI section: the master switch the router gates on,
 	// and the timeouts and retry budget it calls with.
-	ai         *aiconfig.Config
-	repo       aiproviderports.AIProviderRepository
-	encryption *encryptionservice.Service
-	adapters   *adapterregistry.Registry
-	usage      aiusageports.AIUsageRepository
-	quota      platformplanports.QuotaGuard
-	genAI      *aimetrics.GenAI
+	AI         *aiconfig.Config
+	Repo       aiproviderports.AIProviderRepository
+	Encryption *encryptionservice.Service
+	Adapters   *adapterregistry.Registry
+	Usage      aiusageports.AIUsageRepository
+	Quota      platformplanports.QuotaGuard
+	GenAI      *aimetrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
-	health *providerHealth
+	Health *ProviderHealth
 	// limits holds each provider to its cap, its calls at once and its
 	// timeout.
-	limits *providerLimits
+	Limits *providerLimits
 	// files reads attached files for a model that reads files itself.
-	files conversationports.MessageFileReader
+	Files conversationports.MessageFileReader
 	// advisors records the API's refusal of a provider's advisor.
-	advisors aiproviderports.AIProviderAdvisorRecorder
+	Advisors aiproviderports.AIProviderAdvisorRecorder
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
-	pause func(ctx context.Context, wait time.Duration) error
+	Pause func(ctx context.Context, wait time.Duration) error
 
 	// clients are cached per egress policy. Building one per call would discard
 	// connection reuse, and the policy must stay bound to the client so a
 	// provider allowed onto a private network cannot lend that reach to another.
 	clientsMu sync.Mutex
-	clients   map[bool]*http.Client
+	Clients   map[bool]*http.Client
 	// streamClients are the same, minus the whole-request deadline. Kept apart
 	// rather than shared because a blocking call wants that deadline and a
 	// stream is killed by it.
-	streamClients map[bool]*http.Client
+	StreamClients map[bool]*http.Client
 }
 
-func New(p Params) llmports.CompletionService {
-	return newService(p)
-}
-
-func newService(p Params) *Service {
+func NewEngine(p Params) *Engine {
 	logger := p.Logger.Named("service.completion-router")
 
-	return &Service{
-		logger:        logger,
-		ai:            p.AIConfig,
-		repo:          p.Repo,
-		encryption:    p.Encryption,
-		usage:         p.Usage,
-		quota:         quotaservice.OrUnlimited(p.Quota),
-		genAI:         p.Metrics.GenAI(),
-		adapters:      adapterregistry.NewRegistry(),
-		health:        newProviderHealth(nil).share(p.Breakers, logger),
-		limits:        newProviderLimits(&p),
-		files:         p.Files,
-		advisors:      p.Advisors,
-		pause:         pauseFor,
-		clients:       make(map[bool]*http.Client, 2),
-		streamClients: make(map[bool]*http.Client, 2),
+	return &Engine{
+		Logger:        logger,
+		AI:            p.AIConfig,
+		Repo:          p.Repo,
+		Encryption:    p.Encryption,
+		Usage:         p.Usage,
+		Quota:         quotaservice.OrUnlimited(p.Quota),
+		GenAI:         p.Metrics.GenAI(),
+		Adapters:      adapterregistry.NewRegistry(),
+		Health:        NewProviderHealth(nil).Share(p.Breakers, logger),
+		Limits:        NewProviderLimits(&p),
+		Files:         p.Files,
+		Advisors:      p.Advisors,
+		Pause:         pauseFor,
+		Clients:       make(map[bool]*http.Client, 2),
+		StreamClients: make(map[bool]*http.Client, 2),
 	}
 }
 
-func (s *Service) CompleteStructured(
-	ctx context.Context,
-	req *llmports.StructuredCompletionRequest,
-) (*llmports.StructuredCompletionResult, error) {
-	if !s.ai.AIEnabled() {
-		return nil, errortypes.NewBusinessError(aiDisabledMessage)
-	}
-
-	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	outcome, err := s.run(ctx, structuredRun(req))
-	if err != nil {
-		return nil, err
-	}
-
-	return &llmports.StructuredCompletionResult{
-		Text:            outcome.Text,
-		ModelIdentifier: outcome.Model,
-		InputTokens:     outcome.InputTokens,
-		OutputTokens:    outcome.OutputTokens,
-		LatencyMs:       outcome.LatencyMs,
-		CostUSD:         outcome.CostUSD,
-		ProviderID:      outcome.ProviderID,
-		ProviderKind:    outcome.ProviderKind,
-
-		CacheReadTokens:  outcome.CacheReadTokens,
-		CacheWriteTokens: outcome.CacheWriteTokens,
-	}, nil
-}
-
-func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+func (s *Engine) AssertWithinSpend(ctx context.Context, tenantInfo pagination.TenantInfo) error {
 	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return nil
 	}
 
-	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
+	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
 	})
 }
 
-type runRequest struct {
+type RunRequest struct {
 	TenantInfo  pagination.TenantInfo
 	Task        aitask.Task
 	System      string
@@ -193,7 +157,7 @@ type runRequest struct {
 	Attribution aiusageports.AIUsageAttribution
 }
 
-type runOutcome struct {
+type RunOutcome struct {
 	Text             string
 	Model            string
 	InputTokens      int
@@ -213,17 +177,17 @@ type runOutcome struct {
 	Batched          bool
 }
 
-func (o *runOutcome) cost(provider *aiprovider.Provider, task aitask.Task) *decimal.Decimal {
+func (o *RunOutcome) Cost(provider *aiprovider.Provider, task aitask.Task) *decimal.Decimal {
 	if o.Batched {
-		return aipricing.BatchCostForTask(provider, task, o.tokenUsage())
+		return aipricing.BatchCostForTask(provider, task, o.TokenUsage())
 	}
 
-	return aipricing.AdvisedCostForTask(provider, task, o.tokenUsage(), o.Advisor)
+	return aipricing.AdvisedCostForTask(provider, task, o.TokenUsage(), o.Advisor)
 }
 
 // tokenUsage is what the provider reported, in the shape a price is read
 // against, so every cost the router records is priced the same way.
-func (o *runOutcome) tokenUsage() aipricing.TokenUsage {
+func (o *RunOutcome) TokenUsage() aipricing.TokenUsage {
 	return aipricing.TokenUsage{
 		Input:      o.InputTokens,
 		Output:     o.OutputTokens,
@@ -234,11 +198,11 @@ func (o *runOutcome) tokenUsage() aipricing.TokenUsage {
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
 // they should be tried.
-func (s *Service) candidatesFor(
+func (s *Engine) CandidatesFor(
 	ctx context.Context,
-	req *runRequest,
+	req *RunRequest,
 ) ([]*aiprovider.Provider, error) {
-	usable, err := s.usableFor(ctx, req.Task, req.TenantInfo)
+	usable, err := s.UsableFor(ctx, req.Task, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -248,15 +212,15 @@ func (s *Service) candidatesFor(
 		}
 	}
 
-	ready, err := s.awake(ctx, usable)
+	ready, err := s.Awake(ctx, usable)
 	if err != nil {
 		return nil, err
 	}
-	if ready, err = s.underCap(ctx, req.TenantInfo, ready); err != nil {
+	if ready, err = s.UnderCap(ctx, req.TenantInfo, ready); err != nil {
 		return nil, err
 	}
 
-	return preferFirst(ready, req.PreferredProviderID), nil
+	return PreferFirst(ready, req.PreferredProviderID), nil
 }
 
 func requiredProvider(
@@ -275,7 +239,7 @@ func requiredProvider(
 	).WithInternal(llmports.ErrRequiredProviderUnavailable)
 }
 
-func (s *Service) usableFor(
+func (s *Engine) UsableFor(
 	ctx context.Context,
 	task aitask.Task,
 	tenant pagination.TenantInfo,
@@ -301,13 +265,13 @@ func (s *Service) usableFor(
 
 // servingTask appends to usable the providers that may serve task and are not
 // already in it, in the repository's priority order.
-func (s *Service) servingTask(
+func (s *Engine) servingTask(
 	ctx context.Context,
 	task aitask.Task,
 	tenant pagination.TenantInfo,
 	usable []*aiprovider.Provider,
 ) ([]*aiprovider.Provider, error) {
-	candidates, err := s.repo.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
+	candidates, err := s.Repo.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       task,
 		TenantInfo: tenant,
 	})
@@ -324,7 +288,7 @@ func (s *Service) servingTask(
 		if ok, reason := provider.CanServeTask(task); ok {
 			usable = append(usable, provider)
 		} else {
-			s.logger.Debug("skipping provider for task",
+			s.Logger.Debug("skipping provider for task",
 				zap.String("provider", provider.Name),
 				zap.String("task", string(task)),
 				zap.String("reason", reason),
@@ -338,19 +302,19 @@ func (s *Service) servingTask(
 // awake drops the providers resting after repeated failures. When every one
 // of them is resting the caller is told so, with when the first is due back,
 // rather than sent through a list that will fail at each step.
-func (s *Service) awake(
+func (s *Engine) Awake(
 	ctx context.Context,
 	usable []*aiprovider.Provider,
 ) ([]*aiprovider.Provider, error) {
-	ready, resting, until := s.health.rested(ctx, usable)
+	ready, resting, until := s.Health.Rested(ctx, usable)
 	for _, provider := range resting {
-		s.logger.Debug("skipping provider resting after repeated failures",
+		s.Logger.Debug("skipping provider resting after repeated failures",
 			zap.String("provider", provider.Name),
 			zap.Time("until", until),
 		)
 	}
 	if len(ready) == 0 {
-		return nil, restingError(resting, until.Sub(s.health.now()))
+		return nil, restingError(resting, until.Sub(s.Health.now()))
 	}
 
 	return ready, nil
@@ -374,20 +338,20 @@ func restingError(resting []*aiprovider.Provider, wait time.Duration) error {
 	).WithInternal(llmports.ErrProvidersResting)
 }
 
-func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
-	usable, err := s.candidatesFor(ctx, req)
+func (s *Engine) Run(ctx context.Context, req *RunRequest) (*RunOutcome, error) {
+	usable, err := s.CandidatesFor(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.runAmong(ctx, usable, req)
+	return s.RunAmong(ctx, usable, req)
 }
 
-func (s *Service) runAmong(
+func (s *Engine) RunAmong(
 	ctx context.Context,
 	usable []*aiprovider.Provider,
-	req *runRequest,
-) (*runOutcome, error) {
+	req *RunRequest,
+) (*RunOutcome, error) {
 	if req.HedgeAfter > 0 && len(usable) > 1 {
 		return s.runHedged(ctx, usable, req)
 	}
@@ -401,7 +365,7 @@ func (s *Service) runAmong(
 		}
 
 		outcome, attemptErr := s.tryProvider(ctx, &candidateAttempt{
-			provider: provider,
+			Provider: provider,
 			idx:      idx,
 			count:    len(usable),
 		}, req)
@@ -412,7 +376,7 @@ func (s *Service) runAmong(
 		if ctx.Err() != nil {
 			return nil, attemptErr
 		}
-		if errors.Is(attemptErr, errRefused) {
+		if errors.Is(attemptErr, ErrRefused) {
 			return nil, errDeclined()
 		}
 
@@ -424,7 +388,7 @@ func (s *Service) runAmong(
 }
 
 type candidateAttempt struct {
-	provider *aiprovider.Provider
+	Provider *aiprovider.Provider
 	idx      int
 	count    int
 }
@@ -433,45 +397,45 @@ type candidateAttempt struct {
 // health. ctx is the context the attempt runs under: the caller's, or for a
 // hedged call one that is canceled when another provider answers first, which
 // observe and stopped then read as a cancellation rather than a fault.
-func (s *Service) tryProvider(
+func (s *Engine) tryProvider(
 	ctx context.Context,
 	candidate *candidateAttempt,
-	req *runRequest,
-) (*runOutcome, error) {
-	provider, idx := candidate.provider, candidate.idx
-	attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
-		operation:   aitrace.OperationChat,
-		provider:    provider,
-		attempt:     idx + 1,
-		failover:    idx > 0,
-		maxTokens:   req.MaxTokens,
-		attribution: req.Attribution,
+	req *RunRequest,
+) (*RunOutcome, error) {
+	provider, idx := candidate.Provider, candidate.idx
+	attemptCtx, span := s.StartAttempt(ctx, &AttemptSpec{
+		Operation:   aitrace.OperationChat,
+		Provider:    provider,
+		Attempt:     idx + 1,
+		Failover:    idx > 0,
+		MaxTokens:   req.MaxTokens,
+		Attribution: req.Attribution,
 	})
 	started := time.Now()
-	outcome, attemptErr := s.attempt(lastCandidate(attemptCtx, idx, candidate.count), provider, req)
+	outcome, attemptErr := s.Attempt(LastCandidate(attemptCtx, idx, candidate.count), provider, req)
 	latency := time.Since(started)
-	attemptErr = stopped(ctx, attemptErr)
-	s.observe(ctx, provider, attemptErr)
-	s.settleAttempt(attemptCtx, span, &usageAttempt{
-		provider:    provider,
-		task:        req.Task,
-		surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
-		attribution: req.Attribution,
-		tenant:      req.TenantInfo,
-		latency:     latency,
-		outcome:     outcome,
-		err:         attemptErr,
-		operation:   aitrace.OperationChat,
-		attempt:     idx + 1,
-		failover:    idx > 0,
+	attemptErr = Stopped(ctx, attemptErr)
+	s.Observe(ctx, provider, attemptErr)
+	s.SettleAttempt(attemptCtx, span, &UsageAttempt{
+		Provider:    provider,
+		Task:        req.Task,
+		Surface:     SurfaceFor(aiusage.SurfaceStructured, req.Attribution),
+		Attribution: req.Attribution,
+		Tenant:      req.TenantInfo,
+		Latency:     latency,
+		Outcome:     outcome,
+		Err:         attemptErr,
+		Operation:   aitrace.OperationChat,
+		Attempt:     idx + 1,
+		Failover:    idx > 0,
 	})
 	if attemptErr != nil {
 		return nil, attemptErr
 	}
 
-	s.touchKey(ctx, provider, req.TenantInfo)
+	s.TouchKey(ctx, provider, req.TenantInfo)
 	outcome.LatencyMs = latency.Milliseconds()
-	outcome.CostUSD = aipricing.CostFor(provider, outcome.tokenUsage())
+	outcome.CostUSD = aipricing.CostFor(provider, outcome.TokenUsage())
 
 	return outcome, nil
 }
@@ -483,8 +447,8 @@ func errDeclined() error {
 	return errortypes.NewBusinessError("The model declined this request")
 }
 
-func (s *Service) fellThrough(provider *aiprovider.Provider, req *runRequest, err error) {
-	s.logger.Warn("provider attempt failed, falling through",
+func (s *Engine) fellThrough(provider *aiprovider.Provider, req *RunRequest, err error) {
+	s.Logger.Warn("provider attempt failed, falling through",
 		zap.String("provider", provider.Name),
 		zap.String("kind", string(provider.Kind)),
 		zap.String("task", string(req.Task)),
@@ -492,7 +456,7 @@ func (s *Service) fellThrough(provider *aiprovider.Provider, req *runRequest, er
 	)
 }
 
-var errRefused = errors.New("model declined the request")
+var ErrRefused = errors.New("model declined the request")
 
 // stopped makes the failure of an attempt whose caller has gone read as that
 // caller's own cancellation. A severed stream surfaces as whatever the
@@ -500,7 +464,7 @@ var errRefused = errors.New("model declined the request")
 // that reads as any of those is recorded as a failed turn and charged to the
 // provider. Wrapping the context's error is what lets everything downstream
 // see it as a Stop. An error while the caller is still there is returned as is.
-func stopped(ctx context.Context, err error) error {
+func Stopped(ctx context.Context, err error) error {
 	ctxErr := ctx.Err()
 	if err == nil || ctxErr == nil || errors.Is(err, ctxErr) {
 		return err
@@ -509,28 +473,28 @@ func stopped(ctx context.Context, err error) error {
 	return fmt.Errorf("%w: %w", ctxErr, err)
 }
 
-func (s *Service) attempt(
+func (s *Engine) Attempt(
 	ctx context.Context,
 	provider *aiprovider.Provider,
-	req *runRequest,
-) (*runOutcome, error) {
-	adapter, err := s.adapters.Get(provider.Kind)
+	req *RunRequest,
+) (*RunOutcome, error) {
+	adapter, err := s.Adapters.Get(provider.Kind)
 	if err != nil {
 		return nil, err
 	}
 
 	timeout := provider.ResolvedTimeout()
-	release, err := s.claimSlot(ctx, provider, timeout)
+	release, err := s.ClaimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, err
 	}
 	defer release()
 
-	limited := s.withDeadline(ctx, timeout)
+	limited := s.WithDeadline(ctx, timeout)
 	var resp *modeladapter.Response
-	err = limited.finish(s.withKeyFallback(provider, func(apiKey string) error {
+	err = limited.Finish(s.WithKeyFallback(provider, func(apiKey string) error {
 		var callErr error
-		resp, callErr = s.executeWithRetry(limited.ctx, adapter, s.callFor(provider, apiKey, req))
+		resp, callErr = s.executeWithRetry(limited.Ctx, adapter, s.CallFor(provider, apiKey, req))
 
 		return callErr
 	}))
@@ -539,7 +503,7 @@ func (s *Service) attempt(
 	}
 
 	if resp.Refused {
-		return nil, errRefused
+		return nil, ErrRefused
 	}
 
 	text := strings.TrimSpace(resp.Text)
@@ -551,7 +515,7 @@ func (s *Service) attempt(
 		return nil, err
 	}
 
-	return &runOutcome{
+	return &RunOutcome{
 		Text:             resp.Text,
 		Model:            resp.ModelIdentifier,
 		InputTokens:      resp.InputTokens,
@@ -559,7 +523,7 @@ func (s *Service) attempt(
 		ReasoningTokens:  resp.ReasoningTokens,
 		CacheReadTokens:  resp.CacheReadTokens,
 		CacheWriteTokens: resp.CacheWriteTokens,
-		FinishReason:     finishReason(resp),
+		FinishReason:     FinishReason(resp),
 		Truncated:        resp.Truncated,
 		ThinkingDropped:  resp.ThinkingDropped,
 		ProviderID:       provider.ID,
@@ -570,10 +534,10 @@ func (s *Service) attempt(
 // callFor builds the provider-shaped call for a structured request. It is shared
 // with the background path so a deferred call carries exactly the same prompt,
 // schema and token budget as the synchronous one.
-func (s *Service) callFor(
+func (s *Engine) CallFor(
 	provider *aiprovider.Provider,
 	apiKey string,
-	req *runRequest,
+	req *RunRequest,
 ) *modeladapter.Call {
 	maxTokens := req.MaxTokens
 	if maxTokens <= 0 {
@@ -583,12 +547,12 @@ func (s *Service) callFor(
 	return &modeladapter.Call{
 		Provider:                 provider,
 		APIKey:                   apiKey,
-		Client:                   s.clientFor(provider),
-		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
+		Client:                   s.ClientFor(provider),
+		ServerCredentialsAllowed: s.AI.ServerCloudCredentialsAllowed(),
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
-			System:       structuredSystem(req, provider.StructuredOutputMode),
+			System:       StructuredSystem(req, provider.StructuredOutputMode),
 			Messages:     modeladapter.UserMessage(req.UserContent),
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,
@@ -612,10 +576,10 @@ func validateStructuredOutput(schema map[string]any, text string) error {
 		return nil
 	}
 
-	return objectReply(text)
+	return ObjectReply(text)
 }
 
-func objectReply(text string) error {
+func ObjectReply(text string) error {
 	decoded := make(map[string]any)
 	if err := modeladapter.ExtractJSON(text, &decoded); err != nil {
 		return fmt.Errorf("%w: %w", llmports.ErrModelSchemaValidation, err)
@@ -624,28 +588,28 @@ func objectReply(text string) error {
 	return nil
 }
 
-func (s *Service) executeWithRetry(
+func (s *Engine) executeWithRetry(
 	ctx context.Context,
 	adapter modeladapter.Adapter,
 	call *modeladapter.Call,
 ) (*modeladapter.Response, error) {
-	return s.executeWithRetryNoticed(ctx, adapter, call, nil)
+	return s.ExecuteWithRetryNoticed(ctx, adapter, call, nil)
 }
 
 const (
 	// maxBusyAttempts is how many times a provider answering 429 or 5xx is
 	// asked in one call. A busy provider usually answers within a few
 	// seconds, and a person who picked that model has nowhere else to go.
-	maxBusyAttempts = 4
+	MaxBusyAttempts = 4
 	// busyWaitBudget bounds the total wait on one provider in one call, and
 	// maxRetryWait bounds any single wait, whatever the provider asked for.
 	busyWaitBudget = 20 * time.Second
-	maxRetryWait   = 15 * time.Second
+	MaxRetryWait   = 15 * time.Second
 )
 
 // busyAttempts is how many times a busy provider is asked in all.
-func (s *Service) busyAttempts() int {
-	return max(max(1, s.ai.GetMaxRetries()), maxBusyAttempts)
+func (s *Engine) BusyAttempts() int {
+	return max(max(1, s.AI.GetMaxRetries()), MaxBusyAttempts)
 }
 
 // retryWait decides whether one more attempt on the same provider is worth
@@ -657,24 +621,24 @@ func (s *Service) busyAttempts() int {
 // again in a few seconds is what such an answer means, and the wait honours
 // what the provider asked for, within a budget that keeps a person from
 // watching a spinner for a minute.
-func (s *Service) retryWait(err error, attempt int, waited time.Duration) (time.Duration, bool) {
+func (s *Engine) RetryWait(err error, attempt int, waited time.Duration) (time.Duration, bool) {
 	if !modeladapter.IsRetryable(err) {
 		return 0, false
 	}
 
-	limit := max(1, s.ai.GetMaxRetries())
-	busy := unavailability(err)
+	limit := max(1, s.AI.GetMaxRetries())
+	busy := Unavailability(err)
 	if busy {
-		limit = max(limit, maxBusyAttempts)
+		limit = max(limit, MaxBusyAttempts)
 	}
 	if attempt+1 >= limit {
 		return 0, false
 	}
 
-	wait := retryDelay(attempt)
+	wait := RetryDelay(attempt)
 	if busy {
 		wait = max(wait, retryAfterOf(err))
-		wait = min(wait, maxRetryWait)
+		wait = min(wait, MaxRetryWait)
 		if waited+wait > busyWaitBudget {
 			return 0, false
 		}
@@ -694,15 +658,15 @@ func retryAfterOf(err error) time.Duration {
 }
 
 // wait sits out a backoff through the pause hook.
-func (s *Service) wait(ctx context.Context, wait time.Duration) error {
-	if s.pause == nil {
+func (s *Engine) Wait(ctx context.Context, wait time.Duration) error {
+	if s.Pause == nil {
 		return pauseFor(ctx, wait)
 	}
 
-	return s.pause(ctx, wait)
+	return s.Pause(ctx, wait)
 }
 
-func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
+func CredentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
 	return encryptionservice.AIProviderCredentialAAD(
 		provider.OrganizationID,
 		provider.BusinessUnitID,
@@ -710,7 +674,7 @@ func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
 	)
 }
 
-func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
+func (s *Engine) ResolveAPIKey(provider *aiprovider.Provider) (string, error) {
 	stored := strings.TrimSpace(provider.APIKey)
 	if stored == "" {
 		if provider.RequiresCredential() {
@@ -722,7 +686,7 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 		return "", nil
 	}
 
-	decrypted, _, err := s.encryption.DecryptStringWithLegacy(stored, credentialAAD(provider))
+	decrypted, _, err := s.Encryption.DecryptStringWithLegacy(stored, CredentialAAD(provider))
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to decrypt the credential for AI provider {0}", provider.Name,
@@ -736,7 +700,7 @@ func (s *Service) resolveAPIKey(provider *aiprovider.Provider) (string, error) {
 // second and stops at five, because the errors worth retrying — a 429, a 5xx
 // — are the ones an immediate retry makes worse. Retrying a rate limit at once
 // just spends the next request on the same limit.
-func retryDelay(attempt int) time.Duration {
+func RetryDelay(attempt int) time.Duration {
 	const (
 		base = 500 * time.Millisecond
 		cap  = 5 * time.Second
@@ -770,16 +734,16 @@ func pauseFor(ctx context.Context, wait time.Duration) error {
 // Its deadline is the completion budget, not the probe budget: this client
 // carries generations, and a model writing a long answer routinely outlasts the
 // time a reachability check is allowed.
-func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
+func (s *Engine) ClientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork && s.ai.PrivateNetworkProvidersAllowed()
-	if client, ok := s.clients[allowPrivate]; ok {
+	allowPrivate := provider.AllowPrivateNetwork && s.AI.PrivateNetworkProvidersAllowed()
+	if client, ok := s.Clients[allowPrivate]; ok {
 		return client
 	}
-	if s.clients == nil {
-		s.clients = make(map[bool]*http.Client, 2)
+	if s.Clients == nil {
+		s.Clients = make(map[bool]*http.Client, 2)
 	}
 
 	// A blocking call sends nothing until the model has finished, so its
@@ -789,9 +753,9 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 	// self-hosted model — fail at twenty seconds with a transport error,
 	// which reads as an outage rather than as a busy endpoint.
 	policy := s.egressPolicy(allowPrivate)
-	policy.ResponseHeaderTimeout = s.ai.GetCompletionTimeout()
-	client := httpsafe.NewClientWithPolicy(s.ai.GetCompletionTimeout(), policy)
-	s.clients[allowPrivate] = client
+	policy.ResponseHeaderTimeout = s.AI.GetCompletionTimeout()
+	client := httpsafe.NewClientWithPolicy(s.AI.GetCompletionTimeout(), policy)
+	s.Clients[allowPrivate] = client
 
 	return client
 }
@@ -806,25 +770,25 @@ func (s *Service) clientFor(provider *aiprovider.Provider) *http.Client {
 // off. Liveness is enforced between bytes instead, by the idle guard the
 // adapters wrap the body in, so a slow answer is allowed and a silent one is
 // not.
-func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
+func (s *Engine) StreamClientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork && s.ai.PrivateNetworkProvidersAllowed()
-	if client, ok := s.streamClients[allowPrivate]; ok {
+	allowPrivate := provider.AllowPrivateNetwork && s.AI.PrivateNetworkProvidersAllowed()
+	if client, ok := s.StreamClients[allowPrivate]; ok {
 		return client
 	}
-	if s.streamClients == nil {
-		s.streamClients = make(map[bool]*http.Client, 2)
+	if s.StreamClients == nil {
+		s.StreamClients = make(map[bool]*http.Client, 2)
 	}
 
 	// A stream's time-to-headers is bounded by the same silence budget as its
 	// body, not by the probe timeout: an endpoint that holds the headers until
 	// it has something to say is slow, not down.
 	policy := s.egressPolicy(allowPrivate)
-	policy.ResponseHeaderTimeout = s.ai.GetStreamIdleTimeout()
+	policy.ResponseHeaderTimeout = s.AI.GetStreamIdleTimeout()
 	client := httpsafe.NewStreamingClientWithPolicy(policy)
-	s.streamClients[allowPrivate] = client
+	s.StreamClients[allowPrivate] = client
 
 	return client
 }
@@ -833,13 +797,13 @@ func (s *Service) streamClientFor(provider *aiprovider.Provider) *http.Client {
 // its own ResponseHeaderTimeout on top, because what counts as too long
 // before the first byte is entirely different for a blocking call and a
 // streamed one.
-func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
+func (s *Engine) egressPolicy(allowPrivate bool) httpsafe.Policy {
 	return httpsafe.Policy{
 		AllowPrivateNetworks: allowPrivate,
 		// A self-hosted model holds the connection open while it generates and
 		// sends nothing until the first token, which on a loaded GPU outlasts the
 		// transport default.
-		ResponseHeaderTimeout: s.ai.GetCompletionTimeout(),
+		ResponseHeaderTimeout: s.AI.GetCompletionTimeout(),
 	}
 }
 
@@ -849,5 +813,5 @@ func (s *Service) egressPolicy(allowPrivate bool) httpsafe.Policy {
 // documentIntelligence.enableAI, which ships false. Somebody who had just
 // configured a provider had no way to know which switch was refusing them, or
 // that it was named after a feature they were not using.
-var aiDisabledMessage = "AI features are disabled. Set " + aiconfig.EnabledKey +
+var AIDisabledMessage = "AI features are disabled. Set " + aiconfig.EnabledKey +
 	" to true in the server configuration."

@@ -20012,3 +20012,8 @@ github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementserv
 github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.MappingChoice	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.MappingChoice
 github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.CreatedReferenceChoice	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.CreatedReferenceChoice
 github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.CreatedReference	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.CreatedReference
+github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter.Params	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine.Params
+github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter.EmbeddingBatchMaxInputs	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed.EmbeddingBatchMaxInputs
+github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter.EmbeddingBatchMaxTokens	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed.EmbeddingBatchMaxTokens
+github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter.GeminiEmbeddingBatchMaxInputs	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed.GeminiEmbeddingBatchMaxInputs
+github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter.MaxEmbeddingInputs	github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed.MaxEmbeddingInputs

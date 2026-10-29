@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 
 type hedgedResult struct {
 	idx     int
-	outcome *runOutcome
-	err     error
+	Outcome *RunOutcome
+	Err     error
 }
 
 // runHedged asks the providers in order for a caller bounded by a short
@@ -23,23 +23,23 @@ type hedgedResult struct {
 // the next is asked too once the one asked last has not answered within
 // HedgeAfter, or at once when it fails, and the first answer wins; the others
 // are canceled, which observe reads as a cancellation, not a fault.
-func (s *Service) runHedged(
+func (s *Engine) runHedged(
 	ctx context.Context,
 	usable []*aiprovider.Provider,
-	req *runRequest,
-) (*runOutcome, error) {
+	req *RunRequest,
+) (*RunOutcome, error) {
 	hedgeCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	results := make(chan hedgedResult, len(usable))
 	next, inFlight := 0, 0
 	launch := func() {
-		candidate := &candidateAttempt{provider: usable[next], idx: next, count: len(usable)}
+		candidate := &candidateAttempt{Provider: usable[next], idx: next, count: len(usable)}
 		next++
 		inFlight++
 		go func() {
 			outcome, err := s.tryProvider(hedgeCtx, candidate, req)
-			results <- hedgedResult{idx: candidate.idx, outcome: outcome, err: err}
+			results <- hedgedResult{idx: candidate.idx, Outcome: outcome, Err: err}
 		}()
 	}
 
@@ -54,7 +54,7 @@ func (s *Service) runHedged(
 			return nil, ctx.Err()
 		case <-timer.C:
 			if next < len(usable) {
-				s.logger.Info("provider slow, asking the next as well",
+				s.Logger.Info("provider slow, asking the next as well",
 					zap.String("provider", usable[next-1].Name),
 					zap.String("next", usable[next].Name),
 					zap.String("task", string(req.Task)),
@@ -65,25 +65,25 @@ func (s *Service) runHedged(
 			}
 		case result := <-results:
 			inFlight--
-			if result.err == nil {
+			if result.Err == nil {
 				if result.idx > 0 {
-					s.logger.Info("hedged call answered by a later provider",
+					s.Logger.Info("hedged call answered by a later provider",
 						zap.String("provider", usable[result.idx].Name),
 						zap.String("task", string(req.Task)),
 					)
 				}
 
-				return result.outcome, nil
+				return result.Outcome, nil
 			}
 			if ctx.Err() != nil {
-				return nil, result.err
+				return nil, result.Err
 			}
-			if errors.Is(result.err, errRefused) {
+			if errors.Is(result.Err, ErrRefused) {
 				return nil, errDeclined()
 			}
 
-			lastErr = result.err
-			s.fellThrough(usable[result.idx], req, result.err)
+			lastErr = result.Err
+			s.fellThrough(usable[result.idx], req, result.Err)
 			if next < len(usable) {
 				launch()
 				timer.Reset(req.HedgeAfter)

@@ -32,7 +32,7 @@ func TestCompleteStructured_RecordsTheFeatureAndSubject(t *testing.T) {
 	healthy, _ := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	usage := &fakeUsage{}
 	svc := newTestService(t, openAIChatProvider("only", healthy.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := generalRequest()
 	req.Attribution = aiusageports.AIUsageAttribution{
@@ -57,7 +57,7 @@ func TestCompleteChat_RecordsTheFeatureAndSubject(t *testing.T) {
 	healthy, _ := chatServer(t, http.StatusOK, "Found Acme Freight.")
 	usage := &fakeUsage{}
 	svc := newTestService(t, chatProvider("only", healthy.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	attribution := aiusageports.AIUsageAttribution{
 		UserID:  pulid.MustNew("usr_"),
@@ -96,7 +96,7 @@ func TestRecord_LeavesOutASubjectTheTableCannotHold(t *testing.T) {
 			healthy, _ := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 			usage := &fakeUsage{}
 			svc := newTestService(t, openAIChatProvider("only", healthy.URL, 10))
-			svc.usage = usage
+			svc.Usage = usage
 
 			req := generalRequest()
 			req.Attribution = aiusageports.AIUsageAttribution{
@@ -124,7 +124,7 @@ func TestSubmitBackground_AnInlineRunKeepsItsAttribution(t *testing.T) {
 	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := extractionRequest()
 	req.Attribution = documentAttribution()
@@ -151,7 +151,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 		"usage": map[string]any{"input_tokens": 120, "output_tokens": 44},
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := pollRequest(provider)
 	req.Task = aitask.TaskDocumentExtraction
@@ -187,7 +187,7 @@ func TestPollBackground_RecordsATerminalFailureWithItsReason(t *testing.T) {
 		"incomplete_details": map[string]any{"reason": "max_output_tokens"},
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := pollRequest(provider)
 	req.Attribution = documentAttribution()
@@ -212,7 +212,7 @@ func TestPollBackground_RecordsNothingWhileTheCallRuns(t *testing.T) {
 		"id": "resp_abc123", "status": "in_progress", "model": "gpt-test",
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
@@ -221,15 +221,4 @@ func TestPollBackground_RecordsNothingWhileTheCallRuns(t *testing.T) {
 	usage.mu.Lock()
 	defer usage.mu.Unlock()
 	assert.Empty(t, usage.rows, "a pending poll is not a call")
-}
-
-func TestBackgroundLatency(t *testing.T) {
-	t.Parallel()
-
-	now := time.Unix(1_700_000_100, 0)
-
-	assert.Equal(t, 100*time.Second, backgroundLatency(1_700_000_000, now))
-	assert.Zero(t, backgroundLatency(0, now))
-	assert.Zero(t, backgroundLatency(1_700_000_200, now),
-		"a clock that ran backwards is not a negative wait")
 }

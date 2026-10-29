@@ -9,6 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -27,14 +28,14 @@ type fakeRepo struct {
 
 	providers []*aiprovider.Provider
 	byID      *aiprovider.Provider
-	err       error
+	Err       error
 }
 
 func (f *fakeRepo) ListForTask(
 	_ context.Context,
 	_ aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
-	return f.providers, f.err
+	return f.providers, f.Err
 }
 
 func (f *fakeRepo) List(
@@ -48,7 +49,7 @@ func (f *fakeRepo) GetByID(
 	_ context.Context,
 	_ aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
-	return f.byID, f.err
+	return f.byID, f.Err
 }
 
 func (f *fakeRepo) Create(
@@ -72,14 +73,14 @@ func (f *fakeRepo) Delete(_ context.Context, _ aiproviderports.DeleteAIProviderR
 func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 	t.Helper()
 
-	return &Service{
-		logger:     zap.NewNop(),
-		ai:         &aiconfig.Config{MaxRetries: 1},
-		repo:       &fakeRepo{providers: providers},
-		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
-		adapters:   adapterregistry.NewRegistry(),
-		clients:    make(map[bool]*http.Client, 2),
-	}
+	return compose(&completionengine.Engine{
+		Logger:     zap.NewNop(),
+		AI:         &aiconfig.Config{MaxRetries: 1},
+		Repo:       &fakeRepo{providers: providers},
+		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
+		Adapters:   adapterregistry.NewRegistry(),
+		Clients:    make(map[bool]*http.Client, 2),
+	})
 }
 
 // chatServer stands in for any OpenAI-compatible endpoint. It records how many
@@ -254,7 +255,7 @@ func TestCompleteStructured_DisabledGlobally(t *testing.T) {
 
 	off := false
 	svc := newTestService(t)
-	svc.ai = &aiconfig.Config{Enabled: &off}
+	svc.AI = &aiconfig.Config{Enabled: &off}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 	require.Error(t, err)
@@ -269,7 +270,7 @@ func TestCompleteStructured_IsNotGatedByDocumentExtraction(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.ai = &aiconfig.Config{DocumentExtraction: false}
+	svc.AI = &aiconfig.Config{DocumentExtraction: false}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 

@@ -53,7 +53,7 @@ func TestCompleteChat_CarriesTheAdvisorAndChargesItsTokens(t *testing.T) {
 	provider.OutputCostPerMillion = &output
 
 	svc := newTestService(t, provider)
-	key, err := svc.encryption.EncryptString("sk-ant-test")
+	key, err := svc.Encryption.EncryptString("sk-ant-test")
 	require.NoError(t, err)
 	provider.APIKey = key
 
@@ -114,8 +114,8 @@ func TestCompleteChat_PricesEachExecutorIterationAndRecordsTheAdvisor(t *testing
 
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
-	svc.usage = usage
-	key, err := svc.encryption.EncryptString("sk-ant-test")
+	svc.Usage = usage
+	key, err := svc.Encryption.EncryptString("sk-ant-test")
 	require.NoError(t, err)
 	provider.APIKey = key
 

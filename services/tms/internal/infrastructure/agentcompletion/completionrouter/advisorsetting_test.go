@@ -86,7 +86,7 @@ func advisedProvider(t *testing.T, capture *advisorCapture) (*Service, *aiprovid
 	provider.AdvisorEnabled = true
 
 	svc := newTestService(t, provider)
-	key, err := svc.encryption.EncryptString("sk-ant-test")
+	key, err := svc.Encryption.EncryptString("sk-ant-test")
 	require.NoError(t, err)
 	provider.APIKey = key
 
@@ -136,7 +136,7 @@ func TestCompleteChat_RecordsTheAPIsRefusalAndAnswersWithoutTheAdvisor(t *testin
 	svc, provider := advisedProvider(t, capture)
 	provider.AdvisorModel = "claude-haiku-5-5"
 	refusals := &recordedRefusals{}
-	svc.advisors = refusals
+	svc.Advisors = refusals
 
 	result, err := svc.CompleteChat(t.Context(), chatRequest(pulid.Nil))
 	require.NoError(t, err, "the turn is answered without the advisor, not failed")
@@ -165,7 +165,7 @@ func TestCompleteChat_ARefusedBenchAdvisorFailsLoudly(t *testing.T) {
 	svc, provider := advisedProvider(t, capture)
 	provider.AdvisorEnabled = false
 	refusals := &recordedRefusals{}
-	svc.advisors = refusals
+	svc.Advisors = refusals
 
 	req := chatRequest(pulid.Nil)
 	req.Advisor = llmports.DefaultAdvisor("claude-haiku-5-5")

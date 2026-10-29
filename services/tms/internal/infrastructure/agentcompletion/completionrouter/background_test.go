@@ -196,7 +196,7 @@ func pollService(
 	server := newResponsesServer(t, poll)
 	provider := responsesProvider(t, "hosted", server.URL, 10)
 	svc := newTestService(t, provider)
-	svc.repo = &fakeRepo{providers: []*aiprovider.Provider{provider}, byID: provider}
+	svc.Repo = &fakeRepo{providers: []*aiprovider.Provider{provider}, byID: provider}
 
 	return svc, provider, server
 }
@@ -291,7 +291,7 @@ func TestPollBackground_RejectsAProtocolThatCannotDefer(t *testing.T) {
 	inline, _ := chatServer(t, http.StatusOK, `{}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
 	svc := newTestService(t, provider)
-	svc.repo = &fakeRepo{providers: []*aiprovider.Provider{provider}, byID: provider}
+	svc.Repo = &fakeRepo{providers: []*aiprovider.Provider{provider}, byID: provider}
 
 	_, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.Error(t, err)

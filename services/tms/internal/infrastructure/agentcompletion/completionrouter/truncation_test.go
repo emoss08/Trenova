@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -195,7 +196,7 @@ func TestStreamChat_KeepsThePartialReplyOnceTheRetriesAreSpent(t *testing.T) {
 
 	assert.True(t, result.Truncated)
 	assert.Equal(t, "Half an answer", result.Text)
-	assert.Equal(t, maxMidReplyRetries, retries)
+	assert.Equal(t, completionchat.MaxMidReplyRetries, retries)
 }
 
 // A model the person picked is the model they get. Pinned, the turn does

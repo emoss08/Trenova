@@ -3,6 +3,7 @@ package completionrouter
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -34,7 +35,7 @@ func TestRenderedPromptMatchesWhatTheRouterSends(t *testing.T) {
 
 			req := renderedExtractionRequest()
 			provider := &aiprovider.Provider{StructuredOutputMode: mode}
-			call := s.callFor(provider, "", structuredRun(req))
+			call := s.CallFor(provider, "", completionengine.StructuredRun(req))
 			rendered := PromptRenderer{}.RenderStructuredPrompt(req, mode)
 
 			require.Len(t, call.Request.Messages, 1)
@@ -75,11 +76,15 @@ func TestCallForCarriesTheRequestsReasoningOverride(t *testing.T) {
 	assert.Equal(
 		t,
 		aireasoning.ReasoningNone,
-		s.callFor(provider, "", structuredRun(req)).Request.Reasoning,
+		s.CallFor(provider, "", completionengine.StructuredRun(req)).Request.Reasoning,
 	)
 
 	assert.Empty(
 		t,
-		s.callFor(provider, "", structuredRun(renderedExtractionRequest())).Request.Reasoning,
+		s.CallFor(
+			provider,
+			"",
+			completionengine.StructuredRun(renderedExtractionRequest()),
+		).Request.Reasoning,
 	)
 }

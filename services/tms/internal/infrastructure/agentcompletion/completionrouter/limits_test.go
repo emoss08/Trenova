@@ -2,13 +2,13 @@ package completionrouter
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -101,8 +101,8 @@ func (f *fakeKeys) TouchUsed(
 	return nil
 }
 
-func withLimits(service *Service, p *Params) *Service {
-	service.limits = newProviderLimits(p)
+func withLimits(service *Service, p *completionengine.Params) *Service {
+	service.Limits = completionengine.NewProviderLimits(p)
 
 	return service
 }
@@ -130,7 +130,7 @@ func TestCap_MovesATaskPastAProviderThatSpentItsCap(t *testing.T) {
 		aiprovider.CapActionNext,
 	)
 	second := openAIChatProvider("second", secondServer.URL, 20)
-	service := withLimits(newTestService(t, first, second), &Params{
+	service := withLimits(newTestService(t, first, second), &completionengine.Params{
 		Spend: &fakeSpend{spend: map[pulid.ID]decimal.Decimal{first.ID: decimal.NewFromInt(50)}},
 	})
 
@@ -152,7 +152,7 @@ func TestCap_StopsATaskAtAProviderSetToStop(t *testing.T) {
 		aiprovider.CapActionStop,
 	)
 	second := openAIChatProvider("second", secondServer.URL, 20)
-	service := withLimits(newTestService(t, first, second), &Params{
+	service := withLimits(newTestService(t, first, second), &completionengine.Params{
 		Spend: &fakeSpend{spend: map[pulid.ID]decimal.Decimal{first.ID: decimal.NewFromInt(60)}},
 	})
 
@@ -167,7 +167,7 @@ func TestCap_LeavesAProviderUnderItsCapInLine(t *testing.T) {
 
 	server, calls := chatServer(t, http.StatusOK, `{"ok":true}`)
 	provider := capped(openAIChatProvider("only", server.URL, 10), "50", aiprovider.CapActionStop)
-	service := withLimits(newTestService(t, provider), &Params{
+	service := withLimits(newTestService(t, provider), &completionengine.Params{
 		Spend: &fakeSpend{
 			spend: map[pulid.ID]decimal.Decimal{provider.ID: decimal.RequireFromString("49.99")},
 		},
@@ -187,7 +187,7 @@ func TestSlots_SendsWorkOnWhenAProviderIsAtItsLimit(t *testing.T) {
 	second := openAIChatProvider("second", secondServer.URL, 20)
 	slots := newFakeSlots()
 	slots.full[first.ID] = true
-	service := withLimits(newTestService(t, first, second), &Params{Slots: slots})
+	service := withLimits(newTestService(t, first, second), &completionengine.Params{Slots: slots})
 
 	result, err := service.CompleteStructured(t.Context(), generalRequest())
 	require.NoError(t, err)
@@ -208,7 +208,7 @@ func TestSlots_TheLastProviderWaitsForASlot(t *testing.T) {
 	only := openAIChatProvider("only", server.URL, 10)
 	slots := newFakeSlots()
 	slots.busyFor[only.ID] = 2
-	service := withLimits(newTestService(t, only), &Params{Slots: slots})
+	service := withLimits(newTestService(t, only), &completionengine.Params{Slots: slots})
 
 	result, err := service.CompleteStructured(t.Context(), generalRequest())
 	require.NoError(t, err)
@@ -257,7 +257,7 @@ func TestTimeout_NamesTheProvidersOwnLimit(t *testing.T) {
 
 	_, err := service.CompleteStructured(t.Context(), generalRequest())
 	require.Error(t, err)
-	assert.ErrorIs(t, err, errProviderTimedOut)
+	assert.ErrorIs(t, err, completionengine.ErrProviderTimedOut)
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
@@ -283,9 +283,9 @@ func TestKeyFallback_UsesTheReplacedKeyWhileTheNewOneIsRefused(t *testing.T) {
 
 	provider := openAIChatProvider("rotating", server.URL, 10)
 	service := newTestService(t, provider)
-	current, err := service.encryption.EncryptString("new-key")
+	current, err := service.Encryption.EncryptString("new-key")
 	require.NoError(t, err)
-	previous, err := service.encryption.EncryptString("old-key")
+	previous, err := service.Encryption.EncryptString("old-key")
 	require.NoError(t, err)
 	expires := timeutils.NowUnix() + 3600
 	provider.APIKey = current
@@ -310,8 +310,8 @@ func TestTouchKey_RecordsUseAtMostOnceAWhile(t *testing.T) {
 	server, _ := chatServer(t, http.StatusOK, `{"ok":true}`)
 	provider := openAIChatProvider("keyed", server.URL, 10)
 	keys := &fakeKeys{}
-	service := withLimits(newTestService(t, provider), &Params{Keys: keys})
-	encrypted, err := service.encryption.EncryptString("sk-key")
+	service := withLimits(newTestService(t, provider), &completionengine.Params{Keys: keys})
+	encrypted, err := service.Encryption.EncryptString("sk-key")
 	require.NoError(t, err)
 	provider.APIKey = encrypted
 
@@ -320,12 +320,6 @@ func TestTouchKey_RecordsUseAtMostOnceAWhile(t *testing.T) {
 		require.NoError(t, err)
 	}
 	assert.Equal(t, []pulid.ID{provider.ID}, keys.touched)
-}
-
-func TestKeyRefused_ReadsOnlyAuthStatuses(t *testing.T) {
-	t.Parallel()
-
-	assert.False(t, keyRefused(errors.New("dial tcp: refused")))
 }
 
 func TestResolveAPIKey_ReadsOnlyAKeyBoundToItsOwnProvider(t *testing.T) {
@@ -337,25 +331,31 @@ func TestResolveAPIKey_ReadsOnlyAKeyBoundToItsOwnProvider(t *testing.T) {
 	provider.BusinessUnitID = pulid.MustNew("bu_")
 	service := newTestService(t, provider)
 
-	bound, err := service.encryption.EncryptStringWithAAD("sk-bound", credentialAAD(provider))
+	bound, err := service.Encryption.EncryptStringWithAAD(
+		"sk-bound",
+		completionengine.CredentialAAD(provider),
+	)
 	require.NoError(t, err)
 	provider.APIKey = bound
-	key, err := service.resolveAPIKey(provider)
+	key, err := service.ResolveAPIKey(provider)
 	require.NoError(t, err)
 	assert.Equal(t, "sk-bound", key)
 
 	other := *provider
 	other.ID = pulid.MustNew("aiprv_")
-	foreign, err := service.encryption.EncryptStringWithAAD("sk-foreign", credentialAAD(&other))
+	foreign, err := service.Encryption.EncryptStringWithAAD(
+		"sk-foreign",
+		completionengine.CredentialAAD(&other),
+	)
 	require.NoError(t, err)
 	provider.APIKey = foreign
-	_, err = service.resolveAPIKey(provider)
+	_, err = service.ResolveAPIKey(provider)
 	require.Error(t, err, "a key copied from another provider never decrypts")
 
-	legacy, err := service.encryption.EncryptString("sk-legacy")
+	legacy, err := service.Encryption.EncryptString("sk-legacy")
 	require.NoError(t, err)
 	provider.APIKey = legacy
-	key, err = service.resolveAPIKey(provider)
+	key, err = service.ResolveAPIKey(provider)
 	require.NoError(t, err)
 	assert.Equal(
 		t,

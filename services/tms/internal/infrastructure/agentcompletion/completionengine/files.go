@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 
 // fileSource reads a request's attached files within its tenant. Nil when no
 // reader is configured, and every file is then read as its text.
-func (s *Service) fileSource(tenant pagination.TenantInfo) modeladapter.FileSource {
-	if s.files == nil {
+func (s *Engine) FileSource(tenant pagination.TenantInfo) modeladapter.FileSource {
+	if s.Files == nil {
 		return nil
 	}
 
@@ -24,7 +24,7 @@ func (s *Service) fileSource(tenant pagination.TenantInfo) modeladapter.FileSour
 			return nil, err
 		}
 
-		return s.files.ReadMessageFile(ctx, &conversationports.ReadMessageFileRequest{
+		return s.Files.ReadMessageFile(ctx, &conversationports.ReadMessageFileRequest{
 			TenantInfo: tenant,
 			DocumentID: id,
 		})
@@ -34,9 +34,9 @@ func (s *Service) fileSource(tenant pagination.TenantInfo) modeladapter.FileSour
 // noteFiles logs each attached file the model was sent as its text rather than
 // as itself, and why: the answer still came, from the text, but an operator
 // may want to know a file was too large or would not open.
-func (s *Service) noteFiles(provider *aiprovider.Provider, report modeladapter.FileReport) {
+func (s *Engine) NoteFiles(provider *aiprovider.Provider, report modeladapter.FileReport) {
 	for _, fallback := range report.Fallbacks {
-		s.logger.Info("an attached file was sent to the model as its text",
+		s.Logger.Info("an attached file was sent to the model as its text",
 			zap.String("provider", provider.ID.String()),
 			zap.String("document", fallback.DocumentID),
 			zap.String("reason", fallback.Reason),

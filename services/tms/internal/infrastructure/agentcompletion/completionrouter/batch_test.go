@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionbatch"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -103,18 +105,18 @@ func newBatchService(
 
 	svc := newTestService(t, providers...)
 	for _, provider := range providers {
-		key, keyErr := svc.encryption.EncryptString("sk-ant-test")
+		key, keyErr := svc.Encryption.EncryptString("sk-ant-test")
 		require.NoError(t, keyErr)
 		provider.APIKey = key
 	}
-	svc.clients[false] = &http.Client{
+	svc.Clients[false] = &http.Client{
 		Timeout:   5 * time.Second,
 		Transport: claudeRoute{target: target},
 	}
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 	if len(providers) > 0 {
-		svc.repo.(*fakeRepo).byID = providers[0]
+		svc.Repo.(*fakeRepo).byID = providers[0]
 	}
 
 	return svc, api, usage
@@ -200,7 +202,11 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 	first := judgeItem(tenant, "aeval_1", "It was sent on Tuesday.")
 	second := judgeItem(tenant, "aeval_2", "Load 42 is late.")
 
-	one := batchEstimate(provider, aitask.TaskEvaluationJudge, structuredRun(&first.Request))
+	one := completionbatch.BatchEstimate(
+		provider,
+		aitask.TaskEvaluationJudge,
+		completionengine.StructuredRun(&first.Request),
+	)
 	require.NotNil(t, one)
 	full := aipricing.CostForTask(provider, aitask.TaskEvaluationJudge, aipricing.TokenUsage{
 		Input:  1,

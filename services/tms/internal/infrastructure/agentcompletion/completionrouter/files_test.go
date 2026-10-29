@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,11 +34,11 @@ func TestFileSource_ReadsWithinTheRequestsTenant(t *testing.T) {
 	t.Parallel()
 
 	reader := &recordingFileReader{}
-	svc := &Service{files: reader}
+	svc := &completionengine.Engine{Files: reader}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	documentID := pulid.MustNew("doc_")
 
-	source := svc.fileSource(tenant)
+	source := svc.FileSource(tenant)
 	require.NotNil(t, source)
 	content, err := source(t.Context(), documentID.String())
 	require.NoError(t, err)
@@ -49,10 +50,4 @@ func TestFileSource_ReadsWithinTheRequestsTenant(t *testing.T) {
 	_, err = source(t.Context(), "not-a-document")
 	require.Error(t, err)
 	assert.Len(t, reader.seen, 1, "an id that does not parse reads nothing")
-}
-
-func TestFileSource_IsAbsentWithoutAReader(t *testing.T) {
-	t.Parallel()
-
-	assert.Nil(t, (&Service{}).fileSource(pagination.TenantInfo{}))
 }

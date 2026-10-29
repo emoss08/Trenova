@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -69,7 +70,7 @@ func TestCompleteChat_TracesEachAttemptAndFailsOverUnderTheTurn(t *testing.T) {
 	second.Model = "model-b"
 	usage := &fakeUsage{}
 	svc := newTestService(t, first, second)
-	svc.usage = usage
+	svc.Usage = usage
 	waits := recordingPauses(svc)
 
 	attribution := turnAttribution()
@@ -80,8 +81,8 @@ func TestCompleteChat_TracesEachAttemptAndFailsOverUnderTheTurn(t *testing.T) {
 	result, err := svc.CompleteChat(ctx, req)
 	require.NoError(t, err)
 	assert.Equal(t, "Answered.", result.Text)
-	assert.Equal(t, int32(maxBusyAttempts), busyCalls.Load())
-	require.Len(t, *waits, maxBusyAttempts-1)
+	assert.Equal(t, int32(completionengine.MaxBusyAttempts), busyCalls.Load())
+	require.Len(t, *waits, completionengine.MaxBusyAttempts-1)
 
 	anchor := aitrace.ForAttribution(&attribution)
 	failed := aitracetest.One(t, anchor.TraceID, "chat model-a")
@@ -94,7 +95,12 @@ func TestCompleteChat_TracesEachAttemptAndFailsOverUnderTheTurn(t *testing.T) {
 	assert.Contains(t, failed.Attributes, aitrace.AIAttempt.Int(1))
 	assert.Contains(t, failed.Attributes, aitrace.AIFailover.Bool(false))
 	assert.Contains(t, failed.Attributes, aitrace.GenAIProviderName.String("openai"))
-	assert.Len(t, failed.Events, maxBusyAttempts-1, "each wait on the busy provider is an event")
+	assert.Len(
+		t,
+		failed.Events,
+		completionengine.MaxBusyAttempts-1,
+		"each wait on the busy provider is an event",
+	)
 	for _, event := range failed.Events {
 		assert.Equal(t, aitrace.EventProviderBusyWait, event.Name)
 	}
@@ -144,7 +150,7 @@ func TestCompleteChat_ADelegatesAttemptIsTracedUnderItsOwnTask(t *testing.T) {
 	provider.Model = "model-c"
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
-	svc.usage = usage
+	svc.Usage = usage
 
 	attribution := turnAttribution()
 	attribution.DelegateCallID = "call_delegate_1"
@@ -174,7 +180,7 @@ func TestCompleteStructured_TracesItsAttemptInTheCallersTrace(t *testing.T) {
 	provider.Model = "model-d"
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
-	svc.usage = usage
+	svc.Usage = usage
 
 	ctx, request := otelTracer().Start(t.Context(), "POST /graphql")
 	_, err := svc.CompleteStructured(ctx, generalRequest())
@@ -214,7 +220,7 @@ func TestCompleteChat_TracesTheThinkingTheProviderDropped(t *testing.T) {
 	provider.Kind = aiprovider.KindAnthropicMessages
 	provider.Model = "claude-opus-5-5"
 	svc := newTestService(t, provider)
-	key, err := svc.encryption.EncryptString("sk-ant-test")
+	key, err := svc.Encryption.EncryptString("sk-ant-test")
 	require.NoError(t, err)
 	provider.APIKey = key
 	attribution := turnAttribution()

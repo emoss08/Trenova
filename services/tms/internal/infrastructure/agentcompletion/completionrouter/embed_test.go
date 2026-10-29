@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -160,7 +161,7 @@ func embeddingRouterProvider(
 		Enabled:             true,
 	}
 	if apiKey != "" {
-		encrypted, err := svc.encryption.EncryptString(apiKey)
+		encrypted, err := svc.Encryption.EncryptString(apiKey)
 		require.NoError(t, err)
 		provider.APIKey = encrypted
 	}
@@ -172,13 +173,13 @@ func newEmbeddingService(t *testing.T) *Service {
 	t.Helper()
 
 	svc := newTestService(t)
-	svc.pause = func(context.Context, time.Duration) error { return nil }
+	svc.Pause = func(context.Context, time.Duration) error { return nil }
 
 	return svc
 }
 
 func withProviders(svc *Service, providers ...*aiprovider.Provider) {
-	svc.repo = &fakeRepo{providers: providers}
+	svc.Repo = &fakeRepo{providers: providers}
 }
 
 func embedTenant() pagination.TenantInfo {
@@ -192,65 +193,6 @@ func numberedInputs(n int) []string {
 	}
 
 	return inputs
-}
-
-func TestBatchEmbeddingInputs(t *testing.T) {
-	t.Parallel()
-
-	limits := embeddingBatchLimits{inputs: 3, tokens: 10}
-
-	tests := []struct {
-		name   string
-		inputs []string
-		want   []int
-	}{
-		{name: "one input", inputs: []string{"abcd"}, want: []int{1}},
-		{
-			name:   "splits on the input count",
-			inputs: []string{"a", "b", "c", "d", "e", "f", "g"},
-			want:   []int{3, 3, 1},
-		},
-		{
-			name:   "splits on the token budget",
-			inputs: []string{strings.Repeat("x", 24), strings.Repeat("x", 24), "y"},
-			want:   []int{1, 2},
-		},
-		{
-			name:   "an input over the budget travels alone",
-			inputs: []string{"a", strings.Repeat("x", 400), "b"},
-			want:   []int{1, 1, 1},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			batches := batchEmbeddingInputs(tt.inputs, limits)
-			sizes := make([]int, 0, len(batches))
-			total := 0
-			for _, batch := range batches {
-				sizes = append(sizes, len(batch.inputs))
-				total += len(batch.inputs)
-			}
-			assert.Equal(t, tt.want, sizes)
-			assert.Equal(t, len(tt.inputs), total, "every input is sent exactly once")
-		})
-	}
-}
-
-func TestEmbeddingLimitsFor(t *testing.T) {
-	t.Parallel()
-
-	openAI := &aiprovider.Provider{Kind: aiprovider.KindOpenAIResponses}
-	gemini := &aiprovider.Provider{
-		Kind:    aiprovider.KindOpenAIChat,
-		BaseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-	}
-
-	assert.Equal(t, EmbeddingBatchMaxInputs, embeddingLimitsFor(openAI).inputs)
-	assert.Equal(t, EmbeddingBatchMaxTokens, embeddingLimitsFor(openAI).tokens)
-	assert.Equal(t, GeminiEmbeddingBatchMaxInputs, embeddingLimitsFor(gemini).inputs)
 }
 
 func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
@@ -273,9 +215,9 @@ func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 
 	batches := endpoint.batches()
 	require.Len(t, batches, 3)
-	assert.Len(t, batches[0], EmbeddingBatchMaxInputs)
-	assert.Len(t, batches[1], EmbeddingBatchMaxInputs)
-	assert.Len(t, batches[2], 200-2*EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[0], completionembed.EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[1], completionembed.EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[2], 200-2*completionembed.EmbeddingBatchMaxInputs)
 
 	require.Len(t, result.Vectors, len(inputs))
 	for idx, vector := range result.Vectors {
@@ -537,7 +479,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	usage := &fakeUsage{}
 	svc := newEmbeddingService(t)
-	svc.usage = usage
+	svc.Usage = usage
 
 	provider := embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10)
 	inputCost := decimal.RequireFromString("0.02")
@@ -553,7 +495,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo:  embedTenant(),
 		Purpose:     aiusageports.EmbeddingPurposeQuery,
-		Inputs:      numberedInputs(EmbeddingBatchMaxInputs + 4),
+		Inputs:      numberedInputs(completionembed.EmbeddingBatchMaxInputs + 4),
 		Attribution: attribution,
 	})
 	require.NoError(t, err)
@@ -578,7 +520,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 		total = total.Add(*row.CostUSD)
 		tokens += row.InputTokens
 	}
-	assert.Equal(t, 10*(EmbeddingBatchMaxInputs+4), tokens)
+	assert.Equal(t, 10*(completionembed.EmbeddingBatchMaxInputs+4), tokens)
 	require.NotNil(t, result.CostUSD)
 	assert.True(t, result.CostUSD.Equal(total), result.CostUSD.String())
 	assert.True(
@@ -594,7 +536,7 @@ func TestEmbed_DocumentUsageIsIndexingAndUnpricedStaysUnknown(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	usage := &fakeUsage{}
 	svc := newEmbeddingService(t)
-	svc.usage = usage
+	svc.Usage = usage
 	withProviders(
 		svc,
 		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),

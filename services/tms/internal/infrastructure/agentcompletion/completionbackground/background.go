@@ -1,4 +1,4 @@
-package completionrouter
+package completionbackground
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -19,6 +20,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type Background struct {
+	*completionengine.Engine
+}
+
 // SubmitBackground defers a structured call when a candidate's protocol supports
 // it, and runs it inline when none does.
 //
@@ -27,21 +32,21 @@ import (
 // self-hosted server would otherwise lose document extraction entirely.
 // Callers get an answer either way and branch on whether Handle came back
 // empty.
-func (s *Service) SubmitBackground(
+func (s *Background) SubmitBackground(
 	ctx context.Context,
 	req *llmports.StructuredCompletionRequest,
 ) (*llmports.BackgroundSubmission, error) {
-	if !s.ai.AIEnabled() {
-		return nil, errortypes.NewBusinessError(aiDisabledMessage)
+	if !s.AI.AIEnabled() {
+		return nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
 
-	if err := s.assertWithinSpend(ctx, req.TenantInfo); err != nil {
+	if err := s.AssertWithinSpend(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
-	run := structuredRun(req)
+	run := completionengine.StructuredRun(req)
 
-	usable, err := s.candidatesFor(ctx, run)
+	usable, err := s.CandidatesFor(ctx, run)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +66,7 @@ func (s *Service) SubmitBackground(
 		handle, submitErr := runner.Submit(ctx, call)
 		if submitErr != nil {
 			lastErr = submitErr
-			s.logger.Warn("background submit failed, falling through",
+			s.Logger.Warn("background submit failed, falling through",
 				zap.String("provider", provider.Name),
 				zap.String("task", string(run.Task)),
 				zap.Error(submitErr),
@@ -82,12 +87,12 @@ func (s *Service) SubmitBackground(
 	// Every candidate either cannot defer or refused the submission. Running the
 	// call inline still answers the question, and a submit failure that would
 	// have been fatal is reported only if the inline attempt also fails.
-	s.logger.Debug("no provider accepted a background submission, running inline",
+	s.Logger.Debug("no provider accepted a background submission, running inline",
 		zap.String("task", string(run.Task)),
 		zap.Error(lastErr),
 	)
 
-	outcome, err := s.runAmong(ctx, usable, run)
+	outcome, err := s.RunAmong(ctx, usable, run)
 	if err != nil {
 		if lastErr != nil {
 			return nil, fmt.Errorf("%w (background submit failed: %w)", err, lastErr)
@@ -115,12 +120,12 @@ func (s *Service) SubmitBackground(
 }
 
 // PollBackground asks the provider that issued a handle how the call is going.
-func (s *Service) PollBackground(
+func (s *Background) PollBackground(
 	ctx context.Context,
 	req *llmports.BackgroundPollRequest,
 ) (*llmports.BackgroundOutcome, error) {
-	if !s.ai.AIEnabled() {
-		return nil, errortypes.NewBusinessError(aiDisabledMessage)
+	if !s.AI.AIEnabled() {
+		return nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
 
 	handle := strings.TrimSpace(req.Handle)
@@ -128,7 +133,7 @@ func (s *Service) PollBackground(
 		return nil, errortypes.NewBusinessError("A background handle is required")
 	}
 
-	provider, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
+	provider, err := s.Repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -141,7 +146,7 @@ func (s *Service) PollBackground(
 		)
 	}
 
-	adapter, err := s.adapters.Get(provider.Kind)
+	adapter, err := s.Adapters.Get(provider.Kind)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +158,7 @@ func (s *Service) PollBackground(
 		)
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	apiKey, err := s.ResolveAPIKey(provider)
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +166,10 @@ func (s *Service) PollBackground(
 	result, err := runner.Poll(ctx, &modeladapter.Call{
 		Provider:                 provider,
 		APIKey:                   apiKey,
-		Client:                   s.clientFor(provider),
-		StreamClient:             s.streamClientFor(provider),
-		StreamIdle:               s.ai.GetStreamIdleTimeout(),
-		ServerCredentialsAllowed: s.ai.ServerCloudCredentialsAllowed(),
+		Client:                   s.ClientFor(provider),
+		StreamClient:             s.StreamClientFor(provider),
+		StreamIdle:               s.AI.GetStreamIdleTimeout(),
+		ServerCredentialsAllowed: s.AI.ServerCloudCredentialsAllowed(),
 	}, handle)
 	if err != nil {
 		return nil, err
@@ -202,7 +207,7 @@ func (s *Service) PollBackground(
 	return outcome, nil
 }
 
-func (s *Service) recordBackground(
+func (s *Background) recordBackground(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	req *llmports.BackgroundPollRequest,
@@ -213,18 +218,18 @@ func (s *Service) recordBackground(
 		task = aitask.TaskGeneral
 	}
 
-	attempt := usageAttempt{
-		provider:    provider,
-		task:        task,
-		surface:     surfaceFor(aiusage.SurfaceBackground, req.Attribution),
-		attribution: req.Attribution,
-		tenant:      req.TenantInfo,
-		latency:     backgroundLatency(req.SubmittedAt, time.Now()),
-		operation:   aitrace.OperationChat,
-		attempt:     1,
+	attempt := completionengine.UsageAttempt{
+		Provider:    provider,
+		Task:        task,
+		Surface:     completionengine.SurfaceFor(aiusage.SurfaceBackground, req.Attribution),
+		Attribution: req.Attribution,
+		Tenant:      req.TenantInfo,
+		Latency:     completionengine.BackgroundLatency(req.SubmittedAt, time.Now()),
+		Operation:   aitrace.OperationChat,
+		Attempt:     1,
 	}
 	if result.Response != nil {
-		attempt.outcome = &runOutcome{
+		attempt.Outcome = &completionengine.RunOutcome{
 			Model: stringutils.FirstNonEmpty(
 				result.Response.ModelIdentifier,
 				result.ModelIdentifier,
@@ -234,24 +239,16 @@ func (s *Service) recordBackground(
 			ReasoningTokens:  result.Response.ReasoningTokens,
 			CacheReadTokens:  result.Response.CacheReadTokens,
 			CacheWriteTokens: result.Response.CacheWriteTokens,
-			FinishReason:     finishReason(result.Response),
+			FinishReason:     completionengine.FinishReason(result.Response),
 			Truncated:        result.Response.Truncated,
 			ThinkingDropped:  result.Response.ThinkingDropped,
 		}
 	}
 	if result.State == modeladapter.BackgroundFailed {
-		attempt.err = backgroundFailure(result)
+		attempt.Err = backgroundFailure(result)
 	}
 
-	s.record(ctx, &attempt)
-}
-
-func backgroundLatency(submittedAt int64, now time.Time) time.Duration {
-	if submittedAt <= 0 {
-		return 0
-	}
-
-	return max(now.Sub(time.Unix(submittedAt, 0)), 0)
+	s.Record(ctx, &attempt)
 }
 
 func backgroundFailure(result *modeladapter.BackgroundOutcome) error {
@@ -264,11 +261,11 @@ func backgroundFailure(result *modeladapter.BackgroundOutcome) error {
 
 var errNoBackgroundSupport = errors.New("provider protocol has no background mode")
 
-func (s *Service) backgroundCall(
+func (s *Background) backgroundCall(
 	provider *aiprovider.Provider,
-	req *runRequest,
+	req *completionengine.RunRequest,
 ) (modeladapter.BackgroundRunner, *modeladapter.Call, error) {
-	adapter, err := s.adapters.Get(provider.Kind)
+	adapter, err := s.Adapters.Get(provider.Kind)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -278,10 +275,10 @@ func (s *Service) backgroundCall(
 		return nil, nil, errNoBackgroundSupport
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	apiKey, err := s.ResolveAPIKey(provider)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return runner, s.callFor(provider, apiKey, req), nil
+	return runner, s.CallFor(provider, apiKey, req), nil
 }

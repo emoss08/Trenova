@@ -1,4 +1,4 @@
-package completionrouter
+package completionengine
 
 import (
 	"context"
@@ -28,7 +28,7 @@ const (
 	maxTouchedProvider = 4096
 )
 
-var errProviderTimedOut = fmt.Errorf("the AI provider did not answer within its timeout: %w",
+var ErrProviderTimedOut = fmt.Errorf("the AI provider did not answer within its timeout: %w",
 	context.DeadlineExceeded)
 
 type providerLimits struct {
@@ -40,7 +40,7 @@ type providerLimits struct {
 	touched map[pulid.ID]time.Time
 }
 
-func newProviderLimits(p *Params) *providerLimits {
+func NewProviderLimits(p *Params) *providerLimits {
 	return &providerLimits{
 		spend:   p.Spend,
 		slots:   p.Slots,
@@ -49,12 +49,12 @@ func newProviderLimits(p *Params) *providerLimits {
 	}
 }
 
-func (s *Service) underCap(
+func (s *Engine) UnderCap(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	providers []*aiprovider.Provider,
 ) ([]*aiprovider.Provider, error) {
-	if s.limits == nil || s.limits.spend == nil {
+	if s.Limits == nil || s.Limits.spend == nil {
 		return providers, nil
 	}
 
@@ -68,9 +68,9 @@ func (s *Service) underCap(
 		return providers, nil
 	}
 
-	spend, err := s.limits.spend.MonthSpend(ctx, tenant, capped)
+	spend, err := s.Limits.spend.MonthSpend(ctx, tenant, capped)
 	if err != nil {
-		s.logger.Warn("could not read provider spend; monthly caps not applied to this call",
+		s.Logger.Warn("could not read provider spend; monthly caps not applied to this call",
 			zap.Error(err))
 		return providers, nil
 	}
@@ -81,7 +81,7 @@ func (s *Service) underCap(
 			within = append(within, provider)
 			continue
 		}
-		s.logger.Debug("skipping provider at its monthly cap",
+		s.Logger.Debug("skipping provider at its monthly cap",
 			zap.String("provider", provider.Name),
 			zap.String("onCap", string(provider.ResolvedOnCap())),
 		)
@@ -106,12 +106,12 @@ func capReachedError(provider *aiprovider.Provider) error {
 	).WithInternal(llmports.ErrProviderCapReached)
 }
 
-func (s *Service) claimSlot(
+func (s *Engine) ClaimSlot(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	timeout time.Duration,
 ) (func(), error) {
-	if s.limits == nil || s.limits.slots == nil || provider.ID.IsNil() {
+	if s.Limits == nil || s.Limits.slots == nil || provider.ID.IsNil() {
 		return func() {}, nil
 	}
 
@@ -119,7 +119,7 @@ func (s *Service) claimSlot(
 	token := pulid.MustNew("slot_").String()
 	acquired, err := s.awaitSlot(ctx, provider, token, ttl, waitsForSlot(ctx))
 	if err != nil {
-		s.logger.Warn("could not claim a provider slot; calling without one",
+		s.Logger.Warn("could not claim a provider slot; calling without one",
 			zap.String("provider", provider.Name),
 			zap.Error(err))
 		return func() {}, nil
@@ -137,11 +137,11 @@ func (s *Service) claimSlot(
 			close(stop)
 			releaseCtx, release := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 			defer release()
-			if releaseErr := s.limits.slots.Release(releaseCtx, llmports.ProviderSlotRequest{
+			if releaseErr := s.Limits.slots.Release(releaseCtx, llmports.ProviderSlotRequest{
 				ProviderID: provider.ID,
 				Token:      token,
 			}); releaseErr != nil {
-				s.logger.Warn("could not release a provider slot; it expires on its own",
+				s.Logger.Warn("could not release a provider slot; it expires on its own",
 					zap.String("provider", provider.Name),
 					zap.Error(releaseErr))
 			}
@@ -154,7 +154,7 @@ type slotWaitKey struct{}
 // lastCandidate marks the attempt on the last provider a call can go to. A busy
 // provider earlier in the order hands the call on at once; the last one has
 // nowhere to hand it, so it waits a short while for a slot instead.
-func lastCandidate(ctx context.Context, idx, count int) context.Context {
+func LastCandidate(ctx context.Context, idx, count int) context.Context {
 	if idx != count-1 {
 		return ctx
 	}
@@ -173,7 +173,7 @@ func waitsForSlot(ctx context.Context) bool {
 // last provider at once spent a turn's retries in two seconds and failed the
 // person's reply while three conversations ran at once, though a slot frees
 // within seconds.
-func (s *Service) awaitSlot(
+func (s *Engine) awaitSlot(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	token string,
@@ -186,7 +186,7 @@ func (s *Service) awaitSlot(
 	}
 	for {
 		storeCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
-		acquired, err := s.limits.slots.Acquire(storeCtx, llmports.AcquireProviderSlotRequest{
+		acquired, err := s.Limits.slots.Acquire(storeCtx, llmports.AcquireProviderSlotRequest{
 			ProviderID: provider.ID,
 			Token:      token,
 			Limit:      provider.ResolvedMaxConcurrent(),
@@ -205,7 +205,7 @@ func (s *Service) awaitSlot(
 	}
 }
 
-func (s *Service) holdSlot(
+func (s *Engine) holdSlot(
 	providerID pulid.ID,
 	token string,
 	ttl time.Duration,
@@ -220,53 +220,53 @@ func (s *Service) holdSlot(
 			return
 		case <-ticker.C:
 			refreshCtx, cancel := context.WithTimeout(context.Background(), slotStoreTimeout)
-			_, err := s.limits.slots.Refresh(refreshCtx, llmports.ProviderSlotRequest{
+			_, err := s.Limits.slots.Refresh(refreshCtx, llmports.ProviderSlotRequest{
 				ProviderID: providerID,
 				Token:      token,
 				TTL:        ttl,
 			})
 			cancel()
 			if err != nil {
-				s.logger.Debug("could not refresh a provider slot", zap.Error(err))
+				s.Logger.Debug("could not refresh a provider slot", zap.Error(err))
 			}
 		}
 	}
 }
 
 type deadline struct {
-	ctx    context.Context
+	Ctx    context.Context
 	cancel context.CancelCauseFunc
 	timer  *time.Timer
 }
 
-func (s *Service) withDeadline(ctx context.Context, timeout time.Duration) *deadline {
+func (s *Engine) WithDeadline(ctx context.Context, timeout time.Duration) *deadline {
 	limited, cancel := context.WithCancelCause(ctx)
-	d := &deadline{ctx: limited, cancel: cancel}
-	d.timer = time.AfterFunc(timeout, func() { cancel(errProviderTimedOut) })
+	d := &deadline{Ctx: limited, cancel: cancel}
+	d.timer = time.AfterFunc(timeout, func() { cancel(ErrProviderTimedOut) })
 
 	return d
 }
 
-func (d *deadline) disarm() {
+func (d *deadline) Disarm() {
 	d.timer.Stop()
 }
 
-func (d *deadline) finish(err error) error {
+func (d *deadline) Finish(err error) error {
 	d.timer.Stop()
-	timedOut := errors.Is(context.Cause(d.ctx), errProviderTimedOut)
+	timedOut := errors.Is(context.Cause(d.Ctx), ErrProviderTimedOut)
 	d.cancel(nil)
 	if err != nil && timedOut {
-		return fmt.Errorf("%w: %w", errProviderTimedOut, err)
+		return fmt.Errorf("%w: %w", ErrProviderTimedOut, err)
 	}
 
 	return err
 }
 
-func (s *Service) withKeyFallback(
+func (s *Engine) WithKeyFallback(
 	provider *aiprovider.Provider,
 	call func(apiKey string) error,
 ) error {
-	apiKey, err := s.resolveAPIKey(provider)
+	apiKey, err := s.ResolveAPIKey(provider)
 	if err != nil {
 		return err
 	}
@@ -277,14 +277,14 @@ func (s *Service) withKeyFallback(
 		return err
 	}
 
-	previous, _, decryptErr := s.encryption.DecryptStringWithLegacy(
+	previous, _, decryptErr := s.Encryption.DecryptStringWithLegacy(
 		provider.PreviousAPIKey,
-		credentialAAD(provider),
+		CredentialAAD(provider),
 	)
 	if decryptErr != nil {
 		return err
 	}
-	s.logger.Info("provider refused its new key; trying the key it replaced",
+	s.Logger.Info("provider refused its new key; trying the key it replaced",
 		zap.String("provider", provider.Name))
 
 	return call(previous)
@@ -300,37 +300,37 @@ func keyRefused(err error) bool {
 	return status == http.StatusUnauthorized || status == http.StatusForbidden
 }
 
-func (s *Service) touchKey(
+func (s *Engine) TouchKey(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	tenant pagination.TenantInfo,
 ) {
-	if s.limits == nil || s.limits.keys == nil || !provider.HasStoredAPIKey() ||
+	if s.Limits == nil || s.Limits.keys == nil || !provider.HasStoredAPIKey() ||
 		tenant.OrgID.IsNil() {
 		return
 	}
 
 	now := time.Now()
-	s.limits.mu.Lock()
-	last, seen := s.limits.touched[provider.ID]
+	s.Limits.mu.Lock()
+	last, seen := s.Limits.touched[provider.ID]
 	if seen && now.Sub(last) < keyTouchInterval {
-		s.limits.mu.Unlock()
+		s.Limits.mu.Unlock()
 		return
 	}
-	if len(s.limits.touched) >= maxTouchedProvider {
-		clear(s.limits.touched)
+	if len(s.Limits.touched) >= maxTouchedProvider {
+		clear(s.Limits.touched)
 	}
-	s.limits.touched[provider.ID] = now
-	s.limits.mu.Unlock()
+	s.Limits.touched[provider.ID] = now
+	s.Limits.mu.Unlock()
 
 	touchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 	defer cancel()
-	if err := s.limits.keys.TouchUsed(touchCtx, aiproviderports.TouchAIProviderKeyRequest{
+	if err := s.Limits.keys.TouchUsed(touchCtx, aiproviderports.TouchAIProviderKeyRequest{
 		ID:         provider.ID,
 		TenantInfo: tenant,
 		UsedAt:     now.Unix(),
 	}); err != nil {
-		s.logger.Debug("could not record when a provider key was last used",
+		s.Logger.Debug("could not record when a provider key was last used",
 			zap.String("provider", provider.Name),
 			zap.Error(err))
 	}

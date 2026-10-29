@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -25,7 +26,7 @@ import (
 type fakeUsage struct {
 	mu   sync.Mutex
 	rows []*aiusage.AIUsageRecord
-	err  error
+	Err  error
 }
 
 func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) error {
@@ -33,7 +34,7 @@ func (f *fakeUsage) Create(_ context.Context, record *aiusage.AIUsageRecord) err
 	defer f.mu.Unlock()
 	f.rows = append(f.rows, record)
 
-	return f.err
+	return f.Err
 }
 
 func (f *fakeUsage) CreateOrSkip(
@@ -42,8 +43,8 @@ func (f *fakeUsage) CreateOrSkip(
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.err != nil {
-		return 0, f.err
+	if f.Err != nil {
+		return 0, f.Err
 	}
 
 	var inserted int64
@@ -109,7 +110,7 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 		openAIChatProvider("primary", failing.URL, 10),
 		priced(openAIChatProvider("secondary", healthy.URL, 20), "1", "10"),
 	)
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := generalRequest()
 	req.Attribution = aiusageports.AIUsageAttribution{UserID: pulid.MustNew("usr_")}
@@ -152,7 +153,7 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 	healthy, _ := chatServer(t, http.StatusOK, `{"answer":"replayed"}`)
 	usage := &fakeUsage{}
 	svc := newTestService(t, priced(openAIChatProvider("only", healthy.URL, 10), "1", "10"))
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := generalRequest()
 	req.Attribution = aiusageports.AIUsageAttribution{
@@ -168,28 +169,15 @@ func TestCompleteStructured_RecordsAnEvaluationApartFromTheLiveAgent(t *testing.
 	assert.Equal(t, req.Attribution.AgentDefinitionID, rows[0].AgentDefinitionID)
 }
 
-func TestSurfaceFor(t *testing.T) {
-	t.Parallel()
-
-	live := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("ar_")}
-	byRun := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
-	byPurpose := aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}
-
-	assert.Equal(t, aiusage.SurfaceChat, surfaceFor(aiusage.SurfaceChat, live))
-	assert.Equal(t, aiusage.SurfaceStructured, surfaceFor(aiusage.SurfaceStructured, live))
-	assert.Equal(t, aiusage.SurfaceEvaluation, surfaceFor(aiusage.SurfaceChat, byRun))
-	assert.Equal(t, aiusage.SurfaceEvaluation, surfaceFor(aiusage.SurfaceStructured, byPurpose))
-}
-
 // A slow or failing usage table never slows an answer or turns it into an
 // error: the row is telemetry, not the transaction.
 func TestCompleteStructured_AnswersWhenTheUsageWriteFails(t *testing.T) {
 	t.Parallel()
 
 	server, _ := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
-	usage := &fakeUsage{err: errors.New("usage table is away")}
+	usage := &fakeUsage{Err: errors.New("usage table is away")}
 	svc := newTestService(t, openAIChatProvider("local", server.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	result, err := svc.CompleteStructured(t.Context(), generalRequest())
 	require.NoError(t, err)
@@ -217,27 +205,31 @@ func TestClassifyError(t *testing.T) {
 	t.Parallel()
 
 	var netTimeout net.Error = timeoutErr{}
-	assert.Empty(t, classifyError(nil))
-	assert.Equal(t, "refused", classifyError(errRefused))
-	assert.Equal(t, "timeout", classifyError(context.DeadlineExceeded))
-	assert.Equal(t, "cancelled", classifyError(context.Canceled))
-	assert.Equal(t, "timeout", classifyError(netTimeout))
-	assert.Equal(t, "provider_error", classifyError(errors.New("bad request")))
-	assert.Equal(t, "rate_limited", classifyError(&modeladapter.TransportError{
+	assert.Empty(t, completionengine.ClassifyError(nil))
+	assert.Equal(t, "refused", completionengine.ClassifyError(completionengine.ErrRefused))
+	assert.Equal(t, "timeout", completionengine.ClassifyError(context.DeadlineExceeded))
+	assert.Equal(t, "cancelled", completionengine.ClassifyError(context.Canceled))
+	assert.Equal(t, "timeout", completionengine.ClassifyError(netTimeout))
+	assert.Equal(t, "provider_error", completionengine.ClassifyError(errors.New("bad request")))
+	assert.Equal(t, "rate_limited", completionengine.ClassifyError(&modeladapter.TransportError{
 		StatusCode: http.StatusTooManyRequests,
 		Retryable:  true,
 	}))
-	assert.Equal(t, "auth", classifyError(&modeladapter.TransportError{
+	assert.Equal(t, "auth", completionengine.ClassifyError(&modeladapter.TransportError{
 		StatusCode: http.StatusUnauthorized,
 	}))
-	assert.Equal(t, "auth", classifyError(&modeladapter.TransportError{
+	assert.Equal(t, "auth", completionengine.ClassifyError(&modeladapter.TransportError{
 		StatusCode: http.StatusForbidden,
 	}))
-	assert.Equal(t, "provider_unavailable", classifyError(&modeladapter.TransportError{
-		StatusCode: http.StatusBadGateway,
-		Retryable:  true,
-	}))
-	assert.Equal(t, "provider_error", classifyError(&modeladapter.TransportError{
+	assert.Equal(
+		t,
+		"provider_unavailable",
+		completionengine.ClassifyError(&modeladapter.TransportError{
+			StatusCode: http.StatusBadGateway,
+			Retryable:  true,
+		}),
+	)
+	assert.Equal(t, "provider_error", completionengine.ClassifyError(&modeladapter.TransportError{
 		StatusCode: http.StatusBadRequest,
 	}))
 }
@@ -316,7 +308,7 @@ func TestCompleteStructured_PricesCachedPromptTokensApart(t *testing.T) {
 
 	usage := &fakeUsage{}
 	svc := newTestService(t, priced(openAIChatProvider("cached", server.URL, 10), "1", "10"))
-	svc.usage = usage
+	svc.Usage = usage
 
 	result, err := svc.CompleteStructured(t.Context(), generalRequest())
 	require.NoError(t, err)

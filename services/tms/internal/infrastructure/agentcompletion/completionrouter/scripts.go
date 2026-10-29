@@ -14,7 +14,7 @@ import (
 )
 
 func (s *Service) ScriptsOffered(ctx context.Context, tenant pagination.TenantInfo) (bool, error) {
-	usable, err := s.usableFor(ctx, aitask.TaskAssistantChat, tenant)
+	usable, err := s.UsableFor(ctx, aitask.TaskAssistantChat, tenant)
 	if err != nil {
 		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return false, nil
@@ -37,7 +37,7 @@ func (s *Service) ScriptSettings(
 	if providerID.IsNil() {
 		return aiprovider.ScriptSettings{}, nil
 	}
-	provider, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
+	provider, err := s.Repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
