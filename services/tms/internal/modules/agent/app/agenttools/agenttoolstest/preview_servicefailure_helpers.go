@@ -3,7 +3,7 @@ package agenttoolstest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -36,7 +36,7 @@ func (f *FakeFailureDecider) PreviewResolve(
 		After:  &after,
 		EDI: &servicefailureports.ServiceFailure214LifecycleResult{
 			Action:        ediports.ServiceFailureEDIActionSkipped,
-			SkippedReason: operationstools.EdiReadyForGeneration,
+			SkippedReason: servicefailuretools.EdiReadyForGeneration,
 			EDIPartnerID:  pulid.MustNew("edip_"),
 		},
 	}, nil

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -102,7 +102,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 		AgreementName: "Acme 2026 lanes",
 		Explanation:   "Priced by the Acme 2026 lanes agreement.",
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 	params := createShipmentParams()
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -144,12 +144,12 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 		t,
 		created,
 		shipments.saved,
-		operationstools.EnteredShipmentOptions()...)
+		intaketools.EnteredShipmentOptions()...)
 	agenttoolstest.RequireCreateParity(
 		t,
 		delivery,
 		shipments.saved.Moves[0].Stops[1],
-		operationstools.EnteredStopOptions()...)
+		intaketools.EnteredStopOptions()...)
 }
 
 func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
@@ -159,7 +159,7 @@ func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 		Amount:   decimal.NewFromInt(1_700),
 		Currency: "USD",
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -176,7 +176,7 @@ func TestCreateShipment_PreviewWarnsWhenTheShipmentWouldBeRefused(t *testing.T) 
 	t.Parallel()
 
 	shipments := &pricingShipments{duplicate: true}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -204,7 +204,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 		"SEED-DET-009",
 	)
 	shipments := &pricingShipments{refusal: duplicate}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -234,8 +234,8 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 func TestCreateShipment_SaysABOLMustBeUniqueAndIsOptional(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: &pricingShipments{}},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: &pricingShipments{}},
 	)
 	properties := tool.ParamSchema()["properties"].(map[string]any)
 	shipmentSchema := properties["shipment"].(map[string]any)

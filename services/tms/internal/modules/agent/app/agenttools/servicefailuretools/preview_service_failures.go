@@ -1,16 +1,12 @@
-package operationstools
+package servicefailuretools
 
 import (
-	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -48,78 +44,6 @@ func DetectedFailureOptions() []toolpreview.Option {
 			changepreview.FieldReasonCodeID: permission.ResourceServiceFailureReasonCode,
 		}),
 	}
-}
-
-func (t *EvaluateServiceFailuresTool) Preview(
-	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agentpreview.ToolPreview, error) {
-	plans, err := t.plans(ctx, &params)
-	if err != nil {
-		if changepreview.IsRefusal(err) {
-			return changepreview.WarnWouldFail(
-				toolpreview.Build("Would check the shipment's stops for service failures."),
-				err,
-			), nil
-		}
-
-		return nil, err
-	}
-
-	summaries := make([]string, 0, len(plans))
-	changes := make([]*agentpreview.RecordChange, 0, len(plans))
-	for _, plan := range plans {
-		planChanges, changeErr := detectedFailureChanges(plan)
-		if changeErr != nil {
-			return nil, changeErr
-		}
-		changes = append(changes, planChanges...)
-		summaries = append(summaries, detectionSummary(plan))
-	}
-
-	return toolpreview.Build(strings.Join(summaries, " "), changes...), nil
-}
-
-func (t *EvaluateServiceFailuresTool) Validate(
-	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
-) error {
-	_, err := t.plans(ctx, &params)
-
-	return err
-}
-
-func (t *EvaluateServiceFailuresTool) plans(
-	ctx context.Context,
-	params *agenttoolports.ToolExecuteParams,
-) ([]*servicefailureports.ServiceFailureDetectionPlan, error) {
-	if err := toolguard.GuardPreview(t, params); err != nil {
-		return nil, err
-	}
-
-	scope, err := t.request(params)
-	if err != nil {
-		return nil, err
-	}
-
-	shipmentIDs := scope.shipmentIDs
-	if len(shipmentIDs) == 0 {
-		shipmentIDs = []pulid.ID{scope.shipmentID}
-	}
-
-	plans := make([]*servicefailureports.ServiceFailureDetectionPlan, 0, len(shipmentIDs))
-	for _, shipmentID := range shipmentIDs {
-		plan, planErr := t.failures.PreviewEvaluateShipment(ctx, scope.shipmentRequest(shipmentID))
-		if planErr != nil {
-			return nil, planErr
-		}
-		if scope.stopID.IsNotNil() {
-			plan = restrictDetectionToStop(plan, scope.stopID)
-		}
-		plans = append(plans, plan)
-	}
-
-	return plans, nil
 }
 
 func restrictDetectionToStop(

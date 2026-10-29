@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -508,7 +508,7 @@ func newServiceFailureTransitionTool(
 			}
 			summary := fmt.Sprintf("Would %s service failure %s.", spec.verb, plan.Before.Number)
 
-			return operationstools.ServiceFailureLifecyclePreview(
+			return servicefailuretools.ServiceFailureLifecyclePreview(
 				summary,
 				change,
 				plan,

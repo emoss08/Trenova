@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -70,8 +70,8 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
 	imports := &fakeImportCompleter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer, Imports: imports},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer, Imports: imports},
 	)
 	assert.Equal(t, permission.ResourceShipment, tool.Policy().Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
@@ -123,8 +123,8 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer},
 	)
 	payload := shipmentPayload(
 		pulid.MustNew("cust_"),
@@ -158,7 +158,7 @@ func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
 	writer := &agenttoolstest.FakeShipmentWriter{PreviewErr: errortypes.NewValidationError(
 		"bol", errortypes.ErrDuplicate, "A shipment with this BOL already exists",
 	)}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{
 		Shipments: writer,
 		Imports:   &fakeImportCompleter{},
 	})
@@ -189,7 +189,7 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 		BOL: "OLD", Version: 3,
 	}
 	writer := &agenttoolstest.FakeShipmentWriter{Existing: original}
-	tool := operationstools.NewUpdateShipmentTool(writer, nil)
+	tool := intaketools.NewUpdateShipmentTool(writer, nil)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	newCustomer := pulid.MustNew("cust_")
@@ -222,7 +222,7 @@ func TestUpdateShipment_RefusesAnEmptyPatchAndABadID(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{Existing: &shipment.Shipment{}}
-	tool := operationstools.NewUpdateShipmentTool(writer, nil)
+	tool := intaketools.NewUpdateShipmentTool(writer, nil)
 
 	err := tool.Execute(
 		t.Context(),

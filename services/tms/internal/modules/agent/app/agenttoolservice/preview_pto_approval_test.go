@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -95,7 +95,7 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	pto := requestedPTO()
 	before := *pto
 	fake := &savingPTO{pto: pto, balance: decimal.NewFromInt(10)}
-	tool := operationstools.NewApproveWorkerPTOTool(fake).(*operationstools.ApproveWorkerPTOTool)
+	tool := ptodecisiontools.NewApproveWorkerPTOTool(fake).(*ptodecisiontools.ApproveWorkerPTOTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": pto.ID.String()})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -125,7 +125,7 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 		change,
 		&before,
 		pto,
-		operationstools.PtoDecisionOptions()...)
+		ptodecisiontools.PtoDecisionOptions()...)
 }
 
 func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
@@ -134,7 +134,7 @@ func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {
 	pto := requestedPTO()
 	pto.Status = worker.PTOStatusRejected
 	fake := &savingPTO{pto: pto}
-	tool := operationstools.NewApproveWorkerPTOTool(fake).(*operationstools.ApproveWorkerPTOTool)
+	tool := ptodecisiontools.NewApproveWorkerPTOTool(fake).(*ptodecisiontools.ApproveWorkerPTOTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -155,7 +155,7 @@ func TestApproveWorkerPTO_PreviewWarnsWhenAnAgentWouldApprove(t *testing.T) {
 	t.Parallel()
 
 	fake := &savingPTO{pto: requestedPTO()}
-	tool := operationstools.NewApproveWorkerPTOTool(fake).(*operationstools.ApproveWorkerPTOTool)
+	tool := ptodecisiontools.NewApproveWorkerPTOTool(fake).(*ptodecisiontools.ApproveWorkerPTOTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": fake.pto.ID.String()})
 	params.Actor = agenttoolstest.AgentActorFor(params.OrganizationID, params.BusinessUnitID)
 

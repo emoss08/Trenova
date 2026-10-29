@@ -1,14 +1,11 @@
-package operationstools
+package servicefailuretools
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -30,46 +27,6 @@ type serviceFailureResolver interface {
 // ediReadyForGeneration is the 214 preflight's word for a 214 that would be
 // generated when the change is saved.
 const EdiReadyForGeneration = "ready_for_generation"
-
-func (t *ResolveServiceFailureTool) Preview(
-	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agentpreview.ToolPreview, error) {
-	request, existing, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	resolved, err := t.failures.PreviewResolve(ctx, request, params.Actor)
-	if err != nil {
-		return nil, err
-	}
-
-	change, err := toolpreview.Changed(
-		toolpreview.Record{
-			Resource: permission.ResourceServiceFailure,
-			ID:       existing.ID,
-			Label:    "Service failure " + existing.Number,
-			Version:  changepreview.PinnedVersion(existing.Version),
-		},
-		resolved.Before,
-		resolved.After,
-		toolpreview.Only("status", "reasonCodeId", "internalNotes", "resolvedAt", "resolvedById"),
-		toolpreview.WithRefs(map[string]permission.Resource{
-			"reasonCodeId": permission.ResourceServiceFailureReasonCode,
-			"resolvedById": permission.ResourceUser,
-		}),
-		toolpreview.Volatile("resolvedAt"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	summary := fmt.Sprintf("Would resolve service failure %s as %s.",
-		existing.Number, reasonCodeWords(resolved.After))
-
-	return ServiceFailureLifecyclePreview(summary, change, resolved, "resolved"), nil
-}
 
 func ServiceFailureLifecyclePreview(
 	summary string,

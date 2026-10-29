@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
@@ -80,9 +80,9 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&shipmenttools.CancelShipmentTool{}, "shipmentId", permission.ResourceShipment},
 		{&movetools.RecordStopActualTool{}, "moveId", permission.ResourceShipmentMove},
 		{&movetools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&operationstools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&operationstools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&operationstools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&ptodecisiontools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&ptodecisiontools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&ptodecisiontools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{
 			&invoicetools.CorrectChargeCodeTool{},
 			"billingQueueItemId",

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -18,7 +18,7 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 
 	existing := openFailure()
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
-	tool := operationstools.NewResolveServiceFailureTool(failures)
+	tool := servicefailuretools.NewResolveServiceFailureTool(failures)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"serviceFailureId": existing.ID.String(),
 		"reasonCodeId":     pulid.MustNew("sfrc_").String(),

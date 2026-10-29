@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
@@ -427,7 +427,7 @@ func TestInboundTools_AMessageThatCannotBeReadIsAProposal(t *testing.T) {
 func TestCreateShipment_IsNeverCreatedUnattended(t *testing.T) {
 	t.Parallel()
 
-	policy := (&operationstools.CreateShipmentTool{}).Policy()
+	policy := (&intaketools.CreateShipmentTool{}).Policy()
 	assert.False(t, policy.MaxTier.Above(agent.TierActWithApproval))
 	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy))
 }

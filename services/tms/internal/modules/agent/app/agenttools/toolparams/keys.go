@@ -95,3 +95,5 @@ const ParamAdjustmentLines = "lines"
 const ParamLineDescription = "description"
 
 const ToolInvoiceGet = "invoice_get"
+
+const ToolShipmentGetTracking = "shipment_get_tracking"

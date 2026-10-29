@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -76,7 +76,7 @@ func tenderDecisionChanges(
 
 	changes := []*agentpreview.RecordChange{status}
 	if outcome.approval != nil && outcome.approval.Shipment != nil {
-		created, cErr := operationstools.EnteredShipmentChanges(
+		created, cErr := intaketools.EnteredShipmentChanges(
 			&shipmentserviceports.ShipmentCreatePlan{
 				Shipment: outcome.approval.Shipment,
 			},

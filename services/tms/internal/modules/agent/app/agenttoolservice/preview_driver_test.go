@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
@@ -160,7 +161,7 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := operationstools.NewRejectWorkerPTOTool(pto)
+	tool := ptodecisiontools.NewRejectWorkerPTOTool(pto)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"ptoId":  pulid.MustNew("wrkpto_").String(),
 		"reason": "Coverage gap on that route",
@@ -204,7 +205,7 @@ func TestCancelWorkerPTOPreview_SaysTheDaysGoBack(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := operationstools.NewCancelWorkerPTOTool(pto)
+	tool := ptodecisiontools.NewCancelWorkerPTOTool(pto)
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
@@ -261,12 +262,12 @@ func TestPTOLabel_NamesTheDaysInTheOrganizationsZone(t *testing.T) {
 	assert.Equal(
 		t,
 		"Vacation time off from 2027-05-02 to 2027-05-03",
-		operationstools.PtoLabel(pto, chicago),
+		ptodecisiontools.PtoLabel(pto, chicago),
 	)
 	assert.Equal(
 		t,
 		"Vacation time off from 2027-05-03 to 2027-05-04",
-		operationstools.PtoLabel(pto, nil),
+		ptodecisiontools.PtoLabel(pto, nil),
 		"with no zone known it falls back to UTC",
 	)
 }

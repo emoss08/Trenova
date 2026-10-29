@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -157,7 +157,7 @@ func (f *fakeFailureLifecycle) PreviewVoid(
 		After:  &after,
 		EDI: &servicefailureports.ServiceFailure214LifecycleResult{
 			Action:        ediports.ServiceFailureEDIActionSkipped,
-			SkippedReason: operationstools.EdiReadyForGeneration,
+			SkippedReason: servicefailuretools.EdiReadyForGeneration,
 		},
 	}, nil
 }
@@ -295,7 +295,7 @@ func TestEvaluateServiceFailures_OneStopOrSeveralShipments(t *testing.T) {
 	t.Parallel()
 
 	failures := &agenttoolstest.FakeFailureDecider{}
-	tool := operationstools.NewEvaluateServiceFailuresTool(failures)
+	tool := servicefailuretools.NewEvaluateServiceFailuresTool(failures)
 	shipmentID, stopID := pulid.MustNew("shp_"), pulid.MustNew("stp_")
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
@@ -320,7 +320,7 @@ func TestEvaluateServiceFailures_OneStopOrSeveralShipments(t *testing.T) {
 		"both":               {"shipmentId": shipmentID.String(), "shipmentIds": many},
 		"a stop without one": {"shipmentIds": many, "stopId": stopID.String()},
 		"a bad stop":         {"shipmentId": shipmentID.String(), "stopId": "stop-1"},
-		"too many shipments": {"shipmentIds": agenttoolstest.ManyIDs(operationstools.MaxBulkEvaluationShipments + 1)},
+		"too many shipments": {"shipmentIds": agenttoolstest.ManyIDs(servicefailuretools.MaxBulkEvaluationShipments + 1)},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 			agenttoolstest.ExecuteParams(raw)), name)

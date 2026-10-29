@@ -9,8 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
@@ -36,10 +39,10 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 		&inboundtools.ReplyToInboundMessageTool{},
 		&alerttools.ScheduleReportTool{},
 		&shipmenttools.CancelShipmentTool{},
-		&operationstools.UpdateShipmentTool{},
-		&operationstools.ResolveServiceFailureTool{},
-		&operationstools.RejectWorkerPTOTool{},
-		&operationstools.CancelWorkerPTOTool{},
+		&intaketools.UpdateShipmentTool{},
+		&servicefailuretools.ResolveServiceFailureTool{},
+		&ptodecisiontools.RejectWorkerPTOTool{},
+		&ptodecisiontools.CancelWorkerPTOTool{},
 	} {
 		policy := tool.Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, tool.Name())

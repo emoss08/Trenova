@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -111,7 +111,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 		Version:   5,
 	}}
 	partners := &fakePartnerNotices{}
-	tool := operationstools.NewUpdateShipmentTool(writer, partners)
+	tool := intaketools.NewUpdateShipmentTool(writer, partners)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": shipmentID.String(),

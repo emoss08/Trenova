@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -46,8 +46,8 @@ func schemaCheck(tool agenttoolports.AgentTool, args map[string]any) error {
 func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
 	)
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
@@ -104,10 +104,10 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 		FormulaTemplateID: &template,
 		Inputs:            ratedInputs(t, "$2.10/mi"),
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{
 		Shipments: &agenttoolstest.FakeShipmentWriter{},
 		Contracts: contracts,
-	}).(*operationstools.CreateShipmentTool)
+	}).(*intaketools.CreateShipmentTool)
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
@@ -142,12 +142,12 @@ func ratedInputs(t *testing.T, rate string) tarifftypes.Inputs {
 func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{
 		Shipments: &agenttoolstest.FakeShipmentWriter{},
 		Contracts: &fakeContractRates{priced: &shipmentserviceports.ContractRateApplication{
 			Outcome: ratequote.OutcomeNoRateFound,
 		}},
-	}).(*operationstools.CreateShipmentTool)
+	}).(*intaketools.CreateShipmentTool)
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
@@ -161,8 +161,8 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
 	)
 	for field, value := range map[string]any{
 		"rateLocked":         true,
@@ -187,8 +187,8 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer},
 	)
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	sent := map[string]any{"shipment": map[string]any{
@@ -246,8 +246,8 @@ func TestCreateShipment_NumbersStopsFromZeroInTravelOrder(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer},
 	)
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
@@ -272,7 +272,7 @@ func TestCreateShipment_ReadsEachWindowWhereTheStopIs(t *testing.T) {
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{
 		Shipments: writer,
 		Locations: agenttoolstest.FakeLocationZones{
 			Zones: map[pulid.ID]string{origin: "America/Los_Angeles"},
@@ -310,8 +310,8 @@ func TestCreateShipment_RefusesAWindowItCannotRead(t *testing.T) {
 			t.Parallel()
 
 			writer := &agenttoolstest.FakeShipmentWriter{}
-			tool := operationstools.NewCreateShipmentTool(
-				operationstools.CreateShipmentDeps{Shipments: writer},
+			tool := intaketools.NewCreateShipmentTool(
+				intaketools.CreateShipmentDeps{Shipments: writer},
 			)
 			payload := shipmentPayload(
 				pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"),
@@ -336,8 +336,8 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer},
 	)
 	commodityID, accessorialID := pulid.MustNew("com_"), pulid.MustNew("acc_")
 	billTo, template := pulid.MustNew("cus_"), pulid.MustNew("fmt_")
@@ -383,8 +383,8 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(
-		operationstools.CreateShipmentDeps{Shipments: writer},
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: writer},
 	)
 	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
@@ -438,7 +438,7 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 			errortypes.SeverityWarn,
 		).WithRuleKey("capability_policy"),
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

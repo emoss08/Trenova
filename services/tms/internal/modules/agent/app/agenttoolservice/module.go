@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoiceadjustmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicedisputetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicelifecycletools"
@@ -30,10 +31,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/portaltools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/scheduletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentedittools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
@@ -269,15 +272,15 @@ func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) agenttoolp
 }
 
 func provideApproveWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
-	return operationstools.NewApproveWorkerPTOTool(pto)
+	return ptodecisiontools.NewApproveWorkerPTOTool(pto)
 }
 
 func provideRejectWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
-	return operationstools.NewRejectWorkerPTOTool(pto)
+	return ptodecisiontools.NewRejectWorkerPTOTool(pto)
 }
 
 func provideCancelWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
-	return operationstools.NewCancelWorkerPTOTool(pto)
+	return ptodecisiontools.NewCancelWorkerPTOTool(pto)
 }
 
 func provideCreateReportTool(reports *reporting.Service) agenttoolports.AgentTool {
@@ -295,13 +298,13 @@ func provideForkReportTool(reports *reporting.Service) agenttoolports.AgentTool 
 func provideEvaluateServiceFailuresTool(
 	failures servicefailureports.ServiceFailureService,
 ) agenttoolports.AgentTool {
-	return operationstools.NewEvaluateServiceFailuresTool(failures)
+	return servicefailuretools.NewEvaluateServiceFailuresTool(failures)
 }
 
 func provideResolveServiceFailureTool(
 	failures servicefailureports.ServiceFailureService,
 ) agenttoolports.AgentTool {
-	return operationstools.NewResolveServiceFailureTool(failures)
+	return servicefailuretools.NewResolveServiceFailureTool(failures)
 }
 
 func provideNotifyDriverTool(drivers *drivernotificationservice.Service) agenttoolports.AgentTool {
@@ -326,7 +329,7 @@ type intakeToolParams struct {
 }
 
 func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
-	deps := operationstools.CreateShipmentDeps{
+	deps := intaketools.CreateShipmentDeps{
 		Shipments: p.Shipments,
 		Contracts: p.Shipments,
 		Locations: p.Locations,
@@ -336,7 +339,7 @@ func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
 		deps.Imports = p.Imports
 	}
 
-	return operationstools.NewCreateShipmentTool(deps)
+	return intaketools.NewCreateShipmentTool(deps)
 }
 
 func provideCreateLocationTool(
@@ -357,7 +360,7 @@ func provideUpdateShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
 	partners *ediservice.Service,
 ) agenttoolports.AgentTool {
-	return operationstools.NewUpdateShipmentTool(shipments, partners)
+	return intaketools.NewUpdateShipmentTool(shipments, partners)
 }
 
 func provideRescheduleStopTool(

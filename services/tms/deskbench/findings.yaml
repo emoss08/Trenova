@@ -986,7 +986,7 @@ findings:
       temperature control is refused as a placeholder, and a minimum above the maximum is refused.
       To verify in a run.
     files:
-      [services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go]
+      [services/tms/internal/modules/agent/app/agenttools/intaketools/intake_tools.go]
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
 
   - id: DB-042
@@ -1375,7 +1375,7 @@ findings:
       the lane it refuses, naming list_formula_templates. A rating the call names is never
       second-guessed. The tool contract records the exception. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/intaketools/intake_tools.go
       - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_draft.go
       - services/tms/internal/modules/agent/app/agenttoolservice/module.go
       - services/tms/internal/api/toolcontract/bindings.go
@@ -1665,7 +1665,7 @@ findings:
       and says which was used.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/intaketools/intake_tools.go
 
   - id: DB-071
     title: No agent could propose a new customer; the preview's transaction was aborted
@@ -2111,7 +2111,7 @@ findings:
       and otherwise propose and say coverage was not checked.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/pto_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/ptodecisiontools/pto_tools.go
 
   - id: DB-095
     title: No tool could list open safety events across the fleet
@@ -2231,7 +2231,7 @@ findings:
     fix: A deadline reads as 08:00 that day until it; the description says the BOL is optional unless given.
     fixedIn: uncommitted; catalog limits hold
     files:
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/intaketools/intake_tools.go
 
   - id: DB-102
     title: A multi-stop move got no distance, so every per-mile carrier tied at its minimum
@@ -2329,7 +2329,7 @@ findings:
       there is nothing to look up, and to ask only when it says none covers the lane.
     fixedIn: uncommitted; catalog limits and floor hold
     files:
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/intake_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/intaketools/intake_tools.go
 
   - id: DB-107
     title: With no email profile, a send failed as "EmailProfile not found"
@@ -2967,7 +2967,7 @@ findings:
       - services/tms/internal/modules/workforce/ports/workerptoports/workerpto_services.go
       - services/tms/internal/modules/identity/app/workerptoservice/preview_transition.go
       - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_driver.go
-      - services/tms/internal/modules/agent/app/agenttools/operationstools/preview_pto_approval.go
+      - services/tms/internal/modules/agent/app/agenttools/ptodecisiontools/preview_pto_approval.go
       - services/tms/internal/modules/agent/app/agenttoolservice/preview_driver_test.go
       - services/tms/internal/modules/identity/app/ptoledgerservice/availability.go
 

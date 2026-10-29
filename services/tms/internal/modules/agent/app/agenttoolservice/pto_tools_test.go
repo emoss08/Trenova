@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -70,7 +70,7 @@ func TestApproveWorkerPTO_CarriesTheRequestAndTheDecider(t *testing.T) {
 	id := pulid.MustNew("wpto_").String()
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": id})
 
-	require.NoError(t, operationstools.NewApproveWorkerPTOTool(pto).Execute(t.Context(), params))
+	require.NoError(t, ptodecisiontools.NewApproveWorkerPTOTool(pto).Execute(t.Context(), params))
 
 	require.NotNil(t, pto.approved)
 	assert.Equal(t, id, pto.approved.ID.String())
@@ -94,7 +94,7 @@ func TestApproveWorkerPTO_LeavesTheExpectedVersionForTheService(t *testing.T) {
 	pto := &fakePTODecider{}
 	require.NoError(
 		t,
-		operationstools.NewApproveWorkerPTOTool(pto).
+		ptodecisiontools.NewApproveWorkerPTOTool(pto).
 			Execute(t.Context(), agenttoolstest.ExecuteParams(
 				map[string]any{"ptoId": pulid.MustNew("wpto_").String()},
 			)),
@@ -118,7 +118,7 @@ func TestApproveWorkerPTO_RefusesAnAgentPrincipal(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{"ptoId": pulid.MustNew("wpto_").String()})
 	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
-	err := operationstools.NewApproveWorkerPTOTool(pto).Execute(t.Context(), params)
+	err := ptodecisiontools.NewApproveWorkerPTOTool(pto).Execute(t.Context(), params)
 
 	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 	assert.Nil(t, pto.approved)
@@ -130,7 +130,7 @@ func TestRejectWorkerPTO_RequiresAReason(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	err := operationstools.NewRejectWorkerPTOTool(pto).
+	err := ptodecisiontools.NewRejectWorkerPTOTool(pto).
 		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"ptoId": pulid.MustNew("wpto_").String(),
 		}))
@@ -146,7 +146,7 @@ func TestRejectWorkerPTO_PassesTheReasonThrough(t *testing.T) {
 	pto := &fakePTODecider{}
 	require.NoError(
 		t,
-		operationstools.NewRejectWorkerPTOTool(pto).
+		ptodecisiontools.NewRejectWorkerPTOTool(pto).
 			Execute(t.Context(), agenttoolstest.ExecuteParams(
 				map[string]any{
 					"ptoId":  pulid.MustNew("wpto_").String(),
@@ -162,7 +162,7 @@ func TestCancelWorkerPTO_RequiresAReason(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	err := operationstools.NewCancelWorkerPTOTool(pto).
+	err := ptodecisiontools.NewCancelWorkerPTOTool(pto).
 		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"ptoId": pulid.MustNew("wpto_").String(),
 		}))
@@ -176,16 +176,16 @@ func TestCancelWorkerPTO_RequiresAReason(t *testing.T) {
 func TestPTOTools_DeclareTheirAuthorizationAndReversibility(t *testing.T) {
 	t.Parallel()
 
-	approve := operationstools.NewApproveWorkerPTOTool(&fakePTODecider{})
+	approve := ptodecisiontools.NewApproveWorkerPTOTool(&fakePTODecider{})
 	assert.Equal(t, permission.ResourceWorkerPTO, approve.Policy().Resource)
 	assert.Equal(t, permission.OpApprove, approve.Policy().Operation)
 	assert.True(t, approve.Policy().Reversible)
 
-	reject := operationstools.NewRejectWorkerPTOTool(&fakePTODecider{})
+	reject := ptodecisiontools.NewRejectWorkerPTOTool(&fakePTODecider{})
 	assert.Equal(t, permission.OpReject, reject.Policy().Operation)
 	assert.False(t, reject.Policy().Reversible)
 
-	cancel := operationstools.NewCancelWorkerPTOTool(&fakePTODecider{})
+	cancel := ptodecisiontools.NewCancelWorkerPTOTool(&fakePTODecider{})
 	assert.Equal(t, permission.OpCancel, cancel.Policy().Operation)
 	assert.False(t, cancel.Policy().Reversible)
 }
@@ -195,9 +195,9 @@ func TestPTOTools_NeverAutoExecute(t *testing.T) {
 	t.Parallel()
 
 	for _, tool := range []agenttoolports.AgentTool{
-		operationstools.NewApproveWorkerPTOTool(&fakePTODecider{}),
-		operationstools.NewRejectWorkerPTOTool(&fakePTODecider{}),
-		operationstools.NewCancelWorkerPTOTool(&fakePTODecider{}),
+		ptodecisiontools.NewApproveWorkerPTOTool(&fakePTODecider{}),
+		ptodecisiontools.NewRejectWorkerPTOTool(&fakePTODecider{}),
+		ptodecisiontools.NewCancelWorkerPTOTool(&fakePTODecider{}),
 	} {
 		assert.NotEqual(t, agent.TierAutoExecute, tool.Policy().DefaultTier, tool.Name())
 	}
@@ -209,7 +209,7 @@ func TestPTOTools_RefuseAnIdThatIsNotOne(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	err := operationstools.NewApproveWorkerPTOTool(pto).
+	err := ptodecisiontools.NewApproveWorkerPTOTool(pto).
 		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"ptoId": "Maria Ortiz",
 		}))
