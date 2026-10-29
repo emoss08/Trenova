@@ -32,16 +32,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type shipmentPorts struct {
-	reader    shipmentserviceports.ShipmentReader
-	writer    shipmentserviceports.ShipmentWriter
-	lifecycle shipmentserviceports.ShipmentLifecycleService
-	readiness shipmentserviceports.ShipmentBillingReadinessReader
-	transfer  shipmentserviceports.ShipmentBillingTransferService
-	autorater shipmentserviceports.ShipmentAutoRater
-	loading   shipmentserviceports.ShipmentLoadingPlanner
-}
-
 type Params struct {
 	fx.In
 
@@ -64,7 +54,13 @@ type Params struct {
 }
 
 type Handler struct {
-	shipments       shipmentPorts
+	reader          shipmentserviceports.ShipmentReader
+	writer          shipmentserviceports.ShipmentWriter
+	lifecycle       shipmentserviceports.ShipmentLifecycleService
+	readiness       shipmentserviceports.ShipmentBillingReadinessReader
+	transfer        shipmentserviceports.ShipmentBillingTransferService
+	autorater       shipmentserviceports.ShipmentAutoRater
+	loading         shipmentserviceports.ShipmentLoadingPlanner
 	commentService  shipmentcommentports.ShipmentCommentService
 	holdService     shipmentholdports.ShipmentHoldService
 	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
@@ -79,15 +75,13 @@ type Handler struct {
 
 func New(p Params) *Handler {
 	return &Handler{
-		shipments: shipmentPorts{
-			reader:    p.Reader,
-			writer:    p.Writer,
-			lifecycle: p.Lifecycle,
-			readiness: p.Readiness,
-			transfer:  p.Transfer,
-			autorater: p.AutoRater,
-			loading:   p.Loading,
-		},
+		reader:          p.Reader,
+		writer:          p.Writer,
+		lifecycle:       p.Lifecycle,
+		readiness:       p.Readiness,
+		transfer:        p.Transfer,
+		autorater:       p.AutoRater,
+		loading:         p.Loading,
 		commentService:  p.CommentService,
 		holdService:     p.HoldService,
 		importAssistant: p.ImportAssistant,
@@ -327,7 +321,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			result, err := h.shipments.reader.List(
+			result, err := h.reader.List(
 				c.Request.Context(),
 				&shipmentports.ListShipmentsRequest{
 					Filter: req,
@@ -373,7 +367,7 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 		req,
 		h.eh,
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			result, err := h.shipments.reader.GetUnassigned(
+			result, err := h.reader.GetUnassigned(
 				c.Request.Context(),
 				&shipmentports.GetUnassignedShipmentsRequest{
 					Filter: req,
@@ -406,7 +400,7 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 func (h *Handler) getUIPolicy(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	policy, err := h.shipments.reader.GetUIPolicy(c.Request.Context(), pagination.TenantInfo{
+	policy, err := h.reader.GetUIPolicy(c.Request.Context(), pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
 	})
@@ -441,7 +435,7 @@ func (h *Handler) getBillingReadiness(c *gin.Context) {
 		return
 	}
 
-	readiness, err := h.shipments.readiness.GetBillingReadiness(
+	readiness, err := h.readiness.GetBillingReadiness(
 		c.Request.Context(),
 		shipmentID,
 		pagination.TenantInfo{
@@ -561,7 +555,7 @@ func (h *Handler) getPermitAssessment(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.shipments.reader.Get(
+	entity, err := h.reader.Get(
 		c.Request.Context(),
 		&shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
@@ -608,7 +602,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.shipments.reader.Get(
+	entity, err := h.reader.Get(
 		c.Request.Context(),
 		&shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
@@ -666,7 +660,7 @@ func (h *Handler) create(c *gin.Context) {
 	entity.IdempotencyKey, _ = idempotency.KeyFrom(c.Request.Context())
 
 	actor := actorutil.FromAuthContext(authCtx)
-	created, err := h.shipments.writer.Create(c.Request.Context(), entity, actor)
+	created, err := h.writer.Create(c.Request.Context(), entity, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -726,7 +720,7 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	updated, err := h.shipments.writer.Update(c.Request.Context(), entity, actor)
+	updated, err := h.writer.Update(c.Request.Context(), entity, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -757,7 +751,7 @@ func (h *Handler) calculateTotals(c *gin.Context) {
 		return
 	}
 
-	totals, err := h.shipments.reader.CalculateTotals(c.Request.Context(), entity, authCtx.UserID)
+	totals, err := h.reader.CalculateTotals(c.Request.Context(), entity, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -784,7 +778,7 @@ func (h *Handler) calculateDistance(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.shipments.reader.CalculateDistance(c.Request.Context(), entity)
+	resp, err := h.reader.CalculateDistance(c.Request.Context(), entity)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -810,7 +804,7 @@ func (h *Handler) recalculateDistance(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.shipments.reader.RecalculateDistance(
+	resp, err := h.reader.RecalculateDistance(
 		c.Request.Context(),
 		shipmentID,
 		pagination.TenantInfo{
@@ -854,7 +848,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	result, err := h.shipments.lifecycle.Duplicate(c.Request.Context(), req)
+	result, err := h.lifecycle.Duplicate(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -877,7 +871,7 @@ func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
 		BuID:  authCtx.BusinessUnitID,
 	}
 
-	if err := h.shipments.reader.CheckForDuplicateBOLs(c.Request.Context(), req); err != nil {
+	if err := h.reader.CheckForDuplicateBOLs(c.Request.Context(), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -899,7 +893,7 @@ func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 		BuID:  authCtx.BusinessUnitID,
 	}
 
-	if err := h.shipments.loading.CheckHazmatSegregation(c.Request.Context(), req); err != nil {
+	if err := h.loading.CheckHazmatSegregation(c.Request.Context(), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -921,7 +915,7 @@ func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
 		BuID:  authCtx.BusinessUnitID,
 	}
 
-	result, err := h.shipments.loading.CalculateLoadingOptimization(c.Request.Context(), req)
+	result, err := h.loading.CalculateLoadingOptimization(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -944,7 +938,7 @@ func (h *Handler) getPreviousRates(c *gin.Context) {
 		BuID:  authCtx.BusinessUnitID,
 	}
 
-	entities, err := h.shipments.reader.GetPreviousRates(c.Request.Context(), req)
+	entities, err := h.reader.GetPreviousRates(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -967,7 +961,7 @@ func (h *Handler) getPreviousRates(c *gin.Context) {
 func (h *Handler) getDelayedShipments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entities, err := h.shipments.lifecycle.GetDelayedShipments(
+	entities, err := h.lifecycle.GetDelayedShipments(
 		c.Request.Context(),
 		&shipmentports.GetDelayedShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -995,7 +989,7 @@ func (h *Handler) getDelayedShipments(c *gin.Context) {
 func (h *Handler) delayShipments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entities, err := h.shipments.lifecycle.DelayShipments(
+	entities, err := h.lifecycle.DelayShipments(
 		c.Request.Context(),
 		&shipmentports.DelayShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -1024,7 +1018,7 @@ func (h *Handler) delayShipments(c *gin.Context) {
 func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entities, err := h.shipments.lifecycle.GetAutoCancelableShipments(
+	entities, err := h.lifecycle.GetAutoCancelableShipments(
 		c.Request.Context(),
 		&shipmentports.GetAutoCancelableShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -1052,7 +1046,7 @@ func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 func (h *Handler) autoCancelShipments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entities, err := h.shipments.lifecycle.AutoCancelShipments(
+	entities, err := h.lifecycle.AutoCancelShipments(
 		c.Request.Context(),
 		&shipmentports.AutoCancelShipmentsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -1105,7 +1099,7 @@ func (h *Handler) cancel(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	entity, err := h.shipments.lifecycle.Cancel(c.Request.Context(), req, actor)
+	entity, err := h.lifecycle.Cancel(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1143,7 +1137,7 @@ func (h *Handler) autoRate(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	entity, application, err := h.shipments.autorater.AutoRate(c.Request.Context(), req, actor)
+	entity, application, err := h.autorater.AutoRate(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1182,7 +1176,7 @@ func (h *Handler) uncancel(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	entity, err := h.shipments.lifecycle.Uncancel(c.Request.Context(), req, actor)
+	entity, err := h.lifecycle.Uncancel(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1229,7 +1223,7 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	entity, err := h.shipments.lifecycle.TransferOwnership(c.Request.Context(), req, actor)
+	entity, err := h.lifecycle.TransferOwnership(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1256,7 +1250,7 @@ func (h *Handler) transferToBilling(c *gin.Context) {
 	req.ShipmentID = shipmentID
 
 	actor := actorutil.FromAuthContext(authCtx)
-	item, err := h.shipments.transfer.TransferToBilling(c.Request.Context(), req, actor)
+	item, err := h.transfer.TransferToBilling(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1281,7 +1275,7 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	response, err := h.shipments.transfer.BulkTransferToBilling(c.Request.Context(), req, actor)
+	response, err := h.transfer.BulkTransferToBilling(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
