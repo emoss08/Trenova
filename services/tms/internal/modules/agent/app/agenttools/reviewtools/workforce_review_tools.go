@@ -166,42 +166,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*performancereviewservice.CreateReviewRequest, *workerreview.PerformanceReview,
 	]{
-		Request: func(
-			params *agenttoolports.ToolExecuteParams,
-		) (*performancereviewservice.CreateReviewRequest, error) {
-			workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			templateID, err := toolparams.RequirePulid(params.Params, paramReviewTemplate)
-			if err != nil {
-				return nil, err
-			}
-			start, err := toolparams.RequireScheduleDay(
-				params.Params,
-				changepreview.FieldPeriodStart,
-			)
-			if err != nil {
-				return nil, err
-			}
-			end, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldPeriodEnd)
-			if err != nil {
-				return nil, err
-			}
-			title, err := toolparams.BoundedText(params.Params, workforcekit.ParamTitle, 120)
-			if err != nil {
-				return nil, err
-			}
-			return &performancereviewservice.CreateReviewRequest{
-				TenantInfo:  toolparams.TenantFrom(*params),
-				WorkerID:    workerID,
-				TemplateID:  templateID,
-				Title:       title,
-				PeriodStart: start,
-				PeriodEnd:   end,
-				UserID:      params.Actor.UserID,
-			}, nil
-		},
+		Request: createReviewRequest,
 		Plan: func(
 			ctx context.Context,
 			req *performancereviewservice.CreateReviewRequest,
@@ -247,6 +212,43 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 	})
 }
 
+func createReviewRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*performancereviewservice.CreateReviewRequest, error) {
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
+	if err != nil {
+		return nil, err
+	}
+	templateID, err := toolparams.RequirePulid(params.Params, paramReviewTemplate)
+	if err != nil {
+		return nil, err
+	}
+	start, err := toolparams.RequireScheduleDay(
+		params.Params,
+		changepreview.FieldPeriodStart,
+	)
+	if err != nil {
+		return nil, err
+	}
+	end, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldPeriodEnd)
+	if err != nil {
+		return nil, err
+	}
+	title, err := toolparams.BoundedText(params.Params, workforcekit.ParamTitle, 120)
+	if err != nil {
+		return nil, err
+	}
+	return &performancereviewservice.CreateReviewRequest{
+		TenantInfo:  toolparams.TenantFrom(*params),
+		WorkerID:    workerID,
+		TemplateID:  templateID,
+		Title:       title,
+		PeriodStart: start,
+		PeriodEnd:   end,
+		UserID:      params.Actor.UserID,
+	}, nil
+}
+
 type reviewRatingParam struct {
 	Key     string `json:"key"`
 	Score   *int32 `json:"score"`
@@ -283,7 +285,11 @@ func (d *reviewDraft) request(
 		Version:      current.Version,
 		UserID:       d.params.Actor.UserID,
 	}
-	if req.Title, err = toolparams.BoundedText(d.params.Params, workforcekit.ParamTitle, 120); err != nil {
+	if req.Title, err = toolparams.BoundedText(
+		d.params.Params,
+		workforcekit.ParamTitle,
+		120,
+	); err != nil {
 		return nil, err
 	}
 	if err = applyReviewText(req, d.params.Params); err != nil {

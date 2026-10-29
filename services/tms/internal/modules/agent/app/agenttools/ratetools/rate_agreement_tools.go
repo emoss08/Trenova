@@ -740,7 +740,10 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 		}
 		entity.RenewalNoticeDays = int16(days) //nolint:gosec // bounded to maxRenewalNotice above
 	}
-	if autoRenew, flagErr := toolparams.OptionalBoolPointer(h.values, paramAutoRenew); flagErr != nil {
+	if autoRenew, flagErr := toolparams.OptionalBoolPointer(
+		h.values,
+		paramAutoRenew,
+	); flagErr != nil {
 		return flagErr
 	} else if autoRenew != nil {
 		entity.AutoRenew = *autoRenew
@@ -1685,10 +1688,16 @@ func readRateIncreaseScope(
 	req *rateagreementservice.RateIncreaseRequest,
 ) error {
 	var err error
-	if req.CustomerID, err = toolparams.OptionalPulidParam(params, toolparams.ParamCustomerID); err != nil {
+	if req.CustomerID, err = toolparams.OptionalPulidParam(
+		params,
+		toolparams.ParamCustomerID,
+	); err != nil {
 		return err
 	}
-	if req.CarrierID, err = toolparams.OptionalPulidParam(params, toolparams.ParamCarrierID); err != nil {
+	if req.CarrierID, err = toolparams.OptionalPulidParam(
+		params,
+		toolparams.ParamCarrierID,
+	); err != nil {
 		return err
 	}
 	party, given, err := toolparams.OptionalEnum(params, paramPartyType, partyTypes.Values)

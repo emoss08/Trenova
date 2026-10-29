@@ -65,15 +65,15 @@ type recurringFields struct {
 }
 
 type RecurringBook[E any] interface {
-	get(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (*E, error)
-	check(ctx context.Context, entity *E, escrow bool) error
-	create(
+	Get(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (*E, error)
+	Check(ctx context.Context, entity *E, escrow bool) error
+	Create(
 		ctx context.Context,
 		entity *E,
 		escrow bool,
 		actor *permissionports.RequestActor,
 	) (*E, error)
-	update(ctx context.Context, entity *E, actor *permissionports.RequestActor) (*E, error)
+	Update(ctx context.Context, entity *E, actor *permissionports.RequestActor) (*E, error)
 }
 
 type recurringKind[E any] struct {
@@ -324,7 +324,7 @@ func (t *RecurringPayTool[E]) planned(
 		fields.workerID = workerID
 		entity := t.kind.create(tenant, fields)
 		escrow := t.kind.escrow && toolparams.OptionalBool(params.Params, paramEscrowContribution)
-		refusal, failure := changepreview.RefusalOrFailure(t.book.check(ctx, entity, escrow))
+		refusal, failure := changepreview.RefusalOrFailure(t.book.Check(ctx, entity, escrow))
 		if failure != nil {
 			return nil, failure
 		}
@@ -347,13 +347,13 @@ func (t *RecurringPayTool[E]) planned(
 	if !changed {
 		return nil, toolparams.ErrNothingToChange
 	}
-	before, err := t.book.get(ctx, tenant, id)
+	before, err := t.book.Get(ctx, tenant, id)
 	if err != nil {
 		return nil, err
 	}
 	after := *before
 	t.kind.apply(&after, fields, given)
-	refusal, failure := changepreview.RefusalOrFailure(t.book.check(ctx, &after, false))
+	refusal, failure := changepreview.RefusalOrFailure(t.book.Check(ctx, &after, false))
 	if failure != nil {
 		return nil, failure
 	}
@@ -388,11 +388,11 @@ func (t *RecurringPayTool[E]) Execute(
 		return err
 	}
 	if t.update {
-		_, err = t.book.update(ctx, plan.after, params.Actor)
+		_, err = t.book.Update(ctx, plan.after, params.Actor)
 
 		return err
 	}
-	_, err = t.book.create(ctx, plan.after, plan.escrow, params.Actor)
+	_, err = t.book.Create(ctx, plan.after, plan.escrow, params.Actor)
 
 	return err
 }
@@ -670,7 +670,7 @@ type DeductionBook struct {
 	pay *driverpayservice.Service
 }
 
-func (b DeductionBook) get(
+func (b DeductionBook) Get(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
@@ -681,7 +681,7 @@ func (b DeductionBook) get(
 	})
 }
 
-func (b DeductionBook) check(
+func (b DeductionBook) Check(
 	ctx context.Context,
 	entity *recurringpay.RecurringDeduction,
 	escrow bool,
@@ -689,7 +689,7 @@ func (b DeductionBook) check(
 	return b.pay.CheckDeduction(ctx, entity, escrow)
 }
 
-func (b DeductionBook) create(
+func (b DeductionBook) Create(
 	ctx context.Context,
 	entity *recurringpay.RecurringDeduction,
 	escrow bool,
@@ -698,7 +698,7 @@ func (b DeductionBook) create(
 	return b.pay.CreateDeduction(ctx, entity, escrow, actor)
 }
 
-func (b DeductionBook) update(
+func (b DeductionBook) Update(
 	ctx context.Context,
 	entity *recurringpay.RecurringDeduction,
 	actor *permissionports.RequestActor,
@@ -710,7 +710,7 @@ type EarningBook struct {
 	pay *driverpayservice.Service
 }
 
-func (b EarningBook) get(
+func (b EarningBook) Get(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
@@ -721,7 +721,7 @@ func (b EarningBook) get(
 	})
 }
 
-func (b EarningBook) check(
+func (b EarningBook) Check(
 	ctx context.Context,
 	entity *recurringpay.RecurringEarning,
 	_ bool,
@@ -729,7 +729,7 @@ func (b EarningBook) check(
 	return b.pay.CheckEarning(ctx, entity)
 }
 
-func (b EarningBook) create(
+func (b EarningBook) Create(
 	ctx context.Context,
 	entity *recurringpay.RecurringEarning,
 	_ bool,
@@ -738,7 +738,7 @@ func (b EarningBook) create(
 	return b.pay.CreateEarning(ctx, entity, actor)
 }
 
-func (b EarningBook) update(
+func (b EarningBook) Update(
 	ctx context.Context,
 	entity *recurringpay.RecurringEarning,
 	actor *permissionports.RequestActor,

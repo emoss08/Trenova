@@ -124,7 +124,7 @@ func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentToo
 			return nil, err
 		}
 
-		return &reporting.GetRunRequest{Request: reportingRequestFrom(*params), RunID: id}, nil
+		return &reporting.GetRunRequest{Request: reportingRequestFrom(params), RunID: id}, nil
 	}
 
 	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
@@ -194,7 +194,7 @@ func definitionRequestFrom(
 	}
 
 	return &reporting.GetDefinitionRequest{
-		Request:      reportingRequestFrom(*params),
+		Request:      reportingRequestFrom(params),
 		DefinitionID: id,
 	}, nil
 }
@@ -347,7 +347,7 @@ func NewDeleteDashboardTool(dashboards DashboardAdministrator) agenttoolports.Ag
 			}
 
 			return &reportdashboardservice.GetDashboardRequest{
-				Request:     reportingRequestFrom(*params),
+				Request:     reportingRequestFrom(params),
 				DashboardID: id,
 			}, nil
 		},

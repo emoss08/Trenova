@@ -136,7 +136,7 @@ func (t *CreateReportTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agentpreview.ToolPreview, error) {
-	save, err := t.prepare(params)
+	save, err := t.prepare(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (t *UpdateReportTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agentpreview.ToolPreview, error) {
-	save, existing, err := t.prepare(ctx, params)
+	save, existing, err := t.prepare(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (t *ForkReportTool) request(
 	}
 
 	return &reporting.ForkCannedRequest{
-		Request:   reportingRequestFrom(*params),
+		Request:   reportingRequestFrom(params),
 		CannedKey: key,
 		Name:      strings.TrimSpace(toolparams.OptionalString(params.Params, paramReportName)),
 	}, entry, nil

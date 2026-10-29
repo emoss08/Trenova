@@ -92,12 +92,29 @@ var verificationRequestMoves = agenttoolschema.Source(
 )
 
 var verificationFields = []string{
-	workforcekit.FieldWorkerID, paramEmployerName, paramEmployerDOT, paramEmployerMC, paramContactName,
-	paramContactPhone, paramContactEmail, paramEmployedFrom, paramEmployedTo,
-	paramWasDOTRegulated, changepreview.FieldStatus, paramVerifyMethod, workforcekit.FieldRequestedAt,
-	"responseReceivedAt", "drugAlcoholResponseReceivedAt", "followUpCount",
-	"lastFollowUpAt", paramHadAccidents, paramAccidentCount, paramHadDAViolations,
-	paramFindings, workforcekit.FieldNotes, workforcekit.FieldDocument,
+	workforcekit.FieldWorkerID,
+	paramEmployerName,
+	paramEmployerDOT,
+	paramEmployerMC,
+	paramContactName,
+	paramContactPhone,
+	paramContactEmail,
+	paramEmployedFrom,
+	paramEmployedTo,
+	paramWasDOTRegulated,
+	changepreview.FieldStatus,
+	paramVerifyMethod,
+	workforcekit.FieldRequestedAt,
+	"responseReceivedAt",
+	"drugAlcoholResponseReceivedAt",
+	"followUpCount",
+	"lastFollowUpAt",
+	paramHadAccidents,
+	paramAccidentCount,
+	paramHadDAViolations,
+	paramFindings,
+	workforcekit.FieldNotes,
+	workforcekit.FieldDocument,
 }
 
 type VerificationKeeper interface {
@@ -317,7 +334,10 @@ func applyVerificationEmployer(
 		*target.dest = text
 	}
 	var err error
-	if req.EmployedFrom, err = toolparams.OptionalScheduleDay(params, paramEmployedFrom); err != nil {
+	if req.EmployedFrom, err = toolparams.OptionalScheduleDay(
+		params,
+		paramEmployedFrom,
+	); err != nil {
 		return err
 	}
 	if req.EmployedTo, err = toolparams.OptionalScheduleDay(params, paramEmployedTo); err != nil {
@@ -389,7 +409,10 @@ func applyVerificationResponse(
 		paramDAResponseAt); err != nil {
 		return err
 	}
-	if req.HadAccidents, err = toolparams.OptionalBoolPointer(params, paramHadAccidents); err != nil {
+	if req.HadAccidents, err = toolparams.OptionalBoolPointer(
+		params,
+		paramHadAccidents,
+	); err != nil {
 		return err
 	}
 	if req.HadDrugAlcoholViolations, err = toolparams.OptionalBoolPointer(params,

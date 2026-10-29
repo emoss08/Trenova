@@ -97,30 +97,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 			*paymentreminderports.SendNowRequest,
 			[]*paymentreminderports.SendNowPreview,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*paymentreminderports.SendNowRequest, error) {
-				customerID, err := toolparams.RequirePulid(
-					params.Params,
-					toolparams.ParamCustomerID,
-				)
-				if err != nil {
-					return nil, err
-				}
-				note, err := toolparams.BoundedText(
-					params.Params,
-					paramCollectionNote,
-					maxCustomerEmailNoteChars,
-				)
-				if err != nil {
-					return nil, err
-				}
-				return &paymentreminderports.SendNowRequest{
-					TenantInfo: toolparams.TenantFrom(*params),
-					CustomerID: customerID,
-					Note:       note,
-				}, nil
-			},
+			Request: sendPaymentReminderRequest,
 			Plan: func(
 				ctx context.Context,
 				req *paymentreminderports.SendNowRequest,
@@ -158,6 +135,31 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 			},
 		},
 	)
+}
+
+func sendPaymentReminderRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*paymentreminderports.SendNowRequest, error) {
+	customerID, err := toolparams.RequirePulid(
+		params.Params,
+		toolparams.ParamCustomerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	note, err := toolparams.BoundedText(
+		params.Params,
+		paramCollectionNote,
+		maxCustomerEmailNoteChars,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &paymentreminderports.SendNowRequest{
+		TenantInfo: toolparams.TenantFrom(*params),
+		CustomerID: customerID,
+		Note:       note,
+	}, nil
 }
 
 func renderReminders(

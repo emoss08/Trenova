@@ -25,7 +25,7 @@ func (t *ApproveWorkerPTOTool) Preview(
 		return nil, err
 	}
 
-	request, err := ptoStatusRequest(params)
+	request, err := ptoStatusRequest(&params)
 	if err != nil {
 		return nil, err
 	}

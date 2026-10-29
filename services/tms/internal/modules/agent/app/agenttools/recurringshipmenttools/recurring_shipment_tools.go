@@ -70,16 +70,37 @@ var seriesExceptionPolicies = agenttoolschema.Source(
 )
 
 var seriesFields = []string{
-	paramSeriesName, changepreview.FieldDescription, paramSourceShipmentID, changepreview.FieldCustomerID,
-	ParamCronExpression, ParamTimezone, changepreview.FieldRecurringStart, changepreview.FieldRecurringEnd,
-	paramMaxOccurrences, paramLeadTimeDays, paramSkipWeekends, paramExceptionPolicy,
-	paramBlackoutDates, paramAutoGenerate, changepreview.FieldStatus, "nextOccurrenceAt",
+	paramSeriesName,
+	changepreview.FieldDescription,
+	paramSourceShipmentID,
+	changepreview.FieldCustomerID,
+	ParamCronExpression,
+	ParamTimezone,
+	changepreview.FieldRecurringStart,
+	changepreview.FieldRecurringEnd,
+	paramMaxOccurrences,
+	paramLeadTimeDays,
+	paramSkipWeekends,
+	paramExceptionPolicy,
+	paramBlackoutDates,
+	paramAutoGenerate,
+	changepreview.FieldStatus,
+	"nextOccurrenceAt",
 }
 
 var seriesEditable = []string{
-	paramSeriesName, changepreview.FieldDescription, ParamCronExpression, ParamTimezone,
-	changepreview.FieldRecurringStart, changepreview.FieldRecurringEnd, paramMaxOccurrences, paramLeadTimeDays,
-	paramSkipWeekends, paramExceptionPolicy, paramBlackoutDates, paramAutoGenerate,
+	paramSeriesName,
+	changepreview.FieldDescription,
+	ParamCronExpression,
+	ParamTimezone,
+	changepreview.FieldRecurringStart,
+	changepreview.FieldRecurringEnd,
+	paramMaxOccurrences,
+	paramLeadTimeDays,
+	paramSkipWeekends,
+	paramExceptionPolicy,
+	paramBlackoutDates,
+	paramAutoGenerate,
 }
 
 var seriesRefs = map[string]permission.Resource{
@@ -363,7 +384,10 @@ func applySeriesDays(series *recurringshipment.RecurringShipment, params map[str
 				paramBlackoutDates, len(days), recurringshipment.MaxBlackoutDates)
 		}
 		for index, day := range days {
-			if _, dayErr := time.Parse(toolparams.DayLayout, strings.TrimSpace(day)); dayErr != nil {
+			if _, dayErr := time.Parse(
+				toolparams.DayLayout,
+				strings.TrimSpace(day),
+			); dayErr != nil {
 				return fmt.Errorf("%s[%d] must be YYYY-MM-DD, got %q", paramBlackoutDates, index,
 					day)
 			}

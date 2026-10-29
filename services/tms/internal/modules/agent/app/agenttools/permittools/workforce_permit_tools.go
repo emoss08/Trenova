@@ -42,8 +42,13 @@ const maxPermitNumber = 100
 var permitStatuses = agenttoolschema.Source("permit.status", permit.StatusValues())
 
 var permitFields = []string{
-	paramStateID, paramPermitNumber, changepreview.FieldStatus, paramPermitIssued, paramPermitExpiry,
-	paramPermitCost, workforcekit.FieldNotes,
+	paramStateID,
+	paramPermitNumber,
+	changepreview.FieldStatus,
+	paramPermitIssued,
+	paramPermitExpiry,
+	paramPermitCost,
+	workforcekit.FieldNotes,
 }
 
 func PermitToolProviders() []any {

@@ -36,7 +36,9 @@ type requestMissingDocsParams struct {
 	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
-func NewRequestMissingDocsTool(p requestMissingDocsParams) agenttoolports.AgentTool {
+func NewRequestMissingDocsTool(
+	p requestMissingDocsParams, //nolint:gocritic // fx params are passed by value
+) agenttoolports.AgentTool {
 	return &RequestMissingDocsTool{
 		email:     p.Email,
 		templates: p.Templates,
@@ -123,7 +125,7 @@ func (t *RequestMissingDocsTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RequestMissingDocsTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {

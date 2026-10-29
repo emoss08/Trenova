@@ -451,29 +451,7 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 			*collectionports.AssignCollectorRequest,
 			*collectionports.AccountChangePlan,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*collectionports.AssignCollectorRequest, error) {
-				customerID, err := toolparams.RequirePulid(
-					params.Params,
-					toolparams.ParamCustomerID,
-				)
-				if err != nil {
-					return nil, err
-				}
-				req := &collectionports.AssignCollectorRequest{
-					TenantInfo: toolparams.TenantFrom(*params),
-					CustomerID: customerID,
-				}
-				collector, err := toolparams.OptionalPulidParam(params.Params, paramCollectorID)
-				if err != nil {
-					return nil, err
-				}
-				if collector != nil {
-					req.CollectorID = *collector
-				}
-				return req, nil
-			},
+			Request: assignCollectorRequest,
 			Plan: func(
 				ctx context.Context,
 				req *collectionports.AssignCollectorRequest,
@@ -521,6 +499,30 @@ func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.
 	)
 }
 
+func assignCollectorRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*collectionports.AssignCollectorRequest, error) {
+	customerID, err := toolparams.RequirePulid(
+		params.Params,
+		toolparams.ParamCustomerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req := &collectionports.AssignCollectorRequest{
+		TenantInfo: toolparams.TenantFrom(*params),
+		CustomerID: customerID,
+	}
+	collector, err := toolparams.OptionalPulidParam(params.Params, paramCollectorID)
+	if err != nil {
+		return nil, err
+	}
+	if collector != nil {
+		req.CollectorID = *collector
+	}
+	return req, nil
+}
+
 func NewScheduleCollectionFollowUpTool(
 	collections collectionports.Service,
 ) agenttoolports.AgentTool {
@@ -560,35 +562,7 @@ func NewScheduleCollectionFollowUpTool(
 			*collectionports.ScheduleFollowUpRequest,
 			*collectionports.AccountChangePlan,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*collectionports.ScheduleFollowUpRequest, error) {
-				customerID, err := toolparams.RequirePulid(
-					params.Params,
-					toolparams.ParamCustomerID,
-				)
-				if err != nil {
-					return nil, err
-				}
-				note, err := toolparams.BoundedText(
-					params.Params,
-					paramCollectionNote,
-					collection.MaxSummaryLength,
-				)
-				if err != nil {
-					return nil, err
-				}
-				followUpOn, err := optionalDayParam(params.Params, paramFollowUpOn)
-				if err != nil {
-					return nil, err
-				}
-				return &collectionports.ScheduleFollowUpRequest{
-					TenantInfo: toolparams.TenantFrom(*params),
-					CustomerID: customerID,
-					FollowUpOn: followUpOn,
-					Note:       note,
-				}, nil
-			},
+			Request: scheduleFollowUpRequest,
 			Plan: func(
 				ctx context.Context,
 				req *collectionports.ScheduleFollowUpRequest,
@@ -624,4 +598,34 @@ func NewScheduleCollectionFollowUpTool(
 			},
 		},
 	)
+}
+
+func scheduleFollowUpRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*collectionports.ScheduleFollowUpRequest, error) {
+	customerID, err := toolparams.RequirePulid(
+		params.Params,
+		toolparams.ParamCustomerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	note, err := toolparams.BoundedText(
+		params.Params,
+		paramCollectionNote,
+		collection.MaxSummaryLength,
+	)
+	if err != nil {
+		return nil, err
+	}
+	followUpOn, err := optionalDayParam(params.Params, paramFollowUpOn)
+	if err != nil {
+		return nil, err
+	}
+	return &collectionports.ScheduleFollowUpRequest{
+		TenantInfo: toolparams.TenantFrom(*params),
+		CustomerID: customerID,
+		FollowUpOn: followUpOn,
+		Note:       note,
+	}, nil
 }

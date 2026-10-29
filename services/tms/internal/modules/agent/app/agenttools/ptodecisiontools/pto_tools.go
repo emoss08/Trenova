@@ -3,6 +3,8 @@ package ptodecisiontools
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptopreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -45,20 +47,20 @@ func (t *ApproveWorkerPTOTool) SearchTerms() []string {
 
 func (t *ApproveWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			paramPTOID: agenttoolschema.RecordIDText(
 				permission.ResourceWorkerPTO,
 				ptopreview.PtoIDNote,
 			),
 			toolparams.ParamReason: map[string]any{
-				"type": "string",
-				"description": "An optional note recorded with the decision. " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "An optional note recorded with the decision. " +
 					"Leave it out unless you were given one.",
 			},
 		},
-		"required":             []string{paramPTOID},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramPTOID},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -82,13 +84,13 @@ func (t *ApproveWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ApproveWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := ptoStatusRequest(params)
+	request, err := ptoStatusRequest(&params)
 	if err != nil {
 		return err
 	}
@@ -120,20 +122,20 @@ func (t *RejectWorkerPTOTool) SearchTerms() []string {
 
 func (t *RejectWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			paramPTOID: agenttoolschema.RecordIDText(
 				permission.ResourceWorkerPTO,
 				ptopreview.PtoIDNote,
 			),
 			toolparams.ParamReason: map[string]any{
-				"type": "string",
-				"description": "Why it is being declined. Required, and shown to the " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Why it is being declined. Required, and shown to the " +
 					"worker. If nobody told you why, ask rather than guessing.",
 			},
 		},
-		"required":             []string{paramPTOID, toolparams.ParamReason},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramPTOID, toolparams.ParamReason},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -155,7 +157,7 @@ func (t *RejectWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RejectWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -195,19 +197,19 @@ func (t *CancelWorkerPTOTool) Description() string {
 
 func (t *CancelWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			paramPTOID: agenttoolschema.RecordIDText(
 				permission.ResourceWorkerPTO,
 				ptopreview.PtoIDNote,
 			),
 			toolparams.ParamReason: map[string]any{
-				"type":        "string",
-				"description": "Why it is being cancelled. Recorded with the change.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Why it is being cancelled. Recorded with the change.",
 			},
 		},
-		"required":             []string{paramPTOID, toolparams.ParamReason},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramPTOID, toolparams.ParamReason},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -230,7 +232,7 @@ func (t *CancelWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -259,7 +261,7 @@ func ptoDecisionRequest(
 		return nil, err
 	}
 
-	request, err := ptoStatusRequest(*params)
+	request, err := ptoStatusRequest(params)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +280,7 @@ func ptoDecisionRequest(
 // to know a version. Leaving it out is the honest thing; inventing one would
 // defeat the concurrency check it exists to run.
 func ptoStatusRequest(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*workerptoports.UpdatePTOStatusRequest, error) {
 	id, err := toolparams.RequirePulid(params.Params, paramPTOID)
 	if err != nil {
@@ -287,7 +289,7 @@ func ptoStatusRequest(
 
 	return &workerptoports.UpdatePTOStatusRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Reason:     toolparams.OptionalString(params.Params, toolparams.ParamReason),
 	}, nil

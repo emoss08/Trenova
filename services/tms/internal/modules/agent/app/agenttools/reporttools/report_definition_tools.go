@@ -58,8 +58,8 @@ type reportDefinitionWriter interface {
 	NewCannedFork(entry *canned.Entry, req *reporting.ForkCannedRequest) *report.ReportDefinition
 }
 
-func reportingRequestFrom(params agenttoolports.ToolExecuteParams) reporting.Request {
-	tenant := toolparams.TenantFrom(params)
+func reportingRequestFrom(params *agenttoolports.ToolExecuteParams) reporting.Request {
+	tenant := toolparams.TenantFrom(*params)
 	tenant.UserID = params.Actor.PersonUserID()
 
 	return reporting.Request{
@@ -346,7 +346,7 @@ func (t *CreateReportTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CreateReportTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -359,9 +359,9 @@ func (t *CreateReportTool) Execute(
 // person approved it.
 func (t *CreateReportTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	save, err := t.prepare(params)
+	save, err := t.prepare(&params)
 	if err != nil {
 		return err
 	}
@@ -370,9 +370,9 @@ func (t *CreateReportTool) Validate(
 }
 
 func (t *CreateReportTool) prepare(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -474,9 +474,9 @@ func (t *UpdateReportTool) Target(params map[string]any) (agenttoolports.ToolTar
 
 func (t *UpdateReportTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	save, _, err := t.prepare(ctx, params)
+	save, _, err := t.prepare(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -491,9 +491,9 @@ func (t *UpdateReportTool) Execute(
 // to approve it.
 func (t *UpdateReportTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	save, _, err := t.prepare(ctx, params)
+	save, _, err := t.prepare(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -506,9 +506,9 @@ func (t *UpdateReportTool) Validate(
 
 func (t *UpdateReportTool) prepare(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, *report.ReportDefinition, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 
@@ -680,7 +680,7 @@ func (t *ForkReportTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ForkReportTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -691,7 +691,7 @@ func (t *ForkReportTool) Execute(
 // report_get, report_run and report_update take.
 func (t *ForkReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err

@@ -39,9 +39,19 @@ const paramRenew = "renew"
 const kindCredential = "credential"
 
 var credentialFields = []string{
-	workforcekit.FieldWorkerID, paramCredentialTypeID, changepreview.FieldStatus, paramCredentialNumber,
-	paramIssuingAuthority, paramIssuedAt, paramExpiresAt, workforcekit.FieldDocument, workforcekit.FieldNotes,
-	"verifiedById", "verifiedAt", "archivedAt", "archiveReason",
+	workforcekit.FieldWorkerID,
+	paramCredentialTypeID,
+	changepreview.FieldStatus,
+	paramCredentialNumber,
+	paramIssuingAuthority,
+	paramIssuedAt,
+	paramExpiresAt,
+	workforcekit.FieldDocument,
+	workforcekit.FieldNotes,
+	"verifiedById",
+	"verifiedAt",
+	"archivedAt",
+	"archiveReason",
 }
 
 type CredentialKeeper interface {

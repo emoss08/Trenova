@@ -180,7 +180,7 @@ type fakeRecurringBook struct {
 	updated  *recurringpay.RecurringDeduction
 }
 
-func (f *fakeRecurringBook) get(
+func (f *fakeRecurringBook) Get(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
@@ -188,7 +188,7 @@ func (f *fakeRecurringBook) get(
 	return f.existing, nil
 }
 
-func (f *fakeRecurringBook) check(
+func (f *fakeRecurringBook) Check(
 	_ context.Context,
 	_ *recurringpay.RecurringDeduction,
 	escrow bool,
@@ -198,7 +198,7 @@ func (f *fakeRecurringBook) check(
 	return f.refusal
 }
 
-func (f *fakeRecurringBook) create(
+func (f *fakeRecurringBook) Create(
 	_ context.Context,
 	entity *recurringpay.RecurringDeduction,
 	_ bool,
@@ -209,7 +209,7 @@ func (f *fakeRecurringBook) create(
 	return entity, nil
 }
 
-func (f *fakeRecurringBook) update(
+func (f *fakeRecurringBook) Update(
 	_ context.Context,
 	entity *recurringpay.RecurringDeduction,
 	_ *permissionports.RequestActor,
