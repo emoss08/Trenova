@@ -64,21 +64,35 @@ func TestExpectedFunding(t *testing.T) {
 	}
 }
 
-func TestExpectedFundingNeverPaysOutMoreThanTheFace(t *testing.T) {
+func TestExpectedFundingAtTheRateLimit(t *testing.T) {
 	t.Parallel()
 
 	agreement := validAgreement()
-	agreement.AdvanceRateBP = 9500
+	agreement.AdvanceRateBP = 9400
 	agreement.ReserveRateBP = 300
 	agreement.FeeTiers = []*factoring.FeeTier{
 		{DaysFrom: 0, DaysTo: intPtr(75), RateBP: 425},
 		{DaysFrom: 75, RateBP: 600},
 	}
-	got := factoring.ExpectedFunding(200000, agreement, 88)
 	assert.Equal(t, factoring.Funding{
 		FaceMinor: 200000, AdvanceMinor: 188000, FeeMinor: 12000,
 		ReserveMinor: 6000, RestOnReleaseMinor: 0, Days: 88, FeeRateBP: 600,
-	}, got)
+	}, factoring.ExpectedFunding(200000, agreement, 88))
+	assert.Equal(t, factoring.Funding{
+		FaceMinor: 25, AdvanceMinor: 23, FeeMinor: 2,
+		ReserveMinor: 1, RestOnReleaseMinor: 0, Days: 88, FeeRateBP: 600,
+	}, factoring.ExpectedFunding(25, agreement, 88), "both rates round up; the advance gives way")
+}
+
+func TestExpectedFundingFlatFeeOnASmallInvoice(t *testing.T) {
+	t.Parallel()
+
+	agreement := validAgreement()
+	agreement.FeeTiers = []*factoring.FeeTier{{DaysFrom: 0, RateBP: 300, FlatMinor: 2500}}
+	assert.Equal(t, factoring.Funding{
+		FaceMinor: 20000, AdvanceMinor: 16900, FeeMinor: 3100,
+		ReserveMinor: 2000, RestOnReleaseMinor: 0, Days: 5, FeeRateBP: 300,
+	}, factoring.ExpectedFunding(20000, agreement, 5))
 }
 
 func TestExpectedFundingWithoutAgreement(t *testing.T) {
