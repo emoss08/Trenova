@@ -22,7 +22,7 @@ func DeskStrata() map[string]evalsplit.Stratum {
 	slices.SortFunc(templates, func(a, b agenttemplate.Template) int {
 		return cmp.Or(
 			cmp.Compare(len(agentpreset.StarterTools(a)), len(agentpreset.StarterTools(b))),
-			cmp.Compare(agenttemplate.Label(a), agenttemplate.Label(b)),
+			cmp.Compare(a.Label(), b.Label()),
 		)
 	})
 
@@ -34,7 +34,7 @@ func DeskStrata() map[string]evalsplit.Stratum {
 		}
 		for _, name := range agentpreset.StarterTools(template) {
 			if _, held := strata[name]; !held {
-				strata[name] = evalsplit.Stratum{Desk: agenttemplate.Label(template), Mode: mode}
+				strata[name] = evalsplit.Stratum{Desk: template.Label(), Mode: mode}
 			}
 		}
 	}

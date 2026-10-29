@@ -99,51 +99,51 @@ func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
 			t,
 			agentdefinition.TriggerChat,
 			agentpreset.StarterTrigger(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
-		require.Empty(t, agentpreset.StarterEvents(template), agenttemplate.Label(template))
-		require.Empty(t, agentpreset.StarterCron(template), agenttemplate.Label(template))
+		require.Empty(t, agentpreset.StarterEvents(template), template.Label())
+		require.Empty(t, agentpreset.StarterCron(template), template.Label())
 		require.Equal(
 			t,
 			agent.TierPropose,
 			agentpreset.StarterCeiling(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 		require.Equal(
 			t,
 			want.dataAccess,
 			agentpreset.StarterDataAccess(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
-		require.False(t, agentpreset.StarterShadow(template), agenttemplate.Label(template))
-		require.Zero(t, agentpreset.StarterDailyRunLimit(template), agenttemplate.Label(template))
-		require.NotEmpty(t, agenttemplate.Description(template), agenttemplate.Label(template))
+		require.False(t, agentpreset.StarterShadow(template), template.Label())
+		require.Zero(t, agentpreset.StarterDailyRunLimit(template), template.Label())
+		require.NotEmpty(t, template.Description(), template.Label())
 		require.NotEmpty(
 			t,
 			agentinstructions.StarterInstructions(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 		require.Equal(t,
 			want.icon,
 			(&agentdefinition.Definition{Template: template}).ChosenIcon(),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 
 	require.Equal(
 		t,
 		"Master data steward",
-		agenttemplate.Label(agenttemplate.TemplateMasterDataSteward),
+		agenttemplate.TemplateMasterDataSteward.Label(),
 	)
 	require.Equal(t,
-		"Workforce coordinator", agenttemplate.Label(agenttemplate.TemplateWorkforceCoordinator),
+		"Workforce coordinator", agenttemplate.TemplateWorkforceCoordinator.Label(),
 	)
 	require.Equal(
 		t,
 		"Fuel and IFTA clerk",
-		agenttemplate.Label(agenttemplate.TemplateFuelTaxClerk),
+		agenttemplate.TemplateFuelTaxClerk.Label(),
 	)
-	require.Equal(t, "Report analyst", agenttemplate.Label(agenttemplate.TemplateReportAnalyst))
+	require.Equal(t, "Report analyst", agenttemplate.TemplateReportAnalyst.Label())
 }
 
 func TestTemplates_TheMasterDataStewardKeepsTheRecordsEveryoneWorksFrom(t *testing.T) {
@@ -259,7 +259,7 @@ func TestTemplates_WithholdWhatNoAgentShouldHold(t *testing.T) {
 		tools := agentpreset.StarterTools(template)
 		for tool, why := range withheldFromEveryTemplate {
 			require.NotContainsf(t, tools, tool, "%s must not hold %s: %s",
-				agenttemplate.Label(template), tool, why)
+				template.Label(), tool, why)
 		}
 	}
 }

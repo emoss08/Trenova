@@ -54,6 +54,18 @@ var messageFields = map[string]struct{}{
 	"UnavailableReason":        {},
 }
 
+var nonMessageTypes = map[string]struct{}{
+	"masterdatakit.CreateSpec":                {},
+	"masterdatakit.UpdateSpec":                {},
+	"masterdatakit.StatusSpec":                {},
+	"listtool.Spec":                           {},
+	"readspec.Get":                            {},
+	"readspec.List":                           {},
+	"ediconnectionfield.Spec":                 {},
+	"agentaccess.PageSubject":                 {},
+	"carrierintelservice.NotificationRequest": {},
+}
+
 var labelMethods = map[string]struct{}{
 	"Label":       {},
 	"DisplayName": {},
@@ -64,6 +76,7 @@ var noMessage = map[string]struct{}{
 	"NewMultiErrorWithLimit":            {},
 	"NewError":                          {},
 	"NewRequestTimeoutError":            {},
+	"NewTransportError":                 {},
 	"NewEditConflictError":              {},
 	"NewRequestTooLargeError":           {},
 	"NewResolveError":                   {},
@@ -152,6 +165,12 @@ type extractor struct {
 	dynamic  []site
 }
 
+type fileScope struct {
+	pkg       string
+	elided    map[*ast.CompositeLit]string
+	nonFields map[*ast.KeyValueExpr]struct{}
+}
+
 func (e *extractor) walkDir(root string) error {
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -160,6 +179,9 @@ func (e *extractor) walkDir(root string) error {
 		if d.IsDir() {
 			switch d.Name() {
 			case "node_modules", "testdata", ".git", "vendor", "mocks", "seeds", "deskbench":
+				return filepath.SkipDir
+			}
+			if isTestSupportDir(d.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -223,6 +245,11 @@ func (e *extractor) parseFile(path string) error {
 
 	discarded := discardedCalls(file)
 	inI18n := file.Name.Name == "i18n"
+	scope := &fileScope{
+		pkg:       file.Name.Name,
+		elided:    map[*ast.CompositeLit]string{},
+		nonFields: map[*ast.KeyValueExpr]struct{}{},
+	}
 
 	rel, err := filepath.Rel(e.repoRoot, path)
 	if err != nil {
@@ -236,11 +263,14 @@ func (e *extractor) parseFile(path string) error {
 		}
 
 		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
-			e.recordStructField(kv, rel)
+			if _, skip := scope.nonFields[kv]; !skip {
+				e.recordStructField(kv, rel)
+			}
 			return true
 		}
 
 		if lit, isLit := n.(*ast.CompositeLit); isLit {
+			scope.markNonMessageFields(lit)
 			e.recordRulesMessage(lit, rel)
 			return true
 		}
@@ -332,6 +362,61 @@ func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 		return true
 	})
 	return discarded
+}
+
+func isTestSupportDir(name string) bool {
+	return strings.HasSuffix(name, "test")
+}
+
+func (s *fileScope) markNonMessageFields(lit *ast.CompositeLit) {
+	litType := s.elided[lit]
+	if lit.Type != nil {
+		litType = s.typeKey(lit.Type)
+	}
+	if _, skip := nonMessageTypes[litType]; skip {
+		for _, elt := range lit.Elts {
+			if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+				s.nonFields[kv] = struct{}{}
+			}
+		}
+	}
+
+	var element ast.Expr
+	switch t := lit.Type.(type) {
+	case *ast.ArrayType:
+		element = t.Elt
+	case *ast.MapType:
+		element = t.Value
+	default:
+		return
+	}
+	elementType := s.typeKey(element)
+	for _, elt := range lit.Elts {
+		if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+			elt = kv.Value
+		}
+		if child, isLit := elt.(*ast.CompositeLit); isLit && child.Type == nil {
+			s.elided[child] = elementType
+		}
+	}
+}
+
+func (s *fileScope) typeKey(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return s.pkg + "." + t.Name
+	case *ast.SelectorExpr:
+		if pkg, isIdent := t.X.(*ast.Ident); isIdent {
+			return pkg.Name + "." + t.Sel.Name
+		}
+	case *ast.StarExpr:
+		return s.typeKey(t.X)
+	case *ast.IndexExpr:
+		return s.typeKey(t.X)
+	case *ast.IndexListExpr:
+		return s.typeKey(t.X)
+	}
+	return ""
 }
 
 func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {

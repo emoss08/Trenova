@@ -15301,8 +15301,6 @@ github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.MaxTest
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TestPrompt	github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt.TestPrompt
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TestPromptIDPrefix	github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt.TestPromptIDPrefix
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.AllTemplates	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.AllTemplates
-github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Description	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.Description
-github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Label	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.Label
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Template	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.Template
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TemplateBillingAssistant	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.TemplateBillingAssistant
 github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TemplateBillingException	github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.TemplateBillingException

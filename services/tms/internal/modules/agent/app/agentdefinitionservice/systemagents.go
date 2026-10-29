@@ -69,7 +69,7 @@ func (s *Service) EnsureSystem(
 	return nil, errortypes.NewBusinessError(
 		"{0} could not be set up because other agents already use its name. Rename the agent "+
 			"called {0} in AI Control and try again.",
-		agenttemplate.Label(template),
+		template.Label(),
 	)
 }
 
@@ -100,11 +100,11 @@ func (s *Service) systemAgent(
 func systemAgentName(template agenttemplate.Template, attempt int) string {
 	switch attempt {
 	case 0:
-		return agenttemplate.Label(template)
+		return template.Label()
 	case 1:
-		return agenttemplate.Label(template) + " (built-in)"
+		return template.Label() + " (built-in)"
 	default:
-		return agenttemplate.Label(template) + " (built-in " + strconv.Itoa(attempt) + ")"
+		return template.Label() + " (built-in " + strconv.Itoa(attempt) + ")"
 	}
 }
 

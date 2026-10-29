@@ -157,7 +157,7 @@ func TestBuildSystemPrompt_TeachesTheDomainOnceInTheCachedPart(t *testing.T) {
 }
 
 func snapshotlessDefinition(template agenttemplate.Template) *agentdefinition.Definition {
-	d := definitionWithInstructions(agenttemplate.Description(template))
+	d := definitionWithInstructions(template.Description())
 	d.Template = template
 
 	return d

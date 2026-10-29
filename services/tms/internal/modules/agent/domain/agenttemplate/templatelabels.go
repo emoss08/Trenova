@@ -1,6 +1,6 @@
 package agenttemplate
 
-func Label(t Template) string {
+func (t Template) Label() string {
 	switch t {
 	case TemplateDispatchAssistant:
 		return "Dispatch assistant"
@@ -65,7 +65,7 @@ func Label(t Template) string {
 	}
 }
 
-func Description(t Template) string {
+func (t Template) Description() string {
 	switch t {
 	case TemplateDispatchAssistant:
 		return "Answers questions and acts on shipments, moves, drivers, and equipment."

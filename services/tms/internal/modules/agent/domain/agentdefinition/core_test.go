@@ -97,7 +97,7 @@ func TestTemplates_ListNoCoreTool(t *testing.T) {
 	for _, template := range agenttemplate.AllTemplates() {
 		for _, tool := range agentpreset.StarterTools(template) {
 			assert.Falsef(t, agentdefinition.IsCoreTool(tool),
-				"%s lists the core tool %s", agenttemplate.Label(template), tool)
+				"%s lists the core tool %s", template.Label(), tool)
 		}
 	}
 }

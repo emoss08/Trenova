@@ -127,7 +127,7 @@ func TestEnsureSystem_CreatesTheAgentFromItsTemplateOnce(t *testing.T) {
 	require.Len(t, audit.entries, 1, "the first use is audited, later ones are reads")
 
 	template := agenttemplate.TemplateImportAssistant
-	assert.Equal(t, agenttemplate.Label(template), first.Name)
+	assert.Equal(t, template.Label(), first.Name)
 	assert.Equal(t, template, first.Template)
 	assert.Equal(t, agentpreset.StarterTools(template), first.ToolNames)
 	assert.Equal(t, agentinstructions.StarterInstructions(template), first.Instructions)
@@ -181,7 +181,7 @@ func TestEnsureSystem_ConcurrentFirstUsesShareOneAgent(t *testing.T) {
 func TestEnsureSystem_TakesAnotherNameWhenOneIsInUse(t *testing.T) {
 	t.Parallel()
 
-	label := agenttemplate.Label(agenttemplate.TemplateFormulaAssistant)
+	label := agenttemplate.TemplateFormulaAssistant.Label()
 	store := newSystemStore(label)
 	s := &Service{l: zap.NewNop(), repo: store, audit: &auditLog{}}
 

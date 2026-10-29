@@ -19,7 +19,7 @@ func TestEveryStarterToolIsInTheCatalog(t *testing.T) {
 			assert.Truef(t, query || action,
 				"the %s starter lists %s, which no registered tool answers to, so an agent "+
 					"made from it silently goes without",
-				agenttemplate.Label(template), name,
+				template.Label(), name,
 			)
 		}
 	}

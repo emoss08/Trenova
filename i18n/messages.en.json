@@ -12366,15 +12366,6 @@
       "apps/web/components"
     ]
   },
-  "A stub money write within its bounds.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A subject id needs its type": {
     "sites": 1,
     "scope": [
@@ -112722,15 +112713,6 @@
       "go/other"
     ]
   },
-  "Formula template not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Formula template stats loader is not configured": {
     "sites": 1,
     "scope": [
@@ -127605,14 +127587,12 @@
     ]
   },
   "Insurance": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other",
       "routes/desk"
     ]
   },
@@ -140214,7 +140194,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 13,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -200518,15 +200498,6 @@
       "go/other"
     ]
   },
-  "Private conversation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Private key": {
     "sites": 6,
     "scope": [
@@ -216963,15 +216934,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Renew your CDL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Renew {0}": {
@@ -240163,15 +240125,6 @@
       "routes/service-type"
     ]
   },
-  "ServiceFailure not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Serving": {
     "sites": 1,
     "scope": [
@@ -244428,15 +244381,6 @@
     ]
   },
   "Shipper Customer": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Shipper closed early": {
     "sites": 1,
     "scope": [
       "go"
@@ -260386,12 +260330,11 @@
     ]
   },
   "That plan was not raised in one of your conversations": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql",
       "go/other"
     ]
   },
@@ -260468,12 +260411,11 @@
     ]
   },
   "That proposal was not raised in one of your conversations": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql",
       "go/other"
     ]
   },
@@ -353860,7 +353802,7 @@
     ]
   },
   "{0} requires an authenticated user": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],

@@ -274,7 +274,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentSettlementsName,
 			Icon:           agentmark.IconBanknote,
 			Accent:         agentmark.AccentEmeral,
-			Description:    agenttemplate.Description(agenttemplate.TemplateSettlementsClerk),
+			Description:    agenttemplate.TemplateSettlementsClerk.Description(),
 			Template:       agenttemplate.TemplateSettlementsClerk,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateSettlementsClerk,
@@ -303,7 +303,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentReceivablesName,
 			Icon:           agentmark.IconCoins,
 			Accent:         agentmark.AccentSky,
-			Description:    agenttemplate.Description(agenttemplate.TemplateReceivables),
+			Description:    agenttemplate.TemplateReceivables.Description(),
 			Template:       agenttemplate.TemplateReceivables,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateReceivables,
@@ -328,7 +328,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentMasterDataName,
 			Icon:           agentmark.IconFile,
 			Accent:         agentmark.AccentSlate,
-			Description:    agenttemplate.Description(agenttemplate.TemplateMasterDataSteward),
+			Description:    agenttemplate.TemplateMasterDataSteward.Description(),
 			Template:       agenttemplate.TemplateMasterDataSteward,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateMasterDataSteward,
@@ -359,10 +359,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentWorkforceName,
 			Icon:           agentmark.IconClipboard,
 			Accent:         agentmark.AccentViolet,
-			Description: agenttemplate.Description(
-				agenttemplate.TemplateWorkforceCoordinator,
-			),
-			Template: agenttemplate.TemplateWorkforceCoordinator,
+			Description:    agenttemplate.TemplateWorkforceCoordinator.Description(),
+			Template:       agenttemplate.TemplateWorkforceCoordinator,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateWorkforceCoordinator,
 			),
@@ -392,7 +390,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentFuelTaxName,
 			Icon:           agentmark.IconGauge,
 			Accent:         agentmark.AccentAmber,
-			Description:    agenttemplate.Description(agenttemplate.TemplateFuelTaxClerk),
+			Description:    agenttemplate.TemplateFuelTaxClerk.Description(),
 			Template:       agenttemplate.TemplateFuelTaxClerk,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateFuelTaxClerk,
@@ -419,7 +417,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentReportName,
 			Icon:           agentmark.IconCompass,
 			Accent:         agentmark.AccentIndigo,
-			Description:    agenttemplate.Description(agenttemplate.TemplateReportAnalyst),
+			Description:    agenttemplate.TemplateReportAnalyst.Description(),
 			Template:       agenttemplate.TemplateReportAnalyst,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateReportAnalyst,
@@ -568,7 +566,7 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Name:           SeedAgentIntakeDeskName,
 			Icon:           agentmark.IconInbox,
 			Accent:         agentmark.AccentViolet,
-			Description:    agenttemplate.Description(agenttemplate.TemplateIntakeDesk),
+			Description:    agenttemplate.TemplateIntakeDesk.Description(),
 			Template:       agenttemplate.TemplateIntakeDesk,
 			Instructions: agentinstructions.StarterInstructions(
 				agenttemplate.TemplateIntakeDesk,
@@ -626,10 +624,10 @@ func watchtowerDesk(
 	return &agentdefinition.Definition{
 		OrganizationID:  orgID,
 		BusinessUnitID:  buID,
-		Name:            agenttemplate.Label(template),
+		Name:            template.Label(),
 		Icon:            icon,
 		Accent:          accent,
-		Description:     agenttemplate.Description(template),
+		Description:     template.Description(),
 		Template:        template,
 		Instructions:    agentinstructions.StarterInstructions(template),
 		ToolNames:       agentpreset.StarterTools(template),

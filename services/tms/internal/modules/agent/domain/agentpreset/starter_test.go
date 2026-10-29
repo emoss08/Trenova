@@ -29,8 +29,8 @@ func starterDefinition(template agenttemplate.Template) *agentdefinition.Definit
 	return &agentdefinition.Definition{
 		OrganizationID:  pulid.MustNew("org_"),
 		BusinessUnitID:  pulid.MustNew("bu_"),
-		Name:            agenttemplate.Label(template),
-		Description:     agenttemplate.Description(template),
+		Name:            template.Label(),
+		Description:     template.Description(),
 		Template:        template,
 		Instructions:    agentinstructions.StarterInstructions(template),
 		ToolNames:       agentpreset.StarterTools(template),
@@ -60,7 +60,7 @@ func TestTemplates_EveryStarterSavesAsItStands(t *testing.T) {
 			multiErr := errortypes.NewMultiError()
 			definition.Validate(multiErr)
 			require.Falsef(t, multiErr.HasErrors(),
-				"the %s starter does not validate: %v", agenttemplate.Label(template), multiErr,
+				"the %s starter does not validate: %v", template.Label(), multiErr,
 			)
 		})
 	}
@@ -78,23 +78,23 @@ func TestTemplates_TriggersCarryWhatDrivesThem(t *testing.T) {
 			switch agentpreset.StarterTrigger(template) {
 			case agentdefinition.TriggerEvent:
 				require.NotEmptyf(t, agentpreset.StarterEvents(template),
-					"%s is event-triggered with no events", agenttemplate.Label(template),
+					"%s is event-triggered with no events", template.Label(),
 				)
 				for _, kind := range agentpreset.StarterEvents(template) {
 					require.Truef(t, kind.IsValid(),
-						"%s waits on %q, which nothing raises", agenttemplate.Label(template), kind,
+						"%s waits on %q, which nothing raises", template.Label(), kind,
 					)
 				}
 				require.Emptyf(t, agentpreset.StarterCron(template),
-					"%s is event-triggered and also carries a cron", agenttemplate.Label(template),
+					"%s is event-triggered and also carries a cron", template.Label(),
 				)
 			case agentdefinition.TriggerScheduled:
 				require.NotEmptyf(t, agentpreset.StarterCron(template),
-					"%s is scheduled with no cron", agenttemplate.Label(template),
+					"%s is scheduled with no cron", template.Label(),
 				)
 			case agentdefinition.TriggerChat, agentdefinition.TriggerContinuous:
 				require.Emptyf(t, agentpreset.StarterEvents(template),
-					"%s is not event-triggered but lists events", agenttemplate.Label(template),
+					"%s is not event-triggered but lists events", template.Label(),
 				)
 			}
 		})
@@ -117,7 +117,7 @@ func TestTemplates_OutwardFacingDesksStartAtPropose(t *testing.T) {
 			t,
 			agent.TierPropose,
 			agentpreset.StarterCeiling(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 }
@@ -172,7 +172,7 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 			t,
 			kinds,
 			agentpreset.StarterEvents(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 }
@@ -324,7 +324,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 	for _, tc := range cases {
 		tools := agentpreset.StarterTools(tc.template)
 		for _, tool := range tc.needs {
-			require.Containsf(t, tools, tool, "%s needs %s", agenttemplate.Label(tc.template), tool)
+			require.Containsf(t, tools, tool, "%s needs %s", tc.template.Label(), tool)
 		}
 		for _, tool := range tc.never {
 			require.NotContainsf(
@@ -332,7 +332,7 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 				tools,
 				tool,
 				"%s must not hold %s",
-				agenttemplate.Label(tc.template),
+				tc.template.Label(),
 				tool,
 			)
 		}
@@ -361,7 +361,7 @@ func TestTemplates_TheInsightAnalystIsCappedAtTwentyRunsADay(t *testing.T) {
 			t,
 			agentpreset.StarterDailyRunLimit(template),
 			"%s",
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 }
@@ -385,7 +385,7 @@ func TestTemplates_DataAccessFollowsWhatEachDeskReads(t *testing.T) {
 			want,
 			agentpreset.StarterDataAccess(template),
 			"%s",
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 }
@@ -406,7 +406,7 @@ func TestTemplates_StandingToolsAreTheTemplatesOwnTools(t *testing.T) {
 	for _, template := range agenttemplate.AllTemplates() {
 		standing := agentpreset.StandingTools(template)
 		if template != agenttemplate.TemplateFormulaAssistant {
-			require.Emptyf(t, standing, "%s", agenttemplate.Label(template))
+			require.Emptyf(t, standing, "%s", template.Label())
 			continue
 		}
 		require.Contains(t, standing, "formula_propose")
@@ -434,7 +434,7 @@ func TestTemplates_InstructionsLeaveTheOrderOfWorkToTheTools(t *testing.T) {
 			}
 			require.NotContainsf(t, instructions, tool,
 				"the %s instructions name %s; say it on the tool's recipe instead",
-				agenttemplate.Label(template), tool)
+				template.Label(), tool)
 		}
 	}
 }

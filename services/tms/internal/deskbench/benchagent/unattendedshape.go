@@ -49,13 +49,13 @@ func UnattendedTemplates() []agenttemplate.Template {
 }
 
 func UnattendedAgentName(template agenttemplate.Template) string {
-	return BenchAgentPrefix + agenttemplate.Label(template) + unattendedSuffix
+	return BenchAgentPrefix + template.Label() + unattendedSuffix
 }
 
 func UnattendedShape(template agenttemplate.Template) *agentdefinition.Definition {
 	definition := &agentdefinition.Definition{
 		Name:              UnattendedAgentName(template),
-		Description:       agenttemplate.Description(template),
+		Description:       template.Description(),
 		Template:          template,
 		Instructions:      agentinstructions.StarterInstructions(template),
 		ToolNames:         agentdefinition.WithoutCoreTools(agentpreset.StarterTools(template)),

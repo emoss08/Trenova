@@ -329,8 +329,8 @@ func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
 	for _, template := range templates {
 		descriptors = append(descriptors, agentdefinitionports.AgentTemplateDescriptor{
 			Template:             template,
-			Label:                agenttemplate.Label(template),
-			Description:          agenttemplate.Description(template),
+			Label:                template.Label(),
+			Description:          template.Description(),
 			StarterInstructions:  agentinstructions.StarterInstructions(template),
 			StarterTools:         registeredStarterTools(template, s.tools, s.queryTools),
 			StarterTrigger:       agentpreset.StarterTrigger(template),

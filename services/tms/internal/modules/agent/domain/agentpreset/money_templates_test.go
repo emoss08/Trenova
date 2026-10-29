@@ -31,9 +31,9 @@ func TestTemplates_LeaveRoomForAnOrganizationsOwnTools(t *testing.T) {
 			),
 			agentdefinition.MaxTools-templateToolHeadroom,
 			"%s holds %d tools, leaving fewer than %d of the %d an agent may hold",
-			agenttemplate.Label(
-				template,
-			),
+
+			template.Label(),
+
 			len(agentpreset.StarterTools(template)),
 			templateToolHeadroom,
 			agentdefinition.MaxTools,
@@ -54,28 +54,28 @@ func TestTemplates_TheMoneyAssistantsTalkToAPersonAndActAsThem(t *testing.T) {
 			t,
 			agentdefinition.TriggerChat,
 			agentpreset.StarterTrigger(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
-		require.Empty(t, agentpreset.StarterEvents(template), agenttemplate.Label(template))
-		require.Empty(t, agentpreset.StarterCron(template), agenttemplate.Label(template))
+		require.Empty(t, agentpreset.StarterEvents(template), template.Label())
+		require.Empty(t, agentpreset.StarterCron(template), template.Label())
 		require.Equal(
 			t,
 			agent.TierActWithApproval,
 			agentpreset.StarterCeiling(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 		require.Equal(
 			t,
 			agentdefinition.DataAccessRestricted,
 			agentpreset.StarterDataAccess(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
-		require.False(t, agentpreset.StarterShadow(template), agenttemplate.Label(template))
-		require.NotEmpty(t, agenttemplate.Description(template), agenttemplate.Label(template))
+		require.False(t, agentpreset.StarterShadow(template), template.Label())
+		require.NotEmpty(t, template.Description(), template.Label())
 		require.NotEmpty(
 			t,
 			agentinstructions.StarterInstructions(template),
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 }
@@ -295,7 +295,7 @@ func TestTemplates_EveryTemplateImpliesAnIcon(t *testing.T) {
 			t,
 			definition.ChosenIcon(),
 			"%s implies no icon",
-			agenttemplate.Label(template),
+			template.Label(),
 		)
 	}
 

@@ -79,8 +79,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 		{
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
-			Name:            agenttemplate.Label(billing),
-			Description:     agenttemplate.Description(billing),
+			Name:            billing.Label(),
+			Description:     billing.Description(),
 			Template:        billing,
 			Icon:            agentmark.IconReceipt,
 			Accent:          agentmark.AccentAmber,
@@ -103,8 +103,8 @@ func SystemAgentDefinitions(orgID, buID pulid.ID) []*agentdefinition.Definition 
 		{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Name:           agenttemplate.Label(dispatch),
-			Description:    agenttemplate.Description(dispatch),
+			Name:           dispatch.Label(),
+			Description:    dispatch.Description(),
 			Template:       dispatch,
 			Icon:           agentmark.IconRoute,
 			Accent:         agentmark.AccentIndigo,

@@ -408,8 +408,8 @@ func TestTemplates_DescribeEveryStarter(t *testing.T) {
 
 	for _, template := range agenttemplate.AllTemplates() {
 		assert.True(t, template.IsValid())
-		assert.NotEmpty(t, agenttemplate.Label(template))
-		assert.NotEmpty(t, agenttemplate.Description(template))
+		assert.NotEmpty(t, template.Label())
+		assert.NotEmpty(t, template.Description())
 		assert.NotEmpty(t, agentinstructions.StarterInstructions(template))
 		assert.True(t, agentpreset.StarterTrigger(template).IsValid())
 	}
@@ -517,9 +517,9 @@ func TestTemplates_StarterToolsAreWellFormed(t *testing.T) {
 	for _, template := range agenttemplate.AllTemplates() {
 		seen := make(map[string]struct{})
 		for _, tool := range agentpreset.StarterTools(template) {
-			assert.NotEmpty(t, tool, agenttemplate.Label(template))
+			assert.NotEmpty(t, tool, template.Label())
 			_, duplicate := seen[tool]
-			assert.False(t, duplicate, "%s lists %q twice", agenttemplate.Label(template), tool)
+			assert.False(t, duplicate, "%s lists %q twice", template.Label(), tool)
 			seen[tool] = struct{}{}
 		}
 	}

@@ -3,7 +3,6 @@ package agentpreset
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -21,7 +20,7 @@ func NewPageAgent(
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		Name:              name,
-		Description:       agenttemplate.Description(template),
+		Description:       template.Description(),
 		Template:          template,
 		Icon:              agentdefinition.TemplateIcon(template),
 		Instructions:      agentinstructions.StarterInstructions(template),
