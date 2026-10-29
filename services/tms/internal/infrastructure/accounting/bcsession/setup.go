@@ -1,4 +1,4 @@
-package bcconnector
+package bcsession
 
 import (
 	"context"
@@ -23,17 +23,17 @@ type cachedSetup struct {
 	loadedAt time.Time
 }
 
-type postingSetups struct {
+type PostingSetups struct {
 	now       func() time.Time
 	mu        sync.Mutex
 	byCompany map[string]*cachedSetup
 }
 
-func newPostingSetups(now func() time.Time) *postingSetups {
-	return &postingSetups{now: now, byCompany: make(map[string]*cachedSetup)}
+func NewPostingSetups(now func() time.Time) *PostingSetups {
+	return &PostingSetups{now: now, byCompany: make(map[string]*cachedSetup)}
 }
 
-func (s *postingSetups) store(company string, setup *businesscentral.GeneralLedgerSetup) {
+func (s *PostingSetups) Store(company string, setup *businesscentral.GeneralLedgerSetup) {
 	if company == "" || setup == nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (s *postingSetups) store(company string, setup *businesscentral.GeneralLedg
 	s.byCompany[company] = &cachedSetup{setup: *setup, loadedAt: s.now()}
 }
 
-func (s *postingSetups) cached(company string) (businesscentral.GeneralLedgerSetup, bool) {
+func (s *PostingSetups) cached(company string) (businesscentral.GeneralLedgerSetup, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	entry, ok := s.byCompany[company]
@@ -55,7 +55,7 @@ func (s *postingSetups) cached(company string) (businesscentral.GeneralLedgerSet
 	return entry.setup, true
 }
 
-func (s *postingSetups) get(
+func (s *PostingSetups) get(
 	ctx context.Context,
 	client *businesscentral.Client,
 ) (*businesscentral.GeneralLedgerSetup, error) {
@@ -67,7 +67,7 @@ func (s *postingSetups) get(
 	if err != nil {
 		return nil, err
 	}
-	s.store(company, setup)
+	s.Store(company, setup)
 	return setup, nil
 }
 
@@ -85,13 +85,13 @@ func checkPostingDate(setup *businesscentral.GeneralLedgerSetup, date string) er
 	return &accountingsync.SyncError{
 		Category: accountingsync.SyncErrorClosedPeriod,
 		Code:     closedPeriodCode,
-		Message: "The date " + date + " is outside the posting dates " + providerName +
+		Message: "The date " + date + " is outside the posting dates " + ProviderName +
 			" allows",
 		Resolution: closedPeriodResolved,
 	}
 }
 
-func documentCurrency(setup *businesscentral.GeneralLedgerSetup, code string) string {
+func DocumentCurrency(setup *businesscentral.GeneralLedgerSetup, code string) string {
 	value := strings.ToUpper(strings.TrimSpace(code))
 	if value == "" || value == setup.LocalCurrencyCode {
 		return ""
@@ -99,25 +99,32 @@ func documentCurrency(setup *businesscentral.GeneralLedgerSetup, code string) st
 	return value
 }
 
-type postingContext struct {
+type PostingContext struct {
 	setup *businesscentral.GeneralLedgerSetup
 }
 
-func (c *Connector) postingFor(
+func (c *Session) PostingFor(
 	ctx context.Context,
 	client *businesscentral.Client,
 	date string,
-) (*postingContext, error) {
-	setup, err := c.setups.get(ctx, client)
+) (*PostingContext, error) {
+	setup, err := c.PostingSetup(ctx, client)
 	if err != nil {
 		return nil, err
 	}
 	if err = checkPostingDate(setup, date); err != nil {
 		return nil, err
 	}
-	return &postingContext{setup: setup}, nil
+	return &PostingContext{setup: setup}, nil
 }
 
-func (p *postingContext) currency(code string) string {
-	return documentCurrency(p.setup, code)
+func (p *PostingContext) Currency(code string) string {
+	return DocumentCurrency(p.setup, code)
+}
+
+func (c *Session) PostingSetup(
+	ctx context.Context,
+	client *businesscentral.Client,
+) (*businesscentral.GeneralLedgerSetup, error) {
+	return c.setups.get(ctx, client)
 }

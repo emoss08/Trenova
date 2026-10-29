@@ -1,10 +1,11 @@
-package bcconnector
+package bcdocsync
 
 import (
 	"context"
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -13,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/businesscentralpay"
 )
 
-func (c *Connector) FindDocument(
+func (c *Documents) FindDocument(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
@@ -21,12 +22,12 @@ func (c *Connector) FindDocument(
 	if !kind.IsSalesDocument() && !kind.IsBill() && !kind.IsBillPayment() &&
 		kind != accountingsync.SyncObjectCustomerPayment &&
 		kind != accountingsync.SyncObjectCreditApplication {
-		return nil, false, errDocumentKind
+		return nil, false, bcsession.ErrDocumentKind
 	}
 	if kind == accountingsync.SyncObjectCreditApplication {
 		return nil, false, nil
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, false, err
 	}
@@ -63,7 +64,7 @@ func findPosted(
 		ctx,
 		client,
 		kind,
-		docReference(req.DocNumber, req.RequestID),
+		DocReference(req.DocNumber, req.RequestID),
 		strings.TrimSpace(req.CounterpartyExternalID),
 	)
 	if err != nil {
@@ -71,7 +72,7 @@ func findPosted(
 	}
 	for idx := range listed {
 		doc := &listed[idx]
-		if doc.IsDraft() || retired(doc.Status) {
+		if doc.IsDraft() || Retired(doc.Status) {
 			continue
 		}
 		if !req.Total.IsZero() && !sameMoney(doc.TotalAmountIncludingTax, req.Total.Abs()) {
@@ -87,7 +88,7 @@ func findSales(
 	client *businesscentral.Client,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
-	kind, err := salesKindOf(req.Kind)
+	kind, err := SalesKindOf(req.Kind)
 	if err != nil {
 		return nil, false, err
 	}
@@ -102,12 +103,12 @@ func findSales(
 	}, true, nil
 }
 
-func (c *Connector) findPurchase(
+func (c *Documents) findPurchase(
 	ctx context.Context,
 	client *businesscentral.Client,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
-	kind := purchaseKindOf(req.Credit)
+	kind := PurchaseKindOf(req.Credit)
 	doc, ok, err := findPosted(ctx, client, kind, req)
 	if err != nil || !ok {
 		return nil, false, err
@@ -125,14 +126,14 @@ func findPayment(
 	if strings.TrimSpace(req.RequestID) == "" {
 		return nil, false, nil
 	}
-	number := requestReference(req.RequestID)
+	number := RequestReference(req.RequestID)
 	entries, err := businesscentralpay.GeneralLedgerEntries(ctx, client, number)
 	if err != nil || len(entries) == 0 {
 		return nil, false, err
 	}
-	docType := docTypeCustomerPayment
+	docType := DocTypeCustomerPayment
 	if req.Kind.IsBillPayment() {
-		docType = docTypeVendorPayment
+		docType = DocTypeVendorPayment
 	}
 	result := newResult(nil)
 	finishPayment(result, number, docType)

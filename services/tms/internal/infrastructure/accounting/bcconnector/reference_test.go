@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/businesscentralerrors"
-	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -111,61 +111,6 @@ func TestListReferenceReadsEveryKind(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestAccountClassOf(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		category string
-		sub      string
-		want     accountingmapping.AccountClass
-	}{
-		{
-			businesscentralref.CategoryIncome,
-			"Income, Services",
-			accountingmapping.AccountClassIncome,
-		},
-		{businesscentralref.CategoryCostOfGoodsSold, "", accountingmapping.AccountClassCostOfSales},
-		{businesscentralref.CategoryExpense, "Rent Expense", accountingmapping.AccountClassExpense},
-		{
-			businesscentralref.CategoryAssets,
-			"Accounts Receivable",
-			accountingmapping.AccountClassReceivable,
-		},
-		{businesscentralref.CategoryAssets, "Cash", accountingmapping.AccountClassBank},
-		{businesscentralref.CategoryAssets, "Bank Accounts", accountingmapping.AccountClassBank},
-		{businesscentralref.CategoryAssets, "Inventory", accountingmapping.AccountClassAsset},
-		{
-			businesscentralref.CategoryLiabilities,
-			"Accounts Payable",
-			accountingmapping.AccountClassPayable,
-		},
-		{
-			businesscentralref.CategoryLiabilities,
-			"Long Term Liabilities",
-			accountingmapping.AccountClassLiability,
-		},
-		{
-			businesscentralref.CategoryEquity,
-			"Retained Earnings",
-			accountingmapping.AccountClassEquity,
-		},
-		{"", "", ""},
-	}
-	for _, tc := range cases {
-		got := AccountClassOf(
-			&businesscentralref.Account{Category: tc.category, SubCategory: tc.sub},
-		)
-		assert.Equal(t, tc.want, got, tc.category+"/"+tc.sub)
-	}
-	assert.True(t, accountObjectOf(&businesscentralref.Account{
-		AccountType: businesscentralref.AccountTypePosting, DirectPosting: false,
-	}).Active)
-	assert.False(t, accountObjectOf(&businesscentralref.Account{
-		AccountType: businesscentralref.AccountTypePosting, Blocked: true,
-	}).Active)
-	assert.False(t, accountObjectOf(&businesscentralref.Account{AccountType: "Heading"}).Active)
-}
-
 func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	t.Parallel()
 
@@ -236,10 +181,10 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	missing := base
 	missing.Kind = accountingprovider.ReferenceKindVendor
 	_, err = conn.CreateReference(t.Context(), &missing)
-	require.ErrorIs(t, err, errPartyDraftRequired)
+	require.ErrorIs(t, err, bcsession.ErrPartyDraftRequired)
 	missing.Kind = accountingprovider.ReferenceKindItem
 	_, err = conn.CreateReference(t.Context(), &missing)
-	require.ErrorIs(t, err, errItemDraftRequired)
+	require.ErrorIs(t, err, bcsession.ErrItemDraftRequired)
 
 	assert.Equal(t, strings.Repeat("a", 100),
 		conn.SanitizeName(accountingprovider.ReferenceKindCustomer, strings.Repeat("a", 120)))

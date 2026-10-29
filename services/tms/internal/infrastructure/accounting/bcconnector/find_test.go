@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
@@ -116,9 +118,13 @@ func TestFindDocumentForPaymentsReadsTheLedgerByDocumentNumber(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	number := requestReference(testRequestID)
+	number := bcdocsync.RequestReference(testRequestID)
 	assert.Equal(t, number, found.ExternalID)
-	assert.Equal(t, docTypeCustomerPayment, found.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeCustomerPayment,
+		found.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	call, _ := fake.find(http.MethodGet, "/generalLedgerEntries")
 	assert.Equal(t, "documentNumber eq '"+number+"'", call.filter())
 
@@ -128,7 +134,11 @@ func TestFindDocumentForPaymentsReadsTheLedgerByDocumentNumber(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, docTypeVendorPayment, billPay.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeVendorPayment,
+		billPay.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
 	noRequest := findRequest(accountingsync.SyncObjectCustomerPayment)
 	noRequest.RequestID = ""
@@ -149,6 +159,6 @@ func TestFindDocumentRefusesOtherKinds(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ok)
 	_, _, err = conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectCustomer))
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 	assert.Empty(t, fake.all())
 }

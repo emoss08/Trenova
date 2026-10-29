@@ -1,13 +1,14 @@
-package bcconnector
+package bcdocsync
 
 import (
 	"context"
-	"errors"
 	"maps"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -15,37 +16,26 @@ import (
 	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/emoss08/trenova/shared/hashutils"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
+type Documents struct {
+	*bcsession.Session
+}
 
 const (
-	providerName       = "Business Central"
 	defaultLineText    = "Charges"
 	idempotencyWindow  = 30 * 24 * time.Hour
 	moneyPlaces        = 2
 	referencePrefix    = "T"
 	correctiveLookback = 5 * time.Minute
-	refReplaced        = "replaced"
-	refCorrective      = "corrective"
-	refJournal         = "journal"
+	RefReplaced        = "replaced"
+	RefCorrective      = "corrective"
 	refVoidCredit      = "voidCredit"
-	refAccountPrefix   = "account:"
+	RefAccountPrefix   = "account:"
 )
 
-var (
-	errDocumentKind = errors.New(
-		"businesscentral: this record type is not a document Business Central holds",
-	)
-	errExternalID = errors.New(
-		"businesscentral: changing a document needs the id Business Central gave it",
-	)
-	errLinesRequired = errors.New("businesscentral: a document needs at least one line")
-)
-
-func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+func (c *Documents) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
 	return accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      businesscentral.MaxExternalDocumentNumberLength,
 		SupportsDebitMemo:       false,
@@ -55,7 +45,7 @@ func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocument
 	}
 }
 
-func (c *Connector) DocumentURL(
+func (c *Documents) DocumentURL(
 	auth accountingconnectorports.AccountingDocumentAuth,
 	link accountingconnectorports.AccountingDocumentLink,
 ) string {
@@ -69,7 +59,7 @@ func (c *Connector) DocumentURL(
 	if err != nil {
 		return ""
 	}
-	return businesscentral.NewLinker(c.apiOpts...).DocumentLink(ref, name, page, number)
+	return c.Linker().DocumentLink(ref, name, page, number)
 }
 
 func documentPage(kind accountingsync.SyncObjectType) int {
@@ -92,14 +82,14 @@ func purchasePage(kind businesscentraldocs.DocumentKind) int {
 	return businesscentral.PagePostedPurchaseInvoice
 }
 
-func salesKindOf(kind accountingsync.SyncObjectType) (businesscentraldocs.DocumentKind, error) {
+func SalesKindOf(kind accountingsync.SyncObjectType) (businesscentraldocs.DocumentKind, error) {
 	if kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo {
 		return businesscentraldocs.DocumentSalesInvoice, nil
 	}
 	if kind == accountingsync.SyncObjectCreditMemo {
 		return businesscentraldocs.DocumentSalesCreditMemo, nil
 	}
-	return 0, errDocumentKind
+	return 0, bcsession.ErrDocumentKind
 }
 
 type documentWrite struct {
@@ -138,7 +128,7 @@ func resumeDocument(
 	if id := strings.TrimSpace(w.refs[w.refKey]); id != "" {
 		held, err := businesscentraldocs.ReadDocument(ctx, w.client, w.kind, id)
 		switch {
-		case err == nil && !retired(held.Status) && !sameID(held.ID, w.exclude):
+		case err == nil && !Retired(held.Status) && !SameID(held.ID, w.exclude):
 			return held, true, nil
 		case err != nil && !businesscentralerrors.IsNotFound(err):
 			return nil, false, err
@@ -160,7 +150,7 @@ func resumeDocument(
 	var draft *businesscentraldocs.Document
 	for idx := range listed {
 		doc := &listed[idx]
-		if retired(doc.Status) || sameID(doc.ID, w.exclude) {
+		if Retired(doc.Status) || SameID(doc.ID, w.exclude) {
 			continue
 		}
 		if !doc.IsDraft() {
@@ -173,12 +163,12 @@ func resumeDocument(
 	return draft, draft != nil, nil
 }
 
-func retired(status string) bool {
+func Retired(status string) bool {
 	return status == businesscentraldocs.StatusCanceled ||
 		status == businesscentraldocs.StatusCorrective
 }
 
-func (c *Connector) UpsertCustomer(
+func (c *Documents) UpsertCustomer(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingCustomerDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -190,15 +180,15 @@ func (c *Connector) UpsertCustomer(
 	})
 }
 
-func (c *Connector) CreateSalesDocument(
+func (c *Documents) CreateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	kind, err := salesKindOf(doc.Kind)
+	kind, err := SalesKindOf(doc.Kind)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +199,7 @@ func (c *Connector) CreateSalesDocument(
 	return result, nil
 }
 
-func (c *Connector) writeSales(
+func (c *Documents) writeSales(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentraldocs.DocumentKind,
@@ -226,7 +216,7 @@ func (c *Connector) writeSales(
 		input:   input,
 		refs:    result.Refs,
 		refKey:  accountingsync.ExternalRefDocument,
-		exclude: result.Refs[refReplaced],
+		exclude: result.Refs[RefReplaced],
 	})
 	if err != nil {
 		return err
@@ -240,7 +230,7 @@ func (c *Connector) writeSales(
 	return nil
 }
 
-func (c *Connector) salesInput(
+func (c *Documents) salesInput(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentraldocs.DocumentKind,
@@ -250,16 +240,16 @@ func (c *Connector) salesInput(
 	if err != nil {
 		return nil, err
 	}
-	posting, err := c.postingFor(ctx, client, doc.TxnDate)
+	posting, err := c.PostingFor(ctx, client, doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
 	input := &businesscentraldocs.DocumentInput{
 		PartyID:                doc.CustomerExternalID,
-		ExternalDocumentNumber: docReference(doc.DocNumber, doc.RequestID),
+		ExternalDocumentNumber: DocReference(doc.DocNumber, doc.RequestID),
 		DocumentDate:           doc.TxnDate,
 		PostingDate:            doc.TxnDate,
-		CurrencyCode:           posting.currency(doc.CurrencyCode),
+		CurrencyCode:           posting.Currency(doc.CurrencyCode),
 		Lines:                  lines,
 	}
 	if kind == businesscentraldocs.DocumentSalesInvoice {
@@ -277,7 +267,7 @@ func salesLines(
 	lines []accountingconnectorports.AccountingDocumentLine,
 ) ([]businesscentraldocs.LineInput, error) {
 	if len(lines) == 0 {
-		return nil, errLinesRequired
+		return nil, bcsession.ErrLinesRequired
 	}
 	out := make([]businesscentraldocs.LineInput, 0, len(lines))
 	for idx := range lines {
@@ -322,32 +312,32 @@ func lineText(description string) string {
 }
 
 func lineDescription(description string) string {
-	return cleanText(lineText(description), businesscentral.MaxDescriptionLength)
+	return bcrefsync.CleanText(lineText(description), businesscentral.MaxDescriptionLength)
 }
 
-func (c *Connector) UpdateSalesDocument(
+func (c *Documents) UpdateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	kind, err := salesKindOf(doc.Kind)
+	kind, err := SalesKindOf(doc.Kind)
 	if err != nil {
 		return nil, err
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
-		return nil, errExternalID
+		return nil, bcsession.ErrExternalID
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(doc.Refs)
-	corrective, err := c.retireDocument(ctx, client, kind, id)
+	corrective, err := retireDocument(ctx, client, kind, id)
 	if err != nil {
 		return result, err
 	}
-	result.Refs[refReplaced] = id
-	result.Refs[refCorrective] = corrective
+	result.Refs[RefReplaced] = id
+	result.Refs[RefCorrective] = corrective
 	result.Refs[accountingsync.ExternalRefDocument] = ""
 	delete(result.Refs, accountingsync.ExternalRefApplication)
 	if err = c.writeSales(ctx, client, kind, doc, result); err != nil {
@@ -356,31 +346,31 @@ func (c *Connector) UpdateSalesDocument(
 	return result, nil
 }
 
-func (c *Connector) VoidSalesDocument(
+func (c *Documents) VoidSalesDocument(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	kind, err := salesKindOf(ref.Kind)
+	kind, err := SalesKindOf(ref.Kind)
 	if err != nil {
 		return nil, err
 	}
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
-	corrective, err := c.retireDocument(ctx, client, kind, ref.ExternalID)
+	corrective, err := retireDocument(ctx, client, kind, ref.ExternalID)
 	if err != nil {
 		return result, err
 	}
 	if corrective != "" {
-		result.Refs[refCorrective] = corrective
+		result.Refs[RefCorrective] = corrective
 	}
 	return result, nil
 }
 
-func (c *Connector) retireDocument(
+func retireDocument(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentraldocs.DocumentKind,
@@ -394,7 +384,7 @@ func (c *Connector) retireDocument(
 		return "", err
 	}
 	switch {
-	case retired(current.Status):
+	case Retired(current.Status):
 		return correctiveOf(ctx, client, kind, current)
 	case current.IsDraft():
 		if err = businesscentraldocs.DeleteDocument(ctx, client, kind, current.ID, current.ETag); err != nil &&
@@ -441,7 +431,7 @@ func correctiveOf(
 	var found *businesscentraldocs.Document
 	for idx := range memos {
 		memo := &memos[idx]
-		if !sameID(memo.InvoiceID, invoice.ID) {
+		if !SameID(memo.InvoiceID, invoice.ID) {
 			continue
 		}
 		if found == nil || memo.LastModified.After(found.LastModified) {
@@ -454,34 +444,24 @@ func correctiveOf(
 	return found.ID, nil
 }
 
-func docReference(number, requestID string) string {
-	value := cleanText(number, businesscentral.MaxExternalDocumentNumberLength+1)
+func DocReference(number, requestID string) string {
+	value := bcrefsync.CleanText(number, businesscentral.MaxExternalDocumentNumberLength+1)
 	if value != "" && len([]rune(value)) <= businesscentral.MaxExternalDocumentNumberLength {
 		return value
 	}
-	return requestReference(requestID)
+	return RequestReference(requestID)
 }
 
-func requestReference(requestID string) string {
+func RequestReference(requestID string) string {
 	digest := strings.ToUpper(hashutils.SHA256Hex(strings.TrimSpace(requestID)))
 	return referencePrefix + digest[:businesscentral.MaxDocumentNumberLength-len(referencePrefix)]
-}
-
-func cleanText(value string, limit int) string {
-	stripped := strings.Map(func(r rune) rune {
-		if r < ' ' || r == 0x7f || (r >= 0x80 && r < 0xa0) {
-			return ' '
-		}
-		return r
-	}, value)
-	return strings.TrimSpace(stringutils.OneLine(stripped, limit))
 }
 
 func sameMoney(a, b decimal.Decimal) bool {
 	return a.Round(moneyPlaces).Equal(b.Round(moneyPlaces))
 }
 
-func sameID(a, b string) bool {
+func SameID(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
@@ -489,19 +469,4 @@ func newResult(refs map[string]string) *accountingconnectorports.AccountingDocum
 	copied := make(map[string]string, len(refs)+4)
 	maps.Copy(copied, refs)
 	return &accountingconnectorports.AccountingDocumentResult{Refs: copied}
-}
-
-func unixOrZero(t time.Time) int64 {
-	if t.IsZero() {
-		return 0
-	}
-	return t.Unix()
-}
-
-func unixOf(t time.Time) *int64 {
-	if t.IsZero() {
-		return nil
-	}
-	value := t.Unix()
-	return &value
 }

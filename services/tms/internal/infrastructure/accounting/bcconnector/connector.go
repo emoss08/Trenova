@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -24,8 +27,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrNotConfigured = errors.New("business central is not configured on this instance")
-
 const (
 	maxBoundApps            = 512
 	limiterPrefix           = "businesscentral"
@@ -33,10 +34,6 @@ const (
 )
 
 var (
-	errNoRedirect = errors.New(
-		"business central needs app.webBaseUrl or accounting.businessCentral.redirectUrl " +
-			"to build its callback",
-	)
 	errWebhookSignature = errors.New(
 		"business central notifications are verified by their subscription, not a signature",
 	)
@@ -58,8 +55,8 @@ type Provider struct {
 	apiOpts        []businesscentral.Option
 	oauthOpts      []businesscentral.Option
 	gate           *companyGate
-	locks          *batchLocks
-	setups         *postingSetups
+	locks          *bcsession.BatchLocks
+	setups         *bcsession.PostingSetups
 	now            func() time.Time
 	l              *zap.Logger
 
@@ -73,16 +70,19 @@ var (
 )
 
 type Connector struct {
-	oauth      *businesscentral.OAuthClient
-	apiOpts    []businesscentral.Option
-	httpClient *http.Client
-	locks      *batchLocks
-	setups     *postingSetups
-	now        func() time.Time
-	l          *zap.Logger
+	*bcsession.Session
+	*bcdocsync.Documents
+	*bcrefsync.References
+	oauth  *businesscentral.OAuthClient
+	setups *bcsession.PostingSetups
 }
 
-var _ accountingconnectorports.AccountingConnector = (*Connector)(nil)
+var (
+	_ accountingconnectorports.AccountingConnector        = (*Connector)(nil)
+	_ accountingconnectorports.AccountingDocumentWriter   = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
+)
 
 func New(p Params) (*Provider, error) {
 	cfg := p.AccountingConfig.BusinessCentral
@@ -90,8 +90,8 @@ func New(p Params) (*Provider, error) {
 		redirectURL:    cfg.GetRedirectURL(p.AppConfig),
 		webhookBaseURL: cfg.GetWebhookBaseURL(p.AppConfig),
 		gate:           newCompanyGate(),
-		locks:          newBatchLocks(),
-		setups:         newPostingSetups(time.Now),
+		locks:          bcsession.NewBatchLocks(),
+		setups:         bcsession.NewPostingSetups(time.Now),
 		now:            time.Now,
 		l:              p.Logger.Named("accounting.businesscentral"),
 		bound:          make(map[string]*Connector),
@@ -137,7 +137,7 @@ func (p *Provider) Bind(
 
 func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
-		return nil, ErrNotConfigured
+		return nil, bcsession.ErrNotConfigured
 	}
 
 	key := bindingKey(app)
@@ -147,13 +147,18 @@ func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector
 		return conn, nil
 	}
 
+	session := bcsession.NewSession(bcsession.SessionParams{
+		APIOpts:    p.apiOpts,
+		HTTPClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
+		Locks:      p.locks,
+		Setups:     p.setups,
+		Now:        p.now,
+	})
 	conn := &Connector{
-		apiOpts:    p.apiOpts,
-		httpClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
-		locks:      p.locks,
+		Session:    session,
+		Documents:  &bcdocsync.Documents{Session: session},
+		References: &bcrefsync.References{Session: session},
 		setups:     p.setups,
-		now:        p.now,
-		l:          p.l,
 	}
 	if p.redirectURL != "" {
 		oauth, err := businesscentral.NewOAuthClient(businesscentral.OAuthConfig{
@@ -182,7 +187,7 @@ func (p *Provider) WebhookSignatureHeader() string {
 }
 
 func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
+	return bcsession.ClassifyError(err)
 }
 
 func (p *Provider) NotificationBaseURL() string {
@@ -218,31 +223,11 @@ func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	)
 }
 
-func (c *Connector) IntegrationType() integration.Type {
-	return integration.TypeBusinessCentral
-}
-
-func (c *Connector) options() []businesscentral.Option {
-	opts := make([]businesscentral.Option, 0, len(c.apiOpts)+1)
-	opts = append(opts, businesscentral.WithHTTPClient(c.httpClient))
-	return append(opts, c.apiOpts...)
-}
-
-func (c *Connector) client(
-	auth accountingconnectorports.AccountingDocumentAuth,
-) (*businesscentral.Client, error) {
-	ref, err := businesscentral.ParseCompanyRef(auth.RealmID)
-	if err != nil {
-		return nil, err
-	}
-	return businesscentral.New(ref, auth.AccessToken, c.options()...)
-}
-
 func (c *Connector) AuthorizeURL(
 	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
-		return "", errNoRedirect
+		return "", bcsession.ErrNoRedirect
 	}
 	return c.oauth.AuthorizeURL(req.State)
 }
@@ -252,7 +237,7 @@ func (c *Connector) ExchangeCode(
 	req *accountingconnectorports.AccountingCodeExchange,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, bcsession.ErrNoRedirect
 	}
 	token, err := c.oauth.ExchangeCode(ctx, req.Code)
 	if err != nil {
@@ -266,7 +251,7 @@ func (c *Connector) Refresh(
 	req *accountingconnectorports.AccountingRefreshRequest,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, bcsession.ErrNoRedirect
 	}
 	token, err := c.oauth.Refresh(ctx, req.RefreshToken)
 	if err != nil {
@@ -292,7 +277,7 @@ func (c *Connector) ReleaseCompanies(
 
 func (c *Connector) VerifyApp(ctx context.Context) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return bcsession.ErrNoRedirect
 	}
 	err := c.oauth.ProbeCredentials(ctx)
 	switch {
@@ -307,10 +292,6 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 
 func (c *Connector) VerifyWebhook(_ string, _ []byte) error {
 	return errWebhookSignature
-}
-
-func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
 }
 
 func grantOf(token *businesscentral.Token) *accountingconnectorports.AccountingTokenGrant {

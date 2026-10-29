@@ -19454,3 +19454,5 @@ github.com/emoss08/trenova/internal/modules/operations/app/detentionservice.Back
 github.com/emoss08/trenova/internal/modules/operations/app/detentionservice.PreviewResult	github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation.PreviewResult
 github.com/emoss08/trenova/internal/modules/operations/app/detentionservice.PreviewScenario	github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation.PreviewScenario
 github.com/emoss08/trenova/internal/modules/operations/app/detentionservice.SyncShipmentResult	github.com/emoss08/trenova/internal/modules/operations/app/detentionsync.SyncShipmentResult
+github.com/emoss08/trenova/internal/infrastructure/accounting/bcconnector.ErrNotConfigured	github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession.ErrNotConfigured
+github.com/emoss08/trenova/internal/infrastructure/accounting/bcconnector.AccountClassOf	github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync.AccountClassOf

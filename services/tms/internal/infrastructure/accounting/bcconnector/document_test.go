@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentralerrors"
@@ -292,13 +294,13 @@ func TestCreateSalesDocumentValidatesBeforeWriting(t *testing.T) {
 	empty := salesDoc()
 	empty.Lines = nil
 	_, err = conn.CreateSalesDocument(t.Context(), empty)
-	require.ErrorIs(t, err, errLinesRequired)
+	require.ErrorIs(t, err, bcsession.ErrLinesRequired)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
 
 	wrong := salesDoc()
 	wrong.Kind = accountingsync.SyncObjectCustomerPayment
 	_, err = conn.CreateSalesDocument(t.Context(), wrong)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 	assert.Empty(t, fake.writes())
 }
 
@@ -321,8 +323,8 @@ func TestCreateSalesDocumentSendsAForeignCurrencyAndAFallbackReference(t *testin
 	require.True(t, isString)
 	assert.Len(t, reference, 20)
 	assert.True(t, strings.HasPrefix(reference, "T"))
-	assert.Equal(t, requestReference(testRequestID), reference)
-	assert.Equal(t, reference, docReference(strings.Repeat("x", 36), testRequestID))
+	assert.Equal(t, bcdocsync.RequestReference(testRequestID), reference)
+	assert.Equal(t, reference, bcdocsync.DocReference(strings.Repeat("x", 36), testRequestID))
 }
 
 func TestCreateCreditMemoAppliesToTheInvoice(t *testing.T) {
@@ -386,8 +388,8 @@ func TestUpdateSalesInvoiceCancelsThenCreatesANewOne(t *testing.T) {
 	assert.Equal(t, testNewInvoice, result.ExternalID)
 	assert.Equal(t, "PS-INV-1003", result.DocNumber)
 	assert.Equal(t, testNewInvoice, result.Refs[accountingsync.ExternalRefDocument])
-	assert.Equal(t, testInvoice, result.Refs[refReplaced])
-	assert.Equal(t, testCorrective, result.Refs[refCorrective])
+	assert.Equal(t, testInvoice, result.Refs[bcdocsync.RefReplaced])
+	assert.Equal(t, testCorrective, result.Refs[bcdocsync.RefCorrective])
 
 	_, cancelled := fake.find(http.MethodPost, entity("salesInvoices", testInvoice)+cancelAction)
 	assert.True(t, cancelled)
@@ -397,7 +399,7 @@ func TestUpdateSalesInvoiceCancelsThenCreatesANewOne(t *testing.T) {
 	assert.Equal(t, 1, fake.count(http.MethodPost, "/salesInvoices"))
 
 	_, err = conn.UpdateSalesDocument(t.Context(), salesDoc())
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, bcsession.ErrExternalID)
 }
 
 func TestUpdateSalesInvoiceRetriesWithoutCancellingTwice(t *testing.T) {
@@ -551,7 +553,7 @@ func TestClassifyDocumentError(t *testing.T) {
 			accountingsync.SyncErrorConfiguration,
 			0,
 		},
-		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration, 0},
+		{"not configured", bcsession.ErrNotConfigured, accountingsync.SyncErrorConfiguration, 0},
 		{
 			"unavailable",
 			&businesscentralerrors.APIError{Status: 503},
@@ -573,7 +575,7 @@ func TestClassifyDocumentError(t *testing.T) {
 			accountingsync.SyncErrorDuplicate,
 			0,
 		},
-		{"duplicate name", errDuplicateName, accountingsync.SyncErrorDuplicate, 0},
+		{"duplicate name", bcsession.ErrDuplicateName, accountingsync.SyncErrorDuplicate, 0},
 		{
 			"changed",
 			&businesscentralerrors.APIError{

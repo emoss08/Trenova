@@ -58,7 +58,7 @@ func (c *Connector) Subscribe(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingSubscribeRequest,
 ) (*accountingconnection.WebhookSubscriptionGrant, error) {
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *Connector) RenewSubscription(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
 ) (*accountingconnection.WebhookSubscriptionGrant, error) {
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (c *Connector) Unsubscribe(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingUnsubscribeRequest,
 ) error {
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c *Connector) grantOf(
 		grant.NotificationURL = notificationURL
 	}
 	if grant.ExpiresAt.IsZero() {
-		grant.ExpiresAt = c.now().Add(businesscentral.SubscriptionLifetime)
+		grant.ExpiresAt = c.Clock().Add(businesscentral.SubscriptionLifetime)
 	}
 	return grant
 }

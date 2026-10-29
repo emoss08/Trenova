@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -37,20 +39,20 @@ func readKindOf(
 ) (businesscentraldocs.DocumentKind, bool, error) {
 	switch {
 	case kind.IsSalesDocument():
-		docKind, err := salesKindOf(kind)
+		docKind, err := bcdocsync.SalesKindOf(kind)
 		return docKind, err == nil, err
 	case kind.IsBill():
-		credit, err := purchaseIsCredit(target.Refs)
+		credit, err := bcdocsync.PurchaseIsCredit(target.Refs)
 		if err != nil {
 			return 0, false, err
 		}
-		return purchaseKindOf(credit), true, nil
+		return bcdocsync.PurchaseKindOf(credit), true, nil
 	case kind == accountingsync.SyncObjectCustomerPayment,
 		kind == accountingsync.SyncObjectCreditApplication,
 		kind.IsBillPayment():
 		return 0, false, nil
 	default:
-		return 0, false, errDocumentKind
+		return 0, false, bcsession.ErrDocumentKind
 	}
 }
 
@@ -74,7 +76,7 @@ func (c *Connector) ReadDocuments(
 	if len(plan) == 0 {
 		return []*accountingconnectorports.AccountingDocumentState{}, nil
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +124,7 @@ func readStates(
 		if doc, ok := found[strings.ToLower(id)]; ok {
 			balance := doc.RemainingAmount
 			state.Found = true
-			state.Voided = retired(doc.Status)
+			state.Voided = bcdocsync.Retired(doc.Status)
 			state.DocNumber = doc.Number
 			state.Total = doc.TotalAmountIncludingTax
 			state.Balance = &balance

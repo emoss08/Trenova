@@ -17,7 +17,6 @@ exceptions:
       Matching and term comparison live in rateagreementmatch and rateagreementcompare.
 debt:
   services/tms/internal/deskbench: 13871
-  services/tms/internal/infrastructure/accounting/bcconnector: 3718
   services/tms/internal/infrastructure/accounting/nsconnector: 4676
   services/tms/internal/infrastructure/agentcompletion/completionrouter: 4388
   services/tms/internal/infrastructure/agentcompletion/modeladapter: 6687

@@ -1,4 +1,4 @@
-package bcconnector
+package bcsession
 
 import (
 	"context"
@@ -14,20 +14,18 @@ import (
 const (
 	maxErrorMessage      = 2000
 	defaultRateLimitWait = 30 * time.Second
-	reverseTransaction   = "Reverse the payment's entries in Business Central " +
-		"(Reverse transaction), then mark this record resolved"
 )
 
-var errDuplicateName = errors.New(
+var ErrDuplicateName = errors.New(
 	"businesscentral: a record with this name already exists in Business Central",
 )
 
-func classifyError(err error) accountingsync.ErrorCategory {
+func ClassifyError(err error) accountingsync.ErrorCategory {
 	switch {
 	case err == nil:
 		return ""
-	case errors.Is(err, ErrNotConfigured), errors.Is(err, errNoRedirect),
-		errors.Is(err, errNoAccess):
+	case errors.Is(err, ErrNotConfigured), errors.Is(err, ErrNoRedirect),
+		errors.Is(err, ErrNoAccess):
 		return accountingsync.ErrorCategoryConfiguration
 	case businesscentralerrors.IsInvalidGrant(err):
 		return accountingsync.ErrorCategoryRevoked
@@ -51,8 +49,8 @@ type documentFault struct {
 }
 
 func isConfigurationFault(err error) bool {
-	return errors.Is(err, ErrNotConfigured) || errors.Is(err, errNoRedirect) ||
-		errors.Is(err, errNoAccess)
+	return errors.Is(err, ErrNotConfigured) || errors.Is(err, ErrNoRedirect) ||
+		errors.Is(err, ErrNoAccess)
 }
 
 func isAuthFault(err error) bool {
@@ -66,7 +64,7 @@ func isTransientFault(err error) bool {
 }
 
 func isDuplicateName(err error) bool {
-	return errors.Is(err, errDuplicateName)
+	return errors.Is(err, ErrDuplicateName)
 }
 
 func isValidationFault(err error) bool {
@@ -77,36 +75,36 @@ var documentFaults = []documentFault{
 	{
 		matches:    isConfigurationFault,
 		category:   accountingsync.SyncErrorConfiguration,
-		resolution: providerName + " is not configured on this server",
+		resolution: ProviderName + " is not configured on this server",
 	},
 	{
 		matches:    isAuthFault,
 		category:   accountingsync.SyncErrorAuth,
-		resolution: "Reconnect " + providerName + " from the accounting integration",
+		resolution: "Reconnect " + ProviderName + " from the accounting integration",
 	},
 	{
 		matches:  businesscentralerrors.IsForbidden,
 		category: accountingsync.SyncErrorConfiguration,
-		resolution: "The signed-in user lacks permission in " + providerName +
+		resolution: "The signed-in user lacks permission in " + ProviderName +
 			". Give them the permission sets the API needs, then retry",
 	},
 	{matches: isTransientFault, category: accountingsync.SyncErrorTransient},
 	{
 		matches:  isDuplicateName,
 		category: accountingsync.SyncErrorDuplicate,
-		resolution: "A record with this name already exists in " + providerName +
+		resolution: "A record with this name already exists in " + ProviderName +
 			". Map the record to it instead, or rename one of them",
 	},
 	{
 		matches:  businesscentralerrors.IsDuplicate,
 		category: accountingsync.SyncErrorDuplicate,
-		resolution: "The record already exists in " + providerName +
-			". Skip this record if it is the same one, or change the one in " + providerName,
+		resolution: "The record already exists in " + ProviderName +
+			". Skip this record if it is the same one, or change the one in " + ProviderName,
 	},
 	{
 		matches:    businesscentralerrors.IsConflict,
 		category:   accountingsync.SyncErrorConflict,
-		resolution: "The record changed in " + providerName + " while Trenova wrote it. Retry",
+		resolution: "The record changed in " + ProviderName + " while Trenova wrote it. Retry",
 	},
 	{
 		matches:    businesscentralerrors.IsPostingDate,
@@ -116,16 +114,16 @@ var documentFaults = []documentFault{
 	{
 		matches:    businesscentralerrors.IsNotFound,
 		category:   accountingsync.SyncErrorNotFound,
-		resolution: "The linked record no longer exists in " + providerName,
+		resolution: "The linked record no longer exists in " + ProviderName,
 	},
 	{
 		matches:    isValidationFault,
 		category:   accountingsync.SyncErrorValidation,
-		resolution: "Correct the record in Trenova or " + providerName + ", then retry",
+		resolution: "Correct the record in Trenova or " + ProviderName + ", then retry",
 	},
 }
 
-func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
+func (c *Session) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	if err == nil {
 		return nil
 	}
@@ -209,96 +207,16 @@ func isLocalValidation(err error) bool {
 		businesscentralerrors.ErrFieldNotSupported,
 		businesscentralerrors.ErrInvalidText,
 		businesscentralerrors.ErrCurrencyCodeInvalid,
-		errDocumentKind,
-		errExternalID,
-		errLinesRequired,
-		errItemDraftRequired,
-		errPartyDraftRequired,
-		errPurchaseDocumentType,
+		ErrDocumentKind,
+		ErrExternalID,
+		ErrLinesRequired,
+		ErrItemDraftRequired,
+		ErrPartyDraftRequired,
+		ErrPurchaseDocumentType,
 	} {
 		if errors.Is(err, target) {
 			return true
 		}
 	}
 	return false
-}
-
-func unmappedItem(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category:   accountingsync.SyncErrorMapping,
-		Code:       "item",
-		Message:    purpose + " has no " + providerName + " item mapped",
-		Resolution: "Map it to a " + providerName + " item",
-	}
-}
-
-func unmappedAccount(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category:   accountingsync.SyncErrorMapping,
-		Code:       "account",
-		Message:    purpose + " has no " + providerName + " account mapped",
-		Resolution: "Map it to a " + providerName + " account",
-	}
-}
-
-func negativeLine(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorValidation,
-		Code:     "negative-line",
-		Message: purpose + " is negative, and " + providerName +
-			" does not take a negative line on this document",
-		Resolution: "Net the line into the others in Trenova, then retry",
-	}
-}
-
-func paidConflict() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConflict,
-		Code:     "document-paid",
-		Message: "The document has a payment or credit applied in " + providerName +
-			", which refuses to cancel it",
-		Resolution: "Unapply the payment in " + providerName + ", then retry",
-	}
-}
-
-func reversalRefused() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "reverse-transaction",
-		Message: providerName + "'s API can neither unapply nor reverse a posted payment, " +
-			"so Trenova cannot change or void it",
-		Resolution: reverseTransaction,
-	}
-}
-
-func creditApplicationRefused() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "credit-application",
-		Message: providerName + " applies a credit memo only when it is posted against " +
-			"an invoice, so Trenova cannot apply or unapply an existing one",
-		Resolution: "Apply the credit memo in " + providerName +
-			", then mark this record resolved",
-	}
-}
-
-func unpostedJournal(code string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "journal-post",
-		Message: providerName + " would not post the " + code +
-			" payment journal from Trenova, so the payment waits there unposted",
-		Resolution: "Post the " + code + " payment journal in " + providerName,
-	}
-}
-
-func billLinesUnknown() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "bill-lines",
-		Message: "Trenova does not know which accounts the bill was posted to, " +
-			"so it cannot credit it in " + providerName,
-		Resolution: "Credit the bill with a purchase credit memo in " + providerName +
-			", then mark this record resolved",
-	}
 }

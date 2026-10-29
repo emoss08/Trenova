@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -33,7 +34,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
-	require.ErrorIs(t, err, ErrNotConfigured)
+	require.ErrorIs(t, err, bcsession.ErrNotConfigured)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, provider.ClassifyError(err))
 	assert.Equal(t, integration.TypeBusinessCentral, provider.IntegrationType())
 	assert.Empty(t, provider.WebhookSignatureHeader())
@@ -113,19 +114,19 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, bcsession.ErrNoRedirect)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 	_, err = conn.ExchangeCode(
 		t.Context(),
 		&accountingconnectorports.AccountingCodeExchange{Code: "code"},
 	)
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, bcsession.ErrNoRedirect)
 	_, err = conn.Refresh(
 		t.Context(),
 		&accountingconnectorports.AccountingRefreshRequest{RefreshToken: "refresh"},
 	)
-	require.ErrorIs(t, err, errNoRedirect)
-	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
+	require.ErrorIs(t, err, bcsession.ErrNoRedirect)
+	require.ErrorIs(t, conn.VerifyApp(t.Context()), bcsession.ErrNoRedirect)
 }
 
 func TestExchangeCodeAndRefreshReportTheTokenLifetimes(t *testing.T) {
@@ -324,7 +325,7 @@ func TestCompaniesProbesProductionWhenEnvironmentsAreRefused(t *testing.T) {
 	_, err = conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: accessTokenFor(testTenant),
 	}, "")
-	require.ErrorIs(t, err, errNoAccess)
+	require.ErrorIs(t, err, bcsession.ErrNoAccess)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 }
 
@@ -421,8 +422,8 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
-		{"no access", errNoAccess, accountingsync.ErrorCategoryConfiguration},
+		{"not configured", bcsession.ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
+		{"no access", bcsession.ErrNoAccess, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
 			&businesscentralerrors.OAuthError{Code: "invalid_grant"},
@@ -514,27 +515,4 @@ func TestCompanyKeyNamesTheCompanyInThePath(t *testing.T) {
 	parsed, err = url.Parse("https://api.example.com/environments/v1.2")
 	require.NoError(t, err)
 	assert.Empty(t, companyKey(&http.Request{URL: parsed}))
-}
-
-func TestBatchLocksSerializeAndHonourCancellation(t *testing.T) {
-	t.Parallel()
-
-	locks := newBatchLocks()
-	release, err := locks.acquire(t.Context(), "batch")
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
-	defer cancel()
-	_, err = locks.acquire(ctx, "batch")
-	require.ErrorIs(t, err, context.DeadlineExceeded)
-
-	other, err := locks.acquire(t.Context(), "other")
-	require.NoError(t, err)
-	other()
-
-	release()
-	again, err := locks.acquire(t.Context(), "batch")
-	require.NoError(t, err)
-	again()
-	assert.Empty(t, locks.byBatch)
 }

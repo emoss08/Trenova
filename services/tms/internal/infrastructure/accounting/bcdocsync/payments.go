@@ -1,4 +1,4 @@
-package bcconnector
+package bcdocsync
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
@@ -20,8 +22,6 @@ import (
 const (
 	batchCodePrefix          = "TRN"
 	batchCodeHashChars       = 7
-	docTypeCustomerPayment   = "CustomerPayment"
-	docTypeVendorPayment     = "VendorPayment"
 	shortPayNote             = "Short pay on "
 	stepShortPayBase         = 10
 	unappliedPaymentCode     = "unapplied-payment"
@@ -30,7 +30,7 @@ const (
 	paymentsJournalName      = "Trenova payments "
 )
 
-func (c *Connector) SavePayment(
+func (c *Documents) SavePayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -44,11 +44,11 @@ func (c *Connector) SavePayment(
 	if strings.TrimSpace(doc.DepositAccountExternalID) == "" {
 		return nil, unmappedAccount("The deposit account")
 	}
-	client, err := c.client(doc.Auth)
+	client, err := c.Client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
-	posting, err := c.postingFor(ctx, client, doc.TxnDate)
+	posting, err := c.PostingFor(ctx, client, doc.TxnDate)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *Connector) SavePayment(
 		}
 	}
 
-	number := requestReference(doc.RequestID)
+	number := RequestReference(doc.RequestID)
 	if err = c.postPayment(ctx, &journalWrite{
 		client:         client,
 		party:          businesscentralref.PartyCustomer,
@@ -75,7 +75,7 @@ func (c *Connector) SavePayment(
 	}); err != nil {
 		return result, err
 	}
-	finishPayment(result, number, docTypeCustomerPayment)
+	finishPayment(result, number, DocTypeCustomerPayment)
 	return result, nil
 }
 
@@ -98,7 +98,7 @@ func cashApplications(
 		return nil, &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorValidation,
 			Code:     unappliedPaymentCode,
-			Message: "The payment applies no cash to an invoice, so " + providerName +
+			Message: "The payment applies no cash to an invoice, so " + bcsession.ProviderName +
 				" has nothing to record",
 			Resolution: unappliedPaymentResolved,
 		}
@@ -107,7 +107,7 @@ func cashApplications(
 		return nil, &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorValidation,
 			Code:     unappliedPaymentCode,
-			Message: providerName + " records a payment line only against one invoice, " +
+			Message: bcsession.ProviderName + " records a payment line only against one invoice, " +
 				"so a payment with an unapplied amount cannot be sent",
 			Resolution: unappliedPaymentResolved,
 		}
@@ -126,29 +126,19 @@ func customerPaymentLines(
 			PartyID:        doc.CustomerExternalID,
 			PostingDate:    doc.TxnDate,
 			DocumentNumber: number,
-			ExternalDocumentNumber: cleanText(
+			ExternalDocumentNumber: bcrefsync.CleanText(
 				doc.ReferenceNumber,
 				businesscentral.MaxExternalDocumentNumberLength,
 			),
 			Amount:             businesscentralpay.CustomerPaymentAmount(app.AppliedAmount),
 			AppliesToInvoiceID: strings.TrimSpace(app.InvoiceExternalID),
-			Description: cleanText(
+			Description: bcrefsync.CleanText(
 				"Payment of "+app.InvoiceNumber,
 				businesscentral.MaxDescriptionLength,
 			),
 		})
 	}
 	return lines
-}
-
-func finishPayment(
-	result *accountingconnectorports.AccountingDocumentResult,
-	number, docType string,
-) {
-	result.ExternalID = number
-	result.DocNumber = number
-	result.Refs[accountingsync.ExternalRefDocument] = number
-	result.Refs[accountingsync.ExternalRefDocumentType] = docType
 }
 
 type journalWrite struct {
@@ -160,13 +150,13 @@ type journalWrite struct {
 	refs           map[string]string
 }
 
-func (c *Connector) postPayment(ctx context.Context, w *journalWrite) error {
+func (c *Documents) postPayment(ctx context.Context, w *journalWrite) error {
 	batch, err := paymentBatch(ctx, w.client, w.party, w.accountID)
 	if err != nil {
 		return err
 	}
-	w.refs[refJournal] = batch.ID
-	release, err := c.locks.acquire(ctx, w.client.Ref().String()+"|"+batch.ID)
+	w.refs[RefJournal] = batch.ID
+	release, err := c.LockBatch(ctx, w.client.Ref().String()+"|"+batch.ID)
 	if err != nil {
 		return err
 	}
@@ -198,7 +188,7 @@ func paymentBatch(
 	party businesscentralref.PartyKind,
 	accountID string,
 ) (*businesscentralpay.PaymentJournal, error) {
-	code := batchCode(accountID)
+	code := BatchCode(accountID)
 	found, err := businesscentralpay.PaymentJournals(ctx, client, party, code)
 	if err != nil {
 		return nil, err
@@ -236,7 +226,7 @@ func paymentBatch(
 	return &found[0], nil
 }
 
-func batchCode(accountID string) string {
+func BatchCode(accountID string) string {
 	sum := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(accountID))))
 	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(sum[:])
 	return batchCodePrefix + encoded[:batchCodeHashChars]
@@ -265,7 +255,7 @@ func addPaymentLines(ctx context.Context, w *journalWrite, batchID string) error
 
 type shortPayWrite struct {
 	client  *businesscentral.Client
-	posting *postingContext
+	posting *bcsession.PostingContext
 	doc     *accountingconnectorports.AccountingPaymentDocument
 	idx     int
 	result  *accountingconnectorports.AccountingDocumentResult
@@ -275,7 +265,7 @@ func shortPayRefKey(invoiceID string) string {
 	return accountingsync.ExternalRefShortPayPrefix + invoiceID
 }
 
-func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
+func (c *Documents) shortPay(ctx context.Context, w *shortPayWrite) error {
 	app := &w.doc.Applications[w.idx]
 	if strings.TrimSpace(app.ShortPayCreditExternalID) != "" {
 		return nil
@@ -286,7 +276,7 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 			Category:   accountingsync.SyncErrorMapping,
 			Code:       accountingsync.ItemRoleShortPayWriteOff,
 			Message:    "The short pay write-off item is not mapped",
-			Resolution: "Map the short pay write-off to a " + providerName + " item",
+			Resolution: "Map the short pay write-off to a " + bcsession.ProviderName + " item",
 		}
 	}
 	text := shortPayNote + app.InvoiceNumber
@@ -295,16 +285,16 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 		kind:   businesscentraldocs.DocumentSalesCreditMemo,
 		input: &businesscentraldocs.DocumentInput{
 			PartyID: w.doc.CustomerExternalID,
-			ExternalDocumentNumber: requestReference(accountingsync.SyncStepRequestID(
+			ExternalDocumentNumber: RequestReference(accountingsync.SyncStepRequestID(
 				w.doc.RequestID, stepShortPayBase+w.idx,
 			)),
 			DocumentDate: w.doc.TxnDate,
 			PostingDate:  w.doc.TxnDate,
-			CurrencyCode: w.posting.currency(w.doc.CurrencyCode),
+			CurrencyCode: w.posting.Currency(w.doc.CurrencyCode),
 			InvoiceID:    strings.TrimSpace(app.InvoiceExternalID),
 			Lines: []businesscentraldocs.LineInput{{
 				ItemID:      strings.TrimSpace(w.doc.ShortPayItemExternalID),
-				Description: cleanText(text, businesscentral.MaxDescriptionLength),
+				Description: bcrefsync.CleanText(text, businesscentral.MaxDescriptionLength),
 				Quantity:    decimal.NewFromInt(1),
 				UnitPrice:   app.ShortPayAmount,
 			}},
@@ -319,21 +309,21 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 	return nil
 }
 
-func (c *Connector) VoidPayment(
+func (c *Documents) VoidPayment(
 	_ context.Context,
 	_ *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return nil, reversalRefused()
 }
 
-func (c *Connector) CreateCreditApplication(
+func (c *Documents) CreateCreditApplication(
 	_ context.Context,
 	_ *accountingconnectorports.AccountingCreditApplicationDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return nil, creditApplicationRefused()
 }
 
-func (c *Connector) VoidCreditApplication(
+func (c *Documents) VoidCreditApplication(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -341,13 +331,13 @@ func (c *Connector) VoidCreditApplication(
 	if memoID == "" {
 		return nil, creditApplicationRefused()
 	}
-	client, err := c.client(ref.Auth)
+	client, err := c.Client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
-	if _, err = c.retireDocument(
+	if _, err = retireDocument(
 		ctx,
 		client,
 		businesscentraldocs.DocumentSalesCreditMemo,

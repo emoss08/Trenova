@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -206,12 +207,17 @@ func testConnector(t *testing.T, fake *fakeBC) *Connector {
 	provider.now = func() time.Time { return testNow }
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
-	conn.apiOpts = []businesscentral.Option{
-		businesscentral.WithBaseURL(server.URL),
-		businesscentral.WithWebURL(testWebURL),
-		businesscentral.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Session = *bcsession.NewSession(bcsession.SessionParams{
+		APIOpts: []businesscentral.Option{
+			businesscentral.WithBaseURL(server.URL),
+			businesscentral.WithWebURL(testWebURL),
+			businesscentral.WithRetry(restx.RetryConfig{}),
+		},
+		HTTPClient: &http.Client{Transport: provider.gate.transport(server.Client().Transport)},
+		Locks:      provider.locks,
+		Setups:     provider.setups,
+		Now:        provider.now,
+	})
 	return conn
 }
 

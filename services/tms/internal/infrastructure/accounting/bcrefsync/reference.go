@@ -1,4 +1,4 @@
-package bcconnector
+package bcrefsync
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -15,10 +16,9 @@ import (
 	"github.com/emoss08/trenova/shared/businesscentralref"
 )
 
-var (
-	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
-)
+type References struct {
+	*bcsession.Session
+}
 
 const (
 	maxNameLength       = 100
@@ -31,20 +31,15 @@ const (
 	dueDaysUnit         = "D"
 )
 
-var (
-	errItemDraftRequired  = errors.New("businesscentral: an item draft is required")
-	errPartyDraftRequired = errors.New("businesscentral: a customer or vendor draft is required")
-)
-
-func (c *Connector) MaxReferencePageSize() int {
+func (c *References) MaxReferencePageSize() int {
 	return businesscentral.MaxPageSize
 }
 
-func (c *Connector) ListReference(
+func (c *References) ListReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingReferencePageRequest,
 ) (*accountingconnectorports.AccountingReferencePage, error) {
-	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
+	client, err := c.Client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -66,10 +61,10 @@ func listReference(
 	switch kind {
 	case accountingprovider.ReferenceKindAccount:
 		accounts, err := businesscentralref.Accounts(ctx, client, nil)
-		return convertAll(accounts, accountObjectOf), err
+		return convertAll(accounts, AccountObjectOf), err
 	case accountingprovider.ReferenceKindItem:
 		items, err := businesscentralref.Items(ctx, client, nil)
-		return convertAll(items, itemObjectOf), err
+		return convertAll(items, ItemObjectOf), err
 	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		partyKind := partyKindOf(kind)
 		parties, err := businesscentralref.Parties(ctx, client, partyKind, nil)
@@ -102,18 +97,11 @@ func partyKindOf(kind accountingprovider.ReferenceKind) businesscentralref.Party
 	return businesscentralref.PartyCustomer
 }
 
-func referenceKindOf(kind businesscentralref.PartyKind) accountingprovider.ReferenceKind {
-	if kind == businesscentralref.PartyVendor {
-		return accountingprovider.ReferenceKindVendor
-	}
-	return accountingprovider.ReferenceKindCustomer
-}
-
-func (c *Connector) CreateReference(
+func (c *References) CreateReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingmapping.AccountingReferenceObject, error) {
-	client, err := c.client(accountingconnectorports.AccountingDocumentAuth{
+	client, err := c.Client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -123,18 +111,18 @@ func (c *Connector) CreateReference(
 	switch req.Kind {
 	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
-			return nil, errItemDraftRequired
+			return nil, bcsession.ErrItemDraftRequired
 		}
 		return c.createItem(ctx, client, req.Item)
 	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		if req.Party == nil {
-			return nil, errPartyDraftRequired
+			return nil, bcsession.ErrPartyDraftRequired
 		}
-		party, createErr := createParty(ctx, client, partyKindOf(req.Kind), req.Party)
+		party, createErr := CreateParty(ctx, client, partyKindOf(req.Kind), req.Party)
 		if createErr != nil {
 			return nil, createErr
 		}
-		return partyObjectOf(req.Kind, party), nil
+		return PartyObjectOf(req.Kind, party), nil
 	case accountingprovider.ReferenceKindAccount,
 		accountingprovider.ReferenceKindTerm,
 		accountingprovider.ReferenceKindPaymentMethod:
@@ -144,7 +132,7 @@ func (c *Connector) CreateReference(
 	}
 }
 
-func (c *Connector) createItem(
+func (c *References) createItem(
 	ctx context.Context,
 	client *businesscentral.Client,
 	draft *accountingconnectorports.AccountingItemDraft,
@@ -156,7 +144,7 @@ func (c *Connector) createItem(
 	}
 	for idx := range items {
 		if strings.EqualFold(strings.TrimSpace(items[idx].DisplayName), name) {
-			return nil, fmt.Errorf("%w: item %q", errDuplicateName, name)
+			return nil, fmt.Errorf("%w: item %q", bcsession.ErrDuplicateName, name)
 		}
 	}
 	created, err := businesscentralref.CreateItem(ctx, client, &businesscentralref.ItemInput{
@@ -166,16 +154,16 @@ func (c *Connector) createItem(
 	if err != nil {
 		return nil, err
 	}
-	return itemObjectOf(created), nil
+	return ItemObjectOf(created), nil
 }
 
-func createParty(
+func CreateParty(
 	ctx context.Context,
 	client *businesscentral.Client,
 	kind businesscentralref.PartyKind,
 	draft *accountingconnectorports.AccountingPartyDraft,
 ) (*businesscentralref.Party, error) {
-	input := partyInputOf(draft)
+	input := PartyInputOf(draft)
 	if input.DisplayName == "" {
 		return nil, businesscentralerrors.ErrNameRequired
 	}
@@ -184,87 +172,34 @@ func createParty(
 		return nil, err
 	}
 	if len(existing) > 0 {
-		return nil, fmt.Errorf("%w: %q", errDuplicateName, input.DisplayName)
+		return nil, fmt.Errorf("%w: %q", bcsession.ErrDuplicateName, input.DisplayName)
 	}
 	return businesscentralref.CreateParty(ctx, client, kind, input)
 }
 
-func (c *Connector) IsDuplicateName(err error) bool {
-	return errors.Is(err, errDuplicateName) || businesscentralerrors.IsDuplicate(err)
+func (c *References) IsDuplicateName(err error) bool {
+	return errors.Is(err, bcsession.ErrDuplicateName) || businesscentralerrors.IsDuplicate(err)
 }
 
-func (c *Connector) SanitizeName(_ accountingprovider.ReferenceKind, name string) string {
-	return cleanText(name, maxNameLength)
+func (c *References) SanitizeName(_ accountingprovider.ReferenceKind, name string) string {
+	return CleanText(name, maxNameLength)
 }
 
-func partyInputOf(
+func PartyInputOf(
 	draft *accountingconnectorports.AccountingPartyDraft,
 ) *businesscentralref.PartyInput {
 	return &businesscentralref.PartyInput{
-		DisplayName:  cleanText(draft.DisplayName, maxNameLength),
-		Email:        cleanText(draft.Email, maxEmailLength),
-		AddressLine1: cleanText(draft.AddressLine1, maxAddressLength),
-		City:         cleanText(draft.City, maxCityLength),
-		State:        cleanText(draft.State, maxStateLength),
-		PostalCode:   cleanText(draft.PostalCode, maxPostalCodeLength),
-		Country:      cleanText(draft.Country, maxCountryLength),
+		DisplayName:  CleanText(draft.DisplayName, maxNameLength),
+		Email:        CleanText(draft.Email, maxEmailLength),
+		AddressLine1: CleanText(draft.AddressLine1, maxAddressLength),
+		City:         CleanText(draft.City, maxCityLength),
+		State:        CleanText(draft.State, maxStateLength),
+		PostalCode:   CleanText(draft.PostalCode, maxPostalCodeLength),
+		Country:      CleanText(draft.Country, maxCountryLength),
 	}
 }
 
-type partyWrite struct {
-	auth       accountingconnectorports.AccountingDocumentAuth
-	kind       businesscentralref.PartyKind
-	externalID string
-	party      *accountingconnectorports.AccountingPartyDraft
-}
-
-func (c *Connector) upsertParty(
-	ctx context.Context,
-	write *partyWrite,
-) (*accountingconnectorports.AccountingDocumentResult, error) {
-	client, err := c.client(write.auth)
-	if err != nil {
-		return nil, err
-	}
-	var saved *businesscentralref.Party
-	if id := strings.TrimSpace(write.externalID); id != "" {
-		saved, err = updateParty(ctx, client, write.kind, id, write.party)
-	} else {
-		saved, err = createParty(ctx, client, write.kind, write.party)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &accountingconnectorports.AccountingDocumentResult{
-		ExternalID: saved.ID,
-		DocNumber:  saved.DisplayName,
-		Refs:       map[string]string{},
-	}, nil
-}
-
-func updateParty(
-	ctx context.Context,
-	client *businesscentral.Client,
-	kind businesscentralref.PartyKind,
-	id string,
-	draft *accountingconnectorports.AccountingPartyDraft,
-) (*businesscentralref.Party, error) {
-	current, err := businesscentralref.ReadParty(ctx, client, kind, id)
-	if err != nil {
-		return nil, err
-	}
-	input := partyInputOf(draft)
-	input.CurrencyCode = current.CurrencyCode
-	input.PaymentTermsID = current.PaymentTermsID
-	return businesscentralref.UpdateParty(ctx, client, &businesscentralref.PartyUpdate{
-		Kind:    kind,
-		PartyID: current.ID,
-		ETag:    current.ETag,
-		Input:   *input,
-	})
-}
-
-func accountObjectOf(
+func AccountObjectOf(
 	account *businesscentralref.Account,
 ) *accountingmapping.AccountingReferenceObject {
 	return &accountingmapping.AccountingReferenceObject{
@@ -311,7 +246,7 @@ func AccountClassOf(account *businesscentralref.Account) accountingmapping.Accou
 	}
 }
 
-func itemObjectOf(item *businesscentralref.Item) *accountingmapping.AccountingReferenceObject {
+func ItemObjectOf(item *businesscentralref.Item) *accountingmapping.AccountingReferenceObject {
 	name := item.DisplayName
 	if name == "" {
 		name = item.Number
@@ -331,11 +266,11 @@ func partyConverter(
 	kind accountingprovider.ReferenceKind,
 ) func(*businesscentralref.Party) *accountingmapping.AccountingReferenceObject {
 	return func(party *businesscentralref.Party) *accountingmapping.AccountingReferenceObject {
-		return partyObjectOf(kind, party)
+		return PartyObjectOf(kind, party)
 	}
 }
 
-func partyObjectOf(
+func PartyObjectOf(
 	kind accountingprovider.ReferenceKind,
 	party *businesscentralref.Party,
 ) *accountingmapping.AccountingReferenceObject {

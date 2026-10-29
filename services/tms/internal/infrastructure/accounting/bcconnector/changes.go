@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -211,7 +213,7 @@ func (c *Connector) ReadChanges(
 ) (*accountingconnectorports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	if req.Now.IsZero() {
-		now = c.now().UTC()
+		now = c.Clock().UTC()
 	}
 	cursor, err := parseChangeCursor(req.Cursor, now)
 	if err != nil {
@@ -229,7 +231,7 @@ func (c *Connector) ReadChanges(
 			NextCursor: cursor.String(),
 		}, nil
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -308,14 +310,14 @@ func (c *changeCollector) readTarget(
 		accounts, err := businesscentralref.Accounts(ctx, c.client, since)
 		for idx := range accounts {
 			c.seen(accounts[idx].LastModified)
-			c.reference(accountObjectOf(&accounts[idx]))
+			c.reference(bcrefsync.AccountObjectOf(&accounts[idx]))
 		}
 		return err
 	case targetItems:
 		items, err := businesscentralref.Items(ctx, c.client, since)
 		for idx := range items {
 			c.seen(items[idx].LastModified)
-			c.reference(itemObjectOf(&items[idx]))
+			c.reference(bcrefsync.ItemObjectOf(&items[idx]))
 		}
 		return err
 	case targetCustomers:
@@ -339,7 +341,7 @@ func (c *changeCollector) readParties(
 	referenceKind := referenceKindOf(kind)
 	for idx := range parties {
 		c.seen(parties[idx].LastModified)
-		c.reference(partyObjectOf(referenceKind, &parties[idx]))
+		c.reference(bcrefsync.PartyObjectOf(referenceKind, &parties[idx]))
 	}
 	return nil
 }
@@ -370,7 +372,7 @@ func (c *changeCollector) readDocuments(
 			continue
 		}
 		operation := accountingconnectorports.AccountingChangeUpsert
-		if retired(doc.Status) {
+		if bcdocsync.Retired(doc.Status) {
 			operation = accountingconnectorports.AccountingChangeVoid
 		}
 		c.page.Documents = append(
