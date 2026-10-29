@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func acceptedOfferFixture() *tender.TenderOffer {
 type issueLifecycleDeps struct {
 	issuer    *stubRateConIssuer
 	notifRepo *notificationportsmock.MockNotificationRepository
-	svc       *Service
+	svc       *rig
 }
 
 func setupIssueLifecycleTest(t *testing.T, offer *tender.TenderOffer) *issueLifecycleDeps {
@@ -79,7 +79,7 @@ func setupIssueLifecycleTest(t *testing.T, offer *tender.TenderOffer) *issueLife
 		issuer:    &stubRateConIssuer{},
 		notifRepo: notificationportsmock.NewMockNotificationRepository(t),
 	}
-	deps.svc = &Service{
+	deps.svc = &rig{
 		l:    zap.NewNop(),
 		repo: &offerReadingTenderRepo{offer: offer},
 		notifications: notificationservice.New(notificationservice.Params{

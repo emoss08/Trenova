@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -162,16 +163,18 @@ type Service struct {
 	effects *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger  *zap.Logger
 	Creator *tendercreate.Service
 	Effects *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:       d.Logger,
-		creator: d.Creator,
-		effects: d.Effects,
+		l:       p.Logger.Named("service.tender"),
+		creator: p.Creator,
+		effects: p.Effects,
 	}
 }

@@ -18,6 +18,9 @@ type ActivitiesParams struct {
 	fx.In
 
 	Lifecycle   tenderports.TenderLifecycle
+	Dispatcher  tenderports.TenderOfferDispatcher
+	Counters    tenderports.TenderCounterRecorder
+	Responses   tenderports.TenderLateResponseRecorder
 	Repo        tenderports.TenderRepository
 	RateConRepo rateconfirmationports.RateConfirmationRepository
 	Workflows   kernelports.WorkflowStarter
@@ -26,6 +29,9 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	lifecycle   tenderports.TenderLifecycle
+	dispatcher  tenderports.TenderOfferDispatcher
+	counters    tenderports.TenderCounterRecorder
+	responses   tenderports.TenderLateResponseRecorder
 	repo        tenderports.TenderRepository
 	rateConRepo rateconfirmationports.RateConfirmationRepository
 	workflows   kernelports.WorkflowStarter
@@ -35,6 +41,9 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		lifecycle:   p.Lifecycle,
+		dispatcher:  p.Dispatcher,
+		counters:    p.Counters,
+		responses:   p.Responses,
 		repo:        p.Repo,
 		rateConRepo: p.RateConRepo,
 		workflows:   p.Workflows,
@@ -68,7 +77,7 @@ func (a *Activities) DispatchOfferActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
 ) (*tenderports.TenderDispatchResult, error) {
-	return a.lifecycle.DispatchOffer(ctx, in.TenantInfo, in.OfferID)
+	return a.dispatcher.DispatchOffer(ctx, in.TenantInfo, in.OfferID)
 }
 
 func (a *Activities) ExpireOfferActivity(
@@ -105,7 +114,7 @@ func (a *Activities) RecordCounterActivity(
 	if !in.ActorUserID.IsNil() {
 		in.TenantInfo.UserID = in.ActorUserID
 	}
-	return a.lifecycle.RecordCounter(ctx, in.TenantInfo, &tenderports.RecordCounterRequest{
+	return a.counters.RecordCounter(ctx, in.TenantInfo, &tenderports.RecordCounterRequest{
 		OfferID: in.OfferID,
 		Rate:    in.CounterRate,
 		Note:    in.CounterNote,
@@ -157,5 +166,5 @@ func (a *Activities) RecordLateResponseActivity(
 	if !in.ActorUserID.IsNil() {
 		in.TenantInfo.UserID = in.ActorUserID
 	}
-	return a.lifecycle.RecordLateResponse(ctx, in.TenantInfo, in.OfferID, in.Action, in.Source)
+	return a.responses.RecordLateResponse(ctx, in.TenantInfo, in.OfferID, in.Action, in.Source)
 }

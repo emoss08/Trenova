@@ -60,19 +60,23 @@ var tenderAnswers = agenttoolschema.Source("tender.answer", []tenderAnswer{
 // reason; a longer one is refused before anything is recorded.
 const maxTenderDeclineReason = 500
 
-// tenderManager is the slice of the tender service that withdraws a tender
-// and records a carrier's answer to an offer.
-type tenderManager interface {
+type tenderCanceler interface {
 	Cancel(ctx context.Context, req *tendercancel.CancelTenderRequest) error
 	PreviewCancel(
 		ctx context.Context,
 		req *tendercancel.CancelTenderRequest,
 	) (*tendercancel.CancelPreview, error)
+}
+
+type tenderResponder interface {
 	RecordResponse(ctx context.Context, req *tenderports.TenderResponseRequest) error
 	PreviewResponse(
 		ctx context.Context,
 		req *tenderports.TenderResponseRequest,
 	) (*tendernegotiation.ResponsePreview, error)
+}
+
+type tenderBouncer interface {
 	Bounce(ctx context.Context, req *tenderbounce.BounceTenderRequest) (*tender.Tender, error)
 	PreviewBounce(
 		ctx context.Context,
@@ -83,10 +87,10 @@ type tenderManager interface {
 // cancelTenderTool withdraws a live tender, which is the dispatch console's
 // cancel on a tender.
 type CancelTenderTool struct {
-	tenders tenderManager
+	tenders tenderCanceler
 }
 
-func NewCancelTenderTool(tenders tenderManager) agenttoolports.AgentTool {
+func NewCancelTenderTool(tenders tenderCanceler) agenttoolports.AgentTool {
 	return &CancelTenderTool{tenders: tenders}
 }
 
@@ -226,11 +230,15 @@ func (t *CancelTenderTool) Target(params map[string]any) (agenttoolports.ToolTar
 // and whether the offer can still take an answer is what the service checks
 // when it records one.
 type RecordTenderResponseTool struct {
-	tenders tenderManager
+	responses tenderResponder
+	bounces   tenderBouncer
 }
 
-func NewRecordTenderResponseTool(tenders tenderManager) agenttoolports.AgentTool {
-	return &RecordTenderResponseTool{tenders: tenders}
+func NewRecordTenderResponseTool(
+	responses tenderResponder,
+	bounces tenderBouncer,
+) agenttoolports.AgentTool {
+	return &RecordTenderResponseTool{responses: responses, bounces: bounces}
 }
 
 func (t *RecordTenderResponseTool) Name() string { return "dispatch_record_tender_response" }
@@ -364,7 +372,7 @@ func (t *RecordTenderResponseTool) Execute(
 		if err != nil {
 			return err
 		}
-		_, err = t.tenders.Bounce(ctx, bounce)
+		_, err = t.bounces.Bounce(ctx, bounce)
 		return err
 	}
 
@@ -373,7 +381,7 @@ func (t *RecordTenderResponseTool) Execute(
 		return err
 	}
 
-	return t.tenders.RecordResponse(ctx, request)
+	return t.responses.RecordResponse(ctx, request)
 }
 
 // request is the console's manual response: the source is always Manual,

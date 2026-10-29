@@ -1140,7 +1140,7 @@ func FromServices(s *Services) *Resolver {
 	tenderDeps := &tenderresolver.Deps{
 		Core:                s.Core,
 		RoutingGuideService: s.RoutingGuideService,
-		TenderService:       s.TenderService,
+		TenderRepo:          s.TenderRepo,
 	}
 	timesheetDeps := &timesheetresolver.Deps{
 		Core:             s.Core,

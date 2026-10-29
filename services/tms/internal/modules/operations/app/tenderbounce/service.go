@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -299,25 +300,25 @@ type Service struct {
 	effects               *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger                *zap.Logger
 	Repo                  tenderports.TenderRepository
 	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	Assigner              tenderports.CarrierMoveAssigner
 	Creator               *tendercreate.Service
 	Effects               *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                     d.Logger,
-		repo:                  d.Repo,
-		carrierAssignmentRepo: d.CarrierAssignmentRepo,
-		invalidator:           d.Invalidator,
-		assigner:              d.Assigner,
-		creator:               d.Creator,
-		effects:               d.Effects,
+		l:                     p.Logger.Named("service.tender"),
+		repo:                  p.Repo,
+		carrierAssignmentRepo: p.CarrierAssignmentRepo,
+		invalidator:           p.Invalidator,
+		creator:               p.Creator,
+		effects:               p.Effects,
 	}
 }
 

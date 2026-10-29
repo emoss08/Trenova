@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -67,8 +67,8 @@ func sequentialTender(status tender.Status, offers ...tender.OfferStatus) *tende
 	return entity
 }
 
-func managedService(entity *tender.Tender, workflows *fakeWorkflowStarter) *Service {
-	svc := &Service{
+func managedService(entity *tender.Tender, workflows *fakeWorkflowStarter) *rig {
+	svc := &rig{
 		l:            zap.NewNop(),
 		repo:         &readingTenderRepo{entity: entity},
 		workflows:    workflows,

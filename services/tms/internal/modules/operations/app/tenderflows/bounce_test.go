@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -156,7 +156,7 @@ type bounceDeps struct {
 	workflows   *fakeWorkflowStarter
 	events      *recordingEventService
 	audit       *recordingAuditService
-	svc         *Service
+	svc         *rig
 	tenant      pagination.TenantInfo
 	entity      *tender.Tender
 }
@@ -227,7 +227,7 @@ func setupBounce(t *testing.T) *bounceDeps {
 		tenant:    tenantInfo,
 		entity:    entity,
 	}
-	deps.svc = &Service{
+	deps.svc = &rig{
 		l:                     zap.NewNop(),
 		db:                    dbtest.NopConnection{},
 		repo:                  deps.repo,

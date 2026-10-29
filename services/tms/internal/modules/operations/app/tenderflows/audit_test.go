@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -184,7 +184,7 @@ func TestAcceptOfferLogsTenderAudit(t *testing.T) {
 	}
 	audit := &recordingAuditService{}
 	assigner := &stubMoveAssigner{}
-	svc := &Service{
+	svc := &rig{
 		l:                     zap.NewNop(),
 		db:                    dbtest.NopConnection{},
 		repo:                  &acceptingTenderRepo{offer: offer},
@@ -223,7 +223,7 @@ func TestMarkNeedsReviewLogsSystemTenderAudit(t *testing.T) {
 	offer.Tender.Status = tender.StatusNeedsReview
 
 	audit := &recordingAuditService{}
-	svc := &Service{
+	svc := &rig{
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         &needsReviewTenderRepo{offer: offer},

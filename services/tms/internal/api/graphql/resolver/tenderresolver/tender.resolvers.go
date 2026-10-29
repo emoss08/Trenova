@@ -30,7 +30,7 @@ func (r *QueryResolver) Tender(ctx context.Context, id string) (*tender.Tender, 
 		return nil, err
 	}
 
-	return r.TenderService.Get(ctx, tenderports.GetTenderByIDRequest{
+	return r.TenderRepo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -53,7 +53,7 @@ func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string
 		return nil, err
 	}
 
-	return r.TenderService.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
+	return r.TenderRepo.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ShipmentID:     parsedShipmentID,
 		ShipmentMoveID: parsedMoveID,
@@ -71,7 +71,7 @@ func (r *QueryResolver) LiveTenderByMove(ctx context.Context, moveID string) (*t
 		return nil, err
 	}
 
-	return r.TenderService.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
+	return r.TenderRepo.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		MoveID:     parsedMoveID,
 	})

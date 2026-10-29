@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func TestRecordResponse_RefusesAnOfferPastItsExpiry(t *testing.T) {
 	entity := expiredSentTender()
 	repo := &lateFilingTenderRepo{readingTenderRepo: readingTenderRepo{entity: entity}}
 	events := &recordingEventService{}
-	svc := &Service{
+	svc := &rig{
 		repo:         repo,
 		workflows:    &fakeWorkflowStarter{},
 		eventService: events,

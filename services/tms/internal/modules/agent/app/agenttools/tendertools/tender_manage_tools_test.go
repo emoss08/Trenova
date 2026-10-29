@@ -324,7 +324,10 @@ func TestRecordTenderResponse_RecordsAManualAnswer(t *testing.T) {
 
 	require.NoError(
 		t,
-		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+		NewRecordTenderResponseTool(
+			tenders,
+			tenders,
+		).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
 				fieldOfferID:       offerID.String(),
 				fieldAction:        "Decline",
@@ -344,7 +347,7 @@ func TestRecordTenderResponse_RefusesAnAnswerItCannotRecord(t *testing.T) {
 	t.Parallel()
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 	offerID := tenders.entity.Offers[0].ID.String()
 
 	for name, params := range map[string]map[string]any{
@@ -366,7 +369,8 @@ func TestRecordTenderResponse_RefusesAnAnswerItCannotRecord(t *testing.T) {
 func TestRecordTenderResponse_IsClassedByTheAnswer(t *testing.T) {
 	t.Parallel()
 
-	policy := NewRecordTenderResponseTool(newFakeTenderManager(tender.StatusActive)).Policy()
+	manager := newFakeTenderManager(tender.StatusActive)
+	policy := NewRecordTenderResponseTool(manager, manager).Policy()
 	accept := agenttoolstest.ExecuteParams(map[string]any{fieldAction: "Accept"})
 	decline := agenttoolstest.ExecuteParams(map[string]any{fieldAction: "Decline"})
 	garbled := agenttoolstest.ExecuteParams(map[string]any{fieldAction: "yes"})
@@ -386,7 +390,7 @@ func TestRecordTenderResponse_PreviewOfAnAcceptance(t *testing.T) {
 
 	tenders := newFakeTenderManager(tender.StatusActive,
 		tender.OfferStatusSent, tender.OfferStatusPending)
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -433,7 +437,7 @@ func TestRecordTenderResponse_PreviewOfADeclineShowsTheNextOffer(t *testing.T) {
 
 	tenders := newFakeTenderManager(tender.StatusActive,
 		tender.OfferStatusSent, tender.OfferStatusPending)
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -466,7 +470,7 @@ func TestRecordTenderResponse_PreviewWarnsOfAnOfferNoLongerOpen(t *testing.T) {
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusExpired)
 	tenders.refusal = tenderresponse.ErrOfferNoLongerAvailable
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -499,7 +503,10 @@ func TestRecordTenderResponse_RecordsACounterWithItsRate(t *testing.T) {
 
 	require.NoError(
 		t,
-		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+		NewRecordTenderResponseTool(
+			tenders,
+			tenders,
+		).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
 				fieldOfferID:     offerID.String(),
 				fieldAction:      "Counter",
@@ -521,7 +528,7 @@ func TestRecordTenderResponse_RefusesACounterItCannotRecord(t *testing.T) {
 	t.Parallel()
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 	offerID := tenders.entity.Offers[0].ID.String()
 
 	for name, params := range map[string]map[string]any{
@@ -550,7 +557,10 @@ func TestRecordTenderResponse_ACarrierBackingOutBouncesTheTender(t *testing.T) {
 
 	require.NoError(
 		t,
-		NewRecordTenderResponseTool(tenders).Execute(t.Context(), agenttoolstest.ExecuteParams(
+		NewRecordTenderResponseTool(
+			tenders,
+			tenders,
+		).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
 				fieldOfferID:       offerID.String(),
 				fieldAction:        "BackedOut",
@@ -569,7 +579,8 @@ func TestRecordTenderResponse_ACarrierBackingOutBouncesTheTender(t *testing.T) {
 func TestRecordTenderResponse_CountersAndBouncesArePeoplesDecisions(t *testing.T) {
 	t.Parallel()
 
-	policy := NewRecordTenderResponseTool(newFakeTenderManager(tender.StatusActive)).Policy()
+	manager := newFakeTenderManager(tender.StatusActive)
+	policy := NewRecordTenderResponseTool(manager, manager).Policy()
 	for _, answer := range []string{"Counter", "BackedOut"} {
 		params := agenttoolstest.ExecuteParams(map[string]any{fieldAction: answer})
 		assert.Equal(t, agent.EgressMoney, policy.Classified(params).Egress, answer)
@@ -581,7 +592,7 @@ func TestRecordTenderResponse_PreviewOfACounter(t *testing.T) {
 	t.Parallel()
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -612,7 +623,7 @@ func TestRecordTenderResponse_PreviewOfTakingACounterPaysTheCounterRate(t *testi
 		tender.OfferStatusCountered, tender.OfferStatusPending)
 	tenders.entity.Offers[0].CounterRate = decimal.NewNullDecimal(decimal.NewFromInt(1900))
 	tenders.entity.Offers[0].CounterNeedsApproval = true
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -636,7 +647,7 @@ func TestRecordTenderResponse_PreviewOfACarrierBackingOut(t *testing.T) {
 	t.Parallel()
 
 	tenders := acceptedFake()
-	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
+	tool := NewRecordTenderResponseTool(tenders, tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -395,10 +394,7 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 			detentionrepository.OccurrenceParams{DB: conn, Logger: logger}),
 		Effects: detentioneffects.New(detentioneffects.Params{Logger: logger}),
 	})
-	services.TenderService = tenderservice.New(tenderservice.Params{
-		Logger: logger,
-		Repo:   tenderrepository.New(tenderrepository.Params{DB: conn, Logger: logger}),
-	})
+	services.TenderRepo = tenderrepository.New(tenderrepository.Params{DB: conn, Logger: logger})
 }
 
 // operationsListCases are the converted order, recurring shipment, reason
@@ -710,7 +706,7 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		)
 		assert.ElementsMatch(t, []string{first.String(), other.String()}, itemIDs(page))
 
-		listed, err := services.TenderService.ListByShipment(
+		listed, err := services.TenderRepo.ListByShipment(
 			ours,
 			tenderports.ListTendersByShipmentRequest{
 				TenantInfo: tenantInfoOf(env.mine), ShipmentID: graph.Shipment.ID,

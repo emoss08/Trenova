@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -204,7 +205,9 @@ type Service struct {
 	effects     *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	Repo        tenderports.TenderRepository
 	Workflows   kernelports.WorkflowStarter
@@ -212,13 +215,13 @@ type Deps struct {
 	Effects     *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:           d.Logger,
-		repo:        d.Repo,
-		workflows:   d.Workflows,
-		invalidator: d.Invalidator,
-		effects:     d.Effects,
+		l:           p.Logger.Named("service.tender"),
+		repo:        p.Repo,
+		workflows:   p.Workflows,
+		invalidator: p.Invalidator,
+		effects:     p.Effects,
 	}
 }
 
@@ -316,3 +319,5 @@ func (s *Service) liveTendersForShipment(
 
 	return live, nil
 }
+
+var _ tenderports.TenderGuard = (*Service)(nil)

@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -23,13 +22,13 @@ const tokenParam = "token"
 type Params struct {
 	fx.In
 
-	Service      *tenderservice.Service
+	Service      *tenderresponse.Service
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
 }
 
 type Handler struct {
-	service     *tenderservice.Service
+	service     *tenderresponse.Service
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
 }

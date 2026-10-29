@@ -116,11 +116,6 @@ type TenderLifecycle interface {
 		tenantInfo pagination.TenantInfo,
 		tenderID pulid.ID,
 	) (*TenderPlan, error)
-	DispatchOffer(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		offerID pulid.ID,
-	) (*TenderDispatchResult, error)
 	ExpireOffer(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -139,11 +134,6 @@ type TenderLifecycle interface {
 		offerID pulid.ID,
 		source tender.ResponseSource,
 	) (*TenderAcceptResult, error)
-	RecordCounter(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		req *RecordCounterRequest,
-	) (*TenderCounterResult, error)
 	FinalizeAccepted(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -169,17 +159,36 @@ type TenderLifecycle interface {
 		reason string,
 		actorUserID pulid.ID,
 	) error
+	IssueRateConfirmation(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		offerID pulid.ID,
+	) error
+}
+
+type TenderOfferDispatcher interface {
+	DispatchOffer(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		offerID pulid.ID,
+	) (*TenderDispatchResult, error)
+}
+
+type TenderCounterRecorder interface {
+	RecordCounter(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		req *RecordCounterRequest,
+	) (*TenderCounterResult, error)
+}
+
+type TenderLateResponseRecorder interface {
 	RecordLateResponse(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		offerID pulid.ID,
 		action tender.ResponseAction,
 		source tender.ResponseSource,
-	) error
-	IssueRateConfirmation(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		offerID pulid.ID,
 	) error
 }
 

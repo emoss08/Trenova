@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -147,7 +147,7 @@ type createTestDeps struct {
 	events                *recordingEventService
 	notifRepo             *notificationportsmock.MockNotificationRepository
 	audit                 *recordingAuditService
-	svc                   *Service
+	svc                   *rig
 }
 
 func setupCreateTest(t *testing.T) *createTestDeps {
@@ -167,7 +167,7 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 		audit:                 &recordingAuditService{},
 	}
 
-	deps.svc = &Service{
+	deps.svc = &rig{
 		l:                     zap.NewNop(),
 		db:                    dbtest.NopConnection{},
 		repo:                  deps.tenderRepo,

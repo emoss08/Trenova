@@ -81,7 +81,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
@@ -384,16 +385,16 @@ func provideAddShipmentChargeTool(
 func provideCancelShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
 	partners *editenderchangeservice.Service,
-	tenders *tenderservice.Service,
+	tenders *tendercancel.Service,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewCancelShipmentTool(shipments, partners, tenders)
 }
 
-func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) agenttoolports.AgentTool {
+func provideTenderToRoutingGuideTool(tenders *tendercreate.Service) agenttoolports.AgentTool {
 	return tendertools.NewTenderToRoutingGuideTool(tenders)
 }
 
-func provideTenderToCarriersTool(tenders *tenderservice.Service) agenttoolports.AgentTool {
+func provideTenderToCarriersTool(tenders *tendercreate.Service) agenttoolports.AgentTool {
 	return tendertools.NewTenderToCarriersTool(tenders)
 }
 

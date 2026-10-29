@@ -688,10 +688,10 @@ modules:
       - tenderdispatch
       - tendereffects
       - tenderescalation
+      - tenderflows
       - tenderlifecycle
       - tendernegotiation
       - tenderresponse
-      - tenderservice
       - trackingeventservice
       - checkcallservice
       - triagedeliveryrelay

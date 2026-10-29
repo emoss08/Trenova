@@ -5,7 +5,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 )
@@ -22,12 +24,15 @@ func ProvideCancelCarrierAssignmentTool(
 	return carriertools.NewCancelCarrierAssignmentTool(carriers)
 }
 
-func ProvideCancelTenderTool(tenders *tenderservice.Service) agenttoolports.AgentTool {
+func ProvideCancelTenderTool(tenders *tendercancel.Service) agenttoolports.AgentTool {
 	return tendertools.NewCancelTenderTool(tenders)
 }
 
-func ProvideRecordTenderResponseTool(tenders *tenderservice.Service) agenttoolports.AgentTool {
-	return tendertools.NewRecordTenderResponseTool(tenders)
+func ProvideRecordTenderResponseTool(
+	responses *tenderresponse.Service,
+	bounces *tenderbounce.Service,
+) agenttoolports.AgentTool {
+	return tendertools.NewRecordTenderResponseTool(responses, bounces)
 }
 
 func ProvideGenerateRateConfirmationTool(

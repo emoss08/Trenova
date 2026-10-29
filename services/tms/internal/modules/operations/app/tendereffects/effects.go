@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -92,29 +93,27 @@ type Effects struct {
 	lifecycle        carrierintelports.CarrierLifecycleObserver
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger           *zap.Logger
 	Repo             tenderports.TenderRepository
 	EventService     shipmenteventports.ShipmentEventService
 	AuditService     auditports.AuditService
 	Invalidator      shipmentinvalidationports.ShipmentInvalidator
-	Notifications    *notificationservice.Service
-	DispatchControls dispatchcontrolports.DispatchControlRepository
-	IntelGate        carrierintelports.CarrierIntelGate
-	Lifecycle        carrierintelports.CarrierLifecycleObserver
+	Notifications    *notificationservice.Service                   `optional:"true"`
+	DispatchControls dispatchcontrolports.DispatchControlRepository `optional:"true"`
 }
 
-func New(d Deps) *Effects {
+func New(p Params) *Effects {
 	return &Effects{
-		l:                d.Logger,
-		repo:             d.Repo,
-		eventService:     d.EventService,
-		auditService:     d.AuditService,
-		invalidator:      d.Invalidator,
-		notifications:    d.Notifications,
-		dispatchControls: d.DispatchControls,
-		intelGate:        d.IntelGate,
-		lifecycle:        d.Lifecycle,
+		l:                p.Logger.Named("service.tender"),
+		repo:             p.Repo,
+		eventService:     p.EventService,
+		auditService:     p.AuditService,
+		invalidator:      p.Invalidator,
+		notifications:    p.Notifications,
+		dispatchControls: p.DispatchControls,
 	}
 }
 

@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -434,7 +435,9 @@ type Service struct {
 	effects         *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger          *zap.Logger
 	Repo            tenderports.TenderRepository
 	CarrierRepo     carrierports.CarrierRepository
@@ -442,27 +445,25 @@ type Deps struct {
 	OrgRepo         tenantports.OrganizationRepository
 	AppConfig       *appconfig.Config
 	TenderingConfig *tenderingconfig.Config
-	Templates       documenttemplateports.DocumentTemplateResolver
-	EmailService    emailports.EmailService
-	EDIChannel      tenderports.EDITenderChannel
-	IntelGate       carrierintelports.CarrierIntelGate
+	Templates       documenttemplateports.DocumentTemplateResolver `optional:"true"`
+	EmailService    emailports.EmailService                        `optional:"true"`
+	EDIChannel      tenderports.EDITenderChannel                   `optional:"true"`
 	Effects         *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:               d.Logger,
-		repo:            d.Repo,
-		carrierRepo:     d.CarrierRepo,
-		shipmentRepo:    d.ShipmentRepo,
-		orgRepo:         d.OrgRepo,
-		appConfig:       d.AppConfig,
-		tenderingConfig: d.TenderingConfig,
-		templates:       d.Templates,
-		emailService:    d.EmailService,
-		ediChannel:      d.EDIChannel,
-		intelGate:       d.IntelGate,
-		effects:         d.Effects,
+		l:               p.Logger.Named("service.tender"),
+		repo:            p.Repo,
+		carrierRepo:     p.CarrierRepo,
+		shipmentRepo:    p.ShipmentRepo,
+		orgRepo:         p.OrgRepo,
+		appConfig:       p.AppConfig,
+		tenderingConfig: p.TenderingConfig,
+		templates:       p.Templates,
+		emailService:    p.EmailService,
+		ediChannel:      p.EDIChannel,
+		effects:         p.Effects,
 	}
 }
 
@@ -527,3 +528,5 @@ func (s *Service) skipIneligibleOffer(
 	}
 	return &tenderports.TenderDispatchResult{Delivered: false, Reason: reason}, nil
 }
+
+var _ tenderports.TenderOfferDispatcher = (*Service)(nil)

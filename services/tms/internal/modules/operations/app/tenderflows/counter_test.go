@@ -1,4 +1,4 @@
-package tenderservice
+package tenderflows
 
 import (
 	"context"
@@ -151,7 +151,7 @@ type counterDeps struct {
 	permissions *stubPermissions
 	workflows   *signalingWorkflows
 	events      *recordingEventService
-	svc         *Service
+	svc         *rig
 	tenant      pagination.TenantInfo
 	entity      *tender.Tender
 	offer       *tender.TenderOffer
@@ -221,7 +221,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 		entity:      entity,
 		offer:       entity.Offers[0],
 	}
-	deps.svc = &Service{
+	deps.svc = &rig{
 		l:                zap.NewNop(),
 		db:               dbtest.NopConnection{},
 		repo:             deps.repo,

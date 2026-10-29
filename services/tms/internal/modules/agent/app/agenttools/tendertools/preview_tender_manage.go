@@ -107,7 +107,7 @@ func (t *RecordTenderResponseTool) Preview(
 	}
 
 	summary := fmt.Sprintf("Would record the carrier's %s.", responseWord(request.Action))
-	plan, err := t.tenders.PreviewResponse(ctx, request)
+	plan, err := t.responses.PreviewResponse(ctx, request)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -196,7 +196,7 @@ func (t *RecordTenderResponseTool) previewBounce(
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would record that the carrier backed out of its acceptance. Reason: " +
 		request.Reason
-	plan, err := t.tenders.PreviewBounce(ctx, request)
+	plan, err := t.bounces.PreviewBounce(ctx, request)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil

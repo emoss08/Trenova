@@ -125,7 +125,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -139,6 +138,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
@@ -282,7 +282,7 @@ type Params struct {
 	CommodityService                  *commodityservice.Service
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	RoutingGuideService               *routingguideservice.Service
-	TenderService                     *tenderservice.Service
+	TenderRepo                        tenderports.TenderRepository
 	CarrierService                    *carrierservice.Service
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
@@ -563,7 +563,7 @@ type Services struct {
 	CommodityService                  *commodityservice.Service
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	RoutingGuideService               *routingguideservice.Service
-	TenderService                     *tenderservice.Service
+	TenderRepo                        tenderports.TenderRepository
 	CarrierService                    *carrierservice.Service
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
@@ -849,7 +849,7 @@ func newServices(p *Params) *Services {
 		CommodityService:                  p.CommodityService,
 		CarrierAssignmentService:          p.CarrierAssignmentService,
 		RoutingGuideService:               p.RoutingGuideService,
-		TenderService:                     p.TenderService,
+		TenderRepo:                        p.TenderRepo,
 		CarrierService:                    p.CarrierService,
 		CarrierIntelService:               p.CarrierIntelService,
 		CarrierIntelEnrollmentService:     p.CarrierIntelEnrollmentService,

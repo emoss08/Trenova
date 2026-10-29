@@ -3,8 +3,7 @@
 What happens to a carrier tender after the first offer goes out: a carrier that accepts and then
 backs out, a carrier that answers with a rate of its own, and a tender every carrier passed on.
 Read this before changing `tender` (`retender.go`, `counter.go`, `escalation.go`),
-`tenderbounce`, `tendernegotiation`, `tenderescalation`, `tenderlifecycle` (composed by
-`tenderservice`), `tenderjobs`, the
+`tenderbounce`, `tendernegotiation`, `tenderescalation`, `tenderlifecycle`, `tenderjobs`, the
 tender routes, or the tender settings on dispatch controls.
 
 ## The shape of it
@@ -35,7 +34,7 @@ Every rank passed ─▶ MarkExhausted ─▶ escalateExhausted (dispatch contro
 |---|---|
 | Rules (pure) | `operations/domain/tender`: `retender.go` (`CanBounce`, `ReofferPlan`), `counter.go` (`EvaluateCounter`), `escalation.go` (`EscalationPlan`, `EscalationRate`, `RateCeiling`) |
 | Settings | `operations/domain/dispatchcontrol` (`TenderPolicy`, `TenderExhaustedAction`) |
-| Service | `operations/app/tenderservice` composes the use cases: `tenderbounce`, `tendernegotiation` (counters), `tenderescalation`, `tenderlifecycle`, with `tendercreate`, `tenderdispatch`, `tendercancel`, `tenderresponse` and the shared `tendereffects` |
+| Service | one fx-provided service per use case under `operations/app`: `tenderbounce`, `tendernegotiation` (counters), `tenderescalation`, `tenderlifecycle`, `tendercreate`, `tenderdispatch`, `tendercancel`, `tenderresponse`, sharing `tendereffects`; consumers depend on the one they call or its `tenderports` port |
 | Repository | `tenderrepository.Reopen`, `UpdateOfferStatus` with `Counter` and `CounterDecided` |
 | Workflow | `operations/jobs/tenderjobs/workflow.go`, `RecordCounterActivity` |
 | Migration | `20261231009525_tender_bounce_counter` |

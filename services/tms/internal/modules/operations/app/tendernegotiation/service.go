@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -474,24 +475,28 @@ type Service struct {
 	effects        *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger         *zap.Logger
 	Repo           tenderports.TenderRepository
 	AssignmentRepo assignmentports.AssignmentRepository
 	ShipmentRepo   shipmentports.ShipmentRepository
 	Workflows      kernelports.WorkflowStarter
-	Permissions    permissionports.PermissionEngine
+	Permissions    permissionports.PermissionEngine `optional:"true"`
 	Effects        *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:              d.Logger,
-		repo:           d.Repo,
-		assignmentRepo: d.AssignmentRepo,
-		shipmentRepo:   d.ShipmentRepo,
-		workflows:      d.Workflows,
-		permissions:    d.Permissions,
-		effects:        d.Effects,
+		l:              p.Logger.Named("service.tender"),
+		repo:           p.Repo,
+		assignmentRepo: p.AssignmentRepo,
+		shipmentRepo:   p.ShipmentRepo,
+		workflows:      p.Workflows,
+		permissions:    p.Permissions,
+		effects:        p.Effects,
 	}
 }
+
+var _ tenderports.TenderCounterRecorder = (*Service)(nil)

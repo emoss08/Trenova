@@ -16,7 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -107,20 +110,27 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(setter servicefailureservice.EDIServiceSetter, service ediports.ServiceFailure214Service) {
 		setter.SetEDIService(service)
 	},
-	func(s *tenderservice.Service, assigner tenderports.CarrierMoveAssigner) {
-		s.SetCarrierMoveAssigner(assigner)
+	func(
+		bounces *tenderbounce.Service,
+		lifecycle *tenderlifecycle.Service,
+		assigner tenderports.CarrierMoveAssigner,
+	) {
+		bounces.SetCarrierMoveAssigner(assigner)
+		lifecycle.SetCarrierMoveAssigner(assigner)
 	},
 	// Carrier intelligence writes carrier records back through the carrier
 	// service, so the gate and lifecycle observer are attached after every
 	// consumer is built instead of through their constructors.
 	func(
-		tenders *tenderservice.Service,
+		tenderEffects *tendereffects.Effects,
+		tenderDispatch *tenderdispatch.Service,
 		assignments *carrierassignmentservice.Service,
 		gate carrierintelports.CarrierIntelGate,
 		observer carrierintelports.CarrierLifecycleObserver,
 	) {
-		tenders.SetIntelGate(gate)
-		tenders.SetLifecycleObserver(observer)
+		tenderEffects.SetIntelGate(gate)
+		tenderDispatch.SetIntelGate(gate)
+		tenderEffects.SetLifecycleObserver(observer)
 		assignments.SetIntelGate(gate)
 		assignments.SetLifecycleObserver(observer)
 	},
@@ -142,7 +152,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// Providing services.EDITenderChannel would close the constructor cycle
 	// editenderservice -> ShipmentService -> TenderGuard -> tenderservice ->
 	// EDITenderChannel, so the channel arrives after both services are built.
-	func(s *tenderservice.Service, ediTenders *editenderservice.Service) {
+	func(s *tenderdispatch.Service, ediTenders *editenderservice.Service) {
 		s.SetEDITenderChannel(ediTenders)
 	},
 	fx.Annotate(

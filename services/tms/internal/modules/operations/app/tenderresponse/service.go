@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +32,9 @@ type Service struct {
 	negotiator *tendernegotiation.Service
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger     *zap.Logger
 	Repo       tenderports.TenderRepository
 	Workflows  kernelports.WorkflowStarter
@@ -41,15 +44,15 @@ type Deps struct {
 	Negotiator *tendernegotiation.Service
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:          d.Logger,
-		repo:       d.Repo,
-		workflows:  d.Workflows,
-		bouncer:    d.Bouncer,
-		dispatcher: d.Dispatcher,
-		effects:    d.Effects,
-		negotiator: d.Negotiator,
+		l:          p.Logger.Named("service.tender"),
+		repo:       p.Repo,
+		workflows:  p.Workflows,
+		bouncer:    p.Bouncer,
+		dispatcher: p.Dispatcher,
+		effects:    p.Effects,
+		negotiator: p.Negotiator,
 	}
 }
 
@@ -397,3 +400,7 @@ func (s *Service) RecordLateResponse(
 	s.effects.RecordLateOfferResponse(ctx, tenantInfo, offer, action, source)
 	return nil
 }
+
+var _ tenderports.TenderResponseRecorder = (*Service)(nil)
+
+var _ tenderports.TenderLateResponseRecorder = (*Service)(nil)

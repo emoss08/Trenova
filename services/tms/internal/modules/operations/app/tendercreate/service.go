@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -830,7 +831,9 @@ type Service struct {
 	effects               *tendereffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger                *zap.Logger
 	DB                    kernelports.Transactor
 	Repo                  tenderports.TenderRepository
@@ -842,25 +845,25 @@ type Deps struct {
 	HoldRepo              shipmentholdports.ShipmentHoldRepository
 	Workflows             kernelports.WorkflowStarter
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	RateEngine            ratequoteports.RateEngine
+	RateEngine            ratequoteports.RateEngine `optional:"true"`
 	Effects               *tendereffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                     d.Logger,
-		db:                    d.DB,
-		repo:                  d.Repo,
-		guideRepo:             d.GuideRepo,
-		carrierRepo:           d.CarrierRepo,
-		carrierAssignmentRepo: d.CarrierAssignmentRepo,
-		assignmentRepo:        d.AssignmentRepo,
-		shipmentRepo:          d.ShipmentRepo,
-		holdRepo:              d.HoldRepo,
-		workflows:             d.Workflows,
-		invalidator:           d.Invalidator,
-		rateEngine:            d.RateEngine,
-		effects:               d.Effects,
+		l:                     p.Logger.Named("service.tender"),
+		db:                    p.DB,
+		repo:                  p.Repo,
+		guideRepo:             p.GuideRepo,
+		carrierRepo:           p.CarrierRepo,
+		carrierAssignmentRepo: p.CarrierAssignmentRepo,
+		assignmentRepo:        p.AssignmentRepo,
+		shipmentRepo:          p.ShipmentRepo,
+		holdRepo:              p.HoldRepo,
+		workflows:             p.Workflows,
+		invalidator:           p.Invalidator,
+		rateEngine:            p.RateEngine,
+		effects:               p.Effects,
 	}
 }
 

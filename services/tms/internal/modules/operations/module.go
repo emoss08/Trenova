@@ -76,7 +76,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderescalation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/triagedeliveryrelay"
 	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
@@ -233,10 +241,36 @@ func SharedOptions() fx.Option {
 				fx.As(new(shipmentserviceports.ShipmentService)),
 				fx.As(new(shipmentservice.MutationObserverSetter)),
 			),
-			tenderservice.New,
-			func(s *tenderservice.Service) tenderports.TenderGuard { return s },
-			func(s *tenderservice.Service) tenderports.TenderResponseRecorder { return s },
-			func(s *tenderservice.Service) tenderports.TenderLifecycle { return s },
+			tendereffects.New,
+			tendercreate.New,
+			tenderbounce.New,
+			tenderescalation.New,
+			fx.Annotate(
+				tendercancel.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderGuard)),
+			),
+			fx.Annotate(
+				tenderresponse.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderResponseRecorder)),
+				fx.As(new(tenderports.TenderLateResponseRecorder)),
+			),
+			fx.Annotate(
+				tenderlifecycle.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderLifecycle)),
+			),
+			fx.Annotate(
+				tenderdispatch.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderOfferDispatcher)),
+			),
+			fx.Annotate(
+				tendernegotiation.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderCounterRecorder)),
+			),
 			fx.Annotate(
 				weatheralertservice.New,
 				fx.As(new(weatheralertports.WeatherAlertService)),

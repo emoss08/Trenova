@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -25,22 +25,34 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *tenderservice.Service
+	Tenders              tenderports.TenderRepository
+	Creator              *tendercreate.Service
+	Canceler             *tendercancel.Service
+	Responder            *tenderresponse.Service
+	Bouncer              *tenderbounce.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *tenderservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	tenders   tenderports.TenderRepository
+	creator   *tendercreate.Service
+	canceler  *tendercancel.Service
+	responder *tenderresponse.Service
+	bouncer   *tenderbounce.Service
+	eh        *helpers.ErrorHandler
+	pm        *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		tenders:   p.Tenders,
+		creator:   p.Creator,
+		canceler:  p.Canceler,
+		responder: p.Responder,
+		bouncer:   p.Bouncer,
+		eh:        p.ErrorHandler,
+		pm:        p.PermissionMiddleware,
 	}
 }
 
@@ -118,7 +130,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), tenderports.GetTenderByIDRequest{
+	entity, err := h.tenders.GetByID(c.Request.Context(), tenderports.GetTenderByIDRequest{
 		TenantInfo:    tenantInfoFor(c),
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -153,7 +165,7 @@ func (h *Handler) createWaterfall(c *gin.Context) {
 	}
 	req.TenantInfo = tenantInfoFor(c)
 
-	entity, err := h.service.CreateWaterfall(c.Request.Context(), req)
+	entity, err := h.creator.CreateWaterfall(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -184,7 +196,7 @@ func (h *Handler) createSpot(c *gin.Context) {
 	}
 	req.TenantInfo = tenantInfoFor(c)
 
-	entity, err := h.service.CreateSpot(c.Request.Context(), req)
+	entity, err := h.creator.CreateSpot(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -224,7 +236,7 @@ func (h *Handler) cancel(c *gin.Context) {
 	req.TenantInfo = tenantInfoFor(c)
 	req.TenderID = tenderID
 
-	if err = h.service.Cancel(c.Request.Context(), req); err != nil {
+	if err = h.canceler.Cancel(c.Request.Context(), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -269,7 +281,7 @@ func (h *Handler) recordResponse(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.RecordResponse(c.Request.Context(), &tenderports.TenderResponseRequest{
+	if err = h.responder.RecordResponse(c.Request.Context(), &tenderports.TenderResponseRequest{
 		Actor:         requestActorFromAuthContext(authctx.GetAuthContext(c)),
 		TenantInfo:    tenantInfoFor(c),
 		OfferID:       offerID,
@@ -320,7 +332,7 @@ func (h *Handler) bounce(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Bounce(c.Request.Context(), &tenderbounce.BounceTenderRequest{
+	entity, err := h.bouncer.Bounce(c.Request.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: tenantInfoFor(c),
 		TenderID:   tenderID,
 		Reason:     req.Reason,
@@ -364,7 +376,7 @@ func (h *Handler) listByShipment(c *gin.Context) {
 		return
 	}
 
-	entities, err := h.service.ListByShipment(
+	entities, err := h.tenders.ListByShipment(
 		c.Request.Context(),
 		tenderports.ListTendersByShipmentRequest{
 			TenantInfo: tenantInfoFor(c),
@@ -398,7 +410,7 @@ func (h *Handler) getLiveByMove(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetLiveByMoveID(
+	entity, err := h.tenders.GetLiveByMoveID(
 		c.Request.Context(),
 		tenderports.GetLiveTenderByMoveRequest{
 			TenantInfo: tenantInfoFor(c),

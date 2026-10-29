@@ -212,7 +212,6 @@ import (
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
-	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -221,6 +220,7 @@ import (
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	shipmentimportassistantports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	tenderports "github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	carrierintelenrollmentservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
@@ -454,7 +454,7 @@ type ResolverParams struct {
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableExportService                *tableexportservice.Service
 	TelematicsService                 *telematicsservice.Service
-	TenderService                     *tenderservice.Service
+	TenderRepo                        tenderports.TenderRepository
 	TrackingEventService              trackingeventports.TrackingEventService
 	TractorService                    *tractorservice.Service
 	TrailerService                    *trailerservice.Service
@@ -1637,7 +1637,7 @@ func NewSchema(p ResolverParams) Schema {
 	tenderDeps := &tenderresolver.Deps{
 		Core:                core,
 		RoutingGuideService: p.RoutingGuideService,
-		TenderService:       p.TenderService,
+		TenderRepo:          p.TenderRepo,
 	}
 	tractorDeps := &tractorresolver.Deps{
 		Core:           core,

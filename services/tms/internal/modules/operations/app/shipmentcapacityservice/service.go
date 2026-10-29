@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
@@ -65,7 +64,7 @@ type Params struct {
 	Carriers     carrierports.CarrierRepository
 	Shipments    shipmentports.ShipmentRepository
 	RateQuotes   *ratequoteservice.Service
-	Tenders      *tenderservice.Service
+	Tenders      *tendercreate.Service
 	Logger       *zap.Logger
 }
 

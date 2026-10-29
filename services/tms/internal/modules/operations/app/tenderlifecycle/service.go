@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -39,33 +40,33 @@ type Service struct {
 	negotiator            *tendernegotiation.Service
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger                *zap.Logger
 	DB                    kernelports.Transactor
 	Repo                  tenderports.TenderRepository
 	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	Assigner              tenderports.CarrierMoveAssigner
-	RateConIssuer         rateconfirmationports.RateConfirmationIssuer
+	RateConIssuer         rateconfirmationports.RateConfirmationIssuer `optional:"true"`
 	Canceler              *tendercancel.Service
 	Effects               *tendereffects.Effects
 	Escalator             *tenderescalation.Service
 	Negotiator            *tendernegotiation.Service
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                     d.Logger,
-		db:                    d.DB,
-		repo:                  d.Repo,
-		carrierAssignmentRepo: d.CarrierAssignmentRepo,
-		invalidator:           d.Invalidator,
-		assigner:              d.Assigner,
-		rateConIssuer:         d.RateConIssuer,
-		canceler:              d.Canceler,
-		effects:               d.Effects,
-		escalator:             d.Escalator,
-		negotiator:            d.Negotiator,
+		l:                     p.Logger.Named("service.tender"),
+		db:                    p.DB,
+		repo:                  p.Repo,
+		carrierAssignmentRepo: p.CarrierAssignmentRepo,
+		invalidator:           p.Invalidator,
+		rateConIssuer:         p.RateConIssuer,
+		canceler:              p.Canceler,
+		effects:               p.Effects,
+		escalator:             p.Escalator,
+		negotiator:            p.Negotiator,
 	}
 }
 
@@ -798,3 +799,5 @@ func (s *Service) CancelFromWorkflow(
 	actorTenant.UserID = actorUserID
 	return s.canceler.CancelDirect(ctx, actorTenant, entity, reason)
 }
+
+var _ tenderports.TenderLifecycle = (*Service)(nil)
