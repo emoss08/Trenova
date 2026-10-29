@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -147,7 +148,7 @@ func newTestService(
 			Encryption: securityconfig.EncryptionConfig{Key: "test-key-for-unit-tests-only"},
 		},
 	}
-	auditMetrics := metrics.NewAudit(nil, logger, false)
+	auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 	metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 	srv := &service{
@@ -1036,7 +1037,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "my-test-encryption-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1071,7 +1072,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1100,7 +1101,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "prod-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1129,7 +1130,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "my-encryption-key-for-testing"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1158,7 +1159,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: ""},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1186,7 +1187,7 @@ func TestNew(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1217,7 +1218,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1263,7 +1264,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1301,7 +1302,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1344,7 +1345,7 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{

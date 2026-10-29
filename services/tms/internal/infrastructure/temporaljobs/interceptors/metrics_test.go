@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestMetricsInterceptor_InterceptActivity(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 	mi := NewMetricsInterceptor(m)
 
 	next := &mockActivityInbound{result: "test", err: nil}
@@ -47,7 +47,7 @@ func TestMetricsInterceptor_InterceptWorkflow(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 	mi := NewMetricsInterceptor(m)
 
 	suite := &testsuite.WorkflowTestSuite{}
@@ -70,7 +70,7 @@ func TestMetricsActivityInbound_ExecuteActivity_Success_Enabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 	next := &mockActivityInbound{result: "metrics_result", err: nil}
 
 	inbound := &metricsActivityInbound{
@@ -90,7 +90,7 @@ func TestMetricsActivityInbound_ExecuteActivity_Error_Enabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 	expectedErr := errors.New("activity error")
 	next := &mockActivityInbound{result: nil, err: expectedErr}
 
@@ -130,7 +130,7 @@ func TestMetricsActivityInbound_ExecuteActivity_Disabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), false)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), false)
 	next := &mockActivityInbound{result: "disabled_result", err: nil}
 
 	inbound := &metricsActivityInbound{
@@ -150,7 +150,7 @@ func TestMetricsWorkflowInbound_ExecuteWorkflow_Success_Enabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()
@@ -177,7 +177,7 @@ func TestMetricsWorkflowInbound_ExecuteWorkflow_Error_Enabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), true)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()
@@ -229,7 +229,7 @@ func TestMetricsWorkflowInbound_ExecuteWorkflow_Disabled(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	m := metrics.NewTemporal(registry, zap.NewNop(), false)
+	m := platformmetrics.NewTemporal(registry, zap.NewNop(), false)
 
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/cache/rediscache"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	trenovaredis "github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -70,14 +70,14 @@ func readScopeCacheKey(ctx context.Context) string {
 	return scope + narrowedUserKey + user
 }
 
-func (c *Connection) runtimeStats() metrics.RuntimeStats {
-	stats := metrics.RuntimeStats{}
+func (c *Connection) runtimeStats() platformmetrics.RuntimeStats {
+	stats := platformmetrics.RuntimeStats{}
 	if c.tenantKeel == nil {
 		return stats
 	}
 
 	cache := c.tenantKeel.CacheStats()
-	stats.Cache = metrics.ResultCacheStats{
+	stats.Cache = platformmetrics.ResultCacheStats{
 		Hits:      cache.Hits,
 		Misses:    cache.Misses,
 		Bypasses:  cache.Bypasses,

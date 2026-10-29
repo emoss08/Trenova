@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -39,7 +40,7 @@ type Publisher struct {
 	client   *redis.Client
 	cfg      realtimeconfig.Config
 	l        *zap.Logger
-	metrics  *metrics.Realtime
+	metrics  *platformmetrics.Realtime
 	queue    chan *realtimeports.RealtimeEnvelope
 	stopOnce sync.Once
 	stop     chan struct{}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/health"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
@@ -30,7 +31,7 @@ type WorkerManagerParams struct {
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 	manager := registry.NewWorkerManager(p.Client, p.Logger)
 
-	var temporalMetrics *metrics.Temporal
+	var temporalMetrics *platformmetrics.Temporal
 	if p.Metrics != nil {
 		temporalMetrics = p.Metrics.Temporal
 	}

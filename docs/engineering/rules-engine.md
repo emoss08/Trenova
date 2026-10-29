@@ -1448,7 +1448,7 @@ work stops instead of being abandoned. The evaluator's budgets bound a program i
 Typed callers map these to `errortypes` at their own edge.
 
 **Metrics.** `pkg/wasmmodule` cannot import the metrics package, so it reports through a small
-`wasmmodule.Observer`, implemented by `metrics.WasmModule` (`metrics.NewWasmModule`, one per
+`wasmmodule.Observer`, implemented by `platformmetrics.WasmModule` (`platformmetrics.NewWasmModule`, one per
 module; the EDI module's are `trenova_edi_module_*`) (README in
 `internal/infrastructure/observability/metrics`):
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -149,7 +150,7 @@ func newSignatureFixture(t *testing.T, requiresSignature bool) *signatureFixture
 		activities: &Activities{
 			logger: zap.NewNop(),
 			metrics: &metrics.Registry{
-				Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+				Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 			},
 			documentRepo:     docRepo,
 			documentTypeRepo: typeRepo,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -47,7 +48,7 @@ type RateLimiter struct {
 	store        kernelports.RateLimitStore
 	errorHandler *helpers.ErrorHandler
 	logger       *zap.Logger
-	metrics      *metrics.RateLimit
+	metrics      *httpmetrics.RateLimit
 	policies     map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy
 	exemptPaths  []string
 }
@@ -68,7 +69,7 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 		logger = zap.NewNop()
 	}
 
-	var rateLimitMetrics *metrics.RateLimit
+	var rateLimitMetrics *httpmetrics.RateLimit
 	if p.Metrics != nil {
 		rateLimitMetrics = p.Metrics.RateLimit
 	}

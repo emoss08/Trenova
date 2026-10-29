@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func newTestCostBudget(
 
 	ext := newCostBudgetExtension(
 		cfg,
-		metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		httpmetrics.NewGraphQL(nil, zap.NewNop(), false, httpmetrics.GraphQLOptions{}),
 		zap.NewNop(),
 	)
 	base := time.Date(2026, time.September, 5, 12, 0, 0, 0, time.UTC)

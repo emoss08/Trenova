@@ -3,8 +3,8 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -50,7 +50,7 @@ func countedRuntime(
 ) (*Service, *prometheus.Registry) {
 	registry := prometheus.NewRegistry()
 	rt := newRuntime(completion, query, &stubActionRegistry{}, nil)
-	rt.metrics = metrics.NewAssistant(registry, zap.NewNop(), true)
+	rt.metrics = aimetrics.NewAssistant(registry, zap.NewNop(), true)
 
 	return rt, registry
 }

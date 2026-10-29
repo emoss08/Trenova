@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -149,7 +150,7 @@ type Service struct {
 	watchtower watchtowerports.WatchtowerProjector
 	followUps  assistantports.DecisionFollowUps
 	previews   agentruntimeports.ProposalPreviewService
-	metrics    *metrics.ProposalPreview
+	metrics    *aimetrics.ProposalPreview
 	workflows  kernelports.WorkflowStarter
 }
 

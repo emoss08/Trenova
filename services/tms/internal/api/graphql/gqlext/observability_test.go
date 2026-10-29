@@ -8,6 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func newTestExtension(
 	t.Helper()
 
 	registry := prometheus.NewRegistry()
-	gql := metrics.NewGraphQL(registry, zap.NewNop(), true, metrics.GraphQLOptions{
+	gql := httpmetrics.NewGraphQL(registry, zap.NewNop(), true, httpmetrics.GraphQLOptions{
 		ResolverMetrics: resolverMetrics,
 		MaxOperations:   100,
 	})
@@ -107,7 +108,7 @@ func TestNewObservabilityExtension_UsesConfiguredThreshold(t *testing.T) {
 	t.Parallel()
 
 	registry := &metrics.Registry{
-		GraphQL: metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		GraphQL: httpmetrics.NewGraphQL(nil, zap.NewNop(), false, httpmetrics.GraphQLOptions{}),
 	}
 
 	e := NewObservabilityExtension(ObservabilityParams{

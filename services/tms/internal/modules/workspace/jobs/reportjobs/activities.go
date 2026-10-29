@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
@@ -92,7 +93,7 @@ type Activities struct {
 	realtime     realtimeports.RealtimeService
 	readScopes   permissionports.ReadScopes
 	audit        auditports.AuditService
-	metrics      *metrics.Report
+	metrics      *documentmetrics.Report
 	canned       cannedLibrary
 	cfg          *reportingconfig.Config
 	l            *zap.Logger
@@ -125,7 +126,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-func reportMetrics(registry *metrics.Registry) *metrics.Report {
+func reportMetrics(registry *metrics.Registry) *documentmetrics.Report {
 	if registry == nil {
 		return nil
 	}

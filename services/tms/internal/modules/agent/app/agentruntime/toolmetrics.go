@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"cmp"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
@@ -36,7 +36,7 @@ func (s *Service) countToolOutcome(
 		return
 	}
 
-	s.metrics.RecordToolOutcome(metrics.ToolOutcomeLabels{
+	s.metrics.RecordToolOutcome(aimetrics.ToolOutcomeLabels{
 		Tool:     s.toolMetricLabel(name),
 		Verdict:  outcome.verdictOrDerived(),
 		Model:    aianalytics.CanonicalModel(t.result.Model),
@@ -82,7 +82,7 @@ func (s *Service) reask(
 		model = cmp.Or(completion.ModelIdentifier, model)
 		provider = cmp.Or(completion.ProviderKind, provider)
 	}
-	s.metrics.RecordGuardReask(metrics.GuardReaskLabels{
+	s.metrics.RecordGuardReask(aimetrics.GuardReaskLabels{
 		Guard:    guard,
 		Model:    aianalytics.CanonicalModel(model),
 		Provider: string(provider),

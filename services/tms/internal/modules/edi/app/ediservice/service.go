@@ -3,6 +3,7 @@ package ediservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -142,13 +143,13 @@ type Service struct {
 	transport           editransportports.EDITransportDispatcher
 	orderDerivation     orderports.OrderDerivationService
 	lifecycleApplier    *internaledilifecycle.Applier
-	metrics             *metrics.EDI
+	metrics             *documentmetrics.EDI
 	plans               platformplanports.PlanService
 	customFields        customfieldports.NamedValues
 }
 
 func New(p Params) *Service {
-	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
 	if p.Metrics != nil {
 		ediMetrics = p.Metrics.EDI
 	}

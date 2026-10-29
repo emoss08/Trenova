@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -54,7 +55,7 @@ type Components struct {
 	Keyring   *Keyring
 }
 
-func aiAuditMetrics(registry *metrics.Registry) *metrics.AIAudit {
+func aiAuditMetrics(registry *metrics.Registry) *aimetrics.AIAudit {
 	if registry == nil {
 		return nil
 	}

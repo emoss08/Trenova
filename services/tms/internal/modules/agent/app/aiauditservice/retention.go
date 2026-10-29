@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -33,7 +33,7 @@ type PruneResult struct {
 type Retention struct {
 	ledger    aiauditports.AIAuditRepository
 	retention tenantports.DataRetentionRepository
-	metrics   *metrics.AIAudit
+	metrics   *aimetrics.AIAudit
 	now       func() time.Time
 	l         *zap.Logger
 }
@@ -41,7 +41,7 @@ type Retention struct {
 func NewRetention(
 	ledger aiauditports.AIAuditRepository,
 	retention tenantports.DataRetentionRepository,
-	registry *metrics.AIAudit,
+	registry *aimetrics.AIAudit,
 	logger *zap.Logger,
 ) *Retention {
 	return &Retention{

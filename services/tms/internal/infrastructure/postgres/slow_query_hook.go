@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -67,16 +67,16 @@ func (l *slowQueryLog) record(ctx context.Context, q slowQuery) {
 		fields = append(fields, zap.String("context_error", ctxErr.Error()))
 	}
 	if l.pool != nil {
-		fields = append(fields, metrics.PoolStatsFields(poolStats(l.pool))...)
+		fields = append(fields, platformmetrics.PoolStatsFields(poolStats(l.pool))...)
 	}
 
 	l.logger.Warn(ctx, "slow database query", fields...)
 }
 
-func poolStats(pool *pgxpool.Pool) metrics.PoolStats {
+func poolStats(pool *pgxpool.Pool) platformmetrics.PoolStats {
 	stat := pool.Stat()
 
-	return metrics.PoolStats{
+	return platformmetrics.PoolStats{
 		Open:         int(stat.TotalConns()),
 		InUse:        int(stat.AcquiredConns()),
 		Idle:         int(stat.IdleConns()),

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +69,7 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 	}
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), true)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
 		Config:         cfg,
@@ -95,7 +95,7 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 	}
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), true)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
 		Config:         cfg,
@@ -122,7 +122,7 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 	}
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), false)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), false)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
 		Config:         cfg,
@@ -194,7 +194,7 @@ func TestNewMetricsInterceptor(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), true)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 	interceptor := NewMetricsInterceptor(metricsHandler)
 
 	require.NotNil(t, interceptor)
@@ -205,7 +205,7 @@ func TestNewMetricsInterceptor_DisabledMetrics(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), false)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), false)
 	interceptor := NewMetricsInterceptor(metricsHandler)
 
 	require.NotNil(t, interceptor)
@@ -235,7 +235,7 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 	}
 
 	registry := prometheus.NewRegistry()
-	metricsHandler := metrics.NewTemporal(registry, zap.NewNop(), true)
+	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
 		Config:         cfg,

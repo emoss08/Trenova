@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -52,7 +53,7 @@ const DefaultClassifierTimeout = 3 * time.Second
 type Service struct {
 	logger     *zap.Logger
 	completion llmports.CompletionService
-	metrics    *metrics.Assistant
+	metrics    *aimetrics.Assistant
 
 	// ClassifierTimeout is how long the scope check may take before the
 	// request proceeds on the deterministic verdict alone.

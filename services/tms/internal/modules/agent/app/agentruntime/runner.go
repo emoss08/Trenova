@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
@@ -112,7 +113,7 @@ type Service struct {
 	previews    agentruntimeports.ProposalPreviewService
 	rules       agenttoolports.ToolRuleOverrides
 	changes     realtimeports.RecordChangeFeed
-	metrics     *metrics.Assistant
+	metrics     *aimetrics.Assistant
 	disclosures agenttoolports.ToolDisclosureObserver
 	threshold   *int
 	// arguments holds each tool's compiled schema, against which every

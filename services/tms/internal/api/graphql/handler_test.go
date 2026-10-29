@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -35,7 +35,7 @@ func TestHandler_RejectsAPIKeyPrincipal(t *testing.T) {
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
 		}),
-		metrics: metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		metrics: httpmetrics.NewGraphQL(nil, zap.NewNop(), false, httpmetrics.GraphQLOptions{}),
 	}
 
 	router := gin.New()
@@ -76,7 +76,7 @@ func TestHandler_RejectsOversizedBodyByContentLength(t *testing.T) {
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
 		}),
-		metrics: metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		metrics: httpmetrics.NewGraphQL(nil, zap.NewNop(), false, httpmetrics.GraphQLOptions{}),
 	}
 
 	router := gin.New()
@@ -124,7 +124,12 @@ func TestHandler_RejectsOversizedBodyWithoutContentLength(t *testing.T) {
 			AppConfig: &cfg.App,
 		}),
 		persistedOps: &PersistedOperationManifest{queries: map[string]string{}},
-		metrics:      metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		metrics: httpmetrics.NewGraphQL(
+			nil,
+			zap.NewNop(),
+			false,
+			httpmetrics.GraphQLOptions{},
+		),
 	}
 
 	router := gin.New()

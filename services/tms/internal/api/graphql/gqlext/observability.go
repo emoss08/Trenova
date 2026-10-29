@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.opentelemetry.io/otel/attribute"
@@ -36,7 +37,7 @@ type ObservabilityParams struct {
 }
 
 type ObservabilityExtension struct {
-	metrics       *metrics.GraphQL
+	metrics       *httpmetrics.GraphQL
 	l             *zap.Logger
 	tracer        observability.Tracer
 	slowThreshold time.Duration
@@ -90,7 +91,7 @@ func (e *ObservabilityExtension) InterceptResponse(
 	duration := time.Since(start)
 
 	errs := responseErrors(resp)
-	e.metrics.RecordOperation(metrics.RecordOperationParams{
+	e.metrics.RecordOperation(httpmetrics.RecordOperationParams{
 		Operation: name,
 		Type:      opType,
 		ErrorCode: firstErrorCode(errs),
@@ -138,7 +139,7 @@ func (e *ObservabilityExtension) InterceptField(
 	start := time.Now()
 	res, err := next(resolverCtx)
 
-	e.metrics.RecordResolver(metrics.RecordResolverParams{
+	e.metrics.RecordResolver(httpmetrics.RecordResolverParams{
 		Object:   fc.Object,
 		Field:    fc.Field.Name,
 		Duration: time.Since(start).Seconds(),

@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -57,7 +58,7 @@ type Params struct {
 type Service struct {
 	l       *zap.Logger
 	repo    agentruntimeports.AgentRunEventRepository
-	metrics *metrics.Assistant
+	metrics *aimetrics.Assistant
 }
 
 var _ agentruntimeports.AgentRunEventRecorder = (*Service)(nil)

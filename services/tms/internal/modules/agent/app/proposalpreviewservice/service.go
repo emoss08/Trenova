@@ -15,6 +15,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
@@ -109,7 +110,7 @@ type Service struct {
 	steps       stepReader
 	checker     modificationChecker
 	permissions permissionports.PermissionEngine
-	metrics     *metrics.ProposalPreview
+	metrics     *aimetrics.ProposalPreview
 	zones       agenttoolports.TenantTimezoneReader
 	runs        proposalexecutor.RunReader
 	now         func() int64

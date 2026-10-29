@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/keeltables"
@@ -208,7 +209,9 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
 		pool := tenant.Pool()
-		c.metrics.Database.RegisterPoolStats(func() metrics.PoolStats { return poolStats(pool) })
+		c.metrics.Database.RegisterPoolStats(
+			func() platformmetrics.PoolStats { return poolStats(pool) },
+		)
 	}
 
 	if err = c.HealthCheck(ctx); err != nil {

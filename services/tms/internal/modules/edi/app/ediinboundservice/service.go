@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -84,14 +85,14 @@ type Service struct {
 	lading              *edilading.Runtime
 	flows               *edilading.Flows
 	replayer            *edilading.Replayer
-	metrics             *metrics.EDI
+	metrics             *documentmetrics.EDI
 	watchtower          watchtowerports.WatchtowerProjector
 	publisher           agentports.AgentEventPublisher
 	contentGate         contentscanports.Gate
 }
 
 func New(p Params) *Service {
-	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
 	if p.Metrics != nil {
 		ediMetrics = p.Metrics.EDI
 	}

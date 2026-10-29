@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
@@ -75,7 +76,7 @@ type Service struct {
 	adapters   *modeladapter.Registry
 	usage      aiusageports.AIUsageRepository
 	quota      platformplanports.QuotaGuard
-	genAI      *metrics.GenAI
+	genAI      *aimetrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
 	health *providerHealth

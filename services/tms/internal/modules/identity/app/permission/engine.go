@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -862,7 +863,7 @@ func (e *engine) GetEffectivePermissions(
 	start := time.Now()
 	defer func() {
 		e.metrics.Permission.RecordCompute(
-			metrics.PermissionPathEffective, time.Since(start),
+			auditmetrics.PermissionPathEffective, time.Since(start),
 		)
 	}()
 
@@ -902,7 +903,7 @@ func (e *engine) SimulatePermissions(
 	start := time.Now()
 	defer func() {
 		e.metrics.Permission.RecordCompute(
-			metrics.PermissionPathSimulation, time.Since(start),
+			auditmetrics.PermissionPathSimulation, time.Since(start),
 		)
 	}()
 
@@ -1096,17 +1097,17 @@ func (e *engine) getOrComputePermissions(
 	cached, err := e.cacheRepo.Get(ctx, key)
 	result.cacheLookupDuration = time.Since(cacheStart)
 
-	outcome := metrics.PermissionCacheMiss
+	outcome := auditmetrics.PermissionCacheMiss
 	switch {
 	case err != nil:
-		outcome = metrics.PermissionCacheError
+		outcome = auditmetrics.PermissionCacheError
 		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
 	case cached != nil && cached.ExpiresAt > timeutils.NowUnix():
-		outcome = metrics.PermissionCacheHit
+		outcome = auditmetrics.PermissionCacheHit
 	}
 	e.metrics.Permission.RecordCacheLookup(outcome, result.cacheLookupDuration)
 
-	if outcome == metrics.PermissionCacheHit {
+	if outcome == auditmetrics.PermissionCacheHit {
 		result.perms = cached
 		result.cacheHit = true
 		return result, nil
@@ -1123,7 +1124,7 @@ func (e *engine) getOrComputePermissions(
 	if err != nil {
 		return result, err
 	}
-	e.metrics.Permission.RecordCompute(metrics.PermissionPathCached, result.computeDuration)
+	e.metrics.Permission.RecordCompute(auditmetrics.PermissionPathCached, result.computeDuration)
 
 	if epochErr == nil {
 		perms.Epoch = epoch

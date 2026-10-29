@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -39,7 +40,7 @@ type Params struct {
 type Service struct {
 	l       *zap.Logger
 	repo    agentruntimeports.AgentRunStepRepository
-	metrics *metrics.Assistant
+	metrics *aimetrics.Assistant
 }
 
 var _ agentruntimeports.RunStepLedger = (*Service)(nil)

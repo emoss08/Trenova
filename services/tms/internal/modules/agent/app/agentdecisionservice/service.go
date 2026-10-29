@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
@@ -81,7 +82,7 @@ type Service struct {
 	watchtower   watchtowerports.WatchtowerProjector
 	followUps    assistantports.DecisionFollowUps
 	previews     agentruntimeports.ProposalPreviewService
-	metrics      *metrics.ProposalPreview
+	metrics      *aimetrics.ProposalPreview
 }
 
 func New(p Params) agentports.AgentDecisionService {
@@ -106,7 +107,7 @@ func New(p Params) agentports.AgentDecisionService {
 	}
 }
 
-func previewMetrics(registry *metrics.Registry) *metrics.ProposalPreview {
+func previewMetrics(registry *metrics.Registry) *aimetrics.ProposalPreview {
 	if registry == nil {
 		return nil
 	}

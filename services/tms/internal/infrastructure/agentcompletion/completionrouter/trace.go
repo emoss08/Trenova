@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/shopspring/decimal"
@@ -83,7 +83,7 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *u
 		CacheWriteTokens: usage.CacheWriteTokens,
 	})
 
-	s.genAI.RecordCall(ctx, &metrics.GenAICall{
+	s.genAI.RecordCall(ctx, &aimetrics.GenAICall{
 		Operation:     attempt.operation,
 		Provider:      aitrace.ProviderName(provider.Kind),
 		RequestModel:  provider.Model,

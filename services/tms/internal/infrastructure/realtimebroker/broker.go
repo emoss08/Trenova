@@ -10,6 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/redis/go-redis/v9"
@@ -65,7 +66,7 @@ type Broker struct {
 	client  *redis.Client
 	cfg     realtimeconfig.Config
 	l       *zap.Logger
-	metrics *metrics.Realtime
+	metrics *platformmetrics.Realtime
 
 	mu      sync.RWMutex
 	tenants map[string]map[*subscriber]struct{}

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -45,7 +46,7 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 	}
 	logger := zap.NewNop()
 	registry := &metrics.Registry{
-		GraphQL: metrics.NewGraphQL(nil, logger, false, metrics.GraphQLOptions{}),
+		GraphQL: httpmetrics.NewGraphQL(nil, logger, false, httpmetrics.GraphQLOptions{}),
 	}
 
 	resolvers := opts.Resolvers

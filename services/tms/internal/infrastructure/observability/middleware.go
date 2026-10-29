@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -181,5 +182,5 @@ func (m *Middleware) dbPoolFields() []zap.Field {
 		return nil
 	}
 
-	return metrics.PoolStatsFields(stats)
+	return platformmetrics.PoolStatsFields(stats)
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -947,7 +948,7 @@ func TestRetryDLQEntriesActivity_WithMetrics(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	promRegistry := prometheus.NewRegistry()
-	auditMetrics := metrics.NewAudit(promRegistry, zap.NewNop(), true)
+	auditMetrics := auditmetrics.NewAudit(promRegistry, zap.NewNop(), true)
 	metricsRegistry := &metrics.Registry{
 		Audit: auditMetrics,
 	}

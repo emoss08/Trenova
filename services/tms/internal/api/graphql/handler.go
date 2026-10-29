@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,7 +50,7 @@ type Handler struct {
 	loaders      *loadercore.Registry
 	persistedOps *PersistedOperationManifest
 	server       *gqlhandler.Server
-	metrics      *metrics.GraphQL
+	metrics      *httpmetrics.GraphQL
 }
 
 func New(p Params) *Handler {

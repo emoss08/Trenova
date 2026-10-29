@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
@@ -81,7 +82,7 @@ type Activities struct {
 	steps     agentruntimeports.RunStepLedger
 	observer  ToolObserver
 	delegates DelegateOpener
-	metrics   *metrics.Assistant
+	metrics   *aimetrics.Assistant
 	changes   realtimeports.RecordChangeFeed
 	scopes    permissionports.ReadScopes
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func TestEvaluate_FilesHowLongTheCheckTookByWhatDecidedIt(t *testing.T) {
 	t.Parallel()
 
 	registry := prometheus.NewRegistry()
-	guard := &Service{metrics: metrics.NewAssistant(registry, zap.NewNop(), true)}
+	guard := &Service{metrics: aimetrics.NewAssistant(registry, zap.NewNop(), true)}
 	SetCompletionForTest(guard, inScopeClassifier{})
 
 	refused := guard.Evaluate(t.Context(), EvaluateRequest{

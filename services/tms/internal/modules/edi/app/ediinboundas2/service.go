@@ -1,6 +1,7 @@
 package ediinboundas2
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -27,11 +28,11 @@ type Service struct {
 	ediService      *ediservice.Service
 	inbound         *ediinboundservice.Service
 	workflowStarter kernelports.WorkflowStarter
-	metrics         *metrics.EDI
+	metrics         *documentmetrics.EDI
 }
 
 func New(p Params) *Service {
-	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
 	if p.Metrics != nil {
 		ediMetrics = p.Metrics.EDI
 	}

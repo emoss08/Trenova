@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -60,14 +61,14 @@ type Service struct {
 	workflows     kernelports.WorkflowStarter
 	storage       kernelports.Client
 	audit         auditports.AuditService
-	metrics       *metrics.Report
+	metrics       *documentmetrics.Report
 	cfg           *reportingconfig.Config
 	canned        *canned.Registry
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value
 func New(p Params) (*Service, error) {
-	var reportMetrics *metrics.Report
+	var reportMetrics *documentmetrics.Report
 	if p.Metrics != nil {
 		reportMetrics = p.Metrics.Report
 	}

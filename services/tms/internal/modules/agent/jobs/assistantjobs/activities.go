@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
@@ -102,7 +103,7 @@ type Activities struct {
 	threads       replyThreads
 	notifications replyNotifications
 	followUps     assistantports.DecisionFollowUpResumer
-	metrics       *metrics.Assistant
+	metrics       *aimetrics.Assistant
 	workflows     kernelports.WorkflowStarter
 	reflections   agentports.AgentReflectionScheduler
 	queue         assistantports.AssistantQueueSettler

@@ -5,6 +5,11 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,29 +26,29 @@ type Registry struct {
 	otel     meterProviderOnce
 	genAI    genAIOnce
 
-	HTTP       *HTTP
-	Error      *Error
-	Database   *Database
-	Temporal   *Temporal
-	Assistant  *Assistant
-	Audit      *Audit
-	Document   *Document
-	EDI        *EDI
-	Report     *Report
-	GraphQL    *GraphQL
-	Permission *Permission
-	RateLimit  *RateLimit
-	Realtime   *Realtime
-	AIAudit    *AIAudit
+	HTTP       *httpmetrics.HTTP
+	Error      *httpmetrics.Error
+	Database   *platformmetrics.Database
+	Temporal   *platformmetrics.Temporal
+	Assistant  *aimetrics.Assistant
+	Audit      *auditmetrics.Audit
+	Document   *documentmetrics.Document
+	EDI        *documentmetrics.EDI
+	Report     *documentmetrics.Report
+	GraphQL    *httpmetrics.GraphQL
+	Permission *auditmetrics.Permission
+	RateLimit  *httpmetrics.RateLimit
+	Realtime   *platformmetrics.Realtime
+	AIAudit    *aimetrics.AIAudit
 	// ProposalPreview measures what people are shown before they approve.
-	ProposalPreview *ProposalPreview
-	Rules           *WasmModule
-	EDIModule       *WasmModule
+	ProposalPreview *aimetrics.ProposalPreview
+	Rules           *platformmetrics.WasmModule
+	EDIModule       *platformmetrics.WasmModule
 }
 
-func graphQLOptions(cfg *config.Config) GraphQLOptions {
+func graphQLOptions(cfg *config.Config) httpmetrics.GraphQLOptions {
 	gqlCfg := &cfg.Monitoring.GraphQL
-	return GraphQLOptions{
+	return httpmetrics.GraphQLOptions{
 		ResolverMetrics: gqlCfg.ResolverMetrics,
 		MaxOperations:   gqlCfg.GetMaxTrackedOperations(),
 	}
@@ -59,23 +64,35 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			enabled:         false,
 			cfg:             cfg,
 			logger:          logger,
-			HTTP:            NewHTTP(nil, logger, false),
-			Error:           NewError(nil, logger, false),
-			Database:        NewDatabase(nil, logger, false),
-			Temporal:        NewTemporal(nil, logger, false),
-			Assistant:       NewAssistant(nil, logger, false),
-			Audit:           NewAudit(nil, logger, false),
-			Document:        NewDocument(nil, logger, false),
-			EDI:             NewEDI(nil, logger, false),
-			Report:          NewReport(nil, logger, false),
-			GraphQL:         NewGraphQL(nil, logger, false, graphQLOptions(cfg)),
-			Permission:      NewPermission(nil, logger, false),
-			RateLimit:       NewRateLimit(nil, logger, false),
-			Realtime:        NewRealtime(nil, logger, false),
-			AIAudit:         NewAIAudit(nil, logger, false),
-			ProposalPreview: NewProposalPreview(nil, logger, false),
-			Rules:           NewWasmModule(nil, logger, false, rulesSubsystem, "rules"),
-			EDIModule:       NewWasmModule(nil, logger, false, ediModuleSubsystem, "EDI"),
+			HTTP:            httpmetrics.NewHTTP(nil, logger, false),
+			Error:           httpmetrics.NewError(nil, logger, false),
+			Database:        platformmetrics.NewDatabase(nil, logger, false),
+			Temporal:        platformmetrics.NewTemporal(nil, logger, false),
+			Assistant:       aimetrics.NewAssistant(nil, logger, false),
+			Audit:           auditmetrics.NewAudit(nil, logger, false),
+			Document:        documentmetrics.NewDocument(nil, logger, false),
+			EDI:             documentmetrics.NewEDI(nil, logger, false),
+			Report:          documentmetrics.NewReport(nil, logger, false),
+			GraphQL:         httpmetrics.NewGraphQL(nil, logger, false, graphQLOptions(cfg)),
+			Permission:      auditmetrics.NewPermission(nil, logger, false),
+			RateLimit:       httpmetrics.NewRateLimit(nil, logger, false),
+			Realtime:        platformmetrics.NewRealtime(nil, logger, false),
+			AIAudit:         aimetrics.NewAIAudit(nil, logger, false),
+			ProposalPreview: aimetrics.NewProposalPreview(nil, logger, false),
+			Rules: platformmetrics.NewWasmModule(
+				nil,
+				logger,
+				false,
+				platformmetrics.RulesSubsystem,
+				"rules",
+			),
+			EDIModule: platformmetrics.NewWasmModule(
+				nil,
+				logger,
+				false,
+				platformmetrics.EDIModuleSubsystem,
+				"EDI",
+			),
 		}, nil
 	}
 
@@ -88,23 +105,35 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		cfg:             cfg,
 		logger:          logger,
 		enabled:         true,
-		HTTP:            NewHTTP(registry, logger, true),
-		Error:           NewError(registry, logger, true),
-		Database:        NewDatabase(registry, logger, true),
-		Temporal:        NewTemporal(registry, logger, true),
-		Assistant:       NewAssistant(registry, logger, true),
-		Audit:           NewAudit(registry, logger, true),
-		Document:        NewDocument(registry, logger, true),
-		EDI:             NewEDI(registry, logger, true),
-		Report:          NewReport(registry, logger, true),
-		GraphQL:         NewGraphQL(registry, logger, true, graphQLOptions(cfg)),
-		Permission:      NewPermission(registry, logger, true),
-		RateLimit:       NewRateLimit(registry, logger, true),
-		Realtime:        NewRealtime(registry, logger, true),
-		AIAudit:         NewAIAudit(registry, logger, true),
-		ProposalPreview: NewProposalPreview(registry, logger, true),
-		Rules:           NewWasmModule(registry, logger, true, rulesSubsystem, "rules"),
-		EDIModule:       NewWasmModule(registry, logger, true, ediModuleSubsystem, "EDI"),
+		HTTP:            httpmetrics.NewHTTP(registry, logger, true),
+		Error:           httpmetrics.NewError(registry, logger, true),
+		Database:        platformmetrics.NewDatabase(registry, logger, true),
+		Temporal:        platformmetrics.NewTemporal(registry, logger, true),
+		Assistant:       aimetrics.NewAssistant(registry, logger, true),
+		Audit:           auditmetrics.NewAudit(registry, logger, true),
+		Document:        documentmetrics.NewDocument(registry, logger, true),
+		EDI:             documentmetrics.NewEDI(registry, logger, true),
+		Report:          documentmetrics.NewReport(registry, logger, true),
+		GraphQL:         httpmetrics.NewGraphQL(registry, logger, true, graphQLOptions(cfg)),
+		Permission:      auditmetrics.NewPermission(registry, logger, true),
+		RateLimit:       httpmetrics.NewRateLimit(registry, logger, true),
+		Realtime:        platformmetrics.NewRealtime(registry, logger, true),
+		AIAudit:         aimetrics.NewAIAudit(registry, logger, true),
+		ProposalPreview: aimetrics.NewProposalPreview(registry, logger, true),
+		Rules: platformmetrics.NewWasmModule(
+			registry,
+			logger,
+			true,
+			platformmetrics.RulesSubsystem,
+			"rules",
+		),
+		EDIModule: platformmetrics.NewWasmModule(
+			registry,
+			logger,
+			true,
+			platformmetrics.EDIModuleSubsystem,
+			"EDI",
+		),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -178,7 +179,7 @@ func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -238,7 +239,7 @@ func TestPlanDocumentExtractionActivity_RefusesAProfileThatIsNotRead(t *testing.
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
 		documentRepo: docRepo,
 	}
@@ -318,7 +319,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -414,7 +415,7 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -503,7 +504,7 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
@@ -593,7 +594,7 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{DocumentExtraction: true},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,

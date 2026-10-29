@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -175,7 +176,7 @@ func (h *doclingHarness) contentService(
 		DocumentConversionConfig: &documentconversionconfig.Config{},
 		SearchConfig:             &searchconfig.Config{},
 		Metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		DocumentControlRepo: h.activities.documentControlRepo,
 		DocumentRepo:        h.docs,

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -37,7 +38,7 @@ type CostBudgetParams struct {
 
 type CostBudgetExtension struct {
 	cfg     securityconfig.GraphQLCostBudgetConfig
-	metrics *metrics.GraphQL
+	metrics *httpmetrics.GraphQL
 	l       *zap.Logger
 	now     func() time.Time
 
@@ -66,7 +67,7 @@ func NewCostBudgetExtension(p CostBudgetParams) *CostBudgetExtension {
 
 func newCostBudgetExtension(
 	cfg securityconfig.GraphQLCostBudgetConfig,
-	graphQLMetrics *metrics.GraphQL,
+	graphQLMetrics *httpmetrics.GraphQL,
 	logger *zap.Logger,
 ) *CostBudgetExtension {
 	return &CostBudgetExtension{

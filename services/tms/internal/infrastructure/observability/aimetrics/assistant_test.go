@@ -1,0 +1,296 @@
+package aimetrics
+
+import (
+	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func newAssistantForTest(t *testing.T) (*Assistant, *prometheus.Registry) {
+	t.Helper()
+
+	registry := prometheus.NewRegistry()
+
+	return NewAssistant(registry, zap.NewNop(), true), registry
+}
+
+func TestAssistant_CountsTurnsByHowTheyEnded(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordTurn("Completed", 3)
+	assistant.RecordTurn("Completed", 4)
+	assistant.RecordTurn("Failed", 1)
+
+	assert.Equal(t, 2, countOf(t, registry, "trenova_assistant_turns_total", "Completed"))
+	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_turns_total", "Failed"))
+}
+
+// A turn that never said anything is not one that answered instantly. Only a
+// reader who saw the first event records how long it took.
+func TestAssistant_RecordsFirstEventsOnlyWhenOneArrived(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordTurn("Failed", 5)
+	assert.Zero(t, firstEventSamples(t, registry),
+		"finishing a turn says nothing about when it first spoke")
+
+	assistant.RecordFirstEvent(0.8)
+	assert.Equal(t, uint64(1), firstEventSamples(t, registry))
+}
+
+func firstEventSamples(t *testing.T, registry *prometheus.Registry) uint64 {
+	t.Helper()
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+
+	for _, family := range families {
+		if family.GetName() != "trenova_assistant_turn_first_event_seconds" {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			return metric.GetHistogram().GetSampleCount()
+		}
+	}
+
+	return 0
+}
+
+// A stop that silently cancelled nothing is the failure mode worth seeing:
+// the reader is told it stopped while the turn runs on and bills.
+func TestAssistant_SeparatesAStopThatCancelledFromOneThatDidNot(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordTurnStopped("cancelled")
+	assistant.RecordTurnStopped("already_ended")
+
+	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_turns_stopped_total", "cancelled"))
+	assert.Equal(t, 1,
+		countOf(t, registry, "trenova_assistant_turns_stopped_total", "already_ended"))
+}
+
+// A collector is something a caller may legitimately not have: a test builds
+// its service without one. Measuring must never be a reason to crash.
+func TestAssistant_IsSafeWhenThereIsNoCollector(t *testing.T) {
+	t.Parallel()
+
+	var absent *Assistant
+
+	assert.NotPanics(t, func() {
+		absent.RecordTurn("Completed", 1)
+		absent.RecordFirstEvent(1)
+		absent.RecordTurnStopped("cancelled")
+		absent.RecordStepReplayed("AssistantTurn", "Completed")
+		absent.RecordStreamAttach("resumed")
+		absent.RecordToolOutcome(ToolOutcomeLabels{Tool: "shipment_list", Verdict: "ran"})
+		absent.RecordGuardReask(GuardReaskLabels{Guard: "grounding"})
+	})
+}
+
+// A tool the models keep calling wrongly has to stand apart from one that
+// works, by tool and by what stopped it.
+func TestAssistant_CountsToolOutcomesByToolVerdictModelAndProvider(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	haiku := func(tool, verdict string) ToolOutcomeLabels {
+		return ToolOutcomeLabels{
+			Tool:     tool,
+			Verdict:  verdict,
+			Model:    "claude-haiku-5.5",
+			Provider: "AnthropicMessages",
+		}
+	}
+	assistant.RecordToolOutcome(haiku("shipment_list", "ran"))
+	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
+	assistant.RecordToolOutcome(haiku("shipment_list", "invalid"))
+	assistant.RecordToolOutcome(haiku("dispatch_assign_move", "proposed"))
+	assistant.RecordToolOutcome(ToolOutcomeLabels{
+		Tool:     "shipment_list",
+		Verdict:  "invalid",
+		Model:    "gpt-6-luna",
+		Provider: "OpenAIResponses",
+	})
+	assistant.RecordToolOutcome(ToolOutcomeLabels{Tool: "shipment_list", Verdict: "ran"})
+
+	name := "trenova_assistant_tool_outcomes_total"
+	claude := []string{"claude-haiku-5.5", "AnthropicMessages"}
+	assert.Equal(
+		t,
+		1,
+		countOf(t, registry, name, append([]string{"shipment_list", "ran"}, claude...)...),
+	)
+	assert.Equal(
+		t,
+		2,
+		countOf(t, registry, name, append([]string{"shipment_list", "invalid"}, claude...)...),
+	)
+	assert.Equal(
+		t,
+		1,
+		countOf(
+			t,
+			registry,
+			name,
+			append([]string{"dispatch_assign_move", "proposed"}, claude...)...),
+	)
+	assert.Equal(t, 1, countOf(t, registry, name,
+		"shipment_list", "invalid", "gpt-6-luna", "OpenAIResponses"))
+	assert.Equal(t, 1, countOf(t, registry, name, "shipment_list", "ran", "unknown", "unknown"))
+}
+
+// countOf reads one counter by the label values it carries, in any order:
+// prometheus sorts labels alphabetically when it gathers, so matching them
+// positionally would pass or fail on the declaration order of the metric
+// rather than on what was recorded.
+func countOf(t *testing.T, registry *prometheus.Registry, name string, labels ...string) int {
+	t.Helper()
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+
+	for _, family := range families {
+		if family.GetName() != name {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			values := make([]string, 0, len(metric.GetLabel()))
+			for _, label := range metric.GetLabel() {
+				values = append(values, label.GetValue())
+			}
+			if carriesAll(values, labels) {
+				return int(metric.GetCounter().GetValue())
+			}
+		}
+	}
+
+	return 0
+}
+
+func carriesAll(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for _, value := range want {
+		found := false
+		for _, candidate := range got {
+			if candidate == value {
+				found = true
+
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+func histogramSamples(
+	t *testing.T,
+	registry *prometheus.Registry,
+	name string,
+	labels ...string,
+) uint64 {
+	t.Helper()
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+
+	for _, family := range families {
+		if family.GetName() != name {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			values := make([]string, 0, len(metric.GetLabel()))
+			for _, label := range metric.GetLabel() {
+				values = append(values, label.GetValue())
+			}
+			if carriesAll(values, labels) {
+				return metric.GetHistogram().GetSampleCount()
+			}
+		}
+	}
+
+	return 0
+}
+
+// The wait before the first token is spent in phases — preparing the turn,
+// checking the question, the model call waiting for a worker — and each is a
+// histogram of its own, so a slow turn says which part was slow.
+func TestAssistant_TimesEachPhaseBeforeTheFirstToken(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordPrepare("allowed", 0.4)
+	assistant.RecordPrepare("refused", 0.2)
+	assistant.RecordGuard("classifier", 0.3)
+	assistant.RecordModelCallWait(0.02)
+
+	assert.Equal(
+		t,
+		uint64(1),
+		histogramSamples(t, registry, "trenova_assistant_prepare_seconds", "allowed"),
+	)
+	assert.Equal(
+		t,
+		uint64(1),
+		histogramSamples(t, registry, "trenova_assistant_prepare_seconds", "refused"),
+	)
+	assert.Equal(
+		t,
+		uint64(1),
+		histogramSamples(t, registry, "trenova_assistant_guard_seconds", "classifier"),
+	)
+	assert.Equal(
+		t,
+		uint64(1),
+		histogramSamples(t, registry, "trenova_assistant_model_call_wait_seconds"),
+	)
+}
+
+func TestAssistant_PhaseTimingsAreSafeWithoutMetrics(t *testing.T) {
+	t.Parallel()
+
+	var nothing *Assistant
+	nothing.RecordPrepare("allowed", 1)
+	nothing.RecordGuard("classifier", 1)
+	nothing.RecordModelCallWait(1)
+
+	off := NewAssistant(nil, zap.NewNop(), false)
+	off.RecordPrepare("allowed", 1)
+	off.RecordGuard("classifier", 1)
+	off.RecordModelCallWait(1)
+}
+
+func TestAssistant_CountsGuardReasksByGuardModelAndProvider(t *testing.T) {
+	t.Parallel()
+
+	assistant, registry := newAssistantForTest(t)
+
+	assistant.RecordGuardReask(GuardReaskLabels{
+		Guard: "grounding", Model: "claude-haiku-5.5", Provider: "AnthropicMessages",
+	})
+	assistant.RecordGuardReask(GuardReaskLabels{
+		Guard: "grounding", Model: "claude-haiku-5.5", Provider: "AnthropicMessages",
+	})
+	assistant.RecordGuardReask(GuardReaskLabels{Guard: "empty_reply"})
+
+	name := "trenova_assistant_guard_reasks_total"
+	assert.Equal(t, 2, countOf(t, registry, name,
+		"grounding", "claude-haiku-5.5", "AnthropicMessages"))
+	assert.Equal(t, 1, countOf(t, registry, name, "empty_reply", "unknown", "unknown"))
+}

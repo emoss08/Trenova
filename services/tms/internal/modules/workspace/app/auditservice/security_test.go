@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +28,10 @@ type capturingAuditService struct {
 	err    error
 }
 
-func (c *capturingAuditService) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
+func (c *capturingAuditService) LogAction(
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
+) error {
 	c.params = params
 	c.entry = &audit.Entry{Metadata: map[string]any{}}
 	for _, opt := range opts {
@@ -41,7 +45,7 @@ func (c *capturingAuditService) LogAction(params *auditports.LogActionParams, op
 func newSecurityAuditor(svc auditports.AuditService) permissionports.SecurityAuditor {
 	return NewSecurityAuditor(SecurityAuditorParams{
 		AuditService: svc,
-		Metrics:      &metrics.Registry{Audit: metrics.NewAudit(nil, zap.NewNop(), false)},
+		Metrics:      &metrics.Registry{Audit: auditmetrics.NewAudit(nil, zap.NewNop(), false)},
 		Logger:       zap.NewNop(),
 	})
 }

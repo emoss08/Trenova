@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
@@ -50,7 +51,7 @@ func integrationBootstrapDeps(
 	t.Helper()
 
 	logger := zap.NewNop()
-	registry := &metrics.Registry{Audit: metrics.NewAudit(nil, logger, false)}
+	registry := &metrics.Registry{Audit: auditmetrics.NewAudit(nil, logger, false)}
 	appCfg := productionSeedConfig()
 
 	return bootstrapDeps{

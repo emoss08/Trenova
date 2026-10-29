@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -129,7 +129,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 	ediSvc := ediservice.New(params)
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
-		metrics:             metrics.NewEDI(nil, zap.NewNop(), false),
+		metrics:             documentmetrics.NewEDI(nil, zap.NewNop(), false),
 		tenderRecipientRepo: fixture.recipientRepo,
 		tenderRepo:          fixture.tenderRepo,
 		ediService:          ediSvc,

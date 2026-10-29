@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -110,7 +110,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 	})
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
-		metrics:             metrics.NewEDI(nil, zap.NewNop(), false),
+		metrics:             documentmetrics.NewEDI(nil, zap.NewNop(), false),
 		inboundFileRepo:     fixture.inboundFileRepo,
 		partnerRepo:         fixture.partnerRepo,
 		messageRepo:         fixture.messageRepo,

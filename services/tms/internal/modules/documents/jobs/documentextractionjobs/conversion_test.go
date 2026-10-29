@@ -13,6 +13,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -311,7 +312,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
 		documentRepo:        docs,
 		documentControlRepo: controlRepo,

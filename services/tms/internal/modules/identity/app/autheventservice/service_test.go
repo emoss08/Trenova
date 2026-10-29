@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -38,7 +39,7 @@ func (f *fakeRepository) DeleteBefore(context.Context, int64) (int64, error) {
 func newTestService(repo *fakeRepository) iamports.AuthEventRecorder {
 	return New(Params{
 		Repository: repo,
-		Metrics:    &metrics.Registry{Audit: metrics.NewAudit(nil, zap.NewNop(), false)},
+		Metrics:    &metrics.Registry{Audit: auditmetrics.NewAudit(nil, zap.NewNop(), false)},
 		Logger:     zap.NewNop(),
 	})
 }
@@ -96,7 +97,11 @@ func TestRecordWithoutATenantLeavesTheScopeToTheRepository(t *testing.T) {
 
 	require.Len(t, repo.events, 1)
 	event := repo.events[0]
-	assert.True(t, event.OrganizationID.IsNil(), "an organization without a business unit is not a tenant")
+	assert.True(
+		t,
+		event.OrganizationID.IsNil(),
+		"an organization without a business unit is not a tenant",
+	)
 	assert.Equal(t, iam.AuthEventOutcomeFailed, event.Outcome)
 	assert.Len(t, event.ErrorCode, maxErrorCodeLen)
 	assert.Empty(t, event.IPAddress)

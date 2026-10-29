@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -110,7 +110,7 @@ func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
 	}
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
-		metrics:             metrics.NewEDI(nil, zap.NewNop(), false),
+		metrics:             documentmetrics.NewEDI(nil, zap.NewNop(), false),
 		tenderRecipientRepo: fixture.recipientRepo,
 		tenderRepo:          fixture.tenderRepo,
 		tenderResponses:     fixture.recorder,

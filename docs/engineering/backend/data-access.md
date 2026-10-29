@@ -331,7 +331,7 @@ security scoped.
 | Wait ceiling | `database.maxWait` (default `60s`, `0` off) is keel's `Config.MaxWait` on the tenant and system pools: a wait for a slot or a connection that reaches it fails with `keel.ErrWaitLimit`, which `dberror.IsRetryableTransactionError` treats as retryable (`MapRetryableTransactionError` gives "busy, retry"), and a read waiting on another request's cache read reads the database itself. It sits above `server.requestTimeout`, so it ends only waits with no deadline of their own (jobs, consumers) |
 | Result cache | `database.cache` on the tenant pool ([Caching](#caching)); `trenova_db_cache_*` |
 | Query budgets | every REST request and GraphQL operation runs under `keel.Budget` ([Budgets](#budgets)) |
-| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`metrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
+| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`platformmetrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
 
 `dbtx.Read`/`Write` and services' `kernelports.Transactor.Transact(ctx, opts, fn)` go through
 `Connection.Transact`:

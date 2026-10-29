@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -44,7 +45,7 @@ type Service struct {
 	reader    assistantports.TurnStreamReader
 	canceller assistantports.AssistantTurnCanceller
 	realtime  realtimeports.RealtimeService
-	metrics   *metrics.Assistant
+	metrics   *aimetrics.Assistant
 	quota     platformplanports.QuotaGuard
 	plans     platformplanports.PlanService
 	chapters  assistantports.ChapterScheduler

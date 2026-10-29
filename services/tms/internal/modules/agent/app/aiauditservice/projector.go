@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
@@ -60,7 +60,7 @@ type Projector struct {
 	source   aiauditports.AIAuditSourceRepository
 	keyring  *Keyring
 	deriver  *deriver
-	metrics  *metrics.AIAudit
+	metrics  *aimetrics.AIAudit
 	batch    int
 	now      func() time.Time
 	trail    time.Duration
@@ -74,7 +74,7 @@ type ProjectorParams struct {
 	Source    aiauditports.AIAuditSourceRepository
 	Keyring   *Keyring
 	Redactor  *Redactor
-	Metrics   *metrics.AIAudit
+	Metrics   *aimetrics.AIAudit
 	BatchSize int
 	Now       func() time.Time
 	Logger    *zap.Logger
