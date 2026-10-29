@@ -145,6 +145,28 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req fleetcodeports.GetFleetCodesByIDsRequest,
+) ([]*fleetcode.FleetCode, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fleetcode.FleetCode, error) {
+		if len(req.FleetCodeIDs) == 0 {
+			return []*fleetcode.FleetCode{}, nil
+		}
+
+		fc := fleetcodedb.FleetCodes
+		entities, err := fc.Where(fc.ID.In(req.FleetCodeIDs...)).
+			Limit(len(req.FleetCodeIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get fleet codes", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

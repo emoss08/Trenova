@@ -37,21 +37,23 @@ func (r *Sources) EquipmentType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EquipmentTypeService.Get(
-				ctx,
-				equipmenttypeports.GetEquipmentTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, equipmentTypeSelectOptionItem(entity))
+		entities, err := r.EquipmentTypeService.GetByIDs(
+			ctx,
+			equipmenttypeports.GetEquipmentTypesByIDsRequest{
+				TenantInfo:       req.TenantInfo,
+				EquipmentTypeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*equipmenttype.EquipmentType).GetID,
+			equipmentTypeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -270,21 +272,23 @@ func (r *Sources) FleetCode(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FleetCodeService.Get(
-				ctx,
-				fleetcodeports.GetFleetCodeByIDRequest{
-					ID:         id,
-					TenantInfo: &req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, fleetCodeSelectOptionItem(entity))
+		entities, err := r.FleetCodeService.GetByIDs(
+			ctx,
+			fleetcodeports.GetFleetCodesByIDsRequest{
+				TenantInfo:   req.TenantInfo,
+				FleetCodeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*fleetcode.FleetCode).GetID,
+			fleetCodeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

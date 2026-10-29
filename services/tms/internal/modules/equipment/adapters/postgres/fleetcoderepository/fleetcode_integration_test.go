@@ -123,6 +123,18 @@ func TestFleetCodeRepository(t *testing.T) {
 		assert.True(t, errortypes.IsNotFoundError(err))
 	})
 
+	t.Run("get by ids reads only the caller's tenant", func(t *testing.T) {
+		got, err := f.repo.GetByIDs(a.Ctx, fleetcodeports.GetFleetCodesByIDsRequest{
+			FleetCodeIDs: []pulid.ID{f.codes[3].ID, f.other.ID, f.codes[1].ID, pulid.MustNew("fc_")},
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"FC1", "FC3"}, codesOf(got))
+
+		none, err := f.repo.GetByIDs(a.Ctx, fleetcodeports.GetFleetCodesByIDsRequest{})
+		require.NoError(t, err)
+		assert.Empty(t, none)
+	})
+
 	t.Run("update checks the version", func(t *testing.T) {
 		current, err := f.repo.GetByID(
 			a.Ctx,
