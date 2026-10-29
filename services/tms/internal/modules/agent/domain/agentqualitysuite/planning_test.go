@@ -1,10 +1,12 @@
-package agentquality_test
+package agentqualitysuite_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +19,7 @@ func TestDecideSkip(t *testing.T) {
 	t.Parallel()
 
 	now := int64(1_800_000_000)
-	last := &agentquality.LastRun{
+	last := &agentqualitysuite.LastRun{
 		FingerprintHash: "fp",
 		SuiteRevision:   "rev",
 		FinishedAt:      now - 2*day,
@@ -25,12 +27,12 @@ func TestDecideSkip(t *testing.T) {
 
 	tests := []struct {
 		name string
-		in   agentquality.SkipInput
+		in   agentqualitysuite.SkipInput
 		skip bool
 	}{
 		{
 			name: "nothing changed and the last run is recent",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp",
 				SuiteRevision:   "rev",
 				Last:            last,
@@ -41,7 +43,7 @@ func TestDecideSkip(t *testing.T) {
 		},
 		{
 			name: "the agent changed",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp2",
 				SuiteRevision:   "rev",
 				Last:            last,
@@ -51,7 +53,7 @@ func TestDecideSkip(t *testing.T) {
 		},
 		{
 			name: "the cases changed",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp",
 				SuiteRevision:   "rev2",
 				Last:            last,
@@ -61,7 +63,7 @@ func TestDecideSkip(t *testing.T) {
 		},
 		{
 			name: "the last run is too old to stand for the agent",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp",
 				SuiteRevision:   "rev",
 				Last:            last,
@@ -71,13 +73,13 @@ func TestDecideSkip(t *testing.T) {
 		},
 		{
 			name: "the agent has never completed a run",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp", SuiteRevision: "rev", Now: now, ForceRerunDays: 7,
 			},
 		},
 		{
 			name: "a person asked for the run",
-			in: agentquality.SkipInput{
+			in: agentqualitysuite.SkipInput{
 				FingerprintHash: "fp", SuiteRevision: "rev", Last: last, Now: now,
 				ForceRerunDays: 7, Forced: true,
 			},
@@ -88,7 +90,7 @@ func TestDecideSkip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			decision := agentquality.DecideSkip(tt.in)
+			decision := agentqualitysuite.DecideSkip(tt.in)
 			assert.Equal(t, tt.skip, decision.Skip)
 			if tt.skip {
 				assert.NotEmpty(t, decision.Reason)
@@ -100,12 +102,12 @@ func TestDecideSkip(t *testing.T) {
 func samplingCases(
 	sources map[agentquality.CaseSource]int,
 	failing int,
-) []agentquality.SamplingCase {
-	cases := make([]agentquality.SamplingCase, 0, 64)
+) []agentqualitysuite.SamplingCase {
+	cases := make([]agentqualitysuite.SamplingCase, 0, 64)
 	failed := 0
 	for _, source := range agentquality.AllCaseSources() {
 		for range sources[source] {
-			evalCase := agentquality.SamplingCase{
+			evalCase := agentqualitysuite.SamplingCase{
 				ID:      pulid.MustNew("aec_"),
 				Source:  source,
 				Version: 1,
@@ -122,7 +124,7 @@ func samplingCases(
 	return cases
 }
 
-func ids(cases []agentquality.SamplingCase) []pulid.ID {
+func ids(cases []agentqualitysuite.SamplingCase) []pulid.ID {
 	out := make([]pulid.ID, 0, len(cases))
 	for _, evalCase := range cases {
 		out = append(out, evalCase.ID)
@@ -139,22 +141,22 @@ func TestSampleCases_IsDeterministicForARun(t *testing.T) {
 		agentquality.CaseSourceThumbsUp:        30,
 		agentquality.CaseSourceCurated:         10,
 	}, 0)
-	runID := pulid.MustNew(agentquality.SuiteRunIDPrefix)
-	seed := agentquality.SeedFromID(runID)
-	assert.Equal(t, seed, agentquality.SeedFromID(runID), "a run's seed never changes")
+	runID := pulid.MustNew(agentqualitysuite.SuiteRunIDPrefix)
+	seed := agentqualitysuite.SeedFromID(runID)
+	assert.Equal(t, seed, agentqualitysuite.SeedFromID(runID), "a run's seed never changes")
 	assert.GreaterOrEqual(t, seed, int64(0))
 
-	first := agentquality.SampleCases(cases, seed, 20)
-	reversed := make([]agentquality.SamplingCase, len(cases))
+	first := agentqualitysuite.SampleCases(cases, seed, 20)
+	reversed := make([]agentqualitysuite.SamplingCase, len(cases))
 	for idx := range cases {
 		reversed[len(cases)-1-idx] = cases[idx]
 	}
-	second := agentquality.SampleCases(reversed, seed, 20)
+	second := agentqualitysuite.SampleCases(reversed, seed, 20)
 
 	require.Len(t, first, 20)
 	assert.Equal(t, ids(first), ids(second))
 
-	other := agentquality.SampleCases(cases, seed+1, 20)
+	other := agentqualitysuite.SampleCases(cases, seed+1, 20)
 	assert.NotEqual(t, ids(first), ids(other))
 }
 
@@ -167,7 +169,7 @@ func TestSampleCases_PutsRecentFailuresFirstAndStratifiesTheRest(t *testing.T) {
 		agentquality.CaseSourceCurated:         20,
 	}, 3)
 
-	sample := agentquality.SampleCases(cases, 42, 23)
+	sample := agentqualitysuite.SampleCases(cases, 42, 23)
 	require.Len(t, sample, 23)
 
 	for idx := range 3 {
@@ -196,24 +198,24 @@ func TestSampleCases_TakesEveryCaseWhenThereIsRoom(t *testing.T) {
 		agentquality.CaseSourceThumbsUp: 2,
 	}, 0)
 
-	assert.Len(t, agentquality.SampleCases(cases, 7, 50), 5)
-	assert.Empty(t, agentquality.SampleCases(cases, 7, 0))
-	assert.Empty(t, agentquality.SampleCases(nil, 7, 10))
+	assert.Len(t, agentqualitysuite.SampleCases(cases, 7, 50), 5)
+	assert.Empty(t, agentqualitysuite.SampleCases(cases, 7, 0))
+	assert.Empty(t, agentqualitysuite.SampleCases(nil, 7, 10))
 }
 
 func TestSuiteRevision_MovesWithTheCases(t *testing.T) {
 	t.Parallel()
 
 	cases := samplingCases(map[agentquality.CaseSource]int{agentquality.CaseSourceCurated: 3}, 0)
-	revision := agentquality.SuiteRevision(cases)
+	revision := agentqualitysuite.SuiteRevision(cases)
 
-	reordered := []agentquality.SamplingCase{cases[2], cases[0], cases[1]}
-	assert.Equal(t, revision, agentquality.SuiteRevision(reordered))
+	reordered := []agentqualitysuite.SamplingCase{cases[2], cases[0], cases[1]}
+	assert.Equal(t, revision, agentqualitysuite.SuiteRevision(reordered))
 
-	edited := append([]agentquality.SamplingCase(nil), cases...)
+	edited := append([]agentqualitysuite.SamplingCase(nil), cases...)
 	edited[1].Version = 2
-	assert.NotEqual(t, revision, agentquality.SuiteRevision(edited))
-	assert.NotEqual(t, revision, agentquality.SuiteRevision(cases[:2]))
+	assert.NotEqual(t, revision, agentqualitysuite.SuiteRevision(edited))
+	assert.NotEqual(t, revision, agentqualitysuite.SuiteRevision(cases[:2]))
 }
 
 func TestJudgeSample(t *testing.T) {
@@ -224,11 +226,11 @@ func TestJudgeSample(t *testing.T) {
 		candidates = append(candidates, pulid.MustNew("aeval_"))
 	}
 
-	sample := agentquality.JudgeSample(candidates, 9, 0.2)
+	sample := agentqualitysuite.JudgeSample(candidates, 9, 0.2)
 	assert.Len(t, sample, 2)
-	assert.Equal(t, sample, agentquality.JudgeSample(candidates, 9, 0.2))
-	assert.Len(t, agentquality.JudgeSample(candidates[:1], 9, 0.01), 1)
-	assert.Empty(t, agentquality.JudgeSample(candidates, 9, 0))
+	assert.Equal(t, sample, agentqualitysuite.JudgeSample(candidates, 9, 0.2))
+	assert.Len(t, agentqualitysuite.JudgeSample(candidates[:1], 9, 0.01), 1)
+	assert.Empty(t, agentqualitysuite.JudgeSample(candidates, 9, 0))
 }
 
 func TestCheckBudget(t *testing.T) {
@@ -250,11 +252,11 @@ func TestCheckBudget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			decision := agentquality.CheckBudget(agentquality.BudgetInput{
+			decision := agentqualitysuite.CheckBudget(agentqualitysuite.BudgetInput{
 				NightlySpent: decimal.RequireFromString(tt.nightly),
 				MonthlySpent: decimal.RequireFromString(tt.monthly),
-				NightlyCap:   agentquality.DefaultNightlyBudgetUSD,
-				MonthlyCap:   agentquality.DefaultMonthlyBudgetUSD,
+				NightlyCap:   agentqualitycontrol.DefaultNightlyBudgetUSD,
+				MonthlyCap:   agentqualitycontrol.DefaultMonthlyBudgetUSD,
 			})
 			assert.Equal(t, tt.stop, decision.Stop)
 			if tt.stop {
@@ -263,7 +265,7 @@ func TestCheckBudget(t *testing.T) {
 		})
 	}
 
-	zero := agentquality.CheckBudget(agentquality.BudgetInput{
+	zero := agentqualitysuite.CheckBudget(agentqualitysuite.BudgetInput{
 		NightlySpent: decimal.Zero,
 		MonthlySpent: decimal.Zero,
 		NightlyCap:   decimal.Zero,
@@ -275,21 +277,21 @@ func TestCheckBudget(t *testing.T) {
 func TestCheckBudget_HoldsWhatRunningJudgeBatchesWillCost(t *testing.T) {
 	t.Parallel()
 
-	room := agentquality.CheckBudget(agentquality.BudgetInput{
+	room := agentqualitysuite.CheckBudget(agentqualitysuite.BudgetInput{
 		NightlySpent: decimal.RequireFromString("3.00"),
 		MonthlySpent: decimal.RequireFromString("10.00"),
-		NightlyCap:   agentquality.DefaultNightlyBudgetUSD,
-		MonthlyCap:   agentquality.DefaultMonthlyBudgetUSD,
+		NightlyCap:   agentqualitycontrol.DefaultNightlyBudgetUSD,
+		MonthlyCap:   agentqualitycontrol.DefaultMonthlyBudgetUSD,
 		Committed:    decimal.RequireFromString("0.50"),
 	})
 	assert.False(t, room.Stop)
 	assert.True(t, room.Room.Equal(decimal.RequireFromString("1.50")), room.Room.String())
 
-	held := agentquality.CheckBudget(agentquality.BudgetInput{
+	held := agentqualitysuite.CheckBudget(agentqualitysuite.BudgetInput{
 		NightlySpent: decimal.RequireFromString("4.60"),
 		MonthlySpent: decimal.RequireFromString("10.00"),
-		NightlyCap:   agentquality.DefaultNightlyBudgetUSD,
-		MonthlyCap:   agentquality.DefaultMonthlyBudgetUSD,
+		NightlyCap:   agentqualitycontrol.DefaultNightlyBudgetUSD,
+		MonthlyCap:   agentqualitycontrol.DefaultMonthlyBudgetUSD,
 		Committed:    decimal.RequireFromString("0.40"),
 	})
 	assert.True(t, held.Stop, "spend and what running batches will cost reach the cap")

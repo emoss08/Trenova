@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -138,7 +138,7 @@ var _ agentqualityports.AgentQualityService = (*Service)(nil)
 func (s *Service) control(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*agentquality.Control, error) {
+) (*agentqualitycontrol.Control, error) {
 	control, err := s.controls.Get(ctx, tenant)
 	if err == nil {
 		return control, nil
@@ -147,21 +147,21 @@ func (s *Service) control(
 		return nil, fmt.Errorf("read quality controls: %w", err)
 	}
 
-	return agentquality.DefaultControl(tenant.OrgID, tenant.BuID), nil
+	return agentqualitycontrol.DefaultControl(tenant.OrgID, tenant.BuID), nil
 }
 
 func (s *Service) GetControl(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*agentquality.Control, error) {
+) (*agentqualitycontrol.Control, error) {
 	return s.control(ctx, tenant)
 }
 
 func (s *Service) UpdateControl(
 	ctx context.Context,
-	entity *agentquality.Control,
+	entity *agentqualitycontrol.Control,
 	actor *permissionports.RequestActor,
-) (*agentquality.Control, error) {
+) (*agentqualitycontrol.Control, error) {
 	tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 	previous, err := s.control(ctx, tenant)
 	if err != nil {
@@ -188,7 +188,7 @@ func (s *Service) UpdateControl(
 }
 
 func (s *Service) logControl(
-	saved, previous *agentquality.Control,
+	saved, previous *agentqualitycontrol.Control,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActorOrSystem()
@@ -211,7 +211,7 @@ func (s *Service) logControl(
 
 func (s *Service) timezoneOf(
 	ctx context.Context,
-	control *agentquality.Control,
+	control *agentqualitycontrol.Control,
 	tenant pagination.TenantInfo,
 ) string {
 	organizationTimezone := ""

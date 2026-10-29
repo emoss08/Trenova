@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -68,11 +69,11 @@ func agentWorstRatedToModel(
 }
 
 func agentSuiteRunConnectionToModel(
-	result *pagination.CursorListResult[*agentquality.SuiteRun],
+	result *pagination.CursorListResult[*agentqualitysuite.SuiteRun],
 ) (*gqlmodel.AgentSuiteRunConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *agentquality.SuiteRun, cursor string) *gqlmodel.AgentSuiteRunEdge {
+		func(node *agentqualitysuite.SuiteRun, cursor string) *gqlmodel.AgentSuiteRunEdge {
 			return &gqlmodel.AgentSuiteRunEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.AgentSuiteRunEdge) string { return edge.Cursor },
@@ -126,7 +127,7 @@ func suiteCaseTableInput(
 	return &sorted
 }
 
-func fingerprintChangesToModel(run *agentquality.SuiteRun) []*gqlmodel.AgentFingerprintChange {
+func fingerprintChangesToModel(run *agentqualitysuite.SuiteRun) []*gqlmodel.AgentFingerprintChange {
 	out := make([]*gqlmodel.AgentFingerprintChange, 0, len(run.FingerprintChanges))
 	for _, change := range run.FingerprintChanges {
 		out = append(out, &gqlmodel.AgentFingerprintChange{
@@ -139,12 +140,12 @@ func fingerprintChangesToModel(run *agentquality.SuiteRun) []*gqlmodel.AgentFing
 	return out
 }
 
-func changeSummary(run *agentquality.SuiteRun) string {
+func changeSummary(run *agentqualitysuite.SuiteRun) string {
 	if run.BaselineRunID == nil || run.BaselineRunID.IsNil() {
 		return "This is the agent's first scored run."
 	}
 
-	return agentquality.DescribeChanges(run.FingerprintChanges)
+	return agentqualitysuite.DescribeChanges(run.FingerprintChanges)
 }
 
 func parseBudget(field, raw string) (decimal.Decimal, error) {
@@ -163,7 +164,7 @@ func parseBudget(field, raw string) (decimal.Decimal, error) {
 func qualityControlFromInput(
 	tenant pagination.TenantInfo,
 	input *gqlmodel.UpdateAgentQualityControlInput,
-) (*agentquality.Control, error) {
+) (*agentqualitycontrol.Control, error) {
 	nightly, err := parseBudget("nightlyBudgetUsd", input.NightlyBudgetUsd)
 	if err != nil {
 		return nil, err
@@ -173,7 +174,7 @@ func qualityControlFromInput(
 		return nil, err
 	}
 
-	return &agentquality.Control{
+	return &agentqualitycontrol.Control{
 		OrganizationID:      tenant.OrgID,
 		BusinessUnitID:      tenant.BuID,
 		Enabled:             input.Enabled,

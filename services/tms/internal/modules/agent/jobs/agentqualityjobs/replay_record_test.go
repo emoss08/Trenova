@@ -12,7 +12,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -63,10 +64,10 @@ func TestRecordQualityHistories(t *testing.T) {
 			payload := &SuiteRunPayload{
 				OrganizationID:    pulid.MustNew("org_"),
 				BusinessUnitID:    pulid.MustNew("bu_"),
-				SuiteRunID:        agentquality.NewSuiteRunID(),
+				SuiteRunID:        agentqualitysuite.NewSuiteRunID(),
 				AgentDefinitionID: pulid.MustNew("agd_"),
 				SampleSeed:        17,
-				Settings: agentquality.SuiteSettings{
+				Settings: agentqualitycontrol.SuiteSettings{
 					MaxCasesPerAgent: 3, JudgeEnabled: rec.judge, JudgeSampleRate: 0.5,
 				},
 				DayStart:   1_800_000_000,
@@ -108,13 +109,16 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 	w.RegisterActivityWithOptions(func(
 		context.Context,
 		*agentqualityservice.CheckBudgetRequest,
-	) (*agentquality.BudgetDecision, error) {
+	) (*agentqualitysuite.BudgetDecision, error) {
 		checks++
 		if rec.stopAtCheck > 0 && checks >= rec.stopAtCheck {
-			return &agentquality.BudgetDecision{Stop: true, Reason: "Recorded budget stop."}, nil
+			return &agentqualitysuite.BudgetDecision{
+				Stop:   true,
+				Reason: "Recorded budget stop.",
+			}, nil
 		}
 
-		return &agentquality.BudgetDecision{}, nil
+		return &agentqualitysuite.BudgetDecision{}, nil
 	}, activity.RegisterOptions{Name: "CheckEvalBudgetActivity"})
 
 	w.RegisterActivityWithOptions(func(
@@ -138,9 +142,9 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 		_ context.Context,
 		req *agentqualityservice.FinalizeSuiteRequest,
 	) (*agentqualityservice.FinalizedSuite, error) {
-		status := agentquality.SuiteRunStatusCompleted
+		status := agentqualitysuite.SuiteRunStatusCompleted
 		if req.StopReason != "" {
-			status = agentquality.SuiteRunStatusBudgetStopped
+			status = agentqualitysuite.SuiteRunStatusBudgetStopped
 		}
 
 		return &agentqualityservice.FinalizedSuite{Status: status}, nil

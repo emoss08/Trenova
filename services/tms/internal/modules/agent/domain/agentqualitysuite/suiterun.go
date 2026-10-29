@@ -1,4 +1,4 @@
-package agentquality
+package agentqualitysuite
 
 import (
 	"context"

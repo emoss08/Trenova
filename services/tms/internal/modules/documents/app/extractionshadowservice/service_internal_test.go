@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
@@ -407,7 +407,7 @@ func TestRunShadowSkipsWhenTheBudgetIsSpent(t *testing.T) {
 
 	w := newWorld()
 	result := w.pending(w.document(extractedAt))
-	w.budget.decision = &agentquality.BudgetDecision{
+	w.budget.decision = &agentqualitysuite.BudgetDecision{
 		Stop:   true,
 		Reason: "the nightly cap is reached",
 	}

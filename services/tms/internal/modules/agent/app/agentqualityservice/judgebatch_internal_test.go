@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -165,7 +167,7 @@ func (f *batchedJudge) BatchResults(
 
 type judgeFixture struct {
 	tenant      pagination.TenantInfo
-	run         *agentquality.SuiteRun
+	run         *agentqualitysuite.SuiteRun
 	evaluations *judgedEvaluations
 	ids         []pulid.ID
 	completion  *askedJudge
@@ -179,8 +181,8 @@ func newJudgeFixture(t *testing.T, count int) *judgeFixture {
 
 	tenant := pagination.TenantInfo{OrgID: pulid.ID("org_1"), BuID: pulid.ID("bu_1")}
 	agentID := pulid.MustNew("agd_")
-	run := &agentquality.SuiteRun{
-		ID:                agentquality.NewSuiteRunID(),
+	run := &agentqualitysuite.SuiteRun{
+		ID:                agentqualitysuite.NewSuiteRunID(),
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		AgentDefinitionID: agentID,
@@ -220,7 +222,7 @@ func newJudgeFixture(t *testing.T, count int) *judgeFixture {
 	usage := &windowedUsage{spent: decimal.RequireFromString("1.00")}
 	service := &Service{
 		l:           zap.NewNop(),
-		suiteRuns:   &fakeSuiteRuns{runs: map[pulid.ID]*agentquality.SuiteRun{run.ID: run}},
+		suiteRuns:   &fakeSuiteRuns{runs: map[pulid.ID]*agentqualitysuite.SuiteRun{run.ID: run}},
 		evaluations: evaluations,
 		cases:       cases,
 		usage:       usage,
@@ -250,7 +252,7 @@ func (f *judgeFixture) submit(t *testing.T, committed string) *JudgeBatch {
 		EvaluationIDs: f.ids,
 		DayStart:      1_800_000_000,
 		MonthStart:    1_799_000_000,
-		Settings: agentquality.SuiteSettings{
+		Settings: agentqualitycontrol.SuiteSettings{
 			NightlyBudgetUSD: decimal.RequireFromString("5.00"),
 			MonthlyBudgetUSD: decimal.RequireFromString("50.00"),
 			JudgeEnabled:     true,

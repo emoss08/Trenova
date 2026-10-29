@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
@@ -975,9 +977,9 @@ type AgentQualityAgentResolver interface {
 }
 
 type AgentQualityControlResolver interface {
-	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
-	NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
-	MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
+	ID(ctx context.Context, obj *agentqualitycontrol.Control) (*string, error)
+	NightlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
+	MonthlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
 }
 
 type AgentReflectionResolver interface {
@@ -1008,11 +1010,11 @@ type AgentSafetySummaryResolver interface {
 }
 
 type AgentSuiteRunResolver interface {
-	AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error)
-	FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
-	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+	AgentName(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	Fingerprint(ctx context.Context, obj *agentqualitysuite.SuiteRun) (map[string]any, error)
+	FingerprintChanges(ctx context.Context, obj *agentqualitysuite.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
+	ChangeSummary(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 }
 
 type AgentToolHoldersResolver interface {
@@ -2091,8 +2093,8 @@ type MutationResolver interface {
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
 	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
-	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
-	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error)
+	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error)
 	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RecordMyAgentSuggestion(ctx context.Context, input gqlmodel.RecordMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
 	SettleMyAgentSuggestion(ctx context.Context, input gqlmodel.SettleMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
@@ -2875,9 +2877,9 @@ type QueryResolver interface {
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswerConnection(ctx context.Context, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
 	AgentSuiteRunConnection(ctx context.Context, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunConnection, error)
-	AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error)
+	AgentSuiteRun(ctx context.Context, id string) (*agentqualitysuite.SuiteRun, error)
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
-	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
+	AgentQualityControl(ctx context.Context) (*agentqualitycontrol.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
 	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agenttoolports.AgentToolRuleImpact, error)
 	AgentToolHolders(ctx context.Context) ([]*agenttoolports.AgentToolHolders, error)

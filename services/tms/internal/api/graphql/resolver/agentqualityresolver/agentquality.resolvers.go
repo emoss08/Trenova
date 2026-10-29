@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -76,7 +78,7 @@ func (r *AgentQualityAgentResolver) ID(ctx context.Context, obj *agentqualitypor
 	return obj.AgentDefinitionID.String(), nil
 }
 
-func (r *AgentQualityControlResolver) ID(ctx context.Context, obj *agentquality.Control) (*string, error) {
+func (r *AgentQualityControlResolver) ID(ctx context.Context, obj *agentqualitycontrol.Control) (*string, error) {
 	if obj.ID.IsNil() {
 		return nil, nil
 	}
@@ -85,19 +87,19 @@ func (r *AgentQualityControlResolver) ID(ctx context.Context, obj *agentquality.
 	return &id, nil
 }
 
-func (r *AgentQualityControlResolver) NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error) {
+func (r *AgentQualityControlResolver) NightlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error) {
 	return obj.NightlyBudgetUSD.StringFixed(2), nil
 }
 
-func (r *AgentQualityControlResolver) MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error) {
+func (r *AgentQualityControlResolver) MonthlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error) {
 	return obj.MonthlyBudgetUSD.StringFixed(2), nil
 }
 
-func (r *AgentSuiteRunResolver) AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error) {
+func (r *AgentSuiteRunResolver) AgentName(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error) {
 	return suiteRunAgentName(ctx, obj.AgentDefinitionID)
 }
 
-func (r *AgentSuiteRunResolver) Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error) {
+func (r *AgentSuiteRunResolver) Fingerprint(ctx context.Context, obj *agentqualitysuite.SuiteRun) (map[string]any, error) {
 	if obj.Fingerprint == nil {
 		return nil, nil
 	}
@@ -105,15 +107,15 @@ func (r *AgentSuiteRunResolver) Fingerprint(ctx context.Context, obj *agentquali
 	return jsonutils.MustToJSON(obj.Fingerprint), nil
 }
 
-func (r *AgentSuiteRunResolver) FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error) {
+func (r *AgentSuiteRunResolver) FingerprintChanges(ctx context.Context, obj *agentqualitysuite.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error) {
 	return fingerprintChangesToModel(obj), nil
 }
 
-func (r *AgentSuiteRunResolver) ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error) {
+func (r *AgentSuiteRunResolver) ChangeSummary(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error) {
 	return changeSummary(obj), nil
 }
 
-func (r *AgentSuiteRunResolver) CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error) {
+func (r *AgentSuiteRunResolver) CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error) {
 	return obj.CostUSD.StringFixed(6), nil
 }
 
@@ -238,7 +240,7 @@ func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error) {
+func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -255,7 +257,7 @@ func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error) {
+func (r *MutationResolver) UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -423,7 +425,7 @@ func (r *QueryResolver) AgentSuiteRunConnection(ctx context.Context, agentDefini
 	return agentSuiteRunConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error) {
+func (r *QueryResolver) AgentSuiteRun(ctx context.Context, id string) (*agentqualitysuite.SuiteRun, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -478,7 +480,7 @@ func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRu
 	return agentSuiteRunCaseConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentQualityControl(ctx context.Context) (*agentquality.Control, error) {
+func (r *QueryResolver) AgentQualityControl(ctx context.Context) (*agentqualitycontrol.Control, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err

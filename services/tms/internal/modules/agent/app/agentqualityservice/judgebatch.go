@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -25,13 +26,13 @@ const (
 )
 
 type SubmitJudgeBatchRequest struct {
-	TenantInfo    pagination.TenantInfo      `json:"tenantInfo"`
-	SuiteRunID    pulid.ID                   `json:"suiteRunId"`
-	EvaluationIDs []pulid.ID                 `json:"evaluationIds"`
-	DayStart      int64                      `json:"dayStart"`
-	MonthStart    int64                      `json:"monthStart"`
-	Settings      agentquality.SuiteSettings `json:"settings"`
-	CommittedUSD  decimal.Decimal            `json:"committedUsd"`
+	TenantInfo    pagination.TenantInfo             `json:"tenantInfo"`
+	SuiteRunID    pulid.ID                          `json:"suiteRunId"`
+	EvaluationIDs []pulid.ID                        `json:"evaluationIds"`
+	DayStart      int64                             `json:"dayStart"`
+	MonthStart    int64                             `json:"monthStart"`
+	Settings      agentqualitycontrol.SuiteSettings `json:"settings"`
+	CommittedUSD  decimal.Decimal                   `json:"committedUsd"`
 }
 
 type JudgeBatch struct {

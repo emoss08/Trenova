@@ -3,6 +3,7 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
@@ -1417,7 +1418,7 @@ type AgentSuiteRunConnection struct {
 }
 
 type AgentSuiteRunEdge struct {
-	Node   *agentquality.SuiteRun `json:"node"`
+	Node   *agentqualitysuite.SuiteRun `json:"node"`
 	Cursor string                 `json:"cursor"`
 }
 

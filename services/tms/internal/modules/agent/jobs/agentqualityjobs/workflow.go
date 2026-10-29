@@ -4,11 +4,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -143,7 +143,7 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 					TenantInfo: tenant,
 					Agent:      planned,
 					SweepKey:   sweepKey,
-					Trigger:    agentquality.SuiteRunTriggerScheduled,
+					Trigger:    agentqualitysuite.SuiteRunTriggerScheduled,
 				},
 			).Get(stepCtx, nil); err != nil {
 				logger.Warn("could not record an agent the sweep skipped",
@@ -163,7 +163,7 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 				TenantInfo: tenant,
 				Agent:      planned,
 				SweepKey:   sweepKey,
-				Trigger:    agentquality.SuiteRunTriggerScheduled,
+				Trigger:    agentqualitysuite.SuiteRunTriggerScheduled,
 				Settings:   plan.Settings,
 			},
 		).Get(stepCtx, &opened); err != nil {
@@ -265,7 +265,7 @@ func AgentSuiteRunWorkflow(
 
 			replayed++
 			childCtx := workflow.WithChildOptions(ctx, childOptions(
-				agentquality.EvaluationWorkflowID(suiteCase.EvaluationID),
+				agentqualitycontrol.EvaluationWorkflowID(suiteCase.EvaluationID),
 				tenant.OrgID,
 			))
 			if err = workflow.ExecuteChildWorkflow(childCtx, agentcontract.AgentEvaluationWorkflowName,
@@ -353,8 +353,9 @@ func submitJudgeBatch(
 			CommittedUSD:  payload.CommittedUSD,
 		},
 	).Get(submitCtx, &batch); err != nil {
-		workflow.GetLogger(ctx).Warn("the judge batch could not be sent; judging each case on its own",
-			"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
+		workflow.GetLogger(ctx).
+			Warn("the judge batch could not be sent; judging each case on its own",
+				"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
 
 		return &agentqualityservice.JudgeBatch{}
 	}
@@ -388,7 +389,7 @@ func judgeLater(
 
 	return &SuiteRunResult{
 		Replayed:     replayed,
-		Status:       agentquality.SuiteRunStatusRunning,
+		Status:       agentqualitysuite.SuiteRunStatusRunning,
 		Judging:      true,
 		CommittedUSD: batch.EstimateUSD,
 	}, nil
@@ -557,8 +558,8 @@ func checkBudget(
 	ctx workflow.Context,
 	a *Activities,
 	payload *SuiteRunPayload,
-) (agentquality.BudgetDecision, error) {
-	var decision agentquality.BudgetDecision
+) (agentqualitysuite.BudgetDecision, error) {
+	var decision agentqualitysuite.BudgetDecision
 	err := workflow.ExecuteActivity(ctx, a.CheckEvalBudgetActivity,
 		&agentqualityservice.CheckBudgetRequest{
 			TenantInfo:   payload.tenantInfo(),

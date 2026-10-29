@@ -1,4 +1,4 @@
-package agentquality
+package agentqualitysuite
 
 import (
 	"cmp"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -20,13 +22,13 @@ import (
 const secondsPerDay = int64(24 * 60 * 60)
 
 type SamplingCase struct {
-	ID           pulid.ID          `json:"id"`
-	Source       CaseSource        `json:"source"`
-	Version      int64             `json:"version"`
-	Trigger      agent.RunTrigger  `json:"trigger"`
-	SubjectType  agent.SubjectType `json:"subjectType"`
-	SubjectID    pulid.ID          `json:"subjectId"`
-	LastFailedAt int64             `json:"lastFailedAt"`
+	ID           pulid.ID                `json:"id"`
+	Source       agentquality.CaseSource `json:"source"`
+	Version      int64                   `json:"version"`
+	Trigger      agent.RunTrigger        `json:"trigger"`
+	SubjectType  agent.SubjectType       `json:"subjectType"`
+	SubjectID    pulid.ID                `json:"subjectId"`
+	LastFailedAt int64                   `json:"lastFailedAt"`
 }
 
 func (c SamplingCase) Failing() bool { return c.LastFailedAt > 0 }
@@ -86,7 +88,7 @@ func DecideSkip(in SkipInput) SkipDecision {
 
 	days := in.ForceRerunDays
 	if days <= 0 {
-		days = DefaultForceRerunDays
+		days = agentqualitycontrol.DefaultForceRerunDays
 	}
 	if in.Now-in.Last.FinishedAt >= int64(days)*secondsPerDay {
 		return SkipDecision{}
@@ -136,8 +138,8 @@ func stratify(cases []SamplingCase, rng *rand.Rand, room int) []SamplingCase {
 		return nil
 	}
 
-	strata := make([][]SamplingCase, 0, len(AllCaseSources()))
-	for _, source := range AllCaseSources() {
+	strata := make([][]SamplingCase, 0, len(agentquality.AllCaseSources()))
+	for _, source := range agentquality.AllCaseSources() {
 		stratum := make([]SamplingCase, 0, len(cases))
 		for _, evalCase := range cases {
 			if evalCase.Source == source {

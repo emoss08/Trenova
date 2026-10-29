@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,10 +19,13 @@ import (
 
 type budgetControls struct {
 	agentqualityports.AgentQualityControlRepository
-	control *agentquality.Control
+	control *agentqualitycontrol.Control
 }
 
-func (f *budgetControls) Get(context.Context, pagination.TenantInfo) (*agentquality.Control, error) {
+func (f *budgetControls) Get(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentqualitycontrol.Control, error) {
 	if f.control == nil {
 		return nil, errortypes.NewNotFoundError("agent quality control not found")
 	}
@@ -43,7 +46,7 @@ func (f *windowedUsage) EvaluationCost(
 	return &aiusageports.AIUsageCost{CostUSD: f.spent}, nil
 }
 
-func budgetService(control *agentquality.Control, usage *windowedUsage, now int64) *Service {
+func budgetService(control *agentqualitycontrol.Control, usage *windowedUsage, now int64) *Service {
 	return &Service{
 		l:        zap.NewNop(),
 		controls: &budgetControls{control: control},
@@ -56,7 +59,7 @@ func TestCheckEvaluationBudget_StopsOnceTonightsBudgetIsSpent(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.ID("org_1"), BuID: pulid.ID("bu_1")}
-	control := agentquality.DefaultControl(tenant.OrgID, tenant.BuID)
+	control := agentqualitycontrol.DefaultControl(tenant.OrgID, tenant.BuID)
 	control.NightlyBudgetUSD = decimal.RequireFromString("0.40")
 	usage := &windowedUsage{spent: decimal.RequireFromString("0.42")}
 	now := time.Date(2026, time.March, 18, 15, 30, 0, 0, time.UTC).Unix()

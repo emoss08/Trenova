@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type qualityEngine interface {
 	CheckBudget(
 		ctx context.Context,
 		req *agentqualityservice.CheckBudgetRequest,
-	) (*agentquality.BudgetDecision, error)
+	) (*agentqualitysuite.BudgetDecision, error)
 	ScoreSuite(
 		ctx context.Context,
 		req *agentqualityservice.ScoreSuiteRequest,
@@ -129,7 +129,7 @@ func (a *Activities) ListSuiteCasesActivity(
 func (a *Activities) CheckEvalBudgetActivity(
 	ctx context.Context,
 	req *agentqualityservice.CheckBudgetRequest,
-) (*agentquality.BudgetDecision, error) {
+) (*agentqualitysuite.BudgetDecision, error) {
 	decision, err := a.quality.CheckBudget(ctx, req)
 
 	return decision, nonRetryable(err)

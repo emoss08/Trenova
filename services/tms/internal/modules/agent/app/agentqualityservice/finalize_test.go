@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -28,15 +30,15 @@ import (
 
 type fakeSuiteRuns struct {
 	agentqualityports.AgentSuiteRunRepository
-	runs    map[pulid.ID]*agentquality.SuiteRun
-	history []*agentquality.SuiteRun
+	runs    map[pulid.ID]*agentqualitysuite.SuiteRun
+	history []*agentqualitysuite.SuiteRun
 	updates int
 }
 
 func (f *fakeSuiteRuns) GetByID(
 	_ context.Context,
 	req agentqualityports.GetAgentSuiteRunRequest,
-) (*agentquality.SuiteRun, error) {
+) (*agentqualitysuite.SuiteRun, error) {
 	run, ok := f.runs[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Suite run not found")
@@ -48,8 +50,8 @@ func (f *fakeSuiteRuns) GetByID(
 
 func (f *fakeSuiteRuns) Update(
 	_ context.Context,
-	entity *agentquality.SuiteRun,
-) (*agentquality.SuiteRun, error) {
+	entity *agentqualitysuite.SuiteRun,
+) (*agentqualitysuite.SuiteRun, error) {
 	f.updates++
 	clone := *entity
 	f.runs[entity.ID] = &clone
@@ -60,7 +62,7 @@ func (f *fakeSuiteRuns) Update(
 func (f *fakeSuiteRuns) History(
 	context.Context,
 	agentqualityports.AgentSuiteRunHistoryRequest,
-) ([]*agentquality.SuiteRun, error) {
+) ([]*agentqualitysuite.SuiteRun, error) {
 	return f.history, nil
 }
 
@@ -165,8 +167,8 @@ type regressionWorld struct {
 	runs     *fakeSuiteRuns
 	tower    *fakeTower
 	notifier *fakeNotifier
-	run      *agentquality.SuiteRun
-	baseline *agentquality.SuiteRun
+	run      *agentqualitysuite.SuiteRun
+	baseline *agentqualitysuite.SuiteRun
 }
 
 func scoredEvaluation(
@@ -210,24 +212,24 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 
 	baselineScore := 0.9
 	finished := now - 86400
-	baseline := &agentquality.SuiteRun{
-		ID:                agentquality.NewSuiteRunID(),
+	baseline := &agentqualitysuite.SuiteRun{
+		ID:                agentqualitysuite.NewSuiteRunID(),
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
 		AgentDefinitionID: agentID,
-		Status:            agentquality.SuiteRunStatusCompleted,
+		Status:            agentqualitysuite.SuiteRunStatusCompleted,
 		QualityScore:      &baselineScore,
 		CasesPassed:       12,
 		StartedAt:         now - 90000,
 		FinishedAt:        &finished,
 	}
 	baselineID := baseline.ID
-	run := &agentquality.SuiteRun{
-		ID:                agentquality.NewSuiteRunID(),
+	run := &agentqualitysuite.SuiteRun{
+		ID:                agentqualitysuite.NewSuiteRunID(),
 		OrganizationID:    orgID,
 		BusinessUnitID:    buID,
 		AgentDefinitionID: agentID,
-		Status:            agentquality.SuiteRunStatusRunning,
+		Status:            agentqualitysuite.SuiteRunStatusRunning,
 		CasesTotal:        12,
 		StartedAt:         now - 600,
 		BaselineRunID:     &baselineID,
@@ -244,12 +246,12 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 			scoredEvaluation(caseID, idx+1, 0.9, currentHardFailure && idx == 0))
 	}
 
-	history := make([]*agentquality.SuiteRun, 0, 3)
+	history := make([]*agentqualitysuite.SuiteRun, 0, 3)
 	for idx, score := range []float64{0.9, 0.92, 0.88} {
 		value := score
 		at := now - int64((idx+2)*86400)
-		history = append(history, &agentquality.SuiteRun{
-			ID:           agentquality.NewSuiteRunID(),
+		history = append(history, &agentqualitysuite.SuiteRun{
+			ID:           agentqualitysuite.NewSuiteRunID(),
 			QualityScore: &value,
 			CasesPassed:  12,
 			StartedAt:    at,
@@ -258,7 +260,7 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 	}
 
 	runs := &fakeSuiteRuns{
-		runs:    map[pulid.ID]*agentquality.SuiteRun{run.ID: run, baseline.ID: baseline},
+		runs:    map[pulid.ID]*agentqualitysuite.SuiteRun{run.ID: run, baseline.ID: baseline},
 		history: history,
 	}
 	tower := &fakeTower{}
@@ -293,7 +295,7 @@ func (w *regressionWorld) finalize(t *testing.T) *FinalizedSuite {
 	finalized, err := w.service.FinalizeSuite(t.Context(), &FinalizeSuiteRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: w.run.OrganizationID, BuID: w.run.BusinessUnitID},
 		SuiteRunID: w.run.ID,
-		Settings: agentquality.SuiteSettings{
+		Settings: agentqualitycontrol.SuiteSettings{
 			RegressionThreshold: 0.1,
 			MinCases:            10,
 		},
@@ -310,7 +312,7 @@ func TestFinalizeSuite_RaisesARegressionOnceAndSaysWhatChanged(t *testing.T) {
 
 	finalized := world.finalize(t)
 	assert.True(t, finalized.Regression)
-	assert.Equal(t, agentquality.SuiteRunStatusCompleted, finalized.Status)
+	assert.Equal(t, agentqualitysuite.SuiteRunStatusCompleted, finalized.Status)
 	assert.Equal(t, 1, finalized.HardFailures)
 
 	require.Len(t, world.tower.upserts, 1)
@@ -335,7 +337,7 @@ func TestFinalizeSuite_RaisesARegressionOnceAndSaysWhatChanged(t *testing.T) {
 
 	stored := world.runs.runs[world.run.ID]
 	assert.True(t, stored.Regression)
-	assert.Equal(t, agentquality.SuiteRunStatusCompleted, stored.Status)
+	assert.Equal(t, agentqualitysuite.SuiteRunStatusCompleted, stored.Status)
 	assert.Equal(t, "0.42", stored.CostUSD.StringFixed(2))
 	require.NotNil(t, stored.BaselineScore)
 	assert.InDelta(t, 0.9, *stored.BaselineScore, 1e-9)

@@ -2502,13 +2502,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.EvalCase
   AgentSuiteRunStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRunStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRunStatus
   AgentSuiteRunTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRunTrigger
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRunTrigger
   AgentSuiteRun:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRun
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRun
     fields:
       agentName:
         resolver: true
@@ -2516,7 +2516,7 @@ models:
         resolver: true
   AgentQualityControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.Control
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol.Control
     fields:
       id:
         resolver: true

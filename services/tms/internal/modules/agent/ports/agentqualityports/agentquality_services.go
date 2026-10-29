@@ -3,7 +3,8 @@ package agentqualityports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -19,11 +20,11 @@ const MaxAgentQualityWindowDays = 365
 const AgentQualityHistoryPoints = 30
 
 type AgentQualityPoint struct {
-	SuiteRunID   pulid.ID                    `json:"suiteRunId"`
-	At           int64                       `json:"at"`
-	QualityScore float64                     `json:"qualityScore"`
-	Status       agentquality.SuiteRunStatus `json:"status"`
-	Regression   bool                        `json:"regression"`
+	SuiteRunID   pulid.ID                         `json:"suiteRunId"`
+	At           int64                            `json:"at"`
+	QualityScore float64                          `json:"qualityScore"`
+	Status       agentqualitysuite.SuiteRunStatus `json:"status"`
+	Regression   bool                             `json:"regression"`
 }
 
 type AgentQualityOverviewRequest struct {
@@ -33,27 +34,27 @@ type AgentQualityOverviewRequest struct {
 }
 
 type AgentQualityOverview struct {
-	WindowDays          int                    `json:"windowDays"`
-	Since               int64                  `json:"since"`
-	RatingsVisible      bool                   `json:"ratingsVisible"`
-	Satisfaction        *float64               `json:"satisfaction"`
-	Ratings             int                    `json:"ratings"`
-	QualityScore        *float64               `json:"qualityScore"`
-	AgentsScored        int                    `json:"agentsScored"`
-	SuiteRuns           int                    `json:"suiteRuns"`
-	Regressions         int                    `json:"regressions"`
-	OpenRegressions     int                    `json:"openRegressions"`
-	EvalSpendMonthUSD   string                 `json:"evalSpendMonthUsd"`
-	EvalUnpricedCalls   int                    `json:"evalUnpricedCalls"`
-	MonthlyBudgetUSD    string                 `json:"monthlyBudgetUsd"`
-	MonthStartedAt      int64                  `json:"monthStartedAt"`
-	SweepEnabled        bool                   `json:"sweepEnabled"`
-	NextSweepHourLocal  int                    `json:"nextSweepHourLocal"`
-	NextSweepTimezone   string                 `json:"nextSweepTimezone"`
-	AgentsWithCases     int                    `json:"agentsWithCases"`
-	JudgeEnabled        bool                   `json:"judgeEnabled"`
-	RegressionThreshold float64                `json:"regressionThreshold"`
-	WorstRegression     *agentquality.SuiteRun `json:"worstRegression"`
+	WindowDays          int                         `json:"windowDays"`
+	Since               int64                       `json:"since"`
+	RatingsVisible      bool                        `json:"ratingsVisible"`
+	Satisfaction        *float64                    `json:"satisfaction"`
+	Ratings             int                         `json:"ratings"`
+	QualityScore        *float64                    `json:"qualityScore"`
+	AgentsScored        int                         `json:"agentsScored"`
+	SuiteRuns           int                         `json:"suiteRuns"`
+	Regressions         int                         `json:"regressions"`
+	OpenRegressions     int                         `json:"openRegressions"`
+	EvalSpendMonthUSD   string                      `json:"evalSpendMonthUsd"`
+	EvalUnpricedCalls   int                         `json:"evalUnpricedCalls"`
+	MonthlyBudgetUSD    string                      `json:"monthlyBudgetUsd"`
+	MonthStartedAt      int64                       `json:"monthStartedAt"`
+	SweepEnabled        bool                        `json:"sweepEnabled"`
+	NextSweepHourLocal  int                         `json:"nextSweepHourLocal"`
+	NextSweepTimezone   string                      `json:"nextSweepTimezone"`
+	AgentsWithCases     int                         `json:"agentsWithCases"`
+	JudgeEnabled        bool                        `json:"judgeEnabled"`
+	RegressionThreshold float64                     `json:"regressionThreshold"`
+	WorstRegression     *agentqualitysuite.SuiteRun `json:"worstRegression"`
 }
 
 type AgentQualityRequest struct {
@@ -94,7 +95,7 @@ type AgentQualityDetail struct {
 	SatisfactionPoints []*aifeedbackports.AgentFeedbackDay `json:"satisfactionPoints"`
 	QualityPoints      []*AgentQualityPoint                `json:"qualityPoints"`
 	WorstRated         []*AgentWorstRatedAnswer            `json:"worstRated"`
-	LastSuiteRun       *agentquality.SuiteRun              `json:"lastSuiteRun"`
+	LastSuiteRun       *agentqualitysuite.SuiteRun         `json:"lastSuiteRun"`
 	ActiveCases        int                                 `json:"activeCases"`
 }
 
@@ -106,17 +107,17 @@ type ListAgentQualityAgentTableRequest struct {
 }
 
 type AgentQualityAgent struct {
-	AgentDefinitionID pulid.ID               `json:"agentDefinitionId"`
-	Name              string                 `json:"name"`
-	Enabled           bool                   `json:"enabled"`
-	Satisfaction      *float64               `json:"satisfaction"`
-	SatisfactionDelta *float64               `json:"satisfactionDelta"`
-	Ratings           int                    `json:"ratings"`
-	QualityScore      *float64               `json:"qualityScore"`
-	QualityPoints     []*AgentQualityPoint   `json:"qualityPoints"`
-	LastSuiteRun      *agentquality.SuiteRun `json:"lastSuiteRun"`
-	OpenRegression    bool                   `json:"openRegression"`
-	RatingsVisible    bool                   `json:"ratingsVisible"`
+	AgentDefinitionID pulid.ID                    `json:"agentDefinitionId"`
+	Name              string                      `json:"name"`
+	Enabled           bool                        `json:"enabled"`
+	Satisfaction      *float64                    `json:"satisfaction"`
+	SatisfactionDelta *float64                    `json:"satisfactionDelta"`
+	Ratings           int                         `json:"ratings"`
+	QualityScore      *float64                    `json:"qualityScore"`
+	QualityPoints     []*AgentQualityPoint        `json:"qualityPoints"`
+	LastSuiteRun      *agentqualitysuite.SuiteRun `json:"lastSuiteRun"`
+	OpenRegression    bool                        `json:"openRegression"`
+	RatingsVisible    bool                        `json:"ratingsVisible"`
 }
 
 type AgentQualityAgentEdge struct {
@@ -157,12 +158,15 @@ type RunAgentSuiteRequest struct {
 }
 
 type AgentQualityService interface {
-	GetControl(ctx context.Context, tenant pagination.TenantInfo) (*agentquality.Control, error)
+	GetControl(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*agentqualitycontrol.Control, error)
 	UpdateControl(
 		ctx context.Context,
-		entity *agentquality.Control,
+		entity *agentqualitycontrol.Control,
 		actor *permissionports.RequestActor,
-	) (*agentquality.Control, error)
+	) (*agentqualitycontrol.Control, error)
 	Overview(ctx context.Context, req *AgentQualityOverviewRequest) (*AgentQualityOverview, error)
 	AgentQuality(ctx context.Context, req *AgentQualityRequest) (*AgentQualityDetail, error)
 	ListAgentTable(
@@ -176,17 +180,17 @@ type AgentQualityService interface {
 	ListSuiteRunConnection(
 		ctx context.Context,
 		req *ListAgentSuiteRunConnectionRequest,
-	) (*pagination.CursorListResult[*agentquality.SuiteRun], error)
+	) (*pagination.CursorListResult[*agentqualitysuite.SuiteRun], error)
 	GetSuiteRun(
 		ctx context.Context,
 		id pulid.ID,
 		tenant pagination.TenantInfo,
-	) (*agentquality.SuiteRun, error)
+	) (*agentqualitysuite.SuiteRun, error)
 	RunSuite(
 		ctx context.Context,
 		req *RunAgentSuiteRequest,
 		actor *permissionports.RequestActor,
-	) (*agentquality.SuiteRun, error)
+	) (*agentqualitysuite.SuiteRun, error)
 }
 
 type AgentQualityScheduler interface {
@@ -199,7 +203,7 @@ type AgentSuiteRunStart struct {
 	SuiteRunID        pulid.ID
 	AgentDefinitionID pulid.ID
 	SampleSeed        int64
-	Settings          agentquality.SuiteSettings
+	Settings          agentqualitycontrol.SuiteSettings
 	DayStart          int64
 	MonthStart        int64
 }
@@ -212,5 +216,5 @@ type EvaluationBudget interface {
 	CheckEvaluationBudget(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
-	) (*agentquality.BudgetDecision, error)
+	) (*agentqualitysuite.BudgetDecision, error)
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
@@ -446,11 +447,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_agent_suite_runs_status",
-			values: stringsOf(agentquality.AllSuiteRunStatuses()),
+			values: stringsOf(agentqualitysuite.AllSuiteRunStatuses()),
 		},
 		{
 			name:   "ck_agent_suite_runs_trigger",
-			values: stringsOf(agentquality.AllSuiteRunTriggers()),
+			values: stringsOf(agentqualitysuite.AllSuiteRunTriggers()),
 		},
 		{
 			name:   "ck_ai_providers_embedding_input_style",

@@ -918,6 +918,8 @@ modules:
       - agentpreview
       - agentprompt
       - agentquality
+      - agentqualitycontrol
+      - agentqualitysuite
       - agentreach
       - agentrecord
       - agentreflection

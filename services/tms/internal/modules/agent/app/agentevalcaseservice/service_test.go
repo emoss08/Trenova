@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -771,6 +772,6 @@ func (f *fakeCases) ListAgentsWithActiveCases(
 func (f *fakeCases) ListSamplingCases(
 	context.Context,
 	agentqualityports.ListEvalCaseSamplingRequest,
-) ([]agentquality.SamplingCase, error) {
+) ([]agentqualitysuite.SamplingCase, error) {
 	return nil, nil
 }

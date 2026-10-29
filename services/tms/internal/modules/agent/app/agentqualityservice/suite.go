@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -40,10 +42,10 @@ const (
 	failedSuiteCaseNote    = "Not replayed: the suite run failed."
 )
 
-func scoredStatuses() []agentquality.SuiteRunStatus {
-	return []agentquality.SuiteRunStatus{
-		agentquality.SuiteRunStatusCompleted,
-		agentquality.SuiteRunStatusBudgetStopped,
+func scoredStatuses() []agentqualitysuite.SuiteRunStatus {
+	return []agentqualitysuite.SuiteRunStatus{
+		agentqualitysuite.SuiteRunStatusCompleted,
+		agentqualitysuite.SuiteRunStatusBudgetStopped,
 	}
 }
 
@@ -91,17 +93,17 @@ func (s *Service) ListSuiteCases(
 }
 
 type CheckBudgetRequest struct {
-	TenantInfo   pagination.TenantInfo      `json:"tenantInfo"`
-	DayStart     int64                      `json:"dayStart"`
-	MonthStart   int64                      `json:"monthStart"`
-	Settings     agentquality.SuiteSettings `json:"settings"`
-	CommittedUSD decimal.Decimal            `json:"committedUsd"`
+	TenantInfo   pagination.TenantInfo             `json:"tenantInfo"`
+	DayStart     int64                             `json:"dayStart"`
+	MonthStart   int64                             `json:"monthStart"`
+	Settings     agentqualitycontrol.SuiteSettings `json:"settings"`
+	CommittedUSD decimal.Decimal                   `json:"committedUsd"`
 }
 
 func (s *Service) CheckBudget(
 	ctx context.Context,
 	req *CheckBudgetRequest,
-) (*agentquality.BudgetDecision, error) {
+) (*agentqualitysuite.BudgetDecision, error) {
 	nightly, err := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      req.DayStart,
@@ -117,7 +119,7 @@ func (s *Service) CheckBudget(
 		return nil, err
 	}
 
-	decision := agentquality.CheckBudget(agentquality.BudgetInput{
+	decision := agentqualitysuite.CheckBudget(agentqualitysuite.BudgetInput{
 		NightlySpent: nightly.CostUSD,
 		MonthlySpent: monthly.CostUSD,
 		NightlyCap:   req.Settings.NightlyBudgetUSD,
@@ -131,7 +133,7 @@ func (s *Service) CheckBudget(
 func (s *Service) CheckEvaluationBudget(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*agentquality.BudgetDecision, error) {
+) (*agentqualitysuite.BudgetDecision, error) {
 	control, err := s.control(ctx, tenant)
 	if err != nil {
 		return nil, err
@@ -297,10 +299,10 @@ func meanPointer(values []float64) *float64 {
 }
 
 type ScoreSuiteRequest struct {
-	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
-	SuiteRunID pulid.ID                   `json:"suiteRunId"`
-	SampleSeed int64                      `json:"sampleSeed"`
-	Settings   agentquality.SuiteSettings `json:"settings"`
+	TenantInfo pagination.TenantInfo             `json:"tenantInfo"`
+	SuiteRunID pulid.ID                          `json:"suiteRunId"`
+	SampleSeed int64                             `json:"sampleSeed"`
+	Settings   agentqualitycontrol.SuiteSettings `json:"settings"`
 }
 
 type ScoredSuite struct {
@@ -334,7 +336,7 @@ func (s *Service) ScoreSuite(ctx context.Context, req *ScoreSuiteRequest) (*Scor
 		JudgeCases:         []pulid.ID{},
 	}
 	if req.Settings.JudgeEnabled && s.completion != nil {
-		scored.JudgeCases = agentquality.JudgeSample(
+		scored.JudgeCases = agentqualitysuite.JudgeSample(
 			outcome.judgeable,
 			req.SampleSeed,
 			req.Settings.JudgeSampleRate,
@@ -487,20 +489,20 @@ func (s *Service) recordJudgement(
 }
 
 type FinalizeSuiteRequest struct {
-	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
-	SuiteRunID pulid.ID                   `json:"suiteRunId"`
-	Settings   agentquality.SuiteSettings `json:"settings"`
-	StopReason string                     `json:"stopReason,omitempty"`
+	TenantInfo pagination.TenantInfo             `json:"tenantInfo"`
+	SuiteRunID pulid.ID                          `json:"suiteRunId"`
+	Settings   agentqualitycontrol.SuiteSettings `json:"settings"`
+	StopReason string                            `json:"stopReason,omitempty"`
 }
 
 type FinalizedSuite struct {
-	Status       agentquality.SuiteRunStatus `json:"status"`
-	QualityScore *float64                    `json:"qualityScore,omitempty"`
-	Regression   bool                        `json:"regression"`
-	HardFailures int                         `json:"hardFailures"`
+	Status       agentqualitysuite.SuiteRunStatus `json:"status"`
+	QualityScore *float64                         `json:"qualityScore,omitempty"`
+	Regression   bool                             `json:"regression"`
+	HardFailures int                              `json:"hardFailures"`
 }
 
-func finalizedFrom(run *agentquality.SuiteRun) *FinalizedSuite {
+func finalizedFrom(run *agentqualitysuite.SuiteRun) *FinalizedSuite {
 	return &FinalizedSuite{
 		Status:       run.Status,
 		QualityScore: run.QualityScore,
@@ -578,7 +580,7 @@ func (s *Service) FinalizeSuite(
 		comments = joinComments(comments, regressionComment(regression))
 	}
 
-	run.Finish(status, stringutils.Ellipsize(comments, agentquality.MaxSuiteComments), s.now())
+	run.Finish(status, stringutils.Ellipsize(comments, agentqualitysuite.MaxSuiteComments), s.now())
 	s.announce(ctx, run)
 
 	updated, err := s.suiteRuns.Update(ctx, run)
@@ -589,15 +591,18 @@ func (s *Service) FinalizeSuite(
 	return finalizedFrom(updated), nil
 }
 
-func finalStatus(outcome *suiteOutcome, stopReason string) (agentquality.SuiteRunStatus, string) {
+func finalStatus(
+	outcome *suiteOutcome,
+	stopReason string,
+) (agentqualitysuite.SuiteRunStatus, string) {
 	switch {
 	case stopReason != "":
-		return agentquality.SuiteRunStatusBudgetStopped, stopReason
+		return agentqualitysuite.SuiteRunStatusBudgetStopped, stopReason
 	case len(outcome.scored) == 0:
-		return agentquality.SuiteRunStatusFailed,
+		return agentqualitysuite.SuiteRunStatusFailed,
 			"No case could be replayed, so the agent was not scored."
 	default:
-		return agentquality.SuiteRunStatusCompleted, ""
+		return agentqualitysuite.SuiteRunStatusCompleted, ""
 	}
 }
 
@@ -639,9 +644,9 @@ func regressionComment(regression agentscoring.Regression) string {
 
 func (s *Service) detectRegression(
 	ctx context.Context,
-	run *agentquality.SuiteRun,
+	run *agentqualitysuite.SuiteRun,
 	outcome *suiteOutcome,
-	settings agentquality.SuiteSettings,
+	settings agentqualitycontrol.SuiteSettings,
 ) (agentscoring.Regression, error) {
 	previous, err := s.suiteRuns.History(ctx, agentqualityports.AgentSuiteRunHistoryRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -679,11 +684,11 @@ func (s *Service) detectRegression(
 
 	minCases := settings.MinCases
 	if minCases <= 0 {
-		minCases = agentquality.DefaultMinCases
+		minCases = agentqualitycontrol.DefaultMinCases
 	}
 	threshold := settings.RegressionThreshold
 	if threshold <= 0 {
-		threshold = agentquality.DefaultRegressionThreshold
+		threshold = agentqualitycontrol.DefaultRegressionThreshold
 	}
 
 	return agentscoring.DetectRegression(agentscoring.RegressionInput{
@@ -700,7 +705,7 @@ func (s *Service) detectRegression(
 
 func (s *Service) baselineResults(
 	ctx context.Context,
-	run *agentquality.SuiteRun,
+	run *agentqualitysuite.SuiteRun,
 ) ([]agentscoring.CaseResult, error) {
 	if run.BaselineRunID == nil || run.BaselineRunID.IsNil() {
 		return nil, nil
@@ -715,7 +720,7 @@ func (s *Service) baselineResults(
 	return outcomeOf(evaluations, nil).scored, nil
 }
 
-func (s *Service) announce(ctx context.Context, run *agentquality.SuiteRun) {
+func (s *Service) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) {
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if s.watchtower != nil && run.BaselineRunID != nil && run.BaselineRunID.IsNotNil() {
 		s.watchtower.Resolve(
@@ -760,7 +765,7 @@ func (s *Service) agentName(
 
 func (s *Service) notifyRegression(
 	ctx context.Context,
-	run *agentquality.SuiteRun,
+	run *agentqualitysuite.SuiteRun,
 	item watchtowerports.WatchtowerItemInput,
 ) {
 	if s.notifier == nil {
@@ -827,7 +832,7 @@ func (s *Service) FailSuite(ctx context.Context, req *FailSuiteRequest) error {
 	return s.fail(ctx, run, req.Error)
 }
 
-func (s *Service) fail(ctx context.Context, run *agentquality.SuiteRun, reason string) error {
+func (s *Service) fail(ctx context.Context, run *agentqualitysuite.SuiteRun, reason string) error {
 	now := s.now()
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if _, err := s.evaluations.SkipPendingBySuiteRun(
@@ -843,8 +848,8 @@ func (s *Service) fail(ctx context.Context, run *agentquality.SuiteRun, reason s
 	}
 
 	run.Finish(
-		agentquality.SuiteRunStatusFailed,
-		stringutils.Ellipsize(reason, agentquality.MaxSuiteComments),
+		agentqualitysuite.SuiteRunStatusFailed,
+		stringutils.Ellipsize(reason, agentqualitysuite.MaxSuiteComments),
 		now,
 	)
 	if _, err := s.suiteRuns.Update(ctx, run); err != nil {

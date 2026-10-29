@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -455,7 +455,7 @@ func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, decision.Stop)
 
-	w.budget.decision = &agentquality.BudgetDecision{
+	w.budget.decision = &agentqualitysuite.BudgetDecision{
 		Stop:   true,
 		Reason: "Tonight's budget is spent.",
 	}

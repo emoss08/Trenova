@@ -3,6 +3,8 @@
 package agentqualitydb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"context"
 	"unsafe"
 
@@ -14,12 +16,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// controlsTable is the schema of agentquality.Control.
+// controlsTable is the schema of agentqualitycontrol.Control.
 var controlsTable = schema.Table{
 	Name:   "agent_quality_controls",
 	Quoted: `"agent_quality_controls"`,
 	Alias:  "aqc",
-	Model:  "agentquality.Control",
+	Model:  "agentqualitycontrol.Control",
 	Label:  `Control`,
 	Plural: `Controls`,
 	Columns: []schema.Column{
@@ -54,7 +56,7 @@ var controlsTable = schema.Table{
 	IDPrefix:     "aqc_",
 	New:          newControl,
 	NewN:         newNControl,
-	Size:         unsafe.Sizeof(agentquality.Control{}),
+	Size:         unsafe.Sizeof(agentqualitycontrol.Control{}),
 	Ptr:          ptrControl,
 	Value:        valueControl,
 	BeforeCreate: beforeCreateControl,
@@ -62,9 +64,9 @@ var controlsTable = schema.Table{
 
 var controlsRef = keel.Ref{Table: &controlsTable}
 
-// ControlsTable is the table of agentquality.Control.
+// ControlsTable is the table of agentqualitycontrol.Control.
 type ControlsTable struct {
-	keel.Handle[*agentquality.Control]
+	keel.Handle[*agentqualitycontrol.Control]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -86,7 +88,7 @@ type ControlsTable struct {
 
 // Controls references the agent_quality_controls table.
 var Controls = &ControlsTable{
-	Handle:              keel.Handle[*agentquality.Control]{Ref: &controlsRef},
+	Handle:              keel.Handle[*agentqualitycontrol.Control]{Ref: &controlsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &controlsRef, Index: 2}}},
@@ -109,7 +111,7 @@ var Controls = &ControlsTable{
 // BuildControls builds the handle of agent_quality_controls for ref. Generated relation and alias methods call it.
 func BuildControls(r *keel.Ref) *ControlsTable {
 	return &ControlsTable{
-		Handle:              keel.Handle[*agentquality.Control]{Ref: r},
+		Handle:              keel.Handle[*agentqualitycontrol.Control]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -139,18 +141,18 @@ func (t *ControlsTable) As(alias string) *ControlsTable {
 }
 
 // Get returns the agent_quality_controls row with the given key, or keel.ErrNotFound.
-func (t *ControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentquality.Control, error) {
+func (t *ControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentqualitycontrol.Control, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newControl() unsafe.Pointer { return unsafe.Pointer(new(agentquality.Control)) }
+func newControl() unsafe.Pointer { return unsafe.Pointer(new(agentqualitycontrol.Control)) }
 
 func newNControl(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentquality.Control, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]agentqualitycontrol.Control, n)))
 }
 
 func ptrControl(p unsafe.Pointer, c int32) any {
-	r := (*agentquality.Control)(p)
+	r := (*agentqualitycontrol.Control)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -191,7 +193,7 @@ func ptrControl(p unsafe.Pointer, c int32) any {
 }
 
 func valueControl(p unsafe.Pointer, c int32) any {
-	r := (*agentquality.Control)(p)
+	r := (*agentqualitycontrol.Control)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -235,7 +237,7 @@ func valueControl(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateControl(ctx context.Context, p unsafe.Pointer) error {
-	return (*agentquality.Control)(p).BeforeCreate(ctx)
+	return (*agentqualitycontrol.Control)(p).BeforeCreate(ctx)
 }
 
 // evalCasesTable is the schema of agentquality.EvalCase.
@@ -636,15 +638,15 @@ func beforeCreateEvalCase(ctx context.Context, p unsafe.Pointer) error {
 	return (*agentquality.EvalCase)(p).BeforeCreate(ctx)
 }
 
-// suiteRunsTable is the schema of agentquality.SuiteRun.
+// suiteRunsTable is the schema of agentqualitysuite.SuiteRun.
 var suiteRunsTable = schema.Table{
 	Name:        "agent_suite_runs",
 	Quoted:      `"agent_suite_runs"`,
 	Alias:       "asr",
-	Model:       "agentquality.SuiteRun",
+	Model:       "agentqualitysuite.SuiteRun",
 	Label:       `Suite Run`,
 	Plural:      `Suite Runs`,
-	Constraints: (&agentquality.SuiteRun{}).Constraints(),
+	Constraints: (&agentqualitysuite.SuiteRun{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -692,7 +694,7 @@ var suiteRunsTable = schema.Table{
 	IDPrefix:     "",
 	New:          newSuiteRun,
 	NewN:         newNSuiteRun,
-	Size:         unsafe.Sizeof(agentquality.SuiteRun{}),
+	Size:         unsafe.Sizeof(agentqualitysuite.SuiteRun{}),
 	Ptr:          ptrSuiteRun,
 	Value:        valueSuiteRun,
 	BeforeCreate: beforeCreateSuiteRun,
@@ -700,9 +702,9 @@ var suiteRunsTable = schema.Table{
 
 var suiteRunsRef = keel.Ref{Table: &suiteRunsTable}
 
-// SuiteRunsTable is the table of agentquality.SuiteRun.
+// SuiteRunsTable is the table of agentqualitysuite.SuiteRun.
 type SuiteRunsTable struct {
-	keel.Handle[*agentquality.SuiteRun]
+	keel.Handle[*agentqualitysuite.SuiteRun]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -739,7 +741,7 @@ type SuiteRunsTable struct {
 
 // SuiteRuns references the agent_suite_runs table.
 var SuiteRuns = &SuiteRunsTable{
-	Handle:             keel.Handle[*agentquality.SuiteRun]{Ref: &suiteRunsRef},
+	Handle:             keel.Handle[*agentqualitysuite.SuiteRun]{Ref: &suiteRunsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 2}}},
@@ -777,7 +779,7 @@ var SuiteRuns = &SuiteRunsTable{
 // BuildSuiteRuns builds the handle of agent_suite_runs for ref. Generated relation and alias methods call it.
 func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 	return &SuiteRunsTable{
-		Handle:             keel.Handle[*agentquality.SuiteRun]{Ref: r},
+		Handle:             keel.Handle[*agentqualitysuite.SuiteRun]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -822,18 +824,18 @@ func (t *SuiteRunsTable) As(alias string) *SuiteRunsTable {
 }
 
 // Get returns the agent_suite_runs row with the given key, or keel.ErrNotFound.
-func (t *SuiteRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentquality.SuiteRun, error) {
+func (t *SuiteRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentqualitysuite.SuiteRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newSuiteRun() unsafe.Pointer { return unsafe.Pointer(new(agentquality.SuiteRun)) }
+func newSuiteRun() unsafe.Pointer { return unsafe.Pointer(new(agentqualitysuite.SuiteRun)) }
 
 func newNSuiteRun(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentquality.SuiteRun, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]agentqualitysuite.SuiteRun, n)))
 }
 
 func ptrSuiteRun(p unsafe.Pointer, c int32) any {
-	r := (*agentquality.SuiteRun)(p)
+	r := (*agentqualitysuite.SuiteRun)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -904,7 +906,7 @@ func ptrSuiteRun(p unsafe.Pointer, c int32) any {
 }
 
 func valueSuiteRun(p unsafe.Pointer, c int32) any {
-	r := (*agentquality.SuiteRun)(p)
+	r := (*agentqualitysuite.SuiteRun)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1011,7 +1013,7 @@ func valueSuiteRun(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateSuiteRun(ctx context.Context, p unsafe.Pointer) error {
-	return (*agentquality.SuiteRun)(p).BeforeCreate(ctx)
+	return (*agentqualitysuite.SuiteRun)(p).BeforeCreate(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
@@ -1131,76 +1133,76 @@ func (c CaseStatusCol) NotIn(vs ...agentquality.CaseStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// SuiteRunStatusCol is a column of agentquality.SuiteRunStatus values.
+// SuiteRunStatusCol is a column of agentqualitysuite.SuiteRunStatus values.
 type SuiteRunStatusCol struct{ keel.StringCol }
 
-func (c SuiteRunStatusCol) Eq(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Eq(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c SuiteRunStatusCol) Ne(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Ne(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c SuiteRunStatusCol) Gt(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Gt(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c SuiteRunStatusCol) Gte(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Gte(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SuiteRunStatusCol) Lt(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Lt(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c SuiteRunStatusCol) Lte(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Lte(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SuiteRunStatusCol) IsDistinctFrom(v agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) IsDistinctFrom(v agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SuiteRunStatusCol) Between(lo, hi agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) Between(lo, hi agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SuiteRunStatusCol) To(v agentquality.SuiteRunStatus) keel.Assignment {
+func (c SuiteRunStatusCol) To(v agentqualitysuite.SuiteRunStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SuiteRunStatusCol) In(vs ...agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) In(vs ...agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SuiteRunStatusCol) NotIn(vs ...agentquality.SuiteRunStatus) keel.Pred {
+func (c SuiteRunStatusCol) NotIn(vs ...agentqualitysuite.SuiteRunStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// SuiteRunTriggerCol is a column of agentquality.SuiteRunTrigger values.
+// SuiteRunTriggerCol is a column of agentqualitysuite.SuiteRunTrigger values.
 type SuiteRunTriggerCol struct{ keel.StringCol }
 
-func (c SuiteRunTriggerCol) Eq(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Eq(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c SuiteRunTriggerCol) Ne(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Ne(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c SuiteRunTriggerCol) Gt(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Gt(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c SuiteRunTriggerCol) Gte(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Gte(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c SuiteRunTriggerCol) Lt(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Lt(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c SuiteRunTriggerCol) Lte(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Lte(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c SuiteRunTriggerCol) IsDistinctFrom(v agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) IsDistinctFrom(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c SuiteRunTriggerCol) Between(lo, hi agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) Between(lo, hi agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c SuiteRunTriggerCol) To(v agentquality.SuiteRunTrigger) keel.Assignment {
+func (c SuiteRunTriggerCol) To(v agentqualitysuite.SuiteRunTrigger) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c SuiteRunTriggerCol) In(vs ...agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) In(vs ...agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c SuiteRunTriggerCol) NotIn(vs ...agentquality.SuiteRunTrigger) keel.Pred {
+func (c SuiteRunTriggerCol) NotIn(vs ...agentqualitysuite.SuiteRunTrigger) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

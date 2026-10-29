@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -49,14 +51,14 @@ type PlannedAgent struct {
 }
 
 type SweepPlan struct {
-	Enabled    bool                       `json:"enabled"`
-	Reason     string                     `json:"reason,omitempty"`
-	Timezone   string                     `json:"timezone"`
-	PlannedAt  int64                      `json:"plannedAt"`
-	DayStart   int64                      `json:"dayStart"`
-	MonthStart int64                      `json:"monthStart"`
-	Settings   agentquality.SuiteSettings `json:"settings"`
-	Agents     []PlannedAgent             `json:"agents"`
+	Enabled    bool                              `json:"enabled"`
+	Reason     string                            `json:"reason,omitempty"`
+	Timezone   string                            `json:"timezone"`
+	PlannedAt  int64                             `json:"plannedAt"`
+	DayStart   int64                             `json:"dayStart"`
+	MonthStart int64                             `json:"monthStart"`
+	Settings   agentqualitycontrol.SuiteSettings `json:"settings"`
+	Agents     []PlannedAgent                    `json:"agents"`
 }
 
 func (s *Service) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan, error) {
@@ -223,7 +225,7 @@ type planAgentParams struct {
 	tenant     pagination.TenantInfo
 	definition *agentdefinition.Definition
 	provider   resolvedProvider
-	control    *agentquality.Control
+	control    *agentqualitycontrol.Control
 	now        int64
 	forced     bool
 }
@@ -255,7 +257,7 @@ func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAge
 		Name:              p.definition.Name,
 		Fingerprint:       fingerprint,
 		FingerprintHash:   fingerprint.Hash(),
-		SuiteRevision:     agentquality.SuiteRevision(cases),
+		SuiteRevision:     agentqualitysuite.SuiteRevision(cases),
 		ActiveCases:       len(cases),
 	}
 	if len(cases) == 0 {
@@ -268,22 +270,24 @@ func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAge
 	last, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: p.definition.ID,
 		TenantInfo:        p.tenant,
-		Statuses:          []agentquality.SuiteRunStatus{agentquality.SuiteRunStatusCompleted},
+		Statuses: []agentqualitysuite.SuiteRunStatus{
+			agentqualitysuite.SuiteRunStatusCompleted,
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var lastRun *agentquality.LastRun
+	var lastRun *agentqualitysuite.LastRun
 	if last != nil && last.FinishedAt != nil {
-		lastRun = &agentquality.LastRun{
+		lastRun = &agentqualitysuite.LastRun{
 			FingerprintHash: last.FingerprintHash,
 			SuiteRevision:   last.SuiteRevision,
 			FinishedAt:      *last.FinishedAt,
 		}
 	}
 
-	decision := agentquality.DecideSkip(agentquality.SkipInput{
+	decision := agentqualitysuite.DecideSkip(agentqualitysuite.SkipInput{
 		FingerprintHash: planned.FingerprintHash,
 		SuiteRevision:   planned.SuiteRevision,
 		Last:            lastRun,
@@ -298,23 +302,23 @@ func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAge
 }
 
 type OpenSuiteRequest struct {
-	TenantInfo        pagination.TenantInfo        `json:"tenantInfo"`
-	Agent             PlannedAgent                 `json:"agent"`
-	SweepKey          string                       `json:"sweepKey,omitempty"`
-	Trigger           agentquality.SuiteRunTrigger `json:"trigger"`
-	RequestedByUserID pulid.ID                     `json:"requestedByUserId,omitzero"`
-	Settings          agentquality.SuiteSettings   `json:"settings"`
+	TenantInfo        pagination.TenantInfo             `json:"tenantInfo"`
+	Agent             PlannedAgent                      `json:"agent"`
+	SweepKey          string                            `json:"sweepKey,omitempty"`
+	Trigger           agentqualitysuite.SuiteRunTrigger `json:"trigger"`
+	RequestedByUserID pulid.ID                          `json:"requestedByUserId,omitzero"`
+	Settings          agentqualitycontrol.SuiteSettings `json:"settings"`
 }
 
 type OpenedSuite struct {
-	SuiteRunID pulid.ID                    `json:"suiteRunId"`
-	Status     agentquality.SuiteRunStatus `json:"status"`
-	CasesTotal int                         `json:"casesTotal"`
-	SampleSeed int64                       `json:"sampleSeed"`
-	WorkflowID string                      `json:"workflowId"`
+	SuiteRunID pulid.ID                         `json:"suiteRunId"`
+	Status     agentqualitysuite.SuiteRunStatus `json:"status"`
+	CasesTotal int                              `json:"casesTotal"`
+	SampleSeed int64                            `json:"sampleSeed"`
+	WorkflowID string                           `json:"workflowId"`
 }
 
-func openedFrom(run *agentquality.SuiteRun) *OpenedSuite {
+func openedFrom(run *agentqualitysuite.SuiteRun) *OpenedSuite {
 	return &OpenedSuite{
 		SuiteRunID: run.ID,
 		Status:     run.Status,
@@ -355,14 +359,14 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 		return nil, err
 	}
 
-	id := agentquality.NewSuiteRunID()
-	seed := agentquality.SeedFromID(id)
-	sample := agentquality.SampleCases(cases, seed, req.Settings.MaxCasesPerAgent)
+	id := agentqualitysuite.NewSuiteRunID()
+	seed := agentqualitysuite.SeedFromID(id)
+	sample := agentqualitysuite.SampleCases(cases, seed, req.Settings.MaxCasesPerAgent)
 	run := s.newSuiteRun(newSuiteRunParams{
 		id:       id,
 		seed:     seed,
 		req:      req,
-		revision: agentquality.SuiteRevision(cases),
+		revision: agentqualitysuite.SuiteRevision(cases),
 		baseline: baseline,
 		total:    len(sample),
 	})
@@ -406,7 +410,7 @@ func (s *Service) bySweepKey(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	sweepKey string,
-) (*agentquality.SuiteRun, error) {
+) (*agentqualitysuite.SuiteRun, error) {
 	if sweepKey == "" {
 		return nil, nil
 	}
@@ -433,12 +437,12 @@ type newSuiteRunParams struct {
 	seed     int64
 	req      *OpenSuiteRequest
 	revision string
-	baseline *agentquality.SuiteRun
+	baseline *agentqualitysuite.SuiteRun
 	total    int
 }
 
-func (s *Service) newSuiteRun(p newSuiteRunParams) *agentquality.SuiteRun {
-	run := &agentquality.SuiteRun{
+func (s *Service) newSuiteRun(p newSuiteRunParams) *agentqualitysuite.SuiteRun {
+	run := &agentqualitysuite.SuiteRun{
 		ID:                p.id,
 		OrganizationID:    p.req.TenantInfo.OrgID,
 		BusinessUnitID:    p.req.TenantInfo.BuID,
@@ -449,10 +453,10 @@ func (s *Service) newSuiteRun(p newSuiteRunParams) *agentquality.SuiteRun {
 		FingerprintHash:   p.req.Agent.FingerprintHash,
 		SuiteRevision:     p.revision,
 		SampleSeed:        p.seed,
-		Status:            agentquality.SuiteRunStatusRunning,
+		Status:            agentqualitysuite.SuiteRunStatusRunning,
 		CasesTotal:        p.total,
 		StartedAt:         s.now(),
-		WorkflowID:        agentquality.SuiteRunWorkflowID(p.id),
+		WorkflowID:        agentqualitycontrol.SuiteRunWorkflowID(p.id),
 	}
 	if p.req.RequestedByUserID.IsNotNil() {
 		userID := p.req.RequestedByUserID
@@ -468,8 +472,8 @@ func (s *Service) newSuiteRun(p newSuiteRunParams) *agentquality.SuiteRun {
 }
 
 func suiteEvaluations(
-	run *agentquality.SuiteRun,
-	sample []agentquality.SamplingCase,
+	run *agentqualitysuite.SuiteRun,
+	sample []agentqualitysuite.SamplingCase,
 	fingerprint *agentfingerprint.Fingerprint,
 ) []*agentevaluation.Evaluation {
 	evaluations := make([]*agentevaluation.Evaluation, 0, len(sample))
@@ -490,7 +494,7 @@ func suiteEvaluations(
 			SubjectID:         evalCase.SubjectID,
 			DefinitionVersion: fingerprintVersion(fingerprint),
 			Fingerprint:       fingerprint,
-			WorkflowID:        agentquality.EvaluationWorkflowID(evaluationID),
+			WorkflowID:        agentqualitycontrol.EvaluationWorkflowID(evaluationID),
 			RequestedByUserID: run.RequestedByUserID,
 			SuiteRunID:        &suiteRunID,
 			SuiteOrdinal:      &ordinal,
@@ -511,10 +515,10 @@ func fingerprintVersion(fingerprint *agentfingerprint.Fingerprint) int64 {
 
 func (s *Service) createSuite(
 	ctx context.Context,
-	run *agentquality.SuiteRun,
+	run *agentqualitysuite.SuiteRun,
 	evaluations []*agentevaluation.Evaluation,
-) (*agentquality.SuiteRun, error) {
-	var created *agentquality.SuiteRun
+) (*agentqualitysuite.SuiteRun, error) {
+	var created *agentqualitysuite.SuiteRun
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, err := s.suiteRuns.Create(txCtx, run)
 		if err != nil {
@@ -538,7 +542,9 @@ func (s *Service) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) 
 	running, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 		TenantInfo:        req.TenantInfo,
-		Statuses:          []agentquality.SuiteRunStatus{agentquality.SuiteRunStatusRunning},
+		Statuses: []agentqualitysuite.SuiteRunStatus{
+			agentqualitysuite.SuiteRunStatusRunning,
+		},
 	})
 	if err != nil || running == nil {
 		return false, err
@@ -559,10 +565,10 @@ func (s *Service) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) 
 }
 
 type RecordSkippedRequest struct {
-	TenantInfo pagination.TenantInfo        `json:"tenantInfo"`
-	Agent      PlannedAgent                 `json:"agent"`
-	SweepKey   string                       `json:"sweepKey"`
-	Trigger    agentquality.SuiteRunTrigger `json:"trigger"`
+	TenantInfo pagination.TenantInfo             `json:"tenantInfo"`
+	Agent      PlannedAgent                      `json:"agent"`
+	SweepKey   string                            `json:"sweepKey"`
+	Trigger    agentqualitysuite.SuiteRunTrigger `json:"trigger"`
 }
 
 func (s *Service) RecordSkipped(
@@ -578,8 +584,8 @@ func (s *Service) RecordSkipped(
 	}
 
 	now := s.now()
-	id := agentquality.NewSuiteRunID()
-	run := &agentquality.SuiteRun{
+	id := agentqualitysuite.NewSuiteRunID()
+	run := &agentqualitysuite.SuiteRun{
 		ID:                id,
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
@@ -589,13 +595,13 @@ func (s *Service) RecordSkipped(
 		Fingerprint:       req.Agent.Fingerprint,
 		FingerprintHash:   req.Agent.FingerprintHash,
 		SuiteRevision:     req.Agent.SuiteRevision,
-		SampleSeed:        agentquality.SeedFromID(id),
-		Status:            agentquality.SuiteRunStatusSkipped,
+		SampleSeed:        agentqualitysuite.SeedFromID(id),
+		Status:            agentqualitysuite.SuiteRunStatusSkipped,
 		StartedAt:         now,
 		FinishedAt:        &now,
 		Comments: stringutils.Ellipsize(
 			req.Agent.SkipReason,
-			agentquality.MaxSuiteComments,
+			agentqualitysuite.MaxSuiteComments,
 		),
 	}
 
@@ -625,7 +631,7 @@ func (s *Service) RunSuite(
 	ctx context.Context,
 	req *agentqualityports.RunAgentSuiteRequest,
 	actor *permissionports.RequestActor,
-) (*agentquality.SuiteRun, error) {
+) (*agentqualitysuite.SuiteRun, error) {
 	if s.starter == nil {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
@@ -652,7 +658,7 @@ func (s *Service) RunSuite(
 	opened, err := s.OpenSuite(ctx, &OpenSuiteRequest{
 		TenantInfo:        req.TenantInfo,
 		Agent:             planned,
-		Trigger:           agentquality.SuiteRunTriggerManual,
+		Trigger:           agentqualitysuite.SuiteRunTriggerManual,
 		RequestedByUserID: actor.UserIDOrNil(),
 		Settings:          plan.Settings,
 	})
@@ -694,7 +700,7 @@ func (s *Service) RunSuite(
 	return run, nil
 }
 
-func (s *Service) logRun(run *agentquality.SuiteRun, actor *permissionports.RequestActor) {
+func (s *Service) logRun(run *agentqualitysuite.SuiteRun, actor *permissionports.RequestActor) {
 	auditActor := actor.AuditActorOrSystem()
 	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,

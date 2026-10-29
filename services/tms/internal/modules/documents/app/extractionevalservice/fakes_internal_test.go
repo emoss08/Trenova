@@ -5,7 +5,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
@@ -424,13 +424,13 @@ func (f *retentionStore) Get(
 }
 
 type fakeBudget struct {
-	decision *agentquality.BudgetDecision
+	decision *agentqualitysuite.BudgetDecision
 }
 
 func (f *fakeBudget) CheckEvaluationBudget(
 	context.Context,
 	pagination.TenantInfo,
-) (*agentquality.BudgetDecision, error) {
+) (*agentqualitysuite.BudgetDecision, error) {
 	return f.decision, nil
 }
 
@@ -500,7 +500,7 @@ func newWorld() *world {
 		casePages:   &casePagesStore{items: map[pulid.ID]*extractioneval.CasePages{}},
 		providers:   &providerStore{providers: map[pulid.ID]*aiprovider.Provider{}},
 		retention:   &retentionStore{},
-		budget:      &fakeBudget{decision: &agentquality.BudgetDecision{}},
+		budget:      &fakeBudget{decision: &agentqualitysuite.BudgetDecision{}},
 		predictor:   &fakePredictor{},
 		starter:     &fakeStarter{},
 	}

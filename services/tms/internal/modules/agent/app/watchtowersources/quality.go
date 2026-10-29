@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -14,12 +14,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func QualityRegressionPath(run *agentquality.SuiteRun) string {
+func QualityRegressionPath(run *agentqualitysuite.SuiteRun) string {
 	return pathAgentControl + "?tab=quality&agent=" + run.AgentDefinitionID.String() +
 		"&suiteRun=" + run.ID.String()
 }
 
-func QualityRegressionSeverity(run *agentquality.SuiteRun) watchtower.Severity {
+func QualityRegressionSeverity(run *agentqualitysuite.SuiteRun) watchtower.Severity {
 	if run.HardFailures > 0 {
 		return watchtower.SeverityCritical
 	}
@@ -27,7 +27,7 @@ func QualityRegressionSeverity(run *agentquality.SuiteRun) watchtower.Severity {
 	return watchtower.SeverityWarning
 }
 
-func QualityRegressionSummary(run *agentquality.SuiteRun) string {
+func QualityRegressionSummary(run *agentqualitysuite.SuiteRun) string {
 	score := "no score"
 	if run.QualityScore != nil {
 		score = strconv.Itoa(int(*run.QualityScore*100+0.5)) + "%"
@@ -39,7 +39,7 @@ func QualityRegressionSummary(run *agentquality.SuiteRun) string {
 	}
 
 	return stringutils.Ellipsize(
-		"Scored "+score+baseline+". "+agentquality.DescribeChanges(run.FingerprintChanges)+
+		"Scored "+score+baseline+". "+agentqualitysuite.DescribeChanges(run.FingerprintChanges)+
 			" "+run.Comments,
 		maxQualitySummary,
 	)
@@ -48,7 +48,7 @@ func QualityRegressionSummary(run *agentquality.SuiteRun) string {
 const maxQualitySummary = 1000
 
 func DescribeQualityRegression(
-	run *agentquality.SuiteRun,
+	run *agentqualitysuite.SuiteRun,
 	agentName string,
 ) watchtowerports.WatchtowerItemInput {
 	who := agentName
@@ -97,9 +97,9 @@ func (s *QualityRegressionSource) Snapshot(
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	latest, err := s.runs.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 		TenantInfo: tenant,
-		Statuses: []agentquality.SuiteRunStatus{
-			agentquality.SuiteRunStatusCompleted,
-			agentquality.SuiteRunStatusBudgetStopped,
+		Statuses: []agentqualitysuite.SuiteRunStatus{
+			agentqualitysuite.SuiteRunStatusCompleted,
+			agentqualitysuite.SuiteRunStatusBudgetStopped,
 		},
 		Limit: snapshotLimit,
 	})
@@ -107,7 +107,7 @@ func (s *QualityRegressionSource) Snapshot(
 		return nil, err
 	}
 
-	regressed := make([]*agentquality.SuiteRun, 0, len(latest))
+	regressed := make([]*agentqualitysuite.SuiteRun, 0, len(latest))
 	definitionIDs := make([]pulid.ID, 0, len(latest))
 	for _, run := range latest {
 		if run != nil && run.Regression {
