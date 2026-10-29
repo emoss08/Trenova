@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -241,7 +242,7 @@ func boardStepOutcome(arguments map[string]any) toolOutcome {
 			fields[key] = value
 		}
 	}
-	parsed, problems := board.Parse(fields)
+	parsed, problems := boardparse.Parse(fields)
 
 	var revises pulid.ID
 	if raw := strings.TrimSpace(stringArg(arguments, boardPropID)); raw != "" {

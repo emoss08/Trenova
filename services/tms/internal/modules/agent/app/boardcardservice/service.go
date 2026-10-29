@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -170,7 +172,7 @@ func (s *Service) Card(
 		}
 		card.Question = questions[artifact.MessageID]
 	}
-	card.Markdown = filled.Markdown(board.MarkdownMeta{
+	card.Markdown = boardmarkdown.Markdown(filled, boardmarkdown.MarkdownMeta{
 		Question:   card.Question,
 		Author:     card.Author,
 		AnsweredAt: card.AnsweredAt,
@@ -196,12 +198,12 @@ func (s *Service) Fill(
 ) (*board.Filled, error) {
 	now := s.now().Unix()
 	tenant := req.Actor.TenantInfo()
-	reads := &board.Reads{
+	reads := &boardassemble.Reads{
 		Now:      now,
 		Readable: make(map[permission.Resource]bool, 4),
 		Metrics:  map[string]*board.Value{},
-		Analyses: map[pulid.ID]*board.AnalysisRead{},
-		Tables:   map[pulid.ID]*board.TableRead{},
+		Analyses: map[pulid.ID]*boardassemble.AnalysisRead{},
+		Tables:   map[pulid.ID]*boardassemble.TableRead{},
 		Events:   map[pulid.ID][]board.Event{},
 	}
 
@@ -235,7 +237,7 @@ func (s *Service) Fill(
 		return nil, err
 	}
 
-	return board.Assemble(req.Board, reads), nil
+	return boardassemble.Assemble(req.Board, reads), nil
 }
 
 func (s *Service) allowed(

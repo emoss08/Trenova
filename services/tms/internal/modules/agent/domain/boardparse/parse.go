@@ -1,4 +1,4 @@
-package board
+package boardparse
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,17 +18,17 @@ const (
 	fieldAnalysis = "analysis"
 )
 
-var blockFields = map[BlockType][]string{
-	BlockFigures:  {"figures"},
-	BlockRecords:  {fieldRecords, "measure", "order"},
-	BlockCompare:  {fieldRecords, fieldAnalysis, "table", "key", "rows"},
-	BlockTable:    {fieldAnalysis, "table", "artifact", "limit"},
-	BlockChart:    {fieldAnalysis, "chart"},
-	BlockTimeline: {"record", "limit"},
-	BlockChecks:   {"checks"},
-	BlockMeter:    {fieldChecksBlock, "metric"},
-	BlockProse:    {"text"},
-	BlockNote:     {"tone", "text", fieldRecords},
+var blockFields = map[board.BlockType][]string{
+	board.BlockFigures:  {"figures"},
+	board.BlockRecords:  {fieldRecords, "measure", "order"},
+	board.BlockCompare:  {fieldRecords, fieldAnalysis, "table", "key", "rows"},
+	board.BlockTable:    {fieldAnalysis, "table", "artifact", "limit"},
+	board.BlockChart:    {fieldAnalysis, "chart"},
+	board.BlockTimeline: {"record", "limit"},
+	board.BlockChecks:   {"checks"},
+	board.BlockMeter:    {fieldChecksBlock, "metric"},
+	board.BlockProse:    {"text"},
+	board.BlockNote:     {"tone", "text", fieldRecords},
 }
 
 var commonFields = []string{"type", "title", "half"}
@@ -45,49 +46,49 @@ func (p *parser) addf(format string, args ...any) {
 	p.problems = append(p.problems, fmt.Sprintf(format, args...))
 }
 
-func Parse(arguments map[string]any) (board *Board, problems []string) {
+func Parse(arguments map[string]any) (layout *board.Board, problems []string) {
 	p := &parser{}
-	board = &Board{
-		Title:   p.words(arguments, "title", "title", MaxTitleRunes, true),
-		Verdict: p.words(arguments, "verdict", "verdict", MaxVerdictRunes, true),
+	layout = &board.Board{
+		Title:   p.words(arguments, "title", "title", board.MaxTitleRunes, true),
+		Verdict: p.words(arguments, "verdict", "verdict", board.MaxVerdictRunes, true),
 	}
 
 	raw, isList := arguments["blocks"].([]any)
 	switch {
 	case !isList || len(raw) == 0:
 		p.addf("blocks needs at least one block")
-	case len(raw) > MaxBlocks:
-		p.addf("a board holds at most %d blocks", MaxBlocks)
+	case len(raw) > board.MaxBlocks:
+		p.addf("a board holds at most %d blocks", board.MaxBlocks)
 	default:
-		board.Blocks = make([]Block, 0, len(raw))
+		layout.Blocks = make([]board.Block, 0, len(raw))
 		for idx, entry := range raw {
 			fields, isObject := entry.(map[string]any)
 			if !isObject {
 				p.addf("blocks[%d] is not an object", idx+1)
 				continue
 			}
-			board.Blocks = append(board.Blocks, p.block(fields, idx+1))
+			layout.Blocks = append(layout.Blocks, p.block(fields, idx+1))
 		}
 	}
 	if len(p.problems) == 0 {
-		p.whole(board)
+		p.whole(layout)
 	}
 
-	return board, p.problems
+	return layout, p.problems
 }
 
-func (p *parser) whole(board *Board) {
+func (p *parser) whole(layout *board.Board) {
 	notes, data := 0, 0
-	for idx := range board.Blocks {
+	for idx := range layout.Blocks {
 		switch {
-		case board.Blocks[idx].Type == BlockNote:
+		case layout.Blocks[idx].Type == board.BlockNote:
 			notes++
-		case !board.Blocks[idx].Type.Words():
+		case !layout.Blocks[idx].Type.Words():
 			data++
 		}
 	}
-	if notes > MaxNotes {
-		p.addf("a board holds at most %d notes", MaxNotes)
+	if notes > board.MaxNotes {
+		p.addf("a board holds at most %d notes", board.MaxNotes)
 	}
 	if data == 0 {
 		p.addf(
@@ -95,21 +96,22 @@ func (p *parser) whole(board *Board) {
 		)
 	}
 	total := 0
-	for _, ids := range board.Records() {
+	for _, ids := range layout.Records() {
 		total += len(ids)
 	}
-	if total > MaxBoardRecords {
-		p.addf("the board names %d records; it may name at most %d", total, MaxBoardRecords)
+	if total > board.MaxBoardRecords {
+		p.addf("the board names %d records; it may name at most %d", total, board.MaxBoardRecords)
 	}
 
-	p.citations("verdict", board.Verdict, board)
-	for idx := range board.Blocks {
-		block := &board.Blocks[idx]
-		if block.Type == BlockProse {
-			p.citations(fmt.Sprintf("blocks[%d].text", idx+1), block.Text, board)
+	p.citations("verdict", layout.Verdict, layout)
+	for idx := range layout.Blocks {
+		block := &layout.Blocks[idx]
+		if block.Type == board.BlockProse {
+			p.citations(fmt.Sprintf("blocks[%d].text", idx+1), block.Text, layout)
 		}
-		if block.Type == BlockMeter && block.Of > 0 {
-			if block.Of > len(board.Blocks) || board.Blocks[block.Of-1].Type != BlockChecks {
+		if block.Type == board.BlockMeter && block.Of > 0 {
+			if block.Of > len(layout.Blocks) ||
+				layout.Blocks[block.Of-1].Type != board.BlockChecks {
 				p.addf("blocks[%d].checksBlock names block %d, which is not a checks block",
 					idx+1, block.Of)
 			}
@@ -117,29 +119,29 @@ func (p *parser) whole(board *Board) {
 	}
 }
 
-func (p *parser) citations(field, text string, board *Board) {
-	for _, segment := range Segments(text) {
+func (p *parser) citations(field, text string, layout *board.Board) {
+	for _, segment := range board.Segments(text) {
 		if segment.Cite == 0 {
 			continue
 		}
-		if segment.Cite > len(board.Blocks) {
+		if segment.Cite > len(layout.Blocks) {
 			p.addf("%s cites block %d, but the board has %d",
-				field, segment.Cite, len(board.Blocks))
+				field, segment.Cite, len(layout.Blocks))
 			continue
 		}
-		if board.Blocks[segment.Cite-1].Type.Words() {
+		if layout.Blocks[segment.Cite-1].Type.Words() {
 			p.addf("%s cites block %d, which is words, not data; cite the block that shows it",
 				field, segment.Cite)
 		}
 	}
 }
 
-func (p *parser) block(fields map[string]any, at int) Block {
+func (p *parser) block(fields map[string]any, at int) board.Block {
 	path := fmt.Sprintf("blocks[%d]", at)
-	blockType := BlockType(strings.TrimSpace(stringOf(fields["type"])))
+	blockType := board.BlockType(strings.TrimSpace(stringOf(fields["type"])))
 	if !blockType.IsValid() {
 		p.addf("%s.type must be one of %s", path, joinTypes())
-		return Block{Type: blockType}
+		return board.Block{Type: blockType}
 	}
 	allowed := slices.Concat(commonFields, blockFields[blockType])
 	for key := range fields {
@@ -148,82 +150,82 @@ func (p *parser) block(fields map[string]any, at int) Block {
 		}
 	}
 
-	titleMost := MaxBlockTitleRunes
-	if blockType == BlockNote {
-		titleMost = MaxNoteTitleRunes
+	titleMost := board.MaxBlockTitleRunes
+	if blockType == board.BlockNote {
+		titleMost = board.MaxNoteTitleRunes
 	}
-	block := Block{
+	block := board.Block{
 		Type:  blockType,
 		Title: p.words(fields, "title", path+".title", titleMost, false),
 		Half:  fields["half"] == true,
 	}
 	switch blockType {
-	case BlockFigures:
+	case board.BlockFigures:
 		block.Figures = p.figures(fields["figures"], path)
-	case BlockRecords:
-		block.Records = p.records(fields[fieldRecords], path+".records", 1, MaxListRecords)
+	case board.BlockRecords:
+		block.Records = p.records(fields[fieldRecords], path+".records", 1, board.MaxListRecords)
 		block.Measure = p.measure(fields, path, block.Records)
 		block.Order = p.order(fields, path, block.Measure)
-	case BlockCompare:
+	case board.BlockCompare:
 		block.Records = p.records(
-			fields[fieldRecords], path+".records", MinCompareRecords, MaxCompareRecords,
+			fields[fieldRecords], path+".records", board.MinCompareRecords, board.MaxCompareRecords,
 		)
 		block.Analysis = p.id(fields, fieldAnalysis, path, true)
 		block.Index = p.index(fields, "table", path)
-		block.Key = p.text(fields, "key", path+".key", MaxColumnRunes, true)
+		block.Key = p.text(fields, "key", path+".key", board.MaxColumnRunes, true)
 		block.Rows = p.compareRows(fields["rows"], path)
-	case BlockTable:
+	case board.BlockTable:
 		block.Artifact = p.id(fields, "artifact", path, false)
 		if block.Artifact.IsNil() {
 			block.Analysis = p.id(fields, fieldAnalysis, path, true)
 			block.Index = p.index(fields, "table", path)
 		}
-		block.Limit = p.limit(fields, path, MaxTableRows, DefaultTableRows)
-	case BlockChart:
+		block.Limit = p.limit(fields, path, board.MaxTableRows, board.DefaultTableRows)
+	case board.BlockChart:
 		block.Analysis = p.id(fields, fieldAnalysis, path, true)
 		block.Index = p.index(fields, "chart", path)
-	case BlockTimeline:
+	case board.BlockTimeline:
 		p.timeline(fields, path, &block)
-	case BlockChecks:
+	case board.BlockChecks:
 		block.Checks = p.checks(fields["checks"], path)
-	case BlockMeter:
+	case board.BlockMeter:
 		p.meter(fields, path, &block)
-	case BlockProse:
-		block.Text = p.words(fields, "text", path+".text", MaxProseRunes, true)
-	case BlockNote:
+	case board.BlockProse:
+		block.Text = p.words(fields, "text", path+".text", board.MaxProseRunes, true)
+	case board.BlockNote:
 		p.note(fields, path, &block)
 	}
 
 	return block
 }
 
-func (p *parser) timeline(fields map[string]any, path string, block *Block) {
+func (p *parser) timeline(fields map[string]any, path string, block *board.Block) {
 	if fields["record"] == nil {
 		p.addf("%s.record is required: the id of the record whose history to show", path)
 		return
 	}
 	block.Records = p.records([]any{fields["record"]}, path+".record", 1, 1)
-	block.Limit = p.limit(fields, path, MaxTimelineEntries, DefaultTimeline)
+	block.Limit = p.limit(fields, path, board.MaxTimelineEntries, board.DefaultTimeline)
 }
 
-func (p *parser) note(fields map[string]any, path string, block *Block) {
+func (p *parser) note(fields map[string]any, path string, block *board.Block) {
 	block.Tone = p.tone(fields, path)
-	block.Text = p.words(fields, "text", path+".text", MaxNoteTextRunes, true)
+	block.Text = p.words(fields, "text", path+".text", board.MaxNoteTextRunes, true)
 	if block.Title == "" {
 		p.addf("%s.title is required: what the note says in a line", path)
 	}
 	if _, named := fields[fieldRecords]; named {
-		block.Records = p.records(fields[fieldRecords], path+".records", 1, MaxNoteRecords)
+		block.Records = p.records(fields[fieldRecords], path+".records", 1, board.MaxNoteRecords)
 	}
 }
 
-func (p *parser) figures(raw any, path string) []FigureSource {
+func (p *parser) figures(raw any, path string) []board.FigureSource {
 	entries, isList := raw.([]any)
-	if !isList || len(entries) == 0 || len(entries) > MaxFigures {
-		p.addf("%s.figures needs 1 to %d figures", path, MaxFigures)
+	if !isList || len(entries) == 0 || len(entries) > board.MaxFigures {
+		p.addf("%s.figures needs 1 to %d figures", path, board.MaxFigures)
 		return nil
 	}
-	figures := make([]FigureSource, 0, len(entries))
+	figures := make([]board.FigureSource, 0, len(entries))
 	for idx, entry := range entries {
 		fields, isObject := entry.(map[string]any)
 		at := fmt.Sprintf("%s.figures[%d]", path, idx+1)
@@ -231,7 +233,9 @@ func (p *parser) figures(raw any, path string) []FigureSource {
 			p.addf("%s is not an object", at)
 			continue
 		}
-		figure := FigureSource{Label: p.words(fields, "label", at+".label", MaxLabelRunes, true)}
+		figure := board.FigureSource{
+			Label: p.words(fields, "label", at+".label", board.MaxLabelRunes, true),
+		}
 		sources := 0
 		if metric := strings.TrimSpace(stringOf(fields["metric"])); metric != "" {
 			sources++
@@ -239,7 +243,7 @@ func (p *parser) figures(raw any, path string) []FigureSource {
 		}
 		if _, named := fields[fieldRecords]; named {
 			sources++
-			figure.Records = p.records(fields[fieldRecords], at+".records", 1, MaxListRecords)
+			figure.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxListRecords)
 			figure.Measure = p.measure(fields, at, figure.Records)
 			figure.Aggregate = p.aggregate(fields, at, figure.Measure)
 		}
@@ -260,13 +264,13 @@ func (p *parser) figures(raw any, path string) []FigureSource {
 	return figures
 }
 
-func (p *parser) checks(raw any, path string) []Check {
+func (p *parser) checks(raw any, path string) []board.Check {
 	entries, isList := raw.([]any)
-	if !isList || len(entries) == 0 || len(entries) > MaxChecks {
-		p.addf("%s.checks needs 1 to %d checks", path, MaxChecks)
+	if !isList || len(entries) == 0 || len(entries) > board.MaxChecks {
+		p.addf("%s.checks needs 1 to %d checks", path, board.MaxChecks)
 		return nil
 	}
-	checks := make([]Check, 0, len(entries))
+	checks := make([]board.Check, 0, len(entries))
 	for idx, entry := range entries {
 		fields, isObject := entry.(map[string]any)
 		at := fmt.Sprintf("%s.checks[%d]", path, idx+1)
@@ -274,10 +278,10 @@ func (p *parser) checks(raw any, path string) []Check {
 			p.addf("%s is not an object", at)
 			continue
 		}
-		check := Check{
-			Title:  p.words(fields, "title", at+".title", MaxCheckTitleRunes, true),
+		check := board.Check{
+			Title:  p.words(fields, "title", at+".title", board.MaxCheckTitleRunes, true),
 			Tone:   p.tone(fields, at),
-			Detail: p.words(fields, "detail", at+".detail", MaxCheckDetailRunes, false),
+			Detail: p.words(fields, "detail", at+".detail", board.MaxCheckDetailRunes, false),
 		}
 		_, named := fields[fieldRecords]
 		metric := strings.TrimSpace(stringOf(fields["metric"]))
@@ -285,7 +289,7 @@ func (p *parser) checks(raw any, path string) []Check {
 		case named && metric != "":
 			p.addf("%s counts records or a metric, not both", at)
 		case named:
-			check.Records = p.records(fields[fieldRecords], at+".records", 1, MaxCheckRecords)
+			check.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxCheckRecords)
 		case metric != "":
 			check.Metric = p.metric(metric, at)
 		default:
@@ -297,13 +301,13 @@ func (p *parser) checks(raw any, path string) []Check {
 	return checks
 }
 
-func (p *parser) compareRows(raw any, path string) []CompareRow {
+func (p *parser) compareRows(raw any, path string) []board.CompareRow {
 	entries, isList := raw.([]any)
-	if !isList || len(entries) == 0 || len(entries) > MaxCompareRows {
-		p.addf("%s.rows needs 1 to %d rows", path, MaxCompareRows)
+	if !isList || len(entries) == 0 || len(entries) > board.MaxCompareRows {
+		p.addf("%s.rows needs 1 to %d rows", path, board.MaxCompareRows)
 		return nil
 	}
-	rows := make([]CompareRow, 0, len(entries))
+	rows := make([]board.CompareRow, 0, len(entries))
 	for idx, entry := range entries {
 		fields, isObject := entry.(map[string]any)
 		at := fmt.Sprintf("%s.rows[%d]", path, idx+1)
@@ -311,12 +315,12 @@ func (p *parser) compareRows(raw any, path string) []CompareRow {
 			p.addf("%s is not an object", at)
 			continue
 		}
-		row := CompareRow{
-			Column: p.text(fields, "column", at+".column", MaxColumnRunes, true),
-			Label:  p.words(fields, "label", at+".label", MaxLabelRunes, false),
+		row := board.CompareRow{
+			Column: p.text(fields, "column", at+".column", board.MaxColumnRunes, true),
+			Label:  p.words(fields, "label", at+".label", board.MaxLabelRunes, false),
 		}
-		switch better := Better(strings.TrimSpace(stringOf(fields["better"]))); better {
-		case "", BetterHigher, BetterLower:
+		switch better := board.Better(strings.TrimSpace(stringOf(fields["better"]))); better {
+		case "", board.BetterHigher, board.BetterLower:
 			row.Better = better
 		default:
 			p.addf("%s.better is higher or lower", at)
@@ -327,7 +331,7 @@ func (p *parser) compareRows(raw any, path string) []CompareRow {
 	return rows
 }
 
-func (p *parser) meter(fields map[string]any, path string, block *Block) {
+func (p *parser) meter(fields map[string]any, path string, block *board.Block) {
 	_, ofChecks := fields[fieldChecksBlock]
 	metric := strings.TrimSpace(stringOf(fields["metric"]))
 	switch {
@@ -345,7 +349,8 @@ func (p *parser) meter(fields map[string]any, path string, block *Block) {
 		block.Of = position
 	case metric != "":
 		block.Metric = p.metric(metric, path)
-		if kind, _ := MetricKind(block.Metric); block.Metric != "" && kind != ValuePercent {
+		if kind, _ := board.MetricKind(block.Metric); block.Metric != "" &&
+			kind != board.ValuePercent {
 			p.addf("%s.metric must be a percentage to draw as a meter", path)
 		}
 	default:
@@ -354,7 +359,7 @@ func (p *parser) meter(fields map[string]any, path string, block *Block) {
 	}
 }
 
-func (p *parser) records(raw any, path string, least, most int) *RecordSet {
+func (p *parser) records(raw any, path string, least, most int) *board.RecordSet {
 	entries, isList := raw.([]any)
 	if !isList || len(entries) < least || len(entries) > most {
 		if least == most {
@@ -364,7 +369,7 @@ func (p *parser) records(raw any, path string, least, most int) *RecordSet {
 		}
 		return nil
 	}
-	set := &RecordSet{IDs: make([]pulid.ID, 0, len(entries))}
+	set := &board.RecordSet{IDs: make([]pulid.ID, 0, len(entries))}
 	for _, entry := range entries {
 		id, err := pulid.Parse(strings.TrimSpace(stringOf(entry)))
 		if err != nil || id.IsNil() {
@@ -391,13 +396,13 @@ func (p *parser) records(raw any, path string, least, most int) *RecordSet {
 	return set
 }
 
-func (p *parser) measure(fields map[string]any, path string, set *RecordSet) Measure {
-	measure := Measure(strings.TrimSpace(stringOf(fields["measure"])))
+func (p *parser) measure(fields map[string]any, path string, set *board.RecordSet) board.Measure {
+	measure := board.Measure(strings.TrimSpace(stringOf(fields["measure"])))
 	if measure == "" || set == nil {
 		return measure
 	}
 	if !measure.Of(set.Resource) {
-		measures := MeasuresOf(set.Resource)
+		measures := board.MeasuresOf(set.Resource)
 		if len(measures) == 0 {
 			p.addf("%s.measure: a %s has no measure", path, set.Resource)
 		} else {
@@ -409,35 +414,39 @@ func (p *parser) measure(fields map[string]any, path string, set *RecordSet) Mea
 	return measure
 }
 
-func (p *parser) order(fields map[string]any, path string, measure Measure) Order {
-	switch order := Order(strings.TrimSpace(stringOf(fields["order"]))); order {
+func (p *parser) order(fields map[string]any, path string, measure board.Measure) board.Order {
+	switch order := board.Order(strings.TrimSpace(stringOf(fields["order"]))); order {
 	case "":
 		if measure != "" {
-			return OrderMeasure
+			return board.OrderMeasure
 		}
-		return OrderGiven
-	case OrderGiven:
+		return board.OrderGiven
+	case board.OrderGiven:
 		return order
-	case OrderMeasure:
+	case board.OrderMeasure:
 		if measure == "" {
 			p.addf("%s.order measure needs a measure", path)
 		}
 		return order
 	default:
 		p.addf("%s.order is given or measure", path)
-		return OrderGiven
+		return board.OrderGiven
 	}
 }
 
-func (p *parser) aggregate(fields map[string]any, path string, measure Measure) Aggregate {
-	aggregate := Aggregate(strings.TrimSpace(stringOf(fields["aggregate"])))
+func (p *parser) aggregate(
+	fields map[string]any,
+	path string,
+	measure board.Measure,
+) board.Aggregate {
+	aggregate := board.Aggregate(strings.TrimSpace(stringOf(fields["aggregate"])))
 	switch {
 	case aggregate == "":
-		return AggregateCount
-	case !slices.Contains(AllAggregates(), aggregate):
+		return board.AggregateCount
+	case !slices.Contains(board.AllAggregates(), aggregate):
 		p.addf("%s.aggregate is count, sum or max", path)
-		return AggregateCount
-	case aggregate != AggregateCount && measure == "":
+		return board.AggregateCount
+	case aggregate != board.AggregateCount && measure == "":
 		p.addf("%s.aggregate %s needs a measure to add up", path, aggregate)
 	}
 
@@ -445,19 +454,19 @@ func (p *parser) aggregate(fields map[string]any, path string, measure Measure) 
 }
 
 func (p *parser) metric(key, path string) string {
-	if _, ok := MetricKind(key); !ok {
-		p.addf("%s.metric %q is not one of %s", path, key, strings.Join(MetricKeys(), ", "))
+	if _, ok := board.MetricKind(key); !ok {
+		p.addf("%s.metric %q is not one of %s", path, key, strings.Join(board.MetricKeys(), ", "))
 		return ""
 	}
 
 	return key
 }
 
-func (p *parser) tone(fields map[string]any, path string) Tone {
-	tone := Tone(strings.TrimSpace(stringOf(fields["tone"])))
+func (p *parser) tone(fields map[string]any, path string) board.Tone {
+	tone := board.Tone(strings.TrimSpace(stringOf(fields["tone"])))
 	if !tone.IsValid() {
 		p.addf("%s.tone is bad, warn, info or ok", path)
-		return ToneInfo
+		return board.ToneInfo
 	}
 
 	return tone
@@ -513,7 +522,7 @@ var emphasis = strings.NewReplacer("**", "", "__", "", "`", "")
 
 func (p *parser) words(fields map[string]any, key, path string, most int, required bool) string {
 	text := p.limited(fields, key, path, most, required, emphasis.Replace)
-	if figures := Figures(PlainText(text)); len(figures) > 0 {
+	if figures := board.Figures(board.PlainText(text)); len(figures) > 0 {
 		p.addf("%s states %s; the board reads every figure live from its blocks, so take it "+
 			"out of the words. Where the board should show it, add a block that reads it "+
 			"(records or checks for the loads it counts, figures for a metric) and cite that "+
@@ -571,7 +580,7 @@ func resourceOf(id pulid.ID) (permission.Resource, bool) {
 		return "", false
 	}
 	resource, known := permission.ResourceOfIDPrefix(text[:cut+1])
-	if !known || !Supports(resource) {
+	if !known || !board.Supports(resource) {
 		return "", false
 	}
 
@@ -601,8 +610,8 @@ func stringOf(value any) string {
 }
 
 func joinTypes() string {
-	names := make([]string, 0, len(AllBlockTypes()))
-	for _, blockType := range AllBlockTypes() {
+	names := make([]string, 0, len(board.AllBlockTypes()))
+	for _, blockType := range board.AllBlockTypes() {
 		names = append(names, string(blockType))
 	}
 
@@ -610,15 +619,15 @@ func joinTypes() string {
 }
 
 func joinResources() string {
-	names := make([]string, 0, len(Resources()))
-	for _, resource := range Resources() {
+	names := make([]string, 0, len(board.Resources()))
+	for _, resource := range board.Resources() {
 		names = append(names, resource.Noun())
 	}
 
 	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
 }
 
-func joinMeasures(measures []Measure) string {
+func joinMeasures(measures []board.Measure) string {
 	names := make([]string, 0, len(measures))
 	for _, measure := range measures {
 		names = append(names, string(measure))
@@ -626,3 +635,5 @@ func joinMeasures(measures []Measure) string {
 
 	return strings.Join(names, ", ")
 }
+
+const maxFiguresNamed = 4

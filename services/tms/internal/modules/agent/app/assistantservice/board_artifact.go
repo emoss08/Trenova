@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -80,7 +81,7 @@ func (r *artifactRecorder) showBoard(
 	}
 
 	shown := shownArtifact(saved)
-	shown.Brief = filled.Markdown(board.MarkdownMeta{
+	shown.Brief = boardmarkdown.Markdown(filled, boardmarkdown.MarkdownMeta{
 		Author:     author,
 		AnsweredAt: saved.CreatedAt,
 		Location:   boards.Location(r.ctx, r.tenant),

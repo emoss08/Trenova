@@ -952,6 +952,10 @@ modules:
       - aituneup
       - aiusage
       - assistantartifact
+      - board
+      - boardassemble
+      - boardmarkdown
+      - boardparse
       - briefing
       - conversation
       - conversationschedule

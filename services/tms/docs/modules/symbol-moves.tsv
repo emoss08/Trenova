@@ -17235,3 +17235,13 @@ github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreWei
 github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreWeightDocument	github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability.ScoreWeightDocument
 github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreWeightNotice	github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability.ScoreWeightNotice
 github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreWeightUnedited	github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability.ScoreWeightUnedited
+github.com/emoss08/trenova/internal/modules/agent/domain/board.Parse	github.com/emoss08/trenova/internal/modules/agent/domain/boardparse.Parse
+github.com/emoss08/trenova/internal/modules/agent/domain/board.AnalysisRead	github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble.AnalysisRead
+github.com/emoss08/trenova/internal/modules/agent/domain/board.Assemble	github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble.Assemble
+github.com/emoss08/trenova/internal/modules/agent/domain/board.Reads	github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble.Reads
+github.com/emoss08/trenova/internal/modules/agent/domain/board.Summary	github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble.Summary
+github.com/emoss08/trenova/internal/modules/agent/domain/board.TableRead	github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble.TableRead
+github.com/emoss08/trenova/internal/modules/agent/domain/board.EventSentence	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.EventSentence
+github.com/emoss08/trenova/internal/modules/agent/domain/board.Markdown	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.Markdown
+github.com/emoss08/trenova/internal/modules/agent/domain/board.MarkdownMeta	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.MarkdownMeta
+github.com/emoss08/trenova/internal/modules/agent/domain/board.NoteLabel	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.NoteLabel

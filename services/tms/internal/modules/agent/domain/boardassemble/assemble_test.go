@@ -1,4 +1,4 @@
-package board_test
+package boardassemble_test
 
 import (
 	"strings"
@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -33,21 +36,21 @@ func lateness(seconds int64, state board.MeasureState) board.RowMeasure {
 type fixture struct {
 	shipments []pulid.ID
 	board     *board.Board
-	reads     *board.Reads
+	reads     *boardassemble.Reads
 }
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
 
 	args := lateBoard()
-	parsed, problems := board.Parse(args)
+	parsed, problems := boardparse.Parse(args)
 	require.Empty(t, problems)
 	shipments := parsed.Blocks[1].Records.IDs
 
-	summaries := map[pulid.ID]board.Summary{}
+	summaries := map[pulid.ID]boardassemble.Summary{}
 	behind := []int64{6000, 3300, 0, 0}
 	for idx, id := range shipments[:4] {
-		summaries[id] = board.Summary{
+		summaries[id] = boardassemble.Summary{
 			Label:    "S2610-04" + string(rune('1'+idx)),
 			Subtitle: "Dallas, TX → Memphis, TN",
 			Status:   "InTransit",
@@ -60,10 +63,10 @@ func newFixture(t *testing.T) *fixture {
 	return &fixture{
 		shipments: shipments,
 		board:     parsed,
-		reads: &board.Reads{
+		reads: &boardassemble.Reads{
 			Now:      now,
 			Readable: map[permission.Resource]bool{permission.ResourceShipment: true},
-			Summaries: map[permission.Resource]map[pulid.ID]board.Summary{
+			Summaries: map[permission.Resource]map[pulid.ID]boardassemble.Summary{
 				permission.ResourceShipment: summaries,
 			},
 			Metrics: map[string]*board.Value{
@@ -83,7 +86,7 @@ func TestAssembleFillsEachBlockFromWhatTheViewerMayRead(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	filled := board.Assemble(f.board, f.reads)
+	filled := boardassemble.Assemble(f.board, f.reads)
 
 	figures := filled.Blocks[0]
 	assert.Equal(t, board.StateReady, figures.State)
@@ -108,7 +111,7 @@ func TestAssembleFillsEachBlockFromWhatTheViewerMayRead(t *testing.T) {
 	timeline := filled.Blocks[2]
 	assert.Equal(t, board.StateReady, timeline.State)
 	require.Len(t, timeline.Events, 2)
-	assert.Equal(t, "Driver out of hours", board.EventSentence(&timeline.Events[1]))
+	assert.Equal(t, "Driver out of hours", boardmarkdown.EventSentence(&timeline.Events[1]))
 
 	assert.Equal(t, []int{1, 2, 3, 0}, []int{
 		filled.Blocks[0].Numeral, filled.Blocks[1].Numeral,
@@ -130,7 +133,7 @@ func TestAssembleDrawsABlockWhoseSourceCannotBeRead(t *testing.T) {
 	f.reads.Readable[permission.ResourceShipment] = false
 	delete(f.reads.Metrics, "activeShipments")
 
-	filled := board.Assemble(f.board, f.reads)
+	filled := boardassemble.Assemble(f.board, f.reads)
 
 	assert.Equal(t, board.StateUnreadable, filled.Blocks[0].State)
 	assert.Equal(t, board.StateUnreadable, filled.Blocks[1].State)
@@ -144,13 +147,13 @@ func TestAssembleMarksAFigureThatMovedSinceTheAnswer(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	answered := board.Assemble(f.board, f.reads)
+	answered := boardassemble.Assemble(f.board, f.reads)
 	snapshot := answered.Snapshot()
 
 	summary := f.reads.Summaries[permission.ResourceShipment][f.shipments[1]]
 	summary.Measures[board.MeasureLateness] = lateness(0, board.MeasureDelivered)
 	f.reads.Summaries[permission.ResourceShipment][f.shipments[1]] = summary
-	now := board.Assemble(f.board, f.reads)
+	now := boardassemble.Assemble(f.board, f.reads)
 	now.Compare(&snapshot)
 
 	assert.Equal(t, "1", board.FormatValue(now.Blocks[0].Figures[0].Value))
@@ -164,7 +167,7 @@ func TestAssembleComparesRecordsFromAnAnalysisTable(t *testing.T) {
 
 	carriers := []pulid.ID{pulid.MustNew("car_"), pulid.MustNew("car_"), pulid.MustNew("car_")}
 	analysisID := pulid.MustNew("art_")
-	parsed, problems := board.Parse(map[string]any{
+	parsed, problems := boardparse.Parse(map[string]any{
 		"title":   "Carriers head to head",
 		"verdict": "Blue Line wins [most rows][1].",
 		"blocks": []any{map[string]any{
@@ -174,7 +177,11 @@ func TestAssembleComparesRecordsFromAnAnalysisTable(t *testing.T) {
 			"table":    1.0,
 			"key":      "carrier_id",
 			"rows": []any{
-				map[string]any{"column": "on_time", "label": "On-time delivery", "better": "higher"},
+				map[string]any{
+					"column": "on_time",
+					"label":  "On-time delivery",
+					"better": "higher",
+				},
 				map[string]any{"column": "cpm", "label": "Cost per mile", "better": "lower"},
 				map[string]any{"column": "claims", "better": "lower"},
 			},
@@ -182,17 +189,17 @@ func TestAssembleComparesRecordsFromAnAnalysisTable(t *testing.T) {
 	})
 	require.Empty(t, problems)
 
-	summaries := map[pulid.ID]board.Summary{
+	summaries := map[pulid.ID]boardassemble.Summary{
 		carriers[0]: {Label: "Acme Freight", Status: "Active"},
 		carriers[1]: {Label: "Blue Line", Status: "Active"},
 	}
-	reads := &board.Reads{
+	reads := &boardassemble.Reads{
 		Now:      now,
 		Readable: map[permission.Resource]bool{permission.ResourceCarrier: true},
-		Summaries: map[permission.Resource]map[pulid.ID]board.Summary{
+		Summaries: map[permission.Resource]map[pulid.ID]boardassemble.Summary{
 			permission.ResourceCarrier: summaries,
 		},
-		Analyses: map[pulid.ID]*board.AnalysisRead{analysisID: {
+		Analyses: map[pulid.ID]*boardassemble.AnalysisRead{analysisID: {
 			Title: "Carrier scorecard",
 			Display: analysis.Display{Tables: []analysis.Table{{
 				Columns: []analysis.TableColumn{
@@ -210,7 +217,7 @@ func TestAssembleComparesRecordsFromAnAnalysisTable(t *testing.T) {
 		}},
 	}
 
-	filled := board.Assemble(parsed, reads)
+	filled := boardassemble.Assemble(parsed, reads)
 	compare := filled.Blocks[0].Compare
 	require.NotNil(t, compare)
 
@@ -231,7 +238,7 @@ func TestAssembleCountsChecksAndDrawsTheirMeter(t *testing.T) {
 
 	entries := ids("je_", 3)
 	invoices := ids("inv_", 4)
-	parsed, problems := board.Parse(map[string]any{
+	parsed, problems := boardparse.Parse(map[string]any{
 		"title":   "October close",
 		"verdict": "Two things hold [October open][1].",
 		"blocks": []any{
@@ -245,24 +252,27 @@ func TestAssembleCountsChecksAndDrawsTheirMeter(t *testing.T) {
 	})
 	require.Empty(t, problems)
 
-	readableEntries := map[pulid.ID]board.Summary{}
+	readableEntries := map[pulid.ID]boardassemble.Summary{}
 	for _, raw := range entries[:2] {
 		id, _ := pulid.Parse(raw.(string))
-		readableEntries[id] = board.Summary{Label: "JE-" + id.String()[3:7], Status: "Pending"}
+		readableEntries[id] = boardassemble.Summary{
+			Label:  "JE-" + id.String()[3:7],
+			Status: "Pending",
+		}
 	}
-	reads := &board.Reads{
+	reads := &boardassemble.Reads{
 		Now: now,
 		Readable: map[permission.Resource]bool{
 			permission.ResourceJournalEntry: true,
 			permission.ResourceInvoice:      false,
 		},
-		Summaries: map[permission.Resource]map[pulid.ID]board.Summary{
+		Summaries: map[permission.Resource]map[pulid.ID]boardassemble.Summary{
 			permission.ResourceJournalEntry: readableEntries,
 		},
 		Metrics: map[string]*board.Value{},
 	}
 
-	filled := board.Assemble(parsed, reads)
+	filled := boardassemble.Assemble(parsed, reads)
 	checks := filled.Blocks[0].Checks
 
 	assert.Equal(t, "2", board.FormatValue(checks[0].Count))
@@ -284,7 +294,7 @@ func TestMarkdownWritesTheBoardAsItIsReadNow(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	answered := board.Assemble(f.board, f.reads)
+	answered := boardassemble.Assemble(f.board, f.reads)
 	snapshot := answered.Snapshot()
 	summary := f.reads.Summaries[permission.ResourceShipment][f.shipments[1]]
 	summary.Measures[board.MeasureLateness] = lateness(0, board.MeasureDelivered)
@@ -295,10 +305,10 @@ func TestMarkdownWritesTheBoardAsItIsReadNow(t *testing.T) {
 		projected
 	f.reads.Summaries[permission.ResourceShipment][f.shipments[3]].Measures[board.MeasureLateness] =
 		lateness(0, board.MeasureDue)
-	filled := board.Assemble(f.board, f.reads)
+	filled := boardassemble.Assemble(f.board, f.reads)
 	filled.Compare(&snapshot)
 
-	markdown := filled.Markdown(board.MarkdownMeta{
+	markdown := boardmarkdown.Markdown(filled, boardmarkdown.MarkdownMeta{
 		Question:   "Why are these 6 shipments late?",
 		Author:     "Dispatch Desk",
 		AnsweredAt: now - 600,

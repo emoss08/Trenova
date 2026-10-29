@@ -652,11 +652,11 @@ A `board` is an answer the agent laid out with `show_board`: a title, a verdict,
 blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note; two notes
 at most). The agent writes only words; every value is read by the server.
 
-- **The layout is a JSON spec, validated in Go** (`domain/board`, `board.Parse`): blocks name
+- **The layout is a JSON spec, validated in Go** (`domain/board`, `boardparse.Parse`): blocks name
   records by ID, Home metrics by their key (`board.MetricKeys`, from the Home layout), an
   analysis's table or chart by its artifact and index, a table view, or one record's history.
   Limits: 25 records a list, 120 a board, 12 checks; every text field's limit is its schema's
-  `maxLength`, so the model writes within it the first time. Words are plain: `board.Parse`
+  `maxLength`, so the model writes within it the first time. Words are plain: `boardparse.Parse`
   drops markdown emphasis (`**`, `__`, backticks), since the board draws text as text, and
   refuses a figure written into the words (`board.Figures`: a duration, an amount, a percentage
   or a count; record numbers, times of day and dates pass), since every figure is read live

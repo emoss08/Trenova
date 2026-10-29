@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -60,7 +62,7 @@ func (f *fakeSummaries) Summaries(
 		for _, id := range ids {
 			if summary, ok := f.asked[resource][id]; ok {
 				if out[resource] == nil {
-					out[resource] = map[pulid.ID]board.Summary{}
+					out[resource] = map[pulid.ID]boardassemble.Summary{}
 				}
 				out[resource][id] = summary
 			}
@@ -213,7 +215,7 @@ func (f *fixture) request(shown *board.Board) *assistantports.BoardFillRequest {
 
 func parsed(t *testing.T, args map[string]any) *board.Board {
 	t.Helper()
-	shown, problems := board.Parse(args)
+	shown, problems := boardparse.Parse(args)
 	require.Empty(t, problems)
 
 	return shown
@@ -236,7 +238,7 @@ func TestFillReadsOnlyTheRecordsTheReaderMayRead(t *testing.T) {
 
 	f := newFixture()
 	shipment, invoice := pulid.MustNew("shp_"), pulid.MustNew("inv_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412", Status: "InTransit"},
 	}
 	shown := parsed(t, map[string]any{
@@ -313,7 +315,7 @@ func TestFillReadsARecordsHistoryOldestFirst(t *testing.T) {
 	f := newFixture()
 	f.permissions.allowed[permission.ResourceAuditLog] = true
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412"},
 	}
 	f.activity.entries = []*audit.Entry{
@@ -351,7 +353,7 @@ func TestFillDrawsTheTimelineUnreadableWithoutTheAuditLog(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412"},
 	}
 	shown := parsed(t, map[string]any{
@@ -490,7 +492,7 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412", Measures: map[board.Measure]board.RowMeasure{
 			board.MeasureLateness: {
 				Measure: board.MeasureLateness,

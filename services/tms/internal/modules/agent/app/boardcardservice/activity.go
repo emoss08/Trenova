@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -17,7 +18,7 @@ import (
 func (s *Service) readEvents(
 	ctx context.Context,
 	req *assistantports.BoardFillRequest,
-	reads *board.Reads,
+	reads *boardassemble.Reads,
 ) error {
 	audits := false
 	checked := false

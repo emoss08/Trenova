@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -79,7 +80,7 @@ func boardRecorder(
 
 func shownBoard(t *testing.T, revises pulid.ID) agentruntimeports.ToolObservation {
 	t.Helper()
-	parsed, problems := board.Parse(map[string]any{
+	parsed, problems := boardparse.Parse(map[string]any{
 		"title":   "Six late shipments",
 		"verdict": "Four are [held][1].",
 		"blocks": []any{map[string]any{"type": "figures", "figures": []any{map[string]any{

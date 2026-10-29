@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
@@ -215,7 +216,7 @@ func (r *Repository) read(
 	resource permission.Resource,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	if resource == permission.ResourceShipment {
 		return r.shipments(ctx, ids, now)
 	}
@@ -227,15 +228,15 @@ func (r *Repository) read(
 	}
 	query, ok := plain[resource]
 	if !ok {
-		return map[pulid.ID]board.Summary{}, nil
+		return map[pulid.ID]boardassemble.Summary{}, nil
 	}
 	rows, err := keel.Into[summaryRow](ctx, r.db.Keel(ctx), query(ids))
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,
@@ -249,7 +250,7 @@ func (r *Repository) shipments(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[shipmentRow](ctx, r.db.Keel(ctx), shipmentsQuery(ids))
 	if err != nil {
 		return nil, err
@@ -263,7 +264,7 @@ func (r *Repository) shipments(
 		byShipment[stop.ShipmentID] = append(byShipment[stop.ShipmentID], stop)
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		route := byShipment[row.ID]
 		slices.SortFunc(route, func(a, b stopRow) int {
@@ -282,7 +283,7 @@ func (r *Repository) shipments(
 		if late, ok := lateness(route, now); ok {
 			measures[board.MeasureLateness] = late
 		}
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: lane(route),
 			Status:   row.Status,
@@ -400,13 +401,13 @@ func (r *Repository) invoices(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[invoiceRow](ctx, r.db.Keel(ctx), invoicesQuery(ids))
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		due := board.RowMeasure{
 			Measure: board.MeasureAmountDue,
@@ -436,7 +437,7 @@ func (r *Repository) invoices(
 				At:      row.InvoiceDate,
 			}
 		}
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,
@@ -451,13 +452,13 @@ func (r *Repository) entries(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[entryRow](ctx, r.db.Keel(ctx), entriesQuery(ids))
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		pending := board.RowMeasure{
 			Measure: board.MeasurePendingFor,
@@ -477,7 +478,7 @@ func (r *Repository) entries(
 			Value:   money(row.Debit, ""),
 		}
 		measures[board.MeasurePendingFor] = pending
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,

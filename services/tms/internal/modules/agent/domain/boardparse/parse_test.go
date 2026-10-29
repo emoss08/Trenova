@@ -1,10 +1,11 @@
-package board_test
+package boardparse_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,11 @@ func lateBoard() map[string]any {
 				"type":  "figures",
 				"title": "Where they stand",
 				"figures": []any{
-					map[string]any{"label": "Late now", "records": shipments, "measure": "lateness"},
+					map[string]any{
+						"label":   "Late now",
+						"records": shipments,
+						"measure": "lateness",
+					},
 					map[string]any{
 						"label":     "Furthest behind",
 						"records":   shipments,
@@ -62,7 +67,7 @@ func lateBoard() map[string]any {
 func TestParseReadsABoardOfEveryKindOfSource(t *testing.T) {
 	t.Parallel()
 
-	parsed, problems := board.Parse(lateBoard())
+	parsed, problems := boardparse.Parse(lateBoard())
 
 	require.Empty(t, problems)
 	assert.Equal(t, "Six late shipments on the Dallas lanes", parsed.Title)
@@ -233,7 +238,7 @@ func TestParseRefusesWhatABoardCannotDraw(t *testing.T) {
 
 			args := lateBoard()
 			tc.mutate(args)
-			_, problems := board.Parse(args)
+			_, problems := boardparse.Parse(args)
 
 			assert.True(t, strings.Contains(strings.Join(problems, "\n"), tc.want),
 				"want %q in %v", tc.want, problems)
@@ -250,7 +255,7 @@ func TestParseCountsEachRecordOnceAcrossTheBoard(t *testing.T) {
 		blocks = append(blocks, map[string]any{"type": "records", "records": shared})
 	}
 	args := map[string]any{"title": "Invoices", "verdict": "Open.", "blocks": blocks}
-	_, problems := board.Parse(args)
+	_, problems := boardparse.Parse(args)
 	require.Empty(t, problems)
 
 	for idx := 1; idx < len(blocks); idx++ {
@@ -258,7 +263,7 @@ func TestParseCountsEachRecordOnceAcrossTheBoard(t *testing.T) {
 			"type": "records", "records": ids("inv_", board.MaxListRecords),
 		}
 	}
-	_, problems = board.Parse(args)
+	_, problems = boardparse.Parse(args)
 
 	assert.Contains(t, strings.Join(problems, "\n"), "the board names 125 records")
 }
@@ -266,7 +271,9 @@ func TestParseCountsEachRecordOnceAcrossTheBoard(t *testing.T) {
 func TestSegmentsSplitsCitationsOutOfText(t *testing.T) {
 	t.Parallel()
 
-	segments := board.Segments("Four are held behind [one driver's hours][3], two [at the dock][2].")
+	segments := board.Segments(
+		"Four are held behind [one driver's hours][3], two [at the dock][2].",
+	)
 
 	assert.Equal(t, []board.Segment{
 		{Text: "Four are held behind "},
@@ -289,7 +296,7 @@ func TestParseWritesTheWordsPlainAndHoldsANoteToItsOwnLimits(t *testing.T) {
 	note["title"] = strings.Repeat("a", board.MaxNoteTitleRunes)
 	note["text"] = "Call `S2610-041` first."
 
-	parsed, problems := board.Parse(args)
+	parsed, problems := boardparse.Parse(args)
 
 	require.Empty(t, problems)
 	assert.Equal(t, "Four of the six are held behind [one driver's hours][3].", parsed.Verdict)
@@ -297,12 +304,12 @@ func TestParseWritesTheWordsPlainAndHoldsANoteToItsOwnLimits(t *testing.T) {
 	assert.Equal(t, "Call S2610-041 first.", parsed.Blocks[3].Text)
 
 	note["title"] = strings.Repeat("a", board.MaxNoteTitleRunes+1)
-	_, problems = board.Parse(args)
+	_, problems = boardparse.Parse(args)
 	assert.Equal(t, []string{"blocks[4].title is longer than 80 characters"}, problems)
 
 	blocks[0].(map[string]any)["title"] = strings.Repeat("a", board.MaxBlockTitleRunes+1)
 	note["title"] = "Re-tender the two furthest behind"
-	_, problems = board.Parse(args)
+	_, problems = boardparse.Parse(args)
 	assert.Equal(t, []string{"blocks[1].title is longer than 60 characters"}, problems)
 }
 
@@ -335,13 +342,13 @@ func TestParseTakesUpToEightFiguresInABlock(t *testing.T) {
 		}
 	}
 
-	parsed, problems := board.Parse(figuresBoard(5))
+	parsed, problems := boardparse.Parse(figuresBoard(5))
 	require.Empty(t, problems)
 	assert.Len(t, parsed.Blocks[0].Figures, 5)
 
-	_, problems = board.Parse(figuresBoard(board.MaxFigures))
+	_, problems = boardparse.Parse(figuresBoard(board.MaxFigures))
 	assert.Empty(t, problems)
 
-	_, problems = board.Parse(figuresBoard(board.MaxFigures + 1))
+	_, problems = boardparse.Parse(figuresBoard(board.MaxFigures + 1))
 	assert.Contains(t, strings.Join(problems, "\n"), "blocks[1].figures needs 1 to 8 figures")
 }
