@@ -447,8 +447,8 @@ func (s *Service) refreshDueSubjects(
 ) ([]string, error) {
 	confirmed := make([]string, 0, len(subjects))
 	for _, subject := range subjects {
-		if ctx.Err() != nil {
-			break
+		if err := ctx.Err(); err != nil {
+			return nil, err
 		}
 		fetched, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
 			TenantInfo:    run.tenant,

@@ -400,6 +400,28 @@ func New(p Params) *Service {
 	}
 }
 
+func validatePreview(
+	policy *detentionpolicy.DetentionPolicy,
+	scenario *PreviewScenario,
+) error {
+	if policy == nil {
+		return errortypes.NewValidationError(
+			"policy", errortypes.ErrRequired, "A policy is required to preview")
+	}
+
+	multiErr := errortypes.NewMultiError()
+	policy.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	if scenario.ArrivedAt <= 0 {
+		return errortypes.NewValidationError(
+			"scenario.arrivedAt", errortypes.ErrRequired, "An arrival time is required")
+	}
+	return nil
+}
+
 // PreviewPolicy runs the real engine against a hypothetical stop.
 //
 // The preview deliberately reuses the production calculator rather than
@@ -411,20 +433,8 @@ func (s *Service) PreviewPolicy(
 	scenario *PreviewScenario,
 	tenantInfo pagination.TenantInfo,
 ) (*PreviewResult, error) {
-	if policy == nil {
-		return nil, errortypes.NewValidationError(
-			"policy", errortypes.ErrRequired, "A policy is required to preview")
-	}
-
-	multiErr := errortypes.NewMultiError()
-	policy.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	if scenario.ArrivedAt <= 0 {
-		return nil, errortypes.NewValidationError(
-			"scenario.arrivedAt", errortypes.ErrRequired, "An arrival time is required")
+	if err := validatePreview(policy, scenario); err != nil {
+		return nil, err
 	}
 
 	stopType := scenario.StopType

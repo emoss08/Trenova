@@ -82,18 +82,8 @@ func (s *Service) CreateReferenceRecord(
 	if err != nil {
 		return nil, err
 	}
-	if !row.ProviderKind.Creatable() {
-		return nil, errortypes.NewBusinessError(
-			"{0} records are kept by the bookkeeper and are not created from Trenova",
-			string(row.ProviderKind),
-		)
-	}
-	if row.State == accountingmapping.MappingStateConfirmed {
-		return nil, errortypes.NewBusinessError(
-			"{0} is already mapped to {1}; clear it first to create a new record",
-			row.TargetLabel,
-			row.ExternalName,
-		)
+	if err = ensureCreatable(row); err != nil {
+		return nil, err
 	}
 
 	session, err := s.sessions.Session(ctx, req.TenantInfo, row.ConnectionID)
@@ -177,6 +167,23 @@ func (s *Service) CreateReferenceRecord(
 	)
 	s.kit.RequeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
+}
+
+func ensureCreatable(row *accountingmapping.AccountingMapping) error {
+	if !row.ProviderKind.Creatable() {
+		return errortypes.NewBusinessError(
+			"{0} records are kept by the bookkeeper and are not created from Trenova",
+			string(row.ProviderKind),
+		)
+	}
+	if row.State == accountingmapping.MappingStateConfirmed {
+		return errortypes.NewBusinessError(
+			"{0} is already mapped to {1}; clear it first to create a new record",
+			row.TargetLabel,
+			row.ExternalName,
+		)
+	}
+	return nil
 }
 
 func (s *Service) confirmCreated(

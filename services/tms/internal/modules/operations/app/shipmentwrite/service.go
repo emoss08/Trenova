@@ -451,31 +451,9 @@ func (s *Service) Update(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	original, err := s.repo.GetByID(
-		ctx,
-		&shipmentports.GetShipmentByIDRequest{
-			ID: entity.GetID(),
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.GetOrganizationID(),
-				BuID:  entity.GetBusinessUnitID(),
-			},
-			ShipmentOptions: shipmentports.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		},
-	)
+	original, err := s.originalForUpdate(ctx, entity, log)
 	if err != nil {
-		s.l.Error("failed to get original shipment", zap.Error(err))
 		return nil, err
-	}
-
-	if multiErr := shipmenteffects.ValidateShipmentNotLockedForBilling(original); multiErr != nil {
-		log.Warn(
-			"shipment update blocked — locked for billing",
-			zap.String("shipmentId", original.ID.String()),
-			zap.String("billingTransferStatus", string(original.BillingTransferStatus)),
-		)
-		return nil, multiErr
 	}
 
 	control, err := s.effects.GetShipmentControl(ctx, pagination.TenantInfo{
@@ -553,6 +531,40 @@ func (s *Service) Update(
 		advisories: advisories,
 		log:        log,
 	})
+}
+
+func (s *Service) originalForUpdate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	log *zap.Logger,
+) (*shipment.Shipment, error) {
+	original, err := s.repo.GetByID(
+		ctx,
+		&shipmentports.GetShipmentByIDRequest{
+			ID: entity.GetID(),
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.GetOrganizationID(),
+				BuID:  entity.GetBusinessUnitID(),
+			},
+			ShipmentOptions: shipmentports.ShipmentOptions{
+				ExpandShipmentDetails: true,
+			},
+		},
+	)
+	if err != nil {
+		s.l.Error("failed to get original shipment", zap.Error(err))
+		return nil, err
+	}
+
+	if multiErr := shipmenteffects.ValidateShipmentNotLockedForBilling(original); multiErr != nil {
+		log.Warn(
+			"shipment update blocked — locked for billing",
+			zap.String("shipmentId", original.ID.String()),
+			zap.String("billingTransferStatus", string(original.BillingTransferStatus)),
+		)
+		return nil, multiErr
+	}
+	return original, nil
 }
 
 func (s *Service) validateShipmentUpdate(

@@ -243,7 +243,7 @@ func measureDwell(
 	freeMinutes int32,
 	trace *detention.CalculationTrace,
 ) int32 {
-	result.RawDwellMinutes = int32(max(rawSeconds, 0) / secondsPerMinute)
+	result.RawDwellMinutes = intutils.SafeToInt32(max(rawSeconds, 0) / secondsPerMinute)
 
 	trace.AddMinutes(detention.TraceStepRawDwell, "Total time on site",
 		FormatMinutes(result.RawDwellMinutes), "", result.RawDwellMinutes, false)

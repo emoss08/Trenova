@@ -96,8 +96,8 @@ type Service struct {
 var _ recordanchorports.RecordAnchorReader = (*Service)(nil)
 
 func New(
-	p Params,
-) recordanchorports.RecordAnchorReader { //nolint:gocritic // fx params are passed by value
+	p Params, //nolint:gocritic // fx params are passed by value
+) recordanchorports.RecordAnchorReader {
 	return NewWithDependencies(&Dependencies{
 		Logger:      p.Logger,
 		Permissions: p.Permissions,

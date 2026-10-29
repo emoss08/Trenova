@@ -12,6 +12,8 @@ import (
 const (
 	AnonymousOperation = "anonymous"
 	OverflowOperation  = "other"
+
+	labelOperation = "operation"
 )
 
 var (
@@ -93,7 +95,7 @@ func NewGraphQL(
 			Name:      "operations_total",
 			Help:      "Total number of GraphQL operations executed",
 		},
-		[]string{"operation", labelType, "status"},
+		[]string{labelOperation, labelType, "status"},
 	)
 
 	m.operationDuration = prometheus.NewHistogramVec(
@@ -104,7 +106,7 @@ func NewGraphQL(
 			Help:      "GraphQL operation execution latencies in seconds",
 			Buckets:   GraphQLDurationBuckets,
 		},
-		[]string{"operation", labelType},
+		[]string{labelOperation, labelType},
 	)
 
 	m.operationErrors = prometheus.NewCounterVec(
@@ -114,7 +116,7 @@ func NewGraphQL(
 			Name:      "operation_errors_total",
 			Help:      "Total number of GraphQL operations that returned errors, by error code",
 		},
-		[]string{"operation", labelType, "code"},
+		[]string{labelOperation, labelType, "code"},
 	)
 
 	m.activeOperations = prometheus.NewGauge(
@@ -134,7 +136,7 @@ func NewGraphQL(
 			Help:      "Computed GraphQL query complexity per operation",
 			Buckets:   GraphQLCostBuckets,
 		},
-		[]string{"operation", labelType},
+		[]string{labelOperation, labelType},
 	)
 
 	m.rejectionsTotal = prometheus.NewCounterVec(

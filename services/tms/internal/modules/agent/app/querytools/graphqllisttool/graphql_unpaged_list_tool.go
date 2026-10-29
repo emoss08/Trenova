@@ -267,8 +267,12 @@ func (t *UnpagedTool) Query(
 	for key, rows := range beside {
 		outcome[key] = rows
 	}
-	withheld = append(withheld, besideWithheld...)
-	notes = append(notes, besideNotes...)
+	annotateOutcome(outcome, append(notes, besideNotes...), append(withheld, besideWithheld...))
+
+	return t.packaged(outcome, items, positions, window), nil
+}
+
+func annotateOutcome(outcome map[string]any, notes, withheld []string) {
 	if len(notes) > 0 {
 		outcome[graphqlread.OutcomeNote] = strings.Join(notes, " ")
 	}
@@ -276,17 +280,25 @@ func (t *UnpagedTool) Query(
 		outcome[graphqlread.OutcomeWithheld] = withheld
 		outcome[graphqlread.OutcomeWithheldNote] = fieldgate.WithheldNote
 	}
+}
+
+func (t *UnpagedTool) packaged(
+	outcome map[string]any,
+	items []map[string]any,
+	positions []int,
+	window querytool.OffsetWindow,
+) any {
 	marked := markedRows(&t.spec, items)
 	if t.paged {
 		return &OffsetPage{
 			Record: outcome, Outside: marked, Positions: positions, Window: window,
-		}, nil
+		}
 	}
 	if len(marked) > 0 {
-		return &graphqlread.MarkedRecord{Record: outcome, Outside: marked}, nil
+		return &graphqlread.MarkedRecord{Record: outcome, Outside: marked}
 	}
 
-	return outcome, nil
+	return outcome
 }
 
 func (t *UnpagedTool) variables(

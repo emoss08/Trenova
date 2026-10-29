@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
@@ -702,7 +703,7 @@ func (s *Service) screenSpotLine(
 		OrganizationID:  screen.tenantInfo.OrgID,
 		BusinessUnitID:  screen.tenantInfo.BuID,
 		CarrierID:       line.CarrierID,
-		Rank:            int16(idx + 1),
+		Rank:            intutils.SafeToInt16(idx + 1),
 		RateMethod:      rateMethod,
 		Rate:            line.Rate,
 		OfferTTLSeconds: ttl,
