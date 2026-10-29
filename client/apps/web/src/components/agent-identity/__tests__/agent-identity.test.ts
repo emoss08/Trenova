@@ -156,16 +156,25 @@ describe("resolveAgentIdentity icon provenance", () => {
  * alone.
  */
 describe("agent icons", () => {
-  function serverIcons(): string[] {
-    const source = readFileSync(
-      join(repoRoot(), "services/tms/internal/modules/agent/domain/agentdefinition/identity.go"),
+  function markSource(): string {
+    return readFileSync(
+      join(repoRoot(), "services/tms/internal/modules/agent/domain/agentmark/mark.go"),
       "utf8",
     );
+  }
+
+  function iconValues(): Map<string, string> {
     const values = new Map<string, string>();
-    for (const match of source.matchAll(/(Icon\w+)\s*=\s*"([^"]+)"/g)) {
+    for (const match of markSource().matchAll(/(Icon\w+)\s*=\s*"([^"]+)"/g)) {
       values.set(match[1], match[2]);
     }
-    const list = /var knownIcons = \[\]string\{([^}]*)\}/.exec(source)?.[1] ?? "";
+
+    return values;
+  }
+
+  function serverIcons(): string[] {
+    const values = iconValues();
+    const list = /var knownIcons = \[\]string\{([^}]*)\}/.exec(markSource())?.[1] ?? "";
 
     return list
       .split(",")
@@ -187,13 +196,11 @@ describe("agent icons", () => {
       join(repoRoot(), "services/tms/internal/modules/agent/domain/agentdefinition/identity.go"),
       "utf8",
     );
-    const values = new Map<string, string>();
-    for (const match of source.matchAll(/(Icon\w+)\s*=\s*"([^"]+)"/g)) {
-      values.set(match[1], match[2]);
-    }
-    const map = /var templateIcons = map\[Template\]string\{([^}]*)\}/.exec(source)?.[1] ?? "";
+    const values = iconValues();
+    const map =
+      /var templateIcons = map\[agenttemplate\.Template\]string\{([^}]*)\}/.exec(source)?.[1] ?? "";
     const server: Record<string, string> = {};
-    for (const match of map.matchAll(/Template(\w+):\s*(Icon\w+)/g)) {
+    for (const match of map.matchAll(/agenttemplate\.Template(\w+):\s*agentmark\.(Icon\w+)/g)) {
       server[match[1]] = values.get(match[2]) ?? "";
     }
 

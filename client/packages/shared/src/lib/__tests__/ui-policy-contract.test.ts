@@ -8,7 +8,7 @@ import { shipmentUIPolicySchema } from "@trenova/shared/types/shipment";
 // those Go tags, not from what the client happens to accept.
 //
 // Its Go counterpart is TestResolvedPolicyJSON_MatchesTheClientContract in
-// services/tms/internal/api/graphql/resolver/uipolicy_profile_test.go.
+// services/tms/internal/api/graphql/resolver/shipmentresolver/uipolicy_profile_test.go.
 const SERVER_PAYLOAD = {
   allowMoveRemovals: true,
   checkForDuplicateBols: true,
