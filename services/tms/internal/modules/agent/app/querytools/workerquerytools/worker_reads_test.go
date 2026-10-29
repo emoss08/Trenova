@@ -157,6 +157,29 @@ func TestShapeCredentialWorker_SaysWhetherTheDriverIsOffDispatch(t *testing.T) {
 	assert.Equal(t, "already off dispatch (Medical certificate expired)", held[workerNotDispatchBy])
 }
 
+func TestShapeCredentialWorker_LeavesDispatchableUnsaidWithoutTheProfile(t *testing.T) {
+	t.Parallel()
+
+	withheld := map[string]struct{}{fieldWorker + "." + workerProfileField: {}}
+	onDispatch := map[string]any{
+		fieldWorker: map[string]any{workerAssignable: true, workerStatusField: "Active"},
+	}
+	shapeCredentialWorker(onDispatch, withheld, filtercatalog.Clock{})
+
+	held, _ := onDispatch[fieldWorker].(map[string]any)
+	assert.NotContains(t, held, DispatchableField,
+		"compliance is on the withheld profile, so the driver is not called dispatchable")
+
+	offDispatch := map[string]any{
+		fieldWorker: map[string]any{workerAssignable: false, workerStatusField: "Active"},
+	}
+	shapeCredentialWorker(offDispatch, withheld, filtercatalog.Clock{})
+
+	held, _ = offDispatch[fieldWorker].(map[string]any)
+	assert.Equal(t, false, held[DispatchableField])
+	assert.Equal(t, "already off dispatch", held[workerNotDispatchBy])
+}
+
 func TestWorkerList_DispatchableFiltersByHoldEmploymentAndCompliance(t *testing.T) {
 	t.Parallel()
 

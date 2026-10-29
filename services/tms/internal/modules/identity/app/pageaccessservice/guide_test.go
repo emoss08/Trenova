@@ -65,7 +65,8 @@ func TestGuide_NamesTheViewFieldsAboveTheRolesCeiling(t *testing.T) {
 
 	assert.Equal(t,
 		"Without View on Worker, its first name, last name, whole name, profile pic URL, "+
-			"status, type and fleet code stay withheld there too: they rank above this role's "+
+			"status, type, fleet code, can be assigned and assignment blocked stay withheld there "+
+			"too: they rank above this role's "+
 			"sensitivity ceiling.",
 		worker.Ceiling)
 }

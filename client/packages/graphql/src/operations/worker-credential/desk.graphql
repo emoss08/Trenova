@@ -27,6 +27,10 @@ query DeskWorkerCredential($id: ID!) {
   }
 }
 
+# Credentials as worker_list_credentials reads them, each with whether its
+# worker can be dispatched. The worker's compliance standing is on their
+# profile, HR data outside the worker reference view: a reader without worker
+# read gets profile null, and the tool then leaves dispatchable unsaid.
 query DeskWorkerCredentialList(
   $workerIds: [ID!]
   $includeArchived: Boolean
@@ -36,7 +40,7 @@ query DeskWorkerCredentialList(
   $requiredOnly: Boolean
   $limit: Int
   $offset: Int
-) {
+) @requiresRead(kind: "worker") {
   workerCredentials(
     workerIds: $workerIds
     includeArchived: $includeArchived

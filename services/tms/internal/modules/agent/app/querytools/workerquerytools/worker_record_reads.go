@@ -239,8 +239,20 @@ func withholdPrivacyCaseNames(row map[string]any, _ map[string]struct{}, _ filte
 	}
 }
 
-func shapeCredentialWorker(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
-	if held, ok := row[fieldWorker].(map[string]any); ok {
-		dispatchStanding(held)
+func shapeCredentialWorker(
+	row map[string]any,
+	withheld map[string]struct{},
+	_ filtercatalog.Clock,
+) {
+	held, ok := row[fieldWorker].(map[string]any)
+	if !ok {
+		return
+	}
+	dispatchStanding(held)
+	if _, hidden := withheld[fieldWorker+"."+workerProfileField]; !hidden {
+		return
+	}
+	if dispatchable, _ := held[DispatchableField].(bool); dispatchable {
+		delete(held, DispatchableField)
 	}
 }

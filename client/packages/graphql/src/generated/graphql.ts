@@ -17123,7 +17123,7 @@ export type TrainingCourseReferenceFragment = { id: string, code: string, name: 
 
 export type UserReferenceFragment = { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'UserReferenceFragment' };
 
-export type WorkerReferenceFragment = { id: string, fleetCodeId: string | null, status: EntityStatus, type: WorkerType, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeReferenceFragment': FleetCodeReferenceFragment } } | null } & { ' $fragmentName'?: 'WorkerReferenceFragment' };
+export type WorkerReferenceFragment = { id: string, fleetCodeId: string | null, status: EntityStatus, type: WorkerType, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, assignmentBlocked: string, canBeAssigned: boolean, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeReferenceFragment': FleetCodeReferenceFragment } } | null } & { ' $fragmentName'?: 'WorkerReferenceFragment' };
 
 export type WorkerChecklistReferenceFragment = { id: string, name: string, kind: WorkerChecklistKind, status: WorkerChecklistStatus, dueAt: number | null } & { ' $fragmentName'?: 'WorkerChecklistReferenceFragment' };
 

@@ -349,6 +349,8 @@ var viewWords = map[string][]viewWord{
 		{Label: "status", Fields: []string{"status"}},
 		{Label: "type", Fields: []string{"type"}},
 		{Label: "fleet code", Fields: []string{"fleetCodeId", "fleetCode"}},
+		{Label: "can be assigned", Fields: []string{"canBeAssigned"}},
+		{Label: "assignment blocked", Fields: []string{"assignmentBlocked"}},
 	},
 	"worker_checklist": {
 		{Label: "name", Fields: []string{"name"}},

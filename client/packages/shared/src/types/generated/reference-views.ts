@@ -939,7 +939,9 @@ export const REFERENCE_VIEWS = {
     "version",
   ],
   worker: [
+    "assignmentBlocked",
     "businessUnitId",
+    "canBeAssigned",
     "createdAt",
     "firstName",
     "fleetCode",

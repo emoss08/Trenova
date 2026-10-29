@@ -623,6 +623,8 @@ fragment WorkerReference on Worker {
   firstName
   lastName
   wholeName
+  assignmentBlocked
+  canBeAssigned
   fleetCode {
     ...FleetCodeReference
   }

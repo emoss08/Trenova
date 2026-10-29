@@ -61,6 +61,8 @@ func workerResource() *permissionspec.ResourceDefinition {
 			"type",
 			"fleetCodeId",
 			"fleetCode",
+			"canBeAssigned",
+			"assignmentBlocked",
 		},
 		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead, DisplayName: "View", Description: "View workers"},

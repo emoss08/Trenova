@@ -267,6 +267,13 @@ word is a catalog entry, and lists are joined in the request's language by `i18n
 A view field is shown to everyone who can read any record that links to the kind, so adding one
 widens access across the product. Add it only when linking screens need it to identify or use the
 record, never money, credit, contact details, personal or HR data, notes or configuration secrets.
+A view names whole fields: a plain object in a view (a state, an address) shows every field under
+it at the object's own sensitivity, and the generated fragment selects all its scalars. So never
+put an object that also carries what a view may not show in one, such as a worker's `profile`
+(licence number, drug and alcohol standing, disqualification reason). A screen that needs one of
+its fields, as `DeskWorkerCredentialList` needs `profile.complianceStatus`, declares
+`@requiresRead` and draws the field's withheld state. A worker's `canBeAssigned` and
+`assignmentBlocked` are in its view because every screen that assigns a driver needs them.
 The change needs a security review on the pull request, which names every screen it is for. Then:
 
 1. add the field to the kind's `ReferenceView`;
