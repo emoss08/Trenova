@@ -1,4 +1,4 @@
-package volume
+package shipmentvolume
 
 import (
 	"context"
@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -70,23 +71,23 @@ type shpUser struct {
 }
 
 type shpLane struct {
-	origin *locationRecord
-	dest   *locationRecord
+	origin *volumegen.LocationRecord
+	dest   *volumegen.LocationRecord
 }
 
 type shpStopPlan struct {
-	loc *locationRecord
+	loc *volumegen.LocationRecord
 	typ shipment.StopType
 }
 
 type shpCommodityPlan struct {
-	commodity *commodityRecord
+	commodity *volumegen.CommodityRecord
 	pieces    int64
 	weight    int64
 }
 
 type shpPlan struct {
-	customer    *customerRecord
+	customer    *volumegen.CustomerRecord
 	moves       [][]shpStopPlan
 	createdAt   int64
 	pickupAt    int64
@@ -105,7 +106,7 @@ type shpPlan struct {
 
 type shpLookups struct {
 	tractorTypeID pulid.ID
-	trailerTypes  map[trailerKind]pulid.ID
+	trailerTypes  map[volumegen.TrailerKind]pulid.ID
 	anyTrailer    pulid.ID
 	serviceTypes  map[string]pulid.ID
 	shipmentTypes map[string]pulid.ID
@@ -129,11 +130,14 @@ type shpBatch struct {
 	holds              []*shipmenthold.ShipmentHold
 	releases           []shpRelease
 	checkCalls         []*checkcall.CheckCall
-	stamps             map[string][]stamp
+	stamps             map[string][]volumegen.Stamp
 }
 
 func (b *shpBatch) stamp(table string, id pulid.ID, created, updated int64) {
-	b.stamps[table] = append(b.stamps[table], stamp{id: id, created: created, updated: updated})
+	b.stamps[table] = append(
+		b.stamps[table],
+		volumegen.Stamp{Id: id, Created: created, Updated: updated},
+	)
 }
 
 type shpRelease struct {
@@ -143,17 +147,17 @@ type shpRelease struct {
 }
 
 type shpBuilder struct {
-	g               *generator
+	g               *volumegen.Generator
 	now             int64
 	coord           *shipmentstate.Coordinator
 	look            *shpLookups
 	customerWeights []int
 	customerFactor  map[pulid.ID]float64
 	lanes           map[pulid.ID][]shpLane
-	shippers        []*locationRecord
-	consignees      []*locationRecord
+	shippers        []*volumegen.LocationRecord
+	consignees      []*volumegen.LocationRecord
 	crewFree        []int64
-	crewsByKind     map[trailerKind][]int
+	crewsByKind     map[volumegen.TrailerKind][]int
 	carrierPools    map[pulid.ID][]pulid.ID
 	allCrews        []int
 	zones           map[string]*time.Location
@@ -162,12 +166,12 @@ type shpBuilder struct {
 	externalRefs    map[string]struct{}
 }
 
-func (g *generator) seedShipments(ctx context.Context) error {
-	if len(g.customers) == 0 || len(g.locations) < 2 || len(g.commodities) == 0 ||
-		len(g.crews) == 0 {
+func (g *shipmentPhase) seedShipments(ctx context.Context) error {
+	if len(g.Customers) == 0 || len(g.Locations) < 2 || len(g.Commodities) == 0 ||
+		len(g.Crews) == 0 {
 		return fmt.Errorf(
 			"%w: customers, locations, commodities and crews must be seeded before shipments",
-			ErrMissingSeedData,
+			volumegen.ErrMissingSeedData,
 		)
 	}
 
@@ -177,35 +181,35 @@ func (g *generator) seedShipments(ctx context.Context) error {
 	}
 
 	b := g.shpNewBuilder(look)
-	plans := b.planAll(g.opts.Shipments)
+	plans := b.planAll(g.Opts.Shipments)
 
-	proSlots := make([]numberSlot, len(plans))
+	proSlots := make([]volumegen.NumberSlot, len(plans))
 	for i, p := range plans {
-		proSlots[i] = numberSlot{At: p.createdAt, LocationCode: p.moves[0][0].loc.Code}
+		proSlots[i] = volumegen.NumberSlot{At: p.createdAt, LocationCode: p.moves[0][0].loc.Code}
 	}
-	pros, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeProNumber, proSlots)
+	pros, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeProNumber, proSlots)
 	if err != nil {
 		return err
 	}
-	orderNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeOrder, proSlots)
+	orderNumbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeOrder, proSlots)
 	if err != nil {
 		return err
 	}
 
 	for begin := 0; begin < len(plans); begin += shpChunkSize {
 		end := min(begin+shpChunkSize, len(plans))
-		batch := &shpBatch{stamps: make(map[string][]stamp)}
+		batch := &shpBatch{stamps: make(map[string][]volumegen.Stamp)}
 		for i := begin; i < end; i++ {
 			if err = b.build(batch, plans[i], pros[i], orderNumbers[i]); err != nil {
 				return fmt.Errorf("build shipment %s: %w", pros[i], err)
 			}
 		}
-		if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 			return b.write(ctx, tx, batch)
 		}); err != nil {
 			return err
 		}
-		g.progress("shipments", end, len(plans))
+		g.Progress("shipments", end, len(plans))
 	}
 
 	for _, entity := range []struct{ table, label string }{
@@ -223,7 +227,7 @@ func (g *generator) seedShipments(ctx context.Context) error {
 		{shpTableHolds, "Shipment holds"},
 		{"check_calls", "Check calls"},
 	} {
-		g.report.add(entity.label, b.counts[entity.table])
+		g.Report.Add(entity.label, b.counts[entity.table])
 	}
 	for _, status := range []shipment.Status{
 		shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned,
@@ -231,15 +235,15 @@ func (g *generator) seedShipments(ctx context.Context) error {
 		shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced,
 		shipment.StatusCanceled,
 	} {
-		g.opts.Logf("  • shipments %s: %d", status, b.statuses[status])
+		g.Opts.Logf("  • shipments %s: %d", status, b.statuses[status])
 	}
 
 	return nil
 }
 
-func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
+func (g *shipmentPhase) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	look := &shpLookups{
-		trailerTypes:  make(map[trailerKind]pulid.ID),
+		trailerTypes:  make(map[volumegen.TrailerKind]pulid.ID),
 		serviceTypes:  make(map[string]pulid.ID),
 		shipmentTypes: make(map[string]pulid.ID),
 		templates:     make(map[string]*formulatemplate.FormulaTemplate),
@@ -248,7 +252,7 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	et := equipmenttypedb.EquipmentTypes
 	equipment, err := et.Where(et.Status.Eq(domaintypes.StatusActive)).
 		Order(et.ID.Asc()).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load equipment types: %w", err)
 	}
@@ -259,7 +263,7 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 				look.tractorTypeID = et.ID
 			}
 		case equipmenttype.ClassTrailer:
-			kind := trailerKindOf(et)
+			kind := volumegen.TrailerKindOf(et)
 			if _, ok := look.trailerTypes[kind]; !ok {
 				look.trailerTypes[kind] = et.ID
 			}
@@ -272,7 +276,7 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	st := servicetypedb.ServiceTypes
 	services, err := st.Pick(st.ID, st.Code).
 		Where(st.Status.Eq(domaintypes.StatusActive)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load service types: %w", err)
 	}
@@ -283,7 +287,7 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 	sht := shipmenttypedb.ShipmentTypes
 	types, err := sht.Pick(sht.ID, sht.Code).
 		Where(sht.Status.Eq(domaintypes.StatusActive)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load shipment types: %w", err)
 	}
@@ -291,11 +295,11 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 		look.shipmentTypes[strings.ToUpper(t.Code)] = t.ID
 	}
 
-	users, err := g.usersByID(ctx)
+	users, err := g.UsersByID(ctx)
 	if err != nil {
 		return nil, err
 	}
-	for _, id := range g.refs.userIDs {
+	for _, id := range g.Refs.UserIDs {
 		u, ok := users[id]
 		if !ok {
 			continue
@@ -307,54 +311,54 @@ func (g *generator) shpLoadLookups(ctx context.Context) (*shpLookups, error) {
 		look.users = append(look.users, shpUser{ID: u.ID, Name: name})
 	}
 	if len(look.users) == 0 {
-		look.users = append(look.users, shpUser{ID: g.refs.adminID, Name: "Admin"})
+		look.users = append(look.users, shpUser{ID: g.Refs.AdminID, Name: "Admin"})
 	}
 
 	hr := holdreasondb.HoldReasons
 	if look.holdReasons, err = hr.Where(
 		hr.Active.IsTrue(),
 		hr.Type.Eq(holdreason.HoldTypeOperational),
-	).Order(hr.ID.Asc()).All(ctx, g.db); err != nil {
+	).Order(hr.ID.Asc()).All(ctx, g.DB); err != nil {
 		return nil, fmt.Errorf("load hold reasons: %w", err)
 	}
 
-	for _, t := range g.refs.templates {
+	for _, t := range g.Refs.Templates {
 		look.templates[t.Name] = t
 	}
 
 	return look, nil
 }
 
-func (g *generator) shpNewBuilder(look *shpLookups) *shpBuilder {
+func (g *shipmentPhase) shpNewBuilder(look *shpLookups) *shpBuilder {
 	b := &shpBuilder{
-		g:     g,
-		now:   unix(g.now),
+		g:     g.Generator,
+		now:   volumegen.Unix(g.Now),
 		look:  look,
-		coord: shipmentstate.NewCoordinatorWithClock(func() int64 { return unix(g.now) }),
+		coord: shipmentstate.NewCoordinatorWithClock(func() int64 { return volumegen.Unix(g.Now) }),
 		customerFactor: make(
 			map[pulid.ID]float64,
-			len(g.customers),
+			len(g.Customers),
 		),
-		lanes:        make(map[pulid.ID][]shpLane, len(g.customers)),
-		crewFree:     make([]int64, len(g.crews)),
-		crewsByKind:  make(map[trailerKind][]int),
-		carrierPools: make(map[pulid.ID][]pulid.ID, len(g.customers)),
-		allCrews:     make([]int, len(g.crews)),
+		lanes:        make(map[pulid.ID][]shpLane, len(g.Customers)),
+		crewFree:     make([]int64, len(g.Crews)),
+		crewsByKind:  make(map[volumegen.TrailerKind][]int),
+		carrierPools: make(map[pulid.ID][]pulid.ID, len(g.Customers)),
+		allCrews:     make([]int, len(g.Crews)),
 		zones:        make(map[string]*time.Location),
 		counts:       make(map[string]int),
 		statuses:     make(map[shipment.Status]int),
 		externalRefs: make(map[string]struct{}),
 	}
-	for i, c := range g.crews {
+	for i, c := range g.Crews {
 		b.allCrews[i] = i
 		b.crewsByKind[c.TrailerKind] = append(b.crewsByKind[c.TrailerKind], i)
 	}
-	b.customerWeights = make([]int, len(g.customers))
-	for i, c := range g.customers {
+	b.customerWeights = make([]int, len(g.Customers))
+	for i, c := range g.Customers {
 		b.customerWeights[i] = max(c.Weight, 1)
-		b.customerFactor[c.ID] = 0.88 + g.fake.float()*0.27
+		b.customerFactor[c.ID] = 0.88 + g.Fake.Float()*0.27
 	}
-	for _, loc := range g.locations {
+	for _, loc := range g.Locations {
 		if loc.Shipper {
 			b.shippers = append(b.shippers, loc)
 		}
@@ -363,10 +367,10 @@ func (g *generator) shpNewBuilder(look *shpLookups) *shpBuilder {
 		}
 	}
 	if len(b.shippers) == 0 {
-		b.shippers = g.locations
+		b.shippers = g.Locations
 	}
 	if len(b.consignees) == 0 {
-		b.consignees = g.locations
+		b.consignees = g.Locations
 	}
 
 	return b
@@ -385,15 +389,15 @@ func (b *shpBuilder) zone(name string) *time.Location {
 }
 
 func (b *shpBuilder) planAll(n int) []*shpPlan {
-	f := b.g.fake
-	begin := unix(b.g.start)
+	f := b.g.Fake
+	begin := volumegen.Unix(b.g.Start)
 	end := b.now + shpFutureDays*shpDay
 	span := float64(end - begin)
 	const low, slope = 0.7, 0.6
 
 	plans := make([]*shpPlan, 0, n)
 	for range n {
-		u := f.float()
+		u := f.Float()
 		x := (-low + math.Sqrt(low*low+2*slope*u*(low+slope/2))) / slope
 		day := begin + int64(x*span)
 
@@ -402,21 +406,21 @@ func (b *shpBuilder) planAll(n int) []*shpPlan {
 		local := time.Unix(day, 0).In(zone)
 		switch local.Weekday() {
 		case time.Saturday:
-			if f.chance(0.75) {
+			if f.Chance(0.75) {
 				local = local.AddDate(0, 0, -1)
 			}
 		case time.Sunday:
-			if f.chance(0.75) {
+			if f.Chance(0.75) {
 				local = local.AddDate(0, 0, 1)
 			}
 		}
 		pickup := time.Date(
 			local.Year(), local.Month(), local.Day(),
-			f.between(5, 15), pick(f, []int{0, 0, 0, 30}), 0, 0, zone,
+			f.Between(5, 15), volumegen.Pick(f, []int{0, 0, 0, 30}), 0, 0, zone,
 		)
 		p.pickupAt = pickup.Unix()
 		p.createdAt = b.leadTime(p.pickupAt)
-		p.canceled = f.chance(0.02)
+		p.canceled = f.Chance(0.02)
 		plans = append(plans, p)
 	}
 
@@ -425,80 +429,83 @@ func (b *shpBuilder) planAll(n int) []*shpPlan {
 }
 
 func (b *shpBuilder) leadTime(pickupAt int64) int64 {
-	f := b.g.fake
+	f := b.g.Fake
 	var lead int64
-	switch f.weighted([]int{30, 45, 20, 5}) {
+	switch f.Weighted([]int{30, 45, 20, 5}) {
 	case 0:
-		lead = f.between64(2*shpHour, shpDay)
+		lead = f.Between64(2*shpHour, shpDay)
 	case 1:
-		lead = f.between64(shpDay, 4*shpDay)
+		lead = f.Between64(shpDay, 4*shpDay)
 	case 2:
-		lead = f.between64(4*shpDay, 10*shpDay)
+		lead = f.Between64(4*shpDay, 10*shpDay)
 	default:
-		lead = f.between64(10*shpDay, 21*shpDay)
+		lead = f.Between64(10*shpDay, 21*shpDay)
 	}
 	created := pickupAt - lead
-	if latest := b.now - f.between64(5*shpMinute, 2*shpDay); created > latest {
+	if latest := b.now - f.Between64(5*shpMinute, 2*shpDay); created > latest {
 		created = latest
 	}
 	return created
 }
 
-func (b *shpBuilder) pickCustomer() *customerRecord {
-	return b.g.customers[b.g.fake.weighted(b.customerWeights)]
+func (b *shpBuilder) pickCustomer() *volumegen.CustomerRecord {
+	return b.g.Customers[b.g.Fake.Weighted(b.customerWeights)]
 }
 
 func (b *shpBuilder) nearLocation(
-	pool []*locationRecord,
-	anchor *cityRecord,
+	pool []*volumegen.LocationRecord,
+	anchor *volumegen.CityRecord,
 	radius float64,
-	exclude *locationRecord,
-) *locationRecord {
-	f := b.g.fake
+	exclude *volumegen.LocationRecord,
+) *volumegen.LocationRecord {
+	f := b.g.Fake
 	if anchor != nil {
 		for range 25 {
-			candidate := pick(f, pool)
-			if candidate != exclude && haversineMiles(anchor, candidate.City) <= radius {
+			candidate := volumegen.Pick(f, pool)
+			if candidate != exclude && volumegen.HaversineMiles(anchor, candidate.City) <= radius {
 				return candidate
 			}
 		}
 	}
 	for range 10 {
-		candidate := pick(f, pool)
+		candidate := volumegen.Pick(f, pool)
 		if candidate != exclude {
 			return candidate
 		}
 	}
-	return pick(f, b.g.locations)
+	return volumegen.Pick(f, b.g.Locations)
 }
 
-func (b *shpBuilder) farLocation(pool []*locationRecord, from *locationRecord) *locationRecord {
-	f := b.g.fake
+func (b *shpBuilder) farLocation(
+	pool []*volumegen.LocationRecord,
+	from *volumegen.LocationRecord,
+) *volumegen.LocationRecord {
+	f := b.g.Fake
 	for range 25 {
-		candidate := pick(f, pool)
-		if candidate != from && haversineMiles(from.City, candidate.City) >= 40 {
+		candidate := volumegen.Pick(f, pool)
+		if candidate != from && volumegen.HaversineMiles(from.City, candidate.City) >= 40 {
 			return candidate
 		}
 	}
 	return b.nearLocation(pool, nil, 0, from)
 }
 
-func (b *shpBuilder) lane(c *customerRecord) shpLane {
-	f := b.g.fake
+func (b *shpBuilder) lane(c *volumegen.CustomerRecord) shpLane {
+	f := b.g.Fake
 	lanes, ok := b.lanes[c.ID]
 	if !ok {
-		count := f.between(3, 10)
+		count := f.Between(3, 10)
 		lanes = make([]shpLane, 0, count)
 		for range count {
 			if lane, ok := b.ownLane(c); ok {
 				lanes = append(lanes, lane)
 				continue
 			}
-			var origin *locationRecord
-			if f.chance(0.7) {
+			var origin *volumegen.LocationRecord
+			if f.Chance(0.7) {
 				origin = b.nearLocation(b.shippers, c.Home, 450, nil)
 			} else {
-				origin = pick(f, b.shippers)
+				origin = volumegen.Pick(f, b.shippers)
 			}
 			lanes = append(
 				lanes,
@@ -507,20 +514,20 @@ func (b *shpBuilder) lane(c *customerRecord) shpLane {
 		}
 		b.lanes[c.ID] = lanes
 	}
-	if f.chance(0.75) {
-		return lanes[f.intn(len(lanes))]
+	if f.Chance(0.75) {
+		return lanes[f.Intn(len(lanes))]
 	}
-	origin := pick(f, b.shippers)
+	origin := volumegen.Pick(f, b.shippers)
 	return shpLane{origin: origin, dest: b.farLocation(b.consignees, origin)}
 }
 
-func (b *shpBuilder) ownLane(c *customerRecord) (shpLane, bool) {
-	f := b.g.fake
-	if len(c.Facilities) == 0 || !f.chance(0.8) {
+func (b *shpBuilder) ownLane(c *volumegen.CustomerRecord) (shpLane, bool) {
+	f := b.g.Fake
+	if len(c.Facilities) == 0 || !f.Chance(0.8) {
 		return shpLane{}, false
 	}
-	own := pick(f, c.Facilities)
-	if own.Consignee && (!own.Shipper || f.chance(0.25)) {
+	own := volumegen.Pick(f, c.Facilities)
+	if own.Consignee && (!own.Shipper || f.Chance(0.25)) {
 		return shpLane{origin: b.farLocation(b.shippers, own), dest: own}, true
 	}
 	if own.Shipper {
@@ -530,11 +537,11 @@ func (b *shpBuilder) ownLane(c *customerRecord) (shpLane, bool) {
 }
 
 func (b *shpBuilder) planRoute() *shpPlan {
-	f := b.g.fake
+	f := b.g.Fake
 	p := &shpPlan{customer: b.pickCustomer()}
 	l := b.lane(p.customer)
 
-	switch f.weighted([]int{82, 10, 8}) {
+	switch f.Weighted([]int{82, 10, 8}) {
 	case 0:
 		p.moves = [][]shpStopPlan{{
 			{loc: l.origin, typ: shipment.StopTypePickup},
@@ -542,7 +549,7 @@ func (b *shpBuilder) planRoute() *shpPlan {
 		}}
 	case 1:
 		stops := []shpStopPlan{{loc: l.origin, typ: shipment.StopTypePickup}}
-		if f.chance(0.3) {
+		if f.Chance(0.3) {
 			stops = append(stops, shpStopPlan{
 				loc: b.nearLocation(b.shippers, l.origin.City, 120, l.origin),
 				typ: shipment.StopTypePickup,
@@ -550,7 +557,7 @@ func (b *shpBuilder) planRoute() *shpPlan {
 		}
 		prev := l.dest
 		stops = append(stops, shpStopPlan{loc: prev, typ: shipment.StopTypeDelivery})
-		for range f.between(1, 2) {
+		for range f.Between(1, 2) {
 			next := b.nearLocation(b.consignees, prev.City, 220, prev)
 			stops = append(stops, shpStopPlan{loc: next, typ: shipment.StopTypeDelivery})
 			prev = next
@@ -558,10 +565,10 @@ func (b *shpBuilder) planRoute() *shpPlan {
 		p.moves = [][]shpStopPlan{stops}
 	default:
 		p.relay = true
-		legs := f.between(2, 3)
-		points := []*locationRecord{l.origin}
+		legs := f.Between(2, 3)
+		points := []*volumegen.LocationRecord{l.origin}
 		for i := 1; i < legs; i++ {
-			points = append(points, b.farLocation(b.g.locations, points[i-1]))
+			points = append(points, b.farLocation(b.g.Locations, points[i-1]))
 		}
 		points = append(points, l.dest)
 		for i := range legs {
@@ -577,22 +584,22 @@ func (b *shpBuilder) planRoute() *shpPlan {
 }
 
 func (b *shpBuilder) planFreight(p *shpPlan) {
-	f := b.g.fake
-	count := []int{1, 1, 1, 1, 1, 1, 2, 2, 2, 3}[f.intn(10)]
-	p.flatbed = f.chance(0.08)
+	f := b.g.Fake
+	count := []int{1, 1, 1, 1, 1, 1, 2, 2, 2, 3}[f.Intn(10)]
+	p.flatbed = f.Chance(0.08)
 	seen := make(map[pulid.ID]bool, count)
 	for range count {
-		c := pick(f, b.g.commodities)
+		c := volumegen.Pick(f, b.g.Commodities)
 		if seen[c.ID] {
 			continue
 		}
 		seen[c.ID] = true
-		pieces := int64(f.between(1, 26))
+		pieces := int64(f.Between(1, 26))
 		perPiece := c.WeightPerPiece
 		if perPiece <= 0 {
-			perPiece = int64(f.between(300, 1800))
+			perPiece = int64(f.Between(300, 1800))
 		}
-		weight := int64(float64(pieces*perPiece) * (0.8 + f.float()*0.4))
+		weight := int64(float64(pieces*perPiece) * (0.8 + f.Float()*0.4))
 		weight = max(weight, 50)
 		p.commodities = append(p.commodities, shpCommodityPlan{
 			commodity: c,
@@ -621,19 +628,19 @@ func (b *shpBuilder) planFreight(p *shpPlan) {
 	}
 
 	switch {
-	case p.hazmat && f.chance(0.6):
+	case p.hazmat && f.Chance(0.6):
 		p.serviceCode = "HAZM"
-	case p.reefer && f.chance(0.7):
+	case p.reefer && f.Chance(0.7):
 		p.serviceCode = "TEMP"
 	default:
-		p.serviceCode = []string{"STD", "STD", "STD", "STD", "STD", "STD", "STD", "EXP", "TEAM", "DTP"}[f.intn(10)]
+		p.serviceCode = []string{"STD", "STD", "STD", "STD", "STD", "STD", "STD", "EXP", "TEAM", "DTP"}[f.Intn(10)]
 	}
 	p.team = p.serviceCode == "TEAM"
-	p.detention = f.chance(0.09)
+	p.detention = f.Chance(0.09)
 }
 
 func (b *shpBuilder) shipmentTypeCode(p *shpPlan) string {
-	f := b.g.fake
+	f := b.g.Fake
 	switch {
 	case p.hazmat:
 		return "HAZM"
@@ -641,9 +648,9 @@ func (b *shpBuilder) shipmentTypeCode(p *shpPlan) string {
 		return "REEF"
 	case p.flatbed:
 		return "FLAT"
-	case p.weight < 12_000 && f.chance(0.6):
+	case p.weight < 12_000 && f.Chance(0.6):
 		return "LTL"
-	case p.weight < 20_000 && f.chance(0.3):
+	case p.weight < 20_000 && f.Chance(0.3):
 		return "PART"
 	case p.serviceCode == "EXP":
 		return "EXP"
@@ -652,32 +659,37 @@ func (b *shpBuilder) shipmentTypeCode(p *shpPlan) string {
 	}
 }
 
-func (b *shpBuilder) trailerKind(p *shpPlan) trailerKind {
+func (b *shpBuilder) trailerKind(p *shpPlan) volumegen.TrailerKind {
 	switch {
 	case p.reefer:
-		return trailerKindReefer
+		return volumegen.TrailerKindReefer
 	case p.flatbed:
-		return trailerKindFlatbed
+		return volumegen.TrailerKindFlatbed
 	default:
-		return trailerKindDry
+		return volumegen.TrailerKindDry
 	}
 }
 
-func (b *shpBuilder) trailerType(kind trailerKind) pulid.ID {
+func (b *shpBuilder) trailerType(kind volumegen.TrailerKind) pulid.ID {
 	if id, ok := b.look.trailerTypes[kind]; ok {
 		return id
 	}
 	return b.look.anyTrailer
 }
 
-func pickID(f *faker, preferred map[string]pulid.ID, code string, fallback []pulid.ID) pulid.ID {
+func pickID(
+	f *volumegen.Faker,
+	preferred map[string]pulid.ID,
+	code string,
+	fallback []pulid.ID,
+) pulid.ID {
 	if id, ok := preferred[code]; ok {
 		return id
 	}
 	if len(fallback) == 0 {
 		return pulid.Nil
 	}
-	return pick(f, fallback)
+	return volumegen.Pick(f, fallback)
 }
 
 func driveSeconds(miles float64, team bool) int64 {
@@ -701,19 +713,19 @@ type shpTimedStop struct {
 }
 
 func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
-	f := b.g.fake
+	f := b.g.Fake
 	moves := make([][]*shpTimedStop, len(p.moves))
 	plannedDeparture := int64(0)
 	actualDeparture := int64(0)
 	detentionStop := -1
 	if p.detention {
-		detentionStop = f.intn(len(p.moves[len(p.moves)-1])-1) + 1
+		detentionStop = f.Intn(len(p.moves[len(p.moves)-1])-1) + 1
 	}
 
 	for m, stops := range p.moves {
 		timed := make([]*shpTimedStop, len(stops))
 		for s, sp := range stops {
-			ts := &shpTimedStop{plan: sp, appointment: f.chance(0.45)}
+			ts := &shpTimedStop{plan: sp, appointment: f.Chance(0.45)}
 			zone := b.zone(sp.loc.City.Timezone)
 			var plannedArrival int64
 			switch {
@@ -722,21 +734,21 @@ func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
 				plannedArrival = ts.windowStart
 			case s == 0:
 				ts.windowStart = b.businessHours(
-					plannedDeparture+f.between64(2*shpHour, 18*shpHour),
+					plannedDeparture+f.Between64(2*shpHour, 18*shpHour),
 					zone,
 					ts.appointment,
 				)
 				plannedArrival = ts.windowStart
 			default:
 				prev := timed[s-1]
-				ts.miles = roadMiles(prev.plan.loc.City, sp.loc.City)
+				ts.miles = volumegen.RoadMiles(prev.plan.loc.City, sp.loc.City)
 				plannedArrival = plannedDeparture + driveSeconds(ts.miles, p.team)
 				ts.windowStart = b.businessHours(plannedArrival, zone, ts.appointment)
 			}
 			if ts.appointment {
 				ts.windowEnd = ts.windowStart + shpHour
 			} else {
-				ts.windowEnd = ts.windowStart + f.between64(4, 8)*shpHour
+				ts.windowEnd = ts.windowStart + f.Between64(4, 8)*shpHour
 			}
 
 			switch {
@@ -744,19 +756,19 @@ func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
 				ts.arrival = ts.windowStart + b.lateness()
 			case s == 0:
 				ts.arrival = max(
-					actualDeparture+f.between64(shpHour, 6*shpHour),
+					actualDeparture+f.Between64(shpHour, 6*shpHour),
 					ts.windowStart+b.lateness(),
 				)
 			default:
-				drive := int64(float64(driveSeconds(ts.miles, p.team)) * (0.92 + f.float()*0.25))
-				ts.arrival = max(actualDeparture+drive, ts.windowStart-f.between64(0, 45*shpMinute))
-				if f.chance(0.08) {
-					ts.arrival += f.between64(shpHour, 6*shpHour)
+				drive := int64(float64(driveSeconds(ts.miles, p.team)) * (0.92 + f.Float()*0.25))
+				ts.arrival = max(actualDeparture+drive, ts.windowStart-f.Between64(0, 45*shpMinute))
+				if f.Chance(0.08) {
+					ts.arrival += f.Between64(shpHour, 6*shpHour)
 				}
 			}
-			dwell := f.between64(45*shpMinute, 3*shpHour)
+			dwell := f.Between64(45*shpMinute, 3*shpHour)
 			if m == len(p.moves)-1 && s == detentionStop {
-				dwell = f.between64(3*shpHour+15*shpMinute, 6*shpHour)
+				dwell = f.Between64(3*shpHour+15*shpMinute, 6*shpHour)
 			}
 			ts.departure = ts.arrival + dwell
 			plannedDeparture = max(ts.windowStart, plannedArrival) + shpHour
@@ -770,11 +782,11 @@ func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
 }
 
 func (b *shpBuilder) lateness() int64 {
-	f := b.g.fake
-	if f.chance(0.1) {
-		return f.between64(shpHour, 6*shpHour)
+	f := b.g.Fake
+	if f.Chance(0.1) {
+		return f.Between64(shpHour, 6*shpHour)
 	}
-	return f.between64(-20*shpMinute, 40*shpMinute)
+	return f.Between64(-20*shpMinute, 40*shpMinute)
 }
 
 func (b *shpBuilder) businessHours(at int64, zone *time.Location, appointment bool) int64 {
@@ -791,13 +803,17 @@ func (b *shpBuilder) businessHours(at int64, zone *time.Location, appointment bo
 	return t.Unix()
 }
 
-func (b *shpBuilder) pickCrew(start, end int64, p *shpPlan, kind trailerKind) *crew {
-	f := b.g.fake
+func (b *shpBuilder) pickCrew(
+	start, end int64,
+	p *shpPlan,
+	kind volumegen.TrailerKind,
+) *volumegen.Crew {
+	f := b.g.Fake
 	pool := b.crewsByKind[kind]
 	if len(pool) == 0 {
 		pool = b.allCrews
 	}
-	fits := func(c *crew, strict bool) bool {
+	fits := func(c *volumegen.Crew, strict bool) bool {
 		if p.hazmat && !c.Hazmat {
 			return false
 		}
@@ -806,8 +822,8 @@ func (b *shpBuilder) pickCrew(start, end int64, p *shpPlan, kind trailerKind) *c
 
 	best := -1
 	for try := range 48 {
-		i := pool[f.intn(len(pool))]
-		if !fits(b.g.crews[i], try < 32) {
+		i := pool[f.Intn(len(pool))]
+		if !fits(b.g.Crews[i], try < 32) {
 			continue
 		}
 		if b.crewFree[i] <= start {
@@ -820,31 +836,31 @@ func (b *shpBuilder) pickCrew(start, end int64, p *shpPlan, kind trailerKind) *c
 	}
 	if best < 0 {
 		for _, i := range pool {
-			if fits(b.g.crews[i], false) && (best < 0 || b.crewFree[i] < b.crewFree[best]) {
+			if fits(b.g.Crews[i], false) && (best < 0 || b.crewFree[i] < b.crewFree[best]) {
 				best = i
 			}
 		}
 	}
 	if best < 0 {
-		best = pool[f.intn(len(pool))]
+		best = pool[f.Intn(len(pool))]
 	}
 	b.crewFree[best] = max(b.crewFree[best], end)
-	return b.g.crews[best]
+	return b.g.Crews[best]
 }
 
-func (b *shpBuilder) carrierFor(c *customerRecord) pulid.ID {
-	f := b.g.fake
+func (b *shpBuilder) carrierFor(c *volumegen.CustomerRecord) pulid.ID {
+	f := b.g.Fake
 	pool, ok := b.carrierPools[c.ID]
 	if !ok {
-		for range f.between(2, 4) {
-			pool = append(pool, pick(f, b.g.carriers))
+		for range f.Between(2, 4) {
+			pool = append(pool, volumegen.Pick(f, b.g.Carriers))
 		}
 		b.carrierPools[c.ID] = pool
 	}
-	if f.chance(0.8) {
-		return pick(f, pool)
+	if f.Chance(0.8) {
+		return volumegen.Pick(f, pool)
 	}
-	return pick(f, b.g.carriers)
+	return volumegen.Pick(f, b.g.Carriers)
 }
 
 func (b *shpBuilder) carrierAssignment(
@@ -853,49 +869,49 @@ func (b *shpBuilder) carrierAssignment(
 	assignedAt int64,
 	started bool,
 ) *shipment.CarrierAssignment {
-	f := b.g.fake
+	f := b.g.Fake
 	miles := 0.0
 	if move.Distance != nil {
 		miles = *move.Distance
 	}
 	assigner := b.user()
 	ca := &shipment.CarrierAssignment{
-		ID:                    idAt(shipment.CarrierAssignmentIDPrefix, assignedAt),
-		BusinessUnitID:        b.g.refs.buID,
-		OrganizationID:        b.g.refs.orgID,
+		ID:                    volumegen.IDAt(shipment.CarrierAssignmentIDPrefix, assignedAt),
+		BusinessUnitID:        b.g.Refs.BuID,
+		OrganizationID:        b.g.Refs.OrgID,
 		ShipmentMoveID:        move.ID,
 		CarrierID:             b.carrierFor(p.customer),
 		Status:                shipment.CarrierAssignmentStatusConfirmed,
 		RateMethod:            shipment.CarrierRateMethodFlat,
 		CurrencyCode:          "USD",
-		ProNumber:             f.letters(2) + f.digits(7),
-		ExternalDriverName:    f.firstName() + " " + f.lastName(),
-		ExternalDriverPhone:   f.phone(),
-		ExternalTractorNumber: f.digits(4),
-		ExternalTrailerNumber: "53" + f.digits(4),
-		AssignedByID:          ptr(assigner.ID),
+		ProNumber:             f.Letters(2) + f.Digits(7),
+		ExternalDriverName:    f.FirstName() + " " + f.LastName(),
+		ExternalDriverPhone:   f.Phone(),
+		ExternalTractorNumber: f.Digits(4),
+		ExternalTrailerNumber: "53" + f.Digits(4),
+		AssignedByID:          volumegen.Ptr(assigner.ID),
 		Version:               1,
 		CreatedAt:             assignedAt,
 	}
-	rpm := 1.7 + 120/(miles+40) + f.float()*0.35
-	if f.chance(0.4) && miles >= 150 {
+	rpm := 1.7 + 120/(miles+40) + f.Float()*0.35
+	if f.Chance(0.4) && miles >= 150 {
 		ca.RateMethod = shipment.CarrierRateMethodPerMile
 		ca.BaseRate = decimal.NewFromFloat(rpm).Round(2)
 	} else {
 		ca.BaseRate = decimal.NewFromFloat(math.Round(math.Max(miles*rpm, 300)/5) * 5)
 	}
-	ca.FuelSurcharge = decimal.NewFromFloat(miles * (0.38 + f.float()*0.2)).Round(2)
+	ca.FuelSurcharge = decimal.NewFromFloat(miles * (0.38 + f.Float()*0.2)).Round(2)
 	ca.SyncTotals(move.Distance)
-	if !started && f.chance(0.25) {
+	if !started && f.Chance(0.25) {
 		ca.Status = shipment.CarrierAssignmentStatusPending
 	} else {
-		ca.ConfirmedAt = ptr(min(assignedAt+b.at(10*shpMinute, 6*shpHour), b.now))
+		ca.ConfirmedAt = volumegen.Ptr(min(assignedAt+b.at(10*shpMinute, 6*shpHour), b.now))
 	}
 	return ca
 }
 
 func (b *shpBuilder) user() shpUser {
-	return pick(b.g.fake, b.look.users)
+	return volumegen.Pick(b.g.Fake, b.look.users)
 }
 
 func (b *shpBuilder) otherUser(not pulid.ID) (shpUser, bool) {
@@ -912,36 +928,36 @@ func (b *shpBuilder) at(low, high int64) int64 {
 	if high <= low {
 		return low
 	}
-	return b.g.fake.between64(low, high)
+	return b.g.Fake.Between64(low, high)
 }
 
 //nolint:gocognit,funlen // one shipment's graph is built in one place so its parts agree
 func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string) error {
-	f := b.g.fake
-	refs := b.g.refs
-	orgID, buID := refs.orgID, refs.buID
+	f := b.g.Fake
+	refs := b.g.Refs
+	orgID, buID := refs.OrgID, refs.BuID
 	timeline := b.schedule(p)
 
-	shipmentID := idAt("shp_", p.createdAt)
-	orderID := idAt("ord_", p.createdAt)
+	shipmentID := volumegen.IDAt("shp_", p.createdAt)
+	orderID := volumegen.IDAt("ord_", p.createdAt)
 	entered := b.user()
 	owner := b.user()
 	po := ""
-	if f.chance(0.8) {
+	if f.Chance(0.8) {
 		po = b.poNumber(p.customer)
 	}
-	bol := f.digits(10)
+	bol := f.Digits(10)
 
 	entity := &shipment.Shipment{
 		ID:             shipmentID,
 		BusinessUnitID: buID,
 		OrganizationID: orgID,
-		ServiceTypeID:  pickID(f, b.look.serviceTypes, p.serviceCode, refs.serviceTypes),
+		ServiceTypeID:  pickID(f, b.look.serviceTypes, p.serviceCode, refs.ServiceTypes),
 		ShipmentTypeID: pickID(
 			f,
 			b.look.shipmentTypes,
 			b.shipmentTypeCode(p),
-			refs.shipmentTypes,
+			refs.ShipmentTypes,
 		),
 		CustomerID:          p.customer.ID,
 		TractorTypeID:       b.look.tractorTypeID,
@@ -952,8 +968,8 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		EntryMethod:         shipment.EntryMethodManual,
 		ProNumber:           pro,
 		BOL:                 bol,
-		Pieces:              ptr(p.pieces),
-		Weight:              ptr(p.weight),
+		Pieces:              volumegen.Ptr(p.pieces),
+		Weight:              volumegen.Ptr(p.weight),
 		FreightTerms:        shipment.FreightTermsPrepaid,
 		Version:             1,
 		Status:              shipment.StatusNew,
@@ -962,15 +978,15 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("0")),
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("0")),
 	}
-	if f.chance(0.08) {
+	if f.Chance(0.08) {
 		entity.FreightTerms = shipment.FreightTermsCollect
 	}
-	if f.chance(0.15) {
+	if f.Chance(0.15) {
 		entity.EntryMethod = shipment.EntryMethodEDI
-		entity.ExternalReference = b.externalRef(p, func() string { return "LT" + f.digits(9) })
-	} else if f.chance(0.2) {
+		entity.ExternalReference = b.externalRef(p, func() string { return "LT" + f.Digits(9) })
+	} else if f.Chance(0.2) {
 		entity.ExternalReference = b.externalRef(p, func() string {
-			return p.customer.Code + "-" + f.digits(6)
+			return p.customer.Code + "-" + f.Digits(6)
 		})
 	}
 	for _, c := range p.commodities {
@@ -985,7 +1001,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	totalMiles := 0.0
 	totalStops := 0
 	for m, timed := range timeline {
-		moveID := idAt("sm_", p.createdAt)
+		moveID := volumegen.IDAt("sm_", p.createdAt)
 		move := &shipment.ShipmentMove{
 			ID:             moveID,
 			BusinessUnitID: buID,
@@ -1003,7 +1019,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		}
 		for s, ts := range timed {
 			miles += ts.miles
-			stopID := idAt("stp_", p.createdAt)
+			stopID := volumegen.IDAt("stp_", p.createdAt)
 			pieces, weight := p.pieces, p.weight
 			if n := perType[ts.plan.typ]; n > 1 {
 				pieces = max(p.pieces/n, 1)
@@ -1018,10 +1034,10 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				Type:                 ts.plan.typ,
 				ScheduleType:         shipment.StopScheduleTypeOpen,
 				Sequence:             int64(s),
-				Pieces:               ptr(pieces),
-				Weight:               ptr(weight),
+				Pieces:               volumegen.Ptr(pieces),
+				Weight:               volumegen.Ptr(weight),
 				ScheduledWindowStart: ts.windowStart,
-				ScheduledWindowEnd:   ptr(ts.windowEnd),
+				ScheduledWindowEnd:   volumegen.Ptr(ts.windowEnd),
 				AddressLine:          shpAddressLine(ts.plan.loc),
 				Version:              1,
 				Status:               shipment.StopStatusNew,
@@ -1030,30 +1046,30 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				stop.ScheduleType = shipment.StopScheduleTypeAppointment
 			}
 			if !p.canceled && ts.arrival <= b.now {
-				stop.ActualArrival = ptr(ts.arrival)
+				stop.ActualArrival = volumegen.Ptr(ts.arrival)
 				lastActual = ts.arrival
 				if ts.departure <= b.now {
-					stop.ActualDeparture = ptr(ts.departure)
+					stop.ActualDeparture = volumegen.Ptr(ts.departure)
 					lastActual = ts.departure
 				}
 			}
 			move.Stops = append(move.Stops, stop)
 			totalStops++
 		}
-		move.Distance = ptr(math.Round(miles*10) / 10)
+		move.Distance = volumegen.Ptr(math.Round(miles*10) / 10)
 		move.DistanceSource = distancecalculation.SourcePCMiler
 		move.DistanceProvider = string(integration.TypePCMiler)
 		move.DistanceRoutingType = distanceprofile.DefaultRoutingType
 		move.DistanceUnits = distanceprofile.DefaultDistanceUnits
 		move.DistanceDataVersion = distanceprofile.DefaultDataVersion
-		move.DistanceCalculatedAt = ptr(p.createdAt)
+		move.DistanceCalculatedAt = volumegen.Ptr(p.createdAt)
 		totalMiles += miles
 		entity.Moves = append(entity.Moves, move)
 	}
 	totalMiles = math.Round(totalMiles*10) / 10
 
 	started := false
-	moveCrews := make(map[pulid.ID]*crew, len(entity.Moves))
+	moveCrews := make(map[pulid.ID]*volumegen.Crew, len(entity.Moves))
 	for m, move := range entity.Moves {
 		timed := timeline[m]
 		moveStarted := move.Stops[0].ActualArrival != nil
@@ -1069,23 +1085,23 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		var assign bool
 		switch {
 		case moveStarted, started, start < b.now:
-			assign = moveStarted || started || f.chance(0.95)
+			assign = moveStarted || started || f.Chance(0.95)
 			if started && !moveStarted {
-				assign = f.chance(0.85)
+				assign = f.Chance(0.85)
 			}
 		case lead <= 2*shpDay:
-			assign = f.chance(0.8)
+			assign = f.Chance(0.8)
 		case lead <= 7*shpDay:
-			assign = f.chance(0.45)
+			assign = f.Chance(0.45)
 		default:
-			assign = f.chance(0.15)
+			assign = f.Chance(0.15)
 		}
 		if !assign {
 			continue
 		}
 		assignedAt := min(b.at(p.createdAt+10*shpMinute, start-shpHour), b.now-shpMinute)
 		assignedAt = max(assignedAt, p.createdAt)
-		if len(b.g.carriers) > 0 && f.chance(0.12) {
+		if len(b.g.Carriers) > 0 && f.Chance(0.12) {
 			move.CarrierAssignment = b.carrierAssignment(move, p, assignedAt, moveStarted)
 			move.CoverageType = shipment.MoveCoverageTypeCarrier
 			continue
@@ -1097,12 +1113,12 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			entity.TrailerTypeID = pulid.FirstNotNil(c.TrailerTypeID, entity.TrailerTypeID)
 		}
 		a := &shipment.Assignment{
-			ID:                idAt("asn_", assignedAt),
+			ID:                volumegen.IDAt("asn_", assignedAt),
 			BusinessUnitID:    buID,
 			OrganizationID:    orgID,
 			ShipmentMoveID:    move.ID,
-			PrimaryWorkerID:   ptr(c.WorkerID),
-			TractorID:         ptr(c.TractorID),
+			PrimaryWorkerID:   volumegen.Ptr(c.WorkerID),
+			TractorID:         volumegen.Ptr(c.TractorID),
 			TrailerID:         pulid.PtrOrNil(c.TrailerID),
 			SecondaryWorkerID: c.SecondaryWorkerID,
 			Status:            shipment.AssignmentStatusNew,
@@ -1110,10 +1126,10 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 			Version:           1,
 			CreatedAt:         assignedAt,
 		}
-		if moveStarted || f.chance(0.75) {
+		if moveStarted || f.Chance(0.75) {
 			ackAt := min(assignedAt+b.at(5*shpMinute, 90*shpMinute), b.now)
 			a.AckStatus = shipment.AssignmentAckAccepted
-			a.AckAt = ptr(ackAt)
+			a.AckAt = volumegen.Ptr(ackAt)
 		}
 		move.Assignment = a
 		move.CoverageType = shipment.MoveCoverageTypeDriver
@@ -1129,9 +1145,9 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		}
 		canceledAt := b.at(p.createdAt+shpHour, min(p.pickupAt, b.now-shpMinute))
 		canceledBy := b.user()
-		entity.CanceledAt = ptr(canceledAt)
+		entity.CanceledAt = volumegen.Ptr(canceledAt)
 		entity.CanceledByID = canceledBy.ID
-		entity.CancelReason = pick(f, shpCancelReasons)
+		entity.CancelReason = volumegen.Pick(f, shpCancelReasons)
 		lastActual = canceledAt
 	} else if multiErr := b.coord.PrepareForCreateWithDelayThreshold(
 		entity,
@@ -1154,7 +1170,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		}
 	}
 
-	rec := &shipmentRecord{
+	rec := &volumegen.ShipmentRecord{
 		ID:          shipmentID,
 		OrderID:     orderID,
 		ProNumber:   pro,
@@ -1178,11 +1194,11 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 
 	updated := max(p.createdAt, lastActual)
 	switch rec.Stage {
-	case billingStageInvoiced:
+	case volumegen.BillingStageInvoiced:
 		updated = max(updated, rec.InvoiceDate)
-	case billingStageQueued:
+	case volumegen.BillingStageQueued:
 		updated = max(updated, rec.TransferredAt)
-	case billingStageNone:
+	case volumegen.BillingStageNone:
 	}
 	updated = min(updated, b.now)
 
@@ -1246,7 +1262,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	}
 	for _, c := range p.commodities {
 		sc := &shipment.ShipmentCommodity{
-			ID:             idAt("sc_", p.createdAt),
+			ID:             volumegen.IDAt("sc_", p.createdAt),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			ShipmentID:     shipmentID,
@@ -1263,18 +1279,18 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	b.checkCalls(batch, entity, timeline)
 	b.holds(batch, entity, rec)
 
-	b.g.shipments = append(b.g.shipments, rec)
+	b.g.Shipments = append(b.g.Shipments, rec)
 	return nil
 }
 
 func shpMoveRecords(
 	entity *shipment.Shipment,
 	timeline [][]*shpTimedStop,
-	crews map[pulid.ID]*crew,
-) []*moveRecord {
-	records := make([]*moveRecord, 0, len(entity.Moves))
+	crews map[pulid.ID]*volumegen.Crew,
+) []*volumegen.MoveRecord {
+	records := make([]*volumegen.MoveRecord, 0, len(entity.Moves))
 	for m, move := range entity.Moves {
-		rec := &moveRecord{
+		rec := &volumegen.MoveRecord{
 			ID:                move.ID,
 			Sequence:          move.Sequence,
 			Status:            move.Status,
@@ -1315,21 +1331,21 @@ func (b *shpBuilder) externalRef(p *shpPlan, draw func() string) string {
 	}
 }
 
-func (b *shpBuilder) poNumber(c *customerRecord) string {
-	f := b.g.fake
-	switch f.intn(4) {
+func (b *shpBuilder) poNumber(c *volumegen.CustomerRecord) string {
+	f := b.g.Fake
+	switch f.Intn(4) {
 	case 0:
-		return "PO" + f.digits(8)
+		return "PO" + f.Digits(8)
 	case 1:
-		return c.Code + "-" + f.digits(6)
+		return c.Code + "-" + f.Digits(6)
 	case 2:
-		return f.digits(7)
+		return f.Digits(7)
 	default:
-		return fmt.Sprintf("%s%s-%s", f.letters(2), f.digits(5), f.digits(2))
+		return fmt.Sprintf("%s%s-%s", f.Letters(2), f.Digits(5), f.Digits(2))
 	}
 }
 
-func shpAddressLine(loc *locationRecord) string {
+func shpAddressLine(loc *volumegen.LocationRecord) string {
 	return fmt.Sprintf("%s, %s, %s", loc.Address, loc.City.Name, loc.City.State)
 }
 
@@ -1350,11 +1366,11 @@ func shpOrderStatus(status shipment.Status) order.Status {
 	}
 }
 
-func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *shipmentRecord) {
+func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *volumegen.ShipmentRecord) {
 	if entity.Status != shipment.StatusCompleted || rec.DeliveredAt == 0 {
 		return
 	}
-	f := b.g.fake
+	f := b.g.Fake
 	age := b.now - rec.DeliveredAt
 
 	var weights []int
@@ -1369,9 +1385,9 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *shipmentRecord)
 		weights = []int{1, 2, 97}
 	}
 
-	choice := f.weighted(weights)
+	choice := f.Weighted(weights)
 	if choice == 2 {
-		lag := f.between64(shpDay, 10*shpDay)
+		lag := f.Between64(shpDay, 10*shpDay)
 		room := b.now - shpHour - rec.DeliveredAt
 		if room < 2*shpHour {
 			choice = 1
@@ -1380,13 +1396,13 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *shipmentRecord)
 			rec.InvoiceDate = rec.DeliveredAt + lag
 			rec.ReadyToBillAt = rec.DeliveredAt + b.at(shpHour, max(lag/3, shpHour))
 			rec.TransferredAt = b.at(rec.ReadyToBillAt, rec.InvoiceDate-shpMinute)
-			rec.Stage = billingStageInvoiced
+			rec.Stage = volumegen.BillingStageInvoiced
 			rec.QueueStatus = billingqueue.StatusPosted
 			entity.Status = shipment.StatusInvoiced
 			entity.BillingTransferStatus = shipment.BillingTransferPosted
-			entity.MarkedReadyToBillAt = ptr(rec.ReadyToBillAt)
-			entity.TransferredToBillingAt = ptr(rec.TransferredAt)
-			entity.BilledAt = ptr(rec.InvoiceDate)
+			entity.MarkedReadyToBillAt = volumegen.Ptr(rec.ReadyToBillAt)
+			entity.TransferredToBillingAt = volumegen.Ptr(rec.TransferredAt)
+			entity.BilledAt = volumegen.Ptr(rec.InvoiceDate)
 			return
 		}
 	}
@@ -1397,7 +1413,7 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *shipmentRecord)
 	rec.ReadyToBillAt = min(rec.DeliveredAt+b.at(2*shpHour, 2*shpDay), b.now-2*shpMinute)
 	rec.ReadyToBillAt = max(rec.ReadyToBillAt, rec.DeliveredAt)
 	rec.TransferredAt = b.at(rec.ReadyToBillAt, min(rec.ReadyToBillAt+shpDay, b.now-shpMinute))
-	rec.Stage = billingStageQueued
+	rec.Stage = volumegen.BillingStageQueued
 	rec.QueueStatus = []billingqueue.Status{
 		billingqueue.StatusReadyForReview,
 		billingqueue.StatusInReview,
@@ -1405,11 +1421,11 @@ func (b *shpBuilder) planBilling(entity *shipment.Shipment, rec *shipmentRecord)
 		billingqueue.StatusException,
 		billingqueue.StatusSentBackToOps,
 		billingqueue.StatusApproved,
-	}[f.weighted([]int{40, 25, 10, 10, 5, 10})]
+	}[f.Weighted([]int{40, 25, 10, 10, 5, 10})]
 	entity.Status = shipment.StatusReadyToInvoice
 	entity.BillingTransferStatus = shipment.BillingTransferStatus(rec.QueueStatus)
-	entity.MarkedReadyToBillAt = ptr(rec.ReadyToBillAt)
-	entity.TransferredToBillingAt = ptr(rec.TransferredAt)
+	entity.MarkedReadyToBillAt = volumegen.Ptr(rec.ReadyToBillAt)
+	entity.TransferredToBillingAt = volumegen.Ptr(rec.TransferredAt)
 }
 
 func (b *shpBuilder) template(names ...string) *formulatemplate.FormulaTemplate {
@@ -1422,23 +1438,23 @@ func (b *shpBuilder) template(names ...string) *formulatemplate.FormulaTemplate 
 }
 
 func (b *shpBuilder) fuelPercent(at int64) decimal.Decimal {
-	phase := float64(at-unix(b.g.start)) / float64(365*shpDay) * 2 * math.Pi
-	pct := 22 + 6*math.Sin(phase) + (b.g.fake.float()-0.5)*3
+	phase := float64(at-volumegen.Unix(b.g.Start)) / float64(365*shpDay) * 2 * math.Pi
+	pct := 22 + 6*math.Sin(phase) + (b.g.Fake.Float()-0.5)*3
 	return decimal.NewFromFloat(pct).Round(1)
 }
 
 //nolint:funlen // the rate, its method and every accessorial are priced together
 func (b *shpBuilder) price(
 	entity *shipment.Shipment,
-	rec *shipmentRecord,
+	rec *volumegen.ShipmentRecord,
 	p *shpPlan,
 	miles float64,
 	stops int,
 	batch *shpBatch,
 ) {
-	f := b.g.fake
+	f := b.g.Fake
 	rpm := 2.15 + 160/(miles+40)
-	rpm *= b.customerFactor[p.customer.ID] * (0.92 + f.float()*0.16)
+	rpm *= b.customerFactor[p.customer.ID] * (0.92 + f.Float()*0.16)
 	if p.reefer {
 		rpm *= 1.14
 	}
@@ -1454,13 +1470,13 @@ func (b *shpBuilder) price(
 	if p.team {
 		rpm *= 1.12
 	}
-	target := math.Max(miles*rpm, shpMinimumPrice+f.float()*100)
+	target := math.Max(miles*rpm, shpMinimumPrice+f.Float()*100)
 
 	var tmpl *formulatemplate.FormulaTemplate
 	var baseRate, freight decimal.Decimal
 	var unit shpRateUnit
 	cwt := decimal.NewFromInt((p.weight + 99) / 100)
-	roll := f.float()
+	roll := f.Float()
 	switch {
 	case p.weight < 12_000 && roll < 0.5 && b.template(formulatemplate.StandardPerCwt) != nil:
 		tmpl = b.template(formulatemplate.StandardPerCwt)
@@ -1483,7 +1499,7 @@ func (b *shpBuilder) price(
 		baseRate = decimal.NewFromFloat(math.Round(target/5) * 5)
 	}
 	if tmpl == nil {
-		tmpl = pick(f, b.g.refs.templates)
+		tmpl = volumegen.Pick(f, b.g.Refs.Templates)
 		baseRate = decimal.NewFromFloat(math.Round(target/5) * 5)
 		unit = shpRateUnit{}
 	}
@@ -1496,17 +1512,17 @@ func (b *shpBuilder) price(
 		entity.Status == shipment.StatusReadyToInvoice ||
 		entity.Status == shipment.StatusInvoiced
 
-	var charges []chargeRecord
+	var charges []volumegen.ChargeRecord
 	add := func(code string, amount decimal.Decimal, unit int64, at int64) {
-		acc := b.g.refs.accessorial(code)
+		acc := b.g.Refs.Accessorial(code)
 		if acc == nil || amount.LessThanOrEqual(decimal.Zero) {
 			return
 		}
-		id := idAt("ac_", at)
+		id := volumegen.IDAt("ac_", at)
 		ac := &shipment.AdditionalCharge{
 			ID:                  id,
-			BusinessUnitID:      b.g.refs.buID,
-			OrganizationID:      b.g.refs.orgID,
+			BusinessUnitID:      b.g.Refs.BuID,
+			OrganizationID:      b.g.Refs.OrgID,
 			ShipmentID:          entity.ID,
 			AccessorialChargeID: acc.ID,
 			Method:              acc.Method,
@@ -1515,7 +1531,7 @@ func (b *shpBuilder) price(
 			IsDetention:         strings.EqualFold(acc.Code, "DET"),
 			Version:             1,
 		}
-		cr := chargeRecord{
+		cr := volumegen.ChargeRecord{
 			AccessorialChargeID: acc.ID,
 			AdditionalChargeID:  id,
 			Code:                acc.Code,
@@ -1539,14 +1555,14 @@ func (b *shpBuilder) price(
 		charges = append(charges, cr)
 	}
 	rate := func(code string, fallback float64) decimal.Decimal {
-		if acc := b.g.refs.accessorial(code); acc != nil && acc.Amount.GreaterThan(decimal.Zero) {
+		if acc := b.g.Refs.Accessorial(code); acc != nil && acc.Amount.GreaterThan(decimal.Zero) {
 			return acc.Amount
 		}
 		return decimal.NewFromFloat(fallback)
 	}
 
 	if !p.canceled {
-		if f.chance(0.85) {
+		if f.Chance(0.85) {
 			add("FUEL", b.fuelPercent(p.pickupAt), 1, rec.CreatedAt)
 		}
 		if extra := stops - 2; extra > 0 && !p.relay {
@@ -1558,24 +1574,24 @@ func (b *shpBuilder) price(
 		if p.team {
 			add("TEAM", rate("TEAM", 0.25), int64(math.Ceil(miles)), rec.CreatedAt)
 		}
-		if p.flatbed && f.chance(0.5) {
+		if p.flatbed && f.Chance(0.5) {
 			add("TARP", rate("TARP", 75), 1, rec.CreatedAt)
 		}
-	} else if f.chance(0.3) {
+	} else if f.Chance(0.3) {
 		add("TONU", rate("TONU", 250), 1, *entity.CanceledAt)
 	}
 	if delivered {
 		at := rec.DeliveredAt
 		if p.detention {
-			add("DET", rate("DET", 75), f.between64(1, 4), at)
+			add("DET", rate("DET", 75), f.Between64(1, 4), at)
 		}
-		if f.chance(0.07) {
-			add("LUMP", b.g.fake.money(150, 450), 1, at)
+		if f.Chance(0.07) {
+			add("LUMP", b.g.Fake.Money(150, 450), 1, at)
 		}
-		if f.chance(0.01) {
+		if f.Chance(0.01) {
 			add("LAY", rate("LAY", 250), 1, at)
 		}
-		if f.chance(0.015) {
+		if f.Chance(0.015) {
 			add("RESDL", rate("RESDL", 125), 1, at)
 		}
 	}
@@ -1631,9 +1647,9 @@ func (u shpRateUnit) inputs(rate decimal.Decimal) tarifftypes.Inputs {
 func (u shpRateUnit) line(rate, amount decimal.Decimal) shipment.FreightLine {
 	line := shipment.FreightLine{Label: shpFreightLabel, Amount: amount}
 	if u.rate != "" {
-		line.Quantity = ptr(u.quantity)
+		line.Quantity = volumegen.Ptr(u.quantity)
 		line.QuantityUnit = u.quantityUnit
-		line.Rate = ptr(rate)
+		line.Rate = volumegen.Ptr(rate)
 		line.RateUnit = rules.UnitMoney + u.rate
 	}
 	return line
@@ -1695,14 +1711,14 @@ var shpCountValues = []int{0, 1, 2, 3, 4, 5, 6, 8, 12, 20}
 func (b *shpBuilder) comments(
 	batch *shpBatch,
 	entity *shipment.Shipment,
-	rec *shipmentRecord,
+	rec *volumegen.ShipmentRecord,
 	p *shpPlan,
 	timeline [][]*shpTimedStop,
 ) {
-	f := b.g.fake
+	f := b.g.Fake
 	count := int(
 		math.Round(
-			float64(shpCountValues[f.weighted(shpCountWeights)]) * b.g.scale.commentRate / 2.4,
+			float64(shpCountValues[f.Weighted(shpCountWeights)]) * b.g.Scale.CommentRate / 2.4,
 		),
 	)
 	if count == 0 {
@@ -1876,7 +1892,7 @@ func (b *shpBuilder) comments(
 					fmt.Sprintf(
 						"Loaded and rolling from %s, seal %s.",
 						origin.City.Name,
-						f.digits(7),
+						f.Digits(7),
 					),
 				)
 			},
@@ -1894,12 +1910,12 @@ func (b *shpBuilder) comments(
 				addSpec(shipment.CommentTypeException, shipment.CommentVisibilityOperations,
 					shipment.CommentPriorityHigh, departed, transitEnd,
 					fmt.Sprintf("Running %d hours behind on weather near %s. New ETA %s.",
-						f.between(2, 6), pick(f, cities).Name, deliveryAppt))
+						f.Between(2, 6), volumegen.Pick(f, volumegen.Cities).Name, deliveryAppt))
 			},
 			func() {
 				addSpec(shipment.CommentTypeException, shipment.CommentVisibilityOperations,
 					shipment.CommentPriorityUrgent, departed, transitEnd,
-					pick(f, []string{
+					volumegen.Pick(f, []string{
 						"Tractor down with a DEF sensor fault; road service dispatched, ETA 2 hours.",
 						"Driver out of hours short of the receiver; delivering first thing tomorrow.",
 						fmt.Sprintf(
@@ -1927,7 +1943,7 @@ func (b *shpBuilder) comments(
 			transit = append(transit, func() {
 				addSpec(shipment.CommentTypeDriverUpdate, shipment.CommentVisibilityOperations,
 					shipment.CommentPriorityNormal, departed, transitEnd,
-					fmt.Sprintf("Reefer holding %d°F, return air steady.", f.between(-5, 38)))
+					fmt.Sprintf("Reefer holding %d°F, return air steady.", f.Between(-5, 38)))
 			})
 		}
 	}
@@ -1947,8 +1963,8 @@ func (b *shpBuilder) comments(
 					delivered+shpDay,
 					fmt.Sprintf(
 						"Clean POD signed by %s %s at %s.",
-						f.firstName(),
-						f.lastName(),
+						f.FirstName(),
+						f.LastName(),
 						dest.Name,
 					),
 				)
@@ -1994,7 +2010,7 @@ func (b *shpBuilder) comments(
 
 	for range count {
 		pool := pre
-		switch roll := f.float(); {
+		switch roll := f.Float(); {
 		case roll < 0.35:
 		case roll < 0.7 && len(transit) > 0:
 			pool = transit
@@ -2003,7 +2019,7 @@ func (b *shpBuilder) comments(
 		case len(transit) > 0:
 			pool = transit
 		}
-		pick(f, pool)()
+		volumegen.Pick(f, pool)()
 	}
 	if len(specs) == 0 {
 		return
@@ -2015,9 +2031,9 @@ func (b *shpBuilder) comments(
 		spec := &specs[i]
 		author := b.user()
 		c := &shipment.ShipmentComment{
-			ID:             idAt("shc_", spec.at),
-			BusinessUnitID: b.g.refs.buID,
-			OrganizationID: b.g.refs.orgID,
+			ID:             volumegen.IDAt("shc_", spec.at),
+			BusinessUnitID: b.g.Refs.BuID,
+			OrganizationID: b.g.Refs.OrgID,
 			ShipmentID:     entity.ID,
 			UserID:         author.ID,
 			Comment:        spec.text,
@@ -2029,25 +2045,25 @@ func (b *shpBuilder) comments(
 			Version:        1,
 			CreatedAt:      spec.at,
 		}
-		if spec.typ == shipment.CommentTypeStatusUpdate && f.chance(0.6) {
+		if spec.typ == shipment.CommentTypeStatusUpdate && f.Chance(0.6) {
 			c.Source = shipment.CommentSourceSystem
 			c.UserID = pulid.Nil
 		}
-		if spec.typ == shipment.CommentTypeDriverUpdate && f.chance(0.4) {
+		if spec.typ == shipment.CommentTypeDriverUpdate && f.Chance(0.4) {
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginDash
 		}
 		if entity.EntryMethod == shipment.EntryMethodEDI &&
 			spec.typ == shipment.CommentTypeAppointment &&
-			f.chance(0.5) {
+			f.Chance(0.5) {
 			c.Source = shipment.CommentSourceIntegration
 			c.Metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginEDI
 		}
 
 		updated := spec.at
-		if len(topLevel) > 0 && c.Source == shipment.CommentSourceUser && f.chance(0.2) {
-			parent := pick(f, topLevel)
-			c.ParentCommentID = ptr(parent.ID)
-			c.Comment = pick(f, shpReplies)
+		if len(topLevel) > 0 && c.Source == shipment.CommentSourceUser && f.Chance(0.2) {
+			parent := volumegen.Pick(f, topLevel)
+			c.ParentCommentID = volumegen.Ptr(parent.ID)
+			c.Comment = volumegen.Pick(f, shpReplies)
 			c.Type = parent.Type
 			c.Visibility = parent.Visibility
 			c.Priority = shipment.CommentPriorityNormal
@@ -2055,7 +2071,7 @@ func (b *shpBuilder) comments(
 			topLevel = append(topLevel, c)
 		}
 
-		if c.UserID.IsNotNil() && c.ParentCommentID == nil && f.chance(0.12) {
+		if c.UserID.IsNotNil() && c.ParentCommentID == nil && f.Chance(0.12) {
 			if mentioned, ok := b.otherUser(c.UserID); ok {
 				ask := " please take a look."
 				c.Body = map[string]any{
@@ -2077,30 +2093,30 @@ func (b *shpBuilder) comments(
 				}
 				c.Comment = c.Comment + " @" + mentioned.Name + ask
 				batch.mentions = append(batch.mentions, &shipment.ShipmentCommentMention{
-					ID:              idAt("scm_", spec.at),
+					ID:              volumegen.IDAt("scm_", spec.at),
 					CommentID:       c.ID,
 					MentionedUserID: mentioned.ID,
-					OrganizationID:  b.g.refs.orgID,
-					BusinessUnitID:  b.g.refs.buID,
+					OrganizationID:  b.g.Refs.OrgID,
+					BusinessUnitID:  b.g.Refs.BuID,
 					ShipmentID:      entity.ID,
 					CreatedAt:       spec.at,
 				})
 			}
 		}
 
-		if c.ParentCommentID == nil && f.chance(0.04) {
+		if c.ParentCommentID == nil && f.Chance(0.04) {
 			pinnedAt := min(spec.at+b.at(shpMinute, 6*shpHour), b.now)
 			pinner := b.user()
-			c.PinnedAt = ptr(pinnedAt)
-			c.PinnedByID = ptr(pinner.ID)
+			c.PinnedAt = volumegen.Ptr(pinnedAt)
+			c.PinnedByID = volumegen.Ptr(pinner.ID)
 			updated = pinnedAt
 		}
 		if c.Type == shipment.CommentTypeException && c.ParentCommentID == nil {
 			if spec.priority == shipment.CommentPriorityUrgent && c.UserID.IsNotNil() &&
-				f.chance(0.5) {
+				f.Chance(0.5) {
 				c.RequiresAcknowledgment = true
 				seen := map[pulid.ID]bool{c.UserID: true}
-				for range f.between(1, 2) {
+				for range f.Between(1, 2) {
 					u, ok := b.otherUser(c.UserID)
 					if !ok || seen[u.ID] {
 						continue
@@ -2111,22 +2127,22 @@ func (b *shpBuilder) comments(
 						continue
 					}
 					batch.acks = append(batch.acks, &shipment.ShipmentCommentAcknowledgment{
-						ID:             idAt("sck_", ackAt),
+						ID:             volumegen.IDAt("sck_", ackAt),
 						CommentID:      c.ID,
-						BusinessUnitID: b.g.refs.buID,
-						OrganizationID: b.g.refs.orgID,
+						BusinessUnitID: b.g.Refs.BuID,
+						OrganizationID: b.g.Refs.OrgID,
 						ShipmentID:     entity.ID,
 						UserID:         u.ID,
 						AcknowledgedAt: ackAt,
 					})
 				}
 			}
-			if f.chance(0.6) {
+			if f.Chance(0.6) {
 				resolvedAt := spec.at + b.at(shpHour, shpDay)
 				if resolvedAt <= b.now {
 					resolver := b.user()
-					c.ResolvedAt = ptr(resolvedAt)
-					c.ResolvedByID = ptr(resolver.ID)
+					c.ResolvedAt = volumegen.Ptr(resolvedAt)
+					c.ResolvedByID = volumegen.Ptr(resolver.ID)
 					updated = max(updated, resolvedAt)
 				}
 			}
@@ -2137,7 +2153,11 @@ func (b *shpBuilder) comments(
 	}
 }
 
-func shpDeliveryInstruction(f *faker, dest *locationRecord, charged map[string]bool) string {
+func shpDeliveryInstruction(
+	f *volumegen.Faker,
+	dest *volumegen.LocationRecord,
+	charged map[string]bool,
+) string {
 	options := []string{
 		fmt.Sprintf(
 			"Receiver at %s unloads doors 12-18 only. No deliveries after 14:00.",
@@ -2160,7 +2180,7 @@ func shpDeliveryInstruction(f *faker, dest *locationRecord, charged map[string]b
 			fmt.Sprintf("Liftgate needed at %s, no dock available.", dest.Name),
 		)
 	}
-	return pick(f, options)
+	return volumegen.Pick(f, options)
 }
 
 func shpPORef(prefix, po, suffix string) string {
@@ -2170,7 +2190,12 @@ func shpPORef(prefix, po, suffix string) string {
 	return prefix + po + suffix
 }
 
-func shpBillingNote(f *faker, c *customerRecord, po string, charged map[string]bool) string {
+func shpBillingNote(
+	f *volumegen.Faker,
+	c *volumegen.CustomerRecord,
+	po string,
+	charged map[string]bool,
+) string {
 	options := []string{"POD and BOL on file; ready to bill."}
 	if po != "" {
 		options = append(options, fmt.Sprintf("%s requires PO %s on the invoice.", c.Name, po))
@@ -2181,10 +2206,10 @@ func shpBillingNote(f *faker, c *customerRecord, po string, charged map[string]b
 	if charged["DET"] {
 		options = append(options, "AP asked for the detention log before they release payment.")
 	}
-	return pick(f, options)
+	return volumegen.Pick(f, options)
 }
 
-func (b *shpBuilder) localTime(at int64, loc *locationRecord) string {
+func (b *shpBuilder) localTime(at int64, loc *volumegen.LocationRecord) string {
 	return time.Unix(at, 0).In(b.zone(loc.City.Timezone)).Format("Mon Jan 2 15:04 MST")
 }
 
@@ -2199,19 +2224,19 @@ func (b *shpBuilder) checkCalls(
 	if entity.ActualDeliveryDate != nil && b.now-*entity.ActualDeliveryDate > 21*shpDay {
 		return
 	}
-	f := b.g.fake
-	add := func(move *shipment.ShipmentMove, stopID pulid.ID, kind checkcall.Kind, at int64, c *cityRecord) {
+	f := b.g.Fake
+	add := func(move *shipment.ShipmentMove, stopID pulid.ID, kind checkcall.Kind, at int64, c *volumegen.CityRecord) {
 		if at > b.now {
 			return
 		}
-		lat, lon := f.jitter(c)
+		lat, lon := f.Jitter(c)
 		reporter := b.user()
-		id := idAt("chkc_", at)
-		received := min(at+f.between64(0, 5*shpMinute), b.now)
+		id := volumegen.IDAt("chkc_", at)
+		received := min(at+f.Between64(0, 5*shpMinute), b.now)
 		cc := &checkcall.CheckCall{
 			ID:             id,
-			OrganizationID: b.g.refs.orgID,
-			BusinessUnitID: b.g.refs.buID,
+			OrganizationID: b.g.Refs.OrgID,
+			BusinessUnitID: b.g.Refs.BuID,
 			ShipmentID:     entity.ID,
 			ShipmentMoveID: move.ID,
 			StopID:         stopID,
@@ -2220,14 +2245,14 @@ func (b *shpBuilder) checkCalls(
 			Kind:           kind,
 			ReportedAt:     at,
 			ReceivedAt:     received,
-			Latitude:       ptr(lat),
-			Longitude:      ptr(lon),
+			Latitude:       volumegen.Ptr(lat),
+			Longitude:      volumegen.Ptr(lon),
 			City:           c.Name,
 			StateCode:      c.State,
 			ReportedByID:   reporter.ID,
 			CreatedAt:      received,
 		}
-		if f.chance(0.15) {
+		if f.Chance(0.15) {
 			cc.Source = checkcall.SourceAgent
 			cc.ReportedByID = pulid.Nil
 		}
@@ -2243,7 +2268,7 @@ func (b *shpBuilder) checkCalls(
 			if stop.ActualDeparture != nil {
 				add(move, stop.ID, checkcall.KindDeparture, *stop.ActualDeparture, c)
 			}
-			if s == 0 || stop.ActualArrival != nil && f.chance(0.5) {
+			if s == 0 || stop.ActualArrival != nil && f.Chance(0.5) {
 				continue
 			}
 			prev := move.Stops[s-1]
@@ -2255,7 +2280,7 @@ func (b *shpBuilder) checkCalls(
 			if stop.ActualArrival != nil {
 				legEnd = *stop.ActualArrival
 			}
-			for range f.between(1, 3) {
+			for range f.Between(1, 3) {
 				at := b.at(*prev.ActualDeparture+shpHour, legEnd-shpHour)
 				if at <= *prev.ActualDeparture || at >= legEnd {
 					break
@@ -2265,15 +2290,17 @@ func (b *shpBuilder) checkCalls(
 				) / float64(
 					max(legEnd-*prev.ActualDeparture, 1),
 				)
-				point := shpNearestCity(from, c, share)
+				point := volumegen.NearestCity(from, c, share)
 				add(move, pulid.Nil, checkcall.KindUpdate, at, point)
 				if entity.Status == shipment.StatusDelayed && stop.ActualArrival == nil {
 					last := batch.checkCalls[len(batch.checkCalls)-1]
 					if last.ShipmentID == entity.ID && last.Kind == checkcall.KindUpdate &&
 						!last.Delayed {
 						last.Delayed = true
-						last.DelayReason = pick(f, shpDelayReasons)
-						last.EstimatedArrival = ptr(b.now + f.between64(shpHour, 8*shpHour))
+						last.DelayReason = volumegen.Pick(f, shpDelayReasons)
+						last.EstimatedArrival = volumegen.Ptr(
+							b.now + f.Between64(shpHour, 8*shpHour),
+						)
 					}
 				}
 			}
@@ -2281,55 +2308,45 @@ func (b *shpBuilder) checkCalls(
 	}
 }
 
-func shpNearestCity(from, to *cityRecord, share float64) *cityRecord {
-	lat := from.Lat + (to.Lat-from.Lat)*share
-	lon := from.Lon + (to.Lon-from.Lon)*share
-	point := &cityRecord{Lat: lat, Lon: lon}
-	best := &cities[0]
-	bestMiles := math.MaxFloat64
-	for i := range cities {
-		if d := haversineMiles(point, &cities[i]); d < bestMiles {
-			best, bestMiles = &cities[i], d
-		}
-	}
-	return best
-}
-
-func (b *shpBuilder) holds(batch *shpBatch, entity *shipment.Shipment, rec *shipmentRecord) {
+func (b *shpBuilder) holds(
+	batch *shpBatch,
+	entity *shipment.Shipment,
+	rec *volumegen.ShipmentRecord,
+) {
 	if len(b.look.holdReasons) == 0 {
 		return
 	}
-	f := b.g.fake
+	f := b.g.Fake
 	var started int64
 	var released *int64
 	switch {
-	case entity.Status == shipment.StatusDelayed && f.chance(0.35):
+	case entity.Status == shipment.StatusDelayed && f.Chance(0.35):
 		started = b.at(rec.PickupAt, b.now-shpMinute)
-	case rec.DeliveredAt > 0 && b.now-rec.DeliveredAt < 60*shpDay && f.chance(0.03):
+	case rec.DeliveredAt > 0 && b.now-rec.DeliveredAt < 60*shpDay && f.Chance(0.03):
 		started = b.at(rec.PickupAt, rec.DeliveredAt)
-		released = ptr(b.at(started+shpHour, rec.DeliveredAt+shpHour))
+		released = volumegen.Ptr(b.at(started+shpHour, rec.DeliveredAt+shpHour))
 	default:
 		return
 	}
-	reason := pick(f, b.look.holdReasons)
+	reason := volumegen.Pick(f, b.look.holdReasons)
 	author := b.user()
 	h := &shipmenthold.ShipmentHold{
-		ID:                idAt("shh_", started),
+		ID:                volumegen.IDAt("shh_", started),
 		ShipmentID:        entity.ID,
-		BusinessUnitID:    b.g.refs.buID,
-		OrganizationID:    b.g.refs.orgID,
-		HoldReasonID:      ptr(reason.ID),
+		BusinessUnitID:    b.g.Refs.BuID,
+		OrganizationID:    b.g.Refs.OrgID,
+		HoldReasonID:      volumegen.Ptr(reason.ID),
 		Type:              reason.Type,
 		Severity:          reason.DefaultSeverity,
 		ReasonCode:        reason.Code,
-		Notes:             pick(f, shpHoldNotes),
+		Notes:             volumegen.Pick(f, shpHoldNotes),
 		Source:            shipmenthold.HoldSourceUser,
 		BlocksDispatch:    reason.DefaultBlocksDispatch,
 		BlocksDelivery:    reason.DefaultBlocksDelivery,
 		BlocksBilling:     reason.DefaultBlocksBilling,
 		VisibleToCustomer: reason.DefaultVisibleToCustomer,
 		StartedAt:         started,
-		CreatedByID:       ptr(author.ID),
+		CreatedByID:       volumegen.Ptr(author.ID),
 		Version:           1,
 	}
 	if released != nil {
@@ -2351,28 +2368,28 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 		{
 			shpTableOrders,
 			len(batch.orders),
-			func() error { return insertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) },
+			func() error { return volumegen.InsertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) },
 		},
 		{
 			shpTableShipments,
 			len(batch.shipments),
-			func() error { return insertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) },
 		},
 		{
 			shpTableMoves,
 			len(batch.moves),
-			func() error { return insertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) },
 		},
 		{
 			shpTableStops,
 			len(batch.stops),
-			func() error { return insertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) },
 		},
 		{shpTableAssignments, len(batch.assignments), func() error {
-			return insertRows(ctx, tx, shipmentdb.Assignments.Handle, batch.assignments)
+			return volumegen.InsertRows(ctx, tx, shipmentdb.Assignments.Handle, batch.assignments)
 		}},
 		{shpTableCarrierAssignments, len(batch.carrierAssignments), func() error {
-			return insertRows(
+			return volumegen.InsertRows(
 				ctx,
 				tx,
 				shipmentdb.CarrierAssignments.Handle,
@@ -2380,31 +2397,46 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 			)
 		}},
 		{shpTableCommodities, len(batch.commodities), func() error {
-			return insertRows(ctx, tx, shipmentdb.ShipmentCommodities.Handle, batch.commodities)
+			return volumegen.InsertRows(
+				ctx,
+				tx,
+				shipmentdb.ShipmentCommodities.Handle,
+				batch.commodities,
+			)
 		}},
 		{
 			shpTableCharges,
 			len(batch.charges),
-			func() error { return insertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) },
 		},
 		{
 			shpTableComments,
 			len(batch.comments),
-			func() error { return insertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) },
 		},
 		{"shipment_comment_mentions", len(batch.mentions), func() error {
-			return insertRows(ctx, tx, shipmentdb.ShipmentCommentMentions.Handle, batch.mentions)
+			return volumegen.InsertRows(
+				ctx,
+				tx,
+				shipmentdb.ShipmentCommentMentions.Handle,
+				batch.mentions,
+			)
 		}},
 		{"shipment_comment_acknowledgments", len(batch.acks), func() error {
-			return insertRows(ctx, tx, shipmentdb.ShipmentCommentAcknowledgments.Handle, batch.acks)
+			return volumegen.InsertRows(
+				ctx,
+				tx,
+				shipmentdb.ShipmentCommentAcknowledgments.Handle,
+				batch.acks,
+			)
 		}},
 		{
 			shpTableHolds,
 			len(batch.holds),
-			func() error { return insertRows(ctx, tx, shipmentholddb.ShipmentHolds.Handle, batch.holds) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentholddb.ShipmentHolds.Handle, batch.holds) },
 		},
 		{"check_calls", len(batch.checkCalls), func() error {
-			return insertRows(ctx, tx, checkcalldb.CheckCalls.Handle, batch.checkCalls)
+			return volumegen.InsertRows(ctx, tx, checkcalldb.CheckCalls.Handle, batch.checkCalls)
 		}},
 	}
 	for _, step := range steps {
@@ -2423,7 +2455,7 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 	}
 	slices.Sort(tables)
 	for _, table := range tables {
-		if err := backdateTable(ctx, tx, table, batch.stamps[table]); err != nil {
+		if err := volumegen.BackdateTable(ctx, tx, table, batch.stamps[table]); err != nil {
 			return err
 		}
 	}
@@ -2452,7 +2484,7 @@ func (b *shpBuilder) releaseHolds(ctx context.Context, tx *keel.DB, releases []s
 		tx,
 		sh.ReleasedAt.ToExpr(d.Col("released_at")),
 		sh.ReleasedByID.ToExpr(d.Col("released_by_id")),
-		keepUpdated(sh.Handle),
+		volumegen.KeepUpdated(sh.Handle),
 	); err != nil {
 		return fmt.Errorf("release shipment holds: %w", err)
 	}
@@ -2498,4 +2530,12 @@ var shpHoldNotes = []string{
 	"Load secured, waiting on road conditions to clear.",
 	"Paperwork mismatch at pickup; waiting on a corrected BOL.",
 	"Customer asked us to hold delivery until Monday.",
+}
+
+type shipmentPhase struct {
+	*volumegen.Generator
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&shipmentPhase{Generator: g}).seedShipments(ctx)
 }

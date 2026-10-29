@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"strings"
@@ -13,7 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type customerRecord struct {
+type CustomerRecord struct {
 	ID           pulid.ID
 	Code         string
 	Name         string
@@ -24,22 +24,22 @@ type customerRecord struct {
 	PaymentTerm  invoice.PaymentTerm
 	BillingEmail string
 	Weight       int
-	Home         *cityRecord
-	Facilities   []*locationRecord
-	Factoring    []*facPeriod
+	Home         *CityRecord
+	Facilities   []*LocationRecord
+	Factoring    []*FactorPeriod
 }
 
-type locationRecord struct {
+type LocationRecord struct {
 	ID        pulid.ID
 	Code      string
 	Name      string
-	City      *cityRecord
+	City      *CityRecord
 	Address   string
 	Shipper   bool
 	Consignee bool
 }
 
-type commodityRecord struct {
+type CommodityRecord struct {
 	ID             pulid.ID
 	Name           string
 	WeightPerPiece int64
@@ -48,62 +48,62 @@ type commodityRecord struct {
 	TempMax        *int16
 }
 
-type crew struct {
+type Crew struct {
 	WorkerID          pulid.ID
 	SecondaryWorkerID *pulid.ID
 	TractorID         pulid.ID
 	TractorTypeID     pulid.ID
 	TrailerID         pulid.ID
 	TrailerTypeID     pulid.ID
-	TrailerKind       trailerKind
+	TrailerKind       TrailerKind
 	Hazmat            bool
 	HomeState         string
 }
 
-type trailerKind string
+type TrailerKind string
 
 const (
-	trailerKindDry     = trailerKind("dry")
-	trailerKindReefer  = trailerKind("reefer")
-	trailerKindFlatbed = trailerKind("flatbed")
-	trailerKindOther   = trailerKind("other")
+	TrailerKindDry     = TrailerKind("dry")
+	TrailerKindReefer  = TrailerKind("reefer")
+	TrailerKindFlatbed = TrailerKind("flatbed")
+	TrailerKindOther   = TrailerKind("other")
 )
 
-func trailerKindOf(et *equipmenttype.EquipmentType) trailerKind {
+func TrailerKindOf(et *equipmenttype.EquipmentType) TrailerKind {
 	text := strings.ToUpper(et.Code + " " + et.Description)
 	switch {
 	case strings.Contains(text, "REEF"), strings.Contains(text, "REFRIGERAT"):
-		return trailerKindReefer
+		return TrailerKindReefer
 	case strings.Contains(text, "FLAT"), strings.Contains(text, "STEP DECK"):
-		return trailerKindFlatbed
+		return TrailerKindFlatbed
 	case strings.Contains(text, "DRY"), strings.Contains(text, "VAN"),
 		strings.EqualFold(et.Code, "TRAILER"):
-		return trailerKindDry
+		return TrailerKindDry
 	default:
-		return trailerKindOther
+		return TrailerKindOther
 	}
 }
 
-type driverRecord struct {
+type DriverRecord struct {
 	WorkerID    pulid.ID
 	FleetCodeID pulid.ID
 	Type        worker.WorkerType
 	DriverType  worker.DriverType
 	Active      bool
 	HireDate    int64
-	Home        *cityRecord
+	Home        *CityRecord
 	TractorID   pulid.ID
 }
 
-type moveRecord struct {
+type MoveRecord struct {
 	ID                pulid.ID
 	Sequence          int64
 	Status            shipment.MoveStatus
 	Miles             float64
-	Cities            []*cityRecord
+	Cities            []*CityRecord
 	StartedAt         int64
 	CompletedAt       int64
-	Crew              *crew
+	Crew              *Crew
 	AssignmentID      pulid.ID
 	CarrierAssignment *shipment.CarrierAssignment
 }
@@ -111,12 +111,12 @@ type moveRecord struct {
 type billingStage int
 
 const (
-	billingStageNone billingStage = iota
-	billingStageQueued
-	billingStageInvoiced
+	BillingStageNone billingStage = iota
+	BillingStageQueued
+	BillingStageInvoiced
 )
 
-type chargeRecord struct {
+type ChargeRecord struct {
 	AccessorialChargeID pulid.ID
 	AdditionalChargeID  pulid.ID
 	Code                string
@@ -127,14 +127,14 @@ type chargeRecord struct {
 	Amount              decimal.Decimal
 }
 
-type shipmentRecord struct {
+type ShipmentRecord struct {
 	ID                pulid.ID
 	OrderID           pulid.ID
 	ProNumber         string
 	BOL               string
 	OrderNumber       string
 	PONumber          string
-	Customer          *customerRecord
+	Customer          *CustomerRecord
 	Status            shipment.Status
 	FormulaTemplateID pulid.ID
 	FormulaName       string
@@ -144,13 +144,13 @@ type shipmentRecord struct {
 	Miles             float64
 	Freight           decimal.Decimal
 	FreightLines      []shipment.FreightLine
-	Charges           []chargeRecord
+	Charges           []ChargeRecord
 	Total             decimal.Decimal
 	Stage             billingStage
 	QueueStatus       billingqueue.Status
 	ReadyToBillAt     int64
 	TransferredAt     int64
 	InvoiceDate       int64
-	Moves             []*moveRecord
+	Moves             []*MoveRecord
 	Invoice           *invoice.Invoice
 }

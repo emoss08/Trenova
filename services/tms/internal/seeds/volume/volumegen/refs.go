@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"context"
@@ -20,27 +20,29 @@ import (
 )
 
 var (
-	ErrNoOrganization     = errors.New("no organization found; run `task db-reset` first")
-	ErrMissingSeedData    = errors.New("development seed data is missing; run `task db-reset` first")
+	ErrNoOrganization  = errors.New("no organization found; run `task db-reset` first")
+	ErrMissingSeedData = errors.New(
+		"development seed data is missing; run `task db-reset` first",
+	)
 	errNoFreightTemplates = errors.New("no active freight formula templates")
 )
 
-type tenantRefs struct {
-	orgID         pulid.ID
-	buID          pulid.ID
-	buCode        string
-	orgName       string
-	adminID       pulid.ID
-	userIDs       []pulid.ID
-	stateIDs      map[string]pulid.ID
-	stateAbbr     map[pulid.ID]string
-	serviceTypes  []pulid.ID
-	shipmentTypes []pulid.ID
+type TenantRefs struct {
+	OrgID         pulid.ID
+	BuID          pulid.ID
+	BuCode        string
+	OrgName       string
+	AdminID       pulid.ID
+	UserIDs       []pulid.ID
+	StateIDs      map[string]pulid.ID
+	StateAbbr     map[pulid.ID]string
+	ServiceTypes  []pulid.ID
+	ShipmentTypes []pulid.ID
 	accessorials  map[string]*accessorialcharge.AccessorialCharge
-	templates     []*formulatemplate.FormulaTemplate
+	Templates     []*formulatemplate.FormulaTemplate
 }
 
-func loadTenantRefs(ctx context.Context, db *keel.DB, orgID pulid.ID) (*tenantRefs, error) {
+func LoadTenantRefs(ctx context.Context, db *keel.DB, orgID pulid.ID) (*TenantRefs, error) {
 	o := tenantdb.Organizations
 	q := o.AllTenants()
 	if orgID.IsNotNil() {
@@ -59,19 +61,19 @@ func loadTenantRefs(ctx context.Context, db *keel.DB, orgID pulid.ID) (*tenantRe
 		return nil, fmt.Errorf("load business unit: %w", err)
 	}
 
-	return &tenantRefs{
-		orgID:        org.ID,
-		buID:         org.BusinessUnitID,
-		buCode:       bu.Code,
-		orgName:      org.Name,
-		stateIDs:     make(map[string]pulid.ID),
-		stateAbbr:    make(map[pulid.ID]string),
+	return &TenantRefs{
+		OrgID:        org.ID,
+		BuID:         org.BusinessUnitID,
+		BuCode:       bu.Code,
+		OrgName:      org.Name,
+		StateIDs:     make(map[string]pulid.ID),
+		StateAbbr:    make(map[pulid.ID]string),
 		accessorials: make(map[string]*accessorialcharge.AccessorialCharge),
 	}, nil
 }
 
-func loadTenantData(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
-	loaders := []func(context.Context, *keel.DB, *tenantRefs) error{
+func LoadTenantData(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
+	loaders := []func(context.Context, *keel.DB, *TenantRefs) error{
 		loadUsers,
 		loadStates,
 		loadServiceAndShipmentTypes,
@@ -87,7 +89,7 @@ func loadTenantData(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
 	return nil
 }
 
-func loadUsers(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
+func loadUsers(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
 	m := tenantdb.OrganizationMemberships
 	memberships, err := m.Pick(m.UserID).All(ctx, db)
 	if err != nil {
@@ -107,47 +109,47 @@ func loadUsers(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
 		return fmt.Errorf("load users: %w", err)
 	}
 	for _, user := range users {
-		refs.userIDs = append(refs.userIDs, user.ID)
+		refs.UserIDs = append(refs.UserIDs, user.ID)
 		if strings.EqualFold(user.Username, "admin") {
-			refs.adminID = user.ID
+			refs.AdminID = user.ID
 		}
 	}
-	if len(refs.userIDs) == 0 {
-		return fmt.Errorf("%w: organization %s has no active users", ErrMissingSeedData, refs.orgID)
+	if len(refs.UserIDs) == 0 {
+		return fmt.Errorf("%w: organization %s has no active users", ErrMissingSeedData, refs.OrgID)
 	}
-	if refs.adminID.IsNil() {
-		refs.adminID = refs.userIDs[0]
+	if refs.AdminID.IsNil() {
+		refs.AdminID = refs.UserIDs[0]
 	}
 
 	return nil
 }
 
-func loadStates(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
+func loadStates(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
 	states, err := usstatedb.UsStates.Query().All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("load states: %w", err)
 	}
 	for _, s := range states {
-		refs.stateIDs[s.Abbreviation] = s.ID
-		refs.stateAbbr[s.ID] = s.Abbreviation
+		refs.StateIDs[s.Abbreviation] = s.ID
+		refs.StateAbbr[s.ID] = s.Abbreviation
 	}
-	for i := range cities {
-		if _, ok := refs.stateIDs[cities[i].State]; !ok {
-			return fmt.Errorf("%w: state %s is not seeded", ErrMissingSeedData, cities[i].State)
+	for i := range Cities {
+		if _, ok := refs.StateIDs[Cities[i].State]; !ok {
+			return fmt.Errorf("%w: state %s is not seeded", ErrMissingSeedData, Cities[i].State)
 		}
 	}
 
 	return nil
 }
 
-func loadServiceAndShipmentTypes(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
+func loadServiceAndShipmentTypes(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
 	st := servicetypedb.ServiceTypes
 	services, err := st.Pick(st.ID).Where(st.Status.Eq(domaintypes.StatusActive)).All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("load service types: %w", err)
 	}
 	for _, s := range services {
-		refs.serviceTypes = append(refs.serviceTypes, s.ID)
+		refs.ServiceTypes = append(refs.ServiceTypes, s.ID)
 	}
 
 	sht := shipmenttypedb.ShipmentTypes
@@ -156,17 +158,17 @@ func loadServiceAndShipmentTypes(ctx context.Context, db *keel.DB, refs *tenantR
 		return fmt.Errorf("load shipment types: %w", err)
 	}
 	for _, t := range types {
-		refs.shipmentTypes = append(refs.shipmentTypes, t.ID)
+		refs.ShipmentTypes = append(refs.ShipmentTypes, t.ID)
 	}
 
-	if len(refs.serviceTypes) == 0 || len(refs.shipmentTypes) == 0 {
+	if len(refs.ServiceTypes) == 0 || len(refs.ShipmentTypes) == 0 {
 		return fmt.Errorf("%w: no active service or shipment types", ErrMissingSeedData)
 	}
 
 	return nil
 }
 
-func loadAccessorials(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
+func loadAccessorials(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
 	ac := accessorialchargedb.AccessorialCharges
 	charges, err := ac.Where(ac.Status.Eq(domaintypes.StatusActive)).All(ctx, db)
 	if err != nil {
@@ -179,7 +181,7 @@ func loadAccessorials(ctx context.Context, db *keel.DB, refs *tenantRefs) error 
 	return nil
 }
 
-func loadTemplates(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
+func loadTemplates(ctx context.Context, db *keel.DB, refs *TenantRefs) error {
 	ft := formulatemplatedb.FormulaTemplates
 	templates, err := ft.Where(ft.Status.Eq(formulatemplate.StatusActive)).All(ctx, db)
 	if err != nil {
@@ -188,12 +190,12 @@ func loadTemplates(ctx context.Context, db *keel.DB, refs *tenantRefs) error {
 	if len(templates) == 0 {
 		return fmt.Errorf("%w: %w", ErrMissingSeedData, errNoFreightTemplates)
 	}
-	refs.templates = templates
+	refs.Templates = templates
 
 	return nil
 }
 
-func (r *tenantRefs) accessorial(codes ...string) *accessorialcharge.AccessorialCharge {
+func (r *TenantRefs) Accessorial(codes ...string) *accessorialcharge.AccessorialCharge {
 	for _, code := range codes {
 		if c, ok := r.accessorials[strings.ToUpper(code)]; ok {
 			return c

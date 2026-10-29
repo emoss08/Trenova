@@ -589,7 +589,11 @@ database not marked development or test. It streams rows with `COPY` (`Handle.Co
 records through `pkg/seqgen` like the application (over keel-backed sequence and format ports),
 and back-dates rows with `pulid.MustNewAt` and one `keel.Unnest` update per table, because keel
 stamps `autoupdate` columns with the current time on every write. An update that must not move a
-back-dated row's `updated_at` assigns `keepUpdated(h)`. When an entity gains a required relation
+back-dated row's `updated_at` assigns `volumegen.KeepUpdated(h)`. `volumegen` holds the generator
+every phase shares (its options, faker, numberer, tenant references, records and stores);
+`ledgervolume` posts journals and writes the AR rows several phases produce; each phase
+(`masterdatavolume`, `shipmentvolume`, `billingvolume`, …) is a package with one `Seed`
+function, and `volume.Run` calls them in order. When an entity gains a required relation
 or a derived row the application always writes (as every shipment gets an auto-order), generate it
 there too; write an optional relation only in the states where the application would have written
 it (a billing queue item only once a shipment is ready to invoice, a draft invoice only once the

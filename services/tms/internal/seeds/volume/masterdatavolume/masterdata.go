@@ -1,4 +1,4 @@
-package volume
+package masterdatavolume
 
 import (
 	"context"
@@ -35,6 +35,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/seeds/volume/factorvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -45,22 +47,22 @@ const mdDay = int64(86_400)
 type mdDriver struct {
 	worker  *worker.Worker
 	profile *worker.WorkerProfile
-	home    *cityRecord
+	home    *volumegen.CityRecord
 }
 
 type mdEquipment struct {
 	tractorTypes  []*equipmenttype.EquipmentType
 	trailerTypes  []*equipmenttype.EquipmentType
-	kinds         map[pulid.ID]trailerKind
+	kinds         map[pulid.ID]volumegen.TrailerKind
 	manufacturers map[string]pulid.ID
 	fleetCodes    []pulid.ID
 }
 
-func (g *generator) seedMasterData(ctx context.Context) error {
-	return g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+func (g *masterdataPhase) seedMasterData(ctx context.Context) error {
+	return g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		steps := []func(context.Context, *keel.DB) error{
 			g.mdCustomers,
-			g.facMasterData,
+			func(ctx context.Context, tx *keel.DB) error { return factorvolume.Seed(ctx, tx, g.Generator) },
 			g.mdLocations,
 			g.mdCommodities,
 		}
@@ -86,57 +88,24 @@ func (g *generator) seedMasterData(ctx context.Context) error {
 	})
 }
 
-func (g *generator) mdCreated() int64 {
-	return g.fake.between64(unix(g.start.AddDate(-2, 0, 0)), unix(g.start))
+func (g *masterdataPhase) mdCreated() int64 {
+	return g.Fake.Between64(volumegen.Unix(g.Start.AddDate(-2, 0, 0)), volumegen.Unix(g.Start))
 }
 
-func (g *generator) mdUpdated(created int64) int64 {
-	return g.fake.between64(created, unix(g.now))
+func (g *masterdataPhase) mdUpdated(created int64) int64 {
+	return g.Fake.Between64(created, volumegen.Unix(g.Now))
 }
 
-func (g *generator) mdStamp(id pulid.ID, created int64) stamp {
-	return stamp{id: id, created: created, updated: g.mdUpdated(created)}
+func (g *masterdataPhase) mdStamp(id pulid.ID, created int64) volumegen.Stamp {
+	return volumegen.Stamp{Id: id, Created: created, Updated: g.mdUpdated(created)}
 }
 
-func mdTaken[T any](
-	ctx context.Context,
-	db *keel.DB,
-	h keel.Handle[*T],
-	column keel.Expr,
-) (map[string]struct{}, error) {
-	values, err := keel.Into[string](ctx, db, h.Pick(keel.StringOf(column).Lower().Coalesce("")))
-	if err != nil {
-		return nil, fmt.Errorf("load existing %s values: %w", h.Ref.Table.Name, err)
-	}
-	taken := make(map[string]struct{}, len(values))
-	for _, v := range values {
-		if v != "" {
-			taken[v] = struct{}{}
-		}
-	}
-
-	return taken, nil
-}
-
-func mdSlug(name string) string {
-	var b strings.Builder
-	for _, r := range strings.ToLower(name) {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-		}
-		if b.Len() == 20 {
-			break
-		}
-	}
-	return b.String()
-}
-
-func (g *generator) mdTimes(rows int, prefix string) ([]int64, []pulid.ID) {
+func (g *masterdataPhase) mdTimes(rows int, prefix string) ([]int64, []pulid.ID) {
 	created := make([]int64, rows)
 	ids := make([]pulid.ID, rows)
 	for i := range rows {
 		created[i] = g.mdCreated()
-		ids[i] = idAt(prefix, created[i])
+		ids[i] = volumegen.IDAt(prefix, created[i])
 	}
 	return created, ids
 }
@@ -153,83 +122,90 @@ var mdPaymentTerms = []customer.PaymentTerm{
 
 var mdPaymentTermWeights = []int{50, 15, 10, 10, 5, 5, 5}
 
-func (g *generator) mdCustomers(ctx context.Context, tx *keel.DB) error {
-	taken, err := mdTaken(ctx, tx, customerdb.Customers.Handle, customerdb.Customers.Code)
+func (g *masterdataPhase) mdCustomers(ctx context.Context, tx *keel.DB) error {
+	taken, err := volumegen.Taken(ctx, tx, customerdb.Customers.Handle, customerdb.Customers.Code)
 	if err != nil {
 		return err
 	}
 
-	n := g.scale.customers
+	n := g.Scale.Customers
 	created, ids := g.mdTimes(n, "cus_")
 	customers := make([]*customer.Customer, 0, n)
 	profiles := make([]*customer.CustomerBillingProfile, 0, n)
 	emails := make([]*customer.CustomerEmailProfile, 0, n)
-	stamps := make([]stamp, 0, n)
-	profileStamps := make([]stamp, 0, n)
-	emailStamps := make([]stamp, 0, n)
-	g.customers = make([]*customerRecord, 0, n)
+	stamps := make([]volumegen.Stamp, 0, n)
+	profileStamps := make([]volumegen.Stamp, 0, n)
+	emailStamps := make([]volumegen.Stamp, 0, n)
+	g.Customers = make([]*volumegen.CustomerRecord, 0, n)
 
 	for i := range n {
-		name := g.fake.companyName()
-		home := g.fake.city()
-		lat, lon := g.fake.jitter(home)
+		name := g.Fake.CompanyName()
+		home := g.Fake.City()
+		lat, lon := g.Fake.Jitter(home)
 		status := domaintypes.StatusActive
-		if g.fake.chance(0.06) {
+		if g.Fake.Chance(0.06) {
 			status = domaintypes.StatusInactive
 		}
 
 		entity := &customer.Customer{
-			ID:                     ids[i],
-			BusinessUnitID:         g.refs.buID,
-			OrganizationID:         g.refs.orgID,
-			StateID:                g.refs.stateIDs[home.State],
-			Status:                 status,
-			Code:                   uniqueCode(codeFrom(name, g.fake.between(4, 6)), taken),
+			ID:             ids[i],
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
+			StateID:        g.Refs.StateIDs[home.State],
+			Status:         status,
+			Code: volumegen.UniqueCode(
+				volumegen.CodeFrom(name, g.Fake.Between(4, 6)),
+				taken,
+			),
 			Name:                   name,
-			AddressLine1:           g.fake.street(),
+			AddressLine1:           g.Fake.Street(),
 			City:                   home.Name,
-			PostalCode:             g.fake.postalCode(home),
+			PostalCode:             g.Fake.PostalCode(home),
 			IsGeocoded:             true,
 			Latitude:               &lat,
 			Longitude:              &lon,
-			StatusUpdatePreference: pick(g.fake, mdStatusUpdatePreferences),
-			AllowConsolidation:     g.fake.chance(0.7),
-			ConsolidationPriority:  g.fake.between(1, 5),
+			StatusUpdatePreference: volumegen.Pick(g.Fake, mdStatusUpdatePreferences),
+			AllowConsolidation:     g.Fake.Chance(0.7),
+			ConsolidationPriority:  g.Fake.Between(1, 5),
 		}
-		if g.fake.chance(0.15) {
-			entity.AddressLine2 = fmt.Sprintf("Suite %d", g.fake.between(100, 950))
+		if g.Fake.Chance(0.15) {
+			entity.AddressLine2 = fmt.Sprintf("Suite %d", g.Fake.Between(100, 950))
 		}
-		if g.fake.chance(0.4) {
-			entity.ExternalID = "ERP-" + g.fake.digits(6)
+		if g.Fake.Chance(0.4) {
+			entity.ExternalID = "ERP-" + g.Fake.Digits(6)
 		}
 		if entity.StatusUpdatePreference != customer.StatusUpdateNone {
-			entity.StatusUpdateRecipients = "tracking@" + mdSlug(name) + ".example.com"
+			entity.StatusUpdateRecipients = "tracking@" + volumegen.Slug(name) + ".example.com"
 		}
-		if g.fake.chance(0.3) {
-			entity.CheckCallIntervalHours = ptr(int16(pick(g.fake, []int{2, 4, 6, 8, 12})))
+		if g.Fake.Chance(0.3) {
+			entity.CheckCallIntervalHours = volumegen.Ptr(
+				int16(volumegen.Pick(g.Fake, []int{2, 4, 6, 8, 12})),
+			)
 		}
-		if g.fake.chance(0.25) {
-			entity.EtaRiskThresholdMinutes = ptr(int16(pick(g.fake, []int{30, 60, 90, 120})))
+		if g.Fake.Chance(0.25) {
+			entity.EtaRiskThresholdMinutes = volumegen.Ptr(
+				int16(volumegen.Pick(g.Fake, []int{30, 60, 90, 120})),
+			)
 		}
 
-		term := mdPaymentTerms[g.fake.weighted(mdPaymentTermWeights)]
-		profile := customer.NewDefaultBillingProfile(g.refs.orgID, g.refs.buID, entity.ID)
-		profile.ID = idAt("cbp_", created[i])
+		term := mdPaymentTerms[g.Fake.Weighted(mdPaymentTermWeights)]
+		profile := customer.NewDefaultBillingProfile(g.Refs.OrgID, g.Refs.BuID, entity.ID)
+		profile.ID = volumegen.IDAt("cbp_", created[i])
 		profile.PaymentTerm = term
 		g.mdVaryBillingProfile(profile, name)
 
 		email := &customer.CustomerEmailProfile{
-			ID:                    idAt("cem_", created[i]),
-			BusinessUnitID:        g.refs.buID,
-			OrganizationID:        g.refs.orgID,
+			ID:                    volumegen.IDAt("cem_", created[i]),
+			BusinessUnitID:        g.Refs.BuID,
+			OrganizationID:        g.Refs.OrgID,
 			CustomerID:            entity.ID,
-			Subject:               "Invoice from " + g.refs.orgName,
-			ToRecipients:          "ap@" + mdSlug(name) + ".example.com",
+			Subject:               "Invoice from " + g.Refs.OrgName,
+			ToRecipients:          "ap@" + volumegen.Slug(name) + ".example.com",
 			AttachmentName:        "Invoice",
-			IncludeShipmentDetail: g.fake.chance(0.5),
+			IncludeShipmentDetail: g.Fake.Chance(0.5),
 		}
-		if g.fake.chance(0.3) {
-			email.CCRecipients = "billing@" + mdSlug(name) + ".example.com"
+		if g.Fake.Chance(0.3) {
+			email.CCRecipients = "billing@" + volumegen.Slug(name) + ".example.com"
 		}
 
 		weight := max(1, int(math.Round(900*math.Pow(float64(i+1), -1.05))))
@@ -242,7 +218,7 @@ func (g *generator) mdCustomers(ctx context.Context, tx *keel.DB) error {
 		stamps = append(stamps, g.mdStamp(entity.ID, created[i]))
 		profileStamps = append(profileStamps, g.mdStamp(profile.ID, created[i]))
 		billingEmail := ""
-		if g.fake.chance(0.75) {
+		if g.Fake.Chance(0.75) {
 			billingEmail = email.ToRecipients
 			emails = append(emails, email)
 			emailStamps = append(emailStamps, g.mdStamp(email.ID, created[i]))
@@ -250,7 +226,7 @@ func (g *generator) mdCustomers(ctx context.Context, tx *keel.DB) error {
 			profile.EmailInvoiceEnabled = false
 			profile.AutoSendInvoiceOnGeneration = false
 		}
-		g.customers = append(g.customers, &customerRecord{
+		g.Customers = append(g.Customers, &volumegen.CustomerRecord{
 			ID:           entity.ID,
 			Code:         entity.Code,
 			Name:         entity.Name,
@@ -265,31 +241,31 @@ func (g *generator) mdCustomers(ctx context.Context, tx *keel.DB) error {
 		})
 	}
 
-	if err = insertRows(ctx, tx, customerdb.Customers.Handle, customers); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.Customers.Handle, customers); err != nil {
 		return fmt.Errorf("insert customers: %w", err)
 	}
-	if err = insertRows(ctx, tx, customerdb.CustomerBillingProfiles.Handle, profiles); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerBillingProfiles.Handle, profiles); err != nil {
 		return fmt.Errorf("insert customer billing profiles: %w", err)
 	}
-	if err = insertRows(ctx, tx, customerdb.CustomerEmailProfiles.Handle, emails); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerEmailProfiles.Handle, emails); err != nil {
 		return fmt.Errorf("insert customer email profiles: %w", err)
 	}
 	for _, b := range []struct {
 		table  string
-		stamps []stamp
+		stamps []volumegen.Stamp
 	}{
 		{table: "customers", stamps: stamps},
 		{table: "customer_billing_profiles", stamps: profileStamps},
 		{table: "customer_email_profiles", stamps: emailStamps},
 	} {
-		if err = backdateTable(ctx, tx, b.table, b.stamps); err != nil {
+		if err = volumegen.BackdateTable(ctx, tx, b.table, b.stamps); err != nil {
 			return err
 		}
 	}
 
-	g.report.add("Customers", len(customers))
-	g.report.add("Customer billing profiles", len(profiles))
-	g.report.add("Customer email profiles", len(emails))
+	g.Report.Add("Customers", len(customers))
+	g.Report.Add("Customer billing profiles", len(profiles))
+	g.Report.Add("Customer email profiles", len(emails))
 
 	return nil
 }
@@ -302,12 +278,15 @@ var mdStatusUpdatePreferences = []customer.StatusUpdatePreference{
 	customer.StatusUpdateArrivalsAndDepartures,
 }
 
-func (g *generator) mdVaryBillingProfile(profile *customer.CustomerBillingProfile, name string) {
-	if g.fake.chance(0.6) {
-		limit := decimal.NewFromInt(int64(g.fake.between(5, 100)) * 5_000)
+func (g *masterdataPhase) mdVaryBillingProfile(
+	profile *customer.CustomerBillingProfile,
+	name string,
+) {
+	if g.Fake.Chance(0.6) {
+		limit := decimal.NewFromInt(int64(g.Fake.Between(5, 100)) * 5_000)
 		profile.CreditLimit = decimal.NullDecimal{Decimal: limit, Valid: true}
 	}
-	switch roll := g.fake.intn(100); {
+	switch roll := g.Fake.Intn(100); {
 	case roll < 3:
 		profile.CreditStatus = customer.CreditStatusHold
 		profile.CreditHoldReason = "Past due balance over 60 days"
@@ -318,27 +297,27 @@ func (g *generator) mdVaryBillingProfile(profile *customer.CustomerBillingProfil
 	default:
 		profile.CreditStatus = customer.CreditStatusActive
 	}
-	if g.fake.chance(0.2) {
+	if g.Fake.Chance(0.2) {
 		profile.InvoiceDetail = customer.InvoiceDetailSummary
 	}
-	profile.RequirePONumber = g.fake.chance(0.15)
-	profile.RequireBOLNumber = g.fake.chance(0.25)
-	profile.SendStatements = g.fake.chance(0.7)
-	profile.SendPaymentReminders = g.fake.chance(0.8)
-	if g.fake.chance(0.1) {
+	profile.RequirePONumber = g.Fake.Chance(0.15)
+	profile.RequireBOLNumber = g.Fake.Chance(0.25)
+	profile.SendStatements = g.Fake.Chance(0.7)
+	profile.SendPaymentReminders = g.Fake.Chance(0.8)
+	if g.Fake.Chance(0.1) {
 		profile.ApplyLateCharges = true
 		profile.LateChargeRate = decimal.NullDecimal{
 			Decimal: decimal.NewFromFloat(1.5),
 			Valid:   true,
 		}
-		profile.GracePeriodDays = int16(g.fake.between(5, 15))
+		profile.GracePeriodDays = int16(g.Fake.Between(5, 15))
 	}
-	if g.fake.chance(0.05) {
+	if g.Fake.Chance(0.05) {
 		profile.TaxExempt = true
-		profile.TaxExemptNumber = "TX-" + g.fake.digits(9)
+		profile.TaxExemptNumber = "TX-" + g.Fake.Digits(9)
 	}
-	if g.fake.chance(0.2) {
-		profile.BillingNotes = pick(g.fake, []string{
+	if g.Fake.Chance(0.2) {
+		profile.BillingNotes = volumegen.Pick(g.Fake, []string{
 			"Send invoices with signed POD attached.",
 			"AP portal upload required in addition to email.",
 			"Lumper receipts must accompany every invoice.",
@@ -358,7 +337,7 @@ type mdLocationKind struct {
 	weight       int
 	appointment  bool
 	owned        bool
-	name         func(g *generator, c *cityRecord, owner string) string
+	name         func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string
 }
 
 var mdLocationKinds = []mdLocationKind{
@@ -366,14 +345,14 @@ var mdLocationKinds = []mdLocationKind{
 		category: "Distribution Center", catType: locationcategory.CategoryDistributionCenter,
 		facilityType: locationcategory.FacilityTypeCrossDock, color: "#2563EB",
 		shipper: true, consignee: true, weight: 20, appointment: true, owned: true,
-		name: func(g *generator, _ *cityRecord, owner string) string {
+		name: func(g *volumegen.Generator, _ *volumegen.CityRecord, owner string) string {
 			return owner + " Distribution Center"
 		},
 	},
 	{
 		category: "Manufacturing Plant", catType: locationcategory.CategoryCustomerLocation,
 		color: "#7C3AED", shipper: true, weight: 18, owned: true,
-		name: func(g *generator, c *cityRecord, owner string) string {
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
 			return owner + " " + c.Name + " Plant"
 		},
 	},
@@ -381,7 +360,7 @@ var mdLocationKinds = []mdLocationKind{
 		category: "Storage Warehouse", catType: locationcategory.CategoryWarehouse,
 		facilityType: locationcategory.FacilityTypeStorageWarehouse, color: "#0891B2",
 		shipper: true, consignee: true, weight: 18, owned: true,
-		name: func(g *generator, _ *cityRecord, owner string) string {
+		name: func(g *volumegen.Generator, _ *volumegen.CityRecord, owner string) string {
 			return owner + " Warehouse"
 		},
 	},
@@ -389,76 +368,82 @@ var mdLocationKinds = []mdLocationKind{
 		category: "Cold Storage", catType: locationcategory.CategoryWarehouse,
 		facilityType: locationcategory.FacilityTypeColdStorage, color: "#0EA5E9",
 		shipper: true, consignee: true, weight: 8, appointment: true,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return pick(g.fake, companyPrefixes) + " " + c.Name + " Cold Storage"
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return volumegen.Pick(
+				g.Fake,
+				volumegen.CompanyPrefixes,
+			) + " " + c.Name + " Cold Storage"
 		},
 	},
 	{
 		category: "Cross-Dock", catType: locationcategory.CategoryWarehouse,
 		facilityType: locationcategory.FacilityTypeCrossDock, color: "#14B8A6",
 		shipper: true, consignee: true, weight: 6,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return pick(g.fake, companyPrefixes) + " " + c.Name + " Cross-Dock"
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return volumegen.Pick(g.Fake, volumegen.CompanyPrefixes) + " " + c.Name + " Cross-Dock"
 		},
 	},
 	{
 		category: "Port Terminal", catType: locationcategory.CategoryPort,
 		facilityType: locationcategory.FacilityTypeIntermodalFacility, color: "#1D4ED8",
 		shipper: true, consignee: true, weight: 3, appointment: true,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return fmt.Sprintf("Port of %s Terminal %d", c.Name, g.fake.between(1, 9))
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return fmt.Sprintf("Port of %s Terminal %d", c.Name, g.Fake.Between(1, 9))
 		},
 	},
 	{
 		category: "Rail Ramp", catType: locationcategory.CategoryRailYard,
 		facilityType: locationcategory.FacilityTypeIntermodalFacility, color: "#B45309",
 		shipper: true, consignee: true, weight: 3,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return c.Name + " " + pick(g.fake, []string{"BNSF", "UP", "CSX", "NS"}) + " Rail Ramp"
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return c.Name + " " + volumegen.Pick(
+				g.Fake,
+				[]string{"BNSF", "UP", "CSX", "NS"},
+			) + " Rail Ramp"
 		},
 	},
 	{
 		category: "Retail Store", catType: locationcategory.CategoryCustomerLocation,
 		color: "#DB2777", consignee: true, weight: 14,
-		name: func(g *generator, _ *cityRecord, owner string) string {
-			return fmt.Sprintf("%s Store #%d", owner, g.fake.between(100, 9999))
+		name: func(g *volumegen.Generator, _ *volumegen.CityRecord, owner string) string {
+			return fmt.Sprintf("%s Store #%d", owner, g.Fake.Between(100, 9999))
 		},
 	},
 	{
 		category: "Grocery Distribution", catType: locationcategory.CategoryDistributionCenter,
 		facilityType: locationcategory.FacilityTypeColdStorage, color: "#16A34A",
 		consignee: true, weight: 6, appointment: true,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return pick(g.fake, companyPrefixes) + " Grocers " + c.Name + " DC"
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return volumegen.Pick(g.Fake, volumegen.CompanyPrefixes) + " Grocers " + c.Name + " DC"
 		},
 	},
 	{
 		category: "Truck Stop", catType: locationcategory.CategoryTruckStop, color: "#64748B",
 		weight: 2,
-		name: func(g *generator, c *cityRecord, owner string) string {
-			return pick(g.fake, []string{"Pilot", "Love's", "TA", "Petro"}) + " " + c.Name
+		name: func(g *volumegen.Generator, c *volumegen.CityRecord, owner string) string {
+			return volumegen.Pick(g.Fake, []string{"Pilot", "Love's", "TA", "Petro"}) + " " + c.Name
 		},
 	},
 }
 
-func (g *generator) mdLocationOwner(
+func (g *masterdataPhase) mdLocationOwner(
 	kind *mdLocationKind,
 	weights []int,
-) (*customerRecord, *cityRecord) {
-	if !kind.owned || len(g.customers) == 0 || !g.fake.chance(0.6) {
-		return nil, g.fake.city()
+) (*volumegen.CustomerRecord, *volumegen.CityRecord) {
+	if !kind.owned || len(g.Customers) == 0 || !g.Fake.Chance(0.6) {
+		return nil, g.Fake.City()
 	}
-	owner := g.customers[g.fake.weighted(weights)]
+	owner := g.Customers[g.Fake.Weighted(weights)]
 	if owner.Home == nil {
-		return owner, g.fake.city()
+		return owner, g.Fake.City()
 	}
-	if g.fake.chance(0.4) {
+	if g.Fake.Chance(0.4) {
 		return owner, owner.Home
 	}
-	return owner, g.fake.cityNear(owner.Home, 400)
+	return owner, g.Fake.CityNear(owner.Home, 400)
 }
 
-func (g *generator) mdLocationCategories(
+func (g *masterdataPhase) mdLocationCategories(
 	ctx context.Context,
 	tx *keel.DB,
 ) (map[string]pulid.ID, error) {
@@ -472,7 +457,7 @@ func (g *generator) mdLocationCategories(
 	}
 
 	created := make([]*locationcategory.LocationCategory, 0, len(mdLocationKinds))
-	stamps := make([]stamp, 0, len(mdLocationKinds))
+	stamps := make([]volumegen.Stamp, 0, len(mdLocationKinds))
 	for _, kind := range mdLocationKinds {
 		key := strings.ToLower(kind.category)
 		if _, ok := byName[key]; ok {
@@ -480,9 +465,9 @@ func (g *generator) mdLocationCategories(
 		}
 		at := g.mdCreated()
 		category := &locationcategory.LocationCategory{
-			ID:                  idAt("lc_", at),
-			BusinessUnitID:      g.refs.buID,
-			OrganizationID:      g.refs.orgID,
+			ID:                  volumegen.IDAt("lc_", at),
+			BusinessUnitID:      g.Refs.BuID,
+			OrganizationID:      g.Refs.OrgID,
 			Name:                kind.category,
 			Description:         kind.category + " facilities",
 			Type:                kind.catType,
@@ -500,23 +485,23 @@ func (g *generator) mdLocationCategories(
 	if len(created) == 0 {
 		return byName, nil
 	}
-	if err := insertRows(ctx, tx, locationcategorydb.LocationCategories.Handle, created); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, locationcategorydb.LocationCategories.Handle, created); err != nil {
 		return nil, fmt.Errorf("insert location categories: %w", err)
 	}
-	if err := backdate(ctx, tx, locationcategorydb.LocationCategories.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, locationcategorydb.LocationCategories.Handle, stamps); err != nil {
 		return nil, err
 	}
-	g.report.add("Location categories", len(created))
+	g.Report.Add("Location categories", len(created))
 
 	return byName, nil
 }
 
-func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
+func (g *masterdataPhase) mdLocations(ctx context.Context, tx *keel.DB) error {
 	categories, err := g.mdLocationCategories(ctx, tx)
 	if err != nil {
 		return err
 	}
-	taken, err := mdTaken(ctx, tx, locationdb.Locations.Handle, locationdb.Locations.Code)
+	taken, err := volumegen.Taken(ctx, tx, locationdb.Locations.Handle, locationdb.Locations.Code)
 	if err != nil {
 		return err
 	}
@@ -526,42 +511,45 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 		weights[i] = kind.weight
 	}
 
-	ownerWeights := make([]int, len(g.customers))
-	for i, c := range g.customers {
+	ownerWeights := make([]int, len(g.Customers))
+	for i, c := range g.Customers {
 		ownerWeights[i] = c.Weight
 	}
 
-	n := g.scale.locations
+	n := g.Scale.Locations
 	created, ids := g.mdTimes(n, "loc_")
 	locations := make([]*location.Location, 0, n)
-	stamps := make([]stamp, 0, n)
+	stamps := make([]volumegen.Stamp, 0, n)
 	idStrings := make([]string, 0, n)
-	g.locations = make([]*locationRecord, 0, n)
+	g.Locations = make([]*volumegen.LocationRecord, 0, n)
 	radius := geofence.DefaultRadiusMeters
 
 	for i := range n {
-		kind := &mdLocationKinds[g.fake.weighted(weights)]
+		kind := &mdLocationKinds[g.Fake.Weighted(weights)]
 		owner, city := g.mdLocationOwner(kind, ownerWeights)
-		ownerName := g.fake.companyName()
+		ownerName := g.Fake.CompanyName()
 		if owner != nil {
 			ownerName = owner.Name
 		}
-		lat, lon := g.fake.jitter(city)
-		name := kind.name(g, city, ownerName)
-		code := uniqueCode(codeFrom(name, 4)+"-"+codeFrom(city.Name, 3), taken)
+		lat, lon := g.Fake.Jitter(city)
+		name := kind.name(g.Generator, city, ownerName)
+		code := volumegen.UniqueCode(
+			volumegen.CodeFrom(name, 4)+"-"+volumegen.CodeFrom(city.Name, 3),
+			taken,
+		)
 
 		entity := &location.Location{
 			ID:                   ids[i],
-			BusinessUnitID:       g.refs.buID,
-			OrganizationID:       g.refs.orgID,
+			BusinessUnitID:       g.Refs.BuID,
+			OrganizationID:       g.Refs.OrgID,
 			LocationCategoryID:   categories[strings.ToLower(kind.category)],
-			StateID:              g.refs.stateIDs[city.State],
+			StateID:              g.Refs.StateIDs[city.State],
 			Status:               domaintypes.StatusActive,
 			Code:                 code,
 			Name:                 name,
-			AddressLine1:         g.fake.street(),
+			AddressLine1:         g.Fake.Street(),
 			City:                 city.Name,
-			PostalCode:           g.fake.postalCode(city),
+			PostalCode:           g.Fake.PostalCode(city),
 			Timezone:             city.Timezone,
 			IsGeocoded:           true,
 			Latitude:             &lat,
@@ -569,11 +557,11 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 			GeofenceType:         geofence.TypeAuto,
 			GeofenceRadiusMeters: &radius,
 		}
-		if g.fake.chance(0.03) {
+		if g.Fake.Chance(0.03) {
 			entity.Status = domaintypes.StatusInactive
 		}
-		if g.fake.chance(0.2) {
-			entity.Description = pick(g.fake, []string{
+		if g.Fake.Chance(0.2) {
+			entity.Description = volumegen.Pick(g.Fake, []string{
 				"Check in at the guard shack; dock doors on the north side.",
 				"Appointments required. Arrive 30 minutes early with seal intact.",
 				"Live unload only. No overnight parking on site.",
@@ -586,7 +574,7 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 		stamps = append(stamps, g.mdStamp(entity.ID, created[i]))
 		idStrings = append(idStrings, entity.ID.String())
 		if entity.Status == domaintypes.StatusActive {
-			rec := &locationRecord{
+			rec := &volumegen.LocationRecord{
 				ID:        entity.ID,
 				Code:      entity.Code,
 				Name:      entity.Name,
@@ -595,14 +583,14 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 				Shipper:   kind.shipper,
 				Consignee: kind.consignee,
 			}
-			g.locations = append(g.locations, rec)
+			g.Locations = append(g.Locations, rec)
 			if owner != nil {
 				owner.Facilities = append(owner.Facilities, rec)
 			}
 		}
 	}
 
-	if err = insertRows(ctx, tx, locationdb.Locations.Handle, locations); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, locationdb.Locations.Handle, locations); err != nil {
 		return fmt.Errorf("insert locations: %w", err)
 	}
 	l := locationdb.Locations
@@ -615,10 +603,10 @@ func (g *generator) mdLocations(ctx context.Context, tx *keel.DB) error {
 	)); err != nil {
 		return fmt.Errorf("build location geofences: %w", err)
 	}
-	if err = backdate(ctx, tx, locationdb.Locations.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, locationdb.Locations.Handle, stamps); err != nil {
 		return err
 	}
-	g.report.add("Locations", len(locations))
+	g.Report.Add("Locations", len(locations))
 
 	return nil
 }
@@ -956,8 +944,13 @@ var mdCommodityCatalog = []mdCommodityDef{
 	},
 }
 
-func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
-	taken, err := mdTaken(ctx, tx, commoditydb.Commodities.Handle, commoditydb.Commodities.Name)
+func (g *masterdataPhase) mdCommodities(ctx context.Context, tx *keel.DB) error {
+	taken, err := volumegen.Taken(
+		ctx,
+		tx,
+		commoditydb.Commodities.Handle,
+		commoditydb.Commodities.Name,
+	)
 	if err != nil {
 		return err
 	}
@@ -975,7 +968,7 @@ func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
 	}
 
 	rows := make([]*commodity.Commodity, 0, len(mdCommodityCatalog))
-	stamps := make([]stamp, 0, len(mdCommodityCatalog))
+	stamps := make([]volumegen.Stamp, 0, len(mdCommodityCatalog))
 	for _, def := range mdCommodityCatalog {
 		if def.hazmat && len(hazmatIDs) == 0 {
 			continue
@@ -986,9 +979,9 @@ func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
 		at := g.mdCreated()
 		weight := def.weight
 		row := &commodity.Commodity{
-			ID:                  idAt("com_", at),
-			BusinessUnitID:      g.refs.buID,
-			OrganizationID:      g.refs.orgID,
+			ID:                  volumegen.IDAt("com_", at),
+			BusinessUnitID:      g.Refs.BuID,
+			OrganizationID:      g.Refs.OrgID,
 			Status:              domaintypes.StatusActive,
 			Name:                def.name,
 			Description:         def.description,
@@ -1001,29 +994,29 @@ func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
 			Fragile:             def.fragile,
 		}
 		if def.hazmat {
-			row.HazardousMaterialID = pick(g.fake, hazmatIDs)
+			row.HazardousMaterialID = volumegen.Pick(g.Fake, hazmatIDs)
 		}
 		rows = append(rows, row)
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
 	if len(rows) > 0 {
-		if err = insertRows(ctx, tx, commoditydb.Commodities.Handle, rows); err != nil {
+		if err = volumegen.InsertRows(ctx, tx, commoditydb.Commodities.Handle, rows); err != nil {
 			return fmt.Errorf("insert commodities: %w", err)
 		}
-		if err = backdate(ctx, tx, commoditydb.Commodities.Handle, stamps); err != nil {
+		if err = volumegen.Backdate(ctx, tx, commoditydb.Commodities.Handle, stamps); err != nil {
 			return err
 		}
 	}
-	g.report.add("Commodities", len(rows))
+	g.Report.Add("Commodities", len(rows))
 
 	cm := commoditydb.Commodities
 	all, err := cm.Where(cm.Status.Eq(domaintypes.StatusActive)).Order(cm.ID.Asc()).All(ctx, tx)
 	if err != nil {
 		return fmt.Errorf("load commodities: %w", err)
 	}
-	g.commodities = make([]*commodityRecord, 0, len(all))
+	g.Commodities = make([]*volumegen.CommodityRecord, 0, len(all))
 	for _, c := range all {
-		record := &commodityRecord{
+		record := &volumegen.CommodityRecord{
 			ID:             c.ID,
 			Name:           c.Name,
 			WeightPerPiece: 40,
@@ -1033,12 +1026,12 @@ func (g *generator) mdCommodities(ctx context.Context, tx *keel.DB) error {
 			record.WeightPerPiece = int64(math.Round(*c.WeightPerUnit))
 		}
 		if c.MinTemperature != nil {
-			record.TempMin = ptr(int16(*c.MinTemperature))
+			record.TempMin = volumegen.Ptr(int16(*c.MinTemperature))
 		}
 		if c.MaxTemperature != nil {
-			record.TempMax = ptr(int16(*c.MaxTemperature))
+			record.TempMax = volumegen.Ptr(int16(*c.MaxTemperature))
 		}
-		g.commodities = append(g.commodities, record)
+		g.Commodities = append(g.Commodities, record)
 	}
 
 	return nil
@@ -1104,10 +1097,10 @@ var mdFleetColors = []string{
 	"#4F46E5", "#059669", "#B91C1C", "#7C3AED", "#C2410C", "#0E7490", "#A16207", "#BE185D",
 }
 
-func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment, error) {
+func (g *masterdataPhase) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment, error) {
 	equipment := &mdEquipment{
 		manufacturers: make(map[string]pulid.ID),
-		kinds:         make(map[pulid.ID]trailerKind),
+		kinds:         make(map[pulid.ID]volumegen.TrailerKind),
 	}
 
 	et := equipmenttypedb.EquipmentTypes
@@ -1121,13 +1114,13 @@ func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment,
 			equipment.tractorTypes = append(equipment.tractorTypes, t)
 		case equipmenttype.ClassTrailer:
 			equipment.trailerTypes = append(equipment.trailerTypes, t)
-			equipment.kinds[t.ID] = trailerKindOf(t)
+			equipment.kinds[t.ID] = volumegen.TrailerKindOf(t)
 		}
 	}
 	if len(equipment.tractorTypes) == 0 || len(equipment.trailerTypes) == 0 {
 		return nil, fmt.Errorf(
 			"%w: no active tractor or trailer equipment types",
-			ErrMissingSeedData,
+			volumegen.ErrMissingSeedData,
 		)
 	}
 
@@ -1144,7 +1137,7 @@ func (g *generator) mdEquipment(ctx context.Context, tx *keel.DB) (*mdEquipment,
 	return equipment, nil
 }
 
-func (g *generator) mdManufacturers(
+func (g *masterdataPhase) mdManufacturers(
 	ctx context.Context,
 	tx *keel.DB,
 	equipment *mdEquipment,
@@ -1159,7 +1152,7 @@ func (g *generator) mdManufacturers(
 
 	names := append(mdMakes(mdTractorModels), mdMakes(mdTrailerModels)...)
 	rows := make([]*equipmentmanufacturer.EquipmentManufacturer, 0, len(names))
-	stamps := make([]stamp, 0, len(names))
+	stamps := make([]volumegen.Stamp, 0, len(names))
 	for _, name := range names {
 		key := strings.ToLower(name)
 		if _, ok := equipment.manufacturers[key]; ok {
@@ -1167,9 +1160,9 @@ func (g *generator) mdManufacturers(
 		}
 		at := g.mdCreated()
 		row := &equipmentmanufacturer.EquipmentManufacturer{
-			ID:             idAt("em_", at),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
+			ID:             volumegen.IDAt("em_", at),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
 			Status:         domaintypes.StatusActive,
 			Name:           name,
 			Description:    name + " equipment",
@@ -1181,40 +1174,45 @@ func (g *generator) mdManufacturers(
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := insertRows(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, rows); err != nil {
 		return fmt.Errorf("insert equipment manufacturers: %w", err)
 	}
-	if err := backdate(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, stamps); err != nil {
 		return err
 	}
-	g.report.add("Equipment manufacturers", len(rows))
+	g.Report.Add("Equipment manufacturers", len(rows))
 
 	return nil
 }
 
-func (g *generator) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]pulid.ID, error) {
-	taken, err := mdTaken(ctx, tx, fleetcodedb.FleetCodes.Handle, fleetcodedb.FleetCodes.Code)
+func (g *masterdataPhase) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]pulid.ID, error) {
+	taken, err := volumegen.Taken(
+		ctx,
+		tx,
+		fleetcodedb.FleetCodes.Handle,
+		fleetcodedb.FleetCodes.Code,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	n := g.scale.fleetCodes
+	n := g.Scale.FleetCodes
 	rows := make([]*fleetcode.FleetCode, 0, n)
-	stamps := make([]stamp, 0, n)
+	stamps := make([]volumegen.Stamp, 0, n)
 	ids := make([]pulid.ID, 0, n)
 	for i := range n {
 		def := mdFleetCatalog[i%len(mdFleetCatalog)]
 		at := g.mdCreated()
-		revenue := float64(g.fake.between(180, 420)) * 1_000
-		deadhead := float64(g.fake.between(6, 15))
-		mileage := float64(g.fake.between(80, 140)) * 1_000
+		revenue := float64(g.Fake.Between(180, 420)) * 1_000
+		deadhead := float64(g.Fake.Between(6, 15))
+		mileage := float64(g.Fake.Between(80, 140)) * 1_000
 		row := &fleetcode.FleetCode{
-			ID:             idAt("fc_", at),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
-			ManagerID:      pick(g.fake, g.refs.userIDs),
+			ID:             volumegen.IDAt("fc_", at),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
+			ManagerID:      volumegen.Pick(g.Fake, g.Refs.UserIDs),
 			Status:         domaintypes.StatusActive,
-			Code:           uniqueCode(def.code, taken),
+			Code:           volumegen.UniqueCode(def.code, taken),
 			Description:    def.description,
 			RevenueGoal:    &revenue,
 			DeadheadGoal:   &deadhead,
@@ -1225,13 +1223,13 @@ func (g *generator) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]pulid.ID, 
 		ids = append(ids, row.ID)
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
-	if err = insertRows(ctx, tx, fleetcodedb.FleetCodes.Handle, rows); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, fleetcodedb.FleetCodes.Handle, rows); err != nil {
 		return nil, fmt.Errorf("insert fleet codes: %w", err)
 	}
-	if err = backdate(ctx, tx, fleetcodedb.FleetCodes.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, fleetcodedb.FleetCodes.Handle, stamps); err != nil {
 		return nil, err
 	}
-	g.report.add("Fleet codes", len(rows))
+	g.Report.Add("Fleet codes", len(rows))
 
 	return ids, nil
 }
@@ -1278,65 +1276,68 @@ var (
 	}
 )
 
-func (g *generator) mdWorkers(
+func (g *masterdataPhase) mdWorkers(
 	ctx context.Context,
 	tx *keel.DB,
 	fleetCodes []pulid.ID,
 ) ([]*mdDriver, error) {
-	n := g.scale.drivers
-	now := unix(g.now)
+	n := g.Scale.Drivers
+	now := volumegen.Unix(g.Now)
 	created, ids := g.mdTimes(n, "wrk_")
 	drivers := make([]*mdDriver, 0, n)
 	workers := make([]*worker.Worker, 0, n)
 	profiles := make([]*worker.WorkerProfile, 0, n)
 	ptos := make([]*worker.WorkerPTO, 0, n*2)
-	workerStamps := make([]stamp, 0, n)
-	profileStamps := make([]stamp, 0, n)
-	ptoStamps := make([]stamp, 0, n*2)
+	workerStamps := make([]volumegen.Stamp, 0, n)
+	profileStamps := make([]volumegen.Stamp, 0, n)
+	ptoStamps := make([]volumegen.Stamp, 0, n*2)
 	usedEmails := make(map[string]struct{}, n)
 
 	for i := range n {
-		home := g.fake.city()
+		home := g.Fake.City()
 		gender := worker.GenderMale
-		if g.fake.chance(0.14) {
+		if g.Fake.Chance(0.14) {
 			gender = worker.GenderFemale
 		}
-		first, last := g.fake.firstName(), g.fake.lastName()
-		active := g.fake.chance(0.9)
+		first, last := g.Fake.FirstName(), g.Fake.LastName()
+		active := g.Fake.Chance(0.9)
 		workerType := worker.WorkerTypeEmployee
-		if g.fake.chance(0.2) {
+		if g.Fake.Chance(0.2) {
 			workerType = worker.WorkerTypeContractor
 		}
-		driverType := mdDriverTypes[g.fake.weighted(mdDriverTypeWeights)]
+		driverType := mdDriverTypes[g.Fake.Weighted(mdDriverTypeWeights)]
 
-		email := uniqueCode(strings.ToLower(first+"."+last), usedEmails) + "@drivers.example.com"
+		email := volumegen.UniqueCode(
+			strings.ToLower(first+"."+last),
+			usedEmails,
+		) + "@drivers.example.com"
 		entity := &worker.Worker{
 			ID:                    ids[i],
-			BusinessUnitID:        g.refs.buID,
-			OrganizationID:        g.refs.orgID,
-			StateID:               g.refs.stateIDs[home.State],
-			FleetCodeID:           pick(g.fake, fleetCodes),
+			BusinessUnitID:        g.Refs.BuID,
+			OrganizationID:        g.Refs.OrgID,
+			StateID:               g.Refs.StateIDs[home.State],
+			FleetCodeID:           volumegen.Pick(g.Fake, fleetCodes),
 			Status:                domaintypes.StatusActive,
 			Type:                  workerType,
 			DriverType:            driverType,
 			FirstName:             first,
 			LastName:              last,
-			AddressLine1:          g.fake.street(),
+			AddressLine1:          g.Fake.Street(),
 			City:                  home.Name,
-			PostalCode:            g.fake.postalCode(home),
+			PostalCode:            g.Fake.PostalCode(home),
 			Email:                 email,
-			PhoneNumber:           g.fake.phone(),
-			EmergencyContactName:  g.fake.firstName() + " " + last,
-			EmergencyContactPhone: g.fake.phone(),
+			PhoneNumber:           g.Fake.Phone(),
+			EmergencyContactName:  g.Fake.FirstName() + " " + last,
+			EmergencyContactPhone: g.Fake.Phone(),
 			Gender:                gender,
 			CanBeAssigned:         active,
 			AvailableForDispatch:  active,
 		}
-		if g.fake.chance(0.5) {
-			entity.ManagerID = pick(g.fake, g.refs.userIDs)
+		if g.Fake.Chance(0.5) {
+			entity.ManagerID = volumegen.Pick(g.Fake, g.Refs.UserIDs)
 		}
-		if g.fake.chance(0.3) {
-			entity.ExternalID = "PAY-" + g.fake.digits(6)
+		if g.Fake.Chance(0.3) {
+			entity.ExternalID = "PAY-" + g.Fake.Digits(6)
 		}
 		if !active {
 			entity.Status = domaintypes.StatusInactive
@@ -1359,138 +1360,138 @@ func (g *generator) mdWorkers(
 		profileStamps = append(profileStamps, g.mdStamp(profile.ID, created[i]))
 		drivers = append(drivers, &mdDriver{worker: entity, profile: profile, home: home})
 
-		for range g.fake.between(0, 3) {
+		for range g.Fake.Between(0, 3) {
 			pto := g.mdPTO(entity.ID, now)
 			ptos = append(ptos, pto)
 			ptoStamps = append(ptoStamps, g.mdStamp(pto.ID, min(pto.StartDate-mdDay*14, now)))
 		}
 	}
 
-	if err := insertRows(ctx, tx, workerdb.Workers.Handle, workers); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.Workers.Handle, workers); err != nil {
 		return nil, fmt.Errorf("insert workers: %w", err)
 	}
-	if err := insertRows(ctx, tx, workerdb.WorkerProfiles.Handle, profiles); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerProfiles.Handle, profiles); err != nil {
 		return nil, fmt.Errorf("insert worker profiles: %w", err)
 	}
-	if err := insertRows(ctx, tx, workerdb.WorkerPTOs.Handle, ptos); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerPTOs.Handle, ptos); err != nil {
 		return nil, fmt.Errorf("insert worker pto: %w", err)
 	}
 	for _, b := range []struct {
 		table  string
-		stamps []stamp
+		stamps []volumegen.Stamp
 	}{
 		{table: "workers", stamps: workerStamps},
 		{table: "worker_profiles", stamps: profileStamps},
 		{table: "worker_pto", stamps: ptoStamps},
 	} {
-		if err := backdateTable(ctx, tx, b.table, b.stamps); err != nil {
+		if err := volumegen.BackdateTable(ctx, tx, b.table, b.stamps); err != nil {
 			return nil, err
 		}
 	}
-	g.report.add("Workers", len(workers))
-	g.report.add("Worker profiles", len(profiles))
-	g.report.add("Worker PTO", len(ptos))
+	g.Report.Add("Workers", len(workers))
+	g.Report.Add("Worker profiles", len(profiles))
+	g.Report.Add("Worker PTO", len(ptos))
 
 	return drivers, nil
 }
 
-func (g *generator) mdProfile(
+func (g *masterdataPhase) mdProfile(
 	entity *worker.Worker,
-	home *cityRecord,
+	home *volumegen.CityRecord,
 	created, now int64,
 	active bool,
 ) *worker.WorkerProfile {
 	year := 365 * mdDay
-	endorsement := mdEndorsements[g.fake.weighted(mdEndorsementWeights)]
+	endorsement := mdEndorsements[g.Fake.Weighted(mdEndorsementWeights)]
 	cdl := worker.CDLClassA
-	switch roll := g.fake.intn(100); {
+	switch roll := g.Fake.Intn(100); {
 	case roll < 2:
 		cdl = worker.CDLClassC
 	case roll < 10:
 		cdl = worker.CDLClassB
 	}
 
-	licenseExpiry := now + g.fake.between64(30*mdDay, 5*year)
-	medicalExpiry := now + g.fake.between64(30*mdDay, 2*year)
-	switch roll := g.fake.intn(100); {
+	licenseExpiry := now + g.Fake.Between64(30*mdDay, 5*year)
+	medicalExpiry := now + g.Fake.Between64(30*mdDay, 2*year)
+	switch roll := g.Fake.Intn(100); {
 	case roll < 3:
-		licenseExpiry = now - g.fake.between64(mdDay, 60*mdDay)
+		licenseExpiry = now - g.Fake.Between64(mdDay, 60*mdDay)
 	case roll < 6:
-		medicalExpiry = now - g.fake.between64(mdDay, 45*mdDay)
+		medicalExpiry = now - g.Fake.Between64(mdDay, 45*mdDay)
 	case roll < 12:
-		medicalExpiry = now + g.fake.between64(mdDay, 29*mdDay)
+		medicalExpiry = now + g.Fake.Between64(mdDay, 29*mdDay)
 	}
 
 	profile := &worker.WorkerProfile{
-		ID:                  idAt("wrkp_", created),
+		ID:                  volumegen.IDAt("wrkp_", created),
 		WorkerID:            entity.ID,
-		BusinessUnitID:      g.refs.buID,
-		OrganizationID:      g.refs.orgID,
-		LicenseStateID:      g.refs.stateIDs[home.State],
-		DOB:                 now - g.fake.between64(23*year, 64*year),
-		LicenseNumber:       home.State + g.fake.digits(8),
+		BusinessUnitID:      g.Refs.BuID,
+		OrganizationID:      g.Refs.OrgID,
+		LicenseStateID:      g.Refs.StateIDs[home.State],
+		DOB:                 now - g.Fake.Between64(23*year, 64*year),
+		LicenseNumber:       home.State + g.Fake.Digits(8),
 		CDLClass:            cdl,
 		Endorsement:         endorsement,
 		LicenseExpiry:       licenseExpiry,
 		MedicalCardExpiry:   &medicalExpiry,
-		MedicalExaminerName: pick(g.fake, mdExaminers),
-		MedicalExaminerNPI:  "1" + g.fake.digits(9),
-		HireDate:            created - g.fake.between64(0, 12*year),
-		PhysicalDueDate:     ptr(now + g.fake.between64(mdDay, year)),
-		MVRDueDate:          ptr(now + g.fake.between64(mdDay, year)),
-		TrainingHealth:      mdTrainingHealth[g.fake.weighted(mdTrainingWeights)],
-		NextTrainingDue:     ptr(now + g.fake.between64(mdDay, 180*mdDay)),
-		LastComplianceCheck: now - g.fake.between64(0, 30*mdDay),
-		LastMVRCheck:        now - g.fake.between64(30*mdDay, year),
-		LastDrugTest:        now - g.fake.between64(14*mdDay, year),
+		MedicalExaminerName: volumegen.Pick(g.Fake, mdExaminers),
+		MedicalExaminerNPI:  "1" + g.Fake.Digits(9),
+		HireDate:            created - g.Fake.Between64(0, 12*year),
+		PhysicalDueDate:     volumegen.Ptr(now + g.Fake.Between64(mdDay, year)),
+		MVRDueDate:          volumegen.Ptr(now + g.Fake.Between64(mdDay, year)),
+		TrainingHealth:      mdTrainingHealth[g.Fake.Weighted(mdTrainingWeights)],
+		NextTrainingDue:     volumegen.Ptr(now + g.Fake.Between64(mdDay, 180*mdDay)),
+		LastComplianceCheck: now - g.Fake.Between64(0, 30*mdDay),
+		LastMVRCheck:        now - g.Fake.Between64(30*mdDay, year),
+		LastDrugTest:        now - g.Fake.Between64(14*mdDay, year),
 		DrugAlcoholStatus:   worker.DrugAlcoholClear,
 		ReturnToDutyStatus:  worker.ReturnToDutyNotRequired,
-		ShortHaulExempt:     entity.DriverType == worker.DriverTypeLocal && g.fake.chance(0.5),
+		ShortHaulExempt:     entity.DriverType == worker.DriverTypeLocal && g.Fake.Chance(0.5),
 		ComplianceStatus:    worker.ComplianceStatusPending,
 		SafetyRating:        worker.SafetyRatingExcellent,
 		SafetyScore:         100,
 	}
-	queried := now - g.fake.between64(mdDay, 300*mdDay)
+	queried := now - g.Fake.Between64(mdDay, 300*mdDay)
 	profile.LastClearinghouseQueryAt = &queried
-	profile.NextClearinghouseQueryDue = ptr(queried + year)
+	profile.NextClearinghouseQueryDue = volumegen.Ptr(queried + year)
 
 	if endorsement.RequiresHazmatExpiry() {
-		profile.HazmatExpiry = ptr(now + g.fake.between64(60*mdDay, 5*year))
+		profile.HazmatExpiry = volumegen.Ptr(now + g.Fake.Between64(60*mdDay, 5*year))
 	}
-	if g.fake.chance(0.15) {
-		profile.TWICCardNumber = g.fake.digits(12)
-		profile.TWICExpiry = ptr(now + g.fake.between64(90*mdDay, 5*year))
+	if g.Fake.Chance(0.15) {
+		profile.TWICCardNumber = g.Fake.Digits(12)
+		profile.TWICExpiry = volumegen.Ptr(now + g.Fake.Between64(90*mdDay, 5*year))
 	}
-	if g.fake.chance(0.05) {
-		profile.CDLRestrictions = pick(
-			g.fake,
+	if g.Fake.Chance(0.05) {
+		profile.CDLRestrictions = volumegen.Pick(
+			g.Fake,
 			[]string{"L - No air brakes", "E - No manual transmission", "K - Intrastate only"},
 		)
 	}
 
-	switch roll := g.fake.intn(100); {
+	switch roll := g.Fake.Intn(100); {
 	case roll < 3:
 		profile.DrugAlcoholStatus = worker.DrugAlcoholPending
 	case roll < 6:
 		profile.DrugAlcoholStatus = worker.DrugAlcoholUnknown
 	}
 
-	switch roll := g.fake.intn(100); {
+	switch roll := g.Fake.Intn(100); {
 	case roll < 55:
 		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingExcellent, int16(
-			g.fake.between(90, 100),
+			g.Fake.Between(90, 100),
 		)
 	case roll < 85:
 		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingGood, int16(
-			g.fake.between(80, 89),
+			g.Fake.Between(80, 89),
 		)
 	case roll < 95:
 		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingWatch, int16(
-			g.fake.between(65, 79),
+			g.Fake.Between(65, 79),
 		)
 	default:
 		profile.SafetyRating, profile.SafetyScore = worker.SafetyRatingAtRisk, int16(
-			g.fake.between(40, 64),
+			g.Fake.Between(40, 64),
 		)
 	}
 
@@ -1514,39 +1515,39 @@ func (g *generator) mdProfile(
 	}
 	profile.IsQualified = profile.ComplianceStatus == worker.ComplianceStatusCompliant
 
-	if !active && g.fake.chance(0.7) {
-		profile.TerminationDate = ptr(now - g.fake.between64(mdDay, 300*mdDay))
+	if !active && g.Fake.Chance(0.7) {
+		profile.TerminationDate = volumegen.Ptr(now - g.Fake.Between64(mdDay, 300*mdDay))
 	}
 
 	return profile
 }
 
-func (g *generator) mdPTO(workerID pulid.ID, now int64) *worker.WorkerPTO {
-	start := now + g.fake.between64(-150, 90)*mdDay
-	end := start + g.fake.between64(1, 6)*mdDay
+func (g *masterdataPhase) mdPTO(workerID pulid.ID, now int64) *worker.WorkerPTO {
+	start := now + g.Fake.Between64(-150, 90)*mdDay
+	end := start + g.Fake.Between64(1, 6)*mdDay
 	pto := &worker.WorkerPTO{
-		ID:             idAt("wrkpto_", min(start, now)),
+		ID:             volumegen.IDAt("wrkpto_", min(start, now)),
 		WorkerID:       workerID,
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
-		Type:           pick(g.fake, mdPTOTypes),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
+		Type:           volumegen.Pick(g.Fake, mdPTOTypes),
 		StartDate:      start,
 		EndDate:        end,
 		Days:           pto.ComputePTODays(start, end, nil, true, nil),
-		Reason:         pick(g.fake, mdPTOReasons),
+		Reason:         volumegen.Pick(g.Fake, mdPTOReasons),
 		Status:         worker.PTOStatusRequested,
 	}
 
-	roll := g.fake.intn(100)
+	roll := g.Fake.Intn(100)
 	switch {
 	case start < now && roll < 85, start >= now && roll < 45:
 		pto.Status = worker.PTOStatusApproved
-		pto.ApproverID = g.refs.adminID
+		pto.ApproverID = g.Refs.AdminID
 	case start >= now && roll < 85:
 		pto.Status = worker.PTOStatusRequested
 	case roll < 93:
 		pto.Status = worker.PTOStatusRejected
-		pto.RejectorID = g.refs.adminID
+		pto.RejectorID = g.Refs.AdminID
 		pto.RejectionReason = "Insufficient coverage for the requested dates"
 	default:
 		pto.Status = worker.PTOStatusCancelled
@@ -1572,34 +1573,44 @@ var (
 	}
 )
 
-func (g *generator) mdTrailerTypeWeights(types []*equipmenttype.EquipmentType) []int {
+func (g *masterdataPhase) mdTrailerTypeWeights(types []*equipmenttype.EquipmentType) []int {
 	weights := make([]int, len(types))
 	for i, t := range types {
-		switch trailerKindOf(t) {
-		case trailerKindDry:
+		switch volumegen.TrailerKindOf(t) {
+		case volumegen.TrailerKindDry:
 			weights[i] = 16
-		case trailerKindReefer:
+		case volumegen.TrailerKindReefer:
 			weights[i] = 6
-		case trailerKindFlatbed:
+		case volumegen.TrailerKindFlatbed:
 			weights[i] = 3
-		case trailerKindOther:
+		case volumegen.TrailerKindOther:
 			weights[i] = 1
 		}
 	}
 	return weights
 }
 
-func (g *generator) mdFleet(
+func (g *masterdataPhase) mdFleet(
 	ctx context.Context,
 	tx *keel.DB,
 	equipment *mdEquipment,
 	drivers []*mdDriver,
 ) error {
-	tractorTaken, err := mdTaken(ctx, tx, tractordb.Tractors.Handle, tractordb.Tractors.Code)
+	tractorTaken, err := volumegen.Taken(
+		ctx,
+		tx,
+		tractordb.Tractors.Handle,
+		tractordb.Tractors.Code,
+	)
 	if err != nil {
 		return err
 	}
-	trailerTaken, err := mdTaken(ctx, tx, trailerdb.Trailers.Handle, trailerdb.Trailers.Code)
+	trailerTaken, err := volumegen.Taken(
+		ctx,
+		tx,
+		trailerdb.Trailers.Handle,
+		trailerdb.Trailers.Code,
+	)
 	if err != nil {
 		return err
 	}
@@ -1625,65 +1636,65 @@ func (g *generator) mdFleet(
 		}
 	}
 
-	now := unix(g.now)
-	n := min(g.scale.tractors, len(ordered))
+	now := volumegen.Unix(g.Now)
+	n := min(g.Scale.Tractors, len(ordered))
 	tractorMakes := mdMakes(mdTractorModels)
 	tractors := make([]*tractor.Tractor, 0, n)
-	tractorStamps := make([]stamp, 0, n)
-	g.crews = make([]*crew, 0, n)
+	tractorStamps := make([]volumegen.Stamp, 0, n)
+	g.Crews = make([]*volumegen.Crew, 0, n)
 	nextTeammate := 0
 	nextTrailer := 0
 
 	for i := range n {
 		d := ordered[i]
 		at := max(g.mdCreated(), d.profile.HireDate)
-		at = min(at, unix(g.start))
-		makeName := pick(g.fake, tractorMakes)
-		year := g.fake.between(2015, g.now.Year())
+		at = min(at, volumegen.Unix(g.Start))
+		makeName := volumegen.Pick(g.Fake, tractorMakes)
+		year := g.Fake.Between(2015, g.Now.Year())
 		entity := &tractor.Tractor{
-			ID:                      idAt("trac_", at),
-			BusinessUnitID:          g.refs.buID,
-			OrganizationID:          g.refs.orgID,
+			ID:                      volumegen.IDAt("trac_", at),
+			BusinessUnitID:          g.Refs.BuID,
+			OrganizationID:          g.Refs.OrgID,
 			PrimaryWorkerID:         d.worker.ID,
-			EquipmentTypeID:         pick(g.fake, equipment.tractorTypes).ID,
+			EquipmentTypeID:         volumegen.Pick(g.Fake, equipment.tractorTypes).ID,
 			EquipmentManufacturerID: equipment.manufacturers[strings.ToLower(makeName)],
-			StateID:                 g.refs.stateIDs[d.home.State],
+			StateID:                 g.Refs.StateIDs[d.home.State],
 			FleetCodeID:             d.worker.FleetCodeID,
 			Status:                  domaintypes.EquipmentStatusAvailable,
-			Code:                    uniqueCode(fmt.Sprintf("%d", 1000+i), tractorTaken),
+			Code:                    volumegen.UniqueCode(fmt.Sprintf("%d", 1000+i), tractorTaken),
 			Make:                    makeName,
-			Model:                   pick(g.fake, mdTractorModels[makeName]),
+			Model:                   volumegen.Pick(g.Fake, mdTractorModels[makeName]),
 			Year:                    &year,
-			LicensePlateNumber:      g.fake.plate(),
-			RegistrationNumber:      "REG" + g.fake.digits(8),
-			RegistrationExpiry:      ptr(now + g.fake.between64(-20, 365)*mdDay),
+			LicensePlateNumber:      g.Fake.Plate(),
+			RegistrationNumber:      "REG" + g.Fake.Digits(8),
+			RegistrationExpiry:      volumegen.Ptr(now + g.Fake.Between64(-20, 365)*mdDay),
 			FuelType:                domaintypes.IFTAFuelTypeDiesel,
 			IFTAQualified:           true,
-			Vin:                     g.fake.vin(),
+			Vin:                     g.Fake.VIN(),
 			OwnershipType:           domaintypes.OwnershipTypeCompanyOwned,
 		}
-		if g.fake.chance(0.02) {
+		if g.Fake.Chance(0.02) {
 			entity.FuelType = domaintypes.IFTAFuelTypeCNG
 		}
 		switch {
 		case d.worker.Type == worker.WorkerTypeContractor:
 			entity.OwnershipType = domaintypes.OwnershipTypeOwnerOperator
 			entity.OwnerWorkerID = &d.worker.ID
-		case g.fake.chance(0.18):
+		case g.Fake.Chance(0.18):
 			entity.OwnershipType = domaintypes.OwnershipTypeLeased
-			entity.LessorName = pick(g.fake, mdLessors)
-			entity.LeaseReference = "LSE-" + g.fake.digits(7)
-			entity.LeaseEndDate = ptr(now + g.fake.between64(60, 1_400)*mdDay)
+			entity.LessorName = volumegen.Pick(g.Fake, mdLessors)
+			entity.LeaseReference = "LSE-" + g.Fake.Digits(7)
+			entity.LeaseEndDate = volumegen.Ptr(now + g.Fake.Between64(60, 1_400)*mdDay)
 		}
 
 		usable := d.worker.Status == domaintypes.StatusActive
 		switch {
-		case !usable && g.fake.chance(0.5):
+		case !usable && g.Fake.Chance(0.5):
 			entity.Status = domaintypes.EquipmentStatusSold
 		case !usable:
 			entity.Status = domaintypes.EquipmentStatusOOS
 		default:
-			switch roll := g.fake.intn(100); {
+			switch roll := g.Fake.Intn(100); {
 			case roll < 7:
 				entity.Status = domaintypes.EquipmentStatusAtMaintenance
 				usable = false
@@ -1696,7 +1707,7 @@ func (g *generator) mdFleet(
 		if usable && len(available) > 0 {
 			paired := available[nextTrailer%len(available)]
 			paired.FleetCodeID = d.worker.FleetCodeID
-			c := &crew{
+			c := &volumegen.Crew{
 				WorkerID:      d.worker.ID,
 				TractorID:     entity.ID,
 				TractorTypeID: entity.EquipmentTypeID,
@@ -1708,41 +1719,41 @@ func (g *generator) mdFleet(
 			}
 			nextTrailer++
 			if nextTeammate < len(teammates) &&
-				(d.worker.DriverType == worker.DriverTypeTeam || g.fake.chance(0.1)) {
+				(d.worker.DriverType == worker.DriverTypeTeam || g.Fake.Chance(0.1)) {
 				mate := teammates[nextTeammate].worker.ID
 				nextTeammate++
 				c.SecondaryWorkerID = &mate
 				entity.SecondaryWorkerID = mate
 			}
-			g.crews = append(g.crews, c)
+			g.Crews = append(g.Crews, c)
 		}
 
 		tractors = append(tractors, entity)
 		tractorStamps = append(tractorStamps, g.mdStamp(entity.ID, at))
 	}
 
-	if err = insertRows(ctx, tx, tractordb.Tractors.Handle, tractors); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, tractordb.Tractors.Handle, tractors); err != nil {
 		return fmt.Errorf("insert tractors: %w", err)
 	}
-	if err = insertRows(ctx, tx, trailerdb.Trailers.Handle, trailers); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, trailerdb.Trailers.Handle, trailers); err != nil {
 		return fmt.Errorf("insert trailers: %w", err)
 	}
-	if err = backdate(ctx, tx, tractordb.Tractors.Handle, tractorStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, tractordb.Tractors.Handle, tractorStamps); err != nil {
 		return err
 	}
-	if err = backdate(ctx, tx, trailerdb.Trailers.Handle, trailerStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, trailerdb.Trailers.Handle, trailerStamps); err != nil {
 		return err
 	}
-	g.report.add("Tractors", len(tractors))
-	g.report.add("Trailers", len(trailers))
+	g.Report.Add("Tractors", len(tractors))
+	g.Report.Add("Trailers", len(trailers))
 
 	tractorOf := make(map[pulid.ID]pulid.ID, len(tractors))
 	for _, t := range tractors {
 		tractorOf[t.PrimaryWorkerID] = t.ID
 	}
-	g.drivers = make([]*driverRecord, 0, len(drivers))
+	g.Drivers = make([]*volumegen.DriverRecord, 0, len(drivers))
 	for _, d := range drivers {
-		g.drivers = append(g.drivers, &driverRecord{
+		g.Drivers = append(g.Drivers, &volumegen.DriverRecord{
 			WorkerID:    d.worker.ID,
 			FleetCodeID: d.worker.FleetCodeID,
 			Type:        d.worker.Type,
@@ -1757,51 +1768,51 @@ func (g *generator) mdFleet(
 	return nil
 }
 
-func (g *generator) mdTrailers(
+func (g *masterdataPhase) mdTrailers(
 	equipment *mdEquipment,
 	taken map[string]struct{},
-) ([]*trailer.Trailer, []stamp) {
-	n := g.scale.trailers
-	now := unix(g.now)
+) ([]*trailer.Trailer, []volumegen.Stamp) {
+	n := g.Scale.Trailers
+	now := volumegen.Unix(g.Now)
 	weights := g.mdTrailerTypeWeights(equipment.trailerTypes)
 	trailerMakes := mdMakes(mdTrailerModels)
 	rows := make([]*trailer.Trailer, 0, n)
-	stamps := make([]stamp, 0, n)
+	stamps := make([]volumegen.Stamp, 0, n)
 
 	for i := range n {
 		at := g.mdCreated()
-		makeName := pick(g.fake, trailerMakes)
-		year := g.fake.between(2010, g.now.Year())
-		maxLoad := g.fake.between(43, 48) * 1_000
-		state := pick(g.fake, cities).State
+		makeName := volumegen.Pick(g.Fake, trailerMakes)
+		year := g.Fake.Between(2010, g.Now.Year())
+		maxLoad := g.Fake.Between(43, 48) * 1_000
+		state := volumegen.Pick(g.Fake, volumegen.Cities).State
 		row := &trailer.Trailer{
-			ID:                      idAt("tr_", at),
-			BusinessUnitID:          g.refs.buID,
-			OrganizationID:          g.refs.orgID,
-			EquipmentTypeID:         equipment.trailerTypes[g.fake.weighted(weights)].ID,
+			ID:                      volumegen.IDAt("tr_", at),
+			BusinessUnitID:          g.Refs.BuID,
+			OrganizationID:          g.Refs.OrgID,
+			EquipmentTypeID:         equipment.trailerTypes[g.Fake.Weighted(weights)].ID,
 			EquipmentManufacturerID: equipment.manufacturers[strings.ToLower(makeName)],
-			RegistrationStateID:     g.refs.stateIDs[state],
-			FleetCodeID:             pick(g.fake, equipment.fleetCodes),
+			RegistrationStateID:     g.Refs.StateIDs[state],
+			FleetCodeID:             volumegen.Pick(g.Fake, equipment.fleetCodes),
 			Status:                  domaintypes.EquipmentStatusAvailable,
-			Code:                    uniqueCode(fmt.Sprintf("53%04d", 1000+i), taken),
+			Code:                    volumegen.UniqueCode(fmt.Sprintf("53%04d", 1000+i), taken),
 			Make:                    makeName,
-			Model:                   pick(g.fake, mdTrailerModels[makeName]),
+			Model:                   volumegen.Pick(g.Fake, mdTrailerModels[makeName]),
 			Year:                    &year,
-			LicensePlateNumber:      g.fake.plate(),
-			Vin:                     g.fake.vin(),
-			RegistrationNumber:      "TRG" + g.fake.digits(8),
+			LicensePlateNumber:      g.Fake.Plate(),
+			Vin:                     g.Fake.VIN(),
+			RegistrationNumber:      "TRG" + g.Fake.Digits(8),
 			MaxLoadWeight:           &maxLoad,
 			OwnershipType:           domaintypes.OwnershipTypeCompanyOwned,
-			LastInspectionDate:      ptr(now - g.fake.between64(5, 360)*mdDay),
-			RegistrationExpiry:      ptr(now + g.fake.between64(-15, 365)*mdDay),
+			LastInspectionDate:      volumegen.Ptr(now - g.Fake.Between64(5, 360)*mdDay),
+			RegistrationExpiry:      volumegen.Ptr(now + g.Fake.Between64(-15, 365)*mdDay),
 		}
-		if g.fake.chance(0.2) {
+		if g.Fake.Chance(0.2) {
 			row.OwnershipType = domaintypes.OwnershipTypeLeased
-			row.LessorName = pick(g.fake, mdTrailerLessors)
-			row.LeaseReference = "TL-" + g.fake.digits(7)
-			row.LeaseEndDate = ptr(now + g.fake.between64(90, 1_800)*mdDay)
+			row.LessorName = volumegen.Pick(g.Fake, mdTrailerLessors)
+			row.LeaseReference = "TL-" + g.Fake.Digits(7)
+			row.LeaseEndDate = volumegen.Ptr(now + g.Fake.Between64(90, 1_800)*mdDay)
 		}
-		switch roll := g.fake.intn(100); {
+		switch roll := g.Fake.Intn(100); {
 		case roll < 6:
 			row.Status = domaintypes.EquipmentStatusAtMaintenance
 		case roll < 10:
@@ -1819,20 +1830,28 @@ var mdCarrierSuffixes = []string{
 	"Hauling", "Freightways", "Motor Lines",
 }
 
-func (g *generator) mdCarrierName() string {
-	switch g.fake.intn(3) {
+func (g *masterdataPhase) mdCarrierName() string {
+	switch g.Fake.Intn(3) {
 	case 0:
-		return fmt.Sprintf("%s %s", pick(g.fake, companyPrefixes), pick(g.fake, mdCarrierSuffixes))
+		return fmt.Sprintf(
+			"%s %s",
+			volumegen.Pick(g.Fake, volumegen.CompanyPrefixes),
+			volumegen.Pick(g.Fake, mdCarrierSuffixes),
+		)
 	case 1:
-		return fmt.Sprintf("%s %s", g.fake.lastName(), pick(g.fake, mdCarrierSuffixes))
+		return fmt.Sprintf("%s %s", g.Fake.LastName(), volumegen.Pick(g.Fake, mdCarrierSuffixes))
 	default:
-		return fmt.Sprintf("%s & Sons %s", g.fake.lastName(), pick(g.fake, mdCarrierSuffixes))
+		return fmt.Sprintf(
+			"%s & Sons %s",
+			g.Fake.LastName(),
+			volumegen.Pick(g.Fake, mdCarrierSuffixes),
+		)
 	}
 }
 
-func (g *generator) mdUniqueDigits(size int, taken map[string]struct{}) string {
+func (g *masterdataPhase) mdUniqueDigits(size int, taken map[string]struct{}) string {
 	for {
-		value := fmt.Sprintf("%d", g.fake.between(1, 9)) + g.fake.digits(size-1)
+		value := fmt.Sprintf("%d", g.Fake.Between(1, 9)) + g.Fake.Digits(size-1)
 		if _, ok := taken[value]; !ok {
 			taken[value] = struct{}{}
 			return value
@@ -1840,64 +1859,67 @@ func (g *generator) mdUniqueDigits(size int, taken map[string]struct{}) string {
 	}
 }
 
-func (g *generator) mdUniqueSCAC(name string, taken map[string]struct{}) string {
-	candidate := codeFrom(name, 4)
+func (g *masterdataPhase) mdUniqueSCAC(name string, taken map[string]struct{}) string {
+	candidate := volumegen.CodeFrom(name, 4)
 	for {
 		key := strings.ToLower(candidate)
 		if _, ok := taken[key]; !ok {
 			taken[key] = struct{}{}
 			return candidate
 		}
-		candidate = g.fake.letters(4)
+		candidate = g.Fake.Letters(4)
 	}
 }
 
-func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
-	codes, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.Code)
+func (g *masterdataPhase) mdCarriers(ctx context.Context, tx *keel.DB) error {
+	codes, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.Code)
 	if err != nil {
 		return err
 	}
-	scacs, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.SCAC)
+	scacs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.SCAC)
 	if err != nil {
 		return err
 	}
-	dots, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.DOTNumber)
+	dots, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.DOTNumber)
 	if err != nil {
 		return err
 	}
-	mcs, err := mdTaken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.MCNumber)
+	mcs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.MCNumber)
 	if err != nil {
 		return err
 	}
 
-	n := g.scale.carriers
+	n := g.Scale.Carriers
 	created, ids := g.mdTimes(n, "car_")
 	rows := make([]*carrier.Carrier, 0, n)
 	contacts := make([]*carrier.CarrierContact, 0, n*2)
-	stamps := make([]stamp, 0, n)
-	contactStamps := make([]stamp, 0, n*2)
-	g.carriers = make([]pulid.ID, 0, n)
+	stamps := make([]volumegen.Stamp, 0, n)
+	contactStamps := make([]volumegen.Stamp, 0, n*2)
+	g.Carriers = make([]pulid.ID, 0, n)
 	ein := carrier.TaxIDTypeEIN
 
 	for i := range n {
 		name := g.mdCarrierName()
-		slug := mdSlug(name)
-		home := g.fake.city()
+		slug := volumegen.Slug(name)
+		home := g.Fake.City()
 		remit := home
-		if g.fake.chance(0.2) {
-			remit = g.fake.city()
+		if g.Fake.Chance(0.2) {
+			remit = g.Fake.City()
 		}
-		stateID := g.refs.stateIDs[home.State]
-		remitStateID := g.refs.stateIDs[remit.State]
+		stateID := g.Refs.StateIDs[home.State]
+		remitStateID := g.Refs.StateIDs[remit.State]
 
 		row := &carrier.Carrier{
-			ID:                ids[i],
-			BusinessUnitID:    g.refs.buID,
-			OrganizationID:    g.refs.orgID,
-			StateID:           &stateID,
-			RemitStateID:      &remitStateID,
-			Status:            carrier.StatusActive,
-			Code:              uniqueCode(codeFrom(name, g.fake.between(3, 5)), codes),
+			ID:             ids[i],
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
+			StateID:        &stateID,
+			RemitStateID:   &remitStateID,
+			Status:         carrier.StatusActive,
+			Code: volumegen.UniqueCode(
+				volumegen.CodeFrom(name, g.Fake.Between(3, 5)),
+				codes,
+			),
 			Name:              name,
 			CarrierType:       carrier.TypeCommon,
 			DOTNumber:         g.mdUniqueDigits(7, dots),
@@ -1905,28 +1927,28 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 			SCAC:              g.mdUniqueSCAC(name, scacs),
 			ComplianceStatus:  carrier.ComplianceStatusQualified,
 			SafetyRating:      carrier.SafetyRatingSatisfactory,
-			TaxID:             g.fake.digits(2) + "-" + g.fake.digits(7),
+			TaxID:             g.Fake.Digits(2) + "-" + g.Fake.Digits(7),
 			TaxIDType:         &ein,
-			W9OnFile:          g.fake.chance(0.9),
+			W9OnFile:          g.Fake.Chance(0.9),
 			PaymentMethod:     carrier.PaymentMethodACHManual,
-			PaymentTermDays:   pick(g.fake, []int{15, 21, 30, 30, 45}),
+			PaymentTermDays:   volumegen.Pick(g.Fake, []int{15, 21, 30, 30, 45}),
 			RemitToName:       name + " LLC",
-			RemitAddressLine1: fmt.Sprintf("PO Box %d", g.fake.between(1000, 99999)),
+			RemitAddressLine1: fmt.Sprintf("PO Box %d", g.Fake.Between(1000, 99999)),
 			RemitCity:         remit.Name,
-			RemitPostalCode:   g.fake.postalCode(remit),
-			AddressLine1:      g.fake.street(),
+			RemitPostalCode:   g.Fake.PostalCode(remit),
+			AddressLine1:      g.Fake.Street(),
 			City:              home.Name,
-			PostalCode:        g.fake.postalCode(home),
-			Phone:             g.fake.phone(),
+			PostalCode:        g.Fake.PostalCode(home),
+			Phone:             g.Fake.Phone(),
 			Email:             "dispatch@" + slug + ".example.com",
 		}
-		if g.fake.chance(0.3) {
+		if g.Fake.Chance(0.3) {
 			row.DBAName = strings.Fields(name)[0]
 		}
-		if g.fake.chance(0.4) {
+		if g.Fake.Chance(0.4) {
 			row.PaymentMethod = carrier.PaymentMethodCheck
 		}
-		switch roll := g.fake.intn(100); {
+		switch roll := g.Fake.Intn(100); {
 		case roll < 30:
 			row.CarrierType = carrier.TypeContract
 			row.Is1099Eligible = true
@@ -1935,7 +1957,7 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 		case roll < 40:
 			row.CarrierType = carrier.TypeExempt
 		}
-		switch roll := g.fake.intn(100); {
+		switch roll := g.Fake.Intn(100); {
 		case roll < 30:
 			row.SafetyRating = carrier.SafetyRatingNotRated
 		case roll < 38:
@@ -1943,28 +1965,28 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 		case roll < 40:
 			row.SafetyRating = carrier.SafetyRatingUnsatisfactory
 		}
-		switch roll := g.fake.intn(100); {
+		switch roll := g.Fake.Intn(100); {
 		case roll < 12:
 			row.ComplianceStatus = carrier.ComplianceStatusPending
 		case roll < 20:
 			row.ComplianceStatus = carrier.ComplianceStatusExpired
 		case roll < 25:
 			row.ComplianceStatus = carrier.ComplianceStatusDisqualified
-			row.DisqualifiedReason = pick(g.fake, []string{
+			row.DisqualifiedReason = volumegen.Pick(g.Fake, []string{
 				"Insurance lapsed", "Operating authority revoked", "Unsatisfactory safety rating",
 			})
 		default:
-			row.QualifiedAt = ptr(created[i] + g.fake.between64(1, 30)*mdDay)
+			row.QualifiedAt = volumegen.Ptr(created[i] + g.Fake.Between64(1, 30)*mdDay)
 		}
-		switch roll := g.fake.intn(100); {
+		switch roll := g.Fake.Intn(100); {
 		case roll < 8:
 			row.Status = carrier.StatusInactive
 		case roll < 12:
 			row.Status = carrier.StatusDoNotUse
 			row.Notes = "Do not use: repeated late deliveries and claims."
 		}
-		if g.fake.chance(0.2) && row.Notes == "" {
-			row.Notes = pick(g.fake, []string{
+		if g.Fake.Chance(0.2) && row.Notes == "" {
+			row.Notes = volumegen.Pick(g.Fake, []string{
 				"Strong on Texas triangle lanes.",
 				"Reefer capacity out of the Southeast.",
 				"Flatbed and step-deck specialists.",
@@ -1977,7 +1999,7 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 		stamps = append(stamps, g.mdStamp(row.ID, created[i]))
 		if row.Status == carrier.StatusActive &&
 			row.ComplianceStatus == carrier.ComplianceStatusQualified {
-			g.carriers = append(g.carriers, row.ID)
+			g.Carriers = append(g.Carriers, row.ID)
 		}
 
 		for c, role := range []struct {
@@ -1988,14 +2010,14 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 			{title: "Accounts Receivable", mailbox: "ar"},
 		} {
 			contact := &carrier.CarrierContact{
-				ID:                        idAt("carc_", created[i]),
-				BusinessUnitID:            g.refs.buID,
-				OrganizationID:            g.refs.orgID,
+				ID:                        volumegen.IDAt("carc_", created[i]),
+				BusinessUnitID:            g.Refs.BuID,
+				OrganizationID:            g.Refs.OrgID,
 				CarrierID:                 row.ID,
-				Name:                      g.fake.firstName() + " " + g.fake.lastName(),
+				Name:                      g.Fake.FirstName() + " " + g.Fake.LastName(),
 				Title:                     role.title,
 				Email:                     role.mailbox + "@" + slug + ".example.com",
-				Phone:                     g.fake.phone(),
+				Phone:                     g.Fake.Phone(),
 				IsPrimary:                 c == 0,
 				ReceivesRateConfirmations: c == 0,
 			}
@@ -2004,20 +2026,28 @@ func (g *generator) mdCarriers(ctx context.Context, tx *keel.DB) error {
 		}
 	}
 
-	if err = insertRows(ctx, tx, carrierdb.Carriers.Handle, rows); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, carrierdb.Carriers.Handle, rows); err != nil {
 		return fmt.Errorf("insert carriers: %w", err)
 	}
-	if err = insertRows(ctx, tx, carrierdb.CarrierContacts.Handle, contacts); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, carrierdb.CarrierContacts.Handle, contacts); err != nil {
 		return fmt.Errorf("insert carrier contacts: %w", err)
 	}
-	if err = backdate(ctx, tx, carrierdb.Carriers.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, carrierdb.Carriers.Handle, stamps); err != nil {
 		return err
 	}
-	if err = backdate(ctx, tx, carrierdb.CarrierContacts.Handle, contactStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, carrierdb.CarrierContacts.Handle, contactStamps); err != nil {
 		return err
 	}
-	g.report.add("Carriers", len(rows))
-	g.report.add("Carrier contacts", len(contacts))
+	g.Report.Add("Carriers", len(rows))
+	g.Report.Add("Carrier contacts", len(contacts))
 
 	return nil
+}
+
+type masterdataPhase struct {
+	*volumegen.Generator
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&masterdataPhase{Generator: g}).seedMasterData(ctx)
 }

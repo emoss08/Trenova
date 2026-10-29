@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"fmt"
@@ -9,49 +9,51 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type faker struct {
+type Faker struct {
 	r *rand.Rand
 }
 
-func newFaker(seed uint64) *faker {
-	return &faker{r: rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))} //nolint:gosec // seed data
+func NewFaker(seed uint64) *Faker {
+	return &Faker{
+		r: rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15)),
+	} //nolint:gosec // seed data
 }
 
-func (f *faker) intn(n int) int {
+func (f *Faker) Intn(n int) int {
 	if n <= 0 {
 		return 0
 	}
 	return f.r.IntN(n)
 }
 
-func (f *faker) between(low, high int) int {
+func (f *Faker) Between(low, high int) int {
 	if high <= low {
 		return low
 	}
 	return low + f.r.IntN(high-low+1)
 }
 
-func (f *faker) between64(low, high int64) int64 {
+func (f *Faker) Between64(low, high int64) int64 {
 	if high <= low {
 		return low
 	}
 	return low + f.r.Int64N(high-low+1)
 }
 
-func (f *faker) chance(p float64) bool {
+func (f *Faker) Chance(p float64) bool {
 	return f.r.Float64() < p
 }
 
-func (f *faker) float() float64 {
+func (f *Faker) Float() float64 {
 	return f.r.Float64()
 }
 
-func (f *faker) weighted(weights []int) int {
+func (f *Faker) Weighted(weights []int) int {
 	total := 0
 	for _, w := range weights {
 		total += w
 	}
-	roll := f.intn(total)
+	roll := f.Intn(total)
 	for i, w := range weights {
 		if roll < w {
 			return i
@@ -61,99 +63,109 @@ func (f *faker) weighted(weights []int) int {
 	return len(weights) - 1
 }
 
-func pick[T any](f *faker, items []T) T {
-	return items[f.intn(len(items))]
+func Pick[T any](f *Faker, items []T) T {
+	return items[f.Intn(len(items))]
 }
 
-func (f *faker) digits(n int) string {
+func (f *Faker) Digits(n int) string {
 	var b strings.Builder
 	b.Grow(n)
 	for range n {
-		b.WriteByte(byte('0' + f.intn(10)))
+		b.WriteByte(byte('0' + f.Intn(10)))
 	}
 	return b.String()
 }
 
-func (f *faker) letters(n int) string {
+func (f *Faker) Letters(n int) string {
 	var b strings.Builder
 	b.Grow(n)
 	for range n {
-		b.WriteByte(byte('A' + f.intn(26)))
+		b.WriteByte(byte('A' + f.Intn(26)))
 	}
 	return b.String()
 }
 
-func (f *faker) money(low, high float64) decimal.Decimal {
+func (f *Faker) Money(low, high float64) decimal.Decimal {
 	return decimal.NewFromFloat(low + f.r.Float64()*(high-low)).Round(2)
 }
 
-func (f *faker) firstName() string {
-	return pick(f, firstNames)
+func (f *Faker) FirstName() string {
+	return Pick(f, firstNames)
 }
 
-func (f *faker) lastName() string {
-	return pick(f, lastNames)
+func (f *Faker) LastName() string {
+	return Pick(f, lastNames)
 }
 
-func (f *faker) phone() string {
-	return fmt.Sprintf("+1%d%s%s", f.between(201, 989), f.digits(3), f.digits(4))
+func (f *Faker) Phone() string {
+	return fmt.Sprintf("+1%d%s%s", f.Between(201, 989), f.Digits(3), f.Digits(4))
 }
 
-func (f *faker) street() string {
-	return fmt.Sprintf("%d %s %s", f.between(100, 19999), pick(f, streetNames), pick(f, streetSuffixes))
+func (f *Faker) Street() string {
+	return fmt.Sprintf(
+		"%d %s %s",
+		f.Between(100, 19999),
+		Pick(f, streetNames),
+		Pick(f, streetSuffixes),
+	)
 }
 
-func (f *faker) city() *cityRecord {
-	idx := f.weighted(cityWeights)
-	return &cities[idx]
+func (f *Faker) City() *CityRecord {
+	idx := f.Weighted(cityWeights)
+	return &Cities[idx]
 }
 
-func (f *faker) cityNear(home *cityRecord, radiusMiles float64) *cityRecord {
+func (f *Faker) CityNear(home *CityRecord, radiusMiles float64) *CityRecord {
 	for range 12 {
-		candidate := f.city()
-		if candidate != home && haversineMiles(home, candidate) <= radiusMiles {
+		candidate := f.City()
+		if candidate != home && HaversineMiles(home, candidate) <= radiusMiles {
 			return candidate
 		}
 	}
-	return f.city()
+	return f.City()
 }
 
-func (f *faker) postalCode(c *cityRecord) string {
-	return c.Zip[:3] + f.digits(2)
+func (f *Faker) PostalCode(c *CityRecord) string {
+	return c.Zip[:3] + f.Digits(2)
 }
 
-func (f *faker) companyName() string {
-	switch f.intn(4) {
+func (f *Faker) CompanyName() string {
+	switch f.Intn(4) {
 	case 0:
-		return fmt.Sprintf("%s %s", pick(f, companyPrefixes), pick(f, companyIndustries))
+		return fmt.Sprintf("%s %s", Pick(f, CompanyPrefixes), Pick(f, companyIndustries))
 	case 1:
-		return fmt.Sprintf("%s %s %s", f.lastName(), pick(f, companyIndustries), pick(f, companySuffixes))
+		return fmt.Sprintf(
+			"%s %s %s",
+			f.LastName(),
+			Pick(f, companyIndustries),
+			Pick(f, companySuffixes),
+		)
 	case 2:
-		return fmt.Sprintf("%s %s", pick(f, companyPrefixes), pick(f, companySuffixes))
+		return fmt.Sprintf("%s %s", Pick(f, CompanyPrefixes), Pick(f, companySuffixes))
 	default:
-		return fmt.Sprintf("%s & %s %s", f.lastName(), f.lastName(), pick(f, companySuffixes))
+		return fmt.Sprintf("%s & %s %s", f.LastName(), f.LastName(), Pick(f, companySuffixes))
 	}
 }
 
-func (f *faker) vin() string {
+func (f *Faker) VIN() string {
 	const alphabet = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789"
 	var b strings.Builder
 	b.Grow(17)
 	for range 17 {
-		b.WriteByte(alphabet[f.intn(len(alphabet))])
+		b.WriteByte(alphabet[f.Intn(len(alphabet))])
 	}
 	return b.String()
 }
 
-func (f *faker) plate() string {
-	return f.letters(3) + f.digits(4)
+func (f *Faker) Plate() string {
+	return f.Letters(3) + f.Digits(4)
 }
 
-func (f *faker) jitter(c *cityRecord) (lat, lon float64) {
-	return c.Lat + (f.float()-0.5)*0.18, c.Lon + (f.float()-0.5)*0.18
+func (f *Faker) Jitter(c *CityRecord) (lat, lon float64) {
+	return c.Lat + (f.Float()-0.5)*0.18, c.Lon + (f.Float()-0.5)*0.18
 }
 
-func codeFrom(name string, size int) string {
+func CodeFrom(name string, size int) string {
 	var b strings.Builder
 	for _, r := range strings.ToUpper(name) {
 		if r >= 'A' && r <= 'Z' {
@@ -169,7 +181,7 @@ func codeFrom(name string, size int) string {
 	return b.String()
 }
 
-func uniqueCode(base string, taken map[string]struct{}) string {
+func UniqueCode(base string, taken map[string]struct{}) string {
 	candidate := base
 	for n := 2; ; n++ {
 		key := strings.ToLower(candidate)
@@ -181,7 +193,7 @@ func uniqueCode(base string, taken map[string]struct{}) string {
 	}
 }
 
-func haversineMiles(a, b *cityRecord) float64 {
+func HaversineMiles(a, b *CityRecord) float64 {
 	const earthRadiusMiles = 3958.8
 	lat1, lat2 := a.Lat*math.Pi/180, b.Lat*math.Pi/180
 	dLat := (b.Lat - a.Lat) * math.Pi / 180
@@ -191,15 +203,15 @@ func haversineMiles(a, b *cityRecord) float64 {
 	return 2 * earthRadiusMiles * math.Asin(math.Sqrt(h))
 }
 
-func roadMiles(a, b *cityRecord) float64 {
-	miles := haversineMiles(a, b) * 1.18
+func RoadMiles(a, b *CityRecord) float64 {
+	miles := HaversineMiles(a, b) * 1.18
 	if miles < 12 {
 		miles = 12 + miles
 	}
 	return math.Round(miles*10) / 10
 }
 
-type cityRecord struct {
+type CityRecord struct {
 	Name     string
 	State    string
 	Lat      float64
@@ -210,9 +222,9 @@ type cityRecord struct {
 }
 
 var cityWeights = func() []int {
-	weights := make([]int, len(cities))
-	for i := range cities {
-		weights[i] = cities[i].Weight
+	weights := make([]int, len(Cities))
+	for i := range Cities {
+		weights[i] = Cities[i].Weight
 	}
 	return weights
 }()
@@ -225,7 +237,7 @@ const (
 	tzPacific  = "America/Los_Angeles"
 )
 
-var cities = []cityRecord{
+var Cities = []CityRecord{
 	{"Atlanta", "GA", 33.749, -84.388, "30303", tzEastern, 9},
 	{"Savannah", "GA", 32.0809, -81.0912, "31401", tzEastern, 5},
 	{"Macon", "GA", 32.8407, -83.6324, "31201", tzEastern, 2},
@@ -426,7 +438,7 @@ var streetSuffixes = []string{
 	"Pkwy", "Blvd", "Dr", "Rd", "Ave", "St", "Way", "Ln", "Ct", "Hwy", "Loop", "Pl",
 }
 
-var companyPrefixes = []string{
+var CompanyPrefixes = []string{
 	"Apex", "Summit", "Pioneer", "Heartland", "Coastal", "Frontier", "Liberty", "Keystone",
 	"Evergreen", "Pinnacle", "Sterling", "Granite", "Horizon", "Northstar", "Bluewater",
 	"Redwood", "Ironwood", "Silverline", "Prairie", "Lakeshore", "Riverbend", "Sunbelt",

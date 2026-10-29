@@ -1,4 +1,4 @@
-package volume
+package fuelvolume
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,11 @@ const (
 )
 
 var (
-	fuelProviders       = []fuelpurchase.CardProvider{fuelpurchase.CardProviderComdata, fuelpurchase.CardProviderEFS, fuelpurchase.CardProviderWEX}
+	fuelProviders = []fuelpurchase.CardProvider{
+		fuelpurchase.CardProviderComdata,
+		fuelpurchase.CardProviderEFS,
+		fuelpurchase.CardProviderWEX,
+	}
 	fuelProviderWeights = []int{60, 25, 15}
 	fuelProviderPrefix  = map[fuelpurchase.CardProvider]string{
 		fuelpurchase.CardProviderComdata: "CMD",
@@ -88,7 +92,7 @@ type fuelTractor struct {
 	fills     int
 	card      *fuelpurchase.FuelCard
 	mateCard  *fuelpurchase.FuelCard
-	lastCity  *cityRecord
+	lastCity  *volumegen.CityRecord
 	lastAt    int64
 }
 
@@ -140,39 +144,39 @@ type fuelFeedRun struct {
 type fuelImport struct {
 	batches     []*fuelpurchase.ImportBatch
 	rows        []*fuelpurchase.ImportRow
-	batchStamps []stamp
-	rowStamps   []stamp
+	batchStamps []volumegen.Stamp
+	rowStamps   []volumegen.Stamp
 }
 
 type fuelLegs struct {
-	cities []*cityRecord
+	cities []*volumegen.CityRecord
 	miles  []float64
 	total  float64
 }
 
 type fuelSeeder struct {
-	g             *generator
+	g             *volumegen.Generator
 	now           int64
 	loc           *time.Location
 	baseState     string
 	jurisdictions map[string]*ifta.Jurisdiction
 	jurisByID     map[pulid.ID]*ifta.Jurisdiction
 	tractors      map[pulid.ID]*fuelTractor
-	splits        map[[2]*cityRecord][]fuelShare
+	splits        map[[2]*volumegen.CityRecord][]fuelShare
 	lastFours     map[fuelpurchase.CardProvider]map[string]struct{}
 	refTag        string
 	refSeq        int
 	cardOwner     map[pulid.ID]pulid.ID
 
 	cards          []*fuelpurchase.FuelCard
-	cardStamps     []stamp
+	cardStamps     []volumegen.Stamp
 	purchases      []*fuelpurchase.FuelPurchase
-	purchaseStamps []stamp
+	purchaseStamps []volumegen.Stamp
 	runs           map[string]*fuelFeedRun
 	routeMiles     []*shipment.ShipmentMoveJurisdictionMile
-	routeStamps    []stamp
+	routeStamps    []volumegen.Stamp
 	entries        []*ifta.JurisdictionMileageEntry
-	entryStamps    []stamp
+	entryStamps    []volumegen.Stamp
 
 	routeMoves []*fuelRouteMove
 	manual     []fuelMileRow
@@ -182,13 +186,13 @@ type fuelSeeder struct {
 	firstStart int64
 }
 
-func (g *generator) seedFuel(ctx context.Context) error {
+func (g *fuelPhase) seedFuel(ctx context.Context) error {
 	fs, err := g.fuelLoad(ctx)
 	if err != nil {
 		return err
 	}
 	if len(fs.tractors) == 0 || len(fs.jurisdictions) == 0 {
-		g.opts.Logf("  ! no tractors or IFTA jurisdictions; fuel and IFTA skipped")
+		g.Opts.Logf("  ! no tractors or IFTA jurisdictions; fuel and IFTA skipped")
 		return nil
 	}
 
@@ -197,60 +201,60 @@ func (g *generator) seedFuel(ctx context.Context) error {
 	fs.buildHeldRows()
 	imp := fs.finishRuns()
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return fs.writeFuel(ctx, tx, imp)
 	}); err != nil {
 		return err
 	}
-	g.progress("fuel purchases", len(fs.purchases), len(fs.purchases))
+	g.Progress("fuel purchases", len(fs.purchases), len(fs.purchases))
 
-	if err = g.inTx(ctx, fs.writeMiles); err != nil {
+	if err = g.InTx(ctx, fs.writeMiles); err != nil {
 		return err
 	}
-	g.progress("jurisdiction miles", len(fs.routeMiles), len(fs.routeMiles))
+	g.Progress("jurisdiction miles", len(fs.routeMiles), len(fs.routeMiles))
 
 	if err = fs.seedReturns(ctx); err != nil {
 		return err
 	}
 
-	g.report.add("Fuel cards", len(fs.cards))
-	g.report.add("Fuel feed runs", len(imp.batches))
-	g.report.add("Fuel import rows", len(imp.rows))
-	g.report.add("Fuel purchases", len(fs.purchases))
-	g.report.add("Move jurisdiction miles", len(fs.routeMiles))
-	g.report.add("Jurisdiction mileage entries", len(fs.entries))
+	g.Report.Add("Fuel cards", len(fs.cards))
+	g.Report.Add("Fuel feed runs", len(imp.batches))
+	g.Report.Add("Fuel import rows", len(imp.rows))
+	g.Report.Add("Fuel purchases", len(fs.purchases))
+	g.Report.Add("Move jurisdiction miles", len(fs.routeMiles))
+	g.Report.Add("Jurisdiction mileage entries", len(fs.entries))
 
 	return nil
 }
 
-func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
+func (g *fuelPhase) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 	fs := &fuelSeeder{
-		g:             g,
-		now:           unix(g.now),
+		g:             g.Generator,
+		now:           volumegen.Unix(g.Now),
 		loc:           time.UTC,
 		jurisdictions: make(map[string]*ifta.Jurisdiction),
 		jurisByID:     make(map[pulid.ID]*ifta.Jurisdiction),
 		tractors:      make(map[pulid.ID]*fuelTractor),
-		splits:        make(map[[2]*cityRecord][]fuelShare),
+		splits:        make(map[[2]*volumegen.CityRecord][]fuelShare),
 		lastFours:     make(map[fuelpurchase.CardProvider]map[string]struct{}),
-		refTag:        fmt.Sprintf("%05d", g.now.Unix()%100_000),
+		refTag:        fmt.Sprintf("%05d", g.Now.Unix()%100_000),
 		cardOwner:     make(map[pulid.ID]pulid.ID),
 		runs:          make(map[string]*fuelFeedRun),
 		hasReturn:     make(map[ifta.Period]bool),
 	}
 
 	o := tenantdb.Organizations
-	org, err := o.Pick(o.Timezone, o.StateID).Where(o.ID.Eq(g.refs.orgID)).One(ctx, g.db)
+	org, err := o.Pick(o.Timezone, o.StateID).Where(o.ID.Eq(g.Refs.OrgID)).One(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load organization timezone: %w", err)
 	}
 	if loc, err := time.LoadLocation(org.Timezone); err == nil {
 		fs.loc = loc
 	}
-	fs.baseState = g.refs.stateAbbr[org.StateID]
+	fs.baseState = g.Refs.StateAbbr[org.StateID]
 
 	ij := iftadb.Jurisdictions
-	jurisdictions, err := ij.Where(ij.Status.Eq(ifta.JurisdictionStatusActive)).All(ctx, g.db)
+	jurisdictions, err := ij.Where(ij.Status.Eq(ifta.JurisdictionStatusActive)).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
 	}
@@ -262,7 +266,7 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 	}
 
 	tr := tractordb.Tractors
-	tractors, err := tr.Pick(tr.ID, tr.Code, tr.FuelType, tr.IFTAQualified).All(ctx, g.db)
+	tractors, err := tr.Pick(tr.ID, tr.Code, tr.FuelType, tr.IFTAQualified).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load tractors: %w", err)
 	}
@@ -272,21 +276,21 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 			code:      t.Code,
 			fuelType:  t.FuelType,
 			qualified: t.IFTAQualified,
-			odometer:  float64(g.fake.between(120_000, 650_000)),
+			odometer:  float64(g.Fake.Between(120_000, 650_000)),
 		}
 		if ft.fuelType == "" {
 			ft.fuelType = domaintypes.IFTAFuelTypeDiesel
 		}
-		ft.mpg = 6.1 + g.fake.float()*1.5
+		ft.mpg = 6.1 + g.Fake.Float()*1.5
 		if ft.fuelType == domaintypes.IFTAFuelTypeCNG {
-			ft.mpg = 5.0 + g.fake.float()*0.9
+			ft.mpg = 5.0 + g.Fake.Float()*0.9
 		}
 		ft.fillAt = fs.nextFillAt()
 		fs.tractors[t.ID] = ft
 	}
 
 	fc := fuelpurchasedb.FuelCards
-	keys, err := fc.Pick(fc.Provider, fc.LastFour).All(ctx, g.db)
+	keys, err := fc.Pick(fc.Provider, fc.LastFour).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load fuel card numbers: %w", err)
 	}
@@ -300,7 +304,7 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 		fs.lastFours[k.Provider][k.LastFour] = struct{}{}
 	}
 
-	first := ifta.PeriodOf(unix(g.start), fs.loc)
+	first := ifta.PeriodOf(volumegen.Unix(g.Start), fs.loc)
 	current := ifta.PeriodOf(fs.now, fs.loc)
 	for p := first; !current.Before(p); p = p.Next() {
 		fs.periods = append(fs.periods, p)
@@ -308,7 +312,7 @@ func (g *generator) fuelLoad(ctx context.Context) (*fuelSeeder, error) {
 	fs.firstStart, _ = first.Bounds(fs.loc)
 
 	ir := iftadb.Returns
-	existing, err := ir.Pick(ir.Year, ir.Quarter).All(ctx, g.db)
+	existing, err := ir.Pick(ir.Year, ir.Quarter).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load ifta returns: %w", err)
 	}
@@ -331,7 +335,7 @@ func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 	fp := fuelpurchasedb.FuelPurchases
 	purchases, err := fp.Pick(fp.TractorID, fp.JurisdictionID, fp.FuelType, fp.Gallons, fp.TaxPaid, fp.PurchasedAt).
 		Where(fp.PurchasedAt.Gte(fs.firstStart)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load existing fuel purchases: %w", err)
 	}
@@ -349,7 +353,7 @@ func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 	me := iftadb.JurisdictionMileageEntries
 	entries, err := me.Pick(me.TractorID, me.JurisdictionID, me.Miles, me.Loaded, me.Year, me.Quarter).
 		Where(me.TraveledAt.Gte(fs.firstStart)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load existing mileage entries: %w", err)
 	}
@@ -368,13 +372,13 @@ func (fs *fuelSeeder) loadExistingActivity(ctx context.Context) error {
 }
 
 func (fs *fuelSeeder) nextFillAt() float64 {
-	return 650 + fs.g.fake.float()*650
+	return 650 + fs.g.Fake.Float()*650
 }
 
 func (fs *fuelSeeder) lastFour(provider fuelpurchase.CardProvider) string {
 	taken := fs.lastFours[provider]
 	for {
-		candidate := fs.g.fake.digits(4)
+		candidate := fs.g.Fake.Digits(4)
 		if _, ok := taken[candidate]; !ok {
 			taken[candidate] = struct{}{}
 			return candidate
@@ -399,85 +403,103 @@ func (fs *fuelSeeder) newCard(
 ) *fuelpurchase.FuelCard {
 	g := fs.g
 	last := fs.lastFour(provider)
-	expires := fs.now + g.fake.between64(200, 1_100)*fuelDay
+	expires := fs.now + g.Fake.Between64(200, 1_100)*fuelDay
 	card := &fuelpurchase.FuelCard{
-		ID:             idAt("fcard_", created),
-		OrganizationID: g.refs.orgID,
-		BusinessUnitID: g.refs.buID,
+		ID:             volumegen.IDAt("fcard_", created),
+		OrganizationID: g.Refs.OrgID,
+		BusinessUnitID: g.Refs.BuID,
 		Provider:       provider,
 		LastFour:       last,
-		ExternalCardID: fmt.Sprintf("%s-%s-%s", fuelProviderPrefix[provider], g.fake.digits(4), last),
-		Status:         fuelpurchase.CardStatusActive,
-		ExpiresAt:      &expires,
-		Label:          provider.Label() + " " + last,
+		ExternalCardID: fmt.Sprintf(
+			"%s-%s-%s",
+			fuelProviderPrefix[provider],
+			g.Fake.Digits(4),
+			last,
+		),
+		Status:    fuelpurchase.CardStatusActive,
+		ExpiresAt: &expires,
+		Label:     provider.Label() + " " + last,
 	}
 	if workerID.IsNotNil() {
-		card.AssignedWorkerID = ptr(workerID)
+		card.AssignedWorkerID = volumegen.Ptr(workerID)
 		fs.cardOwner[card.ID] = workerID
 	}
 	if ft != nil {
-		card.AssignedTractorID = ptr(ft.id)
+		card.AssignedTractorID = volumegen.Ptr(ft.id)
 		card.Label = fmt.Sprintf("%s •••• %s — Unit %s", provider.Label(), last, ft.code)
 	}
 	card.Normalize()
 	fs.cards = append(fs.cards, card)
-	fs.cardStamps = append(fs.cardStamps, stamp{id: card.ID, created: created, updated: created})
+	fs.cardStamps = append(
+		fs.cardStamps,
+		volumegen.Stamp{Id: card.ID, Created: created, Updated: created},
+	)
 	return card
 }
 
 func (fs *fuelSeeder) buildCards() {
 	g := fs.g
-	start := unix(g.start)
-	hired := make(map[pulid.ID]int64, len(g.drivers))
-	for _, d := range g.drivers {
+	start := volumegen.Unix(g.Start)
+	hired := make(map[pulid.ID]int64, len(g.Drivers))
+	for _, d := range g.Drivers {
 		hired[d.WorkerID] = d.HireDate
 	}
 	cardCreated := func(workerID pulid.ID) int64 {
-		at := start - g.fake.between64(fuelDay, 400*fuelDay)
+		at := start - g.Fake.Between64(fuelDay, 400*fuelDay)
 		if h, ok := hired[workerID]; ok && h > at {
-			at = min(h+g.fake.between64(fuelDay, 10*fuelDay), start)
+			at = min(h+g.Fake.Between64(fuelDay, 10*fuelDay), start)
 		}
 		return at
 	}
 
-	crews := append([]*crew(nil), g.crews...)
+	crews := append([]*volumegen.Crew(nil), g.Crews...)
 	sort.Slice(crews, func(i, j int) bool { return crews[i].TractorID < crews[j].TractorID })
-	discovered := clamp(len(crews)/40, 2, 25)
+	discovered := volumegen.Clamp(len(crews)/40, 2, 25)
 	for _, c := range crews {
 		ft := fs.tractors[c.TractorID]
 		if ft == nil {
 			continue
 		}
-		provider := fuelProviders[g.fake.weighted(fuelProviderWeights)]
+		provider := fuelProviders[g.Fake.Weighted(fuelProviderWeights)]
 		created := cardCreated(c.WorkerID)
 		ft.card = fs.newCard(provider, c.WorkerID, ft, created)
-		if discovered > 0 && g.fake.chance(0.08) {
+		if discovered > 0 && g.Fake.Chance(0.08) {
 			discovered--
-			ft.card.DiscoveredAt = ptr(created)
+			ft.card.DiscoveredAt = volumegen.Ptr(created)
 			ft.card.Notes = fmt.Sprintf(
 				"First seen on the %s feed; assigned to unit %s.", provider.Label(), ft.code,
 			)
 		}
 		if c.SecondaryWorkerID != nil {
-			ft.mateCard = fs.newCard(provider, *c.SecondaryWorkerID, ft, cardCreated(*c.SecondaryWorkerID))
+			ft.mateCard = fs.newCard(
+				provider,
+				*c.SecondaryWorkerID,
+				ft,
+				cardCreated(*c.SecondaryWorkerID),
+			)
 		}
 	}
 
-	for _, d := range g.drivers {
+	for _, d := range g.Drivers {
 		if d.Active || d.TractorID.IsNil() {
 			continue
 		}
 		ft := fs.tractors[d.TractorID]
 		created := cardCreated(d.WorkerID)
-		card := fs.newCard(fuelProviders[g.fake.weighted(fuelProviderWeights)], d.WorkerID, ft, created)
-		cancelled := max(created+30*fuelDay, fs.now-g.fake.between64(5, 300)*fuelDay)
-		card.Cancel(min(cancelled, fs.now-fuelHour), pick(g.fake, fuelCancelReasons))
-		fs.cardStamps[len(fs.cardStamps)-1].updated = *card.CancelledAt
+		card := fs.newCard(
+			fuelProviders[g.Fake.Weighted(fuelProviderWeights)],
+			d.WorkerID,
+			ft,
+			created,
+		)
+		cancelled := max(created+30*fuelDay, fs.now-g.Fake.Between64(5, 300)*fuelDay)
+		card.Cancel(min(cancelled, fs.now-fuelHour), volumegen.Pick(g.Fake, fuelCancelReasons))
+		fs.cardStamps[len(fs.cardStamps)-1].Updated = *card.CancelledAt
 	}
 }
 
-func (fs *fuelSeeder) split(a, b *cityRecord) []fuelShare {
-	key := [2]*cityRecord{a, b}
+func (fs *fuelSeeder) split(a, b *volumegen.CityRecord) []fuelShare {
+	key := [2]*volumegen.CityRecord{a, b}
 	if shares, ok := fs.splits[key]; ok {
 		return shares
 	}
@@ -486,11 +508,11 @@ func (fs *fuelSeeder) split(a, b *cityRecord) []fuelShare {
 		fs.splits[key] = shares
 		return shares
 	}
-	n := max(2, int(haversineMiles(a, b)/fuelSampleMiles))
+	n := max(2, int(volumegen.HaversineMiles(a, b)/fuelSampleMiles))
 	counts := make(map[string]int, 4)
 	order := make([]string, 0, 4)
 	for i := range n {
-		state := shpNearestCity(a, b, (float64(i)+0.5)/float64(n)).State
+		state := volumegen.NearestCity(a, b, (float64(i)+0.5)/float64(n)).State
 		if counts[state] == 0 {
 			order = append(order, state)
 		}
@@ -504,10 +526,10 @@ func (fs *fuelSeeder) split(a, b *cityRecord) []fuelShare {
 	return shares
 }
 
-func fuelRoute(cities []*cityRecord) fuelLegs {
+func fuelRoute(cities []*volumegen.CityRecord) fuelLegs {
 	legs := fuelLegs{cities: cities, miles: make([]float64, 0, len(cities))}
 	for i := 1; i < len(cities); i++ {
-		m := roadMiles(cities[i-1], cities[i])
+		m := volumegen.RoadMiles(cities[i-1], cities[i])
 		legs.miles = append(legs.miles, m)
 		legs.total += m
 	}
@@ -537,12 +559,12 @@ func (fs *fuelSeeder) stateMiles(legs fuelLegs, distance float64) ([]string, map
 func (fs *fuelSeeder) buildRoutes() {
 	g := fs.g
 	type driverMove struct {
-		rec  *shipmentRecord
-		move *moveRecord
+		rec  *volumegen.ShipmentRecord
+		move *volumegen.MoveRecord
 	}
 	byTractor := make(map[pulid.ID][]driverMove)
 
-	for _, rec := range g.shipments {
+	for _, rec := range g.Shipments {
 		if rec.Status == shipment.StatusCanceled {
 			continue
 		}
@@ -557,7 +579,7 @@ func (fs *fuelSeeder) buildRoutes() {
 			if mv.Crew != nil {
 				route.tractorID = mv.Crew.TractorID
 			}
-			calculated := rec.CreatedAt + g.fake.between64(5, 90)
+			calculated := rec.CreatedAt + g.Fake.Between64(5, 90)
 			for seq, state := range order {
 				j := fs.jurisdictions[state]
 				miles := math.Round(byState[state]*100) / 100
@@ -565,9 +587,9 @@ func (fs *fuelSeeder) buildRoutes() {
 					continue
 				}
 				row := &shipment.ShipmentMoveJurisdictionMile{
-					ID:               idAt("smjm_", calculated),
-					BusinessUnitID:   g.refs.buID,
-					OrganizationID:   g.refs.orgID,
+					ID:               volumegen.IDAt("smjm_", calculated),
+					BusinessUnitID:   g.Refs.BuID,
+					OrganizationID:   g.Refs.OrgID,
 					ShipmentMoveID:   mv.ID,
 					ShipmentID:       rec.ID,
 					CountryCode:      j.CountryCode,
@@ -581,18 +603,27 @@ func (fs *fuelSeeder) buildRoutes() {
 					Version:          1,
 				}
 				fs.routeMiles = append(fs.routeMiles, row)
-				fs.routeStamps = append(fs.routeStamps, stamp{id: row.ID, created: calculated, updated: calculated})
+				fs.routeStamps = append(
+					fs.routeStamps,
+					volumegen.Stamp{Id: row.ID, Created: calculated, Updated: calculated},
+				)
 				dec := decimal.NewFromFloat(miles)
 				route.miles = route.miles.Add(dec)
-				route.rows = append(route.rows, fuelMileRow{jurisdictionID: j.ID, miles: dec, loaded: true})
+				route.rows = append(
+					route.rows,
+					fuelMileRow{jurisdictionID: j.ID, miles: dec, loaded: true},
+				)
 			}
 			if !completed || len(route.rows) == 0 {
 				continue
 			}
 			fs.routeMoves = append(fs.routeMoves, route)
 			if mv.Crew != nil && mv.StartedAt > 0 && mv.CompletedAt > mv.StartedAt {
-				byTractor[mv.Crew.TractorID] = append(byTractor[mv.Crew.TractorID], driverMove{rec: rec, move: mv})
-				if g.fake.chance(0.03) {
+				byTractor[mv.Crew.TractorID] = append(
+					byTractor[mv.Crew.TractorID],
+					driverMove{rec: rec, move: mv},
+				)
+				if g.Fake.Chance(0.03) {
 					fs.telematics(route, mv, order, byState)
 				}
 			}
@@ -610,7 +641,10 @@ func (fs *fuelSeeder) buildRoutes() {
 			continue
 		}
 		moves := byTractor[id]
-		sort.Slice(moves, func(i, j int) bool { return moves[i].move.StartedAt < moves[j].move.StartedAt })
+		sort.Slice(
+			moves,
+			func(i, j int) bool { return moves[i].move.StartedAt < moves[j].move.StartedAt },
+		)
 		for _, dm := range moves {
 			fs.driveMove(ft, dm.rec, dm.move)
 		}
@@ -621,7 +655,7 @@ func (fs *fuelSeeder) buildRoutes() {
 // telematics import overrides the calculated route for IFTA.
 func (fs *fuelSeeder) telematics(
 	route *fuelRouteMove,
-	mv *moveRecord,
+	mv *volumegen.MoveRecord,
 	order []string,
 	byState map[string]float64,
 ) {
@@ -629,26 +663,27 @@ func (fs *fuelSeeder) telematics(
 	if mv.Crew == nil {
 		return
 	}
-	traveled := mv.CompletedAt - g.fake.between64(fuelMinute, fuelHour)
-	created := min(mv.CompletedAt+g.fake.between64(10*fuelMinute, 6*fuelHour), fs.now)
+	traveled := mv.CompletedAt - g.Fake.Between64(fuelMinute, fuelHour)
+	created := min(mv.CompletedAt+g.Fake.Between64(10*fuelMinute, 6*fuelHour), fs.now)
 	added := 0
 	for _, state := range order {
 		j := fs.jurisdictions[state]
-		miles := decimal.NewFromFloat(byState[state] * (0.97 + g.fake.float()*0.06)).Round(fuelMilesScale)
+		miles := decimal.NewFromFloat(byState[state] * (0.97 + g.Fake.Float()*0.06)).
+			Round(fuelMilesScale)
 		if j == nil || !miles.IsPositive() {
 			continue
 		}
 		entry := &ifta.JurisdictionMileageEntry{
-			ID:             idAt("ifme_", created),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("ifme_", created),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			TractorID:      mv.Crew.TractorID,
 			JurisdictionID: j.ID,
 			TraveledAt:     traveled,
 			Miles:          miles,
 			Loaded:         true,
 			Source:         ifta.MileageSourceTelematics,
-			ShipmentMoveID: ptr(mv.ID),
+			ShipmentMoveID: volumegen.Ptr(mv.ID),
 			Notes:          "ELD odometer miles for the move, replacing the calculated route",
 			Version:        1,
 		}
@@ -664,7 +699,10 @@ func (fs *fuelSeeder) telematics(
 
 func (fs *fuelSeeder) addEntry(entry *ifta.JurisdictionMileageEntry, created int64) {
 	fs.entries = append(fs.entries, entry)
-	fs.entryStamps = append(fs.entryStamps, stamp{id: entry.ID, created: created, updated: created})
+	fs.entryStamps = append(
+		fs.entryStamps,
+		volumegen.Stamp{Id: entry.ID, Created: created, Updated: created},
+	)
 	fs.manual = append(fs.manual, fuelMileRow{
 		tractorID:      entry.TractorID,
 		jurisdictionID: entry.JurisdictionID,
@@ -675,10 +713,15 @@ func (fs *fuelSeeder) addEntry(entry *ifta.JurisdictionMileageEntry, created int
 	})
 }
 
-func (fs *fuelSeeder) driveMove(ft *fuelTractor, rec *shipmentRecord, mv *moveRecord) {
+func (fs *fuelSeeder) driveMove(
+	ft *fuelTractor,
+	rec *volumegen.ShipmentRecord,
+	mv *volumegen.MoveRecord,
+) {
 	g := fs.g
 	origin := mv.Cities[0]
-	if ft.lastCity != nil && ft.lastCity != origin && haversineMiles(ft.lastCity, origin) > 25 &&
+	if ft.lastCity != nil && ft.lastCity != origin &&
+		volumegen.HaversineMiles(ft.lastCity, origin) > 25 &&
 		mv.StartedAt-ft.lastAt > 3*fuelHour {
 		fs.deadhead(ft, origin, mv.StartedAt, rec)
 	}
@@ -693,30 +736,46 @@ func (fs *fuelSeeder) driveMove(ft *fuelTractor, rec *shipmentRecord, mv *moveRe
 		fs.walk(ft, mv.Crew, legs.cities[i], legs.cities[i+1], miles, begin, end)
 	}
 
-	if mv.Crew.TrailerKind == trailerKindReefer {
-		fs.purchase(ft, mv.Crew, origin, mv.StartedAt+g.fake.between64(10*fuelMinute, 50*fuelMinute),
-			domaintypes.IFTAFuelTypeReefer, decimal.NewFromFloat(15+g.fake.float()*35).Round(3), false)
+	if mv.Crew.TrailerKind == volumegen.TrailerKindReefer {
+		fs.purchase(
+			ft,
+			mv.Crew,
+			origin,
+			mv.StartedAt+g.Fake.Between64(10*fuelMinute, 50*fuelMinute),
+			domaintypes.IFTAFuelTypeReefer,
+			decimal.NewFromFloat(15+g.Fake.Float()*35).Round(3),
+			false,
+		)
 	}
 
 	ft.lastCity = mv.Cities[len(mv.Cities)-1]
 	ft.lastAt = mv.CompletedAt
 }
 
-func (fs *fuelSeeder) deadhead(ft *fuelTractor, to *cityRecord, nextStart int64, rec *shipmentRecord) {
+func (fs *fuelSeeder) deadhead(
+	ft *fuelTractor,
+	to *volumegen.CityRecord,
+	nextStart int64,
+	rec *volumegen.ShipmentRecord,
+) {
 	g := fs.g
 	from := ft.lastCity
-	miles := roadMiles(from, to)
+	miles := volumegen.RoadMiles(from, to)
 	gap := nextStart - ft.lastAt
-	start := ft.lastAt + g.fake.between64(fuelHour, max(fuelHour, min(gap/3, 12*fuelHour)))
+	start := ft.lastAt + g.Fake.Between64(fuelHour, max(fuelHour, min(gap/3, 12*fuelHour)))
 	end := min(start+int64(miles/48*float64(fuelHour)), nextStart-30*fuelMinute)
 	if end <= start || start >= fs.now {
 		return
 	}
 	fs.walk(ft, nil, from, to, miles, start, end)
 
-	legs := fuelLegs{cities: []*cityRecord{from, to}, miles: []float64{miles}, total: miles}
+	legs := fuelLegs{
+		cities: []*volumegen.CityRecord{from, to},
+		miles:  []float64{miles},
+		total:  miles,
+	}
 	order, byState := fs.stateMiles(legs, miles)
-	created := min(end+g.fake.between64(fuelHour, 3*fuelDay), fs.now)
+	created := min(end+g.Fake.Between64(fuelHour, 3*fuelDay), fs.now)
 	for _, state := range order {
 		j := fs.jurisdictions[state]
 		amount := decimal.NewFromFloat(byState[state]).Round(fuelMilesScale)
@@ -724,9 +783,9 @@ func (fs *fuelSeeder) deadhead(ft *fuelTractor, to *cityRecord, nextStart int64,
 			continue
 		}
 		entry := &ifta.JurisdictionMileageEntry{
-			ID:             idAt("ifme_", created),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("ifme_", created),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			TractorID:      ft.id,
 			JurisdictionID: j.ID,
 			TraveledAt:     start,
@@ -735,7 +794,7 @@ func (fs *fuelSeeder) deadhead(ft *fuelTractor, to *cityRecord, nextStart int64,
 			Source:         ifta.MileageSourceManual,
 			Notes: fmt.Sprintf("Deadhead %s, %s to %s, %s ahead of %s",
 				from.Name, from.State, to.Name, to.State, rec.ProNumber),
-			CreatedByID: pick(g.fake, g.refs.userIDs),
+			CreatedByID: volumegen.Pick(g.Fake, g.Refs.UserIDs),
 			Version:     1,
 		}
 		entry.AssignPeriod(fs.loc)
@@ -746,8 +805,8 @@ func (fs *fuelSeeder) deadhead(ft *fuelTractor, to *cityRecord, nextStart int64,
 
 func (fs *fuelSeeder) walk(
 	ft *fuelTractor,
-	c *crew,
-	from, to *cityRecord,
+	c *volumegen.Crew,
+	from, to *volumegen.CityRecord,
 	miles float64,
 	begin, end int64,
 ) {
@@ -762,7 +821,7 @@ func (fs *fuelSeeder) walk(
 		remaining -= need
 		frac := covered / miles
 		at := begin + int64(float64(end-begin)*frac)
-		city := shpNearestCity(from, to, frac)
+		city := volumegen.NearestCity(from, to, frac)
 		used := ft.fillAt
 		ft.sinceFill = 0
 		ft.fillAt = fs.nextFillAt()
@@ -772,7 +831,13 @@ func (fs *fuelSeeder) walk(
 	ft.odometer += miles
 }
 
-func (fs *fuelSeeder) fill(ft *fuelTractor, c *crew, city *cityRecord, at int64, used, odometer float64) {
+func (fs *fuelSeeder) fill(
+	ft *fuelTractor,
+	c *volumegen.Crew,
+	city *volumegen.CityRecord,
+	at int64,
+	used, odometer float64,
+) {
 	g := fs.g
 	gallons := math.Min(math.Max(used/ft.mpg, 40), 290)
 	p := fs.purchase(ft, c, city, at, ft.fuelType, decimal.NewFromFloat(gallons).Round(3), true)
@@ -783,24 +848,28 @@ func (fs *fuelSeeder) fill(ft *fuelTractor, c *crew, city *cityRecord, at int64,
 	p.Odometer = &reading
 	ft.fills++
 	if ft.fuelType == domaintypes.IFTAFuelTypeDiesel && ft.fills%3 == 0 {
-		fs.purchase(ft, c, city, at+g.fake.between64(2*fuelMinute, 8*fuelMinute),
-			domaintypes.IFTAFuelTypeDEF, decimal.NewFromFloat(3+g.fake.float()*9).Round(3), false)
+		fs.purchase(ft, c, city, at+g.Fake.Between64(2*fuelMinute, 8*fuelMinute),
+			domaintypes.IFTAFuelTypeDEF, decimal.NewFromFloat(3+g.Fake.Float()*9).Round(3), false)
 	}
 }
 
-func (fs *fuelSeeder) price(state string, at int64, fuelType domaintypes.IFTAFuelType) decimal.Decimal {
+func (fs *fuelSeeder) price(
+	state string,
+	at int64,
+	fuelType domaintypes.IFTAFuelType,
+) decimal.Decimal {
 	g := fs.g
 	base, ok := fuelDieselPrice[state]
 	if !ok {
 		base = 3.8
 	}
-	phase := float64(at-unix(g.start)) / float64(365*fuelDay) * 2 * math.Pi
-	value := base + 0.28*math.Sin(phase) + (g.fake.float()-0.5)*0.24 - g.fake.float()*0.3
+	phase := float64(at-volumegen.Unix(g.Start)) / float64(365*fuelDay) * 2 * math.Pi
+	value := base + 0.28*math.Sin(phase) + (g.Fake.Float()-0.5)*0.24 - g.Fake.Float()*0.3
 	switch fuelType {
 	case domaintypes.IFTAFuelTypeDEF:
-		value = 3.0 + g.fake.float()*0.9
+		value = 3.0 + g.Fake.Float()*0.9
 	case domaintypes.IFTAFuelTypeCNG:
-		value = base*0.72 + g.fake.float()*0.2
+		value = base*0.72 + g.Fake.Float()*0.2
 	case domaintypes.IFTAFuelTypeReefer:
 		value = base - 0.55
 	default:
@@ -812,8 +881,8 @@ func (fs *fuelSeeder) price(state string, at int64, fuelType domaintypes.IFTAFue
 // feed run, so a fill whose run has not happened yet is not in the system.
 func (fs *fuelSeeder) purchase(
 	ft *fuelTractor,
-	c *crew,
-	city *cityRecord,
+	c *volumegen.Crew,
+	city *volumegen.CityRecord,
 	at int64,
 	fuelType domaintypes.IFTAFuelType,
 	quantity decimal.Decimal,
@@ -826,19 +895,19 @@ func (fs *fuelSeeder) purchase(
 	}
 
 	card := ft.card
-	if c != nil && c.SecondaryWorkerID != nil && ft.mateCard != nil && g.fake.chance(0.35) {
+	if c != nil && c.SecondaryWorkerID != nil && ft.mateCard != nil && g.Fake.Chance(0.35) {
 		card = ft.mateCard
 	}
-	manual := card == nil || card.Status != fuelpurchase.CardStatusActive || g.fake.chance(0.03)
+	manual := card == nil || card.Status != fuelpurchase.CardStatusActive || g.Fake.Chance(0.03)
 
 	unitPrice := fs.price(city.State, at, fuelType)
-	vendor := pick(g.fake, fuelChains)
+	vendor := volumegen.Pick(g.Fake, fuelChains)
 	if fuelType == domaintypes.IFTAFuelTypeCNG {
 		vendor = "Clean Energy Fuels"
 	}
 	p := &fuelpurchase.FuelPurchase{
-		OrganizationID: g.refs.orgID,
-		BusinessUnitID: g.refs.buID,
+		OrganizationID: g.Refs.OrgID,
+		BusinessUnitID: g.Refs.BuID,
 		TractorID:      ft.id,
 		JurisdictionID: j.ID,
 		PurchasedAt:    at,
@@ -857,16 +926,16 @@ func (fs *fuelSeeder) purchase(
 
 	var created int64
 	if manual {
-		created = at + g.fake.between64(fuelDay, 4*fuelDay)
+		created = at + g.Fake.Between64(fuelDay, 4*fuelDay)
 		if created >= fs.now {
 			return nil
 		}
 		p.Source = fuelpurchase.PurchaseSourceManual
 		p.TransactionReference = fs.reference("")
-		p.CreatedByID = pick(g.fake, g.refs.userIDs)
+		p.CreatedByID = volumegen.Pick(g.Fake, g.Refs.UserIDs)
 		p.Notes = "Paid at the pump; receipt turned in with the trip envelope"
 		if c != nil {
-			p.WorkerID = ptr(c.WorkerID)
+			p.WorkerID = volumegen.Ptr(c.WorkerID)
 		}
 	} else {
 		run := fs.run(card.Provider, at)
@@ -875,20 +944,23 @@ func (fs *fuelSeeder) purchase(
 		}
 		created = run.runAt
 		p.Source = fuelpurchase.PurchaseSourceCardImport
-		p.ImportBatchID = ptr(run.batch.ID)
-		p.FuelCardID = ptr(card.ID)
+		p.ImportBatchID = volumegen.Ptr(run.batch.ID)
+		p.FuelCardID = volumegen.Ptr(card.ID)
 		p.CardLastFour = card.LastFour
 		p.TransactionReference = fs.reference(card.Provider)
 		if owner, ok := fs.cardOwner[card.ID]; ok {
-			p.WorkerID = ptr(owner)
+			p.WorkerID = volumegen.Ptr(owner)
 		}
 		run.purchases = append(run.purchases, p)
 	}
-	p.ID = idAt("fpur_", created)
+	p.ID = volumegen.IDAt("fpur_", created)
 	p.Normalize()
 
 	fs.purchases = append(fs.purchases, p)
-	fs.purchaseStamps = append(fs.purchaseStamps, stamp{id: p.ID, created: created, updated: created})
+	fs.purchaseStamps = append(
+		fs.purchaseStamps,
+		volumegen.Stamp{Id: p.ID, Created: created, Updated: created},
+	)
 	fs.uses = append(fs.uses, fuelUse{
 		tractorID:      ft.id,
 		jurisdictionID: j.ID,
@@ -912,18 +984,27 @@ func (fs *fuelSeeder) run(provider fuelpurchase.CardProvider, at int64) *fuelFee
 		return r
 	}
 	g := fs.g
-	runAt := day.AddDate(0, 0, 1).Unix() + 4*fuelHour + g.fake.between64(0, 50*fuelMinute)
+	runAt := day.AddDate(0, 0, 1).Unix() + 4*fuelHour + g.Fake.Between64(0, 50*fuelMinute)
 	if runAt >= fs.now {
 		return nil
 	}
 	batch := &fuelpurchase.ImportBatch{
-		ID:              idAt("fpib_", runAt),
-		OrganizationID:  g.refs.orgID,
-		BusinessUnitID:  g.refs.buID,
-		Provider:        provider,
-		Origin:          fuelpurchase.ImportOriginFeed,
-		FeedReference:   fmt.Sprintf("%s/transactions/%s/%s.csv", strings.ToLower(provider.Label()), day.Format("2006-01-02"), fs.refTag),
-		FileName:        fmt.Sprintf("%s_transactions_%s.csv", strings.ToLower(provider.Label()), day.Format("20060102")),
+		ID:             volumegen.IDAt("fpib_", runAt),
+		OrganizationID: g.Refs.OrgID,
+		BusinessUnitID: g.Refs.BuID,
+		Provider:       provider,
+		Origin:         fuelpurchase.ImportOriginFeed,
+		FeedReference: fmt.Sprintf(
+			"%s/transactions/%s/%s.csv",
+			strings.ToLower(provider.Label()),
+			day.Format("2006-01-02"),
+			fs.refTag,
+		),
+		FileName: fmt.Sprintf(
+			"%s_transactions_%s.csv",
+			strings.ToLower(provider.Label()),
+			day.Format("20060102"),
+		),
 		SourceFormat:    fuelpurchase.SourceFormatCSV,
 		DefaultFuelType: domaintypes.IFTAFuelTypeDiesel,
 		DefaultCurrency: money.DefaultCurrencyCode,
@@ -940,10 +1021,10 @@ func (fs *fuelSeeder) run(provider fuelpurchase.CardProvider, at int64) *fuelFee
 // tractor could be determined for them.
 func (fs *fuelSeeder) buildHeldRows() {
 	g := fs.g
-	count := clamp(len(g.crews)/30, 4, 40)
+	count := volumegen.Clamp(len(g.Crews)/30, 4, 40)
 	for range count {
-		provider := fuelProviders[g.fake.weighted(fuelProviderWeights)]
-		firstSeen := fs.now - g.fake.between64(2*fuelDay, fuelHeldWindow)
+		provider := fuelProviders[g.Fake.Weighted(fuelProviderWeights)]
+		firstSeen := fs.now - g.Fake.Between64(2*fuelDay, fuelHeldWindow)
 		run := fs.run(provider, firstSeen)
 		if run == nil {
 			continue
@@ -951,66 +1032,76 @@ func (fs *fuelSeeder) buildHeldRows() {
 		discoveredAt := run.runAt
 		last := fs.lastFour(provider)
 		card := &fuelpurchase.FuelCard{
-			ID:             idAt("fcard_", discoveredAt),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("fcard_", discoveredAt),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			Provider:       provider,
 			LastFour:       last,
 			Label:          provider.Label() + " " + last,
-			ExternalCardID: fmt.Sprintf("%s-%s-%s", fuelProviderPrefix[provider], g.fake.digits(4), last),
-			Status:         fuelpurchase.CardStatusSuspended,
-			DiscoveredAt:   ptr(discoveredAt),
+			ExternalCardID: fmt.Sprintf(
+				"%s-%s-%s",
+				fuelProviderPrefix[provider],
+				g.Fake.Digits(4),
+				last,
+			),
+			Status:       fuelpurchase.CardStatusSuspended,
+			DiscoveredAt: volumegen.Ptr(discoveredAt),
 		}
 		card.Normalize()
 		fs.cards = append(fs.cards, card)
-		fs.cardStamps = append(fs.cardStamps, stamp{id: card.ID, created: discoveredAt, updated: discoveredAt})
+		fs.cardStamps = append(
+			fs.cardStamps,
+			volumegen.Stamp{Id: card.ID, Created: discoveredAt, Updated: discoveredAt},
+		)
 
 		at := firstSeen
-		for range g.fake.between(2, 6) {
+		for range g.Fake.Between(2, 6) {
 			r := fs.run(provider, at)
 			if r == nil {
 				break
 			}
-			city := g.fake.city()
+			city := g.Fake.City()
 			j := fs.jurisdictions[city.State]
 			if j == nil {
 				continue
 			}
-			gallons := decimal.NewFromFloat(60 + g.fake.float()*170).Round(3)
+			gallons := decimal.NewFromFloat(60 + g.Fake.Float()*170).Round(3)
 			unitPrice := fs.price(city.State, at, domaintypes.IFTAFuelTypeDiesel)
 			parsed := &fuelpurchase.FuelPurchase{
-				OrganizationID:       g.refs.orgID,
-				BusinessUnitID:       g.refs.buID,
-				JurisdictionID:       j.ID,
-				FuelCardID:           ptr(card.ID),
-				CardLastFour:         last,
-				PurchasedAt:          at,
-				Vendor:               pick(g.fake, fuelChains),
-				VendorCity:           city.Name,
-				FuelType:             domaintypes.IFTAFuelTypeDiesel,
-				Quantity:             gallons,
-				QuantityUnit:         fuelpurchase.QuantityUnitGallon,
-				UnitPrice:            decimal.NewNullDecimal(unitPrice),
-				TotalAmountMinor:     money.MinorUnits(gallons.Mul(unitPrice).Round(fuelMoneyScale)),
+				OrganizationID: g.Refs.OrgID,
+				BusinessUnitID: g.Refs.BuID,
+				JurisdictionID: j.ID,
+				FuelCardID:     volumegen.Ptr(card.ID),
+				CardLastFour:   last,
+				PurchasedAt:    at,
+				Vendor:         volumegen.Pick(g.Fake, fuelChains),
+				VendorCity:     city.Name,
+				FuelType:       domaintypes.IFTAFuelTypeDiesel,
+				Quantity:       gallons,
+				QuantityUnit:   fuelpurchase.QuantityUnitGallon,
+				UnitPrice:      decimal.NewNullDecimal(unitPrice),
+				TotalAmountMinor: money.MinorUnits(
+					gallons.Mul(unitPrice).Round(fuelMoneyScale),
+				),
 				CurrencyCode:         money.DefaultCurrencyCode,
 				TransactionReference: fs.reference(provider),
 				Source:               fuelpurchase.PurchaseSourceCardImport,
-				ImportBatchID:        ptr(r.batch.ID),
+				ImportBatchID:        volumegen.Ptr(r.batch.ID),
 				TaxPaid:              true,
 			}
 			parsed.Normalize()
 			r.held = append(r.held, &fuelpurchase.ImportRow{
-				OrganizationID:         g.refs.orgID,
-				BusinessUnitID:         g.refs.buID,
+				OrganizationID:         g.Refs.OrgID,
+				BusinessUnitID:         g.Refs.BuID,
 				ImportBatchID:          r.batch.ID,
 				Parsed:                 parsed,
 				TransactionReference:   parsed.TransactionReference,
 				Status:                 fuelpurchase.ImportRowStatusError,
 				Error:                  "No tractor could be determined for card ending " + last,
-				ResolvedFuelCardID:     ptr(card.ID),
-				ResolvedJurisdictionID: ptr(j.ID),
+				ResolvedFuelCardID:     volumegen.Ptr(card.ID),
+				ResolvedJurisdictionID: volumegen.Ptr(j.ID),
 			})
-			at += g.fake.between64(18*fuelHour, 3*fuelDay)
+			at += g.Fake.Between64(18*fuelHour, 3*fuelDay)
 			if at >= fs.now {
 				break
 			}
@@ -1087,18 +1178,18 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 			parsed.CreatedAt = 0
 			parsed.UpdatedAt = 0
 			row := &fuelpurchase.ImportRow{
-				OrganizationID:         g.refs.orgID,
-				BusinessUnitID:         g.refs.buID,
+				OrganizationID:         g.Refs.OrgID,
+				BusinessUnitID:         g.Refs.BuID,
 				ImportBatchID:          b.ID,
 				RowNumber:              number,
 				Cells:                  fs.cells(p, unitOf[p.TractorID]),
 				Parsed:                 &parsed,
 				TransactionReference:   p.TransactionReference,
 				Status:                 fuelpurchase.ImportRowStatusCommitted,
-				ResolvedTractorID:      ptr(p.TractorID),
+				ResolvedTractorID:      volumegen.Ptr(p.TractorID),
 				ResolvedFuelCardID:     p.FuelCardID,
-				ResolvedJurisdictionID: ptr(p.JurisdictionID),
-				FuelPurchaseID:         ptr(p.ID),
+				ResolvedJurisdictionID: volumegen.Ptr(p.JurisdictionID),
+				FuelPurchaseID:         volumegen.Ptr(p.ID),
 			}
 			runRows = append(runRows, row)
 			total = total.Add(p.Gallons)
@@ -1111,13 +1202,13 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 			}
 			summary.LatestPurchasedAt = max(summary.LatestPurchasedAt, p.PurchasedAt)
 		}
-		if len(r.purchases) > 0 && len(r.held) == 0 && g.fake.chance(0.02) {
-			src := runRows[g.fake.intn(len(runRows))]
+		if len(r.purchases) > 0 && len(r.held) == 0 && g.Fake.Chance(0.02) {
+			src := runRows[g.Fake.Intn(len(runRows))]
 			number++
 			parsed := *src.Parsed
 			runRows = append(runRows, &fuelpurchase.ImportRow{
-				OrganizationID:       g.refs.orgID,
-				BusinessUnitID:       g.refs.buID,
+				OrganizationID:       g.Refs.OrgID,
+				BusinessUnitID:       g.Refs.BuID,
 				ImportBatchID:        b.ID,
 				RowNumber:            number,
 				Cells:                src.Cells,
@@ -1135,8 +1226,8 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 			runRows = append(runRows, held)
 		}
 		for _, row := range runRows {
-			row.ID = idAt("fpir_", r.runAt)
-			out.rowStamps = append(out.rowStamps, stamp{id: row.ID, created: r.runAt})
+			row.ID = volumegen.IDAt("fpir_", r.runAt)
+			out.rowStamps = append(out.rowStamps, volumegen.Stamp{Id: row.ID, Created: r.runAt})
 		}
 
 		summary.RowCount = len(runRows)
@@ -1150,58 +1241,61 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 			summary.ByJurisdiction[k] = v.StringFixed(3)
 		}
 
-		staged := r.runAt + g.fake.between64(10, 90)
+		staged := r.runAt + g.Fake.Between64(10, 90)
 		b.Status = fuelpurchase.ImportStatusParsed
 		b.Summary = summary
 		b.RowCount = summary.RowCount
 		b.ErrorCount = summary.ErrorCount
 		b.CommittedCount = len(r.purchases)
-		b.StagedAt = ptr(staged)
-		updated := staged + g.fake.between64(5, 120)
+		b.StagedAt = volumegen.Ptr(staged)
+		updated := staged + g.Fake.Between64(5, 120)
 		switch {
 		case len(r.held) == 0 && r.dupes == 0:
 			b.Status = fuelpurchase.ImportStatusCommitted
-			b.CommittedAt = ptr(updated)
+			b.CommittedAt = volumegen.Ptr(updated)
 		case r.runAt < fs.now-fuelHeldWindow:
 			b.Status = fuelpurchase.ImportStatusDiscarded
-			updated = min(r.runAt+g.fake.between64(fuelDay, 6*fuelDay), fs.now-fuelHour)
+			updated = min(r.runAt+g.Fake.Between64(fuelDay, 6*fuelDay), fs.now-fuelHour)
 		}
 		b.Normalize()
 
 		out.batches = append(out.batches, b)
 		out.rows = append(out.rows, runRows...)
-		out.batchStamps = append(out.batchStamps, stamp{id: b.ID, created: r.runAt, updated: updated})
+		out.batchStamps = append(
+			out.batchStamps,
+			volumegen.Stamp{Id: b.ID, Created: r.runAt, Updated: updated},
+		)
 	}
 
 	return out
 }
 
 func (fs *fuelSeeder) writeFuel(ctx context.Context, tx *keel.DB, imp *fuelImport) error {
-	if err := insertRows(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cards); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cards); err != nil {
 		return fmt.Errorf("insert fuel cards: %w", err)
 	}
-	if err := backdate(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cardStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cardStamps); err != nil {
 		return err
 	}
 
-	if err := insertRows(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batches); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batches); err != nil {
 		return fmt.Errorf("insert fuel feed runs: %w", err)
 	}
-	if err := backdate(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batchStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batchStamps); err != nil {
 		return err
 	}
 
-	if err := insertRows(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchases); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchases); err != nil {
 		return fmt.Errorf("insert fuel purchases: %w", err)
 	}
-	if err := backdate(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchaseStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchaseStamps); err != nil {
 		return err
 	}
 
-	if err := insertRows(ctx, tx, fuelpurchasedb.ImportRows.Handle, imp.rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportRows.Handle, imp.rows); err != nil {
 		return fmt.Errorf("insert fuel import rows: %w", err)
 	}
-	if err := backdateTableCreated(ctx, tx, "fuel_purchase_import_rows", imp.rowStamps); err != nil {
+	if err := volumegen.BackdateTableCreated(ctx, tx, "fuel_purchase_import_rows", imp.rowStamps); err != nil {
 		return err
 	}
 
@@ -1227,17 +1321,17 @@ func (fs *fuelSeeder) writeFeedStates(
 			continue
 		}
 		state := &fuelpurchase.CardFeedState{
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			Provider:       provider,
 			FeedType:       fuelpurchase.FeedTypeTransactions,
 			Cursor:         b.FeedReference,
 			LastPolledAt:   *b.StagedAt,
 			LastSuccessAt:  *b.StagedAt,
 		}
-		if provider == fuelpurchase.CardProviderWEX && g.fake.chance(0.5) {
-			state.LastPolledAt = fs.now - g.fake.between64(fuelHour, 6*fuelHour)
-			state.FailureCount = g.fake.between(1, 3)
+		if provider == fuelpurchase.CardProviderWEX && g.Fake.Chance(0.5) {
+			state.LastPolledAt = fs.now - g.Fake.Between64(fuelHour, 6*fuelHour)
+			state.FailureCount = g.Fake.Between(1, 3)
 			state.LastError = "WEX returned 503 Service Unavailable; the window is retried on the next run"
 		}
 		states = append(states, state)
@@ -1255,19 +1349,22 @@ func (fs *fuelSeeder) writeFeedStates(
 }
 
 func (fs *fuelSeeder) writeMiles(ctx context.Context, tx *keel.DB) error {
-	if err := insertRows(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeMiles); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeMiles); err != nil {
 		return fmt.Errorf("insert move jurisdiction miles: %w", err)
 	}
-	if err := backdate(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeStamps); err != nil {
 		return err
 	}
-	if err := insertRows(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entries); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entries); err != nil {
 		return fmt.Errorf("insert jurisdiction mileage entries: %w", err)
 	}
-	return backdate(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entryStamps)
+	return volumegen.Backdate(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entryStamps)
 }
 
-func (fs *fuelSeeder) rateFor(j *ifta.Jurisdiction, fuelType domaintypes.IFTAFuelType) (rate, surcharge float64) {
+func (fs *fuelSeeder) rateFor(
+	j *ifta.Jurisdiction,
+	fuelType domaintypes.IFTAFuelType,
+) (rate, surcharge float64) {
 	rate = 0.30
 	if j.CountryCode == ifta.CountryCodeUS {
 		if r, ok := fuelDieselRate[j.Code]; ok {
@@ -1289,7 +1386,9 @@ func (fs *fuelSeeder) rateFor(j *ifta.Jurisdiction, fuelType domaintypes.IFTAFue
 	return rate, surcharge
 }
 
-func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.RateKey]*ifta.TaxRate, error) {
+func (fs *fuelSeeder) seedRates(
+	ctx context.Context,
+) (map[ifta.Period]map[ifta.RateKey]*ifta.TaxRate, error) {
 	g := fs.g
 	fuelTypes := []domaintypes.IFTAFuelType{
 		domaintypes.IFTAFuelTypeDiesel, domaintypes.IFTAFuelTypeGasoline, domaintypes.IFTAFuelTypeCNG,
@@ -1300,7 +1399,10 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 			jurisdictions = append(jurisdictions, j)
 		}
 	}
-	sort.Slice(jurisdictions, func(i, j int) bool { return jurisdictions[i].ID < jurisdictions[j].ID })
+	sort.Slice(
+		jurisdictions,
+		func(i, j int) bool { return jurisdictions[i].ID < jurisdictions[j].ID },
+	)
 
 	rows := make([]*ifta.TaxRate, 0, len(fs.periods)*len(jurisdictions)*len(fuelTypes))
 	years := make([]int64, 0, 4)
@@ -1313,7 +1415,7 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 			for _, fuelType := range fuelTypes {
 				rate, surcharge := fs.rateFor(j, fuelType)
 				r := &ifta.TaxRate{
-					ID:             idAt("iftr_", start),
+					ID:             volumegen.IDAt("iftr_", start),
 					JurisdictionID: j.ID,
 					Year:           p.Year,
 					Quarter:        p.Quarter,
@@ -1323,7 +1425,9 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 					Version:        1,
 				}
 				if surcharge > 0 {
-					r.SurchargeRatePerGallon = decimal.NewNullDecimal(decimal.NewFromFloat(surcharge))
+					r.SurchargeRatePerGallon = decimal.NewNullDecimal(
+						decimal.NewFromFloat(surcharge),
+					)
 				}
 				r.Normalize()
 				rows = append(rows, r)
@@ -1332,15 +1436,23 @@ func (fs *fuelSeeder) seedRates(ctx context.Context) (map[ifta.Period]map[ifta.R
 	}
 
 	tr := iftadb.TaxRates
-	inserted, err := tr.CreateOrSkip(ctx, g.db, rows, tr.JurisdictionID, tr.Year, tr.Quarter, tr.FuelType)
+	inserted, err := tr.CreateOrSkip(
+		ctx,
+		g.DB,
+		rows,
+		tr.JurisdictionID,
+		tr.Year,
+		tr.Quarter,
+		tr.FuelType,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("insert ifta tax rates: %w", err)
 	}
-	g.report.add("IFTA tax rates", int(inserted))
+	g.Report.Add("IFTA tax rates", int(inserted))
 
 	var loaded []*ifta.TaxRate
 	if len(years) > 0 {
-		if loaded, err = tr.Where(tr.Year.In(years...)).All(ctx, g.db); err != nil {
+		if loaded, err = tr.Where(tr.Year.In(years...)).All(ctx, g.DB); err != nil {
 			return nil, fmt.Errorf("load ifta tax rates: %w", err)
 		}
 	}
@@ -1383,7 +1495,10 @@ type fuelComputation struct {
 	noTractorCount int
 }
 
-func (c *fuelComputation) line(j *ifta.Jurisdiction, fuelType domaintypes.IFTAFuelType) *fuelLineAcc {
+func (c *fuelComputation) line(
+	j *ifta.Jurisdiction,
+	fuelType domaintypes.IFTAFuelType,
+) *fuelLineAcc {
 	key := ifta.RateKey{JurisdictionID: j.ID, FuelType: fuelType}
 	acc, ok := c.lines[key]
 	if !ok {
@@ -1628,7 +1743,9 @@ func (c *fuelComputation) buildLine(
 	}
 
 	line.RatePerGallon = decimal.NewNullDecimal(rate.RatePerGallon)
-	line.TaxDueMinor = money.MinorUnits(line.NetTaxableGallons.Mul(rate.RatePerGallon).Round(fuelMoneyScale))
+	line.TaxDueMinor = money.MinorUnits(
+		line.NetTaxableGallons.Mul(rate.RatePerGallon).Round(fuelMoneyScale),
+	)
 	switch {
 	case rate.HasSurcharge():
 		line.SurchargeRatePerGallon = rate.SurchargeRatePerGallon
@@ -1664,8 +1781,8 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 
 	returns := make([]*ifta.Return, 0, len(fs.periods))
 	lines := make([]*ifta.ReturnLine, 0, 256)
-	returnStamps := make([]stamp, 0, len(fs.periods))
-	lineStamps := make([]stamp, 0, 256)
+	returnStamps := make([]volumegen.Stamp, 0, len(fs.periods))
+	lineStamps := make([]volumegen.Stamp, 0, 256)
 	for _, p := range fs.periods {
 		if fs.hasReturn[p] {
 			continue
@@ -1707,8 +1824,8 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 		}
 
 		ret := &ifta.Return{
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			Year:           p.Year,
 			Quarter:        p.Quarter,
 			Status:         ifta.ReturnStatusDraft,
@@ -1724,29 +1841,35 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 		var computed int64
 		switch {
 		case p.Equal(current):
-			computed = max(start, fs.now-g.fake.between64(fuelHour, 2*fuelDay))
+			computed = max(start, fs.now-g.Fake.Between64(fuelHour, 2*fuelDay))
 		case len(ret.BlockingProblems()) > 0:
-			computed = min(end+g.fake.between64(3*fuelDay, 10*fuelDay), fs.now-fuelHour)
+			computed = min(end+g.Fake.Between64(3*fuelDay, 10*fuelDay), fs.now-fuelHour)
 		case fs.now < due:
-			finalized := min(end+g.fake.between64(6*fuelDay, 20*fuelDay), fs.now-fuelHour)
+			finalized := min(end+g.Fake.Between64(6*fuelDay, 20*fuelDay), fs.now-fuelHour)
 			ret.Status = ifta.ReturnStatusFinalized
-			ret.FinalizedAt = ptr(finalized)
-			ret.FinalizedByID = g.refs.adminID
-			computed = finalized - g.fake.between64(5*fuelMinute, 2*fuelHour)
+			ret.FinalizedAt = volumegen.Ptr(finalized)
+			ret.FinalizedByID = g.Refs.AdminID
+			computed = finalized - g.Fake.Between64(5*fuelMinute, 2*fuelHour)
 		default:
-			finalized := end + g.fake.between64(8*fuelDay, 20*fuelDay)
-			filed := min(finalized+g.fake.between64(fuelDay, 6*fuelDay), due-fuelDay)
+			finalized := end + g.Fake.Between64(8*fuelDay, 20*fuelDay)
+			filed := min(finalized+g.Fake.Between64(fuelDay, 6*fuelDay), due-fuelDay)
 			filed = max(filed, finalized)
 			ret.Status = ifta.ReturnStatusFiled
-			ret.FinalizedAt = ptr(finalized)
-			ret.FinalizedByID = g.refs.adminID
-			ret.FiledAt = ptr(filed)
-			ret.FiledByID = g.refs.adminID
-			ret.FilingReference = fmt.Sprintf("IFTA-%s-%d%d-%s", fs.baseState, p.Year, p.Quarter, g.fake.digits(8))
-			computed = finalized - g.fake.between64(5*fuelMinute, 2*fuelHour)
+			ret.FinalizedAt = volumegen.Ptr(finalized)
+			ret.FinalizedByID = g.Refs.AdminID
+			ret.FiledAt = volumegen.Ptr(filed)
+			ret.FiledByID = g.Refs.AdminID
+			ret.FilingReference = fmt.Sprintf(
+				"IFTA-%s-%d%d-%s",
+				fs.baseState,
+				p.Year,
+				p.Quarter,
+				g.Fake.Digits(8),
+			)
+			computed = finalized - g.Fake.Between64(5*fuelMinute, 2*fuelHour)
 		}
-		ret.ComputedAt = ptr(computed)
-		ret.ID = idAt("ifr_", computed)
+		ret.ComputedAt = volumegen.Ptr(computed)
+		ret.ID = volumegen.IDAt("ifr_", computed)
 		ret.Normalize()
 		updated := computed
 		if ret.FiledAt != nil {
@@ -1755,36 +1878,50 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 			updated = *ret.FinalizedAt
 		}
 		returns = append(returns, ret)
-		returnStamps = append(returnStamps, stamp{id: ret.ID, created: computed, updated: updated})
+		returnStamps = append(
+			returnStamps,
+			volumegen.Stamp{Id: ret.ID, Created: computed, Updated: updated},
+		)
 		for _, line := range retLines {
-			line.ID = idAt("ifrl_", computed)
-			line.OrganizationID = g.refs.orgID
-			line.BusinessUnitID = g.refs.buID
+			line.ID = volumegen.IDAt("ifrl_", computed)
+			line.OrganizationID = g.Refs.OrgID
+			line.BusinessUnitID = g.Refs.BuID
 			line.ReturnID = ret.ID
 			lines = append(lines, line)
-			lineStamps = append(lineStamps, stamp{id: line.ID, created: computed, updated: computed})
+			lineStamps = append(
+				lineStamps,
+				volumegen.Stamp{Id: line.ID, Created: computed, Updated: computed},
+			)
 		}
 	}
 	if len(returns) == 0 {
 		return nil
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if err := insertRows(ctx, tx, iftadb.Returns.Handle, returns); err != nil {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if err := volumegen.InsertRows(ctx, tx, iftadb.Returns.Handle, returns); err != nil {
 			return fmt.Errorf("insert ifta returns: %w", err)
 		}
-		if err := insertRows(ctx, tx, iftadb.ReturnLines.Handle, lines); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, iftadb.ReturnLines.Handle, lines); err != nil {
 			return fmt.Errorf("insert ifta return lines: %w", err)
 		}
-		if err := backdate(ctx, tx, iftadb.Returns.Handle, returnStamps); err != nil {
+		if err := volumegen.Backdate(ctx, tx, iftadb.Returns.Handle, returnStamps); err != nil {
 			return err
 		}
-		return backdate(ctx, tx, iftadb.ReturnLines.Handle, lineStamps)
+		return volumegen.Backdate(ctx, tx, iftadb.ReturnLines.Handle, lineStamps)
 	}); err != nil {
 		return err
 	}
-	g.report.add("IFTA returns", len(returns))
-	g.report.add("IFTA return lines", len(lines))
+	g.Report.Add("IFTA returns", len(returns))
+	g.Report.Add("IFTA return lines", len(lines))
 
 	return nil
+}
+
+type fuelPhase struct {
+	*volumegen.Generator
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&fuelPhase{Generator: g}).seedFuel(ctx)
 }

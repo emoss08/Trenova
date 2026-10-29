@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"context"
@@ -18,21 +18,21 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const backdateChunk = 5_000
+const BackdateChunk = 5_000
 
 var errUnknownTable = errors.New("no table handle to backdate")
 
-type stamp struct {
-	id      pulid.ID
-	created int64
-	updated int64
+type Stamp struct {
+	Id      pulid.ID
+	Created int64
+	Updated int64
 }
 
-func idAt(prefix string, unix int64) pulid.ID {
+func IDAt(prefix string, unix int64) pulid.ID {
 	return pulid.MustNewAt(prefix, time.Unix(unix, 0))
 }
 
-func insertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], rows []*T) error {
+func InsertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], rows []*T) error {
 	if len(rows) == 0 {
 		return nil
 	}
@@ -43,24 +43,24 @@ func insertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], rows
 	return nil
 }
 
-func backdate[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], stamps []stamp) error {
-	return backdateColumns(ctx, db, h, stamps, false)
+func Backdate[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], stamps []Stamp) error {
+	return BackdateColumns(ctx, db, h, stamps, false)
 }
 
 func backdateCreated[T any](
 	ctx context.Context,
 	db *keel.DB,
 	h keel.Handle[*T],
-	stamps []stamp,
+	stamps []Stamp,
 ) error {
-	return backdateColumns(ctx, db, h, stamps, true)
+	return BackdateColumns(ctx, db, h, stamps, true)
 }
 
-func backdateColumns[T any](
+func BackdateColumns[T any](
 	ctx context.Context,
 	db *keel.DB,
 	h keel.Handle[*T],
-	stamps []stamp,
+	stamps []Stamp,
 	createdOnly bool,
 ) error {
 	if len(stamps) == 0 {
@@ -72,15 +72,15 @@ func backdateColumns[T any](
 	}
 
 	id := keel.Col{Ref: h.Ref, Index: t.PK[0]}
-	for begin := 0; begin < len(stamps); begin += backdateChunk {
-		chunk := stamps[begin:min(begin+backdateChunk, len(stamps))]
+	for begin := 0; begin < len(stamps); begin += BackdateChunk {
+		chunk := stamps[begin:min(begin+BackdateChunk, len(stamps))]
 		ids := make([]string, len(chunk))
 		created := make([]int64, len(chunk))
 		updated := make([]int64, len(chunk))
 		for i, s := range chunk {
-			ids[i] = s.id.String()
-			created[i] = s.created
-			updated[i] = max(s.updated, s.created)
+			ids[i] = s.Id.String()
+			created[i] = s.Created
+			updated[i] = max(s.Updated, s.Created)
 		}
 
 		d := keel.Unnest("d", []string{"id", "created_at", "updated_at"}, ids, created, updated)
@@ -123,25 +123,25 @@ func analyze[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T]) error {
 	return nil
 }
 
-func (g *generator) inTx(ctx context.Context, fn func(context.Context, *keel.DB) error) error {
-	return keel.Write(ctx, g.db, func(ctx context.Context) error {
-		return fn(ctx, g.db)
+func (g *Generator) InTx(ctx context.Context, fn func(context.Context, *keel.DB) error) error {
+	return keel.Write(ctx, g.DB, func(ctx context.Context) error {
+		return fn(ctx, g.DB)
 	})
 }
 
-func (g *generator) progress(entity string, done, total int) {
-	g.opts.Logf("  • %s: %d/%d", entity, done, total)
+func (g *Generator) Progress(entity string, done, total int) {
+	g.Opts.Logf("  • %s: %d/%d", entity, done, total)
 }
 
-func unix(t time.Time) int64 {
+func Unix(t time.Time) int64 {
 	return t.Unix()
 }
 
-func ptr[T any](v T) *T {
+func Ptr[T any](v T) *T {
 	return &v
 }
 
-func firstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T, error) {
+func FirstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T, error) {
 	row, err := q.First(ctx, db)
 	if errors.Is(err, keel.ErrNotFound) {
 		return nil, nil
@@ -153,10 +153,10 @@ func firstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T,
 	return row, nil
 }
 
-func (g *generator) accountingControl(
+func (g *Generator) AccountingControl(
 	ctx context.Context,
 ) (*accountingcontrol.AccountingControl, error) {
-	control, err := firstOrNil(ctx, g.db, accountingcontroldb.AccountingControls.Query())
+	control, err := FirstOrNil(ctx, g.DB, accountingcontroldb.AccountingControls.Query())
 	if err != nil {
 		return nil, fmt.Errorf("load accounting control: %w", err)
 	}
@@ -164,14 +164,14 @@ func (g *generator) accountingControl(
 	return control, nil
 }
 
-func (g *generator) glAccountsByCode(
+func (g *Generator) GLAccountsByCode(
 	ctx context.Context,
 	codes ...string,
 ) (map[string]pulid.ID, error) {
 	ga := glaccountdb.GLAccounts
 	accounts, err := ga.Pick(ga.ID, ga.AccountCode).
 		Where(ga.AccountCode.In(codes...)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load gl accounts: %w", err)
 	}
@@ -183,9 +183,9 @@ func (g *generator) glAccountsByCode(
 	return byCode, nil
 }
 
-func (g *generator) usersByID(ctx context.Context) (map[pulid.ID]*tenant.User, error) {
+func (g *Generator) UsersByID(ctx context.Context) (map[pulid.ID]*tenant.User, error) {
 	u := tenantdb.Users
-	users, err := u.Where(u.ID.In(g.refs.userIDs...)).All(ctx, g.db)
+	users, err := u.Where(u.ID.In(g.Refs.UserIDs...)).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load users: %w", err)
 	}
@@ -197,11 +197,11 @@ func (g *generator) usersByID(ctx context.Context) (map[pulid.ID]*tenant.User, e
 	return byID, nil
 }
 
-func nullIfEmpty(e keel.Expr) keel.StringExpr {
+func NullIfEmpty(e keel.Expr) keel.StringExpr {
 	return keel.StringOf(e).NullIf("")
 }
 
-func postBalances(
+func PostBalances(
 	ctx context.Context,
 	db *keel.DB,
 	rows []*glbalance.GLAccountPeriodBalance,
@@ -296,7 +296,7 @@ type balanceKey struct {
 	period  pulid.ID
 }
 
-func rollBackBalances(
+func RollBackBalances(
 	ctx context.Context,
 	db *keel.DB,
 	lines []*journalentry.JournalEntryLine,
@@ -368,11 +368,18 @@ func rollBackBalances(
 	return moveAccountBalances(ctx, db, moves)
 }
 
-func keepUpdated[T any](h keel.Handle[*T]) keel.Assignment {
+func KeepUpdated[T any](h keel.Handle[*T]) keel.Assignment {
 	index := h.Ref.Table.AutoUpdate
 	if index < 0 {
 		index = h.Ref.Table.PK[0]
 	}
 	col := keel.Col{Ref: h.Ref, Index: index}
 	return col.ToExpr(col)
+}
+
+func (g *Generator) PickUser(users []pulid.ID) pulid.ID {
+	if len(users) == 0 {
+		return g.Refs.AdminID
+	}
+	return Pick(g.Fake, users)
 }

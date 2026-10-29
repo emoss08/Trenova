@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"context"
@@ -39,11 +39,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 )
 
-type tableBackdate func(ctx context.Context, db *keel.DB, stamps []stamp, createdOnly bool) error
+type tableBackdate func(ctx context.Context, db *keel.DB, stamps []Stamp, createdOnly bool) error
 
 func backdater[T any](h keel.Handle[*T]) tableBackdate {
-	return func(ctx context.Context, db *keel.DB, stamps []stamp, createdOnly bool) error {
-		return backdateColumns(ctx, db, h, stamps, createdOnly)
+	return func(ctx context.Context, db *keel.DB, stamps []Stamp, createdOnly bool) error {
+		return BackdateColumns(ctx, db, h, stamps, createdOnly)
 	}
 }
 
@@ -142,11 +142,11 @@ var tableBackdates = map[string]tableBackdate{
 	"workers":                   backdater(workerdb.Workers.Handle),
 }
 
-func backdateTable(ctx context.Context, db *keel.DB, table string, stamps []stamp) error {
+func BackdateTable(ctx context.Context, db *keel.DB, table string, stamps []Stamp) error {
 	return backdateNamed(ctx, db, table, stamps, false)
 }
 
-func backdateTableCreated(ctx context.Context, db *keel.DB, table string, stamps []stamp) error {
+func BackdateTableCreated(ctx context.Context, db *keel.DB, table string, stamps []Stamp) error {
 	return backdateNamed(ctx, db, table, stamps, true)
 }
 
@@ -154,7 +154,7 @@ func backdateNamed(
 	ctx context.Context,
 	db *keel.DB,
 	table string,
-	stamps []stamp,
+	stamps []Stamp,
 	createdOnly bool,
 ) error {
 	if len(stamps) == 0 {

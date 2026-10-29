@@ -1,4 +1,4 @@
-package volume
+package settlementvolume
 
 import (
 	"context"
@@ -29,6 +29,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -101,8 +103,8 @@ type csCarrier struct {
 }
 
 type csMove struct {
-	rec        *shipmentRecord
-	move       *moveRecord
+	rec        *volumegen.ShipmentRecord
+	move       *volumegen.MoveRecord
 	assignment *shipment.CarrierAssignment
 	carrier    *csCarrier
 	assignedAt int64
@@ -133,7 +135,7 @@ type csPeriod struct {
 
 type csSetup struct {
 	control *carriersettlementcontrol.CarrierSettlementControl
-	billing *bilSetup
+	billing *ledgervolume.Setup
 	expense pulid.ID
 	payable pulid.ID
 	canPost bool
@@ -152,16 +154,19 @@ type csRows struct {
 	events      []*csEvent
 	matches     []*carriersettlement.InvoiceMatch
 	ledger      []*carriersettlement.LedgerEntry
-	stamps      map[string][]stamp
-	billing     *bilRows
+	stamps      map[string][]volumegen.Stamp
+	billing     *ledgervolume.Rows
 	touched     map[pulid.ID]struct{}
 }
 
 func (r *csRows) stamp(table string, id pulid.ID, created, updated int64) {
-	r.stamps[table] = append(r.stamps[table], stamp{id: id, created: created, updated: updated})
+	r.stamps[table] = append(
+		r.stamps[table],
+		volumegen.Stamp{Id: id, Created: created, Updated: updated},
+	)
 }
 
-func (g *generator) seedCarrierSettlements(ctx context.Context) error {
+func (g *settlementPhase) seedCarrierSettlements(ctx context.Context) error {
 	moves := g.csBrokeredMoves()
 	if len(moves) == 0 {
 		return nil
@@ -177,8 +182,10 @@ func (g *generator) seedCarrierSettlements(ctx context.Context) error {
 	}
 
 	rows := &csRows{
-		stamps:  make(map[string][]stamp),
-		billing: &bilRows{balances: make(map[bilBalanceKey]*bilBalance)},
+		stamps: make(map[string][]volumegen.Stamp),
+		billing: &ledgervolume.Rows{
+			Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance),
+		},
 		touched: make(map[pulid.ID]struct{}),
 	}
 
@@ -195,11 +202,11 @@ func (g *generator) seedCarrierSettlements(ctx context.Context) error {
 	if err = g.csSettle(ctx, rows, setup, events); err != nil {
 		return err
 	}
-	if err = g.bilMaterialize(ctx, rows.billing); err != nil {
+	if err = g.Materialize(ctx, rows.billing); err != nil {
 		return err
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.csWrite(ctx, tx, rows)
 	}); err != nil {
 		return err
@@ -209,9 +216,9 @@ func (g *generator) seedCarrierSettlements(ctx context.Context) error {
 	return nil
 }
 
-func (g *generator) csBrokeredMoves() []*csMove {
+func (g *settlementPhase) csBrokeredMoves() []*csMove {
 	var moves []*csMove
-	for _, rec := range g.shipments {
+	for _, rec := range g.Shipments {
 		for _, mv := range rec.Moves {
 			if mv == nil || mv.CarrierAssignment == nil {
 				continue
@@ -235,10 +242,10 @@ func (g *generator) csBrokeredMoves() []*csMove {
 	return moves
 }
 
-func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
-	control, err := firstOrNil(
+func (g *settlementPhase) csLoadSetup(ctx context.Context) (*csSetup, error) {
+	control, err := volumegen.FirstOrNil(
 		ctx,
-		g.db,
+		g.DB,
 		carriersettlementcontroldb.CarrierSettlementControls.Query(),
 	)
 	switch {
@@ -246,25 +253,25 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 		return nil, fmt.Errorf("load carrier settlement control: %w", err)
 	case control == nil:
 		control = &carriersettlementcontrol.CarrierSettlementControl{
-			OrganizationID:     g.refs.orgID,
-			BusinessUnitID:     g.refs.buID,
+			OrganizationID:     g.Refs.OrgID,
+			BusinessUnitID:     g.Refs.BuID,
 			PayTrigger:         settlementcontrol.PayTriggerShipmentDelivered,
 			PayPeriodFrequency: settlementcontrol.PayPeriodFrequencyWeekly,
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
-		if err = carriersettlementcontroldb.CarrierSettlementControls.Create(ctx, g.db, control); err != nil {
+		if err = carriersettlementcontroldb.CarrierSettlementControls.Create(ctx, g.DB, control); err != nil {
 			return nil, fmt.Errorf("create carrier settlement control: %w", err)
 		}
 	}
 
-	billing, err := g.bilLoadSetup(ctx)
+	billing, err := g.LoadSetup(ctx)
 	if err != nil {
 		return nil, err
 	}
 	setup := &csSetup{control: control, billing: billing}
 
-	accounting, err := g.accountingControl(ctx)
+	accounting, err := g.AccountingControl(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -286,11 +293,11 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 		}
 	}
 
-	hasPeriods := len(billing.periods) > 0
+	hasPeriods := len(billing.Periods) > 0
 	setup.canPost = hasPeriods && setup.expense.IsNotNil() && setup.payable.IsNotNil()
-	setup.canPay = setup.canPost && billing.cash.IsNotNil()
+	setup.canPay = setup.canPost && billing.Cash.IsNotNil()
 	if !setup.canPost {
-		g.opts.Logf(
+		g.Opts.Logf(
 			"  ! carrier settlements stop at Approved: no open fiscal period or AP/expense account",
 		)
 	}
@@ -298,8 +305,8 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 	return setup, nil
 }
 
-func (g *generator) csConfigureAccounts(ctx context.Context, setup *csSetup) error {
-	byCode, err := g.glAccountsByCode(ctx, csAccountAP, csAccountExpense)
+func (g *settlementPhase) csConfigureAccounts(ctx context.Context, setup *csSetup) error {
+	byCode, err := g.GLAccountsByCode(ctx, csAccountAP, csAccountExpense)
 	if err != nil {
 		return err
 	}
@@ -317,14 +324,14 @@ func (g *generator) csConfigureAccounts(ctx context.Context, setup *csSetup) err
 	if len(sets) == 0 {
 		return nil
 	}
-	if _, err = csc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
+	if _, err = csc.Where(keel.True()).Update(ctx, g.DB, sets...); err != nil {
 		return fmt.Errorf("configure carrier settlement accounts: %w", err)
 	}
 
 	return nil
 }
 
-func (g *generator) csLoadCarriers(
+func (g *settlementPhase) csLoadCarriers(
 	ctx context.Context,
 	moves []*csMove,
 ) (map[pulid.ID]*csCarrier, error) {
@@ -339,7 +346,7 @@ func (g *generator) csLoadCarriers(
 	}
 
 	cr := carrierdb.Carriers
-	rows, err := cr.Where(cr.ID.In(ids...)).All(ctx, g.db)
+	rows, err := cr.Where(cr.ID.In(ids...)).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load carriers: %w", err)
 	}
@@ -348,8 +355,8 @@ func (g *generator) csLoadCarriers(
 	for _, c := range rows {
 		carriers[c.ID] = &csCarrier{
 			entity:      c,
-			nextInvoice: g.fake.between(100_000, 800_000),
-			nextControl: g.fake.between(100_000, 800_000),
+			nextInvoice: g.Fake.Between(100_000, 800_000),
+			nextControl: g.Fake.Between(100_000, 800_000),
 		}
 	}
 	for _, mv := range moves {
@@ -359,16 +366,16 @@ func (g *generator) csLoadCarriers(
 	return carriers, nil
 }
 
-func (g *generator) csPartners(
+func (g *settlementPhase) csPartners(
 	ctx context.Context,
 	rows *csRows,
 	carriers map[pulid.ID]*csCarrier,
 ) error {
-	codes, err := mdTaken(ctx, g.db, edidb.EDIPartners.Handle, edidb.EDIPartners.Code)
+	codes, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners.Handle, edidb.EDIPartners.Code)
 	if err != nil {
 		return err
 	}
-	names, err := mdTaken(ctx, g.db, edidb.EDIPartners.Handle, edidb.EDIPartners.Name)
+	names, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners.Handle, edidb.EDIPartners.Name)
 	if err != nil {
 		return err
 	}
@@ -381,35 +388,35 @@ func (g *generator) csPartners(
 
 	for _, id := range ids {
 		c := carriers[id]
-		if !g.fake.chance(csEDIShare) {
+		if !g.Fake.Chance(csEDIShare) {
 			continue
 		}
-		created := unix(g.start) - g.fake.between64(10*csDay, 200*csDay)
-		name := uniqueCode(c.entity.Name+" EDI", names)
-		slug := mdSlug(c.entity.Name)
+		created := volumegen.Unix(g.Start) - g.Fake.Between64(10*csDay, 200*csDay)
+		name := volumegen.UniqueCode(c.entity.Name+" EDI", names)
+		slug := volumegen.Slug(c.entity.Name)
 		partner := &edi.EDIPartner{
-			ID:                 idAt("edip_", created),
-			BusinessUnitID:     g.refs.buID,
-			OrganizationID:     g.refs.orgID,
+			ID:                 volumegen.IDAt("edip_", created),
+			BusinessUnitID:     g.Refs.BuID,
+			OrganizationID:     g.Refs.OrgID,
 			Kind:               edi.PartnerKindExternal,
 			Status:             domaintypes.StatusActive,
-			Code:               uniqueCode(c.entity.Code+"-EDI", codes),
+			Code:               volumegen.UniqueCode(c.entity.Code+"-EDI", codes),
 			Name:               name,
 			Description:        c.entity.Name + " freight invoices (210) in",
 			Timezone:           "America/Chicago",
 			Country:            "US",
-			ContactName:        g.fake.firstName() + " " + g.fake.lastName(),
+			ContactName:        g.Fake.FirstName() + " " + g.Fake.LastName(),
 			ContactEmail:       "edi@" + slug + ".example.com",
-			ContactPhone:       g.fake.phone(),
+			ContactPhone:       g.Fake.Phone(),
 			EnabledForInbound:  true,
-			EnabledForOutbound: g.fake.chance(0.6),
+			EnabledForOutbound: g.Fake.Chance(0.6),
 			Settings:           map[string]any{"carrier": map[string]any{"scac": c.entity.SCAC}},
 			Version:            1,
 		}
 		channel := &carrier.CarrierEDIChannel{
-			ID:             idAt("cec_", created),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
+			ID:             volumegen.IDAt("cec_", created),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
 			CarrierID:      c.entity.ID,
 			EDIPartnerID:   partner.ID,
 			IsDefault:      true,
@@ -425,20 +432,20 @@ func (g *generator) csPartners(
 	return nil
 }
 
-func (g *generator) csRateConfirmations(rows *csRows, mv *csMove) {
+func (g *settlementPhase) csRateConfirmations(rows *csRows, mv *csMove) {
 	ca := mv.assignment
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	created := mv.assignedAt
 	email := mv.carrier.entity.Email
 	if email == "" {
-		email = "dispatch@" + mdSlug(mv.carrier.entity.Name) + ".example.com"
+		email = "dispatch@" + volumegen.Slug(mv.carrier.entity.Name) + ".example.com"
 	}
 
 	newRateCon := func(revision int64, at int64) *rateconfirmation.RateConfirmation {
 		return &rateconfirmation.RateConfirmation{
-			ID:                  idAt("ratecon_", at),
-			BusinessUnitID:      g.refs.buID,
-			OrganizationID:      g.refs.orgID,
+			ID:                  volumegen.IDAt("ratecon_", at),
+			BusinessUnitID:      g.Refs.BuID,
+			OrganizationID:      g.Refs.OrgID,
 			CarrierAssignmentID: ca.ID,
 			CarrierID:           ca.CarrierID,
 			ShipmentID:          mv.rec.ID,
@@ -451,7 +458,7 @@ func (g *generator) csRateConfirmations(rows *csRows, mv *csMove) {
 		}
 	}
 	send := func(rc *rateconfirmation.RateConfirmation, at int64) int64 {
-		sentAt := min(at+g.fake.between64(2*csMinute, 40*csMinute), now)
+		sentAt := min(at+g.Fake.Between64(2*csMinute, 40*csMinute), now)
 		rc.Status = rateconfirmation.StatusSent
 		rc.SentAt = &sentAt
 		rc.SentToEmails = email
@@ -460,7 +467,7 @@ func (g *generator) csRateConfirmations(rows *csRows, mv *csMove) {
 
 	first := newRateCon(1, created)
 	updated := created
-	if ca.ConfirmedAt == nil && g.fake.chance(0.2) {
+	if ca.ConfirmedAt == nil && g.Fake.Chance(0.2) {
 		rows.rateCons = append(rows.rateCons, first)
 		rows.stamp(csTableRateCons, first.ID, created, updated)
 		return
@@ -475,8 +482,8 @@ func (g *generator) csRateConfirmations(rows *csRows, mv *csMove) {
 	confirmedAt := max(*ca.ConfirmedAt, updated)
 	active := first
 	activeCreated := created
-	if confirmedAt-updated > 20*csMinute && g.fake.chance(0.06) {
-		voidAt := g.fake.between64(updated+5*csMinute, confirmedAt-10*csMinute)
+	if confirmedAt-updated > 20*csMinute && g.Fake.Chance(0.06) {
+		voidAt := g.Fake.Between64(updated+5*csMinute, confirmedAt-10*csMinute)
 		first.Status = rateconfirmation.StatusVoided
 		first.VoidedAt = &voidAt
 		first.VoidReason = "Rate revised before the carrier signed"
@@ -490,24 +497,24 @@ func (g *generator) csRateConfirmations(rows *csRows, mv *csMove) {
 
 	active.Status = rateconfirmation.StatusConfirmed
 	active.ConfirmedAt = &confirmedAt
-	active.ConfirmedByName = g.fake.firstName() + " " + g.fake.lastName()
-	active.ConfirmedByTitle = pick(g.fake, csConfirmerTitles)
+	active.ConfirmedByName = g.Fake.FirstName() + " " + g.Fake.LastName()
+	active.ConfirmedByTitle = volumegen.Pick(g.Fake, csConfirmerTitles)
 	active.ConfirmedVia = rateconfirmation.ViaPublicSignature
-	if g.fake.chance(0.25) {
+	if g.Fake.Chance(0.25) {
 		active.ConfirmedVia = rateconfirmation.ViaDispatcher
 	}
 	rows.rateCons = append(rows.rateCons, active)
 	rows.stamp(csTableRateCons, active.ID, activeCreated, confirmedAt)
 }
 
-func (g *generator) csInvoices(
+func (g *settlementPhase) csInvoices(
 	ctx context.Context,
 	rows *csRows,
 	setup *csSetup,
 	moves []*csMove,
 ) error {
 	dt := edidocumentdb.EDIDocumentTypes
-	docType, err := firstOrNil(ctx, g.db, dt.Where(
+	docType, err := volumegen.FirstOrNil(ctx, g.DB, dt.Where(
 		dt.Standard.Eq(edidocument.EDIStandardX12),
 		dt.TransactionSet.Eq(edidocument.TransactionSet210),
 		dt.Direction.Eq(edidocument.DocumentDirectionInbound),
@@ -516,11 +523,11 @@ func (g *generator) csInvoices(
 		return fmt.Errorf("load inbound 210 document type: %w", err)
 	}
 	if docType == nil {
-		g.opts.Logf("  ! no inbound X12 210 document type; carrier invoices skipped")
+		g.Opts.Logf("  ! no inbound X12 210 document type; carrier invoices skipped")
 		return nil
 	}
 
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	tolerance := setup.control.VarianceToleranceMinor
 	for _, mv := range moves {
 		if mv.carrier == nil || mv.carrier.partner == nil ||
@@ -528,7 +535,7 @@ func (g *generator) csInvoices(
 			!mv.assignment.IsActive() {
 			continue
 		}
-		received := mv.move.CompletedAt + g.fake.between64(6*csHour, 10*csDay)
+		received := mv.move.CompletedAt + g.Fake.Between64(6*csHour, 10*csDay)
 		if received > now-csHour {
 			continue
 		}
@@ -538,14 +545,14 @@ func (g *generator) csInvoices(
 	return nil
 }
 
-func (g *generator) csInvoice(
+func (g *settlementPhase) csInvoice(
 	rows *csRows,
 	mv *csMove,
 	docType *edidocument.EDIDocumentType,
 	received int64,
 	tolerance int64,
 ) {
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	c := mv.carrier
 	ca := mv.assignment
 	expected := money.MinorUnits(ca.TotalCost)
@@ -554,18 +561,18 @@ func (g *generator) csInvoice(
 
 	var variance int64
 	extra := ""
-	switch roll := g.fake.float(); {
+	switch roll := g.Fake.Float(); {
 	case roll < 0.14:
-		variance = g.fake.between64(2_500, 35_000)
-		extra = pick(g.fake, []string{"Detention", "Lumper", "Layover", "Driver assist"})
+		variance = g.Fake.Between64(2_500, 35_000)
+		extra = volumegen.Pick(g.Fake, []string{"Detention", "Lumper", "Layover", "Driver assist"})
 	case roll < 0.18:
-		variance = -g.fake.between64(1_000, min(5_000, max(linehaul/10, 1_001)))
+		variance = -g.Fake.Between64(1_000, min(5_000, max(linehaul/10, 1_001)))
 	}
 	total := expected + variance
 
 	prefix := c.entity.SCAC
 	if prefix == "" {
-		prefix = codeFrom(c.entity.Name, 4)
+		prefix = volumegen.CodeFrom(c.entity.Name, 4)
 	}
 	c.nextInvoice++
 	number := fmt.Sprintf("%s%07d", prefix, c.nextInvoice)
@@ -596,7 +603,7 @@ func (g *generator) csInvoice(
 	}
 
 	deliveredAt := mv.move.CompletedAt
-	invoiceDate := received - g.fake.between64(csHour, 20*csHour)
+	invoiceDate := received - g.Fake.Between64(csHour, 20*csHour)
 	totalAmount := decimal.NewNullDecimal(money.DecimalFromMinor(total))
 	refs := map[string]string{"scac": c.entity.SCAC}
 	payload := &edipayload.FreightInvoicePayload{
@@ -605,18 +612,18 @@ func (g *generator) csInvoice(
 		DeliveryDate:     deliveredAt,
 		BOL:              mv.rec.BOL,
 		ProNumber:        ca.ProNumber,
-		BillToName:       g.refs.orgName,
+		BillToName:       g.Refs.OrgName,
 		CurrencyCode:     money.DefaultCurrencyCode,
 		TotalAmount:      totalAmount,
 		LineCharges:      charges,
 		ReferenceNumbers: refs,
 	}
-	raw, segments := csRaw210(c, g.refs.orgName, payload, control, received)
+	raw, segments := csRaw210(c, g.Refs.OrgName, payload, control, received)
 
 	message := &edimessage.EDIMessage{
-		ID:                       idAt("edimsg_", received),
-		BusinessUnitID:           g.refs.buID,
-		OrganizationID:           g.refs.orgID,
+		ID:                       volumegen.IDAt("edimsg_", received),
+		BusinessUnitID:           g.Refs.BuID,
+		OrganizationID:           g.Refs.OrgID,
 		EDIPartnerID:             c.partner.ID,
 		DocumentTypeID:           docType.ID,
 		Direction:                edidocument.DocumentDirectionInbound,
@@ -638,9 +645,9 @@ func (g *generator) csInvoice(
 		Version:     1,
 	}
 	invoice := &edicarrierinvoice.CarrierInvoice{
-		ID:                   idAt("edici_", received),
-		BusinessUnitID:       g.refs.buID,
-		OrganizationID:       g.refs.orgID,
+		ID:                   volumegen.IDAt("edici_", received),
+		BusinessUnitID:       g.Refs.BuID,
+		OrganizationID:       g.Refs.OrgID,
 		EDIPartnerID:         c.partner.ID,
 		InboundMessageID:     message.ID,
 		InvoiceNumber:        number,
@@ -648,7 +655,7 @@ func (g *generator) csInvoice(
 		DeliveryDate:         &deliveredAt,
 		BOL:                  mv.rec.BOL,
 		ProNumber:            ca.ProNumber,
-		BillToName:           g.refs.orgName,
+		BillToName:           g.Refs.OrgName,
 		CurrencyCode:         money.DefaultCurrencyCode,
 		TotalAmount:          totalAmount,
 		LineCharges:          charges,
@@ -665,9 +672,9 @@ func (g *generator) csInvoice(
 	rows.stamp(csTableMessages, message.ID, received, received)
 	invoiceUpdated := received
 
-	matchAt := received + g.fake.between64(csHour, 2*csDay)
-	if matchAt > now-10*csMinute || (received > now-4*csDay && g.fake.chance(0.35)) {
-		if g.fake.chance(0.6) {
+	matchAt := received + g.Fake.Between64(csHour, 2*csDay)
+	if matchAt > now-10*csMinute || (received > now-4*csDay && g.Fake.Chance(0.35)) {
+		if g.Fake.Chance(0.6) {
 			invoice.CarrierID = c.entity.ID
 		}
 		rows.stamp(csTableInvoices, invoice.ID, received, invoiceUpdated)
@@ -675,12 +682,12 @@ func (g *generator) csInvoice(
 	}
 
 	invoice.CarrierID = c.entity.ID
-	matcher := g.bilPick(g.refs.userIDs)
+	matcher := g.PickUser(g.Refs.UserIDs)
 	invoiceID := invoice.ID
 	match := &carriersettlement.InvoiceMatch{
-		ID:                  idAt("cim_", matchAt),
-		BusinessUnitID:      g.refs.buID,
-		OrganizationID:      g.refs.orgID,
+		ID:                  volumegen.IDAt("cim_", matchAt),
+		BusinessUnitID:      g.Refs.BuID,
+		OrganizationID:      g.Refs.OrgID,
 		EDICarrierInvoiceID: &invoiceID,
 		CarrierID:           c.entity.ID,
 		CarrierAssignmentID: ca.ID,
@@ -714,11 +721,11 @@ func (g *generator) csInvoice(
 	matchUpdated := matchAt
 
 	age := now - matchAt
-	resolveAt := matchAt + g.fake.between64(csHour, 3*csDay)
+	resolveAt := matchAt + g.Fake.Between64(csHour, 3*csDay)
 	if resolveAt < now {
 		switch match.Status { //nolint:exhaustive // only open match states are resolved here
 		case carriersettlement.InvoiceMatchStatusMatched:
-			if (age > 5*csDay && g.fake.chance(0.92)) || g.fake.chance(0.45) {
+			if (age > 5*csDay && g.Fake.Chance(0.92)) || g.Fake.Chance(0.45) {
 				g.csResolveMatch(
 					match,
 					carriersettlement.InvoiceMatchStatusResolved,
@@ -730,7 +737,7 @@ func (g *generator) csInvoice(
 				invoiceUpdated, matchUpdated = resolveAt, resolveAt
 			}
 		case carriersettlement.InvoiceMatchStatusVariance:
-			roll := g.fake.float()
+			roll := g.Fake.Float()
 			acceptOdds, rejectOdds := 0.3, 0.05
 			if age > 5*csDay {
 				acceptOdds, rejectOdds = 0.7, 0.2
@@ -744,7 +751,7 @@ func (g *generator) csInvoice(
 				rows.events = append(rows.events, g.csVarianceEvent(mv, match, resolveAt))
 			case roll < acceptOdds+rejectOdds:
 				g.csResolveMatch(match, carriersettlement.InvoiceMatchStatusRejected,
-					pick(g.fake, csMatchRejectNotes), matcher, resolveAt)
+					volumegen.Pick(g.Fake, csMatchRejectNotes), matcher, resolveAt)
 				matchUpdated = resolveAt
 			}
 		}
@@ -755,7 +762,7 @@ func (g *generator) csInvoice(
 	rows.stamp(csTableInvoices, invoice.ID, received, invoiceUpdated)
 }
 
-func (g *generator) csResolveMatch(
+func (g *settlementPhase) csResolveMatch(
 	match *carriersettlement.InvoiceMatch,
 	status carriersettlement.InvoiceMatchStatus,
 	note string,
@@ -768,7 +775,7 @@ func (g *generator) csResolveMatch(
 	match.ResolvedAt = &at
 }
 
-func (g *generator) csVarianceEvent(
+func (g *settlementPhase) csVarianceEvent(
 	mv *csMove,
 	match *carriersettlement.InvoiceMatch,
 	at int64,
@@ -777,9 +784,9 @@ func (g *generator) csVarianceEvent(
 	moveID := mv.move.ID
 	shipmentID := mv.rec.ID
 	event := &carriersettlement.CostEvent{
-		ID:                  idAt("cacc_", at),
-		OrganizationID:      g.refs.orgID,
-		BusinessUnitID:      g.refs.buID,
+		ID:                  volumegen.IDAt("cacc_", at),
+		OrganizationID:      g.Refs.OrgID,
+		BusinessUnitID:      g.Refs.BuID,
 		CarrierID:           match.CarrierID,
 		CarrierAssignmentID: &assignmentID,
 		ShipmentID:          &shipmentID,
@@ -799,7 +806,7 @@ func (g *generator) csVarianceEvent(
 	return &csEvent{entity: event, createdAt: at, updatedAt: at, move: mv, match: match}
 }
 
-func (g *generator) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*csEvent {
+func (g *settlementPhase) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*csEvent {
 	for _, mv := range moves {
 		ca := mv.assignment
 		if !ca.IsActive() || mv.move.Status == shipment.MoveStatusCanceled {
@@ -818,9 +825,9 @@ func (g *generator) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*c
 		}
 		add := func(typ carriersettlement.CostEventType, amount int64, description string) {
 			event := &carriersettlement.CostEvent{
-				ID:                  idAt("cacc_", accruedAt),
-				OrganizationID:      g.refs.orgID,
-				BusinessUnitID:      g.refs.buID,
+				ID:                  volumegen.IDAt("cacc_", accruedAt),
+				OrganizationID:      g.Refs.OrgID,
+				BusinessUnitID:      g.Refs.BuID,
 				CarrierID:           ca.CarrierID,
 				CarrierAssignmentID: &assignmentID,
 				ShipmentID:          &shipmentID,
@@ -861,8 +868,8 @@ func (g *generator) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*c
 
 func csTrigger(
 	trigger settlementcontrol.PayTrigger,
-	rec *shipmentRecord,
-	mv *moveRecord,
+	rec *volumegen.ShipmentRecord,
+	mv *volumegen.MoveRecord,
 ) (accruedAt, eventDate int64, ok bool) {
 	delivered := rec.DeliveredAt > 0 && (rec.Status == shipment.StatusCompleted ||
 		rec.Status == shipment.StatusReadyToInvoice || rec.Status == shipment.StatusInvoiced)
@@ -890,11 +897,11 @@ func csTrigger(
 	}
 }
 
-func (g *generator) csPeriods(
+func (g *settlementPhase) csPeriods(
 	control *carriersettlementcontrol.CarrierSettlementControl,
 	earliest int64,
 ) []csPeriod {
-	now := g.now.UTC()
+	now := g.Now.UTC()
 	endDay := time.Weekday(control.PeriodEndDayOfWeek)
 	daysBack := int(now.Weekday() - endDay)
 	if daysBack < 0 {
@@ -934,7 +941,7 @@ func (g *generator) csPeriods(
 	return periods
 }
 
-func (g *generator) csSettle(
+func (g *settlementPhase) csSettle(
 	ctx context.Context,
 	rows *csRows,
 	setup *csSetup,
@@ -943,7 +950,7 @@ func (g *generator) csSettle(
 	if len(events) == 0 {
 		return nil
 	}
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	earliest := events[0].entity.EventDate
 	for _, ev := range events {
 		earliest = min(earliest, ev.entity.EventDate)
@@ -965,7 +972,7 @@ func (g *generator) csSettle(
 	sort.Slice(carrierIDs, func(i, j int) bool { return carrierIDs[i] < carrierIDs[j] })
 
 	for _, period := range g.csPeriods(setup.control, earliest) {
-		genAt := period.end + g.fake.between64(4*csHour, 40*csHour)
+		genAt := period.end + g.Fake.Between64(4*csHour, 40*csHour)
 		if genAt > now-30*csMinute {
 			break
 		}
@@ -991,7 +998,7 @@ func (g *generator) csSettle(
 				if voidAt == 0 {
 					break
 				}
-				at = voidAt + g.fake.between64(csHour, 8*csHour)
+				at = voidAt + g.Fake.Between64(csHour, 8*csHour)
 				if at > now-10*csMinute {
 					for _, ev := range pool {
 						ev.entity.Status = carriersettlement.CostEventStatusPending
@@ -1011,7 +1018,7 @@ func (g *generator) csSettle(
 	return g.csNumberAndPost(ctx, rows, setup)
 }
 
-func (g *generator) csTake(
+func (g *settlementPhase) csTake(
 	pending map[pulid.ID][]*csEvent,
 	carrierID pulid.ID,
 	periodEnd, genAt int64,
@@ -1038,11 +1045,11 @@ func (g *generator) csTake(
 	return take
 }
 
-func (g *generator) csOpenBatches(
+func (g *settlementPhase) csOpenBatches(
 	ctx context.Context,
 ) (map[string]*carriersettlement.CarrierSettlementBatch, error) {
 	csb := carriersettlementdb.CarrierSettlementBatches
-	existing, err := csb.Where(csb.Status.Eq(carriersettlement.BatchStatusOpen)).All(ctx, g.db)
+	existing, err := csb.Where(csb.Status.Eq(carriersettlement.BatchStatusOpen)).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load open carrier settlement batches: %w", err)
 	}
@@ -1057,7 +1064,7 @@ func csPeriodKey(start, end int64) string {
 	return fmt.Sprintf("%d|%d", start, end)
 }
 
-func (g *generator) csBatch(
+func (g *settlementPhase) csBatch(
 	rows *csRows,
 	batches map[string]*carriersettlement.CarrierSettlementBatch,
 	period csPeriod,
@@ -1070,9 +1077,9 @@ func (g *generator) csBatch(
 	}
 	generatedAt := genAt
 	batch := &carriersettlement.CarrierSettlementBatch{
-		ID:             idAt("carstlb_", genAt),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("carstlb_", genAt),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		Status:         carriersettlement.BatchStatusOpen,
 		Name: "Carrier pay period ending " +
 			time.Unix(period.end, 0).UTC().AddDate(0, 0, -1).Format("Jan 2, 2006"),
@@ -1080,7 +1087,7 @@ func (g *generator) csBatch(
 		PeriodEnd:     period.end,
 		PayDate:       period.pay,
 		CurrencyCode:  money.DefaultCurrencyCode,
-		GeneratedByID: g.bilPick(g.refs.userIDs),
+		GeneratedByID: g.PickUser(g.Refs.UserIDs),
 		GeneratedAt:   &generatedAt,
 		Version:       1,
 	}
@@ -1091,7 +1098,7 @@ func (g *generator) csBatch(
 	return batch
 }
 
-func (g *generator) csNewSettlement(
+func (g *settlementPhase) csNewSettlement(
 	rows *csRows,
 	batch *carriersettlement.CarrierSettlementBatch,
 	period csPeriod,
@@ -1101,9 +1108,9 @@ func (g *generator) csNewSettlement(
 ) *csSettlement {
 	batchID := batch.ID
 	entity := &carriersettlement.CarrierSettlement{
-		ID:             idAt("carstl_", genAt),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("carstl_", genAt),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		CarrierID:      carrierID,
 		BatchID:        &batchID,
 		Status:         carriersettlement.StatusDraft,
@@ -1130,9 +1137,9 @@ func (g *generator) csNewSettlement(
 			description = e.EventType.String()
 		}
 		entity.Lines = append(entity.Lines, &carriersettlement.CarrierSettlementLine{
-			ID:             idAt("carstll_", genAt),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
+			ID:             volumegen.IDAt("carstll_", genAt),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
 			SettlementID:   entity.ID,
 			EventType:      e.EventType,
 			Description:    description,
@@ -1153,17 +1160,17 @@ func (g *generator) csNewSettlement(
 	entity.ShipmentCount = len(shipments)
 	entity.SyncTotals()
 
-	if g.fake.chance(0.08) {
-		kind := pick(g.fake, csAdjustmentKinds)
-		amount := g.fake.between64(kind.low, kind.high)
+	if g.Fake.Chance(0.08) {
+		kind := volumegen.Pick(g.Fake, csAdjustmentKinds)
+		amount := g.Fake.Between64(kind.low, kind.high)
 		if kind.negative {
 			amount = -min(amount, entity.GrossCostMinor/3)
 		}
 		if amount != 0 {
 			entity.Lines = append(entity.Lines, &carriersettlement.CarrierSettlementLine{
-				ID:             idAt("carstll_", genAt),
-				BusinessUnitID: g.refs.buID,
-				OrganizationID: g.refs.orgID,
+				ID:             volumegen.IDAt("carstll_", genAt),
+				BusinessUnitID: g.Refs.BuID,
+				OrganizationID: g.Refs.OrgID,
 				SettlementID:   entity.ID,
 				EventType:      carriersettlement.CostEventTypeAdjustment,
 				Description:    kind.description,
@@ -1185,58 +1192,58 @@ func (g *generator) csNewSettlement(
 // csLifecycle walks a generated settlement through review, posting and
 // payment as far as the clock allows, and returns the void time when the
 // settlement is voided so its cost events can be regenerated.
-func (g *generator) csLifecycle(
+func (g *settlementPhase) csLifecycle(
 	s *csSettlement,
 	genAt, payDate int64,
 	setup *csSetup,
 ) int64 {
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	entity := s.entity
-	users := g.refs.userIDs
+	users := g.Refs.UserIDs
 
-	if g.fake.chance(0.025) {
-		voidAt := genAt + g.fake.between64(csHour, 30*csHour)
+	if g.Fake.Chance(0.025) {
+		voidAt := genAt + g.Fake.Between64(csHour, 30*csHour)
 		if voidAt <= now-5*csMinute {
-			if g.fake.chance(0.5) {
-				submitAt := g.fake.between64(
+			if g.Fake.Chance(0.5) {
+				submitAt := g.Fake.Between64(
 					genAt+10*csMinute,
 					max(voidAt-5*csMinute, genAt+10*csMinute),
 				)
-				entity.SubmittedByID = g.bilPick(users)
+				entity.SubmittedByID = g.PickUser(users)
 				entity.SubmittedAt = &submitAt
 			}
 			entity.Status = carriersettlement.StatusVoided
-			entity.VoidedByID = g.bilPick(users)
+			entity.VoidedByID = g.PickUser(users)
 			entity.VoidedAt = &voidAt
-			entity.VoidReason = pick(g.fake, csVoidReasons)
+			entity.VoidReason = volumegen.Pick(g.Fake, csVoidReasons)
 			s.updatedAt = voidAt
 			s.replaced = true
 			return voidAt
 		}
 	}
 
-	submitAt := genAt + g.fake.between64(2*csHour, 30*csHour)
-	if g.fake.chance(0.05) {
-		rejectAt := submitAt + g.fake.between64(csHour, 20*csHour)
+	submitAt := genAt + g.Fake.Between64(2*csHour, 30*csHour)
+	if g.Fake.Chance(0.05) {
+		rejectAt := submitAt + g.Fake.Between64(csHour, 20*csHour)
 		if rejectAt < now {
-			entity.Notes = "Rejected: " + pick(g.fake, csRejectReasons)
+			entity.Notes = "Rejected: " + volumegen.Pick(g.Fake, csRejectReasons)
 			s.updatedAt = rejectAt
-			submitAt = rejectAt + g.fake.between64(2*csHour, 24*csHour)
+			submitAt = rejectAt + g.Fake.Between64(2*csHour, 24*csHour)
 		}
 	}
 	if submitAt > now {
 		return 0
 	}
 	entity.Status = carriersettlement.StatusPendingApproval
-	entity.SubmittedByID = g.bilPick(users)
+	entity.SubmittedByID = g.PickUser(users)
 	entity.SubmittedAt = &submitAt
 	s.updatedAt = submitAt
 
-	approveAt := submitAt + g.fake.between64(csHour, 36*csHour)
+	approveAt := submitAt + g.Fake.Between64(csHour, 36*csHour)
 	if approveAt > now {
 		return 0
 	}
-	approver := g.bilPick(users)
+	approver := g.PickUser(users)
 	entity.Status = carriersettlement.StatusApproved
 	entity.ApprovedByID = approver
 	entity.ApprovedAt = &approveAt
@@ -1247,7 +1254,7 @@ func (g *generator) csLifecycle(
 	}
 	postAt := approveAt
 	if !setup.control.AutoPostOnApprove {
-		postAt += g.fake.between64(10*csMinute, 20*csHour)
+		postAt += g.Fake.Between64(10*csMinute, 20*csHour)
 	}
 	if postAt > now {
 		return 0
@@ -1260,30 +1267,30 @@ func (g *generator) csLifecycle(
 	entity.PostedAPAccountID = &payable
 	s.updatedAt = postAt
 
-	if !setup.canPay || g.fake.chance(0.03) {
+	if !setup.canPay || g.Fake.Chance(0.03) {
 		return 0
 	}
-	paidAt := max(payDate+g.fake.between64(-12*csHour, 2*csDay), postAt+2*csHour)
+	paidAt := max(payDate+g.Fake.Between64(-12*csHour, 2*csDay), postAt+2*csHour)
 	if paidAt > now {
 		return 0
 	}
 	entity.Status = carriersettlement.StatusPaid
 	entity.PaidAt = &paidAt
-	entity.PaidByID = g.bilPick(users)
+	entity.PaidByID = g.PickUser(users)
 	s.updatedAt = paidAt
 
 	return 0
 }
 
-func (g *generator) csNumberAndPost(ctx context.Context, rows *csRows, setup *csSetup) error {
+func (g *settlementPhase) csNumberAndPost(ctx context.Context, rows *csRows, setup *csSetup) error {
 	if len(rows.settlements) == 0 {
 		return nil
 	}
-	slots := make([]numberSlot, len(rows.settlements))
+	slots := make([]volumegen.NumberSlot, len(rows.settlements))
 	for i, s := range rows.settlements {
-		slots[i] = numberSlot{At: s.createdAt}
+		slots[i] = volumegen.NumberSlot{At: s.createdAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeCarrierSettlement, slots)
+	numbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeCarrierSettlement, slots)
 	if err != nil {
 		return err
 	}
@@ -1327,29 +1334,29 @@ func (g *generator) csNumberAndPost(ctx context.Context, rows *csRows, setup *cs
 	return nil
 }
 
-func (g *generator) csPostJournal(rows *csRows, setup *csSetup, s *csSettlement) error {
+func (g *settlementPhase) csPostJournal(rows *csRows, setup *csSetup, s *csSettlement) error {
 	entity := s.entity
 	postAt := *entity.PostedAt
-	journal, err := g.bilNewJournal(setup.billing, postAt)
+	journal, err := g.NewJournal(setup.billing, postAt)
 	if err != nil {
 		return err
 	}
 	event := accountingcontrol.JournalSourceEventCarrierSettlementPosted
-	journal.actorID = entity.PostedByID
-	journal.description = "Carrier settlement " + entity.SettlementNumber
-	journal.sourceType = csSourceType
-	journal.sourceID = entity.ID
-	journal.document = entity.SettlementNumber
-	journal.event = event
-	journal.referenceType = event.String()
-	journal.idempotency = "carrier-settlement-posted:" + entity.ID.String()
-	journal.auto = true
-	journal.legs = []bilLeg{
-		{account: setup.expense, debit: entity.NetPayableMinor},
-		{account: setup.payable, credit: entity.NetPayableMinor},
+	journal.ActorID = entity.PostedByID
+	journal.Description = "Carrier settlement " + entity.SettlementNumber
+	journal.SourceType = csSourceType
+	journal.SourceID = entity.ID
+	journal.Document = entity.SettlementNumber
+	journal.Event = event
+	journal.ReferenceType = event.String()
+	journal.Idempotency = "carrier-settlement-posted:" + entity.ID.String()
+	journal.Auto = true
+	journal.Legs = []ledgervolume.Leg{
+		{Account: setup.expense, Debit: entity.NetPayableMinor},
+		{Account: setup.payable, Credit: entity.NetPayableMinor},
 	}
-	rows.billing.journals = append(rows.billing.journals, journal)
-	batchID := journal.batchID
+	rows.billing.Journals = append(rows.billing.Journals, journal)
+	batchID := journal.BatchID
 	entity.PostedJournalBatchID = &batchID
 
 	g.csLedger(rows, entity, carriersettlement.LedgerEntryTypeBill, event, &batchID,
@@ -1357,7 +1364,7 @@ func (g *generator) csPostJournal(rows *csRows, setup *csSetup, s *csSettlement)
 	return nil
 }
 
-func (g *generator) csPayJournal(
+func (g *settlementPhase) csPayJournal(
 	rows *csRows,
 	setup *csSetup,
 	s *csSettlement,
@@ -1365,7 +1372,7 @@ func (g *generator) csPayJournal(
 ) error {
 	entity := s.entity
 	paidAt := *entity.PaidAt
-	journal, err := g.bilNewJournal(setup.billing, paidAt)
+	journal, err := g.NewJournal(setup.billing, paidAt)
 	if err != nil {
 		return err
 	}
@@ -1375,27 +1382,27 @@ func (g *generator) csPayJournal(
 	}
 	entity.PaymentMethod = string(method)
 	if method == carrier.PaymentMethodACHManual {
-		entity.PaymentReference = "ACH" + g.fake.digits(15)
+		entity.PaymentReference = "ACH" + g.Fake.Digits(15)
 	} else {
-		entity.PaymentReference = "CHK " + g.fake.digits(6)
+		entity.PaymentReference = "CHK " + g.Fake.Digits(6)
 	}
 
 	event := accountingcontrol.JournalSourceEventCarrierSettlementPaid
-	journal.actorID = entity.PaidByID
-	journal.description = "Payment of carrier settlement " + entity.SettlementNumber
-	journal.sourceType = csSourceType
-	journal.sourceID = entity.ID
-	journal.document = entity.SettlementNumber
-	journal.event = event
-	journal.referenceType = event.String()
-	journal.idempotency = "carrier-settlement-paid:" + entity.ID.String()
-	journal.auto = true
-	journal.legs = []bilLeg{
-		{account: setup.payable, debit: entity.NetPayableMinor},
-		{account: setup.billing.cash, credit: entity.NetPayableMinor},
+	journal.ActorID = entity.PaidByID
+	journal.Description = "Payment of carrier settlement " + entity.SettlementNumber
+	journal.SourceType = csSourceType
+	journal.SourceID = entity.ID
+	journal.Document = entity.SettlementNumber
+	journal.Event = event
+	journal.ReferenceType = event.String()
+	journal.Idempotency = "carrier-settlement-paid:" + entity.ID.String()
+	journal.Auto = true
+	journal.Legs = []ledgervolume.Leg{
+		{Account: setup.payable, Debit: entity.NetPayableMinor},
+		{Account: setup.billing.Cash, Credit: entity.NetPayableMinor},
 	}
-	rows.billing.journals = append(rows.billing.journals, journal)
-	batchID := journal.batchID
+	rows.billing.Journals = append(rows.billing.Journals, journal)
+	batchID := journal.BatchID
 	entity.PaidJournalBatchID = &batchID
 
 	g.csLedger(rows, entity, carriersettlement.LedgerEntryTypePayment, event, &batchID,
@@ -1403,7 +1410,7 @@ func (g *generator) csPayJournal(
 	return nil
 }
 
-func (g *generator) csLedger(
+func (g *settlementPhase) csLedger(
 	rows *csRows,
 	entity *carriersettlement.CarrierSettlement,
 	entryType carriersettlement.LedgerEntryType,
@@ -1414,12 +1421,12 @@ func (g *generator) csLedger(
 ) {
 	settlementID := entity.ID
 	if actor.IsNil() {
-		actor = g.refs.adminID
+		actor = g.Refs.AdminID
 	}
 	entry := &carriersettlement.LedgerEntry{
-		ID:                  idAt("carldg_", at),
-		BusinessUnitID:      g.refs.buID,
-		OrganizationID:      g.refs.orgID,
+		ID:                  volumegen.IDAt("carldg_", at),
+		BusinessUnitID:      g.Refs.BuID,
+		OrganizationID:      g.Refs.OrgID,
 		CarrierID:           entity.CarrierID,
 		EntryType:           entryType,
 		SourceObjectType:    csSourceType,
@@ -1439,7 +1446,7 @@ func (g *generator) csLedger(
 }
 
 //nolint:gocognit,funlen // the writes follow the foreign keys between these tables
-func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) error {
+func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) error {
 	settlements := make([]*carriersettlement.CarrierSettlement, len(rows.settlements))
 	for i, s := range rows.settlements {
 		settlements[i] = s.entity
@@ -1456,26 +1463,40 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 	}{
 		{
 			csTablePartners,
-			func() error { return insertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) },
+			func() error { return volumegen.InsertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) },
 		},
 		{
 			csTableChannels,
-			func() error { return insertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) },
+			func() error { return volumegen.InsertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) },
 		},
 		{
 			csTableMessages,
-			func() error { return insertRows(ctx, tx, edimessagedb.EDIMessages.Handle, rows.messages) },
+			func() error { return volumegen.InsertRows(ctx, tx, edimessagedb.EDIMessages.Handle, rows.messages) },
 		},
 		{
 			csTableInvoices,
-			func() error { return insertRows(ctx, tx, edicarrierinvoicedb.CarrierInvoices.Handle, rows.invoices) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					edicarrierinvoicedb.CarrierInvoices.Handle,
+					rows.invoices,
+				)
+			},
 		},
 		{
 			csTableRateCons,
-			func() error { return insertRows(ctx, tx, rateconfirmationdb.RateConfirmations.Handle, rows.rateCons) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					rateconfirmationdb.RateConfirmations.Handle,
+					rows.rateCons,
+				)
+			},
 		},
 		{csTableBatches, func() error {
-			return insertRows(
+			return volumegen.InsertRows(
 				ctx,
 				tx,
 				carriersettlementdb.CarrierSettlementBatches.Handle,
@@ -1484,14 +1505,21 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		}},
 		{
 			csTableSettlements,
-			func() error { return insertRows(ctx, tx, carriersettlementdb.CarrierSettlements.Handle, settlements) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					carriersettlementdb.CarrierSettlements.Handle,
+					settlements,
+				)
+			},
 		},
 		{
 			csTableEvents,
-			func() error { return insertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) },
+			func() error { return volumegen.InsertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) },
 		},
 		{csTableLines, func() error {
-			return insertRows(
+			return volumegen.InsertRows(
 				ctx,
 				tx,
 				carriersettlementdb.CarrierSettlementLines.Handle,
@@ -1500,7 +1528,14 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		}},
 		{
 			csTableMatches,
-			func() error { return insertRows(ctx, tx, carriersettlementdb.InvoiceMatches.Handle, rows.matches) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					carriersettlementdb.InvoiceMatches.Handle,
+					rows.matches,
+				)
+			},
 		},
 	}
 	for _, step := range steps {
@@ -1509,10 +1544,10 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		}
 	}
 
-	if err := g.bilWrite(ctx, tx, rows.billing); err != nil {
+	if err := g.Write(ctx, tx, rows.billing); err != nil {
 		return err
 	}
-	if err := insertRows(
+	if err := volumegen.InsertRows(
 		ctx,
 		tx,
 		carriersettlementdb.LedgerEntries.Handle,
@@ -1525,18 +1560,18 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		csTablePartners, csTableChannels, csTableMessages, csTableInvoices, csTableRateCons,
 		csTableBatches, csTableSettlements, csTableEvents, csTableLines, csTableMatches,
 	} {
-		if err := backdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
+		if err := volumegen.BackdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
 			return err
 		}
 	}
-	if err := backdateTableCreated(ctx, tx, csTableLedger, rows.stamps[csTableLedger]); err != nil {
+	if err := volumegen.BackdateTableCreated(ctx, tx, csTableLedger, rows.stamps[csTableLedger]); err != nil {
 		return err
 	}
 
 	return g.csBatchAggregates(ctx, tx, rows.touched)
 }
 
-func (g *generator) csBatchAggregates(
+func (g *settlementPhase) csBatchAggregates(
 	ctx context.Context,
 	tx *keel.DB,
 	touched map[pulid.ID]struct{},
@@ -1590,7 +1625,7 @@ func (g *generator) csBatchAggregates(
 		csb.SettlementCount.ToExpr(d.Col("settlements")),
 		csb.TotalGrossMinor.ToExpr(d.Col("gross")),
 		csb.TotalNetMinor.ToExpr(d.Col("net")),
-		keepUpdated(csb.Handle),
+		volumegen.KeepUpdated(csb.Handle),
 	); err != nil {
 		return fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 	}
@@ -1598,7 +1633,7 @@ func (g *generator) csBatchAggregates(
 	return nil
 }
 
-func (g *generator) csReport(rows *csRows) {
+func (g *settlementPhase) csReport(rows *csRows) {
 	statuses := make(map[carriersettlement.Status]int)
 	for _, s := range rows.settlements {
 		statuses[s.entity.Status]++
@@ -1608,30 +1643,30 @@ func (g *generator) csReport(rows *csRows) {
 		eventStatuses[ev.entity.Status]++
 	}
 
-	g.report.add("Carrier EDI partners", len(rows.partners))
-	g.report.add("Carrier EDI 210 messages", len(rows.messages))
-	g.report.add("Carrier invoices (EDI 210)", len(rows.invoices))
-	g.report.add("Rate confirmations", len(rows.rateCons))
-	g.report.add("Carrier cost events", len(rows.events))
-	g.report.add("Carrier invoice matches", len(rows.matches))
-	g.report.add("Carrier settlement batches", len(rows.batches))
-	g.report.add("Carrier settlements", len(rows.settlements))
-	g.report.add("Carrier settlement lines", len(rows.lines))
-	g.report.add("Carrier ledger entries", len(rows.ledger))
-	g.report.add("Carrier settlement journals", len(rows.billing.entries))
+	g.Report.Add("Carrier EDI partners", len(rows.partners))
+	g.Report.Add("Carrier EDI 210 messages", len(rows.messages))
+	g.Report.Add("Carrier invoices (EDI 210)", len(rows.invoices))
+	g.Report.Add("Rate confirmations", len(rows.rateCons))
+	g.Report.Add("Carrier cost events", len(rows.events))
+	g.Report.Add("Carrier invoice matches", len(rows.matches))
+	g.Report.Add("Carrier settlement batches", len(rows.batches))
+	g.Report.Add("Carrier settlements", len(rows.settlements))
+	g.Report.Add("Carrier settlement lines", len(rows.lines))
+	g.Report.Add("Carrier ledger entries", len(rows.ledger))
+	g.Report.Add("Carrier settlement journals", len(rows.billing.Entries))
 
 	for _, status := range []carriersettlement.Status{
 		carriersettlement.StatusDraft, carriersettlement.StatusPendingApproval,
 		carriersettlement.StatusApproved, carriersettlement.StatusPosted,
 		carriersettlement.StatusPaid, carriersettlement.StatusVoided,
 	} {
-		g.opts.Logf("  • carrier settlements %s: %d", status, statuses[status])
+		g.Opts.Logf("  • carrier settlements %s: %d", status, statuses[status])
 	}
 	for _, status := range []carriersettlement.CostEventStatus{
 		carriersettlement.CostEventStatusPending, carriersettlement.CostEventStatusAttached,
 		carriersettlement.CostEventStatusSettled,
 	} {
-		g.opts.Logf("  • carrier cost events %s: %d", status, eventStatuses[status])
+		g.Opts.Logf("  • carrier cost events %s: %d", status, eventStatuses[status])
 	}
 }
 
@@ -1645,9 +1680,9 @@ func csRaw210(
 	at := time.Unix(received, 0).UTC()
 	sender := c.entity.SCAC
 	if sender == "" {
-		sender = codeFrom(c.entity.Name, 4)
+		sender = volumegen.CodeFrom(c.entity.Name, 4)
 	}
-	receiverID := codeFrom(receiver, 8)
+	receiverID := volumegen.CodeFrom(receiver, 8)
 	totalCents := money.MinorUnits(p.TotalAmount.Decimal)
 
 	body := []string{
@@ -1688,4 +1723,14 @@ func abs64(v int64) int64 {
 		return -v
 	}
 	return v
+}
+
+type settlementPhase struct {
+	*ledgervolume.Ledger
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&settlementPhase{Ledger: &ledgervolume.Ledger{Generator: g}}).seedCarrierSettlements(
+		ctx,
+	)
 }

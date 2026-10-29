@@ -1,4 +1,4 @@
-package volume
+package adjustmentvolume
 
 import (
 	"context"
@@ -29,6 +29,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -96,14 +98,14 @@ type adjFieldError struct {
 }
 
 type adjSetup struct {
-	bil         *bilSetup
+	bil         *ledgervolume.Setup
 	control     *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 	writeOff    pulid.ID
 	canWriteOff bool
 }
 
 type adjRequest struct {
-	rec      *shipmentRecord
+	rec      *volumegen.ShipmentRecord
 	inv      *invoice.Invoice
 	kind     invoiceadjustment.Kind
 	strategy invoiceadjustment.RebillStrategy
@@ -158,7 +160,7 @@ type adjBatchPlan struct {
 }
 
 type adjReversal struct {
-	rec    *shipmentRecord
+	rec    *volumegen.ShipmentRecord
 	itemID pulid.ID
 	actor  pulid.ID
 	at     int64
@@ -172,7 +174,7 @@ type adjRebillSync struct {
 }
 
 type adjRows struct {
-	bil         *bilRows
+	bil         *ledgervolume.Rows
 	groups      map[pulid.ID]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	groupOrder  []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	adjustments []*invoiceadjustment.InvoiceAdjustment
@@ -190,13 +192,13 @@ type adjRows struct {
 }
 
 type adjPools struct {
-	unpaid  []*shipmentRecord
-	partial []*shipmentRecord
-	paid    []*shipmentRecord
+	unpaid  []*volumegen.ShipmentRecord
+	partial []*volumegen.ShipmentRecord
+	paid    []*volumegen.ShipmentRecord
 	used    map[pulid.ID]bool
 }
 
-func (g *generator) seedAdjustments(ctx context.Context) error {
+func (g *adjustmentPhase) seedAdjustments(ctx context.Context) error {
 	pools := g.adjCollect()
 	total := len(pools.unpaid) + len(pools.partial) + len(pools.paid)
 	if total == 0 {
@@ -208,7 +210,7 @@ func (g *generator) seedAdjustments(ctx context.Context) error {
 		return err
 	}
 	if setup == nil {
-		g.opts.Logf("  ! no invoice adjustment control; skipping invoice adjustments")
+		g.Opts.Logf("  ! no invoice adjustment control; skipping invoice adjustments")
 		return nil
 	}
 
@@ -221,7 +223,9 @@ func (g *generator) seedAdjustments(ctx context.Context) error {
 	}
 
 	rows := &adjRows{
-		bil:     &bilRows{balances: make(map[bilBalanceKey]*bilBalance)},
+		bil: &ledgervolume.Rows{
+			Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance),
+		},
 		groups:  make(map[pulid.ID]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup),
 		sources: make(map[pulid.ID]*invoice.Invoice),
 	}
@@ -235,10 +239,10 @@ func (g *generator) seedAdjustments(ctx context.Context) error {
 		g.adjBuildBatch(rows, b)
 	}
 
-	if err = g.bilMaterialize(ctx, rows.bil); err != nil {
+	if err = g.Materialize(ctx, rows.bil); err != nil {
 		return err
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.adjWrite(ctx, tx, rows)
 	}); err != nil {
 		return err
@@ -248,9 +252,9 @@ func (g *generator) seedAdjustments(ctx context.Context) error {
 	return nil
 }
 
-func (g *generator) adjCollect() *adjPools {
+func (g *adjustmentPhase) adjCollect() *adjPools {
 	pools := &adjPools{used: make(map[pulid.ID]bool)}
-	for _, r := range g.shipments {
+	for _, r := range g.Shipments {
 		inv := r.Invoice
 		if inv == nil || inv.Status != invoice.StatusPosted || inv.IsCreditMemo() ||
 			inv.BillType != billingqueue.BillTypeInvoice || len(inv.Lines) == 0 ||
@@ -270,16 +274,19 @@ func (g *generator) adjCollect() *adjPools {
 			}
 		}
 	}
-	for _, pool := range [][]*shipmentRecord{pools.unpaid, pools.partial, pools.paid} {
+	for _, pool := range [][]*volumegen.ShipmentRecord{pools.unpaid, pools.partial, pools.paid} {
 		for i := len(pool) - 1; i > 0; i-- {
-			j := g.fake.intn(i + 1)
+			j := g.Fake.Intn(i + 1)
 			pool[i], pool[j] = pool[j], pool[i]
 		}
 	}
 	return pools
 }
 
-func (p *adjPools) take(pool []*shipmentRecord, accept func(*shipmentRecord) bool) *shipmentRecord {
+func (p *adjPools) take(
+	pool []*volumegen.ShipmentRecord,
+	accept func(*volumegen.ShipmentRecord) bool,
+) *volumegen.ShipmentRecord {
 	for _, r := range pool {
 		if p.used[r.Invoice.ID] {
 			continue
@@ -293,10 +300,10 @@ func (p *adjPools) take(pool []*shipmentRecord, accept func(*shipmentRecord) boo
 	return nil
 }
 
-func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
-	control, err := firstOrNil(
+func (g *adjustmentPhase) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
+	control, err := volumegen.FirstOrNil(
 		ctx,
-		g.db,
+		g.DB,
 		invoiceadjustmentcontroldb.InvoiceAdjustmentControls.Query(),
 	)
 	if err != nil {
@@ -306,13 +313,13 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 		return nil, nil
 	}
 
-	bil, err := g.bilLoadSetup(ctx)
+	bil, err := g.LoadSetup(ctx)
 	if err != nil {
 		return nil, err
 	}
 	setup := &adjSetup{bil: bil, control: control}
 
-	accounting, err := g.accountingControl(ctx)
+	accounting, err := g.AccountingControl(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -321,14 +328,14 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 	}
 	setup.writeOff = accounting.DefaultWriteOffAccountID
 	if setup.writeOff.IsNil() {
-		byCode, codeErr := g.glAccountsByCode(ctx, adjAccountWriteOff)
+		byCode, codeErr := g.GLAccountsByCode(ctx, adjAccountWriteOff)
 		if codeErr != nil {
 			return nil, codeErr
 		}
 		if id, ok := byCode[adjAccountWriteOff]; ok {
 			ac := accountingcontroldb.AccountingControls
 			if _, err = ac.Where(ac.DefaultWriteOffAccountID.IsNull()).
-				Update(ctx, g.db, ac.DefaultWriteOffAccountID.To(id)); err != nil {
+				Update(ctx, g.DB, ac.DefaultWriteOffAccountID.To(id)); err != nil {
 				return nil, fmt.Errorf("set default write-off account: %w", err)
 			}
 			setup.writeOff = id
@@ -336,13 +343,17 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 	}
 	journalsAllowed := accounting.JournalPostingMode != accountingcontrol.JournalPostingModeManual ||
 		accounting.ManualJournalEntryPolicy != accountingcontrol.ManualJournalEntryPolicyDisallow
-	setup.canWriteOff = setup.writeOff.IsNotNil() && bil.ar.IsNotNil() && journalsAllowed &&
-		len(bil.periods) > 0
+	setup.canWriteOff = setup.writeOff.IsNotNil() && bil.AR.IsNotNil() && journalsAllowed &&
+		len(bil.Periods) > 0
 
 	return setup, nil
 }
 
-func (g *generator) adjPlanIndividual(setup *adjSetup, pools *adjPools, target int) []*adjPlan {
+func (g *adjustmentPhase) adjPlanIndividual(
+	setup *adjSetup,
+	pools *adjPools,
+	target int,
+) []*adjPlan {
 	outcomes := []adjOutcome{
 		adjOutcomeDraft, adjOutcomePending, adjOutcomeExecuted, adjOutcomeRejected,
 		adjOutcomeFailed, adjOutcomeFailedRejected,
@@ -356,8 +367,8 @@ func (g *generator) adjPlanIndividual(setup *adjSetup, pools *adjPools, target i
 
 	plans := make([]*adjPlan, 0, target)
 	for attempt := 0; len(plans) < target && attempt < target*4; attempt++ {
-		outcome := outcomes[g.fake.weighted(outcomeWeights)]
-		kind := kinds[g.fake.weighted(kindWeights)]
+		outcome := outcomes[g.Fake.Weighted(outcomeWeights)]
+		kind := kinds[g.Fake.Weighted(kindWeights)]
 		if outcome == adjOutcomeDraft {
 			kind = invoiceadjustment.KindCreditOnly
 		}
@@ -368,14 +379,14 @@ func (g *generator) adjPlanIndividual(setup *adjSetup, pools *adjPools, target i
 	return plans
 }
 
-func (g *generator) adjPlanOne(
+func (g *adjustmentPhase) adjPlanOne(
 	setup *adjSetup,
 	pools *adjPools,
 	kind invoiceadjustment.Kind,
 	outcome adjOutcome,
 ) *adjPlan {
-	now := unix(g.now)
-	var rec *shipmentRecord
+	now := volumegen.Unix(g.Now)
+	var rec *volumegen.ShipmentRecord
 	switch {
 	case outcome == adjOutcomeFailed || outcome == adjOutcomeFailedRejected:
 		kind = invoiceadjustment.KindWriteOff
@@ -383,16 +394,16 @@ func (g *generator) adjPlanOne(
 	case kind == invoiceadjustment.KindFullReversal:
 		rec = pools.take(pools.unpaid, nil)
 	case kind == invoiceadjustment.KindWriteOff:
-		if g.fake.chance(0.5) {
+		if g.Fake.Chance(0.5) {
 			rec = pools.take(pools.partial, nil)
 		}
 		if rec == nil {
-			rec = pools.take(pools.unpaid, func(r *shipmentRecord) bool {
-				return r.Invoice.DueDate != nil && now-*r.Invoice.DueDate > 60*bilDay
+			rec = pools.take(pools.unpaid, func(r *volumegen.ShipmentRecord) bool {
+				return r.Invoice.DueDate != nil && now-*r.Invoice.DueDate > 60*volumegen.Day
 			})
 		}
 	default:
-		pool := [][]*shipmentRecord{pools.unpaid, pools.partial, pools.paid}[g.fake.weighted([]int{50, 20, 30})]
+		pool := [][]*volumegen.ShipmentRecord{pools.unpaid, pools.partial, pools.paid}[g.Fake.Weighted([]int{50, 20, 30})]
 		rec = pools.take(pool, nil)
 		if rec == nil {
 			rec = pools.take(pools.unpaid, nil)
@@ -411,7 +422,7 @@ func (g *generator) adjPlanOne(
 		req:      req,
 		outcome:  outcome,
 		submitAt: submitAt,
-		submitBy: g.bilPick(g.refs.userIDs),
+		submitBy: g.PickUser(g.Refs.UserIDs),
 	}
 
 	if outcome == adjOutcomeDraft {
@@ -433,8 +444,8 @@ func (g *generator) adjPlanOne(
 	return g.adjSettleOutcome(setup, p)
 }
 
-func (g *generator) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
-	now := unix(g.now)
+func (g *adjustmentPhase) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
+	now := volumegen.Unix(g.Now)
 	failed := p.outcome == adjOutcomeFailed || p.outcome == adjOutcomeFailedRejected
 	if !p.pv.approval {
 		if failed {
@@ -459,8 +470,8 @@ func (g *generator) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
 			p.outcome = adjOutcomePending
 		} else {
 			p.decideBy = approver
-			p.decideAt = min(p.submitAt+g.fake.between64(30*bilMinute, 4*bilDay), now-20*bilMinute)
-			p.decideAt = max(p.decideAt, p.submitAt+bilMinute)
+			p.decideAt = min(p.submitAt+g.Fake.Between64(30*volumegen.Minute, 4*volumegen.Day), now-20*volumegen.Minute)
+			p.decideAt = max(p.decideAt, p.submitAt+volumegen.Minute)
 		}
 	}
 
@@ -471,7 +482,7 @@ func (g *generator) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
 			p.execAt = p.decideAt
 		}
 	case adjOutcomeRejected:
-		p.rejectReason = pick(g.fake, adjRejectReasons)
+		p.rejectReason = volumegen.Pick(g.Fake, adjRejectReasons)
 	case adjOutcomeFailed, adjOutcomeFailedRejected:
 		p.failure = "validation failed:\n- creditTotalAmount: Write-off amount cannot exceed the invoice open balance" +
 			"\n- invoiceId: Write-offs require a remaining invoice balance"
@@ -483,9 +494,9 @@ func (g *generator) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
 	return p
 }
 
-func (g *generator) adjOtherUser(not pulid.ID) (pulid.ID, bool) {
-	candidates := make([]pulid.ID, 0, len(g.refs.userIDs))
-	for _, id := range g.refs.userIDs {
+func (g *adjustmentPhase) adjOtherUser(not pulid.ID) (pulid.ID, bool) {
+	candidates := make([]pulid.ID, 0, len(g.Refs.UserIDs))
+	for _, id := range g.Refs.UserIDs {
 		if id != not {
 			candidates = append(candidates, id)
 		}
@@ -493,39 +504,42 @@ func (g *generator) adjOtherUser(not pulid.ID) (pulid.ID, bool) {
 	if len(candidates) == 0 {
 		return not, false
 	}
-	return pick(g.fake, candidates), true
+	return volumegen.Pick(g.Fake, candidates), true
 }
 
-func (g *generator) adjSubmitTime(inv *invoice.Invoice, outcome adjOutcome) int64 {
-	now := unix(g.now)
-	earliest := inv.InvoiceDate + bilDay
-	latest := now - 2*bilHour
+func (g *adjustmentPhase) adjSubmitTime(inv *invoice.Invoice, outcome adjOutcome) int64 {
+	now := volumegen.Unix(g.Now)
+	earliest := inv.InvoiceDate + volumegen.Day
+	latest := now - 2*volumegen.Hour
 	if outcome == adjOutcomePending || outcome == adjOutcomeDraft {
-		earliest = max(earliest, now-25*bilDay)
+		earliest = max(earliest, now-25*volumegen.Day)
 	}
 	if earliest >= latest {
 		return latest
 	}
-	return g.fake.between64(earliest, latest)
+	return g.Fake.Between64(earliest, latest)
 }
 
-func (g *generator) adjRequestFor(rec *shipmentRecord, kind invoiceadjustment.Kind) *adjRequest {
+func (g *adjustmentPhase) adjRequestFor(
+	rec *volumegen.ShipmentRecord,
+	kind invoiceadjustment.Kind,
+) *adjRequest {
 	inv := rec.Invoice
 	req := &adjRequest{
 		rec:      rec,
 		inv:      inv,
 		kind:     kind,
 		strategy: invoiceadjustment.RebillStrategyCloneExact,
-		key:      "adj-" + inv.Number + "-" + g.fake.digits(6),
+		key:      "adj-" + inv.Number + "-" + g.Fake.Digits(6),
 	}
 
 	switch kind {
 	case invoiceadjustment.KindCreditOnly:
-		req.reason = pick(g.fake, adjCreditReasons)
+		req.reason = volumegen.Pick(g.Fake, adjCreditReasons)
 		req.credit = g.adjPartialCredit(inv)
 	case invoiceadjustment.KindCreditRebill:
-		req.reason = pick(g.fake, adjRebillReasons)
-		if g.fake.chance(0.55) {
+		req.reason = volumegen.Pick(g.Fake, adjRebillReasons)
+		if g.Fake.Chance(0.55) {
 			req.strategy = invoiceadjustment.RebillStrategyManual
 			req.credit = make(map[pulid.ID]decimal.Decimal, len(inv.Lines))
 			req.rebill = make(map[pulid.ID]decimal.Decimal, len(inv.Lines))
@@ -533,18 +547,18 @@ func (g *generator) adjRequestFor(rec *shipmentRecord, kind invoiceadjustment.Ki
 				amount := line.Amount.Abs()
 				req.credit[line.ID] = amount
 				if line.Type == invoice.InvoiceLineTypeFreight {
-					amount = amount.Mul(decimal.NewFromFloat(0.88 + g.fake.float()*0.2)).Round(2)
+					amount = amount.Mul(decimal.NewFromFloat(0.88 + g.Fake.Float()*0.2)).Round(2)
 				}
 				req.rebill[line.ID] = amount
 			}
 		}
 	case invoiceadjustment.KindFullReversal:
-		req.reason = pick(g.fake, adjReversalReasons)
+		req.reason = volumegen.Pick(g.Fake, adjReversalReasons)
 	case invoiceadjustment.KindWriteOff:
-		req.reason = pick(g.fake, adjWriteOffReasons)
+		req.reason = volumegen.Pick(g.Fake, adjWriteOffReasons)
 		open := inv.OpenBalanceAmount()
 		if open.LessThanOrEqual(decimal.Zero) {
-			open = inv.TotalAmount.Mul(decimal.NewFromFloat(0.05 + g.fake.float()*0.1)).Round(2)
+			open = inv.TotalAmount.Mul(decimal.NewFromFloat(0.05 + g.Fake.Float()*0.1)).Round(2)
 		}
 		req.credit = make(map[pulid.ID]decimal.Decimal, len(inv.Lines))
 		remaining := open
@@ -560,7 +574,7 @@ func (g *generator) adjRequestFor(rec *shipmentRecord, kind invoiceadjustment.Ki
 	return req
 }
 
-func (g *generator) adjPartialCredit(inv *invoice.Invoice) map[pulid.ID]decimal.Decimal {
+func (g *adjustmentPhase) adjPartialCredit(inv *invoice.Invoice) map[pulid.ID]decimal.Decimal {
 	var accessorials []*invoice.InvoiceLine
 	var freight *invoice.InvoiceLine
 	for _, line := range inv.Lines {
@@ -577,15 +591,15 @@ func (g *generator) adjPartialCredit(inv *invoice.Invoice) map[pulid.ID]decimal.
 	}
 	credit := make(map[pulid.ID]decimal.Decimal, 1)
 	switch {
-	case len(accessorials) > 0 && (freight == nil || g.fake.chance(0.6)):
-		line := pick(g.fake, accessorials)
+	case len(accessorials) > 0 && (freight == nil || g.Fake.Chance(0.6)):
+		line := volumegen.Pick(g.Fake, accessorials)
 		amount := line.Amount
-		if g.fake.chance(0.4) {
-			amount = amount.Mul(decimal.NewFromFloat(0.25 + g.fake.float()*0.5)).Round(2)
+		if g.Fake.Chance(0.4) {
+			amount = amount.Mul(decimal.NewFromFloat(0.25 + g.Fake.Float()*0.5)).Round(2)
 		}
 		credit[line.ID] = amount
 	case freight != nil:
-		credit[freight.ID] = freight.Amount.Mul(decimal.NewFromFloat(0.04 + g.fake.float()*0.16)).
+		credit[freight.ID] = freight.Amount.Mul(decimal.NewFromFloat(0.04 + g.Fake.Float()*0.16)).
 			Round(2)
 	default:
 		line := inv.Lines[0]
@@ -594,8 +608,8 @@ func (g *generator) adjPartialCredit(inv *invoice.Invoice) map[pulid.ID]decimal.
 	return credit
 }
 
-func (g *generator) adjOpenPeriod(setup *adjSetup, date int64) *fiscalperiod.FiscalPeriod {
-	for _, p := range setup.bil.periods {
+func (g *adjustmentPhase) adjOpenPeriod(setup *adjSetup, date int64) *fiscalperiod.FiscalPeriod {
+	for _, p := range setup.bil.Periods {
 		if p.StartDate <= date && date <= p.EndDate {
 			return p
 		}
@@ -603,7 +617,7 @@ func (g *generator) adjOpenPeriod(setup *adjSetup, date int64) *fiscalperiod.Fis
 	return nil
 }
 
-func (g *generator) adjAccountingDate(
+func (g *adjustmentPhase) adjAccountingDate(
 	setup *adjSetup,
 	inv *invoice.Invoice,
 	at int64,
@@ -643,7 +657,7 @@ func (g *generator) adjAccountingDate(
 }
 
 //nolint:gocognit,funlen // mirrors invoiceadjustmentservice.computePreview step for step
-func (g *generator) adjPreview(
+func (g *adjustmentPhase) adjPreview(
 	setup *adjSetup,
 	req *adjRequest,
 	inv *invoice.Invoice,
@@ -842,12 +856,12 @@ func (g *generator) adjPreview(
 	return pv
 }
 
-func (g *generator) adjPlanBatches(
+func (g *adjustmentPhase) adjPlanBatches(
 	setup *adjSetup,
 	pools *adjPools,
 	total int,
 ) ([]*adjBatchPlan, []*adjPlan) {
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	statuses := []invoiceadjustment.BatchStatus{
 		invoiceadjustment.BatchStatusCompleted,
 		invoiceadjustment.BatchStatusPartial,
@@ -859,11 +873,11 @@ func (g *generator) adjPlanBatches(
 		invoiceadjustment.BatchStatusFailed,
 		invoiceadjustment.BatchStatusCompleted,
 	}
-	count := clamp(total/700, 5, 30)
+	count := volumegen.Clamp(total/700, 5, 30)
 
-	byCustomer := make(map[pulid.ID][]*shipmentRecord)
+	byCustomer := make(map[pulid.ID][]*volumegen.ShipmentRecord)
 	var customers []pulid.ID
-	for _, pool := range [][]*shipmentRecord{pools.unpaid, pools.partial, pools.paid} {
+	for _, pool := range [][]*volumegen.ShipmentRecord{pools.unpaid, pools.partial, pools.paid} {
 		for _, r := range pool {
 			id := r.Invoice.CustomerID
 			if _, ok := byCustomer[id]; !ok {
@@ -885,29 +899,29 @@ func (g *generator) adjPlanBatches(
 		status := statuses[i%len(statuses)]
 		startErr := status == invoiceadjustment.BatchStatusFailed && i%2 == 1
 		temporal := status == invoiceadjustment.BatchStatusRunning ||
-			status == invoiceadjustment.BatchStatusSubmitted || startErr || g.fake.chance(0.3)
-		size := g.fake.between(4, adjBatchInlineMax)
+			status == invoiceadjustment.BatchStatusSubmitted || startErr || g.Fake.Chance(0.3)
+		size := g.Fake.Between(4, adjBatchInlineMax)
 		if temporal {
-			size = g.fake.between(adjBatchInlineMax+1, 48)
+			size = g.Fake.Between(adjBatchInlineMax+1, 48)
 		}
 
 		customerID := customers[i%len(customers)]
 		candidates := byCustomer[customerID]
-		submitBy := g.bilPick(g.refs.userIDs)
-		submitted := now - g.fake.between64(2*bilDay, 150*bilDay)
+		submitBy := g.PickUser(g.Refs.UserIDs)
+		submitted := now - g.Fake.Between64(2*volumegen.Day, 150*volumegen.Day)
 		if status == invoiceadjustment.BatchStatusRunning ||
 			status == invoiceadjustment.BatchStatusSubmitted {
-			submitted = now - g.fake.between64(5*bilMinute, 50*bilMinute)
+			submitted = now - g.Fake.Between64(5*volumegen.Minute, 50*volumegen.Minute)
 		}
-		key := "bulk-" + g.fake.letters(4) + "-" + g.fake.digits(8)
+		key := "bulk-" + g.Fake.Letters(4) + "-" + g.Fake.Digits(8)
 		batch := &invoiceadjustment.InvoiceAdjustmentBatch{
-			ID:             idAt("iadjb_", submitted),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("iadjb_", submitted),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			IdempotencyKey: key,
 			Status:         status,
 			SubmittedByID:  submitBy,
-			SubmittedAt:    ptr(submitted),
+			SubmittedAt:    volumegen.Ptr(submitted),
 			Metadata:       map[string]any{"processingMode": "inline"},
 			Version:        1,
 			CreatedAt:      submitted,
@@ -917,24 +931,24 @@ func (g *generator) adjPlanBatches(
 			batch.Metadata["processingMode"] = "temporal"
 		}
 		bp := &adjBatchPlan{batch: batch, inline: !temporal, startErr: startErr}
-		reason := pick(g.fake, adjCreditReasons)
+		reason := volumegen.Pick(g.Fake, adjCreditReasons)
 
-		var picked []*shipmentRecord
+		var picked []*volumegen.ShipmentRecord
 		for _, r := range candidates {
 			if len(picked) == size {
 				break
 			}
-			if !pools.used[r.Invoice.ID] && r.Invoice.InvoiceDate < submitted-bilDay {
+			if !pools.used[r.Invoice.ID] && r.Invoice.InvoiceDate < submitted-volumegen.Day {
 				pools.used[r.Invoice.ID] = true
 				picked = append(picked, r)
 			}
 		}
-		for _, pool := range [][]*shipmentRecord{pools.unpaid, pools.partial, pools.paid} {
+		for _, pool := range [][]*volumegen.ShipmentRecord{pools.unpaid, pools.partial, pools.paid} {
 			for _, r := range pool {
 				if len(picked) == size {
 					break
 				}
-				if !pools.used[r.Invoice.ID] && r.Invoice.InvoiceDate < submitted-bilDay {
+				if !pools.used[r.Invoice.ID] && r.Invoice.InvoiceDate < submitted-volumegen.Day {
 					pools.used[r.Invoice.ID] = true
 					picked = append(picked, r)
 				}
@@ -958,7 +972,7 @@ func (g *generator) adjPlanBatches(
 		}
 		processedTo := len(picked)
 		if status == invoiceadjustment.BatchStatusRunning {
-			processedTo = max(1, len(picked)*g.fake.between(25, 70)/100)
+			processedTo = max(1, len(picked)*g.Fake.Between(25, 70)/100)
 		}
 
 		at := submitted
@@ -967,9 +981,9 @@ func (g *generator) adjPlanBatches(
 			req.reason = reason
 			req.key = fmt.Sprintf("%s:%s", key, r.Invoice.Number)
 			item := &invoiceadjustment.InvoiceAdjustmentBatchItem{
-				ID:             idAt("iadjbi_", submitted),
-				OrganizationID: g.refs.orgID,
-				BusinessUnitID: g.refs.buID,
+				ID:             volumegen.IDAt("iadjbi_", submitted),
+				OrganizationID: g.Refs.OrgID,
+				BusinessUnitID: g.Refs.BuID,
 				BatchID:        batch.ID,
 				InvoiceID:      r.Invoice.ID,
 				IdempotencyKey: fmt.Sprintf("%s-%d", key, idx),
@@ -993,9 +1007,9 @@ func (g *generator) adjPlanBatches(
 				continue
 			}
 
-			at = min(at+g.fake.between64(2, 40), now-bilMinute)
+			at = min(at+g.Fake.Between64(2, 40), now-volumegen.Minute)
 			ip.at = at
-			if failShare >= 1 || g.fake.chance(failShare) {
+			if failShare >= 1 || g.Fake.Chance(failShare) {
 				g.adjFailItem(req, item)
 				continue
 			}
@@ -1011,7 +1025,7 @@ func (g *generator) adjPlanBatches(
 			if pv.approval {
 				outcome = []adjOutcome{
 					adjOutcomePending, adjOutcomeExecuted, adjOutcomeRejected,
-				}[g.fake.weighted([]int{55, 35, 10})]
+				}[g.Fake.Weighted([]int{55, 35, 10})]
 			}
 			p := &adjPlan{req: req, outcome: outcome, pv: pv, submitAt: at, submitBy: submitBy}
 			if settled := g.adjSettleOutcome(setup, p); settled != nil {
@@ -1024,7 +1038,7 @@ func (g *generator) adjPlanBatches(
 	return batches, plans
 }
 
-func (g *generator) adjFailItem(
+func (g *adjustmentPhase) adjFailItem(
 	req *adjRequest,
 	item *invoiceadjustment.InvoiceAdjustmentBatchItem,
 ) {
@@ -1038,7 +1052,7 @@ func (g *generator) adjFailItem(
 		}})
 	} else {
 		line := inv.Lines[0]
-		over := line.Amount.Abs().Add(g.fake.money(25, 400))
+		over := line.Amount.Abs().Add(g.Fake.Money(25, 400))
 		req.credit = map[pulid.ID]decimal.Decimal{line.ID: over}
 		item.ErrorMessage = adjErrorText([]adjFieldError{{
 			"lines",
@@ -1058,14 +1072,14 @@ func adjErrorText(errs []adjFieldError) string {
 	return "validation failed:\n- " + strings.Join(messages, "\n- ")
 }
 
-func (g *generator) adjRequestPayload(req *adjRequest) map[string]any {
+func (g *adjustmentPhase) adjRequestPayload(req *adjRequest) map[string]any {
 	request := &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		InvoiceID:      req.inv.ID,
 		Kind:           req.kind,
 		RebillStrategy: req.strategy,
 		Reason:         req.reason,
 		IdempotencyKey: req.key,
-		TenantInfo:     pagination.TenantInfo{OrgID: g.refs.orgID, BuID: g.refs.buID},
+		TenantInfo:     pagination.TenantInfo{OrgID: g.Refs.OrgID, BuID: g.Refs.BuID},
 	}
 	for _, line := range req.inv.Lines {
 		credit, ok := req.credit[line.ID]
@@ -1085,28 +1099,28 @@ func (g *generator) adjRequestPayload(req *adjRequest) map[string]any {
 	return jsonutils.MustToJSON(request)
 }
 
-func (g *generator) adjNumber(ctx context.Context, plans []*adjPlan) error {
-	var memoSlots, rebillSlots []numberSlot
+func (g *adjustmentPhase) adjNumber(ctx context.Context, plans []*adjPlan) error {
+	var memoSlots, rebillSlots []volumegen.NumberSlot
 	var memoPlans, rebillPlans []*adjPlan
 	for _, p := range plans {
 		if p.outcome != adjOutcomeExecuted {
 			continue
 		}
-		memoSlots = append(memoSlots, numberSlot{At: p.execAt})
+		memoSlots = append(memoSlots, volumegen.NumberSlot{At: p.execAt})
 		memoPlans = append(memoPlans, p)
 		if p.req.kind == invoiceadjustment.KindCreditRebill {
-			rebillSlots = append(rebillSlots, numberSlot{At: p.execAt})
+			rebillSlots = append(rebillSlots, volumegen.NumberSlot{At: p.execAt})
 			rebillPlans = append(rebillPlans, p)
 		}
 	}
-	memoNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeCreditMemo, memoSlots)
+	memoNumbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeCreditMemo, memoSlots)
 	if err != nil {
 		return err
 	}
 	for i, p := range memoPlans {
 		p.memoNumber = memoNumbers[i]
 	}
-	rebillNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeInvoice, rebillSlots)
+	rebillNumbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeInvoice, rebillSlots)
 	if err != nil {
 		return err
 	}
@@ -1116,7 +1130,7 @@ func (g *generator) adjNumber(ctx context.Context, plans []*adjPlan) error {
 	return nil
 }
 
-func (g *generator) adjGroup(
+func (g *adjustmentPhase) adjGroup(
 	rows *adjRows,
 	inv *invoice.Invoice,
 	at int64,
@@ -1125,9 +1139,9 @@ func (g *generator) adjGroup(
 		return group
 	}
 	group := &invoiceadjustment.InvoiceAdjustmentCorrectionGroup{
-		ID:               idAt("icg_", at),
-		OrganizationID:   g.refs.orgID,
-		BusinessUnitID:   g.refs.buID,
+		ID:               volumegen.IDAt("icg_", at),
+		OrganizationID:   g.Refs.OrgID,
+		BusinessUnitID:   g.Refs.BuID,
 		RootInvoiceID:    inv.ID,
 		CurrentInvoiceID: inv.ID,
 		Metadata:         map[string]any{},
@@ -1154,16 +1168,16 @@ func adjSnapshotPayload(inv *invoice.Invoice) map[string]any {
 }
 
 //nolint:funlen // one adjustment's rows are built together so their links agree
-func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
+func (g *adjustmentPhase) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 	req := p.req
 	inv := req.inv
 	group := g.adjGroup(rows, inv, p.submitAt)
 	at := p.submitAt
 
 	adj := &invoiceadjustment.InvoiceAdjustment{
-		ID:                      idAt("iadj_", at),
-		OrganizationID:          g.refs.orgID,
-		BusinessUnitID:          g.refs.buID,
+		ID:                      volumegen.IDAt("iadj_", at),
+		OrganizationID:          g.Refs.OrgID,
+		BusinessUnitID:          g.Refs.BuID,
 		CorrectionGroupID:       group.ID,
 		OriginalInvoiceID:       inv.ID,
 		Kind:                    req.kind,
@@ -1187,13 +1201,13 @@ func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 	if p.outcome == adjOutcomeDraft {
 		adj.Kind = invoiceadjustment.KindCreditOnly
 		adj.RebillStrategy = invoiceadjustment.RebillStrategyCloneExact
-		adj.IdempotencyKey = idAt("iadjkey_", at).String()
+		adj.IdempotencyKey = volumegen.IDAt("iadjkey_", at).String()
 		adj.Metadata["draft"] = true
 		for _, line := range inv.Lines {
 			rows.lines = append(rows.lines, &invoiceadjustment.InvoiceAdjustmentLine{
-				ID:                      idAt("iadjl_", at),
-				OrganizationID:          g.refs.orgID,
-				BusinessUnitID:          g.refs.buID,
+				ID:                      volumegen.IDAt("iadjl_", at),
+				OrganizationID:          g.Refs.OrgID,
+				BusinessUnitID:          g.Refs.BuID,
 				AdjustmentID:            adj.ID,
 				OriginalInvoiceID:       inv.ID,
 				OriginalLineID:          line.ID,
@@ -1228,7 +1242,7 @@ func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 		adj.ReplacementReviewStatus = invoiceadjustment.ReplacementReviewStatusRequired
 	}
 	adj.SubmittedByID = p.submitBy
-	adj.SubmittedAt = ptr(at)
+	adj.SubmittedAt = volumegen.Ptr(at)
 	adj.Metadata["attachmentIds"] = []any{}
 	adj.Status = invoiceadjustment.StatusApproved
 	if pv.approval {
@@ -1237,18 +1251,18 @@ func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 	}
 
 	for _, line := range pv.lines {
-		line.ID = idAt("iadjl_", at)
-		line.OrganizationID = g.refs.orgID
-		line.BusinessUnitID = g.refs.buID
+		line.ID = volumegen.IDAt("iadjl_", at)
+		line.OrganizationID = g.Refs.OrgID
+		line.BusinessUnitID = g.Refs.BuID
 		line.AdjustmentID = adj.ID
 		line.CreatedAt = at
 		line.UpdatedAt = at
 		rows.lines = append(rows.lines, line)
 	}
 	rows.snapshots = append(rows.snapshots, &invoiceadjustment.InvoiceAdjustmentSnapshot{
-		ID:             idAt("iadjs_", at),
-		OrganizationID: g.refs.orgID,
-		BusinessUnitID: g.refs.buID,
+		ID:             volumegen.IDAt("iadjs_", at),
+		OrganizationID: g.Refs.OrgID,
+		BusinessUnitID: g.Refs.BuID,
 		AdjustmentID:   adj.ID,
 		InvoiceID:      inv.ID,
 		Kind:           invoiceadjustment.SnapshotKindSubmission,
@@ -1270,7 +1284,10 @@ func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 		adj.ExecutionError = p.failure
 		adj.UpdatedAt = p.decideAt
 		if p.outcome == adjOutcomeFailedRejected {
-			rejectAt := min(p.decideAt+g.fake.between64(bilHour, 3*bilDay), unix(g.now)-bilMinute)
+			rejectAt := min(
+				p.decideAt+g.Fake.Between64(volumegen.Hour, 3*volumegen.Day),
+				volumegen.Unix(g.Now)-volumegen.Minute,
+			)
 			adj.Reject(p.decideBy, max(rejectAt, p.decideAt), p.rejectReason)
 			adj.UpdatedAt = max(rejectAt, p.decideAt)
 		}
@@ -1283,7 +1300,7 @@ func (g *generator) adjBuild(setup *adjSetup, rows *adjRows, p *adjPlan) error {
 }
 
 //nolint:funlen // mirrors invoiceadjustmentservice.executeApprovedAdjustment
-func (g *generator) adjExecute(
+func (g *adjustmentPhase) adjExecute(
 	setup *adjSetup,
 	rows *adjRows,
 	p *adjPlan,
@@ -1298,14 +1315,14 @@ func (g *generator) adjExecute(
 	if adj.ApprovalRequired {
 		actor = p.decideBy
 		adj.ApprovedByID = p.decideBy
-		adj.ApprovedAt = ptr(at)
+		adj.ApprovedAt = volumegen.Ptr(at)
 		adj.ApprovalStatus = invoiceadjustment.ApprovalStatusApproved
 	}
 
 	memoItem := &billingqueue.BillingQueueItem{
-		ID:                        idAt("bqi_", at),
-		OrganizationID:            g.refs.orgID,
-		BusinessUnitID:            g.refs.buID,
+		ID:                        volumegen.IDAt("bqi_", at),
+		OrganizationID:            g.Refs.OrgID,
+		BusinessUnitID:            g.Refs.BuID,
 		ShipmentID:                source.ShipmentID,
 		OrderID:                   source.OrderID,
 		BillToCustomerID:          source.CustomerID,
@@ -1314,9 +1331,9 @@ func (g *generator) adjExecute(
 		Status:                    billingqueue.StatusPosted,
 		BillType:                  billingqueue.BillTypeCreditMemo,
 		IsAdjustmentOrigin:        true,
-		SourceInvoiceID:           ptr(source.ID),
-		SourceInvoiceAdjustmentID: ptr(adj.ID),
-		CorrectionGroupID:         ptr(group.ID),
+		SourceInvoiceID:           volumegen.Ptr(source.ID),
+		SourceInvoiceAdjustmentID: volumegen.Ptr(adj.ID),
+		CorrectionGroupID:         volumegen.Ptr(group.ID),
 		RequiresReplacementReview: pv.review,
 		RerateVariancePercent:     decimal.Zero,
 		AdjustmentContext:         map[string]any{"kind": req.kind},
@@ -1324,7 +1341,7 @@ func (g *generator) adjExecute(
 		UpdatedAt:                 at,
 	}
 	memoItem.SyncAllocatedMinor()
-	rows.bil.items = append(rows.bil.items, memoItem)
+	rows.bil.Items = append(rows.bil.Items, memoItem)
 
 	subtotal, other := decimal.Zero, decimal.Zero
 	for _, line := range pv.creditLines {
@@ -1335,9 +1352,9 @@ func (g *generator) adjExecute(
 		}
 	}
 	memo := &invoice.Invoice{
-		ID:                        idAt("inv_", at),
-		OrganizationID:            g.refs.orgID,
-		BusinessUnitID:            g.refs.buID,
+		ID:                        volumegen.IDAt("inv_", at),
+		OrganizationID:            g.Refs.OrgID,
+		BusinessUnitID:            g.Refs.BuID,
 		BillingQueueItemID:        memoItem.ID,
 		Scope:                     invoice.ScopeAdjustment,
 		ShipmentID:                source.ShipmentID,
@@ -1352,8 +1369,8 @@ func (g *generator) adjExecute(
 		PaymentTerm:               source.PaymentTerm,
 		CurrencyCode:              source.CurrencyCode,
 		InvoiceDate:               pv.accountingDate,
-		DueDate:                   ptr(pv.accountingDate),
-		PostedAt:                  ptr(at),
+		DueDate:                   volumegen.Ptr(pv.accountingDate),
+		PostedAt:                  volumegen.Ptr(at),
 		ShipmentProNumber:         source.ShipmentProNumber,
 		ShipmentBOL:               source.ShipmentBOL,
 		ServiceDate:               source.ServiceDate,
@@ -1385,7 +1402,7 @@ func (g *generator) adjExecute(
 	}
 	g.adjAttachLines(rows, memo, at)
 	memo.SyncMinorAmounts()
-	rows.bil.invoices = append(rows.bil.invoices, memo)
+	rows.bil.Invoices = append(rows.bil.Invoices, memo)
 	rows.memos++
 	adj.CreditMemoInvoiceID = memo.ID
 
@@ -1396,10 +1413,10 @@ func (g *generator) adjExecute(
 	}
 
 	if applied := min(memo.CreditRemainingMinor(), source.OpenBalanceMinor()); applied > 0 {
-		rows.bil.memoApps = append(rows.bil.memoApps, &customerpayment.CreditMemoApplication{
-			ID:                  idAt("cma_", at),
-			OrganizationID:      g.refs.orgID,
-			BusinessUnitID:      g.refs.buID,
+		rows.bil.MemoApps = append(rows.bil.MemoApps, &customerpayment.CreditMemoApplication{
+			ID:                  volumegen.IDAt("cma_", at),
+			OrganizationID:      g.Refs.OrgID,
+			BusinessUnitID:      g.Refs.BuID,
 			CreditMemoInvoiceID: memo.ID,
 			InvoiceID:           source.ID,
 			AppliedAmountMinor:  applied,
@@ -1438,9 +1455,9 @@ func (g *generator) adjExecute(
 		rows.exceptions = append(
 			rows.exceptions,
 			&invoiceadjustment.InvoiceAdjustmentReconciliationException{
-				ID:                  idAt("irex_", at),
-				OrganizationID:      g.refs.orgID,
-				BusinessUnitID:      g.refs.buID,
+				ID:                  volumegen.IDAt("irex_", at),
+				OrganizationID:      g.Refs.OrgID,
+				BusinessUnitID:      g.Refs.BuID,
 				AdjustmentID:        adj.ID,
 				InvoiceID:           source.ID,
 				CreditMemoInvoiceID: memo.ID,
@@ -1458,9 +1475,9 @@ func (g *generator) adjExecute(
 	}
 
 	rows.snapshots = append(rows.snapshots, &invoiceadjustment.InvoiceAdjustmentSnapshot{
-		ID:             idAt("iadjs_", at),
-		OrganizationID: g.refs.orgID,
-		BusinessUnitID: g.refs.buID,
+		ID:             volumegen.IDAt("iadjs_", at),
+		OrganizationID: g.Refs.OrgID,
+		BusinessUnitID: g.Refs.BuID,
 		AdjustmentID:   adj.ID,
 		InvoiceID:      source.ID,
 		Kind:           invoiceadjustment.SnapshotKindExecution,
@@ -1485,11 +1502,11 @@ func (g *generator) adjExecute(
 	return nil
 }
 
-func (g *generator) adjAttachLines(rows *adjRows, inv *invoice.Invoice, at int64) {
+func (g *adjustmentPhase) adjAttachLines(rows *adjRows, inv *invoice.Invoice, at int64) {
 	for _, line := range inv.Lines {
-		line.ID = idAt("invl_", at)
-		line.OrganizationID = g.refs.orgID
-		line.BusinessUnitID = g.refs.buID
+		line.ID = volumegen.IDAt("invl_", at)
+		line.OrganizationID = g.Refs.OrgID
+		line.BusinessUnitID = g.Refs.BuID
 		line.InvoiceID = inv.ID
 		line.ShipmentID = inv.ShipmentID
 		line.ShipmentProNumber = inv.ShipmentProNumber
@@ -1497,10 +1514,10 @@ func (g *generator) adjAttachLines(rows *adjRows, inv *invoice.Invoice, at int64
 		line.CreatedAt = at
 		line.UpdatedAt = at
 	}
-	rows.bil.lines = append(rows.bil.lines, inv.Lines...)
+	rows.bil.Lines = append(rows.bil.Lines, inv.Lines...)
 }
 
-func (g *generator) adjRebill(
+func (g *adjustmentPhase) adjRebill(
 	rows *adjRows,
 	p *adjPlan,
 	memo *invoice.Invoice,
@@ -1516,9 +1533,9 @@ func (g *generator) adjRebill(
 		status = billingqueue.StatusReadyForReview
 	}
 	item := &billingqueue.BillingQueueItem{
-		ID:                        idAt("bqi_", at),
-		OrganizationID:            g.refs.orgID,
-		BusinessUnitID:            g.refs.buID,
+		ID:                        volumegen.IDAt("bqi_", at),
+		OrganizationID:            g.Refs.OrgID,
+		BusinessUnitID:            g.Refs.BuID,
 		ShipmentID:                source.ShipmentID,
 		OrderID:                   source.OrderID,
 		BillToCustomerID:          source.CustomerID,
@@ -1527,17 +1544,23 @@ func (g *generator) adjRebill(
 		Status:                    status,
 		BillType:                  billingqueue.BillTypeInvoice,
 		IsAdjustmentOrigin:        true,
-		SourceInvoiceID:           ptr(source.ID),
-		SourceInvoiceAdjustmentID: ptr(adj.ID),
-		SourceCreditMemoInvoiceID: ptr(memo.ID),
-		CorrectionGroupID:         ptr(group.ID),
+		SourceInvoiceID:           volumegen.Ptr(source.ID),
+		SourceInvoiceAdjustmentID: volumegen.Ptr(adj.ID),
+		SourceCreditMemoInvoiceID: volumegen.Ptr(memo.ID),
+		CorrectionGroupID:         volumegen.Ptr(group.ID),
 		RebillStrategy:            string(adj.RebillStrategy),
 		RequiresReplacementReview: pv.review,
 		RerateVariancePercent:     decimal.Zero,
 		AdjustmentContext: map[string]any{
-			"replacementLines":   jsonutils.MustToJSON(map[string]any{"lines": pv.replacementLines})["lines"],
-			"subtotalAmount":     bilSum(pv.replacementLines, invoice.InvoiceLineTypeFreight),
-			"otherAmount":        bilSum(pv.replacementLines, invoice.InvoiceLineTypeAccessorial),
+			"replacementLines": jsonutils.MustToJSON(map[string]any{"lines": pv.replacementLines})["lines"],
+			"subtotalAmount": ledgervolume.Sum(
+				pv.replacementLines,
+				invoice.InvoiceLineTypeFreight,
+			),
+			"otherAmount": ledgervolume.Sum(
+				pv.replacementLines,
+				invoice.InvoiceLineTypeAccessorial,
+			),
 			"totalAmount":        pv.rebill,
 			"accountingDate":     pv.accountingDate,
 			"sourceInvoiceId":    source.ID,
@@ -1548,12 +1571,12 @@ func (g *generator) adjRebill(
 		UpdatedAt: at,
 	}
 	item.SyncAllocatedMinor()
-	rows.bil.items = append(rows.bil.items, item)
+	rows.bil.Items = append(rows.bil.Items, item)
 
 	replacement := &invoice.Invoice{
-		ID:                 idAt("inv_", at),
-		OrganizationID:     g.refs.orgID,
-		BusinessUnitID:     g.refs.buID,
+		ID:                 volumegen.IDAt("inv_", at),
+		OrganizationID:     g.Refs.OrgID,
+		BusinessUnitID:     g.Refs.BuID,
 		BillingQueueItemID: item.ID,
 		Scope:              invoice.ScopeAdjustment,
 		ShipmentID:         source.ShipmentID,
@@ -1570,21 +1593,27 @@ func (g *generator) adjRebill(
 			pv.accountingDate,
 			source.PaymentTerm,
 		),
-		ShipmentProNumber:         source.ShipmentProNumber,
-		ShipmentBOL:               source.ShipmentBOL,
-		ServiceDate:               source.ServiceDate,
-		BillToName:                source.BillToName,
-		BillToCode:                source.BillToCode,
-		BillToAddressLine1:        source.BillToAddressLine1,
-		BillToAddressLine2:        source.BillToAddressLine2,
-		BillToCity:                source.BillToCity,
-		BillToState:               source.BillToState,
-		BillToPostalCode:          source.BillToPostalCode,
-		BillToCountry:             source.BillToCountry,
-		ShipperCustomerID:         source.ShipperCustomerID,
-		IsSplitBill:               source.IsSplitBill,
-		SubtotalAmount:            bilSum(pv.replacementLines, invoice.InvoiceLineTypeFreight),
-		OtherAmount:               bilSum(pv.replacementLines, invoice.InvoiceLineTypeAccessorial),
+		ShipmentProNumber:  source.ShipmentProNumber,
+		ShipmentBOL:        source.ShipmentBOL,
+		ServiceDate:        source.ServiceDate,
+		BillToName:         source.BillToName,
+		BillToCode:         source.BillToCode,
+		BillToAddressLine1: source.BillToAddressLine1,
+		BillToAddressLine2: source.BillToAddressLine2,
+		BillToCity:         source.BillToCity,
+		BillToState:        source.BillToState,
+		BillToPostalCode:   source.BillToPostalCode,
+		BillToCountry:      source.BillToCountry,
+		ShipperCustomerID:  source.ShipperCustomerID,
+		IsSplitBill:        source.IsSplitBill,
+		SubtotalAmount: ledgervolume.Sum(
+			pv.replacementLines,
+			invoice.InvoiceLineTypeFreight,
+		),
+		OtherAmount: ledgervolume.Sum(
+			pv.replacementLines,
+			invoice.InvoiceLineTypeAccessorial,
+		),
 		TotalAmount:               pv.rebill,
 		AppliedAmount:             decimal.Zero,
 		SettlementStatus:          invoice.SettlementStatusUnpaid,
@@ -1602,7 +1631,7 @@ func (g *generator) adjRebill(
 	}
 	g.adjAttachLines(rows, replacement, at)
 	replacement.SyncMinorAmounts()
-	rows.bil.invoices = append(rows.bil.invoices, replacement)
+	rows.bil.Invoices = append(rows.bil.Invoices, replacement)
 	rows.replacement++
 
 	source.SupersededByInvoiceID = replacement.ID
@@ -1616,14 +1645,14 @@ func (g *generator) adjRebill(
 	return replacement
 }
 
-func (g *generator) adjPostCreditMemo(
+func (g *adjustmentPhase) adjPostCreditMemo(
 	setup *adjSetup,
 	rows *adjRows,
 	adj *invoiceadjustment.InvoiceAdjustment,
 	memo, source *invoice.Invoice,
 	actor pulid.ID,
 ) (pulid.ID, error) {
-	if !setup.bil.postInvoices {
+	if !setup.bil.PostInvoices {
 		return pulid.Nil, nil
 	}
 	amount := memo.CreditTotalMinor()
@@ -1635,32 +1664,32 @@ func (g *generator) adjPostCreditMemo(
 	entryID := pulid.Nil
 
 	if adj.Kind != invoiceadjustment.KindWriteOff {
-		journal, err := g.bilNewJournal(setup.bil, memo.InvoiceDate)
+		journal, err := g.NewJournal(setup.bil, memo.InvoiceDate)
 		if err != nil {
 			return pulid.Nil, err
 		}
-		journal.actorID = actor
-		journal.description = "Credit memo posted for " + memo.Number
-		journal.sourceType = "Invoice"
-		journal.sourceID = memo.ID
-		journal.document = memo.Number
-		journal.event = event
-		journal.referenceType = event.String()
-		journal.idempotency = "invoice-posted:" + memo.ID.String()
-		journal.auto = true
-		journal.legs = []bilLeg{
-			{account: setup.bil.revenue, debit: amount, customer: memo.CustomerID},
-			{account: setup.bil.ar, credit: amount, customer: memo.CustomerID},
+		journal.ActorID = actor
+		journal.Description = "Credit memo posted for " + memo.Number
+		journal.SourceType = "Invoice"
+		journal.SourceID = memo.ID
+		journal.Document = memo.Number
+		journal.Event = event
+		journal.ReferenceType = event.String()
+		journal.Idempotency = "invoice-posted:" + memo.ID.String()
+		journal.Auto = true
+		journal.Legs = []ledgervolume.Leg{
+			{Account: setup.bil.Revenue, Debit: amount, Customer: memo.CustomerID},
+			{Account: setup.bil.AR, Credit: amount, Customer: memo.CustomerID},
 		}
-		rows.bil.journals = append(rows.bil.journals, journal)
-		ledgerDate = journal.date
-		entryID = journal.entryID
+		rows.bil.Journals = append(rows.bil.Journals, journal)
+		ledgerDate = journal.Date
+		entryID = journal.EntryID
 	}
 
-	rows.bil.ledger = append(rows.bil.ledger, &customerledger.CustomerLedgerEntry{
-		ID:               idAt("cledg_", *memo.PostedAt),
-		OrganizationID:   g.refs.orgID,
-		BusinessUnitID:   g.refs.buID,
+	rows.bil.Ledger = append(rows.bil.Ledger, &customerledger.CustomerLedgerEntry{
+		ID:               volumegen.IDAt("cledg_", *memo.PostedAt),
+		OrganizationID:   g.Refs.OrgID,
+		BusinessUnitID:   g.Refs.BuID,
 		CustomerID:       memo.CustomerID,
 		SourceObjectType: "Invoice",
 		SourceObjectID:   memo.ID.String(),
@@ -1676,7 +1705,7 @@ func (g *generator) adjPostCreditMemo(
 	return entryID, nil
 }
 
-func (g *generator) adjWriteOffJournal(
+func (g *adjustmentPhase) adjWriteOffJournal(
 	setup *adjSetup,
 	rows *adjRows,
 	adj *invoiceadjustment.InvoiceAdjustment,
@@ -1684,36 +1713,41 @@ func (g *generator) adjWriteOffJournal(
 	actor pulid.ID,
 ) (pulid.ID, error) {
 	amount := money.MinorUnits(adj.CreditTotalAmount.Abs())
-	journal, err := g.bilNewJournal(setup.bil, adj.AccountingDate)
+	journal, err := g.NewJournal(setup.bil, adj.AccountingDate)
 	if err != nil {
 		return pulid.Nil, err
 	}
-	journal.actorID = actor
-	journal.description = "Invoice write-off for " + source.Number
-	journal.sourceType = "InvoiceAdjustment"
-	journal.sourceID = adj.ID
-	journal.document = source.Number
-	journal.event = adjWriteOffEvent
-	journal.referenceType = "InvoiceAdjustmentWriteOff"
-	journal.idempotency = "invoice-writeoff:" + adj.ID.String()
-	journal.auto = true
-	journal.legs = []bilLeg{
-		{account: setup.writeOff, debit: amount, customer: source.CustomerID},
-		{account: setup.bil.ar, credit: amount, customer: source.CustomerID},
+	journal.ActorID = actor
+	journal.Description = "Invoice write-off for " + source.Number
+	journal.SourceType = "InvoiceAdjustment"
+	journal.SourceID = adj.ID
+	journal.Document = source.Number
+	journal.Event = adjWriteOffEvent
+	journal.ReferenceType = "InvoiceAdjustmentWriteOff"
+	journal.Idempotency = "invoice-writeoff:" + adj.ID.String()
+	journal.Auto = true
+	journal.Legs = []ledgervolume.Leg{
+		{Account: setup.writeOff, Debit: amount, Customer: source.CustomerID},
+		{Account: setup.bil.AR, Credit: amount, Customer: source.CustomerID},
 	}
-	rows.bil.journals = append(rows.bil.journals, journal)
-	rows.writeOffs = append(rows.writeOffs, journal.entryID)
-	return journal.entryID, nil
+	rows.bil.Journals = append(rows.bil.Journals, journal)
+	rows.writeOffs = append(rows.writeOffs, journal.EntryID)
+	return journal.EntryID, nil
 }
 
-func (g *generator) adjVoid(rows *adjRows, p *adjPlan, source *invoice.Invoice, actor pulid.ID) {
+func (g *adjustmentPhase) adjVoid(
+	rows *adjRows,
+	p *adjPlan,
+	source *invoice.Invoice,
+	actor pulid.ID,
+) {
 	at := p.execAt
 	reason := strings.TrimSpace(p.req.reason)
 	if reason == "" {
 		reason = "Reversed in full by adjustment " + p.adjustment.ID.String()
 	}
 	source.Status = invoice.StatusVoided
-	source.VoidedAt = ptr(at)
+	source.VoidedAt = volumegen.Ptr(at)
 	source.VoidedByID = actor
 	source.VoidReason = reason
 	source.VoidDisposition = invoice.VoidDispositionDoNotRebill
@@ -1739,9 +1773,9 @@ func adjCancelReason(reason string) string {
 	return prefix + reason[:limit-len(prefix)]
 }
 
-func (g *generator) adjBuildBatch(rows *adjRows, b *adjBatchPlan) {
+func (g *adjustmentPhase) adjBuildBatch(rows *adjRows, b *adjBatchPlan) {
 	batch := b.batch
-	now := unix(g.now)
+	now := volumegen.Unix(g.Now)
 	last := batch.CreatedAt
 	for _, ip := range b.items {
 		item := ip.item
@@ -1789,18 +1823,18 @@ func (g *generator) adjBuildBatch(rows *adjRows, b *adjBatchPlan) {
 	batch.FailedCount = failed
 
 	workflowID := fmt.Sprintf("invoice-adjustment-batch-%s-%s-%s",
-		g.refs.orgID.String(), g.refs.buID.String(), batch.ID.String())
+		g.Refs.OrgID.String(), g.Refs.BuID.String(), batch.ID.String())
 	switch {
 	case b.startErr:
 		batch.Status = invoiceadjustment.BatchStatusFailed
 		batch.Metadata["workflowError"] = kernelports.ErrWorkflowStarterDisabled.Error()
 	case batch.Status == invoiceadjustment.BatchStatusSubmitted:
 		batch.Metadata["workflowId"] = workflowID
-		batch.Metadata["runId"] = adjRunID(g)
+		batch.Metadata["runId"] = adjRunID(g.Generator)
 	default:
 		if !b.inline {
 			batch.Metadata["workflowId"] = workflowID
-			batch.Metadata["runId"] = adjRunID(g)
+			batch.Metadata["runId"] = adjRunID(g.Generator)
 		}
 		switch {
 		case processed == 0, processed < batch.TotalCount:
@@ -1817,7 +1851,7 @@ func (g *generator) adjBuildBatch(rows *adjRows, b *adjBatchPlan) {
 	rows.batches = append(rows.batches, batch)
 }
 
-func adjRunID(g *generator) string {
+func adjRunID(g *volumegen.Generator) string {
 	const hex = "0123456789abcdef"
 	var b strings.Builder
 	for i := range 36 {
@@ -1825,14 +1859,14 @@ func adjRunID(g *generator) string {
 		case 8, 13, 18, 23:
 			b.WriteByte('-')
 		default:
-			b.WriteByte(hex[g.fake.intn(len(hex))])
+			b.WriteByte(hex[g.Fake.Intn(len(hex))])
 		}
 	}
 	return b.String()
 }
 
 //nolint:funlen // writes run in foreign-key order
-func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) error {
+func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	// A group's current invoice is often a credit memo or replacement written
 	// below, so the group starts at its root invoice and is re-pointed after.
 	current := make([]pulid.ID, len(rows.groupOrder))
@@ -1840,13 +1874,13 @@ func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) er
 		current[i] = group.CurrentInvoiceID
 		group.CurrentInvoiceID = group.RootInvoiceID
 	}
-	err := bilInsert(
+	err := ledgervolume.Insert(
 		ctx,
 		tx,
 		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle,
 		rows.groupOrder,
-		func(r *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.CreatedAt}
+		func(r *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.CreatedAt}
 		},
 		false,
 	)
@@ -1859,42 +1893,42 @@ func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) er
 	if err := g.adjUpdateGroupLinks(ctx, tx, rows, true); err != nil {
 		return err
 	}
-	if err := g.bilWrite(ctx, tx, rows.bil); err != nil {
+	if err := g.Write(ctx, tx, rows.bil); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustments.Handle, rows.adjustments,
-		func(r *invoiceadjustment.InvoiceAdjustment) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustments.Handle, rows.adjustments,
+		func(r *invoiceadjustment.InvoiceAdjustment) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentLines.Handle, rows.lines,
-		func(r *invoiceadjustment.InvoiceAdjustmentLine) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentLines.Handle, rows.lines,
+		func(r *invoiceadjustment.InvoiceAdjustmentLine) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle, rows.snapshots,
-		func(r *invoiceadjustment.InvoiceAdjustmentSnapshot) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle, rows.snapshots,
+		func(r *invoiceadjustment.InvoiceAdjustmentSnapshot) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt}
 		}, true); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle, rows.exceptions,
-		func(r *invoiceadjustment.InvoiceAdjustmentReconciliationException) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle, rows.exceptions,
+		func(r *invoiceadjustment.InvoiceAdjustmentReconciliationException) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle, rows.batches,
-		func(r *invoiceadjustment.InvoiceAdjustmentBatch) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle, rows.batches,
+		func(r *invoiceadjustment.InvoiceAdjustmentBatch) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle, rows.batchItems,
-		func(r *invoiceadjustment.InvoiceAdjustmentBatchItem) stamp {
-			return stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt}
+	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle, rows.batchItems,
+		func(r *invoiceadjustment.InvoiceAdjustmentBatchItem) volumegen.Stamp {
+			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false); err != nil {
 		return err
 	}
@@ -1913,14 +1947,14 @@ func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) er
 	if len(rows.writeOffs) > 0 {
 		je := journalentrydb.JournalEntries
 		if _, err := je.Where(je.ID.In(rows.writeOffs...)).
-			Update(ctx, tx, je.EntryType.To(journalentry.EntryTypeAdjusting), keepUpdated(je.Handle)); err != nil {
+			Update(ctx, tx, je.EntryType.To(journalentry.EntryTypeAdjusting), volumegen.KeepUpdated(je.Handle)); err != nil {
 			return fmt.Errorf("mark write-off journals adjusting: %w", err)
 		}
 	}
 	return nil
 }
 
-func (g *generator) adjUpdateGroupLinks(
+func (g *adjustmentPhase) adjUpdateGroupLinks(
 	ctx context.Context,
 	tx *keel.DB,
 	rows *adjRows,
@@ -1945,11 +1979,11 @@ func (g *generator) adjUpdateGroupLinks(
 	if onInvoices {
 		inv := invoicedb.Invoices
 		_, err = inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).
-			Update(ctx, tx, inv.CorrectionGroupID.ToExpr(d.Col("value")), keepUpdated(inv.Handle))
+			Update(ctx, tx, inv.CorrectionGroupID.ToExpr(d.Col("value")), volumegen.KeepUpdated(inv.Handle))
 	} else {
 		cg := invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups
 		_, err = cg.With(d).Join(d, d.Col("id").EqCol(cg.ID)).Where(keel.True()).
-			Update(ctx, tx, cg.CurrentInvoiceID.ToExpr(d.Col("value")), keepUpdated(cg.Handle))
+			Update(ctx, tx, cg.CurrentInvoiceID.ToExpr(d.Col("value")), volumegen.KeepUpdated(cg.Handle))
 	}
 	if err != nil {
 		return fmt.Errorf("link correction groups: %w", err)
@@ -1957,7 +1991,7 @@ func (g *generator) adjUpdateGroupLinks(
 	return nil
 }
 
-func (g *generator) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adjRows) error {
+func (g *adjustmentPhase) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	n := len(rows.sources)
 	if n == 0 {
 		return nil
@@ -2001,16 +2035,16 @@ func (g *generator) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adj
 	if _, err := inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).Update(
 		ctx,
 		tx,
-		inv.SupersededByInvoiceID.ToExpr(nullIfEmpty(d.Col("superseded"))),
+		inv.SupersededByInvoiceID.ToExpr(volumegen.NullIfEmpty(d.Col("superseded"))),
 		inv.AppliedAmount.ToExpr(keel.CastNumeric(d.Col("applied"))),
 		inv.AppliedAmountMinor.ToExpr(d.Col("applied_minor")),
 		inv.SettlementStatus.ToExpr(d.Col("settlement")),
 		inv.Status.ToExpr(d.Col("status")),
 		inv.VoidedAt.ToExpr(keel.Int64Of(d.Col("voided_at")).NullIf(0)),
-		inv.VoidedByID.ToExpr(nullIfEmpty(d.Col("voided_by"))),
-		inv.VoidReason.ToExpr(nullIfEmpty(d.Col("void_reason"))),
-		inv.VoidDisposition.ToExpr(nullIfEmpty(d.Col("disposition"))),
-		inv.VoidedByAdjustmentID.ToExpr(nullIfEmpty(d.Col("voided_by_adj"))),
+		inv.VoidedByID.ToExpr(volumegen.NullIfEmpty(d.Col("voided_by"))),
+		inv.VoidReason.ToExpr(volumegen.NullIfEmpty(d.Col("void_reason"))),
+		inv.VoidDisposition.ToExpr(volumegen.NullIfEmpty(d.Col("disposition"))),
+		inv.VoidedByAdjustmentID.ToExpr(volumegen.NullIfEmpty(d.Col("voided_by_adj"))),
 		inv.UpdatedAt.ToExpr(d.Col("updated")),
 	); err != nil {
 		return fmt.Errorf("update adjusted invoices: %w", err)
@@ -2018,7 +2052,7 @@ func (g *generator) adjUpdateSources(ctx context.Context, tx *keel.DB, rows *adj
 	return nil
 }
 
-func (g *generator) adjApplyReversals(ctx context.Context, tx *keel.DB, rows *adjRows) error {
+func (g *adjustmentPhase) adjApplyReversals(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	if len(rows.reversals) == 0 {
 		return nil
 	}
@@ -2083,7 +2117,7 @@ func (g *generator) adjApplyReversals(ctx context.Context, tx *keel.DB, rows *ad
 	return nil
 }
 
-func (g *generator) adjSyncRebills(ctx context.Context, tx *keel.DB, rows *adjRows) error {
+func (g *adjustmentPhase) adjSyncRebills(ctx context.Context, tx *keel.DB, rows *adjRows) error {
 	if len(rows.rebills) == 0 {
 		return nil
 	}
@@ -2109,30 +2143,38 @@ func (g *generator) adjSyncRebills(ctx context.Context, tx *keel.DB, rows *adjRo
 	return nil
 }
 
-func (g *generator) adjCount(rows *adjRows) {
+func (g *adjustmentPhase) adjCount(rows *adjRows) {
 	statuses := make(map[invoiceadjustment.Status]int)
 	for _, adj := range rows.adjustments {
 		statuses[adj.Status]++
 	}
-	g.report.add("Invoice adjustments", len(rows.adjustments))
-	g.report.add("Invoice adjustment lines", len(rows.lines))
-	g.report.add("Invoice adjustment snapshots", len(rows.snapshots))
-	g.report.add("Invoice correction groups", len(rows.groupOrder))
-	g.report.add("Reconciliation exceptions", len(rows.exceptions))
-	g.report.add("Adjustment batches", len(rows.batches))
-	g.report.add("Adjustment batch items", len(rows.batchItems))
-	g.report.add("Adjustment credit memos", rows.memos)
-	g.report.add("Replacement invoices", rows.replacement)
-	g.report.add("Billing queue items", len(rows.bil.items))
-	g.report.add("Credit memo applications", len(rows.bil.memoApps))
-	g.report.add("Customer ledger entries", len(rows.bil.ledger))
-	g.report.add("Journal entries", len(rows.bil.entries))
-	g.report.add("Journal entry lines", len(rows.bil.jlines))
+	g.Report.Add("Invoice adjustments", len(rows.adjustments))
+	g.Report.Add("Invoice adjustment lines", len(rows.lines))
+	g.Report.Add("Invoice adjustment snapshots", len(rows.snapshots))
+	g.Report.Add("Invoice correction groups", len(rows.groupOrder))
+	g.Report.Add("Reconciliation exceptions", len(rows.exceptions))
+	g.Report.Add("Adjustment batches", len(rows.batches))
+	g.Report.Add("Adjustment batch items", len(rows.batchItems))
+	g.Report.Add("Adjustment credit memos", rows.memos)
+	g.Report.Add("Replacement invoices", rows.replacement)
+	g.Report.Add("Billing queue items", len(rows.bil.Items))
+	g.Report.Add("Credit memo applications", len(rows.bil.MemoApps))
+	g.Report.Add("Customer ledger entries", len(rows.bil.Ledger))
+	g.Report.Add("Journal entries", len(rows.bil.Entries))
+	g.Report.Add("Journal entry lines", len(rows.bil.JournalLines))
 	for _, status := range []invoiceadjustment.Status{
 		invoiceadjustment.StatusDraft, invoiceadjustment.StatusPendingApproval,
 		invoiceadjustment.StatusExecuted, invoiceadjustment.StatusRejected,
 		invoiceadjustment.StatusExecutionFailed,
 	} {
-		g.opts.Logf("  • adjustments %s: %d", status, statuses[status])
+		g.Opts.Logf("  • adjustments %s: %d", status, statuses[status])
 	}
+}
+
+type adjustmentPhase struct {
+	*ledgervolume.Ledger
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&adjustmentPhase{Ledger: &ledgervolume.Ledger{Generator: g}}).seedAdjustments(ctx)
 }

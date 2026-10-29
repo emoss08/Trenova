@@ -1,4 +1,4 @@
-package volume
+package payrollvolume
 
 import (
 	"context"
@@ -32,6 +32,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -84,7 +86,7 @@ type paySetup struct {
 	codeAccounts   map[pulid.ID]pulid.ID
 	codes          map[string]*paycode.PayCode
 	profiles       map[string]*driverpay.PayProfile
-	bil            *bilSetup
+	bil            *ledgervolume.Setup
 	journals       bool
 }
 
@@ -114,7 +116,7 @@ type paySettlement struct {
 }
 
 type payWorker struct {
-	driver        *driverRecord
+	driver        *volumegen.DriverRecord
 	team          bool
 	assignments   []*payassignment.WorkerPayAssignment
 	deductions    []*recurringpay.RecurringDeduction
@@ -143,15 +145,18 @@ type payRows struct {
 	batches     []*driversettlement.SettlementBatch
 	expenses    []*payexpense.Expense
 	disputes    []*driversettlement.Dispute
-	stamps      map[string][]stamp
+	stamps      map[string][]volumegen.Stamp
 }
 
 func (r *payRows) stamp(table string, id pulid.ID, created, updated int64) {
-	r.stamps[table] = append(r.stamps[table], stamp{id: id, created: created, updated: updated})
+	r.stamps[table] = append(
+		r.stamps[table],
+		volumegen.Stamp{Id: id, Created: created, Updated: updated},
+	)
 }
 
-func (g *generator) seedPayroll(ctx context.Context) error {
-	if len(g.drivers) == 0 {
+func (g *payrollPhase) seedPayroll(ctx context.Context) error {
+	if len(g.Drivers) == 0 {
 		return nil
 	}
 
@@ -169,45 +174,47 @@ func (g *generator) seedPayroll(ctx context.Context) error {
 		g.paySettleWorker(setup, w, periods)
 	}
 
-	rows := &payRows{stamps: make(map[string][]stamp)}
+	rows := &payRows{stamps: make(map[string][]volumegen.Stamp)}
 	if err = g.payCollect(ctx, workers, periods, rows); err != nil {
 		return err
 	}
 
-	journals := &bilRows{balances: make(map[bilBalanceKey]*bilBalance)}
+	journals := &ledgervolume.Rows{
+		Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance),
+	}
 	if err = g.payJournals(setup, rows, journals); err != nil {
 		return err
 	}
-	if err = g.bilMaterialize(ctx, journals); err != nil {
+	if err = g.Materialize(ctx, journals); err != nil {
 		return err
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		return g.payWrite(ctx, tx, rows, journals)
 	}); err != nil {
 		return err
 	}
 
-	g.report.add("Worker pay assignments", len(rows.assignments))
-	g.report.add("Recurring deductions", len(rows.deductions))
-	g.report.add("Recurring earnings", len(rows.earnings))
-	g.report.add("Pay advances", len(rows.advances))
-	g.report.add("Escrow accounts", len(rows.escrows))
-	g.report.add("Escrow transactions", len(rows.escrowTxs))
-	g.report.add("Pay events", len(rows.events))
-	g.report.add("Settlement batches", len(rows.batches))
-	g.report.add("Driver settlements", len(rows.settlements))
-	g.report.add("Driver settlement lines", len(rows.lines))
-	g.report.add("Driver expenses", len(rows.expenses))
-	g.report.add("Settlement disputes", len(rows.disputes))
-	g.report.add("Payroll journal entries", len(journals.entries))
+	g.Report.Add("Worker pay assignments", len(rows.assignments))
+	g.Report.Add("Recurring deductions", len(rows.deductions))
+	g.Report.Add("Recurring earnings", len(rows.earnings))
+	g.Report.Add("Pay advances", len(rows.advances))
+	g.Report.Add("Escrow accounts", len(rows.escrows))
+	g.Report.Add("Escrow transactions", len(rows.escrowTxs))
+	g.Report.Add("Pay events", len(rows.events))
+	g.Report.Add("Settlement batches", len(rows.batches))
+	g.Report.Add("Driver settlements", len(rows.settlements))
+	g.Report.Add("Driver settlement lines", len(rows.lines))
+	g.Report.Add("Driver expenses", len(rows.expenses))
+	g.Report.Add("Settlement disputes", len(rows.disputes))
+	g.Report.Add("Payroll journal entries", len(journals.Entries))
 
 	return nil
 }
 
 // -- Setup --
 
-func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
+func (g *payrollPhase) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	setup := &paySetup{
 		codeAccounts:  make(map[pulid.ID]pulid.ID),
 		codes:         make(map[string]*paycode.PayCode),
@@ -215,7 +222,7 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		allowDisputes: true,
 	}
 
-	control, err := firstOrNil(ctx, g.db, settlementcontroldb.SettlementControls.Query())
+	control, err := volumegen.FirstOrNil(ctx, g.DB, settlementcontroldb.SettlementControls.Query())
 	switch {
 	case err != nil:
 		return nil, fmt.Errorf("load settlement control: %w", err)
@@ -232,7 +239,7 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	}
 	setup.control = control
 
-	dash, err := firstOrNil(ctx, g.db, dashcontroldb.DashControls.Query())
+	dash, err := volumegen.FirstOrNil(ctx, g.DB, dashcontroldb.DashControls.Query())
 	if err != nil {
 		return nil, fmt.Errorf("load dash control: %w", err)
 	}
@@ -241,7 +248,7 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		setup.requireReceipt = dash.RequireExpenseReceipt
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
 		if txErr := g.payEnsureCodes(ctx, tx, setup); txErr != nil {
 			return txErr
 		}
@@ -250,11 +257,11 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		return nil, err
 	}
 
-	if setup.bil, err = g.bilLoadSetup(ctx); err != nil {
+	if setup.bil, err = g.LoadSetup(ctx); err != nil {
 		return nil, err
 	}
 
-	ac, err := g.accountingControl(ctx)
+	ac, err := g.AccountingControl(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,10 +276,10 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 			cash:           ac.DefaultCashAccountID,
 		}
 	}
-	setup.journals = len(setup.bil.periods) > 0 && setup.accounts.payable.IsNotNil() &&
+	setup.journals = len(setup.bil.Periods) > 0 && setup.accounts.payable.IsNotNil() &&
 		(setup.accounts.companyExpense.IsNotNil() || setup.accounts.ownerExpense.IsNotNil())
 	if !setup.journals {
-		g.opts.Logf("  ! settlement posting accounts or open fiscal periods are missing; " +
+		g.Opts.Logf("  ! settlement posting accounts or open fiscal periods are missing; " +
 			"driver settlements stop at Approved")
 	}
 
@@ -290,14 +297,14 @@ var payCustomCodes = []struct {
 	{"WASHOUT", "Trailer Washout Reimbursement"},
 }
 
-func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *paySetup) error {
-	at := unix(g.start) - 400*payDay
+func (g *payrollPhase) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *paySetup) error {
+	at := volumegen.Unix(g.Start) - 400*payDay
 	rows := make([]*paycode.PayCode, 0, len(paycode.SystemPayCodes())+len(payCustomCodes))
 	for _, def := range paycode.SystemPayCodes() {
 		rows = append(rows, &paycode.PayCode{
-			ID:                    idAt("payc_", at),
-			BusinessUnitID:        g.refs.buID,
-			OrganizationID:        g.refs.orgID,
+			ID:                    volumegen.IDAt("payc_", at),
+			BusinessUnitID:        g.Refs.BuID,
+			OrganizationID:        g.Refs.OrgID,
 			Status:                domaintypes.StatusActive,
 			Direction:             def.Direction,
 			Code:                  def.Code,
@@ -309,9 +316,9 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 	}
 	for _, def := range payCustomCodes {
 		rows = append(rows, &paycode.PayCode{
-			ID:             idAt("payc_", at),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
+			ID:             volumegen.IDAt("payc_", at),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
 			Status:         domaintypes.StatusActive,
 			Direction:      paycode.PayCodeDirectionEarning,
 			Code:           def.code,
@@ -333,7 +340,7 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 		return fmt.Errorf("insert pay codes: %w", err)
 	}
 	if inserted > 0 {
-		g.report.add("Pay codes", int(inserted))
+		g.Report.Add("Pay codes", int(inserted))
 	}
 
 	codes, err := pc.Query().All(ctx, tx)
@@ -347,11 +354,11 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 		}
 	}
 
-	stamps := make([]stamp, len(rows))
+	stamps := make([]volumegen.Stamp, len(rows))
 	for i, r := range rows {
-		stamps[i] = stamp{id: r.ID, created: at, updated: at}
+		stamps[i] = volumegen.Stamp{Id: r.ID, Created: at, Updated: at}
 	}
-	return backdate(ctx, tx, paycodedb.PayCodes.Handle, stamps)
+	return volumegen.Backdate(ctx, tx, paycodedb.PayCodes.Handle, stamps)
 }
 
 func payComponent(
@@ -505,7 +512,7 @@ func payProfileDefs() []*driverpay.PayProfile {
 	}
 }
 
-func (g *generator) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *paySetup) error {
+func (g *payrollPhase) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *paySetup) error {
 	pp := driverpaydb.PayProfiles
 	existing, err := pp.Load(pp.Components()).All(ctx, tx)
 	if err != nil {
@@ -516,31 +523,31 @@ func (g *generator) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *p
 		byName[strings.ToLower(p.Name)] = p
 	}
 
-	at := unix(g.start) - 380*payDay
+	at := volumegen.Unix(g.Start) - 380*payDay
 	var profiles []*driverpay.PayProfile
 	var components []*driverpay.PayProfileComponent
-	stamps := make([]stamp, 0)
-	compStamps := make([]stamp, 0)
+	stamps := make([]volumegen.Stamp, 0)
+	compStamps := make([]volumegen.Stamp, 0)
 	for _, def := range payProfileDefs() {
 		if p, ok := byName[strings.ToLower(def.Name)]; ok {
 			setup.profiles[def.Name] = p
 			continue
 		}
-		def.ID = idAt("dpp_", at)
-		def.BusinessUnitID = g.refs.buID
-		def.OrganizationID = g.refs.orgID
+		def.ID = volumegen.IDAt("dpp_", at)
+		def.BusinessUnitID = g.Refs.BuID
+		def.OrganizationID = g.Refs.OrgID
 		def.Status = domaintypes.StatusActive
 		def.CurrencyCode = payCurrency
 		for _, c := range def.Components {
-			c.ID = idAt("dppc_", at)
-			c.BusinessUnitID = g.refs.buID
-			c.OrganizationID = g.refs.orgID
+			c.ID = volumegen.IDAt("dppc_", at)
+			c.BusinessUnitID = g.Refs.BuID
+			c.OrganizationID = g.Refs.OrgID
 			c.PayProfileID = def.ID
 			components = append(components, c)
-			compStamps = append(compStamps, stamp{id: c.ID, created: at, updated: at})
+			compStamps = append(compStamps, volumegen.Stamp{Id: c.ID, Created: at, Updated: at})
 		}
 		profiles = append(profiles, def)
-		stamps = append(stamps, stamp{id: def.ID, created: at, updated: at})
+		stamps = append(stamps, volumegen.Stamp{Id: def.ID, Created: at, Updated: at})
 		setup.profiles[def.Name] = def
 	}
 	if len(profiles) == 0 {
@@ -553,19 +560,19 @@ func (g *generator) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *p
 		clone.Components = nil
 		inserting[i] = &clone
 	}
-	if err := insertRows(ctx, tx, driverpaydb.PayProfiles.Handle, inserting); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfiles.Handle, inserting); err != nil {
 		return fmt.Errorf("insert pay profiles: %w", err)
 	}
-	if err := insertRows(ctx, tx, driverpaydb.PayProfileComponents.Handle, components); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, driverpaydb.PayProfileComponents.Handle, components); err != nil {
 		return fmt.Errorf("insert pay profile components: %w", err)
 	}
-	if err := backdate(ctx, tx, driverpaydb.PayProfiles.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfiles.Handle, stamps); err != nil {
 		return err
 	}
-	if err := backdate(ctx, tx, driverpaydb.PayProfileComponents.Handle, compStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, driverpaydb.PayProfileComponents.Handle, compStamps); err != nil {
 		return err
 	}
-	g.report.add("Pay profiles", len(profiles))
+	g.Report.Add("Pay profiles", len(profiles))
 
 	return nil
 }
@@ -576,17 +583,17 @@ func (s *paySetup) code(direction paycode.PayCodeDirection, code string) *paycod
 
 // -- Workers, assignments and recurring items --
 
-func (g *generator) payBuildWorkers(setup *paySetup) map[pulid.ID]*payWorker {
+func (g *payrollPhase) payBuildWorkers(setup *paySetup) map[pulid.ID]*payWorker {
 	teams := make(map[pulid.ID]bool)
-	for _, c := range g.crews {
+	for _, c := range g.Crews {
 		if c.SecondaryWorkerID != nil {
 			teams[c.WorkerID] = true
 			teams[*c.SecondaryWorkerID] = true
 		}
 	}
 
-	workers := make(map[pulid.ID]*payWorker, len(g.drivers))
-	for _, d := range g.drivers {
+	workers := make(map[pulid.ID]*payWorker, len(g.Drivers))
+	for _, d := range g.Drivers {
 		w := &payWorker{driver: d, team: teams[d.WorkerID]}
 		g.payAssign(setup, w)
 		g.payRecurring(setup, w)
@@ -596,12 +603,12 @@ func (g *generator) payBuildWorkers(setup *paySetup) map[pulid.ID]*payWorker {
 	return workers
 }
 
-func (g *generator) payProfileFor(w *payWorker) (string, decimal.Decimal) {
+func (g *payrollPhase) payProfileFor(w *payWorker) (string, decimal.Decimal) {
 	owner := w.driver.Type == worker.WorkerTypeContractor
 	switch {
 	case w.team:
 		return payProfileTeam, payHalf
-	case owner && g.fake.chance(0.5):
+	case owner && g.Fake.Chance(0.5):
 		return payProfileOwnerRevenue, payHundred
 	case owner:
 		return payProfileOwnerLinehaul, payHundred
@@ -614,25 +621,25 @@ func (g *generator) payProfileFor(w *payWorker) (string, decimal.Decimal) {
 	}
 }
 
-func (g *generator) payAssign(setup *paySetup, w *payWorker) {
+func (g *payrollPhase) payAssign(setup *paySetup, w *payWorker) {
 	name, split := g.payProfileFor(w)
 	profile := setup.profiles[name]
 	if profile == nil {
 		return
 	}
-	from := max(w.driver.HireDate, unix(g.start)-g.fake.between64(30, 400)*payDay)
-	creator := pick(g.fake, g.refs.userIDs)
+	from := max(w.driver.HireDate, volumegen.Unix(g.Start)-g.Fake.Between64(30, 400)*payDay)
+	creator := volumegen.Pick(g.Fake, g.Refs.UserIDs)
 
 	if !w.team && profile.Classification == driverpay.PayeeClassificationCompanyDriver &&
-		name != payProfileCompany && g.fake.chance(0.1) {
+		name != payProfileCompany && g.Fake.Chance(0.1) {
 		if prior := setup.profiles[payProfileCompany]; prior != nil {
-			switchAt := unix(g.start) + g.fake.between64(30, 200)*payDay
-			if switchAt > from+payDay && switchAt < unix(g.now)-14*payDay {
+			switchAt := volumegen.Unix(g.Start) + g.Fake.Between64(30, 200)*payDay
+			if switchAt > from+payDay && switchAt < volumegen.Unix(g.Now)-14*payDay {
 				end := switchAt
 				w.assignments = append(w.assignments, &payassignment.WorkerPayAssignment{
-					ID:             idAt("wpa_", from),
-					BusinessUnitID: g.refs.buID,
-					OrganizationID: g.refs.orgID,
+					ID:             volumegen.IDAt("wpa_", from),
+					BusinessUnitID: g.Refs.BuID,
+					OrganizationID: g.Refs.OrgID,
 					WorkerID:       w.driver.WorkerID,
 					PayProfileID:   prior.ID,
 					EffectiveFrom:  from,
@@ -649,9 +656,9 @@ func (g *generator) payAssign(setup *paySetup, w *payWorker) {
 	}
 
 	assignment := &payassignment.WorkerPayAssignment{
-		ID:             idAt("wpa_", from),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("wpa_", from),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		WorkerID:       w.driver.WorkerID,
 		PayProfileID:   profile.ID,
 		EffectiveFrom:  from,
@@ -680,7 +687,7 @@ func (w *payWorker) owner() bool {
 	return w.driver.Type == worker.WorkerTypeContractor
 }
 
-func (g *generator) payDeduction(
+func (g *payrollPhase) payDeduction(
 	setup *paySetup,
 	w *payWorker,
 	code, description string,
@@ -693,9 +700,9 @@ func (g *generator) payDeduction(
 		return nil
 	}
 	d := &recurringpay.RecurringDeduction{
-		ID:             idAt("rded_", start),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("rded_", start),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		WorkerID:       w.driver.WorkerID,
 		PayCodeID:      pc.ID,
 		Status:         recurringpay.DeductionStatusActive,
@@ -706,7 +713,7 @@ func (g *generator) payDeduction(
 		AmountMinor:    amountMinor,
 		StartDate:      start,
 		CurrencyCode:   payCurrency,
-		CreatedByID:    pick(g.fake, g.refs.userIDs),
+		CreatedByID:    volumegen.Pick(g.Fake, g.Refs.UserIDs),
 		CreatedAt:      start,
 		UpdatedAt:      start,
 	}
@@ -714,7 +721,7 @@ func (g *generator) payDeduction(
 	return d
 }
 
-func (g *generator) payEarning(
+func (g *payrollPhase) payEarning(
 	setup *paySetup,
 	w *payWorker,
 	code, description string,
@@ -728,9 +735,9 @@ func (g *generator) payEarning(
 		return
 	}
 	w.earnings = append(w.earnings, &recurringpay.RecurringEarning{
-		ID:             idAt("rern_", start),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("rern_", start),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		WorkerID:       w.driver.WorkerID,
 		PayCodeID:      pc.ID,
 		Status:         recurringpay.EarningStatusActive,
@@ -740,30 +747,30 @@ func (g *generator) payEarning(
 		AmountMinor:    amountMinor,
 		StartDate:      start,
 		CurrencyCode:   payCurrency,
-		CreatedByID:    pick(g.fake, g.refs.userIDs),
+		CreatedByID:    volumegen.Pick(g.Fake, g.Refs.UserIDs),
 		CreatedAt:      start,
 		UpdatedAt:      start,
 	})
 }
 
-func (g *generator) payMinor(low, high int) int64 {
-	return int64(g.fake.between(low, high)) * 100
+func (g *payrollPhase) payMinor(low, high int) int64 {
+	return int64(g.Fake.Between(low, high)) * 100
 }
 
 //nolint:gocognit // each worker's recurring pay items are decided together
-func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
+func (g *payrollPhase) payRecurring(setup *paySetup, w *payWorker) {
 	if len(w.assignments) == 0 {
 		return
 	}
 	start := w.assignments[0].EffectiveFrom
-	f := g.fake
+	f := g.Fake
 
 	if w.owner() {
 		if w.driver.TractorID.IsNotNil() {
 			lease := g.payDeduction(setup, w, "TRKLEASE", "Tractor lease-purchase payment",
 				g.payMinor(550, 780), recurringpay.DeductionFrequencyEverySettlement, start)
-			if lease != nil && f.chance(0.4) {
-				lease.TotalCapMinor = ptr(g.payMinor(38_000, 62_000))
+			if lease != nil && f.Chance(0.4) {
+				lease.TotalCapMinor = volumegen.Ptr(g.payMinor(38_000, 62_000))
 				lease.DeductedToDateMinor = g.payMinor(4_000, 20_000)
 			}
 		}
@@ -771,16 +778,16 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			g.payMinor(75, 115), recurringpay.DeductionFrequencyEverySettlement, start)
 		g.payDeduction(setup, w, "ELD", "ELD subscription",
 			g.payMinor(35, 49), recurringpay.DeductionFrequencyMonthly, start)
-		if f.chance(0.3) {
+		if f.Chance(0.3) {
 			g.payDeduction(setup, w, "TRLLEASE", "Dry van trailer rental",
 				g.payMinor(210, 260), recurringpay.DeductionFrequencyEverySettlement, start)
 		}
-		if f.chance(0.85) {
+		if f.Chance(0.85) {
 			target := g.payMinor(2_500, 5_000)
 			w.escrow = &payescrow.EscrowAccount{
-				ID:                 idAt("escr_", start),
-				BusinessUnitID:     g.refs.buID,
-				OrganizationID:     g.refs.orgID,
+				ID:                 volumegen.IDAt("escr_", start),
+				BusinessUnitID:     g.Refs.BuID,
+				OrganizationID:     g.Refs.OrgID,
 				WorkerID:           w.driver.WorkerID,
 				Status:             payescrow.EscrowAccountStatusActive,
 				TargetAmountMinor:  target,
@@ -793,10 +800,10 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			escrow := g.payDeduction(setup, w, "ESCROW", "Maintenance escrow contribution",
 				g.payMinor(75, 150), recurringpay.DeductionFrequencyEverySettlement, start)
 			if escrow != nil {
-				escrow.EscrowAccountID = ptr(w.escrow.ID)
+				escrow.EscrowAccountID = volumegen.Ptr(w.escrow.ID)
 			}
 		}
-		if f.chance(0.2) {
+		if f.Chance(0.2) {
 			g.payEarning(setup, w, "EQUIPRENT", "APU rental for company use of driver-owned unit",
 				g.payMinor(50, 75), recurringpay.EarningFrequencyEverySettlement,
 				recurringpay.EarningKindStandard, start)
@@ -804,13 +811,13 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 		return
 	}
 
-	switch roll := f.intn(100); {
+	switch roll := f.Intn(100); {
 	case roll < 4:
-		loanStart := unix(g.start) + f.between64(10, 240)*payDay
+		loanStart := volumegen.Unix(g.Start) + f.Between64(10, 240)*payDay
 		loan := g.payDeduction(setup, w, "LOAN", "Company loan repayment",
 			g.payMinor(25, 75), recurringpay.DeductionFrequencyEverySettlement, loanStart)
 		if loan != nil {
-			loan.TotalCapMinor = ptr(g.payMinor(300, 1_200))
+			loan.TotalCapMinor = volumegen.Ptr(g.payMinor(300, 1_200))
 		}
 	case roll < 6:
 		garnish := g.payDeduction(setup, w, "OTHER", "Child support withholding order",
@@ -819,8 +826,8 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			state := w.driver.Home.State
 			garnish.Kind = recurringpay.DeductionKindGarnishment
 			garnish.Priority = 10
-			garnish.CourtOrderNumber = "CO-" + f.digits(8)
-			garnish.CaseNumber = state + "-" + f.digits(6)
+			garnish.CourtOrderNumber = "CO-" + f.Digits(8)
+			garnish.CaseNumber = state + "-" + f.Digits(6)
 			garnish.IssuingAgency = state + " Child Support Services"
 		}
 	case roll < 30:
@@ -828,12 +835,12 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			g.payMinor(18, 45), recurringpay.DeductionFrequencyEverySettlement, start)
 	}
 
-	if w.driver.DriverType == worker.DriverTypeOTR && f.chance(0.3) {
+	if w.driver.DriverType == worker.DriverTypeOTR && f.Chance(0.3) {
 		g.payEarning(setup, w, "PERDIEM", "OTR per diem: IRS substantiated M&IE",
 			g.payMinor(250, 340), recurringpay.EarningFrequencyEverySettlement,
 			recurringpay.EarningKindStandard, start)
 	}
-	if f.chance(0.15) {
+	if f.Chance(0.15) {
 		g.payEarning(
 			setup,
 			w,
@@ -848,7 +855,7 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			start,
 		)
 	}
-	if unix(g.now)-w.driver.HireDate > 3*365*payDay && f.chance(0.4) {
+	if volumegen.Unix(g.Now)-w.driver.HireDate > 3*365*payDay && f.Chance(0.4) {
 		g.payEarning(
 			setup,
 			w,
@@ -863,7 +870,7 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			start,
 		)
 	}
-	if f.chance(0.1) {
+	if f.Chance(0.1) {
 		g.payEarning(
 			setup,
 			w,
@@ -880,7 +887,7 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 	}
 
 	for _, d := range w.deductions {
-		if f.chance(0.05) {
+		if f.Chance(0.05) {
 			d.Status = recurringpay.DeductionStatusPaused
 		}
 	}
@@ -904,45 +911,50 @@ var payAdvanceNotes = []string{
 	"Advance against next settlement",
 }
 
-func (g *generator) payAdvances(w *payWorker) {
-	f := g.fake
+func (g *payrollPhase) payAdvances(w *payWorker) {
+	f := g.Fake
 	count := 0
 	switch {
-	case !w.driver.Active && f.chance(0.25):
+	case !w.driver.Active && f.Chance(0.25):
 		count = 1
-	case w.driver.Active && f.chance(0.22):
-		count = f.between(1, 4)
+	case w.driver.Active && f.Chance(0.22):
+		count = f.Between(1, 4)
 	}
 	for range count {
-		issued := unix(g.start) + f.between64(0, unix(g.now)-unix(g.start)-payHour)
+		issued := volumegen.Unix(
+			g.Start,
+		) + f.Between64(
+			0,
+			volumegen.Unix(g.Now)-volumegen.Unix(g.Start)-payHour,
+		)
 		if len(w.assignments) > 0 {
 			issued = max(issued, w.assignments[0].EffectiveFrom+payDay)
 		}
-		if issued >= unix(g.now) {
+		if issued >= volumegen.Unix(g.Now) {
 			continue
 		}
-		src := pick(f, payAdvanceSources)
+		src := volumegen.Pick(f, payAdvanceSources)
 		advance := &payadvance.PayAdvance{
-			ID:             idAt("padv_", issued),
-			BusinessUnitID: g.refs.buID,
-			OrganizationID: g.refs.orgID,
+			ID:             volumegen.IDAt("padv_", issued),
+			BusinessUnitID: g.Refs.BuID,
+			OrganizationID: g.Refs.OrgID,
 			WorkerID:       w.driver.WorkerID,
 			Status:         payadvance.AdvanceStatusOutstanding,
 			Source:         src.source,
 			IssuedDate:     issued,
 			AmountMinor:    g.payMinor(100, 600),
-			Notes:          pick(f, payAdvanceNotes),
+			Notes:          volumegen.Pick(f, payAdvanceNotes),
 			CurrencyCode:   payCurrency,
-			CreatedByID:    pick(f, g.refs.userIDs),
+			CreatedByID:    volumegen.Pick(f, g.Refs.UserIDs),
 			CreatedAt:      issued,
 			UpdatedAt:      issued,
 		}
 		if src.prefix != "" {
-			advance.Reference = src.prefix + f.digits(6)
+			advance.Reference = src.prefix + f.Digits(6)
 		}
 		plan := &payAdvancePlan{advance: advance}
 		if !w.driver.Active {
-			plan.writeOffAt = issued + f.between64(45, 90)*payDay
+			plan.writeOffAt = issued + f.Between64(45, 90)*payDay
 		}
 		w.advances = append(w.advances, plan)
 	}
@@ -975,8 +987,8 @@ func payBandedRate(
 }
 
 type payMoveFacts struct {
-	shipment   *shipmentRecord
-	move       *moveRecord
+	shipment   *volumegen.ShipmentRecord
+	move       *volumegen.MoveRecord
 	hazmat     bool
 	detention  decimal.Decimal
 	extraStops int
@@ -993,7 +1005,7 @@ func payRevenueShare(facts *payMoveFacts) decimal.Decimal {
 	return decimal.NewFromInt(1)
 }
 
-func payRevenueBasis(r *shipmentRecord, basis driverpay.RevenueBasis) decimal.Decimal {
+func payRevenueBasis(r *volumegen.ShipmentRecord, basis driverpay.RevenueBasis) decimal.Decimal {
 	if basis == driverpay.RevenueBasisTotalRevenue {
 		return r.Total
 	}
@@ -1108,9 +1120,9 @@ var payHoldReasons = []string{
 	"Damage claim open on this load",
 }
 
-func (g *generator) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*payWorker) {
-	now := unix(g.now)
-	for _, r := range g.shipments {
+func (g *payrollPhase) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*payWorker) {
+	now := volumegen.Unix(g.Now)
+	for _, r := range g.Shipments {
 		if r.DeliveredAt == 0 || r.Status == shipment.StatusCanceled {
 			continue
 		}
@@ -1155,7 +1167,7 @@ func (g *generator) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*payWo
 	}
 }
 
-func (g *generator) payAccrue(setup *paySetup, w *payWorker, facts *payMoveFacts, now int64) {
+func (g *payrollPhase) payAccrue(setup *paySetup, w *payWorker, facts *payMoveFacts, now int64) {
 	r, m := facts.shipment, facts.move
 	assignment := w.assignmentAt(r.DeliveredAt)
 	if assignment == nil {
@@ -1166,16 +1178,16 @@ func (g *generator) payAccrue(setup *paySetup, w *payWorker, facts *payMoveFacts
 		return
 	}
 	components, gross := payComputeMove(profile, assignment.SplitPercent, facts)
-	created := min(r.DeliveredAt+g.fake.between64(payMinute, 20*payMinute), now)
+	created := min(r.DeliveredAt+g.Fake.Between64(payMinute, 20*payMinute), now)
 	event := &driversettlement.PayEvent{
-		ID:               idAt("dpe_", created),
-		BusinessUnitID:   g.refs.buID,
-		OrganizationID:   g.refs.orgID,
+		ID:               volumegen.IDAt("dpe_", created),
+		BusinessUnitID:   g.Refs.BuID,
+		OrganizationID:   g.Refs.OrgID,
 		WorkerID:         w.driver.WorkerID,
 		ShipmentID:       r.ID,
-		MoveID:           ptr(m.ID),
-		AssignmentID:     ptr(assignment.ID),
-		PayProfileID:     ptr(profile.ID),
+		MoveID:           volumegen.Ptr(m.ID),
+		AssignmentID:     volumegen.Ptr(assignment.ID),
+		PayProfileID:     volumegen.Ptr(profile.ID),
 		IdempotencyKey:   "pay:" + w.driver.WorkerID.String() + ":" + m.ID.String(),
 		Status:           driversettlement.PayEventStatusAccrued,
 		EventDate:        r.DeliveredAt,
@@ -1191,9 +1203,9 @@ func (g *generator) payAccrue(setup *paySetup, w *payWorker, facts *payMoveFacts
 	if event.CurrencyCode == "" {
 		event.CurrencyCode = payCurrency
 	}
-	if g.fake.chance(0.015) {
+	if g.Fake.Chance(0.015) {
 		event.OnHold = true
-		event.HoldReason = pick(g.fake, payHoldReasons)
+		event.HoldReason = volumegen.Pick(g.Fake, payHoldReasons)
 	}
 	w.events = append(w.events, event)
 }
@@ -1229,29 +1241,29 @@ var payExpenseRejections = []string{
 	"Lumper was paid by the company's Comdata check",
 }
 
-func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWorker) {
+func (g *payrollPhase) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWorker) {
 	weights := make([]int, len(payExpenseKinds))
 	for i, k := range payExpenseKinds {
 		weights[i] = k.weight
 	}
-	now := unix(g.now)
-	byShipment := make(map[pulid.ID]*shipmentRecord, len(g.shipments))
-	for _, r := range g.shipments {
+	now := volumegen.Unix(g.Now)
+	byShipment := make(map[pulid.ID]*volumegen.ShipmentRecord, len(g.Shipments))
+	for _, r := range g.Shipments {
 		byShipment[r.ID] = r
 	}
 
 	for _, w := range workers {
 		for _, event := range w.events {
-			if !g.fake.chance(0.12) {
+			if !g.Fake.Chance(0.12) {
 				continue
 			}
-			kind := payExpenseKinds[g.fake.weighted(weights)]
+			kind := payExpenseKinds[g.Fake.Weighted(weights)]
 			pc := setup.code(paycode.PayCodeDirectionEarning, kind.code)
 			if pc == nil {
 				continue
 			}
-			incurred := event.EventDate - g.fake.between64(payHour, 30*payHour)
-			submitted := min(incurred+g.fake.between64(payHour, 2*payDay), now-payMinute)
+			incurred := event.EventDate - g.Fake.Between64(payHour, 30*payHour)
+			submitted := min(incurred+g.Fake.Between64(payHour, 2*payDay), now-payMinute)
 			if submitted <= incurred {
 				continue
 			}
@@ -1270,24 +1282,24 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 				}
 			}
 			expense := &payexpense.Expense{
-				ID:                idAt("dexp_", submitted),
-				BusinessUnitID:    g.refs.buID,
-				OrganizationID:    g.refs.orgID,
+				ID:                volumegen.IDAt("dexp_", submitted),
+				BusinessUnitID:    g.Refs.BuID,
+				OrganizationID:    g.Refs.OrgID,
 				WorkerID:          w.driver.WorkerID,
-				ShipmentID:        ptr(event.ShipmentID),
-				PayCodeID:         ptr(pc.ID),
+				ShipmentID:        volumegen.Ptr(event.ShipmentID),
+				PayCodeID:         volumegen.Ptr(pc.ID),
 				Status:            payexpense.ExpenseStatusPending,
 				AmountMinor:       g.payMinor(kind.low, kind.high),
 				CurrencyCode:      payCurrency,
 				Description:       description,
 				IncurredDate:      incurred,
-				SubmittedByUserID: pick(g.fake, g.refs.userIDs),
+				SubmittedByUserID: volumegen.Pick(g.Fake, g.Refs.UserIDs),
 				Version:           1,
 				CreatedAt:         submitted,
 				UpdatedAt:         submitted,
 			}
 			plan := &payExpensePlan{expense: expense, outcome: payexpense.ExpenseStatusReimbursed}
-			switch roll := g.fake.intn(100); {
+			switch roll := g.Fake.Intn(100); {
 			case setup.requireReceipt || roll < 10:
 				plan.outcome = payexpense.ExpenseStatusRejected
 			case roll < 14:
@@ -1327,10 +1339,10 @@ func payStepBack(frequency settlementcontrol.PayPeriodFrequency, end time.Time) 
 	}
 }
 
-func (g *generator) payPeriods(control *settlementcontrol.SettlementControl) []payPeriod {
-	current := payResolvePeriod(control, unix(g.now))
+func (g *payrollPhase) payPeriods(control *settlementcontrol.SettlementControl) []payPeriod {
+	current := payResolvePeriod(control, volumegen.Unix(g.Now))
 	periods := []payPeriod{current}
-	floor := unix(g.start) - 30*payDay
+	floor := volumegen.Unix(g.Start) - 30*payDay
 	for p := current; p.start > floor; {
 		end := time.Unix(p.start, 0).UTC()
 		p = payPeriod{
@@ -1346,9 +1358,9 @@ func (g *generator) payPeriods(control *settlementcontrol.SettlementControl) []p
 
 // -- Settlements --
 
-func (g *generator) payOrderedWorkers(workers map[pulid.ID]*payWorker) []*payWorker {
+func (g *payrollPhase) payOrderedWorkers(workers map[pulid.ID]*payWorker) []*payWorker {
 	ordered := make([]*payWorker, 0, len(workers))
-	for _, d := range g.drivers {
+	for _, d := range g.Drivers {
 		if w := workers[d.WorkerID]; w != nil {
 			ordered = append(ordered, w)
 		}
@@ -1357,8 +1369,8 @@ func (g *generator) payOrderedWorkers(workers map[pulid.ID]*payWorker) []*payWor
 }
 
 //nolint:gocognit,cyclop // one worker's pay history is simulated in order
-func (g *generator) paySettleWorker(setup *paySetup, w *payWorker, periods []payPeriod) {
-	now := unix(g.now)
+func (g *payrollPhase) paySettleWorker(setup *paySetup, w *payWorker, periods []payPeriod) {
+	now := volumegen.Unix(g.Now)
 	next := 0
 	for _, period := range periods {
 		var events []*driversettlement.PayEvent
@@ -1373,7 +1385,7 @@ func (g *generator) paySettleWorker(setup *paySetup, w *payWorker, periods []pay
 		if len(events) == 0 {
 			continue
 		}
-		generated := period.end + g.fake.between64(payHour, 10*payHour)
+		generated := period.end + g.Fake.Between64(payHour, 10*payHour)
 		if generated >= now-payMinute {
 			continue
 		}
@@ -1397,7 +1409,7 @@ func (g *generator) paySettleWorker(setup *paySetup, w *payWorker, periods []pay
 	g.payCloseDisputes(w)
 }
 
-func (g *generator) payWriteOffs(w *payWorker, at int64) {
+func (g *payrollPhase) payWriteOffs(w *payWorker, at int64) {
 	for _, plan := range w.advances {
 		a := plan.advance
 		if plan.writeOffAt == 0 || plan.writeOffAt > at || a.WrittenOffAt != nil {
@@ -1408,7 +1420,7 @@ func (g *generator) payWriteOffs(w *payWorker, at int64) {
 			a.WrittenOffMinor = outstanding
 			a.WriteOffReason = "Driver separated; balance uncollectible"
 			a.WrittenOffAt = &writtenAt
-			a.WrittenOffByID = pick(g.fake, g.refs.userIDs)
+			a.WrittenOffByID = volumegen.Pick(g.Fake, g.Refs.UserIDs)
 			a.UpdatedAt = writtenAt
 			a.SyncStatus()
 		}
@@ -1416,7 +1428,7 @@ func (g *generator) payWriteOffs(w *payWorker, at int64) {
 }
 
 //nolint:funlen // the generated lines follow the application's order
-func (g *generator) payBuildSettlement(
+func (g *payrollPhase) payBuildSettlement(
 	setup *paySetup,
 	w *payWorker,
 	period payPeriod,
@@ -1424,9 +1436,9 @@ func (g *generator) payBuildSettlement(
 	generated int64,
 ) *paySettlement {
 	entity := &driversettlement.Settlement{
-		ID:             idAt("dstl_", generated),
-		BusinessUnitID: g.refs.buID,
-		OrganizationID: g.refs.orgID,
+		ID:             volumegen.IDAt("dstl_", generated),
+		BusinessUnitID: g.Refs.BuID,
+		OrganizationID: g.Refs.OrgID,
 		WorkerID:       w.driver.WorkerID,
 		Status:         driversettlement.StatusDraft,
 		Classification: driverpay.PayeeClassificationCompanyDriver,
@@ -1453,7 +1465,7 @@ func (g *generator) payBuildSettlement(
 			driversettlement.ExceptionSeverityCritical,
 			"Worker has no effective pay profile assignment for this period")
 	} else {
-		entity.PayProfileID = ptr(profile.ID)
+		entity.PayProfileID = volumegen.Ptr(profile.ID)
 		entity.PayProfileName = profile.Name
 		entity.Classification = profile.Classification
 	}
@@ -1463,7 +1475,7 @@ func (g *generator) payBuildSettlement(
 	lines := make([]*driversettlement.SettlementLine, 0, len(events)*2+8)
 	for _, event := range events {
 		event.Status = driversettlement.PayEventStatusSettled
-		event.SettlementID = ptr(entity.ID)
+		event.SettlementID = volumegen.Ptr(entity.ID)
 		event.UpdatedAt = generated
 		shipments[event.ShipmentID] = struct{}{}
 		totalMiles = totalMiles.Add(event.TotalMiles)
@@ -1476,9 +1488,9 @@ func (g *generator) payBuildSettlement(
 				Quantity:      comp.Quantity,
 				Rate:          comp.Rate,
 				AmountMinor:   comp.AmountMinor,
-				ShipmentID:    ptr(event.ShipmentID),
+				ShipmentID:    volumegen.Ptr(event.ShipmentID),
 				MoveID:        event.MoveID,
-				PayEventID:    ptr(event.ID),
+				PayEventID:    volumegen.Ptr(event.ID),
 				ProNumber:     event.ProNumber,
 			})
 		}
@@ -1521,8 +1533,8 @@ func (g *generator) payBuildSettlement(
 			Category:           category,
 			Description:        earning.Description,
 			AmountMinor:        amount,
-			RecurringEarningID: ptr(earning.ID),
-			PayCodeID:          ptr(earning.PayCodeID),
+			RecurringEarningID: volumegen.Ptr(earning.ID),
+			PayCodeID:          volumegen.Ptr(earning.PayCodeID),
 		})
 	}
 
@@ -1588,9 +1600,9 @@ func (g *generator) payBuildSettlement(
 			Category:             category,
 			Description:          deduction.Description,
 			AmountMinor:          -amount,
-			RecurringDeductionID: ptr(deduction.ID),
+			RecurringDeductionID: volumegen.Ptr(deduction.ID),
 			EscrowAccountID:      escrowID,
-			PayCodeID:            ptr(deduction.PayCodeID),
+			PayCodeID:            volumegen.Ptr(deduction.PayCodeID),
 		})
 	}
 
@@ -1623,7 +1635,7 @@ func payCodeByID(setup *paySetup, id pulid.ID) *paycode.PayCode {
 	return nil
 }
 
-func (g *generator) payAdvanceLines(
+func (g *payrollPhase) payAdvanceLines(
 	setup *paySetup,
 	w *payWorker,
 	generated, gross int64,
@@ -1664,13 +1676,13 @@ func (g *generator) payAdvanceLines(
 			Category:    driversettlement.LineCategoryAdvanceRecovery,
 			Description: description,
 			AmountMinor: -recovery,
-			AdvanceID:   ptr(a.ID),
+			AdvanceID:   volumegen.Ptr(a.ID),
 		})
 	}
 	return lines
 }
 
-func (g *generator) payFlagVariance(
+func (g *payrollPhase) payFlagVariance(
 	setup *paySetup,
 	w *payWorker,
 	entity *driversettlement.Settlement,
@@ -1705,60 +1717,60 @@ func (g *generator) payFlagVariance(
 // payment on realistic delays and stops at whatever stage the present
 // reaches. A settlement that cannot post (missing posting accounts) stops at
 // Approved, as the application refuses to post it.
-func (g *generator) payAdvanceTimeline(setup *paySetup, s *paySettlement, period payPeriod) {
-	now := unix(g.now) - payMinute
-	f := g.fake
+func (g *payrollPhase) payAdvanceTimeline(setup *paySetup, s *paySettlement, period payPeriod) {
+	now := volumegen.Unix(g.Now) - payMinute
+	f := g.Fake
 	e := s.entity
-	reviewer := pick(f, g.refs.userIDs)
-	approver := pick(f, g.refs.userIDs)
+	reviewer := volumegen.Pick(f, g.Refs.UserIDs)
+	approver := volumegen.Pick(f, g.Refs.UserIDs)
 
-	submitted := s.generatedAt + f.between64(2*payHour, 72*payHour)
+	submitted := s.generatedAt + f.Between64(2*payHour, 72*payHour)
 	if submitted > now {
 		return
 	}
-	if f.chance(0.03) {
+	if f.Chance(0.03) {
 		e.Notes = "Rejected: detention on the delivery stop was missing; corrected and resubmitted"
 	}
 	e.Status = driversettlement.StatusPendingApproval
 	e.SubmittedByID = reviewer
-	e.SubmittedAt = ptr(submitted)
+	e.SubmittedAt = volumegen.Ptr(submitted)
 	s.updatedAt = submitted
 
-	approved := submitted + f.between64(payHour, 36*payHour)
+	approved := submitted + f.Between64(payHour, 36*payHour)
 	if approved > now {
 		return
 	}
 	e.Status = driversettlement.StatusApproved
 	e.ApprovedByID = approver
-	e.ApprovedAt = ptr(approved)
+	e.ApprovedAt = volumegen.Ptr(approved)
 	s.updatedAt = approved
 
-	posted := approved + f.between64(30*payMinute, 24*payHour)
+	posted := approved + f.Between64(30*payMinute, 24*payHour)
 	if posted > now || !g.payPostable(setup, e) {
 		return
 	}
 	e.Status = driversettlement.StatusPosted
 	e.PostedByID = approver
-	e.PostedAt = ptr(posted)
-	e.PostedPayableAccountID = ptr(setup.accounts.payable)
+	e.PostedAt = volumegen.Ptr(posted)
+	e.PostedPayableAccountID = volumegen.Ptr(setup.accounts.payable)
 	s.updatedAt = posted
 
-	paid := max(period.payDate+f.between64(6*payHour, 14*payHour), posted+payHour)
+	paid := max(period.payDate+f.Between64(6*payHour, 14*payHour), posted+payHour)
 	if paid > now || (e.NetPayMinor > 0 && setup.accounts.cash.IsNil()) {
 		return
 	}
 	e.Status = driversettlement.StatusPaid
-	e.PaidAt = ptr(paid)
+	e.PaidAt = volumegen.Ptr(paid)
 	e.PaidByID = approver
-	if f.chance(0.85) {
-		e.PaymentMethod, e.PaymentReference = "ACH", "ACH-"+f.digits(8)
+	if f.Chance(0.85) {
+		e.PaymentMethod, e.PaymentReference = "ACH", "ACH-"+f.Digits(8)
 	} else {
-		e.PaymentMethod, e.PaymentReference = "Check", "CHK "+f.digits(6)
+		e.PaymentMethod, e.PaymentReference = "Check", "CHK "+f.Digits(6)
 	}
 	s.updatedAt = paid
 }
 
-func (g *generator) payPostable(setup *paySetup, e *driversettlement.Settlement) bool {
+func (g *payrollPhase) payPostable(setup *paySetup, e *driversettlement.Settlement) bool {
 	if !setup.journals {
 		return false
 	}
@@ -1787,16 +1799,16 @@ func (g *generator) payPostable(setup *paySetup, e *driversettlement.Settlement)
 
 // payDraftWindow is when an office user could still change the settlement:
 // after it was generated and before it was submitted for approval.
-func (g *generator) payDraftWindow(s *paySettlement) (from, to int64, ok bool) {
+func (g *payrollPhase) payDraftWindow(s *paySettlement) (from, to int64, ok bool) {
 	from = s.generatedAt + 20*payMinute
-	to = unix(g.now) - 5*payMinute
+	to = volumegen.Unix(g.Now) - 5*payMinute
 	if s.entity.SubmittedAt != nil {
 		to = min(to, *s.entity.SubmittedAt-5*payMinute)
 	}
 	return from, to, to > from
 }
 
-func (g *generator) payAddAdjustment(
+func (g *payrollPhase) payAddAdjustment(
 	s *paySettlement,
 	description string,
 	amountMinor int64,
@@ -1804,7 +1816,7 @@ func (g *generator) payAddAdjustment(
 	at int64,
 ) *driversettlement.SettlementLine {
 	line := &driversettlement.SettlementLine{
-		ID:          idAt("dstll_", at),
+		ID:          volumegen.IDAt("dstll_", at),
 		Category:    driversettlement.LineCategoryAdjustment,
 		Description: description,
 		AmountMinor: amountMinor,
@@ -1818,7 +1830,7 @@ func (g *generator) payAddAdjustment(
 	return line
 }
 
-func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
+func (g *payrollPhase) payAttachExpenses(w *payWorker, s *paySettlement) {
 	from, to, ok := g.payDraftWindow(s)
 	if !ok {
 		return
@@ -1829,7 +1841,7 @@ func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
 			continue
 		}
 		e := plan.expense
-		reviewed := from + g.fake.between64(0, to-from)
+		reviewed := from + g.Fake.Between64(0, to-from)
 		line := g.payAddAdjustment(
 			s,
 			"Expense reimbursement: "+e.Description,
@@ -1838,16 +1850,16 @@ func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
 			reviewed,
 		)
 		e.Status = payexpense.ExpenseStatusReimbursed
-		e.ReviewedByID = ptr(pick(g.fake, g.refs.userIDs))
-		e.ReviewedAt = ptr(reviewed)
-		e.SettlementLineID = ptr(line.ID)
+		e.ReviewedByID = volumegen.Ptr(volumegen.Pick(g.Fake, g.Refs.UserIDs))
+		e.ReviewedAt = volumegen.Ptr(reviewed)
+		e.SettlementLineID = volumegen.Ptr(line.ID)
 		e.UpdatedAt = reviewed
 		plan.attached = true
 	}
 }
 
-func (g *generator) payCloseExpenses(w *payWorker) {
-	now := unix(g.now)
+func (g *payrollPhase) payCloseExpenses(w *payWorker) {
+	now := volumegen.Unix(g.Now)
 	for _, plan := range w.expenses {
 		e := plan.expense
 		if plan.attached {
@@ -1856,17 +1868,17 @@ func (g *generator) payCloseExpenses(w *payWorker) {
 		switch {
 		case plan.outcome == payexpense.ExpenseStatusCancelled:
 			e.Status = payexpense.ExpenseStatusCancelled
-			e.UpdatedAt = min(e.CreatedAt+g.fake.between64(payHour, 2*payDay), now)
+			e.UpdatedAt = min(e.CreatedAt+g.Fake.Between64(payHour, 2*payDay), now)
 		case plan.outcome == payexpense.ExpenseStatusRejected ||
 			now-e.CreatedAt > 21*payDay:
-			reviewed := e.CreatedAt + g.fake.between64(2*payHour, 4*payDay)
+			reviewed := e.CreatedAt + g.Fake.Between64(2*payHour, 4*payDay)
 			if reviewed >= now {
 				continue
 			}
 			e.Status = payexpense.ExpenseStatusRejected
-			e.ReviewNote = pick(g.fake, payExpenseRejections)
-			e.ReviewedByID = ptr(pick(g.fake, g.refs.userIDs))
-			e.ReviewedAt = ptr(reviewed)
+			e.ReviewNote = volumegen.Pick(g.Fake, payExpenseRejections)
+			e.ReviewedByID = volumegen.Ptr(volumegen.Pick(g.Fake, g.Refs.UserIDs))
+			e.ReviewedAt = volumegen.Ptr(reviewed)
 			e.UpdatedAt = reviewed
 		}
 	}
@@ -1904,9 +1916,9 @@ var payDisputeCategories = []driversettlement.DisputeCategory{
 	driversettlement.DisputeCategoryOther,
 }
 
-func (g *generator) payRaiseDispute(setup *paySetup, w *payWorker, s *paySettlement) {
+func (g *payrollPhase) payRaiseDispute(setup *paySetup, w *payWorker, s *paySettlement) {
 	e := s.entity
-	if !setup.allowDisputes || !g.fake.chance(0.025) {
+	if !setup.allowDisputes || !g.Fake.Chance(0.025) {
 		return
 	}
 	var basis int64
@@ -1920,21 +1932,21 @@ func (g *generator) payRaiseDispute(setup *paySetup, w *payWorker, s *paySettlem
 	default:
 		return
 	}
-	raised := basis + g.fake.between64(4*payHour, 6*payDay)
-	if raised >= unix(g.now)-payHour {
+	raised := basis + g.Fake.Between64(4*payHour, 6*payDay)
+	if raised >= volumegen.Unix(g.Now)-payHour {
 		return
 	}
-	category := pick(g.fake, payDisputeCategories)
+	category := volumegen.Pick(g.Fake, payDisputeCategories)
 	dispute := &driversettlement.Dispute{
-		ID:                idAt("dsd_", raised),
-		BusinessUnitID:    g.refs.buID,
-		OrganizationID:    g.refs.orgID,
+		ID:                volumegen.IDAt("dsd_", raised),
+		BusinessUnitID:    g.Refs.BuID,
+		OrganizationID:    g.Refs.OrgID,
 		SettlementID:      e.ID,
 		WorkerID:          w.driver.WorkerID,
 		Status:            driversettlement.DisputeStatusOpen,
 		Category:          category,
-		Description:       pick(g.fake, payDisputeTexts[category]),
-		SubmittedByUserID: pick(g.fake, g.refs.userIDs),
+		Description:       volumegen.Pick(g.Fake, payDisputeTexts[category]),
+		SubmittedByUserID: volumegen.Pick(g.Fake, g.Refs.UserIDs),
 		Version:           1,
 		CreatedAt:         raised,
 		UpdatedAt:         raised,
@@ -1949,7 +1961,7 @@ func (g *generator) payRaiseDispute(setup *paySetup, w *payWorker, s *paySettlem
 	if want != "" {
 		for _, line := range e.Lines {
 			if line.Category == want {
-				dispute.SettlementLineID = ptr(payLineID(line, s.generatedAt))
+				dispute.SettlementLineID = volumegen.Ptr(payLineID(line, s.generatedAt))
 				break
 			}
 		}
@@ -1959,7 +1971,7 @@ func (g *generator) payRaiseDispute(setup *paySetup, w *payWorker, s *paySettlem
 
 func payLineID(line *driversettlement.SettlementLine, at int64) pulid.ID {
 	if line.ID.IsNil() {
-		line.ID = idAt("dstll_", at)
+		line.ID = volumegen.IDAt("dstll_", at)
 	}
 	return line.ID
 }
@@ -1970,17 +1982,17 @@ var payDenials = []string{
 	"Receipt was submitted after the reimbursement window",
 }
 
-func (g *generator) payResolveDisputes(w *payWorker, s *paySettlement) {
+func (g *payrollPhase) payResolveDisputes(w *payWorker, s *paySettlement) {
 	from, to, ok := g.payDraftWindow(s)
 	for _, plan := range w.disputes {
 		d := plan.dispute
 		if d.Status.IsTerminal() || plan.raisedAt >= s.generatedAt {
 			continue
 		}
-		resolver := pick(g.fake, g.refs.userIDs)
-		switch roll := g.fake.intn(100); {
+		resolver := volumegen.Pick(g.Fake, g.Refs.UserIDs)
+		switch roll := g.Fake.Intn(100); {
 		case roll < 60 && ok:
-			resolved := from + g.fake.between64(0, to-from)
+			resolved := from + g.Fake.Between64(0, to-from)
 			amount := g.payMinor(25, 180)
 			if d.Category == driversettlement.DisputeCategoryIncorrectDeduction {
 				amount = g.payMinor(18, 115)
@@ -1994,34 +2006,34 @@ func (g *generator) payResolveDisputes(w *payWorker, s *paySettlement) {
 			)
 			d.Status = driversettlement.DisputeStatusResolved
 			d.ResolutionNote = "Confirmed and corrected on the next settlement"
-			d.ResolutionLineID = ptr(line.ID)
-			d.ResolvedByID = ptr(resolver)
-			d.ResolvedAt = ptr(resolved)
+			d.ResolutionLineID = volumegen.Ptr(line.ID)
+			d.ResolvedByID = volumegen.Ptr(resolver)
+			d.ResolvedAt = volumegen.Ptr(resolved)
 			d.UpdatedAt = resolved
 		case roll < 85:
-			resolved := plan.raisedAt + g.fake.between64(payDay, 5*payDay)
-			if resolved >= unix(g.now) {
+			resolved := plan.raisedAt + g.Fake.Between64(payDay, 5*payDay)
+			if resolved >= volumegen.Unix(g.Now) {
 				continue
 			}
 			d.Status = driversettlement.DisputeStatusDenied
-			d.ResolutionNote = pick(g.fake, payDenials)
-			d.ResolvedByID = ptr(resolver)
-			d.ResolvedAt = ptr(resolved)
+			d.ResolutionNote = volumegen.Pick(g.Fake, payDenials)
+			d.ResolvedByID = volumegen.Ptr(resolver)
+			d.ResolvedAt = volumegen.Ptr(resolved)
 			d.UpdatedAt = resolved
 		case roll < 93:
-			withdrawn := plan.raisedAt + g.fake.between64(2*payHour, 3*payDay)
-			if withdrawn >= unix(g.now) {
+			withdrawn := plan.raisedAt + g.Fake.Between64(2*payHour, 3*payDay)
+			if withdrawn >= volumegen.Unix(g.Now) {
 				continue
 			}
 			d.Status = driversettlement.DisputeStatusWithdrawn
-			d.ResolvedAt = ptr(withdrawn)
+			d.ResolvedAt = volumegen.Ptr(withdrawn)
 			d.UpdatedAt = withdrawn
 		}
 	}
 }
 
-func (g *generator) payCloseDisputes(w *payWorker) {
-	now := unix(g.now)
+func (g *payrollPhase) payCloseDisputes(w *payWorker) {
+	now := volumegen.Unix(g.Now)
 	for _, plan := range w.disputes {
 		d := plan.dispute
 		if d.Status.IsTerminal() {
@@ -2029,14 +2041,14 @@ func (g *generator) payCloseDisputes(w *payWorker) {
 		}
 		if now-plan.raisedAt > 2*payDay {
 			d.Status = driversettlement.DisputeStatusInReview
-			d.UpdatedAt = plan.raisedAt + g.fake.between64(payHour, 2*payDay)
+			d.UpdatedAt = plan.raisedAt + g.Fake.Between64(payHour, 2*payDay)
 		}
 	}
 }
 
 // -- Approval side effects --
 
-func (g *generator) payApplySideEffects(s *paySettlement) {
+func (g *payrollPhase) payApplySideEffects(s *paySettlement) {
 	e := s.entity
 	if e.ApprovedAt == nil {
 		return
@@ -2063,15 +2075,15 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 				w.escrow.BalanceMinor += amount
 				w.escrow.UpdatedAt = at
 				s.escrowTxs = append(s.escrowTxs, &payescrow.EscrowTransaction{
-					ID:                idAt("esctx_", at),
-					BusinessUnitID:    g.refs.buID,
-					OrganizationID:    g.refs.orgID,
+					ID:                volumegen.IDAt("esctx_", at),
+					BusinessUnitID:    g.Refs.BuID,
+					OrganizationID:    g.Refs.OrgID,
 					EscrowAccountID:   w.escrow.ID,
 					Type:              payescrow.EscrowTransactionTypeContribution,
 					AmountMinor:       amount,
 					BalanceAfterMinor: w.escrow.BalanceMinor,
 					OccurredDate:      at,
-					SettlementID:      ptr(e.ID),
+					SettlementID:      volumegen.Ptr(e.ID),
 					CreatedByID:       e.ApprovedByID,
 					CreatedAt:         at,
 				})
@@ -2117,7 +2129,7 @@ func payDeductionByID(w *payWorker, id *pulid.ID) *recurringpay.RecurringDeducti
 // -- Collection, numbering and journals --
 
 //nolint:funlen // every payroll table is gathered in one pass
-func (g *generator) payCollect(
+func (g *payrollPhase) payCollect(
 	ctx context.Context,
 	workers map[pulid.ID]*payWorker,
 	periods []payPeriod,
@@ -2132,11 +2144,11 @@ func (g *generator) payCollect(
 		return settlements[i].generatedAt < settlements[j].generatedAt
 	})
 
-	slots := make([]numberSlot, len(settlements))
+	slots := make([]volumegen.NumberSlot, len(settlements))
 	for i, s := range settlements {
-		slots[i] = numberSlot{At: s.generatedAt}
+		slots[i] = volumegen.NumberSlot{At: s.generatedAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeDriverSettlement, slots)
+	numbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeDriverSettlement, slots)
 	if err != nil {
 		return err
 	}
@@ -2149,9 +2161,9 @@ func (g *generator) payCollect(
 		batch, ok := batches[e.PeriodEnd]
 		if !ok {
 			batch = &driversettlement.SettlementBatch{
-				ID:             idAt("dstlb_", s.generatedAt),
-				BusinessUnitID: g.refs.buID,
-				OrganizationID: g.refs.orgID,
+				ID:             volumegen.IDAt("dstlb_", s.generatedAt),
+				BusinessUnitID: g.Refs.BuID,
+				OrganizationID: g.Refs.OrgID,
 				Status:         driversettlement.BatchStatusOpen,
 				Name: "Pay period ending " +
 					time.Unix(e.PeriodEnd, 0).UTC().AddDate(0, 0, -1).Format("Jan 2, 2006"),
@@ -2159,8 +2171,8 @@ func (g *generator) payCollect(
 				PeriodEnd:     e.PeriodEnd,
 				PayDate:       e.PayDate,
 				CurrencyCode:  payCurrency,
-				GeneratedByID: g.refs.adminID,
-				GeneratedAt:   ptr(s.generatedAt),
+				GeneratedByID: g.Refs.AdminID,
+				GeneratedAt:   volumegen.Ptr(s.generatedAt),
 				Version:       1,
 				CreatedAt:     s.generatedAt,
 				UpdatedAt:     s.generatedAt,
@@ -2168,7 +2180,7 @@ func (g *generator) payCollect(
 			batches[e.PeriodEnd] = batch
 			batchDone[e.PeriodEnd] = true
 		}
-		e.BatchID = ptr(batch.ID)
+		e.BatchID = volumegen.Ptr(batch.ID)
 		batch.SettlementCount++
 		if e.HasExceptions {
 			batch.ExceptionCount++
@@ -2179,7 +2191,7 @@ func (g *generator) payCollect(
 		if e.Status != driversettlement.StatusPaid {
 			batchDone[e.PeriodEnd] = false
 		} else if batch.CompletedAt == nil || *batch.CompletedAt < *e.PaidAt {
-			batch.CompletedAt = ptr(*e.PaidAt)
+			batch.CompletedAt = volumegen.Ptr(*e.PaidAt)
 		}
 
 		rows.settlements = append(rows.settlements, e)
@@ -2190,10 +2202,10 @@ func (g *generator) payCollect(
 				at = t
 			}
 			if line.ID.IsNil() {
-				line.ID = idAt("dstll_", at)
+				line.ID = volumegen.IDAt("dstll_", at)
 			}
-			line.BusinessUnitID = g.refs.buID
-			line.OrganizationID = g.refs.orgID
+			line.BusinessUnitID = g.Refs.BuID
+			line.OrganizationID = g.Refs.OrgID
 			line.SettlementID = e.ID
 			rows.lines = append(rows.lines, line)
 			rows.stamp("driver_settlement_lines", line.ID, at, at)
@@ -2261,7 +2273,11 @@ func (g *generator) payCollect(
 	return nil
 }
 
-func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRows) error {
+func (g *payrollPhase) payJournals(
+	setup *paySetup,
+	rows *payRows,
+	journals *ledgervolume.Rows,
+) error {
 	if !setup.journals {
 		return nil
 	}
@@ -2271,46 +2287,46 @@ func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRow
 		}
 		legs := payPostingLegs(e, setup)
 		if len(legs) > 0 {
-			journal, err := g.bilNewJournal(setup.bil, *e.PostedAt)
+			journal, err := g.NewJournal(setup.bil, *e.PostedAt)
 			if err != nil {
 				return err
 			}
-			journal.actorID = e.PostedByID
-			journal.description = "Driver settlement " + e.SettlementNumber
-			journal.sourceType = "DriverSettlement"
-			journal.sourceID = e.ID
-			journal.document = e.SettlementNumber
-			journal.event = accountingcontrol.JournalSourceEventDriverSettlementPosted
-			journal.referenceType = journal.event.String()
-			journal.idempotency = "driver-settlement-posted:" + e.ID.String()
-			journal.auto = true
-			journal.legs = legs
-			journals.journals = append(journals.journals, journal)
-			e.PostedJournalBatchID = ptr(journal.batchID)
+			journal.ActorID = e.PostedByID
+			journal.Description = "Driver settlement " + e.SettlementNumber
+			journal.SourceType = "DriverSettlement"
+			journal.SourceID = e.ID
+			journal.Document = e.SettlementNumber
+			journal.Event = accountingcontrol.JournalSourceEventDriverSettlementPosted
+			journal.ReferenceType = journal.Event.String()
+			journal.Idempotency = "driver-settlement-posted:" + e.ID.String()
+			journal.Auto = true
+			journal.Legs = legs
+			journals.Journals = append(journals.Journals, journal)
+			e.PostedJournalBatchID = volumegen.Ptr(journal.BatchID)
 		}
 
 		if e.PaidAt == nil || e.NetPayMinor == 0 || e.PostedJournalBatchID == nil {
 			continue
 		}
-		payment, err := g.bilNewJournal(setup.bil, *e.PaidAt)
+		payment, err := g.NewJournal(setup.bil, *e.PaidAt)
 		if err != nil {
 			return err
 		}
-		payment.actorID = e.PaidByID
-		payment.description = "Payment of driver settlement " + e.SettlementNumber
-		payment.sourceType = "DriverSettlement"
-		payment.sourceID = e.ID
-		payment.document = e.SettlementNumber
-		payment.event = accountingcontrol.JournalSourceEventDriverSettlementPaid
-		payment.referenceType = payment.event.String()
-		payment.idempotency = "driver-settlement-paid:" + e.ID.String()
-		payment.auto = true
-		payment.legs = []bilLeg{
-			{account: setup.accounts.payable, debit: e.NetPayMinor},
-			{account: setup.accounts.cash, credit: e.NetPayMinor},
+		payment.ActorID = e.PaidByID
+		payment.Description = "Payment of driver settlement " + e.SettlementNumber
+		payment.SourceType = "DriverSettlement"
+		payment.SourceID = e.ID
+		payment.Document = e.SettlementNumber
+		payment.Event = accountingcontrol.JournalSourceEventDriverSettlementPaid
+		payment.ReferenceType = payment.Event.String()
+		payment.Idempotency = "driver-settlement-paid:" + e.ID.String()
+		payment.Auto = true
+		payment.Legs = []ledgervolume.Leg{
+			{Account: setup.accounts.payable, Debit: e.NetPayMinor},
+			{Account: setup.accounts.cash, Credit: e.NetPayMinor},
 		}
-		journals.journals = append(journals.journals, payment)
-		e.PaidJournalBatchID = ptr(payment.batchID)
+		journals.Journals = append(journals.Journals, payment)
+		e.PaidJournalBatchID = volumegen.Ptr(payment.BatchID)
 	}
 	return nil
 }
@@ -2321,7 +2337,7 @@ func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRow
 // their own accounts.
 //
 //nolint:gocognit,cyclop // one branch per settlement line category, as in the application
-func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []bilLeg {
+func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []ledgervolume.Leg {
 	accounts := setup.accounts
 	expense := accounts.companyExpense
 	if e.Classification == driverpay.PayeeClassificationOwnerOperator {
@@ -2393,18 +2409,18 @@ func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []bilLeg {
 	}
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 
-	legs := make([]bilLeg, 0, 8+len(ids))
+	legs := make([]ledgervolume.Leg, 0, 8+len(ids))
 	for _, id := range ids {
 		if debit := codeDebits[id]; debit > 0 {
-			legs = append(legs, bilLeg{account: id, debit: debit})
+			legs = append(legs, ledgervolume.Leg{Account: id, Debit: debit})
 		}
 		if credit := codeCredits[id]; credit > 0 {
-			legs = append(legs, bilLeg{account: id, credit: credit})
+			legs = append(legs, ledgervolume.Leg{Account: id, Credit: credit})
 		}
 	}
 	add := func(account pulid.ID, debit, credit int64) {
 		if debit > 0 || credit > 0 {
-			legs = append(legs, bilLeg{account: account, debit: debit, credit: credit})
+			legs = append(legs, ledgervolume.Leg{Account: account, Debit: debit, Credit: credit})
 		}
 	}
 	add(expense, expenseDebit, 0)
@@ -2420,11 +2436,11 @@ func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []bilLeg {
 
 // -- Write --
 
-func (g *generator) payWrite(
+func (g *payrollPhase) payWrite(
 	ctx context.Context,
 	tx *keel.DB,
 	rows *payRows,
-	journals *bilRows,
+	journals *ledgervolume.Rows,
 ) error {
 	steps := []struct {
 		table string
@@ -2433,7 +2449,7 @@ func (g *generator) payWrite(
 		{
 			"worker_pay_assignments",
 			func() error {
-				return insertRows(
+				return volumegen.InsertRows(
 					ctx,
 					tx,
 					payassignmentdb.WorkerPayAssignments.Handle,
@@ -2443,47 +2459,89 @@ func (g *generator) payWrite(
 		},
 		{
 			"escrow_accounts",
-			func() error { return insertRows(ctx, tx, payescrowdb.EscrowAccounts.Handle, rows.escrows) },
+			func() error { return volumegen.InsertRows(ctx, tx, payescrowdb.EscrowAccounts.Handle, rows.escrows) },
 		},
 		{
 			"recurring_deductions",
-			func() error { return insertRows(ctx, tx, recurringpaydb.RecurringDeductions.Handle, rows.deductions) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					recurringpaydb.RecurringDeductions.Handle,
+					rows.deductions,
+				)
+			},
 		},
 		{
 			"recurring_earnings",
-			func() error { return insertRows(ctx, tx, recurringpaydb.RecurringEarnings.Handle, rows.earnings) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					recurringpaydb.RecurringEarnings.Handle,
+					rows.earnings,
+				)
+			},
 		},
 		{
 			"pay_advances",
-			func() error { return insertRows(ctx, tx, payadvancedb.PayAdvances.Handle, rows.advances) },
+			func() error { return volumegen.InsertRows(ctx, tx, payadvancedb.PayAdvances.Handle, rows.advances) },
 		},
 		{
 			"driver_settlement_batches",
-			func() error { return insertRows(ctx, tx, driversettlementdb.SettlementBatches.Handle, rows.batches) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					driversettlementdb.SettlementBatches.Handle,
+					rows.batches,
+				)
+			},
 		},
 		{
 			"driver_settlements",
-			func() error { return insertRows(ctx, tx, driversettlementdb.Settlements.Handle, rows.settlements) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					driversettlementdb.Settlements.Handle,
+					rows.settlements,
+				)
+			},
 		},
 		{
 			"driver_settlement_lines",
-			func() error { return insertRows(ctx, tx, driversettlementdb.SettlementLines.Handle, rows.lines) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					driversettlementdb.SettlementLines.Handle,
+					rows.lines,
+				)
+			},
 		},
 		{
 			"driver_pay_events",
-			func() error { return insertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) },
+			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) },
 		},
 		{
 			"escrow_transactions",
-			func() error { return insertRows(ctx, tx, payescrowdb.EscrowTransactions.Handle, rows.escrowTxs) },
+			func() error {
+				return volumegen.InsertRows(
+					ctx,
+					tx,
+					payescrowdb.EscrowTransactions.Handle,
+					rows.escrowTxs,
+				)
+			},
 		},
 		{
 			"driver_expenses",
-			func() error { return insertRows(ctx, tx, payexpensedb.Expenses.Handle, rows.expenses) },
+			func() error { return volumegen.InsertRows(ctx, tx, payexpensedb.Expenses.Handle, rows.expenses) },
 		},
 		{
 			"settlement_disputes",
-			func() error { return insertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) },
+			func() error { return volumegen.InsertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) },
 		},
 	}
 	for _, step := range steps {
@@ -2498,23 +2556,31 @@ func (g *generator) payWrite(
 	}
 	sort.Strings(tables)
 	for _, table := range tables {
-		if err := backdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
+		if err := volumegen.BackdateTable(ctx, tx, table, rows.stamps[table]); err != nil {
 			return err
 		}
 	}
-	txStamps := make([]stamp, len(rows.escrowTxs))
+	txStamps := make([]volumegen.Stamp, len(rows.escrowTxs))
 	for i, t := range rows.escrowTxs {
-		txStamps[i] = stamp{id: t.ID, created: t.CreatedAt}
+		txStamps[i] = volumegen.Stamp{Id: t.ID, Created: t.CreatedAt}
 	}
-	if err := backdateTableCreated(ctx, tx, "escrow_transactions", txStamps); err != nil {
+	if err := volumegen.BackdateTableCreated(ctx, tx, "escrow_transactions", txStamps); err != nil {
 		return err
 	}
 
-	if len(journals.journals) == 0 {
+	if len(journals.Journals) == 0 {
 		return nil
 	}
-	if err := g.bilWrite(ctx, tx, journals); err != nil {
+	if err := g.Write(ctx, tx, journals); err != nil {
 		return errors.Join(errors.New("write payroll journals"), err)
 	}
 	return nil
+}
+
+type payrollPhase struct {
+	*ledgervolume.Ledger
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&payrollPhase{Ledger: &ledgervolume.Ledger{Generator: g}}).seedPayroll(ctx)
 }

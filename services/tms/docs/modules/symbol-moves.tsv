@@ -20302,3 +20302,13 @@ github.com/emoss08/trenova/internal/seeds/fixtures.WorkerTrainingSeed	github.com
 github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.CatalogHeartbeatParams	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.CatalogHeartbeatParams
 github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.CheckCatalogResult	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.CheckCatalogResult
 github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.StartCatalogHeartbeat	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.StartCatalogHeartbeat
+github.com/emoss08/trenova/internal/seeds/volume.Count	github.com/emoss08/trenova/internal/seeds/volume/volumegen.Count
+github.com/emoss08/trenova/internal/seeds/volume.DefaultHistoryMonths	github.com/emoss08/trenova/internal/seeds/volume/volumegen.DefaultHistoryMonths
+github.com/emoss08/trenova/internal/seeds/volume.DefaultShipments	github.com/emoss08/trenova/internal/seeds/volume/volumegen.DefaultShipments
+github.com/emoss08/trenova/internal/seeds/volume.ErrHistoryMonths	github.com/emoss08/trenova/internal/seeds/volume/volumegen.ErrHistoryMonths
+github.com/emoss08/trenova/internal/seeds/volume.ErrMissingSeedData	github.com/emoss08/trenova/internal/seeds/volume/volumegen.ErrMissingSeedData
+github.com/emoss08/trenova/internal/seeds/volume.ErrNoOrganization	github.com/emoss08/trenova/internal/seeds/volume/volumegen.ErrNoOrganization
+github.com/emoss08/trenova/internal/seeds/volume.ErrShipmentCount	github.com/emoss08/trenova/internal/seeds/volume/volumegen.ErrShipmentCount
+github.com/emoss08/trenova/internal/seeds/volume.MaxShipments	github.com/emoss08/trenova/internal/seeds/volume/volumegen.MaxShipments
+github.com/emoss08/trenova/internal/seeds/volume.Options	github.com/emoss08/trenova/internal/seeds/volume/volumegen.Options
+github.com/emoss08/trenova/internal/seeds/volume.Report	github.com/emoss08/trenova/internal/seeds/volume/volumegen.Report

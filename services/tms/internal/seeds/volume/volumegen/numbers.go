@@ -1,4 +1,4 @@
-package volume
+package volumegen
 
 import (
 	"context"
@@ -20,10 +20,10 @@ type sequenceStore struct {
 	db *keel.DB
 }
 
-func newNumberer(db *keel.DB) *numberer {
+func NewNumberer(db *keel.DB) *Numberer {
 	formats := &formatProvider{db: db}
 
-	return &numberer{
+	return &Numberer{
 		generator: seqgen.NewGenerator(seqgen.GeneratorParams{
 			Store:    &sequenceStore{db: db},
 			Provider: formats,
@@ -145,15 +145,15 @@ func (p *formatProvider) GetFormat(
 	return cfg.Format(), nil
 }
 
-type numberer struct {
+type Numberer struct {
 	generator seqgen.Generator
 	formats   seqgen.FormatProvider
-	orgID     pulid.ID
-	buID      pulid.ID
-	buCode    string
+	OrgID     pulid.ID
+	BuID      pulid.ID
+	BuCode    string
 }
 
-type numberSlot struct {
+type NumberSlot struct {
 	At           int64
 	LocationCode string
 }
@@ -164,20 +164,20 @@ type numberGroup struct {
 	indexes []int
 }
 
-// allocate issues one number per slot from the tenant's real sequence, in the
+// Allocate issues one number per slot from the tenant's real sequence, in the
 // order the slots happened. Slots are grouped by every date part and the
 // location code the tenant's format prints, so each number reads exactly as
 // the application would have issued it at that moment.
-func (n *numberer) allocate(
+func (n *Numberer) Allocate(
 	ctx context.Context,
 	typ sequenceconfig.SequenceType,
-	slots []numberSlot,
+	slots []NumberSlot,
 ) ([]string, error) {
 	if len(slots) == 0 {
 		return nil, nil
 	}
 
-	format, err := n.formats.GetFormat(ctx, typ, n.orgID, n.buID)
+	format, err := n.formats.GetFormat(ctx, typ, n.OrgID, n.BuID)
 	if err != nil {
 		return nil, fmt.Errorf("get %s format: %w", typ, err)
 	}
@@ -221,12 +221,12 @@ func (n *numberer) allocate(
 		})
 		numbers, genErr := n.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
 			Type:             typ,
-			OrgID:            n.orgID,
-			BuID:             n.buID,
+			OrgID:            n.OrgID,
+			BuID:             n.BuID,
 			Count:            len(group.indexes),
 			Time:             group.at,
 			LocationCode:     group.code,
-			BusinessUnitCode: n.buCode,
+			BusinessUnitCode: n.BuCode,
 		})
 		if genErr != nil {
 			return nil, fmt.Errorf("generate %s numbers: %w", typ, genErr)

@@ -1,4 +1,4 @@
-package volume
+package cashvolume
 
 import (
 	"context"
@@ -52,6 +52,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
+	"github.com/emoss08/trenova/internal/seeds/volume/ledgervolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,7 +89,7 @@ type cashApplication struct {
 type cashInvoice struct {
 	id          pulid.ID
 	number      string
-	customer    *customerRecord
+	customer    *volumegen.CustomerRecord
 	billType    string
 	memoKind    string
 	total       int64
@@ -188,9 +190,9 @@ type cashState struct {
 	sending    cashSending
 	billing    *billingcontrol.BillingControl
 	accounting *accountingcontrol.AccountingControl
-	setup      *bilSetup
+	setup      *ledgervolume.Setup
 	loc        *time.Location
-	customers  map[pulid.ID]*customerRecord
+	customers  map[pulid.ID]*volumegen.CustomerRecord
 	profiles   map[pulid.ID]*cashProfile
 	invoices   []*cashInvoice
 	byCustomer map[pulid.ID][]*cashInvoice
@@ -198,8 +200,8 @@ type cashState struct {
 	contacts   map[pulid.ID]string
 }
 
-func (g *generator) seedCash(ctx context.Context) (err error) {
-	if len(g.customers) == 0 {
+func (g *cashPhase) seedCash(ctx context.Context) (err error) {
+	if len(g.Customers) == 0 {
 		return nil
 	}
 
@@ -239,7 +241,7 @@ func (g *generator) seedCash(ctx context.Context) (err error) {
 // cashRestoreSending puts back the late-charge, reminder and statement settings
 // the seed switched on to write their history. Left on, the worker's next run
 // would act on every seeded invoice and email the seeded billing addresses.
-func (g *generator) cashRestoreSending(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashRestoreSending(ctx context.Context, st *cashState) error {
 	sending := st.sending
 	if !sending.lateChanged && !sending.remindersChange && !sending.statementChange {
 		return nil
@@ -255,46 +257,46 @@ func (g *generator) cashRestoreSending(ctx context.Context, st *cashState) error
 	if sending.statementChange {
 		sets = append(sets, bc.MonthlyStatementsEnabled.To(sending.statements))
 	}
-	if _, err := bc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
+	if _, err := bc.Where(keel.True()).Update(ctx, g.DB, sets...); err != nil {
 		return fmt.Errorf("restore late charge, reminder and statement settings: %w", err)
 	}
-	g.opts.Logf(
+	g.Opts.Logf(
 		"  • restored the organization's late charge, reminder and statement settings; " +
 			"their seeded history stays, and the worker will not act on seeded invoices",
 	)
 	return nil
 }
 
-func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
+func (g *cashPhase) cashLoad(ctx context.Context) (*cashState, error) {
 	st := &cashState{
 		loc:        time.UTC,
-		customers:  make(map[pulid.ID]*customerRecord, len(g.customers)),
-		profiles:   make(map[pulid.ID]*cashProfile, len(g.customers)),
-		byCustomer: make(map[pulid.ID][]*cashInvoice, len(g.customers)),
-		ledger:     make(map[pulid.ID][]cashLedgerRow, len(g.customers)),
-		contacts:   make(map[pulid.ID]string, len(g.customers)),
+		customers:  make(map[pulid.ID]*volumegen.CustomerRecord, len(g.Customers)),
+		profiles:   make(map[pulid.ID]*cashProfile, len(g.Customers)),
+		byCustomer: make(map[pulid.ID][]*cashInvoice, len(g.Customers)),
+		ledger:     make(map[pulid.ID][]cashLedgerRow, len(g.Customers)),
+		contacts:   make(map[pulid.ID]string, len(g.Customers)),
 	}
-	ids := make([]pulid.ID, 0, len(g.customers))
-	for _, c := range g.customers {
+	ids := make([]pulid.ID, 0, len(g.Customers))
+	for _, c := range g.Customers {
 		st.customers[c.ID] = c
-		st.contacts[c.ID] = g.fake.firstName() + " " + g.fake.lastName()
+		st.contacts[c.ID] = g.Fake.FirstName() + " " + g.Fake.LastName()
 		ids = append(ids, c.ID)
 	}
 
 	var err error
-	if st.billing, err = firstOrNil(ctx, g.db, billingcontroldb.BillingControls.Query()); err != nil {
+	if st.billing, err = volumegen.FirstOrNil(ctx, g.DB, billingcontroldb.BillingControls.Query()); err != nil {
 		return nil, fmt.Errorf("load billing control: %w", err)
 	}
-	if st.accounting, err = g.accountingControl(ctx); err != nil {
+	if st.accounting, err = g.AccountingControl(ctx); err != nil {
 		return nil, err
 	}
 
-	if st.setup, err = g.bilLoadSetup(ctx); err != nil {
+	if st.setup, err = g.LoadSetup(ctx); err != nil {
 		return nil, err
 	}
 
 	o := tenantdb.Organizations
-	org, err := o.Pick(o.Timezone).Where(o.ID.Eq(g.refs.orgID)).One(ctx, g.db)
+	org, err := o.Pick(o.Timezone).Where(o.ID.Eq(g.Refs.OrgID)).One(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load organization timezone: %w", err)
 	}
@@ -303,7 +305,7 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 	}
 
 	cbp := customerdb.CustomerBillingProfiles
-	profiles, err := keel.Into[cashProfile](ctx, g.db, cbp.Where(cbp.CustomerID.In(ids...)).Pick(
+	profiles, err := keel.Into[cashProfile](ctx, g.DB, cbp.Where(cbp.CustomerID.In(ids...)).Pick(
 		cbp.CustomerID,
 		cbp.ApplyLateCharges,
 		cbp.LateChargeRate,
@@ -324,7 +326,7 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 	}
 
 	cle := customerledgerdb.CustomerLedgerEntries
-	ledger, err := keel.Into[cashLedgerRow](ctx, g.db, cle.Where(cle.CustomerID.In(ids...)).Pick(
+	ledger, err := keel.Into[cashLedgerRow](ctx, g.DB, cle.Where(cle.CustomerID.In(ids...)).Pick(
 		cle.CustomerID,
 		cle.TransactionDate,
 		cle.AmountMinor,
@@ -339,7 +341,7 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 	return st, nil
 }
 
-func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, error) {
+func (g *cashPhase) cashLoadFactoring(ctx context.Context) (*cashFactoring, error) {
 	out := &cashFactoring{
 		chargedBack: make(map[pulid.ID]struct{}),
 		nonRecourse: make(map[pulid.ID]bool),
@@ -349,7 +351,7 @@ func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, erro
 	fsi := factoringsubmissiondb.SubmissionItems
 	charged, err := fsi.Pick(fsi.InvoiceID).
 		Where(fsi.Status.Eq(factoringsubmission.SubmissionItemStatusChargedBack)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load charged back factoring items: %w", err)
 	}
@@ -358,7 +360,7 @@ func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, erro
 	}
 
 	fc := factoringcompanydb.FactoringCompanies
-	companies, err := fc.Pick(fc.ID, fc.NonRecourse).All(ctx, g.db)
+	companies, err := fc.Pick(fc.ID, fc.NonRecourse).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load factoring companies: %w", err)
 	}
@@ -367,7 +369,7 @@ func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, erro
 	}
 
 	fa := factoringdb.Agreements
-	agreements, err := fa.Pick(fa.ID, fa.Recourse).All(ctx, g.db)
+	agreements, err := fa.Pick(fa.ID, fa.Recourse).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load factoring agreements: %w", err)
 	}
@@ -402,9 +404,9 @@ func (f *cashFactoring) carriesRisk(row *cashInvoiceRow) bool {
 	return nonRecourse
 }
 
-func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []pulid.ID) error {
+func (g *cashPhase) cashLoadInvoices(ctx context.Context, st *cashState, ids []pulid.ID) error {
 	inv := invoicedb.Invoices
-	rows, err := keel.Into[cashInvoiceRow](ctx, g.db, inv.Where(
+	rows, err := keel.Into[cashInvoiceRow](ctx, g.DB, inv.Where(
 		inv.Status.Eq(invoice.StatusPosted),
 		inv.CustomerID.In(ids...),
 	).Pick(
@@ -461,7 +463,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 	posted, err := cp.Pick(cp.ID, cp.PaymentDate).Where(
 		cp.CustomerID.In(ids...),
 		cp.Status.Eq(customerpayment.StatusPosted),
-	).All(ctx, g.db)
+	).All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load posted payments: %w", err)
 	}
@@ -474,7 +476,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 	cpa := customerpaymentdb.Applications
 	paymentApps, err := cpa.Pick(cpa.CustomerPaymentID, cpa.InvoiceID, cpa.AppliedAmountMinor).
 		Where(cpa.CustomerPaymentID.In(paymentIDs...)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load payment applications: %w", err)
 	}
@@ -492,7 +494,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 		invoiceIDs = append(invoiceIDs, rows[i].ID)
 	}
 	cma := customerpaymentdb.CreditMemoApplications
-	memoApps, err := keel.Into[cashApplicationRow](ctx, g.db, cma.Where(
+	memoApps, err := keel.Into[cashApplicationRow](ctx, g.DB, cma.Where(
 		cma.Status.Eq(customerpayment.CreditApplicationStatusApplied),
 		cma.InvoiceID.In(invoiceIDs...),
 	).Pick(cma.InvoiceID, cma.AppliedAmountMinor, cma.AccountingDate))
@@ -500,7 +502,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 		return fmt.Errorf("load credit memo applications: %w", err)
 	}
 	fre := factoringledgerdb.ReserveEntries
-	factorApps, err := keel.Into[cashApplicationRow](ctx, g.db, fre.Where(
+	factorApps, err := keel.Into[cashApplicationRow](ctx, g.DB, fre.Where(
 		fre.CustomerID.In(ids...),
 		fre.ARMinor.Ne(0),
 	).Pick(fre.InvoiceID, fre.ARMinor.Neg(), fre.AccountingDate))
@@ -542,16 +544,16 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 // when they are off: the app writes nothing for a disabled feature, so the
 // pages would stay empty no matter how much receivable history exists. The
 // features that email customers are switched back by cashRestoreSending.
-func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashEnableFeatures(ctx context.Context, st *cashState) error {
 	if st.accounting != nil &&
 		st.accounting.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
 		ac := accountingcontroldb.AccountingControls
 		if _, err := ac.Where(keel.True()).
-			Update(ctx, g.db, ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeWarnOnly)); err != nil {
+			Update(ctx, g.DB, ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeWarnOnly)); err != nil {
 			return fmt.Errorf("enable bank reconciliation: %w", err)
 		}
 		st.accounting.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
-		g.opts.Logf("  • enabled bank reconciliation (WarnOnly) so imported deposits are matched")
+		g.Opts.Logf("  • enabled bank reconciliation (WarnOnly) so imported deposits are matched")
 	}
 	if st.billing == nil {
 		return nil
@@ -568,7 +570,7 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		}
 		b.LateChargeAssessmentMode = billingcontrol.LateChargeAssessmentModeAutomatic
 		sets = append(sets, bc.LateChargeAssessmentMode.To(b.LateChargeAssessmentMode))
-		g.opts.Logf("  • set late charge assessment to Automatic")
+		g.Opts.Logf("  • set late charge assessment to Automatic")
 	}
 	if !b.PaymentRemindersEnabled || len(b.PaymentReminderDays) == 0 {
 		st.sending.reminders, st.sending.remindersChange = b.PaymentRemindersEnabled, true
@@ -581,7 +583,7 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 			bc.PaymentRemindersEnabled.To(true),
 			bc.PaymentReminderDays.To(b.PaymentReminderDays),
 		)
-		g.opts.Logf("  • enabled payment reminders")
+		g.Opts.Logf("  • enabled payment reminders")
 	}
 	if !b.MonthlyStatementsEnabled || b.MonthlyStatementDay < 1 {
 		st.sending.statements, st.sending.statementChange = b.MonthlyStatementsEnabled, true
@@ -594,27 +596,27 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 			bc.MonthlyStatementsEnabled.To(true),
 			bc.MonthlyStatementDay.To(b.MonthlyStatementDay),
 		)
-		g.opts.Logf("  • enabled monthly statements")
+		g.Opts.Logf("  • enabled monthly statements")
 	}
 	if len(sets) == 0 {
 		return nil
 	}
-	if _, err := bc.Where(keel.True()).Update(ctx, g.db, sets...); err != nil {
+	if _, err := bc.Where(keel.True()).Update(ctx, g.DB, sets...); err != nil {
 		return fmt.Errorf("enable receivables features: %w", err)
 	}
 
 	return nil
 }
 
-func (g *generator) cashUser() pulid.ID {
-	if len(g.refs.userIDs) == 0 {
-		return g.refs.adminID
+func (g *cashPhase) cashUser() pulid.ID {
+	if len(g.Refs.UserIDs) == 0 {
+		return g.Refs.AdminID
 	}
-	return pick(g.fake, g.refs.userIDs)
+	return volumegen.Pick(g.Fake, g.Refs.UserIDs)
 }
 
-func (g *generator) cashName(st *cashState, id pulid.ID) string {
-	if name, ok := st.setup.names[id]; ok && name != "" {
+func (g *cashPhase) cashName(st *cashState, id pulid.ID) string {
+	if name, ok := st.setup.Names[id]; ok && name != "" {
 		return name
 	}
 	return "a collector"
@@ -632,26 +634,26 @@ func cashBusinessDay(day time.Time) time.Time {
 	return day
 }
 
-func (g *generator) cashBetween(low, high int64) int64 {
+func (g *cashPhase) cashBetween(low, high int64) int64 {
 	if high <= low {
 		return low
 	}
-	return g.fake.between64(low, high)
+	return g.Fake.Between64(low, high)
 }
 
 // -- Bank reconciliation --
 
-func (g *generator) cashReversedPayments(ctx context.Context) (map[pulid.ID]*cashReversal, error) {
+func (g *cashPhase) cashReversedPayments(ctx context.Context) (map[pulid.ID]*cashReversal, error) {
 	out := make(map[pulid.ID]*cashReversal)
-	if len(g.payments) == 0 {
+	if len(g.Payments) == 0 {
 		return out, nil
 	}
-	ids := make([]pulid.ID, 0, len(g.payments))
-	for _, p := range g.payments {
+	ids := make([]pulid.ID, 0, len(g.Payments))
+	for _, p := range g.Payments {
 		ids = append(ids, p.ID)
 	}
 	cp := customerpaymentdb.Payments
-	rows, err := keel.Into[cashReversal](ctx, g.db, cp.Where(
+	rows, err := keel.Into[cashReversal](ctx, g.DB, cp.Where(
 		cp.Status.Eq(customerpayment.StatusReversed),
 		cp.ID.In(ids...),
 	).Pick(cp.ID, cp.ReversedAt, cp.ReversalReason.Coalesce("")))
@@ -665,14 +667,14 @@ func (g *generator) cashReversedPayments(ctx context.Context) (map[pulid.ID]*cas
 	return out, nil
 }
 
-func (g *generator) cashDepositLag(method customerpayment.Method) int {
+func (g *cashPhase) cashDepositLag(method customerpayment.Method) int {
 	switch method {
 	case customerpayment.MethodWire:
 		return 0
 	case customerpayment.MethodACH:
-		return g.fake.between(0, 1)
+		return g.Fake.Between(0, 1)
 	case customerpayment.MethodCheck:
-		return g.fake.between(1, 3)
+		return g.Fake.Between(1, 3)
 	case customerpayment.MethodCard:
 		return 2
 	default:
@@ -698,9 +700,9 @@ type cashBankRows struct {
 	batches       []*bankreceiptbatch.BankReceiptBatch
 	receipts      []*bankreceipt.BankReceipt
 	items         []*bankreceiptworkitem.WorkItem
-	batchStamps   []stamp
-	receiptStamps []stamp
-	itemStamps    []stamp
+	batchStamps   []volumegen.Stamp
+	receiptStamps []volumegen.Stamp
+	itemStamps    []volumegen.Stamp
 }
 
 type cashOtherDeposit struct {
@@ -731,8 +733,8 @@ var cashOtherDeposits = []cashOtherDeposit{
 }
 
 //nolint:gocognit,funlen // one deposit's import and reconciliation story is told in one place
-func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
-	if len(g.payments) == 0 {
+func (g *cashPhase) cashBankReceipts(ctx context.Context, st *cashState) error {
+	if len(g.Payments) == 0 {
 		return nil
 	}
 	reversed, err := g.cashReversedPayments(ctx)
@@ -740,13 +742,13 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		return err
 	}
 
-	payments := slices.Clone(g.payments)
+	payments := slices.Clone(g.Payments)
 	sort.SliceStable(payments, func(i, j int) bool {
 		return payments[i].PaymentDate < payments[j].PaymentDate
 	})
 
-	nowUnix := unix(g.now)
-	importer := g.refs.adminID
+	nowUnix := volumegen.Unix(g.Now)
+	importer := g.Refs.AdminID
 	matchesLater := st.accounting != nil &&
 		st.accounting.ReconciliationMode != accountingcontrol.ReconciliationModeDisabled
 	rows := &cashBankRows{}
@@ -762,10 +764,10 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 			return nil
 		}
 		b := &bankreceiptbatch.BankReceiptBatch{
-			ID:             idAt("brib_", importAt),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
-			Source:         pick(g.fake, cashBankSources),
+			ID:             volumegen.IDAt("brib_", importAt),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
+			Source:         volumegen.Pick(g.Fake, cashBankSources),
 			Reference:      "DEP-" + day.Format("20060102"),
 			Status:         bankreceiptbatch.StatusCompleted,
 			CreatedByID:    importer,
@@ -778,7 +780,7 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		rows.batches = append(rows.batches, b)
 		rows.batchStamps = append(
 			rows.batchStamps,
-			stamp{id: b.ID, created: importAt, updated: importAt},
+			volumegen.Stamp{Id: b.ID, Created: importAt, Updated: importAt},
 		)
 		return b
 	}
@@ -803,22 +805,22 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		rows.receipts = append(rows.receipts, r)
 		rows.receiptStamps = append(
 			rows.receiptStamps,
-			stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt},
+			volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt},
 		)
 		if item != nil {
 			rows.items = append(rows.items, item)
 			rows.itemStamps = append(
 				rows.itemStamps,
-				stamp{id: item.ID, created: item.CreatedAt, updated: item.UpdatedAt},
+				volumegen.Stamp{Id: item.ID, Created: item.CreatedAt, Updated: item.UpdatedAt},
 			)
 		}
 	}
 
 	workItem := func(r *bankreceipt.BankReceipt, openedAt int64) *bankreceiptworkitem.WorkItem {
 		return &bankreceiptworkitem.WorkItem{
-			ID:             idAt("brwi_", openedAt),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("brwi_", openedAt),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			BankReceiptID:  r.ID,
 			Status:         bankreceiptworkitem.StatusOpen,
 			CreatedByID:    importer,
@@ -838,22 +840,22 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 			assignedAt := openedAt + g.cashBetween(cashHour, 2*cashDay)
 			resolvedAt := min(assignedAt+g.cashBetween(cashHour, 5*cashDay), nowUnix-cashMinute)
 			item.AssignedToUserID = worker
-			item.AssignedAt = ptr(assignedAt)
+			item.AssignedAt = volumegen.Ptr(assignedAt)
 			item.ResolvedByUserID = worker
-			item.ResolvedAt = ptr(resolvedAt)
+			item.ResolvedAt = volumegen.Ptr(resolvedAt)
 			item.UpdatedByID = worker
 			item.UpdatedAt = resolvedAt
 			finish(worker, resolvedAt)
 			return
 		}
-		switch roll := g.fake.intn(10); {
+		switch roll := g.Fake.Intn(10); {
 		case roll < 5:
 		case roll < 8:
 			worker := g.cashUser()
 			assignedAt := min(openedAt+g.cashBetween(cashHour, 2*cashDay), nowUnix-cashMinute)
 			item.Status = bankreceiptworkitem.StatusAssigned
 			item.AssignedToUserID = worker
-			item.AssignedAt = ptr(assignedAt)
+			item.AssignedAt = volumegen.Ptr(assignedAt)
 			item.UpdatedByID = worker
 			item.UpdatedAt = assignedAt
 		default:
@@ -862,7 +864,7 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 			reviewAt := min(assignedAt+g.cashBetween(10*cashMinute, cashDay), nowUnix-cashMinute)
 			item.Status = bankreceiptworkitem.StatusInReview
 			item.AssignedToUserID = worker
-			item.AssignedAt = ptr(assignedAt)
+			item.AssignedAt = volumegen.Ptr(assignedAt)
 			item.UpdatedByID = worker
 			item.UpdatedAt = reviewAt
 		}
@@ -882,9 +884,9 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		}
 		importAt := b.CreatedAt
 		r := &bankreceipt.BankReceipt{
-			ID:              idAt("brcpt_", importAt),
-			OrganizationID:  g.refs.orgID,
-			BusinessUnitID:  g.refs.buID,
+			ID:              volumegen.IDAt("brcpt_", importAt),
+			OrganizationID:  g.Refs.OrgID,
+			BusinessUnitID:  g.Refs.BuID,
 			ReceiptDate:     day.Add(12 * time.Hour).Unix(),
 			AmountMinor:     p.AmountMinor,
 			ReferenceNumber: p.ReferenceNumber,
@@ -903,11 +905,11 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		}
 
 		rev := reversed[p.ID]
-		roll := g.fake.float()
+		roll := g.Fake.Float()
 		if roll < 0.86 && strings.TrimSpace(p.ReferenceNumber) != "" {
 			r.Status = bankreceipt.StatusMatched
 			r.MatchedCustomerPaymentID = p.ID
-			r.MatchedAt = ptr(importAt)
+			r.MatchedAt = volumegen.Ptr(importAt)
 			r.MatchedByID = importer
 			var item *bankreceiptworkitem.WorkItem
 			if rev != nil && rev.ReversedAt != nil && *rev.ReversedAt > importAt {
@@ -947,7 +949,7 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 				item.ResolutionNote = cashMatchedNote
 				r.Status = bankreceipt.StatusMatched
 				r.MatchedCustomerPaymentID = p.ID
-				r.MatchedAt = ptr(at)
+				r.MatchedAt = volumegen.Ptr(at)
 				r.MatchedByID = by
 				r.UpdatedByID = by
 				r.UpdatedAt = at
@@ -959,20 +961,20 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 
 	if matchesLater {
 		for _, b := range slices.Clone(rows.batches) {
-			if !g.fake.chance(0.18) || b.CreatedAt > nowUnix-cashHour {
+			if !g.Fake.Chance(0.18) || b.CreatedAt > nowUnix-cashHour {
 				continue
 			}
-			kind := cashOtherDeposits[g.fake.intn(len(cashOtherDeposits))]
+			kind := cashOtherDeposits[g.Fake.Intn(len(cashOtherDeposits))]
 			reference := kind.reference
 			if reference == "DEP" {
-				reference = "DEP" + g.fake.digits(8)
+				reference = "DEP" + g.Fake.Digits(8)
 			}
 			r := &bankreceipt.BankReceipt{
-				ID:              idAt("brcpt_", b.CreatedAt),
-				OrganizationID:  g.refs.orgID,
-				BusinessUnitID:  g.refs.buID,
+				ID:              volumegen.IDAt("brcpt_", b.CreatedAt),
+				OrganizationID:  g.Refs.OrgID,
+				BusinessUnitID:  g.Refs.BuID,
 				ReceiptDate:     b.CreatedAt - 18*cashHour,
-				AmountMinor:     money.MinorUnits(g.fake.money(kind.low, kind.high)),
+				AmountMinor:     money.MinorUnits(g.Fake.Money(kind.low, kind.high)),
 				ReferenceNumber: reference,
 				Memo:            kind.memo,
 				Status:          bankreceipt.StatusException,
@@ -1005,30 +1007,30 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 	if len(rows.receipts) == 0 {
 		return nil
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := insertRows(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batches); txErr != nil {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batches); txErr != nil {
 			return fmt.Errorf("insert bank receipt batches: %w", txErr)
 		}
-		if txErr := insertRows(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receipts); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receipts); txErr != nil {
 			return fmt.Errorf("insert bank receipts: %w", txErr)
 		}
-		if txErr := insertRows(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.items); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.items); txErr != nil {
 			return fmt.Errorf("insert bank receipt work items: %w", txErr)
 		}
-		if txErr := backdate(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batchStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batchStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := backdate(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receiptStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receiptStamps); txErr != nil {
 			return txErr
 		}
-		return backdate(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.itemStamps)
+		return volumegen.Backdate(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.itemStamps)
 	}); err != nil {
 		return err
 	}
 
-	g.report.add("Bank import batches", len(rows.batches))
-	g.report.add("Bank receipts", len(rows.receipts))
-	g.report.add("Reconciliation work items", len(rows.items))
+	g.Report.Add("Bank import batches", len(rows.batches))
+	g.Report.Add("Bank receipts", len(rows.receipts))
+	g.Report.Add("Reconciliation work items", len(rows.items))
 	return nil
 }
 
@@ -1046,18 +1048,18 @@ type cashLateLine struct {
 }
 
 type cashLateMemo struct {
-	customer *customerRecord
+	customer *volumegen.CustomerRecord
 	asOf     int64
 	lines    []*cashLateLine
 }
 
 //nolint:gocognit,funlen // the nightly late charge run is replayed over the history in one pass
-func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 	if st.billing == nil ||
 		st.billing.LateChargeAssessmentMode != billingcontrol.LateChargeAssessmentModeAutomatic {
 		return nil
 	}
-	nowUnix := unix(g.now)
+	nowUnix := volumegen.Unix(g.Now)
 	minimum := money.MinorUnits(st.billing.LateChargeMinimumAmount)
 
 	var lines []*cashLateLine
@@ -1133,31 +1135,31 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 		return nil
 	}
 
-	slots := make([]numberSlot, len(memos))
+	slots := make([]volumegen.NumberSlot, len(memos))
 	for i, m := range memos {
-		slots[i] = numberSlot{At: m.asOf}
+		slots[i] = volumegen.NumberSlot{At: m.asOf}
 	}
-	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeDebitMemo, slots)
+	numbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeDebitMemo, slots)
 	if err != nil {
 		return err
 	}
 
 	autoPost := st.billing.InvoicePostingMode == billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions
-	rows := &bilRows{balances: make(map[bilBalanceKey]*bilBalance)}
+	rows := &ledgervolume.Rows{Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance)}
 	var assessments []*latecharge.LateChargeAssessment
-	var assessmentStamps []stamp
+	var assessmentStamps []volumegen.Stamp
 	posted, drafts := 0, 0
 	for i, m := range memos {
-		runKey := idAt("lcr_", m.asOf).String()
-		actor := g.refs.adminID
+		runKey := volumegen.IDAt("lcr_", m.asOf).String()
+		actor := g.Refs.AdminID
 		term := m.customer.PaymentTerm
 		if term == "" {
 			term = invoice.PaymentTermNet30
 		}
 		item := &billingqueue.BillingQueueItem{
-			ID:                    idAt("bqi_", m.asOf),
-			OrganizationID:        g.refs.orgID,
-			BusinessUnitID:        g.refs.buID,
+			ID:                    volumegen.IDAt("bqi_", m.asOf),
+			OrganizationID:        g.Refs.OrgID,
+			BusinessUnitID:        g.Refs.BuID,
 			BillToCustomerID:      m.customer.ID,
 			Number:                numbers[i],
 			Status:                billingqueue.StatusApproved,
@@ -1174,9 +1176,9 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 		item.SyncAllocatedMinor()
 
 		memo := &invoice.Invoice{
-			ID:                 idAt("inv_", m.asOf),
-			OrganizationID:     g.refs.orgID,
-			BusinessUnitID:     g.refs.buID,
+			ID:                 volumegen.IDAt("inv_", m.asOf),
+			OrganizationID:     g.Refs.OrgID,
+			BusinessUnitID:     g.Refs.BuID,
 			BillingQueueItemID: item.ID,
 			CustomerID:         m.customer.ID,
 			Scope:              invoice.ScopeMemo,
@@ -1205,15 +1207,15 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 			CreatedAt: m.asOf,
 			UpdatedAt: m.asOf,
 		}
-		bilBillTo(memo, m.customer)
+		ledgervolume.BillTo(memo, m.customer)
 
 		total := decimal.Zero
 		for idx, l := range m.lines {
 			amount := money.DecimalFromMinor(l.charge)
 			line := &invoice.InvoiceLine{
-				ID:             idAt("invl_", m.asOf),
-				OrganizationID: g.refs.orgID,
-				BusinessUnitID: g.refs.buID,
+				ID:             volumegen.IDAt("invl_", m.asOf),
+				OrganizationID: g.Refs.OrgID,
+				BusinessUnitID: g.Refs.BuID,
 				InvoiceID:      memo.ID,
 				LineNumber:     idx + 1,
 				Type:           invoice.InvoiceLineTypeMemo,
@@ -1234,12 +1236,12 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 			}
 			total = total.Add(amount)
 			memo.Lines = append(memo.Lines, line)
-			rows.lines = append(rows.lines, line)
+			rows.Lines = append(rows.Lines, line)
 
 			a := &latecharge.LateChargeAssessment{
-				ID:                    idAt("lca_", m.asOf),
-				OrganizationID:        g.refs.orgID,
-				BusinessUnitID:        g.refs.buID,
+				ID:                    volumegen.IDAt("lca_", m.asOf),
+				OrganizationID:        g.Refs.OrgID,
+				BusinessUnitID:        g.Refs.BuID,
 				CustomerID:            m.customer.ID,
 				SourceInvoiceID:       l.inv.id,
 				PeriodIndex:           l.index,
@@ -1259,7 +1261,7 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 			assessments = append(assessments, a)
 			assessmentStamps = append(
 				assessmentStamps,
-				stamp{id: a.ID, created: m.asOf, updated: m.asOf},
+				volumegen.Stamp{Id: a.ID, Created: m.asOf, Updated: m.asOf},
 			)
 		}
 		memo.TotalAmount = total
@@ -1269,26 +1271,29 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 		switch {
 		case autoPost:
 			postedAt = m.asOf
-		case nowUnix-m.asOf > 5*cashDay && g.fake.chance(0.9):
+		case nowUnix-m.asOf > 5*cashDay && g.Fake.Chance(0.9):
 			postedAt = min(m.asOf+g.cashBetween(4*cashHour, 3*cashDay), nowUnix-cashHour)
 		}
 		if postedAt > 0 {
 			memo.Status = invoice.StatusPosted
-			memo.PostedAt = ptr(postedAt)
+			memo.PostedAt = volumegen.Ptr(postedAt)
 			memo.UpdatedAt = postedAt
 			item.Status = billingqueue.StatusPosted
 			item.UpdatedAt = postedAt
-			rows.links = append(rows.links, bilItemInvoice{item: item.ID, invoice: memo.ID})
-			if st.setup.postInvoices {
-				if err = g.bilPostInvoice(st.setup, rows, memo, pulid.Nil, item); err != nil {
+			rows.Links = append(
+				rows.Links,
+				ledgervolume.ItemInvoice{Item: item.ID, Invoice: memo.ID},
+			)
+			if st.setup.PostInvoices {
+				if err = g.PostInvoice(st.setup, rows, memo, pulid.Nil, item); err != nil {
 					return err
 				}
-				j := rows.journals[len(rows.journals)-1]
-				j.event = accountingcontrol.JournalSourceEventDebitMemoPosted
-				j.referenceType = j.event.String()
-				j.description = "Debit memo posted for " + memo.Number
-				entry := rows.ledger[len(rows.ledger)-1]
-				entry.SourceEventType = j.event.String()
+				j := rows.Journals[len(rows.Journals)-1]
+				j.Event = accountingcontrol.JournalSourceEventDebitMemoPosted
+				j.ReferenceType = j.Event.String()
+				j.Description = "Debit memo posted for " + memo.Number
+				entry := rows.Ledger[len(rows.Ledger)-1]
+				entry.SourceEventType = j.Event.String()
 				st.ledger[m.customer.ID] = append(st.ledger[m.customer.ID], cashLedgerRow{
 					CustomerID:      m.customer.ID,
 					TransactionDate: entry.TransactionDate,
@@ -1313,36 +1318,36 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 		} else {
 			drafts++
 		}
-		rows.items = append(rows.items, item)
-		rows.invoices = append(rows.invoices, memo)
+		rows.Items = append(rows.Items, item)
+		rows.Invoices = append(rows.Invoices, memo)
 	}
 
-	if err = g.bilMaterialize(ctx, rows); err != nil {
+	if err = g.Materialize(ctx, rows); err != nil {
 		return err
 	}
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := g.bilWrite(ctx, tx, rows); txErr != nil {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := g.Write(ctx, tx, rows); txErr != nil {
 			return txErr
 		}
-		if txErr := insertRows(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessments); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessments); txErr != nil {
 			return fmt.Errorf("insert late charge assessments: %w", txErr)
 		}
-		return backdate(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessmentStamps)
+		return volumegen.Backdate(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessmentStamps)
 	}); err != nil {
 		return err
 	}
 
-	g.report.add("Late charge assessments", len(assessments))
-	g.report.add("Late charge debit memos", posted)
-	g.report.add("Late charge memos awaiting post", drafts)
-	g.report.add("Journal entries", len(rows.entries))
-	g.report.add("Customer ledger entries", len(rows.ledger))
+	g.Report.Add("Late charge assessments", len(assessments))
+	g.Report.Add("Late charge debit memos", posted)
+	g.Report.Add("Late charge memos awaiting post", drafts)
+	g.Report.Add("Journal entries", len(rows.Entries))
+	g.Report.Add("Customer ledger entries", len(rows.Ledger))
 	return nil
 }
 
 // -- Payment reminders --
 
-func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashReminders(ctx context.Context, st *cashState) error {
 	if st.billing == nil || !st.billing.PaymentRemindersEnabled {
 		return nil
 	}
@@ -1350,10 +1355,10 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 	if len(schedule) == 0 {
 		schedule = billingcontrol.DefaultPaymentReminderDays
 	}
-	nowUnix := unix(g.now)
+	nowUnix := volumegen.Unix(g.Now)
 
 	var rows []*paymentreminder.Reminder
-	for _, c := range g.customers {
+	for _, c := range g.Customers {
 		profile := st.profiles[c.ID]
 		if profile == nil || !profile.SendPaymentReminders || c.BillingEmail == "" {
 			continue
@@ -1376,9 +1381,9 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 					break
 				}
 				rows = append(rows, &paymentreminder.Reminder{
-					ID:             idAt("ipr_", sentAt),
-					OrganizationID: g.refs.orgID,
-					BusinessUnitID: g.refs.buID,
+					ID:             volumegen.IDAt("ipr_", sentAt),
+					OrganizationID: g.Refs.OrgID,
+					BusinessUnitID: g.Refs.BuID,
 					InvoiceID:      inv.id,
 					CustomerID:     c.ID,
 					Step: int16(
@@ -1392,12 +1397,12 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 				})
 			}
 			if open := inv.openAt(nowUnix); open > 0 && inv.due < nowUnix-5*cashDay &&
-				g.fake.chance(0.1) {
+				g.Fake.Chance(0.1) {
 				sentAt := g.cashBetween(inv.due+5*cashDay, nowUnix-cashHour)
 				rows = append(rows, &paymentreminder.Reminder{
-					ID:              idAt("ipr_", sentAt),
-					OrganizationID:  g.refs.orgID,
-					BusinessUnitID:  g.refs.buID,
+					ID:              volumegen.IDAt("ipr_", sentAt),
+					OrganizationID:  g.Refs.OrgID,
+					BusinessUnitID:  g.Refs.BuID,
 					InvoiceID:       inv.id,
 					CustomerID:      c.ID,
 					Step:            paymentreminder.ManualStep,
@@ -1419,8 +1424,8 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := insertRows(ctx, tx, paymentreminderdb.Reminders.Handle, rows); txErr != nil {
+	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := volumegen.InsertRows(ctx, tx, paymentreminderdb.Reminders.Handle, rows); txErr != nil {
 			return fmt.Errorf("insert payment reminders: %w", txErr)
 		}
 		return nil
@@ -1428,23 +1433,23 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 		return err
 	}
 
-	g.report.add("Payment reminders", len(rows))
+	g.Report.Add("Payment reminders", len(rows))
 	return nil
 }
 
 // -- Customer statements --
 
-func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashStatements(ctx context.Context, st *cashState) error {
 	if st.billing == nil || !st.billing.MonthlyStatementsEnabled {
 		return nil
 	}
-	nowUnix := unix(g.now)
+	nowUnix := volumegen.Unix(g.Now)
 	day := int(st.billing.MonthlyStatementDay)
 	if day < 1 || day > customerstatement.MaxMonthlyDay {
 		day = 1
 	}
 
-	first := g.start.In(st.loc)
+	first := g.Start.In(st.loc)
 	month := time.Date(first.Year(), first.Month(), 1, 0, 0, 0, 0, st.loc).AddDate(0, 1, 0)
 	var rows []*customerstatement.Statement
 	for ; ; month = month.AddDate(0, 1, 0) {
@@ -1454,7 +1459,7 @@ func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
 			break
 		}
 		period, _ := customerstatement.MonthlyPeriod(sentAt, st.loc, day)
-		for _, c := range g.customers {
+		for _, c := range g.Customers {
 			profile := st.profiles[c.ID]
 			if profile == nil || !profile.SendStatements || c.BillingEmail == "" {
 				continue
@@ -1478,9 +1483,9 @@ func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
 				}
 			}
 			rows = append(rows, &customerstatement.Statement{
-				ID:                 idAt("cst_", sentAt),
-				OrganizationID:     g.refs.orgID,
-				BusinessUnitID:     g.refs.buID,
+				ID:                 volumegen.IDAt("cst_", sentAt),
+				OrganizationID:     g.Refs.OrgID,
+				BusinessUnitID:     g.Refs.BuID,
 				CustomerID:         c.ID,
 				PeriodStart:        period.Start,
 				PeriodEnd:          period.End,
@@ -1496,8 +1501,8 @@ func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := insertRows(ctx, tx, customerstatementdb.Statements.Handle, rows); txErr != nil {
+	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := volumegen.InsertRows(ctx, tx, customerstatementdb.Statements.Handle, rows); txErr != nil {
 			return fmt.Errorf("insert customer statements: %w", txErr)
 		}
 		return nil
@@ -1505,7 +1510,7 @@ func (g *generator) cashStatements(ctx context.Context, st *cashState) error {
 		return err
 	}
 
-	g.report.add("Customer statements", len(rows))
+	g.Report.Add("Customer statements", len(rows))
 	return nil
 }
 
@@ -1525,15 +1530,15 @@ var cashEmailNotes = []string{
 }
 
 //nolint:gocognit,funlen // one customer's collection history is written in one place
-func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
-	nowUnix := unix(g.now)
+func (g *cashPhase) cashCollections(ctx context.Context, st *cashState) error {
+	nowUnix := volumegen.Unix(g.Now)
 	today := cashLocalDay(nowUnix, st.loc)
 
 	var accounts []*collection.Account
-	var accountStamps []stamp
+	var accountStamps []volumegen.Stamp
 	var activities []*collection.Activity
 
-	for _, c := range g.customers {
+	for _, c := range g.Customers {
 		invs := slices.DeleteFunc(slices.Clone(st.byCustomer[c.ID]), func(inv *cashInvoice) bool {
 			return inv.factored && inv.nonRecourse
 		})
@@ -1547,9 +1552,9 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 
 		add := func(kind collection.ActivityKind, at int64, by pulid.ID, summary string, invID pulid.ID) *collection.Activity {
 			a := &collection.Activity{
-				ID:             idAt("cact_", at),
-				OrganizationID: g.refs.orgID,
-				BusinessUnitID: g.refs.buID,
+				ID:             volumegen.IDAt("cact_", at),
+				OrganizationID: g.Refs.OrgID,
+				BusinessUnitID: g.Refs.BuID,
 				CustomerID:     c.ID,
 				Kind:           kind,
 				Summary:        summary,
@@ -1569,24 +1574,24 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 				return
 			}
 			collector = g.cashUser()
-			a := add(collection.ActivityCollectorAssigned, at, g.refs.adminID,
+			a := add(collection.ActivityCollectorAssigned, at, g.Refs.AdminID,
 				"Assigned to "+g.cashName(st, collector), pulid.Nil)
 			a.CollectorID = collector
 		}
 		contactNote := func(inv *cashInvoice, at int64) {
-			if g.fake.chance(0.6) {
+			if g.Fake.Chance(0.6) {
 				add(collection.ActivityCall, at, collector,
-					fmt.Sprintf(pick(g.fake, cashCallNotes), contact, inv.number), inv.id)
+					fmt.Sprintf(volumegen.Pick(g.Fake, cashCallNotes), contact, inv.number), inv.id)
 				return
 			}
 			add(collection.ActivityEmail, at, collector,
-				fmt.Sprintf(pick(g.fake, cashEmailNotes), contact, inv.number), inv.id)
+				fmt.Sprintf(volumegen.Pick(g.Fake, cashEmailNotes), contact, inv.number), inv.id)
 		}
 		promise := func(inv *cashInvoice, at, amount, promisedOn int64) {
 			a := add(collection.ActivityPromiseToPay, at, collector,
 				"Promised to pay "+inv.number, inv.id)
-			a.PromisedAmountMinor = ptr(amount)
-			a.PromisedOn = ptr(promisedOn)
+			a.PromisedAmountMinor = volumegen.Ptr(amount)
+			a.PromisedOn = volumegen.Ptr(promisedOn)
 			lastPromise = a
 		}
 
@@ -1595,19 +1600,19 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 				continue
 			}
 			paidAt := inv.paidOffAt()
-			if paidAt == 0 || paidAt <= inv.due+15*cashDay || !g.fake.chance(0.5) {
+			if paidAt == 0 || paidAt <= inv.due+15*cashDay || !g.Fake.Chance(0.5) {
 				continue
 			}
 			callAt := inv.due + g.cashBetween(7*cashDay, min(paidAt-inv.due-cashDay, 25*cashDay))
 			assign(callAt - g.cashBetween(cashHour, 2*cashDay))
 			contactNote(inv, callAt)
-			if g.fake.chance(0.6) {
+			if g.Fake.Chance(0.6) {
 				promisedAt := max(callAt+cashHour, paidAt-g.cashBetween(cashDay, 5*cashDay))
 				if promisedAt < paidAt {
 					promisedOn := cashLocalDay(
 						paidAt,
 						st.loc,
-					).AddDate(0, 0, g.fake.between(0, 2)).
+					).AddDate(0, 0, g.Fake.Between(0, 2)).
 						Unix()
 					if owed := inv.openAt(paidAt - 1); owed > 0 {
 						promise(inv, promisedAt, owed, promisedOn)
@@ -1629,24 +1634,24 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 				oldest = min(oldest, inv.due)
 			}
 			assign(min(oldest+g.cashBetween(3*cashDay, 10*cashDay), nowUnix-2*cashHour))
-			for range g.fake.between(1, 4) {
-				inv := pick(g.fake, overdue)
+			for range g.Fake.Between(1, 4) {
+				inv := volumegen.Pick(g.Fake, overdue)
 				at := g.cashBetween(
 					max(inv.due+2*cashDay, acts[0].CreatedAt+cashMinute),
 					nowUnix-cashHour,
 				)
 				contactNote(inv, at)
 			}
-			switch roll := g.fake.float(); {
+			switch roll := g.Fake.Float(); {
 			case roll < 0.35:
-				inv := pick(g.fake, overdue)
+				inv := volumegen.Pick(g.Fake, overdue)
 				at := g.cashBetween(max(nowUnix-5*cashDay, inv.due), nowUnix-cashHour)
-				promisedOn := today.AddDate(0, 0, g.fake.between(1, 14)).Unix()
+				promisedOn := today.AddDate(0, 0, g.Fake.Between(1, 14)).Unix()
 				promise(inv, at, inv.openAt(nowUnix), promisedOn)
-				nextFollowUp = ptr(promisedOn + cashDay)
+				nextFollowUp = volumegen.Ptr(promisedOn + cashDay)
 			case roll < 0.55:
-				inv := pick(g.fake, overdue)
-				promisedOn := today.AddDate(0, 0, -g.fake.between(3, 20)).Unix()
+				inv := volumegen.Pick(g.Fake, overdue)
+				promisedOn := today.AddDate(0, 0, -g.Fake.Between(3, 20)).Unix()
 				at := g.cashBetween(max(promisedOn-10*cashDay, inv.due), promisedOn-cashHour)
 				if at > inv.due {
 					promise(inv, at, inv.openAt(nowUnix), promisedOn)
@@ -1660,7 +1665,7 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 				}
 			}
 			if nextFollowUp == nil {
-				nextFollowUp = ptr(today.AddDate(0, 0, g.fake.between(1, 10)).Unix())
+				nextFollowUp = volumegen.Ptr(today.AddDate(0, 0, g.Fake.Between(1, 10)).Unix())
 				a := add(
 					collection.ActivityFollowUpScheduled,
 					nowUnix-g.cashBetween(cashMinute, 6*cashHour),
@@ -1678,14 +1683,14 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 		sort.SliceStable(acts, func(i, j int) bool { return acts[i].CreatedAt < acts[j].CreatedAt })
 		for _, a := range acts {
 			if a.CreatedByID.IsNil() {
-				a.CreatedByID = g.refs.adminID
+				a.CreatedByID = g.Refs.AdminID
 			}
 		}
 		first, last := acts[0].CreatedAt, acts[len(acts)-1].CreatedAt
 		account := &collection.Account{
-			ID:             idAt("cacc_", first),
-			OrganizationID: g.refs.orgID,
-			BusinessUnitID: g.refs.buID,
+			ID:             volumegen.IDAt("cacc_", first),
+			OrganizationID: g.Refs.OrgID,
+			BusinessUnitID: g.Refs.BuID,
 			CustomerID:     c.ID,
 			CollectorID:    collector,
 			NextFollowUpOn: nextFollowUp,
@@ -1697,27 +1702,30 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 			account.PromiseActivityID = lastPromise.ID
 		}
 		accounts = append(accounts, account)
-		accountStamps = append(accountStamps, stamp{id: account.ID, created: first, updated: last})
+		accountStamps = append(
+			accountStamps,
+			volumegen.Stamp{Id: account.ID, Created: first, Updated: last},
+		)
 		activities = append(activities, acts...)
 	}
 	if len(accounts) == 0 {
 		return nil
 	}
 
-	if err := g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := insertRows(ctx, tx, collectiondb.Accounts.Handle, accounts); txErr != nil {
+	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Accounts.Handle, accounts); txErr != nil {
 			return fmt.Errorf("insert collection accounts: %w", txErr)
 		}
-		if txErr := insertRows(ctx, tx, collectiondb.Activities.Handle, activities); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Activities.Handle, activities); txErr != nil {
 			return fmt.Errorf("insert collection activities: %w", txErr)
 		}
-		return backdate(ctx, tx, collectiondb.Accounts.Handle, accountStamps)
+		return volumegen.Backdate(ctx, tx, collectiondb.Accounts.Handle, accountStamps)
 	}); err != nil {
 		return err
 	}
 
-	g.report.add("Collection accounts", len(accounts))
-	g.report.add("Collection activities", len(activities))
+	g.Report.Add("Collection accounts", len(accounts))
+	g.Report.Add("Collection activities", len(activities))
 	return nil
 }
 
@@ -1780,12 +1788,12 @@ var cashRejections = []string{
 type cashManual struct {
 	request  *manualjournal.Request
 	lines    []*manualjournal.Line
-	journal  *bilJournal
+	journal  *ledgervolume.Journal
 	template cashJournalTemplate
 	postedAt int64
 }
 
-func (g *generator) cashAccounts(ctx context.Context) (map[string]pulid.ID, error) {
+func (g *cashPhase) cashAccounts(ctx context.Context) (map[string]pulid.ID, error) {
 	codes := make([]string, 0, 2*len(cashJournalTemplates))
 	for _, t := range cashJournalTemplates {
 		codes = append(codes, t.debit, t.credit)
@@ -1795,7 +1803,7 @@ func (g *generator) cashAccounts(ctx context.Context) (map[string]pulid.ID, erro
 		ga.AccountCode.In(codes...),
 		ga.AllowManualJE.IsTrue(),
 		ga.Status.Eq(domaintypes.StatusActive),
-	).All(ctx, g.db)
+	).All(ctx, g.DB)
 	if err != nil {
 		return nil, fmt.Errorf("load manual journal accounts: %w", err)
 	}
@@ -1807,8 +1815,8 @@ func (g *generator) cashAccounts(ctx context.Context) (map[string]pulid.ID, erro
 }
 
 //nolint:gocognit,funlen // a month of journal requests and their outcomes is planned in one pass
-func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error {
-	if st.accounting == nil || len(st.setup.periods) == 0 {
+func (g *cashPhase) cashManualJournals(ctx context.Context, st *cashState) error {
+	if st.accounting == nil || len(st.setup.Periods) == 0 {
 		return nil
 	}
 	accounts, err := g.cashAccounts(ctx)
@@ -1825,12 +1833,12 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 		return nil
 	}
 
-	nowUnix := unix(g.now)
+	nowUnix := volumegen.Unix(g.Now)
 	approval := st.accounting.RequireManualJEApproval
-	firstPeriod := st.setup.periods[0].StartDate
-	nowLocal := g.now.In(st.loc)
+	firstPeriod := st.setup.Periods[0].StartDate
+	nowLocal := g.Now.In(st.loc)
 	currentMonth := time.Date(nowLocal.Year(), nowLocal.Month(), 1, 0, 0, 0, 0, st.loc)
-	start := g.start.In(st.loc)
+	start := g.Start.In(st.loc)
 	month := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, st.loc)
 
 	var manuals []*cashManual
@@ -1849,16 +1857,16 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			if current {
 				created = min(accountingDate-g.cashBetween(cashHour, 2*cashDay), nowUnix-cashHour)
 			}
-			period, date, ok := g.bilResolvePeriod(st.setup, accountingDate)
+			period, date, ok := g.ResolvePeriod(st.setup, accountingDate)
 			if !ok {
 				continue
 			}
-			amount := money.MinorUnits(g.fake.money(t.low, t.high))
+			amount := money.MinorUnits(g.Fake.Money(t.low, t.high))
 			author := g.cashUser()
 			req := &manualjournal.Request{
-				ID:                      idAt("mjr_", created),
-				OrganizationID:          g.refs.orgID,
-				BusinessUnitID:          g.refs.buID,
+				ID:                      volumegen.IDAt("mjr_", created),
+				OrganizationID:          g.Refs.OrgID,
+				BusinessUnitID:          g.Refs.BuID,
 				Status:                  manualjournal.StatusDraft,
 				Description:             t.description + " - " + month.Format("January 2006"),
 				Reason:                  "Month-end close",
@@ -1877,18 +1885,18 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			m := &cashManual{request: req, template: t}
 			m.lines = []*manualjournal.Line{
 				{
-					ID: idAt(
+					ID: volumegen.IDAt(
 						"mjrl_",
 						created,
-					), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
+					), OrganizationID: g.Refs.OrgID, BusinessUnitID: g.Refs.BuID,
 					ManualJournalRequestID: req.ID, LineNumber: 1, GLAccountID: accounts[t.debit],
 					Description: t.description, DebitAmount: amount, CreatedAt: created, UpdatedAt: created,
 				},
 				{
-					ID: idAt(
+					ID: volumegen.IDAt(
 						"mjrl_",
 						created,
-					), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
+					), OrganizationID: g.Refs.OrgID, BusinessUnitID: g.Refs.BuID,
 					ManualJournalRequestID: req.ID, LineNumber: 2, GLAccountID: accounts[t.credit],
 					Description: t.description, CreditAmount: amount, CreatedAt: created, UpdatedAt: created,
 				},
@@ -1897,13 +1905,13 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			approver := g.cashUser()
 			approve := func(at int64) {
 				req.Status = manualjournal.StatusApproved
-				req.ApprovedAt = ptr(at)
+				req.ApprovedAt = volumegen.Ptr(at)
 				req.ApprovedByID = approver
 				req.UpdatedByID = approver
 				req.UpdatedAt = at
 			}
 			submittedAt := min(created+g.cashBetween(10*cashMinute, 6*cashHour), nowUnix-cashMinute)
-			roll := g.fake.float()
+			roll := g.Fake.Float()
 			switch {
 			case current && roll < 0.3:
 			case current && roll < 0.65:
@@ -1921,14 +1929,14 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 					nowUnix-cashMinute,
 				)
 				req.Status = manualjournal.StatusRejected
-				req.RejectedAt = ptr(rejectedAt)
+				req.RejectedAt = volumegen.Ptr(rejectedAt)
 				req.RejectedByID = approver
-				req.RejectionReason = pick(g.fake, cashRejections)
+				req.RejectionReason = volumegen.Pick(g.Fake, cashRejections)
 				req.UpdatedAt = rejectedAt
 			case roll < 0.06:
 				cancelledAt := min(submittedAt+g.cashBetween(cashHour, cashDay), nowUnix-cashMinute)
 				req.Status = manualjournal.StatusCancelled
-				req.CancelledAt = ptr(cancelledAt)
+				req.CancelledAt = volumegen.Ptr(cancelledAt)
 				req.CancelledByID = author
 				req.CancelReason = "Duplicate of another request"
 				req.UpdatedAt = cancelledAt
@@ -1942,24 +1950,24 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 					approvedAt+g.cashBetween(10*cashMinute, cashDay),
 					nowUnix-cashMinute,
 				)
-				journal, jErr := g.bilNewJournal(st.setup, date)
+				journal, jErr := g.NewJournal(st.setup, date)
 				if jErr != nil {
 					return jErr
 				}
-				journal.actorID = approver
-				journal.description = req.Description
-				journal.sourceType = "ManualJournalRequest"
-				journal.sourceID = req.ID
-				journal.event = accountingcontrol.JournalSourceEventType("ManualJournalPosted")
-				journal.referenceType = "ManualJournalRequest"
-				journal.idempotency = "manual-journal-posted:" + req.ID.String()
-				journal.legs = []bilLeg{
-					{account: accounts[t.debit], debit: amount},
-					{account: accounts[t.credit], credit: amount},
+				journal.ActorID = approver
+				journal.Description = req.Description
+				journal.SourceType = "ManualJournalRequest"
+				journal.SourceID = req.ID
+				journal.Event = accountingcontrol.JournalSourceEventType("ManualJournalPosted")
+				journal.ReferenceType = "ManualJournalRequest"
+				journal.Idempotency = "manual-journal-posted:" + req.ID.String()
+				journal.Legs = []ledgervolume.Leg{
+					{Account: accounts[t.debit], Debit: amount},
+					{Account: accounts[t.credit], Credit: amount},
 				}
 				m.journal = journal
 				req.Status = manualjournal.StatusPosted
-				req.PostedBatchID = journal.batchID
+				req.PostedBatchID = journal.BatchID
 				req.UpdatedByID = approver
 				req.UpdatedAt = m.postedAt
 			}
@@ -1970,31 +1978,31 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 		return nil
 	}
 
-	slots := make([]numberSlot, len(manuals))
+	slots := make([]volumegen.NumberSlot, len(manuals))
 	for i, m := range manuals {
-		slots[i] = numberSlot{At: m.request.CreatedAt}
+		slots[i] = volumegen.NumberSlot{At: m.request.CreatedAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeManualJournalRequest, slots)
+	numbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeManualJournalRequest, slots)
 	if err != nil {
 		return err
 	}
-	posted := &bilRows{balances: make(map[bilBalanceKey]*bilBalance)}
+	posted := &ledgervolume.Rows{Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance)}
 	for i, m := range manuals {
 		m.request.RequestNumber = numbers[i]
 		if m.journal != nil {
-			m.journal.document = numbers[i]
-			posted.journals = append(posted.journals, m.journal)
+			m.journal.Document = numbers[i]
+			posted.Journals = append(posted.Journals, m.journal)
 		}
 	}
-	if err = g.bilMaterialize(ctx, posted); err != nil {
+	if err = g.Materialize(ctx, posted); err != nil {
 		return err
 	}
-	manualBatches := make(map[pulid.ID]bool, len(posted.batches))
-	for _, b := range posted.batches {
+	manualBatches := make(map[pulid.ID]bool, len(posted.Batches))
+	for _, b := range posted.Batches {
 		b.BatchType = "Manual"
 		manualBatches[b.ID] = true
 	}
-	for _, e := range posted.entries {
+	for _, e := range posted.Entries {
 		e.RequiresApproval = approval
 	}
 
@@ -2005,44 +2013,50 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 
 	requests := make([]*manualjournal.Request, 0, len(manuals))
 	var lines []*manualjournal.Line
-	requestStamps := make([]stamp, 0, len(manuals))
-	lineStamps := make([]stamp, 0, 2*len(manuals))
+	requestStamps := make([]volumegen.Stamp, 0, len(manuals))
+	lineStamps := make([]volumegen.Stamp, 0, 2*len(manuals))
 	for _, m := range manuals {
 		requests = append(requests, m.request)
-		requestStamps = append(requestStamps,
-			stamp{id: m.request.ID, created: m.request.CreatedAt, updated: m.request.UpdatedAt})
+		requestStamps = append(
+			requestStamps,
+			volumegen.Stamp{
+				Id:      m.request.ID,
+				Created: m.request.CreatedAt,
+				Updated: m.request.UpdatedAt,
+			},
+		)
 		for _, l := range m.lines {
 			lines = append(lines, l)
 			lineStamps = append(
 				lineStamps,
-				stamp{id: l.ID, created: l.CreatedAt, updated: l.CreatedAt},
+				volumegen.Stamp{Id: l.ID, Created: l.CreatedAt, Updated: l.CreatedAt},
 			)
 		}
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := g.bilWrite(ctx, tx, posted); txErr != nil {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if txErr := g.Write(ctx, tx, posted); txErr != nil {
 			return txErr
 		}
 		if reversals.rows != nil {
-			if txErr := g.bilWrite(ctx, tx, reversals.rows); txErr != nil {
+			if txErr := g.Write(ctx, tx, reversals.rows); txErr != nil {
 				return txErr
 			}
 		}
-		if txErr := insertRows(ctx, tx, manualjournaldb.Requests.Handle, requests); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Requests.Handle, requests); txErr != nil {
 			return fmt.Errorf("insert manual journal requests: %w", txErr)
 		}
-		if txErr := insertRows(ctx, tx, manualjournaldb.Lines.Handle, lines); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Lines.Handle, lines); txErr != nil {
 			return fmt.Errorf("insert manual journal lines: %w", txErr)
 		}
-		if txErr := backdate(ctx, tx, manualjournaldb.Requests.Handle, requestStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Requests.Handle, requestStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := backdate(ctx, tx, manualjournaldb.Lines.Handle, lineStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Lines.Handle, lineStamps); txErr != nil {
 			return txErr
 		}
 		if len(reversals.entities) > 0 {
-			if txErr := insertRows(ctx, tx, journalreversaldb.Reversals.Handle, reversals.entities); txErr != nil {
+			if txErr := volumegen.InsertRows(ctx, tx, journalreversaldb.Reversals.Handle, reversals.entities); txErr != nil {
 				return fmt.Errorf("insert journal reversals: %w", txErr)
 			}
 		}
@@ -2051,14 +2065,14 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 		return err
 	}
 
-	g.report.add("Manual journal requests", len(requests))
-	g.report.add("Journal reversals", len(reversals.entities))
-	g.report.add("Journal entries", len(posted.entries)+reversals.entryCount())
+	g.Report.Add("Manual journal requests", len(requests))
+	g.Report.Add("Journal reversals", len(reversals.entities))
+	g.Report.Add("Journal entries", len(posted.Entries)+reversals.entryCount())
 	return nil
 }
 
 type cashReversalSet struct {
-	rows     *bilRows
+	rows     *ledgervolume.Rows
 	entities []*journalreversal.Reversal
 }
 
@@ -2066,7 +2080,7 @@ func (s *cashReversalSet) entryCount() int {
 	if s.rows == nil {
 		return 0
 	}
-	return len(s.rows.entries)
+	return len(s.rows.Entries)
 }
 
 type cashReversedEntry struct {
@@ -2081,27 +2095,27 @@ type cashReversedEntry struct {
 // day of the next month, the way an accountant reverses an accrual.
 //
 //nolint:funlen // a reversal request, its journal and its link to the original are built together
-func (g *generator) cashReversals(
+func (g *cashPhase) cashReversals(
 	ctx context.Context,
 	st *cashState,
 	manuals []*cashManual,
-	posted *bilRows,
+	posted *ledgervolume.Rows,
 ) (*cashReversalSet, []cashReversedEntry, error) {
 	set := &cashReversalSet{}
 	if st.accounting.JournalReversalPolicy == accountingcontrol.JournalReversalPolicyDisallow {
 		return set, nil, nil
 	}
-	nowUnix := unix(g.now)
+	nowUnix := volumegen.Unix(g.Now)
 	approval := st.accounting.RequireManualJEApproval
-	entries := make(map[pulid.ID]int, len(posted.entries))
-	for i, e := range posted.entries {
+	entries := make(map[pulid.ID]int, len(posted.Entries))
+	for i, e := range posted.Entries {
 		entries[e.ID] = i
 	}
 
-	set.rows = &bilRows{balances: make(map[bilBalanceKey]*bilBalance)}
+	set.rows = &ledgervolume.Rows{Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance)}
 	type pending struct {
 		entity   *journalreversal.Reversal
-		journal  *bilJournal
+		journal  *ledgervolume.Journal
 		original pulid.ID
 		number   string
 	}
@@ -2111,25 +2125,25 @@ func (g *generator) cashReversals(
 		if m.template.key != cashPayrollAccrual || m.journal == nil {
 			continue
 		}
-		idx, ok := entries[m.journal.entryID]
+		idx, ok := entries[m.journal.EntryID]
 		if !ok {
 			continue
 		}
-		original := posted.entries[idx]
+		original := posted.Entries[idx]
 		reverseOn := cashLocalDay(original.AccountingDate, st.loc).AddDate(0, 0, 1).Unix()
 		requestedAt := reverseOn + g.cashBetween(cashHour, 20*cashHour)
 		if requestedAt > nowUnix-cashHour {
 			continue
 		}
-		period, date, ok := g.bilResolvePeriod(st.setup, reverseOn)
+		period, date, ok := g.ResolvePeriod(st.setup, reverseOn)
 		if !ok {
 			continue
 		}
 		requester := g.cashUser()
 		entity := &journalreversal.Reversal{
-			ID:                      idAt(journalreversal.IDPrefix, requestedAt),
-			OrganizationID:          g.refs.orgID,
-			BusinessUnitID:          g.refs.buID,
+			ID:                      volumegen.IDAt(journalreversal.IDPrefix, requestedAt),
+			OrganizationID:          g.Refs.OrgID,
+			BusinessUnitID:          g.Refs.BuID,
 			OriginalJournalEntryID:  original.ID,
 			Status:                  journalreversal.StatusApproved,
 			RequestedAccountingDate: date,
@@ -2139,7 +2153,7 @@ func (g *generator) cashReversals(
 			ReasonText:              reason,
 			RequestedByID:           requester,
 			ApprovedByID:            requester,
-			ApprovedAt:              ptr(requestedAt),
+			ApprovedAt:              volumegen.Ptr(requestedAt),
 			Version:                 1,
 			CreatedAt:               requestedAt,
 			UpdatedAt:               requestedAt,
@@ -2159,55 +2173,55 @@ func (g *generator) cashReversals(
 		postedAt := min(approvedAt+g.cashBetween(10*cashMinute, cashDay), nowUnix-cashMinute)
 		if approval {
 			entity.ApprovedByID = approver
-			entity.ApprovedAt = ptr(approvedAt)
+			entity.ApprovedAt = volumegen.Ptr(approvedAt)
 		}
-		journal, err := g.bilNewJournal(st.setup, date)
+		journal, err := g.NewJournal(st.setup, date)
 		if err != nil {
 			return nil, nil, err
 		}
-		journal.actorID = approver
-		journal.description = original.Description
-		journal.sourceType = "JournalEntry"
-		journal.sourceID = original.ID
-		journal.document = original.EntryNumber
-		journal.event = accountingcontrol.JournalSourceEventType("JournalReversalCreated")
-		journal.referenceType = "JournalReversal"
-		journal.idempotency = "journal-reversal:" + entity.ID.String()
-		journal.auto = true
-		for _, leg := range m.journal.legs {
-			journal.legs = append(journal.legs, bilLeg{
-				account: leg.account, debit: leg.credit, credit: leg.debit, customer: leg.customer,
+		journal.ActorID = approver
+		journal.Description = original.Description
+		journal.SourceType = "JournalEntry"
+		journal.SourceID = original.ID
+		journal.Document = original.EntryNumber
+		journal.Event = accountingcontrol.JournalSourceEventType("JournalReversalCreated")
+		journal.ReferenceType = "JournalReversal"
+		journal.Idempotency = "journal-reversal:" + entity.ID.String()
+		journal.Auto = true
+		for _, leg := range m.journal.Legs {
+			journal.Legs = append(journal.Legs, ledgervolume.Leg{
+				Account: leg.Account, Debit: leg.Credit, Credit: leg.Debit, Customer: leg.Customer,
 			})
 		}
-		set.rows.journals = append(set.rows.journals, journal)
+		set.rows.Journals = append(set.rows.Journals, journal)
 		entity.Status = journalreversal.StatusPosted
 		entity.PostedByID = approver
-		entity.PostedAt = ptr(postedAt)
-		entity.ReversalJournalEntryID = journal.entryID
-		entity.PostedBatchID = journal.batchID
+		entity.PostedAt = volumegen.Ptr(postedAt)
+		entity.ReversalJournalEntryID = journal.EntryID
+		entity.PostedBatchID = journal.BatchID
 		entity.UpdatedAt = postedAt
 		postedReversals = append(postedReversals, &pending{
 			entity: entity, journal: journal, original: original.ID, number: original.EntryNumber,
 		})
 	}
-	if len(set.rows.journals) == 0 {
+	if len(set.rows.Journals) == 0 {
 		set.rows = nil
 		return set, nil, nil
 	}
-	if err := g.bilMaterialize(ctx, set.rows); err != nil {
+	if err := g.Materialize(ctx, set.rows); err != nil {
 		return nil, nil, err
 	}
 
 	byEntry := make(map[pulid.ID]*pending, len(postedReversals))
 	for _, p := range postedReversals {
-		byEntry[p.journal.entryID] = p
+		byEntry[p.journal.EntryID] = p
 	}
-	for _, b := range set.rows.batches {
+	for _, b := range set.rows.Batches {
 		b.BatchType = "Reversal"
 		b.Description = "Journal reversal"
 	}
 	reversed := make([]cashReversedEntry, 0, len(postedReversals))
-	for _, e := range set.rows.entries {
+	for _, e := range set.rows.Entries {
 		p := byEntry[e.ID]
 		if p == nil {
 			continue
@@ -2215,7 +2229,7 @@ func (g *generator) cashReversals(
 		e.EntryType = "Reversal"
 		e.IsReversal = true
 		e.ReversalOfID = p.original
-		e.ReversalDate = ptr(e.AccountingDate)
+		e.ReversalDate = volumegen.Ptr(e.AccountingDate)
 		e.ReversalReason = reason
 		e.ReferenceNumber = p.number
 		e.ReferenceID = p.entity.ID.String()
@@ -2228,7 +2242,7 @@ func (g *generator) cashReversals(
 	return set, reversed, nil
 }
 
-func (g *generator) cashMarkReversed(
+func (g *cashPhase) cashMarkReversed(
 	ctx context.Context,
 	tx *keel.DB,
 	reversed []cashReversedEntry,
@@ -2257,7 +2271,7 @@ func (g *generator) cashMarkReversed(
 		je.ReversalDate.ToExpr(d.Col("reversal_date")),
 		je.ReversalReason.To(reversed[0].reason),
 		je.UpdatedByID.ToExpr(d.Col("user_id")),
-		keepUpdated(je.Handle),
+		volumegen.KeepUpdated(je.Handle),
 	); err != nil {
 		return fmt.Errorf("mark reversed journal entries: %w", err)
 	}
@@ -2271,12 +2285,12 @@ func (g *generator) cashMarkReversed(
 // journals have not been posted yet; their amounts come back off the balances.
 //
 //nolint:funlen // the queue state and the balance rollback must change together
-func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error {
+func (g *cashPhase) cashJournalsToPost(ctx context.Context, st *cashState) error {
 	if st.accounting == nil ||
 		st.accounting.JournalPostingMode != accountingcontrol.JournalPostingModeManual {
 		return nil
 	}
-	cutoff := unix(g.now) - cashPendingWindow
+	cutoff := volumegen.Unix(g.Now) - cashPendingWindow
 
 	je := journalentrydb.JournalEntries
 	targets, err := je.Pick(je.ID, je.BatchID, je.FiscalYearID, je.FiscalPeriodID).Where(
@@ -2285,7 +2299,7 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 		je.IsReversal.IsFalse(),
 		je.ReversedByID.IsNull(),
 		je.AccountingDate.Gte(cutoff),
-	).All(ctx, g.db)
+	).All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load recent system journals: %w", err)
 	}
@@ -2311,13 +2325,13 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 	jel := journalentrydb.JournalEntryLines
 	lines, err := jel.Pick(jel.JournalEntryID, jel.GLAccountID, jel.DebitAmount, jel.CreditAmount, jel.NetAmount).
 		Where(jel.JournalEntryID.In(entryIDs...)).
-		All(ctx, g.db)
+		All(ctx, g.DB)
 	if err != nil {
 		return fmt.Errorf("load recent system journal lines: %w", err)
 	}
 
-	if err = g.inTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if err := rollBackBalances(ctx, tx, lines, byEntry); err != nil {
+	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
+		if err := volumegen.RollBackBalances(ctx, tx, lines, byEntry); err != nil {
 			return err
 		}
 
@@ -2329,7 +2343,7 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 			je.PostedByID.ToNull(),
 			je.RequiresApproval.To(!approved),
 			je.IsApproved.To(approved),
-			keepUpdated(je.Handle),
+			volumegen.KeepUpdated(je.Handle),
 		}
 		if !approved {
 			sets = append(sets, je.ApprovedAt.ToNull(), je.ApprovedByID.ToNull())
@@ -2345,7 +2359,7 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 				jb.Status.To(status),
 				jb.PostedAt.ToNull(),
 				jb.PostedByID.ToNull(),
-				keepUpdated(jb.Handle),
+				volumegen.KeepUpdated(jb.Handle),
 			); err != nil {
 				return fmt.Errorf("queue journal batches: %w", err)
 			}
@@ -2360,6 +2374,14 @@ func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error
 		return err
 	}
 
-	g.report.add("Journals waiting to post", len(targets))
+	g.Report.Add("Journals waiting to post", len(targets))
 	return nil
+}
+
+type cashPhase struct {
+	*ledgervolume.Ledger
+}
+
+func Seed(ctx context.Context, g *volumegen.Generator) error {
+	return (&cashPhase{Ledger: &ledgervolume.Ledger{Generator: g}}).seedCash(ctx)
 }
