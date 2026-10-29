@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ func (h *Handler) registerChapterRoutes(api *gin.RouterGroup, resource string) {
 }
 
 type chapterListResponse struct {
-	Items []*conversation.Chapter `json:"items"`
+	Items []*conversationchapter.Chapter `json:"items"`
 }
 
 type openChapterRequest struct {
@@ -52,7 +52,7 @@ func (h *Handler) listChapters(c *gin.Context) {
 		return
 	}
 	if items == nil {
-		items = []*conversation.Chapter{}
+		items = []*conversationchapter.Chapter{}
 	}
 
 	helpers.JSON(c, http.StatusOK, chapterListResponse{Items: items})

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -579,7 +580,7 @@ func (b *Bench) captureRun(
 	record := &TurnRecord{
 		RunID:     fired.run.ID,
 		TraceID:   fired.run.TraceID,
-		Origin:    conversation.AssistantTurnOrigin(fired.run.Trigger),
+		Origin:    conversationturn.AssistantTurnOrigin(fired.run.Trigger),
 		StartedAt: fired.startedAt,
 		Status:    conversation.AssistantTurnStatusRunning,
 	}

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,12 +58,17 @@ func TestStartTurnWorkflow_StartsTheTurnUnderItsAnchorAndKeepsTheRequest(t *test
 	aitracetest.Install()
 
 	starter := &anchoredStarter{}
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:       pulid.MustNew("atrn_"),
 		ThreadID: pulid.MustNew("athr_"),
 	}
 	ctx, request := otel.Tracer("assistantjobs-test").Start(t.Context(), "POST /assistant/turns/")
-	_, err := assistantcontract.StartTurnWorkflow(ctx, starter, turn, assistantcontract.TurnStart{Content: "Where is 12345?"})
+	_, err := assistantcontract.StartTurnWorkflow(
+		ctx,
+		starter,
+		turn,
+		assistantcontract.TurnStart{Content: "Where is 12345?"},
+	)
 	request.End()
 	require.NoError(t, err)
 

@@ -34,6 +34,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
@@ -340,11 +342,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_assistant_turns_origin",
-			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+			values: stringsOf(conversationturn.AllAssistantTurnOrigins()),
 		},
 		{
 			name:   "ck_assistant_thread_chapters_title_source",
-			values: stringsOf(conversation.AllChapterTitleSources()),
+			values: stringsOf(conversationchapter.AllChapterTitleSources()),
 		},
 		{
 			name:   "ck_agent_waits_kind",

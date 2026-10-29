@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +39,7 @@ func through(sequence int) *int { return &sequence }
 
 func spanOf(title string, from int, last *int) *assistantports.ChapterSpan {
 	return &assistantports.ChapterSpan{
-		Chapter: &conversation.Chapter{ID: pulid.MustNew("achp_"), Title: title},
+		Chapter: &conversationchapter.Chapter{ID: pulid.MustNew("achp_"), Title: title},
 		From:    from,
 		Through: last,
 	}

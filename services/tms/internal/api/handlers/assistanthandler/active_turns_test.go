@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -89,11 +90,11 @@ func TestActiveTurns_ListsTheCallersRepliesInProgress(t *testing.T) {
 	t.Parallel()
 
 	userID, buID, orgID := pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_")
-	turn := conversation.AssistantTurn{
+	turn := conversationturn.AssistantTurn{
 		ID:        pulid.MustNew("atrn_"),
 		ThreadID:  pulid.MustNew("athr_"),
 		UserID:    userID,
-		Origin:    conversation.AssistantTurnOriginDecisionFollowUp,
+		Origin:    conversationturn.AssistantTurnOriginDecisionFollowUp,
 		Status:    conversation.AssistantTurnStatusRunning,
 		StartedAt: 1_700_000_000,
 	}

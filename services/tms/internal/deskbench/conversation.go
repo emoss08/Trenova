@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -155,9 +156,9 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 		ThreadID:   c.Thread.ID,
 		UserID:     c.session.User.ID,
 		TenantInfo: c.session.Tenant,
-		Origin:     conversation.AssistantTurnOriginPerson,
+		Origin:     conversationturn.AssistantTurnOriginPerson,
 		Input:      u.Content,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		start := assistantcontract.TurnStart{
 			Actor:   c.session.Actor,
 			Content: u.Content,
@@ -717,7 +718,7 @@ func (c *Conversation) settlePlan(ctx context.Context, decision *DecisionRecord)
 func (c *Conversation) lookupTurn(
 	ctx context.Context,
 	turnID pulid.ID,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	req := assistantports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,

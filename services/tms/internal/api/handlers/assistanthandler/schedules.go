@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -41,7 +41,7 @@ type scheduleService interface {
 	RunNow(
 		ctx context.Context,
 		req conversationscheduleservice.ScheduleRequest,
-	) (*conversation.AssistantTurn, error)
+	) (*conversationturn.AssistantTurn, error)
 }
 
 // registerScheduleRoutes adds the routes for requests scheduled in a

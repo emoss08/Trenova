@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,12 +109,12 @@ func idsOf(set map[pulid.ID]struct{}) []pulid.ID {
 // lookups is what one tenant's pass read to explain its rows.
 type lookups struct {
 	runs        map[pulid.ID]*agent.AgentRun
-	turns       map[pulid.ID]*conversation.AssistantTurn
-	turnByRun   map[pulid.ID]*conversation.AssistantTurn
+	turns       map[pulid.ID]*conversationturn.AssistantTurn
+	turnByRun   map[pulid.ID]*conversationturn.AssistantTurn
 	threads     map[pulid.ID]*conversation.Thread
 	evaluations map[pulid.ID]*agentevaluation.Evaluation
 	proposals   map[pulid.ID]*agent.AgentProposal
-	threadTurns map[pulid.ID][]*conversation.AssistantTurn
+	threadTurns map[pulid.ID][]*conversationturn.AssistantTurn
 	users       map[pulid.ID]string
 	agents      map[pulid.ID]string
 	calls       map[aiauditports.OwnerCall]struct{}
@@ -122,12 +123,12 @@ type lookups struct {
 func emptyLookups() *lookups {
 	return &lookups{
 		runs:        map[pulid.ID]*agent.AgentRun{},
-		turns:       map[pulid.ID]*conversation.AssistantTurn{},
-		turnByRun:   map[pulid.ID]*conversation.AssistantTurn{},
+		turns:       map[pulid.ID]*conversationturn.AssistantTurn{},
+		turnByRun:   map[pulid.ID]*conversationturn.AssistantTurn{},
 		threads:     map[pulid.ID]*conversation.Thread{},
 		evaluations: map[pulid.ID]*agentevaluation.Evaluation{},
 		proposals:   map[pulid.ID]*agent.AgentProposal{},
-		threadTurns: map[pulid.ID][]*conversation.AssistantTurn{},
+		threadTurns: map[pulid.ID][]*conversationturn.AssistantTurn{},
 		users:       map[pulid.ID]string{},
 		agents:      map[pulid.ID]string{},
 		calls:       map[aiauditports.OwnerCall]struct{}{},
@@ -395,7 +396,7 @@ func (l *lookups) runOwner(id pulid.ID) owner {
 	return found
 }
 
-func (l *lookups) turnForRun(run *agent.AgentRun) *conversation.AssistantTurn {
+func (l *lookups) turnForRun(run *agent.AgentRun) *conversationturn.AssistantTurn {
 	if run.TurnID.IsNotNil() {
 		if turn, ok := l.turns[run.TurnID]; ok {
 			return turn
@@ -415,8 +416,8 @@ func (l *lookups) turnForRun(run *agent.AgentRun) *conversation.AssistantTurn {
 
 // turnAt is the turn of a conversation that was running at a moment, for a
 // usage row written before rows named their turn.
-func (l *lookups) turnAt(threadID pulid.ID, at int64) *conversation.AssistantTurn {
-	var best *conversation.AssistantTurn
+func (l *lookups) turnAt(threadID pulid.ID, at int64) *conversationturn.AssistantTurn {
+	var best *conversationturn.AssistantTurn
 	for _, turn := range l.threadTurns[threadID] {
 		if turn.StartedAt > at+1 {
 			continue

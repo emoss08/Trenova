@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -116,7 +117,7 @@ func runTranscriptMessages(transcript *agent.RunTranscript) []conversation.Messa
 
 	messages := make([]conversation.Message, len(transcript.Messages))
 	for idx := range transcript.Messages {
-		messages[idx] = conversation.MessageOfTranscript(&transcript.Messages[idx])
+		messages[idx] = conversationtranscript.MessageOfTranscript(&transcript.Messages[idx])
 	}
 
 	return messages

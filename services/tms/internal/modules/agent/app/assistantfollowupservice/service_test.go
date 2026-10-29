@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -85,14 +86,14 @@ type fakeTurns struct {
 func (f *fakeTurns) StartTurn(
 	_ context.Context,
 	req assistantturnservice.StartRequest,
-	start func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
+	start func(turn *conversationturn.AssistantTurn) (string, error),
+) (*conversationturn.AssistantTurn, error) {
 	f.started = append(f.started, req)
 	if f.startErr != nil {
 		return nil, f.startErr
 	}
 
-	turn := &conversation.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}
+	turn := &conversationturn.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}
 	workflowID, err := start(turn)
 	if err != nil {
 		return nil, err
@@ -194,7 +195,7 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 
 	require.Len(t, f.turns.started, 1)
 	started := f.turns.started[0]
-	assert.Equal(t, conversation.AssistantTurnOriginDecisionFollowUp, started.Origin)
+	assert.Equal(t, conversationturn.AssistantTurnOriginDecisionFollowUp, started.Origin)
 	assert.Equal(t, f.thread.UserID, started.UserID)
 	assert.Equal(t, f.thread.ID, started.ThreadID)
 

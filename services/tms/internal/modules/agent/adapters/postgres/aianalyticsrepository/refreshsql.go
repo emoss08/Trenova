@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -320,7 +321,7 @@ func turnOwners(req *unitRefresh) *keel.CTETable {
 				conversation.AssistantTurnStatusStopped,
 				conversation.AssistantTurnStatusFailed,
 			),
-			o.Origin.Ne(conversation.AssistantTurnOriginCompaction),
+			o.Origin.Ne(conversationturn.AssistantTurnOriginCompaction),
 		))
 }
 

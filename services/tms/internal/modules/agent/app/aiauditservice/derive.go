@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -140,7 +141,7 @@ func runOutcome(status agent.RunStatus) aiaudit.Outcome {
 
 func (d *deriver) turnEvents(
 	l *lookups,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 ) []*aiaudit.AIAuditEvent {
 	o := l.ownerOf(string(agent.RunOwnerAssistantTurn), turn.ID)
 	events := make([]*aiaudit.AIAuditEvent, 0, 2)

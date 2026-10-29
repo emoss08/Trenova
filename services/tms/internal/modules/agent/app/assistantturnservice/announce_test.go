@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +78,7 @@ func TestStartTurn_AnnouncesTheTurnOnceItsWorkflowIsRecorded(t *testing.T) {
 	req := startRequest()
 
 	turn, err := svc.StartTurn(t.Context(), req,
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "assistant-turn:atrn_1", nil
 		},
 	)
@@ -107,7 +108,7 @@ func TestStartTurn_AnnouncesATurnThatCouldNotStartAsFinished(t *testing.T) {
 	svc, realtime := announcing(&recordingTurns{})
 
 	_, err := svc.StartTurn(t.Context(), startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "", errors.New("temporal is unreachable")
 		},
 	)
@@ -128,7 +129,7 @@ func TestStartTurn_StartsWhenTheAnnouncementFails(t *testing.T) {
 	realtime.err = errors.New("realtime is down")
 
 	turn, err := svc.StartTurn(t.Context(), startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "assistant-turn:atrn_1", nil
 		},
 	)
@@ -231,7 +232,7 @@ func (l *liveTurns) ListLive(
 
 func liveTurn() *assistantports.LiveAssistantTurn {
 	turn := runningTurn()
-	turn.WorkflowID = conversation.AssistantTurnWorkflowID(turn.ID)
+	turn.WorkflowID = conversationturn.AssistantTurnWorkflowID(turn.ID)
 
 	return &assistantports.LiveAssistantTurn{AssistantTurn: *turn}
 }

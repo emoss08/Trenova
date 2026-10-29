@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -49,11 +50,11 @@ func (h *Handler) activeTurn(c *gin.Context) {
 
 // liveTurn is one reply the person still has in progress.
 type liveTurn struct {
-	TurnID      pulid.ID                         `json:"turnId"`
-	ThreadID    pulid.ID                         `json:"threadId"`
-	ThreadTitle string                           `json:"threadTitle"`
-	Origin      conversation.AssistantTurnOrigin `json:"origin"`
-	StartedAt   int64                            `json:"startedAt"`
+	TurnID      pulid.ID                             `json:"turnId"`
+	ThreadID    pulid.ID                             `json:"threadId"`
+	ThreadTitle string                               `json:"threadTitle"`
+	Origin      conversationturn.AssistantTurnOrigin `json:"origin"`
+	StartedAt   int64                                `json:"startedAt"`
 }
 
 type liveTurnsResponse struct {
@@ -176,7 +177,7 @@ type startTurnResponse struct {
 	Thread *conversation.Thread `json:"thread,omitempty"`
 }
 
-func turnStarted(turn *conversation.AssistantTurn) startTurnResponse {
+func turnStarted(turn *conversationturn.AssistantTurn) startTurnResponse {
 	return startTurnResponse{
 		TurnID:    turn.ID,
 		ThreadID:  turn.ThreadID,
@@ -302,7 +303,7 @@ func (h *Handler) askWorker(
 	c *gin.Context,
 	threadID pulid.ID,
 	body *sendMessageRequest,
-) (*conversation.AssistantTurn, client.WorkflowRun, error) {
+) (*conversationturn.AssistantTurn, client.WorkflowRun, error) {
 	authCtx := authctx.GetAuthContext(c)
 
 	// The conversation is checked as the person's own before its one live
@@ -324,10 +325,10 @@ func (h *Handler) askWorker(
 			ThreadID:   threadID,
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
-			Origin:     conversation.AssistantTurnOriginPerson,
+			Origin:     conversationturn.AssistantTurnOriginPerson,
 			Input:      body.Content,
 		},
-		func(turn *conversation.AssistantTurn) (string, error) {
+		func(turn *conversationturn.AssistantTurn) (string, error) {
 			started, err := h.startWorkflow(c, turn, authCtx, body)
 			if err != nil {
 				return "", err
@@ -351,7 +352,7 @@ func (h *Handler) askWorker(
 // implementation of it, and the one that outlives the other is the record.
 func (h *Handler) startWorkflow(
 	c *gin.Context,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	authCtx *authctx.AuthContext,
 	body *sendMessageRequest,
 ) (client.WorkflowRun, error) {

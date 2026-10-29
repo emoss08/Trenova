@@ -1,8 +1,9 @@
-package conversation
+package conversationturn
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ func TestAssistantTurn_Validate_ChecksTraceID(t *testing.T) {
 	turn := &AssistantTurn{
 		ThreadID: pulid.MustNew("ath_"),
 		UserID:   pulid.MustNew("usr_"),
-		Status:   AssistantTurnStatusRunning,
+		Status:   conversation.AssistantTurnStatusRunning,
 		Origin:   AssistantTurnOriginPerson,
 	}
 

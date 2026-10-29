@@ -8,6 +8,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -79,16 +81,16 @@ func (s *Service) Plan(
 func (s *Service) planOpened(
 	ctx context.Context,
 	plan *assistantports.ChapterPlan,
-	turn *conversation.AssistantTurn,
-	existing *conversation.Chapter,
+	turn *conversationturn.AssistantTurn,
+	existing *conversationchapter.Chapter,
 	auto bool,
 ) (*assistantports.ChapterPlan, error) {
 	question := strings.TrimSpace(turn.Input)
 	switch {
 	case existing != nil:
 		plan.Skip = skipAlreadyOpen
-	case turn.Origin != conversation.AssistantTurnOriginPerson &&
-		turn.Origin != conversation.AssistantTurnOriginScheduled:
+	case turn.Origin != conversationturn.AssistantTurnOriginPerson &&
+		turn.Origin != conversationturn.AssistantTurnOriginScheduled:
 		plan.Skip = skipContinues
 	case question == "":
 		plan.Skip = skipNoQuestion
@@ -104,7 +106,7 @@ func (s *Service) planOpened(
 	if err != nil {
 		return nil, err
 	}
-	if len(chapters) >= conversation.MaxChaptersPerThread {
+	if len(chapters) >= conversationchapter.MaxChaptersPerThread {
 		plan.Skip = skipLimit
 
 		return plan, nil
@@ -112,11 +114,11 @@ func (s *Service) planOpened(
 
 	plan.Evidence = []string{question}
 	plan.NameEarlier = earlierToName(chapters)
-	if turn.Origin == conversation.AssistantTurnOriginScheduled {
+	if turn.Origin == conversationturn.AssistantTurnOriginScheduled {
 		plan.Opens = true
-		plan.Fallback = conversation.ChapterTitleFrom(question)
-		plan.FallbackSource = conversation.ChapterTitleSchedule
-		plan.ModelSource = conversation.ChapterTitleSchedule
+		plan.Fallback = conversationchapter.ChapterTitleFrom(question)
+		plan.FallbackSource = conversationchapter.ChapterTitleSchedule
+		plan.ModelSource = conversationchapter.ChapterTitleSchedule
 		if auto {
 			plan.Request = nameRequest(&plan.Turn, question, "")
 		}
@@ -126,8 +128,8 @@ func (s *Service) planOpened(
 
 	if len(chapters) == 0 {
 		plan.Opens = true
-		plan.Fallback = conversation.ChapterTitleFrom(question)
-		plan.FallbackSource = conversation.ChapterTitleQuestion
+		plan.Fallback = conversationchapter.ChapterTitleFrom(question)
+		plan.FallbackSource = conversationchapter.ChapterTitleQuestion
 
 		return plan, nil
 	}
@@ -150,7 +152,7 @@ func (s *Service) planOpened(
 	}
 
 	plan.Decides = true
-	plan.ModelSource = conversation.ChapterTitleModel
+	plan.ModelSource = conversationchapter.ChapterTitleModel
 	plan.Evidence = append(plan.Evidence, contents(recent)...)
 	plan.Request = decideRequest(&plan.Turn, chapters[len(chapters)-1].Title, recent, question)
 
@@ -160,8 +162,8 @@ func (s *Service) planOpened(
 func (s *Service) planAnswered(
 	ctx context.Context,
 	plan *assistantports.ChapterPlan,
-	turn *conversation.AssistantTurn,
-	existing *conversation.Chapter,
+	turn *conversationturn.AssistantTurn,
+	existing *conversationchapter.Chapter,
 	auto bool,
 ) (*assistantports.ChapterPlan, error) {
 	if existing == nil {
@@ -173,7 +175,7 @@ func (s *Service) planAnswered(
 
 	if existing.StartSequence == nil ||
 		turn.Status == conversation.AssistantTurnStatusRefused {
-		plan.Remove = existing.TitleSource != conversation.ChapterTitlePerson
+		plan.Remove = existing.TitleSource != conversationchapter.ChapterTitlePerson
 		if !plan.Remove {
 			plan.Skip = skipNamed
 		}
@@ -194,13 +196,13 @@ func (s *Service) planAnswered(
 func (s *Service) planRequested(
 	ctx context.Context,
 	plan *assistantports.ChapterPlan,
-	existing *conversation.Chapter,
+	existing *conversationchapter.Chapter,
 	auto bool,
 ) (*assistantports.ChapterPlan, error) {
 	switch {
 	case existing == nil:
 		plan.Skip = skipNoChapter
-	case !auto || existing.TitleSource != conversation.ChapterTitleQuestion:
+	case !auto || existing.TitleSource != conversationchapter.ChapterTitleQuestion:
 		plan.Skip = skipNamed
 	}
 	if plan.Skipped() {
@@ -214,7 +216,7 @@ func (s *Service) planRequested(
 func (s *Service) planRename(
 	ctx context.Context,
 	plan *assistantports.ChapterPlan,
-	existing *conversation.Chapter,
+	existing *conversationchapter.Chapter,
 ) (*assistantports.ChapterPlan, error) {
 	question, reply, err := s.turnText(
 		ctx,
@@ -231,23 +233,23 @@ func (s *Service) planRename(
 		return plan, nil
 	}
 
-	plan.ModelSource = conversation.ChapterTitleModel
+	plan.ModelSource = conversationchapter.ChapterTitleModel
 	plan.Evidence = []string{question, reply}
 	plan.Request = nameRequest(&plan.Turn, question, reply)
 
 	return plan, nil
 }
 
-func worthRenaming(chapter *conversation.Chapter, question string) bool {
-	return chapter.TitleSource == conversation.ChapterTitleModel &&
+func worthRenaming(chapter *conversationchapter.Chapter, question string) bool {
+	return chapter.TitleSource == conversationchapter.ChapterTitleModel &&
 		len(strings.Fields(question)) < shortQuestionWord
 }
 
-func earlierToName(chapters []*conversation.Chapter) pulid.ID {
+func earlierToName(chapters []*conversationchapter.Chapter) pulid.ID {
 	if len(chapters) == 0 {
 		return ""
 	}
-	if last := chapters[len(chapters)-1]; last.TitleSource == conversation.ChapterTitleQuestion {
+	if last := chapters[len(chapters)-1]; last.TitleSource == conversationchapter.ChapterTitleQuestion {
 		return last.TurnID
 	}
 
@@ -325,11 +327,11 @@ func (s *Service) open(
 	ctx context.Context,
 	plan *assistantports.ChapterPlan,
 	title string,
-	source conversation.ChapterTitleSource,
+	source conversationchapter.ChapterTitleSource,
 	outcome *assistantports.ChapterOutcome,
 ) (*assistantports.ChapterOutcome, error) {
 	turn := &plan.Turn
-	chapter, err := s.create(ctx, &conversation.Chapter{
+	chapter, err := s.create(ctx, &conversationchapter.Chapter{
 		OrganizationID: turn.TenantInfo.OrgID,
 		BusinessUnitID: turn.TenantInfo.BuID,
 		ThreadID:       turn.ThreadID,
@@ -371,7 +373,7 @@ func (s *Service) read(
 		return chapterAnswer{}
 	}
 
-	answer.Title = conversation.CleanChapterTitle(answer.Title)
+	answer.Title = conversationchapter.CleanChapterTitle(answer.Title)
 	if answer.Title != "" && !supported(answer.Title, plan.Evidence) {
 		s.l.Info("the chapter model named a number the conversation does not hold",
 			zap.String("thread", plan.Turn.ThreadID.String()),

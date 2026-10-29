@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -54,7 +55,7 @@ func New(p Params) assistantports.AssistantChapterService {
 func (s *Service) List(
 	ctx context.Context,
 	req assistantports.ThreadChaptersRequest,
-) ([]*conversation.Chapter, error) {
+) ([]*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (s *Service) List(
 func (s *Service) Open(
 	ctx context.Context,
 	req assistantports.OpenChapterRequest,
-) (*conversation.Chapter, error) {
+) (*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func (s *Service) Open(
 	if err != nil {
 		return nil, err
 	}
-	if count >= conversation.MaxChaptersPerThread {
+	if count >= conversationchapter.MaxChaptersPerThread {
 		return nil, errortypes.NewBusinessError(
 			"This conversation has as many chapters as it can hold. Merge some before starting another.",
 		)
@@ -115,13 +116,13 @@ func (s *Service) Open(
 		return nil, err
 	}
 
-	chapter, err := s.create(ctx, &conversation.Chapter{
+	chapter, err := s.create(ctx, &conversationchapter.Chapter{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		ThreadID:       req.ThreadID,
 		TurnID:         turnID,
-		Title:          conversation.ChapterTitleFrom(question),
-		TitleSource:    conversation.ChapterTitleQuestion,
+		Title:          conversationchapter.ChapterTitleFrom(question),
+		TitleSource:    conversationchapter.ChapterTitleQuestion,
 	})
 	if err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func (s *Service) Open(
 func (s *Service) nameQuestionChapters(
 	ctx context.Context,
 	req assistantports.OpenChapterRequest,
-	opened *conversation.Chapter,
+	opened *conversationchapter.Chapter,
 ) {
 	turn := &assistantports.ChapterTurnRequest{
 		TenantInfo: req.TenantInfo,
@@ -155,7 +156,8 @@ func (s *Service) nameQuestionChapters(
 		return
 	}
 	for _, chapter := range chapters {
-		if chapter.ID != opened.ID && chapter.TitleSource == conversation.ChapterTitleQuestion {
+		if chapter.ID != opened.ID &&
+			chapter.TitleSource == conversationchapter.ChapterTitleQuestion {
 			s.cueNaming(ctx, turn, chapter.TurnID)
 		}
 	}
@@ -181,14 +183,14 @@ func (s *Service) cueNaming(
 func (s *Service) Rename(
 	ctx context.Context,
 	req assistantports.RenameChapterRequest,
-) (*conversation.Chapter, error) {
+) (*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
 	title := strings.Join(strings.Fields(req.Title), " ")
 	me := errortypes.NewMultiError()
-	conversation.ValidateChapterTitle("title", title, me)
+	conversationchapter.ValidateChapterTitle("title", title, me)
 	if me.HasErrors() {
 		return nil, me
 	}
@@ -198,7 +200,7 @@ func (s *Service) Rename(
 		ThreadID:    req.ThreadID,
 		TenantInfo:  req.TenantInfo,
 		Title:       title,
-		TitleSource: conversation.ChapterTitlePerson,
+		TitleSource: conversationchapter.ChapterTitlePerson,
 		Version:     req.Version,
 	})
 	if err != nil {
@@ -246,8 +248,14 @@ func (s *Service) Span(
 	return SpanOf(chapters, req.ID)
 }
 
-func SpanOf(chapters []*conversation.Chapter, id pulid.ID) (*assistantports.ChapterSpan, error) {
-	idx := slices.IndexFunc(chapters, func(c *conversation.Chapter) bool { return c.ID == id })
+func SpanOf(
+	chapters []*conversationchapter.Chapter,
+	id pulid.ID,
+) (*assistantports.ChapterSpan, error) {
+	idx := slices.IndexFunc(
+		chapters,
+		func(c *conversationchapter.Chapter) bool { return c.ID == id },
+	)
 	if idx < 0 {
 		return nil, errortypes.NewNotFoundError("Chapter not found in this conversation")
 	}
@@ -289,8 +297,8 @@ func (s *Service) owned(
 
 func (s *Service) create(
 	ctx context.Context,
-	chapter *conversation.Chapter,
-) (*conversation.Chapter, error) {
+	chapter *conversationchapter.Chapter,
+) (*conversationchapter.Chapter, error) {
 	me := errortypes.NewMultiError()
 	chapter.Validate(me)
 	if me.HasErrors() {

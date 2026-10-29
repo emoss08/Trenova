@@ -1,4 +1,4 @@
-package conversation_test
+package conversationtranscript_test
 
 import (
 	"strings"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,15 +15,15 @@ import (
 func TestRunTranscriptOf_NothingSaidIsNoTranscript(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, conversation.RunTranscriptOf(nil))
-	assert.Nil(t, conversation.RunTranscriptOf([]conversation.Message{}))
+	assert.Nil(t, conversationtranscript.RunTranscriptOf(nil))
+	assert.Nil(t, conversationtranscript.RunTranscriptOf([]conversation.Message{}))
 }
 
 func TestRunTranscriptOf_KeepsWhatAReaderNeedsAndNothingTheProviderOwns(t *testing.T) {
 	t.Parallel()
 
 	delegate := pulid.MustNew("agdef_")
-	transcript := conversation.RunTranscriptOf([]conversation.Message{
+	transcript := conversationtranscript.RunTranscriptOf([]conversation.Message{
 		{
 			Role:    conversation.RoleAssistant,
 			Kind:    conversation.MessageKindMessage,
@@ -87,10 +88,12 @@ func TestRunTranscriptOf_KeepsWhatAReaderNeedsAndNothingTheProviderOwns(t *testi
 func TestRunTranscriptOf_AMessageOverTheBoundKeepsOnlyItsShape(t *testing.T) {
 	t.Parallel()
 
-	transcript := conversation.RunTranscriptOf([]conversation.Message{{
-		Role:      conversation.RoleAssistant,
-		Content:   strings.Repeat("a", agent.TranscriptMessageBytes),
-		ToolCalls: []conversation.ToolCallRecord{{ID: "c1", Name: "report_run", Arguments: map[string]any{"q": "x"}}},
+	transcript := conversationtranscript.RunTranscriptOf([]conversation.Message{{
+		Role:    conversation.RoleAssistant,
+		Content: strings.Repeat("a", agent.TranscriptMessageBytes),
+		ToolCalls: []conversation.ToolCallRecord{
+			{ID: "c1", Name: "report_run", Arguments: map[string]any{"q": "x"}},
+		},
 		CreatedAt: 9,
 	}})
 
@@ -115,7 +118,7 @@ func TestRunTranscriptOf_LeavesOutTheMiddleOfALongRun(t *testing.T) {
 		})
 	}
 
-	transcript := conversation.RunTranscriptOf(messages)
+	transcript := conversationtranscript.RunTranscriptOf(messages)
 
 	require.NotNil(t, transcript)
 	kept := transcript.Messages
@@ -159,19 +162,23 @@ func TestMessageOfTranscript_ReadsBackWhatTheRunKept(t *testing.T) {
 		},
 	}
 
-	transcript := conversation.RunTranscriptOf(original)
+	transcript := conversationtranscript.RunTranscriptOf(original)
 	require.NotNil(t, transcript)
 	require.Len(t, transcript.Messages, len(original))
 
 	for idx := range original {
-		assert.Equal(t, original[idx], conversation.MessageOfTranscript(&transcript.Messages[idx]))
+		assert.Equal(
+			t,
+			original[idx],
+			conversationtranscript.MessageOfTranscript(&transcript.Messages[idx]),
+		)
 	}
 }
 
 func TestMessageOfTranscript_AnUnmarkedEntryIsAPlainMessage(t *testing.T) {
 	t.Parallel()
 
-	message := conversation.MessageOfTranscript(&agent.TranscriptMessage{Role: "User"})
+	message := conversationtranscript.MessageOfTranscript(&agent.TranscriptMessage{Role: "User"})
 
 	assert.Equal(t, conversation.MessageKindMessage, message.Kind)
 	assert.Nil(t, message.Reasoning)

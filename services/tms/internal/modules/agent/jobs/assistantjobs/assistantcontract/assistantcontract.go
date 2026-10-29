@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -49,7 +49,7 @@ func (p *CompactionPayload) TenantInfo() pagination.TenantInfo {
 func StartCompactionWorkflow(
 	ctx context.Context,
 	workflows kernelports.WorkflowStarter,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	actor *permissionports.RequestActor,
 	auto bool,
 ) (client.WorkflowRun, error) {
@@ -91,8 +91,8 @@ type CompactionTurns interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
 // StartCompaction records a compaction as the conversation's live turn and
@@ -103,7 +103,7 @@ func StartCompaction(
 	turns CompactionTurns,
 	workflows kernelports.WorkflowStarter,
 	req StartCompactionRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	if workflows == nil {
 		return nil, errors.New("no workflow client to start a compaction with")
 	}
@@ -112,8 +112,8 @@ func StartCompaction(
 		ThreadID:   req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
-		Origin:     conversation.AssistantTurnOriginCompaction,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+		Origin:     conversationturn.AssistantTurnOriginCompaction,
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		run, err := StartCompactionWorkflow(ctx, workflows, turn, &req.Actor, req.Auto)
 		if err != nil {
 			return "", err
@@ -182,7 +182,7 @@ type TurnStart struct {
 func StartTurnWorkflow(
 	ctx context.Context,
 	workflows kernelports.WorkflowStarter,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	start TurnStart,
 ) (client.WorkflowRun, error) {
 	origin := aitrace.Traceparent(ctx)
@@ -225,7 +225,7 @@ const AssistantTurnWorkflowName = "AssistantTurnWorkflow"
 
 // WorkflowIDFor names the execution carrying a turn.
 func WorkflowIDFor(turnID pulid.ID) string {
-	return conversation.AssistantTurnWorkflowID(turnID)
+	return conversationturn.AssistantTurnWorkflowID(turnID)
 }
 
 // AssistantTurnPayload is one question and everything needed to answer it.

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -96,12 +97,12 @@ type turnStarter interface {
 	Active(
 		ctx context.Context,
 		req assistantports.ActiveAssistantTurnRequest,
-	) (*conversation.AssistantTurn, error)
+	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
 type runStarter interface {
@@ -774,8 +775,8 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
-		Origin:     conversation.AssistantTurnOriginWaitResolved,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+		Origin:     conversationturn.AssistantTurnOriginWaitResolved,
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
 			assistantcontract.TurnStart{
 				Actor:   owner,

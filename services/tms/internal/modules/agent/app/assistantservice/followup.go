@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -223,7 +224,7 @@ func (s *Service) anchorChanged(
 			continue
 		}
 		unread = append(unread, ref)
-		if len(unread) == conversation.MaxWorkingSet {
+		if len(unread) == conversationworkingset.MaxWorkingSet {
 			break
 		}
 	}

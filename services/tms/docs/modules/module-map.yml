@@ -963,7 +963,13 @@ modules:
       - boardparse
       - briefing
       - conversation
+      - conversationchapter
+      - conversationqueue
+      - conversationreplay
       - conversationschedule
+      - conversationtranscript
+      - conversationturn
+      - conversationworkingset
       - deskcase
       - extensionportal
       - extensionwebwatch

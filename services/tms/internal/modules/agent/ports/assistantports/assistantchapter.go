@@ -3,7 +3,7 @@ package assistantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,12 +39,12 @@ type ChapterPlan struct {
 	ChapterID pulid.ID `json:"chapterId,omitempty"`
 	Remove    bool     `json:"remove,omitempty"`
 
-	Opens          bool                            `json:"opens,omitempty"`
-	Decides        bool                            `json:"decides,omitempty"`
-	Fallback       string                          `json:"fallback,omitempty"`
-	FallbackSource conversation.ChapterTitleSource `json:"fallbackSource,omitempty"`
-	ModelSource    conversation.ChapterTitleSource `json:"modelSource,omitempty"`
-	Evidence       []string                        `json:"evidence,omitempty"`
+	Opens          bool                                   `json:"opens,omitempty"`
+	Decides        bool                                   `json:"decides,omitempty"`
+	Fallback       string                                 `json:"fallback,omitempty"`
+	FallbackSource conversationchapter.ChapterTitleSource `json:"fallbackSource,omitempty"`
+	ModelSource    conversationchapter.ChapterTitleSource `json:"modelSource,omitempty"`
+	Evidence       []string                               `json:"evidence,omitempty"`
 	// NameEarlier is the turn of the chapter before, still named after its
 	// question: a chapter shows only once there is a second, so the first
 	// is named when the next one opens.
@@ -87,7 +87,7 @@ type RetitleChapterRequest struct {
 	ThreadID    pulid.ID
 	TenantInfo  pagination.TenantInfo
 	Title       string
-	TitleSource conversation.ChapterTitleSource
+	TitleSource conversationchapter.ChapterTitleSource
 	// Version, when set, refuses the rename if the chapter changed since the
 	// person read it; without it a person's own title is never replaced.
 	Version *int64
@@ -109,12 +109,15 @@ type TurnOfMessageRequest struct {
 }
 
 type ChapterRepository interface {
-	List(ctx context.Context, req ListChaptersRequest) ([]*conversation.Chapter, error)
-	Get(ctx context.Context, req GetChapterRequest) (*conversation.Chapter, error)
-	ForTurn(ctx context.Context, req ChapterForTurnRequest) (*conversation.Chapter, error)
+	List(ctx context.Context, req ListChaptersRequest) ([]*conversationchapter.Chapter, error)
+	Get(ctx context.Context, req GetChapterRequest) (*conversationchapter.Chapter, error)
+	ForTurn(ctx context.Context, req ChapterForTurnRequest) (*conversationchapter.Chapter, error)
 	Count(ctx context.Context, req ListChaptersRequest) (int, error)
-	Create(ctx context.Context, chapter *conversation.Chapter) (*conversation.Chapter, error)
-	Retitle(ctx context.Context, req RetitleChapterRequest) (*conversation.Chapter, error)
+	Create(
+		ctx context.Context,
+		chapter *conversationchapter.Chapter,
+	) (*conversationchapter.Chapter, error)
+	Retitle(ctx context.Context, req RetitleChapterRequest) (*conversationchapter.Chapter, error)
 	Delete(ctx context.Context, req DeleteChapterRequest) (bool, error)
 	TurnOfMessage(ctx context.Context, req TurnOfMessageRequest) (pulid.ID, error)
 }
@@ -149,7 +152,7 @@ type RemoveChapterRequest struct {
 }
 
 type ChapterSpan struct {
-	Chapter *conversation.Chapter
+	Chapter *conversationchapter.Chapter
 	// From is the sequence of the chapter's first message, and Through that
 	// of its last, nil while the chapter runs to the end of the conversation.
 	From    int
@@ -164,9 +167,9 @@ type ChapterSpanRequest struct {
 }
 
 type AssistantChapterService interface {
-	List(ctx context.Context, req ThreadChaptersRequest) ([]*conversation.Chapter, error)
-	Open(ctx context.Context, req OpenChapterRequest) (*conversation.Chapter, error)
-	Rename(ctx context.Context, req RenameChapterRequest) (*conversation.Chapter, error)
+	List(ctx context.Context, req ThreadChaptersRequest) ([]*conversationchapter.Chapter, error)
+	Open(ctx context.Context, req OpenChapterRequest) (*conversationchapter.Chapter, error)
+	Rename(ctx context.Context, req RenameChapterRequest) (*conversationchapter.Chapter, error)
 	Remove(ctx context.Context, req RemoveChapterRequest) error
 	Span(ctx context.Context, req ChapterSpanRequest) (*ChapterSpan, error)
 	Plan(ctx context.Context, req *ChapterTurnRequest) (*ChapterPlan, error)

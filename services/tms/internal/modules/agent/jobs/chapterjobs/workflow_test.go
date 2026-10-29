@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -52,8 +52,8 @@ func modelPlan(req assistantports.ChapterTurnRequest) *assistantports.ChapterPla
 		Turn:           req,
 		Opens:          true,
 		Fallback:       "Why is load 1200 late?",
-		FallbackSource: conversation.ChapterTitleQuestion,
-		ModelSource:    conversation.ChapterTitleModel,
+		FallbackSource: conversationchapter.ChapterTitleQuestion,
+		ModelSource:    conversationchapter.ChapterTitleModel,
 		Request: &llmports.StructuredCompletionRequest{
 			TenantInfo: tenant(),
 			SchemaName: "chapter_title",

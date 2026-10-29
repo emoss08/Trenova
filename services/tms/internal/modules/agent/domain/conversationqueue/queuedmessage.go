@@ -1,4 +1,4 @@
-package conversation
+package conversationqueue
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -63,7 +64,7 @@ type QueuedMessage struct {
 	Organization *tenant.Organization `json:"-"`
 	BusinessUnit *tenant.BusinessUnit `json:"-"`
 	User         *tenant.User         `json:"-" keel:"belongs:user_id"`
-	Thread       *Thread              `json:"-" keel:"belongs:thread_id"`
+	Thread       *conversation.Thread `json:"-" keel:"belongs:thread_id"`
 }
 
 func (m *QueuedMessage) Normalize() {

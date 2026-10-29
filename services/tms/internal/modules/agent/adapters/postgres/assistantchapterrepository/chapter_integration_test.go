@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -79,15 +81,15 @@ func (h *harness) turn(
 	t *testing.T,
 	thread *conversation.Thread,
 	createdAt int64,
-) *conversation.AssistantTurn {
+) *conversationturn.AssistantTurn {
 	t.Helper()
 
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		ThreadID:       thread.ID,
 		UserID:         h.tenant.UserID,
-		Origin:         conversation.AssistantTurnOriginPerson,
+		Origin:         conversationturn.AssistantTurnOriginPerson,
 		Status:         conversation.AssistantTurnStatusCompleted,
 		Input:          "question",
 		CreatedAt:      createdAt,
@@ -127,13 +129,13 @@ func (h *harness) say(
 
 func (h *harness) chapter(
 	t *testing.T,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	title string,
-	source conversation.ChapterTitleSource,
-) *conversation.Chapter {
+	source conversationchapter.ChapterTitleSource,
+) *conversationchapter.Chapter {
 	t.Helper()
 
-	created, err := h.repo.Create(h.ctx, &conversation.Chapter{
+	created, err := h.repo.Create(h.ctx, &conversationchapter.Chapter{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		ThreadID:       turn.ThreadID,
@@ -150,7 +152,7 @@ func (h *harness) list(
 	t *testing.T,
 	ctx context.Context,
 	threadID pulid.ID,
-) []*conversation.Chapter {
+) []*conversationchapter.Chapter {
 	t.Helper()
 
 	chapters, err := h.repo.List(ctx, assistantports.ListChaptersRequest{
@@ -162,7 +164,7 @@ func (h *harness) list(
 	return chapters
 }
 
-func chapterIDs(chapters []*conversation.Chapter) []pulid.ID {
+func chapterIDs(chapters []*conversationchapter.Chapter) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(chapters))
 	for _, chapter := range chapters {
 		ids = append(ids, chapter.ID)
@@ -182,12 +184,12 @@ func TestCreate_OpensOneChapterPerTurn(t *testing.T) {
 	turn := h.turn(t, thread, 1_000)
 	h.say(t, thread, turn.ID, "Which loads are late?", "Three are late.")
 
-	first := h.chapter(t, turn, "Late loads", conversation.ChapterTitleModel)
-	again := h.chapter(t, turn, "Something else", conversation.ChapterTitleQuestion)
+	first := h.chapter(t, turn, "Late loads", conversationchapter.ChapterTitleModel)
+	again := h.chapter(t, turn, "Something else", conversationchapter.ChapterTitleQuestion)
 
 	assert.Equal(t, first.ID, again.ID)
 	assert.Equal(t, "Late loads", again.Title)
-	assert.Equal(t, conversation.ChapterTitleModel, again.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleModel, again.TitleSource)
 
 	count, err := h.repo.Count(h.ctx, assistantports.ListChaptersRequest{
 		ThreadID:   thread.ID,
@@ -207,9 +209,14 @@ func TestList_OrdersChaptersByTheirTurnsAndSaysWhereEachStarts(t *testing.T) {
 	h.say(t, thread, "", "A card written outside any turn")
 	h.say(t, thread, secondTurn.ID, "Open the Acme dispute", "It is open.")
 
-	third := h.chapter(t, unanswered, "Detention policy", conversation.ChapterTitleQuestion)
-	second := h.chapter(t, secondTurn, "Acme invoice dispute", conversation.ChapterTitleModel)
-	first := h.chapter(t, firstTurn, "Late loads", conversation.ChapterTitlePerson)
+	third := h.chapter(t, unanswered, "Detention policy", conversationchapter.ChapterTitleQuestion)
+	second := h.chapter(
+		t,
+		secondTurn,
+		"Acme invoice dispute",
+		conversationchapter.ChapterTitleModel,
+	)
+	first := h.chapter(t, firstTurn, "Late loads", conversationchapter.ChapterTitlePerson)
 
 	chapters := h.list(t, h.ctx, thread.ID)
 
@@ -224,7 +231,7 @@ func TestList_OrdersChaptersByTheirTurnsAndSaysWhereEachStarts(t *testing.T) {
 	assert.Equal(t, []int64{1_000, 2_000, 3_000},
 		[]int64{chapters[0].StartedAt, chapters[1].StartedAt, chapters[2].StartedAt})
 	assert.Equal(t, "Late loads", chapters[0].Title)
-	assert.Equal(t, conversation.ChapterTitlePerson, chapters[0].TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitlePerson, chapters[0].TitleSource)
 
 	got, err := h.repo.Get(h.ctx, assistantports.GetChapterRequest{
 		ID:         second.ID,
@@ -257,8 +264,8 @@ func TestList_ReadsOnlyTheConversationsOwnChapters(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t)
 	elsewhere := h.thread(t)
-	h.chapter(t, h.turn(t, thread, 1_000), "Late loads", conversation.ChapterTitleModel)
-	h.chapter(t, h.turn(t, elsewhere, 1_000), "Acme", conversation.ChapterTitleModel)
+	h.chapter(t, h.turn(t, thread, 1_000), "Late loads", conversationchapter.ChapterTitleModel)
+	h.chapter(t, h.turn(t, elsewhere, 1_000), "Acme", conversationchapter.ChapterTitleModel)
 
 	chapters := h.list(t, h.ctx, thread.ID)
 
@@ -269,12 +276,17 @@ func TestList_ReadsOnlyTheConversationsOwnChapters(t *testing.T) {
 func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t)
-	named := h.chapter(t, h.turn(t, thread, 1_000), "My loads", conversation.ChapterTitlePerson)
+	named := h.chapter(
+		t,
+		h.turn(t, thread, 1_000),
+		"My loads",
+		conversationchapter.ChapterTitlePerson,
+	)
 	asked := h.chapter(
 		t,
 		h.turn(t, thread, 2_000),
 		"Which loads are late?",
-		conversation.ChapterTitleQuestion,
+		conversationchapter.ChapterTitleQuestion,
 	)
 
 	kept, err := h.repo.Retitle(h.ctx, assistantports.RetitleChapterRequest{
@@ -282,11 +294,11 @@ func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
 		Title:       "Late loads",
-		TitleSource: conversation.ChapterTitleModel,
+		TitleSource: conversationchapter.ChapterTitleModel,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "My loads", kept.Title)
-	assert.Equal(t, conversation.ChapterTitlePerson, kept.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitlePerson, kept.TitleSource)
 	assert.Equal(t, named.Version, kept.Version)
 
 	renamed, err := h.repo.Retitle(h.ctx, assistantports.RetitleChapterRequest{
@@ -294,11 +306,11 @@ func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
 		Title:       "Late loads",
-		TitleSource: conversation.ChapterTitleModel,
+		TitleSource: conversationchapter.ChapterTitleModel,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Late loads", renamed.Title)
-	assert.Equal(t, conversation.ChapterTitleModel, renamed.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleModel, renamed.TitleSource)
 	assert.Greater(
 		t,
 		renamed.Version,
@@ -310,7 +322,12 @@ func TestRetitle_AModelNeverReplacesAPersonsTitle(t *testing.T) {
 func TestRetitle_APersonRenamesTheVersionTheyRead(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t)
-	chapter := h.chapter(t, h.turn(t, thread, 1_000), "Late loads", conversation.ChapterTitleModel)
+	chapter := h.chapter(
+		t,
+		h.turn(t, thread, 1_000),
+		"Late loads",
+		conversationchapter.ChapterTitleModel,
+	)
 
 	read := chapter.Version
 	renamed, err := h.repo.Retitle(h.ctx, assistantports.RetitleChapterRequest{
@@ -318,19 +335,19 @@ func TestRetitle_APersonRenamesTheVersionTheyRead(t *testing.T) {
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
 		Title:       "Dallas lane",
-		TitleSource: conversation.ChapterTitlePerson,
+		TitleSource: conversationchapter.ChapterTitlePerson,
 		Version:     &read,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Dallas lane", renamed.Title)
-	assert.Equal(t, conversation.ChapterTitlePerson, renamed.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitlePerson, renamed.TitleSource)
 
 	_, err = h.repo.Retitle(h.ctx, assistantports.RetitleChapterRequest{
 		ID:          chapter.ID,
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
 		Title:       "Houston lane",
-		TitleSource: conversation.ChapterTitlePerson,
+		TitleSource: conversationchapter.ChapterTitlePerson,
 		Version:     &read,
 	})
 
@@ -353,7 +370,7 @@ func TestRetitle_AMissingChapterIsNotFound(t *testing.T) {
 		ThreadID:    thread.ID,
 		TenantInfo:  h.tenant,
 		Title:       "Late loads",
-		TitleSource: conversation.ChapterTitleModel,
+		TitleSource: conversationchapter.ChapterTitleModel,
 	})
 
 	assert.True(t, errortypes.IsNotFoundError(err))
@@ -362,8 +379,18 @@ func TestRetitle_AMissingChapterIsNotFound(t *testing.T) {
 func TestDelete_KeepPersonLeavesAChapterThePersonNamed(t *testing.T) {
 	h := newHarness(t)
 	thread := h.thread(t)
-	named := h.chapter(t, h.turn(t, thread, 1_000), "My loads", conversation.ChapterTitlePerson)
-	asked := h.chapter(t, h.turn(t, thread, 2_000), "Late loads", conversation.ChapterTitleQuestion)
+	named := h.chapter(
+		t,
+		h.turn(t, thread, 1_000),
+		"My loads",
+		conversationchapter.ChapterTitlePerson,
+	)
+	asked := h.chapter(
+		t,
+		h.turn(t, thread, 2_000),
+		"Late loads",
+		conversationchapter.ChapterTitleQuestion,
+	)
 
 	removed, err := h.repo.Delete(h.ctx, assistantports.DeleteChapterRequest{
 		ID:         named.ID,
@@ -444,7 +471,7 @@ func TestChapters_AnotherTenantSeesNone(t *testing.T) {
 	thread := h.thread(t)
 	turn := h.turn(t, thread, 1_000)
 	asked := h.say(t, thread, turn.ID, "Which loads are late?", "Three are late.")
-	chapter := h.chapter(t, turn, "Late loads", conversation.ChapterTitleModel)
+	chapter := h.chapter(t, turn, "Late loads", conversationchapter.ChapterTitleModel)
 
 	chapters, err := h.repo.List(h.other, assistantports.ListChaptersRequest{
 		ThreadID:   thread.ID,
@@ -487,7 +514,7 @@ func TestChapters_AnotherTenantSeesNone(t *testing.T) {
 		ThreadID:    thread.ID,
 		TenantInfo:  h.otherTenant,
 		Title:       "Taken",
-		TitleSource: conversation.ChapterTitlePerson,
+		TitleSource: conversationchapter.ChapterTitlePerson,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 

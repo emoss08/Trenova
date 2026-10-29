@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -88,20 +89,29 @@ func (r *sourceRepository) ListRuns(
 func (r *sourceRepository) ListTurns(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*conversation.AssistantTurn, error) {
+) ([]*conversationturn.AssistantTurn, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project assistant turns into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		turn := conversationdb.AssistantTurns
-		rows, err := keyset(turn.Query(), turn.UpdatedAt, turn.ID, page).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			turn := conversationdb.AssistantTurns
+			rows, err := keyset(
+				turn.Query(),
+				turn.UpdatedAt,
+				turn.ID,
+				page,
+			).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) ListUsage(
@@ -232,66 +242,78 @@ func (r *sourceRepository) TurnsByIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if len(ids) == 0 {
-			return []*conversation.AssistantTurn{}, nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if len(ids) == 0 {
+				return []*conversationturn.AssistantTurn{}, nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.Where(turn.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns by id: %w", err)
-		}
+			turn := conversationdb.AssistantTurns
+			rows, err := turn.Where(turn.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns by id: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) TurnsByRunIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	runIDs []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if len(runIDs) == 0 {
-			return []*conversation.AssistantTurn{}, nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if len(runIDs) == 0 {
+				return []*conversationturn.AssistantTurn{}, nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.Where(turn.RunID.In(runIDs...)).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns by run: %w", err)
-		}
+			turn := conversationdb.AssistantTurns
+			rows, err := turn.Where(turn.RunID.In(runIDs...)).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns by run: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) TurnsInWindow(
 	ctx context.Context,
 	req *aiauditports.AIAuditTurnWindow,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if req == nil || len(req.ThreadIDs) == 0 {
-			return make([]*conversation.AssistantTurn, 0), nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if req == nil || len(req.ThreadIDs) == 0 {
+				return make([]*conversationturn.AssistantTurn, 0), nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.
-			Where(
-				turn.ThreadID.In(req.ThreadIDs...),
-				turn.StartedAt.Lte(req.To),
-				keel.Or(turn.CompletedAt.IsNull(), turn.CompletedAt.Gte(req.From)),
-			).
-			Order(turn.StartedAt.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns in a window: %w", err)
-		}
+			turn := conversationdb.AssistantTurns
+			rows, err := turn.
+				Where(
+					turn.ThreadID.In(req.ThreadIDs...),
+					turn.StartedAt.Lte(req.To),
+					keel.Or(turn.CompletedAt.IsNull(), turn.CompletedAt.Gte(req.From)),
+				).
+				Order(turn.StartedAt.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns in a window: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) ThreadsByIDs(

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -216,7 +217,7 @@ func (s *Service) runMessages(
 		for idx := range run.Transcript.Messages {
 			messages = append(
 				messages,
-				conversation.MessageOfTranscript(&run.Transcript.Messages[idx]),
+				conversationtranscript.MessageOfTranscript(&run.Transcript.Messages[idx]),
 			)
 		}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -146,9 +147,9 @@ func (s *Service) PrepareCompaction(
 		return nil, errNothingToCompact()
 	}
 
-	kept := []string{conversation.KeptRecent}
+	kept := []string{conversationreplay.KeptRecent}
 	if len(pendingProposals(outcomes)) > 0 {
-		kept = append(kept, conversation.KeptApprovals)
+		kept = append(kept, conversationreplay.KeptApprovals)
 	}
 
 	return &CompactionPlan{

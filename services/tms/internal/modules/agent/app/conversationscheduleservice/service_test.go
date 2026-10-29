@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -218,17 +219,17 @@ func (f *fakePermissions) MayUseAgent(
 }
 
 type fakeTurns struct {
-	active  *conversation.AssistantTurn
+	active  *conversationturn.AssistantTurn
 	started []assistantturnservice.StartRequest
 }
 
 func (f *fakeTurns) StartTurn(
 	_ context.Context,
 	req assistantturnservice.StartRequest,
-	start func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
+	start func(turn *conversationturn.AssistantTurn) (string, error),
+) (*conversationturn.AssistantTurn, error) {
 	f.started = append(f.started, req)
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:       pulid.MustNew("atrn_"),
 		ThreadID: req.ThreadID,
 		UserID:   req.UserID,
@@ -245,7 +246,7 @@ func (f *fakeTurns) StartTurn(
 func (f *fakeTurns) Active(
 	_ context.Context,
 	_ assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
 
@@ -882,7 +883,7 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 
 	require.Len(t, f.turns.started, 1)
 	started := f.turns.started[0]
-	assert.Equal(t, conversation.AssistantTurnOriginScheduled, started.Origin)
+	assert.Equal(t, conversationturn.AssistantTurnOriginScheduled, started.Origin)
 	assert.Equal(t, f.thread.ID, started.ThreadID)
 	assert.Equal(t, f.thread.UserID, started.UserID)
 	assert.Equal(t, "What's blocking the billing queue?", started.Input)
@@ -971,7 +972,7 @@ func TestFire_StartsNothingItShouldNot(t *testing.T) {
 		t.Parallel()
 		f := newFixture()
 		created := f.create(t, "every day check loads").Schedule
-		f.turns.active = &conversation.AssistantTurn{ID: pulid.MustNew("atrn_")}
+		f.turns.active = &conversationturn.AssistantTurn{ID: pulid.MustNew("atrn_")}
 		_, err := fire(f, created.ID)
 		require.True(t, errors.Is(err, ErrConversationBusy))
 		assert.Empty(t, f.turns.started)
@@ -990,7 +991,7 @@ func TestRunNow_ReturnsTheTurnToWatch(t *testing.T) {
 
 	turn, err := f.service.RunNow(t.Context(), f.request(created.ID))
 	require.NoError(t, err)
-	assert.Equal(t, conversation.AssistantTurnOriginScheduled, turn.Origin)
+	assert.Equal(t, conversationturn.AssistantTurnOriginScheduled, turn.Origin)
 	assert.Equal(t, turn.ID, f.schedules.rows[created.ID].LastTurnID)
 
 	f.turns.active = turn

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
@@ -17,9 +19,9 @@ import (
 )
 
 type fakeChapters struct {
-	chapters []*conversation.Chapter
+	chapters []*conversationchapter.Chapter
 	turnOf   map[pulid.ID]pulid.ID
-	created  []*conversation.Chapter
+	created  []*conversationchapter.Chapter
 	retitled []assistantports.RetitleChapterRequest
 	deleted  []assistantports.DeleteChapterRequest
 }
@@ -27,14 +29,14 @@ type fakeChapters struct {
 func (f *fakeChapters) List(
 	context.Context,
 	assistantports.ListChaptersRequest,
-) ([]*conversation.Chapter, error) {
+) ([]*conversationchapter.Chapter, error) {
 	return slices.Clone(f.chapters), nil
 }
 
 func (f *fakeChapters) Get(
 	_ context.Context,
 	req assistantports.GetChapterRequest,
-) (*conversation.Chapter, error) {
+) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.ID == req.ID {
 			return chapter, nil
@@ -47,7 +49,7 @@ func (f *fakeChapters) Get(
 func (f *fakeChapters) ForTurn(
 	_ context.Context,
 	req assistantports.ChapterForTurnRequest,
-) (*conversation.Chapter, error) {
+) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.TurnID == req.TurnID {
 			return chapter, nil
@@ -63,8 +65,8 @@ func (f *fakeChapters) Count(context.Context, assistantports.ListChaptersRequest
 
 func (f *fakeChapters) Create(
 	_ context.Context,
-	chapter *conversation.Chapter,
-) (*conversation.Chapter, error) {
+	chapter *conversationchapter.Chapter,
+) (*conversationchapter.Chapter, error) {
 	if chapter.ID.IsNil() {
 		chapter.ID = pulid.MustNew("achp_")
 	}
@@ -77,7 +79,7 @@ func (f *fakeChapters) Create(
 func (f *fakeChapters) Retitle(
 	_ context.Context,
 	req assistantports.RetitleChapterRequest,
-) (*conversation.Chapter, error) {
+) (*conversationchapter.Chapter, error) {
 	f.retitled = append(f.retitled, req)
 	for _, chapter := range f.chapters {
 		if chapter.ID == req.ID {
@@ -96,9 +98,9 @@ func (f *fakeChapters) Delete(
 	req assistantports.DeleteChapterRequest,
 ) (bool, error) {
 	f.deleted = append(f.deleted, req)
-	idx := slices.IndexFunc(f.chapters, func(c *conversation.Chapter) bool {
+	idx := slices.IndexFunc(f.chapters, func(c *conversationchapter.Chapter) bool {
 		return c.ID == req.ID &&
-			(!req.KeepPerson || c.TitleSource != conversation.ChapterTitlePerson)
+			(!req.KeepPerson || c.TitleSource != conversationchapter.ChapterTitlePerson)
 	})
 	if idx < 0 {
 		return false, nil
@@ -155,13 +157,13 @@ func (f *fakeConversations) ListMessages(
 type fakeTurns struct {
 	assistantports.AssistantTurnRepository
 
-	turns map[pulid.ID]*conversation.AssistantTurn
+	turns map[pulid.ID]*conversationturn.AssistantTurn
 }
 
 func (f *fakeTurns) GetByID(
 	_ context.Context,
 	req assistantports.GetAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	turn, ok := f.turns[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Turn not found")
@@ -236,7 +238,7 @@ func newFixture(t *testing.T) *fixture {
 			thread: thread,
 			byTurn: map[pulid.ID][]conversation.Message{},
 		},
-		turns:     &fakeTurns{turns: map[pulid.ID]*conversation.AssistantTurn{}},
+		turns:     &fakeTurns{turns: map[pulid.ID]*conversationturn.AssistantTurn{}},
 		control:   &agentcontrol.AgentControl{},
 		scheduler: &fakeScheduler{},
 		realtime:  &fakeRealtime{},
@@ -257,11 +259,11 @@ func newFixture(t *testing.T) *fixture {
 }
 
 func (f *fixture) turn(
-	origin conversation.AssistantTurnOrigin,
+	origin conversationturn.AssistantTurnOrigin,
 	status conversation.AssistantTurnStatus,
 	input string,
-) *conversation.AssistantTurn {
-	turn := &conversation.AssistantTurn{
+) *conversationturn.AssistantTurn {
+	turn := &conversationturn.AssistantTurn{
 		ID:             pulid.MustNew("atrn_"),
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
@@ -279,10 +281,10 @@ func (f *fixture) turn(
 func (f *fixture) chapter(
 	turnID pulid.ID,
 	title string,
-	source conversation.ChapterTitleSource,
+	source conversationchapter.ChapterTitleSource,
 	start *int64,
-) *conversation.Chapter {
-	chapter := &conversation.Chapter{
+) *conversationchapter.Chapter {
+	chapter := &conversationchapter.Chapter{
 		ID:             pulid.MustNew("achp_"),
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,

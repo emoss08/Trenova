@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -26,13 +28,13 @@ import (
 )
 
 type memoryQueue struct {
-	items    []*conversation.QueuedMessage
+	items    []*conversationqueue.QueuedMessage
 	restored []pulid.ID
 }
 
-func (q *memoryQueue) sorted() []*conversation.QueuedMessage {
+func (q *memoryQueue) sorted() []*conversationqueue.QueuedMessage {
 	out := slices.Clone(q.items)
-	slices.SortFunc(out, func(a, b *conversation.QueuedMessage) int {
+	slices.SortFunc(out, func(a, b *conversationqueue.QueuedMessage) int {
 		return cmp.Compare(a.Position, b.Position)
 	})
 
@@ -42,8 +44,8 @@ func (q *memoryQueue) sorted() []*conversation.QueuedMessage {
 func (q *memoryQueue) List(
 	_ context.Context,
 	scope *assistantports.AssistantQueueScope,
-) ([]*conversation.QueuedMessage, error) {
-	out := make([]*conversation.QueuedMessage, 0, len(q.items))
+) ([]*conversationqueue.QueuedMessage, error) {
+	out := make([]*conversationqueue.QueuedMessage, 0, len(q.items))
 	for _, item := range q.sorted() {
 		if item.ThreadID == scope.ThreadID {
 			out = append(out, item)
@@ -56,7 +58,7 @@ func (q *memoryQueue) List(
 func (q *memoryQueue) Get(
 	_ context.Context,
 	req *assistantports.QueuedMessageRequest,
-) (*conversation.QueuedMessage, error) {
+) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
 			copied := *item
@@ -72,12 +74,12 @@ func (q *memoryQueue) Get(
 
 func (q *memoryQueue) Insert(
 	_ context.Context,
-	entity *conversation.QueuedMessage,
-) (*conversation.QueuedMessage, error) {
-	if len(q.items) >= conversation.MaxQueuedPerThread {
+	entity *conversationqueue.QueuedMessage,
+) (*conversationqueue.QueuedMessage, error) {
+	if len(q.items) >= conversationqueue.MaxQueuedPerThread {
 		return nil, assistantports.ErrQueueFull
 	}
-	entity.ID = pulid.MustNew(conversation.QueuedMessageIDPrefix)
+	entity.ID = pulid.MustNew(conversationqueue.QueuedMessageIDPrefix)
 	entity.Position = int64(len(q.items) + 1)
 	q.items = append(q.items, entity)
 
@@ -86,8 +88,8 @@ func (q *memoryQueue) Insert(
 
 func (q *memoryQueue) Update(
 	_ context.Context,
-	entity *conversation.QueuedMessage,
-) (*conversation.QueuedMessage, error) {
+	entity *conversationqueue.QueuedMessage,
+) (*conversationqueue.QueuedMessage, error) {
 	for idx, item := range q.items {
 		if item.ID == entity.ID {
 			q.items[idx] = entity
@@ -101,7 +103,7 @@ func (q *memoryQueue) Update(
 func (q *memoryQueue) MarkSteer(
 	ctx context.Context,
 	req *assistantports.QueuedMessageRequest,
-) (*conversation.QueuedMessage, error) {
+) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
 			item.Steer = true
@@ -112,7 +114,7 @@ func (q *memoryQueue) MarkSteer(
 }
 
 func (q *memoryQueue) Delete(_ context.Context, req *assistantports.QueuedMessageRequest) error {
-	q.items = slices.DeleteFunc(q.items, func(item *conversation.QueuedMessage) bool {
+	q.items = slices.DeleteFunc(q.items, func(item *conversationqueue.QueuedMessage) bool {
 		return item.ID == req.ID
 	})
 
@@ -123,7 +125,7 @@ func (q *memoryQueue) DeleteMany(
 	_ context.Context,
 	req *assistantports.DeleteQueuedMessagesRequest,
 ) error {
-	q.items = slices.DeleteFunc(q.items, func(item *conversation.QueuedMessage) bool {
+	q.items = slices.DeleteFunc(q.items, func(item *conversationqueue.QueuedMessage) bool {
 		return slices.Contains(req.IDs, item.ID)
 	})
 
@@ -133,7 +135,7 @@ func (q *memoryQueue) DeleteMany(
 func (q *memoryQueue) Reorder(
 	_ context.Context,
 	req *assistantports.ReorderQueuedMessagesRequest,
-) ([]*conversation.QueuedMessage, error) {
+) ([]*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		item.Position = int64(slices.Index(req.IDs, item.ID) + 1)
 	}
@@ -144,10 +146,10 @@ func (q *memoryQueue) Reorder(
 func (q *memoryQueue) ClaimNext(
 	_ context.Context,
 	scope *assistantports.AssistantQueueScope,
-) (*conversation.QueuedMessage, error) {
+) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.sorted() {
 		if item.ThreadID == scope.ThreadID {
-			q.items = slices.DeleteFunc(q.items, func(known *conversation.QueuedMessage) bool {
+			q.items = slices.DeleteFunc(q.items, func(known *conversationqueue.QueuedMessage) bool {
 				return known.ID == item.ID
 			})
 			return item, nil
@@ -160,10 +162,10 @@ func (q *memoryQueue) ClaimNext(
 func (q *memoryQueue) Claim(
 	_ context.Context,
 	req *assistantports.QueuedMessageRequest,
-) (*conversation.QueuedMessage, error) {
+) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
-			q.items = slices.DeleteFunc(q.items, func(known *conversation.QueuedMessage) bool {
+			q.items = slices.DeleteFunc(q.items, func(known *conversationqueue.QueuedMessage) bool {
 				return known.ID == req.ID
 			})
 			return item, nil
@@ -173,7 +175,7 @@ func (q *memoryQueue) Claim(
 	return nil, assistantports.ErrQueueEmpty
 }
 
-func (q *memoryQueue) Restore(_ context.Context, entity *conversation.QueuedMessage) error {
+func (q *memoryQueue) Restore(_ context.Context, entity *conversationqueue.QueuedMessage) error {
 	q.restored = append(q.restored, entity.ID)
 	q.items = append(q.items, entity)
 
@@ -181,7 +183,7 @@ func (q *memoryQueue) Restore(_ context.Context, entity *conversation.QueuedMess
 }
 
 type fakeTurns struct {
-	active   *conversation.AssistantTurn
+	active   *conversationturn.AssistantTurn
 	startErr error
 	started  []assistantturnservice.StartRequest
 }
@@ -189,19 +191,19 @@ type fakeTurns struct {
 func (f *fakeTurns) Active(
 	context.Context,
 	assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
 
 func (f *fakeTurns) StartTurn(
 	_ context.Context,
 	req assistantturnservice.StartRequest,
-	start func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
+	start func(turn *conversationturn.AssistantTurn) (string, error),
+) (*conversationturn.AssistantTurn, error) {
 	if f.startErr != nil {
 		return nil, f.startErr
 	}
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:             pulid.MustNew("atrn_"),
 		ThreadID:       req.ThreadID,
 		UserID:         req.UserID,
@@ -314,11 +316,11 @@ func newHarness() *harness {
 	return h
 }
 
-func (h *harness) running() *conversation.AssistantTurn {
-	h.turns.active = &conversation.AssistantTurn{
+func (h *harness) running() *conversationturn.AssistantTurn {
+	h.turns.active = &conversationturn.AssistantTurn{
 		ID:       pulid.MustNew("atrn_"),
 		ThreadID: h.scope.ThreadID,
-		Origin:   conversation.AssistantTurnOriginPerson,
+		Origin:   conversationturn.AssistantTurnOriginPerson,
 	}
 
 	return h.turns.active
@@ -346,7 +348,7 @@ func TestEnqueue_SteersTheReplyUnderWay(t *testing.T) {
 	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "  Actually the carrier is Werner.  ",
-		Request: conversation.QueuedRequest{
+		Request: conversationqueue.QueuedRequest{
 			Mentions: []agentpagecontext.EntityRef{
 				{Type: "carrier", ID: pulid.MustNew("car_").String(), Label: "Werner"},
 			},
@@ -397,7 +399,7 @@ func TestEnqueue_AFreeConversationSendsTheMessageAtOnce(t *testing.T) {
 	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Re-rate the Acme loads.",
-		Request: conversation.QueuedRequest{ProviderID: providerID, ProviderChosen: true},
+		Request: conversationqueue.QueuedRequest{ProviderID: providerID, ProviderChosen: true},
 		Steer:   true,
 	})
 
@@ -406,7 +408,7 @@ func TestEnqueue_AFreeConversationSendsTheMessageAtOnce(t *testing.T) {
 	assert.Nil(t, outcome.Item, "the message became the turn")
 	assert.Empty(t, h.queue.items)
 	require.Len(t, h.turns.started, 1)
-	assert.Equal(t, conversation.AssistantTurnOriginPerson, h.turns.started[0].Origin)
+	assert.Equal(t, conversationturn.AssistantTurnOriginPerson, h.turns.started[0].Origin)
 	assert.Equal(t, "Re-rate the Acme loads.", h.turns.started[0].Input)
 	assert.Empty(t, h.workflows.signals)
 }
@@ -420,7 +422,7 @@ func TestEnqueue_RefusesFilesOnASteerAndAnEmptyMessage(t *testing.T) {
 	_, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Read this",
-		Request: conversation.QueuedRequest{
+		Request: conversationqueue.QueuedRequest{
 			AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")},
 		},
 		Steer: true,
@@ -562,7 +564,7 @@ func TestSendNow_RefusesToSteerWithFiles(t *testing.T) {
 	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Read the POD",
-		Request: conversation.QueuedRequest{
+		Request: conversationqueue.QueuedRequest{
 			AttachmentDocumentIDs: []pulid.ID{pulid.MustNew("doc_")},
 		},
 	})
@@ -585,7 +587,7 @@ func TestEnqueue_AStepForAnotherAgentWaitsRatherThanSteers(t *testing.T) {
 	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
-		Request: conversation.QueuedRequest{DirectedAgentID: agentID},
+		Request: conversationqueue.QueuedRequest{DirectedAgentID: agentID},
 		Steer:   true,
 	})
 
@@ -606,7 +608,7 @@ func TestSendNow_RefusesToSteerAStepForAnotherAgent(t *testing.T) {
 	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
-		Request: conversation.QueuedRequest{DirectedAgentID: pulid.MustNew("agdef_")},
+		Request: conversationqueue.QueuedRequest{DirectedAgentID: pulid.MustNew("agdef_")},
 	})
 	require.NoError(t, err)
 
@@ -626,7 +628,7 @@ func TestEnqueue_AStepForAnotherAgentStartsItsTurnDirected(t *testing.T) {
 	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
 		Scope:   h.scope,
 		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
-		Request: conversation.QueuedRequest{DirectedAgentID: agentID},
+		Request: conversationqueue.QueuedRequest{DirectedAgentID: agentID},
 	})
 
 	require.NoError(t, err)

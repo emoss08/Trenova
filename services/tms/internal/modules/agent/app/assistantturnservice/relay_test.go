@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,20 +18,20 @@ import (
 // stubTurns is the turn's record. Status is what a re-read returns, which is
 // how the relay learns a turn ended without saying so.
 type stubTurns struct {
-	turn *conversation.AssistantTurn
+	turn *conversationturn.AssistantTurn
 	err  error
 	gets int
 }
 
 func (s *stubTurns) Start(
-	context.Context, *conversation.AssistantTurn,
-) (*conversation.AssistantTurn, error) {
+	context.Context, *conversationturn.AssistantTurn,
+) (*conversationturn.AssistantTurn, error) {
 	return s.turn, nil
 }
 
 func (s *stubTurns) GetByID(
 	context.Context, assistantports.GetAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	s.gets++
 	if s.err != nil {
 		return nil, s.err
@@ -41,7 +42,7 @@ func (s *stubTurns) GetByID(
 
 func (s *stubTurns) Active(
 	context.Context, assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
@@ -94,8 +95,8 @@ func newRelay(turns *stubTurns, reader *stubReader) *Service {
 	return &Service{l: zap.NewNop(), turns: turns, reader: reader}
 }
 
-func runningTurn() *conversation.AssistantTurn {
-	return &conversation.AssistantTurn{
+func runningTurn() *conversationturn.AssistantTurn {
+	return &conversationturn.AssistantTurn{
 		ID:             pulid.MustNew("atrn_"),
 		ThreadID:       pulid.MustNew("athr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -108,7 +109,7 @@ func runningTurn() *conversation.AssistantTurn {
 func collect(
 	t *testing.T,
 	svc *Service,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 ) []assistantports.TurnStreamFrame {
 	t.Helper()
 
@@ -157,7 +158,7 @@ func TestRelay_ClosesAReaderWhoseTurnClosedBeforeTheyCaughtUp(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	record := &conversation.AssistantTurn{
+	record := &conversationturn.AssistantTurn{
 		ID:       turn.ID,
 		ThreadID: turn.ThreadID,
 		Status:   conversation.AssistantTurnStatusCompleted,
@@ -265,7 +266,7 @@ func TestRelay_FollowsATurnWhoseStartWasNotRecorded(t *testing.T) {
 	seen := collect(t, svc, turn)
 
 	assert.Equal(t, 1, reader.reads)
-	assert.Equal(t, conversation.AssistantTurnWorkflowID(turn.ID), reader.ref.WorkflowID)
+	assert.Equal(t, conversationturn.AssistantTurnWorkflowID(turn.ID), reader.ref.WorkflowID)
 	require.Len(t, seen, 2)
 }
 

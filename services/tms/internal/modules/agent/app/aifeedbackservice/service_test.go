@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -26,7 +27,7 @@ type conversationFixture struct {
 	question conversation.Message
 	tool     conversation.Message
 	answer   conversation.Message
-	turn     *conversation.AssistantTurn
+	turn     *conversationturn.AssistantTurn
 }
 
 func newConversation(owner pulid.ID) conversationFixture {
@@ -64,7 +65,7 @@ func newConversation(owner pulid.ID) conversationFixture {
 			Model:      "claude-opus",
 			ProviderID: pulid.MustNew("aip_"),
 		},
-		turn: &conversation.AssistantTurn{
+		turn: &conversationturn.AssistantTurn{
 			ID:    pulid.MustNew("atrn_"),
 			RunID: pulid.MustNew("arun_"),
 		},
@@ -479,7 +480,11 @@ func TestListMine_IsScopedToTheCallerAndBounded(t *testing.T) {
 	tenant := testTenant()
 	actor := person(tenant)
 
-	targets := make([]aifeedbackports.AIFeedbackTargetRef, 0, aifeedbackports.MaxAIFeedbackTargetsPerRead+1)
+	targets := make(
+		[]aifeedbackports.AIFeedbackTargetRef,
+		0,
+		aifeedbackports.MaxAIFeedbackTargetsPerRead+1,
+	)
 	for range aifeedbackports.MaxAIFeedbackTargetsPerRead + 1 {
 		targets = append(targets, aifeedbackports.AIFeedbackTargetRef{
 			TargetType: aifeedback.TargetAssistantMessage,

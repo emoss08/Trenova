@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -59,8 +60,8 @@ type turnStarter interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
 func New(p Params) assistantports.DecisionFollowUps {
@@ -135,26 +136,30 @@ func (s *Service) FollowUp(ctx context.Context, req assistantports.DecisionFollo
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: req.TenantInfo,
-		Origin:     conversation.AssistantTurnOriginDecisionFollowUp,
+		Origin:     conversationturn.AssistantTurnOriginDecisionFollowUp,
 	}
 
 	// A worker answers it like any other turn, so the report survives the
 	// request that decided and can be watched and stopped like any reply.
-	_, err = s.turns.StartTurn(ctx, start, func(turn *conversation.AssistantTurn) (string, error) {
-		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantcontract.TurnStart{
-				Actor: actor,
-				Request: assistantcontract.AssistantTurnRequest{
-					FollowUpProposalID: req.ProposalID,
-					FollowUpPlanID:     req.PlanID,
-				},
-			})
-		if startErr != nil {
-			return "", startErr
-		}
+	_, err = s.turns.StartTurn(
+		ctx,
+		start,
+		func(turn *conversationturn.AssistantTurn) (string, error) {
+			run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+				assistantcontract.TurnStart{
+					Actor: actor,
+					Request: assistantcontract.AssistantTurnRequest{
+						FollowUpProposalID: req.ProposalID,
+						FollowUpPlanID:     req.PlanID,
+					},
+				})
+			if startErr != nil {
+				return "", startErr
+			}
 
-		return run.GetID(), nil
-	})
+			return run.GetID(), nil
+		},
+	)
 	if err != nil {
 		s.logStartFailure(start, err)
 	}

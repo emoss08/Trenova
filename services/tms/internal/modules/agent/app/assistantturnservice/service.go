@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -72,7 +73,7 @@ type StartRequest struct {
 	TenantInfo pagination.TenantInfo
 	// Origin and Input say what the turn answers. An empty origin is a
 	// person's question.
-	Origin conversation.AssistantTurnOrigin
+	Origin conversationturn.AssistantTurnOrigin
 	Input  string
 }
 
@@ -84,14 +85,14 @@ type StartRequest struct {
 func (s *Service) Start(
 	ctx context.Context,
 	req StartRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	if err := s.assertPlanAllows(ctx, req); err != nil {
 		return nil, err
 	}
 
 	id := pulid.MustNew("atrn_")
 	anchor := aitrace.AnchorFor(aitrace.AnchorAssistantTurn, id.String())
-	turn, err := s.turns.Start(ctx, &conversation.AssistantTurn{
+	turn, err := s.turns.Start(ctx, &conversationturn.AssistantTurn{
 		ID:             id,
 		TraceID:        anchor.TraceID.String(),
 		OrganizationID: req.TenantInfo.OrgID,
@@ -117,13 +118,13 @@ func (s *Service) Start(
 
 func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error {
 	switch req.Origin {
-	case "", conversation.AssistantTurnOriginPerson:
+	case "", conversationturn.AssistantTurnOriginPerson:
 		return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 			TenantInfo: req.TenantInfo,
 			Meter:      platformcatalog.MeterAIAssistantMessages,
 			Quantity:   1,
 		})
-	case conversation.AssistantTurnOriginScheduled:
+	case conversationturn.AssistantTurnOriginScheduled:
 		return planservice.RequireCapability(
 			ctx,
 			s.plans,
@@ -139,7 +140,7 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 func (s *Service) Active(
 	ctx context.Context,
 	req assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return s.turns.Active(ctx, req)
 }
 
@@ -157,7 +158,7 @@ func (s *Service) ListLive(
 func (s *Service) Get(
 	ctx context.Context,
 	req assistantports.GetAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return s.turns.GetByID(ctx, req)
 }
 
@@ -165,7 +166,7 @@ func (s *Service) Get(
 // is over. It reports a failure to close, for a caller that retries.
 func (s *Service) Close(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	status conversation.AssistantTurnStatus,
 	message string,
 ) error {
@@ -187,7 +188,7 @@ func (s *Service) Close(
 // Complete closes the turn's record.
 func (s *Service) Complete(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	status conversation.AssistantTurnStatus,
 	cause error,
 ) {
@@ -232,11 +233,11 @@ func StatusFor(refused bool, cause error) conversation.AssistantTurnStatus {
 	}
 }
 
-func tenantOf(turn *conversation.AssistantTurn) pagination.TenantInfo {
+func tenantOf(turn *conversationturn.AssistantTurn) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID}
 }
 
-func streamRef(turn *conversation.AssistantTurn) assistantports.TurnStreamRef {
+func streamRef(turn *conversationturn.AssistantTurn) assistantports.TurnStreamRef {
 	return assistantports.TurnStreamRef{
 		TenantInfo: tenantOf(turn),
 		TurnID:     turn.ID,
@@ -253,8 +254,8 @@ func streamRef(turn *conversation.AssistantTurn) assistantports.TurnStreamRef {
 func (s *Service) StartTurn(
 	ctx context.Context,
 	req StartRequest,
-	start func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
+	start func(turn *conversationturn.AssistantTurn) (string, error),
+) (*conversationturn.AssistantTurn, error) {
 	turn, err := s.Start(ctx, req)
 	if err != nil {
 		return nil, err
@@ -283,7 +284,7 @@ func (s *Service) StartTurn(
 	return turn, nil
 }
 
-func (s *Service) cueChapter(ctx context.Context, turn *conversation.AssistantTurn) {
+func (s *Service) cueChapter(ctx context.Context, turn *conversationturn.AssistantTurn) {
 	if s.chapters == nil {
 		return
 	}
@@ -305,7 +306,7 @@ var ErrNoExecution = assistantports.ErrNoTurnExecution
 //
 // Closing a reader stops nothing: the turn runs on a worker, and bills for it.
 // So stopping is asked for explicitly, and cancels the turn's workflow.
-func (s *Service) Stop(ctx context.Context, turn *conversation.AssistantTurn) error {
+func (s *Service) Stop(ctx context.Context, turn *conversationturn.AssistantTurn) error {
 	if turn.Status.Terminal() {
 		// Already over. Saying so beats reporting a failure for something the
 		// person got what they wanted from.

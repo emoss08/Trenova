@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -82,7 +83,7 @@ func MeasureContext(req ContextRequest) conversation.ContextUsage {
 	// What a compaction would summarize is everything but the newest turns,
 	// measured as what replaying those turns alone would leave out.
 	if older, _ := SplitForCompaction(req.History); len(older) > 0 {
-		ordered := conversation.ReplayOrder(req.History)
+		ordered := conversationreplay.ReplayOrder(req.History)
 		recent, _ := replayHistory(ordered[len(older):], req.Proposals)
 		usage.Compactable = max(0, replayTokens(messages)-replayTokens(recent))
 	}
@@ -98,7 +99,7 @@ func MeasureContext(req ContextRequest) conversation.ContextUsage {
 func SplitForCompaction(
 	history []conversation.Message,
 ) (older []conversation.Message, through int) {
-	ordered := conversation.ReplayOrder(history)
+	ordered := conversationreplay.ReplayOrder(history)
 	cut := recentTurnStart(ordered, CompactionKeepTurns)
 	if cut <= 0 {
 		return nil, 0

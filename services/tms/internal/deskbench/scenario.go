@@ -12,7 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
@@ -212,9 +212,9 @@ func (s *Step) validateAttach(where string, decides bool) error {
 	switch {
 	case decides && len(s.Attach) > 0:
 		return fmt.Errorf("%s: attach belongs on a say step, the message the files go with", where)
-	case len(s.Attach) > conversation.MaxMessageAttachments:
+	case len(s.Attach) > conversationqueue.MaxMessageAttachments:
 		return fmt.Errorf("%s: a message carries at most %d files",
-			where, conversation.MaxMessageAttachments)
+			where, conversationqueue.MaxMessageAttachments)
 	default:
 		return nil
 	}

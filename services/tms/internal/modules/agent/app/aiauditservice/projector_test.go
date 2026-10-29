@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -70,11 +71,11 @@ func newScenario() *scenario {
 			ID: s.thread, OrganizationID: org, BusinessUnitID: bu,
 			UserID: s.user, AgentDefinitionID: s.agentID,
 		}},
-		turns: []*conversation.AssistantTurn{{
+		turns: []*conversationturn.AssistantTurn{{
 			ID: s.turn, OrganizationID: org, BusinessUnitID: bu,
 			ThreadID: s.thread, UserID: s.user, RunID: s.run,
 			Status:    conversation.AssistantTurnStatusCompleted,
-			Origin:    conversation.AssistantTurnOriginPerson,
+			Origin:    conversationturn.AssistantTurnOriginPerson,
 			StartedAt: testNow - 1000, CompletedAt: i64(testNow - 900),
 			Fingerprint: &agentfingerprint.Fingerprint{DefinitionVersion: 3},
 			TraceID:     "4bf92f3577b34da6a3ce929d0e0e4736",

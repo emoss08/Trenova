@@ -1463,7 +1463,7 @@ The bench scores the matching against labelled questions with `trenova desk rout
 ### Steering and the queue
 
 A person can talk to a conversation while its agent is still working. What they
-type goes to `assistant_queued_messages` (`conversation.QueuedMessage`), one row
+type goes to `assistant_queued_messages` (`conversationqueue.QueuedMessage`), one row
 per message in send order, through `assistantqueueservice` and the
 `/assistant/threads/:threadID/queue/` routes. The queue lives in the database so
 it survives a reload, another tab, and a restart of anything working on the
@@ -2379,7 +2379,7 @@ its chapter land in cannot race.
 
 The model is `aitask.TaskChapterTitling`, which borrows the Desk's own providers when none is
 routed, at temperature 0, with no reasoning setting sent (so a model that cannot reason, such as GPT-4.1 nano, is never refused), a 4-second hedge and 80 tokens, attributed to
-`aiusage.FeatureConversationChapters`. Its title is cleaned (`conversation.CleanChapterTitle`)
+`aiusage.FeatureConversationChapters`. Its title is cleaned (`conversationchapter.CleanChapterTitle`)
 and refused when it names a number the question, reply or recent turns do not hold
 (`numberguard`); a refused or missing answer opens nothing for a decision and falls back to the
 question for a chapter that must open. `TitleSource` says who named it; `Person` is never
@@ -2396,7 +2396,7 @@ transcript heads each chapter. The client draws the heading and rail
 again read as the title regenerating), finds the chapter in view from `data-chapter-turn`
 (`useChapterNav`), and counts each chapter's work from the lists it already holds, by time.
 
-A conversation holds at most `conversation.MaxChaptersPerThread` (200) chapters, which bounds
+A conversation holds at most `conversationchapter.MaxChaptersPerThread` (200) chapters, which bounds
 every chapter read; the list is one statement joining each chapter's turn and its first message.
 
 ### History replay
@@ -2946,7 +2946,7 @@ name and `no-store`, exactly as a conversation's download is. Both documents
 come from one renderer in `assistantservice/transcript.go`
 (`renderTranscriptDocument`), which takes a message list, a heading and the
 proposals: a conversation passes its thread's messages, a run converts its
-stored entries back with `conversation.MessageOfTranscript` and passes the
+stored entries back with `conversationtranscript.MessageOfTranscript` and passes the
 proposals it raised (`ListByRun`). The run's heading names its agent, trigger,
 status, start and finish and model; a message kept without its body says it was
 too long to keep; and the left-out middle is stated twice, in the heading's

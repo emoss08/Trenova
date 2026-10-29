@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -23,21 +24,21 @@ import (
 
 type turnRecords struct {
 	mu        sync.Mutex
-	turn      *conversation.AssistantTurn
+	turn      *conversationturn.AssistantTurn
 	completed []assistantports.CompleteAssistantTurnRequest
 }
 
 func (r *turnRecords) Start(
 	_ context.Context,
-	turn *conversation.AssistantTurn,
-) (*conversation.AssistantTurn, error) {
+	turn *conversationturn.AssistantTurn,
+) (*conversationturn.AssistantTurn, error) {
 	return turn, nil
 }
 
 func (r *turnRecords) GetByID(
 	context.Context,
 	assistantports.GetAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -47,7 +48,7 @@ func (r *turnRecords) GetByID(
 func (r *turnRecords) Active(
 	context.Context,
 	assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
@@ -145,7 +146,10 @@ func (l *ledger) Loaded(
 	return steps, nil
 }
 
-func finishActivities(turn *conversation.AssistantTurn, steps *ledger) (*Activities, *turnRecords) {
+func finishActivities(
+	turn *conversationturn.AssistantTurn,
+	steps *ledger,
+) (*Activities, *turnRecords) {
 	records := &turnRecords{turn: turn}
 
 	return NewActivities(ActivitiesParams{
@@ -158,7 +162,7 @@ func finishActivities(turn *conversation.AssistantTurn, steps *ledger) (*Activit
 	}), records
 }
 
-func finishInput(turn *conversation.AssistantTurn) *FinishTurnInput {
+func finishInput(turn *conversationturn.AssistantTurn) *FinishTurnInput {
 	return &FinishTurnInput{
 		Payload: &assistantcontract.AssistantTurnPayload{
 			BasePayload: temporaltype.BasePayload{
@@ -173,8 +177,8 @@ func finishInput(turn *conversation.AssistantTurn) *FinishTurnInput {
 	}
 }
 
-func runningTurn() *conversation.AssistantTurn {
-	return &conversation.AssistantTurn{
+func runningTurn() *conversationturn.AssistantTurn {
+	return &conversationturn.AssistantTurn{
 		ID:             pulid.MustNew("atrn_"),
 		ThreadID:       pulid.MustNew("athr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -286,7 +290,7 @@ func TestFinishTurn_SavesAfterAnAttemptThatFailedCleanly(t *testing.T) {
 	require.Len(t, records.completed, 1)
 }
 
-func closeTurn(t *testing.T, a *Activities, turn *conversation.AssistantTurn) {
+func closeTurn(t *testing.T, a *Activities, turn *conversationturn.AssistantTurn) {
 	t.Helper()
 
 	var suite testsuite.WorkflowTestSuite

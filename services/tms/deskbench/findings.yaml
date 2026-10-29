@@ -721,6 +721,7 @@ findings:
       - services/tms/internal/modules/agent/app/recordanchorservice/
       - services/tms/internal/modules/agent/app/assistantservice/workingset.go
       - services/tms/internal/modules/agent/domain/conversation/workingset.go
+      - services/tms/internal/modules/agent/domain/conversationworkingset/workingsetops.go
       - services/tms/internal/modules/agent/domain/agentmessage/anchors.go
       - services/tms/internal/modules/operations/app/shipmenttracking/facts.go
       - docs/engineering/agent-runtime.md

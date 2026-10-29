@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
@@ -13,7 +14,7 @@ import (
 
 // RelayRequest asks to follow one turn from a position in it.
 type RelayRequest struct {
-	Turn *conversation.AssistantTurn
+	Turn *conversationturn.AssistantTurn
 	// Cursor is the last frame the reader applied. Empty replays the turn
 	// from its beginning, which is what a fresh tab attaching to a reply
 	// already in progress wants.
@@ -108,8 +109,8 @@ func (s *Service) Relay(
 // way, and a failed read is no reason to tell them anything worse.
 func (s *Service) current(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
-) *conversation.AssistantTurn {
+	turn *conversationturn.AssistantTurn,
+) *conversationturn.AssistantTurn {
 	current, err := s.turns.GetByID(ctx, assistantports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
@@ -129,7 +130,7 @@ func (s *Service) current(
 // ClosingEvent is the ending a reader gets when the turn's own ending cannot
 // be given to them: it names the turn, so the client refetches the thread
 // rather than trusting whatever half a reply it has on screen.
-func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
+func ClosingEvent(turn *conversationturn.AssistantTurn) kernelports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
 		return kernelports.StreamEvent{
 			Event: assistantports.AssistantEventError,
@@ -153,7 +154,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	}
 }
 
-func closingFrame(turn *conversation.AssistantTurn) assistantports.TurnStreamFrame {
+func closingFrame(turn *conversationturn.AssistantTurn) assistantports.TurnStreamFrame {
 	event := ClosingEvent(turn)
 
 	return frameOf(event.Event, event.Data)

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
@@ -434,7 +435,7 @@ type fakeSource struct {
 	aiauditports.AIAuditSourceRepository
 
 	runs        []*agent.AgentRun
-	turns       []*conversation.AssistantTurn
+	turns       []*conversationturn.AssistantTurn
 	usage       []*aiusage.AIUsageRecord
 	steps       []*agentrunstep.AgentRunStep
 	events      []*agentrunevent.AgentRunEvent
@@ -486,9 +487,9 @@ func (f *fakeSource) ListRuns(
 func (f *fakeSource) ListTurns(
 	_ context.Context,
 	req aiauditports.AIAuditSourcePage,
-) ([]*conversation.AssistantTurn, error) {
-	return page(f.turns, func(r *conversation.AssistantTurn) int64 { return r.UpdatedAt },
-		func(r *conversation.AssistantTurn) string { return r.ID.String() }, req, nil), nil
+) ([]*conversationturn.AssistantTurn, error) {
+	return page(f.turns, func(r *conversationturn.AssistantTurn) int64 { return r.UpdatedAt },
+		func(r *conversationturn.AssistantTurn) string { return r.ID.String() }, req, nil), nil
 }
 
 func (f *fakeSource) ListUsage(
@@ -559,23 +560,31 @@ func (f *fakeSource) TurnsByIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return byIDs(f.turns, func(r *conversation.AssistantTurn) pulid.ID { return r.ID }, ids), nil
+) ([]*conversationturn.AssistantTurn, error) {
+	return byIDs(
+		f.turns,
+		func(r *conversationturn.AssistantTurn) pulid.ID { return r.ID },
+		ids,
+	), nil
 }
 
 func (f *fakeSource) TurnsByRunIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return byIDs(f.turns, func(r *conversation.AssistantTurn) pulid.ID { return r.RunID }, ids), nil
+) ([]*conversationturn.AssistantTurn, error) {
+	return byIDs(
+		f.turns,
+		func(r *conversationturn.AssistantTurn) pulid.ID { return r.RunID },
+		ids,
+	), nil
 }
 
 func (f *fakeSource) TurnsInWindow(
 	_ context.Context,
 	req *aiauditports.AIAuditTurnWindow,
-) ([]*conversation.AssistantTurn, error) {
-	return byIDs(f.turns, func(r *conversation.AssistantTurn) pulid.ID { return r.ThreadID },
+) ([]*conversationturn.AssistantTurn, error) {
+	return byIDs(f.turns, func(r *conversationturn.AssistantTurn) pulid.ID { return r.ThreadID },
 		req.ThreadIDs), nil
 }
 

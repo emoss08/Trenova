@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,17 +89,17 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		UserID: tenant.UserID, AgentDefinitionID: pulid.MustNew("agd_"),
 		Title: "Analytics fixture",
 	}
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID,
-		Origin: conversation.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
+		Origin: conversationturn.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
 		StartedAt:   now - 15,
 		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
-	compaction := &conversation.AssistantTurn{
+	compaction := &conversationturn.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID,
-		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
+		Origin: conversationturn.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
 		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	insert(ctx, t, db, conversationdb.Threads.Handle, thread)

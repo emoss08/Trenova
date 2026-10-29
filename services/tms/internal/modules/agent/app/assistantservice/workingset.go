@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -30,7 +31,7 @@ type workingTurn struct {
 func touchedRecords(turn *workingTurn) []conversation.WorkingRecord {
 	touched := make([]conversation.WorkingRecord, 0, 8)
 	add := func(id, label string, source conversation.WorkingSource) {
-		if record, ok := conversation.NewWorkingRecord(id, label, source, turn.at); ok {
+		if record, ok := conversationworkingset.NewWorkingRecord(id, label, source, turn.at); ok {
 			touched = append(touched, record)
 		}
 	}
@@ -131,7 +132,7 @@ func (s *Service) keepWorkingSet(
 		return
 	}
 
-	next := conversation.Touch(turn.thread.WorkingSet, touched...)
+	next := conversationworkingset.Touch(turn.thread.WorkingSet, touched...)
 	if err := s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
 		ThreadID:   turn.thread.ID,
 		TenantInfo: tenant,
@@ -194,8 +195,8 @@ func anchorRefs(scope *anchorScope) []agentpagecontext.EntityRef {
 	for _, record := range scope.thread.WorkingSet {
 		add(record.Ref())
 	}
-	if len(refs) > conversation.MaxWorkingSet {
-		refs = refs[:conversation.MaxWorkingSet]
+	if len(refs) > conversationworkingset.MaxWorkingSet {
+		refs = refs[:conversationworkingset.MaxWorkingSet]
 	}
 
 	return refs

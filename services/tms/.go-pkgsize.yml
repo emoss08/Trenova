@@ -52,7 +52,6 @@ debt:
   services/tms/internal/modules/agent/app/assistantservice: 14610
   services/tms/internal/modules/agent/app/watchtowersources: 3873
   services/tms/internal/modules/agent/domain/agentquality: 1614
-  services/tms/internal/modules/agent/domain/conversation: 2167
   services/tms/internal/modules/agent/ports/agentports: 10434
   services/tms/internal/modules/billing/app/billingqueueservice: 4708
   services/tms/internal/modules/billing/app/factoringservice: 8073

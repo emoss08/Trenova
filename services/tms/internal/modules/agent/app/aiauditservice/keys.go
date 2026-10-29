@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 )
@@ -22,7 +22,7 @@ func runKeys(run *agent.AgentRun) []string {
 	return keys
 }
 
-func turnKeys(turn *conversation.AssistantTurn) []string {
+func turnKeys(turn *conversationturn.AssistantTurn) []string {
 	keys := []string{sourceKey("turn", turn.ID.String(), "started")}
 	if turn.Status.Terminal() {
 		keys = append(keys, sourceKey("turn", turn.ID.String(), "ended"))

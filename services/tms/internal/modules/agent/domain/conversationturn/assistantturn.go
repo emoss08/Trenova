@@ -1,10 +1,11 @@
-package conversation
+package conversationturn
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,31 +18,6 @@ import (
 var (
 	_ validationframework.TenantedEntity = (*AssistantTurn)(nil)
 )
-
-// AssistantTurnStatus is how far a turn got.
-type AssistantTurnStatus string
-
-const (
-	AssistantTurnStatusPending   = AssistantTurnStatus("Pending")
-	AssistantTurnStatusRunning   = AssistantTurnStatus("Running")
-	AssistantTurnStatusCompleted = AssistantTurnStatus("Completed")
-	// AssistantTurnStatusRefused is a turn the scope guard declined. It is a finished
-	// turn, not a failed one: the question was read, judged and answered.
-	AssistantTurnStatusRefused = AssistantTurnStatus("Refused")
-	// AssistantTurnStatusStopped is a turn the person ended themselves.
-	AssistantTurnStatusStopped = AssistantTurnStatus("Stopped")
-	AssistantTurnStatusFailed  = AssistantTurnStatus("Failed")
-)
-
-func (s AssistantTurnStatus) IsValid() bool {
-	switch s {
-	case AssistantTurnStatusPending, AssistantTurnStatusRunning, AssistantTurnStatusCompleted,
-		AssistantTurnStatusRefused, AssistantTurnStatusStopped, AssistantTurnStatusFailed:
-		return true
-	default:
-		return false
-	}
-}
 
 // AssistantTurnOrigin is what started a turn: a person asking, or the
 // application following up a decision on one of the conversation's proposals.
@@ -89,19 +65,6 @@ func (o AssistantTurnOrigin) IsValid() bool {
 	}
 }
 
-// Terminal reports a turn that will produce nothing more.
-func (s AssistantTurnStatus) Terminal() bool {
-	switch s {
-	case AssistantTurnStatusCompleted,
-		AssistantTurnStatusRefused,
-		AssistantTurnStatusStopped,
-		AssistantTurnStatusFailed:
-		return true
-	default:
-		return false
-	}
-}
-
 // AssistantTurn is one question and the reply it is producing.
 //
 // It exists so a reply has an identity of its own while it is still being
@@ -131,11 +94,11 @@ type AssistantTurn struct {
 	Origin AssistantTurnOrigin `json:"origin" keel:"origin"`
 	Input  string              `json:"input"  keel:"input,nullzero"`
 
-	Status       AssistantTurnStatus           `json:"status"       keel:"status"`
-	ErrorMessage string                        `json:"errorMessage" keel:"error_message,nullzero"`
-	StartedAt    int64                         `json:"startedAt"    keel:"started_at,nullzero"`
-	CompletedAt  *int64                        `json:"completedAt"  keel:"completed_at"`
-	Fingerprint  *agentfingerprint.Fingerprint `json:"fingerprint"  keel:"fingerprint,jsonb"`
+	Status       conversation.AssistantTurnStatus `json:"status"       keel:"status"`
+	ErrorMessage string                           `json:"errorMessage" keel:"error_message,nullzero"`
+	StartedAt    int64                            `json:"startedAt"    keel:"started_at,nullzero"`
+	CompletedAt  *int64                           `json:"completedAt"  keel:"completed_at"`
+	Fingerprint  *agentfingerprint.Fingerprint    `json:"fingerprint"  keel:"fingerprint,jsonb"`
 	// TraceID is the turn's trace.
 	TraceID string `json:"traceId"      keel:"trace_id,nullzero"`
 
@@ -150,7 +113,7 @@ type AssistantTurn struct {
 func (t *AssistantTurn) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if t.Status == "" {
-		t.Status = AssistantTurnStatusPending
+		t.Status = conversation.AssistantTurnStatusPending
 	}
 	if t.Origin == "" {
 		t.Origin = AssistantTurnOriginPerson
@@ -169,7 +132,7 @@ func (t *AssistantTurn) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&t.UserID, validation.Required.Error("User is required")),
 		validation.Field(&t.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[AssistantTurnStatus]("Invalid status"),
+			domainvalidation.ValidEnum[conversation.AssistantTurnStatus]("Invalid status"),
 		),
 		validation.Field(&t.Origin,
 			validation.Required.Error("Origin is required"),

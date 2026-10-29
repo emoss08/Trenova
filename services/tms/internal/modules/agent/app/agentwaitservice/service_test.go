@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
@@ -264,23 +265,23 @@ func (f *fakeWorkflows) SignalWorkflow(_ context.Context, workflowID, _, _ strin
 }
 
 type fakeTurns struct {
-	active  *conversation.AssistantTurn
+	active  *conversationturn.AssistantTurn
 	started []assistantturnservice.StartRequest
 }
 
 func (f *fakeTurns) Active(
 	context.Context,
 	assistantports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
 
 func (f *fakeTurns) StartTurn(
 	_ context.Context,
 	req assistantturnservice.StartRequest,
-	start func(turn *conversation.AssistantTurn) (string, error),
-) (*conversation.AssistantTurn, error) {
-	turn := &conversation.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}
+	start func(turn *conversationturn.AssistantTurn) (string, error),
+) (*conversationturn.AssistantTurn, error) {
+	turn := &conversationturn.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: req.ThreadID}
 	if _, err := start(turn); err != nil {
 		return nil, err
 	}
@@ -588,7 +589,7 @@ func TestFinish_PicksTheConversationUpAsItsOwnerOnce(t *testing.T) {
 	require.NoError(t, h.svc.Finish(context.Background(), finishInput(wait, agentwait.StatusMet)))
 
 	require.Len(t, h.turns.started, 1, "a retried finish starts no second turn")
-	assert.Equal(t, conversation.AssistantTurnOriginWaitResolved, h.turns.started[0].Origin)
+	assert.Equal(t, conversationturn.AssistantTurnOriginWaitResolved, h.turns.started[0].Origin)
 	assert.Equal(t, wait.UserID, h.turns.started[0].UserID)
 	assert.Equal(t, agentwait.StatusMet, wait.Status)
 	assert.Equal(t, "Arrived.", wait.Outcome)
@@ -599,7 +600,7 @@ func TestFinish_ABusyConversationIsTriedAgain(t *testing.T) {
 
 	wait := openWait(agentwait.KindTime, agentwait.Condition{At: now})
 	h := newHarness(wait)
-	h.turns.active = &conversation.AssistantTurn{ID: pulid.MustNew("atrn_")}
+	h.turns.active = &conversationturn.AssistantTurn{ID: pulid.MustNew("atrn_")}
 
 	err := h.svc.Finish(context.Background(), finishInput(wait, agentwait.StatusMet))
 	require.ErrorIs(t, err, agentwaitcontract.ErrConversationBusy)

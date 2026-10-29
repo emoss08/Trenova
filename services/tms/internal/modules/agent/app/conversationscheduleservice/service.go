@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -79,12 +80,12 @@ type turns interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 	Active(
 		ctx context.Context,
 		req assistantports.ActiveAssistantTurnRequest,
-	) (*conversation.AssistantTurn, error)
+	) (*conversationturn.AssistantTurn, error)
 }
 
 // threads is the part of the conversation repository a schedule needs.
@@ -677,7 +678,7 @@ func (s *Service) Forget(ctx context.Context, schedules []*conversationschedule.
 func (s *Service) RunNow(
 	ctx context.Context,
 	req ScheduleRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	schedule, err := s.schedules.Get(ctx, req.get())
 	if err != nil {
 		return nil, err
@@ -752,7 +753,7 @@ func (s *Service) Fire(
 func (s *Service) run(
 	ctx context.Context,
 	schedule *conversationschedule.Schedule,
-) (*conversation.AssistantTurn, string, error) {
+) (*conversationturn.AssistantTurn, string, error) {
 	tenant := pagination.TenantInfo{
 		OrgID:  schedule.OrganizationID,
 		BuID:   schedule.BusinessUnitID,
@@ -804,9 +805,9 @@ func (s *Service) run(
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
-		Origin:     conversation.AssistantTurnOriginScheduled,
+		Origin:     conversationturn.AssistantTurnOriginScheduled,
 		Input:      schedule.Prompt,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		started, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
 			assistantcontract.TurnStart{
 				Actor:   owner,

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,10 +71,10 @@ func (f runTranscriptFixture) request() agentruntimeports.GetAgentRunByIDRequest
 }
 
 func roundTripped(messages []conversation.Message) []conversation.Message {
-	transcript := conversation.RunTranscriptOf(messages)
+	transcript := conversationtranscript.RunTranscriptOf(messages)
 	out := make([]conversation.Message, len(transcript.Messages))
 	for idx := range transcript.Messages {
-		out[idx] = conversation.MessageOfTranscript(&transcript.Messages[idx])
+		out[idx] = conversationtranscript.MessageOfTranscript(&transcript.Messages[idx])
 	}
 
 	return out
@@ -92,7 +93,7 @@ func TestRunTranscript_RendersTheRunWithTheConversationsRenderer(t *testing.T) {
 	t.Parallel()
 
 	messages := parityMessages()
-	fixture := newRunTranscriptFixture(conversation.RunTranscriptOf(messages))
+	fixture := newRunTranscriptFixture(conversationtranscript.RunTranscriptOf(messages))
 	fixture.proposals.byRun = parityInput().Proposals
 
 	file, err := fixture.svc.RunTranscript(t.Context(), fixture.request())
@@ -120,7 +121,7 @@ func TestRunTranscript_RendersTheRunWithTheConversationsRenderer(t *testing.T) {
 func TestRunTranscript_ReadsUnderTheRequestsTenant(t *testing.T) {
 	t.Parallel()
 
-	fixture := newRunTranscriptFixture(conversation.RunTranscriptOf(transcriptMessages()))
+	fixture := newRunTranscriptFixture(conversationtranscript.RunTranscriptOf(transcriptMessages()))
 
 	_, err := fixture.svc.RunTranscript(t.Context(), fixture.request())
 	require.NoError(t, err)

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -31,16 +32,16 @@ import (
 
 func tracedTurn(
 	t *testing.T,
-) (*assistantcontract.AssistantTurnPayload, *conversation.AssistantTurn) {
+) (*assistantcontract.AssistantTurnPayload, *conversationturn.AssistantTurn) {
 	t.Helper()
 
 	payload := replayPayload()
 	payload.Origin = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 
-	return payload, &conversation.AssistantTurn{
+	return payload, &conversationturn.AssistantTurn{
 		ID:        payload.TurnID,
 		ThreadID:  payload.ThreadID,
-		Origin:    conversation.AssistantTurnOriginPerson,
+		Origin:    conversationturn.AssistantTurnOriginPerson,
 		CreatedAt: 1_790_000_000,
 		StartedAt: 1_790_000_001,
 	}
@@ -108,7 +109,7 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 		aitrace.AITurnID.String(payload.TurnID.String()),
 		aitrace.AIOwnerKind.String(string(agentruntimeports.RunStepOwnerAssistantTurn)),
 		aitrace.UserID.String(payload.Actor.UserID.String()),
-		aitrace.AITrigger.String(string(conversation.AssistantTurnOriginPerson)),
+		aitrace.AITrigger.String(string(conversationturn.AssistantTurnOriginPerson)),
 		aitrace.AIStatus.String(string(conversation.AssistantTurnStatusCompleted)),
 		aitrace.AITokensInput.Int64(2500),
 		aitrace.AITokensOutput.Int64(52),

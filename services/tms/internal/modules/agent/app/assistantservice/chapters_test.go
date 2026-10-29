@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,14 @@ import (
 type stubChapters struct {
 	assistantports.ChapterRepository
 
-	chapters []*conversation.Chapter
+	chapters []*conversationchapter.Chapter
 	err      error
 }
 
 func (s *stubChapters) List(
 	context.Context,
 	assistantports.ListChaptersRequest,
-) ([]*conversation.Chapter, error) {
+) ([]*conversationchapter.Chapter, error) {
 	return s.chapters, s.err
 }
 
@@ -256,7 +257,7 @@ func TestPrepareCompaction_SummarizesUpToTheLatestChapterStart(t *testing.T) {
 		Instructions: 6200,
 		Model:        "claude-sonnet-4-5",
 	}
-	svc.chapters = &stubChapters{chapters: []*conversation.Chapter{
+	svc.chapters = &stubChapters{chapters: []*conversationchapter.Chapter{
 		{ID: "achp_1", Title: "Customers 0 to 5", StartSequence: startedAt(0)},
 		{ID: "achp_2", Title: "Customers 6 to 9", StartSequence: startedAt(24)},
 		{ID: "achp_3", Title: "Being answered"},
@@ -388,7 +389,7 @@ func TestTranscript_HeadsEachChapterFromTheConversationsChapters(t *testing.T) {
 		&stubConversations{thread: input.Thread, messages: input.Messages},
 		&stubProposalRepo{},
 	)
-	svc.chapters = &stubChapters{chapters: []*conversation.Chapter{
+	svc.chapters = &stubChapters{chapters: []*conversationchapter.Chapter{
 		{ID: "achp_1", Title: "Late loads", StartSequence: startedAt(1)},
 		{ID: "achp_2", Title: "Acme invoice dispute", StartSequence: startedAt(3)},
 		{ID: "achp_3", Title: "Being answered"},

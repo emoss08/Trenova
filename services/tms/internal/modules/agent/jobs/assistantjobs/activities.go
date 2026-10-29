@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
@@ -287,7 +288,7 @@ func (a *Activities) FinishTurnActivity(
 func emitTurnRoots(
 	ctx context.Context,
 	in *FinishTurnInput,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	status string,
 ) {
 	payload := in.Payload
@@ -689,7 +690,7 @@ func usageLimit(params map[string]string) map[string]any {
 // the conversation rather than trust what it has on screen.
 func (a *Activities) alreadySaved(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 ) *TurnEnding {
 	current, err := a.turnRepo.GetByID(ctx, assistantports.GetAssistantTurnRequest{
 		ID:         turn.ID,

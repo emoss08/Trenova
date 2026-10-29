@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,11 +20,11 @@ func TestRename_KeepsThePersonsTitleOnOneLine(t *testing.T) {
 
 	f := newFixture(t)
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"a",
 	)
-	chapter := f.chapter(turn.ID, "Late loads", conversation.ChapterTitleModel, sequence(0))
+	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(0))
 	version := int64(3)
 
 	renamed, err := f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
@@ -42,7 +44,7 @@ func TestRename_KeepsThePersonsTitleOnOneLine(t *testing.T) {
 		ThreadID:    f.thread.ID,
 		TenantInfo:  f.tenant,
 		Title:       "Acme invoice dispute",
-		TitleSource: conversation.ChapterTitlePerson,
+		TitleSource: conversationchapter.ChapterTitlePerson,
 		Version:     &version,
 	}, f.chapters.retitled[0])
 	f.assertAnnounced(t, 1)
@@ -53,17 +55,17 @@ func TestRename_RefusesATitleOverSixtyCharacters(t *testing.T) {
 
 	f := newFixture(t)
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"a",
 	)
-	chapter := f.chapter(turn.ID, "Late loads", conversation.ChapterTitleModel, sequence(0))
+	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(0))
 
 	_, err := f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
-		Title:      strings.Repeat("é", conversation.ChapterTitleRunes+1),
+		Title:      strings.Repeat("é", conversationchapter.ChapterTitleRunes+1),
 		TenantInfo: f.tenant,
 	})
 
@@ -148,11 +150,11 @@ func TestRemove_DeletesAnyChapterThePersonPicks(t *testing.T) {
 
 	f := newFixture(t)
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"a",
 	)
-	chapter := f.chapter(turn.ID, "My loads", conversation.ChapterTitlePerson, sequence(0))
+	chapter := f.chapter(turn.ID, "My loads", conversationchapter.ChapterTitlePerson, sequence(0))
 
 	err := f.svc.Remove(t.Context(), assistantports.RemoveChapterRequest{
 		ID:         chapter.ID,
@@ -189,7 +191,7 @@ func TestOpen_StartsAChapterAtTheQuestionOfTheMessagesTurn(t *testing.T) {
 
 	f := newFixture(t)
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"late loads",
 	)
@@ -209,7 +211,7 @@ func TestOpen_StartsAChapterAtTheQuestionOfTheMessagesTurn(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "Which loads are late?", opened.Title)
-	assert.Equal(t, conversation.ChapterTitleQuestion, opened.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleQuestion, opened.TitleSource)
 	assert.Equal(t, turn.ID, opened.TurnID)
 	require.Len(t, f.chapters.created, 1)
 	assert.Equal(t, []*assistantports.ChapterTurnRequest{{
@@ -226,19 +228,19 @@ func TestOpen_NamesTheQuietFirstChapterAlongsideTheNewOne(t *testing.T) {
 
 	f := newFixture(t)
 	first := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"late loads",
 	)
-	f.chapter(first.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	f.chapter(first.ID, "Late loads", conversationchapter.ChapterTitleQuestion, sequence(0))
 	named := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"acme",
 	)
-	f.chapter(named.ID, "Acme invoice dispute", conversation.ChapterTitlePerson, sequence(4))
+	f.chapter(named.ID, "Acme invoice dispute", conversationchapter.ChapterTitlePerson, sequence(4))
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"driver hours",
 	)
@@ -304,11 +306,11 @@ func TestOpen_ATurnThatAlreadyOpensAChapterReturnsIt(t *testing.T) {
 
 	f := newFixture(t)
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"late loads",
 	)
-	existing := f.chapter(turn.ID, "Late loads", conversation.ChapterTitleModel, sequence(0))
+	existing := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(0))
 	messageID := pulid.MustNew("amsg_")
 	f.chapters.turnOf[messageID] = turn.ID
 
@@ -329,16 +331,21 @@ func TestOpen_RefusesPastTheLimit(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	for idx := range conversation.MaxChaptersPerThread {
+	for idx := range conversationchapter.MaxChaptersPerThread {
 		earlier := f.turn(
-			conversation.AssistantTurnOriginPerson,
+			conversationturn.AssistantTurnOriginPerson,
 			conversation.AssistantTurnStatusCompleted,
 			"a",
 		)
-		f.chapter(earlier.ID, "Chapter", conversation.ChapterTitleModel, sequence(int64(idx)))
+		f.chapter(
+			earlier.ID,
+			"Chapter",
+			conversationchapter.ChapterTitleModel,
+			sequence(int64(idx)),
+		)
 	}
 	turn := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"late loads",
 	)
@@ -356,8 +363,8 @@ func TestOpen_RefusesPastTheLimit(t *testing.T) {
 	assert.Empty(t, f.chapters.created)
 }
 
-func spanChapters() []*conversation.Chapter {
-	return []*conversation.Chapter{
+func spanChapters() []*conversationchapter.Chapter {
+	return []*conversationchapter.Chapter{
 		{ID: "achp_1", Title: "Late loads", StartSequence: sequence(0)},
 		{ID: "achp_2", Title: "Acme invoice dispute", StartSequence: sequence(6)},
 		{ID: "achp_3", Title: "Still being answered"},
@@ -410,17 +417,17 @@ func TestSpan_ReadsTheConversationsChapters(t *testing.T) {
 
 	f := newFixture(t)
 	first := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"a",
 	)
 	second := f.turn(
-		conversation.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginPerson,
 		conversation.AssistantTurnStatusCompleted,
 		"b",
 	)
-	opening := f.chapter(first.ID, "Late loads", conversation.ChapterTitleModel, sequence(2))
-	f.chapter(second.ID, "Acme invoice dispute", conversation.ChapterTitleModel, sequence(9))
+	opening := f.chapter(first.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(2))
+	f.chapter(second.ID, "Acme invoice dispute", conversationchapter.ChapterTitleModel, sequence(9))
 
 	span, err := f.svc.Span(t.Context(), assistantports.ChapterSpanRequest{
 		ID:         opening.ID,

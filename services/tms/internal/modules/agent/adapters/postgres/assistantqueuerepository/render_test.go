@@ -3,7 +3,7 @@ package assistantqueuerepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ func TestHeadQuerySkipsLockedRows(t *testing.T) {
 func TestEditQueryComparesTheVersion(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, editQuery(&conversation.QueuedMessage{
+	sql, args := keeltest.Render(t, editQuery(&conversationqueue.QueuedMessage{
 		ID:       pulid.ID("aqm_1"),
 		ThreadID: pulid.ID("ath_1"),
 		UserID:   pulid.ID("usr_1"),

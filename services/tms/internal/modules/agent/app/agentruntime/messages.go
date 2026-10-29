@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -98,7 +99,7 @@ func replayHistoryWithFiles(
 ) (messages []llmports.Message, shortened []string) {
 	// A compacted conversation is read from its latest summary, which stands
 	// in for everything before the turns it kept whole.
-	history = conversation.ReplayOrder(history)
+	history = conversationreplay.ReplayOrder(history)
 	messages = make([]llmports.Message, 0, len(history)+1)
 	ledger := newProposalLedger(outcomes)
 

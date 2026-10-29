@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,7 +81,7 @@ func TestPrepareCompaction_SummarizesEverythingBeforeTheLatestTurns(t *testing.T
 	assert.Equal(t, 40, plan.Summarized)
 	assert.Greater(t, plan.Before, plan.After)
 	assert.Equal(t, 6200, plan.Instructions, "the prompt's measure carries over")
-	assert.Equal(t, []string{conversation.KeptRecent}, plan.Kept)
+	assert.Equal(t, []string{conversationreplay.KeptRecent}, plan.Kept)
 
 	request := plan.Request
 	require.NotNil(t, request)

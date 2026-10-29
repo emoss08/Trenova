@@ -214,3 +214,41 @@ func UnlistedOrigins() []ThreadOrigin {
 
 	return out
 }
+
+// AssistantTurnStatus is how far a turn got.
+type AssistantTurnStatus string
+
+const (
+	AssistantTurnStatusPending   = AssistantTurnStatus("Pending")
+	AssistantTurnStatusRunning   = AssistantTurnStatus("Running")
+	AssistantTurnStatusCompleted = AssistantTurnStatus("Completed")
+	// AssistantTurnStatusRefused is a turn the scope guard declined. It is a finished
+	// turn, not a failed one: the question was read, judged and answered.
+	AssistantTurnStatusRefused = AssistantTurnStatus("Refused")
+	// AssistantTurnStatusStopped is a turn the person ended themselves.
+	AssistantTurnStatusStopped = AssistantTurnStatus("Stopped")
+	AssistantTurnStatusFailed  = AssistantTurnStatus("Failed")
+)
+
+func (s AssistantTurnStatus) IsValid() bool {
+	switch s {
+	case AssistantTurnStatusPending, AssistantTurnStatusRunning, AssistantTurnStatusCompleted,
+		AssistantTurnStatusRefused, AssistantTurnStatusStopped, AssistantTurnStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Terminal reports a turn that will produce nothing more.
+func (s AssistantTurnStatus) Terminal() bool {
+	switch s {
+	case AssistantTurnStatusCompleted,
+		AssistantTurnStatusRefused,
+		AssistantTurnStatusStopped,
+		AssistantTurnStatusFailed:
+		return true
+	default:
+		return false
+	}
+}

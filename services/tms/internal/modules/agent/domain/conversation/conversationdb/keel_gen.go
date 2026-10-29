@@ -3,6 +3,9 @@
 package conversationdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"context"
 	"unsafe"
 
@@ -17,12 +20,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// assistantTurnsTable is the schema of conversation.AssistantTurn.
+// assistantTurnsTable is the schema of conversationturn.AssistantTurn.
 var assistantTurnsTable = schema.Table{
 	Name:   "assistant_turns",
 	Quoted: `"assistant_turns"`,
 	Alias:  "at_",
-	Model:  "conversation.AssistantTurn",
+	Model:  "conversationturn.AssistantTurn",
 	Label:  `Assistant Turn`,
 	Plural: `Assistant Turns`,
 	Doc:    "AssistantTurn is one question and the reply it is producing.\n\nIt exists so a reply has an identity of its own while it is still being written. Its events are published under this id, and a reader whose stream expired reads this row to learn how it ended — which is the difference between telling them the answer is in the conversation and leaving them watching a connection that will never say anything again.",
@@ -59,7 +62,7 @@ var assistantTurnsTable = schema.Table{
 	IDPrefix:     "atrn_",
 	New:          newAssistantTurn,
 	NewN:         newNAssistantTurn,
-	Size:         unsafe.Sizeof(conversation.AssistantTurn{}),
+	Size:         unsafe.Sizeof(conversationturn.AssistantTurn{}),
 	Ptr:          ptrAssistantTurn,
 	Value:        valueAssistantTurn,
 	BeforeCreate: beforeCreateAssistantTurn,
@@ -67,9 +70,9 @@ var assistantTurnsTable = schema.Table{
 
 var assistantTurnsRef = keel.Ref{Table: &assistantTurnsTable}
 
-// AssistantTurnsTable is the table of conversation.AssistantTurn.
+// AssistantTurnsTable is the table of conversationturn.AssistantTurn.
 type AssistantTurnsTable struct {
-	keel.Handle[*conversation.AssistantTurn]
+	keel.Handle[*conversationturn.AssistantTurn]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -92,7 +95,7 @@ type AssistantTurnsTable struct {
 
 // AssistantTurns references the assistant_turns table.
 var AssistantTurns = &AssistantTurnsTable{
-	Handle:         keel.Handle[*conversation.AssistantTurn]{Ref: &assistantTurnsRef},
+	Handle:         keel.Handle[*conversationturn.AssistantTurn]{Ref: &assistantTurnsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 2}}},
@@ -116,7 +119,7 @@ var AssistantTurns = &AssistantTurnsTable{
 // BuildAssistantTurns builds the handle of assistant_turns for ref. Generated relation and alias methods call it.
 func BuildAssistantTurns(r *keel.Ref) *AssistantTurnsTable {
 	return &AssistantTurnsTable{
-		Handle:         keel.Handle[*conversation.AssistantTurn]{Ref: r},
+		Handle:         keel.Handle[*conversationturn.AssistantTurn]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,18 +150,18 @@ func (t *AssistantTurnsTable) As(alias string) *AssistantTurnsTable {
 }
 
 // Get returns the assistant_turns row with the given key, or keel.ErrNotFound.
-func (t *AssistantTurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.AssistantTurn, error) {
+func (t *AssistantTurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationturn.AssistantTurn, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newAssistantTurn() unsafe.Pointer { return unsafe.Pointer(new(conversation.AssistantTurn)) }
+func newAssistantTurn() unsafe.Pointer { return unsafe.Pointer(new(conversationturn.AssistantTurn)) }
 
 func newNAssistantTurn(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]conversation.AssistantTurn, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]conversationturn.AssistantTurn, n)))
 }
 
 func ptrAssistantTurn(p unsafe.Pointer, c int32) any {
-	r := (*conversation.AssistantTurn)(p)
+	r := (*conversationturn.AssistantTurn)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -201,7 +204,7 @@ func ptrAssistantTurn(p unsafe.Pointer, c int32) any {
 }
 
 func valueAssistantTurn(p unsafe.Pointer, c int32) any {
-	r := (*conversation.AssistantTurn)(p)
+	r := (*conversationturn.AssistantTurn)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -268,15 +271,15 @@ func valueAssistantTurn(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateAssistantTurn(ctx context.Context, p unsafe.Pointer) error {
-	return (*conversation.AssistantTurn)(p).BeforeCreate(ctx)
+	return (*conversationturn.AssistantTurn)(p).BeforeCreate(ctx)
 }
 
-// chaptersTable is the schema of conversation.Chapter.
+// chaptersTable is the schema of conversationchapter.Chapter.
 var chaptersTable = schema.Table{
 	Name:   "assistant_thread_chapters",
 	Quoted: `"assistant_thread_chapters"`,
 	Alias:  "atc",
-	Model:  "conversation.Chapter",
+	Model:  "conversationchapter.Chapter",
 	Label:  `Chapter`,
 	Plural: `Chapters`,
 	Columns: []schema.Column{
@@ -306,16 +309,16 @@ var chaptersTable = schema.Table{
 	IDPrefix:   "achp_",
 	New:        newChapter,
 	NewN:       newNChapter,
-	Size:       unsafe.Sizeof(conversation.Chapter{}),
+	Size:       unsafe.Sizeof(conversationchapter.Chapter{}),
 	Ptr:        ptrChapter,
 	Value:      valueChapter,
 }
 
 var chaptersRef = keel.Ref{Table: &chaptersTable}
 
-// ChaptersTable is the table of conversation.Chapter.
+// ChaptersTable is the table of conversationchapter.Chapter.
 type ChaptersTable struct {
-	keel.Handle[*conversation.Chapter]
+	keel.Handle[*conversationchapter.Chapter]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -332,7 +335,7 @@ type ChaptersTable struct {
 
 // Chapters references the assistant_thread_chapters table.
 var Chapters = &ChaptersTable{
-	Handle:         keel.Handle[*conversation.Chapter]{Ref: &chaptersRef},
+	Handle:         keel.Handle[*conversationchapter.Chapter]{Ref: &chaptersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 2}}},
@@ -350,7 +353,7 @@ var Chapters = &ChaptersTable{
 // BuildChapters builds the handle of assistant_thread_chapters for ref. Generated relation and alias methods call it.
 func BuildChapters(r *keel.Ref) *ChaptersTable {
 	return &ChaptersTable{
-		Handle:         keel.Handle[*conversation.Chapter]{Ref: r},
+		Handle:         keel.Handle[*conversationchapter.Chapter]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -375,18 +378,18 @@ func (t *ChaptersTable) As(alias string) *ChaptersTable {
 }
 
 // Get returns the assistant_thread_chapters row with the given key, or keel.ErrNotFound.
-func (t *ChaptersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.Chapter, error) {
+func (t *ChaptersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationchapter.Chapter, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newChapter() unsafe.Pointer { return unsafe.Pointer(new(conversation.Chapter)) }
+func newChapter() unsafe.Pointer { return unsafe.Pointer(new(conversationchapter.Chapter)) }
 
 func newNChapter(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]conversation.Chapter, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]conversationchapter.Chapter, n)))
 }
 
 func ptrChapter(p unsafe.Pointer, c int32) any {
-	r := (*conversation.Chapter)(p)
+	r := (*conversationchapter.Chapter)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -417,7 +420,7 @@ func ptrChapter(p unsafe.Pointer, c int32) any {
 }
 
 func valueChapter(p unsafe.Pointer, c int32) any {
-	r := (*conversation.Chapter)(p)
+	r := (*conversationchapter.Chapter)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1021,12 +1024,12 @@ func beforeCreateMessage(ctx context.Context, p unsafe.Pointer) error {
 	return (*conversation.Message)(p).BeforeCreate(ctx)
 }
 
-// queuedMessagesTable is the schema of conversation.QueuedMessage.
+// queuedMessagesTable is the schema of conversationqueue.QueuedMessage.
 var queuedMessagesTable = schema.Table{
 	Name:   "assistant_queued_messages",
 	Quoted: `"assistant_queued_messages"`,
 	Alias:  "aqm",
-	Model:  "conversation.QueuedMessage",
+	Model:  "conversationqueue.QueuedMessage",
 	Label:  `Queued Message`,
 	Plural: `Queued Messages`,
 	Columns: []schema.Column{
@@ -1060,7 +1063,7 @@ var queuedMessagesTable = schema.Table{
 	IDPrefix:   "aqm_",
 	New:        newQueuedMessage,
 	NewN:       newNQueuedMessage,
-	Size:       unsafe.Sizeof(conversation.QueuedMessage{}),
+	Size:       unsafe.Sizeof(conversationqueue.QueuedMessage{}),
 	Ptr:        ptrQueuedMessage,
 	Value:      valueQueuedMessage,
 	Attach:     attachQueuedMessage,
@@ -1068,9 +1071,9 @@ var queuedMessagesTable = schema.Table{
 
 var queuedMessagesRef = keel.Ref{Table: &queuedMessagesTable}
 
-// QueuedMessagesTable is the table of conversation.QueuedMessage.
+// QueuedMessagesTable is the table of conversationqueue.QueuedMessage.
 type QueuedMessagesTable struct {
-	keel.Handle[*conversation.QueuedMessage]
+	keel.Handle[*conversationqueue.QueuedMessage]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -1087,7 +1090,7 @@ type QueuedMessagesTable struct {
 
 // QueuedMessages references the assistant_queued_messages table.
 var QueuedMessages = &QueuedMessagesTable{
-	Handle:         keel.Handle[*conversation.QueuedMessage]{Ref: &queuedMessagesRef},
+	Handle:         keel.Handle[*conversationqueue.QueuedMessage]{Ref: &queuedMessagesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queuedMessagesRef, Index: 2}}},
@@ -1105,7 +1108,7 @@ var QueuedMessages = &QueuedMessagesTable{
 // BuildQueuedMessages builds the handle of assistant_queued_messages for ref. Generated relation and alias methods call it.
 func BuildQueuedMessages(r *keel.Ref) *QueuedMessagesTable {
 	return &QueuedMessagesTable{
-		Handle:         keel.Handle[*conversation.QueuedMessage]{Ref: r},
+		Handle:         keel.Handle[*conversationqueue.QueuedMessage]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1138,18 +1141,18 @@ func (t *QueuedMessagesTable) User() *tenantdb.UsersTable {
 func (t *QueuedMessagesTable) Thread() *ThreadsTable { return keel.Path(t.Ref, 1, BuildThreads) }
 
 // Get returns the assistant_queued_messages row with the given key, or keel.ErrNotFound.
-func (t *QueuedMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.QueuedMessage, error) {
+func (t *QueuedMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationqueue.QueuedMessage, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newQueuedMessage() unsafe.Pointer { return unsafe.Pointer(new(conversation.QueuedMessage)) }
+func newQueuedMessage() unsafe.Pointer { return unsafe.Pointer(new(conversationqueue.QueuedMessage)) }
 
 func newNQueuedMessage(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]conversation.QueuedMessage, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]conversationqueue.QueuedMessage, n)))
 }
 
 func ptrQueuedMessage(p unsafe.Pointer, c int32) any {
-	r := (*conversation.QueuedMessage)(p)
+	r := (*conversationqueue.QueuedMessage)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1180,7 +1183,7 @@ func ptrQueuedMessage(p unsafe.Pointer, c int32) any {
 }
 
 func valueQueuedMessage(p unsafe.Pointer, c int32) any {
-	r := (*conversation.QueuedMessage)(p)
+	r := (*conversationqueue.QueuedMessage)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1214,7 +1217,7 @@ func valueQueuedMessage(p unsafe.Pointer, c int32) any {
 }
 
 func attachQueuedMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*conversation.QueuedMessage)(p)
+	r := (*conversationqueue.QueuedMessage)(p)
 	switch rel {
 	case 0:
 		r.User = (*tenant.User)(child)
@@ -1680,40 +1683,40 @@ var enumThreadStatus = [...]schema.EnumValue{
 	{Value: `Archived`, Label: `Archived`},
 }
 
-// AssistantTurnOriginCol is a column of conversation.AssistantTurnOrigin values.
+// AssistantTurnOriginCol is a column of conversationturn.AssistantTurnOrigin values.
 type AssistantTurnOriginCol struct{ keel.StringCol }
 
-func (c AssistantTurnOriginCol) Eq(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Eq(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c AssistantTurnOriginCol) Ne(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Ne(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c AssistantTurnOriginCol) Gt(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Gt(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c AssistantTurnOriginCol) Gte(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Gte(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c AssistantTurnOriginCol) Lt(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Lt(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c AssistantTurnOriginCol) Lte(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Lte(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c AssistantTurnOriginCol) IsDistinctFrom(v conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) IsDistinctFrom(v conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c AssistantTurnOriginCol) Between(lo, hi conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) Between(lo, hi conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c AssistantTurnOriginCol) To(v conversation.AssistantTurnOrigin) keel.Assignment {
+func (c AssistantTurnOriginCol) To(v conversationturn.AssistantTurnOrigin) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c AssistantTurnOriginCol) In(vs ...conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) In(vs ...conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c AssistantTurnOriginCol) NotIn(vs ...conversation.AssistantTurnOrigin) keel.Pred {
+func (c AssistantTurnOriginCol) NotIn(vs ...conversationturn.AssistantTurnOrigin) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -1754,40 +1757,40 @@ func (c AssistantTurnStatusCol) NotIn(vs ...conversation.AssistantTurnStatus) ke
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ChapterTitleSourceCol is a column of conversation.ChapterTitleSource values.
+// ChapterTitleSourceCol is a column of conversationchapter.ChapterTitleSource values.
 type ChapterTitleSourceCol struct{ keel.StringCol }
 
-func (c ChapterTitleSourceCol) Eq(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Eq(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ChapterTitleSourceCol) Ne(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Ne(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ChapterTitleSourceCol) Gt(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Gt(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ChapterTitleSourceCol) Gte(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Gte(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ChapterTitleSourceCol) Lt(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Lt(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ChapterTitleSourceCol) Lte(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Lte(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ChapterTitleSourceCol) IsDistinctFrom(v conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) IsDistinctFrom(v conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ChapterTitleSourceCol) Between(lo, hi conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) Between(lo, hi conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ChapterTitleSourceCol) To(v conversation.ChapterTitleSource) keel.Assignment {
+func (c ChapterTitleSourceCol) To(v conversationchapter.ChapterTitleSource) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ChapterTitleSourceCol) In(vs ...conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) In(vs ...conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ChapterTitleSourceCol) NotIn(vs ...conversation.ChapterTitleSource) keel.Pred {
+func (c ChapterTitleSourceCol) NotIn(vs ...conversationchapter.ChapterTitleSource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

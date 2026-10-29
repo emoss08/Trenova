@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,9 +109,9 @@ func TestAnchorRefs_PutsThisTurnFirstAndLeavesOutTheSubject(t *testing.T) {
 	t.Parallel()
 
 	subject := pulid.MustNew("shp_")
-	older, _ := conversation.NewWorkingRecord(pulid.MustNew("inv_").String(), "INV-1",
+	older, _ := conversationworkingset.NewWorkingRecord(pulid.MustNew("inv_").String(), "INV-1",
 		conversation.WorkingSourceRead, 5)
-	subjectRecord, _ := conversation.NewWorkingRecord(subject.String(), "",
+	subjectRecord, _ := conversationworkingset.NewWorkingRecord(subject.String(), "",
 		conversation.WorkingSourceSubject, 6)
 	mentioned := pulid.MustNew("wrk_").String()
 

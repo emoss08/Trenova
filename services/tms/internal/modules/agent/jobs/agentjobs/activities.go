@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -532,7 +533,7 @@ func (a *Activities) settleRun(
 
 	run.ModelIdentifier = p.Outcome.Model
 	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
-	run.Transcript = conversation.RunTranscriptOf(p.Outcome.Messages)
+	run.Transcript = conversationtranscript.RunTranscriptOf(p.Outcome.Messages)
 	run.RecordTaint(p.Outcome.Taint, timeutils.NowUnix())
 	if fingerprint := p.Outcome.ServedFingerprint(); fingerprint != nil {
 		run.Fingerprint = fingerprint

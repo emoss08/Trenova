@@ -1,12 +1,13 @@
-package conversation
+package conversationtranscript
 
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func RunTranscriptOf(messages []Message) *agent.RunTranscript {
+func RunTranscriptOf(messages []conversation.Message) *agent.RunTranscript {
 	if len(messages) == 0 {
 		return nil
 	}
@@ -34,7 +35,9 @@ func RunTranscriptOf(messages []Message) *agent.RunTranscript {
 	}
 }
 
-func boundedTranscriptMessage(message *Message) (entry agent.TranscriptMessage, size int) {
+func boundedTranscriptMessage(
+	message *conversation.Message,
+) (entry agent.TranscriptMessage, size int) {
 	entry = transcriptMessageOf(message)
 	size = encodedSize(&entry)
 	if size <= agent.TranscriptMessageBytes {
@@ -47,7 +50,7 @@ func boundedTranscriptMessage(message *Message) (entry agent.TranscriptMessage, 
 	return entry, size
 }
 
-func transcriptMessageOf(message *Message) agent.TranscriptMessage {
+func transcriptMessageOf(message *conversation.Message) agent.TranscriptMessage {
 	entry := agent.TranscriptMessage{
 		Role:              string(message.Role),
 		Kind:              string(message.Kind),
@@ -87,10 +90,10 @@ func encodedSize(entry *agent.TranscriptMessage) int {
 	return len(encoded)
 }
 
-func MessageOfTranscript(entry *agent.TranscriptMessage) Message {
-	message := Message{
-		Role:              Role(entry.Role),
-		Kind:              MessageKind(entry.Kind),
+func MessageOfTranscript(entry *agent.TranscriptMessage) conversation.Message {
+	message := conversation.Message{
+		Role:              conversation.Role(entry.Role),
+		Kind:              conversation.MessageKind(entry.Kind),
 		Content:           entry.Content,
 		ToolCallID:        entry.ToolCallID,
 		ToolName:          entry.ToolName,
@@ -102,15 +105,15 @@ func MessageOfTranscript(entry *agent.TranscriptMessage) Message {
 		CreatedAt:         entry.CreatedAt,
 	}
 	if message.Kind == "" {
-		message.Kind = MessageKindMessage
+		message.Kind = conversation.MessageKindMessage
 	}
 	if entry.Reasoning != "" {
-		message.Reasoning = &ReasoningTrace{Text: entry.Reasoning}
+		message.Reasoning = &conversation.ReasoningTrace{Text: entry.Reasoning}
 	}
 	if len(entry.ToolCalls) > 0 {
-		message.ToolCalls = make([]ToolCallRecord, len(entry.ToolCalls))
+		message.ToolCalls = make([]conversation.ToolCallRecord, len(entry.ToolCalls))
 		for idx, call := range entry.ToolCalls {
-			message.ToolCalls[idx] = ToolCallRecord{
+			message.ToolCalls[idx] = conversation.ToolCallRecord{
 				ID:        call.ID,
 				Name:      call.Name,
 				Arguments: call.Arguments,

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -23,7 +24,7 @@ import (
 const (
 	// MaxAttachments bounds one message's files. Each is read into the
 	// prompt, so the bound is a context budget as much as a courtesy.
-	MaxAttachments = conversation.MaxMessageAttachments
+	MaxAttachments = conversationqueue.MaxMessageAttachments
 	// AttachmentResourceType is the resource an attachment is uploaded
 	// against: the thread, so ownership is a plain comparison.
 	AttachmentResourceType = document.ConversationResourceType

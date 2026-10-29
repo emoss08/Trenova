@@ -3,12 +3,11 @@ package assistantturnservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +34,7 @@ func TestStartRefusesAPersonsQuestionPastTheMonthlyMessageLimit(t *testing.T) {
 	}, nil)
 	svc := &Service{l: zap.NewNop(), quota: guard}
 
-	for _, origin := range []conversation.AssistantTurnOrigin{"", conversation.AssistantTurnOriginPerson} {
+	for _, origin := range []conversationturn.AssistantTurnOrigin{"", conversationturn.AssistantTurnOriginPerson} {
 		turn, err := svc.Start(t.Context(), StartRequest{
 			ThreadID:   pulid.MustNew("thr_"),
 			UserID:     tenant.UserID,
@@ -50,12 +49,15 @@ func TestStartRefusesAPersonsQuestionPastTheMonthlyMessageLimit(t *testing.T) {
 func TestStartRefusesScheduledTurnsThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), plans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation)}
+	svc := &Service{
+		l:     zap.NewNop(),
+		plans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
+	}
 
 	turn, err := svc.Start(t.Context(), StartRequest{
 		ThreadID:   pulid.MustNew("thr_"),
 		TenantInfo: plantest.Tenant(),
-		Origin:     conversation.AssistantTurnOriginScheduled,
+		Origin:     conversationturn.AssistantTurnOriginScheduled,
 	})
 
 	require.Nil(t, turn)
@@ -65,10 +67,14 @@ func TestStartRefusesScheduledTurnsThePlanRestricts(t *testing.T) {
 func TestAssertPlanAllowsLetsFollowUpsThrough(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), quota: platformplanportsmock.NewMockQuotaGuard(t), plans: platformplanportsmock.NewMockPlanService(t)}
+	svc := &Service{
+		l:     zap.NewNop(),
+		quota: platformplanportsmock.NewMockQuotaGuard(t),
+		plans: platformplanportsmock.NewMockPlanService(t),
+	}
 
 	require.NoError(t, svc.assertPlanAllows(t.Context(), StartRequest{
 		TenantInfo: plantest.Tenant(),
-		Origin:     conversation.AssistantTurnOriginDecisionFollowUp,
+		Origin:     conversationturn.AssistantTurnOriginDecisionFollowUp,
 	}))
 }

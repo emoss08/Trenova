@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -121,7 +121,7 @@ func (c cursor) after(other cursor) bool {
 type tenantRows struct {
 	tenant    pagination.TenantInfo
 	runs      map[pulid.ID]*agent.AgentRun
-	turns     map[pulid.ID]*conversation.AssistantTurn
+	turns     map[pulid.ID]*conversationturn.AssistantTurn
 	usage     map[pulid.ID]*aiusage.AIUsageRecord
 	steps     map[pulid.ID]*agentrunstep.AgentRunStep
 	events    map[pulid.ID]*agentrunevent.AgentRunEvent
@@ -133,7 +133,7 @@ func newTenantRows(tenant pagination.TenantInfo) *tenantRows {
 	return &tenantRows{
 		tenant:    tenant,
 		runs:      map[pulid.ID]*agent.AgentRun{},
-		turns:     map[pulid.ID]*conversation.AssistantTurn{},
+		turns:     map[pulid.ID]*conversationturn.AssistantTurn{},
 		usage:     map[pulid.ID]*aiusage.AIUsageRecord{},
 		steps:     map[pulid.ID]*agentrunstep.AgentRunStep{},
 		events:    map[pulid.ID]*agentrunevent.AgentRunEvent{},

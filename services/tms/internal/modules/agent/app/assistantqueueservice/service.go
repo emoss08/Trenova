@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -50,12 +52,12 @@ type turnStarter interface {
 	Active(
 		ctx context.Context,
 		req assistantports.ActiveAssistantTurnRequest,
-	) (*conversation.AssistantTurn, error)
+	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
 type threadReader interface {
@@ -113,7 +115,7 @@ func (s *Scope) repo() *assistantports.AssistantQueueScope {
 type EnqueueRequest struct {
 	Scope   *Scope
 	Content string
-	Request conversation.QueuedRequest
+	Request conversationqueue.QueuedRequest
 	Steer   bool
 }
 
@@ -135,18 +137,21 @@ type ReorderRequest struct {
 }
 
 type Outcome struct {
-	Item *conversation.QueuedMessage `json:"item,omitempty"`
+	Item *conversationqueue.QueuedMessage `json:"item,omitempty"`
 	// Steering says the message was handed to the reply under way, which
 	// reads it at its next step.
 	Steering bool `json:"steering"`
 	// Turn is the reply the message started, when the conversation was free.
-	Turn *conversation.AssistantTurn `json:"-"`
+	Turn *conversationturn.AssistantTurn `json:"-"`
 	// Held says why the message is waiting rather than sent, when it could
 	// not be sent although the conversation was free.
 	Held string `json:"held,omitempty"`
 }
 
-func (s *Service) List(ctx context.Context, scope *Scope) ([]*conversation.QueuedMessage, error) {
+func (s *Service) List(
+	ctx context.Context,
+	scope *Scope,
+) ([]*conversationqueue.QueuedMessage, error) {
 	if err := s.ownThread(ctx, scope); err != nil {
 		return nil, err
 	}
@@ -160,7 +165,7 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 	}
 
 	request := req.Request
-	item := &conversation.QueuedMessage{
+	item := &conversationqueue.QueuedMessage{
 		OrganizationID: req.Scope.Actor.OrganizationID,
 		BusinessUnitID: req.Scope.Actor.BusinessUnitID,
 		ThreadID:       req.Scope.ThreadID,
@@ -187,7 +192,7 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 		if errors.Is(err, assistantports.ErrQueueFull) {
 			return nil, errortypes.NewBusinessError(fmt.Sprintf(
 				"Up to %d messages can wait in a conversation. Send or remove one first.",
-				conversation.MaxQueuedPerThread,
+				conversationqueue.MaxQueuedPerThread,
 			))
 		}
 		return nil, err
@@ -204,14 +209,17 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 	return s.sendWhenFree(ctx, req.Scope, created)
 }
 
-func (s *Service) Edit(ctx context.Context, req *EditRequest) (*conversation.QueuedMessage, error) {
+func (s *Service) Edit(
+	ctx context.Context,
+	req *EditRequest,
+) (*conversationqueue.QueuedMessage, error) {
 	item, err := s.editable(ctx, req.Scope, req.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	multiErr := errortypes.NewMultiError()
-	conversation.ValidateQueuedContent("content", req.Content, multiErr)
+	conversationqueue.ValidateQueuedContent("content", req.Content, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
@@ -246,7 +254,7 @@ func (s *Service) Remove(ctx context.Context, req *ItemRequest) error {
 func (s *Service) Reorder(
 	ctx context.Context,
 	req *ReorderRequest,
-) ([]*conversation.QueuedMessage, error) {
+) ([]*conversationqueue.QueuedMessage, error) {
 	if err := s.ownThread(ctx, req.Scope); err != nil {
 		return nil, err
 	}
@@ -271,7 +279,7 @@ func (s *Service) Reorder(
 		return nil, err
 	}
 	s.announce(ctx, &req.Scope.Actor, req.Scope.ThreadID)
-	slices.SortFunc(ordered, func(a, b *conversation.QueuedMessage) int {
+	slices.SortFunc(ordered, func(a, b *conversationqueue.QueuedMessage) int {
 		return cmp.Compare(a.Position, b.Position)
 	})
 
@@ -316,7 +324,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 // reply can no longer take is sent once it does.
 func (s *Service) steerNow(
 	ctx context.Context,
-	active *conversation.AssistantTurn,
+	active *conversationturn.AssistantTurn,
 	key *assistantports.QueuedMessageRequest,
 ) (*Outcome, error) {
 	if !steerable(active) {
@@ -398,7 +406,7 @@ func (s *Service) SettleQueue(
 func (s *Service) sendWhenFree(
 	ctx context.Context,
 	scope *Scope,
-	created *conversation.QueuedMessage,
+	created *conversationqueue.QueuedMessage,
 ) (*Outcome, error) {
 	turn, item := s.dispatchNext(ctx, scope.repo())
 	if turn != nil {
@@ -415,14 +423,14 @@ func (s *Service) sendWhenFree(
 }
 
 type dispatched struct {
-	*conversation.QueuedMessage
+	*conversationqueue.QueuedMessage
 	heldReason string
 }
 
 func (s *Service) dispatchNext(
 	ctx context.Context,
 	scope *assistantports.AssistantQueueScope,
-) (*conversation.AssistantTurn, *dispatched) {
+) (*conversationturn.AssistantTurn, *dispatched) {
 	item, err := s.queue.ClaimNext(ctx, scope)
 	if errors.Is(err, assistantports.ErrQueueEmpty) {
 		return nil, nil
@@ -449,11 +457,11 @@ func (s *Service) dispatchNext(
 
 func (s *Service) start(
 	ctx context.Context,
-	item *conversation.QueuedMessage,
-) (*conversation.AssistantTurn, error) {
+	item *conversationqueue.QueuedMessage,
+) (*conversationturn.AssistantTurn, error) {
 	request := item.Request
 	if request == nil {
-		request = &conversation.QueuedRequest{}
+		request = &conversationqueue.QueuedRequest{}
 	}
 	actor := permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -471,9 +479,9 @@ func (s *Service) start(
 			BuID:   item.BusinessUnitID,
 			UserID: item.UserID,
 		},
-		Origin: conversation.AssistantTurnOriginPerson,
+		Origin: conversationturn.AssistantTurnOriginPerson,
 		Input:  item.Content,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		run, err := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
 			assistantcontract.TurnStart{
 				Actor:   actor,
@@ -496,7 +504,7 @@ func (s *Service) start(
 	})
 }
 
-func (s *Service) restore(ctx context.Context, item *conversation.QueuedMessage) {
+func (s *Service) restore(ctx context.Context, item *conversationqueue.QueuedMessage) {
 	if err := s.queue.Restore(ctx, item); err != nil {
 		s.l.Error("a queued message could not be put back after it failed to start",
 			zap.String("message", item.ID.String()),
@@ -510,8 +518,8 @@ func (s *Service) restore(ctx context.Context, item *conversation.QueuedMessage)
 // the queue like any other and is sent as the reply ends.
 func (s *Service) steer(
 	ctx context.Context,
-	active *conversation.AssistantTurn,
-	item *conversation.QueuedMessage,
+	active *conversationturn.AssistantTurn,
+	item *conversationqueue.QueuedMessage,
 ) bool {
 	if active == nil {
 		return false
@@ -541,7 +549,7 @@ func (s *Service) editable(
 	ctx context.Context,
 	scope *Scope,
 	id pulid.ID,
-) (*conversation.QueuedMessage, error) {
+) (*conversationqueue.QueuedMessage, error) {
 	if err := s.ownThread(ctx, scope); err != nil {
 		return nil, err
 	}
@@ -580,7 +588,10 @@ func (s *Service) ownThread(ctx context.Context, scope *Scope) error {
 	return err
 }
 
-func (s *Service) active(ctx context.Context, scope *Scope) (*conversation.AssistantTurn, error) {
+func (s *Service) active(
+	ctx context.Context,
+	scope *Scope,
+) (*conversationturn.AssistantTurn, error) {
 	return s.turns.Active(ctx, assistantports.ActiveAssistantTurnRequest{
 		ThreadID:   scope.ThreadID,
 		UserID:     scope.Actor.UserID,
@@ -615,11 +626,11 @@ func (s *Service) announce(
 	}
 }
 
-func steerable(active *conversation.AssistantTurn) bool {
-	return active != nil && active.Origin != conversation.AssistantTurnOriginCompaction
+func steerable(active *conversationturn.AssistantTurn) bool {
+	return active != nil && active.Origin != conversationturn.AssistantTurnOriginCompaction
 }
 
-func sameItems(current []*conversation.QueuedMessage, ids []pulid.ID) bool {
+func sameItems(current []*conversationqueue.QueuedMessage, ids []pulid.ID) bool {
 	if len(current) != len(ids) {
 		return false
 	}
