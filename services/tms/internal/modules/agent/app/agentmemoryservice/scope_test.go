@@ -23,7 +23,7 @@ func TestForContext_ReadsOnlyThisAgentsOwnMemories(t *testing.T) {
 
 	_, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).ForContext(
 		t.Context(),
-		agentmemoryports.MemoryContextRequest{TenantInfo: tenant(), AgentDefinitionID: agentID},
+		&agentmemoryports.MemoryContextRequest{TenantInfo: tenant(), AgentDefinitionID: agentID},
 	)
 	require.NoError(t, err)
 

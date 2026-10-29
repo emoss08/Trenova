@@ -377,7 +377,7 @@ func (t *ForgetMemoryTool) Execute(
 		return err
 	}
 
-	_, err = t.memories.SetStatus(ctx, request, params.Actor)
+	_, err = t.memories.SetStatus(ctx, &request, params.Actor)
 
 	return err
 }

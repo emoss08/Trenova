@@ -507,10 +507,10 @@ func mayChangeStatus(
 
 func (s *Service) SetStatus(
 	ctx context.Context,
-	req agentmemoryports.SetAgentMemoryStatusRequest,
+	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agentmemory.Memory, error) {
-	return s.setStatus(ctx, &req, actor, s.manages(ctx, req.TenantInfo, actor))
+	return s.setStatus(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
 }
 
 func (s *Service) PreviewSetStatus(
@@ -865,7 +865,7 @@ func (s *Service) ListConnection(
 
 func (s *Service) Recall(
 	ctx context.Context,
-	req agentmemoryports.RecallAgentMemoriesRequest,
+	req *agentmemoryports.RecallAgentMemoriesRequest,
 ) ([]agentmemoryports.RecalledMemory, error) {
 	limit := req.Limit
 	if limit <= 0 {
@@ -902,7 +902,7 @@ func (s *Service) Recall(
 		return recalledAs(found, ""), nil
 	}
 
-	similar, ok := s.similar(ctx, &req, &search)
+	similar, ok := s.similar(ctx, req, &search)
 	if !ok {
 		return recalledAs(found, agentmemory.MemoryMatchWords), nil
 	}
@@ -1040,7 +1040,7 @@ func recallMatch(words, meaning bool) agentmemory.MemoryMatch {
 
 func (s *Service) ForContext(
 	ctx context.Context,
-	req agentmemoryports.MemoryContextRequest,
+	req *agentmemoryports.MemoryContextRequest,
 ) (*agentmemoryports.MemoryContext, error) {
 	now := timeutils.NowUnix()
 
@@ -1351,6 +1351,8 @@ func correctionContent(
 			fmt.Sprintf("A person rejected %s. Reason: %s", proposal.ToolName, reason),
 			agentmemory.MaxMemoryContentChars,
 		)
+	case agenttooltrust.TrustOutcomeApproved, agenttooltrust.TrustOutcomeExecutionFailed:
+		return ""
 	default:
 		return ""
 	}

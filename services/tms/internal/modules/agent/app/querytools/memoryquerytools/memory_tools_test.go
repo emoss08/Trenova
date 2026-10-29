@@ -24,9 +24,9 @@ type fakeRecall struct {
 
 func (f *fakeRecall) Recall(
 	_ context.Context,
-	req agentmemoryports.RecallAgentMemoriesRequest,
+	req *agentmemoryports.RecallAgentMemoriesRequest,
 ) ([]agentmemoryports.RecalledMemory, error) {
-	f.captured = req
+	f.captured = *req
 
 	var match agentmemory.MemoryMatch
 	if req.Query != "" {

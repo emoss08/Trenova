@@ -190,7 +190,7 @@ func (t *recallMemoryTool) Query(
 	}
 	criteria.Field("tool", req.ToolName)
 
-	memories, err := t.memories.Recall(ctx, req)
+	memories, err := t.memories.Recall(ctx, &req)
 	if err != nil {
 		return nil, err
 	}

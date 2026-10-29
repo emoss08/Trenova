@@ -197,7 +197,7 @@ func TestRecallFusesWordsAndMeaning(t *testing.T) {
 	svc.repo = repo
 	svc.vectors = vectors
 
-	recalled, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
+	recalled, err := svc.Recall(t.Context(), &agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo:  tenant(),
 		Query:       "free time before detention",
 		Limit:       10,
@@ -247,7 +247,7 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 			svc.repo = &searchingMemoryRepo{byWords: repo.byWords}
 			svc.vectors = vectors
 
-			recalled, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
+			recalled, err := svc.Recall(t.Context(), &agentmemoryports.RecallAgentMemoriesRequest{
 				TenantInfo: tenant(),
 				Query:      "free time",
 			})
@@ -261,7 +261,7 @@ func TestRecallStaysOnWordsWithoutMeaning(t *testing.T) {
 	svc.repo = &searchingMemoryRepo{eligible: []*agentmemory.Memory{found}}
 	vectors := &fakeVectors{}
 	svc.vectors = vectors
-	listed, err := svc.Recall(t.Context(), agentmemoryports.RecallAgentMemoriesRequest{
+	listed, err := svc.Recall(t.Context(), &agentmemoryports.RecallAgentMemoriesRequest{
 		TenantInfo: tenant(),
 		IDs:        []pulid.ID{found.ID},
 	})

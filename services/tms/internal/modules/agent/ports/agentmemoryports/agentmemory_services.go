@@ -364,7 +364,7 @@ type AgentMemoryService interface {
 	) (*agentmemory.Memory, error)
 	SetStatus(
 		ctx context.Context,
-		req SetAgentMemoryStatusRequest,
+		req *SetAgentMemoryStatusRequest,
 		actor *permissionports.RequestActor,
 	) (*agentmemory.Memory, error)
 	// Review clears a tainted memory's taint for the person who read it:
@@ -380,7 +380,7 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		req *ListAgentMemoryConnectionRequest,
 	) (*pagination.CursorListResult[*agentmemory.Memory], error)
-	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]RecalledMemory, error)
+	Recall(ctx context.Context, req *RecallAgentMemoriesRequest) ([]RecalledMemory, error)
 	// MayManageShared reports whether the person holds agent-memory manage:
 	// the right to keep, change and approve what reaches other people's
 	// conversations. Nobody but a person holds it, and a check that cannot
@@ -389,7 +389,7 @@ type AgentMemoryService interface {
 	// ForContext returns the memories a prompt may carry, best first, with
 	// the records they were read for. Nothing is counted as used until a
 	// prompt carries it; RecordUse does that.
-	ForContext(ctx context.Context, req MemoryContextRequest) (*MemoryContext, error)
+	ForContext(ctx context.Context, req *MemoryContextRequest) (*MemoryContext, error)
 	RecordUse(ctx context.Context, req RecordMemoryUseRequest) error
 	Usage(ctx context.Context, tenant pagination.TenantInfo) (*AgentMemoryUsage, error)
 	// RecordCorrection turns a decision that changed or refused a proposal

@@ -158,16 +158,17 @@ func contextSections(in *promptInput) llmports.DelimitedContext {
 		}
 		signalLines = append(signalLines, line)
 	}
-	sections = append(sections, llmports.ContextSection{
-		Title:   "Why this work was worth a look",
-		Trusted: true,
-		Content: strings.Join(signalLines, "\n"),
-	})
-
-	sections = append(sections, llmports.ContextSection{
-		Title:   "Memories already kept",
-		Content: memoryLines(in.Memories),
-	})
+	sections = append(sections,
+		llmports.ContextSection{
+			Title:   "Why this work was worth a look",
+			Trusted: true,
+			Content: strings.Join(signalLines, "\n"),
+		},
+		llmports.ContextSection{
+			Title:   "Memories already kept",
+			Content: memoryLines(in.Memories),
+		},
+	)
 
 	if len(in.Subjects) > 0 {
 		lines := make([]string, 0, len(in.Subjects))

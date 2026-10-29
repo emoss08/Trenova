@@ -442,7 +442,7 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 		return nil, err
 	}
 
-	return r.AgentMemoryService.SetStatus(ctx, agentmemoryports.SetAgentMemoryStatusRequest{
+	return r.AgentMemoryService.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Status:     status,

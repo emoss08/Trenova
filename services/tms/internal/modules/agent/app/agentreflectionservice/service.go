@@ -278,7 +278,7 @@ func (s *Service) ready(
 	}
 
 	toolNames := windowToolNames(p.window.Messages)
-	known, err := s.memories.ForContext(ctx, agentmemoryports.MemoryContextRequest{
+	known, err := s.memories.ForContext(ctx, &agentmemoryports.MemoryContextRequest{
 		TenantInfo:        plan.TenantInfo,
 		AgentDefinitionID: plan.AgentDefinitionID,
 		ReaderUserID:      plan.PersonUserID,

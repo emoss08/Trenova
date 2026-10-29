@@ -242,7 +242,7 @@ func (b *Builder) readMemories(
 	toolNames []string,
 	tenant pagination.TenantInfo,
 ) *agentmemoryports.MemoryContext {
-	memories, err := b.memories.ForContext(ctx, agentmemoryports.MemoryContextRequest{
+	memories, err := b.memories.ForContext(ctx, &agentmemoryports.MemoryContextRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: req.Definition.ID,
 		ReaderUserID:      req.Actor.PersonUserID(),

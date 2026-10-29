@@ -400,7 +400,7 @@ func TestForContext_ReadsCandidatesWithoutCountingThemUsed(t *testing.T) {
 	repo := &fakeMemoryRepo{active: []*agentmemory.Memory{one}}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
 
-	got, err := svc.ForContext(t.Context(), agentmemoryports.MemoryContextRequest{
+	got, err := svc.ForContext(t.Context(), &agentmemoryports.MemoryContextRequest{
 		TenantInfo: tenant(),
 		ToolNames:  []string{"dispatch_assign_move"},
 	})
@@ -428,7 +428,7 @@ func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
 	}
 	svc.subjects = agentmemorysubjects.NewSubjectResolver(&fakeLinks{links: links})
 
-	got, err := svc.ForContext(t.Context(), agentmemoryports.MemoryContextRequest{
+	got, err := svc.ForContext(t.Context(), &agentmemoryports.MemoryContextRequest{
 		TenantInfo: tenant(),
 		Records: []agentpagecontext.EntityRef{
 			{Type: "customer", ID: customerID.String()},

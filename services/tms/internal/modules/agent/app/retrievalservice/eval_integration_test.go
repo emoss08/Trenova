@@ -277,7 +277,7 @@ func (h *evalHarness) retrievers(
 		memories: func(query string) ([]string, error) {
 			recalled, err := memories.Recall(
 				h.as(h.tenant),
-				agentmemoryports.RecallAgentMemoriesRequest{
+				&agentmemoryports.RecallAgentMemoriesRequest{
 					TenantInfo: h.tenant,
 					Query:      query,
 					Limit:      evalLimit,
@@ -580,7 +580,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					recalled, err := memoryServices[name].Recall(h.as(h.tenant),
-						agentmemoryports.RecallAgentMemoriesRequest{
+						&agentmemoryports.RecallAgentMemoriesRequest{
 							TenantInfo: h.tenant, Query: query, Limit: agentmemory.MaxMemoryRecallLimit,
 						})
 					require.NoError(t, err)

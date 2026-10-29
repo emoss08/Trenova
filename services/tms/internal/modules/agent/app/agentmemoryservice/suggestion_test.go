@@ -108,14 +108,14 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	repo := &suggestionRepo{memory: shared}
 	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
 
-	_, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	_, err := svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: shared.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
 	}, userActor())
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, repo.statuses)
 
-	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: shared.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
 	}, agentActor())
 	require.Error(t, err, "a run with nobody in it never retires what others read")
@@ -128,13 +128,13 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	repo = &suggestionRepo{memory: own}
 	svc = &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
 
-	updated, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	updated, err := svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: own.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
 	}, owner)
 	require.NoError(t, err)
 	assert.Equal(t, agentmemory.MemoryStatusRetired, updated.Status)
 
-	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: own.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
 	}, userActor())
 	require.Error(t, err, "another person's own memory is not theirs")
@@ -146,7 +146,7 @@ func TestSetStatus_RefusesASuggestedMemory(t *testing.T) {
 	repo := &suggestionRepo{memory: suggestion()}
 	svc := suggestionService(repo)
 
-	_, err := svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	_, err := svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Status:     agentmemory.MemoryStatusActive,
@@ -155,7 +155,7 @@ func TestSetStatus_RefusesASuggestedMemory(t *testing.T) {
 	assert.Empty(t, repo.statuses, "a suggestion is never activated by a status change")
 
 	repo.memory.Status = agentmemory.MemoryStatusDismissed
-	_, err = svc.SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	_, err = svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Status:     agentmemory.MemoryStatusActive,
@@ -173,7 +173,7 @@ func TestSetStatus_RefusesToMakeAMemorySuggested(t *testing.T) {
 
 	_, err := suggestionService(
 		repo,
-	).SetStatus(t.Context(), agentmemoryports.SetAgentMemoryStatusRequest{
+	).SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memory.ID,
 		TenantInfo: tenant(),
 		Status:     agentmemory.MemoryStatusSuggested,
@@ -191,7 +191,7 @@ func TestSetStatus_StillRetiresAnActiveMemory(t *testing.T) {
 
 	updated, err := suggestionService(repo).SetStatus(
 		t.Context(),
-		agentmemoryports.SetAgentMemoryStatusRequest{
+		&agentmemoryports.SetAgentMemoryStatusRequest{
 			ID:         memory.ID,
 			TenantInfo: tenant(),
 			Status:     agentmemory.MemoryStatusRetired,

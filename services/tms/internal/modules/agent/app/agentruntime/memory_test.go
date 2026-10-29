@@ -35,9 +35,9 @@ type fakeMemories struct {
 
 func (f *fakeMemories) ForContext(
 	_ context.Context,
-	req agentmemoryports.MemoryContextRequest,
+	req *agentmemoryports.MemoryContextRequest,
 ) (*agentmemoryports.MemoryContext, error) {
-	f.asked = &req
+	f.asked = req
 
 	return f.answer, nil
 }

@@ -115,13 +115,13 @@ func (f *fakeMemories) GetByID(
 
 func (f *fakeMemories) SetStatus(
 	_ context.Context,
-	req agentmemoryports.SetAgentMemoryStatusRequest,
+	req *agentmemoryports.SetAgentMemoryStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agentmemory.Memory, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
-	f.status = &req
+	f.status = req
 	memory, ok := f.stored[req.ID]
 	if !ok {
 		return &agentmemory.Memory{ID: req.ID, Status: req.Status}, nil
