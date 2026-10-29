@@ -591,6 +591,11 @@ modules:
   operations:
     level: 7
     domain:
+      - boardgrouping
+      - chargeallocation
+      - checkcall
+      - commentbody
+      - customertracking
       - detention
       - detentioncollectability
       - detentionevidence
@@ -598,27 +603,23 @@ modules:
       - detentionpolicy
       - dispatchcontrol
       - documentshipmentdraft
+      - movesplit
       - order
+      - pickupwindow
+      - quickfilter
       - recurringshipment
       - servicefailure
       - shipment
-      - boardgrouping
-      - chargeallocation
-      - commentbody
-      - movesplit
-      - pickupwindow
-      - quickfilter
       - shipmentcoverage
+      - shipmentevent
+      - shipmentformula
       - shipmenthold
       - shipmentrating
-      - shipmentevent
       - shipmentstate
       - shipmentsuggestion
+      - stopeta
       - tender
       - trackingevent
-      - checkcall
-      - stopeta
-      - customertracking
       - weatheralert
     service:
       - allocationcheck

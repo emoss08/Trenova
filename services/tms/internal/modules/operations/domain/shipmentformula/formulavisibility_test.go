@@ -1,8 +1,9 @@
-package shipment
+package shipmentformula
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -12,23 +13,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ratedShipment() *Shipment {
-	return &Shipment{
+func ratedShipment() *shipment.Shipment {
+	return &shipment.Shipment{
 		ID:              pulid.MustNew("shp_"),
 		FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per pound"},
-		RatingDetail: &RatingDetail{
+		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Trace:               &shipment.RatingTrace{Statements: rules.RawJSON(`["weight * 2"]`)},
 			Bill:                &tarifftypes.Bill{Total: decimal.NewFromInt(42)},
 		},
 	}
 }
 
-func TestShipment_WithoutFormulaContent(t *testing.T) {
+func TestWithhold(t *testing.T) {
 	t.Parallel()
 
 	original := ratedShipment()
-	redacted := original.WithoutFormulaContent()
+	redacted := Withhold(original)
 
 	require.NotSame(t, original, redacted)
 	assert.Nil(t, redacted.FormulaTemplate)
@@ -41,27 +42,27 @@ func TestShipment_WithoutFormulaContent(t *testing.T) {
 	assert.NotEmpty(t, original.RatingDetail.Trace)
 }
 
-func TestShipment_WithoutFormulaContentLeavesCleanShipmentAlone(t *testing.T) {
+func TestWithholdLeavesCleanShipmentAlone(t *testing.T) {
 	t.Parallel()
 
-	var missing *Shipment
-	assert.Nil(t, missing.WithoutFormulaContent())
+	var missing *shipment.Shipment
+	assert.Nil(t, Withhold(missing))
 
-	plain := &Shipment{
+	plain := &shipment.Shipment{
 		ID:           pulid.MustNew("shp_"),
-		RatingDetail: &RatingDetail{Bill: &tarifftypes.Bill{Total: decimal.NewFromInt(1)}},
+		RatingDetail: &shipment.RatingDetail{Bill: &tarifftypes.Bill{Total: decimal.NewFromInt(1)}},
 	}
-	assert.Same(t, plain, plain.WithoutFormulaContent())
+	assert.Same(t, plain, Withhold(plain))
 }
 
-func TestWithoutFormulaContent_Slice(t *testing.T) {
+func TestWithholdAll(t *testing.T) {
 	t.Parallel()
 
-	plain := &Shipment{ID: pulid.MustNew("shp_")}
+	plain := &shipment.Shipment{ID: pulid.MustNew("shp_")}
 	rated := ratedShipment()
-	items := []*Shipment{plain, rated, nil}
+	items := []*shipment.Shipment{plain, rated, nil}
 
-	redacted := WithoutFormulaContent(items)
+	redacted := WithholdAll(items)
 
 	require.Len(t, redacted, 3)
 	assert.Same(t, plain, redacted[0])
@@ -72,7 +73,7 @@ func TestWithoutFormulaContent_Slice(t *testing.T) {
 	assert.Same(t, rated, items[1])
 	assert.NotEmpty(t, items[1].RatingDetail.Trace)
 
-	clean := []*Shipment{plain}
-	assert.Equal(t, &clean[0], &WithoutFormulaContent(clean)[0])
-	assert.Empty(t, WithoutFormulaContent(nil))
+	clean := []*shipment.Shipment{plain}
+	assert.Equal(t, &clean[0], &WithholdAll(clean)[0])
+	assert.Empty(t, WithholdAll(nil))
 }
