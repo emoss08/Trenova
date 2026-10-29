@@ -114,6 +114,33 @@ func (r *repository) GetByID(
 	)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req distanceprofileports.GetDistanceProfilesByIDsRequest,
+) ([]*distanceprofile.DistanceProfile, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*distanceprofile.DistanceProfile, error) {
+			if len(req.DistanceProfileIDs) == 0 {
+				return []*distanceprofile.DistanceProfile{}, nil
+			}
+
+			dp := distanceprofiledb.DistanceProfiles
+			entities, err := dp.Where(dp.ID.In(req.DistanceProfileIDs...)).
+				Limit(len(req.DistanceProfileIDs)).
+				Cache(resultcache.Reference()...).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get distance profiles", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetDefault(
 	ctx context.Context,
 	_ pagination.TenantInfo,

@@ -62,6 +62,13 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req distanceprofileports.GetDistanceProfilesByIDsRequest,
+) ([]*distanceprofile.DistanceProfile, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) EnsureDefault(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

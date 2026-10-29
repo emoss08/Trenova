@@ -301,6 +301,74 @@ func (_c *MockDistanceProfileRepository_GetByID_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockDistanceProfileRepository
+func (_mock *MockDistanceProfileRepository) GetByIDs(ctx context.Context, req distanceprofileports.GetDistanceProfilesByIDsRequest) ([]*distanceprofile.DistanceProfile, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*distanceprofile.DistanceProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, distanceprofileports.GetDistanceProfilesByIDsRequest) ([]*distanceprofile.DistanceProfile, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, distanceprofileports.GetDistanceProfilesByIDsRequest) []*distanceprofile.DistanceProfile); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*distanceprofile.DistanceProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, distanceprofileports.GetDistanceProfilesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDistanceProfileRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockDistanceProfileRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req distanceprofileports.GetDistanceProfilesByIDsRequest
+func (_e *MockDistanceProfileRepository_Expecter) GetByIDs(ctx any, req any) *MockDistanceProfileRepository_GetByIDs_Call {
+	return &MockDistanceProfileRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockDistanceProfileRepository_GetByIDs_Call) Run(run func(ctx context.Context, req distanceprofileports.GetDistanceProfilesByIDsRequest)) *MockDistanceProfileRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 distanceprofileports.GetDistanceProfilesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(distanceprofileports.GetDistanceProfilesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceProfileRepository_GetByIDs_Call) Return(distanceProfiles []*distanceprofile.DistanceProfile, err error) *MockDistanceProfileRepository_GetByIDs_Call {
+	_c.Call.Return(distanceProfiles, err)
+	return _c
+}
+
+func (_c *MockDistanceProfileRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req distanceprofileports.GetDistanceProfilesByIDsRequest) ([]*distanceprofile.DistanceProfile, error)) *MockDistanceProfileRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetDefault provides a mock function for the type MockDistanceProfileRepository
 func (_mock *MockDistanceProfileRepository) GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*distanceprofile.DistanceProfile, error) {
 	ret := _mock.Called(ctx, tenantInfo)

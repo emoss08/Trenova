@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
@@ -37,18 +36,17 @@ func (r *Sources) USState(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.UsStateService.Get(
-				ctx,
-				usstateports.GetUsStateByIDRequest{StateID: id},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, usStateSelectOptionItem(entity))
+		entities, err := r.UsStateService.GetByIDs(ctx, req.IDs)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*usstate.UsState).GetID,
+			usStateSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -106,21 +104,23 @@ func (r *Sources) RateZone(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.RateZoneService.GetByID(
-				ctx,
-				&ratezoneports.GetRateZoneByIDRequest{
-					RateZoneID: id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, rateZoneSelectOptionItem(entity))
+		entities, err := r.RateZoneService.GetByIDs(
+			ctx,
+			&ratezoneports.GetRateZonesByIDsRequest{
+				TenantInfo:  req.TenantInfo,
+				RateZoneIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*ratezone.RateZone).GetID,
+			rateZoneSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -141,21 +141,23 @@ func (r *Sources) LocationCategory(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.LocationCategoryService.Get(
-				ctx,
-				locationcategoryports.GetLocationCategoryByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, locationCategorySelectOptionItem(entity))
+		entities, err := r.LocationCategoryService.GetByIDs(
+			ctx,
+			locationcategoryports.GetLocationCategoriesByIDsRequest{
+				TenantInfo:          req.TenantInfo,
+				LocationCategoryIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*locationcategory.LocationCategory).GetID,
+			locationCategorySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -242,21 +244,23 @@ func (r *Sources) DistanceProfile(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.DistanceProfileService.Get(
-				ctx,
-				distanceprofileports.GetDistanceProfileByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, distanceProfileSelectOptionItem(entity))
+		entities, err := r.DistanceProfileService.GetByIDs(
+			ctx,
+			distanceprofileports.GetDistanceProfilesByIDsRequest{
+				TenantInfo:         req.TenantInfo,
+				DistanceProfileIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*distanceprofile.DistanceProfile).GetID,
+			distanceProfileSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

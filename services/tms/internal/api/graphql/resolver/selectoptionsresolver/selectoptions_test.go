@@ -245,19 +245,22 @@ func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	zoneID := pulid.MustNew("rzn_")
+	goneID := pulid.MustNew("rzn_")
 	repo := ratezoneportsmock.NewMockRateZoneRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *ratezoneports.GetRateZoneByIDRequest) bool {
-			return req.RateZoneID == zoneID &&
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req *ratezoneports.GetRateZonesByIDsRequest) bool {
+			return len(req.RateZoneIDs) == 2 &&
+				req.RateZoneIDs[0] == goneID &&
+				req.RateZoneIDs[1] == zoneID &&
 				req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID
 		})).
-		Return(&ratezone.RateZone{
+		Return([]*ratezone.RateZone{{
 			ID:        zoneID,
 			Code:      "SW",
 			Name:      "Southwest",
 			CreatedAt: 1780415883,
-		}, nil).
+		}}, nil).
 		Once()
 
 	resolver := &QueryResolver{&Deps{
@@ -274,7 +277,7 @@ func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
 
 	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
 		Resource: gqlmodel.SelectOptionResourceRateZone,
-		Ids:      []string{zoneID.String()},
+		Ids:      []string{goneID.String(), zoneID.String()},
 	})
 	require.NoError(t, err)
 
