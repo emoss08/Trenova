@@ -28,7 +28,6 @@ type Service struct {
 
 var _ invoiceadjustmentports.InvoiceAdjustmentDraftService = (*Service)(nil)
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) invoiceadjustmentports.InvoiceAdjustmentDraftService {
 	return &Service{
 		db:          p.DB,

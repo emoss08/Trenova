@@ -1,4 +1,3 @@
-//nolint:gocognit // existing legacy workflow/API shape is intentionally kept stable
 package invoicedraftservice
 
 import (
@@ -27,7 +26,6 @@ type Service struct {
 
 var _ invoiceports.InvoiceDraftService = (*Service)(nil)
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	l := p.Logger.Named("service.invoice")
 	return &Service{

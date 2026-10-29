@@ -1,4 +1,3 @@
-//nolint:gocognit // existing legacy workflow/API shape is intentionally kept stable
 package invoicequeryservice
 
 import (
@@ -19,7 +18,6 @@ type Service struct {
 
 var _ invoiceports.InvoiceQueryService = (*Service)(nil)
 
-//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		repo: p.Repo,
