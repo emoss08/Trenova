@@ -50,7 +50,9 @@ func ratedItem() *billingqueue.BillingQueueItem {
 			FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per mile\"\n"},
 			RatingDetail: &shipment.RatingDetail{
 				FormulaTemplateName: "Per mile",
-				Trace:               rules.RawJSON(`{"statements":["miles * rate"]}`),
+				Trace: &shipment.RatingTrace{
+					Statements: rules.RawJSON(`["miles * rate"]`),
+				},
 			},
 		},
 	}
