@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tarifftables"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -83,7 +84,7 @@ func SharedOptions() fx.Option {
 			func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
 			ratinghydration.New,
 			func(h *ratinghydration.Hydrator) ratequoteports.ShipmentRatingHydrator { return h },
-			tariff.NewTables,
+			tarifftables.NewTables,
 			tariff.NewCodes,
 			tariff.NewSettings,
 			tariff.NewContexts,

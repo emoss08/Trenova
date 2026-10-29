@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariffverdict"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -118,14 +119,14 @@ type Input struct {
 }
 
 type Checked struct {
-	OK       bool               `json:"ok"`
-	Kind     string             `json:"kind,omitempty"`
-	Name     string             `json:"name,omitempty"`
-	Findings []tariff.Finding   `json:"findings"`
-	Inputs   []Input            `json:"inputs"`
-	Imports  []string           `json:"imports"`
-	Charges  []string           `json:"charges"`
-	Tests    tariff.TestSummary `json:"tests"`
+	OK       bool                      `json:"ok"`
+	Kind     string                    `json:"kind,omitempty"`
+	Name     string                    `json:"name,omitempty"`
+	Findings []tariffverdict.Finding   `json:"findings"`
+	Inputs   []Input                   `json:"inputs"`
+	Imports  []string                  `json:"imports"`
+	Charges  []string                  `json:"charges"`
+	Tests    tariffverdict.TestSummary `json:"tests"`
 	source   string
 	check    *rules.TariffCheck
 	locale   i18n.Locale
@@ -185,11 +186,11 @@ func checkedOf(
 	locale := i18n.FromContext(ctx)
 	out := &Checked{
 		OK:       check != nil && check.OK && check.FirstError() == nil,
-		Findings: []tariff.Finding{},
+		Findings: []tariffverdict.Finding{},
 		Inputs:   []Input{},
 		Imports:  []string{},
 		Charges:  []string{},
-		Tests:    tariff.SummarizeTests(locale, source, tests),
+		Tests:    tariffverdict.SummarizeTests(locale, source, tests),
 		source:   source,
 		check:    check,
 		locale:   locale,
@@ -201,7 +202,7 @@ func checkedOf(
 		out.Kind = string(check.Header.Kind)
 		out.Name = check.Header.Name
 	}
-	out.Findings = tariff.Findings(locale, source, check.Diagnostics)
+	out.Findings = tariffverdict.Findings(locale, source, check.Diagnostics)
 	for i := range out.Findings {
 		if out.Findings[i].Severity == rules.SeverityWarning {
 			out.warnings = append(out.warnings, out.Findings[i].Message)
@@ -236,12 +237,12 @@ type PreviewRequest struct {
 
 type Preview struct {
 	*Checked
-	Bill      *tarifftypes.Bill      `json:"bill,omitempty"`
-	Choices   []tarifftypes.Choice   `json:"choices,omitempty"`
-	Refusal   string                 `json:"refusal,omitempty"`
-	RefusalAt *tariff.SourcePosition `json:"refusalAt,omitempty"`
-	Error     string                 `json:"error,omitempty"`
-	ErrorAt   *tariff.SourcePosition `json:"errorAt,omitempty"`
+	Bill      *tarifftypes.Bill             `json:"bill,omitempty"`
+	Choices   []tarifftypes.Choice          `json:"choices,omitempty"`
+	Refusal   string                        `json:"refusal,omitempty"`
+	RefusalAt *tariffverdict.SourcePosition `json:"refusalAt,omitempty"`
+	Error     string                        `json:"error,omitempty"`
+	ErrorAt   *tariffverdict.SourcePosition `json:"errorAt,omitempty"`
 }
 
 func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, error) {
@@ -312,11 +313,11 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 	return out, nil
 }
 
-func positionOf(source string, at *rules.TariffRange) *tariff.SourcePosition {
+func positionOf(source string, at *rules.TariffRange) *tariffverdict.SourcePosition {
 	if at == nil {
 		return nil
 	}
-	position := tariff.PositionOf(source, at.From)
+	position := tariffverdict.PositionOf(source, at.From)
 	return &position
 }
 

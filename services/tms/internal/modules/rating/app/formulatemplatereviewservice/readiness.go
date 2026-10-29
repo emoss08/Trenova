@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariffverdict"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,15 +58,15 @@ func (c *ReadinessCheck) refusalMessage() string {
 }
 
 type ReadinessResponse struct {
-	CanSubmit        bool                    `json:"canSubmit"`
-	CanApprove       bool                    `json:"canApprove"`
-	Checks           []ReadinessCheck        `json:"checks"`
-	TestTotal        int                     `json:"testTotal"`
-	TestPassed       int                     `json:"testPassed"`
-	TestFailing      []string                `json:"testFailing,omitempty"`
-	Coverage         *tariff.CoverageSummary `json:"coverage"`
-	Dependents       []DependentFailure      `json:"dependents"`
-	PendingSchedules []ScheduledWindow       `json:"pendingSchedules"`
+	CanSubmit        bool                           `json:"canSubmit"`
+	CanApprove       bool                           `json:"canApprove"`
+	Checks           []ReadinessCheck               `json:"checks"`
+	TestTotal        int                            `json:"testTotal"`
+	TestPassed       int                            `json:"testPassed"`
+	TestFailing      []string                       `json:"testFailing,omitempty"`
+	Coverage         *tariffverdict.CoverageSummary `json:"coverage"`
+	Dependents       []DependentFailure             `json:"dependents"`
+	PendingSchedules []ScheduledWindow              `json:"pendingSchedules"`
 }
 
 type submissionGate struct {
@@ -124,7 +125,7 @@ func (s *Service) Readiness(
 	resp.TestTotal = len(gate.content.tests.Tests)
 	resp.TestPassed = gate.content.PassedTests()
 	resp.TestFailing = gate.content.FailingTests()
-	resp.Coverage = tariff.SummarizeCoverage(template.Source, gate.content.tests.Coverage)
+	resp.Coverage = tariffverdict.SummarizeCoverage(template.Source, gate.content.tests.Coverage)
 	locale := i18n.FromContext(ctx)
 
 	libraries, err := s.libraryReadiness(ctx, template)
@@ -361,7 +362,7 @@ func testsReadiness(
 			"Only {0} of {1} tests pass ({2}); fix the formula or the tests before submitting",
 			passed,
 			total,
-			strings.Join(tariff.FailingTests(locale, content.tests), "; "),
+			strings.Join(tariffverdict.FailingTests(locale, content.tests), "; "),
 		)
 	default:
 		check.Status = ReadinessPass
@@ -374,9 +375,9 @@ func testsReadiness(
 func coverageReadiness(
 	locale i18n.Locale,
 	content *formulatemplateservice.ContentCheck,
-	coverage *tariff.CoverageSummary,
+	coverage *tariffverdict.CoverageSummary,
 ) ReadinessCheck {
-	verdict := tariff.CoverageCheck(locale, content.Checks(), coverage)
+	verdict := tariffverdict.CoverageCheck(locale, content.Checks(), coverage)
 	return ReadinessCheck{
 		Key:    ReadinessCheckCoverage,
 		Label:  verdict.Label,

@@ -4,10 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariffverdict"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
@@ -42,13 +41,13 @@ type ReadinessCheck struct {
 }
 
 type ReadinessResponse struct {
-	CanSubmit   bool                    `json:"canSubmit"`
-	CanApprove  bool                    `json:"canApprove"`
-	Checks      []ReadinessCheck        `json:"checks"`
-	TestTotal   int                     `json:"testTotal"`
-	TestPassed  int                     `json:"testPassed"`
-	TestFailing []string                `json:"testFailing,omitempty"`
-	Coverage    *tariff.CoverageSummary `json:"coverage"`
+	CanSubmit   bool                           `json:"canSubmit"`
+	CanApprove  bool                           `json:"canApprove"`
+	Checks      []ReadinessCheck               `json:"checks"`
+	TestTotal   int                            `json:"testTotal"`
+	TestPassed  int                            `json:"testPassed"`
+	TestFailing []string                       `json:"testFailing,omitempty"`
+	Coverage    *tariffverdict.CoverageSummary `json:"coverage"`
 }
 
 type submissionGate struct {
@@ -126,7 +125,7 @@ func (s *Service) Readiness(
 	locale := i18n.FromContext(ctx)
 	status, reviewer := reviewChecks(locale, library, req.TenantInfo.UserID)
 	age := ageCheck(locale, library, timeutils.NowUnix())
-	coverage := tariff.SummarizeCoverage(library.Source, gate.content.tests.Coverage)
+	coverage := tariffverdict.SummarizeCoverage(library.Source, gate.content.tests.Coverage)
 	blocking := gate.blocking()
 
 	return &ReadinessResponse{
@@ -209,7 +208,7 @@ func testsCheck(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 			"Only {0} of {1} tests pass ({2}); fix the library or its tests before submitting",
 			passed,
 			total,
-			strings.Join(tariff.FailingTests(locale, content.tests), "; "),
+			strings.Join(tariffverdict.FailingTests(locale, content.tests), "; "),
 		)
 	default:
 		check.Status = ReadinessPass
@@ -221,9 +220,9 @@ func testsCheck(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 func coverageCheck(
 	locale i18n.Locale,
 	content *contentCheck,
-	coverage *tariff.CoverageSummary,
+	coverage *tariffverdict.CoverageSummary,
 ) ReadinessCheck {
-	verdict := tariff.CoverageCheck(locale, content.checks(), coverage)
+	verdict := tariffverdict.CoverageCheck(locale, content.checks(), coverage)
 	return ReadinessCheck{
 		Key:    ReadinessCheckCoverage,
 		Label:  verdict.Label,

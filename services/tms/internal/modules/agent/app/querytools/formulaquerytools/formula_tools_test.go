@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariffverdict"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -80,11 +80,15 @@ func (f *fakeWorkbench) outcomeOrDefault() *formulaassistantservice.Checked {
 		OK:       true,
 		Kind:     "tariff",
 		Name:     "Per Mile",
-		Findings: []tariff.Finding{},
+		Findings: []tariffverdict.Finding{},
 		Inputs:   []formulaassistantservice.Input{{Name: "rate", Type: "Money/mi", Required: true}},
 		Imports:  []string{},
 		Charges:  []string{"Per Mile"},
-		Tests:    tariff.TestSummary{Total: 1, Passed: 1, Tests: []tariff.TestOutcome{}},
+		Tests: tariffverdict.TestSummary{
+			Total:  1,
+			Passed: 1,
+			Tests:  []tariffverdict.TestOutcome{},
+		},
 	}
 }
 
@@ -266,7 +270,7 @@ func TestCheckAndRunTests_PassTheWholeSourceAndItsKind(t *testing.T) {
 	require.Error(t, err)
 
 	workbench.outcome = &formulaassistantservice.Checked{
-		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
+		Findings: []tariffverdict.Finding{{Severity: "error", Message: "There is no `ratee`"}},
 	}
 	tested, err := (&runFormulaTestsTool{workbench: workbench}).Query(t.Context(),
 		querytooltest.ChatParams(map[string]any{"source": toolPerMileSource}, ""))
@@ -384,7 +388,7 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 	}, "")
 
 	failing := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
-		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
+		Findings: []tariffverdict.Finding{{Severity: "error", Message: "There is no `ratee`"}},
 	}}
 	result, err := newProposeSourceTool(
 		&proposeFormulaSpec,
@@ -408,7 +412,7 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 
 	red := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
 		OK:    true,
-		Tests: tariff.TestSummary{Total: 2, Passed: 1},
+		Tests: tariffverdict.TestSummary{Total: 2, Passed: 1},
 	}}
 	result, err = newProposeSourceTool(&proposeFormulaSpec, red, author).Query(t.Context(), params)
 	require.NoError(t, err)
@@ -596,33 +600,33 @@ func TestRunTests_ReportsPropertiesAndTheRegionsNoTestReaches(t *testing.T) {
 
 	workbench := &fakeWorkbench{}
 	workbench.outcome = workbench.outcomeOrDefault()
-	workbench.outcome.Tests = tariff.TestSummary{
+	workbench.outcome.Tests = tariffverdict.TestSummary{
 		Total:  1,
 		Passed: 0,
-		Tests: []tariff.TestOutcome{{
+		Tests: []tariffverdict.TestOutcome{{
 			Name:   "heavier never bills less",
 			Kind:   "property",
 			Status: "failed",
 			Cases:  24,
-			Counterexample: &tariff.Counterexample{
-				Values: []tariff.VariedValue{{Target: "shipment.weight", Value: "999 lb"}},
-				Monotone: &tariff.MonotoneFailure{
+			Counterexample: &tariffverdict.Counterexample{
+				Values: []tariffverdict.VariedValue{{Target: "shipment.weight", Value: "999 lb"}},
+				Monotone: &tariffverdict.MonotoneFailure{
 					Target:     "shipment.weight",
 					Expression: "total",
 					Direction:  "nondecreasing",
-					Before:     tariff.MonotoneSide{At: "999 lb", Result: "$310.00"},
-					After:      tariff.MonotoneSide{At: "1,000 lb", Result: "$250.00"},
+					Before:     tariffverdict.MonotoneSide{At: "999 lb", Result: "$310.00"},
+					After:      tariffverdict.MonotoneSide{At: "1,000 lb", Result: "$250.00"},
 				},
 				Test: "test \"heavier never bills less: 999 lb\" {\n}\n",
 			},
 		}},
-		Coverage: &tariff.CoverageReport{
-			CoverageSummary: &tariff.CoverageSummary{
+		Coverage: &tariffverdict.CoverageReport{
+			CoverageSummary: &tariffverdict.CoverageSummary{
 				Reached: 18,
 				Total:   21,
-				Unreached: []tariff.UnreachedRegion{{
+				Unreached: []tariffverdict.UnreachedRegion{{
 					Kind:    "if",
-					At:      tariff.SourcePosition{Line: 12, Column: 1},
+					At:      tariffverdict.SourcePosition{Line: 12, Column: 1},
 					Excerpt: "if weight > 45_000 lb {",
 				}},
 			},

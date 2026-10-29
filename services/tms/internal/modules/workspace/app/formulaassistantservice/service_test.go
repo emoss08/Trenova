@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariffverdict"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -172,7 +173,7 @@ func TestCheck_ReadsTemplatesAndLibrariesWithTheirOwnKind(t *testing.T) {
 	require.Len(t, checked.Inputs, 1)
 	assert.Equal(t, "Money/mi", checked.Inputs[0].Type)
 	require.Len(t, checked.Findings, 1)
-	assert.Equal(t, &tariff.SourcePosition{Line: 3, Column: 1}, checked.Findings[0].At)
+	assert.Equal(t, &tariffverdict.SourcePosition{Line: 3, Column: 1}, checked.Findings[0].At)
 	assert.Equal(t, "input", checked.Findings[0].Excerpt)
 	assert.Equal(t, 1, checked.Tests.Passed)
 	require.Len(t, f.templates.tested, 1)
@@ -238,7 +239,7 @@ func TestPreview_ReportsTheBillOrWhereItStopped(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "This rate needs the trip's miles", preview.Refusal)
-	assert.Equal(t, &tariff.SourcePosition{Line: 3, Column: 1}, preview.RefusalAt)
+	assert.Equal(t, &tariffverdict.SourcePosition{Line: 3, Column: 1}, preview.RefusalAt)
 	assert.Nil(t, f.templates.previews[1].ShipmentID, "no shipment rates the sample record")
 }
 

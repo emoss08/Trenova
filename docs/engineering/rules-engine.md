@@ -1307,7 +1307,7 @@ projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 `coordinateKey`), `axisLabel` and `bandLabel` for headers, which only lay cells out and label
 them. A dimension's `KeyNormalization` and `RangeOverflow` stay settings of the matrix in Go;
 the Tariff host sends them as each table axis's `normalization` and `overflow`
-(`rating/app/tariff/tables.go`).
+(`rating/app/tarifftables/tables.go`).
 
 ## The Tariff server API
 
@@ -1613,9 +1613,9 @@ in the reader's language.
 
 **Properties and coverage.** Properties are tests: `TariffTestRun.Passed` is false when one
 fails, so save-for-review, submit and approval refuse it, naming each failure through
-`tariff.FailingTests` (the varied values, the monotone pair or the refusal). Readiness for
+`tariffverdict.FailingTests` (the varied values, the monotone pair or the refusal). Readiness for
 templates and libraries adds a `coverage` check that warns and never blocks, and a `coverage`
-summary (`tariff.SummarizeCoverage`: reached, total and up to 50 unreached regions with their
+summary (`tariffverdict.SummarizeCoverage`: reached, total and up to 50 unreached regions with their
 range, line and source line). Nova's `SummarizeTests` carries the same.
 
 **The preview, backtest and impact** rate a candidate source through `tariffports.Rater` with a
@@ -1638,7 +1638,7 @@ two-second timeout per rating (the backtest's past shipments come from
 messages translate in the reader's locale through `shared/i18n`.
 
 **Nova** reads the language with `formula_describe_language` (the catalog plus the
-organisation's context, `tariff.Findings` and `tariff.SummarizeTests` turning the module's UTF-16
+organisation's context, `tariffverdict.Findings` and `tariffverdict.SummarizeTests` turning the module's UTF-16
 ranges into lines and character columns, and cutting excerpts, through
 `stringutils.ByteOffsetOfUTF16`, so text after `°F`, `é` or an emoji is placed right and never
 split), checks with `formula_check`, runs tests with `formula_run_tests`, rates with

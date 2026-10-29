@@ -1,4 +1,4 @@
-package tariff
+package tariffverdict
 
 import (
 	"strings"

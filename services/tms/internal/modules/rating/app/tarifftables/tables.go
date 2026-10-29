@@ -1,4 +1,4 @@
-package tariff
+package tarifftables
 
 import (
 	"context"
@@ -689,7 +689,7 @@ func (t *Tables) LoadCells(
 		if !ok {
 			continue
 		}
-		at := tableAt(tariffCtx, table)
+		at := TableAt(tariffCtx, table)
 		if at < 0 {
 			continue
 		}
@@ -727,7 +727,7 @@ func (t *Tables) contextIndexes(
 	keys := make([]ratetablecache.VersionKey, 0, len(codes))
 	byKey := make(map[ratetablecache.VersionKey]string, len(codes))
 	for _, code := range codes {
-		at := tableAt(tariffCtx, code)
+		at := TableAt(tariffCtx, code)
 		if at < 0 {
 			continue
 		}
@@ -789,7 +789,7 @@ func (t *Tables) LoadWhole(
 		byTable[index.Code] = append(byTable[index.Code], encodeCell(index, cell))
 	}
 	for _, index := range byKey {
-		target := &tariffCtx.Tables[tableAt(tariffCtx, index.Code)]
+		target := &tariffCtx.Tables[TableAt(tariffCtx, index.Code)]
 		target.Cells = byTable[index.Code]
 		if target.Cells == nil {
 			target.Cells = []rules.TariffCell{}
@@ -895,7 +895,7 @@ func groupNeeds(needs []rules.TariffNeed) map[string][][]string {
 	return grouped
 }
 
-func tableAt(tariffCtx *rules.TariffContext, code string) int {
+func TableAt(tariffCtx *rules.TariffContext, code string) int {
 	for i := range tariffCtx.Tables {
 		if tariffCtx.Tables[i].Code == code {
 			return i

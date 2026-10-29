@@ -1,12 +1,11 @@
-package tariff
+package tariffverdict
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,9 @@ func TestFailingTests_DescribesEachFailureWithItsCounterexample(t *testing.T) {
 		{
 			Name:   "divides",
 			Status: rules.TariffTestError,
-			Error:  &rules.TariffEvalError{Message: wasmmodule.Message{Template: "Division by zero"}},
+			Error: &rules.TariffEvalError{
+				Message: wasmmodule.Message{Template: "Division by zero"},
+			},
 		},
 		{
 			Name:   "heavier never bills less",
@@ -78,7 +79,10 @@ func TestFailingTests_NamesAtMostTen(t *testing.T) {
 
 	run := &rules.TariffTestRun{}
 	for range 15 {
-		run.Tests = append(run.Tests, rules.TariffTestResult{Name: "x", Status: rules.TariffTestFailed})
+		run.Tests = append(
+			run.Tests,
+			rules.TariffTestResult{Name: "x", Status: rules.TariffTestFailed},
+		)
 	}
 	assert.Len(t, FailingTests(i18n.Default, run), maxNamedFailures)
 }
@@ -93,7 +97,10 @@ func TestSummarizeCoverage_PlacesUnreachedRegionsAfterNonASCIIText(t *testing.T)
 	summary := SummarizeCoverage(source, &rules.TariffCoverage{
 		Regions: []rules.TariffRegion{
 			{Kind: rules.TariffCoverageIf, Range: rules.TariffRange{From: from, To: from + 30}},
-			{Kind: rules.TariffCoverageCharge, Range: rules.TariffRange{From: charge, To: charge + 24}},
+			{
+				Kind:  rules.TariffCoverageCharge,
+				Range: rules.TariffRange{From: charge, To: charge + 24},
+			},
 		},
 		Reached: 0,
 		Total:   2,

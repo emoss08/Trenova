@@ -1,4 +1,4 @@
-package tariff
+package tariffverdict
 
 import (
 	"strconv"
@@ -6,9 +6,8 @@ import (
 	"testing"
 	"unicode/utf16"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +25,11 @@ func TestPositionOf_CountsLinesAndCharactersFromUTF16Offsets(t *testing.T) {
 	assert.Equal(t, SourcePosition{Line: 1, Column: 12}, PositionOf(source, 11))
 	assert.Equal(t, SourcePosition{Line: 1, Column: 14}, PositionOf(source, 14),
 		"the emoji is two code units and one character")
-	assert.Equal(t, SourcePosition{Line: 3, Column: 7}, PositionOf(source, utf16Offset(source, "rate")))
+	assert.Equal(
+		t,
+		SourcePosition{Line: 3, Column: 7},
+		PositionOf(source, utf16Offset(source, "rate")),
+	)
 	assert.Equal(t, SourcePosition{Line: 4, Column: 1}, PositionOf(source, len(source)+10))
 	assert.Equal(t, SourcePosition{Line: 1, Column: 1}, PositionOf(source, -3))
 }
@@ -45,12 +48,18 @@ func TestFindings_ReadRangesAsUTF16AfterNonASCIIText(t *testing.T) {
 		Severity: rules.SeverityWarning,
 		Code:     "unused",
 		Message:  wasmmodule.Message{Template: "Unused"},
-		Range:    &rules.TariffRange{From: utf16Offset(source, "°F"), To: utf16Offset(source, "°F") + 2},
+		Range: &rules.TariffRange{
+			From: utf16Offset(source, "°F"),
+			To:   utf16Offset(source, "°F") + 2,
+		},
 	}, {
 		Severity: rules.SeverityWarning,
 		Code:     "doc",
 		Message:  wasmmodule.Message{Template: "The name"},
-		Range:    &rules.TariffRange{From: utf16Offset(source, "Café"), To: utf16Offset(source, "\"\n")},
+		Range: &rules.TariffRange{
+			From: utf16Offset(source, "Café"),
+			To:   utf16Offset(source, "\"\n"),
+		},
 	}})
 
 	require.Len(t, findings, 3)
@@ -110,17 +119,24 @@ func TestSummarizeTests_CountsAndBoundsFailures(t *testing.T) {
 			Values:  []rules.TariffTestValue{{Display: "$200"}},
 		})
 	}
-	summary := SummarizeTests(i18n.Locale("en"), "tariff \"T\"\ntest \"a\" {}\n", &rules.TariffTestRun{
-		Tests: []rules.TariffTestResult{
-			{Name: "a", Status: rules.TariffTestPassed, Range: rules.TariffRange{From: 11}},
-			{Name: "b", Status: rules.TariffTestFailed, Failures: failures},
-			{
-				Name:   "c",
-				Status: rules.TariffTestError,
-				Error:  &rules.TariffEvalError{Code: "none", Message: wasmmodule.Message{Template: "no weight"}},
+	summary := SummarizeTests(
+		i18n.Locale("en"),
+		"tariff \"T\"\ntest \"a\" {}\n",
+		&rules.TariffTestRun{
+			Tests: []rules.TariffTestResult{
+				{Name: "a", Status: rules.TariffTestPassed, Range: rules.TariffRange{From: 11}},
+				{Name: "b", Status: rules.TariffTestFailed, Failures: failures},
+				{
+					Name:   "c",
+					Status: rules.TariffTestError,
+					Error: &rules.TariffEvalError{
+						Code:    "none",
+						Message: wasmmodule.Message{Template: "no weight"},
+					},
+				},
 			},
 		},
-	})
+	)
 
 	assert.Equal(t, 3, summary.Total)
 	assert.Equal(t, 1, summary.Passed)
