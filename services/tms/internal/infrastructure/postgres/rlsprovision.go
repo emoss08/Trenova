@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/jackc/pgx/v5"
 )
@@ -27,7 +26,7 @@ type RLSProvisionResult struct {
 func ProvisionRLS(
 	ctx context.Context,
 	db *keel.DB,
-	cfg *config.Config,
+	cfg *databaseconfig.Config,
 ) (*RLSProvisionResult, error) {
 	result := new(RLSProvisionResult)
 	if cfg == nil {
@@ -40,7 +39,7 @@ func ProvisionRLS(
 	}
 	result.PoliciesAdded = added
 
-	installed, err := InstallConfiguredRLSScopeKey(ctx, db, cfg.Database.RLS)
+	installed, err := InstallConfiguredRLSScopeKey(ctx, db, cfg.RLS)
 	if err != nil {
 		return nil, err
 	}

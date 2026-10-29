@@ -67,12 +67,3 @@ type Config struct {
 
 	extensions map[string]any
 }
-
-func (c *Config) PublicLinkBaseURL() string {
-	if base := c.Tendering.GetPublicBaseURL(); base != "" {
-		return base
-	}
-	return c.App.GetWebBaseURL()
-}
-
-func (c *Config) CorsEnabled() bool { return c.Server.CORS.Enabled }

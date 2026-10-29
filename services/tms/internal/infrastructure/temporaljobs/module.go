@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/health"
@@ -19,13 +19,13 @@ import (
 type WorkerManagerParams struct {
 	fx.In
 
-	Client      client.Client
-	Logger      *zap.Logger
-	LC          fx.Lifecycle
-	Config      *config.Config
-	Metrics     *metrics.Registry         `optional:"true"`
-	Registries  []registry.WorkerRegistry `group:"worker_registries"`
-	QueueFilter *registry.QueueFilter     `optional:"true"`
+	Client         client.Client
+	Logger         *zap.Logger
+	LC             fx.Lifecycle
+	TemporalConfig *temporalconfig.Config
+	Metrics        *metrics.Registry         `optional:"true"`
+	Registries     []registry.WorkerRegistry `group:"worker_registries"`
+	QueueFilter    *registry.QueueFilter     `optional:"true"`
 }
 
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
@@ -36,14 +36,14 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 		temporalMetrics = p.Metrics.Temporal
 	}
 	manager.SetInterceptors(interceptors.BuildWorkerInterceptorChain(interceptors.ChainParams{
-		Config:         p.Config,
+		TemporalConfig: p.TemporalConfig,
 		Logger:         p.Logger,
 		MetricsHandler: temporalMetrics,
 	}))
 
 	queueFilter := p.QueueFilter
-	if queueFilter == nil && len(p.Config.Temporal.Worker.Queues) > 0 {
-		queueFilter = &registry.QueueFilter{Queues: p.Config.Temporal.Worker.Queues}
+	if queueFilter == nil && len(p.TemporalConfig.Worker.Queues) > 0 {
+		queueFilter = &registry.QueueFilter{Queues: p.TemporalConfig.Worker.Queues}
 	}
 
 	for _, reg := range p.Registries {

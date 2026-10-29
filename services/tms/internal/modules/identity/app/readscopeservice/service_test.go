@@ -83,11 +83,11 @@ func newService(
 		Maybe()
 
 	return New(Params{
-		Config:   cfg,
-		DB:       &inlineDetacher{},
-		Engine:   engine,
-		Teams:    teams,
-		Registry: permissioncatalog.NewRegistry(),
+		DatabaseConfig: &cfg.Database,
+		DB:             &inlineDetacher{},
+		Engine:         engine,
+		Teams:          teams,
+		Registry:       permissioncatalog.NewRegistry(),
 	})
 }
 
@@ -226,11 +226,11 @@ func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
 		}, nil)
 	detacher := &inlineDetacher{}
 	svc := New(Params{
-		Config:   enforcing(),
-		DB:       detacher,
-		Engine:   engine,
-		Teams:    &fakeTeams{},
-		Registry: permissioncatalog.NewRegistry(),
+		DatabaseConfig: &enforcing().Database,
+		DB:             detacher,
+		Engine:         engine,
+		Teams:          &fakeTeams{},
+		Registry:       permissioncatalog.NewRegistry(),
 	})
 
 	_, err := svc.Grants(t.Context(), principal())
@@ -238,7 +238,11 @@ func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
 	assert.Equal(t, 1, detacher.calls, "the grants never join the caller's transaction")
 
 	_, err = New(
-		Params{Config: &config.Config{}, DB: detacher, Registry: permissioncatalog.NewRegistry()},
+		Params{
+			DatabaseConfig: &databaseconfig.Config{},
+			DB:             detacher,
+			Registry:       permissioncatalog.NewRegistry(),
+		},
 	).
 		Grants(t.Context(), principal())
 	require.NoError(t, err)

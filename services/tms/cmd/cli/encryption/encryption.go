@@ -110,12 +110,14 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		_ = sink.Close()
 	}()
 
-	encryption, err := encryptionservice.New(encryptionservice.Params{Config: cfg})
+	encryption, err := encryptionservice.New(
+		encryptionservice.Params{SecurityConfig: &cfg.Security},
+	)
 	if err != nil {
 		return fmt.Errorf("load the encryption keys: %w", err)
 	}
 
-	maint, err := postgres.OpenMaintenanceDB(context.Background(), cfg)
+	maint, err := postgres.OpenMaintenanceDB(context.Background(), &cfg.App, &cfg.Database)
 	if err != nil {
 		return fmt.Errorf("open the database: %w", err)
 	}

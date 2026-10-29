@@ -30,12 +30,17 @@ func TestRequestTimeoutHandler_ReturnsGatewayTimeoutWithHeaders(t *testing.T) {
 		AllowHeaders:     []string{"Content-Type"},
 		AllowCredentials: true,
 	}))
-	router.Use(NewSecurityHeadersMiddleware(cfg))
+	router.Use(NewSecurityHeadersMiddleware(&cfg.App))
 	router.GET("/slow", func(c *gin.Context) {
 		time.Sleep(200 * time.Millisecond)
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/slow", nil)
@@ -69,7 +74,12 @@ func TestRequestTimeoutHandler_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	for _, path := range []string{"/api/v1/realtime/live", "/api/v1/realtime/ws/connect"} {
 		w := httptest.NewRecorder()
@@ -99,7 +109,12 @@ func TestRequestTimeoutHandler_SkipsAPostedStream(t *testing.T) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(

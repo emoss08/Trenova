@@ -24,7 +24,7 @@ const (
 )
 
 func (c *Connection) resultCache() (*keel.CacheConfig, error) {
-	settings := &c.cfg.Database.Cache
+	settings := c.databaseConfig.Cache
 
 	cache := &keel.CacheConfig{
 		Local:   keel.MemoryCache(settings.GetLocalBytes()),
@@ -32,7 +32,7 @@ func (c *Connection) resultCache() (*keel.CacheConfig, error) {
 		OnError: newCacheErrorLog(c.logger).report,
 	}
 
-	if dsn := c.cfg.GetCacheListenDSN(); dsn != "" {
+	if dsn := c.databaseConfig.CacheListenDSN(c.appConfig.Name); dsn != "" {
 		listen, err := pgx.ParseConfig(dsn)
 		if err != nil {
 			return nil, fmt.Errorf("parse the result cache listener address: %w", err)

@@ -56,11 +56,11 @@ func setupAPIKeyHandler(
 		ErrorHandler:     errorHandler,
 	})
 	svc := apikeyservice.New(apikeyservice.Params{
-		Logger:   zap.NewNop(),
-		Repo:     repo,
-		Registry: permissioncatalog.NewRegistry(),
-		Engine:   &mocks.AllowAllPermissionEngine{},
-		Config:   cfg,
+		Logger:         zap.NewNop(),
+		Repo:           repo,
+		Registry:       permissioncatalog.NewRegistry(),
+		Engine:         &mocks.AllowAllPermissionEngine{},
+		SecurityConfig: &cfg.Security,
 	})
 
 	return apikeyhandler.New(apikeyhandler.Params{

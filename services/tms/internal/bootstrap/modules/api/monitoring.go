@@ -18,7 +18,7 @@ var MonitoringServerModule = fx.Module("monitoring-server",
 // down. In production each process has its own container.
 var WorkerMonitoringServerModule = fx.Module("worker-monitoring-server",
 	fx.Invoke(func(p api.MonitoringServerParams) {
-		if p.Config.Monitoring.Metrics.Enabled {
+		if p.MonitoringConfig.Metrics.Enabled {
 			api.NewMonitoringServer(p)
 		}
 	}),

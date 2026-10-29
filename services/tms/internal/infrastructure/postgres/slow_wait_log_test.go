@@ -23,9 +23,10 @@ func slowWaitConnection(t *testing.T, after time.Duration) (*Connection, *observ
 	cfg.Database.SlowWaitWarning = after
 
 	return &Connection{
-		cfg:      cfg,
-		logger:   observability.NewContextLogger(zap.New(core)),
-		settings: connectionSettings{component: "postgres"},
+		appConfig:      &cfg.App,
+		databaseConfig: &cfg.Database,
+		logger:         observability.NewContextLogger(zap.New(core)),
+		settings:       connectionSettings{component: "postgres"},
 	}, logs
 }
 
@@ -58,7 +59,10 @@ func TestSlowWaits_LogATenantSlotWaitWithItsHolders(t *testing.T) {
 		Limit:   2,
 		Waiters: 3,
 		Holders: []keel.SlotHolder{
-			{Held: 40 * time.Second, Stack: []string{"rolerepository.GetUserRoleAssignments role.go:264"}},
+			{
+				Held:  40 * time.Second,
+				Stack: []string{"rolerepository.GetUserRoleAssignments role.go:264"},
+			},
 		},
 	})
 

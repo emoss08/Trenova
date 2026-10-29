@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -82,7 +83,7 @@ func TestExtractionStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+			metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 			require.NoError(t, err)
 
 			orgID := pulid.MustNew("org_")

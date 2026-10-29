@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
@@ -94,7 +94,7 @@ func TestPairingNeedsTheWebAddress(t *testing.T) {
 	t.Parallel()
 
 	s := newWorld().service()
-	s.cfg = &config.Config{}
+	*s.cfg = appconfig.Config{}
 
 	grant, err := s.StartPairing(t.Context(), &StartPairingRequest{
 		MachineName:  "DISPATCH-07",

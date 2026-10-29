@@ -85,10 +85,10 @@ func newTestHandler(repo *tokenRepo) *Handler {
 		Service:      service,
 		ErrorHandler: errorHandler,
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
-			Config:       cfg,
-			Store:        ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
+			SecurityConfig: &cfg.Security,
+			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+			ErrorHandler:   errorHandler,
+			Logger:         zap.NewNop(),
 		}),
 	})
 }

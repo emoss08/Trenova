@@ -264,5 +264,9 @@ func (s *Service) applySignLink(
 }
 
 func (s *Service) signURL(rawToken string) string {
-	return s.cfg.PublicLinkBaseURL() + "/rate-confirmation/" + url.PathEscape(rawToken)
+	return s.tenderingConfig.PublicLinkBaseURL(
+		s.appConfig,
+	) + "/rate-confirmation/" + url.PathEscape(
+		rawToken,
+	)
 }

@@ -3,7 +3,7 @@ package invoiceshareservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -27,7 +27,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Config              *config.Config
+	AppConfig           *appconfig.Config
 	Repo                invoiceports.InvoiceShareRepository
 	InvoiceRepo         invoiceports.InvoiceRepository
 	UserRepo            tenantports.UserRepository
@@ -41,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	cfg                 *config.Config
+	cfg                 *appconfig.Config
 	repo                invoiceports.InvoiceShareRepository
 	invoiceRepo         invoiceports.InvoiceRepository
 	userRepo            tenantports.UserRepository
@@ -56,7 +56,7 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.invoice-share"),
-		cfg:                 p.Config,
+		cfg:                 p.AppConfig,
 		repo:                p.Repo,
 		invoiceRepo:         p.InvoiceRepo,
 		userRepo:            p.UserRepo,

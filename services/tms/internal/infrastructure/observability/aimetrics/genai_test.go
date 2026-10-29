@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/stretchr/testify/assert"
@@ -100,7 +100,7 @@ func TestGenAI_AFailedCallCountsItsDurationWithTheErrorAndNoTokens(t *testing.T)
 func TestGenAI_IsSafeWhenMetricsAreOff(t *testing.T) {
 	t.Parallel()
 
-	registry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	registry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	genAI := registry.GenAI()

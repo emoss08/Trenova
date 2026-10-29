@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -15,14 +14,12 @@ type Params struct {
 	fx.In
 
 	Service              *versionservice.Service
-	Config               *config.Config
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *versionservice.Service
-	cfg     *config.Config
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -30,7 +27,6 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
-		cfg:     p.Config,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}

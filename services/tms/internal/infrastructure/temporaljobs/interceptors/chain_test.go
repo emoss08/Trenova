@@ -24,7 +24,7 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 	}
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: nil,
 	})
@@ -47,7 +47,7 @@ func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
 	}
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: nil,
 	})
@@ -72,7 +72,7 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: metricsHandler,
 	})
@@ -98,7 +98,7 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: metricsHandler,
 	})
@@ -125,7 +125,7 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), false)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: metricsHandler,
 	})
@@ -148,7 +148,7 @@ func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
 	}
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: nil,
 	})
@@ -238,7 +238,7 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 	metricsHandler := platformmetrics.NewTemporal(registry, zap.NewNop(), true)
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: metricsHandler,
 	})
@@ -265,7 +265,7 @@ func TestBuildWorkerInterceptorChain_NilNilMetricsHandler(t *testing.T) {
 	}
 
 	chain := BuildWorkerInterceptorChain(ChainParams{
-		Config:         cfg,
+		TemporalConfig: &cfg.Temporal,
 		Logger:         zap.NewNop(),
 		MetricsHandler: nil,
 	})

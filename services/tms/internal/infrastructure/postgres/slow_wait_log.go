@@ -41,7 +41,7 @@ func newSlowWaitKinds(interval time.Duration) map[keel.WaitKind]*slowWaitKind {
 }
 
 func (c *Connection) slowWaits(pool scopePool) keel.SlowWaitConfig {
-	after := c.cfg.Database.SlowWaitWarning
+	after := c.databaseConfig.SlowWaitWarning
 	if after <= 0 {
 		return keel.SlowWaitConfig{}
 	}

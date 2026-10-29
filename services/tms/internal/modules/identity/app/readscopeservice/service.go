@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -30,11 +29,11 @@ type TeamDirectory interface {
 type Params struct {
 	fx.In
 
-	Config   *config.Config
-	DB       kernelports.Detacher
-	Engine   permissionports.PermissionEngine
-	Teams    TeamDirectory
-	Registry *permissioncatalog.Registry
+	DatabaseConfig *databaseconfig.Config
+	DB             kernelports.Detacher
+	Engine         permissionports.PermissionEngine
+	Teams          TeamDirectory
+	Registry       *permissioncatalog.Registry
 }
 
 type Service struct {
@@ -53,15 +52,15 @@ func New(p Params) *Service {
 		teams:             p.Teams,
 		registry:          p.Registry,
 		kinds:             p.Registry.DatabaseScopedResources(),
-		databaseEnforcing: databaseEnforcesScopes(p.Config),
+		databaseEnforcing: databaseEnforcesScopes(p.DatabaseConfig),
 	}
 }
 
-func databaseEnforcesScopes(cfg *config.Config) bool {
+func databaseEnforcesScopes(cfg *databaseconfig.Config) bool {
 	if cfg == nil {
 		return false
 	}
-	switch cfg.Database.RLS.Mode {
+	switch cfg.RLS.Mode {
 	case databaseconfig.RLSModeObserve, databaseconfig.RLSModeEnforce:
 		return true
 	default:

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -32,7 +33,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	cfg := &config.Config{
 		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")
@@ -140,7 +141,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	cfg := &config.Config{
 		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")
@@ -187,7 +188,7 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 	cfg := &config.Config{
 		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
@@ -219,7 +220,7 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	cfg := &config.Config{
 		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")

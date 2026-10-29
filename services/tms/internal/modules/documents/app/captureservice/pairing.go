@@ -88,7 +88,7 @@ func (s *Service) StartPairing(
 		return nil, err
 	}
 
-	webBase := s.cfg.App.GetWebBaseURL()
+	webBase := s.cfg.GetWebBaseURL()
 	if webBase == "" {
 		return nil, errortypes.NewBusinessError(ErrNoWebAddress.Error())
 	}

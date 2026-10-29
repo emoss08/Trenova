@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
@@ -30,7 +32,6 @@ type Options struct {
 	// filled in.
 	Resolvers agentread.ResolverParams
 	Engine    permissionports.PermissionEngine
-	Config    *config.Config
 }
 
 // NewReader is the reader a converted tool reads through, built as the
@@ -40,10 +41,7 @@ type Options struct {
 func NewReader(t testing.TB, opts Options) *agentread.Reader {
 	t.Helper()
 
-	cfg := opts.Config
-	if cfg == nil {
-		cfg = &config.Config{}
-	}
+	monitoring := &monitoringconfig.Config{}
 	logger := zap.NewNop()
 	registry := &metrics.Registry{
 		GraphQL: httpmetrics.NewGraphQL(nil, logger, false, httpmetrics.GraphQLOptions{}),
@@ -52,22 +50,22 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 	resolvers := opts.Resolvers
 	resolvers.Logger = logger
 	resolvers.PermissionEngine = opts.Engine
-	resolvers.Config = cfg
+	resolvers.MonitoringConfig = monitoring
 
 	return agentread.New(agentread.Params{
 		Params: gqlext.Params{
 			Observability: gqlext.NewObservabilityExtension(gqlext.ObservabilityParams{
-				MonitoringConfig: &cfg.Monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
+				MonitoringConfig: monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
 			}),
 			CostBudget: gqlext.NewCostBudgetExtension(gqlext.CostBudgetParams{
-				SecurityConfig: &cfg.Security, Logger: logger, Metrics: registry,
+				SecurityConfig: &securityconfig.Config{}, Logger: logger, Metrics: registry,
 			}),
 			ReadOnly: gqlext.NewReadOnlyExtension(gqlext.ReadOnlyParams{Logger: logger}),
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{
 				PermissionEngine: opts.Engine,
 			}),
 		},
-		Config:      cfg,
+		AppConfig:   &appconfig.Config{},
 		Schema:      agentread.NewSchema(resolvers),
 		Permissions: opts.Engine,
 	})

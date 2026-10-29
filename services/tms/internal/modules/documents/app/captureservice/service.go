@@ -12,7 +12,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -58,7 +58,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	Config          *config.Config
+	AppConfig       *appconfig.Config
 	DB              kernelports.Transactor
 	Devices         captureports.CaptureDeviceRepository
 	Pairings        captureports.CapturePairingRepository
@@ -121,7 +121,7 @@ type notifier interface {
 
 type Service struct {
 	l             *zap.Logger
-	cfg           *config.Config
+	cfg           *appconfig.Config
 	db            kernelports.Transactor
 	devices       captureports.CaptureDeviceRepository
 	pairings      captureports.CapturePairingRepository
@@ -163,7 +163,7 @@ func New(p Params) *Service {
 	return &Service{
 		contentGate:   p.ContentGate,
 		l:             p.Logger.Named("service.capture"),
-		cfg:           p.Config,
+		cfg:           p.AppConfig,
 		db:            p.DB,
 		devices:       p.Devices,
 		pairings:      p.Pairings,

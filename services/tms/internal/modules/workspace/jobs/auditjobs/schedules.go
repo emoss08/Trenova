@@ -3,7 +3,7 @@ package auditjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -14,10 +14,10 @@ type ScheduleProvider struct {
 	dlqRetryInterval    time.Duration
 }
 
-func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
+func NewScheduleProvider(cfg *auditconfig.Config) *ScheduleProvider {
 	return &ScheduleProvider{
-		bufferFlushInterval: cfg.Audit.GetBufferFlushInterval(),
-		dlqRetryInterval:    cfg.Audit.GetDLQRetryInterval(),
+		bufferFlushInterval: cfg.GetBufferFlushInterval(),
+		dlqRetryInterval:    cfg.GetDLQRetryInterval(),
 	}
 }
 

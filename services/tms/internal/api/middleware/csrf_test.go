@@ -166,7 +166,7 @@ func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 		},
 	}
 	middleware := NewCSRFMiddleware(
-		cfg,
+		&cfg.Security,
 		helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
@@ -226,7 +226,8 @@ func newCSRFBrowserGuardRouter(t *testing.T, mode string) *gin.Engine {
 
 	router := gin.New()
 	router.Use(NewCSRFBrowserGuard(
-		cfg,
+		&cfg.Security,
+		&cfg.Server,
 		helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

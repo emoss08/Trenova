@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/keellog"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -94,11 +95,11 @@ var queryLogSkip = []string{
 	"github.com/emoss08/trenova/pkg/lanequery.",
 }
 
-func queryLog(cfg *config.Config) keel.Observer {
-	if !cfg.App.IsDevelopment() {
+func queryLog(appConfig *appconfig.Config, databaseConfig *databaseconfig.Config) keel.Observer {
+	if !appConfig.IsDevelopment() {
 		return nil
 	}
-	mode, ok := keellog.ParseMode(cfg.Database.QueryLog)
+	mode, ok := keellog.ParseMode(databaseConfig.QueryLog)
 	if !ok {
 		return nil
 	}

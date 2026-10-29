@@ -10,8 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,10 +38,11 @@ var idempotencyRetryableCodes = map[string]struct{}{
 type IdempotencyParams struct {
 	fx.In
 
-	Config       *config.Config
-	Store        kernelports.IdempotencyStore `optional:"true"`
-	ErrorHandler *helpers.ErrorHandler
-	Logger       *zap.Logger
+	ServerConfig   *serverconfig.Config
+	SecurityConfig *securityconfig.Config
+	Store          kernelports.IdempotencyStore `optional:"true"`
+	ErrorHandler   *helpers.ErrorHandler
+	Logger         *zap.Logger
 }
 
 type IdempotencyMiddleware struct {
@@ -61,10 +62,12 @@ func NewIdempotencyMiddleware(p IdempotencyParams) *IdempotencyMiddleware {
 	cfg := securityconfig.IdempotencyConfig{}
 	var requestTimeout time.Duration
 	var secret string
-	if p.Config != nil {
-		cfg = p.Config.Security.Idempotency
-		requestTimeout = p.Config.Server.RequestTimeout
-		secret = p.Config.Security.Session.Secret
+	if p.SecurityConfig != nil {
+		cfg = p.SecurityConfig.Idempotency
+		secret = p.SecurityConfig.Session.Secret
+	}
+	if p.ServerConfig != nil {
+		requestTimeout = p.ServerConfig.RequestTimeout
 	}
 
 	logger := p.Logger

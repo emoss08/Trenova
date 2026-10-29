@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -34,34 +35,37 @@ const (
 type Params struct {
 	fx.In
 
-	Config       *config.Config
-	Logger       *zap.Logger
-	ErrorHandler *helpers.ErrorHandler
-	Loaders      *loadercore.Registry
-	PersistedOps *PersistedOperationManifest
-	Server       *gqlhandler.Server
-	Metrics      *metrics.Registry
+	AppConfig      *appconfig.Config
+	SecurityConfig *securityconfig.Config
+	Logger         *zap.Logger
+	ErrorHandler   *helpers.ErrorHandler
+	Loaders        *loadercore.Registry
+	PersistedOps   *PersistedOperationManifest
+	Server         *gqlhandler.Server
+	Metrics        *metrics.Registry
 }
 
 type Handler struct {
-	cfg          *config.Config
-	l            *zap.Logger
-	eh           *helpers.ErrorHandler
-	loaders      *loadercore.Registry
-	persistedOps *PersistedOperationManifest
-	server       *gqlhandler.Server
-	metrics      *httpmetrics.GraphQL
+	appConfig      *appconfig.Config
+	securityConfig *securityconfig.Config
+	l              *zap.Logger
+	eh             *helpers.ErrorHandler
+	loaders        *loadercore.Registry
+	persistedOps   *PersistedOperationManifest
+	server         *gqlhandler.Server
+	metrics        *httpmetrics.GraphQL
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		cfg:          p.Config,
-		l:            p.Logger.Named("api.graphql"),
-		eh:           p.ErrorHandler,
-		loaders:      p.Loaders,
-		persistedOps: p.PersistedOps,
-		server:       p.Server,
-		metrics:      p.Metrics.GraphQL,
+		appConfig:      p.AppConfig,
+		securityConfig: p.SecurityConfig,
+		l:              p.Logger.Named("api.graphql"),
+		eh:             p.ErrorHandler,
+		loaders:        p.Loaders,
+		persistedOps:   p.PersistedOps,
+		server:         p.Server,
+		metrics:        p.Metrics.GraphQL,
 	}
 }
 
@@ -77,7 +81,7 @@ func (h *Handler) handle(c *gin.Context) {
 		return
 	}
 
-	maxBodyBytes := h.cfg.Security.GraphQL.GetMaxRequestBodyBytes()
+	maxBodyBytes := h.securityConfig.GraphQL.GetMaxRequestBodyBytes()
 	if c.Request.ContentLength > maxBodyBytes {
 		h.rejectRequestTooLarge(c, maxBodyBytes)
 		return
@@ -87,7 +91,7 @@ func (h *Handler) handle(c *gin.Context) {
 	if err := rewritePersistedOperationRequest(
 		c.Request,
 		h.persistedOps,
-		enforcePersistedOperations(h.cfg),
+		enforcePersistedOperations(h.appConfig),
 	); err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
@@ -131,7 +135,7 @@ func (h *Handler) rejectRequestTooLarge(c *gin.Context, maxBodyBytes int64) {
 				strconv.FormatInt(maxBodyBytes, 10) + " byte limit",
 			"extensions": map[string]any{
 				"code": requestTooLargeErrorCode,
-				"type": h.cfg.App.GetProblemTypeBaseURI() +
+				"type": h.appConfig.GetProblemTypeBaseURI() +
 					string(helpers.ProblemTypeValidation),
 				"traceId": requestid.Get(c),
 			},

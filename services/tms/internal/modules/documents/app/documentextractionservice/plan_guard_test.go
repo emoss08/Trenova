@@ -3,8 +3,8 @@ package documentextractionservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
@@ -22,7 +22,7 @@ import (
 func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) {
 	t.Parallel()
 
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 	tenant := plantest.Tenant()
 	documentID := pulid.MustNew("doc_")

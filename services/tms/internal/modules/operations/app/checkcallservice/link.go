@@ -52,7 +52,7 @@ func (s *Service) planIssue(
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
-	base := s.cfg.PublicLinkBaseURL()
+	base := s.tenderingConfig.PublicLinkBaseURL(s.appConfig)
 	if base == "" {
 		return nil, errortypes.NewBusinessError(
 			"Carrier tracking links need a public base URL; set app.webBaseUrl",

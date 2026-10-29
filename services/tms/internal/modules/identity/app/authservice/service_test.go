@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -473,14 +472,13 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	stateRepo := tenantportsmock.NewMockSSOLoginStateRepository(t)
 	svc := &Service{
-		or:        orgRepo,
-		ssoRepo:   ssoRepo,
-		stateRepo: stateRepo,
-		cfg: &config.Config{
-			Server: serverconfig.Config{
-				CORS: serverconfig.CORSConfig{
-					AllowedOrigins: []string{"https://app.test"},
-				},
+		or:             orgRepo,
+		ssoRepo:        ssoRepo,
+		stateRepo:      stateRepo,
+		securityConfig: &securityconfig.Config{},
+		serverConfig: &serverconfig.Config{
+			CORS: serverconfig.CORSConfig{
+				AllowedOrigins: []string{"https://app.test"},
 			},
 		},
 		oidc: newTestOIDCProviders(providerServer),
@@ -618,15 +616,14 @@ func TestNew(t *testing.T) {
 	svc := New(Params{
 		UserRepository:    userRepo,
 		SessionRepository: sessionRepo,
-		Config: &config.Config{
-			Security: securityconfig.Config{
-				Session: securityconfig.SessionConfig{
-					MaxAge:      12 * time.Hour,
-					IdleTimeout: 30 * time.Minute,
-				},
+		SecurityConfig: &securityconfig.Config{
+			Session: securityconfig.SessionConfig{
+				MaxAge:      12 * time.Hour,
+				IdleTimeout: 30 * time.Minute,
 			},
 		},
-		Logger: zap.NewNop(),
+		ServerConfig: &serverconfig.Config{},
+		Logger:       zap.NewNop(),
 	})
 
 	require.NotNil(t, svc)

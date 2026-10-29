@@ -84,7 +84,11 @@ func TestResultCacheFollowsTheConfiguration(t *testing.T) {
 	cfg.Database.Host, cfg.Database.Port, cfg.Database.Name = "db.internal", 6432, "trenova"
 	cfg.Database.User, cfg.Database.Password, cfg.Database.SSLMode = "trenova_app", "secret", "disable"
 	cfg.Database.Cache = databaseconfig.CacheConfig{Enabled: true}
-	conn := &Connection{cfg: cfg, logger: observability.NewContextLogger(zap.NewNop())}
+	conn := &Connection{
+		appConfig:      &cfg.App,
+		databaseConfig: &cfg.Database,
+		logger:         observability.NewContextLogger(zap.NewNop()),
+	}
 
 	cache, err := conn.resultCache()
 	require.NoError(t, err)

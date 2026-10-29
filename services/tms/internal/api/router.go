@@ -138,7 +138,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/api/routegroup"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
@@ -153,7 +155,9 @@ type RouterParams struct {
 	fx.In
 
 	Server                  *Server
-	Config                  *config.Config
+	AppConfig               *appconfig.Config
+	SecurityConfig          *securityconfig.Config
+	ServerConfig            *serverconfig.Config
 	Logger                  *zap.Logger
 	ObservabilityMiddleware *observability.Middleware
 
@@ -313,7 +317,9 @@ type Router struct {
 	permissionMiddleware            *middleware.PermissionMiddleware
 	tenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	responseGuard                   *responseguard.Guard
-	cfg                             *config.Config
+	appConfig                       *appconfig.Config
+	securityConfig                  *securityconfig.Config
+	serverConfig                    *serverconfig.Config
 	errorHandler                    *helpers.ErrorHandler
 	editionRoutes                   routegroup.Registrars
 	organizationHandler             *organizationhandler.Handler
@@ -452,7 +458,9 @@ type Router struct {
 func NewRouter(p RouterParams) *Router {
 	return &Router{
 		s:                               p.Server,
-		cfg:                             p.Config,
+		appConfig:                       p.AppConfig,
+		securityConfig:                  p.SecurityConfig,
+		serverConfig:                    p.ServerConfig,
 		l:                               p.Logger,
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
@@ -600,17 +608,17 @@ func NewRouter(p RouterParams) *Router {
 }
 
 func (r *Router) setupCors() {
-	if !r.cfg.CorsEnabled() {
+	if !r.serverConfig.CORS.Enabled {
 		return
 	}
 
 	corsConfig := cors.Config{
-		AllowOrigins:     r.cfg.Server.CORS.AllowedOrigins,
-		AllowMethods:     r.cfg.Server.CORS.AllowedMethods,
-		AllowHeaders:     r.cfg.Server.CORS.AllowedHeaders,
-		ExposeHeaders:    r.cfg.Server.CORS.ExposeHeaders,
-		AllowCredentials: r.cfg.Server.CORS.Credentials,
-		MaxAge:           time.Duration(r.cfg.Server.CORS.MaxAge) * time.Second,
+		AllowOrigins:     r.serverConfig.CORS.AllowedOrigins,
+		AllowMethods:     r.serverConfig.CORS.AllowedMethods,
+		AllowHeaders:     r.serverConfig.CORS.AllowedHeaders,
+		ExposeHeaders:    r.serverConfig.CORS.ExposeHeaders,
+		AllowCredentials: r.serverConfig.CORS.Credentials,
+		MaxAge:           time.Duration(r.serverConfig.CORS.MaxAge) * time.Second,
 	}
 
 	// If AllowOrigins is empty or contains "*", allow all origins with credentials disabled
@@ -633,12 +641,15 @@ func (r *Router) Setup() {
 func (r *Router) setupMiddleware() {
 	r.setupCors()
 
-	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.cfg))
+	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.appConfig))
 	r.s.router.Use(gin.Recovery())
 	r.s.router.Use(requestid.New())
 	r.s.router.Use(middleware.NewRequestMetaMiddleware())
 	r.s.router.Use(r.tenantBoundaryMiddleware.Track())
-	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
+	r.s.router.Use(
+		middleware.NewCSRFBrowserGuard(r.securityConfig, r.serverConfig, r.errorHandler, r.l).
+			Guard(),
+	)
 	r.s.router.Use(responseCompression())
 	r.s.router.Use(middleware.NewLocaleMiddleware().Resolve())
 	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
@@ -816,7 +827,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(r.readScopeMiddleware.Install())
 	protected.Use(r.rateLimiter.ByAPIKey())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
-	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
+	protected.Use(middleware.NewCSRFMiddleware(r.securityConfig, r.errorHandler).RequireToken())
 	// After RequireAuth, which is what puts the flag in the context, and before any
 	// handler: a session that owes a password change may only reach the endpoints that
 	// let it resolve one.

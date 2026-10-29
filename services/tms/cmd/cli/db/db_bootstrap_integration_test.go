@@ -66,7 +66,8 @@ func integrationBootstrapDeps(
 				),
 				AuditBufferRepository: auditportsmock.NewMockAuditBufferRepository(t),
 				Logger:                logger,
-				Config:                appCfg,
+				AppConfig:             &appCfg.App,
+				SecurityConfig:        &appCfg.Security,
 				Metrics:               registry,
 			})
 			return auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{

@@ -317,7 +317,7 @@ security scoped.
 | Concern | Where it lives |
 |---|---|
 | Session timeouts (`statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`) | pgx runtime parameters, from `database.*Timeout` (`connection.go`, `sessionParams`) |
-| `application_name`, `connect_timeout`, `sslmode` | the DSN (`config.Config.GetDSN`) |
+| `application_name`, `connect_timeout`, `sslmode` | the DSN (`databaseconfig.Config.DSN`) |
 | Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`) |
 | Enum types | keel registers every enum and its array type on each new connection with one catalog query |
 | Slow queries, tracing, query timing | one `slowQueryLog` per pool and `tracingObserver` (`go.sql.query_timing`) |

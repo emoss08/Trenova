@@ -3,7 +3,7 @@ package rateconfirmationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -149,9 +149,8 @@ func TestPreviewSend_IsTheEmailSendWouldSend(t *testing.T) {
 		PayloadSnapshot:     map[string]any{"CarrierName": "Eastline Transport"},
 	}
 	deps.repo.add(entity)
-	deps.svc.cfg = &config.Config{
-		Tendering: tenderingconfig.Config{PublicBaseURL: "https://tender.example"},
-	}
+	deps.svc.appConfig = &appconfig.Config{}
+	deps.svc.tenderingConfig = &tenderingconfig.Config{PublicBaseURL: "https://tender.example"}
 	deps.carrierRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(carrierWithRateConContacts(entity.CarrierID), nil).

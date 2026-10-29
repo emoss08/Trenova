@@ -26,7 +26,7 @@ func TestNewRegistry_Disabled(t *testing.T) {
 	}
 	logger := zap.NewNop()
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 
 	require.NoError(t, err)
 	assert.False(t, registry.IsEnabled())
@@ -50,7 +50,7 @@ func TestRegistry_IsEnabled(t *testing.T) {
 			},
 		}
 
-		registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+		registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 		require.NoError(t, err)
 
 		assert.False(t, registry.IsEnabled())
@@ -68,7 +68,7 @@ func TestRegistry_Handler_Disabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	handler := registry.Handler()
@@ -92,7 +92,7 @@ func TestRegistry_RecordError_Disabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -111,7 +111,7 @@ func TestRegistry_RecordPanicRecovery_Disabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -130,7 +130,7 @@ func TestRegistry_IncrementActiveRequests_Disabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -149,7 +149,7 @@ func TestRegistry_DecrementActiveRequests_Disabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -171,7 +171,7 @@ func TestNewRegistry_Enabled(t *testing.T) {
 	}
 	logger := zap.NewNop()
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 
 	require.NoError(t, err)
 	assert.True(t, registry.IsEnabled())
@@ -201,7 +201,7 @@ func TestRegistry_Handler_Enabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	handler := registry.Handler()

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -34,8 +34,8 @@ type Params struct {
 	Engine   permissionports.PermissionEngine
 	Scopes   permissionports.ScopePolicy
 
-	Config *config.Config
-	Plans  platformplanports.PlanService `optional:"true"`
+	SecurityConfig *securityconfig.Config
+	Plans          platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
@@ -45,7 +45,7 @@ type Service struct {
 	auditor  permissionports.SecurityAuditor
 	engine   permissionports.PermissionEngine
 	scopes   permissionports.ScopePolicy
-	cfg      *config.Config
+	cfg      *securityconfig.Config
 	plans    platformplanports.PlanService
 }
 
@@ -57,7 +57,7 @@ func New(p Params) *Service {
 		auditor:  p.Auditor,
 		engine:   p.Engine,
 		scopes:   p.Scopes,
-		cfg:      p.Config,
+		cfg:      p.SecurityConfig,
 		plans:    p.Plans,
 	}
 }
@@ -604,7 +604,7 @@ func (s *Service) enforceCreatorKeyLimit(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) error {
-	limit := s.cfg.Security.APIToken.MaxTokensPerUser
+	limit := s.cfg.APIToken.MaxTokensPerUser
 	if limit <= 0 {
 		return nil
 	}
@@ -623,8 +623,8 @@ func (s *Service) enforceCreatorKeyLimit(
 
 func (s *Service) resolveCreateExpiry(expiresAt int64) (int64, error) {
 	now := timeutils.NowUnix()
-	if expiresAt == 0 && s.cfg.Security.APIToken.DefaultExpiry > 0 {
-		expiresAt = now + int64(s.cfg.Security.APIToken.DefaultExpiry.Seconds())
+	if expiresAt == 0 && s.cfg.APIToken.DefaultExpiry > 0 {
+		expiresAt = now + int64(s.cfg.APIToken.DefaultExpiry.Seconds())
 	}
 
 	return s.validateExpiry(expiresAt)
@@ -648,7 +648,7 @@ func (s *Service) validateExpiry(expiresAt int64) (int64, error) {
 		)
 	}
 
-	maxExpiry := s.cfg.Security.APIToken.MaxExpiry
+	maxExpiry := s.cfg.APIToken.MaxExpiry
 	if maxExpiry > 0 && expiresAt > now+int64(maxExpiry.Seconds()) {
 		return 0, errortypes.NewValidationError(
 			"expiresAt",

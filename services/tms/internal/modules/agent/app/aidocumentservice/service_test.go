@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -79,7 +80,7 @@ func (s *stubCompletion) PollBackground(
 func newTestService(t *testing.T, completion *stubCompletion) *Service {
 	t.Helper()
 
-	registry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	registry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	cfg := &config.Config{AI: aiconfig.Config{DocumentExtraction: true}}

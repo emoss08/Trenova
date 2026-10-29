@@ -9,16 +9,17 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
 func NewRequestTimeoutHandler(
 	next http.Handler,
-	cfg *config.Config,
+	appConfig *appconfig.Config, serverConfig *serverconfig.Config,
 	errorHandler *helpers.ErrorHandler,
 ) http.Handler {
-	timeout := cfg.Server.RequestTimeout
+	timeout := serverConfig.RequestTimeout
 	if timeout <= 0 {
 		return next
 	}
@@ -58,7 +59,7 @@ func NewRequestTimeoutHandler(
 				return
 			}
 
-			applyTimeoutFallbackHeaders(w.Header(), cfg, r)
+			applyTimeoutFallbackHeaders(w.Header(), appConfig, serverConfig, r)
 			errorHandler.WriteRequestTimeout(
 				w,
 				timeoutResponseContext(r),
@@ -123,30 +124,35 @@ func clientIP(r *http.Request) string {
 	return r.RemoteAddr
 }
 
-func applyTimeoutFallbackHeaders(header http.Header, cfg *config.Config, r *http.Request) {
-	ApplySecurityHeaders(header, cfg)
-	applyTimeoutFallbackCORS(header, cfg, r)
+func applyTimeoutFallbackHeaders(
+	header http.Header,
+	appConfig *appconfig.Config,
+	serverConfig *serverconfig.Config,
+	r *http.Request,
+) {
+	ApplySecurityHeaders(header, appConfig)
+	applyTimeoutFallbackCORS(header, serverConfig, r)
 }
 
-func applyTimeoutFallbackCORS(header http.Header, cfg *config.Config, r *http.Request) {
-	if !cfg.CorsEnabled() || header.Get("Access-Control-Allow-Origin") != "" {
+func applyTimeoutFallbackCORS(header http.Header, cfg *serverconfig.Config, r *http.Request) {
+	if !cfg.CORS.Enabled || header.Get("Access-Control-Allow-Origin") != "" {
 		return
 	}
 
 	origin := r.Header.Get("Origin")
-	if origin == "" || !originAllowed(origin, cfg.Server.CORS.AllowedOrigins) {
+	if origin == "" || !originAllowed(origin, cfg.CORS.AllowedOrigins) {
 		return
 	}
 
 	header.Set("Access-Control-Allow-Origin", origin)
 	AddVary(header, "Origin")
-	if cfg.Server.CORS.Credentials {
+	if cfg.CORS.Credentials {
 		header.Set("Access-Control-Allow-Credentials", "true")
 	}
-	if len(cfg.Server.CORS.ExposeHeaders) > 0 {
+	if len(cfg.CORS.ExposeHeaders) > 0 {
 		header.Set(
 			"Access-Control-Expose-Headers",
-			strings.Join(cfg.Server.CORS.ExposeHeaders, ", "),
+			strings.Join(cfg.CORS.ExposeHeaders, ", "),
 		)
 	}
 }

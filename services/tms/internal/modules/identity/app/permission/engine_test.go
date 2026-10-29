@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -62,7 +62,7 @@ func setupTestEngine(
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 
-	metricsRegistry, err := metrics.NewRegistry(&config.Config{}, logger)
+	metricsRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, logger)
 	require.NoError(t, err)
 
 	e := &engine{

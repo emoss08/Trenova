@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -54,7 +55,8 @@ type Params struct {
 	UploadService         documentuploadports.DocumentUploadService
 	Inliner               documenttemplateports.AssetInliner
 	AuditService          auditports.AuditService
-	Config                *config.Config
+	AppConfig             *appconfig.Config
+	TenderingConfig       *tenderingconfig.Config
 }
 
 type Service struct {
@@ -71,7 +73,8 @@ type Service struct {
 	uploadService         documentuploadports.DocumentUploadService
 	inliner               documenttemplateports.AssetInliner
 	auditService          auditports.AuditService
-	cfg                   *config.Config
+	appConfig             *appconfig.Config
+	tenderingConfig       *tenderingconfig.Config
 }
 
 func New(p Params) *Service {
@@ -89,7 +92,8 @@ func New(p Params) *Service {
 		uploadService:         p.UploadService,
 		inliner:               p.Inliner,
 		auditService:          p.AuditService,
-		cfg:                   p.Config,
+		appConfig:             p.AppConfig,
+		tenderingConfig:       p.TenderingConfig,
 	}
 }
 

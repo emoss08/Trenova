@@ -124,11 +124,11 @@ func TestResolve_BlocksLoopbackWhenSandboxDisallowed(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.CarrierIntelligence.SandboxAllowed = &disallowed
 
-	_, err := Resolve("http://127.0.0.1:9000", "", cfg)
+	_, err := Resolve("http://127.0.0.1:9000", "", &cfg.App, &cfg.CarrierIntelligence)
 	require.Error(t, err)
 	assert.Equal(t, "Local base URLs are not allowed in this environment", err.Error())
 
-	target, err := Resolve("", "https://api.carrierok.com", cfg)
+	target, err := Resolve("", "https://api.carrierok.com", &cfg.App, &cfg.CarrierIntelligence)
 	require.NoError(t, err)
 	assert.Equal(t, "https://api.carrierok.com", target.BaseURL)
 	assert.False(t, target.Loopback)
@@ -138,7 +138,7 @@ func TestResolve_AllowsLoopbackOutsideProduction(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{}
-	target, err := Resolve("http://localhost:9000/", "", cfg)
+	target, err := Resolve("http://localhost:9000/", "", &cfg.App, &cfg.CarrierIntelligence)
 	require.NoError(t, err)
 	assert.True(t, target.Loopback)
 	assert.Equal(t, "http://localhost:9000", target.BaseURL)

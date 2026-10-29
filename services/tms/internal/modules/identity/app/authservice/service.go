@@ -13,7 +13,8 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -59,63 +60,66 @@ type Params struct {
 	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
 	RoleActivation    iamports.RoleActivationPolicy   `optional:"true"`
 	Encryption        *encryptionservice.Service
-	Config            *config.Config
+	SecurityConfig    *securityconfig.Config
+	ServerConfig      *serverconfig.Config
 	Logger            *zap.Logger
 }
 
 type Service struct {
-	ur         tenantports.UserRepository
-	or         tenantports.OrganizationRepository
-	sr         sessionports.SessionRepository
-	rbacRepo   permissionports.RBACRepository
-	ssoRepo    tenantports.SSOConfigRepository
-	stateRepo  tenantports.SSOLoginStateRepository
-	links      tenantports.SSOIdentityLinkRepository
-	akr        apikeyports.APIKeyRepository
-	portalRepo portalaccessports.PortalAccessRepository
-	usageBuf   apikeyports.UsageRecorder
-	turns      assistantports.AssistantTurnStopper
-	authEvents iamports.AuthEventRecorder
-	throttle   sessionports.LoginThrottleStore
-	plans      platformplanports.PlanService
-	mfa        sessionports.MFAService
-	challenges iamports.MFAChallengeRepository
-	activation iamports.RoleActivationPolicy
-	enc        *encryptionservice.Service
-	cfg        *config.Config
-	policy     session.Policy
-	oidc       *oidcProviders
-	l          *zap.Logger
+	ur             tenantports.UserRepository
+	or             tenantports.OrganizationRepository
+	sr             sessionports.SessionRepository
+	rbacRepo       permissionports.RBACRepository
+	ssoRepo        tenantports.SSOConfigRepository
+	stateRepo      tenantports.SSOLoginStateRepository
+	links          tenantports.SSOIdentityLinkRepository
+	akr            apikeyports.APIKeyRepository
+	portalRepo     portalaccessports.PortalAccessRepository
+	usageBuf       apikeyports.UsageRecorder
+	turns          assistantports.AssistantTurnStopper
+	authEvents     iamports.AuthEventRecorder
+	throttle       sessionports.LoginThrottleStore
+	plans          platformplanports.PlanService
+	mfa            sessionports.MFAService
+	challenges     iamports.MFAChallengeRepository
+	activation     iamports.RoleActivationPolicy
+	enc            *encryptionservice.Service
+	securityConfig *securityconfig.Config
+	serverConfig   *serverconfig.Config
+	policy         session.Policy
+	oidc           *oidcProviders
+	l              *zap.Logger
 }
 
 func New(p Params) tenantports.AuthService {
 	return &Service{
-		ur:         p.UserRepository,
-		or:         p.OrganizationRepo,
-		sr:         p.SessionRepository,
-		rbacRepo:   p.RBACRepository,
-		ssoRepo:    p.SSOConfigRepo,
-		stateRepo:  p.SSOStateRepo,
-		links:      p.SSOIdentityLinks,
-		akr:        p.APIKeyRepository,
-		portalRepo: p.PortalRepo,
-		usageBuf:   p.UsageRecorder,
-		turns:      p.TurnStopper,
-		authEvents: p.AuthEvents,
-		throttle:   p.LoginThrottle,
-		plans:      p.Plans,
-		mfa:        p.MFA,
-		challenges: p.MFAChallenges,
-		activation: p.RoleActivation,
-		enc:        p.Encryption,
-		cfg:        p.Config,
+		ur:             p.UserRepository,
+		or:             p.OrganizationRepo,
+		sr:             p.SessionRepository,
+		rbacRepo:       p.RBACRepository,
+		ssoRepo:        p.SSOConfigRepo,
+		stateRepo:      p.SSOStateRepo,
+		links:          p.SSOIdentityLinks,
+		akr:            p.APIKeyRepository,
+		portalRepo:     p.PortalRepo,
+		usageBuf:       p.UsageRecorder,
+		turns:          p.TurnStopper,
+		authEvents:     p.AuthEvents,
+		throttle:       p.LoginThrottle,
+		plans:          p.Plans,
+		mfa:            p.MFA,
+		challenges:     p.MFAChallenges,
+		activation:     p.RoleActivation,
+		enc:            p.Encryption,
+		securityConfig: p.SecurityConfig,
+		serverConfig:   p.ServerConfig,
 		policy: session.Policy{
-			MaxAge:      p.Config.Security.Session.MaxAge,
-			IdleTimeout: p.Config.Security.Session.IdleTimeout,
+			MaxAge:      p.SecurityConfig.Session.MaxAge,
+			IdleTimeout: p.SecurityConfig.Session.IdleTimeout,
 		},
 		oidc: newOIDCProviders(
-			p.Config.Security.SSO.IssuerPolicy(),
-			p.Config.Security.SSO.GetProviderCacheTTL(),
+			p.SecurityConfig.SSO.IssuerPolicy(),
+			p.SecurityConfig.SSO.GetProviderCacheTTL(),
 		),
 		l: p.Logger.Named("service.auth"),
 	}
@@ -327,7 +331,7 @@ func (s *Service) StartSSOLogin(
 	}
 	req.Provider = ssoConfig.Provider
 
-	if err = validateReturnToURL(req.ReturnTo, s.cfg.Server.CORS.AllowedOrigins); err != nil {
+	if err = validateReturnToURL(req.ReturnTo, s.serverConfig.CORS.AllowedOrigins); err != nil {
 		return "", err
 	}
 
@@ -891,7 +895,7 @@ func (s *Service) AuthenticateAPIKey(
 	token string,
 	ipAddress, userAgent string,
 ) (*tenantports.AuthenticatedPrincipal, error) {
-	if !s.cfg.Security.APIToken.Enabled {
+	if !s.securityConfig.APIToken.Enabled {
 		return nil, errortypes.NewAuthenticationError("API token authentication is disabled")
 	}
 

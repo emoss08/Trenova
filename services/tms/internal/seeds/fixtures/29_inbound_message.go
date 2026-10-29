@@ -6,35 +6,33 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
-
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/seeds/seedenv"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection/aicorrectiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/seeds/seedenv"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -102,8 +100,17 @@ var InboundMessage = Seeds.Add(seed.Seed{
 	Name:        "inbound_message",
 	Kind:        seed.Fixture,
 	Description: "Seeds three monitored addresses and a Triage queue in every state the design shows",
-	After:       []*seed.Seed{Shipment, DriverPay, AdminAccount, Carrier, Worker, AIProvider, Detention, HoldReason},
-	Run:         (&InboundMessageSeed{}).Run,
+	After: []*seed.Seed{
+		Shipment,
+		DriverPay,
+		AdminAccount,
+		Carrier,
+		Worker,
+		AIProvider,
+		Detention,
+		HoldReason,
+	},
+	Run: (&InboundMessageSeed{}).Run,
 })
 
 type inboundSeedRefs struct {
@@ -137,7 +144,9 @@ type seedMailboxes struct {
 
 func (s *InboundMessageSeed) Run(ctx context.Context, sr *seed.Run) error {
 	db := sr.DB
-	sealer, err := encryptionservice.New(encryptionservice.Params{Config: seedenv.Config(ctx)})
+	sealer, err := encryptionservice.New(
+		encryptionservice.Params{SecurityConfig: &seedenv.Config(ctx).Security},
+	)
 	if errors.Is(err, encryptionservice.ErrLocalKeyRequired) {
 		sealer = encryptionservice.NewWithKeyManager(encryptionservice.DisabledKeyManager{})
 	} else if err != nil {

@@ -4,7 +4,7 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
@@ -20,7 +20,6 @@ import (
 
 type Registry struct {
 	registry *prometheus.Registry
-	cfg      *config.Config
 	logger   *zap.Logger
 	enabled  bool
 	otel     meterProviderOnce
@@ -46,23 +45,22 @@ type Registry struct {
 	EDIModule       *platformmetrics.WasmModule
 }
 
-func graphQLOptions(cfg *config.Config) httpmetrics.GraphQLOptions {
-	gqlCfg := &cfg.Monitoring.GraphQL
+func graphQLOptions(cfg *monitoringconfig.Config) httpmetrics.GraphQLOptions {
+	gqlCfg := &cfg.GraphQL
 	return httpmetrics.GraphQLOptions{
 		ResolverMetrics: gqlCfg.ResolverMetrics,
 		MaxOperations:   gqlCfg.GetMaxTrackedOperations(),
 	}
 }
 
-func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
-	enabled := cfg.Monitoring.Metrics.Enabled
+func NewRegistry(cfg *monitoringconfig.Config, logger *zap.Logger) (*Registry, error) {
+	enabled := cfg.Metrics.Enabled
 
 	if !enabled {
 		logger.Warn("Metrics collection is disabled")
 		dberror.SetConcurrencyObserver(nil)
 		return &Registry{
 			enabled:         false,
-			cfg:             cfg,
 			logger:          logger,
 			HTTP:            httpmetrics.NewHTTP(nil, logger, false),
 			Error:           httpmetrics.NewError(nil, logger, false),
@@ -102,7 +100,6 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 
 	m := &Registry{
 		registry:        registry,
-		cfg:             cfg,
 		logger:          logger,
 		enabled:         true,
 		HTTP:            httpmetrics.NewHTTP(registry, logger, true),
@@ -139,8 +136,8 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)
 
 	logger.Info("Metrics registry initialized",
-		zap.Int("port", cfg.Monitoring.Metrics.Port),
-		zap.String("path", cfg.Monitoring.Metrics.Path),
+		zap.Int("port", cfg.Metrics.Port),
+		zap.String("path", cfg.Metrics.Path),
 	)
 
 	return m, nil

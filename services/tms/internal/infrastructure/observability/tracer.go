@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"go.opentelemetry.io/otel"
@@ -30,36 +30,40 @@ import (
 type TracerProviderParams struct {
 	fx.In
 
-	Lifecycle fx.Lifecycle
-	Config    *config.Config
-	Logger    *zap.Logger
+	Lifecycle        fx.Lifecycle
+	AppConfig        *appconfig.Config
+	MonitoringConfig *monitoringconfig.Config
+	Logger           *zap.Logger
 }
 
 type TracerProvider struct {
-	provider *sdktrace.TracerProvider
-	tracer   trace.Tracer
-	cfg      *config.Config
-	l        *zap.Logger
+	provider         *sdktrace.TracerProvider
+	tracer           trace.Tracer
+	appConfig        *appconfig.Config
+	monitoringConfig *monitoringconfig.Config
+	l                *zap.Logger
 }
 
 func NewTracerProvider(p TracerProviderParams) (*TracerProvider, error) {
 	log := p.Logger.With(zap.String("component", "tracer"))
-	aitrace.SetSamplingRate(p.Config.Monitoring.Tracing.GetAISamplingRate())
+	aitrace.SetSamplingRate(p.MonitoringConfig.Tracing.GetAISamplingRate())
 
-	if !p.Config.Monitoring.Tracing.Enabled {
+	if !p.MonitoringConfig.Tracing.Enabled {
 		log.Warn("🟡 Tracing is disabled")
 		noopProvider := noop.NewTracerProvider()
 		return &TracerProvider{
-			provider: nil,
-			tracer:   noopProvider.Tracer("noop"),
-			cfg:      p.Config,
-			l:        log,
+			provider:         nil,
+			tracer:           noopProvider.Tracer("noop"),
+			appConfig:        p.AppConfig,
+			monitoringConfig: p.MonitoringConfig,
+			l:                log,
 		}, nil
 	}
 
 	tp := &TracerProvider{
-		cfg: p.Config,
-		l:   log,
+		appConfig:        p.AppConfig,
+		monitoringConfig: p.MonitoringConfig,
+		l:                log,
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -80,14 +84,14 @@ func NewTracerProvider(p TracerProviderParams) (*TracerProvider, error) {
 func (tp *TracerProvider) initialize(ctx context.Context) error {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName(tp.cfg.Monitoring.Tracing.ServiceName),
-		semconv.ServiceVersion(tp.cfg.App.Version),
-		attribute.String("deployment.environment", tp.cfg.App.Env),
+		semconv.ServiceName(tp.monitoringConfig.Tracing.ServiceName),
+		semconv.ServiceVersion(tp.appConfig.Version),
+		attribute.String("deployment.environment", tp.appConfig.Env),
 		attribute.String("service.namespace", "trenova"),
 		attribute.String("service.instance.id", generateInstanceID()),
 	)
 
-	exporter, err := createExporter(ctx, &tp.cfg.Monitoring.Tracing, tp.l)
+	exporter, err := createExporter(ctx, &tp.monitoringConfig.Tracing, tp.l)
 	if err != nil {
 		return fmt.Errorf("failed to create exporter: %w", err)
 	}
@@ -100,7 +104,7 @@ func (tp *TracerProvider) initialize(ctx context.Context) error {
 		),
 		sdktrace.WithResource(res),
 		sdktrace.WithIDGenerator(aitrace.NewIDGenerator()),
-		sdktrace.WithSampler(createSampler(&tp.cfg.Monitoring.Tracing)),
+		sdktrace.WithSampler(createSampler(&tp.monitoringConfig.Tracing)),
 	)
 
 	otel.SetTracerProvider(provider)
@@ -116,10 +120,10 @@ func (tp *TracerProvider) initialize(ctx context.Context) error {
 	tp.tracer = provider.Tracer("trenova")
 
 	tp.l.Info("Tracer provider initialized",
-		zap.String("provider", tp.cfg.Monitoring.Tracing.Provider),
-		zap.String("endpoint", tp.cfg.Monitoring.Tracing.Endpoint),
-		zap.Float64("sampling_rate", tp.cfg.Monitoring.Tracing.SamplingRate),
-		zap.Float64("ai_sampling_rate", tp.cfg.Monitoring.Tracing.GetAISamplingRate()),
+		zap.String("provider", tp.monitoringConfig.Tracing.Provider),
+		zap.String("endpoint", tp.monitoringConfig.Tracing.Endpoint),
+		zap.Float64("sampling_rate", tp.monitoringConfig.Tracing.SamplingRate),
+		zap.Float64("ai_sampling_rate", tp.monitoringConfig.Tracing.GetAISamplingRate()),
 	)
 
 	return nil

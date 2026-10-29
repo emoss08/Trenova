@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -173,29 +175,29 @@ func newLogSink(cfg loggingconfig.Config) (zapcore.WriteSyncer, io.Closer, error
 	}
 }
 
-type Params struct {
-	fx.In
-	Config *Config
-	Logger *zap.Logger
-}
-
 func Hooks() fx.Option {
 	return fx.Options(
-		fx.Invoke(func(lc fx.Lifecycle, config *Config, logger *zap.Logger, sink *LogSink) {
+		fx.Invoke(func(
+			lc fx.Lifecycle,
+			app *appconfig.Config,
+			database *databaseconfig.Config,
+			logger *zap.Logger,
+			sink *LogSink,
+		) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
 					logger.Debug("Database configuration",
-						zap.String("dsn", config.GetDSNMasked()),
+						zap.String("dsn", database.DSNMasked()),
 					)
 
 					logger.Info("Starting application",
-						zap.String("name", config.App.Name),
-						zap.String("version", config.App.Version),
-						zap.String("environment", config.App.Env),
-						zap.Bool("debug", config.App.Debug),
+						zap.String("name", app.Name),
+						zap.String("version", app.Version),
+						zap.String("environment", app.Env),
+						zap.Bool("debug", app.Debug),
 					)
 
-					if config.App.IsProduction() {
+					if app.IsProduction() {
 						logger.Info("Running in production mode - strict security checks enabled")
 					}
 

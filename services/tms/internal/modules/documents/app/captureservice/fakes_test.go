@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -98,10 +97,8 @@ func newWorld() *world {
 
 func (w *world) service() *Service {
 	return &Service{
-		l: zap.NewNop(),
-		cfg: &config.Config{
-			App: appconfig.Config{WebBaseURL: "https://app.trenova.test"},
-		},
+		l:             zap.NewNop(),
+		cfg:           &appconfig.Config{WebBaseURL: "https://app.trenova.test"},
 		db:            dbtest.NopConnection{},
 		devices:       &fakeDevices{w},
 		pairings:      &fakePairings{w},

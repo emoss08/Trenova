@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/hostguard"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -42,12 +43,17 @@ var (
 )
 
 type Connector struct {
-	cfg          *config.Config
-	extraOptions []carrierok.Option
+	appConfig                 *appconfig.Config
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config
+	extraOptions              []carrierok.Option
 }
 
-func New(cfg *config.Config) *Connector {
-	return &Connector{cfg: cfg}
+func New(
+	appConfig *appconfig.Config,
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config,
+) *Connector {
+	return &Connector{appConfig: appConfig,
+		carrierIntelligenceConfig: carrierIntelligenceConfig}
 }
 
 func (c *Connector) IntegrationType() integration.Type {
@@ -163,14 +169,15 @@ func (c *Connector) newSDKClient(
 	if apiKey == "" {
 		return nil, intelkit.NewUserError(messageAPIKeyRequired, nil)
 	}
-	if carrierok.IsSandboxKey(apiKey) && !c.cfg.CarrierIntelligence.IsSandboxAllowed(&c.cfg.App) {
+	if carrierok.IsSandboxKey(apiKey) &&
+		!c.carrierIntelligenceConfig.IsSandboxAllowed(c.appConfig) {
 		return nil, intelkit.NewUserError(messageSandboxDisallowed, nil)
 	}
 
 	target, err := hostguard.Resolve(
 		cfg[integration.ConfigKeyCarrierIntelBaseURL],
 		integration.DefaultCarrierOKBaseURL,
-		c.cfg,
+		c.appConfig, c.carrierIntelligenceConfig,
 	)
 	if err != nil {
 		return nil, err

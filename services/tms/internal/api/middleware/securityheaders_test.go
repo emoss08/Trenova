@@ -94,7 +94,9 @@ func TestSecurityHeadersMiddleware_PreservesCORSPreflightHeaders(t *testing.T) {
 		AllowCredentials: true,
 		MaxAge:           time.Hour,
 	}))
-	router.Use(NewSecurityHeadersMiddleware(newSecurityHeadersTestConfig(appconfig.EnvProduction)))
+	router.Use(
+		NewSecurityHeadersMiddleware(&newSecurityHeadersTestConfig(appconfig.EnvProduction).App),
+	)
 	router.GET("/ok", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
@@ -116,7 +118,7 @@ func TestSecurityHeadersMiddleware_PreservesCORSPreflightHeaders(t *testing.T) {
 
 func newSecurityHeadersTestRouter(env string) *gin.Engine {
 	router := gin.New()
-	router.Use(NewSecurityHeadersMiddleware(newSecurityHeadersTestConfig(env)))
+	router.Use(NewSecurityHeadersMiddleware(&newSecurityHeadersTestConfig(env).App))
 	router.GET("/ok", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

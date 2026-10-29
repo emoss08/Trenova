@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -63,7 +63,7 @@ type Params struct {
 	fx.In
 	gqlext.Params
 
-	Config      *config.Config
+	AppConfig   *appconfig.Config
 	Schema      Schema
 	Loaders     *loadercore.Registry
 	Permissions permissionports.PermissionEngine
@@ -86,7 +86,7 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 	for _, ext := range gqlext.Extensions(p.Params) {
 		exec.Use(ext)
 	}
-	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.Config))
+	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.AppConfig))
 	exec.SetRecoverFunc(gqlext.Recover)
 
 	operations := make(map[string]Operation, len(Operations()))

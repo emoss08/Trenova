@@ -50,7 +50,7 @@ func TestProtocolErrorCodesAreRegistered(t *testing.T) {
 func TestErrorPresenter_CostBudgetIsRateLimitProblem(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 	ctx := gqlctx.WithRequestID(context.Background(), "req-1")
 
 	err := gqlerror.Errorf("budget exhausted")
@@ -69,7 +69,7 @@ func TestErrorPresenter_CostBudgetIsRateLimitProblem(t *testing.T) {
 func TestErrorPresenter_OtherProtocolErrorsStayValidationProblems(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 
 	err := gqlerror.Errorf("too deep")
 	errcode.Set(err, querycost.DepthLimitErrorCode)
@@ -86,7 +86,7 @@ func TestErrorPresenter_OtherProtocolErrorsStayValidationProblems(t *testing.T) 
 func TestErrorPresenter_DomainErrorsCarryFieldErrors(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 
 	presented := present(
 		context.Background(),
@@ -104,7 +104,7 @@ func TestErrorPresenter_DomainErrorsCarryFieldErrors(t *testing.T) {
 func TestErrorPresenter_UnknownErrorsAreSystemErrors(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 
 	presented := present(context.Background(), errors.New("boom"))
 	require.NotNil(t, presented)
@@ -114,7 +114,7 @@ func TestErrorPresenter_UnknownErrorsAreSystemErrors(t *testing.T) {
 func TestErrorPresenter_UniqueViolationIsADuplicateConflict(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 	ctx := gqlctx.WithRequestID(t.Context(), "req-dup")
 
 	presented := present(ctx, fmt.Errorf("insert customer: %w", &pgconn.PgError{
@@ -135,7 +135,7 @@ func TestErrorPresenter_UniqueViolationIsADuplicateConflict(t *testing.T) {
 func TestErrorPresenter_RowLevelSecurityViolationIsForbidden(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 	tracker := tenantboundary.NewTracker()
 	ctx := tenantboundary.With(gqlctx.WithRequestID(t.Context(), "req-rls"), tracker)
 
@@ -155,7 +155,7 @@ func TestErrorPresenter_RowLevelSecurityViolationIsForbidden(t *testing.T) {
 func TestErrorPresenter_QuotaExceededCarriesItsParams(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 
 	presented := present(context.Background(), fmt.Errorf("create shipment: %w",
 		errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo")))
@@ -177,7 +177,7 @@ func TestErrorPresenter_QuotaExceededCarriesItsParams(t *testing.T) {
 func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
 	t.Parallel()
 
-	present := newErrorPresenter(presenterTestConfig())
+	present := newErrorPresenter(&presenterTestConfig().App)
 
 	presented := present(context.Background(),
 		errortypes.NewPlanRestrictionError("api_keys", "", "free_demo"))

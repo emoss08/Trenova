@@ -222,11 +222,13 @@ func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
 	f.cfg.Database.SlowWaitWarning = 50 * time.Millisecond
 	core, logs := observer.New(zapcore.WarnLevel)
 	conn, err := newConnection(ConnectionParams{
-		Lifecycle: fxtest.NewLifecycle(t),
-		Config:    f.cfg,
-		Logger:    zap.New(core),
-		Observers: shapetest.Observers(t),
-	}, oltpSettings(f.cfg))
+		Lifecycle:       fxtest.NewLifecycle(t),
+		AppConfig:       &f.cfg.App,
+		DatabaseConfig:  &f.cfg.Database,
+		ReportingConfig: &f.cfg.Reporting,
+		Logger:          zap.New(core),
+		Observers:       shapetest.Observers(t),
+	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)
 	require.NoError(t, conn.connect(t.Context()))
 	t.Cleanup(func() { _ = conn.shutdown(context.Background()) })

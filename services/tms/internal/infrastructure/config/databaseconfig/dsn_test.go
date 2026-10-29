@@ -1,32 +1,27 @@
-package config
+package databaseconfig
 
 import (
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestConfig_GetDSN(t *testing.T) {
+func TestConfig_DSN(t *testing.T) {
 	t.Parallel()
 
 	t.Run("basic", func(t *testing.T) {
 		t.Parallel()
 		c := &Config{
-			App: appconfig.Config{Name: "trenova"},
-			Database: databaseconfig.Config{
-				User:    "user",
-				Host:    "localhost",
-				Port:    5432,
-				Name:    "testdb",
-				SSLMode: "disable",
-			},
+			User:    "user",
+			Host:    "localhost",
+			Port:    5432,
+			Name:    "testdb",
+			SSLMode: "disable",
 		}
-		dsn := c.GetDSN("password123")
+		dsn := c.DSN("trenova", "password123")
 		assert.Contains(t, dsn, "postgres://user:password123@localhost:5432/testdb")
 		assert.Contains(t, dsn, "sslmode=disable")
 		assert.Contains(t, dsn, "application_name=trenova")
@@ -38,16 +33,13 @@ func TestConfig_GetDSN(t *testing.T) {
 	t.Run("special characters in password", func(t *testing.T) {
 		t.Parallel()
 		c := &Config{
-			App: appconfig.Config{Name: "trenova"},
-			Database: databaseconfig.Config{
-				User:    "admin",
-				Host:    "db.example.com",
-				Port:    5433,
-				Name:    "prod",
-				SSLMode: "require",
-			},
+			User:    "admin",
+			Host:    "db.example.com",
+			Port:    5433,
+			Name:    "prod",
+			SSLMode: "require",
 		}
-		dsn := c.GetDSN("p@ss w0rd!")
+		dsn := c.DSN("trenova", "p@ss w0rd!")
 		assert.Contains(t, dsn, "sslmode=require")
 
 		parsed, err := url.Parse(dsn)
@@ -69,17 +61,14 @@ func TestConfig_GetDSN(t *testing.T) {
 			"plus+literal",
 		} {
 			c := &Config{
-				App: appconfig.Config{Name: "trenova"},
-				Database: databaseconfig.Config{
-					User:    "trenova app",
-					Host:    "localhost",
-					Port:    5432,
-					Name:    "trenova",
-					SSLMode: "disable",
-				},
+				User:    "trenova app",
+				Host:    "localhost",
+				Port:    5432,
+				Name:    "trenova",
+				SSLMode: "disable",
 			}
 
-			parsed, err := url.Parse(c.GetDSN(password))
+			parsed, err := url.Parse(c.DSN("trenova", password))
 			require.NoError(t, err, password)
 			got, ok := parsed.User.Password()
 			require.True(t, ok, password)
@@ -91,34 +80,32 @@ func TestConfig_GetDSN(t *testing.T) {
 	})
 }
 
-func TestConfig_GetDSNMasked(t *testing.T) {
+func TestConfig_DSNMasked(t *testing.T) {
 	t.Parallel()
 
 	c := &Config{
-		Database: databaseconfig.Config{
-			User:    "user",
-			Host:    "localhost",
-			Port:    5432,
-			Name:    "testdb",
-			SSLMode: "disable",
-		},
+		User:    "user",
+		Host:    "localhost",
+		Port:    5432,
+		Name:    "testdb",
+		SSLMode: "disable",
 	}
-	masked := c.GetDSNMasked()
+	masked := c.DSNMasked()
 	assert.Equal(t, "postgres://user:****@localhost:5432/testdb?sslmode=disable", masked)
 }
 
-func TestGetDSNForRole(t *testing.T) {
+func TestConfig_DSNForRole(t *testing.T) {
 	t.Parallel()
 
-	cfg := newValidConfig()
-	cfg.Database.User = "trenova_app"
-	cfg.Database.Host = "db.internal"
-	cfg.Database.Port = 5432
-	cfg.Database.Name = "trenova"
-	cfg.Database.SSLMode = "require"
-	cfg.Database.Password = "app"
+	cfg := validDatabaseConfig()
+	cfg.User = "trenova_app"
+	cfg.Host = "db.internal"
+	cfg.Port = 5432
+	cfg.Name = "trenova"
+	cfg.SSLMode = "require"
+	cfg.Password = "app"
 
-	dsn := cfg.GetDSNForRole(databaseconfig.Role{User: "trenova_system", Password: "p@ss word+1"})
+	dsn := cfg.DSNForRole("trenova", Role{User: "trenova_system", Password: "p@ss word+1"})
 	assert.True(t, strings.HasPrefix(dsn, "postgres://trenova_system:"), dsn)
 	assert.Contains(t, dsn, "@db.internal:5432/trenova?sslmode=require")
 
@@ -133,24 +120,24 @@ func TestGetDSNForRole(t *testing.T) {
 		"a space or plus in a password must reach Postgres unchanged",
 	)
 
-	assert.Equal(t, cfg.GetDSN(cfg.Database.Password), cfg.GetMigrationDSN())
+	assert.Equal(t, cfg.DSN("trenova", cfg.Password), cfg.MigrationDSN("trenova"))
 }
 
-func TestConfig_GetCacheListenDSN(t *testing.T) {
+func TestConfig_CacheListenDSN(t *testing.T) {
 	t.Parallel()
 
-	cfg := newValidConfig()
-	assert.Empty(t, cfg.GetCacheListenDSN(), "no listen host keeps the pool's settings")
+	cfg := validDatabaseConfig()
+	assert.Empty(t, cfg.CacheListenDSN("trenova"), "no listen host keeps the pool's settings")
 
-	cfg.Database.Cache.ListenHost = "pg-primary.internal"
-	parsed, err := url.Parse(cfg.GetCacheListenDSN())
+	cfg.Cache.ListenHost = "pg-primary.internal"
+	parsed, err := url.Parse(cfg.CacheListenDSN("trenova"))
 	require.NoError(t, err)
 	assert.Equal(t, "pg-primary.internal:5432", parsed.Host)
 	assert.Equal(t, "/trenova", parsed.Path)
 	assert.Equal(t, "postgres", parsed.User.Username())
 
-	cfg.Database.Cache.ListenPort = 5433
-	parsed, err = url.Parse(cfg.GetCacheListenDSN())
+	cfg.Cache.ListenPort = 5433
+	parsed, err = url.Parse(cfg.CacheListenDSN("trenova"))
 	require.NoError(t, err)
 	assert.Equal(t, "pg-primary.internal:5433", parsed.Host)
 	assert.Equal(t, "disable", parsed.Query().Get("sslmode"))

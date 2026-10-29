@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
@@ -42,12 +43,16 @@ func ValidateBaseURL(raw, fallback string, allowed []string) (string, error) {
 	return target.BaseURL, nil
 }
 
-func Resolve(raw, fallback string, cfg *config.Config) (*Target, error) {
-	target, err := validate(raw, fallback, cfg.CarrierIntelligence.GetAllowedHosts())
+func Resolve(
+	raw, fallback string,
+	appConfig *appconfig.Config,
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config,
+) (*Target, error) {
+	target, err := validate(raw, fallback, carrierIntelligenceConfig.GetAllowedHosts())
 	if err != nil {
 		return nil, err
 	}
-	if target.Loopback && !cfg.CarrierIntelligence.IsSandboxAllowed(&cfg.App) {
+	if target.Loopback && !carrierIntelligenceConfig.IsSandboxAllowed(appConfig) {
 		return nil, newError("Local base URLs are not allowed in this environment")
 	}
 	return target, nil

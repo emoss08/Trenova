@@ -43,7 +43,8 @@ func serve(
 	gin.SetMode(gin.TestMode)
 
 	handler := publicconfighandler.New(publicconfighandler.Params{
-		Config: cfg,
+		PlatformConfig: &cfg.Platform,
+		SecurityConfig: &cfg.Security,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

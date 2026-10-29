@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
@@ -1128,11 +1127,11 @@ func (s *Service) withoutSelfScoped(names []string) []string {
 	return kept
 }
 
-func configuredThreshold(cfg *config.Config) *int {
+func configuredThreshold(cfg *aiconfig.Config) *int {
 	if cfg == nil {
 		return nil
 	}
-	threshold := cfg.AI.GetToolDisclosureThreshold()
+	threshold := cfg.GetToolDisclosureThreshold()
 
 	return &threshold
 }

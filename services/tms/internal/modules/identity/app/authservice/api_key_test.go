@@ -3,8 +3,8 @@ package authservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
@@ -33,12 +33,11 @@ func TestAuthenticateAPIKeyDisabled(t *testing.T) {
 	svc := &Service{
 		akr:      apikeyportsmock.NewMockAPIKeyRepository(t),
 		usageBuf: recorder,
-		cfg: &config.Config{
-			Security: securityconfig.Config{
-				APIToken: securityconfig.APITokenConfig{Enabled: false},
-			},
+		securityConfig: &securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{Enabled: false},
 		},
-		l: zap.NewNop(),
+		serverConfig: &serverconfig.Config{},
+		l:            zap.NewNop(),
 	}
 
 	result, err := svc.AuthenticateAPIKey(t.Context(), "trv_test.secret", "192.0.2.1", "test")
@@ -70,12 +69,11 @@ func TestAuthenticateAPIKeyRejectsRevokedKey(t *testing.T) {
 	svc := &Service{
 		akr:      repo,
 		usageBuf: recorder,
-		cfg: &config.Config{
-			Security: securityconfig.Config{
-				APIToken: securityconfig.APITokenConfig{Enabled: true},
-			},
+		securityConfig: &securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{Enabled: true},
 		},
-		l: zap.NewNop(),
+		serverConfig: &serverconfig.Config{},
+		l:            zap.NewNop(),
 	}
 
 	result, authErr := svc.AuthenticateAPIKey(t.Context(), generated.Token(), "192.0.2.1", "test")
@@ -108,12 +106,11 @@ func TestAuthenticateAPIKeyRejectsExpiredKey(t *testing.T) {
 	svc := &Service{
 		akr:      repo,
 		usageBuf: recorder,
-		cfg: &config.Config{
-			Security: securityconfig.Config{
-				APIToken: securityconfig.APITokenConfig{Enabled: true},
-			},
+		securityConfig: &securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{Enabled: true},
 		},
-		l: zap.NewNop(),
+		serverConfig: &serverconfig.Config{},
+		l:            zap.NewNop(),
 	}
 
 	result, authErr := svc.AuthenticateAPIKey(t.Context(), generated.Token(), "192.0.2.1", "test")
@@ -145,12 +142,11 @@ func TestAuthenticateAPIKeyRejectsInvalidSecret(t *testing.T) {
 	svc := &Service{
 		akr:      repo,
 		usageBuf: recorder,
-		cfg: &config.Config{
-			Security: securityconfig.Config{
-				APIToken: securityconfig.APITokenConfig{Enabled: true},
-			},
+		securityConfig: &securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{Enabled: true},
 		},
-		l: zap.NewNop(),
+		serverConfig: &serverconfig.Config{},
+		l:            zap.NewNop(),
 	}
 
 	result, authErr := svc.AuthenticateAPIKey(
@@ -187,12 +183,11 @@ func TestAuthenticateAPIKeySuccessReturnsMachinePrincipal(t *testing.T) {
 	svc := &Service{
 		akr:      repo,
 		usageBuf: recorder,
-		cfg: &config.Config{
-			Security: securityconfig.Config{
-				APIToken: securityconfig.APITokenConfig{Enabled: true},
-			},
+		securityConfig: &securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{Enabled: true},
 		},
-		l: zap.NewNop(),
+		serverConfig: &serverconfig.Config{},
+		l:            zap.NewNop(),
 	}
 
 	result, authErr := svc.AuthenticateAPIKey(

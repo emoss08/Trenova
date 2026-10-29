@@ -153,7 +153,7 @@ func DatabaseConfig(p ConfigParams) func() (keel.Config, error) {
 		}
 
 		dsn, err := pgxdsn.Normalize(
-			cfg.GetMigrationDSN(),
+			cfg.Database.MigrationDSN(cfg.App.Name),
 			pgxdsn.Options{ApplicationName: p.Name},
 		)
 		if err != nil {

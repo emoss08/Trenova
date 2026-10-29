@@ -120,7 +120,6 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	return userhandler.New(userhandler.Params{
 		Service:              userSvc,
 		RoleService:          roleSvc,
-		Config:               opts.cfg,
 		PermissionEngine:     opts.permEngine,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,

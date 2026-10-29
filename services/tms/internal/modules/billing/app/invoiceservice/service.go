@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -116,7 +116,7 @@ type Params struct {
 	AccountingSync              accountingsyncports.AccountingSyncEnqueuer        `optional:"true"`
 	EmailSenders                emailports.EmailSenderResolver                    `optional:"true"`
 	GLAccounts                  glaccountports.GLAccountRepository                `optional:"true"`
-	Config                      *config.Config                                    `optional:"true"`
+	AppConfig                   *appconfig.Config                                 `optional:"true"`
 	Permissions                 permissionports.PermissionEngine
 }
 
@@ -247,16 +247,16 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		accountingSync:              p.AccountingSync,
 		emailSenders:                p.EmailSenders,
 		glAccounts:                  p.GLAccounts,
-		webBaseURL:                  webBaseURL(p.Config),
+		webBaseURL:                  webBaseURL(p.AppConfig),
 		permissions:                 p.Permissions,
 	}
 }
 
-func webBaseURL(cfg *config.Config) string {
+func webBaseURL(cfg *appconfig.Config) string {
 	if cfg == nil {
 		return ""
 	}
-	return cfg.App.GetWebBaseURL()
+	return cfg.GetWebBaseURL()
 }
 
 func (s *Service) List(

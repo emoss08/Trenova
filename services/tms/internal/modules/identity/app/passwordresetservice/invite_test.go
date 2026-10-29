@@ -45,7 +45,7 @@ func newInviteHarness(t *testing.T, user *tenant.User) *inviteHarness {
 		tokens: &stubTokenRepo{},
 	}
 	h.svc = newService(t, h.users, h.tokens, &stubSessionRepo{})
-	h.svc.cfg.Security.PasswordReset.InviteTokenTTL = 72 * time.Hour
+	h.svc.cfg.PasswordReset.InviteTokenTTL = 72 * time.Hour
 
 	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	templates.EXPECT().RenderMessage(mock.Anything, mock.MatchedBy(

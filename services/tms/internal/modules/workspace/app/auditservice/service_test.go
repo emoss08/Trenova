@@ -156,7 +156,6 @@ func newTestService(
 		bufferRepo: bufferRepo,
 		realtime:   realtime,
 		logger:     logger.Named("service.audit"),
-		config:     cfg,
 		sdm:        NewSensitiveDataManager(cfg.Security.Encryption),
 		metrics:    metricsRegistry,
 	}
@@ -1045,7 +1044,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1055,7 +1055,6 @@ func TestNew(t *testing.T) {
 		assert.Same(t, repo, concrete.repo)
 		assert.Same(t, bufferRepo, concrete.bufferRepo)
 		assert.NotNil(t, concrete.logger)
-		assert.Same(t, cfg, concrete.config)
 		assert.NotNil(t, concrete.sdm)
 		assert.Same(t, metricsRegistry, concrete.metrics)
 	})
@@ -1080,7 +1079,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1109,7 +1109,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1138,7 +1139,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1167,7 +1169,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1195,7 +1198,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1226,7 +1230,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1272,7 +1277,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1310,7 +1316,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1353,7 +1360,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 

@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/hostguard"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -39,12 +40,17 @@ var (
 )
 
 type Connector struct {
-	cfg          *config.Config
-	extraOptions []fmcsa.Option
+	appConfig                 *appconfig.Config
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config
+	extraOptions              []fmcsa.Option
 }
 
-func New(cfg *config.Config) *Connector {
-	return &Connector{cfg: cfg}
+func New(
+	appConfig *appconfig.Config,
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config,
+) *Connector {
+	return &Connector{appConfig: appConfig,
+		carrierIntelligenceConfig: carrierIntelligenceConfig}
 }
 
 func isInvalidArgument(err error) bool {
@@ -129,7 +135,7 @@ func (c *Connector) newSDKClient(
 	target, err := hostguard.Resolve(
 		cfg[integration.ConfigKeyCarrierIntelBaseURL],
 		integration.DefaultFMCSABaseURL,
-		c.cfg,
+		c.appConfig, c.carrierIntelligenceConfig,
 	)
 	if err != nil {
 		return nil, err

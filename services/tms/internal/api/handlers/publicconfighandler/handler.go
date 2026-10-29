@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -22,22 +22,25 @@ const (
 type Params struct {
 	fx.In
 
-	Config       *config.Config
-	ErrorHandler *helpers.ErrorHandler
-	Contributors []kernelports.PublicConfigContributor `group:"public_config_contributors"`
+	PlatformConfig *platformconfig.Config
+	SecurityConfig *securityconfig.Config
+	ErrorHandler   *helpers.ErrorHandler
+	Contributors   []kernelports.PublicConfigContributor `group:"public_config_contributors"`
 }
 
 type Handler struct {
-	cfg          *config.Config
-	eh           *helpers.ErrorHandler
-	contributors []kernelports.PublicConfigContributor
+	platformConfig *platformconfig.Config
+	securityConfig *securityconfig.Config
+	eh             *helpers.ErrorHandler
+	contributors   []kernelports.PublicConfigContributor
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		cfg:          p.Config,
-		eh:           p.ErrorHandler,
-		contributors: p.Contributors,
+		platformConfig: p.PlatformConfig,
+		securityConfig: p.SecurityConfig,
+		eh:             p.ErrorHandler,
+		contributors:   p.Contributors,
 	}
 }
 
@@ -67,9 +70,9 @@ func (h *Handler) publicConfig(c *gin.Context) {
 
 func (h *Handler) Build(ctx context.Context) (*kernelports.PublicConfig, error) {
 	resp := &kernelports.PublicConfig{
-		PlatformMode: string(h.cfg.Platform.GetMode()),
+		PlatformMode: string(h.platformConfig.GetMode()),
 		FreePlan:     kernelports.PublicFreePlanSummary{Limits: map[string]int64{}},
-		Session:      publicSessionPolicy(&h.cfg.Security.Session),
+		Session:      publicSessionPolicy(&h.securityConfig.Session),
 	}
 
 	for _, contributor := range h.contributors {

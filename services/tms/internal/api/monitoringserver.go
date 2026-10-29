@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
@@ -21,19 +21,19 @@ import (
 type MonitoringServerParams struct {
 	fx.In
 
-	Config         *config.Config
-	Logger         *zap.Logger
-	LC             fx.Lifecycle
-	Metrics        *metrics.Registry
-	Database       *postgres.Connection
-	EDIMessageRepo edimessageports.EDIMessageRepository
-	EDIInboundRepo edimessageports.EDIInboundFileRepository
-	EDIProfileRepo edipartnerports.EDICommunicationProfileRepository
+	MonitoringConfig *monitoringconfig.Config
+	Logger           *zap.Logger
+	LC               fx.Lifecycle
+	Metrics          *metrics.Registry
+	Database         *postgres.Connection
+	EDIMessageRepo   edimessageports.EDIMessageRepository
+	EDIInboundRepo   edimessageports.EDIInboundFileRepository
+	EDIProfileRepo   edipartnerports.EDICommunicationProfileRepository
 }
 
 type MonitoringServer struct {
 	server         *http.Server
-	cfg            *config.Config
+	cfg            *monitoringconfig.Config
 	logger         *zap.Logger
 	metrics        *metrics.Registry
 	database       databaseHealth
@@ -60,12 +60,12 @@ type monitoringResponse struct {
 func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
 	addr := fmt.Sprintf(
 		"%s:%d",
-		p.Config.Monitoring.Metrics.GetHost(),
-		p.Config.Monitoring.Metrics.Port,
+		p.MonitoringConfig.Metrics.GetHost(),
+		p.MonitoringConfig.Metrics.Port,
 	)
 
 	s := &MonitoringServer{
-		cfg:            p.Config,
+		cfg:            p.MonitoringConfig,
 		logger:         p.Logger.Named("monitoring-server"),
 		metrics:        p.Metrics,
 		database:       p.Database,
@@ -75,10 +75,10 @@ func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle(p.Config.Monitoring.Metrics.Path, p.Metrics.Handler())
-	mux.HandleFunc(p.Config.Monitoring.Health.Path, s.handleHealth)
-	mux.HandleFunc(p.Config.Monitoring.Health.ReadinessPath, s.handleReadiness)
-	mux.HandleFunc(p.Config.Monitoring.Health.LivenessPath, s.handleLiveness)
+	mux.Handle(p.MonitoringConfig.Metrics.Path, p.Metrics.Handler())
+	mux.HandleFunc(p.MonitoringConfig.Health.Path, s.handleHealth)
+	mux.HandleFunc(p.MonitoringConfig.Health.ReadinessPath, s.handleReadiness)
+	mux.HandleFunc(p.MonitoringConfig.Health.LivenessPath, s.handleLiveness)
 
 	s.server = &http.Server{
 		Addr:              addr,
@@ -101,10 +101,10 @@ func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
 func (s *MonitoringServer) Start(_ context.Context) error {
 	s.logger.Info("Starting monitoring server",
 		zap.String("address", fmt.Sprintf("http://%s", s.server.Addr)),
-		zap.String("metrics_path", s.cfg.Monitoring.Metrics.Path),
-		zap.String("health_path", s.cfg.Monitoring.Health.Path),
-		zap.String("readiness_path", s.cfg.Monitoring.Health.ReadinessPath),
-		zap.String("liveness_path", s.cfg.Monitoring.Health.LivenessPath),
+		zap.String("metrics_path", s.cfg.Metrics.Path),
+		zap.String("health_path", s.cfg.Health.Path),
+		zap.String("readiness_path", s.cfg.Health.ReadinessPath),
+		zap.String("liveness_path", s.cfg.Health.LivenessPath),
 		zap.Bool("metrics_enabled", s.metrics.IsEnabled()),
 	)
 

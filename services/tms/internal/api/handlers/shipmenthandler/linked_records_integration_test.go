@@ -252,10 +252,10 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	enforced.Database.RLS.Mode = databaseconfig.RLSModeEnforce
 	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 	scopes := readscopeservice.New(readscopeservice.Params{
-		Config:   enforced,
-		DB:       rls,
-		Engine:   shipmentOnly,
-		Registry: permissioncatalog.NewRegistry(),
+		DatabaseConfig: &enforced.Database,
+		DB:             rls,
+		Engine:         shipmentOnly,
+		Registry:       permissioncatalog.NewRegistry(),
 	})
 
 	body, header := serveExpandedShipment(t, ctx, rls, load, shipmentOnly, true, scopes)
@@ -279,10 +279,10 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 		&mocks.DenyResourcesPermissionEngine{},
 		true,
 		readscopeservice.New(readscopeservice.Params{
-			Config:   enforced,
-			DB:       rls,
-			Engine:   &mocks.DenyResourcesPermissionEngine{},
-			Registry: permissioncatalog.NewRegistry(),
+			DatabaseConfig: &enforced.Database,
+			DB:             rls,
+			Engine:         &mocks.DenyResourcesPermissionEngine{},
+			Registry:       permissioncatalog.NewRegistry(),
 		}),
 	)
 	assert.Equal(t, driverHomeAddress, primaryWorkerOf(t, whole)["addressLine1"])

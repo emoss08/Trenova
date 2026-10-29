@@ -1,7 +1,7 @@
 package aicorrectionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -13,8 +13,8 @@ type ScheduleProvider struct {
 	extraction bool
 }
 
-func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
-	return &ScheduleProvider{extraction: cfg.AI.DocumentExtractionEnabled()}
+func NewScheduleProvider(cfg *aiconfig.Config) *ScheduleProvider {
+	return &ScheduleProvider{extraction: cfg.DocumentExtractionEnabled()}
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {

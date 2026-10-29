@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -54,7 +54,7 @@ type Params struct {
 	Watches      agentextensionports.WebWatchRepository
 	Findings     agentextensionports.WebWatchFindingRepository
 	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
-	Config       *config.Config              `                                   optional:"true"`
+	AppConfig    *appconfig.Config           `                                   optional:"true"`
 }
 
 type Service struct {
@@ -128,19 +128,19 @@ func New(p Params) *Service {
 		watches:    p.Watches,
 		findings:   p.Findings,
 		workflows:  p.Workflows,
-		appHost:    appHostOf(p.Config),
-		webBase:    webBaseOf(p.Config),
+		appHost:    appHostOf(p.AppConfig),
+		webBase:    webBaseOf(p.AppConfig),
 		now:        timeutils.NowUnix,
 	}
 }
 
 // appHostOf is the host Trenova's own web app is served from, which no portal
 // site may cover.
-func appHostOf(cfg *config.Config) string {
+func appHostOf(cfg *appconfig.Config) string {
 	if cfg == nil {
 		return ""
 	}
-	parsed, err := url.Parse(cfg.App.GetWebBaseURL())
+	parsed, err := url.Parse(cfg.GetWebBaseURL())
 	if err != nil {
 		return ""
 	}
@@ -150,12 +150,12 @@ func appHostOf(cfg *config.Config) string {
 
 // webBaseOf is the public address Trenova is served from, where a vendor
 // reports back.
-func webBaseOf(cfg *config.Config) string {
+func webBaseOf(cfg *appconfig.Config) string {
 	if cfg == nil {
 		return ""
 	}
 
-	return cfg.App.GetWebBaseURL()
+	return cfg.GetWebBaseURL()
 }
 
 func secretScope(tenantInfo pagination.TenantInfo, typ agentextension.Type) secretconfig.Scope {

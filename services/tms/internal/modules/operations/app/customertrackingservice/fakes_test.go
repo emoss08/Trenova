@@ -392,19 +392,20 @@ func newHarness() *harness {
 	cfg := &config.Config{}
 	cfg.App.WebBaseURL = "https://app.example.com/"
 	h.service = &Service{
-		l:             zap.NewNop(),
-		cfg:           cfg,
-		profiles:      h.profiles,
-		links:         h.links,
-		notifications: h.notifications,
-		facts:         h.facts,
-		shipmentRepo:  h.shipments,
-		stopEtas:      h.etas,
-		customerRepo:  h.customers,
-		templates:     h.templates,
-		emailService:  h.email,
-		documents:     h.documents,
-		now:           func() int64 { return h.now },
+		l:               zap.NewNop(),
+		appConfig:       &cfg.App,
+		tenderingConfig: &cfg.Tendering,
+		profiles:        h.profiles,
+		links:           h.links,
+		notifications:   h.notifications,
+		facts:           h.facts,
+		shipmentRepo:    h.shipments,
+		stopEtas:        h.etas,
+		customerRepo:    h.customers,
+		templates:       h.templates,
+		emailService:    h.email,
+		documents:       h.documents,
+		now:             func() int64 { return h.now },
 	}
 	return h
 }

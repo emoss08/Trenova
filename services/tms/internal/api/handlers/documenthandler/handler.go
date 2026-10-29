@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -126,14 +125,14 @@ func NewTestHandler(
 	pm *middleware.PermissionMiddleware,
 	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
-	return NewTestHandlerWithConfig(service, eh, pm, &config.Config{}, importAssistant...)
+	return NewTestHandlerWithConfig(service, eh, pm, &storageconfig.Config{}, importAssistant...)
 }
 
 func NewTestHandlerWithConfig(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
-	cfg *config.Config,
+	cfg *storageconfig.Config,
 	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
 	var assistant shipmentimportassistantports.ShipmentImportAssistantService
@@ -143,7 +142,7 @@ func NewTestHandlerWithConfig(
 
 	storageConfig := storageconfig.Config{}
 	if cfg != nil {
-		storageConfig = cfg.Storage
+		storageConfig = *cfg
 	}
 
 	return &Handler{

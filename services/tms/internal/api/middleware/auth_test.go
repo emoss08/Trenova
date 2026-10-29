@@ -40,8 +40,8 @@ func newTestAuthConfig() *config.Config {
 
 func newAuthMiddleware(cfg *config.Config, svc *tenantportsmock.MockAuthService) *AuthMiddleware {
 	return NewAuthMiddleware(AuthMiddlewareParams{
-		Config:  cfg,
-		Service: svc,
+		SecurityConfig: &cfg.Security,
+		Service:        svc,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

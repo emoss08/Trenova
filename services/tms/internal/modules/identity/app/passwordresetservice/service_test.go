@@ -149,7 +149,7 @@ func newService(
 		ur:       users,
 		tokens:   tokens,
 		sessions: sessions,
-		cfg:      cfg,
+		cfg:      &cfg.Security,
 		l:        zap.NewNop(),
 	}
 }
@@ -353,7 +353,7 @@ func TestResetURL_RefusesToGuessTheOrigin(t *testing.T) {
 	t.Parallel()
 
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
-	svc.cfg.Security.PasswordReset.BaseURL = ""
+	svc.cfg.PasswordReset.BaseURL = ""
 
 	_, err := svc.linkURL("raw-token", passwordreset.PasswordResetPurposeReset)
 

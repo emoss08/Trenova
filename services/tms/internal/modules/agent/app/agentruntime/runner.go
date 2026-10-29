@@ -7,7 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -86,7 +87,8 @@ type Params struct {
 	// hold names the person's other agents that hold it.
 	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 	RateLimits  kernelports.RateLimitStore                     `optional:"true"`
-	Config      *config.Config                                 `optional:"true"`
+	AIConfig    *aiconfig.Config                               `optional:"true"`
+	AppConfig   *appconfig.Config                              `optional:"true"`
 	Disclosures agenttoolports.ToolDisclosureObserver          `optional:"true"`
 	Shadow      *agentshadow.Resolver                          `optional:"true"`
 	// Scripts is optional. With it the code-mode gate reads the chat
@@ -150,12 +152,12 @@ func New(p Params) *Service {
 		changes:     p.Changes,
 		metrics:     metrics.AssistantFrom(p.Metrics),
 		disclosures: p.Disclosures,
-		threshold:   configuredThreshold(p.Config),
+		threshold:   configuredThreshold(p.AIConfig),
 		rateLimits:  p.RateLimits,
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
 		registry:    permissioncatalog.NewRegistry(),
-		codeMode:    codeModeGate(p.Config),
+		codeMode:    codeModeGate(p.AppConfig),
 		scripts:     p.Scripts,
 		shadow:      shadowFrom(p.Shadow),
 	}
@@ -164,9 +166,9 @@ func New(p Params) *Service {
 // codeModeGate decides from the chat providers' script settings, and is
 // forced open on request only in a development or test deployment, where the
 // desk bench runs.
-func codeModeGate(cfg *config.Config) codemode.Gate {
+func codeModeGate(cfg *appconfig.Config) codemode.Gate {
 	return codemode.Gate{
-		Forced: cfg != nil && (cfg.App.IsDevelopment() || cfg.App.IsTest()),
+		Forced: cfg != nil && (cfg.IsDevelopment() || cfg.IsTest()),
 	}
 }
 

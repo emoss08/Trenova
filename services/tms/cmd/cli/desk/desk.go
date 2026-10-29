@@ -252,15 +252,19 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	report, outDir, err := execute(cmd.Context(), executeOptions{kind: kindAsk}, deskbench.RunOptions{
-		Scenarios: []*deskbench.Scenario{scenario},
-		User:      flags.user,
-		Agent:     flags.agent,
-		Providers: flags.providers,
-		Keep:      flags.keep,
-		Delete:    flags.delete,
-		ThreadID:  threadID,
-	})
+	report, outDir, err := execute(
+		cmd.Context(),
+		executeOptions{kind: kindAsk},
+		deskbench.RunOptions{
+			Scenarios: []*deskbench.Scenario{scenario},
+			User:      flags.user,
+			Agent:     flags.agent,
+			Providers: flags.providers,
+			Keep:      flags.keep,
+			Delete:    flags.delete,
+			ThreadID:  threadID,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -600,7 +604,7 @@ func openBenchWith(ctx context.Context, opts deskbench.OpenOptions) (*deskbench.
 	if cfg == nil {
 		return nil, errors.New("configuration was not loaded")
 	}
-	if err := deskbench.AssertSafe(cfg, flags.namespace); err != nil {
+	if err := deskbench.AssertSafe(&cfg.App, &cfg.Temporal, flags.namespace); err != nil {
 		return nil, err
 	}
 	if err := deskbench.EnsureNamespace(ctx, &cfg.Temporal, flags.namespace); err != nil {

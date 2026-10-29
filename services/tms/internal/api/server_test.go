@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
@@ -37,9 +38,10 @@ func TestNewServer_UsesConfiguredHTTPTimeouts(t *testing.T) {
 	}
 
 	server, err := NewServer(Params{
-		Config: cfg,
-		Logger: zap.NewNop(),
-		LC:     fxtest.NewLifecycle(t),
+		AppConfig:    &cfg.App,
+		ServerConfig: &cfg.Server,
+		Logger:       zap.NewNop(),
+		LC:           fxtest.NewLifecycle(t),
 	})
 	require.NoError(t, err)
 
@@ -54,13 +56,12 @@ func TestNewServer_RejectsInvalidTrustedProxies(t *testing.T) {
 	t.Parallel()
 
 	_, err := NewServer(Params{
-		Config: &config.Config{
-			Server: serverconfig.Config{
-				Host:           "127.0.0.1",
-				Port:           8081,
-				Mode:           "test",
-				TrustedProxies: []string{"not-a-cidr"},
-			},
+		AppConfig: &appconfig.Config{},
+		ServerConfig: &serverconfig.Config{
+			Host:           "127.0.0.1",
+			Port:           8081,
+			Mode:           "test",
+			TrustedProxies: []string{"not-a-cidr"},
 		},
 		Logger: zap.NewNop(),
 		LC:     fxtest.NewLifecycle(t),
@@ -124,7 +125,7 @@ func TestClientIPResolution(t *testing.T) {
 			router := gin.New()
 			require.NoError(
 				t,
-				configureClientIPResolution(router, &config.Config{Server: tt.server}),
+				configureClientIPResolution(router, &tt.server),
 			)
 
 			var got string
@@ -167,8 +168,8 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 	}
 
 	limiter := middleware.NewRateLimiter(middleware.RateLimiterParams{
-		Config: cfg,
-		Store:  ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+		SecurityConfig: &cfg.Security,
+		Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
@@ -177,7 +178,7 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 	})
 
 	router := gin.New()
-	require.NoError(t, configureClientIPResolution(router, cfg))
+	require.NoError(t, configureClientIPResolution(router, &cfg.Server))
 	router.GET("/probe", limiter.ByClientIP(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

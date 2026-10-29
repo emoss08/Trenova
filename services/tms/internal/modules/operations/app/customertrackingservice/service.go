@@ -1,7 +1,8 @@
 package customertrackingservice
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -19,57 +20,60 @@ import (
 type Params struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Config        *config.Config
-	Profiles      customertrackingports.ProfileRepository
-	Links         customertrackingports.LinkRepository
-	Notifications customertrackingports.NotificationRepository
-	Facts         customertrackingports.FactRepository
-	ShipmentRepo  shipmentports.ShipmentRepository
-	StopEtas      stopetaports.Repository
-	CustomerRepo  customerports.CustomerRepository
-	OrgRepo       tenantports.OrganizationRepository             `optional:"true"`
-	Templates     documenttemplateports.DocumentTemplateResolver `optional:"true"`
-	EmailService  emailports.EmailService                        `optional:"true"`
-	Documents     documentports.InvoiceDocumentService           `optional:"true"`
-	AuditService  auditports.AuditService                        `optional:"true"`
+	Logger          *zap.Logger
+	AppConfig       *appconfig.Config
+	TenderingConfig *tenderingconfig.Config
+	Profiles        customertrackingports.ProfileRepository
+	Links           customertrackingports.LinkRepository
+	Notifications   customertrackingports.NotificationRepository
+	Facts           customertrackingports.FactRepository
+	ShipmentRepo    shipmentports.ShipmentRepository
+	StopEtas        stopetaports.Repository
+	CustomerRepo    customerports.CustomerRepository
+	OrgRepo         tenantports.OrganizationRepository             `optional:"true"`
+	Templates       documenttemplateports.DocumentTemplateResolver `optional:"true"`
+	EmailService    emailports.EmailService                        `optional:"true"`
+	Documents       documentports.InvoiceDocumentService           `optional:"true"`
+	AuditService    auditports.AuditService                        `optional:"true"`
 }
 
 type Service struct {
-	l             *zap.Logger
-	cfg           *config.Config
-	profiles      customertrackingports.ProfileRepository
-	links         customertrackingports.LinkRepository
-	notifications customertrackingports.NotificationRepository
-	facts         customertrackingports.FactRepository
-	shipmentRepo  shipmentports.ShipmentRepository
-	stopEtas      stopetaports.Repository
-	customerRepo  customerports.CustomerRepository
-	orgRepo       tenantports.OrganizationRepository
-	templates     documenttemplateports.DocumentTemplateResolver
-	emailService  emailports.EmailService
-	documents     documentports.InvoiceDocumentService
-	auditService  auditports.AuditService
-	now           func() int64
+	l               *zap.Logger
+	appConfig       *appconfig.Config
+	tenderingConfig *tenderingconfig.Config
+	profiles        customertrackingports.ProfileRepository
+	links           customertrackingports.LinkRepository
+	notifications   customertrackingports.NotificationRepository
+	facts           customertrackingports.FactRepository
+	shipmentRepo    shipmentports.ShipmentRepository
+	stopEtas        stopetaports.Repository
+	customerRepo    customerports.CustomerRepository
+	orgRepo         tenantports.OrganizationRepository
+	templates       documenttemplateports.DocumentTemplateResolver
+	emailService    emailports.EmailService
+	documents       documentports.InvoiceDocumentService
+	auditService    auditports.AuditService
+	now             func() int64
 }
 
 func New(p Params) *Service { //nolint:gocritic // dependency injection
 	return &Service{
-		l:             p.Logger.Named("service.customer-tracking"),
-		cfg:           p.Config,
-		profiles:      p.Profiles,
-		links:         p.Links,
-		notifications: p.Notifications,
-		facts:         p.Facts,
-		shipmentRepo:  p.ShipmentRepo,
-		stopEtas:      p.StopEtas,
-		customerRepo:  p.CustomerRepo,
-		orgRepo:       p.OrgRepo,
-		templates:     p.Templates,
-		emailService:  p.EmailService,
-		documents:     p.Documents,
-		auditService:  p.AuditService,
-		now:           timeutils.NowUnix,
+		l:               p.Logger.Named("service.customer-tracking"),
+		appConfig:       p.AppConfig,
+		tenderingConfig: p.TenderingConfig,
+		profiles:        p.Profiles,
+		links:           p.Links,
+		notifications:   p.Notifications,
+		facts:           p.Facts,
+		shipmentRepo:    p.ShipmentRepo,
+		stopEtas:        p.StopEtas,
+		customerRepo:    p.CustomerRepo,
+		orgRepo:         p.OrgRepo,
+		templates:       p.Templates,
+		emailService:    p.EmailService,
+		documents:       p.Documents,
+		auditService:    p.AuditService,
+		now:             timeutils.NowUnix,
 	}
 }
 

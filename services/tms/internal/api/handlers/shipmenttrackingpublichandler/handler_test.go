@@ -106,10 +106,10 @@ func newRouter() *gin.Engine {
 		Service:      &fakeService{},
 		ErrorHandler: errorHandler,
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
-			Config:       cfg,
-			Store:        ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
+			SecurityConfig: &cfg.Security,
+			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+			ErrorHandler:   errorHandler,
+			Logger:         zap.NewNop(),
 		}),
 	})
 	gin.SetMode(gin.TestMode)

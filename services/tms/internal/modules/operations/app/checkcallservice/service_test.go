@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -393,11 +393,12 @@ func newHarness(t *testing.T) *harness {
 		carrierID: carrierID,
 	}
 	h.svc = New(Params{
-		DB:     dbtest.NopConnection{},
-		Logger: zap.NewNop(),
-		Config: &config.Config{Tendering: tenderingconfig.Config{
+		DB:        dbtest.NopConnection{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
+		TenderingConfig: &tenderingconfig.Config{
 			PublicBaseURL: "https://app.example.com/",
-		}},
+		},
 		Repo:                h.checkCalls,
 		Links:               h.links,
 		MoveRepo:            h.moves,
@@ -618,10 +619,13 @@ func TestIssueLink_RefusesLoadsItCannotTrack(t *testing.T) {
 	t.Parallel()
 
 	for name, setup := range map[string]func(*harness){
-		"own fleet":     func(h *harness) { h.move.CoverageType = shipment.MoveCoverageTypeDriver },
-		"completed":     func(h *harness) { h.move.Status = shipment.MoveStatusCompleted },
-		"no carrier":    func(h *harness) { h.assignments.assignment = nil },
-		"no public url": func(h *harness) { h.svc.cfg = &config.Config{} },
+		"own fleet":  func(h *harness) { h.move.CoverageType = shipment.MoveCoverageTypeDriver },
+		"completed":  func(h *harness) { h.move.Status = shipment.MoveStatusCompleted },
+		"no carrier": func(h *harness) { h.assignments.assignment = nil },
+		"no public url": func(h *harness) {
+			h.svc.appConfig = &appconfig.Config{}
+			h.svc.tenderingConfig = &tenderingconfig.Config{}
+		},
 	} {
 		h := newHarness(t)
 		setup(h)

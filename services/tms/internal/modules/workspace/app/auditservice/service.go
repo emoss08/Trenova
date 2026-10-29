@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -36,7 +37,8 @@ type Params struct {
 	AuditBufferRepository auditports.AuditBufferRepository
 	Realtime              realtimeports.RealtimeService
 	Logger                *zap.Logger
-	Config                *config.Config
+	AppConfig             *appconfig.Config
+	SecurityConfig        *securityconfig.Config
 	Metrics               *metrics.Registry
 	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 }
@@ -46,7 +48,6 @@ type service struct {
 	bufferRepo auditports.AuditBufferRepository
 	realtime   realtimeports.RealtimeService
 	logger     *zap.Logger
-	config     *config.Config
 	sdm        *SensitiveDataManager
 	metrics    *metrics.Registry
 	agents     *agentCredits
@@ -88,13 +89,12 @@ func New(p Params) auditports.AuditService {
 		bufferRepo: p.AuditBufferRepository,
 		realtime:   p.Realtime,
 		logger:     logger,
-		config:     p.Config,
-		sdm:        NewSensitiveDataManager(p.Config.Security.Encryption),
+		sdm:        NewSensitiveDataManager(p.SecurityConfig.Encryption),
 		metrics:    p.Metrics,
 		agents:     newAgentCredits(definitions, logger),
 	}
 
-	srv.configureSensitiveDataManager(p.Config.App.Env)
+	srv.configureSensitiveDataManager(p.AppConfig.Env)
 	if err := srv.registerDefaultSensitiveFields(); err != nil {
 		p.Logger.Error("failed to register default sensitive fields", zap.Error(err))
 	}

@@ -106,9 +106,10 @@ func TestNewTracerProvider_AppliesTheAISamplingRate(t *testing.T) {
 	cfg.Monitoring.Tracing.AISamplingRate = &rate
 
 	tp, err := NewTracerProvider(TracerProviderParams{
-		Lifecycle: fxtest.NewLifecycle(t),
-		Config:    cfg,
-		Logger:    zap.NewNop(),
+		Lifecycle:        fxtest.NewLifecycle(t),
+		AppConfig:        &cfg.App,
+		MonitoringConfig: &cfg.Monitoring,
+		Logger:           zap.NewNop(),
 	})
 
 	require.NoError(t, err)

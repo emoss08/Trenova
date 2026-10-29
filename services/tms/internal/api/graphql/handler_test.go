@@ -71,7 +71,8 @@ func TestHandler_RejectsOversizedBodyByContentLength(t *testing.T) {
 		},
 	}
 	h := &Handler{
-		cfg: cfg,
+		appConfig:      &cfg.App,
+		securityConfig: &cfg.Security,
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
@@ -118,7 +119,8 @@ func TestHandler_RejectsOversizedBodyWithoutContentLength(t *testing.T) {
 		},
 	}
 	h := &Handler{
-		cfg: cfg,
+		appConfig:      &cfg.App,
+		securityConfig: &cfg.Security,
 		eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

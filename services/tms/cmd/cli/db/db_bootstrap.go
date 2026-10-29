@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/redis/writebuffer"
@@ -288,7 +289,7 @@ func bootstrapInstance(
 		return nil
 	}
 
-	printBootstrapCreated(deps.out, deps.cfg, &plan.Inputs, result)
+	printBootstrapCreated(deps.out, &deps.cfg.App, &plan.Inputs, result)
 	return nil
 }
 
@@ -342,7 +343,7 @@ func redisSecurityAuditor(
 		}
 	}
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 	if err != nil {
 		stop()
 		return nil, nil, fmt.Errorf("create metrics registry: %w", err)
@@ -353,9 +354,10 @@ func redisSecurityAuditor(
 		AuditBufferRepository: writebuffer.NewAuditBufferRepository(
 			writebuffer.AuditBufferRepositoryParams{Client: client, Logger: logger},
 		),
-		Logger:  logger,
-		Config:  cfg,
-		Metrics: registry,
+		Logger:         logger,
+		AppConfig:      &cfg.App,
+		SecurityConfig: &cfg.Security,
+		Metrics:        registry,
 	})
 
 	auditor := auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{
@@ -475,7 +477,7 @@ func printBootstrapCompleted(out io.Writer, inputs *instancebootstrap.Inputs, co
 
 func printBootstrapCreated(
 	out io.Writer,
-	appCfg *config.Config,
+	appCfg *appconfig.Config,
 	inputs *instancebootstrap.Inputs,
 	result *instancebootstrapports.InstanceBootstrapResult,
 ) {
@@ -483,11 +485,11 @@ func printBootstrapCreated(
 	fmt.Fprintf(out, "  Administrator: %s <%s>\n", inputs.AdminName, result.AdminEmail)
 	fmt.Fprintf(out, "  Username:      %s\n", result.AdminUsername)
 	fmt.Fprintf(out, "  Sign-in slug:  %s\n", result.LoginSlug)
-	if appCfg != nil && appCfg.App.GetWebBaseURL() != "" {
+	if appCfg != nil && appCfg.GetWebBaseURL() != "" {
 		fmt.Fprintf(
 			out,
 			"Sign in at %s with that email address and password.\n",
-			appCfg.App.GetWebBaseURL(),
+			appCfg.GetWebBaseURL(),
 		)
 	}
 	if result.SystemUserCreated {

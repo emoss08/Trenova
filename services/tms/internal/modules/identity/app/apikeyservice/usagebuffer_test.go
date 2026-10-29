@@ -6,7 +6,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
@@ -20,13 +19,11 @@ import (
 func newTestUsageBuffer(t *testing.T, repo *apikeyportsmock.MockAPIKeyRepository) *UsageBuffer {
 	t.Helper()
 
-	return NewUsageBuffer(repo, zap.NewNop(), &config.Config{
-		Security: securityconfig.Config{
-			APIToken: securityconfig.APITokenConfig{
-				UsageFlushInterval: 25 * time.Millisecond,
-				UsageUpdateTimeout: time.Second,
-				UsageMaxPending:    32,
-			},
+	return NewUsageBuffer(repo, zap.NewNop(), &securityconfig.Config{
+		APIToken: securityconfig.APITokenConfig{
+			UsageFlushInterval: 25 * time.Millisecond,
+			UsageUpdateTimeout: time.Second,
+			UsageMaxPending:    32,
 		},
 	})
 }
@@ -227,13 +224,11 @@ func TestUsageBufferDropsNewKeysWhenPendingBufferIsFull(t *testing.T) {
 	t.Parallel()
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
-	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
-		Security: securityconfig.Config{
-			APIToken: securityconfig.APITokenConfig{
-				UsageFlushInterval: time.Second,
-				UsageUpdateTimeout: time.Second,
-				UsageMaxPending:    2,
-			},
+	buf := NewUsageBuffer(repo, zap.NewNop(), &securityconfig.Config{
+		APIToken: securityconfig.APITokenConfig{
+			UsageFlushInterval: time.Second,
+			UsageUpdateTimeout: time.Second,
+			UsageMaxPending:    2,
 		},
 	})
 
@@ -332,13 +327,11 @@ func TestUsageBufferStopCancelsInFlightFlush(t *testing.T) {
 	t.Parallel()
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
-	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
-		Security: securityconfig.Config{
-			APIToken: securityconfig.APITokenConfig{
-				UsageFlushInterval: 10 * time.Millisecond,
-				UsageUpdateTimeout: time.Second,
-				UsageMaxPending:    8,
-			},
+	buf := NewUsageBuffer(repo, zap.NewNop(), &securityconfig.Config{
+		APIToken: securityconfig.APITokenConfig{
+			UsageFlushInterval: 10 * time.Millisecond,
+			UsageUpdateTimeout: time.Second,
+			UsageMaxPending:    8,
 		},
 	})
 
@@ -406,13 +399,11 @@ func TestUsageBufferRetryRequeueHonorsCapacity(t *testing.T) {
 	t.Parallel()
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
-	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
-		Security: securityconfig.Config{
-			APIToken: securityconfig.APITokenConfig{
-				UsageFlushInterval: time.Second,
-				UsageUpdateTimeout: time.Second,
-				UsageMaxPending:    2,
-			},
+	buf := NewUsageBuffer(repo, zap.NewNop(), &securityconfig.Config{
+		APIToken: securityconfig.APITokenConfig{
+			UsageFlushInterval: time.Second,
+			UsageUpdateTimeout: time.Second,
+			UsageMaxPending:    2,
 		},
 	})
 

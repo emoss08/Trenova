@@ -13,6 +13,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -76,7 +78,7 @@ func testConnector(cfg *config.Config) *Connector {
 	if cfg == nil {
 		cfg = &config.Config{}
 	}
-	connector := New(cfg)
+	connector := New(&cfg.App, &cfg.CarrierIntelligence)
 	connector.extraOptions = []carrierok.Option{carrierok.WithRetry(restx.RetryConfig{})}
 	return connector
 }
@@ -122,7 +124,7 @@ func assertNoSecret(t *testing.T, err error) {
 func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	t.Parallel()
 
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	assert.Equal(t, integration.TypeCarrierOK, connector.IntegrationType())
 
 	descriptor := connector.Descriptor()
@@ -161,13 +163,16 @@ func TestConnector_BindRejectsSandboxKeyWhenDisallowed(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.CarrierIntelligence.SandboxAllowed = &disallowed
 
-	_, err := New(cfg).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&cfg.App,
+		&cfg.CarrierIntelligence,
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{integration.ConfigKeyCarrierIntelAPIKey: sandboxKey},
 	})
 	require.Error(t, err)
 	assert.Equal(t, "Sandbox API keys are not allowed in this environment", err.Error())
 
-	err = New(cfg).TestConnection(t.Context(), map[string]string{
+	err = New(&cfg.App, &cfg.CarrierIntelligence).TestConnection(t.Context(), map[string]string{
 		integration.ConfigKeyCarrierIntelAPIKey: sandboxKey,
 	})
 	require.Error(t, err)
@@ -177,7 +182,10 @@ func TestConnector_BindRejectsSandboxKeyWhenDisallowed(t *testing.T) {
 func TestConnector_BindRejectsUnapprovedHost(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelAPIKey:  liveKey,
 			integration.ConfigKeyCarrierIntelBaseURL: "https://attacker.example.com",
@@ -191,7 +199,10 @@ func TestConnector_BindRejectsUnapprovedHost(t *testing.T) {
 func TestConnector_BindRequiresAPIKey(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{},
 	})
 	require.Error(t, err)

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -22,10 +22,10 @@ func init() {
 	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
 }
 
-func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
+func newErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 	classifier := helpers.NewDefaultClassifier()
-	sanitizer := helpers.NewSanitizer(cfg.App.Debug)
-	baseURI := cfg.App.GetProblemTypeBaseURI()
+	sanitizer := helpers.NewSanitizer(cfg.Debug)
+	baseURI := cfg.GetProblemTypeBaseURI()
 
 	return func(ctx context.Context, err error) *gqlerror.Error {
 		gqlErr := graphql.DefaultErrorPresenter(ctx, err)

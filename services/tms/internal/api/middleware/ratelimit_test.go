@@ -51,8 +51,8 @@ func newTestRateLimiter(
 	}
 
 	return NewRateLimiter(RateLimiterParams{
-		Config: cfg,
-		Store:  store,
+		SecurityConfig: &cfg.Security,
+		Store:          store,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

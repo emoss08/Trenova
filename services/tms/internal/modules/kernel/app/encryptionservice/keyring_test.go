@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -182,8 +181,8 @@ func fakeKMSDialer(client *fakeKMSClient) kmsDialer {
 	}
 }
 
-func encryptionConfig(enc securityconfig.EncryptionConfig) *config.Config {
-	return &config.Config{Security: securityconfig.Config{Encryption: enc}}
+func encryptionConfig(enc securityconfig.EncryptionConfig) *securityconfig.Config {
+	return &securityconfig.Config{Encryption: enc}
 }
 
 func TestKeyManagerFromConfig_FailsClosed(t *testing.T) {

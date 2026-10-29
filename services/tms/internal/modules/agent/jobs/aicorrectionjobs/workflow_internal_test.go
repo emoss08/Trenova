@@ -100,5 +100,5 @@ func TestSchedules_ExtractionDriftOnlyWithDocumentExtraction(t *testing.T) {
 func scheduleProviderWith(extraction bool) *ScheduleProvider {
 	cfg := &config.Config{}
 	cfg.AI.DocumentExtraction = extraction
-	return NewScheduleProvider(cfg)
+	return NewScheduleProvider(&cfg.AI)
 }

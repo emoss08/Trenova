@@ -59,7 +59,7 @@ func (s *Service) deliver(
 		UserID: p.sharer.ID,
 	}
 	path := invoiceSharePath(p.invoice.ID.String(), p.tab)
-	baseURL := s.cfg.App.GetWebBaseURL()
+	baseURL := s.cfg.GetWebBaseURL()
 	canEmail := baseURL != "" && s.emailService != nil && s.templates != nil
 
 	companyName := ""

@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
@@ -429,7 +429,7 @@ type Params struct {
 	FuelPurchaseService          *fuelpurchaseservice.Service
 	IFTAService                  *iftaservice.Service
 	DistanceCalculationService   shipmentdistanceports.DistanceCalculationService `optional:"true"`
-	Config                       *config.Config                                   `optional:"true"`
+	MonitoringConfig             *monitoringconfig.Config                         `optional:"true"`
 }
 
 type Services struct {
@@ -675,7 +675,7 @@ func newServices(p *Params) *Services {
 			WorkerPTOService:    p.WorkerPTOService,
 			OrgStructureService: p.OrgStructureService,
 			PermissionEngine:    p.PermissionEngine,
-			TraceURL:            resolvercore.TraceURLBuilder(p.Config),
+			TraceURL:            resolvercore.TraceURLBuilder(p.MonitoringConfig),
 		},
 		AnalyticsService:             p.AnalyticsService,
 		OrganizationService:          p.OrganizationService,

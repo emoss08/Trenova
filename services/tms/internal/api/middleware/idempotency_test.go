@@ -125,8 +125,9 @@ func newIdempotencyHarness(t *testing.T, opts idempotencyHarnessOptions) *idempo
 	}
 	h := &idempotencyHarness{store: newMemoryIdempotencyStore()}
 	mw := NewIdempotencyMiddleware(IdempotencyParams{
-		Config: cfg,
-		Store:  h.store,
+		ServerConfig:   &cfg.Server,
+		SecurityConfig: &cfg.Security,
+		Store:          h.store,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

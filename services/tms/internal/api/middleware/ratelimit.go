@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -36,11 +35,11 @@ const (
 type RateLimiterParams struct {
 	fx.In
 
-	Config       *config.Config
-	Store        kernelports.RateLimitStore
-	ErrorHandler *helpers.ErrorHandler
-	Logger       *zap.Logger
-	Metrics      *metrics.Registry `optional:"true"`
+	SecurityConfig *securityconfig.Config
+	Store          kernelports.RateLimitStore
+	ErrorHandler   *helpers.ErrorHandler
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry `optional:"true"`
 }
 
 type RateLimiter struct {
@@ -60,8 +59,8 @@ type scopedRequest struct {
 
 func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 	cfg := securityconfig.RateLimitConfig{}
-	if p.Config != nil {
-		cfg = p.Config.Security.RateLimit
+	if p.SecurityConfig != nil {
+		cfg = p.SecurityConfig.RateLimit
 	}
 
 	logger := p.Logger

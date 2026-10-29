@@ -4,7 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/carrierokconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/fmcsaconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/outboundlimit"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"go.uber.org/fx"
 )
@@ -17,10 +18,16 @@ var Module = fx.Module("carrierintel",
 	),
 )
 
-func newCarrierOK(cfg *config.Config) carrierintelports.CarrierIntelConnector {
-	return carrierokconnector.New(cfg)
+func newCarrierOK(
+	appConfig *appconfig.Config,
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config,
+) carrierintelports.CarrierIntelConnector {
+	return carrierokconnector.New(appConfig, carrierIntelligenceConfig)
 }
 
-func newFMCSA(cfg *config.Config) carrierintelports.CarrierIntelConnector {
-	return fmcsaconnector.New(cfg)
+func newFMCSA(
+	appConfig *appconfig.Config,
+	carrierIntelligenceConfig *carrierintelligenceconfig.Config,
+) carrierintelports.CarrierIntelConnector {
+	return fmcsaconnector.New(appConfig, carrierIntelligenceConfig)
 }

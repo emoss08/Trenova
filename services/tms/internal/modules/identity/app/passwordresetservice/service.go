@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/accounttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -61,7 +61,7 @@ type Params struct {
 	Plans            platformplanports.PlanService           `optional:"true"`
 	PlatformEmail    kernelports.PlatformEmailService        `optional:"true"`
 	PlatformInvites  kernelports.PlatformAccountInviteSender `optional:"true"`
-	Config           *config.Config
+	SecurityConfig   *securityconfig.Config
 	Logger           *zap.Logger
 }
 
@@ -77,7 +77,7 @@ type Service struct {
 	plans        platformplanports.PlanService
 	platform     kernelports.PlatformEmailService
 	invites      kernelports.PlatformAccountInviteSender
-	cfg          *config.Config
+	cfg          *securityconfig.Config
 	l            *zap.Logger
 }
 
@@ -94,7 +94,7 @@ func New(p Params) *Service {
 		plans:        p.Plans,
 		platform:     p.PlatformEmail,
 		invites:      p.PlatformInvites,
-		cfg:          p.Config,
+		cfg:          p.SecurityConfig,
 		l:            p.Logger.Named("service.password-reset"),
 	}
 }
@@ -351,9 +351,9 @@ func (s *Service) issueToken(ctx context.Context, link *linkRequest) error {
 
 func (s *Service) linkTTL(purpose passwordreset.PasswordResetPurpose) time.Duration {
 	if purpose.IsInvite() {
-		return s.cfg.Security.PasswordReset.GetInviteTokenTTL()
+		return s.cfg.PasswordReset.GetInviteTokenTTL()
 	}
-	return s.cfg.Security.PasswordReset.GetTokenTTL()
+	return s.cfg.PasswordReset.GetTokenTTL()
 }
 
 func (s *Service) withinRequestAllowance(
@@ -367,7 +367,7 @@ func (s *Service) withinRequestAllowance(
 		return false, err
 	}
 
-	if issued >= s.cfg.Security.PasswordReset.GetMaxRequestsPerHour() {
+	if issued >= s.cfg.PasswordReset.GetMaxRequestsPerHour() {
 		s.l.Warn("password reset rate limit reached",
 			zap.String("userId", user.ID.String()),
 			zap.Int("issued", issued))
@@ -506,7 +506,7 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
-	ttl := s.cfg.Security.PasswordReset.GetTokenTTL()
+	ttl := s.cfg.PasswordReset.GetTokenTTL()
 	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
 
 	if s.usesPlatformSender(ctx, tenantInfo) {
@@ -599,7 +599,7 @@ func (s *Service) linkURL(
 	rawToken string,
 	purpose passwordreset.PasswordResetPurpose,
 ) (string, error) {
-	base := s.cfg.Security.PasswordReset.GetBaseURL()
+	base := s.cfg.PasswordReset.GetBaseURL()
 	if base == "" {
 		return "", errNoResetBaseURL
 	}

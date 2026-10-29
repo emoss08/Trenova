@@ -3,20 +3,6 @@
 package agentread
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
@@ -162,19 +148,26 @@ import (
 	workerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerresolver"
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
-	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	monitoringconfig "github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	fiscalperiodservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
@@ -206,8 +199,14 @@ import (
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -254,6 +253,7 @@ import (
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -290,7 +290,6 @@ type ResolverParams struct {
 	CarrierSettlementRepo        carriersettlementports.CarrierSettlementRepository
 	CarrierSettlementService     *carriersettlementservice.Service
 	CommodityService             *commodityservice.Service
-	Config                       *config.Config `optional:"true"`
 	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
 	CustomerPaymentService       customerpaymentports.CustomerPaymentService
 	CustomerService              *customerservice.Service
@@ -348,6 +347,7 @@ type ResolverParams struct {
 	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
 	ManualJournalService         *manualjournalservice.Service
+	MonitoringConfig             *monitoringconfig.Config `optional:"true"`
 	NotificationService          *notificationservice.Service
 	OrderService                 *orderservice.Service
 	OrgStructureService          *orgstructureservice.Service
@@ -1225,7 +1225,7 @@ func NewSchema(p ResolverParams) Schema {
 		WorkerPTOService:    p.WorkerPTOService,
 		OrgStructureService: p.OrgStructureService,
 		PermissionEngine:    p.PermissionEngine,
-		TraceURL:            resolvercore.TraceURLBuilder(p.Config),
+		TraceURL:            resolvercore.TraceURLBuilder(p.MonitoringConfig),
 	}
 	accessorialchargeDeps := &accessorialchargeresolver.Deps{
 		Core:                     core,

@@ -103,7 +103,7 @@ func (s *Service) PreviewShare(
 		BuID:   plan.invoice.BusinessUnitID,
 		UserID: plan.sharer.ID,
 	}
-	baseURL := s.cfg.App.GetWebBaseURL()
+	baseURL := s.cfg.GetWebBaseURL()
 	canEmail := baseURL != "" && s.emailService != nil && s.templates != nil
 	companyName := ""
 	if canEmail {

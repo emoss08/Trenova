@@ -1,7 +1,7 @@
 package documentextractionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
@@ -30,13 +30,13 @@ type RegistryParams struct {
 	fx.In
 
 	Activities *Activities
-	Config     *config.Config
+	AIConfig   *aiconfig.Config
 	Logger     *zap.Logger
 }
 
-func QueueWorkerConfig(cfg *config.Config) registry.WorkerConfig {
+func QueueWorkerConfig(cfg *aiconfig.Config) registry.WorkerConfig {
 	workerConfig := registry.DefaultWorkerConfig()
-	workerConfig.MaxConcurrentActivityExecutionSize = cfg.AI.GetMaxConcurrentActivities()
+	workerConfig.MaxConcurrentActivityExecutionSize = cfg.GetMaxConcurrentActivities()
 	workerConfig.MaxConcurrentWorkflowTaskExecutionSize = max(
 		2, workerConfig.MaxConcurrentActivityExecutionSize,
 	)
@@ -51,7 +51,7 @@ func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 		&registry.DomainConfig{
 			Name:         "document-extraction-worker",
 			TaskQueue:    temporaltype.DocumentExtractionTaskQueue,
-			WorkerConfig: QueueWorkerConfig(p.Config),
+			WorkerConfig: QueueWorkerConfig(p.AIConfig),
 		},
 		p.Activities,
 		Workflows,
@@ -64,7 +64,7 @@ func NewDrainingRegistry(p RegistryParams) registry.WorkerRegistry {
 		"document-intelligence-worker",
 		p.Activities,
 		DrainingWorkflows,
-		p.Config,
+		p.AIConfig,
 		p.Logger,
 	)
 }
@@ -73,7 +73,7 @@ func DrainingRegistry(
 	name string,
 	activities any,
 	workflows []registry.WorkflowDefinition,
-	cfg *config.Config,
+	cfg *aiconfig.Config,
 	logger *zap.Logger,
 ) registry.WorkerRegistry {
 	return registry.NewDomainRegistry(

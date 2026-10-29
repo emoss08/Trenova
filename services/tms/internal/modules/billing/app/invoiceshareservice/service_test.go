@@ -171,7 +171,7 @@ func newHarness(t *testing.T) *harness {
 
 	h.svc = New(Params{
 		Logger:           zap.NewNop(),
-		Config:           h.cfg,
+		AppConfig:        &h.cfg.App,
 		Repo:             h.shares,
 		InvoiceRepo:      h.invoices,
 		UserRepo:         h.users,

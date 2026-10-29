@@ -177,7 +177,7 @@ func (s *Service) deliverByEmail(
 			"Email delivery is not configured for this environment",
 		)
 	}
-	if s.cfg.PublicLinkBaseURL() == "" {
+	if s.tenderingConfig.PublicLinkBaseURL(s.appConfig) == "" {
 		return errortypes.NewBusinessError(
 			"Public links need a base URL; set app.webBaseUrl so offer links can be reached",
 		)
@@ -407,7 +407,7 @@ func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantI
 
 func (s *Service) offerResponseURL(token, action string) string {
 	path := "/tender-offer/" + url.PathEscape(token) + "/" + action
-	base := s.cfg.PublicLinkBaseURL()
+	base := s.tenderingConfig.PublicLinkBaseURL(s.appConfig)
 	if base == "" {
 		return path
 	}

@@ -79,7 +79,7 @@ reaches the page by being merely present.
 
 `customer_tracking_links` stores a link's SHA-256 hash, never the token (`tokenutils.New`); the
 URL is the public link base + `/shipment-tracking/<token>` and is returned once, to the
-person or agent that issued it. The base is `Config.PublicLinkBaseURL()`: `tendering.publicBaseUrl`
+person or agent that issued it. The base is `tenderingconfig.Config.PublicLinkBaseURL(app)`: `tendering.publicBaseUrl`
 when an installation set it, else `app.webBaseUrl`. Carrier tracking links, tender offers and
 public rate confirmations use the same resolver, so one setting serves every link a customer or
 carrier opens. A link has a purpose (`Shared` by a person or agent, or

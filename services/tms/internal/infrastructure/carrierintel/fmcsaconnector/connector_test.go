@@ -12,7 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -104,7 +105,7 @@ func routeHandler(t *testing.T, overrides map[string]http.HandlerFunc) http.Hand
 }
 
 func testConnector() *Connector {
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	connector.extraOptions = []fmcsa.Option{fmcsa.WithRetry(restx.RetryConfig{})}
 	return connector
 }
@@ -139,7 +140,7 @@ func bindTestClient(t *testing.T, limiter restx.Limiter, handler http.HandlerFun
 func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	t.Parallel()
 
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	assert.Equal(t, integration.TypeFMCSAQCMobile, connector.IntegrationType())
 
 	descriptor := connector.Descriptor()
@@ -181,13 +182,19 @@ func TestConnector_BindAndClientInterfaces(t *testing.T) {
 func TestConnector_BindValidation(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{},
 	})
 	require.Error(t, err)
 	assert.Equal(t, "FMCSA QCMobile web key is required", err.Error())
 
-	_, err = New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err = New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelWebKey:  testWebKey,
 			integration.ConfigKeyCarrierIntelBaseURL: "http://mobile.fmcsa.dot.gov/qc/services",

@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -60,7 +61,8 @@ type Params struct {
 	EventService          shipmenteventports.ShipmentEventService
 	AuditService          auditports.AuditService
 	Invalidator           shipmentinvalidationports.ShipmentInvalidator
-	Config                *config.Config
+	AppConfig             *appconfig.Config
+	TenderingConfig       *tenderingconfig.Config
 	Templates             documenttemplateports.DocumentTemplateResolver `optional:"true"`
 	EmailService          emailports.EmailService                        `optional:"true"`
 	Notifications         *notificationservice.Service                   `optional:"true"`
@@ -86,7 +88,8 @@ type Service struct {
 	eventService          shipmenteventports.ShipmentEventService
 	auditService          auditports.AuditService
 	invalidator           shipmentinvalidationports.ShipmentInvalidator
-	cfg                   *config.Config
+	appConfig             *appconfig.Config
+	tenderingConfig       *tenderingconfig.Config
 	templates             documenttemplateports.DocumentTemplateResolver
 	emailService          emailports.EmailService
 	notifications         *notificationservice.Service
@@ -116,7 +119,8 @@ func New(p Params) *Service {
 		eventService:          p.EventService,
 		auditService:          p.AuditService,
 		invalidator:           p.Invalidator,
-		cfg:                   p.Config,
+		appConfig:             p.AppConfig,
+		tenderingConfig:       p.TenderingConfig,
 		templates:             p.Templates,
 		emailService:          p.EmailService,
 		notifications:         p.Notifications,

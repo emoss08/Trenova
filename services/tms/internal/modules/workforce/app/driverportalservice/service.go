@@ -1,7 +1,7 @@
 package driverportalservice
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/portalconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
@@ -39,7 +39,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Config              *config.Config
+	PortalConfig        *portalconfig.Config
 	PortalRepo          portalaccessports.PortalAccessRepository
 	OrgRepo             tenantports.OrganizationRepository
 	SettlementRepo      driversettlementports.DriverSettlementRepository
@@ -73,7 +73,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	cfg                 *config.Config
+	cfg                 *portalconfig.Config
 	portalRepo          portalaccessports.PortalAccessRepository
 	orgRepo             tenantports.OrganizationRepository
 	settlementRepo      driversettlementports.DriverSettlementRepository
@@ -108,7 +108,7 @@ type Service struct {
 func New(p Params) *Service { //nolint:gocritic // stable API shape
 	return &Service{
 		l:                   p.Logger.Named("service.driver-portal"),
-		cfg:                 p.Config,
+		cfg:                 p.PortalConfig,
 		portalRepo:          p.PortalRepo,
 		orgRepo:             p.OrgRepo,
 		settlementRepo:      p.SettlementRepo,

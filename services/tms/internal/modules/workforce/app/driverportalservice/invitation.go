@@ -427,7 +427,7 @@ func (s *Service) lookupAcceptableInvitation(
 }
 
 func (s *Service) inviteURL(token string) string {
-	base := s.cfg.Portal.GetBaseURL()
+	base := s.cfg.GetBaseURL()
 	if base == "" {
 		return "/dash/accept?token=" + token
 	}

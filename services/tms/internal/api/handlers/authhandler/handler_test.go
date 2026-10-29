@@ -56,10 +56,11 @@ func newTestHandler(svc *tenantportsmock.MockAuthService) (*Handler, *gin.Engine
 		AppConfig: &cfg.App,
 	})
 	h := New(Params{
-		Service:      svc,
-		Logger:       zap.NewNop(),
-		Config:       cfg,
-		ErrorHandler: eh,
+		Service:        svc,
+		Logger:         zap.NewNop(),
+		SecurityConfig: &cfg.Security,
+		ServerConfig:   &cfg.Server,
+		ErrorHandler:   eh,
 	})
 	r := gin.New()
 	h.RegisterRoutes(&r.RouterGroup)

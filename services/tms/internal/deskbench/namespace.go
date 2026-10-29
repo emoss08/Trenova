@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
 	namespacepb "go.temporal.io/api/namespace/v1"
@@ -36,14 +36,18 @@ var (
 	)
 )
 
-func AssertSafe(cfg *config.Config, namespace string) error {
-	if cfg.App.IsProduction() || cfg.App.IsStaging() {
+func AssertSafe(
+	appConfig *appconfig.Config,
+	temporalConfig *temporalconfig.Config,
+	namespace string,
+) error {
+	if appConfig.IsProduction() || appConfig.IsStaging() {
 		return ErrProductionEnvironment
 	}
-	if cfg.Temporal.UsesProfile() {
+	if temporalConfig.UsesProfile() {
 		return ErrTemporalProfile
 	}
-	if namespace == "" || namespace == cfg.Temporal.GetNamespace() {
+	if namespace == "" || namespace == temporalConfig.GetNamespace() {
 		return ErrDefaultNamespace
 	}
 

@@ -16,7 +16,6 @@ import (
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 	gax "github.com/googleapis/gax-go/v2"
@@ -43,7 +42,7 @@ var (
 type Params struct {
 	fx.In
 
-	Config *config.Config
+	SecurityConfig *securityconfig.Config
 }
 
 type Service struct {
@@ -138,7 +137,7 @@ type kmsClient interface {
 }
 
 func New(p Params) (*Service, error) {
-	keyManager, err := keyManagerFromConfig(p.Config, dialKMS)
+	keyManager, err := keyManagerFromConfig(p.SecurityConfig, dialKMS)
 	if err != nil {
 		return nil, err
 	}
@@ -530,12 +529,12 @@ func dialKMS(ctx context.Context, opts ...option.ClientOption) (kmsClient, error
 	return kms.NewKeyManagementClient(ctx, opts...)
 }
 
-func keyManagerFromConfig(cfg *config.Config, dial kmsDialer) (KeyManager, error) {
+func keyManagerFromConfig(cfg *securityconfig.Config, dial kmsDialer) (KeyManager, error) {
 	if cfg == nil {
 		return DisabledKeyManager{}, nil
 	}
 
-	enc := cfg.Security.Encryption
+	enc := cfg.Encryption
 	manager := strings.ToLower(strings.TrimSpace(enc.KeyManager))
 	if manager == "" {
 		manager = securityconfig.EncryptionKeyManagerLocal

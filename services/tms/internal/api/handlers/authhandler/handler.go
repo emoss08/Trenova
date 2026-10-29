@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/sessioncookie"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
@@ -29,28 +30,31 @@ const validKey = "valid"
 type Params struct {
 	fx.In
 
-	Service       tenantports.AuthService
-	PasswordReset *passwordresetservice.Service
-	Logger        *zap.Logger
-	Config        *config.Config
-	ErrorHandler  *helpers.ErrorHandler
+	Service        tenantports.AuthService
+	PasswordReset  *passwordresetservice.Service
+	Logger         *zap.Logger
+	SecurityConfig *securityconfig.Config
+	ServerConfig   *serverconfig.Config
+	ErrorHandler   *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service       tenantports.AuthService
-	passwordReset *passwordresetservice.Service
-	l             *zap.Logger
-	cfg           *config.Config
-	eh            *helpers.ErrorHandler
+	service        tenantports.AuthService
+	passwordReset  *passwordresetservice.Service
+	l              *zap.Logger
+	securityConfig *securityconfig.Config
+	serverConfig   *serverconfig.Config
+	eh             *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:       p.Service,
-		passwordReset: p.PasswordReset,
-		l:             p.Logger.With(zap.String("handler", "auth")),
-		cfg:           p.Config,
-		eh:            p.ErrorHandler,
+		service:        p.Service,
+		passwordReset:  p.PasswordReset,
+		l:              p.Logger.With(zap.String("handler", "auth")),
+		securityConfig: p.SecurityConfig,
+		serverConfig:   p.ServerConfig,
+		eh:             p.ErrorHandler,
 	}
 }
 
@@ -170,7 +174,7 @@ func (h *Handler) completeLogin(c *gin.Context, resp *tenantports.LoginResponse)
 	)
 
 	h.setSessionCookie(c, resp.SessionToken, resp.ExpiresAt)
-	resp.CSRFToken = csrf.Token(resp.SessionID, h.cfg.Security.Session.Secret)
+	resp.CSRFToken = csrf.Token(resp.SessionID, h.securityConfig.Session.Secret)
 
 	helpers.JSON(c, http.StatusOK, resp)
 }
@@ -207,7 +211,7 @@ func (h *Handler) logout(c *gin.Context) {
 // @Failure 401 {object} gin.H
 // @Router /auth/validate-session [post]
 func (h *Handler) validateSession(c *gin.Context) {
-	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	token, err := c.Cookie(h.securityConfig.Session.Name)
 	if err != nil || token == "" {
 		helpers.JSON(c, http.StatusUnauthorized, gin.H{validKey: false})
 		return
@@ -230,7 +234,7 @@ func (h *Handler) validateSession(c *gin.Context) {
 // @Failure 401 {object} helpers.ProblemDetail
 // @Router /auth/session/keepalive [post]
 func (h *Handler) keepSessionAlive(c *gin.Context) {
-	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	token, err := c.Cookie(h.securityConfig.Session.Name)
 	if err != nil || token == "" {
 		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
 		return
@@ -246,7 +250,7 @@ func (h *Handler) keepSessionAlive(c *gin.Context) {
 }
 
 func (h *Handler) csrfToken(c *gin.Context) {
-	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	token, err := c.Cookie(h.securityConfig.Session.Name)
 	if err != nil || token == "" {
 		h.anonymousCSRFToken(c)
 		return
@@ -259,8 +263,8 @@ func (h *Handler) csrfToken(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, gin.H{
-		"csrfToken":  csrf.Token(sess.ID.String(), h.cfg.Security.Session.Secret),
-		"headerName": h.cfg.Security.CSRF.HeaderName,
+		"csrfToken":  csrf.Token(sess.ID.String(), h.securityConfig.Session.Secret),
+		"headerName": h.securityConfig.CSRF.HeaderName,
 	})
 }
 
@@ -268,12 +272,12 @@ func (h *Handler) anonymousCSRFToken(c *gin.Context) {
 	c.Header("Cache-Control", "no-store")
 	helpers.JSON(c, http.StatusOK, gin.H{
 		"csrfToken":  "",
-		"headerName": h.cfg.Security.CSRF.HeaderName,
+		"headerName": h.securityConfig.CSRF.HeaderName,
 	})
 }
 
 func (h *Handler) sessionFromCookie(c *gin.Context) (*session.Session, bool) {
-	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	token, err := c.Cookie(h.securityConfig.Session.Name)
 	if err != nil || token == "" {
 		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
 		return nil, false
@@ -485,17 +489,17 @@ func (h *Handler) resolveSSOErrorOrigin(loginState *tenantports.SSOLoginState) s
 		}
 	}
 
-	if len(h.cfg.Server.CORS.AllowedOrigins) > 0 {
-		return h.cfg.Server.CORS.AllowedOrigins[0]
+	if len(h.serverConfig.CORS.AllowedOrigins) > 0 {
+		return h.serverConfig.CORS.AllowedOrigins[0]
 	}
 
 	return ""
 }
 
 func (h *Handler) clearSessionCookie(c *gin.Context) {
-	sessioncookie.Clear(c, &h.cfg.Security.Session)
+	sessioncookie.Clear(c, &h.securityConfig.Session)
 }
 
 func (h *Handler) setSessionCookie(c *gin.Context, sessionID string, expiresAt int64) {
-	sessioncookie.Set(c, &h.cfg.Security.Session, sessionID, expiresAt)
+	sessioncookie.Set(c, &h.securityConfig.Session, sessionID, expiresAt)
 }

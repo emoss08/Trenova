@@ -277,7 +277,12 @@ func setupHandlerWithConfig(
 	})
 
 	return &handlerDeps{
-		handler:     documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg),
+		handler: documenthandler.NewTestHandlerWithConfig(
+			service,
+			errorHandler,
+			pm,
+			&cfg.Storage,
+		),
 		cacheRepo:   cacheRepo,
 		sessionRepo: sessionRepo,
 	}

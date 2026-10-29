@@ -21,7 +21,7 @@ func SetConfig(c *config.Config) {
 }
 
 func openDB(ctx context.Context) (*keel.DB, error) {
-	return postgres.OpenMaintenanceDB(ctx, cfg)
+	return postgres.OpenMaintenanceDB(ctx, &cfg.App, &cfg.Database)
 }
 
 var DbCmd = &cobra.Command{

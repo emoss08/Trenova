@@ -98,10 +98,10 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	enforced := &config.Config{}
 	enforced.Database.RLS.Mode = databaseconfig.RLSModeEnforce
 	scopes := readscopeservice.New(readscopeservice.Params{
-		Config:   enforced,
-		DB:       owner,
-		Engine:   noWorkerRead,
-		Registry: permissioncatalog.NewRegistry(),
+		DatabaseConfig: &enforced.Database,
+		DB:             owner,
+		Engine:         noWorkerRead,
+		Registry:       permissioncatalog.NewRegistry(),
 	})
 	principal := &permissionports.PermissionCheckRequest{
 		PrincipalType:  permissionports.PrincipalTypeUser,

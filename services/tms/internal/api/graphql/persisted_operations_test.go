@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/stretchr/testify/assert"
@@ -56,8 +55,8 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 	t.Parallel()
 
 	manifest, err := NewPersistedOperationManifest(PersistedOperationManifestParams{
-		Config: &config.Config{App: appconfig.Config{Env: appconfig.EnvProduction}},
-		Logger: zap.NewNop(),
+		AppConfig: &appconfig.Config{Env: appconfig.EnvProduction},
+		Logger:    zap.NewNop(),
 	})
 	require.NoError(t, err)
 	assert.Nil(t, manifest.reloader)
@@ -302,23 +301,23 @@ func TestDevelopmentManifestSource(t *testing.T) {
 	path := filepath.Join(dir, "manifest.json")
 	require.NoError(t, os.WriteFile(path, []byte(`{}`), 0o600))
 
-	assert.Empty(t, developmentManifestSource(nil))
-	assert.Empty(t, developmentManifestSource(&config.Config{
-		App: appconfig.Config{Env: appconfig.EnvProduction},
-		Security: securityconfig.Config{
+	assert.Empty(t, developmentManifestSource(nil, nil))
+	assert.Empty(t, developmentManifestSource(
+		&appconfig.Config{Env: appconfig.EnvProduction},
+		&securityconfig.Config{
 			GraphQL: securityconfig.GraphQLConfig{PersistedDocumentsPath: path},
 		},
-	}))
-	assert.Empty(t, developmentManifestSource(&config.Config{
-		App: appconfig.Config{Env: appconfig.EnvDevelopment},
-		Security: securityconfig.Config{GraphQL: securityconfig.GraphQLConfig{
+	))
+	assert.Empty(t, developmentManifestSource(
+		&appconfig.Config{Env: appconfig.EnvDevelopment},
+		&securityconfig.Config{GraphQL: securityconfig.GraphQLConfig{
 			PersistedDocumentsPath: filepath.Join(dir, "missing.json"),
 		}},
-	}))
-	assert.Equal(t, path, developmentManifestSource(&config.Config{
-		App: appconfig.Config{Env: appconfig.EnvDevelopment},
-		Security: securityconfig.Config{
+	))
+	assert.Equal(t, path, developmentManifestSource(
+		&appconfig.Config{Env: appconfig.EnvDevelopment},
+		&securityconfig.Config{
 			GraphQL: securityconfig.GraphQLConfig{PersistedDocumentsPath: path},
 		},
-	}))
+	))
 }

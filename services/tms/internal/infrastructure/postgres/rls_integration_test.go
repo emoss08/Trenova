@@ -90,7 +90,7 @@ func newRLSFixture(t *testing.T, mode string) *rlsFixture {
 		},
 	}
 
-	_, err = ProvisionRLS(t.Context(), admin, cfg)
+	_, err = ProvisionRLS(t.Context(), admin, &cfg.Database)
 	require.NoError(t, err)
 
 	f := &rlsFixture{
@@ -201,11 +201,13 @@ func (f *rlsFixture) connect(t *testing.T) *Connection {
 	t.Helper()
 
 	conn, err := newConnection(ConnectionParams{
-		Lifecycle: fxtest.NewLifecycle(t),
-		Config:    f.cfg,
-		Logger:    zaptest.NewLogger(t),
-		Observers: shapetest.Observers(t),
-	}, oltpSettings(f.cfg))
+		Lifecycle:       fxtest.NewLifecycle(t),
+		AppConfig:       &f.cfg.App,
+		DatabaseConfig:  &f.cfg.Database,
+		ReportingConfig: &f.cfg.Reporting,
+		Logger:          zaptest.NewLogger(t),
+		Observers:       shapetest.Observers(t),
+	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)
 	require.NoError(t, conn.connect(t.Context()))
 	t.Cleanup(func() { _ = conn.shutdown(context.Background()) })
@@ -438,11 +440,13 @@ func TestRLS_StartupRefusesAnApplicationRoleThatCanBypass(t *testing.T) {
 	require.NoError(t, err)
 
 	conn, err := newConnection(ConnectionParams{
-		Lifecycle: fxtest.NewLifecycle(t),
-		Config:    f.cfg,
-		Logger:    zaptest.NewLogger(t),
-		Observers: shapetest.Observers(t),
-	}, oltpSettings(f.cfg))
+		Lifecycle:       fxtest.NewLifecycle(t),
+		AppConfig:       &f.cfg.App,
+		DatabaseConfig:  &f.cfg.Database,
+		ReportingConfig: &f.cfg.Reporting,
+		Logger:          zaptest.NewLogger(t),
+		Observers:       shapetest.Observers(t),
+	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.shutdown(context.Background()) })
 

@@ -113,11 +113,11 @@ func newTestMonitoringServer(
 		},
 	}
 
-	metricsRegistry, err := obsmetrics.NewRegistry(cfg, zap.NewNop())
+	metricsRegistry, err := obsmetrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	server := &MonitoringServer{
-		cfg:      cfg,
+		cfg:      &cfg.Monitoring,
 		logger:   zap.NewNop(),
 		metrics:  metricsRegistry,
 		database: &fakeDBConnection{healthErr: dbErr},
@@ -176,7 +176,7 @@ func startTestMonitoringServer(t *testing.T, server *MonitoringServer) {
 
 	require.Eventually(t, func() bool {
 		resp, err := http.Get(
-			"http://" + server.server.Addr + server.cfg.Monitoring.Health.LivenessPath,
+			"http://" + server.server.Addr + server.cfg.Health.LivenessPath,
 		)
 		if err != nil {
 			return false

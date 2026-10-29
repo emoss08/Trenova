@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
@@ -138,11 +138,10 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		dispatchcontrolrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
 	svc := checkcallservice.New(checkcallservice.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
-		Config: &config.Config{
-			Tendering: tenderingconfig.Config{PublicBaseURL: "https://app.example.com"},
-		},
+		DB:              conn,
+		Logger:          zap.NewNop(),
+		AppConfig:       &appconfig.Config{},
+		TenderingConfig: &tenderingconfig.Config{PublicBaseURL: "https://app.example.com"},
 		Repo: checkcallrepository.New(
 			checkcallrepository.Params{DB: conn, Logger: zap.NewNop()},
 		),
