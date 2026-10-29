@@ -150,7 +150,10 @@ func (s *Service) AcknowledgeMyTraining(
 			wrk.FirstName+" "+wrk.LastName+" finished "+record.Course.Name+
 				". Enter the score to close the assignment.",
 			"/hr/workers?tab=training",
-			map[string]any{"workerId": wrk.ID.String(), "trainingRecordId": record.ID.String()},
+			map[string]any{
+				relatedWorkerIDKey: wrk.ID.String(),
+				"trainingRecordId": record.ID.String(),
+			},
 		)
 	}
 	return portalTrainingFromRecord(record, wrk), nil

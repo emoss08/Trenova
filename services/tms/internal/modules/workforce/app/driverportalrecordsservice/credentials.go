@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
@@ -16,8 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
-
-const credentialResourceType = "worker_credential"
 
 // PortalCredential is the driver's view of one credential slot: enough to know
 // what is due and to upload a renewal, without the office-only fields.
@@ -119,7 +118,7 @@ func (s *Service) UploadMyCredentialDocument(
 		Actor:        *actor,
 		File:         file,
 		ResourceID:   cred.ID.String(),
-		ResourceType: credentialResourceType,
+		ResourceType: string(permission.ResourceWorkerCredential),
 	})
 	if err != nil {
 		return nil, err
@@ -156,6 +155,6 @@ func (s *Service) notifyCredentialUpload(
 		wrk.FirstName+" "+wrk.LastName+" uploaded a document for their "+name+
 			". Review it and renew the credential.",
 		"/hr/workers?tab=credentials",
-		map[string]any{"workerId": wrk.ID.String(), "credentialId": cred.ID.String()},
+		map[string]any{relatedWorkerIDKey: wrk.ID.String(), "credentialId": cred.ID.String()},
 	)
 }

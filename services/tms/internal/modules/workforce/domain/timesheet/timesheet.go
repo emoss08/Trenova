@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -169,9 +170,7 @@ func (e *TimeClockEntry) PaidMinutes() int32 {
 	if e.IsOpen() {
 		return 0
 	}
-	minutes := int32(
-		(*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute,
-	) //nolint:gosec // bounded below
+	minutes := intutils.SafeToInt32((*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute)
 	minutes -= e.BreakMinutes
 	if minutes < 0 {
 		return 0
@@ -210,9 +209,7 @@ func (e *TimeClockEntry) Validate(multiErr *errortypes.MultiError) {
 		return
 	}
 
-	span := int32(
-		(*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute,
-	) //nolint:gosec // checked above
+	span := intutils.SafeToInt32((*e.ClockedOutAt - e.ClockedInAt) / secondsPerMinute)
 	// A punch nobody closed until the next day is a forgotten clock-out rather
 	// than a day somebody worked straight through.
 	if span > maxTimeEntryMinutes {
@@ -332,7 +329,7 @@ func (t *Timesheet) TotalMinutes() int32 {
 // what the sheet adds up to. Paid leave sits outside the split: time nobody
 // worked does not earn overtime, and counting it would pay a premium on a
 // holiday somebody spent at home.
-func (t *Timesheet) ApplyTotals(workedMinutes, paidLeaveMinutes int32, entryCount int32) {
+func (t *Timesheet) ApplyTotals(workedMinutes, paidLeaveMinutes, entryCount int32) {
 	threshold := t.OvertimeThresholdMinutes
 	if threshold <= 0 {
 		threshold = defaultOvertimeThreshold

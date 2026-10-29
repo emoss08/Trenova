@@ -76,7 +76,7 @@ func (s *Service) GiveRecognition(
 			created.WorkerID,
 			eventRecognition,
 			notification.PriorityMedium,
-			notificationtemplate.DriverNotificationContext{
+			&notificationtemplate.DriverNotificationContext{
 				RecognitionTitle:   created.Title,
 				RecognitionMessage: created.Message,
 			},

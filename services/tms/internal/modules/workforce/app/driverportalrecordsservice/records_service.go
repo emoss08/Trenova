@@ -13,6 +13,8 @@ import (
 	"go.uber.org/fx"
 )
 
+const relatedWorkerIDKey = "workerId"
+
 type Params struct {
 	fx.In
 

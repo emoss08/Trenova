@@ -233,12 +233,12 @@ func (r *repository) GetTimesheetByID(
 		}
 
 		if req.IncludeEntries {
-			entries, err := r.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
+			entries, entriesErr := r.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 				TenantInfo:  req.TenantInfo,
 				TimesheetID: entity.ID,
 			})
-			if err != nil {
-				return nil, err
+			if entriesErr != nil {
+				return nil, entriesErr
 			}
 			entity.Entries = entries
 		}

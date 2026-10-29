@@ -132,6 +132,9 @@ func (h TrainingHealth) Blocks() bool {
 	switch h {
 	case TrainingHealthOverdue, TrainingHealthExpired, TrainingHealthFailed, TrainingHealthMissing:
 		return true
+	case TrainingHealthCurrent, TrainingHealthScheduled, TrainingHealthDueSoon,
+		TrainingHealthExpiringSoon:
+		return false
 	default:
 		return false
 	}

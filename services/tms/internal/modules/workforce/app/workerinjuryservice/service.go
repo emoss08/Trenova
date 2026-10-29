@@ -412,10 +412,6 @@ func injuryTenant(entity *workerinjury.WorkerInjury) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func summaryTenant(entity *workerinjury.OSHAAnnualSummary) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
 func caseLabel(entity *workerinjury.WorkerInjury) string {
 	return strconv.Itoa(int(entity.CaseYear)) + "-" + strconv.Itoa(int(entity.CaseNumber))
 }

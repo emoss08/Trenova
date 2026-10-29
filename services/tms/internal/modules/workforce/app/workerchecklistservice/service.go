@@ -139,7 +139,3 @@ func (s *Service) publish(
 func templateTenant(entity *workerchecklist.WorkerChecklistTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
-
-func checklistTenant(entity *workerchecklist.WorkerChecklist) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}

@@ -48,7 +48,7 @@ func (s *Service) AcknowledgeMyReview(
 		"Review signed off",
 		wrk.FirstName+" "+wrk.LastName+" signed off on \""+saved.Title+"\". Close it when you are ready.",
 		"/hr/workers?tab=reviews",
-		map[string]any{"workerId": wrk.ID.String(), "reviewId": saved.ID.String()},
+		map[string]any{relatedWorkerIDKey: wrk.ID.String(), "reviewId": saved.ID.String()},
 	)
 	return saved, nil
 }

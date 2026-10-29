@@ -87,6 +87,8 @@ func (d DeductionKind) DefaultPriority() int16 {
 		return 10
 	case DeductionKindBenefit:
 		return 200
+	case DeductionKindStandard:
+		return 100
 	default:
 		return 100
 	}

@@ -526,7 +526,7 @@ func (s *Service) notifyDriver(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	eventType string,
-	context notificationtemplate.DriverNotificationContext,
+	notice *notificationtemplate.DriverNotificationContext,
 	related map[string]any,
 ) {
 	if s.driverNotify == nil {
@@ -537,7 +537,7 @@ func (s *Service) notifyDriver(
 		WorkerID:        workerID,
 		EventType:       eventType,
 		Priority:        notification.PriorityHigh,
-		Context:         context,
+		Context:         *notice,
 		Link:            "/dash/profile",
 		RelatedEntities: related,
 	})

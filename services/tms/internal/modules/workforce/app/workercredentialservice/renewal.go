@@ -54,8 +54,8 @@ func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error 
 		return err
 	}
 
-	s.notifyRenewal(ctx, req, named)
-	s.auditRenewal(req, named)
+	s.notifyRenewal(ctx, &req, named)
+	s.auditRenewal(&req, named)
 
 	return nil
 }
@@ -116,14 +116,14 @@ func (s *Service) namedCredentials(
 
 func (s *Service) notifyRenewal(
 	ctx context.Context,
-	req RenewalRequest,
+	req *RenewalRequest,
 	named []*workercredential.WorkerCredential,
 ) {
 	if s.driverNotify == nil {
 		return
 	}
 
-	notice, correlation := renewalNotification(&req, named, timeutils.NowUnix())
+	notice, correlation := renewalNotification(req, named, timeutils.NowUnix())
 	s.driverNotify.NotifyWithCorrelation(ctx, notice, correlation)
 }
 
@@ -193,7 +193,7 @@ func renewalSubject(named []*workercredential.WorkerCredential) string {
 	return strings.Join(names, ", ")
 }
 
-func (s *Service) auditRenewal(req RenewalRequest, named []*workercredential.WorkerCredential) {
+func (s *Service) auditRenewal(req *RenewalRequest, named []*workercredential.WorkerCredential) {
 	if s.auditService == nil {
 		return
 	}

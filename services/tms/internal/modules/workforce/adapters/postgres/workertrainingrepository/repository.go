@@ -403,7 +403,9 @@ func reminderQuery(
 	return q
 }
 
-func reminderWindow(req *workertrainingports.ListTrainingRemindersRequest) (int64, int64) {
+func reminderWindow(
+	req *workertrainingports.ListTrainingRemindersRequest,
+) (grace, horizon int64) {
 	now := timeutils.NowUnix()
 	return now - int64(req.GraceDays)*secondsPerDay, now + int64(req.HorizonDays)*secondsPerDay
 }

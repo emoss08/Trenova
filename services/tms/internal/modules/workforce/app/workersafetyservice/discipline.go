@@ -200,7 +200,7 @@ func (s *Service) IssueAction(
 			req.WorkerID,
 			eventDisciplinary,
 			notification.PriorityHigh,
-			notificationtemplate.DriverNotificationContext{
+			&notificationtemplate.DriverNotificationContext{
 				DisciplineLevel:  created.Level.String(),
 				DisciplineReason: created.Reason,
 			},

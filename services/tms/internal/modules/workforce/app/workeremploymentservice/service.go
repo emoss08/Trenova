@@ -11,6 +11,7 @@ package workeremploymentservice
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -397,7 +398,7 @@ func (s *Service) RecordHired(ctx context.Context, wrk *worker.Worker, userID pu
 		RecordedByID:   userID,
 		FromValues:     map[string]string{},
 		ToValues: map[string]string{
-			employment.EmploymentValueHireDate: fmt.Sprintf("%d", wrk.Profile.HireDate),
+			employment.EmploymentValueHireDate: strconv.FormatInt(wrk.Profile.HireDate, 10),
 		},
 	}
 	if !wrk.FleetCodeID.IsNil() {
@@ -464,24 +465,23 @@ func (s *Service) populateValues(
 	switch req.Kind {
 	case employment.EmploymentEventHired, employment.EmploymentEventRehired:
 		if wrk.Profile != nil && wrk.Profile.HireDate > 0 {
-			event.FromValues[employment.EmploymentValueHireDate] = fmt.Sprintf(
-				"%d",
+			event.FromValues[employment.EmploymentValueHireDate] = strconv.FormatInt(
 				wrk.Profile.HireDate,
+				10,
 			)
 		}
-		event.ToValues[employment.EmploymentValueHireDate] = fmt.Sprintf("%d", req.EffectiveAt)
+		event.ToValues[employment.EmploymentValueHireDate] = strconv.FormatInt(req.EffectiveAt, 10)
 		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
 		event.ToValues[employment.EmploymentValueStatus] = "Active"
 	case employment.EmploymentEventTerminated:
 		event.FromValues[employment.EmploymentValueStatus] = wrk.Status.String()
 		event.ToValues[employment.EmploymentValueStatus] = "Inactive"
-		event.ToValues[employment.EmploymentValueTerminationDate] = fmt.Sprintf(
-			"%d",
+		event.ToValues[employment.EmploymentValueTerminationDate] = strconv.FormatInt(
 			req.EffectiveAt,
+			10,
 		)
 	case employment.EmploymentEventSuspended:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
-			"%t",
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
 			wrk.CanBeAssigned,
 		)
 		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
@@ -493,21 +493,18 @@ func (s *Service) populateValues(
 				"Choose the kind of leave",
 			)
 		}
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
-			"%t",
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
 			wrk.CanBeAssigned,
 		)
 		event.ToValues[employment.EmploymentValueCanBeAssigned] = "false"
 		event.ToValues[employment.EmploymentValueLeaveType] = req.LeaveType.String()
 	case employment.EmploymentEventReinstated:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
-			"%t",
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
 			wrk.CanBeAssigned,
 		)
 		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"
 	case employment.EmploymentEventLeaveEnded:
-		event.FromValues[employment.EmploymentValueCanBeAssigned] = fmt.Sprintf(
-			"%t",
+		event.FromValues[employment.EmploymentValueCanBeAssigned] = strconv.FormatBool(
 			wrk.CanBeAssigned,
 		)
 		event.ToValues[employment.EmploymentValueCanBeAssigned] = "true"

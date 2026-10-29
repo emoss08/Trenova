@@ -187,7 +187,7 @@ func (s *Service) notifyDriver(
 	workerID pulid.ID,
 	eventType string,
 	priority notification.Priority,
-	context notificationtemplate.DriverNotificationContext,
+	notice *notificationtemplate.DriverNotificationContext,
 	correlation string,
 ) {
 	if s.driverNotify == nil {
@@ -198,7 +198,7 @@ func (s *Service) notifyDriver(
 		WorkerID:   workerID,
 		EventType:  eventType,
 		Priority:   priority,
-		Context:    context,
+		Context:    *notice,
 		Link:       dashProfileLink,
 	}, correlation)
 }
@@ -285,10 +285,6 @@ func (s *Service) Scorecard(
 }
 
 func eventTenant(entity *workersafety.WorkerSafetyEvent) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
-func actionTenant(entity *workerdiscipline.WorkerDisciplinaryAction) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 

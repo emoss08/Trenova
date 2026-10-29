@@ -172,7 +172,3 @@ func (s *Service) loadWorker(
 func templateTenant(entity *workerreview.PerformanceReviewTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
-
-func reviewTenant(entity *workerreview.PerformanceReview) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}

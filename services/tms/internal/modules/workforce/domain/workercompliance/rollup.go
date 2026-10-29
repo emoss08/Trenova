@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -61,7 +62,7 @@ func RollupFrom(
 	}
 	if safety != nil {
 		rollup.SafetyRating = safety.Rating
-		rollup.SafetyScore = int16(safety.Score)
+		rollup.SafetyScore = intutils.SafeToInt16(int64(safety.Score))
 	}
 	return rollup
 }

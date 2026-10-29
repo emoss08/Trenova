@@ -235,7 +235,7 @@ func (s *Service) DecideChange(
 		req.TenantInfo,
 		updated.WorkerID,
 		eventProfileChangeReviewed,
-		notificationtemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
+		&notificationtemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
 		map[string]any{"changeRequestId": updated.ID.String()},
 	)
 

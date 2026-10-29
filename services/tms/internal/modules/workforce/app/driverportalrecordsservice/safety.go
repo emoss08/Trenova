@@ -70,7 +70,10 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 		"Disciplinary action acknowledged",
 		wrk.FirstName+" "+wrk.LastName+" acknowledged their "+saved.Level.String()+".",
 		"/hr/workers?tab=safety",
-		map[string]any{"workerId": wrk.ID.String(), "disciplinaryActionId": saved.ID.String()},
+		map[string]any{
+			relatedWorkerIDKey:     wrk.ID.String(),
+			"disciplinaryActionId": saved.ID.String(),
+		},
 	)
 	return saved, nil
 }

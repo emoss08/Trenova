@@ -81,6 +81,15 @@ func ChecklistKindClosedByEvent(kind employment.EmploymentEventKind) (ChecklistK
 		return ChecklistKindOnboarding, true
 	case employment.EmploymentEventHired, employment.EmploymentEventRehired:
 		return ChecklistKindOffboarding, true
+	case employment.EmploymentEventProbationEnded,
+		employment.EmploymentEventPromoted,
+		employment.EmploymentEventTransferred,
+		employment.EmploymentEventLeaveStarted,
+		employment.EmploymentEventLeaveEnded,
+		employment.EmploymentEventSuspended,
+		employment.EmploymentEventReinstated,
+		employment.EmploymentEventRateChanged:
+		return "", false
 	default:
 		return "", false
 	}
@@ -96,6 +105,15 @@ func ChecklistTriggerForEvent(kind employment.EmploymentEventKind) (ChecklistTri
 		return ChecklistTriggerRehired, true
 	case employment.EmploymentEventTerminated:
 		return ChecklistTriggerTerminated, true
+	case employment.EmploymentEventProbationEnded,
+		employment.EmploymentEventPromoted,
+		employment.EmploymentEventTransferred,
+		employment.EmploymentEventLeaveStarted,
+		employment.EmploymentEventLeaveEnded,
+		employment.EmploymentEventSuspended,
+		employment.EmploymentEventReinstated,
+		employment.EmploymentEventRateChanged:
+		return "", false
 	default:
 		return "", false
 	}
@@ -642,7 +660,7 @@ func (t *WorkerChecklistTemplate) Instantiate(
 			CredentialTypeID: source.CredentialTypeID,
 			DocumentTypeID:   source.DocumentTypeID,
 			Status:           ChecklistItemPending,
-			SortOrder:        int32(index), //nolint:gosec // item counts are tiny
+			SortOrder:        int32(index),
 		}
 		if source.DueOffsetDays > 0 {
 			due := startedAt + int64(source.DueOffsetDays)*timeutils.SecondsPerDay
