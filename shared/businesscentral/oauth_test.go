@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,15 +55,15 @@ func TestNewOAuthClientRequiresConfig(t *testing.T) {
 	_, err := businesscentral.NewOAuthClient(businesscentral.OAuthConfig{
 		ClientSecret: "s", RedirectURL: "r",
 	})
-	require.ErrorIs(t, err, businesscentral.ErrClientIDRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrClientIDRequired)
 	_, err = businesscentral.NewOAuthClient(businesscentral.OAuthConfig{
 		ClientID: "c", RedirectURL: "r",
 	})
-	require.ErrorIs(t, err, businesscentral.ErrClientSecretRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrClientSecretRequired)
 	_, err = businesscentral.NewOAuthClient(businesscentral.OAuthConfig{
 		ClientID: "c", ClientSecret: "s",
 	})
-	require.ErrorIs(t, err, businesscentral.ErrRedirectURLRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrRedirectURLRequired)
 }
 
 func TestAuthorizeURL(t *testing.T) {
@@ -96,7 +97,7 @@ func TestAuthorizeURL(t *testing.T) {
 	assert.NotContains(t, raw, testClientSecret)
 
 	_, err = client.AuthorizeURL(" ")
-	require.ErrorIs(t, err, businesscentral.ErrStateRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrStateRequired)
 }
 
 func TestExchangeCodePostsTheForm(t *testing.T) {
@@ -128,7 +129,7 @@ func TestExchangeCodePostsTheForm(t *testing.T) {
 	assert.Contains(t, token.Scope, "Financials.ReadWrite.All")
 
 	_, err = client.ExchangeCode(t.Context(), " ")
-	require.ErrorIs(t, err, businesscentral.ErrCodeRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrCodeRequired)
 }
 
 func TestRefreshPostsTheRotatingToken(t *testing.T) {
@@ -150,7 +151,7 @@ func TestRefreshPostsTheRotatingToken(t *testing.T) {
 	assert.Equal(t, 90*24*time.Hour, businesscentral.RefreshTokenLifetime)
 
 	_, err = client.Refresh(t.Context(), "")
-	require.ErrorIs(t, err, businesscentral.ErrTokenRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrTokenRequired)
 }
 
 func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
@@ -159,10 +160,10 @@ func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
 	client := newOAuthClient(t, serveFixture(t, http.StatusBadRequest, "invalid_grant.json"))
 	_, err := client.Refresh(t.Context(), "old-refresh")
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsInvalidGrant(err))
-	assert.False(t, businesscentral.IsInvalidClient(err))
-	assert.False(t, businesscentral.IsTransient(err))
-	var oauthErr *businesscentral.OAuthError
+	assert.True(t, businesscentralerrors.IsInvalidGrant(err))
+	assert.False(t, businesscentralerrors.IsInvalidClient(err))
+	assert.False(t, businesscentralerrors.IsTransient(err))
+	var oauthErr *businesscentralerrors.OAuthError
 	require.ErrorAs(t, err, &oauthErr)
 	assert.Equal(t, http.StatusBadRequest, oauthErr.Status)
 	assert.Equal(t, []int{70008}, oauthErr.ErrorCodes)
@@ -178,8 +179,8 @@ func TestInvalidGrantByErrorCode(t *testing.T) {
 			_, _ = w.Write([]byte(`{"error":"interaction_required","error_codes":[` + code + `]}`))
 		})
 		_, err := client.Refresh(t.Context(), "refresh")
-		assert.True(t, businesscentral.IsInvalidGrant(err), code)
-		assert.False(t, businesscentral.IsInvalidClient(err), code)
+		assert.True(t, businesscentralerrors.IsInvalidGrant(err), code)
+		assert.False(t, businesscentralerrors.IsInvalidClient(err), code)
 	}
 }
 
@@ -189,8 +190,8 @@ func TestRefreshRejectedAsInvalidClient(t *testing.T) {
 	client := newOAuthClient(t, serveFixture(t, http.StatusUnauthorized, "invalid_client.json"))
 	_, err := client.Refresh(t.Context(), "refresh")
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsInvalidClient(err))
-	assert.False(t, businesscentral.IsInvalidGrant(err))
+	assert.True(t, businesscentralerrors.IsInvalidClient(err))
+	assert.False(t, businesscentralerrors.IsInvalidGrant(err))
 	assert.NotContains(t, err.Error(), testClientSecret)
 
 	for _, code := range []string{"700016", "7000222"} {
@@ -199,8 +200,8 @@ func TestRefreshRejectedAsInvalidClient(t *testing.T) {
 			_, _ = w.Write([]byte(`{"error":"invalid_grant","error_codes":[` + code + `]}`))
 		})
 		_, err = client.Refresh(t.Context(), "refresh")
-		assert.True(t, businesscentral.IsInvalidClient(err), code)
-		assert.False(t, businesscentral.IsInvalidGrant(err), code)
+		assert.True(t, businesscentralerrors.IsInvalidClient(err), code)
+		assert.False(t, businesscentralerrors.IsInvalidGrant(err), code)
 	}
 }
 
@@ -228,12 +229,12 @@ func TestProbeCredentialsSendsADummyRefreshToken(t *testing.T) {
 		_, _ = w.Write(fixture(t, "invalid_grant.json"))
 	})
 	err := client.ProbeCredentials(t.Context())
-	assert.True(t, businesscentral.IsInvalidGrant(err), "the app itself was accepted")
+	assert.True(t, businesscentralerrors.IsInvalidGrant(err), "the app itself was accepted")
 	assert.Equal(t, "refresh_token", form.Get("grant_type"))
 	assert.NotEmpty(t, form.Get("refresh_token"))
 
 	client = newOAuthClient(t, serveFixture(t, http.StatusUnauthorized, "invalid_client.json"))
-	assert.True(t, businesscentral.IsInvalidClient(client.ProbeCredentials(t.Context())))
+	assert.True(t, businesscentralerrors.IsInvalidClient(client.ProbeCredentials(t.Context())))
 }
 
 func TestTokenCallsAreNeverRetried(t *testing.T) {
@@ -246,7 +247,7 @@ func TestTokenCallsAreNeverRetried(t *testing.T) {
 	})
 	_, err := client.Refresh(t.Context(), "refresh")
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsTransient(err))
 	assert.Equal(t, int32(1), calls.Load(), "a rotated refresh token must not be sent twice")
 }
 
@@ -257,7 +258,7 @@ func TestTokenResponseWithoutTokensIsRejected(t *testing.T) {
 		_, _ = w.Write([]byte(`{"token_type":"Bearer","expires_in":3600,"access_token":"a"}`))
 	})
 	_, err := client.ExchangeCode(t.Context(), "code")
-	require.ErrorIs(t, err, businesscentral.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, businesscentralerrors.ErrUnexpectedPayload)
 }
 
 func TestTenantIDFromAccessToken(t *testing.T) {
@@ -282,10 +283,10 @@ func TestTenantIDFromAccessTokenRejectsBadTokens(t *testing.T) {
 	for _, raw := range []string{"", "only.two", "a.!!!.c",
 		"a." + base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".c"} {
 		_, err := businesscentral.TenantIDFromAccessToken(raw)
-		require.ErrorIs(t, err, businesscentral.ErrMalformedToken, raw)
+		require.ErrorIs(t, err, businesscentralerrors.ErrMalformedToken, raw)
 	}
 	_, err := businesscentral.TenantIDFromAccessToken(jwt(`{"sub":"x"}`))
-	require.ErrorIs(t, err, businesscentral.ErrTenantClaim)
+	require.ErrorIs(t, err, businesscentralerrors.ErrTenantClaim)
 	_, err = businesscentral.TenantIDFromAccessToken(jwt(`{"tid":"../../etc"}`))
-	require.ErrorIs(t, err, businesscentral.ErrTenantClaim)
+	require.ErrorIs(t, err, businesscentralerrors.ErrTenantClaim)
 }

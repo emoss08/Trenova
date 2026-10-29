@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -265,7 +265,7 @@ func TestCreateSalesInvoiceKeepsTheDraftWhenPostingFails(t *testing.T) {
 	assert.Equal(t, testNewInvoice, result.Refs[accountingsync.ExternalRefDocument])
 	classified := conn.ClassifyDocumentError(err)
 	assert.Equal(t, accountingsync.SyncErrorClosedPeriod, classified.Category)
-	assert.Equal(t, businesscentral.CodeDialogException, classified.Code)
+	assert.Equal(t, businesscentralerrors.CodeDialogException, classified.Code)
 }
 
 func TestCreateSalesDocumentValidatesBeforeWriting(t *testing.T) {
@@ -520,63 +520,92 @@ func TestClassifyDocumentError(t *testing.T) {
 	}{
 		{
 			"rate limited",
-			&businesscentral.APIError{Status: 429},
+			&businesscentralerrors.APIError{Status: 429},
 			accountingsync.SyncErrorRateLimited,
 			30 * time.Second,
 		},
 		{
 			"rate limited with wait",
-			&businesscentral.APIError{Status: 429, RetryAfter: 7 * time.Second},
+			&businesscentralerrors.APIError{Status: 429, RetryAfter: 7 * time.Second},
 			accountingsync.SyncErrorRateLimited,
 			7 * time.Second,
 		},
-		{"auth", &businesscentral.APIError{Status: 401, Code: "Authentication_InvalidCredentials"},
-			accountingsync.SyncErrorAuth, 0},
+		{
+			"auth",
+			&businesscentralerrors.APIError{Status: 401, Code: "Authentication_InvalidCredentials"},
+			accountingsync.SyncErrorAuth,
+			0,
+		},
 		{
 			"revoked",
-			&businesscentral.OAuthError{Code: "invalid_grant"},
+			&businesscentralerrors.OAuthError{Code: "invalid_grant"},
 			accountingsync.SyncErrorAuth,
 			0,
 		},
 		{
 			"forbidden",
-			&businesscentral.APIError{Status: 403, Code: "Authorization_InsufficientPermissions"},
+			&businesscentralerrors.APIError{
+				Status: 403,
+				Code:   "Authorization_InsufficientPermissions",
+			},
 			accountingsync.SyncErrorConfiguration,
 			0,
 		},
 		{"not configured", ErrNotConfigured, accountingsync.SyncErrorConfiguration, 0},
 		{
 			"unavailable",
-			&businesscentral.APIError{Status: 503},
+			&businesscentralerrors.APIError{Status: 503},
 			accountingsync.SyncErrorTransient,
 			0,
 		},
-		{"timeout", &businesscentral.APIError{Status: 408}, accountingsync.SyncErrorTransient, 0},
+		{
+			"timeout",
+			&businesscentralerrors.APIError{Status: 408},
+			accountingsync.SyncErrorTransient,
+			0,
+		},
 		{
 			"duplicate",
-			&businesscentral.APIError{Status: 400, Code: businesscentral.CodeEntityWithSameKey},
+			&businesscentralerrors.APIError{
+				Status: 400,
+				Code:   businesscentralerrors.CodeEntityWithSameKey,
+			},
 			accountingsync.SyncErrorDuplicate,
 			0,
 		},
 		{"duplicate name", errDuplicateName, accountingsync.SyncErrorDuplicate, 0},
-		{"changed", &businesscentral.APIError{Status: 400, Code: businesscentral.CodeEntityChanged},
-			accountingsync.SyncErrorConflict, 0},
-		{"posting date", &businesscentral.APIError{
-			Status: 400, Code: businesscentral.CodeDialogException,
+		{
+			"changed",
+			&businesscentralerrors.APIError{
+				Status: 400,
+				Code:   businesscentralerrors.CodeEntityChanged,
+			},
+			accountingsync.SyncErrorConflict,
+			0,
+		},
+		{"posting date", &businesscentralerrors.APIError{
+			Status: 400, Code: businesscentralerrors.CodeDialogException,
 			Message: "Posting Date is not within your range of allowed posting dates",
 		}, accountingsync.SyncErrorClosedPeriod, 0},
 		{
 			"missing",
-			&businesscentral.APIError{Status: 404, Code: businesscentral.CodeRecordNotFound},
+			&businesscentralerrors.APIError{
+				Status: 404,
+				Code:   businesscentralerrors.CodeRecordNotFound,
+			},
 			accountingsync.SyncErrorNotFound,
 			0,
 		},
-		{"dialog", &businesscentral.APIError{
-			Status: 400, Code: businesscentral.CodeDialogException, Message: "Item is blocked",
+		{"dialog", &businesscentralerrors.APIError{
+			Status: 400, Code: businesscentralerrors.CodeDialogException, Message: "Item is blocked",
 		}, accountingsync.SyncErrorValidation, 0},
-		{"bad request", &businesscentral.APIError{Status: 400, Code: "BadRequest_PropertyNotFound"},
-			accountingsync.SyncErrorValidation, 0},
-		{"local", businesscentral.ErrFieldTooLong, accountingsync.SyncErrorValidation, 0},
+		{
+			"bad request",
+			&businesscentralerrors.APIError{Status: 400, Code: "BadRequest_PropertyNotFound"},
+			accountingsync.SyncErrorValidation,
+			0,
+		},
+		{"local", businesscentralerrors.ErrFieldTooLong, accountingsync.SyncErrorValidation, 0},
 		{"unknown", errors.New("boom"), accountingsync.SyncErrorTransient, 0},
 		{"held", held, accountingsync.SyncErrorMapping, 0},
 	}
@@ -589,9 +618,9 @@ func TestClassifyDocumentError(t *testing.T) {
 	assert.Nil(t, conn.ClassifyDocumentError(nil))
 	assert.Same(t, held, conn.ClassifyDocumentError(held))
 
-	dialog := conn.ClassifyDocumentError(&businesscentral.APIError{
-		Status: 400, Code: businesscentral.CodeDialogException, Message: "Item is blocked",
+	dialog := conn.ClassifyDocumentError(&businesscentralerrors.APIError{
+		Status: 400, Code: businesscentralerrors.CodeDialogException, Message: "Item is blocked",
 	})
 	assert.Equal(t, "Item is blocked", dialog.Message)
-	assert.Equal(t, businesscentral.CodeDialogException, dialog.Code)
+	assert.Equal(t, businesscentralerrors.CodeDialogException, dialog.Code)
 }

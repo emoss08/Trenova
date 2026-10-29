@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -82,39 +85,39 @@ func documentPage(kind accountingsync.SyncObjectType) int {
 	}
 }
 
-func purchasePage(kind businesscentral.DocumentKind) int {
-	if kind == businesscentral.DocumentPurchaseCreditMemo {
+func purchasePage(kind businesscentraldocs.DocumentKind) int {
+	if kind == businesscentraldocs.DocumentPurchaseCreditMemo {
 		return businesscentral.PagePostedPurchaseCreditMemo
 	}
 	return businesscentral.PagePostedPurchaseInvoice
 }
 
-func salesKindOf(kind accountingsync.SyncObjectType) (businesscentral.DocumentKind, error) {
+func salesKindOf(kind accountingsync.SyncObjectType) (businesscentraldocs.DocumentKind, error) {
 	if kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo {
-		return businesscentral.DocumentSalesInvoice, nil
+		return businesscentraldocs.DocumentSalesInvoice, nil
 	}
 	if kind == accountingsync.SyncObjectCreditMemo {
-		return businesscentral.DocumentSalesCreditMemo, nil
+		return businesscentraldocs.DocumentSalesCreditMemo, nil
 	}
 	return 0, errDocumentKind
 }
 
 type documentWrite struct {
 	client  *businesscentral.Client
-	kind    businesscentral.DocumentKind
-	input   *businesscentral.DocumentInput
+	kind    businesscentraldocs.DocumentKind
+	input   *businesscentraldocs.DocumentInput
 	refs    map[string]string
 	refKey  string
 	exclude string
 }
 
-func postDocument(ctx context.Context, w *documentWrite) (*businesscentral.Document, error) {
+func postDocument(ctx context.Context, w *documentWrite) (*businesscentraldocs.Document, error) {
 	current, found, err := resumeDocument(ctx, w)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		if current, err = w.client.CreateDocument(ctx, w.kind, w.input); err != nil {
+		if current, err = businesscentraldocs.CreateDocument(ctx, w.client, w.kind, w.input); err != nil {
 			return nil, err
 		}
 	}
@@ -122,30 +125,31 @@ func postDocument(ctx context.Context, w *documentWrite) (*businesscentral.Docum
 	if !current.IsDraft() {
 		return current, nil
 	}
-	if err = w.client.PostDocument(ctx, w.kind, current.ID); err != nil {
+	if err = businesscentraldocs.PostDocument(ctx, w.client, w.kind, current.ID); err != nil {
 		return nil, err
 	}
-	return w.client.Document(ctx, w.kind, current.ID)
+	return businesscentraldocs.ReadDocument(ctx, w.client, w.kind, current.ID)
 }
 
 func resumeDocument(
 	ctx context.Context,
 	w *documentWrite,
-) (*businesscentral.Document, bool, error) {
+) (*businesscentraldocs.Document, bool, error) {
 	if id := strings.TrimSpace(w.refs[w.refKey]); id != "" {
-		held, err := w.client.Document(ctx, w.kind, id)
+		held, err := businesscentraldocs.ReadDocument(ctx, w.client, w.kind, id)
 		switch {
 		case err == nil && !retired(held.Status) && !sameID(held.ID, w.exclude):
 			return held, true, nil
-		case err != nil && !businesscentral.IsNotFound(err):
+		case err != nil && !businesscentralerrors.IsNotFound(err):
 			return nil, false, err
 		}
 	}
 	if w.input.ExternalDocumentNumber == "" {
 		return nil, false, nil
 	}
-	listed, err := w.client.FindDocuments(
+	listed, err := businesscentraldocs.FindDocuments(
 		ctx,
+		w.client,
 		w.kind,
 		w.input.ExternalDocumentNumber,
 		w.input.PartyID,
@@ -153,7 +157,7 @@ func resumeDocument(
 	if err != nil {
 		return nil, false, err
 	}
-	var draft *businesscentral.Document
+	var draft *businesscentraldocs.Document
 	for idx := range listed {
 		doc := &listed[idx]
 		if retired(doc.Status) || sameID(doc.ID, w.exclude) {
@@ -170,7 +174,8 @@ func resumeDocument(
 }
 
 func retired(status string) bool {
-	return status == businesscentral.StatusCanceled || status == businesscentral.StatusCorrective
+	return status == businesscentraldocs.StatusCanceled ||
+		status == businesscentraldocs.StatusCorrective
 }
 
 func (c *Connector) UpsertCustomer(
@@ -179,7 +184,7 @@ func (c *Connector) UpsertCustomer(
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
-		kind:       businesscentral.PartyCustomer,
+		kind:       businesscentralref.PartyCustomer,
 		externalID: doc.ExternalID,
 		party:      &doc.Party,
 	})
@@ -207,7 +212,7 @@ func (c *Connector) CreateSalesDocument(
 func (c *Connector) writeSales(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	doc *accountingconnectorports.AccountingSalesDocument,
 	result *accountingconnectorports.AccountingDocumentResult,
 ) error {
@@ -238,9 +243,9 @@ func (c *Connector) writeSales(
 func (c *Connector) salesInput(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	doc *accountingconnectorports.AccountingSalesDocument,
-) (*businesscentral.DocumentInput, error) {
+) (*businesscentraldocs.DocumentInput, error) {
 	lines, err := salesLines(doc.Lines)
 	if err != nil {
 		return nil, err
@@ -249,7 +254,7 @@ func (c *Connector) salesInput(
 	if err != nil {
 		return nil, err
 	}
-	input := &businesscentral.DocumentInput{
+	input := &businesscentraldocs.DocumentInput{
 		PartyID:                doc.CustomerExternalID,
 		ExternalDocumentNumber: docReference(doc.DocNumber, doc.RequestID),
 		DocumentDate:           doc.TxnDate,
@@ -257,11 +262,11 @@ func (c *Connector) salesInput(
 		CurrencyCode:           posting.currency(doc.CurrencyCode),
 		Lines:                  lines,
 	}
-	if kind == businesscentral.DocumentSalesInvoice {
+	if kind == businesscentraldocs.DocumentSalesInvoice {
 		input.DueDate = doc.DueDate
 		input.PaymentTermsID = doc.TermExternalID
 	}
-	if kind == businesscentral.DocumentSalesCreditMemo &&
+	if kind == businesscentraldocs.DocumentSalesCreditMemo &&
 		strings.TrimSpace(doc.ApplyToExternalID) != "" && doc.ApplyAmount.IsPositive() {
 		input.InvoiceID = strings.TrimSpace(doc.ApplyToExternalID)
 	}
@@ -270,11 +275,11 @@ func (c *Connector) salesInput(
 
 func salesLines(
 	lines []accountingconnectorports.AccountingDocumentLine,
-) ([]businesscentral.LineInput, error) {
+) ([]businesscentraldocs.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
-	out := make([]businesscentral.LineInput, 0, len(lines))
+	out := make([]businesscentraldocs.LineInput, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		purpose := linePurpose(idx, line.Description)
@@ -285,7 +290,7 @@ func salesLines(
 			return nil, negativeLine(purpose)
 		}
 		quantity, price := lineQuantity(line)
-		out = append(out, businesscentral.LineInput{
+		out = append(out, businesscentraldocs.LineInput{
 			ItemID:      strings.TrimSpace(line.ItemExternalID),
 			Description: lineDescription(line.Description),
 			Quantity:    quantity,
@@ -378,12 +383,12 @@ func (c *Connector) VoidSalesDocument(
 func (c *Connector) retireDocument(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	id string,
 ) (string, error) {
-	current, err := client.Document(ctx, kind, id)
+	current, err := businesscentraldocs.ReadDocument(ctx, client, kind, id)
 	if err != nil {
-		if businesscentral.IsNotFound(err) {
+		if businesscentralerrors.IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
@@ -392,22 +397,22 @@ func (c *Connector) retireDocument(
 	case retired(current.Status):
 		return correctiveOf(ctx, client, kind, current)
 	case current.IsDraft():
-		if err = client.DeleteDocument(ctx, kind, current.ID, current.ETag); err != nil &&
-			!businesscentral.IsNotFound(err) {
+		if err = businesscentraldocs.DeleteDocument(ctx, client, kind, current.ID, current.ETag); err != nil &&
+			!businesscentralerrors.IsNotFound(err) {
 			return "", err
 		}
 		return "", nil
-	case kind == businesscentral.DocumentSalesInvoice && settled(current):
+	case kind == businesscentraldocs.DocumentSalesInvoice && settled(current):
 		return "", paidConflict()
 	}
-	if err = client.CancelDocument(ctx, kind, current.ID); err != nil {
+	if err = businesscentraldocs.CancelDocument(ctx, client, kind, current.ID); err != nil {
 		return "", err
 	}
 	return correctiveOf(ctx, client, kind, current)
 }
 
-func settled(doc *businesscentral.Document) bool {
-	if doc.Status == businesscentral.StatusPaid {
+func settled(doc *businesscentraldocs.Document) bool {
+	if doc.Status == businesscentraldocs.StatusPaid {
 		return true
 	}
 	return doc.TotalAmountIncludingTax.IsPositive() &&
@@ -417,18 +422,23 @@ func settled(doc *businesscentral.Document) bool {
 func correctiveOf(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.DocumentKind,
-	invoice *businesscentral.Document,
+	kind businesscentraldocs.DocumentKind,
+	invoice *businesscentraldocs.Document,
 ) (string, error) {
-	if kind != businesscentral.DocumentSalesInvoice || invoice.LastModified.IsZero() {
+	if kind != businesscentraldocs.DocumentSalesInvoice || invoice.LastModified.IsZero() {
 		return "", nil
 	}
 	since := invoice.LastModified.Add(-correctiveLookback)
-	memos, err := client.Documents(ctx, businesscentral.DocumentSalesCreditMemo, &since)
+	memos, err := businesscentraldocs.Documents(
+		ctx,
+		client,
+		businesscentraldocs.DocumentSalesCreditMemo,
+		&since,
+	)
 	if err != nil {
 		return "", err
 	}
-	var found *businesscentral.Document
+	var found *businesscentraldocs.Document
 	for idx := range memos {
 		memo := &memos[idx]
 		if !sameID(memo.InvoiceID, invoice.ID) {

@@ -1,4 +1,4 @@
-package businesscentral
+package businesscentraldocs
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -18,7 +21,6 @@ const (
 	StatusCorrective = "Corrective"
 	LineTypeItem     = "Item"
 	LineTypeAccount  = "Account"
-	actionPost       = "post"
 	actionCancel     = "cancel"
 	idField          = "id"
 )
@@ -68,7 +70,7 @@ func (k DocumentKind) spec() (documentSpec, error) {
 			creditMemo: true, cancellable: true,
 		}, nil
 	default:
-		return documentSpec{}, ErrUnknownKind
+		return documentSpec{}, businesscentralerrors.ErrUnknownKind
 	}
 }
 
@@ -131,28 +133,28 @@ type Line struct {
 }
 
 type wireDocument struct {
-	ID                      string          `json:"id"`
-	Number                  string          `json:"number"`
-	ExternalDocumentNumber  string          `json:"externalDocumentNumber"`
-	VendorInvoiceNumber     string          `json:"vendorInvoiceNumber"`
-	VendorCreditMemoNumber  string          `json:"vendorCreditMemoNumber"`
-	InvoiceDate             string          `json:"invoiceDate"`
-	CreditMemoDate          string          `json:"creditMemoDate"`
-	PostingDate             string          `json:"postingDate"`
-	DueDate                 string          `json:"dueDate"`
-	CustomerID              string          `json:"customerId"`
-	CustomerNumber          string          `json:"customerNumber"`
-	VendorID                string          `json:"vendorId"`
-	VendorNumber            string          `json:"vendorNumber"`
-	CurrencyCode            string          `json:"currencyCode"`
-	PaymentTermsID          string          `json:"paymentTermsId"`
-	InvoiceID               string          `json:"invoiceId"`
-	InvoiceNumber           string          `json:"invoiceNumber"`
-	Status                  string          `json:"status"`
-	TotalAmountIncludingTax decimal.Decimal `json:"totalAmountIncludingTax"`
-	RemainingAmount         decimal.Decimal `json:"remainingAmount"`
-	LastModifiedDateTime    wireTime        `json:"lastModifiedDateTime"`
-	ETag                    string          `json:"@odata.etag"`
+	ID                      string                   `json:"id"`
+	Number                  string                   `json:"number"`
+	ExternalDocumentNumber  string                   `json:"externalDocumentNumber"`
+	VendorInvoiceNumber     string                   `json:"vendorInvoiceNumber"`
+	VendorCreditMemoNumber  string                   `json:"vendorCreditMemoNumber"`
+	InvoiceDate             string                   `json:"invoiceDate"`
+	CreditMemoDate          string                   `json:"creditMemoDate"`
+	PostingDate             string                   `json:"postingDate"`
+	DueDate                 string                   `json:"dueDate"`
+	CustomerID              string                   `json:"customerId"`
+	CustomerNumber          string                   `json:"customerNumber"`
+	VendorID                string                   `json:"vendorId"`
+	VendorNumber            string                   `json:"vendorNumber"`
+	CurrencyCode            string                   `json:"currencyCode"`
+	PaymentTermsID          string                   `json:"paymentTermsId"`
+	InvoiceID               string                   `json:"invoiceId"`
+	InvoiceNumber           string                   `json:"invoiceNumber"`
+	Status                  string                   `json:"status"`
+	TotalAmountIncludingTax decimal.Decimal          `json:"totalAmountIncludingTax"`
+	RemainingAmount         decimal.Decimal          `json:"remainingAmount"`
+	LastModifiedDateTime    businesscentral.WireTime `json:"lastModifiedDateTime"`
+	ETag                    string                   `json:"@odata.etag"`
 }
 
 func (w *wireDocument) document(kind DocumentKind) Document {
@@ -160,22 +162,26 @@ func (w *wireDocument) document(kind DocumentKind) Document {
 		Kind:   kind,
 		ID:     strings.ToLower(w.ID),
 		Number: w.Number,
-		ExternalDocumentNumber: firstNonBlank(
-			w.ExternalDocumentNumber, w.VendorInvoiceNumber, w.VendorCreditMemoNumber,
+		ExternalDocumentNumber: stringutils.FirstNonEmptyTrimmed(
+			w.ExternalDocumentNumber, w.VendorInvoiceNumber, w.VendorCreditMemoNumber),
+
+		DocumentDate: businesscentral.OutputDate(
+			stringutils.FirstNonEmptyTrimmed(w.InvoiceDate, w.CreditMemoDate),
 		),
-		DocumentDate:            outputDate(firstNonBlank(w.InvoiceDate, w.CreditMemoDate)),
-		PostingDate:             outputDate(w.PostingDate),
-		DueDate:                 outputDate(w.DueDate),
-		PartyID:                 emptyGUID(firstNonBlank(w.CustomerID, w.VendorID)),
-		PartyNumber:             firstNonBlank(w.CustomerNumber, w.VendorNumber),
+		PostingDate: businesscentral.OutputDate(w.PostingDate),
+		DueDate:     businesscentral.OutputDate(w.DueDate),
+		PartyID: businesscentral.EmptyGUID(
+			stringutils.FirstNonEmptyTrimmed(w.CustomerID, w.VendorID),
+		),
+		PartyNumber:             stringutils.FirstNonEmptyTrimmed(w.CustomerNumber, w.VendorNumber),
 		CurrencyCode:            strings.ToUpper(strings.TrimSpace(w.CurrencyCode)),
-		PaymentTermsID:          emptyGUID(w.PaymentTermsID),
-		InvoiceID:               emptyGUID(w.InvoiceID),
+		PaymentTermsID:          businesscentral.EmptyGUID(w.PaymentTermsID),
+		InvoiceID:               businesscentral.EmptyGUID(w.InvoiceID),
 		InvoiceNumber:           w.InvoiceNumber,
-		Status:                  enumValue(w.Status),
+		Status:                  businesscentral.EnumValue(w.Status),
 		TotalAmountIncludingTax: w.TotalAmountIncludingTax,
 		RemainingAmount:         w.RemainingAmount,
-		LastModified:            w.LastModifiedDateTime.time(),
+		LastModified:            w.LastModifiedDateTime.Time(),
 		ETag:                    w.ETag,
 	}
 }
@@ -185,13 +191,13 @@ func documentConverter(kind DocumentKind) func(*wireDocument) Document {
 }
 
 type lineBody struct {
-	LineType       string  `json:"lineType"`
-	ItemID         string  `json:"itemId,omitempty"`
-	AccountID      string  `json:"accountId,omitempty"`
-	Description    string  `json:"description,omitempty"`
-	Quantity       *number `json:"quantity"`
-	UnitPrice      *number `json:"unitPrice,omitempty"`
-	DirectUnitCost *number `json:"directUnitCost,omitempty"`
+	LineType       string                  `json:"lineType"`
+	ItemID         string                  `json:"itemId,omitempty"`
+	AccountID      string                  `json:"accountId,omitempty"`
+	Description    string                  `json:"description,omitempty"`
+	Quantity       *businesscentral.Number `json:"quantity"`
+	UnitPrice      *businesscentral.Number `json:"unitPrice,omitempty"`
+	DirectUnitCost *businesscentral.Number `json:"directUnitCost,omitempty"`
 }
 
 type wireLine struct {
@@ -218,9 +224,9 @@ func lineConverter(sales bool) func(*wireLine) Line {
 			ID:                 strings.ToLower(w.ID),
 			DocumentID:         strings.ToLower(w.DocumentID),
 			Sequence:           w.Sequence,
-			LineType:           enumValue(w.LineType),
-			ItemID:             emptyGUID(w.ItemID),
-			AccountID:          emptyGUID(w.AccountID),
+			LineType:           businesscentral.EnumValue(w.LineType),
+			ItemID:             businesscentral.EmptyGUID(w.ItemID),
+			AccountID:          businesscentral.EmptyGUID(w.AccountID),
 			Description:        w.Description,
 			Quantity:           w.Quantity,
 			UnitPrice:          price,
@@ -272,8 +278,9 @@ func (b *documentBody) assign(kind DocumentKind, f *documentFields) {
 	}
 }
 
-func (c *Client) Documents(
+func Documents(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	modifiedSince *time.Time,
 ) ([]Document, error) {
@@ -281,15 +288,16 @@ func (c *Client) Documents(
 	if err != nil {
 		return nil, err
 	}
-	return collect(ctx, c.core, &listCall{
-		endpoint: spec.entity,
-		path:     c.collectionPath(spec.entity),
-		filter:   filterModifiedSince(modifiedSince),
+	return businesscentral.Collect(ctx, c.Core(), &businesscentral.ListCall{
+		Endpoint: spec.entity,
+		Path:     c.CollectionPath(spec.entity),
+		Filter:   businesscentral.FilterModifiedSince(modifiedSince),
 	}, documentConverter(kind))
 }
 
-func (c *Client) DocumentsByID(
+func DocumentsByID(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	ids []string,
 ) ([]Document, error) {
@@ -297,22 +305,23 @@ func (c *Client) DocumentsByID(
 	if err != nil {
 		return nil, err
 	}
-	unique, err := guids(ids, MaxIDsPerRead)
+	unique, err := businesscentral.GUIDs(ids, businesscentral.MaxIDsPerRead)
 	if err != nil {
 		return nil, err
 	}
 	if len(unique) == 0 {
 		return []Document{}, nil
 	}
-	return collect(ctx, c.core, &listCall{
-		endpoint: spec.entity + "-by-id",
-		path:     c.collectionPath(spec.entity),
-		filter:   filterIn(idField, unique),
+	return businesscentral.Collect(ctx, c.Core(), &businesscentral.ListCall{
+		Endpoint: spec.entity + "-by-id",
+		Path:     c.CollectionPath(spec.entity),
+		Filter:   businesscentral.FilterIn(idField, unique),
 	}, documentConverter(kind))
 }
 
-func (c *Client) FindDocuments(
+func FindDocuments(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	externalDocumentNumber, partyID string,
 ) ([]Document, error) {
@@ -321,30 +330,34 @@ func (c *Client) FindDocuments(
 		return nil, err
 	}
 	reference := strings.TrimSpace(externalDocumentNumber)
-	if !textWithin(reference, MaxExternalDocumentNumberLength) {
-		return nil, ErrInvalidFilter
+	if !businesscentral.TextWithin(reference, businesscentral.MaxExternalDocumentNumberLength) {
+		return nil, businesscentralerrors.ErrInvalidFilter
 	}
-	literal, err := odataString(reference)
+	literal, err := businesscentral.ODataString(reference)
 	if err != nil {
 		return nil, err
 	}
-	party, err := optionalGUID(partyID)
+	party, err := businesscentral.OptionalGUID(partyID)
 	if err != nil {
 		return nil, err
 	}
 	partyClause := ""
 	if party != "" {
-		partyClause = filterEquals(spec.partyField, party)
+		partyClause = businesscentral.FilterEquals(spec.partyField, party)
 	}
-	return collect(ctx, c.core, &listCall{
-		endpoint: spec.entity + suffixSearch,
-		path:     c.collectionPath(spec.entity),
-		filter:   filterJoin(filterEquals(spec.referenceField, literal), partyClause),
+	return businesscentral.Collect(ctx, c.Core(), &businesscentral.ListCall{
+		Endpoint: spec.entity + businesscentral.SuffixSearch,
+		Path:     c.CollectionPath(spec.entity),
+		Filter: businesscentral.FilterJoin(
+			businesscentral.FilterEquals(spec.referenceField, literal),
+			partyClause,
+		),
 	}, documentConverter(kind))
 }
 
-func (c *Client) Document(
+func ReadDocument(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	documentID string,
 ) (*Document, error) {
@@ -352,19 +365,20 @@ func (c *Client) Document(
 	if err != nil {
 		return nil, err
 	}
-	id, err := guid(documentID)
+	id, err := businesscentral.GUID(documentID)
 	if err != nil {
 		return nil, err
 	}
-	return fetchOne(ctx, c.core, &call{
-		endpoint: spec.entity + suffixGet,
-		method:   http.MethodGet,
-		path:     c.entityPath(spec.entity, id),
+	return businesscentral.FetchOne(ctx, c.Core(), &businesscentral.Call{
+		Endpoint: spec.entity + businesscentral.SuffixGet,
+		Method:   http.MethodGet,
+		Path:     c.EntityPath(spec.entity, id),
 	}, documentConverter(kind))
 }
 
-func (c *Client) CreateDocument(
+func CreateDocument(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	in *DocumentInput,
 ) (*Document, error) {
@@ -376,17 +390,18 @@ func (c *Client) CreateDocument(
 	if err != nil {
 		return nil, err
 	}
-	return fetchOne(ctx, c.core, &call{
-		endpoint: spec.entity + suffixCreate,
-		method:   http.MethodPost,
-		path:     c.collectionPath(spec.entity),
-		body:     body,
-		expected: []int{http.StatusCreated},
+	return businesscentral.FetchOne(ctx, c.Core(), &businesscentral.Call{
+		Endpoint: spec.entity + businesscentral.SuffixCreate,
+		Method:   http.MethodPost,
+		Path:     c.CollectionPath(spec.entity),
+		Body:     body,
+		Expected: []int{http.StatusCreated},
 	}, documentConverter(kind))
 }
 
-func (c *Client) CreateDocumentLine(
+func CreateDocumentLine(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	documentID string,
 	in *LineInput,
@@ -395,7 +410,7 @@ func (c *Client) CreateDocumentLine(
 	if err != nil {
 		return nil, err
 	}
-	id, err := guid(documentID)
+	id, err := businesscentral.GUID(documentID)
 	if err != nil {
 		return nil, err
 	}
@@ -403,17 +418,18 @@ func (c *Client) CreateDocumentLine(
 	if err != nil {
 		return nil, err
 	}
-	return fetchOne(ctx, c.core, &call{
-		endpoint: spec.linesEntity + suffixCreate,
-		method:   http.MethodPost,
-		path:     c.entityPath(spec.entity, id) + "/" + spec.linesEntity,
-		body:     body,
-		expected: []int{http.StatusCreated},
+	return businesscentral.FetchOne(ctx, c.Core(), &businesscentral.Call{
+		Endpoint: spec.linesEntity + businesscentral.SuffixCreate,
+		Method:   http.MethodPost,
+		Path:     c.EntityPath(spec.entity, id) + "/" + spec.linesEntity,
+		Body:     body,
+		Expected: []int{http.StatusCreated},
 	}, lineConverter(spec.sales))
 }
 
-func (c *Client) DeleteDocument(
+func DeleteDocument(
 	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	documentID, etag string,
 ) error {
@@ -421,23 +437,39 @@ func (c *Client) DeleteDocument(
 	if err != nil {
 		return err
 	}
-	id, err := guid(documentID)
+	id, err := businesscentral.GUID(documentID)
 	if err != nil {
 		return err
 	}
-	return c.remove(ctx, spec.entity+suffixDelete, c.entityPath(spec.entity, id), etag)
+	return c.Remove(
+		ctx,
+		spec.entity+businesscentral.SuffixDelete,
+		c.EntityPath(spec.entity, id),
+		etag,
+	)
 }
 
-func (c *Client) PostDocument(ctx context.Context, kind DocumentKind, documentID string) error {
-	return c.documentAction(ctx, kind, documentID, actionPost)
-}
-
-func (c *Client) CancelDocument(ctx context.Context, kind DocumentKind, documentID string) error {
-	return c.documentAction(ctx, kind, documentID, actionCancel)
-}
-
-func (c *Client) documentAction(
+func PostDocument(
 	ctx context.Context,
+	c *businesscentral.Client,
+	kind DocumentKind,
+	documentID string,
+) error {
+	return documentAction(ctx, c, kind, documentID, businesscentral.ActionPost)
+}
+
+func CancelDocument(
+	ctx context.Context,
+	c *businesscentral.Client,
+	kind DocumentKind,
+	documentID string,
+) error {
+	return documentAction(ctx, c, kind, documentID, actionCancel)
+}
+
+func documentAction(
+	ctx context.Context,
+	c *businesscentral.Client,
 	kind DocumentKind,
 	documentID, action string,
 ) error {
@@ -446,13 +478,13 @@ func (c *Client) documentAction(
 		return err
 	}
 	if action == actionCancel && !spec.cancellable {
-		return ErrUnsupportedAction
+		return businesscentralerrors.ErrUnsupportedAction
 	}
-	id, err := guid(documentID)
+	id, err := businesscentral.GUID(documentID)
 	if err != nil {
 		return err
 	}
-	return c.invoke(ctx, spec.entity+"-"+action, c.actionPath(spec.entity, id, action))
+	return c.Invoke(ctx, spec.entity+"-"+action, c.ActionPath(spec.entity, id, action))
 }
 
 func (in *DocumentInput) body(kind DocumentKind, spec *documentSpec) (documentBody, error) {
@@ -462,43 +494,46 @@ func (in *DocumentInput) body(kind DocumentKind, spec *documentSpec) (documentBo
 	}
 	var body documentBody
 	body.assign(kind, &fields)
-	if body.PostingDate, err = inputDate(in.PostingDate, false); err != nil {
+	if body.PostingDate, err = businesscentral.InputDate(in.PostingDate, false); err != nil {
 		return documentBody{}, err
 	}
-	if body.DueDate, err = inputDate(in.DueDate, false); err != nil {
+	if body.DueDate, err = businesscentral.InputDate(in.DueDate, false); err != nil {
 		return documentBody{}, err
 	}
-	if body.CurrencyCode, err = currencyCode(in.CurrencyCode); err != nil {
+	if body.CurrencyCode, err = businesscentral.CurrencyCode(in.CurrencyCode); err != nil {
 		return documentBody{}, err
 	}
-	if body.PaymentTermsID, err = optionalGUID(in.PaymentTermsID); err != nil {
+	if body.PaymentTermsID, err = businesscentral.OptionalGUID(in.PaymentTermsID); err != nil {
 		return documentBody{}, err
 	}
 	if body.PaymentTermsID != "" && !spec.sales {
-		return documentBody{}, ErrFieldNotSupported
+		return documentBody{}, businesscentralerrors.ErrFieldNotSupported
 	}
-	if body.InvoiceID, err = optionalGUID(in.InvoiceID); err != nil {
+	if body.InvoiceID, err = businesscentral.OptionalGUID(in.InvoiceID); err != nil {
 		return documentBody{}, err
 	}
 	if body.InvoiceID != "" && !spec.creditMemo {
-		return documentBody{}, ErrFieldNotSupported
+		return documentBody{}, businesscentralerrors.ErrFieldNotSupported
 	}
 	return body, nil
 }
 
 func (in *DocumentInput) fields(spec *documentSpec) (documentFields, error) {
-	party, err := guid(in.PartyID)
+	party, err := businesscentral.GUID(in.PartyID)
 	if err != nil {
 		if strings.TrimSpace(in.PartyID) == "" {
-			return documentFields{}, ErrPartyRequired
+			return documentFields{}, businesscentralerrors.ErrPartyRequired
 		}
 		return documentFields{}, err
 	}
-	reference, err := cleanText(in.ExternalDocumentNumber, MaxExternalDocumentNumberLength)
+	reference, err := businesscentral.CleanText(
+		in.ExternalDocumentNumber,
+		businesscentral.MaxExternalDocumentNumberLength,
+	)
 	if err != nil {
 		return documentFields{}, err
 	}
-	date, err := inputDate(in.DocumentDate, false)
+	date, err := businesscentral.InputDate(in.DocumentDate, false)
 	if err != nil {
 		return documentFields{}, err
 	}
@@ -525,41 +560,44 @@ func lineBodies(lines []LineInput, sales bool) ([]lineBody, error) {
 }
 
 func (in *LineInput) body(sales bool) (lineBody, error) {
-	itemID, err := optionalGUID(in.ItemID)
+	itemID, err := businesscentral.OptionalGUID(in.ItemID)
 	if err != nil {
 		return lineBody{}, err
 	}
-	accountID, err := optionalGUID(in.AccountID)
+	accountID, err := businesscentral.OptionalGUID(in.AccountID)
 	if err != nil {
 		return lineBody{}, err
 	}
 	if (itemID == "") == (accountID == "") {
-		return lineBody{}, ErrLinesRequired
+		return lineBody{}, businesscentralerrors.ErrLinesRequired
 	}
-	description, err := cleanText(in.Description, MaxDescriptionLength)
+	description, err := businesscentral.CleanText(
+		in.Description,
+		businesscentral.MaxDescriptionLength,
+	)
 	if err != nil {
 		return lineBody{}, err
 	}
 	if !in.Quantity.IsPositive() {
-		return lineBody{}, ErrQuantityInvalid
+		return lineBody{}, businesscentralerrors.ErrQuantityInvalid
 	}
 	if in.UnitPrice.IsNegative() {
-		return lineBody{}, ErrPriceInvalid
+		return lineBody{}, businesscentralerrors.ErrPriceInvalid
 	}
 	body := lineBody{
 		LineType:    LineTypeAccount,
 		ItemID:      itemID,
 		AccountID:   accountID,
 		Description: description,
-		Quantity:    numberOf(in.Quantity),
+		Quantity:    businesscentral.NumberOf(in.Quantity),
 	}
 	if itemID != "" {
 		body.LineType = LineTypeItem
 	}
 	if sales {
-		body.UnitPrice = numberOf(in.UnitPrice)
+		body.UnitPrice = businesscentral.NumberOf(in.UnitPrice)
 	} else {
-		body.DirectUnitCost = numberOf(in.UnitPrice)
+		body.DirectUnitCost = businesscentral.NumberOf(in.UnitPrice)
 	}
 	return body, nil
 }

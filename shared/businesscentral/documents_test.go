@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,11 +28,16 @@ func TestSalesInvoicesSinceAndShape(t *testing.T) {
 		_, _ = w.Write(fixture(t, "sales_invoices.json"))
 	})
 
-	docs, err := client.Documents(t.Context(), businesscentral.DocumentSalesInvoice, &since)
+	docs, err := businesscentraldocs.Documents(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		&since,
+	)
 	require.NoError(t, err)
 	require.Len(t, docs, 2)
 	open := docs[0]
-	assert.Equal(t, businesscentral.DocumentSalesInvoice, open.Kind)
+	assert.Equal(t, businesscentraldocs.DocumentSalesInvoice, open.Kind)
 	assert.Equal(t, testInvoice, open.ID)
 	assert.Equal(t, "PS-INV103001", open.Number)
 	assert.Equal(t, "TRN-1001", open.ExternalDocumentNumber)
@@ -41,7 +48,7 @@ func TestSalesInvoicesSinceAndShape(t *testing.T) {
 	assert.Equal(t, "C00010", open.PartyNumber)
 	assert.Equal(t, "USD", open.CurrencyCode)
 	assert.Equal(t, "66666666-7777-4888-8999-aaaaaaaaaaa1", open.PaymentTermsID)
-	assert.Equal(t, businesscentral.StatusOpen, open.Status)
+	assert.Equal(t, businesscentraldocs.StatusOpen, open.Status)
 	assert.True(t, dec("1250.5").Equal(open.TotalAmountIncludingTax))
 	assert.True(t, dec("250.5").Equal(open.RemainingAmount))
 	assert.Equal(t, time.Date(2026, 9, 1, 18, 0, 0, 123000000, time.UTC), open.LastModified)
@@ -62,17 +69,32 @@ func TestFindSalesInvoiceByExternalNumberAndCustomer(t *testing.T) {
 		_, _ = w.Write(fixture(t, "sales_invoices.json"))
 	})
 
-	docs, err := client.FindDocuments(t.Context(), businesscentral.DocumentSalesInvoice,
-		"TRN'1001", strings.ToUpper(testCustomer))
+	docs, err := businesscentraldocs.FindDocuments(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		"TRN'1001",
+		strings.ToUpper(testCustomer),
+	)
 	require.NoError(t, err)
 	assert.Len(t, docs, 2)
 
-	_, err = client.FindDocuments(t.Context(), businesscentral.DocumentSalesInvoice,
-		strings.Repeat("x", 36), "")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidFilter)
-	_, err = client.FindDocuments(t.Context(), businesscentral.DocumentSalesInvoice,
-		"TRN-1", "1 or 1 eq 1")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidID)
+	_, err = businesscentraldocs.FindDocuments(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		strings.Repeat("x", 36),
+		"",
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidFilter)
+	_, err = businesscentraldocs.FindDocuments(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		"TRN-1",
+		"1 or 1 eq 1",
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidID)
 }
 
 func TestFindPurchaseInvoiceByVendorInvoiceNumber(t *testing.T) {
@@ -85,14 +107,19 @@ func TestFindPurchaseInvoiceByVendorInvoiceNumber(t *testing.T) {
 		_, _ = w.Write(fixture(t, "purchase_invoices.json"))
 	})
 
-	docs, err := client.FindDocuments(t.Context(), businesscentral.DocumentPurchaseInvoice,
-		"OO-77", testVendor)
+	docs, err := businesscentraldocs.FindDocuments(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentPurchaseInvoice,
+		"OO-77",
+		testVendor,
+	)
 	require.NoError(t, err)
 	require.Len(t, docs, 1)
 	assert.Equal(t, "OO-77", docs[0].ExternalDocumentNumber)
 	assert.Equal(t, testVendor, docs[0].PartyID)
 	assert.Equal(t, "V00010", docs[0].PartyNumber)
-	assert.Equal(t, businesscentral.StatusInReview, docs[0].Status)
+	assert.Equal(t, businesscentraldocs.StatusInReview, docs[0].Status)
 }
 
 func TestDocumentsByIDUsesInFilter(t *testing.T) {
@@ -104,12 +131,21 @@ func TestDocumentsByIDUsesInFilter(t *testing.T) {
 		_, _ = w.Write(fixture(t, "sales_invoices.json"))
 	})
 
-	docs, err := client.DocumentsByID(t.Context(), businesscentral.DocumentSalesInvoice,
-		[]string{testInvoice, strings.ToUpper(testInvoice), other})
+	docs, err := businesscentraldocs.DocumentsByID(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		[]string{testInvoice, strings.ToUpper(testInvoice), other},
+	)
 	require.NoError(t, err)
 	assert.Len(t, docs, 2)
 
-	empty, err := client.DocumentsByID(t.Context(), businesscentral.DocumentSalesInvoice, nil)
+	empty, err := businesscentraldocs.DocumentsByID(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		nil,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, empty)
 
@@ -117,8 +153,13 @@ func TestDocumentsByIDUsesInFilter(t *testing.T) {
 	for idx := range businesscentral.MaxIDsPerRead + 1 {
 		ids = append(ids, "00000000-0000-4000-8000-0000000000"+twoDigits(idx))
 	}
-	_, err = client.DocumentsByID(t.Context(), businesscentral.DocumentSalesInvoice, ids)
-	require.ErrorIs(t, err, businesscentral.ErrTooManyIDs)
+	_, err = businesscentraldocs.DocumentsByID(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		ids,
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrTooManyIDs)
 }
 
 func twoDigits(value int) string {
@@ -133,7 +174,12 @@ func TestSalesCreditMemos(t *testing.T) {
 		_, _ = w.Write(fixture(t, "sales_credit_memos.json"))
 	})
 
-	docs, err := client.Documents(t.Context(), businesscentral.DocumentSalesCreditMemo, nil)
+	docs, err := businesscentraldocs.Documents(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesCreditMemo,
+		nil,
+	)
 	require.NoError(t, err)
 	require.Len(t, docs, 1)
 	assert.Equal(t, "2026-09-05", docs[0].DocumentDate)
@@ -150,11 +196,16 @@ func TestPurchaseCreditMemos(t *testing.T) {
 		_, _ = w.Write(fixture(t, "purchase_credit_memos.json"))
 	})
 
-	docs, err := client.Documents(t.Context(), businesscentral.DocumentPurchaseCreditMemo, nil)
+	docs, err := businesscentraldocs.Documents(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentPurchaseCreditMemo,
+		nil,
+	)
 	require.NoError(t, err)
 	require.Len(t, docs, 1)
 	assert.Equal(t, "OO-CM-1", docs[0].ExternalDocumentNumber)
-	assert.Equal(t, businesscentral.StatusCanceled, docs[0].Status)
+	assert.Equal(t, businesscentraldocs.StatusCanceled, docs[0].Status)
 	assert.Equal(t, "2026-09-08", docs[0].DocumentDate)
 }
 
@@ -166,15 +217,20 @@ func TestDocumentByID(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_purchase_invoice.json"))
 	})
 
-	doc, err := client.Document(t.Context(), businesscentral.DocumentPurchaseInvoice,
-		"cccccccc-dddd-4eee-8fff-000000000002")
+	doc, err := businesscentraldocs.ReadDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentPurchaseInvoice,
+		"cccccccc-dddd-4eee-8fff-000000000002",
+	)
+
 	require.NoError(t, err)
 	assert.Equal(t, "OO-78", doc.ExternalDocumentNumber)
-	assert.Equal(t, businesscentral.DocumentPurchaseInvoice, doc.Kind)
+	assert.Equal(t, businesscentraldocs.DocumentPurchaseInvoice, doc.Kind)
 }
 
-func freightInvoice() businesscentral.DocumentInput {
-	return businesscentral.DocumentInput{
+func freightInvoice() businesscentraldocs.DocumentInput {
+	return businesscentraldocs.DocumentInput{
 		PartyID:                testCustomer,
 		ExternalDocumentNumber: "TRN-1003",
 		DocumentDate:           "2026-10-01",
@@ -182,7 +238,7 @@ func freightInvoice() businesscentral.DocumentInput {
 		DueDate:                "2026-10-31",
 		CurrencyCode:           "usd",
 		PaymentTermsID:         "66666666-7777-4888-8999-aaaaaaaaaaa1",
-		Lines: []businesscentral.LineInput{
+		Lines: []businesscentraldocs.LineInput{
 			{
 				ItemID:      "44444444-5555-4666-8777-888888888881",
 				Description: "Linehaul ATL-SEA",
@@ -234,7 +290,12 @@ func TestCreateSalesInvoiceDeepInsertsLines(t *testing.T) {
 	})
 
 	in := freightInvoice()
-	doc, err := client.CreateDocument(t.Context(), businesscentral.DocumentSalesInvoice, &in)
+	doc, err := businesscentraldocs.CreateDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		&in,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "S-INV-0003", doc.Number)
 	assert.True(t, doc.IsDraft())
@@ -265,16 +326,20 @@ func TestCreatePurchaseInvoiceUsesDirectUnitCost(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_purchase_invoice.json"))
 	})
 
-	doc, err := client.CreateDocument(t.Context(), businesscentral.DocumentPurchaseInvoice,
-		&businesscentral.DocumentInput{
+	doc, err := businesscentraldocs.CreateDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentPurchaseInvoice,
+		&businesscentraldocs.DocumentInput{
 			PartyID:                testVendor,
 			ExternalDocumentNumber: "OO-78",
 			DocumentDate:           "2026-10-02",
-			Lines: []businesscentral.LineInput{{
+			Lines: []businesscentraldocs.LineInput{{
 				AccountID: testAccount, Description: "Settlement", Quantity: dec("1"),
 				UnitPrice: dec("1000"),
 			}},
-		})
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "108002", doc.Number)
 }
@@ -292,17 +357,21 @@ func TestCreateCreditMemoAppliesToInvoice(t *testing.T) {
 		_, _ = w.Write([]byte(`{"id":"bbbbbbbb-cccc-4ddd-8eee-fffffffffff1","status":"Draft"}`))
 	})
 
-	doc, err := client.CreateDocument(t.Context(), businesscentral.DocumentSalesCreditMemo,
-		&businesscentral.DocumentInput{
+	doc, err := businesscentraldocs.CreateDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesCreditMemo,
+		&businesscentraldocs.DocumentInput{
 			PartyID:      testCustomer,
 			DocumentDate: "2026-09-05",
 			InvoiceID:    testInvoice,
-			Lines: []businesscentral.LineInput{{
+			Lines: []businesscentraldocs.LineInput{{
 				AccountID: testAccount, Quantity: dec("1"), UnitPrice: dec("100"),
 			}},
-		})
+		},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, businesscentral.DocumentSalesCreditMemo, doc.Kind)
+	assert.Equal(t, businesscentraldocs.DocumentSalesCreditMemo, doc.Kind)
 }
 
 func TestCreateDocumentValidatesInput(t *testing.T) {
@@ -312,53 +381,53 @@ func TestCreateDocumentValidatesInput(t *testing.T) {
 		t.Error("invalid input is never sent")
 	})
 	cases := map[string]struct {
-		kind   businesscentral.DocumentKind
-		mutate func(*businesscentral.DocumentInput)
+		kind   businesscentraldocs.DocumentKind
+		mutate func(*businesscentraldocs.DocumentInput)
 		want   error
 	}{
-		"no party": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.PartyID = "" },
-			businesscentral.ErrPartyRequired},
-		"bad date": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.PostingDate = "2026-13-01" },
-			businesscentral.ErrInvalidDate},
-		"long reference": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) {
+		"no party": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.PartyID = "" },
+			businesscentralerrors.ErrPartyRequired},
+		"bad date": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.PostingDate = "2026-13-01" },
+			businesscentralerrors.ErrInvalidDate},
+		"long reference": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) {
 				in.ExternalDocumentNumber = strings.Repeat("x", 36)
 			},
-			businesscentral.ErrFieldTooLong},
-		"line without target": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) {
+			businesscentralerrors.ErrFieldTooLong},
+		"line without target": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) {
 				in.Lines[0].ItemID = ""
 				in.Lines[0].AccountID = ""
 			},
-			businesscentral.ErrLinesRequired},
-		"line with both targets": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.Lines[0].AccountID = testAccount },
-			businesscentral.ErrLinesRequired},
-		"zero quantity": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.Lines[0].Quantity = dec("0") },
-			businesscentral.ErrQuantityInvalid},
-		"negative price": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.Lines[0].UnitPrice = dec("-1") },
-			businesscentral.ErrPriceInvalid},
-		"long description": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) {
+			businesscentralerrors.ErrLinesRequired},
+		"line with both targets": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.Lines[0].AccountID = testAccount },
+			businesscentralerrors.ErrLinesRequired},
+		"zero quantity": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.Lines[0].Quantity = dec("0") },
+			businesscentralerrors.ErrQuantityInvalid},
+		"negative price": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.Lines[0].UnitPrice = dec("-1") },
+			businesscentralerrors.ErrPriceInvalid},
+		"long description": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) {
 				in.Lines[0].Description = strings.Repeat("d", 101)
 			},
-			businesscentral.ErrFieldTooLong},
-		"invoice id on an invoice": {businesscentral.DocumentSalesInvoice,
-			func(in *businesscentral.DocumentInput) { in.InvoiceID = testInvoice },
-			businesscentral.ErrFieldNotSupported},
-		"payment terms on a purchase": {businesscentral.DocumentPurchaseInvoice,
-			func(*businesscentral.DocumentInput) {}, businesscentral.ErrFieldNotSupported},
-		"unknown kind": {businesscentral.DocumentKind(0),
-			func(*businesscentral.DocumentInput) {}, businesscentral.ErrUnknownKind},
+			businesscentralerrors.ErrFieldTooLong},
+		"invoice id on an invoice": {businesscentraldocs.DocumentSalesInvoice,
+			func(in *businesscentraldocs.DocumentInput) { in.InvoiceID = testInvoice },
+			businesscentralerrors.ErrFieldNotSupported},
+		"payment terms on a purchase": {businesscentraldocs.DocumentPurchaseInvoice,
+			func(*businesscentraldocs.DocumentInput) {}, businesscentralerrors.ErrFieldNotSupported},
+		"unknown kind": {businesscentraldocs.DocumentKind(0),
+			func(*businesscentraldocs.DocumentInput) {}, businesscentralerrors.ErrUnknownKind},
 	}
 	for name, tc := range cases {
 		in := freightInvoice()
 		tc.mutate(&in)
-		_, err := client.CreateDocument(t.Context(), tc.kind, &in)
+		_, err := businesscentraldocs.CreateDocument(t.Context(), client, tc.kind, &in)
 		require.ErrorIs(t, err, tc.want, name)
 	}
 }
@@ -382,15 +451,20 @@ func TestCreateDocumentLine(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_sales_invoice_line.json"))
 	})
 
-	line, err := client.CreateDocumentLine(t.Context(), businesscentral.DocumentSalesInvoice, doc,
-		&businesscentral.LineInput{
+	line, err := businesscentraldocs.CreateDocumentLine(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		doc,
+		&businesscentraldocs.LineInput{
 			AccountID: testAccount, Description: "Detention", Quantity: dec("2"),
 			UnitPrice: dec("25.125"),
-		})
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, doc, line.DocumentID)
 	assert.Equal(t, 10000, line.Sequence)
-	assert.Equal(t, businesscentral.LineTypeAccount, line.LineType)
+	assert.Equal(t, businesscentraldocs.LineTypeAccount, line.LineType)
 	assert.Empty(t, line.ItemID)
 	assert.Equal(t, testAccount, line.AccountID)
 	assert.True(t, dec("25.125").Equal(line.UnitPrice))
@@ -411,36 +485,89 @@ func TestDocumentActions(t *testing.T) {
 	})
 
 	ctx := t.Context()
-	require.NoError(t, client.PostDocument(ctx, businesscentral.DocumentSalesInvoice, testInvoice))
 	require.NoError(
 		t,
-		client.CancelDocument(ctx, businesscentral.DocumentSalesInvoice, testInvoice),
+		businesscentraldocs.PostDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentSalesInvoice,
+			testInvoice,
+		),
 	)
 	require.NoError(
 		t,
-		client.PostDocument(ctx, businesscentral.DocumentSalesCreditMemo, testInvoice),
+		businesscentraldocs.CancelDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentSalesInvoice,
+			testInvoice,
+		),
 	)
 	require.NoError(
 		t,
-		client.CancelDocument(ctx, businesscentral.DocumentSalesCreditMemo, testInvoice),
+		businesscentraldocs.PostDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentSalesCreditMemo,
+			testInvoice,
+		),
 	)
 	require.NoError(
 		t,
-		client.PostDocument(ctx, businesscentral.DocumentPurchaseInvoice, testInvoice),
+		businesscentraldocs.CancelDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentSalesCreditMemo,
+			testInvoice,
+		),
 	)
 	require.NoError(
 		t,
-		client.PostDocument(ctx, businesscentral.DocumentPurchaseCreditMemo, testInvoice),
+		businesscentraldocs.PostDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentPurchaseInvoice,
+			testInvoice,
+		),
 	)
 	require.NoError(
 		t,
-		client.CancelDocument(ctx, businesscentral.DocumentPurchaseCreditMemo, testInvoice),
+		businesscentraldocs.PostDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentPurchaseCreditMemo,
+			testInvoice,
+		),
 	)
-	require.ErrorIs(t,
-		client.CancelDocument(ctx, businesscentral.DocumentPurchaseInvoice, testInvoice),
-		businesscentral.ErrUnsupportedAction)
-	require.ErrorIs(t, client.PostDocument(ctx, businesscentral.DocumentSalesInvoice, "1"),
-		businesscentral.ErrInvalidID)
+	require.NoError(
+		t,
+		businesscentraldocs.CancelDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentPurchaseCreditMemo,
+			testInvoice,
+		),
+	)
+	require.ErrorIs(
+		t,
+		businesscentraldocs.CancelDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentPurchaseInvoice,
+			testInvoice,
+		),
+		businesscentralerrors.ErrUnsupportedAction,
+	)
+	require.ErrorIs(
+		t,
+		businesscentraldocs.PostDocument(
+			ctx,
+			client,
+			businesscentraldocs.DocumentSalesInvoice,
+			"1",
+		),
+		businesscentralerrors.ErrInvalidID,
+	)
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -464,6 +591,14 @@ func TestDeleteDocumentSendsIfMatch(t *testing.T) {
 		assert.Equal(t, `W/"JzIwOzE="`, r.Header.Get("If-Match"))
 		w.WriteHeader(http.StatusNoContent)
 	})
-	require.NoError(t, client.DeleteDocument(t.Context(), businesscentral.DocumentSalesInvoice,
-		testInvoice, `W/"JzIwOzE="`))
+	require.NoError(
+		t,
+		businesscentraldocs.DeleteDocument(
+			t.Context(),
+			client,
+			businesscentraldocs.DocumentSalesInvoice,
+			testInvoice,
+			`W/"JzIwOzE="`,
+		),
+	)
 }

@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralpay"
 )
 
 func (c *Connector) FindDocument(
@@ -40,8 +43,8 @@ func (c *Connector) FindDocument(
 	default:
 		found, ok, err = findPayment(ctx, client, req)
 	}
-	if errors.Is(err, businesscentral.ErrInvalidFilter) ||
-		errors.Is(err, businesscentral.ErrInvalidID) {
+	if errors.Is(err, businesscentralerrors.ErrInvalidFilter) ||
+		errors.Is(err, businesscentralerrors.ErrInvalidID) {
 		return nil, false, nil
 	}
 	if err != nil || !ok {
@@ -53,11 +56,12 @@ func (c *Connector) FindDocument(
 func findPosted(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
-) (*businesscentral.Document, bool, error) {
-	listed, err := client.FindDocuments(
+) (*businesscentraldocs.Document, bool, error) {
+	listed, err := businesscentraldocs.FindDocuments(
 		ctx,
+		client,
 		kind,
 		docReference(req.DocNumber, req.RequestID),
 		strings.TrimSpace(req.CounterpartyExternalID),
@@ -122,7 +126,7 @@ func findPayment(
 		return nil, false, nil
 	}
 	number := requestReference(req.RequestID)
-	entries, err := client.GeneralLedgerEntries(ctx, number)
+	entries, err := businesscentralpay.GeneralLedgerEntries(ctx, client, number)
 	if err != nil || len(entries) == 0 {
 		return nil, false, err
 	}

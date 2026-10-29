@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -69,13 +70,13 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 	cfg.ClientID = strings.TrimSpace(cfg.ClientID)
 	cfg.RedirectURL = strings.TrimSpace(cfg.RedirectURL)
 	if cfg.ClientID == "" {
-		return nil, ErrClientIDRequired
+		return nil, businesscentralerrors.ErrClientIDRequired
 	}
 	if strings.TrimSpace(cfg.ClientSecret) == "" {
-		return nil, ErrClientSecretRequired
+		return nil, businesscentralerrors.ErrClientSecretRequired
 	}
 	if cfg.RedirectURL == "" {
-		return nil, ErrRedirectURLRequired
+		return nil, businesscentralerrors.ErrRedirectURLRequired
 	}
 
 	scopes := make([]string, 0, len(cfg.Scopes))
@@ -97,7 +98,7 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 		HTTPClient:   settings.httpClient,
 		Retry:        restx.RetryConfig{},
 		Observer:     settings.observer,
-		ErrorDecoder: decodeOAuthError,
+		ErrorDecoder: businesscentralerrors.DecodeOAuthError,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("businesscentral: configure identity transport: %w", err)
@@ -113,7 +114,7 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 
 func (c *OAuthClient) AuthorizeURL(state string) (string, error) {
 	if strings.TrimSpace(state) == "" {
-		return "", ErrStateRequired
+		return "", businesscentralerrors.ErrStateRequired
 	}
 
 	target, err := url.Parse(strings.TrimRight(c.loginURL, "/") + authorizePath)
@@ -135,7 +136,7 @@ func (c *OAuthClient) AuthorizeURL(state string) (string, error) {
 
 func (c *OAuthClient) ExchangeCode(ctx context.Context, code string) (*Token, error) {
 	if strings.TrimSpace(code) == "" {
-		return nil, ErrCodeRequired
+		return nil, businesscentralerrors.ErrCodeRequired
 	}
 	return c.requestToken(ctx, url.Values{
 		"grant_type":   {grantAuthCode},
@@ -146,7 +147,7 @@ func (c *OAuthClient) ExchangeCode(ctx context.Context, code string) (*Token, er
 
 func (c *OAuthClient) Refresh(ctx context.Context, refreshToken string) (*Token, error) {
 	if strings.TrimSpace(refreshToken) == "" {
-		return nil, ErrTokenRequired
+		return nil, businesscentralerrors.ErrTokenRequired
 	}
 	return c.requestToken(ctx, url.Values{
 		"grant_type":    {grantRefreshToken},
@@ -178,11 +179,11 @@ func (c *OAuthClient) requestToken(
 		Out:            &out,
 		ExpectedStatus: []int{http.StatusOK},
 	}); err != nil {
-		redactSecrets(err, c.cfg.ClientSecret, grant)
+		businesscentralerrors.RedactSecrets(err, c.cfg.ClientSecret, grant)
 		return nil, err
 	}
 	if out.AccessToken == "" || out.RefreshToken == "" || out.ExpiresIn <= 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 
 	return &Token{
@@ -198,22 +199,22 @@ func (c *OAuthClient) requestToken(
 func TenantIDFromAccessToken(accessToken string) (string, error) {
 	segments := strings.Split(strings.TrimSpace(accessToken), ".")
 	if len(segments) != jwtSegments || segments[1] == "" {
-		return "", ErrMalformedToken
+		return "", businesscentralerrors.ErrMalformedToken
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(segments[1], "="))
 	if err != nil {
-		return "", ErrMalformedToken
+		return "", businesscentralerrors.ErrMalformedToken
 	}
 	var claims accessTokenClaims
 	if err = sonic.Unmarshal(payload, &claims); err != nil {
-		return "", ErrMalformedToken
+		return "", businesscentralerrors.ErrMalformedToken
 	}
 	if strings.TrimSpace(claims.TenantID) == "" {
-		return "", ErrTenantClaim
+		return "", businesscentralerrors.ErrTenantClaim
 	}
-	tenant, err := guid(claims.TenantID)
+	tenant, err := GUID(claims.TenantID)
 	if err != nil {
-		return "", ErrTenantClaim
+		return "", businesscentralerrors.ErrTenantClaim
 	}
 	return tenant, nil
 }

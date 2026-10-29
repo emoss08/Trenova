@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -29,15 +29,15 @@ func classifyError(err error) accountingsync.ErrorCategory {
 	case errors.Is(err, ErrNotConfigured), errors.Is(err, errNoRedirect),
 		errors.Is(err, errNoAccess):
 		return accountingsync.ErrorCategoryConfiguration
-	case businesscentral.IsInvalidGrant(err):
+	case businesscentralerrors.IsInvalidGrant(err):
 		return accountingsync.ErrorCategoryRevoked
-	case businesscentral.IsRateLimited(err):
+	case businesscentralerrors.IsRateLimited(err):
 		return accountingsync.ErrorCategoryRateLimited
-	case businesscentral.IsInvalidClient(err), businesscentral.IsAuth(err):
+	case businesscentralerrors.IsInvalidClient(err), businesscentralerrors.IsAuth(err):
 		return accountingsync.ErrorCategoryUnauthorized
-	case businesscentral.IsForbidden(err):
+	case businesscentralerrors.IsForbidden(err):
 		return accountingsync.ErrorCategoryConfiguration
-	case businesscentral.IsTransient(err), errors.Is(err, context.DeadlineExceeded):
+	case businesscentralerrors.IsTransient(err), errors.Is(err, context.DeadlineExceeded):
 		return accountingsync.ErrorCategoryTransient
 	default:
 		return accountingsync.ErrorCategoryUnknown
@@ -56,12 +56,13 @@ func isConfigurationFault(err error) bool {
 }
 
 func isAuthFault(err error) bool {
-	return businesscentral.IsInvalidGrant(err) || businesscentral.IsInvalidClient(err) ||
-		businesscentral.IsAuth(err)
+	return businesscentralerrors.IsInvalidGrant(err) ||
+		businesscentralerrors.IsInvalidClient(err) ||
+		businesscentralerrors.IsAuth(err)
 }
 
 func isTransientFault(err error) bool {
-	return businesscentral.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
+	return businesscentralerrors.IsTransient(err) || errors.Is(err, context.DeadlineExceeded)
 }
 
 func isDuplicateName(err error) bool {
@@ -69,7 +70,7 @@ func isDuplicateName(err error) bool {
 }
 
 func isValidationFault(err error) bool {
-	return isLocalValidation(err) || businesscentral.IsValidation(err)
+	return isLocalValidation(err) || businesscentralerrors.IsValidation(err)
 }
 
 var documentFaults = []documentFault{
@@ -84,7 +85,7 @@ var documentFaults = []documentFault{
 		resolution: "Reconnect " + providerName + " from the accounting integration",
 	},
 	{
-		matches:  businesscentral.IsForbidden,
+		matches:  businesscentralerrors.IsForbidden,
 		category: accountingsync.SyncErrorConfiguration,
 		resolution: "The signed-in user lacks permission in " + providerName +
 			". Give them the permission sets the API needs, then retry",
@@ -97,23 +98,23 @@ var documentFaults = []documentFault{
 			". Map the record to it instead, or rename one of them",
 	},
 	{
-		matches:  businesscentral.IsDuplicate,
+		matches:  businesscentralerrors.IsDuplicate,
 		category: accountingsync.SyncErrorDuplicate,
 		resolution: "The record already exists in " + providerName +
 			". Skip this record if it is the same one, or change the one in " + providerName,
 	},
 	{
-		matches:    businesscentral.IsConflict,
+		matches:    businesscentralerrors.IsConflict,
 		category:   accountingsync.SyncErrorConflict,
 		resolution: "The record changed in " + providerName + " while Trenova wrote it. Retry",
 	},
 	{
-		matches:    businesscentral.IsPostingDate,
+		matches:    businesscentralerrors.IsPostingDate,
 		category:   accountingsync.SyncErrorClosedPeriod,
 		resolution: closedPeriodResolved,
 	},
 	{
-		matches:    businesscentral.IsNotFound,
+		matches:    businesscentralerrors.IsNotFound,
 		category:   accountingsync.SyncErrorNotFound,
 		resolution: "The linked record no longer exists in " + providerName,
 	},
@@ -136,9 +137,9 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 		Category:   accountingsync.SyncErrorTransient,
 		Code:       errorCode(err),
 		Message:    errorMessage(err),
-		RetryAfter: businesscentral.RetryAfter(err),
+		RetryAfter: businesscentralerrors.RetryAfter(err),
 	}
-	if businesscentral.IsRateLimited(err) {
+	if businesscentralerrors.IsRateLimited(err) {
 		out.Category = accountingsync.SyncErrorRateLimited
 		if out.RetryAfter <= 0 {
 			out.RetryAfter = defaultRateLimitWait
@@ -156,8 +157,8 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	return out
 }
 
-func apiErrorOf(err error) *businesscentral.APIError {
-	var apiErr *businesscentral.APIError
+func apiErrorOf(err error) *businesscentralerrors.APIError {
+	var apiErr *businesscentralerrors.APIError
 	if errors.As(err, &apiErr) {
 		return apiErr
 	}
@@ -185,29 +186,29 @@ func errorMessage(err error) string {
 
 func isLocalValidation(err error) bool {
 	for _, target := range []error{
-		businesscentral.ErrIDRequired,
-		businesscentral.ErrInvalidID,
-		businesscentral.ErrTooManyIDs,
-		businesscentral.ErrInvalidCompanyRef,
-		businesscentral.ErrInvalidEnvironment,
-		businesscentral.ErrInvalidETag,
-		businesscentral.ErrInvalidFilter,
-		businesscentral.ErrInvalidDate,
-		businesscentral.ErrDateRequired,
-		businesscentral.ErrUnknownKind,
-		businesscentral.ErrUnknownType,
-		businesscentral.ErrUnsupportedAction,
-		businesscentral.ErrPartyRequired,
-		businesscentral.ErrLinesRequired,
-		businesscentral.ErrQuantityInvalid,
-		businesscentral.ErrPriceInvalid,
-		businesscentral.ErrAmountInvalid,
-		businesscentral.ErrNameRequired,
-		businesscentral.ErrJournalCodeInvalid,
-		businesscentral.ErrFieldTooLong,
-		businesscentral.ErrFieldNotSupported,
-		businesscentral.ErrInvalidText,
-		businesscentral.ErrCurrencyCodeInvalid,
+		businesscentralerrors.ErrIDRequired,
+		businesscentralerrors.ErrInvalidID,
+		businesscentralerrors.ErrTooManyIDs,
+		businesscentralerrors.ErrInvalidCompanyRef,
+		businesscentralerrors.ErrInvalidEnvironment,
+		businesscentralerrors.ErrInvalidETag,
+		businesscentralerrors.ErrInvalidFilter,
+		businesscentralerrors.ErrInvalidDate,
+		businesscentralerrors.ErrDateRequired,
+		businesscentralerrors.ErrUnknownKind,
+		businesscentralerrors.ErrUnknownType,
+		businesscentralerrors.ErrUnsupportedAction,
+		businesscentralerrors.ErrPartyRequired,
+		businesscentralerrors.ErrLinesRequired,
+		businesscentralerrors.ErrQuantityInvalid,
+		businesscentralerrors.ErrPriceInvalid,
+		businesscentralerrors.ErrAmountInvalid,
+		businesscentralerrors.ErrNameRequired,
+		businesscentralerrors.ErrJournalCodeInvalid,
+		businesscentralerrors.ErrFieldTooLong,
+		businesscentralerrors.ErrFieldNotSupported,
+		businesscentralerrors.ErrInvalidText,
+		businesscentralerrors.ErrCurrencyCodeInvalid,
 		errDocumentKind,
 		errExternalID,
 		errLinesRequired,

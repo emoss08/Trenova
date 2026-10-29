@@ -10,6 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralpay"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/shopspring/decimal"
 )
 
@@ -63,7 +67,7 @@ func (c *Connector) SavePayment(
 	number := requestReference(doc.RequestID)
 	if err = c.postPayment(ctx, &journalWrite{
 		client:         client,
-		party:          businesscentral.PartyCustomer,
+		party:          businesscentralref.PartyCustomer,
 		accountID:      doc.DepositAccountExternalID,
 		documentNumber: number,
 		lines:          customerPaymentLines(doc, cash, number),
@@ -83,7 +87,7 @@ func cashApplications(
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
 		if app.AppliedAmount.IsNegative() || app.ShortPayAmount.IsNegative() {
-			return nil, businesscentral.ErrAmountInvalid
+			return nil, businesscentralerrors.ErrAmountInvalid
 		}
 		if app.AppliedAmount.IsPositive() {
 			cash = append(cash, app)
@@ -115,10 +119,10 @@ func customerPaymentLines(
 	doc *accountingconnectorports.AccountingPaymentDocument,
 	cash []*accountingconnectorports.AccountingPaymentApplication,
 	number string,
-) []businesscentral.PaymentInput {
-	lines := make([]businesscentral.PaymentInput, 0, len(cash))
+) []businesscentralpay.PaymentInput {
+	lines := make([]businesscentralpay.PaymentInput, 0, len(cash))
 	for _, app := range cash {
-		lines = append(lines, businesscentral.PaymentInput{
+		lines = append(lines, businesscentralpay.PaymentInput{
 			PartyID:        doc.CustomerExternalID,
 			PostingDate:    doc.TxnDate,
 			DocumentNumber: number,
@@ -126,7 +130,7 @@ func customerPaymentLines(
 				doc.ReferenceNumber,
 				businesscentral.MaxExternalDocumentNumberLength,
 			),
-			Amount:             businesscentral.CustomerPaymentAmount(app.AppliedAmount),
+			Amount:             businesscentralpay.CustomerPaymentAmount(app.AppliedAmount),
 			AppliesToInvoiceID: strings.TrimSpace(app.InvoiceExternalID),
 			Description: cleanText(
 				"Payment of "+app.InvoiceNumber,
@@ -149,10 +153,10 @@ func finishPayment(
 
 type journalWrite struct {
 	client         *businesscentral.Client
-	party          businesscentral.PartyKind
+	party          businesscentralref.PartyKind
 	accountID      string
 	documentNumber string
-	lines          []businesscentral.PaymentInput
+	lines          []businesscentralpay.PaymentInput
 	refs           map[string]string
 }
 
@@ -168,7 +172,7 @@ func (c *Connector) postPayment(ctx context.Context, w *journalWrite) error {
 	}
 	defer release()
 
-	posted, err := w.client.GeneralLedgerEntries(ctx, w.documentNumber)
+	posted, err := businesscentralpay.GeneralLedgerEntries(ctx, w.client, w.documentNumber)
 	if err != nil {
 		return err
 	}
@@ -178,9 +182,9 @@ func (c *Connector) postPayment(ctx context.Context, w *journalWrite) error {
 	if err = addPaymentLines(ctx, w, batch.ID); err != nil {
 		return err
 	}
-	if err = w.client.PostJournal(ctx, batch.ID); err != nil {
-		if businesscentral.IsNotFound(err) ||
-			errors.Is(err, businesscentral.ErrUnsupportedAction) {
+	if err = businesscentralpay.PostJournal(ctx, w.client, batch.ID); err != nil {
+		if businesscentralerrors.IsNotFound(err) ||
+			errors.Is(err, businesscentralerrors.ErrUnsupportedAction) {
 			return unpostedJournal(batch.Code)
 		}
 		return err
@@ -191,11 +195,11 @@ func (c *Connector) postPayment(ctx context.Context, w *journalWrite) error {
 func paymentBatch(
 	ctx context.Context,
 	client *businesscentral.Client,
-	party businesscentral.PartyKind,
+	party businesscentralref.PartyKind,
 	accountID string,
-) (*businesscentral.PaymentJournal, error) {
+) (*businesscentralpay.PaymentJournal, error) {
 	code := batchCode(accountID)
-	found, err := client.PaymentJournals(ctx, party, code)
+	found, err := businesscentralpay.PaymentJournals(ctx, client, party, code)
 	if err != nil {
 		return nil, err
 	}
@@ -203,26 +207,31 @@ func paymentBatch(
 		return &found[0], nil
 	}
 	name := receiptsJournalName + code
-	if party == businesscentral.PartyVendor {
+	if party == businesscentralref.PartyVendor {
 		name = paymentsJournalName + code
 	}
-	created, err := client.CreatePaymentJournal(ctx, party, &businesscentral.PaymentJournalInput{
-		Code:               code,
-		DisplayName:        name,
-		BalancingAccountID: accountID,
-	})
+	created, err := businesscentralpay.CreatePaymentJournal(
+		ctx,
+		client,
+		party,
+		&businesscentralpay.PaymentJournalInput{
+			Code:               code,
+			DisplayName:        name,
+			BalancingAccountID: accountID,
+		},
+	)
 	if err == nil {
 		return created, nil
 	}
-	if !businesscentral.IsDuplicate(err) {
+	if !businesscentralerrors.IsDuplicate(err) {
 		return nil, err
 	}
-	found, err = client.PaymentJournals(ctx, party, code)
+	found, err = businesscentralpay.PaymentJournals(ctx, client, party, code)
 	if err != nil {
 		return nil, err
 	}
 	if len(found) == 0 {
-		return nil, businesscentral.ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 	return &found[0], nil
 }
@@ -234,7 +243,7 @@ func batchCode(accountID string) string {
 }
 
 func addPaymentLines(ctx context.Context, w *journalWrite, batchID string) error {
-	existing, err := w.client.Payments(ctx, w.party, batchID, w.documentNumber)
+	existing, err := businesscentralpay.Payments(ctx, w.client, w.party, batchID, w.documentNumber)
 	if err != nil {
 		return err
 	}
@@ -247,7 +256,7 @@ func addPaymentLines(ctx context.Context, w *journalWrite, batchID string) error
 		if _, ok := held[strings.ToLower(line.AppliesToInvoiceID)]; ok {
 			continue
 		}
-		if _, err = w.client.CreatePayment(ctx, w.party, batchID, line); err != nil {
+		if _, err = businesscentralpay.CreatePayment(ctx, w.client, w.party, batchID, line); err != nil {
 			return err
 		}
 	}
@@ -283,8 +292,8 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 	text := shortPayNote + app.InvoiceNumber
 	memo, err := postDocument(ctx, &documentWrite{
 		client: w.client,
-		kind:   businesscentral.DocumentSalesCreditMemo,
-		input: &businesscentral.DocumentInput{
+		kind:   businesscentraldocs.DocumentSalesCreditMemo,
+		input: &businesscentraldocs.DocumentInput{
 			PartyID: w.doc.CustomerExternalID,
 			ExternalDocumentNumber: requestReference(accountingsync.SyncStepRequestID(
 				w.doc.RequestID, stepShortPayBase+w.idx,
@@ -293,7 +302,7 @@ func (c *Connector) shortPay(ctx context.Context, w *shortPayWrite) error {
 			PostingDate:  w.doc.TxnDate,
 			CurrencyCode: w.posting.currency(w.doc.CurrencyCode),
 			InvoiceID:    strings.TrimSpace(app.InvoiceExternalID),
-			Lines: []businesscentral.LineInput{{
+			Lines: []businesscentraldocs.LineInput{{
 				ItemID:      strings.TrimSpace(w.doc.ShortPayItemExternalID),
 				Description: cleanText(text, businesscentral.MaxDescriptionLength),
 				Quantity:    decimal.NewFromInt(1),
@@ -341,7 +350,7 @@ func (c *Connector) VoidCreditApplication(
 	if _, err = c.retireDocument(
 		ctx,
 		client,
-		businesscentral.DocumentSalesCreditMemo,
+		businesscentraldocs.DocumentSalesCreditMemo,
 		memoID,
 	); err != nil {
 		return result, err

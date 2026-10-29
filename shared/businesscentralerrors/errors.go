@@ -1,4 +1,4 @@
-package businesscentral
+package businesscentralerrors
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -198,7 +199,7 @@ type oauthErrorBody struct {
 	ErrorCodes       []int  `json:"error_codes"`
 }
 
-func decodeAPIError(status int, body []byte, header http.Header) error {
+func DecodeAPIError(status int, body []byte, header http.Header) error {
 	apiErr := &APIError{
 		Status: status,
 		cause:  restx.DecodeAPIError(status, body, header),
@@ -207,10 +208,10 @@ func decodeAPIError(status int, body []byte, header http.Header) error {
 		if retryAfter, ok := restx.ParseRetryAfter(header.Get(retryAfterHeader)); ok {
 			apiErr.RetryAfter = retryAfter
 		}
-		apiErr.RequestID = firstNonBlank(
+		apiErr.RequestID = stringutils.FirstNonEmptyTrimmed(
 			header.Get(requestIDHeader),
-			header.Get(correlationIDHeader),
-		)
+			header.Get(correlationIDHeader))
+
 	}
 
 	var parsed apiErrorBody
@@ -226,7 +227,7 @@ func decodeAPIError(status int, body []byte, header http.Header) error {
 	return apiErr
 }
 
-func decodeOAuthError(status int, body []byte, header http.Header) error {
+func DecodeOAuthError(status int, body []byte, header http.Header) error {
 	var parsed oauthErrorBody
 	if err := sonic.Unmarshal(body, &parsed); err == nil && parsed.Error != "" {
 		return &OAuthError{
@@ -254,23 +255,14 @@ func plainMessage(body []byte) string {
 	return text[:cut]
 }
 
-func firstNonBlank(values ...string) string {
-	for _, value := range values {
-		if trimmed := strings.TrimSpace(value); trimmed != "" {
-			return trimmed
-		}
-	}
-	return ""
-}
-
-func redactAPIError(err error, redact func(string) string) {
+func RedactAPIError(err error, redact func(string) string) {
 	if apiErr, ok := apiErrorOf(err); ok {
 		apiErr.Message = redact(apiErr.Message)
 		apiErr.Code = redact(apiErr.Code)
 	}
 }
 
-func redactSecrets(err error, secrets ...string) {
+func RedactSecrets(err error, secrets ...string) {
 	replace := func(value string) string {
 		for _, secret := range secrets {
 			if len(secret) >= minRedactedSecretLength {

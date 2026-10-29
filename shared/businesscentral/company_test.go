@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,12 +47,12 @@ func TestParseCompanyRefRejectsMalformedInput(t *testing.T) {
 		tenant[:31] + "-_" + company + "_Production",
 	} {
 		_, err := businesscentral.ParseCompanyRef(raw)
-		require.ErrorIs(t, err, businesscentral.ErrInvalidCompanyRef, raw)
+		require.ErrorIs(t, err, businesscentralerrors.ErrInvalidCompanyRef, raw)
 	}
 	bad := []string{"1prod", "_prod", "prod env", "prod/../x", "prod'", strings.Repeat("e", 30)}
 	for _, env := range bad {
 		_, err := businesscentral.ParseCompanyRef(tenant + "_" + company + "_" + env)
-		require.ErrorIs(t, err, businesscentral.ErrInvalidEnvironment, env)
+		require.ErrorIs(t, err, businesscentralerrors.ErrInvalidEnvironment, env)
 	}
 }
 

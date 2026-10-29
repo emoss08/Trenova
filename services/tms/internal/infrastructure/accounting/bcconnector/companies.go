@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 )
 
 const (
@@ -36,7 +37,7 @@ func (c *Connector) Companies(
 	_ string,
 ) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
-		return nil, businesscentral.ErrAccessTokenRequired
+		return nil, businesscentralerrors.ErrAccessTokenRequired
 	}
 	tenant, err := businesscentral.TenantIDFromAccessToken(grant.AccessToken)
 	if err != nil {
@@ -63,7 +64,7 @@ func (c *Connector) Companies(
 			companies = appendCompanies(companies, tenant, env, listed)
 		case probing:
 			return nil, fmt.Errorf("%w: %w", errNoAccess, listErr)
-		case refusesAccess(listErr), businesscentral.IsNotFound(listErr):
+		case refusesAccess(listErr), businesscentralerrors.IsNotFound(listErr):
 			continue
 		default:
 			return nil, listErr
@@ -93,7 +94,7 @@ func listEnvironments(
 }
 
 func refusesAccess(err error) bool {
-	return businesscentral.IsAuth(err) || businesscentral.IsForbidden(err)
+	return businesscentralerrors.IsAuth(err) || businesscentralerrors.IsForbidden(err)
 }
 
 func appendCompanies(

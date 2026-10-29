@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,7 @@ func TestNewDiscoveryClientRequiresToken(t *testing.T) {
 	t.Parallel()
 
 	_, err := businesscentral.NewDiscoveryClient("")
-	require.ErrorIs(t, err, businesscentral.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrAccessTokenRequired)
 }
 
 func TestEnvironmentsKeepOnlyBusinessCentral(t *testing.T) {
@@ -73,7 +74,7 @@ func TestCompaniesValidatesTenantAndEnvironment(t *testing.T) {
 		t.Error("no request is sent for invalid input")
 	})
 	_, err := client.Companies(t.Context(), "tenant/../x", "Production")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidID)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidID)
 	_, err = client.Companies(t.Context(), testTenant, "Prod/../admin")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidEnvironment)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidEnvironment)
 }

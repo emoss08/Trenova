@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 )
 
 var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
@@ -38,11 +40,11 @@ const (
 
 var errChangeCursor = errors.New("businesscentral: the change cursor is not one this adapter wrote")
 
-var documentTargets = map[changeTarget]businesscentral.DocumentKind{ //nolint:exhaustive // only document targets have a document kind
-	targetSalesInvoices:    businesscentral.DocumentSalesInvoice,
-	targetSalesCreditMemos: businesscentral.DocumentSalesCreditMemo,
-	targetPurchaseInvoices: businesscentral.DocumentPurchaseInvoice,
-	targetPurchaseCredits:  businesscentral.DocumentPurchaseCreditMemo,
+var documentTargets = map[changeTarget]businesscentraldocs.DocumentKind{ //nolint:exhaustive // only document targets have a document kind
+	targetSalesInvoices:    businesscentraldocs.DocumentSalesInvoice,
+	targetSalesCreditMemos: businesscentraldocs.DocumentSalesCreditMemo,
+	targetPurchaseInvoices: businesscentraldocs.DocumentPurchaseInvoice,
+	targetPurchaseCredits:  businesscentraldocs.DocumentPurchaseCreditMemo,
 }
 
 func (t changeTarget) valid() bool {
@@ -303,23 +305,23 @@ func (c *changeCollector) readTarget(
 	case targetSalesInvoices, targetSalesCreditMemos, targetPurchaseInvoices, targetPurchaseCredits:
 		return c.readDocuments(ctx, documentTargets[target], since)
 	case targetAccounts:
-		accounts, err := c.client.Accounts(ctx, since)
+		accounts, err := businesscentralref.Accounts(ctx, c.client, since)
 		for idx := range accounts {
 			c.seen(accounts[idx].LastModified)
 			c.reference(accountObjectOf(&accounts[idx]))
 		}
 		return err
 	case targetItems:
-		items, err := c.client.Items(ctx, since)
+		items, err := businesscentralref.Items(ctx, c.client, since)
 		for idx := range items {
 			c.seen(items[idx].LastModified)
 			c.reference(itemObjectOf(&items[idx]))
 		}
 		return err
 	case targetCustomers:
-		return c.readParties(ctx, businesscentral.PartyCustomer, since)
+		return c.readParties(ctx, businesscentralref.PartyCustomer, since)
 	case targetVendors:
-		return c.readParties(ctx, businesscentral.PartyVendor, since)
+		return c.readParties(ctx, businesscentralref.PartyVendor, since)
 	default:
 		return errChangeCursor
 	}
@@ -327,10 +329,10 @@ func (c *changeCollector) readTarget(
 
 func (c *changeCollector) readParties(
 	ctx context.Context,
-	kind businesscentral.PartyKind,
+	kind businesscentralref.PartyKind,
 	since *time.Time,
 ) error {
-	parties, err := c.client.Parties(ctx, kind, since)
+	parties, err := businesscentralref.Parties(ctx, c.client, kind, since)
 	if err != nil {
 		return err
 	}
@@ -353,10 +355,10 @@ func (c *changeCollector) reference(obj *accountingmapping.AccountingReferenceOb
 
 func (c *changeCollector) readDocuments(
 	ctx context.Context,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	since *time.Time,
 ) error {
-	docs, err := c.client.Documents(ctx, kind, since)
+	docs, err := businesscentraldocs.Documents(ctx, c.client, kind, since)
 	if err != nil {
 		return err
 	}
@@ -384,16 +386,17 @@ func (c *changeCollector) readDocuments(
 	return nil
 }
 
-func documentObjectTypes(kind businesscentral.DocumentKind) []accountingsync.SyncObjectType {
+func documentObjectTypes(kind businesscentraldocs.DocumentKind) []accountingsync.SyncObjectType {
 	switch kind {
-	case businesscentral.DocumentSalesInvoice:
+	case businesscentraldocs.DocumentSalesInvoice:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectInvoice,
 			accountingsync.SyncObjectDebitMemo,
 		}
-	case businesscentral.DocumentSalesCreditMemo:
+	case businesscentraldocs.DocumentSalesCreditMemo:
 		return []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}
-	case businesscentral.DocumentPurchaseInvoice, businesscentral.DocumentPurchaseCreditMemo:
+	case businesscentraldocs.DocumentPurchaseInvoice,
+		businesscentraldocs.DocumentPurchaseCreditMemo:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectCarrierBill,
 			accountingsync.SyncObjectDriverBill,

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,41 +119,51 @@ func TestAccountClassOf(t *testing.T) {
 		sub      string
 		want     accountingmapping.AccountClass
 	}{
-		{businesscentral.CategoryIncome, "Income, Services", accountingmapping.AccountClassIncome},
-		{businesscentral.CategoryCostOfGoodsSold, "", accountingmapping.AccountClassCostOfSales},
-		{businesscentral.CategoryExpense, "Rent Expense", accountingmapping.AccountClassExpense},
 		{
-			businesscentral.CategoryAssets,
+			businesscentralref.CategoryIncome,
+			"Income, Services",
+			accountingmapping.AccountClassIncome,
+		},
+		{businesscentralref.CategoryCostOfGoodsSold, "", accountingmapping.AccountClassCostOfSales},
+		{businesscentralref.CategoryExpense, "Rent Expense", accountingmapping.AccountClassExpense},
+		{
+			businesscentralref.CategoryAssets,
 			"Accounts Receivable",
 			accountingmapping.AccountClassReceivable,
 		},
-		{businesscentral.CategoryAssets, "Cash", accountingmapping.AccountClassBank},
-		{businesscentral.CategoryAssets, "Bank Accounts", accountingmapping.AccountClassBank},
-		{businesscentral.CategoryAssets, "Inventory", accountingmapping.AccountClassAsset},
+		{businesscentralref.CategoryAssets, "Cash", accountingmapping.AccountClassBank},
+		{businesscentralref.CategoryAssets, "Bank Accounts", accountingmapping.AccountClassBank},
+		{businesscentralref.CategoryAssets, "Inventory", accountingmapping.AccountClassAsset},
 		{
-			businesscentral.CategoryLiabilities,
+			businesscentralref.CategoryLiabilities,
 			"Accounts Payable",
 			accountingmapping.AccountClassPayable,
 		},
 		{
-			businesscentral.CategoryLiabilities,
+			businesscentralref.CategoryLiabilities,
 			"Long Term Liabilities",
 			accountingmapping.AccountClassLiability,
 		},
-		{businesscentral.CategoryEquity, "Retained Earnings", accountingmapping.AccountClassEquity},
+		{
+			businesscentralref.CategoryEquity,
+			"Retained Earnings",
+			accountingmapping.AccountClassEquity,
+		},
 		{"", "", ""},
 	}
 	for _, tc := range cases {
-		got := AccountClassOf(&businesscentral.Account{Category: tc.category, SubCategory: tc.sub})
+		got := AccountClassOf(
+			&businesscentralref.Account{Category: tc.category, SubCategory: tc.sub},
+		)
 		assert.Equal(t, tc.want, got, tc.category+"/"+tc.sub)
 	}
-	assert.True(t, accountObjectOf(&businesscentral.Account{
-		AccountType: businesscentral.AccountTypePosting, DirectPosting: false,
+	assert.True(t, accountObjectOf(&businesscentralref.Account{
+		AccountType: businesscentralref.AccountTypePosting, DirectPosting: false,
 	}).Active)
-	assert.False(t, accountObjectOf(&businesscentral.Account{
-		AccountType: businesscentral.AccountTypePosting, Blocked: true,
+	assert.False(t, accountObjectOf(&businesscentralref.Account{
+		AccountType: businesscentralref.AccountTypePosting, Blocked: true,
 	}).Active)
-	assert.False(t, accountObjectOf(&businesscentral.Account{AccountType: "Heading"}).Active)
+	assert.False(t, accountObjectOf(&businesscentralref.Account{AccountType: "Heading"}).Active)
 }
 
 func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
@@ -208,10 +220,10 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	}
 	_, err = conn.CreateReference(t.Context(), &partyReq)
 	assert.True(t, conn.IsDuplicateName(err))
-	assert.True(t, conn.IsDuplicateName(&businesscentral.APIError{
-		Status: 400, Code: businesscentral.CodeEntityWithSameKey,
+	assert.True(t, conn.IsDuplicateName(&businesscentralerrors.APIError{
+		Status: 400, Code: businesscentralerrors.CodeEntityWithSameKey,
 	}))
-	assert.False(t, conn.IsDuplicateName(businesscentral.ErrFieldTooLong))
+	assert.False(t, conn.IsDuplicateName(businesscentralerrors.ErrFieldTooLong))
 
 	for _, kind := range []accountingprovider.ReferenceKind{
 		accountingprovider.ReferenceKindAccount, accountingprovider.ReferenceKindTerm, "Nope",

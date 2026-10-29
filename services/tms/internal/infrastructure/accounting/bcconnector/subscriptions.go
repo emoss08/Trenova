@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 )
 
 var _ accountingconnectorports.AccountingWebhookSubscriber = (*Connector)(nil)
@@ -40,12 +42,12 @@ func (c *Connector) SubscriptionRenewWindow() time.Duration {
 func subscriptionInput(
 	client *businesscentral.Client,
 	resource, notificationURL, clientState string,
-) (*businesscentral.SubscriptionInput, error) {
-	path := businesscentral.SubscriptionResource(client.Ref(), strings.TrimSpace(resource))
+) (*businesscentralwebhook.SubscriptionInput, error) {
+	path := businesscentralwebhook.SubscriptionResource(client.Ref(), strings.TrimSpace(resource))
 	if path == "" {
 		return nil, errUnknownResource
 	}
-	return &businesscentral.SubscriptionInput{
+	return &businesscentralwebhook.SubscriptionInput{
 		NotificationURL: notificationURL,
 		Resource:        path,
 		ClientState:     clientState,
@@ -64,7 +66,7 @@ func (c *Connector) Subscribe(
 	if err != nil {
 		return nil, err
 	}
-	created, err := client.CreateSubscription(ctx, input)
+	created, err := businesscentralwebhook.CreateSubscription(ctx, client, input)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,13 @@ func (c *Connector) RenewSubscription(
 	if err != nil {
 		return nil, err
 	}
-	renewed, err := client.RenewSubscription(ctx, req.ExternalID, req.ETag, input)
+	renewed, err := businesscentralwebhook.RenewSubscription(
+		ctx,
+		client,
+		req.ExternalID,
+		req.ETag,
+		input,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -98,19 +106,19 @@ func (c *Connector) Unsubscribe(
 	if err != nil {
 		return err
 	}
-	if err = client.DeleteSubscription(ctx, req.ExternalID, req.ETag); err != nil &&
-		!businesscentral.IsNotFound(err) {
+	if err = businesscentralwebhook.DeleteSubscription(ctx, client, req.ExternalID, req.ETag); err != nil &&
+		!businesscentralerrors.IsNotFound(err) {
 		return err
 	}
 	return nil
 }
 
 func (c *Connector) IsSubscriptionGone(err error) bool {
-	return businesscentral.IsNotFound(err)
+	return businesscentralerrors.IsNotFound(err)
 }
 
 func (c *Connector) grantOf(
-	sub *businesscentral.Subscription,
+	sub *businesscentralwebhook.Subscription,
 	notificationURL string,
 ) *accountingconnection.WebhookSubscriptionGrant {
 	grant := &accountingconnection.WebhookSubscriptionGrant{

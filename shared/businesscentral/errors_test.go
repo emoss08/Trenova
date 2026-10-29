@@ -8,14 +8,18 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralpay"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func apiError(t *testing.T, err error) *businesscentral.APIError {
+func apiError(t *testing.T, err error) *businesscentralerrors.APIError {
 	t.Helper()
-	var apiErr *businesscentral.APIError
+	var apiErr *businesscentralerrors.APIError
 	require.ErrorAs(t, err, &apiErr)
 	return apiErr
 }
@@ -38,9 +42,9 @@ func TestUnauthorizedIsAuthAndNeverLeaksTheToken(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, apiErr.Status)
 	assert.Equal(t, "Authentication_InvalidCredentials", apiErr.Code)
 	assert.Equal(t, "req-401", apiErr.RequestID)
-	assert.True(t, businesscentral.IsAuth(err))
-	assert.False(t, businesscentral.IsForbidden(err))
-	assert.False(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsAuth(err))
+	assert.False(t, businesscentralerrors.IsForbidden(err))
+	assert.False(t, businesscentralerrors.IsTransient(err))
 	assert.NotContains(t, err.Error(), "super-secret-access")
 	assert.NotContains(t, apiErr.Message, "super-secret-access")
 	assert.Equal(t, int32(1), calls.Load())
@@ -51,7 +55,7 @@ func TestAuthenticationCodeIsAuthWithoutStatus(t *testing.T) {
 
 	client := newAPIClient(t, serveFixture(t, http.StatusBadRequest, "error_401.json"))
 	_, err := client.Currencies(t.Context())
-	assert.True(t, businesscentral.IsAuth(err))
+	assert.True(t, businesscentralerrors.IsAuth(err))
 }
 
 func TestForbidden(t *testing.T) {
@@ -59,8 +63,8 @@ func TestForbidden(t *testing.T) {
 
 	client := newAPIClient(t, serveFixture(t, http.StatusForbidden, "error_403.json"))
 	_, err := client.Currencies(t.Context())
-	assert.True(t, businesscentral.IsForbidden(err))
-	assert.False(t, businesscentral.IsAuth(err))
+	assert.True(t, businesscentralerrors.IsForbidden(err))
+	assert.False(t, businesscentralerrors.IsAuth(err))
 	assert.Equal(t, "Authorization_InsufficientPermissions", apiError(t, err).Code)
 }
 
@@ -68,9 +72,14 @@ func TestRecordNotFound(t *testing.T) {
 	t.Parallel()
 
 	client := newAPIClient(t, serveFixture(t, http.StatusNotFound, "error_404.json"))
-	_, err := client.Document(t.Context(), businesscentral.DocumentSalesInvoice, testInvoice)
-	assert.True(t, businesscentral.IsNotFound(err))
-	assert.False(t, businesscentral.IsValidation(err))
+	_, err := businesscentraldocs.ReadDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		testInvoice,
+	)
+	assert.True(t, businesscentralerrors.IsNotFound(err))
+	assert.False(t, businesscentralerrors.IsValidation(err))
 	assert.Contains(t, err.Error(), "Internal_RecordNotFound")
 }
 
@@ -79,29 +88,44 @@ func TestEntityChangedIsAConflict(t *testing.T) {
 
 	for _, status := range []int{http.StatusConflict, http.StatusPreconditionFailed} {
 		client := newAPIClient(t, serveFixture(t, status, "error_conflict.json"))
-		err := client.DeleteDocument(t.Context(), businesscentral.DocumentSalesInvoice,
-			testInvoice, `W/"JzIwOzE="`)
-		assert.True(t, businesscentral.IsConflict(err), "status %d", status)
-		assert.False(t, businesscentral.IsTransient(err))
+		err := businesscentraldocs.DeleteDocument(
+			t.Context(),
+			client,
+			businesscentraldocs.DocumentSalesInvoice,
+			testInvoice,
+			`W/"JzIwOzE="`,
+		)
+		assert.True(t, businesscentralerrors.IsConflict(err), "status %d", status)
+		assert.False(t, businesscentralerrors.IsTransient(err))
 	}
 
 	client := newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(`{"error":{"code":"BadRequest_InvalidToken","message":"stale"}}`))
 	})
-	err := client.DeleteDocument(t.Context(), businesscentral.DocumentSalesInvoice, testInvoice, "")
-	assert.True(t, businesscentral.IsConflict(err))
+	err := businesscentraldocs.DeleteDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		testInvoice,
+		"",
+	)
+	assert.True(t, businesscentralerrors.IsConflict(err))
 }
 
 func TestDuplicateKey(t *testing.T) {
 	t.Parallel()
 
 	client := newAPIClient(t, serveFixture(t, http.StatusBadRequest, "error_duplicate.json"))
-	_, err := client.CreatePaymentJournal(t.Context(), businesscentral.PartyCustomer,
-		&businesscentral.PaymentJournalInput{Code: "TRENOVA"})
-	assert.True(t, businesscentral.IsDuplicate(err))
-	assert.True(t, businesscentral.IsValidation(err))
-	assert.False(t, businesscentral.IsPostingDate(err))
+	_, err := businesscentralpay.CreatePaymentJournal(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		&businesscentralpay.PaymentJournalInput{Code: "TRENOVA"},
+	)
+	assert.True(t, businesscentralerrors.IsDuplicate(err))
+	assert.True(t, businesscentralerrors.IsValidation(err))
+	assert.False(t, businesscentralerrors.IsPostingDate(err))
 }
 
 func TestPostingDateOutsideTheAllowedRange(t *testing.T) {
@@ -114,12 +138,17 @@ func TestPostingDateOutsideTheAllowedRange(t *testing.T) {
 		_, _ = w.Write(fixture(t, "error_posting_date.json"))
 	})
 
-	err := client.PostDocument(t.Context(), businesscentral.DocumentSalesInvoice, testInvoice)
+	err := businesscentraldocs.PostDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		testInvoice,
+	)
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsPostingDate(err))
-	assert.True(t, businesscentral.IsValidation(err))
-	assert.False(t, businesscentral.IsDuplicate(err))
-	assert.Equal(t, businesscentral.CodeDialogException, apiError(t, err).Code)
+	assert.True(t, businesscentralerrors.IsPostingDate(err))
+	assert.True(t, businesscentralerrors.IsValidation(err))
+	assert.False(t, businesscentralerrors.IsDuplicate(err))
+	assert.Equal(t, businesscentralerrors.CodeDialogException, apiError(t, err).Code)
 	assert.Equal(t, int32(1), calls.Load())
 }
 
@@ -128,8 +157,8 @@ func TestBadRequestCodeIsValidation(t *testing.T) {
 
 	client := newAPIClient(t, serveFixture(t, http.StatusBadRequest, "error_validation.json"))
 	_, err := client.Currencies(t.Context())
-	assert.True(t, businesscentral.IsValidation(err))
-	assert.False(t, businesscentral.IsPostingDate(err))
+	assert.True(t, businesscentralerrors.IsValidation(err))
+	assert.False(t, businesscentralerrors.IsPostingDate(err))
 }
 
 func TestRateLimitedHonoursRetryAfter(t *testing.T) {
@@ -163,10 +192,10 @@ func TestRateLimitedErrorCarriesRetryAfter(t *testing.T) {
 
 	_, err := client.Currencies(t.Context())
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsRateLimited(err))
-	assert.False(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsRateLimited(err))
+	assert.False(t, businesscentralerrors.IsTransient(err))
 	assert.Equal(t, 7*time.Second, apiError(t, err).RetryAfter)
-	assert.Equal(t, 7*time.Second, businesscentral.RetryAfter(err))
+	assert.Equal(t, 7*time.Second, businesscentralerrors.RetryAfter(err))
 }
 
 func TestRateLimitedWithoutRetryAfterBacksOff(t *testing.T) {
@@ -181,7 +210,7 @@ func TestRateLimitedWithoutRetryAfterBacksOff(t *testing.T) {
 
 	_, err := client.Currencies(t.Context())
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsRateLimited(err))
+	assert.True(t, businesscentralerrors.IsRateLimited(err))
 	assert.Equal(t, time.Duration(0), apiError(t, err).RetryAfter)
 	assert.Equal(t, int32(3), calls.Load(), "a read is retried up to the attempt limit")
 }
@@ -198,7 +227,7 @@ func TestServiceUnavailableIsTransient(t *testing.T) {
 
 	_, err := client.Currencies(t.Context())
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsTransient(err))
 	assert.Equal(t, "Service Unavailable", apiError(t, err).Message)
 	assert.Equal(t, int32(3), calls.Load())
 }
@@ -210,18 +239,18 @@ func TestRequestTimeoutIsTransient(t *testing.T) {
 		w.WriteHeader(http.StatusRequestTimeout)
 	})
 	_, err := client.Currencies(t.Context())
-	assert.True(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsTransient(err))
 }
 
 func TestPredicatesOnForeignErrors(t *testing.T) {
 	t.Parallel()
 
 	err := errors.New("plain")
-	assert.False(t, businesscentral.IsAuth(err))
-	assert.False(t, businesscentral.IsNotFound(err))
-	assert.False(t, businesscentral.IsConflict(err))
-	assert.False(t, businesscentral.IsValidation(err))
-	assert.False(t, businesscentral.IsPostingDate(err))
-	assert.False(t, businesscentral.IsTransient(nil))
-	assert.True(t, businesscentral.IsRateLimited(&restx.RateLimitedError{Key: "k"}))
+	assert.False(t, businesscentralerrors.IsAuth(err))
+	assert.False(t, businesscentralerrors.IsNotFound(err))
+	assert.False(t, businesscentralerrors.IsConflict(err))
+	assert.False(t, businesscentralerrors.IsValidation(err))
+	assert.False(t, businesscentralerrors.IsPostingDate(err))
+	assert.False(t, businesscentralerrors.IsTransient(nil))
+	assert.True(t, businesscentralerrors.IsRateLimited(&restx.RateLimitedError{Key: "k"}))
 }

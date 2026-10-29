@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/restx"
 	"go.uber.org/fx"
@@ -190,7 +192,7 @@ func (p *Provider) NotificationBaseURL() string {
 func (p *Provider) ParseNotifications(
 	body []byte,
 ) ([]accountingconnectorports.AccountingWebhookNotification, error) {
-	parsed, err := businesscentral.ParseNotifications(body)
+	parsed, err := businesscentralwebhook.ParseNotifications(body)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +209,7 @@ func (p *Provider) ParseNotifications(
 }
 
 func (p *Provider) ValidationToken(raw string) (string, bool) {
-	return businesscentral.ValidationToken(raw)
+	return businesscentralwebhook.ValidationToken(raw)
 }
 
 func bindingKey(app *accountingconnectorports.AccountingApp) string {
@@ -294,9 +296,9 @@ func (c *Connector) VerifyApp(ctx context.Context) error {
 	}
 	err := c.oauth.ProbeCredentials(ctx)
 	switch {
-	case err == nil, businesscentral.IsInvalidGrant(err):
+	case err == nil, businesscentralerrors.IsInvalidGrant(err):
 		return nil
-	case businesscentral.IsInvalidClient(err):
+	case businesscentralerrors.IsInvalidClient(err):
 		return accountingconnectorports.ErrAccountingAppRejected
 	default:
 		return err

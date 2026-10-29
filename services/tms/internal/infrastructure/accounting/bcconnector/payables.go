@@ -10,6 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralpay"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/shopspring/decimal"
 )
@@ -31,17 +35,17 @@ func (c *Connector) UpsertVendor(
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
-		kind:       businesscentral.PartyVendor,
+		kind:       businesscentralref.PartyVendor,
 		externalID: doc.ExternalID,
 		party:      &doc.Party,
 	})
 }
 
-func purchaseKindOf(credit bool) businesscentral.DocumentKind {
+func purchaseKindOf(credit bool) businesscentraldocs.DocumentKind {
 	if credit {
-		return businesscentral.DocumentPurchaseCreditMemo
+		return businesscentraldocs.DocumentPurchaseCreditMemo
 	}
-	return businesscentral.DocumentPurchaseInvoice
+	return businesscentraldocs.DocumentPurchaseInvoice
 }
 
 func (c *Connector) CreatePurchaseDocument(
@@ -107,7 +111,7 @@ func (c *Connector) purchaseInput(
 	ctx context.Context,
 	client *businesscentral.Client,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
-) (*businesscentral.DocumentInput, error) {
+) (*businesscentraldocs.DocumentInput, error) {
 	lines, err := purchaseLines(doc.Lines)
 	if err != nil {
 		return nil, err
@@ -116,7 +120,7 @@ func (c *Connector) purchaseInput(
 	if err != nil {
 		return nil, err
 	}
-	input := &businesscentral.DocumentInput{
+	input := &businesscentraldocs.DocumentInput{
 		PartyID:                doc.VendorExternalID,
 		ExternalDocumentNumber: docReference(doc.DocNumber, doc.RequestID),
 		DocumentDate:           doc.TxnDate,
@@ -132,11 +136,11 @@ func (c *Connector) purchaseInput(
 
 func purchaseLines(
 	lines []accountingconnectorports.AccountingPurchaseLine,
-) ([]businesscentral.LineInput, error) {
+) ([]businesscentraldocs.LineInput, error) {
 	if len(lines) == 0 {
 		return nil, errLinesRequired
 	}
-	out := make([]businesscentral.LineInput, 0, len(lines))
+	out := make([]businesscentraldocs.LineInput, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		purpose := linePurpose(idx, line.Description)
@@ -146,7 +150,7 @@ func purchaseLines(
 		if line.Amount.IsNegative() {
 			return nil, negativeLine(purpose)
 		}
-		out = append(out, businesscentral.LineInput{
+		out = append(out, businesscentraldocs.LineInput{
 			AccountID:   strings.TrimSpace(line.AccountExternalID),
 			Description: lineDescription(line.Description),
 			Quantity:    decimal.NewFromInt(1),
@@ -158,13 +162,13 @@ func purchaseLines(
 
 type purchaseWritten struct {
 	auth   accountingconnectorports.AccountingDocumentAuth
-	kind   businesscentral.DocumentKind
-	doc    *businesscentral.Document
+	kind   businesscentraldocs.DocumentKind
+	doc    *businesscentraldocs.Document
 	result *accountingconnectorports.AccountingDocumentResult
 }
 
 func (c *Connector) finishPurchase(written *purchaseWritten) {
-	credit := written.kind == businesscentral.DocumentPurchaseCreditMemo
+	credit := written.kind == businesscentraldocs.DocumentPurchaseCreditMemo
 	docType := docTypePurchaseInvoice
 	if credit {
 		docType = docTypePurchaseCreditMemo
@@ -312,24 +316,35 @@ type billRetirement struct {
 
 func (c *Connector) retirePurchase(ctx context.Context, r *billRetirement) error {
 	if r.credit {
-		_, err := c.retireDocument(ctx, r.client, businesscentral.DocumentPurchaseCreditMemo, r.id)
+		_, err := c.retireDocument(
+			ctx,
+			r.client,
+			businesscentraldocs.DocumentPurchaseCreditMemo,
+			r.id,
+		)
 		return err
 	}
-	bill, err := r.client.Document(ctx, businesscentral.DocumentPurchaseInvoice, r.id)
+	bill, err := businesscentraldocs.ReadDocument(
+		ctx,
+		r.client,
+		businesscentraldocs.DocumentPurchaseInvoice,
+		r.id,
+	)
 	if err != nil {
-		if businesscentral.IsNotFound(err) {
+		if businesscentralerrors.IsNotFound(err) {
 			return nil
 		}
 		return err
 	}
 	if bill.IsDraft() {
-		err = r.client.DeleteDocument(
+		err = businesscentraldocs.DeleteDocument(
 			ctx,
-			businesscentral.DocumentPurchaseInvoice,
+			r.client,
+			businesscentraldocs.DocumentPurchaseInvoice,
 			bill.ID,
 			bill.ETag,
 		)
-		if err != nil && !businesscentral.IsNotFound(err) {
+		if err != nil && !businesscentralerrors.IsNotFound(err) {
 			return err
 		}
 		return nil
@@ -340,9 +355,9 @@ func (c *Connector) retirePurchase(ctx context.Context, r *billRetirement) error
 func (c *Connector) creditBill(
 	ctx context.Context,
 	r *billRetirement,
-	bill *businesscentral.Document,
+	bill *businesscentraldocs.Document,
 ) error {
-	input := &businesscentral.DocumentInput{
+	input := &businesscentraldocs.DocumentInput{
 		PartyID:                bill.PartyID,
 		ExternalDocumentNumber: requestReference(r.requestID),
 		InvoiceID:              bill.ID,
@@ -350,7 +365,7 @@ func (c *Connector) creditBill(
 	key := voidCreditKey(bill.ID)
 	held, found, err := resumeDocument(ctx, &documentWrite{
 		client: r.client,
-		kind:   businesscentral.DocumentPurchaseCreditMemo,
+		kind:   businesscentraldocs.DocumentPurchaseCreditMemo,
 		input:  input,
 		refs:   r.refs,
 		refKey: key,
@@ -375,7 +390,7 @@ func (c *Connector) creditBill(
 	input.CurrencyCode = documentCurrency(setup, bill.CurrencyCode)
 	memo, err := postDocument(ctx, &documentWrite{
 		client: r.client,
-		kind:   businesscentral.DocumentPurchaseCreditMemo,
+		kind:   businesscentraldocs.DocumentPurchaseCreditMemo,
 		input:  input,
 		refs:   r.refs,
 		refKey: key,
@@ -394,7 +409,7 @@ func voidCreditKey(billID string) string {
 func creditLines(
 	accounts map[string]string,
 	total decimal.Decimal,
-) ([]businesscentral.LineInput, error) {
+) ([]businesscentraldocs.LineInput, error) {
 	keys := make([]string, 0, len(accounts))
 	for key := range accounts {
 		if strings.HasPrefix(key, refAccountPrefix) && len(key) > len(refAccountPrefix) {
@@ -406,9 +421,9 @@ func creditLines(
 	}
 	slices.Sort(keys)
 	if len(keys) == 1 {
-		return []businesscentral.LineInput{creditLine(keys[0], total)}, nil
+		return []businesscentraldocs.LineInput{creditLine(keys[0], total)}, nil
 	}
-	lines := make([]businesscentral.LineInput, 0, len(keys))
+	lines := make([]businesscentraldocs.LineInput, 0, len(keys))
 	for _, key := range keys {
 		amount, err := decimal.NewFromString(accounts[key])
 		if err != nil || amount.IsNegative() {
@@ -424,8 +439,8 @@ func creditLines(
 	return lines, nil
 }
 
-func creditLine(key string, amount decimal.Decimal) businesscentral.LineInput {
-	return businesscentral.LineInput{
+func creditLine(key string, amount decimal.Decimal) businesscentraldocs.LineInput {
+	return businesscentraldocs.LineInput{
 		AccountID:   strings.TrimPrefix(key, refAccountPrefix),
 		Description: "Void",
 		Quantity:    decimal.NewFromInt(1),
@@ -441,7 +456,7 @@ func (c *Connector) CreateBillPayment(
 		return nil, errDocumentKind
 	}
 	if !doc.Amount.IsPositive() {
-		return nil, businesscentral.ErrAmountInvalid
+		return nil, businesscentralerrors.ErrAmountInvalid
 	}
 	if strings.TrimSpace(doc.BankAccountExternalID) == "" {
 		return nil, unmappedAccount("The bank account")
@@ -457,10 +472,10 @@ func (c *Connector) CreateBillPayment(
 	number := requestReference(doc.RequestID)
 	if err = c.postPayment(ctx, &journalWrite{
 		client:         client,
-		party:          businesscentral.PartyVendor,
+		party:          businesscentralref.PartyVendor,
 		accountID:      doc.BankAccountExternalID,
 		documentNumber: number,
-		lines: []businesscentral.PaymentInput{{
+		lines: []businesscentralpay.PaymentInput{{
 			PartyID:        doc.VendorExternalID,
 			PostingDate:    doc.TxnDate,
 			DocumentNumber: number,

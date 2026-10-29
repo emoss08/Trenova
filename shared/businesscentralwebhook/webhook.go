@@ -1,4 +1,4 @@
-package businesscentral
+package businesscentralwebhook
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 )
 
 const (
@@ -28,12 +30,12 @@ type Notification struct {
 }
 
 type wireNotification struct {
-	SubscriptionID       string   `json:"subscriptionId"`
-	ClientState          string   `json:"clientState"`
-	ExpirationDateTime   wireTime `json:"expirationDateTime"`
-	Resource             string   `json:"resource"`
-	ChangeType           string   `json:"changeType"`
-	LastModifiedDateTime wireTime `json:"lastModifiedDateTime"`
+	SubscriptionID       string                   `json:"subscriptionId"`
+	ClientState          string                   `json:"clientState"`
+	ExpirationDateTime   businesscentral.WireTime `json:"expirationDateTime"`
+	Resource             string                   `json:"resource"`
+	ChangeType           string                   `json:"changeType"`
+	LastModifiedDateTime businesscentral.WireTime `json:"lastModifiedDateTime"`
 }
 
 type notificationEnvelope struct {
@@ -43,14 +45,14 @@ type notificationEnvelope struct {
 func ParseNotifications(body []byte) ([]Notification, error) {
 	trimmed := bytes.TrimSpace(body)
 	if len(trimmed) == 0 || trimmed[0] != '{' {
-		return nil, ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 	var wire notificationEnvelope
 	if err := sonic.Unmarshal(trimmed, &wire); err != nil {
-		return nil, ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 	if len(wire.Value) > MaxNotificationsPerBatch {
-		return nil, ErrTooManyNotifications
+		return nil, businesscentralerrors.ErrTooManyNotifications
 	}
 
 	notifications := make([]Notification, 0, len(wire.Value))
@@ -59,10 +61,10 @@ func ParseNotifications(body []byte) ([]Notification, error) {
 		notifications = append(notifications, Notification{
 			SubscriptionID:     strings.TrimSpace(item.SubscriptionID),
 			ClientState:        item.ClientState,
-			ExpirationDateTime: item.ExpirationDateTime.time(),
+			ExpirationDateTime: item.ExpirationDateTime.Time(),
 			Resource:           item.Resource,
 			ChangeType:         strings.ToLower(strings.TrimSpace(item.ChangeType)),
-			LastModified:       item.LastModifiedDateTime.time(),
+			LastModified:       item.LastModifiedDateTime.Time(),
 		})
 	}
 	return notifications, nil

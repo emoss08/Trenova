@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -349,9 +350,9 @@ func TestCompaniesFailsWithoutACompanyOrATenant(t *testing.T) {
 		&accountingconnectorports.AccountingTokenGrant{AccessToken: "opaque"},
 		"",
 	)
-	require.ErrorIs(t, err, businesscentral.ErrMalformedToken)
+	require.ErrorIs(t, err, businesscentralerrors.ErrMalformedToken)
 	_, err = conn.Companies(t.Context(), nil, "")
-	require.ErrorIs(t, err, businesscentral.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrAccessTokenRequired)
 }
 
 func TestCompanyFactsReadsTheBooks(t *testing.T) {
@@ -424,22 +425,34 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 		{"no access", errNoAccess, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
-			&businesscentral.OAuthError{Code: "invalid_grant"},
+			&businesscentralerrors.OAuthError{Code: "invalid_grant"},
 			accountingsync.ErrorCategoryRevoked,
 		},
 		{
 			"client",
-			&businesscentral.OAuthError{Code: "invalid_client"},
+			&businesscentralerrors.OAuthError{Code: "invalid_client"},
 			accountingsync.ErrorCategoryUnauthorized,
 		},
-		{"auth", &businesscentral.APIError{Status: 401}, accountingsync.ErrorCategoryUnauthorized},
+		{
+			"auth",
+			&businesscentralerrors.APIError{Status: 401},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
 		{
 			"forbidden",
-			&businesscentral.APIError{Status: 403},
+			&businesscentralerrors.APIError{Status: 403},
 			accountingsync.ErrorCategoryConfiguration,
 		},
-		{"rate", &businesscentral.APIError{Status: 429}, accountingsync.ErrorCategoryRateLimited},
-		{"busy", &businesscentral.APIError{Status: 503}, accountingsync.ErrorCategoryTransient},
+		{
+			"rate",
+			&businesscentralerrors.APIError{Status: 429},
+			accountingsync.ErrorCategoryRateLimited,
+		},
+		{
+			"busy",
+			&businesscentralerrors.APIError{Status: 503},
+			accountingsync.ErrorCategoryTransient,
+		},
 		{"deadline", context.DeadlineExceeded, accountingsync.ErrorCategoryTransient},
 		{"other", errors.New("boom"), accountingsync.ErrorCategoryUnknown},
 	}

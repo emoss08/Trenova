@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 )
 
 var (
@@ -63,17 +65,17 @@ func listReference(
 ) ([]*accountingmapping.AccountingReferenceObject, error) {
 	switch kind {
 	case accountingprovider.ReferenceKindAccount:
-		accounts, err := client.Accounts(ctx, nil)
+		accounts, err := businesscentralref.Accounts(ctx, client, nil)
 		return convertAll(accounts, accountObjectOf), err
 	case accountingprovider.ReferenceKindItem:
-		items, err := client.Items(ctx, nil)
+		items, err := businesscentralref.Items(ctx, client, nil)
 		return convertAll(items, itemObjectOf), err
 	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		partyKind := partyKindOf(kind)
-		parties, err := client.Parties(ctx, partyKind, nil)
+		parties, err := businesscentralref.Parties(ctx, client, partyKind, nil)
 		return convertAll(parties, partyConverter(kind)), err
 	case accountingprovider.ReferenceKindTerm:
-		terms, err := client.PaymentTerms(ctx)
+		terms, err := businesscentralref.PaymentTerms(ctx, client)
 		return convertAll(terms, termObjectOf), err
 	case accountingprovider.ReferenceKindPaymentMethod:
 		return []*accountingmapping.AccountingReferenceObject{}, nil
@@ -93,15 +95,15 @@ func convertAll[T any](
 	return out
 }
 
-func partyKindOf(kind accountingprovider.ReferenceKind) businesscentral.PartyKind {
+func partyKindOf(kind accountingprovider.ReferenceKind) businesscentralref.PartyKind {
 	if kind == accountingprovider.ReferenceKindVendor {
-		return businesscentral.PartyVendor
+		return businesscentralref.PartyVendor
 	}
-	return businesscentral.PartyCustomer
+	return businesscentralref.PartyCustomer
 }
 
-func referenceKindOf(kind businesscentral.PartyKind) accountingprovider.ReferenceKind {
-	if kind == businesscentral.PartyVendor {
+func referenceKindOf(kind businesscentralref.PartyKind) accountingprovider.ReferenceKind {
+	if kind == businesscentralref.PartyVendor {
 		return accountingprovider.ReferenceKindVendor
 	}
 	return accountingprovider.ReferenceKindCustomer
@@ -148,7 +150,7 @@ func (c *Connector) createItem(
 	draft *accountingconnectorports.AccountingItemDraft,
 ) (*accountingmapping.AccountingReferenceObject, error) {
 	name := c.SanitizeName(accountingprovider.ReferenceKindItem, draft.Name)
-	items, err := client.Items(ctx, nil)
+	items, err := businesscentralref.Items(ctx, client, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -157,9 +159,9 @@ func (c *Connector) createItem(
 			return nil, fmt.Errorf("%w: item %q", errDuplicateName, name)
 		}
 	}
-	created, err := client.CreateItem(ctx, &businesscentral.ItemInput{
+	created, err := businesscentralref.CreateItem(ctx, client, &businesscentralref.ItemInput{
 		DisplayName: name,
-		Type:        businesscentral.ItemTypeService,
+		Type:        businesscentralref.ItemTypeService,
 	})
 	if err != nil {
 		return nil, err
@@ -170,25 +172,25 @@ func (c *Connector) createItem(
 func createParty(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.PartyKind,
+	kind businesscentralref.PartyKind,
 	draft *accountingconnectorports.AccountingPartyDraft,
-) (*businesscentral.Party, error) {
+) (*businesscentralref.Party, error) {
 	input := partyInputOf(draft)
 	if input.DisplayName == "" {
-		return nil, businesscentral.ErrNameRequired
+		return nil, businesscentralerrors.ErrNameRequired
 	}
-	existing, err := client.FindParties(ctx, kind, input.DisplayName)
+	existing, err := businesscentralref.FindParties(ctx, client, kind, input.DisplayName)
 	if err != nil {
 		return nil, err
 	}
 	if len(existing) > 0 {
 		return nil, fmt.Errorf("%w: %q", errDuplicateName, input.DisplayName)
 	}
-	return client.CreateParty(ctx, kind, input)
+	return businesscentralref.CreateParty(ctx, client, kind, input)
 }
 
 func (c *Connector) IsDuplicateName(err error) bool {
-	return errors.Is(err, errDuplicateName) || businesscentral.IsDuplicate(err)
+	return errors.Is(err, errDuplicateName) || businesscentralerrors.IsDuplicate(err)
 }
 
 func (c *Connector) SanitizeName(_ accountingprovider.ReferenceKind, name string) string {
@@ -197,8 +199,8 @@ func (c *Connector) SanitizeName(_ accountingprovider.ReferenceKind, name string
 
 func partyInputOf(
 	draft *accountingconnectorports.AccountingPartyDraft,
-) *businesscentral.PartyInput {
-	return &businesscentral.PartyInput{
+) *businesscentralref.PartyInput {
+	return &businesscentralref.PartyInput{
 		DisplayName:  cleanText(draft.DisplayName, maxNameLength),
 		Email:        cleanText(draft.Email, maxEmailLength),
 		AddressLine1: cleanText(draft.AddressLine1, maxAddressLength),
@@ -211,7 +213,7 @@ func partyInputOf(
 
 type partyWrite struct {
 	auth       accountingconnectorports.AccountingDocumentAuth
-	kind       businesscentral.PartyKind
+	kind       businesscentralref.PartyKind
 	externalID string
 	party      *accountingconnectorports.AccountingPartyDraft
 }
@@ -224,7 +226,7 @@ func (c *Connector) upsertParty(
 	if err != nil {
 		return nil, err
 	}
-	var saved *businesscentral.Party
+	var saved *businesscentralref.Party
 	if id := strings.TrimSpace(write.externalID); id != "" {
 		saved, err = updateParty(ctx, client, write.kind, id, write.party)
 	} else {
@@ -243,18 +245,18 @@ func (c *Connector) upsertParty(
 func updateParty(
 	ctx context.Context,
 	client *businesscentral.Client,
-	kind businesscentral.PartyKind,
+	kind businesscentralref.PartyKind,
 	id string,
 	draft *accountingconnectorports.AccountingPartyDraft,
-) (*businesscentral.Party, error) {
-	current, err := client.Party(ctx, kind, id)
+) (*businesscentralref.Party, error) {
+	current, err := businesscentralref.ReadParty(ctx, client, kind, id)
 	if err != nil {
 		return nil, err
 	}
 	input := partyInputOf(draft)
 	input.CurrencyCode = current.CurrencyCode
 	input.PaymentTermsID = current.PaymentTermsID
-	return client.UpdateParty(ctx, &businesscentral.PartyUpdate{
+	return businesscentralref.UpdateParty(ctx, client, &businesscentralref.PartyUpdate{
 		Kind:    kind,
 		PartyID: current.ID,
 		ETag:    current.ETag,
@@ -263,7 +265,7 @@ func updateParty(
 }
 
 func accountObjectOf(
-	account *businesscentral.Account,
+	account *businesscentralref.Account,
 ) *accountingmapping.AccountingReferenceObject {
 	return &accountingmapping.AccountingReferenceObject{
 		Kind:              accountingprovider.ReferenceKindAccount,
@@ -279,18 +281,18 @@ func accountObjectOf(
 	}
 }
 
-func AccountClassOf(account *businesscentral.Account) accountingmapping.AccountClass {
+func AccountClassOf(account *businesscentralref.Account) accountingmapping.AccountClass {
 	sub := strings.ToLower(account.SubCategory)
 	switch account.Category {
-	case businesscentral.CategoryIncome:
+	case businesscentralref.CategoryIncome:
 		return accountingmapping.AccountClassIncome
-	case businesscentral.CategoryCostOfGoodsSold:
+	case businesscentralref.CategoryCostOfGoodsSold:
 		return accountingmapping.AccountClassCostOfSales
-	case businesscentral.CategoryExpense:
+	case businesscentralref.CategoryExpense:
 		return accountingmapping.AccountClassExpense
-	case businesscentral.CategoryEquity:
+	case businesscentralref.CategoryEquity:
 		return accountingmapping.AccountClassEquity
-	case businesscentral.CategoryAssets:
+	case businesscentralref.CategoryAssets:
 		switch {
 		case strings.Contains(sub, "receivable"):
 			return accountingmapping.AccountClassReceivable
@@ -299,7 +301,7 @@ func AccountClassOf(account *businesscentral.Account) accountingmapping.AccountC
 		default:
 			return accountingmapping.AccountClassAsset
 		}
-	case businesscentral.CategoryLiabilities:
+	case businesscentralref.CategoryLiabilities:
 		if strings.Contains(sub, "payable") {
 			return accountingmapping.AccountClassPayable
 		}
@@ -309,7 +311,7 @@ func AccountClassOf(account *businesscentral.Account) accountingmapping.AccountC
 	}
 }
 
-func itemObjectOf(item *businesscentral.Item) *accountingmapping.AccountingReferenceObject {
+func itemObjectOf(item *businesscentralref.Item) *accountingmapping.AccountingReferenceObject {
 	name := item.DisplayName
 	if name == "" {
 		name = item.Number
@@ -327,15 +329,15 @@ func itemObjectOf(item *businesscentral.Item) *accountingmapping.AccountingRefer
 
 func partyConverter(
 	kind accountingprovider.ReferenceKind,
-) func(*businesscentral.Party) *accountingmapping.AccountingReferenceObject {
-	return func(party *businesscentral.Party) *accountingmapping.AccountingReferenceObject {
+) func(*businesscentralref.Party) *accountingmapping.AccountingReferenceObject {
+	return func(party *businesscentralref.Party) *accountingmapping.AccountingReferenceObject {
 		return partyObjectOf(kind, party)
 	}
 }
 
 func partyObjectOf(
 	kind accountingprovider.ReferenceKind,
-	party *businesscentral.Party,
+	party *businesscentralref.Party,
 ) *accountingmapping.AccountingReferenceObject {
 	return &accountingmapping.AccountingReferenceObject{
 		Kind:              kind,
@@ -354,7 +356,9 @@ func partyObjectOf(
 	}
 }
 
-func termObjectOf(term *businesscentral.PaymentTerm) *accountingmapping.AccountingReferenceObject {
+func termObjectOf(
+	term *businesscentralref.PaymentTerm,
+) *accountingmapping.AccountingReferenceObject {
 	name := term.DisplayName
 	if name == "" {
 		name = term.Code
