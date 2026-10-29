@@ -94,7 +94,7 @@ func (w openAsOfWindow) movedInvoices() *keel.CTETable {
 		ledger.
 			Pick(ledger.RelatedInvoiceID).
 			Where(
-				ledger.SourceObjectType.Eq(customerledger.SourceFactoringItem),
+				ledger.SourceObjectType.EqCol(keel.ConstText(customerledger.SourceFactoringItem)),
 				ledger.RelatedInvoiceID.IsNotNull(),
 				ledger.CreatedAt.Gt(start),
 			),
@@ -148,7 +148,7 @@ func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 				Join(
 					candidates,
 					id.EqCol(cle.RelatedInvoiceID),
-					cle.SourceObjectType.Eq(customerledger.SourceFactoringItem),
+					cle.SourceObjectType.EqCol(keel.ConstText(customerledger.SourceFactoringItem)),
 				).
 				Pick(id, due, cle.CreatedAt, keel.NullInt64(), cle.AmountMinor.Neg()),
 		),

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/pkg/rankquery"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -429,7 +430,10 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 	reservedInv := invoicedb.Invoices.As("reserved_inv")
 	advanceAt := fs.SentAt.Add(agr.FundingDays.Mul(keel.Int64(secondsPerDay))).
 		Greatest(keel.Int64(req.AsOfDate))
-	releaseAt := reservedInv.DueDate.Greatest(keel.Int64(req.AsOfDate))
+	reservedDue := keel.Int64Of(keel.Scalar(reservedInv.
+		Pick(reservedInv.DueDate).
+		Where(reservedInv.ID.EqCol(reserved.InvoiceID))))
+	releaseAt := reservedDue.Greatest(keel.Int64(req.AsOfDate))
 
 	return weeks.Query().With(weeks).
 		Pick(
@@ -464,10 +468,9 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 			)),
 			orZero(keel.Scalar(reserved.
 				Pick(reserved.ReserveMinor.Sum()).
-				Join(reservedInv, reservedInv.ID.EqCol(reserved.InvoiceID)).
 				Where(
 					reserved.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
-					reservedInv.DueDate.IsNotNull(),
+					reservedDue.IsNotNull(),
 					inWeek(releaseAt),
 				))),
 			weekStart.GteExpr(keel.Int64(req.AsOfDate)),
@@ -583,6 +586,15 @@ func (r *repository) GetCollectionTotals(
 	)
 }
 
+var topOverdueColumns = []string{
+	"customer_id",
+	"customer_name",
+	"overdue_minor",
+	"total_open_minor",
+	"oldest_days_past_due",
+	"open_invoice_count",
+}
+
 type topOverdueRecord struct {
 	CustomerID        string
 	CustomerName      string
@@ -604,7 +616,7 @@ func (r *repository) ListTopOverdueCustomers(
 			open := receivablesql.OpenMinor(inv)
 			overdue := overdueAt(inv, req.AsOfDate)
 			overdueMinor := amountWhen(overdue, open).Sum()
-			records, err := keel.Into[topOverdueRecord](ctx, r.db.Keel(ctx), inv.
+			grouped := inv.
 				Pick(
 					inv.CustomerID,
 					inv.BillToName,
@@ -618,9 +630,16 @@ func (r *repository) ListTopOverdueCustomers(
 				).
 				Where(receivablesql.Open(inv)).
 				Group(inv.CustomerID, inv.BillToName).
-				Having(overdueMinor.Gt(0)).
-				Order(overdueMinor.Desc()).
-				Limit(req.Limit))
+				Having(overdueMinor.Gt(0))
+			records, err := keel.Into[topOverdueRecord](ctx, r.db.Keel(ctx), rankquery.Top(
+				grouped,
+				rankquery.Params{
+					Name:    "overdue_customers",
+					Columns: topOverdueColumns,
+					Rank:    []keel.Order{overdueMinor.Desc()},
+					Limit:   req.Limit,
+				},
+			))
 			if err != nil {
 				return nil, fmt.Errorf("list ar top overdue customers: %w", err)
 			}

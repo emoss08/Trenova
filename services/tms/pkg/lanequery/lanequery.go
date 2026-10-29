@@ -7,10 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/pkg/rankquery"
 )
 
 const (
 	endpointsCTE          = "lane_endpoints"
+	lanesCTE              = "lanes"
 	originLocationID      = "origin_location_id"
 	destinationLocationID = "destination_location_id"
 
@@ -41,24 +43,30 @@ func lanes(opts Options) *keel.Query[*keel.Row] {
 	destinationState := usstatedb.UsStates.As(destinationStateAlias)
 	count := keel.Count()
 
-	q := endpoints.Query().With(endpoints).
+	grouped := endpoints.Query().
 		Join(originLocation, originLocation.ID.EqCol(origin)).
 		Join(originState, originState.ID.EqCol(originLocation.StateID)).
 		Join(destinationLocation, destinationLocation.ID.EqCol(destination)).
 		Join(destinationState, destinationState.ID.EqCol(destinationLocation.StateID)).
 		Where(origin.IsNotNull(), destination.IsNotNull()).
 		Group(originState.Abbreviation, destinationState.Abbreviation).
-		Pick(originState.Abbreviation, destinationState.Abbreviation, count).
-		Order(
-			keel.Desc(count),
-			originState.Abbreviation.Asc(),
-			destinationState.Abbreviation.Asc(),
-		)
-	if opts.Limit > 0 {
-		q = q.Limit(opts.Limit)
+		Pick(originState.Abbreviation, destinationState.Abbreviation, count)
+	rank := []keel.Order{
+		keel.Desc(count),
+		originState.Abbreviation.Asc(),
+		destinationState.Abbreviation.Asc(),
+	}
+	if opts.Limit <= 0 {
+		return grouped.With(endpoints).Order(rank...)
 	}
 
-	return q
+	return rankquery.Top(grouped, rankquery.Params{
+		Name:    lanesCTE,
+		Columns: []string{"origin_state", "destination_state", "shipments"},
+		With:    []*keel.CTETable{endpoints},
+		Rank:    rank,
+		Limit:   opts.Limit,
+	})
 }
 
 func shipmentEndpoints(filter []keel.Pred) *keel.Query[*shipment.Shipment] {

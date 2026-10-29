@@ -264,7 +264,7 @@ type worklistQuery struct {
 	limit       int
 }
 
-func openInvoicesByCustomer(asOf int64) *keel.CTETable {
+func openInvoicesByCustomer(asOf int64, customerID pulid.ID) *keel.CTETable {
 	inv := invoicedb.Invoices
 	open := receivablesql.OpenMinor(inv)
 	overdue := keel.And(inv.DueDate.IsNotNull(), inv.DueDate.Lt(asOf))
@@ -288,14 +288,18 @@ func openInvoicesByCustomer(asOf int64) *keel.CTETable {
 				keel.Count(),
 				keel.Count().Filter(inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed)),
 			).
-			Where(receivablesql.Open(inv), keel.Not(receivablesql.SoldWithoutRecourse(inv))).
+			Where(
+				receivablesql.Open(inv),
+				keel.When(customerID.IsNotNil(), inv.CustomerID.Eq(customerID)),
+				keel.Not(receivablesql.SoldWithoutRecourse(inv)),
+			).
 			Group(inv.CustomerID),
 	)
 }
 
 func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 	cus := customerdb.Customers
-	oi := openInvoicesByCustomer(q.asOf)
+	oi := openInvoicesByCustomer(q.asOf, q.customerID)
 	cbp := customerdb.CustomerBillingProfiles
 	acc := collectiondb.Accounts
 	col := tenantdb.Users.As("col")
@@ -311,7 +315,7 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 	openMinor := keel.NumericOf(oi.Col("open_minor")).Coalesce(0)
 	overdueMinor := keel.NumericOf(oi.Col("overdue_minor")).Coalesce(0)
 
-	return cus.With(oi).
+	stmt := cus.With(oi).
 		LeftJoin(oi, oi.Col("customer_id").EqCol(cus.ID)).
 		LeftJoin(cbp, cbp.CustomerID.EqCol(cus.ID)).
 		LeftJoin(acc, acc.CustomerID.EqCol(cus.ID)).
@@ -359,9 +363,11 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 			keel.When(q.collectorID.IsNotNil(), acc.CollectorID.Eq(q.collectorID)),
 			keel.When(q.unassigned, acc.CollectorID.IsNull()),
 			keel.When(q.pattern != "", keel.Or(cus.Name.ILike(q.pattern), cus.Code.ILike(q.pattern))),
-		).
-		Order(overdueMinor.Desc(), cus.ID.Asc()).
-		Limit(q.limit)
+		)
+	if q.customerID.IsNotNil() {
+		return stmt
+	}
+	return stmt.Order(overdueMinor.Desc(), cus.ID.Asc()).Limit(q.limit)
 }
 
 func (r *repository) readWorklist(

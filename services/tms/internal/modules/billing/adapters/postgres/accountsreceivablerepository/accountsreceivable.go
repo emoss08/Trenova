@@ -173,7 +173,10 @@ func hasShortPay(inv *invoicedb.InvoicesTable) keel.Pred {
 	cpa := customerpaymentdb.Applications.As("cpa")
 	cp := customerpaymentdb.Payments.As("cp")
 	return keel.Exists(postedApplications(cpa, cp).
-		Where(cpa.InvoiceID.EqCol(inv.ID), cpa.ShortPayAmountMinor.Gt(0)))
+		Where(
+			cpa.InvoiceID.EqCol(inv.ID),
+			keel.Int64Of(cpa.ShortPayAmountMinor).GtExpr(keel.ConstInt64(0)),
+		))
 }
 
 func (rec *agingRowRecord) row() *customerledgerports.ARCustomerAgingRow {

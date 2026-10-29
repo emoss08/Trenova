@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/lanequery"
+	"github.com/emoss08/trenova/pkg/rankquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -105,6 +106,15 @@ func countDesc() keel.Order {
 	return keel.Count().Desc()
 }
 
+func topRows(name string, rank ...keel.Order) rankquery.Params {
+	return rankquery.Params{
+		Name:    name,
+		Columns: []string{"label", "total"},
+		Rank:    rank,
+		Limit:   agentprofileports.TopRows,
+	}
+}
+
 func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads) []keel.BatchItem {
 	out := reads.activity
 	sp := shipmentdb.Shipments
@@ -142,13 +152,12 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			).
 			Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 			Where(live, inWindow(w)), &reads.moves),
-		keel.IntoSlice(sp.
+		keel.IntoSlice(rankquery.Top(sp.
 			Join(cus, cus.ID.EqCol(sp.CustomerID)).
 			Group(cus.ID, cus.Name).
 			Pick(cus.Name, keel.Count()).
-			Where(live, inWindow(w)).
-			Order(countDesc(), cus.Name.Asc()).
-			Limit(agentprofileports.TopRows), &out.TopCustomers),
+			Where(live, inWindow(w)), topRows("top_customers", countDesc(), cus.Name.Asc()),
+		), &out.TopCustomers),
 		keel.IntoSlice(lanequery.New(lanequery.Options{
 			Shipments: []keel.Pred{
 				sp.CreatedAt.Gte(w.Start),
@@ -157,16 +166,16 @@ func organizationItems(w agentprofileports.FactsWindow, reads *organizationReads
 			},
 			Limit: agentprofileports.TopRows,
 		}), &out.TopLanes),
-		keel.IntoSlice(stp.
+		keel.IntoSlice(rankquery.Top(stp.
 			Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 			Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 			Join(loc, loc.ID.EqCol(stp.LocationID)).
 			LeftJoin(ust, ust.ID.EqCol(loc.StateID)).
 			Group(loc.ID, loc.Name, loc.City, ust.Abbreviation).
 			Pick(pickupName, sp.ID.CountDistinct()).
-			Where(stp.Type.In(shipmentvocab.PickupStopTypes()...), live, inWindow(w)).
-			Order(keel.Desc(sp.ID.CountDistinct()), keel.Asc(pickupName)).
-			Limit(agentprofileports.TopRows), &out.TopPickupLocations),
+			Where(stp.Type.In(shipmentvocab.PickupStopTypes()...), live, inWindow(w)),
+			topRows("top_pickups", keel.Desc(sp.ID.CountDistinct()), keel.Asc(pickupName)),
+		), &out.TopPickupLocations),
 		keel.IntoValue(wrk.
 			Pick(keel.Count(), keel.Count().Filter(wrk.Type.Eq(worker.WorkerTypeContractor))).
 			Where(activeWorkers), &reads.workers),
@@ -354,7 +363,7 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 			sp.Where(sp.EnteredByID.Eq(req.UserID), inWindow(w)),
 			&out.EnteredShipments,
 		),
-		keel.IntoSlice(sp.
+		keel.IntoSlice(rankquery.Top(sp.
 			Join(cus, cus.ID.EqCol(sp.CustomerID)).
 			Group(cus.ID, cus.Name).
 			Pick(cus.Name, keel.Count()).
@@ -362,9 +371,8 @@ func userItems(req *agentprofileports.UserFactsRequest, reads *userReads) []keel
 				keel.Or(sp.OwnerID.Eq(req.UserID), sp.EnteredByID.Eq(req.UserID)),
 				sp.Status.Ne(shipmentvocab.StatusCanceled),
 				inWindow(w),
-			).
-			Order(countDesc(), cus.Name.Asc()).
-			Limit(agentprofileports.TopRows), &out.Customers),
+			), topRows("user_customers", countDesc(), cus.Name.Asc()),
+		), &out.Customers),
 		keel.IntoSlice(ae.
 			Group(ae.Resource).
 			Pick(keel.CastText(ae.Resource), keel.Count()).
