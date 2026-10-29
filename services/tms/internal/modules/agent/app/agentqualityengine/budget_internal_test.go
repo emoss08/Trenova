@@ -1,10 +1,11 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -46,12 +47,15 @@ func (f *windowedUsage) EvaluationCost(
 	return &aiusageports.AIUsageCost{CostUSD: f.spent}, nil
 }
 
-func budgetService(control *agentqualitycontrol.Control, usage *windowedUsage, now int64) *Service {
-	return &Service{
-		l:        zap.NewNop(),
-		controls: &budgetControls{control: control},
-		usage:    usage,
-		now:      func() int64 { return now },
+func budgetService(control *agentqualitycontrol.Control, usage *windowedUsage, now int64) *Engine {
+	return &Engine{
+		l: zap.NewNop(),
+		settings: agentqualitysettings.New(agentqualitysettings.Params{
+			Logger:   zap.NewNop(),
+			Controls: &budgetControls{control: control},
+		}),
+		usage: usage,
+		now:   func() int64 { return now },
 	}
 }
 

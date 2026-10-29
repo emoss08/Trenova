@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"errors"

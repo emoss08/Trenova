@@ -1,7 +1,7 @@
 package agentqualityjobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,12 +24,12 @@ const (
 )
 
 type SweepPayload struct {
-	OrganizationID    pulid.ID                       `json:"organizationId"`
-	BusinessUnitID    pulid.ID                       `json:"businessUnitId"`
-	AgentDefinitionID pulid.ID                       `json:"agentDefinitionId,omitzero"`
-	Plan              *agentqualityservice.SweepPlan `json:"plan,omitempty"`
-	Cursor            int                            `json:"cursor,omitempty"`
-	Result            *SweepResult                   `json:"result,omitempty"`
+	OrganizationID    pulid.ID                      `json:"organizationId"`
+	BusinessUnitID    pulid.ID                      `json:"businessUnitId"`
+	AgentDefinitionID pulid.ID                      `json:"agentDefinitionId,omitzero"`
+	Plan              *agentqualityengine.SweepPlan `json:"plan,omitempty"`
+	Cursor            int                           `json:"cursor,omitempty"`
+	Result            *SweepResult                  `json:"result,omitempty"`
 }
 
 func (p *SweepPayload) tenantInfo() pagination.TenantInfo {
@@ -76,8 +76,8 @@ type SuiteRunResult struct {
 }
 
 type SuiteJudgePayload struct {
-	Suite SuiteRunPayload                `json:"suite"`
-	Batch agentqualityservice.JudgeBatch `json:"batch"`
+	Suite SuiteRunPayload               `json:"suite"`
+	Batch agentqualityengine.JudgeBatch `json:"batch"`
 }
 
 func SuiteJudgeWorkflowID(suiteRunID pulid.ID) string {

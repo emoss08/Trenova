@@ -3,6 +3,8 @@ package agentqualityservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -11,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -56,15 +59,15 @@ func (s *Service) Overview(
 		return nil, err
 	}
 
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	now := s.now()
 	since := now - int64(window)*secondsPerDay
-	timezone := s.timezoneOf(ctx, control, req.TenantInfo)
-	_, monthStart, err := windows(now, timezone)
+	timezone := s.settings.Timezone(ctx, control, req.TenantInfo)
+	_, monthStart, err := agentqualitysettings.Windows(now, timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +117,7 @@ func (s *Service) Overview(
 
 	latest, err := s.suiteRuns.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 		TenantInfo: req.TenantInfo,
-		Statuses:   scoredStatuses(),
+		Statuses:   agentqualityengine.ScoredStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -130,7 +133,7 @@ func (s *Service) Overview(
 	}
 	overview.WorstRegression = worstRegression(latest)
 	overview.AgentsScored = len(scores)
-	overview.QualityScore = meanPointer(scores)
+	overview.QualityScore = floatutils.MeanPtr(scores)
 
 	withCases, err := s.cases.ListAgentsWithActiveCases(
 		ctx,
@@ -275,7 +278,7 @@ func (s *Service) fillRatings(
 	req *agentqualityports.AgentQualityRequest,
 	since int64,
 ) error {
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return err
 	}
@@ -284,7 +287,7 @@ func (s *Service) fillRatings(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             since,
-		Timezone:          s.timezoneOf(ctx, control, req.TenantInfo),
+		Timezone:          s.settings.Timezone(ctx, control, req.TenantInfo),
 		Limit:             detailWorstRatedLimit,
 	}
 	days, err := s.feedback.DailySatisfaction(ctx, windowReq)

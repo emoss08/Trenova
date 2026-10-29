@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
@@ -18,17 +19,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"go.uber.org/zap"
 )
 
 const staleRunningAfter = int64(24 * 60 * 60)
@@ -61,15 +56,15 @@ type SweepPlan struct {
 	Agents     []PlannedAgent                    `json:"agents"`
 }
 
-func (s *Service) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan, error) {
-	control, err := s.control(ctx, req.TenantInfo)
+func (s *Engine) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan, error) {
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	now := s.now()
-	timezone := s.timezoneOf(ctx, control, req.TenantInfo)
-	dayStart, monthStart, err := windows(now, timezone)
+	timezone := s.settings.Timezone(ctx, control, req.TenantInfo)
+	dayStart, monthStart, err := agentqualitysettings.Windows(now, timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +115,7 @@ func (s *Service) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan,
 	return plan, nil
 }
 
-func (s *Service) agentsToPlan(
+func (s *Engine) agentsToPlan(
 	ctx context.Context,
 	req *SweepRequest,
 ) ([]*agentdefinition.Definition, error) {
@@ -195,7 +190,7 @@ func (r resolvedProvider) forAgent(preferred pulid.ID) (pulid.ID, string) {
 	return r.candidates[0].ID, r.candidates[0].Model
 }
 
-func (s *Service) chatProvider(
+func (s *Engine) chatProvider(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (resolvedProvider, error) {
@@ -230,7 +225,7 @@ type planAgentParams struct {
 	forced     bool
 }
 
-func (s *Service) fingerprint(
+func (s *Engine) fingerprint(
 	definition *agentdefinition.Definition,
 	provider resolvedProvider,
 ) *agentfingerprint.Fingerprint {
@@ -242,7 +237,7 @@ func (s *Service) fingerprint(
 	return s.runtime.Fingerprint(definition, providerID, model)
 }
 
-func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAgent, error) {
+func (s *Engine) planAgent(ctx context.Context, p planAgentParams) (*PlannedAgent, error) {
 	fingerprint := s.fingerprint(p.definition, p.provider)
 	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        p.tenant,
@@ -328,7 +323,7 @@ func openedFrom(run *agentqualitysuite.SuiteRun) *OpenedSuite {
 	}
 }
 
-func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*OpenedSuite, error) {
+func (s *Engine) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*OpenedSuite, error) {
 	existing, err := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
 	if err != nil {
 		return nil, err
@@ -353,7 +348,7 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 	baseline, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 		TenantInfo:        req.TenantInfo,
-		Statuses:          scoredStatuses(),
+		Statuses:          ScoredStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -406,7 +401,7 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 	return openedFrom(created), nil
 }
 
-func (s *Service) bySweepKey(
+func (s *Engine) bySweepKey(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	sweepKey string,
@@ -441,7 +436,7 @@ type newSuiteRunParams struct {
 	total    int
 }
 
-func (s *Service) newSuiteRun(p newSuiteRunParams) *agentqualitysuite.SuiteRun {
+func (s *Engine) newSuiteRun(p newSuiteRunParams) *agentqualitysuite.SuiteRun {
 	run := &agentqualitysuite.SuiteRun{
 		ID:                p.id,
 		OrganizationID:    p.req.TenantInfo.OrgID,
@@ -513,7 +508,7 @@ func fingerprintVersion(fingerprint *agentfingerprint.Fingerprint) int64 {
 	return fingerprint.DefinitionVersion
 }
 
-func (s *Service) createSuite(
+func (s *Engine) createSuite(
 	ctx context.Context,
 	run *agentqualitysuite.SuiteRun,
 	evaluations []*agentevaluation.Evaluation,
@@ -538,7 +533,7 @@ func (s *Service) createSuite(
 	return created, nil
 }
 
-func (s *Service) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) (bool, error) {
+func (s *Engine) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) (bool, error) {
 	running, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 		TenantInfo:        req.TenantInfo,
@@ -571,7 +566,7 @@ type RecordSkippedRequest struct {
 	Trigger    agentqualitysuite.SuiteRunTrigger `json:"trigger"`
 }
 
-func (s *Service) RecordSkipped(
+func (s *Engine) RecordSkipped(
 	ctx context.Context,
 	req *RecordSkippedRequest,
 ) (*OpenedSuite, error) {
@@ -625,95 +620,4 @@ func (s *Service) RecordSkipped(
 	}
 
 	return openedFrom(created), nil
-}
-
-func (s *Service) RunSuite(
-	ctx context.Context,
-	req *agentqualityports.RunAgentSuiteRequest,
-	actor *permissionports.RequestActor,
-) (*agentqualitysuite.SuiteRun, error) {
-	if s.starter == nil {
-		return nil, errortypes.NewBusinessError("The workflow engine is not available")
-	}
-
-	plan, err := s.PlanSweep(ctx, &SweepRequest{
-		TenantInfo:        req.TenantInfo,
-		AgentDefinitionID: req.AgentDefinitionID,
-		Forced:            true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(plan.Agents) == 0 {
-		return nil, errortypes.NewNotFoundError("Agent not found within your organization")
-	}
-
-	planned := plan.Agents[0]
-	if planned.ActiveCases == 0 {
-		return nil, errortypes.NewBusinessError(
-			"This agent has no active evaluation cases to run; activate a case first",
-		)
-	}
-
-	opened, err := s.OpenSuite(ctx, &OpenSuiteRequest{
-		TenantInfo:        req.TenantInfo,
-		Agent:             planned,
-		Trigger:           agentqualitysuite.SuiteRunTriggerManual,
-		RequestedByUserID: actor.UserIDOrNil(),
-		Settings:          plan.Settings,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
-		ID:         opened.SuiteRunID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err = s.starter.StartSuiteRun(ctx, &agentqualityports.AgentSuiteRunStart{
-		TenantInfo:        req.TenantInfo,
-		UserID:            actor.UserIDOrNil(),
-		SuiteRunID:        run.ID,
-		AgentDefinitionID: run.AgentDefinitionID,
-		SampleSeed:        run.SampleSeed,
-		Settings:          plan.Settings,
-		DayStart:          plan.DayStart,
-		MonthStart:        plan.MonthStart,
-	}); err != nil {
-		if failErr := s.fail(
-			ctx,
-			run,
-			"The suite could not be started: "+err.Error(),
-		); failErr != nil {
-			s.l.Error("could not close a suite run that failed to start", zap.Error(failErr))
-		}
-
-		return nil, err
-	}
-
-	s.logRun(run, actor)
-
-	return run, nil
-}
-
-func (s *Service) logRun(run *agentqualitysuite.SuiteRun, actor *permissionports.RequestActor) {
-	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceAgentEvalSuite,
-		ResourceID:     run.ID.String(),
-		Operation:      permission.OpCreate,
-		UserID:         auditActor.UserID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(run),
-		OrganizationID: run.OrganizationID,
-		BusinessUnitID: run.BusinessUnitID,
-	}, auditservice.WithComment("Agent suite run started by hand")); err != nil {
-		s.l.Error("failed to log agent suite run audit", zap.Error(err))
-	}
 }

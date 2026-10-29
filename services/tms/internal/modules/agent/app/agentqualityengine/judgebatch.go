@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
@@ -50,7 +50,7 @@ func (b *JudgeBatch) Batched() bool {
 	return b != nil && b.BatchID != ""
 }
 
-func (s *Service) SubmitJudgeBatch(
+func (s *Engine) SubmitJudgeBatch(
 	ctx context.Context,
 	req *SubmitJudgeBatchRequest,
 ) (*JudgeBatch, error) {
@@ -119,7 +119,7 @@ func (s *Service) SubmitJudgeBatch(
 	return batch, nil
 }
 
-func (s *Service) judgeBatchItems(
+func (s *Engine) judgeBatchItems(
 	ctx context.Context,
 	req *SubmitJudgeBatchRequest,
 ) ([]llmports.BatchCompletionItem, []pulid.ID, error) {
@@ -174,7 +174,7 @@ func (s *Service) judgeBatchItems(
 	return items, deferred, nil
 }
 
-func (s *Service) suiteEvaluationIndex(
+func (s *Engine) suiteEvaluationIndex(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	suiteRunID pulid.ID,
@@ -206,7 +206,7 @@ type JudgeBatchStatus struct {
 	Canceled   int  `json:"canceled"`
 }
 
-func (s *Service) CheckJudgeBatch(
+func (s *Engine) CheckJudgeBatch(
 	ctx context.Context,
 	req *CheckJudgeBatchRequest,
 ) (*JudgeBatchStatus, error) {
@@ -244,7 +244,7 @@ type CollectedJudgeBatch struct {
 	Retry  []pulid.ID `json:"retry"`
 }
 
-func (s *Service) CollectJudgeBatch(
+func (s *Engine) CollectJudgeBatch(
 	ctx context.Context,
 	req *CollectJudgeBatchRequest,
 ) (*CollectedJudgeBatch, error) {

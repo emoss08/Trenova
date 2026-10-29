@@ -413,7 +413,7 @@ func (s *Service) ListWorstRatedTable(
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (s *Service) ListWorstRatedTable(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             s.now() - int64(window)*secondsPerDay,
-		Timezone:          s.timezoneOf(ctx, control, req.TenantInfo),
+		Timezone:          s.settings.Timezone(ctx, control, req.TenantInfo),
 		Limit:             MaxWorstRatedAnswers,
 	})
 	if err != nil {

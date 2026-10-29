@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
@@ -163,7 +163,7 @@ func (f *fakeNotifier) NotifyPermitted(
 }
 
 type regressionWorld struct {
-	service  *Service
+	service  *Engine
 	runs     *fakeSuiteRuns
 	tower    *fakeTower
 	notifier *fakeNotifier
@@ -267,7 +267,7 @@ func newRegressionWorld(t *testing.T, currentHardFailure bool) *regressionWorld 
 	notifier := &fakeNotifier{sent: map[string]struct{}{}}
 
 	return &regressionWorld{
-		service: &Service{
+		service: &Engine{
 			l:         zap.NewNop(),
 			suiteRuns: runs,
 			evaluations: &fakeEvaluations{bySuite: map[pulid.ID][]*agentevaluation.Evaluation{

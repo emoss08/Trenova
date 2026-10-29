@@ -2670,7 +2670,7 @@ sampled case at once with `JudgeCaseActivity`, as before.
 
 - **Submit.** After scoring, an unattended run sends every sampled case in one
   `SubmitJudgeBatchActivity` (no retry: a submit that fails falls back to judging each case,
-  never to a second batch). `agentqualityservice.SubmitJudgeBatch` reads the suite's
+  never to a second batch). `agentqualityengine.Engine.SubmitJudgeBatch` reads the suite's
   evaluations and the agent's cases in three bounded queries, builds each request with
   `judgeRequest`, the builder `JudgeCase` uses, and hands them to
   `llmports.BatchCompletionService`. The completion router batches only on the provider it

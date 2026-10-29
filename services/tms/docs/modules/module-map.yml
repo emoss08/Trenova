@@ -1022,7 +1022,9 @@ modules:
       - agentplanservice
       - agentproposalnotifier
       - agentproposalservice
+      - agentqualityengine
       - agentqualityservice
+      - agentqualitysettings
       - agentquerytoolservice
       - agentredteam
       - agentreflectionservice

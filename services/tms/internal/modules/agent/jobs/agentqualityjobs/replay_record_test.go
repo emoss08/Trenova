@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
@@ -87,7 +87,7 @@ func TestRecordQualityHistories(t *testing.T) {
 }
 
 func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
-	cases := []agentqualityservice.SuiteCase{
+	cases := []agentqualityengine.SuiteCase{
 		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 1},
 		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 2},
 		{EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix), Ordinal: 3},
@@ -95,10 +95,10 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 	listed := false
 	w.RegisterActivityWithOptions(func(
 		context.Context,
-		*agentqualityservice.ListSuiteCasesRequest,
-	) ([]agentqualityservice.SuiteCase, error) {
+		*agentqualityengine.ListSuiteCasesRequest,
+	) ([]agentqualityengine.SuiteCase, error) {
 		if listed {
-			return []agentqualityservice.SuiteCase{}, nil
+			return []agentqualityengine.SuiteCase{}, nil
 		}
 		listed = true
 
@@ -108,7 +108,7 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 	checks := 0
 	w.RegisterActivityWithOptions(func(
 		context.Context,
-		*agentqualityservice.CheckBudgetRequest,
+		*agentqualityengine.CheckBudgetRequest,
 	) (*agentqualitysuite.BudgetDecision, error) {
 		checks++
 		if rec.stopAtCheck > 0 && checks >= rec.stopAtCheck {
@@ -123,9 +123,9 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 
 	w.RegisterActivityWithOptions(func(
 		context.Context,
-		*agentqualityservice.ScoreSuiteRequest,
-	) (*agentqualityservice.ScoredSuite, error) {
-		return &agentqualityservice.ScoredSuite{
+		*agentqualityengine.ScoreSuiteRequest,
+	) (*agentqualityengine.ScoredSuite, error) {
+		return &agentqualityengine.ScoredSuite{
 			Scored:     len(cases),
 			JudgeCases: []pulid.ID{cases[0].EvaluationID},
 		}, nil
@@ -133,26 +133,26 @@ func registerQualityStandIns(w worker.Worker, rec recordedSuite) {
 
 	w.RegisterActivityWithOptions(func(
 		context.Context,
-		*agentqualityservice.JudgeCaseRequest,
-	) (*agentqualityservice.JudgedCase, error) {
-		return &agentqualityservice.JudgedCase{Judged: true}, nil
+		*agentqualityengine.JudgeCaseRequest,
+	) (*agentqualityengine.JudgedCase, error) {
+		return &agentqualityengine.JudgedCase{Judged: true}, nil
 	}, activity.RegisterOptions{Name: "JudgeCaseActivity"})
 
 	w.RegisterActivityWithOptions(func(
 		_ context.Context,
-		req *agentqualityservice.FinalizeSuiteRequest,
-	) (*agentqualityservice.FinalizedSuite, error) {
+		req *agentqualityengine.FinalizeSuiteRequest,
+	) (*agentqualityengine.FinalizedSuite, error) {
 		status := agentqualitysuite.SuiteRunStatusCompleted
 		if req.StopReason != "" {
 			status = agentqualitysuite.SuiteRunStatusBudgetStopped
 		}
 
-		return &agentqualityservice.FinalizedSuite{Status: status}, nil
+		return &agentqualityengine.FinalizedSuite{Status: status}, nil
 	}, activity.RegisterOptions{Name: "FinalizeSuiteActivity"})
 
 	w.RegisterActivityWithOptions(func(
 		context.Context,
-		*agentqualityservice.FailSuiteRequest,
+		*agentqualityengine.FailSuiteRequest,
 	) error {
 		return nil
 	}, activity.RegisterOptions{Name: "FailSuiteActivity"})

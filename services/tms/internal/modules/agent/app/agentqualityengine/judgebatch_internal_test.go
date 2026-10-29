@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
@@ -173,7 +173,7 @@ type judgeFixture struct {
 	completion  *askedJudge
 	batches     *batchedJudge
 	usage       *windowedUsage
-	service     *Service
+	service     *Engine
 }
 
 func newJudgeFixture(t *testing.T, count int) *judgeFixture {
@@ -220,7 +220,7 @@ func newJudgeFixture(t *testing.T, count int) *judgeFixture {
 	completion := &askedJudge{}
 	batches := &batchedJudge{}
 	usage := &windowedUsage{spent: decimal.RequireFromString("1.00")}
-	service := &Service{
+	service := &Engine{
 		l:           zap.NewNop(),
 		suiteRuns:   &fakeSuiteRuns{runs: map[pulid.ID]*agentqualitysuite.SuiteRun{run.ID: run}},
 		evaluations: evaluations,

@@ -77,7 +77,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentprofileservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentreflectionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrosterservice"
@@ -381,9 +383,11 @@ func SharedOptions() fx.Option {
 			agentevaluationservice.New,
 			agentevalcaseservice.New,
 			agentactivitysummaryservice.New,
+			agentqualitysettings.New,
+			agentqualityengine.New,
 			agentqualityservice.New,
 			agentqualityservice.AsService,
-			agentqualityservice.AsEvaluationBudget,
+			agentqualityengine.AsEvaluationBudget,
 			fx.Annotate(
 				dispatchautoassignservice.New,
 				fx.As(new(dispatchconsoleports.DispatchAutoAssignService)),

@@ -1,4 +1,4 @@
-package agentqualityservice
+package agentqualityengine
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -42,7 +44,7 @@ const (
 	failedSuiteCaseNote    = "Not replayed: the suite run failed."
 )
 
-func scoredStatuses() []agentqualitysuite.SuiteRunStatus {
+func ScoredStatuses() []agentqualitysuite.SuiteRunStatus {
 	return []agentqualitysuite.SuiteRunStatus{
 		agentqualitysuite.SuiteRunStatusCompleted,
 		agentqualitysuite.SuiteRunStatusBudgetStopped,
@@ -62,7 +64,7 @@ type ListSuiteCasesRequest struct {
 	Limit        int                   `json:"limit"`
 }
 
-func (s *Service) ListSuiteCases(
+func (s *Engine) ListSuiteCases(
 	ctx context.Context,
 	req *ListSuiteCasesRequest,
 ) ([]SuiteCase, error) {
@@ -100,7 +102,7 @@ type CheckBudgetRequest struct {
 	CommittedUSD decimal.Decimal                   `json:"committedUsd"`
 }
 
-func (s *Service) CheckBudget(
+func (s *Engine) CheckBudget(
 	ctx context.Context,
 	req *CheckBudgetRequest,
 ) (*agentqualitysuite.BudgetDecision, error) {
@@ -130,16 +132,19 @@ func (s *Service) CheckBudget(
 	return &decision, nil
 }
 
-func (s *Service) CheckEvaluationBudget(
+func (s *Engine) CheckEvaluationBudget(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*agentqualitysuite.BudgetDecision, error) {
-	control, err := s.control(ctx, tenant)
+	control, err := s.settings.Control(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 
-	dayStart, monthStart, err := windows(s.now(), s.timezoneOf(ctx, control, tenant))
+	dayStart, monthStart, err := agentqualitysettings.Windows(
+		s.now(),
+		s.settings.Timezone(ctx, control, tenant),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +169,7 @@ type suiteOutcome struct {
 	judgeable     []pulid.ID
 }
 
-func (s *Service) suiteEvaluationsOf(
+func (s *Engine) suiteEvaluationsOf(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	suiteRunID pulid.ID,
@@ -193,7 +198,7 @@ func (s *Service) suiteEvaluationsOf(
 	}
 }
 
-func (s *Service) caseSources(
+func (s *Engine) caseSources(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
@@ -285,19 +290,6 @@ func scorePointer(results []agentscoring.CaseResult) *float64 {
 	return &score
 }
 
-func meanPointer(values []float64) *float64 {
-	if len(values) == 0 {
-		return nil
-	}
-	total := 0.0
-	for _, value := range values {
-		total += value
-	}
-	mean := total / float64(len(values))
-
-	return &mean
-}
-
 type ScoreSuiteRequest struct {
 	TenantInfo pagination.TenantInfo             `json:"tenantInfo"`
 	SuiteRunID pulid.ID                          `json:"suiteRunId"`
@@ -311,7 +303,7 @@ type ScoredSuite struct {
 	JudgeCases         []pulid.ID `json:"judgeCases"`
 }
 
-func (s *Service) ScoreSuite(ctx context.Context, req *ScoreSuiteRequest) (*ScoredSuite, error) {
+func (s *Engine) ScoreSuite(ctx context.Context, req *ScoreSuiteRequest) (*ScoredSuite, error) {
 	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
@@ -368,7 +360,7 @@ type JudgedCase struct {
 	Note   string   `json:"note,omitempty"`
 }
 
-func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*JudgedCase, error) {
+func (s *Engine) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*JudgedCase, error) {
 	if s.completion == nil {
 		return &JudgedCase{Note: "No completion service is available to judge with."}, nil
 	}
@@ -449,7 +441,7 @@ func judgeRequest(
 	}
 }
 
-func (s *Service) recordJudgement(
+func (s *Engine) recordJudgement(
 	ctx context.Context,
 	evaluation *agentevaluation.Evaluation,
 	text string,
@@ -511,7 +503,7 @@ func finalizedFrom(run *agentqualitysuite.SuiteRun) *FinalizedSuite {
 	}
 }
 
-func (s *Service) FinalizeSuite(
+func (s *Engine) FinalizeSuite(
 	ctx context.Context,
 	req *FinalizeSuiteRequest,
 ) (*FinalizedSuite, error) {
@@ -555,7 +547,7 @@ func (s *Service) FinalizeSuite(
 	run.CasesSkipped = outcome.skipped
 	run.HardFailures = outcome.hardFailures
 	run.DeterministicScore = scorePointer(outcome.deterministic)
-	run.JudgeScore = meanPointer(outcome.judged)
+	run.JudgeScore = floatutils.MeanPtr(outcome.judged)
 	run.QualityScore = scorePointer(outcome.scored)
 	if cost, costErr := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
@@ -642,7 +634,7 @@ func regressionComment(regression agentscoring.Regression) string {
 	return comment
 }
 
-func (s *Service) detectRegression(
+func (s *Engine) detectRegression(
 	ctx context.Context,
 	run *agentqualitysuite.SuiteRun,
 	outcome *suiteOutcome,
@@ -703,7 +695,7 @@ func (s *Service) detectRegression(
 	}), nil
 }
 
-func (s *Service) baselineResults(
+func (s *Engine) baselineResults(
 	ctx context.Context,
 	run *agentqualitysuite.SuiteRun,
 ) ([]agentscoring.CaseResult, error) {
@@ -720,7 +712,7 @@ func (s *Service) baselineResults(
 	return outcomeOf(evaluations, nil).scored, nil
 }
 
-func (s *Service) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) {
+func (s *Engine) announce(ctx context.Context, run *agentqualitysuite.SuiteRun) {
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if s.watchtower != nil && run.BaselineRunID != nil && run.BaselineRunID.IsNotNil() {
 		s.watchtower.Resolve(
@@ -742,7 +734,7 @@ func (s *Service) announce(ctx context.Context, run *agentqualitysuite.SuiteRun)
 	s.notifyRegression(ctx, run, item)
 }
 
-func (s *Service) agentName(
+func (s *Engine) agentName(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
@@ -763,7 +755,7 @@ func (s *Service) agentName(
 	return definition.Name
 }
 
-func (s *Service) notifyRegression(
+func (s *Engine) notifyRegression(
 	ctx context.Context,
 	run *agentqualitysuite.SuiteRun,
 	item watchtowerports.WatchtowerItemInput,
@@ -817,7 +809,7 @@ type FailSuiteRequest struct {
 	Error      string                `json:"error"`
 }
 
-func (s *Service) FailSuite(ctx context.Context, req *FailSuiteRequest) error {
+func (s *Engine) FailSuite(ctx context.Context, req *FailSuiteRequest) error {
 	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
@@ -832,7 +824,7 @@ func (s *Service) FailSuite(ctx context.Context, req *FailSuiteRequest) error {
 	return s.fail(ctx, run, req.Error)
 }
 
-func (s *Service) fail(ctx context.Context, run *agentqualitysuite.SuiteRun, reason string) error {
+func (s *Engine) fail(ctx context.Context, run *agentqualitysuite.SuiteRun, reason string) error {
 	now := s.now()
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if _, err := s.evaluations.SkipPendingBySuiteRun(
