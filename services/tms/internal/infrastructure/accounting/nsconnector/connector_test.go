@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -37,7 +38,7 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
-	require.ErrorIs(t, err, ErrNotConfigured)
+	require.ErrorIs(t, err, nsbinding.ErrNotConfigured)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, provider.ClassifyError(err))
 	assert.Equal(t, integration.TypeNetSuite, provider.IntegrationType())
 	assert.Empty(t, provider.WebhookSignatureHeader())
@@ -113,21 +114,21 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 	_, err = conn.ExchangeCode(
 		t.Context(),
 		&accountingconnectorports.AccountingCodeExchange{Code: "c"},
 	)
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 	_, err = conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "refresh",
 	})
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingconnectorports.AccountingRevokeRequest{
 		Token: "refresh",
-	}), errNoRedirect)
-	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
+	}), nsbinding.ErrNoRedirect)
+	require.ErrorIs(t, conn.VerifyApp(t.Context()), nsbinding.ErrNoRedirect)
 	nsConn, ok := conn.(*Connector)
 	require.True(t, ok)
 	_, err = nsConn.TokenFromCertificate(
@@ -136,7 +137,7 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 			RealmID: testAccount,
 		},
 	)
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 }
 
 func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
@@ -180,7 +181,7 @@ func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
 		Code:         "code-1",
 		CodeVerifier: testVerifier,
 	})
-	require.ErrorIs(t, err, errNoAccount)
+	require.ErrorIs(t, err, nsbinding.ErrNoAccount)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 
@@ -328,14 +329,14 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
-		{"unreachable", errUnreachable, accountingsync.ErrorCategoryConfiguration},
+		{"not configured", nsbinding.ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
+		{"unreachable", nsbinding.ErrUnreachable, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
 			&netsuiteerrors.OAuthError{Code: "invalid_grant"},
 			accountingsync.ErrorCategoryRevoked,
 		},
-		{"certificate", errCertificateRevoked, accountingsync.ErrorCategoryRevoked},
+		{"certificate", nsbinding.ErrCertificateRevoked, accountingsync.ErrorCategoryRevoked},
 		{
 			"client",
 			&netsuiteerrors.OAuthError{Code: "invalid_client"},

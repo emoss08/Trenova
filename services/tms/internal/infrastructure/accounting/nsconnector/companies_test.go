@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -68,7 +69,7 @@ func TestCompaniesFailures(t *testing.T) {
 	_, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, testAccount)
-	require.ErrorIs(t, err, errNoCompany)
+	require.ErrorIs(t, err, nsbinding.ErrNoCompany)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 
 	_, err = conn.Companies(t.Context(), nil, testAccount)
@@ -76,7 +77,7 @@ func TestCompaniesFailures(t *testing.T) {
 	_, err = conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, "")
-	require.ErrorIs(t, err, errNoAccount)
+	require.ErrorIs(t, err, nsbinding.ErrNoAccount)
 
 	unreachable := testConnector(t, &fakeNS{respond: func(nsCall) reply {
 		return fixtureReply(t, http.StatusNotFound, "error_404_nonexistent.json")
@@ -84,7 +85,7 @@ func TestCompaniesFailures(t *testing.T) {
 	_, err = unreachable.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: "access-token",
 	}, testAccount)
-	require.ErrorIs(t, err, errUnreachable)
+	require.ErrorIs(t, err, nsbinding.ErrUnreachable)
 }
 
 func factsResponder(t *testing.T) func(call nsCall) reply {
@@ -150,7 +151,7 @@ func TestCompanyFactsSurfacesAnUnreachableAccount(t *testing.T) {
 		return fixtureReply(t, http.StatusNotFound, "error_404_nonexistent.json")
 	}})
 	_, err := conn.CompanyFacts(t.Context(), testAccount, "access-token")
-	require.ErrorIs(t, err, errUnreachable)
+	require.ErrorIs(t, err, nsbinding.ErrUnreachable)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 
 	failing := testConnector(t, &fakeNS{respond: func(nsCall) reply {

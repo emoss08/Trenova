@@ -1,12 +1,13 @@
-package nsconnector
+package nsdocsync
 
 import (
 	"context"
-	"errors"
 	"maps"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -15,15 +16,13 @@ import (
 )
 
 const (
-	docTypeCustomerPayment = "customerPayment"
-	docTypeVendorPayment   = "vendorPayment"
+	DocTypeCustomerPayment = "customerPayment"
+	DocTypeVendorPayment   = "vendorPayment"
 	shortPayNote           = "Short pay on "
-	stepShortPayBase       = 10
+	StepShortPayBase       = 10
 )
 
-var errApplyTarget = errors.New("netsuite: an applied amount needs the document it pays")
-
-func (c *Connector) SavePayment(
+func (c *Documents) SavePayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -34,11 +33,11 @@ func (c *Connector) SavePayment(
 	if strings.TrimSpace(doc.DepositAccountExternalID) == "" {
 		return nil, unmappedAccount("The deposit account")
 	}
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
-	currency, err := c.currencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
+	currency, err := c.CurrencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
 	if err != nil {
 		return nil, err
 	}
@@ -54,48 +53,48 @@ func (c *Connector) SavePayment(
 		}
 	}
 
-	body := &transactionBody{
-		Customer:   refOf(doc.CustomerExternalID),
-		Subsidiary: s.subsidiary(),
+	body := &nsbinding.TransactionBody{
+		Customer:   nsrefsync.RefOf(doc.CustomerExternalID),
+		Subsidiary: s.Subsidiary(),
 		TranDate:   doc.TxnDate,
-		Account:    refOf(doc.DepositAccountExternalID),
-		Payment:    amountOf(doc.TotalAmount),
-		CheckNum:   cleanText(doc.ReferenceNumber, maxTranIDLength),
-		Memo:       cleanText(doc.PrivateNote, maxMemoLength),
-		Apply:      &sublist[applyLine]{Items: cash},
+		Account:    nsrefsync.RefOf(doc.DepositAccountExternalID),
+		Payment:    nsbinding.AmountOf(doc.TotalAmount),
+		CheckNum:   nsrefsync.CleanText(doc.ReferenceNumber, maxTranIDLength),
+		Memo:       nsrefsync.CleanText(doc.PrivateNote, maxMemoLength),
+		Apply:      &nsbinding.Sublist[nsbinding.ApplyLine]{Items: cash},
 	}
-	body.setCurrency(currency)
+	body.SetCurrency(currency)
 	saved, err := savePaymentRecord(ctx, s, &paymentSave{
-		recordType: recordCustomerPayment,
-		id:         doc.ExternalID,
+		recordType: RecordCustomerPayment,
+		ID:         doc.ExternalID,
 		requestID:  doc.RequestID,
 		body:       body,
 	})
-	finishPayment(result, saved, docTypeCustomerPayment)
+	finishPayment(result, saved, DocTypeCustomerPayment)
 	return result, err
 }
 
 func cashApplications(
 	doc *accountingconnectorports.AccountingPaymentDocument,
-) ([]applyLine, error) {
+) ([]nsbinding.ApplyLine, error) {
 	if !doc.TotalAmount.IsPositive() {
-		return nil, errAmountInvalid
+		return nil, nsbinding.ErrAmountInvalid
 	}
-	cash := make([]applyLine, 0, len(doc.Applications))
+	cash := make([]nsbinding.ApplyLine, 0, len(doc.Applications))
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
 		if app.AppliedAmount.IsNegative() || app.ShortPayAmount.IsNegative() {
-			return nil, errAmountInvalid
+			return nil, nsbinding.ErrAmountInvalid
 		}
 		invoice := strings.TrimSpace(app.InvoiceExternalID)
 		if invoice == "" && (app.AppliedAmount.IsPositive() || app.ShortPayAmount.IsPositive()) {
-			return nil, errApplyTarget
+			return nil, nsbinding.ErrApplyTarget
 		}
 		if app.AppliedAmount.IsPositive() {
-			cash = append(cash, applyLine{
-				Doc:    recordRef{ID: invoice},
+			cash = append(cash, nsbinding.ApplyLine{
+				Doc:    nsbinding.RecordRef{ID: invoice},
 				Apply:  true,
-				Amount: amountOf(app.AppliedAmount),
+				Amount: nsbinding.AmountOf(app.AppliedAmount),
 			})
 		}
 	}
@@ -110,30 +109,34 @@ func finishPayment(
 	if saved == nil {
 		return
 	}
-	result.ExternalID = saved.id
+	result.ExternalID = saved.ID
 	result.DocNumber = saved.number
-	result.Refs[accountingsync.ExternalRefDocument] = saved.id
+	result.Refs[accountingsync.ExternalRefDocument] = saved.ID
 	result.Refs[accountingsync.ExternalRefDocumentType] = docType
 }
 
 type paymentSave struct {
 	recordType string
-	id         string
+	ID         string
 	requestID  string
-	body       *transactionBody
+	body       *nsbinding.TransactionBody
 }
 
-func savePaymentRecord(ctx context.Context, s *session, p *paymentSave) (*written, error) {
-	id := strings.TrimSpace(p.id)
+func savePaymentRecord(
+	ctx context.Context,
+	s *nsbinding.Session,
+	p *paymentSave,
+) (*written, error) {
+	id := strings.TrimSpace(p.ID)
 	if id == "" {
-		return writeRecord(ctx, s.client, &recordWrite{
+		return writeRecord(ctx, s.Client, &recordWrite{
 			recordType: p.recordType,
 			externalID: p.requestID,
 			body:       p.body,
 		})
 	}
-	var current transactionRecord
-	if err := s.client.Get(ctx, netsuite.RecordRead{
+	var current nsbinding.TransactionRecord
+	if err := s.Client.Get(ctx, netsuite.RecordRead{
 		Type:               p.recordType,
 		ID:                 id,
 		ExpandSubResources: true,
@@ -144,26 +147,26 @@ func savePaymentRecord(ctx context.Context, s *session, p *paymentSave) (*writte
 	for idx := range p.body.Apply.Items {
 		keep[p.body.Apply.Items[idx].Doc.ID] = struct{}{}
 	}
-	for _, applied := range current.appliedDocs() {
+	for _, applied := range current.AppliedDocs() {
 		if _, ok := keep[applied]; !ok {
-			p.body.Apply.Items = append(p.body.Apply.Items, applyLine{
-				Doc:   recordRef{ID: applied},
+			p.body.Apply.Items = append(p.body.Apply.Items, nsbinding.ApplyLine{
+				Doc:   nsbinding.RecordRef{ID: applied},
 				Apply: false,
 			})
 		}
 	}
-	return patchRecord(ctx, s.client, &recordUpdate{
+	return patchRecord(ctx, s.Client, &recordUpdate{
 		recordType: p.recordType,
-		id:         id,
+		ID:         id,
 		body:       p.body,
 	})
 }
 
 type shortPayWrite struct {
-	session  *session
+	session  *nsbinding.Session
 	doc      *accountingconnectorports.AccountingPaymentDocument
 	idx      int
-	currency currencyFields
+	currency nsbinding.CurrencyFields
 	result   *accountingconnectorports.AccountingDocumentResult
 }
 
@@ -182,53 +185,53 @@ func shortPay(ctx context.Context, w *shortPayWrite) error {
 			Category:   accountingsync.SyncErrorMapping,
 			Code:       accountingsync.ItemRoleShortPayWriteOff,
 			Message:    "The short pay write-off item is not mapped",
-			Resolution: "Map the short pay write-off to a " + providerName + " item",
+			Resolution: "Map the short pay write-off to a " + nsbinding.ProviderName + " item",
 		}
 	}
-	text := cleanText(shortPayNote+app.InvoiceNumber, maxLineTextLength)
-	body := &transactionBody{
-		Entity:     refOf(w.doc.CustomerExternalID),
-		Subsidiary: w.session.subsidiary(),
+	text := nsrefsync.CleanText(shortPayNote+app.InvoiceNumber, nsrefsync.MaxLineTextLength)
+	body := &nsbinding.TransactionBody{
+		Entity:     nsrefsync.RefOf(w.doc.CustomerExternalID),
+		Subsidiary: w.session.Subsidiary(),
 		TranDate:   w.doc.TxnDate,
 		Memo:       text,
-		Item: &sublist[itemLine]{Items: []itemLine{{
-			Item:        recordRef{ID: item},
+		Item: &nsbinding.Sublist[nsbinding.ItemLine]{Items: []nsbinding.ItemLine{{
+			Item:        nsbinding.RecordRef{ID: item},
 			Description: text,
-			Quantity:    amount(decimal.NewFromInt(1)),
-			Rate:        amount(app.ShortPayAmount),
-			Amount:      amount(app.ShortPayAmount),
+			Quantity:    nsbinding.Amount(decimal.NewFromInt(1)),
+			Rate:        nsbinding.Amount(app.ShortPayAmount),
+			Amount:      nsbinding.Amount(app.ShortPayAmount),
 		}}},
-		Apply: &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: strings.TrimSpace(app.InvoiceExternalID)},
+		Apply: &nsbinding.Sublist[nsbinding.ApplyLine]{Items: []nsbinding.ApplyLine{{
+			Doc:    nsbinding.RecordRef{ID: strings.TrimSpace(app.InvoiceExternalID)},
 			Apply:  true,
-			Amount: amountOf(app.ShortPayAmount),
+			Amount: nsbinding.AmountOf(app.ShortPayAmount),
 		}}},
 	}
-	body.setCurrency(w.currency)
-	saved, err := writeRecord(ctx, w.session.client, &recordWrite{
-		recordType: recordCreditMemo,
-		externalID: accountingsync.SyncStepRequestID(w.doc.RequestID, stepShortPayBase+w.idx),
+	body.SetCurrency(w.currency)
+	saved, err := writeRecord(ctx, w.session.Client, &recordWrite{
+		recordType: RecordCreditMemo,
+		externalID: accountingsync.SyncStepRequestID(w.doc.RequestID, StepShortPayBase+w.idx),
 		body:       body,
 	})
 	if saved != nil {
-		w.result.Refs[shortPayRefKey(app.InvoiceExternalID)] = saved.id
+		w.result.Refs[shortPayRefKey(app.InvoiceExternalID)] = saved.ID
 	}
 	return err
 }
 
-func (c *Connector) VoidPayment(
+func (c *Documents) VoidPayment(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
-	s, err := c.open(ref.Auth)
+	s, err := c.Open(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 	if _, err = c.unwindRecord(ctx, s, &unwind{
-		recordType: recordCustomerPayment,
-		id:         ref.ExternalID,
+		recordType: RecordCustomerPayment,
+		ID:         ref.ExternalID,
 		locked:     salesLocked,
 		refused:    func() error { return reversalRefused() },
 	}); err != nil {
@@ -243,8 +246,8 @@ func (c *Connector) VoidPayment(
 			continue
 		}
 		corrective, unwindErr := c.unwindRecord(ctx, s, &unwind{
-			recordType: recordCreditMemo,
-			id:         memo,
+			recordType: RecordCreditMemo,
+			ID:         memo,
 			locked:     salesLocked,
 			refused:    func() error { return creditReversalRefused("short pay credit memo") },
 			offset:     invoiceOffset(shortPayOffsetID(ref.RequestID, memo)),
@@ -259,30 +262,32 @@ func (c *Connector) VoidPayment(
 	return result, nil
 }
 
-func (c *Connector) CreateCreditApplication(
+func (c *Documents) CreateCreditApplication(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingCreditApplicationDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Amount.IsPositive() {
-		return nil, errAmountInvalid
+		return nil, nsbinding.ErrAmountInvalid
 	}
 	memo := strings.TrimSpace(doc.CreditMemoExternalID)
 	invoice := strings.TrimSpace(doc.InvoiceExternalID)
 	if memo == "" || invoice == "" {
-		return nil, errExternalID
+		return nil, nsbinding.ErrExternalID
 	}
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
-	saved, err := patchRecord(ctx, s.client, &recordUpdate{
-		recordType: recordCreditMemo,
-		id:         memo,
-		body: &transactionBody{Apply: &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: invoice},
-			Apply:  true,
-			Amount: amountOf(doc.Amount),
-		}}}},
+	saved, err := patchRecord(ctx, s.Client, &recordUpdate{
+		recordType: RecordCreditMemo,
+		ID:         memo,
+		body: &nsbinding.TransactionBody{
+			Apply: &nsbinding.Sublist[nsbinding.ApplyLine]{Items: []nsbinding.ApplyLine{{
+				Doc:    nsbinding.RecordRef{ID: invoice},
+				Apply:  true,
+				Amount: nsbinding.AmountOf(doc.Amount),
+			}}},
+		},
 	})
 	if saved == nil {
 		return nil, err
@@ -297,7 +302,7 @@ func (c *Connector) CreateCreditApplication(
 	}, err
 }
 
-func (c *Connector) VoidCreditApplication(
+func (c *Documents) VoidCreditApplication(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -309,16 +314,16 @@ func (c *Connector) VoidCreditApplication(
 	if memo == "" || invoice == "" {
 		return nil, creditApplicationUnknown()
 	}
-	s, err := c.open(ref.Auth)
+	s, err := c.Open(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
-	err = s.client.Patch(ctx, netsuite.RecordPatch{
-		Type: recordCreditMemo,
+	err = s.Client.Patch(ctx, netsuite.RecordPatch{
+		Type: RecordCreditMemo,
 		ID:   memo,
-		Body: &transactionBody{Apply: unapplyLines([]string{invoice})},
+		Body: &nsbinding.TransactionBody{Apply: unapplyLines([]string{invoice})},
 	})
 	if err != nil && !netsuiteerrors.IsNotFound(err) {
 		return result, err

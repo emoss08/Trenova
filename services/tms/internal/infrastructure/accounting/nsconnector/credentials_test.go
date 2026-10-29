@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -127,7 +128,7 @@ func TestTokenFromCertificateRefusedIsRevoked(t *testing.T) {
 				PrivateKeyPEM: cert.PrivateKeyPEM,
 			},
 		)
-		require.ErrorIs(t, err, errCertificateRevoked, fixture)
+		require.ErrorIs(t, err, nsbinding.ErrCertificateRevoked, fixture)
 		assert.Equal(t, accountingsync.ErrorCategoryRevoked, conn.ClassifyError(err), fixture)
 		assert.Equal(t, accountingsync.SyncErrorAuth, conn.ClassifyDocumentError(err).Category)
 	}

@@ -1,4 +1,4 @@
-package nsconnector
+package nsrefsync
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -13,14 +14,13 @@ import (
 	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
-var (
-	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
-)
+type References struct {
+	*nsbinding.Binding
+}
 
 const (
-	maxItemNameLength   = 60
-	maxPartyNameLength  = 83
+	MaxItemNameLength   = 60
+	MaxPartyNameLength  = 83
 	maxEmailLength      = 254
 	maxAddressLength    = 150
 	maxCityLength       = 50
@@ -28,56 +28,52 @@ const (
 	maxPostalCodeLength = 36
 	countryCodeLength   = 2
 	duplicateMatchLimit = 10
-	recordServiceItem   = "serviceSaleItem"
-	recordNonInvItem    = "nonInventorySaleItem"
-	sublistAddressBook  = "addressBook"
+	RecordServiceItem   = "serviceSaleItem"
+	RecordNonInvItem    = "nonInventorySaleItem"
 )
 
 var (
-	errItemDraftRequired  = errors.New("netsuite: an item draft is required")
-	errPartyDraftRequired = errors.New("netsuite: a customer or vendor draft is required")
-	errNameRequired       = errors.New("netsuite: a name is required")
-	errNoPaymentMethods   = errors.New("netsuite: payment methods are not read from NetSuite")
+	errNoPaymentMethods = errors.New("netsuite: payment methods are not read from NetSuite")
 )
 
-type partyKind int
+type PartyKind int
 
 const (
-	partyCustomer partyKind = iota
-	partyVendor
+	PartyCustomer PartyKind = iota
+	PartyVendor
 )
 
-func (k partyKind) recordType() string {
-	if k == partyVendor {
-		return recordVendor
+func (k PartyKind) recordType() string {
+	if k == PartyVendor {
+		return RecordVendor
 	}
-	return recordCustomer
+	return RecordCustomer
 }
 
-func (k partyKind) spec() *referenceSpec {
-	if k == partyVendor {
-		return &vendorSpec
+func (k PartyKind) spec() *nsbinding.ReferenceSpec {
+	if k == PartyVendor {
+		return &VendorSpec
 	}
-	return &customerSpec
+	return &CustomerSpec
 }
 
-func partyKindOf(kind accountingprovider.ReferenceKind) partyKind {
+func partyKindOf(kind accountingprovider.ReferenceKind) PartyKind {
 	if kind == accountingprovider.ReferenceKindVendor {
-		return partyVendor
+		return PartyVendor
 	}
-	return partyCustomer
+	return PartyCustomer
 }
 
-func referenceSpecOf(kind accountingprovider.ReferenceKind) (*referenceSpec, error) {
+func referenceSpecOf(kind accountingprovider.ReferenceKind) (*nsbinding.ReferenceSpec, error) {
 	switch kind {
 	case accountingprovider.ReferenceKindAccount:
-		return &accountSpec, nil
+		return &AccountSpec, nil
 	case accountingprovider.ReferenceKindItem:
-		return &itemSpec, nil
+		return &ItemSpec, nil
 	case accountingprovider.ReferenceKindCustomer:
-		return &customerSpec, nil
+		return &CustomerSpec, nil
 	case accountingprovider.ReferenceKindVendor:
-		return &vendorSpec, nil
+		return &VendorSpec, nil
 	case accountingprovider.ReferenceKindTerm:
 		return &termSpec, nil
 	case accountingprovider.ReferenceKindPaymentMethod:
@@ -87,11 +83,11 @@ func referenceSpecOf(kind accountingprovider.ReferenceKind) (*referenceSpec, err
 	}
 }
 
-func (c *Connector) MaxReferencePageSize() int {
+func (c *References) MaxReferencePageSize() int {
 	return netsuite.MaxQueryLimit
 }
 
-func (c *Connector) ListReference(
+func (c *References) ListReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingReferencePageRequest,
 ) (*accountingconnectorports.AccountingReferencePage, error) {
@@ -104,7 +100,7 @@ func (c *Connector) ListReference(
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
+	s, err := c.Open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -115,16 +111,16 @@ func (c *Connector) ListReference(
 	if limit <= 0 || limit > netsuite.MaxQueryLimit {
 		limit = netsuite.MaxQueryLimit
 	}
-	b := (&sqlBuilder{}).
-		where(spec.filter).
-		where(spec.column("id")+" >= ?", max(req.StartPosition, 1))
-	if s.ref.SubsidiaryID != "" {
-		b.where(spec.subsidiary, s.ref.SubsidiaryID)
+	b := (&nsbinding.SQLBuilder{}).
+		Where(spec.Filter).
+		Where(spec.Column("id")+" >= ?", max(req.StartPosition, 1))
+	if s.Ref.SubsidiaryID != "" {
+		b.Where(spec.Subsidiary, s.Ref.SubsidiaryID)
 	}
-	var rows []referenceRow
-	page, err := s.client.Query(ctx, netsuite.Query{
-		SQL:    b.sql(spec.selectFrom, spec.column("id")),
-		Params: b.params,
+	var rows []nsbinding.ReferenceRow
+	page, err := s.Client.Query(ctx, netsuite.Query{
+		SQL:    b.SQL(spec.SelectFrom, spec.Column("id")),
+		Params: b.Params,
 		Limit:  limit,
 	}, &rows)
 	if err != nil {
@@ -134,19 +130,19 @@ func (c *Connector) ListReference(
 		Objects: make([]*accountingmapping.AccountingReferenceObject, 0, len(rows)),
 	}
 	for idx := range rows {
-		out.Objects = append(out.Objects, referenceObjectOf(req.Kind, &rows[idx]))
+		out.Objects = append(out.Objects, ReferenceObjectOf(req.Kind, &rows[idx]))
 	}
 	if page.HasMore && len(rows) > 0 {
-		if last, ok := parseInternalID(rows[len(rows)-1].ID.Value()); ok {
+		if last, ok := nsbinding.ParseInternalID(rows[len(rows)-1].ID.Value()); ok {
 			out.NextStart = int(last + 1)
 		}
 	}
 	return out, nil
 }
 
-func referenceObjectOf(
+func ReferenceObjectOf(
 	kind accountingprovider.ReferenceKind,
-	row *referenceRow,
+	row *nsbinding.ReferenceRow,
 ) *accountingmapping.AccountingReferenceObject {
 	if kind == accountingprovider.ReferenceKindAccount {
 		return accountObjectOf(row)
@@ -160,7 +156,7 @@ func referenceObjectOf(
 	return partyObjectOf(kind, row)
 }
 
-func accountObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
+func accountObjectOf(row *nsbinding.ReferenceRow) *accountingmapping.AccountingReferenceObject {
 	name := row.AccountName.Value()
 	if name == "" {
 		name = row.FullName.Value()
@@ -176,7 +172,7 @@ func accountObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceOb
 		AccountClass:       class,
 		ParentExternalID:   row.Parent.Value(),
 		Active:             !row.Inactive.Value() && !row.Summary.Value() && class != "",
-		ProviderUpdatedAt:  unixOf(row.modified()),
+		ProviderUpdatedAt:  unixOf(row.ModifiedAt()),
 	}
 }
 
@@ -209,7 +205,7 @@ func AccountClassOf(accountType string) accountingmapping.AccountClass {
 	}
 }
 
-func itemObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
+func itemObjectOf(row *nsbinding.ReferenceRow) *accountingmapping.AccountingReferenceObject {
 	name := row.DisplayName.Value()
 	if name == "" {
 		name = row.ItemID.Value()
@@ -223,13 +219,13 @@ func itemObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObjec
 		SubType:                 row.SubType.Value(),
 		IncomeAccountExternalID: row.IncomeAccount.Value(),
 		Active:                  !row.Inactive.Value(),
-		ProviderUpdatedAt:       unixOf(row.modified()),
+		ProviderUpdatedAt:       unixOf(row.ModifiedAt()),
 	}
 }
 
 func partyObjectOf(
 	kind accountingprovider.ReferenceKind,
-	row *referenceRow,
+	row *nsbinding.ReferenceRow,
 ) *accountingmapping.AccountingReferenceObject {
 	name := row.CompanyName.Value()
 	if name == "" {
@@ -245,11 +241,11 @@ func partyObjectOf(
 		CurrencyCode:      strings.ToUpper(row.Currency.Value()),
 		Is1099:            kind == accountingprovider.ReferenceKindVendor && row.Is1099.Value(),
 		Active:            !row.Inactive.Value(),
-		ProviderUpdatedAt: unixOf(row.modified()),
+		ProviderUpdatedAt: unixOf(row.ModifiedAt()),
 	}
 }
 
-func termObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObject {
+func termObjectOf(row *nsbinding.ReferenceRow) *accountingmapping.AccountingReferenceObject {
 	obj := &accountingmapping.AccountingReferenceObject{
 		Kind:       accountingprovider.ReferenceKindTerm,
 		ExternalID: row.ID.Value(),
@@ -263,18 +259,18 @@ func termObjectOf(row *referenceRow) *accountingmapping.AccountingReferenceObjec
 	return obj
 }
 
-func (c *Connector) CreateReference(
+func (c *References) CreateReference(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (*accountingmapping.AccountingReferenceObject, error) {
 	switch req.Kind {
 	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
-			return nil, errItemDraftRequired
+			return nil, nsbinding.ErrItemDraftRequired
 		}
 	case accountingprovider.ReferenceKindCustomer, accountingprovider.ReferenceKindVendor:
 		if req.Party == nil {
-			return nil, errPartyDraftRequired
+			return nil, nsbinding.ErrPartyDraftRequired
 		}
 	case accountingprovider.ReferenceKindAccount,
 		accountingprovider.ReferenceKindTerm,
@@ -283,7 +279,7 @@ func (c *Connector) CreateReference(
 	default:
 		return nil, fmt.Errorf("netsuite: unknown reference kind %q", req.Kind)
 	}
-	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
+	s, err := c.Open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     req.RealmID,
 		AccessToken: req.AccessToken,
 	})
@@ -297,7 +293,7 @@ func (c *Connector) CreateReference(
 		}
 		return readReference(ctx, s, req.Kind, id)
 	}
-	id, err := createParty(ctx, s, &partyCreate{
+	id, err := CreateParty(ctx, s, &PartyCreate{
 		kind:      partyKindOf(req.Kind),
 		requestID: req.RequestID,
 		draft:     req.Party,
@@ -310,7 +306,7 @@ func (c *Connector) CreateReference(
 
 func readReference(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 	kind accountingprovider.ReferenceKind,
 	id string,
 ) (*accountingmapping.AccountingReferenceObject, error) {
@@ -318,15 +314,15 @@ func readReference(
 	if err != nil {
 		return nil, err
 	}
-	internalID, ok := parseInternalID(id)
+	internalID, ok := nsbinding.ParseInternalID(id)
 	if !ok {
 		return nil, netsuiteerrors.ErrInvalidRecordID
 	}
-	b := (&sqlBuilder{}).where(spec.column("id")+" = ?", internalID)
-	var rows []referenceRow
-	if _, err = s.client.Query(ctx, netsuite.Query{
-		SQL:    b.sql(spec.selectFrom, ""),
-		Params: b.params,
+	b := (&nsbinding.SQLBuilder{}).Where(spec.Column("id")+" = ?", internalID)
+	var rows []nsbinding.ReferenceRow
+	if _, err = s.Client.Query(ctx, netsuite.Query{
+		SQL:    b.SQL(spec.SelectFrom, ""),
+		Params: b.Params,
 		Limit:  1,
 	}, &rows); err != nil {
 		return nil, err
@@ -334,84 +330,87 @@ func readReference(
 	if len(rows) == 0 {
 		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
-	return referenceObjectOf(kind, &rows[0]), nil
+	return ReferenceObjectOf(kind, &rows[0]), nil
 }
 
 func duplicateOf(
 	ctx context.Context,
-	s *session,
-	b *sqlBuilder,
-	spec *referenceSpec,
+	s *nsbinding.Session,
+	b *nsbinding.SQLBuilder,
+	spec *nsbinding.ReferenceSpec,
 	requestID string,
 ) error {
-	var rows []referenceRow
-	if _, err := s.client.Query(ctx, netsuite.Query{
-		SQL:    b.sql(spec.selectFrom, spec.column("id")),
-		Params: b.params,
+	var rows []nsbinding.ReferenceRow
+	if _, err := s.Client.Query(ctx, netsuite.Query{
+		SQL:    b.SQL(spec.SelectFrom, spec.Column("id")),
+		Params: b.Params,
 		Limit:  duplicateMatchLimit,
 	}, &rows); err != nil {
 		return err
 	}
 	for idx := range rows {
 		if requestID == "" || rows[idx].ExternalID.Value() != requestID {
-			return errDuplicateName
+			return nsbinding.ErrDuplicateName
 		}
 	}
 	return nil
 }
 
 type itemBody struct {
-	ItemID           string              `json:"itemId"`
-	DisplayName      string              `json:"displayName,omitempty"`
-	SalesDescription string              `json:"salesDescription,omitempty"`
-	IncomeAccount    *recordRef          `json:"incomeAccount,omitempty"`
-	Subsidiary       *sublist[recordRef] `json:"subsidiary,omitempty"`
-	IncludeChildren  bool                `json:"includeChildren"`
+	ItemID           string                                  `json:"itemId"`
+	DisplayName      string                                  `json:"displayName,omitempty"`
+	SalesDescription string                                  `json:"salesDescription,omitempty"`
+	IncomeAccount    *nsbinding.RecordRef                    `json:"incomeAccount,omitempty"`
+	Subsidiary       *nsbinding.Sublist[nsbinding.RecordRef] `json:"subsidiary,omitempty"`
+	IncludeChildren  bool                                    `json:"includeChildren"`
 }
 
-func (c *Connector) createItem(
+func (c *References) createItem(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 	requestID string,
 	draft *accountingconnectorports.AccountingItemDraft,
 ) (string, error) {
 	name := c.SanitizeName(accountingprovider.ReferenceKindItem, draft.Name)
 	if name == "" {
-		return "", errNameRequired
+		return "", nsbinding.ErrNameRequired
 	}
 	if strings.TrimSpace(requestID) == "" {
-		return "", errRequestID
+		return "", nsbinding.ErrRequestID
 	}
-	check := (&sqlBuilder{}).where("UPPER(i.itemid) = UPPER(?)", name)
-	if err := duplicateOf(ctx, s, check, &itemSpec, requestID); err != nil {
+	check := (&nsbinding.SQLBuilder{}).Where("UPPER(i.itemid) = UPPER(?)", name)
+	if err := duplicateOf(ctx, s, check, &ItemSpec, requestID); err != nil {
 		return "", fmt.Errorf("%w: item %q", err, name)
 	}
 	body := &itemBody{
 		ItemID:           name,
 		DisplayName:      name,
-		SalesDescription: cleanText(draft.Description, maxLineTextLength),
-		IncomeAccount:    refOf(draft.IncomeAccountID),
+		SalesDescription: CleanText(draft.Description, MaxLineTextLength),
+		IncomeAccount:    RefOf(draft.IncomeAccountID),
 	}
-	if sub := s.subsidiary(); sub != nil {
-		body.Subsidiary = &sublist[recordRef]{Items: []recordRef{*sub}}
+	if sub := s.Subsidiary(); sub != nil {
+		body.Subsidiary = &nsbinding.Sublist[nsbinding.RecordRef]{
+			Items: []nsbinding.RecordRef{*sub},
+		}
 	}
-	id, err := s.client.Upsert(ctx, netsuite.RecordWrite{
-		Type:       recordServiceItem,
+	id, err := s.Client.Upsert(ctx, netsuite.RecordWrite{
+		Type:       RecordServiceItem,
 		ExternalID: requestID,
 		Body:       body,
 	})
 	if err == nil || !itemTypeRefused(err) {
 		return id, err
 	}
-	return s.client.Upsert(ctx, netsuite.RecordWrite{
-		Type:       recordNonInvItem,
+	return s.Client.Upsert(ctx, netsuite.RecordWrite{
+		Type:       RecordNonInvItem,
 		ExternalID: requestID,
 		Body:       body,
 	})
 }
 
 func itemTypeRefused(err error) bool {
-	return netsuiteerrors.IsNotFound(err) || errorCode(err) == netsuiteerrors.CodeInvalidRequest
+	return netsuiteerrors.IsNotFound(err) ||
+		nsbinding.ErrorCode(err) == netsuiteerrors.CodeInvalidRequest
 }
 
 type addressLine struct {
@@ -421,47 +420,47 @@ type addressLine struct {
 }
 
 type addressBody struct {
-	Addr1   string     `json:"addr1,omitempty"`
-	City    string     `json:"city,omitempty"`
-	State   string     `json:"state,omitempty"`
-	Zip     string     `json:"zip,omitempty"`
-	Country *recordRef `json:"country,omitempty"`
+	Addr1   string               `json:"addr1,omitempty"`
+	City    string               `json:"city,omitempty"`
+	State   string               `json:"state,omitempty"`
+	Zip     string               `json:"zip,omitempty"`
+	Country *nsbinding.RecordRef `json:"country,omitempty"`
 }
 
 type partyBody struct {
-	CompanyName    string                `json:"companyName,omitempty"`
-	IsPerson       bool                  `json:"isPerson"`
-	Email          string                `json:"email,omitempty"`
-	Subsidiary     *recordRef            `json:"subsidiary,omitempty"`
-	Is1099Eligible *bool                 `json:"is1099Eligible,omitempty"`
-	AddressBook    *sublist[addressLine] `json:"addressBook,omitempty"`
+	CompanyName    string                          `json:"companyName,omitempty"`
+	IsPerson       bool                            `json:"isPerson"`
+	Email          string                          `json:"email,omitempty"`
+	Subsidiary     *nsbinding.RecordRef            `json:"subsidiary,omitempty"`
+	Is1099Eligible *bool                           `json:"is1099Eligible,omitempty"`
+	AddressBook    *nsbinding.Sublist[addressLine] `json:"addressBook,omitempty"`
 }
 
-func partyBodyOf(kind partyKind, draft *accountingconnectorports.AccountingPartyDraft) *partyBody {
-	name := cleanText(draft.CompanyName, maxPartyNameLength)
+func PartyBodyOf(kind PartyKind, draft *accountingconnectorports.AccountingPartyDraft) *partyBody {
+	name := CleanText(draft.CompanyName, MaxPartyNameLength)
 	if name == "" {
-		name = cleanText(draft.DisplayName, maxPartyNameLength)
+		name = CleanText(draft.DisplayName, MaxPartyNameLength)
 	}
 	body := &partyBody{
 		CompanyName: name,
-		Email:       cleanText(draft.Email, maxEmailLength),
+		Email:       CleanText(draft.Email, maxEmailLength),
 	}
-	if kind == partyVendor {
+	if kind == PartyVendor {
 		eligible := draft.Is1099
 		body.Is1099Eligible = &eligible
 	}
 	address := addressBody{
-		Addr1: cleanText(draft.AddressLine1, maxAddressLength),
-		City:  cleanText(draft.City, maxCityLength),
-		State: cleanText(draft.State, maxStateLength),
-		Zip:   cleanText(draft.PostalCode, maxPostalCodeLength),
+		Addr1: CleanText(draft.AddressLine1, maxAddressLength),
+		City:  CleanText(draft.City, maxCityLength),
+		State: CleanText(draft.State, maxStateLength),
+		Zip:   CleanText(draft.PostalCode, maxPostalCodeLength),
 	}
 	if country := strings.ToUpper(strings.TrimSpace(draft.Country)); len(country) ==
 		countryCodeLength {
-		address.Country = &recordRef{ID: country}
+		address.Country = &nsbinding.RecordRef{ID: country}
 	}
 	if address != (addressBody{}) {
-		body.AddressBook = &sublist[addressLine]{Items: []addressLine{{
+		body.AddressBook = &nsbinding.Sublist[addressLine]{Items: []addressLine{{
 			DefaultBilling:     true,
 			DefaultShipping:    true,
 			AddressBookAddress: address,
@@ -470,94 +469,46 @@ func partyBodyOf(kind partyKind, draft *accountingconnectorports.AccountingParty
 	return body
 }
 
-type partyCreate struct {
-	kind      partyKind
+type PartyCreate struct {
+	kind      PartyKind
 	requestID string
 	draft     *accountingconnectorports.AccountingPartyDraft
 }
 
-func createParty(ctx context.Context, s *session, p *partyCreate) (string, error) {
-	body := partyBodyOf(p.kind, p.draft)
+func CreateParty(ctx context.Context, s *nsbinding.Session, p *PartyCreate) (string, error) {
+	body := PartyBodyOf(p.kind, p.draft)
 	if body.CompanyName == "" {
-		return "", errNameRequired
+		return "", nsbinding.ErrNameRequired
 	}
 	requestID := strings.TrimSpace(p.requestID)
 	if requestID == "" {
-		return "", errRequestID
+		return "", nsbinding.ErrRequestID
 	}
 	spec := p.kind.spec()
-	check := (&sqlBuilder{}).where(
-		"(UPPER("+spec.column("entityid")+") = UPPER(?) OR UPPER("+
-			spec.column("companyname")+") = UPPER(?))",
+	check := (&nsbinding.SQLBuilder{}).Where(
+		"(UPPER("+spec.Column("entityid")+") = UPPER(?) OR UPPER("+
+			spec.Column("companyname")+") = UPPER(?))",
 		body.CompanyName,
 		body.CompanyName,
 	)
 	if err := duplicateOf(ctx, s, check, spec, requestID); err != nil {
 		return "", fmt.Errorf("%w: %q", err, body.CompanyName)
 	}
-	body.Subsidiary = s.subsidiary()
-	return s.client.Upsert(ctx, netsuite.RecordWrite{
+	body.Subsidiary = s.Subsidiary()
+	return s.Client.Upsert(ctx, netsuite.RecordWrite{
 		Type:       p.kind.recordType(),
 		ExternalID: requestID,
 		Body:       body,
 	})
 }
 
-func (c *Connector) IsDuplicateName(err error) bool {
-	return errors.Is(err, errDuplicateName) || netsuiteerrors.IsDuplicateExternalID(err)
+func (c *References) IsDuplicateName(err error) bool {
+	return errors.Is(err, nsbinding.ErrDuplicateName) || netsuiteerrors.IsDuplicateExternalID(err)
 }
 
-func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
+func (c *References) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
 	if kind == accountingprovider.ReferenceKindItem {
-		return cleanText(name, maxItemNameLength)
+		return CleanText(name, MaxItemNameLength)
 	}
-	return cleanText(name, maxPartyNameLength)
-}
-
-type partyWrite struct {
-	auth       accountingconnectorports.AccountingDocumentAuth
-	kind       partyKind
-	requestID  string
-	externalID string
-	party      *accountingconnectorports.AccountingPartyDraft
-}
-
-func (c *Connector) upsertParty(
-	ctx context.Context,
-	w *partyWrite,
-) (*accountingconnectorports.AccountingDocumentResult, error) {
-	s, err := c.open(w.auth)
-	if err != nil {
-		return nil, err
-	}
-	body := partyBodyOf(w.kind, w.party)
-	if body.CompanyName == "" {
-		return nil, errNameRequired
-	}
-	id := strings.TrimSpace(w.externalID)
-	if id != "" {
-		var replace []string
-		if body.AddressBook != nil {
-			replace = []string{sublistAddressBook}
-		}
-		if err = s.client.Patch(ctx, netsuite.RecordPatch{
-			Type:    w.kind.recordType(),
-			ID:      id,
-			Body:    body,
-			Replace: replace,
-		}); err != nil {
-			return nil, err
-		}
-	} else if id, err = createParty(ctx, s, &partyCreate{
-		kind:      w.kind,
-		requestID: w.requestID,
-		draft:     w.party,
-	}); err != nil {
-		return nil, err
-	}
-	return &accountingconnectorports.AccountingDocumentResult{
-		ExternalID: id,
-		DocNumber:  body.CompanyName,
-		Refs:       map[string]string{},
-	}, nil
+	return CleanText(name, MaxPartyNameLength)
 }

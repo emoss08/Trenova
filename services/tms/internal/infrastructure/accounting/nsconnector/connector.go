@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -22,8 +25,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrNotConfigured = errors.New("netsuite is not configured on this instance")
-
 const (
 	maxBoundApps            = 512
 	limiterPrefix           = "netsuite"
@@ -33,13 +34,9 @@ const (
 )
 
 var (
-	errNoRedirect = errors.New(
-		"netsuite needs app.webBaseUrl or accounting.netSuite.redirectUrl to build its callback",
-	)
 	errNoWebhooks = errors.New(
 		"netsuite sends no webhooks, so Trenova has no NetSuite notification route",
 	)
-	errNoAccount = errors.New("netsuite: the NetSuite account id is required")
 )
 
 type Params struct {
@@ -57,7 +54,7 @@ type Provider struct {
 	apiOpts     []netsuite.Option
 	oauthOpts   []netsuite.Option
 	gate        *accountGate
-	books       *currencyBooks
+	books       *nsbinding.CurrencyBooks
 	now         func() time.Time
 	l           *zap.Logger
 
@@ -68,17 +65,18 @@ type Provider struct {
 var _ accountingconnectorports.AccountingProvider = (*Provider)(nil)
 
 type Connector struct {
-	oauth      *netsuite.OAuthClient
-	apiOpts    []netsuite.Option
-	httpClient *http.Client
-	books      *currencyBooks
-	now        func() time.Time
-	l          *zap.Logger
+	*nsbinding.Binding
+	*nsdocsync.Documents
+	*nsrefsync.References
+	oauth *netsuite.OAuthClient
 }
 
 var (
 	_ accountingconnectorports.AccountingConnector                  = (*Connector)(nil)
 	_ accountingconnectorports.AccountingClientCredentialsConnector = (*Connector)(nil)
+	_ accountingconnectorports.AccountingDocumentWriter             = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader            = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator           = (*Connector)(nil)
 )
 
 func New(p Params) (*Provider, error) {
@@ -86,7 +84,7 @@ func New(p Params) (*Provider, error) {
 	provider := &Provider{
 		redirectURL: cfg.GetRedirectURL(p.AppConfig),
 		gate:        newAccountGate(),
-		books:       newCurrencyBooks(time.Now),
+		books:       nsbinding.NewCurrencyBooks(time.Now),
 		now:         time.Now,
 		l:           p.Logger.Named("accounting.netsuite"),
 		bound:       make(map[string]*Connector),
@@ -129,7 +127,7 @@ func (p *Provider) Bind(
 
 func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
-		return nil, ErrNotConfigured
+		return nil, nsbinding.ErrNotConfigured
 	}
 
 	key := bindingKey(app)
@@ -139,12 +137,16 @@ func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector
 		return conn, nil
 	}
 
+	binding := nsbinding.NewBinding(nsbinding.BindingParams{
+		APIOpts:    p.apiOpts,
+		HTTPClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
+		Books:      p.books,
+		Now:        p.now,
+	})
 	conn := &Connector{
-		apiOpts:    p.apiOpts,
-		httpClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
-		books:      p.books,
-		now:        p.now,
-		l:          p.l,
+		Binding:    binding,
+		Documents:  &nsdocsync.Documents{Binding: binding},
+		References: &nsrefsync.References{Binding: binding},
 	}
 	if p.redirectURL != "" {
 		oauth, err := netsuite.NewOAuthClient(netsuite.OAuthConfig{
@@ -173,7 +175,7 @@ func (p *Provider) WebhookSignatureHeader() string {
 }
 
 func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
+	return nsbinding.ClassifyError(err)
 }
 
 func bindingKey(app *accountingconnectorports.AccountingApp) string {
@@ -182,32 +184,11 @@ func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	)
 }
 
-func (c *Connector) IntegrationType() integration.Type {
-	return integration.TypeNetSuite
-}
-
-func (c *Connector) options() []netsuite.Option {
-	opts := make([]netsuite.Option, 0, len(c.apiOpts)+1)
-	opts = append(opts, netsuite.WithHTTPClient(c.httpClient))
-	return append(opts, c.apiOpts...)
-}
-
-func accountOf(realmID string) (string, error) {
-	if strings.TrimSpace(realmID) == "" {
-		return "", errNoAccount
-	}
-	ref, err := netsuite.ParseCompanyRef(realmID)
-	if err != nil {
-		return "", err
-	}
-	return ref.AccountID, nil
-}
-
 func (c *Connector) AuthorizeURL(
 	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
-		return "", errNoRedirect
+		return "", nsbinding.ErrNoRedirect
 	}
 	return c.oauth.AuthorizeURL(netsuite.AuthorizeRequest{
 		State:         req.State,
@@ -220,9 +201,9 @@ func (c *Connector) ExchangeCode(
 	req *accountingconnectorports.AccountingCodeExchange,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, nsbinding.ErrNoRedirect
 	}
-	account, err := accountOf(req.CallbackRealmID)
+	account, err := nsbinding.AccountOf(req.CallbackRealmID)
 	if err != nil {
 		return nil, err
 	}
@@ -242,9 +223,9 @@ func (c *Connector) Refresh(
 	req *accountingconnectorports.AccountingRefreshRequest,
 ) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, nsbinding.ErrNoRedirect
 	}
-	account, err := accountOf(req.RealmID)
+	account, err := nsbinding.AccountOf(req.RealmID)
 	if err != nil {
 		return nil, err
 	}
@@ -263,9 +244,9 @@ func (c *Connector) Revoke(
 	req *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return nsbinding.ErrNoRedirect
 	}
-	account, err := accountOf(req.RealmID)
+	account, err := nsbinding.AccountOf(req.RealmID)
 	if err != nil {
 		return err
 	}
@@ -282,7 +263,7 @@ func (c *Connector) ReleaseCompanies(
 
 func (c *Connector) VerifyApp(_ context.Context) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return nsbinding.ErrNoRedirect
 	}
 	if !validClientID(c.oauth.ClientID()) {
 		return accountingconnectorports.ErrAccountingAppRejected
@@ -307,10 +288,6 @@ func validClientID(id string) bool {
 
 func (c *Connector) VerifyWebhook(_ string, _ []byte) error {
 	return errNoWebhooks
-}
-
-func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
 }
 
 func grantOf(token *netsuite.Token) *accountingconnectorports.AccountingTokenGrant {

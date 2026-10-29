@@ -1,9 +1,11 @@
-package nsconnector
+package nsdocsync
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -17,23 +19,23 @@ func findTypeOf(
 	case kind == accountingsync.SyncObjectCreditApplication:
 		return "", false, nil
 	case kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo:
-		return typeInvoice, true, nil
+		return TypeInvoice, true, nil
 	case kind == accountingsync.SyncObjectCreditMemo:
-		return typeCreditMemo, true, nil
+		return TypeCreditMemo, true, nil
 	case kind == accountingsync.SyncObjectCustomerPayment:
-		return typeCustomerPayment, true, nil
+		return TypeCustomerPayment, true, nil
 	case kind.IsBill() && req.Credit:
-		return typeVendorCredit, true, nil
+		return TypeVendorCredit, true, nil
 	case kind.IsBill():
-		return typeVendorBill, true, nil
+		return TypeVendorBill, true, nil
 	case kind.IsBillPayment():
-		return typeVendorPayment, true, nil
+		return TypeVendorPayment, true, nil
 	default:
-		return "", false, errDocumentKind
+		return "", false, nsbinding.ErrDocumentKind
 	}
 }
 
-func (c *Connector) FindDocument(
+func (c *Documents) FindDocument(
 	ctx context.Context,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
 ) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
@@ -41,16 +43,16 @@ func (c *Connector) FindDocument(
 	if err != nil || !searchable {
 		return nil, false, err
 	}
-	s, err := c.open(req.Auth)
+	s, err := c.Open(req.Auth)
 	if err != nil {
 		return nil, false, err
 	}
-	row, ok, err := findByExternalID(ctx, s.client, typeCode, strings.TrimSpace(req.RequestID))
+	row, ok, err := findByExternalID(ctx, s.Client, typeCode, strings.TrimSpace(req.RequestID))
 	if err != nil {
 		return nil, false, err
 	}
 	if !ok {
-		row, ok, err = findByNumber(ctx, s.client, typeCode, req)
+		row, ok, err = findByNumber(ctx, s.Client, typeCode, req)
 		if err != nil || !ok {
 			return nil, false, err
 		}
@@ -63,33 +65,33 @@ func findByNumber(
 	client *netsuite.Client,
 	typeCode string,
 	req *accountingconnectorports.AccountingFindDocumentRequest,
-) (*transactionRow, bool, error) {
-	number := cleanText(req.DocNumber, maxTranIDLength)
+) (*nsbinding.TransactionRow, bool, error) {
+	number := nsrefsync.CleanText(req.DocNumber, maxTranIDLength)
 	if number == "" {
 		return nil, false, nil
 	}
-	b := (&sqlBuilder{}).
-		where("t.type = ?", typeCode).
-		where("(t.tranid = ? OR t.otherrefnum = ?)", number, number).
-		where("t.voided = 'F'")
+	b := (&nsbinding.SQLBuilder{}).
+		Where("t.type = ?", typeCode).
+		Where("(t.tranid = ? OR t.otherrefnum = ?)", number, number).
+		Where("t.voided = 'F'")
 	if party := strings.TrimSpace(req.CounterpartyExternalID); party != "" {
-		partyID, ok := parseInternalID(party)
+		partyID, ok := nsbinding.ParseInternalID(party)
 		if !ok {
 			return nil, false, nil
 		}
-		b.where("t.entity = ?", partyID)
+		b.Where("t.entity = ?", partyID)
 	}
-	var rows []transactionRow
+	var rows []nsbinding.TransactionRow
 	if _, err := client.Query(ctx, netsuite.Query{
-		SQL:    b.sql(transactionSQL, "t.id"),
-		Params: b.params,
+		SQL:    b.SQL(TransactionSQL, "t.id"),
+		Params: b.Params,
 		Limit:  findMatchLimit,
 	}, &rows); err != nil {
 		return nil, false, err
 	}
 	for idx := range rows {
 		row := &rows[idx]
-		if !req.Total.IsZero() && !sameMoney(row.total(), req.Total.Abs()) {
+		if !req.Total.IsZero() && !sameMoney(row.AbsTotal(), req.Total.Abs()) {
 			continue
 		}
 		return row, true, nil
@@ -99,9 +101,9 @@ func findByNumber(
 
 func foundResult(
 	req *accountingconnectorports.AccountingFindDocumentRequest,
-	row *transactionRow,
+	row *nsbinding.TransactionRow,
 ) *accountingconnectorports.AccountingDocumentResult {
-	saved := &written{id: row.id(), number: row.TranID.Value()}
+	saved := &written{ID: row.IDValue(), number: row.TranID.Value()}
 	result := newResult(nil)
 	switch {
 	case req.Kind.IsBill():
@@ -112,13 +114,13 @@ func foundResult(
 			result: result,
 		})
 	case req.Kind == accountingsync.SyncObjectCustomerPayment:
-		finishPayment(result, saved, docTypeCustomerPayment)
+		finishPayment(result, saved, DocTypeCustomerPayment)
 	case req.Kind.IsBillPayment():
-		finishPayment(result, saved, docTypeVendorPayment)
+		finishPayment(result, saved, DocTypeVendorPayment)
 	default:
-		result.ExternalID = saved.id
+		result.ExternalID = saved.ID
 		result.DocNumber = saved.number
-		result.Refs[accountingsync.ExternalRefDocument] = saved.id
+		result.Refs[accountingsync.ExternalRefDocument] = saved.ID
 	}
 	return result
 }

@@ -1,49 +1,38 @@
-package nsconnector
+package nsdocsync
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
+type Documents struct {
+	*nsbinding.Binding
+}
 
 const (
-	recordInvoice         = "invoice"
-	recordCreditMemo      = "creditMemo"
-	recordCustomerPayment = "customerPayment"
-	recordVendorBill      = "vendorBill"
-	recordVendorCredit    = "vendorCredit"
-	recordVendorPayment   = "vendorPayment"
-	recordCustomer        = "customer"
-	recordVendor          = "vendor"
-	refCorrective         = "corrective"
-	fieldTranID           = "tranId"
+	RecordInvoice         = "invoice"
+	RecordCreditMemo      = "creditMemo"
+	RecordCustomerPayment = "customerPayment"
+	RecordVendorBill      = "vendorBill"
+	RecordVendorCredit    = "vendorCredit"
+	RecordVendorPayment   = "vendorPayment"
+	RefCorrective         = "corrective"
+	FieldTranID           = "tranId"
 	sublistItem           = "item"
 	sublistExpense        = "expense"
 	customerPagePath      = "/app/common/entity/custjob.nl"
 	vendorPagePath        = "/app/common/entity/vendor.nl"
 )
 
-var (
-	errDocumentKind = errors.New(
-		"netsuite: this record type is not a document NetSuite holds",
-	)
-	errExternalID = errors.New(
-		"netsuite: changing a document needs the id NetSuite gave it",
-	)
-	errRequestID     = errors.New("netsuite: a write needs the request id to key its external id")
-	errLinesRequired = errors.New("netsuite: a document needs at least one line")
-	errAmountInvalid = errors.New("netsuite: the amount must be positive")
-)
-
-func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+func (c *Documents) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
 	return accountingconnectorports.AccountingDocumentLimits{
 		MaxDocNumberLength:      maxTranIDLength,
 		SupportsDebitMemo:       false,
@@ -53,7 +42,7 @@ func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocument
 	}
 }
 
-func (c *Connector) DocumentURL(
+func (c *Documents) DocumentURL(
 	auth accountingconnectorports.AccountingDocumentAuth,
 	link accountingconnectorports.AccountingDocumentLink,
 ) string {
@@ -76,7 +65,7 @@ func (c *Connector) DocumentURL(
 
 func entityLink(accountID, path, id string) string {
 	host, err := netsuite.AppHost(accountID)
-	if _, ok := parseInternalID(id); err != nil || !ok {
+	if _, ok := nsbinding.ParseInternalID(id); err != nil || !ok {
 		return ""
 	}
 	return "https://" + host + path + "?id=" + url.QueryEscape(id)
@@ -89,7 +78,7 @@ type recordWrite struct {
 }
 
 type written struct {
-	id     string
+	ID     string
 	number string
 }
 
@@ -100,7 +89,7 @@ func writeRecord(
 ) (*written, error) {
 	externalID := strings.TrimSpace(w.externalID)
 	if externalID == "" {
-		return nil, errRequestID
+		return nil, nsbinding.ErrRequestID
 	}
 	id, err := client.Upsert(ctx, netsuite.RecordWrite{
 		Type:       w.recordType,
@@ -111,12 +100,12 @@ func writeRecord(
 		return nil, err
 	}
 	number, err := tranIDOf(ctx, client, w.recordType, id)
-	return &written{id: id, number: number}, err
+	return &written{ID: id, number: number}, err
 }
 
 type recordUpdate struct {
 	recordType string
-	id         string
+	ID         string
 	body       any
 	replace    []string
 }
@@ -128,14 +117,14 @@ func patchRecord(
 ) (*written, error) {
 	if err := client.Patch(ctx, netsuite.RecordPatch{
 		Type:    u.recordType,
-		ID:      u.id,
+		ID:      u.ID,
 		Body:    u.body,
 		Replace: u.replace,
 	}); err != nil {
 		return nil, err
 	}
-	number, err := tranIDOf(ctx, client, u.recordType, u.id)
-	return &written{id: u.id, number: number}, err
+	number, err := tranIDOf(ctx, client, u.recordType, u.ID)
+	return &written{ID: u.ID, number: number}, err
 }
 
 func tranIDOf(
@@ -149,7 +138,7 @@ func tranIDOf(
 	if err := client.Get(ctx, netsuite.RecordRead{
 		Type:   recordType,
 		ID:     id,
-		Fields: []string{fieldTranID},
+		Fields: []string{FieldTranID},
 	}, &out); err != nil {
 		return "", err
 	}
@@ -158,28 +147,28 @@ func tranIDOf(
 
 func salesRecordOf(kind accountingsync.SyncObjectType) (string, error) {
 	if kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo {
-		return recordInvoice, nil
+		return RecordInvoice, nil
 	}
 	if kind == accountingsync.SyncObjectCreditMemo {
-		return recordCreditMemo, nil
+		return RecordCreditMemo, nil
 	}
-	return "", errDocumentKind
+	return "", nsbinding.ErrDocumentKind
 }
 
-func (c *Connector) UpsertCustomer(
+func (c *Documents) UpsertCustomer(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingCustomerDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
-		kind:       partyCustomer,
+		kind:       nsrefsync.PartyCustomer,
 		requestID:  doc.RequestID,
 		externalID: doc.ExternalID,
 		party:      &doc.Party,
 	})
 }
 
-func (c *Connector) CreateSalesDocument(
+func (c *Documents) CreateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -187,7 +176,7 @@ func (c *Connector) CreateSalesDocument(
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +185,7 @@ func (c *Connector) CreateSalesDocument(
 		return nil, err
 	}
 	result := newResult(doc.Refs)
-	saved, err := writeRecord(ctx, s.client, &recordWrite{
+	saved, err := writeRecord(ctx, s.Client, &recordWrite{
 		recordType: recordType,
 		externalID: doc.RequestID,
 		body:       body,
@@ -205,7 +194,7 @@ func (c *Connector) CreateSalesDocument(
 	return result, err
 }
 
-func (c *Connector) UpdateSalesDocument(
+func (c *Documents) UpdateSalesDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingSalesDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -215,9 +204,9 @@ func (c *Connector) UpdateSalesDocument(
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
-		return nil, errExternalID
+		return nil, nsbinding.ErrExternalID
 	}
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -226,9 +215,9 @@ func (c *Connector) UpdateSalesDocument(
 		return nil, err
 	}
 	result := newResult(doc.Refs)
-	saved, err := patchRecord(ctx, s.client, &recordUpdate{
+	saved, err := patchRecord(ctx, s.Client, &recordUpdate{
 		recordType: recordType,
-		id:         id,
+		ID:         id,
 		body:       body,
 		replace:    []string{sublistItem},
 	})
@@ -239,63 +228,65 @@ func (c *Connector) UpdateSalesDocument(
 func finishSales(
 	result *accountingconnectorports.AccountingDocumentResult,
 	saved *written,
-	body *transactionBody,
+	body *nsbinding.TransactionBody,
 ) {
 	if saved == nil {
 		return
 	}
-	result.ExternalID = saved.id
+	result.ExternalID = saved.ID
 	result.DocNumber = saved.number
-	result.Refs[accountingsync.ExternalRefDocument] = saved.id
+	result.Refs[accountingsync.ExternalRefDocument] = saved.ID
 	if body.Apply != nil && len(body.Apply.Items) > 0 {
 		result.Refs[accountingsync.ExternalRefApplication] = body.Apply.Items[0].Doc.ID
 	}
 }
 
-func (c *Connector) salesBody(
+func (c *Documents) salesBody(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 	recordType string,
 	doc *accountingconnectorports.AccountingSalesDocument,
-) (*transactionBody, error) {
+) (*nsbinding.TransactionBody, error) {
 	lines, err := salesLines(doc.Lines)
 	if err != nil {
 		return nil, err
 	}
-	currency, err := c.currencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
+	currency, err := c.CurrencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
 	if err != nil {
 		return nil, err
 	}
-	body := &transactionBody{
-		Entity:      refOf(doc.CustomerExternalID),
-		Subsidiary:  s.subsidiary(),
+	body := &nsbinding.TransactionBody{
+		Entity:      nsrefsync.RefOf(doc.CustomerExternalID),
+		Subsidiary:  s.Subsidiary(),
 		TranDate:    doc.TxnDate,
-		OtherRefNum: cleanText(doc.DocNumber, maxTranIDLength),
-		Memo:        cleanText(doc.PrivateNote, maxMemoLength),
-		Message:     cleanText(doc.CustomerMemo, maxMemoLength),
-		Item:        &sublist[itemLine]{Items: lines},
+		OtherRefNum: nsrefsync.CleanText(doc.DocNumber, maxTranIDLength),
+		Memo:        nsrefsync.CleanText(doc.PrivateNote, maxMemoLength),
+		Message:     nsrefsync.CleanText(doc.CustomerMemo, maxMemoLength),
+		Item:        &nsbinding.Sublist[nsbinding.ItemLine]{Items: lines},
 	}
-	body.setCurrency(currency)
-	if recordType == recordInvoice {
+	body.SetCurrency(currency)
+	if recordType == RecordInvoice {
 		body.DueDate = doc.DueDate
-		body.Terms = refOf(doc.TermExternalID)
+		body.Terms = nsrefsync.RefOf(doc.TermExternalID)
 	}
 	invoiceID := strings.TrimSpace(doc.ApplyToExternalID)
-	if recordType == recordCreditMemo && invoiceID != "" && doc.ApplyAmount.IsPositive() {
-		body.Apply = &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: invoiceID},
+	if recordType == RecordCreditMemo && invoiceID != "" && doc.ApplyAmount.IsPositive() {
+		body.Apply = &nsbinding.Sublist[nsbinding.ApplyLine]{Items: []nsbinding.ApplyLine{{
+			Doc:    nsbinding.RecordRef{ID: invoiceID},
 			Apply:  true,
-			Amount: amountOf(doc.ApplyAmount),
+			Amount: nsbinding.AmountOf(doc.ApplyAmount),
 		}}}
 	}
 	return body, nil
 }
 
-func salesLines(lines []accountingconnectorports.AccountingDocumentLine) ([]itemLine, error) {
+func salesLines(
+	lines []accountingconnectorports.AccountingDocumentLine,
+) ([]nsbinding.ItemLine, error) {
 	if len(lines) == 0 {
-		return nil, errLinesRequired
+		return nil, nsbinding.ErrLinesRequired
 	}
-	out := make([]itemLine, 0, len(lines))
+	out := make([]nsbinding.ItemLine, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		purpose := linePurpose(idx, line.Description)
@@ -307,12 +298,15 @@ func salesLines(lines []accountingconnectorports.AccountingDocumentLine) ([]item
 			return nil, negativeLine(purpose)
 		}
 		quantity, rate := lineQuantity(line)
-		out = append(out, itemLine{
-			Item:        recordRef{ID: item},
-			Description: cleanText(lineText(line.Description), maxLineTextLength),
-			Quantity:    amount(quantity),
-			Rate:        amount(rate),
-			Amount:      amount(line.Amount),
+		out = append(out, nsbinding.ItemLine{
+			Item: nsbinding.RecordRef{ID: item},
+			Description: nsrefsync.CleanText(
+				lineText(line.Description),
+				nsrefsync.MaxLineTextLength,
+			),
+			Quantity: nsbinding.Amount(quantity),
+			Rate:     nsbinding.Amount(rate),
+			Amount:   nsbinding.Amount(line.Amount),
 		})
 	}
 	return out, nil
@@ -328,7 +322,7 @@ func lineQuantity(
 	return decimal.NewFromInt(1), line.Amount
 }
 
-func (c *Connector) VoidSalesDocument(
+func (c *Documents) VoidSalesDocument(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
@@ -336,33 +330,33 @@ func (c *Connector) VoidSalesDocument(
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(ref.Auth)
+	s, err := c.Open(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 	var corrective string
-	if recordType == recordCreditMemo {
+	if recordType == RecordCreditMemo {
 		corrective, err = c.unwindRecord(ctx, s, &unwind{
-			recordType: recordCreditMemo,
-			id:         ref.ExternalID,
+			recordType: RecordCreditMemo,
+			ID:         ref.ExternalID,
 			locked:     salesLocked,
 			refused:    func() error { return creditReversalRefused("credit memo") },
 			offset:     invoiceOffset(ref.RequestID),
 		})
 	} else {
-		corrective, err = c.retireDocument(ctx, s, &reversal{
-			recordType:  recordInvoice,
-			reverseType: recordCreditMemo,
-			reverseCode: typeCreditMemo,
-			id:          ref.ExternalID,
+		corrective, err = c.retireDocument(ctx, s, &Reversal{
+			recordType:  RecordInvoice,
+			reverseType: RecordCreditMemo,
+			reverseCode: TypeCreditMemo,
+			ID:          ref.ExternalID,
 			requestID:   ref.RequestID,
 			locked:      salesLocked,
 		})
 	}
 	if corrective != "" {
-		result.Refs[refCorrective] = corrective
+		result.Refs[RefCorrective] = corrective
 	}
 	return result, err
 }

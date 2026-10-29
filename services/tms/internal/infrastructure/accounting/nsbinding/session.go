@@ -1,4 +1,4 @@
-package nsconnector
+package nsbinding
 
 import (
 	"context"
@@ -19,13 +19,13 @@ const (
 	currencyErrorCode = "currency"
 )
 
-type session struct {
-	client *netsuite.Client
-	ref    netsuite.CompanyRef
+type Session struct {
+	Client *netsuite.Client
+	Ref    netsuite.CompanyRef
 	auth   accountingconnectorports.AccountingDocumentAuth
 }
 
-func (c *Connector) open(auth accountingconnectorports.AccountingDocumentAuth) (*session, error) {
+func (c *Binding) Open(auth accountingconnectorports.AccountingDocumentAuth) (*Session, error) {
 	ref, err := netsuite.ParseCompanyRef(auth.RealmID)
 	if err != nil {
 		return nil, err
@@ -33,18 +33,18 @@ func (c *Connector) open(auth accountingconnectorports.AccountingDocumentAuth) (
 	client, err := netsuite.NewAccountClient(netsuite.AccountConfig{
 		AccountID:   ref.AccountID,
 		AccessToken: auth.AccessToken,
-	}, c.options()...)
+	}, c.Options()...)
 	if err != nil {
 		return nil, err
 	}
-	return &session{client: client, ref: ref, auth: auth}, nil
+	return &Session{Client: client, Ref: ref, auth: auth}, nil
 }
 
-func (s *session) subsidiary() *recordRef {
-	if s.ref.SubsidiaryID == "" {
+func (s *Session) Subsidiary() *RecordRef {
+	if s.Ref.SubsidiaryID == "" {
 		return nil
 	}
-	return &recordRef{ID: s.ref.SubsidiaryID}
+	return &RecordRef{ID: s.Ref.SubsidiaryID}
 }
 
 type currencyBook struct {
@@ -53,17 +53,17 @@ type currencyBook struct {
 	loadedAt time.Time
 }
 
-type currencyBooks struct {
+type CurrencyBooks struct {
 	now     func() time.Time
 	mu      sync.Mutex
 	byRealm map[string]*currencyBook
 }
 
-func newCurrencyBooks(now func() time.Time) *currencyBooks {
-	return &currencyBooks{now: now, byRealm: make(map[string]*currencyBook)}
+func NewCurrencyBooks(now func() time.Time) *CurrencyBooks {
+	return &CurrencyBooks{now: now, byRealm: make(map[string]*currencyBook)}
 }
 
-func (b *currencyBooks) cached(realm string) (*currencyBook, bool) {
+func (b *CurrencyBooks) cached(realm string) (*currencyBook, bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	entry, ok := b.byRealm[realm]
@@ -73,7 +73,7 @@ func (b *currencyBooks) cached(realm string) (*currencyBook, bool) {
 	return entry, true
 }
 
-func (b *currencyBooks) store(realm string, book *currencyBook) {
+func (b *CurrencyBooks) store(realm string, book *currencyBook) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if _, known := b.byRealm[realm]; !known && len(b.byRealm) >= maxCachedRealms {
@@ -83,12 +83,12 @@ func (b *currencyBooks) store(realm string, book *currencyBook) {
 	b.byRealm[realm] = book
 }
 
-func (b *currencyBooks) get(ctx context.Context, s *session) (*currencyBook, error) {
-	realm := s.ref.String()
+func (b *CurrencyBooks) get(ctx context.Context, s *Session) (*currencyBook, error) {
+	realm := s.Ref.String()
 	if book, ok := b.cached(realm); ok {
 		return book, nil
 	}
-	rows, err := queryAll(ctx, s.client, currenciesSQL, func(r *currencyRow) string {
+	rows, err := QueryAll(ctx, s.Client, CurrenciesSQL, func(r *CurrencyRow) string {
 		return r.ID.Value()
 	})
 	if err != nil {
@@ -101,7 +101,7 @@ func (b *currencyBooks) get(ctx context.Context, s *session) (*currencyBook, err
 			book.ids[symbol] = rows[idx].ID.Value()
 		}
 	}
-	home, err := homeOf(ctx, s.client, s.ref)
+	home, err := HomeOf(ctx, s.Client, s.Ref)
 	if err != nil {
 		return nil, err
 	}
@@ -110,13 +110,13 @@ func (b *currencyBooks) get(ctx context.Context, s *session) (*currencyBook, err
 	return book, nil
 }
 
-func homeOf(
+func HomeOf(
 	ctx context.Context,
 	client *netsuite.Client,
 	ref netsuite.CompanyRef,
-) (*subsidiaryRow, error) {
-	var rows []subsidiaryRow
-	query := netsuite.Query{SQL: companySQL, Limit: 1}
+) (*SubsidiaryRow, error) {
+	var rows []SubsidiaryRow
+	query := netsuite.Query{SQL: CompanySQL, Limit: 1}
 	if ref.SubsidiaryID != "" {
 		query = netsuite.Query{SQL: subsidiarySQL, Params: []any{ref.SubsidiaryID}, Limit: 1}
 	}
@@ -129,42 +129,46 @@ func homeOf(
 	return &rows[0], nil
 }
 
-type currencyFields struct {
-	currency *recordRef
-	rate     *amount
+type CurrencyFields struct {
+	currency *RecordRef
+	rate     *Amount
 }
 
-func (c *Connector) currencyFor(
+func (c *Binding) CurrencyFor(
 	ctx context.Context,
-	s *session,
+	s *Session,
 	code string,
 	rate decimal.Decimal,
-) (currencyFields, error) {
+) (CurrencyFields, error) {
 	value := strings.ToUpper(strings.TrimSpace(code))
 	base := strings.ToUpper(strings.TrimSpace(s.auth.CompanyCode))
 	if value == "" || value == base {
-		return currencyFields{}, nil
+		return CurrencyFields{}, nil
 	}
 	book, err := c.books.get(ctx, s)
 	if err != nil {
-		return currencyFields{}, err
+		return CurrencyFields{}, err
 	}
 	if value == book.base {
-		return currencyFields{}, nil
+		return CurrencyFields{}, nil
 	}
 	id := book.ids[value]
 	if id == "" {
-		return currencyFields{}, &accountingsync.SyncError{
+		return CurrencyFields{}, &accountingsync.SyncError{
 			Category: accountingsync.SyncErrorCurrency,
 			Code:     currencyErrorCode,
-			Message:  "The currency " + value + " is not active in " + providerName,
+			Message:  "The currency " + value + " is not active in " + ProviderName,
 			Resolution: "Add " + value + " under Lists > Accounting > Currencies in " +
-				providerName + ", then retry",
+				ProviderName + ", then retry",
 		}
 	}
-	out := currencyFields{currency: &recordRef{ID: id}}
+	out := CurrencyFields{currency: &RecordRef{ID: id}}
 	if rate.IsPositive() {
-		out.rate = amountOf(rate)
+		out.rate = AmountOf(rate)
 	}
 	return out, nil
+}
+
+func (c *Binding) Clock() time.Time {
+	return c.now()
 }

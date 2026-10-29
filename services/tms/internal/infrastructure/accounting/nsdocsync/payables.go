@@ -1,27 +1,24 @@
-package nsconnector
+package nsdocsync
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 )
 
-var errPurchaseDocumentType = errors.New(
-	"netsuite: the purchase document type is neither a vendor bill nor a vendor credit",
-)
-
-func (c *Connector) UpsertVendor(
+func (c *Documents) UpsertVendor(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingVendorDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.upsertParty(ctx, &partyWrite{
 		auth:       doc.Auth,
-		kind:       partyVendor,
+		kind:       nsrefsync.PartyVendor,
 		requestID:  doc.RequestID,
 		externalID: doc.ExternalID,
 		party:      &doc.Party,
@@ -30,39 +27,39 @@ func (c *Connector) UpsertVendor(
 
 func purchaseRecordOf(credit bool) string {
 	if credit {
-		return recordVendorCredit
+		return RecordVendorCredit
 	}
-	return recordVendorBill
+	return RecordVendorBill
 }
 
-func (c *Connector) CreatePurchaseDocument(
+func (c *Documents) CreatePurchaseDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.savePurchase(ctx, doc, false)
 }
 
-func (c *Connector) UpdatePurchaseDocument(
+func (c *Documents) UpdatePurchaseDocument(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.savePurchase(ctx, doc, true)
 }
 
-func (c *Connector) savePurchase(
+func (c *Documents) savePurchase(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
 	update bool,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
-		return nil, errDocumentKind
+		return nil, nsbinding.ErrDocumentKind
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if update && id == "" {
-		return nil, errExternalID
+		return nil, nsbinding.ErrExternalID
 	}
 	recordType := purchaseRecordOf(doc.VendorCredit)
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +69,14 @@ func (c *Connector) savePurchase(
 	}
 	var saved *written
 	if update {
-		saved, err = patchRecord(ctx, s.client, &recordUpdate{
+		saved, err = patchRecord(ctx, s.Client, &recordUpdate{
 			recordType: recordType,
-			id:         id,
+			ID:         id,
 			body:       body,
 			replace:    []string{sublistExpense},
 		})
 	} else {
-		saved, err = writeRecord(ctx, s.client, &recordWrite{
+		saved, err = writeRecord(ctx, s.Client, &recordWrite{
 			recordType: recordType,
 			externalID: doc.RequestID,
 			body:       body,
@@ -97,40 +94,42 @@ func (c *Connector) savePurchase(
 	return result, err
 }
 
-func (c *Connector) purchaseBody(
+func (c *Documents) purchaseBody(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 	doc *accountingconnectorports.AccountingPurchaseDocument,
-) (*transactionBody, error) {
+) (*nsbinding.TransactionBody, error) {
 	lines, err := purchaseLines(doc.Lines)
 	if err != nil {
 		return nil, err
 	}
-	currency, err := c.currencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
+	currency, err := c.CurrencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
 	if err != nil {
 		return nil, err
 	}
-	body := &transactionBody{
-		Entity:     refOf(doc.VendorExternalID),
-		Subsidiary: s.subsidiary(),
+	body := &nsbinding.TransactionBody{
+		Entity:     nsrefsync.RefOf(doc.VendorExternalID),
+		Subsidiary: s.Subsidiary(),
 		TranDate:   doc.TxnDate,
-		TranID:     cleanText(doc.DocNumber, maxTranIDLength),
-		Account:    refOf(doc.APAccountExternalID),
-		Memo:       cleanText(doc.PrivateNote, maxMemoLength),
-		Expense:    &sublist[expenseLine]{Items: lines},
+		TranID:     nsrefsync.CleanText(doc.DocNumber, maxTranIDLength),
+		Account:    nsrefsync.RefOf(doc.APAccountExternalID),
+		Memo:       nsrefsync.CleanText(doc.PrivateNote, maxMemoLength),
+		Expense:    &nsbinding.Sublist[nsbinding.ExpenseLine]{Items: lines},
 	}
-	body.setCurrency(currency)
+	body.SetCurrency(currency)
 	if !doc.VendorCredit {
 		body.DueDate = doc.DueDate
 	}
 	return body, nil
 }
 
-func purchaseLines(lines []accountingconnectorports.AccountingPurchaseLine) ([]expenseLine, error) {
+func purchaseLines(
+	lines []accountingconnectorports.AccountingPurchaseLine,
+) ([]nsbinding.ExpenseLine, error) {
 	if len(lines) == 0 {
-		return nil, errLinesRequired
+		return nil, nsbinding.ErrLinesRequired
 	}
-	out := make([]expenseLine, 0, len(lines))
+	out := make([]nsbinding.ExpenseLine, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		purpose := linePurpose(idx, line.Description)
@@ -141,10 +140,10 @@ func purchaseLines(lines []accountingconnectorports.AccountingPurchaseLine) ([]e
 		if line.Amount.IsNegative() {
 			return nil, negativeLine(purpose)
 		}
-		out = append(out, expenseLine{
-			Account: recordRef{ID: account},
-			Amount:  amount(line.Amount),
-			Memo:    cleanText(lineText(line.Description), maxLineTextLength),
+		out = append(out, nsbinding.ExpenseLine{
+			Account: nsbinding.RecordRef{ID: account},
+			Amount:  nsbinding.Amount(line.Amount),
+			Memo:    nsrefsync.CleanText(lineText(line.Description), nsrefsync.MaxLineTextLength),
 		})
 	}
 	return out, nil
@@ -160,49 +159,49 @@ type purchaseWritten struct {
 func finishPurchase(w *purchaseWritten) {
 	recordType := purchaseRecordOf(w.credit)
 	result := w.result
-	result.ExternalID = w.saved.id
+	result.ExternalID = w.saved.ID
 	result.DocNumber = w.saved.number
-	result.Refs[accountingsync.ExternalRefDocument] = w.saved.id
+	result.Refs[accountingsync.ExternalRefDocument] = w.saved.ID
 	result.Refs[accountingsync.ExternalRefDocumentType] = recordType
 	result.Refs[accountingsync.ExternalRefCreditDocument] = strconv.FormatBool(w.credit)
-	if account, err := accountOf(w.auth.RealmID); err == nil {
-		result.Refs[accountingsync.ExternalRefURL] = netsuite.TransactionLink(account, w.saved.id)
+	if account, err := nsbinding.AccountOf(w.auth.RealmID); err == nil {
+		result.Refs[accountingsync.ExternalRefURL] = netsuite.TransactionLink(account, w.saved.ID)
 	}
 }
 
-func purchaseIsCredit(refs map[string]string) (bool, error) {
+func PurchaseIsCredit(refs map[string]string) (bool, error) {
 	if value := strings.TrimSpace(refs[accountingsync.ExternalRefCreditDocument]); value != "" {
 		credit, err := strconv.ParseBool(value)
 		if err != nil {
-			return false, errPurchaseDocumentType
+			return false, nsbinding.ErrPurchaseDocumentType
 		}
 		return credit, nil
 	}
 	switch strings.TrimSpace(refs[accountingsync.ExternalRefDocumentType]) {
-	case "", recordVendorBill:
+	case "", RecordVendorBill:
 		return false, nil
-	case recordVendorCredit:
+	case RecordVendorCredit:
 		return true, nil
 	default:
-		return false, errPurchaseDocumentType
+		return false, nsbinding.ErrPurchaseDocumentType
 	}
 }
 
-func (c *Connector) VoidPurchaseDocument(
+func (c *Documents) VoidPurchaseDocument(
 	ctx context.Context,
 	ref *accountingconnectorports.AccountingDocumentRef,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() && !ref.Kind.IsBillPayment() {
-		return nil, errDocumentKind
+		return nil, nsbinding.ErrDocumentKind
 	}
 	credit := false
 	if ref.Kind.IsBill() {
 		var err error
-		if credit, err = purchaseIsCredit(ref.Refs); err != nil {
+		if credit, err = PurchaseIsCredit(ref.Refs); err != nil {
 			return nil, err
 		}
 	}
-	s, err := c.open(ref.Auth)
+	s, err := c.Open(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -212,107 +211,107 @@ func (c *Connector) VoidPurchaseDocument(
 	switch {
 	case ref.Kind.IsBillPayment():
 		_, err = c.unwindRecord(ctx, s, &unwind{
-			recordType: recordVendorPayment,
-			id:         ref.ExternalID,
+			recordType: RecordVendorPayment,
+			ID:         ref.ExternalID,
 			locked:     purchaseLocked,
 			refused:    func() error { return reversalRefused() },
 		})
 	case credit:
 		corrective, err = c.unwindRecord(ctx, s, &unwind{
-			recordType: recordVendorCredit,
-			id:         ref.ExternalID,
+			recordType: RecordVendorCredit,
+			ID:         ref.ExternalID,
 			locked:     purchaseLocked,
 			refused:    func() error { return creditReversalRefused("vendor credit") },
 			offset: &creditOffset{
-				recordType: recordVendorBill,
-				typeCode:   typeVendorBill,
+				recordType: RecordVendorBill,
+				typeCode:   TypeVendorBill,
 				requestID:  ref.RequestID,
 			},
 		})
 	default:
-		corrective, err = c.retireDocument(ctx, s, &reversal{
-			recordType:  recordVendorBill,
-			reverseType: recordVendorCredit,
-			reverseCode: typeVendorCredit,
-			id:          ref.ExternalID,
+		corrective, err = c.retireDocument(ctx, s, &Reversal{
+			recordType:  RecordVendorBill,
+			reverseType: RecordVendorCredit,
+			reverseCode: TypeVendorCredit,
+			ID:          ref.ExternalID,
 			requestID:   ref.RequestID,
 			locked:      purchaseLocked,
 		})
 	}
 	if corrective != "" {
-		result.Refs[refCorrective] = corrective
+		result.Refs[RefCorrective] = corrective
 	}
 	return result, err
 }
 
-func (c *Connector) CreateBillPayment(
+func (c *Documents) CreateBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.saveBillPayment(ctx, doc, false)
 }
 
-func (c *Connector) UpdateBillPayment(
+func (c *Documents) UpdateBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	return c.saveBillPayment(ctx, doc, true)
 }
 
-func (c *Connector) saveBillPayment(
+func (c *Documents) saveBillPayment(
 	ctx context.Context,
 	doc *accountingconnectorports.AccountingBillPaymentDocument,
 	update bool,
 ) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
-		return nil, errDocumentKind
+		return nil, nsbinding.ErrDocumentKind
 	}
 	id := strings.TrimSpace(doc.ExternalID)
 	if update && id == "" {
-		return nil, errExternalID
+		return nil, nsbinding.ErrExternalID
 	}
 	if !doc.Amount.IsPositive() {
-		return nil, errAmountInvalid
+		return nil, nsbinding.ErrAmountInvalid
 	}
 	bill := strings.TrimSpace(doc.BillExternalID)
 	if bill == "" {
-		return nil, errApplyTarget
+		return nil, nsbinding.ErrApplyTarget
 	}
 	if strings.TrimSpace(doc.BankAccountExternalID) == "" {
 		return nil, unmappedAccount("The bank account")
 	}
-	s, err := c.open(doc.Auth)
+	s, err := c.Open(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
-	currency, err := c.currencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
+	currency, err := c.CurrencyFor(ctx, s, doc.CurrencyCode, doc.ExchangeRate)
 	if err != nil {
 		return nil, err
 	}
-	body := &transactionBody{
-		Entity:     refOf(doc.VendorExternalID),
-		Subsidiary: s.subsidiary(),
+	body := &nsbinding.TransactionBody{
+		Entity:     nsrefsync.RefOf(doc.VendorExternalID),
+		Subsidiary: s.Subsidiary(),
 		TranDate:   doc.TxnDate,
-		TranID:     cleanText(doc.DocNumber, maxTranIDLength),
-		Account:    refOf(doc.BankAccountExternalID),
-		Memo:       cleanText(doc.PrivateNote, maxMemoLength),
-		Apply: &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: bill},
+		TranID:     nsrefsync.CleanText(doc.DocNumber, maxTranIDLength),
+		Account:    nsrefsync.RefOf(doc.BankAccountExternalID),
+		Memo:       nsrefsync.CleanText(doc.PrivateNote, maxMemoLength),
+		Apply: &nsbinding.Sublist[nsbinding.ApplyLine]{Items: []nsbinding.ApplyLine{{
+			Doc:    nsbinding.RecordRef{ID: bill},
 			Apply:  true,
-			Amount: amountOf(doc.Amount),
+			Amount: nsbinding.AmountOf(doc.Amount),
 		}}},
 	}
-	body.setCurrency(currency)
+	body.SetCurrency(currency)
 	if !update {
 		id = ""
 	}
 	saved, err := savePaymentRecord(ctx, s, &paymentSave{
-		recordType: recordVendorPayment,
-		id:         id,
+		recordType: RecordVendorPayment,
+		ID:         id,
 		requestID:  doc.RequestID,
 		body:       body,
 	})
 	result := newResult(nil)
-	finishPayment(result, saved, docTypeVendorPayment)
+	finishPayment(result, saved, DocTypeVendorPayment)
 	return result, err
 }

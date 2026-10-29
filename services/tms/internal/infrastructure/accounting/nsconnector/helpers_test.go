@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -134,7 +136,7 @@ func (f *fakeNS) defaultReply(t *testing.T, call nsCall) reply {
 	switch {
 	case call.Path == suiteQLPath:
 		return reply{status: http.StatusOK, body: emptyRows}
-	case call.Method == http.MethodGet && call.Query.Get("fields") == fieldTranID:
+	case call.Method == http.MethodGet && call.Query.Get("fields") == nsdocsync.FieldTranID:
 		id := call.Path[strings.LastIndexByte(call.Path, '/')+1:]
 		return reply{status: http.StatusOK, body: `{"id":"` + id + `","tranId":"DOC-` + id + `"}`}
 	case call.Method == http.MethodPatch, call.Method == http.MethodDelete:
@@ -241,16 +243,20 @@ func testConnector(t *testing.T, fake *fakeNS) *Connector {
 		netsuite.WithHTTPClient(fake.server.Client()),
 	}
 	provider.now = func() time.Time { return testNow }
-	provider.books = newCurrencyBooks(provider.now)
+	provider.books = nsbinding.NewCurrencyBooks(provider.now)
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{
-		Transport: provider.gate.transport(fake.server.Client().Transport),
-	}
-	conn.apiOpts = []netsuite.Option{
-		netsuite.WithBaseURL(fake.server.URL),
-		netsuite.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Binding = *nsbinding.NewBinding(nsbinding.BindingParams{
+		APIOpts: []netsuite.Option{
+			netsuite.WithBaseURL(fake.server.URL),
+			netsuite.WithRetry(restx.RetryConfig{}),
+		},
+		HTTPClient: &http.Client{
+			Transport: provider.gate.transport(fake.server.Client().Transport),
+		},
+		Books: provider.books,
+		Now:   provider.now,
+	})
 	return conn
 }
 

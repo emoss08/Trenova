@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
@@ -193,5 +194,5 @@ func TestReadDocumentsSkipsCreditApplications(t *testing.T) {
 			Kind: accountingsync.SyncObjectJournalEntry,
 		},
 	)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 }

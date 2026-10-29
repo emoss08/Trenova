@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
@@ -34,7 +35,7 @@ const (
 type sandbox struct {
 	conn    *Connector
 	account string
-	ref     netsuite.CompanyRef
+	Ref     netsuite.CompanyRef
 	grant   *accountingconnectorports.AccountingTokenGrant
 	facts   *accountingconnection.CompanyFacts
 	auth    accountingconnectorports.AccountingDocumentAuth
@@ -91,7 +92,7 @@ func openSandbox(t *testing.T) *sandbox {
 	return &sandbox{
 		conn:    conn,
 		account: account,
-		ref:     ref,
+		Ref:     ref,
 		grant:   grant,
 		facts:   facts,
 		auth: accountingconnectorports.AccountingDocumentAuth{
@@ -121,7 +122,7 @@ func TestSandboxListsCompaniesAndReadsFacts(t *testing.T) {
 	for idx := range companies {
 		ids = append(ids, companies[idx].ID)
 	}
-	assert.Contains(t, ids, s.ref.String())
+	assert.Contains(t, ids, s.Ref.String())
 
 	assert.NotEmpty(t, s.facts.CompanyName)
 	assert.NotEmpty(t, s.facts.HomeCurrency)
@@ -231,7 +232,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 	suffix := strconv.FormatInt(started.UnixNano(), 36)
 	requestID := "trn-sandbox-" + suffix
 	amount := decimal.NewFromInt(sandboxAmount)
-	today := started.Format(dateLayout)
+	today := started.Format(nsdocsync.DateLayout)
 
 	doc := &accountingconnectorports.AccountingSalesDocument{
 		Auth:               s.auth,
@@ -240,7 +241,7 @@ func TestSandboxInvoicePaymentLifecycle(t *testing.T) {
 		CustomerExternalID: sandboxEnv("CUSTOMER_ID"),
 		DocNumber:          "TRN-SBX-" + suffix,
 		TxnDate:            today,
-		DueDate:            started.AddDate(0, 0, 30).Format(dateLayout),
+		DueDate:            started.AddDate(0, 0, 30).Format(nsdocsync.DateLayout),
 		CurrencyCode:       s.facts.HomeCurrency,
 		PrivateNote:        "Trenova sandbox run " + suffix,
 		Lines: []accountingconnectorports.AccountingDocumentLine{{

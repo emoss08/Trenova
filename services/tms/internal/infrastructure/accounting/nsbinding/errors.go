@@ -1,9 +1,8 @@
-package nsconnector
+package nsbinding
 
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -16,29 +15,27 @@ import (
 )
 
 const (
-	providerName         = "NetSuite"
+	ProviderName         = "NetSuite"
 	maxErrorMessage      = 2000
 	defaultRateLimitWait = 10 * time.Second
 	defaultPermission    = "this record"
-	closedPeriodResolved = "Reopen the accounting period in NetSuite, or send the record on " +
+	ClosedPeriodResolved = "Reopen the accounting period in NetSuite, or send the record on " +
 		"the first open day"
-	reversePayment = "Reverse the payment in NetSuite, then mark this record resolved"
-	unapplyPayment = "Unapply the payment in NetSuite, then retry"
 )
 
 var (
-	errDuplicateName = errors.New("netsuite: a record with this name already exists in NetSuite")
-	errUnreachable   = errors.New("netsuite: Trenova could not reach this NetSuite account")
+	ErrDuplicateName = errors.New("netsuite: a record with this name already exists in NetSuite")
+	ErrUnreachable   = errors.New("netsuite: Trenova could not reach this NetSuite account")
 	permissionName   = regexp.MustCompile(`'([^']{1,120})'`)
 )
 
-func classifyError(err error) accountingsync.ErrorCategory {
+func ClassifyError(err error) accountingsync.ErrorCategory {
 	switch {
 	case err == nil:
 		return ""
 	case isConfigurationFault(err):
 		return accountingsync.ErrorCategoryConfiguration
-	case errors.Is(err, errCertificateRevoked), netsuiteerrors.IsInvalidGrant(err):
+	case errors.Is(err, ErrCertificateRevoked), netsuiteerrors.IsInvalidGrant(err):
 		return accountingsync.ErrorCategoryRevoked
 	case netsuiteerrors.IsRateLimited(err):
 		return accountingsync.ErrorCategoryRateLimited
@@ -54,21 +51,21 @@ func classifyError(err error) accountingsync.ErrorCategory {
 }
 
 func isConfigurationFault(err error) bool {
-	return errors.Is(err, ErrNotConfigured) || errors.Is(err, errNoRedirect) ||
-		errors.Is(err, errUnreachable) || errors.Is(err, errNoCompany)
+	return errors.Is(err, ErrNotConfigured) || errors.Is(err, ErrNoRedirect) ||
+		errors.Is(err, ErrUnreachable) || errors.Is(err, ErrNoCompany)
 }
 
 func isAuthFault(err error) bool {
-	return errors.Is(err, errCertificateRevoked) || netsuiteerrors.IsInvalidGrant(err) ||
+	return errors.Is(err, ErrCertificateRevoked) || netsuiteerrors.IsInvalidGrant(err) ||
 		netsuiteerrors.IsInvalidClient(err) || netsuiteerrors.IsUnauthorized(err)
 }
 
-func isPermissionFault(err error) bool {
+func IsPermissionFault(err error) bool {
 	return netsuiteerrors.IsForbidden(err) || netsuiteerrors.IsPermission(err)
 }
 
 func isQueryRefused(err error) bool {
-	if netsuiteerrors.IsUnsupportedTable(err) || isPermissionFault(err) {
+	if netsuiteerrors.IsUnsupportedTable(err) || IsPermissionFault(err) {
 		return true
 	}
 	var apiErr *netsuiteerrors.APIError
@@ -80,7 +77,7 @@ func isTransientFault(err error) bool {
 }
 
 func isDuplicateFault(err error) bool {
-	return errors.Is(err, errDuplicateName) || netsuiteerrors.IsIdempotencyConflict(err) ||
+	return errors.Is(err, ErrDuplicateName) || netsuiteerrors.IsIdempotencyConflict(err) ||
 		netsuiteerrors.IsDuplicateExternalID(err)
 }
 
@@ -88,14 +85,9 @@ func isValidationFault(err error) bool {
 	if isLocalValidation(err) {
 		return true
 	}
-	code := errorCode(err)
+	code := ErrorCode(err)
 	return code == netsuiteerrors.CodeInvalidContent || code == netsuiteerrors.CodeInvalidRequest ||
 		code == netsuiteerrors.CodeUserError
-}
-
-func isUnreachable(err error) bool {
-	var dnsErr *net.DNSError
-	return netsuiteerrors.IsNotFound(err) || errors.As(err, &dnsErr)
 }
 
 type documentFault struct {
@@ -108,46 +100,46 @@ var documentFaults = []documentFault{
 	{
 		matches:    isConfigurationFault,
 		category:   accountingsync.SyncErrorConfiguration,
-		resolution: providerName + " is not configured on this server",
+		resolution: ProviderName + " is not configured on this server",
 	},
 	{
 		matches:    isAuthFault,
 		category:   accountingsync.SyncErrorAuth,
-		resolution: "Reconnect " + providerName + " from the accounting integration",
+		resolution: "Reconnect " + ProviderName + " from the accounting integration",
 	},
 	{matches: isTransientFault, category: accountingsync.SyncErrorTransient},
 	{
-		matches:  errorIs(errDuplicateName),
+		matches:  errorIs(ErrDuplicateName),
 		category: accountingsync.SyncErrorDuplicate,
-		resolution: "A record with this name already exists in " + providerName +
+		resolution: "A record with this name already exists in " + ProviderName +
 			". Map the record to it instead, or rename one of them",
 	},
 	{
 		matches:  isDuplicateFault,
 		category: accountingsync.SyncErrorDuplicate,
-		resolution: "The record already exists in " + providerName +
-			". Skip this record if it is the same one, or change the one in " + providerName,
+		resolution: "The record already exists in " + ProviderName +
+			". Skip this record if it is the same one, or change the one in " + ProviderName,
 	},
 	{
 		matches:    netsuiteerrors.IsClosedPeriod,
 		category:   accountingsync.SyncErrorClosedPeriod,
-		resolution: closedPeriodResolved,
+		resolution: ClosedPeriodResolved,
 	},
 	{
 		matches:    netsuiteerrors.IsNotFound,
 		category:   accountingsync.SyncErrorNotFound,
-		resolution: "The linked record no longer exists in " + providerName,
+		resolution: "The linked record no longer exists in " + ProviderName,
 	},
 	{
 		matches:  netsuiteerrors.IsInvalidReference,
 		category: accountingsync.SyncErrorMapping,
-		resolution: "Check the mapping for the record " + providerName +
+		resolution: "Check the mapping for the record " + ProviderName +
 			" named, then retry",
 	},
 	{
 		matches:    isValidationFault,
 		category:   accountingsync.SyncErrorValidation,
-		resolution: "Correct the record in Trenova or " + providerName + ", then retry",
+		resolution: "Correct the record in Trenova or " + ProviderName + ", then retry",
 	},
 }
 
@@ -155,7 +147,7 @@ func errorIs(target error) func(error) bool {
 	return func(err error) bool { return errors.Is(err, target) }
 }
 
-func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
+func (c *Binding) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	if err == nil {
 		return nil
 	}
@@ -165,7 +157,7 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 	}
 	out := &accountingsync.SyncError{
 		Category:   accountingsync.SyncErrorTransient,
-		Code:       errorCode(err),
+		Code:       ErrorCode(err),
 		Message:    errorMessage(err),
 		RetryAfter: netsuiteerrors.RetryAfter(err),
 	}
@@ -176,11 +168,11 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 			out.RetryAfter = defaultRateLimitWait
 		}
 		return out
-	case isPermissionFault(err) && !isAuthFault(err):
+	case IsPermissionFault(err) && !isAuthFault(err):
 		record := permissionRecord(err)
 		out.Category = accountingsync.SyncErrorConfiguration
-		out.Message = "The role lacks permission for " + record + " in " + providerName
-		out.Resolution = "Give the " + providerName + " role the permission for " + record +
+		out.Message = "The role lacks permission for " + record + " in " + ProviderName
+		out.Resolution = "Give the " + ProviderName + " role the permission for " + record +
 			", then retry"
 		return out
 	}
@@ -203,7 +195,7 @@ func apiErrorOf(err error) *netsuiteerrors.APIError {
 	return nil
 }
 
-func errorCode(err error) string {
+func ErrorCode(err error) string {
 	apiErr := apiErrorOf(err)
 	if apiErr == nil {
 		var oauthErr *netsuiteerrors.OAuthError
@@ -243,13 +235,6 @@ func permissionRecord(err error) string {
 	return defaultPermission
 }
 
-func deleteRefused(err error) bool {
-	if netsuiteerrors.IsClosedPeriod(err) {
-		return true
-	}
-	return errorCode(err) == netsuiteerrors.CodeUserError && !netsuiteerrors.IsPermission(err)
-}
-
 func isLocalValidation(err error) bool {
 	for _, target := range []error{
 		netsuiteerrors.ErrInvalidAccountID,
@@ -261,90 +246,20 @@ func isLocalValidation(err error) bool {
 		netsuiteerrors.ErrInvalidFieldName,
 		netsuiteerrors.ErrBodyRequired,
 		netsuiteerrors.ErrInvalidQueryTime,
-		errDocumentKind,
-		errExternalID,
-		errRequestID,
-		errLinesRequired,
-		errAmountInvalid,
-		errApplyTarget,
-		errItemDraftRequired,
-		errPartyDraftRequired,
-		errNameRequired,
-		errPurchaseDocumentType,
+		ErrDocumentKind,
+		ErrExternalID,
+		ErrRequestID,
+		ErrLinesRequired,
+		ErrAmountInvalid,
+		ErrApplyTarget,
+		ErrItemDraftRequired,
+		ErrPartyDraftRequired,
+		ErrNameRequired,
+		ErrPurchaseDocumentType,
 	} {
 		if errors.Is(err, target) {
 			return true
 		}
 	}
 	return false
-}
-
-func unmappedItem(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category:   accountingsync.SyncErrorMapping,
-		Code:       "item",
-		Message:    purpose + " has no " + providerName + " item mapped",
-		Resolution: "Map it to a " + providerName + " item",
-	}
-}
-
-func unmappedAccount(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category:   accountingsync.SyncErrorMapping,
-		Code:       "account",
-		Message:    purpose + " has no " + providerName + " account mapped",
-		Resolution: "Map it to a " + providerName + " account",
-	}
-}
-
-func negativeLine(purpose string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorValidation,
-		Code:     "negative-line",
-		Message: purpose + " is negative, and " + providerName +
-			" does not take a negative line on this document",
-		Resolution: "Net the line into the others in Trenova, then retry",
-	}
-}
-
-func paidConflict() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConflict,
-		Code:     "document-applied",
-		Message: "A payment or credit is still applied to the document in " + providerName +
-			", so Trenova cannot delete or reverse it",
-		Resolution: unapplyPayment,
-	}
-}
-
-func reversalRefused() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "reverse-payment",
-		Message: "The payment is in a closed or locked period in " + providerName +
-			", which has no REST void, so Trenova cannot delete it",
-		Resolution: reversePayment,
-	}
-}
-
-func creditReversalRefused(label string) *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "reverse-credit",
-		Message: "The " + label + " is in a closed or locked period in " + providerName +
-			", which refuses to delete it",
-		Resolution: "Reverse the " + label + " in " + providerName +
-			", then mark this record resolved",
-	}
-}
-
-func creditApplicationUnknown() *accountingsync.SyncError {
-	return &accountingsync.SyncError{
-		Category: accountingsync.SyncErrorConfiguration,
-		Code:     "credit-application",
-		Message: "Trenova does not know which credit memo and invoice the application " +
-			"joined in " + providerName,
-		Resolution: "Unapply the credit memo in " + providerName +
-			", then mark this record resolved",
-	}
 }

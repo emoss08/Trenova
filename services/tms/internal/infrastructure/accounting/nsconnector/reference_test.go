@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -191,7 +193,7 @@ func TestAccountClassOfCoversNetSuiteAccountTypes(t *testing.T) {
 		"NonPosting":   "",
 		"Stat":         "",
 	} {
-		assert.Equal(t, want, AccountClassOf(accountType), accountType)
+		assert.Equal(t, want, nsrefsync.AccountClassOf(accountType), accountType)
 	}
 }
 
@@ -212,9 +214,9 @@ func TestCreateCustomerUpsertsByRequestIDWithTheSubsidiary(t *testing.T) {
 	created := false
 	fake := &fakeNS{respond: func(call nsCall) reply {
 		switch {
-		case call.is(http.MethodPut, eidPath(recordCustomer, testRequestID)):
+		case call.is(http.MethodPut, eidPath(nsrefsync.RecordCustomer, testRequestID)):
 			created = true
-			return upserted(recordCustomer, "900")
+			return upserted(nsrefsync.RecordCustomer, "900")
 		case call.queries("FROM customer c") && created:
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, map[string]any{
 				"id": "900", "entityid": "CUST-900", "companyname": "Northwind Logistics",
@@ -244,7 +246,7 @@ func TestCreateCustomerUpsertsByRequestIDWithTheSubsidiary(t *testing.T) {
 	check, ok := fake.query("UPPER(c.entityid)")
 	require.True(t, ok)
 	assert.Equal(t, []any{"Northwind Logistics", "Northwind Logistics"}, check.Params)
-	put, ok := fake.find(http.MethodPut, eidPath(recordCustomer, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsrefsync.RecordCustomer, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, "Northwind Logistics", put.Body["companyName"])
 	assert.Equal(t, false, put.Body["isPerson"])
@@ -264,8 +266,8 @@ func TestCreatePartyRefusesADuplicateNameButResumesItsOwnRetry(t *testing.T) {
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, map[string]any{
 				"id": "512", "entityid": "Swift Carriers LLC", "externalid": owner,
 			})}
-		case call.is(http.MethodPut, eidPath(recordVendor, testRequestID)):
-			return upserted(recordVendor, "512")
+		case call.is(http.MethodPut, eidPath(nsrefsync.RecordVendor, testRequestID)):
+			return upserted(nsrefsync.RecordVendor, "512")
 		case call.queries("FROM vendor v"):
 			return fixtureReply(t, http.StatusOK, "vendors.json")
 		}
@@ -278,16 +280,16 @@ func TestCreatePartyRefusesADuplicateNameButResumesItsOwnRetry(t *testing.T) {
 		Is1099:      true,
 	}
 	_, err := conn.CreateReference(t.Context(), req)
-	require.ErrorIs(t, err, errDuplicateName)
+	require.ErrorIs(t, err, nsbinding.ErrDuplicateName)
 	assert.True(t, conn.IsDuplicateName(err))
 	assert.Equal(t, accountingsync.SyncErrorDuplicate, conn.ClassifyDocumentError(err).Category)
-	assert.Zero(t, fake.count(http.MethodPut, eidPath(recordVendor, testRequestID)))
+	assert.Zero(t, fake.count(http.MethodPut, eidPath(nsrefsync.RecordVendor, testRequestID)))
 
 	owner = testRequestID
 	obj, err := conn.CreateReference(t.Context(), req)
 	require.NoError(t, err)
 	assert.Equal(t, "512", obj.ExternalID)
-	put, ok := fake.find(http.MethodPut, eidPath(recordVendor, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsrefsync.RecordVendor, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, true, put.Body["is1099Eligible"])
 }
@@ -297,10 +299,10 @@ func TestCreateItemFallsBackToANonInventorySaleItem(t *testing.T) {
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
 		switch {
-		case call.is(http.MethodPut, eidPath(recordServiceItem, testRequestID)):
+		case call.is(http.MethodPut, eidPath(nsrefsync.RecordServiceItem, testRequestID)):
 			return fixtureReply(t, http.StatusBadRequest, "error_invalid_request.json")
-		case call.is(http.MethodPut, eidPath(recordNonInvItem, testRequestID)):
-			return upserted(recordNonInvItem, "88")
+		case call.is(http.MethodPut, eidPath(nsrefsync.RecordNonInvItem, testRequestID)):
+			return upserted(nsrefsync.RecordNonInvItem, "88")
 		case call.queries("i.id = ?"):
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, map[string]any{
 				"id": "88", "itemid": "Detention", "itemtype": "NonInvtPart", "isinactive": "F",
@@ -320,12 +322,16 @@ func TestCreateItemFallsBackToANonInventorySaleItem(t *testing.T) {
 	assert.Equal(t, "88", obj.ExternalID)
 	assert.Equal(t, "Detention", obj.Name)
 
-	put, ok := fake.find(http.MethodPut, eidPath(recordNonInvItem, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsrefsync.RecordNonInvItem, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, "Detention", put.Body["itemId"])
 	assert.Equal(t, "40", refID(t, put.Body, "incomeAccount"))
 	assert.Equal(t, testSubsidiary, items(t, put.Body, "subsidiary")[0]["id"])
-	assert.Equal(t, 1, fake.count(http.MethodPut, eidPath(recordServiceItem, testRequestID)))
+	assert.Equal(
+		t,
+		1,
+		fake.count(http.MethodPut, eidPath(nsrefsync.RecordServiceItem, testRequestID)),
+	)
 }
 
 func TestCreateReferenceRefusesKindsNetSuiteDoesNotTakeFromTrenova(t *testing.T) {
@@ -343,16 +349,16 @@ func TestCreateReferenceRefusesKindsNetSuiteDoesNotTakeFromTrenova(t *testing.T)
 		require.Error(t, err, kind)
 	}
 	_, err := conn.CreateReference(t.Context(), createRequest(accountingprovider.ReferenceKindItem))
-	require.ErrorIs(t, err, errItemDraftRequired)
+	require.ErrorIs(t, err, nsbinding.ErrItemDraftRequired)
 	_, err = conn.CreateReference(
 		t.Context(),
 		createRequest(accountingprovider.ReferenceKindCustomer),
 	)
-	require.ErrorIs(t, err, errPartyDraftRequired)
+	require.ErrorIs(t, err, nsbinding.ErrPartyDraftRequired)
 	req := createRequest(accountingprovider.ReferenceKindCustomer)
 	req.Party = &accountingconnectorports.AccountingPartyDraft{DisplayName: " "}
 	_, err = conn.CreateReference(t.Context(), req)
-	require.ErrorIs(t, err, errNameRequired)
+	require.ErrorIs(t, err, nsbinding.ErrNameRequired)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
 	assert.Empty(t, fake.all())
 }
@@ -362,11 +368,15 @@ func TestSanitizeNameFitsNetSuiteLimits(t *testing.T) {
 
 	conn := testConnector(t, &fakeNS{})
 	long := strings.Repeat("x", 120)
-	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindItem, long), maxItemNameLength)
+	assert.Len(
+		t,
+		conn.SanitizeName(accountingprovider.ReferenceKindItem, long),
+		nsrefsync.MaxItemNameLength,
+	)
 	assert.Len(
 		t,
 		conn.SanitizeName(accountingprovider.ReferenceKindCustomer, long),
-		maxPartyNameLength,
+		nsrefsync.MaxPartyNameLength,
 	)
 	assert.Equal(t, "a b", conn.SanitizeName(accountingprovider.ReferenceKindVendor, " a\tb "))
 }
@@ -375,8 +385,8 @@ func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordVendor, testRequestID)) {
-			return upserted(recordVendor, "513")
+		if call.is(http.MethodPut, eidPath(nsrefsync.RecordVendor, testRequestID)) {
+			return upserted(nsrefsync.RecordVendor, "513")
 		}
 		return reply{}
 	}}
@@ -396,7 +406,7 @@ func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testCustomer, result.ExternalID)
 	assert.Equal(t, "Acme Freight", result.DocNumber)
-	patch, ok := fake.find(http.MethodPatch, recordPath(recordCustomer, testCustomer))
+	patch, ok := fake.find(http.MethodPatch, recordPath(nsrefsync.RecordCustomer, testCustomer))
 	require.True(t, ok)
 	assert.Equal(t, "addressBook", patch.Query.Get("replace"))
 	assert.NotContains(t, patch.Body, "subsidiary")
@@ -408,7 +418,7 @@ func TestUpsertCustomerAndVendorPatchExistingRecords(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "513", result.ExternalID)
-	put, ok := fake.find(http.MethodPut, eidPath(recordVendor, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsrefsync.RecordVendor, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, testSubsidiary, refID(t, put.Body, "subsidiary"))
 	assert.Equal(t, false, put.Body["is1099Eligible"])

@@ -2,12 +2,12 @@ package nsconnector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -20,8 +20,6 @@ const (
 	endOfDayOffset   = 24*time.Hour - time.Second
 )
 
-var errNoCompany = errors.New("netsuite offered no active subsidiary this sign-in can open")
-
 func (c *Connector) Companies(
 	ctx context.Context,
 	grant *accountingconnectorports.AccountingTokenGrant,
@@ -30,26 +28,31 @@ func (c *Connector) Companies(
 	if grant == nil {
 		return nil, netsuiteerrors.ErrAccessTokenRequired
 	}
-	account, err := accountOf(callbackRealmID)
+	account, err := nsbinding.AccountOf(callbackRealmID)
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
+	s, err := c.Open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     account,
 		AccessToken: grant.AccessToken,
 	})
 	if err != nil {
 		return nil, err
 	}
-	subsidiaries, err := queryAll(ctx, s.client, subsidiariesSQL, func(r *subsidiaryRow) string {
-		return r.ID.Value()
-	})
+	subsidiaries, err := nsbinding.QueryAll(
+		ctx,
+		s.Client,
+		subsidiariesSQL,
+		func(r *nsbinding.SubsidiaryRow) string {
+			return r.ID.Value()
+		},
+	)
 	switch {
 	case err == nil:
 	case netsuiteerrors.IsUnsupportedTable(err):
 		return singleCompany(ctx, s)
 	case isUnreachable(err):
-		return nil, fmt.Errorf("%w: %w", errUnreachable, err)
+		return nil, fmt.Errorf("%w: %w", nsbinding.ErrUnreachable, err)
 	default:
 		return nil, err
 	}
@@ -66,25 +69,25 @@ func (c *Connector) Companies(
 		})
 	}
 	if len(companies) == 0 {
-		return nil, errNoCompany
+		return nil, nsbinding.ErrNoCompany
 	}
 	return companies, nil
 }
 
 func singleCompany(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 ) ([]accountingconnectorports.AccountingCompany, error) {
-	home, err := homeOf(ctx, s.client, s.ref)
+	home, err := nsbinding.HomeOf(ctx, s.Client, s.Ref)
 	if err != nil {
 		if isUnreachable(err) {
-			return nil, fmt.Errorf("%w: %w", errUnreachable, err)
+			return nil, fmt.Errorf("%w: %w", nsbinding.ErrUnreachable, err)
 		}
 		return nil, err
 	}
 	return []accountingconnectorports.AccountingCompany{{
-		ID:   s.ref.AccountID,
-		Name: companyLabel(home.CompanyName.Value(), s.ref),
+		ID:   s.Ref.AccountID,
+		Name: companyLabel(home.CompanyName.Value(), s.Ref),
 	}}, nil
 }
 
@@ -105,7 +108,7 @@ func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
 ) (*accountingconnection.CompanyFacts, error) {
-	s, err := c.open(accountingconnectorports.AccountingDocumentAuth{
+	s, err := c.Open(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})
@@ -115,18 +118,21 @@ func (c *Connector) CompanyFacts(
 	facts, err := readFacts(ctx, s)
 	if err != nil {
 		if isUnreachable(err) {
-			return nil, fmt.Errorf("%w: %w", errUnreachable, err)
+			return nil, fmt.Errorf("%w: %w", nsbinding.ErrUnreachable, err)
 		}
 		return nil, err
 	}
 	return facts, nil
 }
 
-func readFacts(ctx context.Context, s *session) (*accountingconnection.CompanyFacts, error) {
-	var company []subsidiaryRow
-	if _, err := s.client.Query(
+func readFacts(
+	ctx context.Context,
+	s *nsbinding.Session,
+) (*accountingconnection.CompanyFacts, error) {
+	var company []nsbinding.SubsidiaryRow
+	if _, err := s.Client.Query(
 		ctx,
-		netsuite.Query{SQL: companySQL, Limit: 1},
+		netsuite.Query{SQL: nsbinding.CompanySQL, Limit: 1},
 		&company,
 	); err != nil {
 		return nil, err
@@ -141,8 +147,8 @@ func readFacts(ctx context.Context, s *session) (*accountingconnection.CompanyFa
 		Country:      strings.ToUpper(home.Country.Value()),
 		HomeCurrency: strings.ToUpper(home.Currency.Value()),
 	}
-	if s.ref.SubsidiaryID != "" {
-		subsidiary, err := homeOf(ctx, s.client, s.ref)
+	if s.Ref.SubsidiaryID != "" {
+		subsidiary, err := nsbinding.HomeOf(ctx, s.Client, s.Ref)
 		if err != nil {
 			return nil, err
 		}
@@ -160,15 +166,20 @@ func readFacts(ctx context.Context, s *session) (*accountingconnection.CompanyFa
 	}
 	facts.ShortCode = facts.HomeCurrency
 
-	periods, err := queryAll(ctx, s.client, periodsSQL, func(r *periodRow) string {
+	periods, err := nsbinding.QueryAll(ctx, s.Client, periodsSQL, func(r *periodRow) string {
 		return r.ID.Value()
 	})
 	if err != nil {
 		return nil, err
 	}
-	currencies, err := queryAll(ctx, s.client, currenciesSQL, func(r *currencyRow) string {
-		return r.ID.Value()
-	})
+	currencies, err := nsbinding.QueryAll(
+		ctx,
+		s.Client,
+		nsbinding.CurrenciesSQL,
+		func(r *nsbinding.CurrencyRow) string {
+			return r.ID.Value()
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

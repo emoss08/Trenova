@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
@@ -49,8 +51,8 @@ func TestCreateInvoiceUpsertsByRequestIDAndReadsTheNumberBack(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordInvoice, testRequestID)) {
-			return upserted(recordInvoice, testInvoice)
+		if call.is(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testRequestID)) {
+			return upserted(nsdocsync.RecordInvoice, testInvoice)
 		}
 		return reply{}
 	}}
@@ -62,7 +64,7 @@ func TestCreateInvoiceUpsertsByRequestIDAndReadsTheNumberBack(t *testing.T) {
 	assert.Equal(t, testInvoice, result.Refs[accountingsync.ExternalRefDocument])
 	assert.Equal(t, "yes", result.Refs["kept"])
 
-	put, ok := fake.find(http.MethodPut, eidPath(recordInvoice, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testRequestID))
 	require.True(t, ok)
 	body := put.Body
 	assert.Equal(t, testCustomer, refID(t, body, "entity"))
@@ -89,19 +91,19 @@ func TestCreateInvoiceUpsertsByRequestIDAndReadsTheNumberBack(t *testing.T) {
 		"a quantity that does not multiply out is one line",
 	)
 	assert.InDelta(t, 250.0, lines[1]["rate"], 0)
-	assert.Equal(t, defaultLineText, lines[1]["description"])
+	assert.Equal(t, nsdocsync.DefaultLineText, lines[1]["description"])
 
-	read, ok := fake.find(http.MethodGet, recordPath(recordInvoice, testInvoice))
+	read, ok := fake.find(http.MethodGet, recordPath(nsdocsync.RecordInvoice, testInvoice))
 	require.True(t, ok)
-	assert.Equal(t, fieldTranID, read.Query.Get("fields"))
+	assert.Equal(t, nsdocsync.FieldTranID, read.Query.Get("fields"))
 }
 
 func TestRetriedCreateLandsOnTheSameExternalID(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordInvoice, testRequestID)) {
-			return upserted(recordInvoice, testInvoice)
+		if call.is(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testRequestID)) {
+			return upserted(nsdocsync.RecordInvoice, testInvoice)
 		}
 		return reply{}
 	}}
@@ -117,7 +119,7 @@ func TestRetriedCreateLandsOnTheSameExternalID(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, first.ExternalID, second.ExternalID)
-	assert.Equal(t, 2, fake.count(http.MethodPut, eidPath(recordInvoice, testRequestID)))
+	assert.Equal(t, 2, fake.count(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testRequestID)))
 	for _, call := range fake.writes() {
 		assert.Equal(t, http.MethodPut, call.Method, "a retry never posts a second record")
 	}
@@ -129,8 +131,8 @@ func TestForeignCurrencyDocumentsCarryTheCurrencyAndRate(t *testing.T) {
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
 		switch {
-		case call.is(http.MethodPut, eidPath(recordCreditMemo, testRequestID)):
-			return upserted(recordCreditMemo, testCreditMemo)
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordCreditMemo, testRequestID)):
+			return upserted(nsdocsync.RecordCreditMemo, testCreditMemo)
 		case call.queries("FROM currency c"):
 			return fixtureReply(t, http.StatusOK, "currencies.json")
 		case call.queries("FROM subsidiary s"):
@@ -151,7 +153,7 @@ func TestForeignCurrencyDocumentsCarryTheCurrencyAndRate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testInvoice, result.Refs[accountingsync.ExternalRefApplication])
 
-	put, ok := fake.find(http.MethodPut, eidPath(recordCreditMemo, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsdocsync.RecordCreditMemo, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, "3", refID(t, put.Body, "currency"))
 	assert.InDelta(t, 0.7312, put.Body["exchangeRate"], 0)
@@ -196,16 +198,16 @@ func TestSalesDocumentsRefuseUnmappedAndNegativeLines(t *testing.T) {
 
 	doc.Lines = nil
 	_, err = conn.CreateSalesDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errLinesRequired)
+	require.ErrorIs(t, err, nsbinding.ErrLinesRequired)
 
 	doc = salesDoc(accountingsync.SyncObjectCustomerPayment)
 	_, err = conn.CreateSalesDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 
 	doc = salesDoc(accountingsync.SyncObjectInvoice)
 	doc.RequestID = ""
 	_, err = conn.CreateSalesDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errRequestID)
+	require.ErrorIs(t, err, nsbinding.ErrRequestID)
 	assert.Empty(t, fake.writes())
 }
 
@@ -221,15 +223,15 @@ func TestUpdateSalesDocumentPatchesAndReplacesTheLines(t *testing.T) {
 	assert.Equal(t, testInvoice, result.ExternalID)
 	assert.Equal(t, "DOC-"+testInvoice, result.DocNumber)
 
-	patch, ok := fake.find(http.MethodPatch, recordPath(recordInvoice, testInvoice))
+	patch, ok := fake.find(http.MethodPatch, recordPath(nsdocsync.RecordInvoice, testInvoice))
 	require.True(t, ok)
 	assert.Equal(t, "item", patch.Query.Get("replace"))
 	assert.Len(t, items(t, patch.Body, "item"), 2)
-	assert.Zero(t, fake.count(http.MethodPut, eidPath(recordInvoice, testRequestID)))
+	assert.Zero(t, fake.count(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testRequestID)))
 
 	doc.ExternalID = ""
 	_, err = conn.UpdateSalesDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, nsbinding.ErrExternalID)
 }
 
 func TestUpdateInAClosedPeriodIsAClosedPeriodFailure(t *testing.T) {
@@ -246,7 +248,7 @@ func TestUpdateInAClosedPeriodIsAClosedPeriodFailure(t *testing.T) {
 	_, err := conn.UpdateSalesDocument(t.Context(), doc)
 	classified := conn.ClassifyDocumentError(err)
 	assert.Equal(t, accountingsync.SyncErrorClosedPeriod, classified.Category)
-	assert.Equal(t, closedPeriodResolved, classified.Resolution)
+	assert.Equal(t, nsbinding.ClosedPeriodResolved, classified.Resolution)
 }
 
 func voidRef(
@@ -289,9 +291,9 @@ func TestVoidInvoiceInAnOpenPeriodDeletesIt(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, testInvoice, result.ExternalID)
-	assert.Empty(t, result.Refs[refCorrective])
+	assert.Empty(t, result.Refs[nsdocsync.RefCorrective])
 	assert.Equal(t,
-		[]string{"DELETE " + recordPath(recordInvoice, testInvoice)},
+		[]string{"DELETE " + recordPath(nsdocsync.RecordInvoice, testInvoice)},
 		methods(fake.writes()),
 	)
 	state, ok := fake.query("LEFT JOIN accountingperiod ap")
@@ -302,12 +304,12 @@ func TestVoidInvoiceInAnOpenPeriodDeletesIt(t *testing.T) {
 func reversalResponder(t *testing.T, state string) func(call nsCall) reply {
 	return stateResponder(t, state, func(call nsCall) reply {
 		switch {
-		case call.is(http.MethodGet, recordPath(recordInvoice, testInvoice)) &&
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordInvoice, testInvoice)) &&
 			call.Query.Get("expandSubResources") == "true":
 			return fixtureReply(t, http.StatusOK, "invoice.json")
-		case call.is(http.MethodPut, eidPath(recordCreditMemo, testVoidRequest)):
-			return upserted(recordCreditMemo, "1310")
-		case call.is(http.MethodDelete, recordPath(recordInvoice, testInvoice)):
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordCreditMemo, testVoidRequest)):
+			return upserted(nsdocsync.RecordCreditMemo, "1310")
+		case call.is(http.MethodDelete, recordPath(nsdocsync.RecordInvoice, testInvoice)):
 			return fixtureReply(t, http.StatusBadRequest, "error_user_error.json")
 		}
 		return reply{}
@@ -324,15 +326,15 @@ func TestVoidInvoiceInAClosedPeriodCreditsItInstead(t *testing.T) {
 		voidRef(accountingsync.SyncObjectInvoice, testInvoice),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "1310", result.Refs[refCorrective])
-	assert.Zero(t, fake.count(http.MethodDelete, recordPath(recordInvoice, testInvoice)))
+	assert.Equal(t, "1310", result.Refs[nsdocsync.RefCorrective])
+	assert.Zero(t, fake.count(http.MethodDelete, recordPath(nsdocsync.RecordInvoice, testInvoice)))
 
-	put, ok := fake.find(http.MethodPut, eidPath(recordCreditMemo, testVoidRequest))
+	put, ok := fake.find(http.MethodPut, eidPath(nsdocsync.RecordCreditMemo, testVoidRequest))
 	require.True(t, ok)
 	assert.Equal(t, testCustomer, refID(t, put.Body, "entity"))
 	assert.Equal(t, testSubsidiary, refID(t, put.Body, "subsidiary"))
 	assert.Equal(t, "1", refID(t, put.Body, "currency"))
-	assert.Equal(t, testNow.Format(dateLayout), put.Body["tranDate"])
+	assert.Equal(t, testNow.Format(nsdocsync.DateLayout), put.Body["tranDate"])
 	assert.Equal(t, "Reverses INV-1001", put.Body["memo"])
 	lines := items(t, put.Body, "item")
 	require.Len(t, lines, 2)
@@ -354,10 +356,10 @@ func TestVoidInvoiceWhoseDeleteIsRefusedCreditsIt(t *testing.T) {
 		voidRef(accountingsync.SyncObjectInvoice, testInvoice),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "1310", result.Refs[refCorrective])
+	assert.Equal(t, "1310", result.Refs[nsdocsync.RefCorrective])
 	assert.Equal(t, []string{
-		"DELETE " + recordPath(recordInvoice, testInvoice),
-		"PUT " + eidPath(recordCreditMemo, testVoidRequest),
+		"DELETE " + recordPath(nsdocsync.RecordInvoice, testInvoice),
+		"PUT " + eidPath(nsdocsync.RecordCreditMemo, testVoidRequest),
 	}, methods(fake.writes()))
 }
 
@@ -396,10 +398,10 @@ func TestVoidInvoiceResumesAReversalItAlreadyWrote(t *testing.T) {
 		voidRef(accountingsync.SyncObjectInvoice, testInvoice),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "1310", result.Refs[refCorrective])
+	assert.Equal(t, "1310", result.Refs[nsdocsync.RefCorrective])
 	assert.Empty(t, fake.writes())
 	call, _ := fake.query("t.externalid = ?")
-	assert.Equal(t, []any{typeCreditMemo, testVoidRequest}, call.Params)
+	assert.Equal(t, []any{nsdocsync.TypeCreditMemo, testVoidRequest}, call.Params)
 }
 
 func TestVoidOfAMissingOrVoidedInvoiceIsDone(t *testing.T) {
@@ -438,7 +440,7 @@ func TestVoidCreditMemoUnappliesThenDeletes(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: stateResponder(t, "state_open.json", func(call nsCall) reply {
-		if call.is(http.MethodGet, recordPath(recordCreditMemo, testCreditMemo)) {
+		if call.is(http.MethodGet, recordPath(nsdocsync.RecordCreditMemo, testCreditMemo)) {
 			return reply{status: http.StatusOK, body: `{"id":"1301","apply":{"items":[` +
 				`{"doc":1201,"apply":true,"amount":100.0},{"doc":1202,"apply":false,"amount":0}]}}`}
 		}
@@ -452,8 +454,8 @@ func TestVoidCreditMemoUnappliesThenDeletes(t *testing.T) {
 	require.NoError(t, err)
 	writes := fake.writes()
 	assert.Equal(t, []string{
-		"PATCH " + recordPath(recordCreditMemo, testCreditMemo),
-		"DELETE " + recordPath(recordCreditMemo, testCreditMemo),
+		"PATCH " + recordPath(nsdocsync.RecordCreditMemo, testCreditMemo),
+		"DELETE " + recordPath(nsdocsync.RecordCreditMemo, testCreditMemo),
 	}, methods(writes))
 	apply := items(t, writes[0].Body, "apply")
 	require.Len(t, apply, 1)
@@ -479,10 +481,10 @@ func creditOffsetResponder(
 			}
 		case call.queries("t.externalid = ?") && earlier != "":
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(earlier, nil))}
-		case call.is(http.MethodGet, recordPath(recordCreditMemo, testCreditMemo)):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCreditMemo, testCreditMemo)):
 			return fixtureReply(t, http.StatusOK, "credit_memo.json")
-		case call.is(http.MethodPut, eidPath(recordInvoice, testVoidRequest)):
-			return upserted(recordInvoice, "1210")
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testVoidRequest)):
+			return upserted(nsdocsync.RecordInvoice, "1210")
 		}
 		return reply{}
 	}
@@ -498,22 +500,22 @@ func TestVoidCreditMemoInAClosedPeriodWritesAnOffsettingInvoice(t *testing.T) {
 		voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "1210", result.Refs[refCorrective])
+	assert.Equal(t, "1210", result.Refs[nsdocsync.RefCorrective])
 	assert.Equal(
 		t,
-		[]string{"PUT " + eidPath(recordInvoice, testVoidRequest)},
+		[]string{"PUT " + eidPath(nsdocsync.RecordInvoice, testVoidRequest)},
 		methods(fake.writes()),
 	)
 
 	find, ok := fake.query("t.externalid = ?")
 	require.True(t, ok)
-	assert.Equal(t, []any{typeInvoice, testVoidRequest}, find.Params)
-	put, _ := fake.find(http.MethodPut, eidPath(recordInvoice, testVoidRequest))
+	assert.Equal(t, []any{nsdocsync.TypeInvoice, testVoidRequest}, find.Params)
+	put, _ := fake.find(http.MethodPut, eidPath(nsdocsync.RecordInvoice, testVoidRequest))
 	assert.Equal(t, testCustomer, refID(t, put.Body, "entity"))
 	assert.Equal(t, testSubsidiary, refID(t, put.Body, "subsidiary"))
 	assert.Equal(t, "1", refID(t, put.Body, "currency"))
 	assert.Equal(t, "119", refID(t, put.Body, "account"))
-	assert.Equal(t, testNow.Format(dateLayout), put.Body["tranDate"])
+	assert.Equal(t, testNow.Format(nsdocsync.DateLayout), put.Body["tranDate"])
 	assert.Equal(t, "Reverses CM-301", put.Body["memo"])
 	lines := items(t, put.Body, "item")
 	require.Len(t, lines, 2)
@@ -537,7 +539,7 @@ func TestVoidCreditMemoInAClosedPeriodReusesAnEarlierOffset(t *testing.T) {
 		voidRef(accountingsync.SyncObjectCreditMemo, testCreditMemo),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "1210", result.Refs[refCorrective])
+	assert.Equal(t, "1210", result.Refs[nsdocsync.RefCorrective])
 	assert.Empty(t, fake.writes())
 }
 

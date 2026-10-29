@@ -19614,3 +19614,5 @@ github.com/emoss08/trenova/internal/modules/edi/app/ediservice.ValidateBulkEDIAc
 github.com/emoss08/trenova/internal/modules/edi/app/ediservice.Validator	github.com/emoss08/trenova/internal/modules/edi/app/edivalidation.Validator
 github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.ReadBudget	github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice.ReadBudget
 github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.EnvelopeColumns	github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets.EnvelopeColumns
+github.com/emoss08/trenova/internal/infrastructure/accounting/nsconnector.ErrNotConfigured	github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding.ErrNotConfigured
+github.com/emoss08/trenova/internal/infrastructure/accounting/nsconnector.AccountClassOf	github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync.AccountClassOf

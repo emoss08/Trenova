@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -43,9 +45,9 @@ func typeOf(call nsCall) string {
 func changesResponder(t *testing.T) func(call nsCall) reply {
 	return func(call nsCall) reply {
 		switch {
-		case call.queries("FROM transaction t") && typeOf(call) == typeCustomerPayment:
+		case call.queries("FROM transaction t") && typeOf(call) == nsdocsync.TypeCustomerPayment:
 			return fixtureReply(t, http.StatusOK, "changed_payments.json")
-		case call.queries("FROM transaction t") && typeOf(call) == typeInvoice:
+		case call.queries("FROM transaction t") && typeOf(call) == nsdocsync.TypeInvoice:
 			return fixtureReply(t, http.StatusOK, "changed_invoices.json")
 		case call.queries("FROM customer c"):
 			return fixtureReply(t, http.StatusOK, "customers.json")
@@ -53,7 +55,7 @@ func changesResponder(t *testing.T) func(call nsCall) reply {
 			return fixtureReply(t, http.StatusOK, "deleted_records.json")
 		case call.queries("FROM systemnote sn"):
 			return fixtureReply(t, http.StatusOK, "system_notes.json")
-		case call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCustomerPayment, testPayment)):
 			return fixtureReply(t, http.StatusOK, "customer_payment.json")
 		}
 		return reply{}
@@ -98,7 +100,7 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 		},
 	}, normalizeLines(payment.Lines))
 
-	read, ok := fake.find(http.MethodGet, recordPath(recordCustomerPayment, testPayment))
+	read, ok := fake.find(http.MethodGet, recordPath(nsdocsync.RecordCustomerPayment, testPayment))
 	require.True(t, ok)
 	assert.Equal(t, "true", read.Query.Get("expandSubResources"))
 
@@ -120,9 +122,9 @@ func TestReadChangesReadsPaymentsBackWithTheirApplications(t *testing.T) {
 	cursor, err := parseChangeCursor(page.NextCursor, testNow)
 	require.NoError(t, err)
 	invoices := cursor.positions[targetInvoices]
-	assert.Equal(t, int64(1205), invoices.id)
-	assert.Equal(t, time.Date(2026, 10, 13, 14, 6, 0, 0, time.UTC), invoices.at)
-	assert.Equal(t, int64(1401), cursor.positions[targetCustPayments].id)
+	assert.Equal(t, int64(1205), invoices.ID)
+	assert.Equal(t, time.Date(2026, 10, 13, 14, 6, 0, 0, time.UTC), invoices.At)
+	assert.Equal(t, int64(1401), cursor.positions[targetCustPayments].ID)
 }
 
 func TestReadChangesAsksSystemNotesForEachTransactionPage(t *testing.T) {
@@ -208,8 +210,8 @@ func TestReadChangesUsesAKeysetCursorNeverAnOffset(t *testing.T) {
 	since := time.Date(2026, 10, 13, 10, 0, 0, 0, time.UTC)
 	cursor := &changeCursor{
 		since: since,
-		positions: map[string]keyset{
-			targetInvoices: {at: time.Date(2026, 10, 13, 14, 4, 5, 0, time.UTC), id: 1201},
+		positions: map[string]nsbinding.Keyset{
+			targetInvoices: {At: time.Date(2026, 10, 13, 14, 4, 5, 0, time.UTC), ID: 1201},
 		},
 	}
 	_, err := conn.ReadChanges(t.Context(), changesRequest(cursor.String()))
@@ -217,7 +219,7 @@ func TestReadChangesUsesAKeysetCursorNeverAnOffset(t *testing.T) {
 
 	var invoiceCall nsCall
 	for _, call := range fake.all() {
-		if call.queries("FROM transaction t") && typeOf(call) == typeInvoice {
+		if call.queries("FROM transaction t") && typeOf(call) == nsdocsync.TypeInvoice {
 			invoiceCall = call
 		}
 	}
@@ -227,7 +229,7 @@ func TestReadChangesUsesAKeysetCursorNeverAnOffset(t *testing.T) {
 	assert.True(t, strings.HasSuffix(invoiceCall.SQL, "ORDER BY "+key+", t.id"))
 	assert.Contains(t, invoiceCall.SQL, "tl.subsidiary = ?")
 	assert.Equal(t, []any{
-		typeInvoice,
+		nsdocsync.TypeInvoice,
 		"2026-10-13 14:04:05",
 		"2026-10-13 14:04:05",
 		float64(1201),
@@ -237,7 +239,7 @@ func TestReadChangesUsesAKeysetCursorNeverAnOffset(t *testing.T) {
 	assert.Empty(t, invoiceCall.Query.Get("offset"))
 
 	payments, _ := fake.query("FROM transaction t")
-	assert.Equal(t, typeCustomerPayment, typeOf(payments))
+	assert.Equal(t, nsdocsync.TypeCustomerPayment, typeOf(payments))
 	assert.Equal(t, netsuite.FormatQueryTime(since.Add(-timezoneMargin)), payments.Params[1])
 	assert.Equal(t, "100", payments.Query.Get("limit"))
 }
@@ -247,7 +249,7 @@ func TestReadChangesFinishesWithReferencesAndDeletes(t *testing.T) {
 
 	responder := changesResponder(t)
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.queries("FROM transaction t") && typeOf(call) == typeInvoice {
+		if call.queries("FROM transaction t") && typeOf(call) == nsdocsync.TypeInvoice {
 			return reply{status: http.StatusOK, body: emptyRows}
 		}
 		return responder(call)
@@ -277,8 +279,8 @@ func TestReadChangesFinishesWithReferencesAndDeletes(t *testing.T) {
 	assert.False(t, termsRead, "terms are not a change target")
 	cursor, err := parseChangeCursor(page.NextCursor, testNow)
 	require.NoError(t, err)
-	assert.Equal(t, int64(350), cursor.positions[targetDeleted].id)
-	assert.Equal(t, int64(342), cursor.positions[targetCustomers].id)
+	assert.Equal(t, int64(350), cursor.positions[targetDeleted].ID)
+	assert.Equal(t, int64(342), cursor.positions[targetCustomers].ID)
 	_, kept := cursor.positions[targetInvoices]
 	assert.True(t, kept)
 }
@@ -345,12 +347,12 @@ func TestVendorPaymentsReadBackAsBillPayments(t *testing.T) {
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
 		switch {
-		case call.queries("FROM transaction t") && typeOf(call) == typeVendorPayment:
+		case call.queries("FROM transaction t") && typeOf(call) == nsdocsync.TypeVendorPayment:
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, map[string]any{
 				"id": testBillPayment, "type": "VendPymt", "voided": "T", "currency": "USD",
 				"lastmodified": "2026-10-13 14:00:00",
 			})}
-		case call.is(http.MethodGet, recordPath(recordVendorPayment, testBillPayment)):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorPayment, testBillPayment)):
 			return fixtureReply(t, http.StatusOK, "vendor_payment.json")
 		}
 		return reply{}

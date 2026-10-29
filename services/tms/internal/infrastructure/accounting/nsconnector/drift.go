@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
@@ -11,10 +13,10 @@ import (
 
 var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
-const maxIDsPerRead = 500
-
 func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
-	return accountingconnectorports.AccountingDocumentReadLimits{MaxPerRead: maxIDsPerRead}
+	return accountingconnectorports.AccountingDocumentReadLimits{
+		MaxPerRead: nsbinding.MaxIDsPerRead,
+	}
 }
 
 func readable(kind accountingsync.SyncObjectType) (bool, error) {
@@ -25,7 +27,7 @@ func readable(kind accountingsync.SyncObjectType) (bool, error) {
 	case kind == accountingsync.SyncObjectCreditApplication:
 		return false, nil
 	default:
-		return false, errDocumentKind
+		return false, nsbinding.ErrDocumentKind
 	}
 }
 
@@ -39,7 +41,7 @@ func (c *Connector) ReadDocuments(
 	}
 	ids := make([]int64, 0, len(req.Targets))
 	for idx := range req.Targets {
-		if id, valid := parseInternalID(req.Targets[idx].ExternalID); valid && ok {
+		if id, valid := nsbinding.ParseInternalID(req.Targets[idx].ExternalID); valid && ok {
 			ids = append(ids, id)
 		}
 	}
@@ -52,14 +54,14 @@ func (c *Connector) ReadDocuments(
 		id := strings.TrimSpace(req.Targets[idx].ExternalID)
 		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
 		if row, hit := found[id]; hit {
-			balance := row.remaining()
+			balance := row.AbsRemaining()
 			state.Found = true
 			state.Voided = row.Voided.Value()
 			state.DocNumber = row.TranID.Value()
-			state.Total = row.total()
+			state.Total = row.AbsTotal()
 			state.Balance = &balance
 			state.CurrencyCode = strings.ToUpper(row.Currency.Value())
-			state.ModifiedAt = unixOrZero(row.modified())
+			state.ModifiedAt = unixOrZero(row.ModifiedAt())
 			state.ModifiedBy = editors[id]
 		}
 		out = append(out, state)
@@ -71,29 +73,33 @@ func (c *Connector) readFound(
 	ctx context.Context,
 	auth accountingconnectorports.AccountingDocumentAuth,
 	ids []int64,
-) (found map[string]*transactionRow, editors map[string]string, err error) {
-	found = make(map[string]*transactionRow, len(ids))
+) (found map[string]*nsbinding.TransactionRow, editors map[string]string, err error) {
+	found = make(map[string]*nsbinding.TransactionRow, len(ids))
 	if len(ids) == 0 {
 		return found, map[string]string{}, nil
 	}
-	s, openErr := c.open(auth)
+	s, openErr := c.Open(auth)
 	if openErr != nil {
 		return nil, nil, openErr
 	}
 	hits := make([]int64, 0, len(ids))
-	for start := 0; start < len(ids); start += maxIDsPerRead {
-		rows, readErr := readStates(ctx, s.client, ids[start:min(start+maxIDsPerRead, len(ids))])
+	for start := 0; start < len(ids); start += nsbinding.MaxIDsPerRead {
+		rows, readErr := readStates(
+			ctx,
+			s.Client,
+			ids[start:min(start+nsbinding.MaxIDsPerRead, len(ids))],
+		)
 		if readErr != nil {
 			return nil, nil, readErr
 		}
 		for idx := range rows {
-			found[rows[idx].id()] = &rows[idx]
-			if id, ok := parseInternalID(rows[idx].id()); ok {
+			found[rows[idx].IDValue()] = &rows[idx]
+			if id, ok := nsbinding.ParseInternalID(rows[idx].IDValue()); ok {
 				hits = append(hits, id)
 			}
 		}
 	}
-	editors, err = (&editorBook{client: s.client}).names(ctx, hits)
+	editors, err = (&nsbinding.EditorBook{Client: s.Client}).Names(ctx, hits)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,13 +110,13 @@ func readStates(
 	ctx context.Context,
 	client *netsuite.Client,
 	ids []int64,
-) ([]transactionRow, error) {
-	marks, params := idList(ids)
-	b := (&sqlBuilder{}).where("t.id IN ("+marks+")", params...)
-	var rows []transactionRow
+) ([]nsbinding.TransactionRow, error) {
+	marks, params := nsbinding.IDList(ids)
+	b := (&nsbinding.SQLBuilder{}).Where("t.id IN ("+marks+")", params...)
+	var rows []nsbinding.TransactionRow
 	if _, err := client.Query(ctx, netsuite.Query{
-		SQL:    b.sql(transactionSQL, "t.id"),
-		Params: b.params,
+		SQL:    b.SQL(nsdocsync.TransactionSQL, "t.id"),
+		Params: b.Params,
 	}, &rows); err != nil {
 		return nil, err
 	}

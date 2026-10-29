@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
@@ -20,9 +22,9 @@ func fixtureError(t *testing.T, status int, fixture string) error {
 	conn := testConnector(t, &fakeNS{respond: func(nsCall) reply {
 		return fixtureReply(t, status, fixture)
 	}})
-	s, err := conn.open(testAuth())
+	s, err := conn.Open(testAuth())
 	require.NoError(t, err)
-	err = s.client.Delete(t.Context(), recordInvoice, testInvoice)
+	err = s.Client.Delete(t.Context(), nsdocsync.RecordInvoice, testInvoice)
 	require.Error(t, err)
 	return err
 }
@@ -174,20 +176,24 @@ func TestClassifyDocumentErrorPassesThroughAndHandlesLocalFailures(t *testing.T)
 	assert.Same(t, own, conn.ClassifyDocumentError(fmt.Errorf("wrapped: %w", own)))
 
 	cases := map[error]accountingsync.SyncErrorCategory{
-		ErrNotConfigured:                    accountingsync.SyncErrorConfiguration,
-		errNoRedirect:                       accountingsync.SyncErrorConfiguration,
-		errLinesRequired:                    accountingsync.SyncErrorValidation,
-		netsuiteerrors.ErrInvalidExternalID: accountingsync.SyncErrorValidation,
-		&netsuiteerrors.OAuthError{Code: "invalid_grant"}: accountingsync.SyncErrorAuth,
-		context.DeadlineExceeded:                          accountingsync.SyncErrorTransient,
-		errors.New("boom"):                                accountingsync.SyncErrorTransient,
-		fmt.Errorf("%w: item", errDuplicateName):          accountingsync.SyncErrorDuplicate,
+		nsbinding.ErrNotConfigured:                         accountingsync.SyncErrorConfiguration,
+		nsbinding.ErrNoRedirect:                            accountingsync.SyncErrorConfiguration,
+		nsbinding.ErrLinesRequired:                         accountingsync.SyncErrorValidation,
+		netsuiteerrors.ErrInvalidExternalID:                accountingsync.SyncErrorValidation,
+		&netsuiteerrors.OAuthError{Code: "invalid_grant"}:  accountingsync.SyncErrorAuth,
+		context.DeadlineExceeded:                           accountingsync.SyncErrorTransient,
+		errors.New("boom"):                                 accountingsync.SyncErrorTransient,
+		fmt.Errorf("%w: item", nsbinding.ErrDuplicateName): accountingsync.SyncErrorDuplicate,
 	}
 	for err, want := range cases {
 		assert.Equal(t, want, conn.ClassifyDocumentError(err).Category, err.Error())
 	}
-	assert.Equal(t, "invalid_grant", errorCode(&netsuiteerrors.OAuthError{Code: "invalid_grant"}))
-	assert.Equal(t, "400", errorCode(&netsuiteerrors.APIError{Status: 400}))
+	assert.Equal(
+		t,
+		"invalid_grant",
+		nsbinding.ErrorCode(&netsuiteerrors.OAuthError{Code: "invalid_grant"}),
+	)
+	assert.Equal(t, "400", nsbinding.ErrorCode(&netsuiteerrors.APIError{Status: 400}))
 }
 
 func TestUnreachableCoversNotFoundAndDNSFailures(t *testing.T) {
@@ -196,8 +202,8 @@ func TestUnreachableCoversNotFoundAndDNSFailures(t *testing.T) {
 	assert.True(t, isUnreachable(&net.DNSError{Err: "no such host", Name: "x"}))
 	assert.True(t, isUnreachable(&netsuiteerrors.APIError{Status: http.StatusNotFound}))
 	assert.False(t, isUnreachable(errors.New("boom")))
-	assert.True(t, deleteRefused(fixtureError(t, 400, "error_user_error.json")))
-	assert.True(t, deleteRefused(fixtureError(t, 400, "error_period_closed.json")))
-	assert.False(t, deleteRefused(fixtureError(t, 400, "error_permission.json")))
-	assert.False(t, deleteRefused(fixtureError(t, 500, "error_500.json")))
+	assert.True(t, nsdocsync.DeleteRefused(fixtureError(t, 400, "error_user_error.json")))
+	assert.True(t, nsdocsync.DeleteRefused(fixtureError(t, 400, "error_period_closed.json")))
+	assert.False(t, nsdocsync.DeleteRefused(fixtureError(t, 400, "error_permission.json")))
+	assert.False(t, nsdocsync.DeleteRefused(fixtureError(t, 500, "error_500.json")))
 }

@@ -1,10 +1,12 @@
-package nsconnector
+package nsdocsync
 
 import (
 	"context"
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/emoss08/trenova/shared/netsuiteerrors"
@@ -13,29 +15,33 @@ import (
 
 const (
 	reversalNote  = "Reverses "
-	externalIDSQL = transactionSQL + " WHERE t.type = ? AND t.externalid = ?"
+	externalIDSQL = TransactionSQL + " WHERE t.type = ? AND t.externalid = ?"
 )
 
-func salesLocked(row *transactionRow) bool {
+func salesLocked(row *nsbinding.TransactionRow) bool {
 	return row.Closed.Value() || row.AllLocked.Value() || row.ARLocked.Value()
 }
 
-func purchaseLocked(row *transactionRow) bool {
+func purchaseLocked(row *nsbinding.TransactionRow) bool {
 	return row.Closed.Value() || row.AllLocked.Value() || row.APLocked.Value()
 }
 
-type reversal struct {
+type Reversal struct {
 	recordType  string
 	reverseType string
 	reverseCode string
-	id          string
+	ID          string
 	requestID   string
-	locked      func(*transactionRow) bool
+	locked      func(*nsbinding.TransactionRow) bool
 	offset      bool
 }
 
-func (c *Connector) retireDocument(ctx context.Context, s *session, r *reversal) (string, error) {
-	state, found, err := transactionState(ctx, s.client, r.id)
+func (c *Documents) retireDocument(
+	ctx context.Context,
+	s *nsbinding.Session,
+	r *Reversal,
+) (string, error) {
+	state, found, err := transactionState(ctx, s.Client, r.ID)
 	if err != nil {
 		if netsuiteerrors.IsNotFound(err) {
 			return "", nil
@@ -46,24 +52,24 @@ func (c *Connector) retireDocument(ctx context.Context, s *session, r *reversal)
 		return "", nil
 	}
 	locked := r.locked(state)
-	if locked || state.applied() {
-		held, heldOK, findErr := findByExternalID(ctx, s.client, r.reverseCode, r.requestID)
+	if locked || state.Applied() {
+		held, heldOK, findErr := findByExternalID(ctx, s.Client, r.reverseCode, r.requestID)
 		if findErr != nil {
 			return "", findErr
 		}
 		if heldOK {
-			return held.id(), nil
+			return held.IDValue(), nil
 		}
-		if state.applied() {
+		if state.Applied() {
 			return "", paidConflict()
 		}
 	}
 	if !locked {
-		err = s.client.Delete(ctx, r.recordType, r.id)
+		err = s.Client.Delete(ctx, r.recordType, r.ID)
 		switch {
 		case err == nil, netsuiteerrors.IsNotFound(err):
 			return "", nil
-		case !deleteRefused(err):
+		case !DeleteRefused(err):
 			return "", err
 		}
 	}
@@ -74,11 +80,11 @@ func findByExternalID(
 	ctx context.Context,
 	client *netsuite.Client,
 	typeCode, externalID string,
-) (*transactionRow, bool, error) {
+) (*nsbinding.TransactionRow, bool, error) {
 	if !validRequestID(externalID) {
 		return nil, false, nil
 	}
-	var rows []transactionRow
+	var rows []nsbinding.TransactionRow
 	if _, err := client.Query(ctx, netsuite.Query{
 		SQL:    externalIDSQL,
 		Params: []any{typeCode, externalID},
@@ -107,16 +113,16 @@ func validRequestID(raw string) bool {
 	return true
 }
 
-func (c *Connector) reverse(
+func (c *Documents) reverse(
 	ctx context.Context,
-	s *session,
-	r *reversal,
-	state *transactionRow,
+	s *nsbinding.Session,
+	r *Reversal,
+	state *nsbinding.TransactionRow,
 ) (string, error) {
-	var record transactionRecord
-	if err := s.client.Get(ctx, netsuite.RecordRead{
+	var record nsbinding.TransactionRecord
+	if err := s.Client.Get(ctx, netsuite.RecordRead{
 		Type:               r.recordType,
-		ID:                 r.id,
+		ID:                 r.ID,
 		ExpandSubResources: true,
 	}, &record); err != nil {
 		return "", err
@@ -125,7 +131,7 @@ func (c *Connector) reverse(
 	if err != nil {
 		return "", err
 	}
-	saved, err := writeRecord(ctx, s.client, &recordWrite{
+	saved, err := writeRecord(ctx, s.Client, &recordWrite{
 		recordType: r.reverseType,
 		externalID: r.requestID,
 		body:       body,
@@ -133,38 +139,38 @@ func (c *Connector) reverse(
 	if saved == nil {
 		return "", err
 	}
-	return saved.id, err
+	return saved.ID, err
 }
 
-func (c *Connector) reversalBody(
-	record *transactionRecord,
-	state *transactionRow,
-	r *reversal,
-) (*transactionBody, error) {
-	body := &transactionBody{
-		Entity:     refOf(record.party().ID.Value()),
-		Subsidiary: refOf(record.Subsidiary.ID.Value()),
-		Currency:   refOf(record.Currency.ID.Value()),
-		TranDate:   c.now().UTC().Format(dateLayout),
-		Memo:       cleanText(reversalNote+record.TranID, maxMemoLength),
+func (c *Documents) reversalBody(
+	record *nsbinding.TransactionRecord,
+	state *nsbinding.TransactionRow,
+	r *Reversal,
+) (*nsbinding.TransactionBody, error) {
+	body := &nsbinding.TransactionBody{
+		Entity:     nsrefsync.RefOf(record.Party().ID.Value()),
+		Subsidiary: nsrefsync.RefOf(record.Subsidiary.ID.Value()),
+		Currency:   nsrefsync.RefOf(record.Currency.ID.Value()),
+		TranDate:   c.Clock().UTC().Format(DateLayout),
+		Memo:       nsrefsync.CleanText(reversalNote+record.TranID, maxMemoLength),
 	}
 	if r.offset {
-		body.Account = refOf(record.Account.ID.Value())
+		body.Account = nsrefsync.RefOf(record.Account.ID.Value())
 	} else {
-		body.Apply = &sublist[applyLine]{Items: []applyLine{{
-			Doc:    recordRef{ID: r.id},
+		body.Apply = &nsbinding.Sublist[nsbinding.ApplyLine]{Items: []nsbinding.ApplyLine{{
+			Doc:    nsbinding.RecordRef{ID: r.ID},
 			Apply:  true,
-			Amount: amountOf(state.total()),
+			Amount: nsbinding.AmountOf(state.AbsTotal()),
 		}}}
 	}
 	if record.ExchangeRate.IsPositive() {
-		body.ExchangeRate = amountOf(record.ExchangeRate)
+		body.ExchangeRate = nsbinding.AmountOf(record.ExchangeRate)
 	}
 	if items := reversedItems(record.Item.Items); len(items) > 0 {
-		body.Item = &sublist[itemLine]{Items: items}
+		body.Item = &nsbinding.Sublist[nsbinding.ItemLine]{Items: items}
 	}
 	if expenses := reversedExpenses(record.Expense.Items); len(expenses) > 0 {
-		body.Expense = &sublist[expenseLine]{Items: expenses}
+		body.Expense = &nsbinding.Sublist[nsbinding.ExpenseLine]{Items: expenses}
 	}
 	if body.Item == nil && body.Expense == nil {
 		return nil, reversalLinesUnknown()
@@ -172,8 +178,8 @@ func (c *Connector) reversalBody(
 	return body, nil
 }
 
-func reversedItems(lines []recordItemLine) []itemLine {
-	out := make([]itemLine, 0, len(lines))
+func reversedItems(lines []nsbinding.RecordItemLine) []nsbinding.ItemLine {
+	out := make([]nsbinding.ItemLine, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		item := line.Item.ID.Value()
@@ -184,29 +190,29 @@ func reversedItems(lines []recordItemLine) []itemLine {
 		if !quantity.IsPositive() || !sameMoney(quantity.Mul(rate), line.Amount) {
 			quantity, rate = decimal.NewFromInt(1), line.Amount
 		}
-		out = append(out, itemLine{
-			Item:        recordRef{ID: item},
-			Description: cleanText(line.Description, maxLineTextLength),
-			Quantity:    amount(quantity),
-			Rate:        amount(rate),
-			Amount:      amount(line.Amount),
+		out = append(out, nsbinding.ItemLine{
+			Item:        nsbinding.RecordRef{ID: item},
+			Description: nsrefsync.CleanText(line.Description, nsrefsync.MaxLineTextLength),
+			Quantity:    nsbinding.Amount(quantity),
+			Rate:        nsbinding.Amount(rate),
+			Amount:      nsbinding.Amount(line.Amount),
 		})
 	}
 	return out
 }
 
-func reversedExpenses(lines []recordExpenseLine) []expenseLine {
-	out := make([]expenseLine, 0, len(lines))
+func reversedExpenses(lines []nsbinding.RecordExpenseLine) []nsbinding.ExpenseLine {
+	out := make([]nsbinding.ExpenseLine, 0, len(lines))
 	for idx := range lines {
 		line := &lines[idx]
 		account := line.Account.ID.Value()
 		if account == "" {
 			continue
 		}
-		out = append(out, expenseLine{
-			Account: recordRef{ID: account},
-			Amount:  amount(line.Amount),
-			Memo:    cleanText(line.Memo, maxLineTextLength),
+		out = append(out, nsbinding.ExpenseLine{
+			Account: nsbinding.RecordRef{ID: account},
+			Amount:  nsbinding.Amount(line.Amount),
+			Memo:    nsrefsync.CleanText(line.Memo, nsrefsync.MaxLineTextLength),
 		})
 	}
 	return out
@@ -216,17 +222,17 @@ func reversalLinesUnknown() *accountingsync.SyncError {
 	return &accountingsync.SyncError{
 		Category: accountingsync.SyncErrorConfiguration,
 		Code:     "reversal-lines",
-		Message: providerName + " returned no lines for the document, so Trenova cannot " +
+		Message: nsbinding.ProviderName + " returned no lines for the document, so Trenova cannot " +
 			"reverse it with a credit",
-		Resolution: "Credit the document in " + providerName +
+		Resolution: "Credit the document in " + nsbinding.ProviderName +
 			", then mark this record resolved",
 	}
 }
 
 type unwind struct {
 	recordType string
-	id         string
-	locked     func(*transactionRow) bool
+	ID         string
+	locked     func(*nsbinding.TransactionRow) bool
 	refused    func() error
 	offset     *creditOffset
 }
@@ -237,8 +243,12 @@ type creditOffset struct {
 	requestID  string
 }
 
-func (c *Connector) unwindRecord(ctx context.Context, s *session, u *unwind) (string, error) {
-	state, found, err := transactionState(ctx, s.client, u.id)
+func (c *Documents) unwindRecord(
+	ctx context.Context,
+	s *nsbinding.Session,
+	u *unwind,
+) (string, error) {
+	state, found, err := transactionState(ctx, s.Client, u.ID)
 	if err != nil {
 		if netsuiteerrors.IsNotFound(err) {
 			return "", nil
@@ -251,14 +261,14 @@ func (c *Connector) unwindRecord(ctx context.Context, s *session, u *unwind) (st
 	if u.locked(state) {
 		return c.offsetCredit(ctx, s, u, state)
 	}
-	if err = unapplyAll(ctx, s.client, u.recordType, u.id); err != nil {
+	if err = unapplyAll(ctx, s.Client, u.recordType, u.ID); err != nil {
 		return "", u.settle(err)
 	}
-	return "", u.settle(s.client.Delete(ctx, u.recordType, u.id))
+	return "", u.settle(s.Client.Delete(ctx, u.recordType, u.ID))
 }
 
 func invoiceOffset(requestID string) *creditOffset {
-	return &creditOffset{recordType: recordInvoice, typeCode: typeInvoice, requestID: requestID}
+	return &creditOffset{recordType: RecordInvoice, typeCode: TypeInvoice, requestID: requestID}
 }
 
 func shortPayOffsetID(requestID, memo string) string {
@@ -269,33 +279,33 @@ func shortPayOffsetID(requestID, memo string) string {
 }
 
 func shortPayCorrective(key string) string {
-	return refCorrective + "-" + strings.TrimPrefix(key, accountingsync.ExternalRefShortPayPrefix)
+	return RefCorrective + "-" + strings.TrimPrefix(key, accountingsync.ExternalRefShortPayPrefix)
 }
 
-func (c *Connector) offsetCredit(
+func (c *Documents) offsetCredit(
 	ctx context.Context,
-	s *session,
+	s *nsbinding.Session,
 	u *unwind,
-	state *transactionRow,
+	state *nsbinding.TransactionRow,
 ) (string, error) {
 	if u.offset == nil || !validRequestID(u.offset.requestID) {
 		return "", u.refused()
 	}
-	held, ok, err := findByExternalID(ctx, s.client, u.offset.typeCode, u.offset.requestID)
+	held, ok, err := findByExternalID(ctx, s.Client, u.offset.typeCode, u.offset.requestID)
 	if err != nil {
 		return "", err
 	}
 	if ok {
-		return held.id(), nil
+		return held.IDValue(), nil
 	}
-	if state.applied() {
+	if state.Applied() {
 		return "", paidConflict()
 	}
-	return c.reverse(ctx, s, &reversal{
+	return c.reverse(ctx, s, &Reversal{
 		recordType:  u.recordType,
 		reverseType: u.offset.recordType,
 		reverseCode: u.offset.typeCode,
-		id:          u.id,
+		ID:          u.ID,
 		requestID:   u.offset.requestID,
 		offset:      true,
 	}, state)
@@ -305,7 +315,7 @@ func (u *unwind) settle(err error) error {
 	switch {
 	case err == nil, netsuiteerrors.IsNotFound(err):
 		return nil
-	case deleteRefused(err):
+	case DeleteRefused(err):
 		return errors.Join(u.refused(), err)
 	default:
 		return err
@@ -317,7 +327,7 @@ func unapplyAll(
 	client *netsuite.Client,
 	recordType, id string,
 ) error {
-	var record transactionRecord
+	var record nsbinding.TransactionRecord
 	if err := client.Get(ctx, netsuite.RecordRead{
 		Type:               recordType,
 		ID:                 id,
@@ -325,13 +335,13 @@ func unapplyAll(
 	}, &record); err != nil {
 		return err
 	}
-	docs := record.appliedDocs()
+	docs := record.AppliedDocs()
 	if len(docs) == 0 {
 		return nil
 	}
 	return client.Patch(ctx, netsuite.RecordPatch{
 		Type: recordType,
 		ID:   id,
-		Body: &transactionBody{Apply: unapplyLines(docs)},
+		Body: &nsbinding.TransactionBody{Apply: unapplyLines(docs)},
 	})
 }
