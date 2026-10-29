@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -104,17 +105,17 @@ func (s *Service) StartPairing(
 			return nil, codeErr
 		}
 
-		_, err = s.pairings.Create(ctx, &capture.CapturePairing{
+		_, err = s.pairings.Create(ctx, &capturepairing.CapturePairing{
 			DeviceCodeHash: deviceCodeHash,
 			UserCode:       userCode,
-			Status:         capture.PairingPending,
+			Status:         capturepairing.PairingPending,
 			MachineName:    strings.TrimSpace(req.MachineName),
 			WindowsUser:    strings.TrimSpace(req.WindowsUser),
 			AgentVersion:   strings.TrimSpace(req.AgentVersion),
 			Architecture:   req.Architecture,
 			OSVersion:      strings.TrimSpace(req.OSVersion),
 			ClientIP:       req.ClientIP,
-			ExpiresAt:      now + capture.PairingLifetimeSeconds,
+			ExpiresAt:      now + capturepairing.PairingLifetimeSeconds,
 		})
 		if err == nil {
 			display := FormatUserCode(userCode)
@@ -125,8 +126,8 @@ func (s *Service) StartPairing(
 				UserCode:                display,
 				VerificationURI:         verify,
 				VerificationURIComplete: verify + "?code=" + display,
-				ExpiresIn:               capture.PairingLifetimeSeconds,
-				Interval:                capture.PairingPollIntervalSeconds,
+				ExpiresIn:               capturepairing.PairingLifetimeSeconds,
+				Interval:                capturepairing.PairingPollIntervalSeconds,
 			}, nil
 		}
 		if !dberror.IsUniqueConstraintViolation(err) {
@@ -160,10 +161,10 @@ func validateMachine(machineName, agentVersion string, arch capture.Architecture
 
 func newUserCode() (string, error) {
 	var b strings.Builder
-	b.Grow(capture.UserCodeLength)
+	b.Grow(capturepairing.UserCodeLength)
 
 	limit := big.NewInt(int64(len(userCodeAlphabet)))
-	for range capture.UserCodeLength {
+	for range capturepairing.UserCodeLength {
 		n, err := rand.Int(rand.Reader, limit)
 		if err != nil {
 			return "", err
@@ -176,7 +177,7 @@ func newUserCode() (string, error) {
 
 // FormatUserCode shows a code the way people read it: two groups of four.
 func FormatUserCode(code string) string {
-	if len(code) != capture.UserCodeLength {
+	if len(code) != capturepairing.UserCodeLength {
 		return code
 	}
 
@@ -187,7 +188,7 @@ func FormatUserCode(code string) string {
 // without the dash, with stray spaces.
 func NormalizeUserCode(raw string) string {
 	var b strings.Builder
-	b.Grow(capture.UserCodeLength)
+	b.Grow(capturepairing.UserCodeLength)
 	for _, r := range strings.ToUpper(raw) {
 		if r >= 'A' && r <= 'Z' {
 			b.WriteRune(r)
@@ -248,10 +249,10 @@ func (s *Service) PreviewPairing(
 func (s *Service) openPairing(
 	ctx context.Context,
 	userCode string,
-) (*capture.CapturePairing, error) {
+) (*capturepairing.CapturePairing, error) {
 	code := NormalizeUserCode(userCode)
 	notFound := errortypes.NewNotFoundError("That code is not valid or has expired")
-	if len(code) != capture.UserCodeLength {
+	if len(code) != capturepairing.UserCodeLength {
 		return nil, notFound
 	}
 
@@ -263,7 +264,7 @@ func (s *Service) openPairing(
 
 		return nil, err
 	}
-	if pairing.Status != capture.PairingPending || pairing.IsExpired(timeutils.NowUnix()) {
+	if pairing.Status != capturepairing.PairingPending || pairing.IsExpired(timeutils.NowUnix()) {
 		return nil, notFound
 	}
 
@@ -303,7 +304,7 @@ func (s *Service) DecidePairing(ctx context.Context, req *DecidePairingRequest) 
 	now := timeutils.NowUnix()
 	pairing.DecidedAt = &now
 	if !req.Approve {
-		pairing.Status = capture.PairingDenied
+		pairing.Status = capturepairing.PairingDenied
 		_, err = s.pairings.Update(ctx, pairing)
 
 		return err
@@ -319,7 +320,7 @@ func (s *Service) DecidePairing(ctx context.Context, req *DecidePairingRequest) 
 	}
 
 	orgID, buID, userID := req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.UserID
-	pairing.Status = capture.PairingApproved
+	pairing.Status = capturepairing.PairingApproved
 	pairing.OrganizationID = &orgID
 	pairing.BusinessUnitID = &buID
 	pairing.ApprovedByID = &userID
@@ -348,7 +349,7 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 
 	now := timeutils.NowUnix()
 	if denial := pollOutcome(pairing, now); denial != "" {
-		if pairing.Status == capture.PairingPending && denial != PairingExpiredToken {
+		if pairing.Status == capturepairing.PairingPending && denial != PairingExpiredToken {
 			pairing.LastPolledAt = &now
 			// A poll that lost a race with another poll is not a failure: the
 			// other one already recorded the time.
@@ -380,7 +381,7 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 				return createErr
 			}
 
-			pairing.Status = capture.PairingConsumed
+			pairing.Status = capturepairing.PairingConsumed
 			pairing.DeviceID = &created.ID
 			if _, updateErr := s.pairings.Update(txCtx, pairing); updateErr != nil {
 				return updateErr
@@ -432,21 +433,21 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 
 // pollOutcome is what a poll of this grant answers, empty when the grant is
 // ready to exchange.
-func pollOutcome(pairing *capture.CapturePairing, now int64) PairingErrorCode {
+func pollOutcome(pairing *capturepairing.CapturePairing, now int64) PairingErrorCode {
 	switch pairing.Status {
-	case capture.PairingDenied:
+	case capturepairing.PairingDenied:
 		return PairingAccessDenied
-	case capture.PairingConsumed:
+	case capturepairing.PairingConsumed:
 		return PairingInvalidGrant
-	case capture.PairingExpired:
+	case capturepairing.PairingExpired:
 		return PairingExpiredToken
-	case capture.PairingPending, capture.PairingApproved:
+	case capturepairing.PairingPending, capturepairing.PairingApproved:
 	}
 
 	if pairing.IsExpired(now) {
 		return PairingExpiredToken
 	}
-	if pairing.Status == capture.PairingPending {
+	if pairing.Status == capturepairing.PairingPending {
 		if pairing.PolledTooSoon(now) {
 			return PairingSlowDown
 		}
@@ -462,7 +463,7 @@ func pollOutcome(pairing *capture.CapturePairing, now int64) PairingErrorCode {
 }
 
 func newDeviceFromPairing(
-	pairing *capture.CapturePairing,
+	pairing *capturepairing.CapturePairing,
 	now int64,
 ) (*capture.CaptureDevice, *issuedTokens, error) {
 	issued, err := issueTokens(now)

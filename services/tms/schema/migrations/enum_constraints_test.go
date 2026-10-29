@@ -38,6 +38,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
@@ -547,11 +550,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_capture_pairings_status",
-			values: stringsOf(capture.AllPairingStatuses()),
+			values: stringsOf(capturepairing.AllPairingStatuses()),
 		},
 		{
 			name:   "ck_capture_profiles_status",
-			values: stringsOf(capture.AllProfileStatuses()),
+			values: stringsOf(captureprofile.AllProfileStatuses()),
 		},
 		{
 			name:   "ck_capture_profiles_pixel_type",
@@ -559,19 +562,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_capture_profiles_separator_strategies",
-			values: stringsOf(capture.AllSeparatorStrategies()),
+			values: stringsOf(captureprofile.AllSeparatorStrategies()),
 		},
 		{
 			name:   "ck_capture_requests_mode",
-			values: stringsOf(capture.AllRequestModes()),
+			values: stringsOf(capturerequest.AllRequestModes()),
 		},
 		{
 			name:   "ck_capture_requests_status",
-			values: stringsOf(capture.AllRequestStatuses()),
+			values: stringsOf(capturerequest.AllRequestStatuses()),
 		},
 		{
 			name:   "ck_capture_requests_failure_code",
-			values: stringsOf(capture.AllRequestFailureCodes()),
+			values: stringsOf(capturerequest.AllRequestFailureCodes()),
 		},
 		{
 			name:   "ck_capture_batches_source",

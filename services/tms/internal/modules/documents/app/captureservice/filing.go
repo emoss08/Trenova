@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -45,7 +46,7 @@ func (s *Service) coverSheetByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*capture.CaptureCoverSheet, bool, error) {
+) (*capturecoversheet.CaptureCoverSheet, bool, error) {
 	sheet, err := s.coverSheets.GetByID(ctx, captureports.GetCaptureCoverSheetByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,

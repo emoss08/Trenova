@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +15,7 @@ import (
 func paperwork(name string, isDefault bool) ProfileSettings {
 	return ProfileSettings{
 		Name:              name,
-		Status:            capture.ProfileActive,
+		Status:            captureprofile.ProfileActive,
 		IsDefault:         isDefault,
 		DPI:               300,
 		PixelType:         capture.PixelBlackWhite,
@@ -61,7 +62,7 @@ func TestMakingAProfileTheDefaultTakesTheFlag(t *testing.T) {
 	require.NoError(t, err)
 
 	retired := paperwork("Legal", false)
-	retired.Status = capture.ProfileInactive
+	retired.Status = captureprofile.ProfileInactive
 	_, err = s.CreateProfile(t.Context(), &CreateProfileInput{
 		TenantInfo: w.tenant,
 		Settings:   retired,
@@ -144,7 +145,7 @@ func TestProfileSettingsAreCheckedAndSeparatorsDeduplicated(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 
 	inactiveDefault := paperwork("Paperwork", true)
-	inactiveDefault.Status = capture.ProfileInactive
+	inactiveDefault.Status = captureprofile.ProfileInactive
 	_, err = s.CreateProfile(t.Context(), &CreateProfileInput{
 		TenantInfo: w.tenant,
 		Settings:   inactiveDefault,
@@ -152,10 +153,10 @@ func TestProfileSettingsAreCheckedAndSeparatorsDeduplicated(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 
 	split := paperwork("  Split by patch  ", false)
-	split.SeparatorStrategies = []capture.SeparatorStrategy{
-		capture.SeparatorPatchCode,
-		capture.SeparatorCoverSheet,
-		capture.SeparatorPatchCode,
+	split.SeparatorStrategies = []captureprofile.SeparatorStrategy{
+		captureprofile.SeparatorPatchCode,
+		captureprofile.SeparatorCoverSheet,
+		captureprofile.SeparatorPatchCode,
 	}
 	created, err := s.CreateProfile(t.Context(), &CreateProfileInput{
 		TenantInfo: w.tenant,
@@ -163,9 +164,9 @@ func TestProfileSettingsAreCheckedAndSeparatorsDeduplicated(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Split by patch", created.Name)
-	assert.Equal(t, []capture.SeparatorStrategy{
-		capture.SeparatorPatchCode,
-		capture.SeparatorCoverSheet,
+	assert.Equal(t, []captureprofile.SeparatorStrategy{
+		captureprofile.SeparatorPatchCode,
+		captureprofile.SeparatorCoverSheet,
 	}, created.SeparatorStrategies)
 }
 

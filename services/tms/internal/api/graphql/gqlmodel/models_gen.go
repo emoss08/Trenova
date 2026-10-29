@@ -3,6 +3,8 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
@@ -2144,7 +2146,7 @@ type CapturePageRotationInput struct {
 type CaptureProfileInput struct {
 	Name                string                      `json:"name"`
 	Description         *string                     `json:"description,omitempty"`
-	Status              capture.ProfileStatus       `json:"status"`
+	Status              captureprofile.ProfileStatus       `json:"status"`
 	IsDefault           bool                        `json:"isDefault"`
 	DPI                 int                         `json:"dpi"`
 	PixelType           capture.PixelType           `json:"pixelType"`
@@ -2153,7 +2155,7 @@ type CaptureProfileInput struct {
 	DiscardBlankPages   bool                        `json:"discardBlankPages"`
 	JPEGQuality         int                         `json:"jpegQuality"`
 	ShowDriverUI        bool                        `json:"showDriverUi"`
-	SeparatorStrategies []capture.SeparatorStrategy `json:"separatorStrategies"`
+	SeparatorStrategies []captureprofile.SeparatorStrategy `json:"separatorStrategies"`
 	FixedPageCount      int                         `json:"fixedPageCount"`
 }
 
@@ -2680,7 +2682,7 @@ type CreateAgentEvalCaseInput struct {
 type CreateCaptureRequestInput struct {
 	// One of the caller's own devices.
 	DeviceID       string              `json:"deviceId"`
-	Mode           capture.RequestMode `json:"mode"`
+	Mode           capturerequest.RequestMode `json:"mode"`
 	TargetType     string              `json:"targetType"`
 	TargetID       string              `json:"targetId"`
 	DocumentTypeID *string             `json:"documentTypeId,omitempty"`

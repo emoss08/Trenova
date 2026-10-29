@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/zap"
@@ -28,7 +28,7 @@ func NewCoverSheetRepository(p Params) captureports.CaptureCoverSheetRepository 
 
 func (r *coverSheetRepository) CreateMany(
 	ctx context.Context,
-	entities []*capture.CaptureCoverSheet,
+	entities []*capturecoversheet.CaptureCoverSheet,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
@@ -42,30 +42,38 @@ func (r *coverSheetRepository) CreateMany(
 func (r *coverSheetRepository) GetByID(
 	ctx context.Context,
 	req captureports.GetCaptureCoverSheetByIDRequest,
-) (*capture.CaptureCoverSheet, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
-		entity, err := capturedb.CaptureCoverSheets.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, coverSheetErrors.Map(err, req.ID.String())
-		}
+) (*capturecoversheet.CaptureCoverSheet, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*capturecoversheet.CaptureCoverSheet, error) {
+			entity, err := capturedb.CaptureCoverSheets.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, coverSheetErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *coverSheetRepository) GetByTokenHash(
 	ctx context.Context,
 	req captureports.GetCaptureCoverSheetByTokenRequest,
-) (*capture.CaptureCoverSheet, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
-		c := capturedb.CaptureCoverSheets
-		entity, err := c.Where(c.TokenHash.Eq(req.TokenHash)).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, coverSheetErrors.Map(err, "")
-		}
+) (*capturecoversheet.CaptureCoverSheet, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*capturecoversheet.CaptureCoverSheet, error) {
+			c := capturedb.CaptureCoverSheets
+			entity, err := c.Where(c.TokenHash.Eq(req.TokenHash)).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, coverSheetErrors.Map(err, "")
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *coverSheetRepository) MarkUsed(

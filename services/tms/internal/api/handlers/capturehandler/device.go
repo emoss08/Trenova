@@ -127,7 +127,7 @@ func (h *Handler) signOut(c *gin.Context) {
 // @ID listCaptureDeviceProfiles
 // @Tags Capture
 // @Produce json
-// @Success 200 {array} capture.CaptureProfile
+// @Success 200 {array} captureprofile.CaptureProfile
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -182,7 +182,7 @@ func (h *Handler) reportSources(c *gin.Context) {
 // @ID listCaptureDeviceRequests
 // @Tags Capture
 // @Produce json
-// @Success 200 {array} capture.CaptureRequest
+// @Success 200 {array} capturerequest.CaptureRequest
 // @Failure 401 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /capture/device/requests/ [get]
@@ -204,7 +204,7 @@ func (h *Handler) openRequests(c *gin.Context) {
 // @Produce json
 // @Param requestID path string true "Capture request ID"
 // @Param request body captureservice.RequestStatusReport true "The new status"
-// @Success 200 {object} capture.CaptureRequest
+// @Success 200 {object} capturerequest.CaptureRequest
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail

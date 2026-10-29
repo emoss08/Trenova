@@ -1,9 +1,11 @@
-package capture_test
+package capturesplit_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturesplit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,7 +48,7 @@ func TestSplitWithoutSeparatorsIsOneDocument(t *testing.T) {
 	t.Parallel()
 
 	pages, ids := pagesFrom(pageSpec{}, pageSpec{}, pageSpec{})
-	result := capture.SplitPages(pages, capture.RulesFor(nil))
+	result := capturesplit.SplitPages(pages, capturesplit.RulesFor(nil))
 
 	require.Len(t, result.Proposals, 1)
 	assert.Equal(t, ids, result.Proposals[0].PageIDs)
@@ -57,7 +59,7 @@ func TestSplitOnPatchCodesDropsTheSheet(t *testing.T) {
 	t.Parallel()
 
 	pages, ids := pagesFrom(pageSpec{}, pageSpec{patch: "T"}, pageSpec{}, pageSpec{})
-	result := capture.SplitPages(pages, capture.RulesFor(nil))
+	result := capturesplit.SplitPages(pages, capturesplit.RulesFor(nil))
 
 	require.Len(t, result.Proposals, 2)
 	assert.Equal(t, ids[:1], result.Proposals[0].PageIDs)
@@ -73,7 +75,7 @@ func TestCoverSheetRoutesUntilTheNextDivision(t *testing.T) {
 		pageSpec{cover: true}, pageSpec{},
 		pageSpec{patch: "2"}, pageSpec{},
 	)
-	result := capture.SplitPages(pages, capture.RulesFor(nil))
+	result := capturesplit.SplitPages(pages, capturesplit.RulesFor(nil))
 
 	require.Len(t, result.Proposals, 3)
 	assert.Equal(t, pages[0].Markers.CoverSheetID, result.Proposals[0].CoverSheetID)
@@ -86,7 +88,7 @@ func TestUnverifiedCoverSheetDividesButRoutesNothing(t *testing.T) {
 	t.Parallel()
 
 	pages, _ := pagesFrom(pageSpec{cover: true}, pageSpec{}, pageSpec{unverified: true}, pageSpec{})
-	result := capture.SplitPages(pages, capture.RulesFor(nil))
+	result := capturesplit.SplitPages(pages, capturesplit.RulesFor(nil))
 
 	require.Len(t, result.Proposals, 2)
 	assert.NotNil(t, result.Proposals[0].CoverSheetID)
@@ -98,11 +100,11 @@ func TestBlankPagesAsSeparatorsAndDiscards(t *testing.T) {
 
 	pages, ids := pagesFrom(pageSpec{}, pageSpec{blank: true}, pageSpec{}, pageSpec{blank: true})
 
-	discard := capture.SplitPages(pages, capture.SplitRules{DiscardBlank: true})
+	discard := capturesplit.SplitPages(pages, capturesplit.SplitRules{DiscardBlank: true})
 	require.Len(t, discard.Proposals, 1)
 	assert.Equal(t, []pulid.ID{ids[0], ids[2]}, discard.Proposals[0].PageIDs)
 
-	separate := capture.SplitPages(pages, capture.SplitRules{BlankPages: true})
+	separate := capturesplit.SplitPages(pages, capturesplit.SplitRules{BlankPages: true})
 	require.Len(t, separate.Proposals, 2)
 	assert.Equal(t, []pulid.ID{ids[0]}, separate.Proposals[0].PageIDs)
 	assert.Equal(t, []pulid.ID{ids[2]}, separate.Proposals[1].PageIDs)
@@ -115,7 +117,7 @@ func TestFixedPageCountKeepsTheCoverSheetRoute(t *testing.T) {
 		pageSpec{cover: true},
 		pageSpec{}, pageSpec{}, pageSpec{}, pageSpec{}, pageSpec{}, pageSpec{},
 	)
-	result := capture.SplitPages(pages, capture.SplitRules{FixedPageCount: 2})
+	result := capturesplit.SplitPages(pages, capturesplit.SplitRules{FixedPageCount: 2})
 
 	require.Len(t, result.Proposals, 3)
 	for _, proposal := range result.Proposals {
@@ -128,7 +130,7 @@ func TestAllBlankStackHasNoDocuments(t *testing.T) {
 	t.Parallel()
 
 	pages, _ := pagesFrom(pageSpec{blank: true}, pageSpec{blank: true})
-	result := capture.SplitPages(pages, capture.SplitRules{DiscardBlank: true})
+	result := capturesplit.SplitPages(pages, capturesplit.SplitRules{DiscardBlank: true})
 
 	assert.Empty(t, result.Proposals)
 	assert.Len(t, result.Separators, 2)
@@ -137,19 +139,19 @@ func TestAllBlankStackHasNoDocuments(t *testing.T) {
 func TestRulesForProfile(t *testing.T) {
 	t.Parallel()
 
-	profile := &capture.CaptureProfile{
+	profile := &captureprofile.CaptureProfile{
 		DiscardBlankPages: true,
-		SeparatorStrategies: []capture.SeparatorStrategy{
-			capture.SeparatorBlankPage,
-			capture.SeparatorFixedPageCount,
+		SeparatorStrategies: []captureprofile.SeparatorStrategy{
+			captureprofile.SeparatorBlankPage,
+			captureprofile.SeparatorFixedPageCount,
 		},
 		FixedPageCount: 3,
 	}
 
-	assert.Equal(t, capture.SplitRules{
+	assert.Equal(t, capturesplit.SplitRules{
 		PatchCodes:     true,
 		BlankPages:     true,
 		DiscardBlank:   true,
 		FixedPageCount: 3,
-	}, capture.RulesFor(profile))
+	}, capturesplit.RulesFor(profile))
 }

@@ -1,6 +1,10 @@
-package capture
+package capturesplit
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 // SplitRules say where a stack of pages divides into documents.
 type SplitRules struct {
@@ -19,17 +23,17 @@ type SplitRules struct {
 // person who printed one and put it in the stack meant it, whatever profile
 // the scan used. A batch with no profile splits on patch codes only, because
 // the device reports one only when the scanner found one.
-func RulesFor(profile *CaptureProfile) SplitRules {
+func RulesFor(profile *captureprofile.CaptureProfile) SplitRules {
 	if profile == nil {
 		return SplitRules{PatchCodes: true}
 	}
 
 	rules := SplitRules{
 		PatchCodes:   true,
-		BlankPages:   profile.UsesSeparator(SeparatorBlankPage),
+		BlankPages:   profile.UsesSeparator(captureprofile.SeparatorBlankPage),
 		DiscardBlank: profile.DiscardBlankPages,
 	}
-	if profile.UsesSeparator(SeparatorFixedPageCount) {
+	if profile.UsesSeparator(captureprofile.SeparatorFixedPageCount) {
 		rules.FixedPageCount = profile.FixedPageCount
 	}
 
@@ -57,7 +61,7 @@ type SplitResult struct {
 // division. A sheet that looked like a cover sheet but did not verify still
 // divides, and routes nothing: splitting where a person clearly meant a split
 // is right even when the destination cannot be trusted.
-func SplitPages(pages []*CapturePage, rules SplitRules) SplitResult {
+func SplitPages(pages []*capture.CapturePage, rules SplitRules) SplitResult {
 	result := SplitResult{
 		Proposals:  make([]Proposal, 0, 1),
 		Separators: make([]pulid.ID, 0),

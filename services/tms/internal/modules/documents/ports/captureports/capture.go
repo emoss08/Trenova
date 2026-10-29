@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -61,12 +65,18 @@ type CaptureDeviceRepository interface {
 }
 
 type CapturePairingRepository interface {
-	Create(ctx context.Context, entity *capture.CapturePairing) (*capture.CapturePairing, error)
-	Update(ctx context.Context, entity *capture.CapturePairing) (*capture.CapturePairing, error)
-	GetByDeviceCodeHash(ctx context.Context, hash string) (*capture.CapturePairing, error)
+	Create(
+		ctx context.Context,
+		entity *capturepairing.CapturePairing,
+	) (*capturepairing.CapturePairing, error)
+	Update(
+		ctx context.Context,
+		entity *capturepairing.CapturePairing,
+	) (*capturepairing.CapturePairing, error)
+	GetByDeviceCodeHash(ctx context.Context, hash string) (*capturepairing.CapturePairing, error)
 	// GetOpenByUserCode finds a code a person could still approve. A code
 	// that expired or was used is not found, so it cannot be approved late.
-	GetOpenByUserCode(ctx context.Context, userCode string) (*capture.CapturePairing, error)
+	GetOpenByUserCode(ctx context.Context, userCode string) (*capturepairing.CapturePairing, error)
 	// ExpireStale closes every open grant whose time ran out, so its user code
 	// can be issued again.
 	ExpireStale(ctx context.Context, now int64) (int, error)
@@ -78,8 +88,8 @@ type GetCaptureProfileByIDRequest struct {
 }
 
 type ListCaptureProfilesRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-	Status capture.ProfileStatus    `json:"status"`
+	Filter *pagination.QueryOptions     `json:"filter"`
+	Status captureprofile.ProfileStatus `json:"status"`
 }
 
 type DeleteCaptureProfileRequest struct {
@@ -91,21 +101,27 @@ type CaptureProfileRepository interface {
 	List(
 		ctx context.Context,
 		req *ListCaptureProfilesRequest,
-	) (*pagination.ListResult[*capture.CaptureProfile], error)
+	) (*pagination.ListResult[*captureprofile.CaptureProfile], error)
 	GetByID(
 		ctx context.Context,
 		req GetCaptureProfileByIDRequest,
-	) (*capture.CaptureProfile, error)
+	) (*captureprofile.CaptureProfile, error)
 	// GetDefault returns the tenant's default profile, or a not-found error
 	// when it has none.
 	GetDefault(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*capture.CaptureProfile, error)
+	) (*captureprofile.CaptureProfile, error)
 	// Create and Update clear the flag on any other default in the same
 	// transaction when the entity is the default, so a tenant never has two.
-	Create(ctx context.Context, entity *capture.CaptureProfile) (*capture.CaptureProfile, error)
-	Update(ctx context.Context, entity *capture.CaptureProfile) (*capture.CaptureProfile, error)
+	Create(
+		ctx context.Context,
+		entity *captureprofile.CaptureProfile,
+	) (*captureprofile.CaptureProfile, error)
+	Update(
+		ctx context.Context,
+		entity *captureprofile.CaptureProfile,
+	) (*captureprofile.CaptureProfile, error)
 	Delete(ctx context.Context, req DeleteCaptureProfileRequest) error
 }
 
@@ -128,24 +144,30 @@ type ListCaptureRequestsForTargetRequest struct {
 }
 
 type CaptureRequestRepository interface {
-	Create(ctx context.Context, entity *capture.CaptureRequest) (*capture.CaptureRequest, error)
-	Update(ctx context.Context, entity *capture.CaptureRequest) (*capture.CaptureRequest, error)
+	Create(
+		ctx context.Context,
+		entity *capturerequest.CaptureRequest,
+	) (*capturerequest.CaptureRequest, error)
+	Update(
+		ctx context.Context,
+		entity *capturerequest.CaptureRequest,
+	) (*capturerequest.CaptureRequest, error)
 	GetByID(
 		ctx context.Context,
 		req GetCaptureRequestByIDRequest,
-	) (*capture.CaptureRequest, error)
+	) (*capturerequest.CaptureRequest, error)
 	// ListOpen returns what a device still has to do, oldest first.
 	ListOpen(
 		ctx context.Context,
 		req ListOpenCaptureRequestsRequest,
-	) ([]*capture.CaptureRequest, error)
+	) ([]*capturerequest.CaptureRequest, error)
 	ListForTarget(
 		ctx context.Context,
 		req ListCaptureRequestsForTargetRequest,
-	) ([]*capture.CaptureRequest, error)
+	) ([]*capturerequest.CaptureRequest, error)
 	// ListExpired returns requests still waiting on a device whose time ran
 	// out, across every tenant, a bounded batch at a time.
-	ListExpired(ctx context.Context, now int64, limit int) ([]*capture.CaptureRequest, error)
+	ListExpired(ctx context.Context, now int64, limit int) ([]*capturerequest.CaptureRequest, error)
 }
 
 type GetCaptureBatchByIDRequest struct {
@@ -347,15 +369,15 @@ type GetCaptureCoverSheetByIDRequest struct {
 }
 
 type CaptureCoverSheetRepository interface {
-	CreateMany(ctx context.Context, entities []*capture.CaptureCoverSheet) error
+	CreateMany(ctx context.Context, entities []*capturecoversheet.CaptureCoverSheet) error
 	GetByID(
 		ctx context.Context,
 		req GetCaptureCoverSheetByIDRequest,
-	) (*capture.CaptureCoverSheet, error)
+	) (*capturecoversheet.CaptureCoverSheet, error)
 	GetByTokenHash(
 		ctx context.Context,
 		req GetCaptureCoverSheetByTokenRequest,
-	) (*capture.CaptureCoverSheet, error)
+	) (*capturecoversheet.CaptureCoverSheet, error)
 	MarkUsed(ctx context.Context, req MarkCaptureCoverSheetUsedRequest) error
 }
 

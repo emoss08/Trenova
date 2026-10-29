@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,9 +35,9 @@ type CreateCoverSheetsInput struct {
 // drawn from it. The payload is returned once, to be printed; only its hash is
 // kept.
 type IssuedCoverSheet struct {
-	Sheet   *capture.CaptureCoverSheet  `json:"sheet"`
-	Payload string                      `json:"payload"`
-	QRCode  *captureports.CaptureQRCode `json:"qrCode"`
+	Sheet   *capturecoversheet.CaptureCoverSheet `json:"sheet"`
+	Payload string                               `json:"payload"`
+	QRCode  *captureports.CaptureQRCode          `json:"qrCode"`
 }
 
 // CreateCoverSheets issues sheets for printing. Each routing sheet is checked
@@ -64,7 +65,7 @@ func (s *Service) CreateCoverSheets(
 
 	now := timeutils.NowUnix()
 	issued := make([]IssuedCoverSheet, 0, len(in.Sheets))
-	sheets := make([]*capture.CaptureCoverSheet, 0, len(in.Sheets))
+	sheets := make([]*capturecoversheet.CaptureCoverSheet, 0, len(in.Sheets))
 	for _, spec := range in.Sheets {
 		target := capture.Target{
 			ResourceType:   spec.TargetType,
@@ -88,7 +89,7 @@ func (s *Service) CreateCoverSheets(
 			return nil, err
 		}
 
-		sheet := &capture.CaptureCoverSheet{
+		sheet := &capturecoversheet.CaptureCoverSheet{
 			ID:             pulid.MustNew("ccs_"),
 			OrganizationID: in.TenantInfo.OrgID,
 			BusinessUnitID: in.TenantInfo.BuID,
@@ -97,7 +98,7 @@ func (s *Service) CreateCoverSheets(
 			TargetID:       spec.TargetID,
 			DocumentTypeID: spec.DocumentTypeID,
 			IssuedByID:     in.TenantInfo.UserID,
-			ExpiresAt:      now + capture.CoverSheetLifetimeSeconds,
+			ExpiresAt:      now + capturecoversheet.CoverSheetLifetimeSeconds,
 		}
 
 		multiErr := errortypes.NewMultiError()
@@ -106,7 +107,7 @@ func (s *Service) CreateCoverSheets(
 			return nil, multiErr
 		}
 
-		payload := capture.CoverSheetPayload(token)
+		payload := capturecoversheet.CoverSheetPayload(token)
 		code, err := s.qrCodes.Encode(payload)
 		if err != nil {
 			return nil, err

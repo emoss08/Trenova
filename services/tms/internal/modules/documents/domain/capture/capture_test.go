@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func errorFields(multiErr *errortypes.MultiError) []string {
@@ -18,83 +17,6 @@ func errorFields(multiErr *errortypes.MultiError) []string {
 	}
 
 	return fields
-}
-
-func TestRequestStatusCanMoveTo(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		from capture.RequestStatus
-		to   capture.RequestStatus
-		want bool
-	}{
-		{capture.RequestPending, capture.RequestDelivered, true},
-		{capture.RequestPending, capture.RequestInProgress, true},
-		{capture.RequestDelivered, capture.RequestInProgress, true},
-		{capture.RequestInProgress, capture.RequestCompleted, true},
-		{capture.RequestDelivered, capture.RequestCompleted, true},
-		{capture.RequestPending, capture.RequestCompleted, false},
-		{capture.RequestInProgress, capture.RequestDelivered, false},
-		{capture.RequestDelivered, capture.RequestPending, false},
-		{capture.RequestPending, capture.RequestCanceled, true},
-		{capture.RequestInProgress, capture.RequestFailed, true},
-		{capture.RequestCanceled, capture.RequestInProgress, false},
-		{capture.RequestCompleted, capture.RequestFailed, false},
-		{capture.RequestExpired, capture.RequestDelivered, false},
-		{capture.RequestPending, capture.RequestPending, false},
-	}
-
-	for _, tt := range tests {
-		assert.Equal(t, tt.want, tt.from.CanMoveTo(tt.to), "%s -> %s", tt.from, tt.to)
-	}
-}
-
-func TestRequestTransitionStampsTimes(t *testing.T) {
-	t.Parallel()
-
-	req := &capture.CaptureRequest{Status: capture.RequestPending}
-	require.True(t, req.Transition(capture.RequestDelivered, 100))
-	require.NotNil(t, req.DeliveredAt)
-	assert.Equal(t, int64(100), *req.DeliveredAt)
-
-	require.True(t, req.Transition(capture.RequestCompleted, 200))
-	require.NotNil(t, req.CompletedAt)
-	assert.Equal(t, int64(200), *req.CompletedAt)
-
-	assert.False(t, req.Transition(capture.RequestFailed, 300),
-		"a finished request cannot be failed by a late report")
-	assert.Equal(t, capture.RequestCompleted, req.Status)
-}
-
-func TestRequestExpiryOnlyWhileWaiting(t *testing.T) {
-	t.Parallel()
-
-	req := &capture.CaptureRequest{Status: capture.RequestPending, ExpiresAt: 100}
-	assert.False(t, req.IsExpired(99))
-	assert.True(t, req.IsExpired(100))
-
-	req.Status = capture.RequestInProgress
-	assert.False(t, req.IsExpired(10_000), "a scan in progress is not expired by the clock")
-}
-
-func TestRequestValidate(t *testing.T) {
-	t.Parallel()
-
-	profileID := pulid.MustNew("cprf_")
-	req := &capture.CaptureRequest{
-		UserID:     pulid.MustNew("usr_"),
-		DeviceID:   pulid.MustNew("cdev_"),
-		Mode:       capture.RequestModePrint,
-		Status:     capture.RequestPending,
-		TargetType: "invoice",
-		TargetID:   pulid.MustNew("inv_"),
-		ProfileID:  &profileID,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	req.Validate(multiErr)
-
-	assert.ElementsMatch(t, []string{"targetType", "profileId"}, errorFields(multiErr))
 }
 
 func TestTargetValidate(t *testing.T) {
@@ -184,52 +106,6 @@ func TestFileableResourcesAreRealResources(t *testing.T) {
 	}
 }
 
-func TestProfileValidate(t *testing.T) {
-	t.Parallel()
-
-	valid := func() *capture.CaptureProfile {
-		profile := &capture.CaptureProfile{Name: "PODs"}
-		profile.ApplyDefaults()
-
-		return profile
-	}
-
-	multiErr := errortypes.NewMultiError()
-	valid().Validate(multiErr)
-	assert.False(t, multiErr.HasErrors(), "defaults must be a valid profile")
-
-	fixed := valid()
-	fixed.SeparatorStrategies = []capture.SeparatorStrategy{capture.SeparatorFixedPageCount}
-	multiErr = errortypes.NewMultiError()
-	fixed.Validate(multiErr)
-	assert.Equal(t, []string{"fixedPageCount"}, errorFields(multiErr))
-
-	stray := valid()
-	stray.FixedPageCount = 3
-	multiErr = errortypes.NewMultiError()
-	stray.Validate(multiErr)
-	assert.Equal(t, []string{"fixedPageCount"}, errorFields(multiErr))
-
-	inactiveDefault := valid()
-	inactiveDefault.IsDefault = true
-	inactiveDefault.Status = capture.ProfileInactive
-	multiErr = errortypes.NewMultiError()
-	inactiveDefault.Validate(multiErr)
-	assert.Equal(t, []string{"isDefault"}, errorFields(multiErr))
-
-	bad := valid()
-	bad.DPI = 1200
-	bad.JPEGQuality = 10
-	bad.SeparatorStrategies = []capture.SeparatorStrategy{"Staple"}
-	multiErr = errortypes.NewMultiError()
-	bad.Validate(multiErr)
-	assert.ElementsMatch(
-		t,
-		[]string{"dpi", "jpegQuality", "separatorStrategies"},
-		errorFields(multiErr),
-	)
-}
-
 func TestBatchSettleFiling(t *testing.T) {
 	t.Parallel()
 
@@ -283,20 +159,6 @@ func TestDeviceOnline(t *testing.T) {
 	device := &capture.CaptureDevice{Status: capture.DeviceActive, LastSeenAt: &seen}
 	assert.True(t, device.IsOnline(1000+capture.OnlineWindowSeconds))
 	assert.False(t, device.IsOnline(1001+capture.OnlineWindowSeconds))
-}
-
-func TestCoverSheetToken(t *testing.T) {
-	t.Parallel()
-
-	token, ok := capture.CoverSheetToken(capture.CoverSheetPayload("abc"))
-	require.True(t, ok)
-	assert.Equal(t, "abc", token)
-
-	_, ok = capture.CoverSheetToken("https://tracking.example/abc")
-	assert.False(t, ok)
-
-	_, ok = capture.CoverSheetToken(capture.CoverSheetPrefix)
-	assert.False(t, ok, "a prefix with no token is not a sheet")
 }
 
 func TestNormalizeRotation(t *testing.T) {

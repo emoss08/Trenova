@@ -1,9 +1,10 @@
-package capture
+package capturecoversheet
 
 import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -49,13 +50,13 @@ func (c *CaptureCoverSheet) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.ExpiresAt, validation.Required.Error("Expiry is required")),
 	))
 
-	c.Target().Validate(multiErr, targetFields, false)
+	c.Target().Validate(multiErr, capture.DefaultTargetFields, false)
 }
 
 // Target is where the sheet routes. A sheet with no record only divides the
 // stack.
-func (c *CaptureCoverSheet) Target() Target {
-	return Target{
+func (c *CaptureCoverSheet) Target() capture.Target {
+	return capture.Target{
 		ResourceType:   c.TargetType,
 		ResourceID:     c.TargetID,
 		DocumentTypeID: c.DocumentTypeID,

@@ -13,6 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -163,7 +164,7 @@ func (s *Service) requestForBatch(
 	ctx context.Context,
 	principal *DevicePrincipal,
 	in *OpenBatchInput,
-) (*capture.CaptureRequest, bool, error) {
+) (*capturerequest.CaptureRequest, bool, error) {
 	if in.RequestID != nil {
 		request, err := s.deviceRequest(ctx, principal, *in.RequestID)
 		if err != nil {
@@ -194,7 +195,7 @@ func (s *Service) requestForBatch(
 		return nil, false, err
 	}
 	for _, request := range open {
-		if request.Mode == capture.RequestModePrint && request.BatchID == nil {
+		if request.Mode == capturerequest.RequestModePrint && request.BatchID == nil {
 			return request, true, nil
 		}
 	}
@@ -206,11 +207,11 @@ func (s *Service) requestForBatch(
 // logged, not returned: the pages are safe in the batch either way.
 func (s *Service) attachRequest(
 	ctx context.Context,
-	request *capture.CaptureRequest,
+	request *capturerequest.CaptureRequest,
 	batchID pulid.ID,
 ) {
 	request.BatchID = &batchID
-	request.Transition(capture.RequestInProgress, timeutils.NowUnix())
+	request.Transition(capturerequest.RequestInProgress, timeutils.NowUnix())
 
 	updated, err := s.requests.Update(ctx, request)
 	if err != nil {
@@ -722,10 +723,10 @@ func (s *Service) completeRequest(ctx context.Context, batch *capture.CaptureBat
 		return
 	}
 
-	next := capture.RequestCompleted
+	next := capturerequest.RequestCompleted
 	if batch.Status == capture.BatchDiscarded {
-		next = capture.RequestFailed
-		request.FailureCode = capture.FailureFeederEmpty
+		next = capturerequest.RequestFailed
+		request.FailureCode = capturerequest.FailureFeederEmpty
 	}
 	if !request.Transition(next, timeutils.NowUnix()) {
 		return

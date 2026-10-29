@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,16 +57,16 @@ func TestPageSelectOptionItemsPagesAndReportsTheTotal(t *testing.T) {
 }
 
 func TestWithIDsKeepsOnlyTheAskedForEntitiesAndNothingElse(t *testing.T) {
-	a := &capture.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "A"}
-	b := &capture.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "B"}
-	c := &capture.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "C"}
-	idOf := func(p *capture.CaptureProfile) pulid.ID { return p.ID }
+	a := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "A"}
+	b := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "B"}
+	c := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "C"}
+	idOf := func(p *captureprofile.CaptureProfile) pulid.ID { return p.ID }
 
-	all := []*capture.CaptureProfile{a, b, c}
+	all := []*captureprofile.CaptureProfile{a, b, c}
 	assert.Equal(t, all, withIDs(all, nil, idOf))
 	assert.Equal(
 		t,
-		[]*capture.CaptureProfile{a, c},
+		[]*captureprofile.CaptureProfile{a, c},
 		withIDs(all, []pulid.ID{c.ID, a.ID}, idOf),
 	)
 	assert.Empty(t, withIDs(all, []pulid.ID{pulid.MustNew("cprf_")}, idOf))
@@ -100,7 +101,7 @@ func TestCaptureDeviceOptionCarriesItsScannersAndWhetherItIsOnline(t *testing.T)
 }
 
 func TestCaptureProfileOptionNamesItsSettings(t *testing.T) {
-	profile := &capture.CaptureProfile{
+	profile := &captureprofile.CaptureProfile{
 		ID:          pulid.MustNew("cprf_"),
 		Name:        "Paperwork",
 		Description: "Bills of lading",

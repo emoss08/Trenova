@@ -3,6 +3,10 @@
 package capturedb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"context"
 	"unsafe"
 
@@ -400,12 +404,12 @@ func beforeCreateCaptureBatch(ctx context.Context, p unsafe.Pointer) error {
 	return (*capture.CaptureBatch)(p).BeforeCreate(ctx)
 }
 
-// captureCoverSheetsTable is the schema of capture.CaptureCoverSheet.
+// captureCoverSheetsTable is the schema of capturecoversheet.CaptureCoverSheet.
 var captureCoverSheetsTable = schema.Table{
 	Name:   "capture_cover_sheets",
 	Quoted: `"capture_cover_sheets"`,
 	Alias:  "ccs",
-	Model:  "capture.CaptureCoverSheet",
+	Model:  "capturecoversheet.CaptureCoverSheet",
 	Label:  `Capture Cover Sheet`,
 	Plural: `Capture Cover Sheets`,
 	Doc:    "CaptureCoverSheet is a printed separator that says where the pages behind it go.\n\nThe QR code carries a random token, not the record: a sheet photocopied into another tenant's stack finds no row there, and reading one tells nobody which shipment it belongs to. The token is stored hashed, like every other bearer secret here.",
@@ -436,16 +440,16 @@ var captureCoverSheetsTable = schema.Table{
 	IDPrefix:   "ccs_",
 	New:        newCaptureCoverSheet,
 	NewN:       newNCaptureCoverSheet,
-	Size:       unsafe.Sizeof(capture.CaptureCoverSheet{}),
+	Size:       unsafe.Sizeof(capturecoversheet.CaptureCoverSheet{}),
 	Ptr:        ptrCaptureCoverSheet,
 	Value:      valueCaptureCoverSheet,
 }
 
 var captureCoverSheetsRef = keel.Ref{Table: &captureCoverSheetsTable}
 
-// CaptureCoverSheetsTable is the table of capture.CaptureCoverSheet.
+// CaptureCoverSheetsTable is the table of capturecoversheet.CaptureCoverSheet.
 type CaptureCoverSheetsTable struct {
-	keel.Handle[*capture.CaptureCoverSheet]
+	keel.Handle[*capturecoversheet.CaptureCoverSheet]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -462,7 +466,7 @@ type CaptureCoverSheetsTable struct {
 
 // CaptureCoverSheets references the capture_cover_sheets table.
 var CaptureCoverSheets = &CaptureCoverSheetsTable{
-	Handle:         keel.Handle[*capture.CaptureCoverSheet]{Ref: &captureCoverSheetsRef},
+	Handle:         keel.Handle[*capturecoversheet.CaptureCoverSheet]{Ref: &captureCoverSheetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 2}}},
@@ -480,7 +484,7 @@ var CaptureCoverSheets = &CaptureCoverSheetsTable{
 // BuildCaptureCoverSheets builds the handle of capture_cover_sheets for ref. Generated relation and alias methods call it.
 func BuildCaptureCoverSheets(r *keel.Ref) *CaptureCoverSheetsTable {
 	return &CaptureCoverSheetsTable{
-		Handle:         keel.Handle[*capture.CaptureCoverSheet]{Ref: r},
+		Handle:         keel.Handle[*capturecoversheet.CaptureCoverSheet]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -505,18 +509,18 @@ func (t *CaptureCoverSheetsTable) As(alias string) *CaptureCoverSheetsTable {
 }
 
 // Get returns the capture_cover_sheets row with the given key, or keel.ErrNotFound.
-func (t *CaptureCoverSheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capture.CaptureCoverSheet, error) {
+func (t *CaptureCoverSheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capturecoversheet.CaptureCoverSheet, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newCaptureCoverSheet() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureCoverSheet)) }
+func newCaptureCoverSheet() unsafe.Pointer { return unsafe.Pointer(new(capturecoversheet.CaptureCoverSheet)) }
 
 func newNCaptureCoverSheet(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]capture.CaptureCoverSheet, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]capturecoversheet.CaptureCoverSheet, n)))
 }
 
 func ptrCaptureCoverSheet(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureCoverSheet)(p)
+	r := (*capturecoversheet.CaptureCoverSheet)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -547,7 +551,7 @@ func ptrCaptureCoverSheet(p unsafe.Pointer, c int32) any {
 }
 
 func valueCaptureCoverSheet(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureCoverSheet)(p)
+	r := (*capturecoversheet.CaptureCoverSheet)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1502,12 +1506,12 @@ func beforeCreateCapturePage(ctx context.Context, p unsafe.Pointer) error {
 	return (*capture.CapturePage)(p).BeforeCreate(ctx)
 }
 
-// capturePairingsTable is the schema of capture.CapturePairing.
+// capturePairingsTable is the schema of capturepairing.CapturePairing.
 var capturePairingsTable = schema.Table{
 	Name:   "capture_pairings",
 	Quoted: `"capture_pairings"`,
 	Alias:  "cp",
-	Model:  "capture.CapturePairing",
+	Model:  "capturepairing.CapturePairing",
 	Label:  `Capture Pairing`,
 	Plural: `Capture Pairings`,
 	Doc:    "CapturePairing is one device authorization grant (RFC 8628): a code shown on the machine, approved by a signed-in person in the browser, and exchanged by the machine for its credential.\n\nIt has no tenant until it is approved. The machine asking for a code does not know, and must not be able to choose, which organization it will belong to: that is decided by who approves it and where they are signed in.",
@@ -1547,7 +1551,7 @@ var capturePairingsTable = schema.Table{
 	IDPrefix:     "cpair_",
 	New:          newCapturePairing,
 	NewN:         newNCapturePairing,
-	Size:         unsafe.Sizeof(capture.CapturePairing{}),
+	Size:         unsafe.Sizeof(capturepairing.CapturePairing{}),
 	Ptr:          ptrCapturePairing,
 	Value:        valueCapturePairing,
 	BeforeCreate: beforeCreateCapturePairing,
@@ -1555,9 +1559,9 @@ var capturePairingsTable = schema.Table{
 
 var capturePairingsRef = keel.Ref{Table: &capturePairingsTable}
 
-// CapturePairingsTable is the table of capture.CapturePairing.
+// CapturePairingsTable is the table of capturepairing.CapturePairing.
 type CapturePairingsTable struct {
-	keel.Handle[*capture.CapturePairing]
+	keel.Handle[*capturepairing.CapturePairing]
 	ID             keelkinds.PulidIDCol
 	DeviceCodeHash keel.StringCol
 	UserCode       keel.StringCol
@@ -1583,7 +1587,7 @@ type CapturePairingsTable struct {
 
 // CapturePairings references the capture_pairings table.
 var CapturePairings = &CapturePairingsTable{
-	Handle:         keel.Handle[*capture.CapturePairing]{Ref: &capturePairingsRef},
+	Handle:         keel.Handle[*capturepairing.CapturePairing]{Ref: &capturePairingsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 0}}},
 	DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 1}},
 	UserCode:       keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 2}},
@@ -1610,7 +1614,7 @@ var CapturePairings = &CapturePairingsTable{
 // BuildCapturePairings builds the handle of capture_pairings for ref. Generated relation and alias methods call it.
 func BuildCapturePairings(r *keel.Ref) *CapturePairingsTable {
 	return &CapturePairingsTable{
-		Handle:         keel.Handle[*capture.CapturePairing]{Ref: r},
+		Handle:         keel.Handle[*capturepairing.CapturePairing]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		UserCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1644,18 +1648,18 @@ func (t *CapturePairingsTable) As(alias string) *CapturePairingsTable {
 }
 
 // Get returns the capture_pairings row with the given key, or keel.ErrNotFound.
-func (t *CapturePairingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capture.CapturePairing, error) {
+func (t *CapturePairingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capturepairing.CapturePairing, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newCapturePairing() unsafe.Pointer { return unsafe.Pointer(new(capture.CapturePairing)) }
+func newCapturePairing() unsafe.Pointer { return unsafe.Pointer(new(capturepairing.CapturePairing)) }
 
 func newNCapturePairing(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]capture.CapturePairing, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]capturepairing.CapturePairing, n)))
 }
 
 func ptrCapturePairing(p unsafe.Pointer, c int32) any {
-	r := (*capture.CapturePairing)(p)
+	r := (*capturepairing.CapturePairing)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1704,7 +1708,7 @@ func ptrCapturePairing(p unsafe.Pointer, c int32) any {
 }
 
 func valueCapturePairing(p unsafe.Pointer, c int32) any {
-	r := (*capture.CapturePairing)(p)
+	r := (*capturepairing.CapturePairing)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1783,19 +1787,19 @@ func valueCapturePairing(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateCapturePairing(ctx context.Context, p unsafe.Pointer) error {
-	return (*capture.CapturePairing)(p).BeforeCreate(ctx)
+	return (*capturepairing.CapturePairing)(p).BeforeCreate(ctx)
 }
 
-// captureProfilesTable is the schema of capture.CaptureProfile.
+// captureProfilesTable is the schema of captureprofile.CaptureProfile.
 var captureProfilesTable = schema.Table{
 	Name:        "capture_profiles",
 	Quoted:      `"capture_profiles"`,
 	Alias:       "cp",
-	Model:       "capture.CaptureProfile",
+	Model:       "captureprofile.CaptureProfile",
 	Label:       `Capture Profile`,
 	Plural:      `Capture Profiles`,
 	Doc:         `CaptureProfile is a named set of scan settings an organization offers the people who scan, so a billing clerk picks "PODs" rather than a resolution.`,
-	Constraints: (&capture.CaptureProfile{}).Constraints(),
+	Constraints: (&captureprofile.CaptureProfile{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1830,7 +1834,7 @@ var captureProfilesTable = schema.Table{
 	IDPrefix:     "cprf_",
 	New:          newCaptureProfile,
 	NewN:         newNCaptureProfile,
-	Size:         unsafe.Sizeof(capture.CaptureProfile{}),
+	Size:         unsafe.Sizeof(captureprofile.CaptureProfile{}),
 	Ptr:          ptrCaptureProfile,
 	Value:        valueCaptureProfile,
 	BeforeCreate: beforeCreateCaptureProfile,
@@ -1838,9 +1842,9 @@ var captureProfilesTable = schema.Table{
 
 var captureProfilesRef = keel.Ref{Table: &captureProfilesTable}
 
-// CaptureProfilesTable is the table of capture.CaptureProfile.
+// CaptureProfilesTable is the table of captureprofile.CaptureProfile.
 type CaptureProfilesTable struct {
-	keel.Handle[*capture.CaptureProfile]
+	keel.Handle[*captureprofile.CaptureProfile]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1864,7 +1868,7 @@ type CaptureProfilesTable struct {
 
 // CaptureProfiles references the capture_profiles table.
 var CaptureProfiles = &CaptureProfilesTable{
-	Handle:              keel.Handle[*capture.CaptureProfile]{Ref: &captureProfilesRef},
+	Handle:              keel.Handle[*captureprofile.CaptureProfile]{Ref: &captureProfilesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureProfilesRef, Index: 2}}},
@@ -1889,7 +1893,7 @@ var CaptureProfiles = &CaptureProfilesTable{
 // BuildCaptureProfiles builds the handle of capture_profiles for ref. Generated relation and alias methods call it.
 func BuildCaptureProfiles(r *keel.Ref) *CaptureProfilesTable {
 	return &CaptureProfilesTable{
-		Handle:              keel.Handle[*capture.CaptureProfile]{Ref: r},
+		Handle:              keel.Handle[*captureprofile.CaptureProfile]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1921,18 +1925,18 @@ func (t *CaptureProfilesTable) As(alias string) *CaptureProfilesTable {
 }
 
 // Get returns the capture_profiles row with the given key, or keel.ErrNotFound.
-func (t *CaptureProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capture.CaptureProfile, error) {
+func (t *CaptureProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*captureprofile.CaptureProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newCaptureProfile() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureProfile)) }
+func newCaptureProfile() unsafe.Pointer { return unsafe.Pointer(new(captureprofile.CaptureProfile)) }
 
 func newNCaptureProfile(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]capture.CaptureProfile, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]captureprofile.CaptureProfile, n)))
 }
 
 func ptrCaptureProfile(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureProfile)(p)
+	r := (*captureprofile.CaptureProfile)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1977,7 +1981,7 @@ func ptrCaptureProfile(p unsafe.Pointer, c int32) any {
 }
 
 func valueCaptureProfile(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureProfile)(p)
+	r := (*captureprofile.CaptureProfile)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2028,15 +2032,15 @@ func valueCaptureProfile(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateCaptureProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*capture.CaptureProfile)(p).BeforeCreate(ctx)
+	return (*captureprofile.CaptureProfile)(p).BeforeCreate(ctx)
 }
 
-// captureRequestsTable is the schema of capture.CaptureRequest.
+// captureRequestsTable is the schema of capturerequest.CaptureRequest.
 var captureRequestsTable = schema.Table{
 	Name:   "capture_requests",
 	Quoted: `"capture_requests"`,
 	Alias:  "cr",
-	Model:  "capture.CaptureRequest",
+	Model:  "capturerequest.CaptureRequest",
 	Label:  `Capture Request`,
 	Plural: `Capture Requests`,
 	Doc:    `CaptureRequest is a person asking, from the web app, for their device to capture pages into a particular record. It never reaches the device directly: the device learns of it from its stream and fetches it, so the browser never talks to anything on the person's machine.`,
@@ -2079,7 +2083,7 @@ var captureRequestsTable = schema.Table{
 	IDPrefix:     "creq_",
 	New:          newCaptureRequest,
 	NewN:         newNCaptureRequest,
-	Size:         unsafe.Sizeof(capture.CaptureRequest{}),
+	Size:         unsafe.Sizeof(capturerequest.CaptureRequest{}),
 	Ptr:          ptrCaptureRequest,
 	Value:        valueCaptureRequest,
 	Attach:       attachCaptureRequest,
@@ -2088,9 +2092,9 @@ var captureRequestsTable = schema.Table{
 
 var captureRequestsRef = keel.Ref{Table: &captureRequestsTable}
 
-// CaptureRequestsTable is the table of capture.CaptureRequest.
+// CaptureRequestsTable is the table of capturerequest.CaptureRequest.
 type CaptureRequestsTable struct {
-	keel.Handle[*capture.CaptureRequest]
+	keel.Handle[*capturerequest.CaptureRequest]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2116,7 +2120,7 @@ type CaptureRequestsTable struct {
 
 // CaptureRequests references the capture_requests table.
 var CaptureRequests = &CaptureRequestsTable{
-	Handle:         keel.Handle[*capture.CaptureRequest]{Ref: &captureRequestsRef},
+	Handle:         keel.Handle[*capturerequest.CaptureRequest]{Ref: &captureRequestsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureRequestsRef, Index: 2}}},
@@ -2143,7 +2147,7 @@ var CaptureRequests = &CaptureRequestsTable{
 // BuildCaptureRequests builds the handle of capture_requests for ref. Generated relation and alias methods call it.
 func BuildCaptureRequests(r *keel.Ref) *CaptureRequestsTable {
 	return &CaptureRequestsTable{
-		Handle:         keel.Handle[*capture.CaptureRequest]{Ref: r},
+		Handle:         keel.Handle[*capturerequest.CaptureRequest]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2182,18 +2186,18 @@ func (t *CaptureRequestsTable) CaptureProfile() *CaptureProfilesTable {
 }
 
 // Get returns the capture_requests row with the given key, or keel.ErrNotFound.
-func (t *CaptureRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capture.CaptureRequest, error) {
+func (t *CaptureRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capturerequest.CaptureRequest, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newCaptureRequest() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureRequest)) }
+func newCaptureRequest() unsafe.Pointer { return unsafe.Pointer(new(capturerequest.CaptureRequest)) }
 
 func newNCaptureRequest(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]capture.CaptureRequest, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]capturerequest.CaptureRequest, n)))
 }
 
 func ptrCaptureRequest(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureRequest)(p)
+	r := (*capturerequest.CaptureRequest)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2242,7 +2246,7 @@ func ptrCaptureRequest(p unsafe.Pointer, c int32) any {
 }
 
 func valueCaptureRequest(p unsafe.Pointer, c int32) any {
-	r := (*capture.CaptureRequest)(p)
+	r := (*capturerequest.CaptureRequest)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2315,15 +2319,15 @@ func valueCaptureRequest(p unsafe.Pointer, c int32) any {
 }
 
 func attachCaptureRequest(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*capture.CaptureRequest)(p)
+	r := (*capturerequest.CaptureRequest)(p)
 	switch rel {
 	case 0:
-		r.CaptureProfile = (*capture.CaptureProfile)(child)
+		r.CaptureProfile = (*captureprofile.CaptureProfile)(child)
 	}
 }
 
 func beforeCreateCaptureRequest(ctx context.Context, p unsafe.Pointer) error {
-	return (*capture.CaptureRequest)(p).BeforeCreate(ctx)
+	return (*capturerequest.CaptureRequest)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -2544,28 +2548,28 @@ func (c PageStatusCol) NotIn(vs ...capture.PageStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PairingStatusCol is a column of capture.PairingStatus values.
+// PairingStatusCol is a column of capturepairing.PairingStatus values.
 type PairingStatusCol struct{ keel.StringCol }
 
-func (c PairingStatusCol) Eq(v capture.PairingStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PairingStatusCol) Ne(v capture.PairingStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PairingStatusCol) Gt(v capture.PairingStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PairingStatusCol) Gte(v capture.PairingStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PairingStatusCol) Lt(v capture.PairingStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PairingStatusCol) Lte(v capture.PairingStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c PairingStatusCol) IsDistinctFrom(v capture.PairingStatus) keel.Pred {
+func (c PairingStatusCol) Eq(v capturepairing.PairingStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c PairingStatusCol) Ne(v capturepairing.PairingStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c PairingStatusCol) Gt(v capturepairing.PairingStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c PairingStatusCol) Gte(v capturepairing.PairingStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c PairingStatusCol) Lt(v capturepairing.PairingStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c PairingStatusCol) Lte(v capturepairing.PairingStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PairingStatusCol) IsDistinctFrom(v capturepairing.PairingStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PairingStatusCol) Between(lo, hi capture.PairingStatus) keel.Pred {
+func (c PairingStatusCol) Between(lo, hi capturepairing.PairingStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PairingStatusCol) To(v capture.PairingStatus) keel.Assignment {
+func (c PairingStatusCol) To(v capturepairing.PairingStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PairingStatusCol) In(vs ...capture.PairingStatus) keel.Pred {
+func (c PairingStatusCol) In(vs ...capturepairing.PairingStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PairingStatusCol) NotIn(vs ...capture.PairingStatus) keel.Pred {
+func (c PairingStatusCol) NotIn(vs ...capturepairing.PairingStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -2592,113 +2596,113 @@ func (c PixelTypeCol) NotIn(vs ...capture.PixelType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ProfileStatusCol is a column of capture.ProfileStatus values.
+// ProfileStatusCol is a column of captureprofile.ProfileStatus values.
 type ProfileStatusCol struct{ keel.StringCol }
 
-func (c ProfileStatusCol) Eq(v capture.ProfileStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProfileStatusCol) Ne(v capture.ProfileStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProfileStatusCol) Gt(v capture.ProfileStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProfileStatusCol) Gte(v capture.ProfileStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProfileStatusCol) Lt(v capture.ProfileStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProfileStatusCol) Lte(v capture.ProfileStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ProfileStatusCol) IsDistinctFrom(v capture.ProfileStatus) keel.Pred {
+func (c ProfileStatusCol) Eq(v captureprofile.ProfileStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ProfileStatusCol) Ne(v captureprofile.ProfileStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ProfileStatusCol) Gt(v captureprofile.ProfileStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ProfileStatusCol) Gte(v captureprofile.ProfileStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ProfileStatusCol) Lt(v captureprofile.ProfileStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ProfileStatusCol) Lte(v captureprofile.ProfileStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProfileStatusCol) IsDistinctFrom(v captureprofile.ProfileStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ProfileStatusCol) Between(lo, hi capture.ProfileStatus) keel.Pred {
+func (c ProfileStatusCol) Between(lo, hi captureprofile.ProfileStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ProfileStatusCol) To(v capture.ProfileStatus) keel.Assignment {
+func (c ProfileStatusCol) To(v captureprofile.ProfileStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ProfileStatusCol) In(vs ...capture.ProfileStatus) keel.Pred {
+func (c ProfileStatusCol) In(vs ...captureprofile.ProfileStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ProfileStatusCol) NotIn(vs ...capture.ProfileStatus) keel.Pred {
+func (c ProfileStatusCol) NotIn(vs ...captureprofile.ProfileStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RequestFailureCodeCol is a column of capture.RequestFailureCode values.
+// RequestFailureCodeCol is a column of capturerequest.RequestFailureCode values.
 type RequestFailureCodeCol struct{ keel.StringCol }
 
-func (c RequestFailureCodeCol) Eq(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Eq(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RequestFailureCodeCol) Ne(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Ne(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RequestFailureCodeCol) Gt(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Gt(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RequestFailureCodeCol) Gte(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Gte(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RequestFailureCodeCol) Lt(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Lt(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RequestFailureCodeCol) Lte(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Lte(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RequestFailureCodeCol) IsDistinctFrom(v capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) IsDistinctFrom(v capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RequestFailureCodeCol) Between(lo, hi capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) Between(lo, hi capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RequestFailureCodeCol) To(v capture.RequestFailureCode) keel.Assignment {
+func (c RequestFailureCodeCol) To(v capturerequest.RequestFailureCode) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RequestFailureCodeCol) In(vs ...capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) In(vs ...capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RequestFailureCodeCol) NotIn(vs ...capture.RequestFailureCode) keel.Pred {
+func (c RequestFailureCodeCol) NotIn(vs ...capturerequest.RequestFailureCode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RequestModeCol is a column of capture.RequestMode values.
+// RequestModeCol is a column of capturerequest.RequestMode values.
 type RequestModeCol struct{ keel.StringCol }
 
-func (c RequestModeCol) Eq(v capture.RequestMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RequestModeCol) Ne(v capture.RequestMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RequestModeCol) Gt(v capture.RequestMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RequestModeCol) Gte(v capture.RequestMode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RequestModeCol) Lt(v capture.RequestMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RequestModeCol) Lte(v capture.RequestMode) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c RequestModeCol) IsDistinctFrom(v capture.RequestMode) keel.Pred {
+func (c RequestModeCol) Eq(v capturerequest.RequestMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c RequestModeCol) Ne(v capturerequest.RequestMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c RequestModeCol) Gt(v capturerequest.RequestMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c RequestModeCol) Gte(v capturerequest.RequestMode) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c RequestModeCol) Lt(v capturerequest.RequestMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c RequestModeCol) Lte(v capturerequest.RequestMode) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RequestModeCol) IsDistinctFrom(v capturerequest.RequestMode) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RequestModeCol) Between(lo, hi capture.RequestMode) keel.Pred {
+func (c RequestModeCol) Between(lo, hi capturerequest.RequestMode) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RequestModeCol) To(v capture.RequestMode) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c RequestModeCol) In(vs ...capture.RequestMode) keel.Pred {
+func (c RequestModeCol) To(v capturerequest.RequestMode) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RequestModeCol) In(vs ...capturerequest.RequestMode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RequestModeCol) NotIn(vs ...capture.RequestMode) keel.Pred {
+func (c RequestModeCol) NotIn(vs ...capturerequest.RequestMode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RequestStatusCol is a column of capture.RequestStatus values.
+// RequestStatusCol is a column of capturerequest.RequestStatus values.
 type RequestStatusCol struct{ keel.StringCol }
 
-func (c RequestStatusCol) Eq(v capture.RequestStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RequestStatusCol) Ne(v capture.RequestStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RequestStatusCol) Gt(v capture.RequestStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RequestStatusCol) Gte(v capture.RequestStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RequestStatusCol) Lt(v capture.RequestStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RequestStatusCol) Lte(v capture.RequestStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c RequestStatusCol) IsDistinctFrom(v capture.RequestStatus) keel.Pred {
+func (c RequestStatusCol) Eq(v capturerequest.RequestStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c RequestStatusCol) Ne(v capturerequest.RequestStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c RequestStatusCol) Gt(v capturerequest.RequestStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c RequestStatusCol) Gte(v capturerequest.RequestStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c RequestStatusCol) Lt(v capturerequest.RequestStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c RequestStatusCol) Lte(v capturerequest.RequestStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RequestStatusCol) IsDistinctFrom(v capturerequest.RequestStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RequestStatusCol) Between(lo, hi capture.RequestStatus) keel.Pred {
+func (c RequestStatusCol) Between(lo, hi capturerequest.RequestStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RequestStatusCol) To(v capture.RequestStatus) keel.Assignment {
+func (c RequestStatusCol) To(v capturerequest.RequestStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RequestStatusCol) In(vs ...capture.RequestStatus) keel.Pred {
+func (c RequestStatusCol) In(vs ...capturerequest.RequestStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RequestStatusCol) NotIn(vs ...capture.RequestStatus) keel.Pred {
+func (c RequestStatusCol) NotIn(vs ...capturerequest.RequestStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

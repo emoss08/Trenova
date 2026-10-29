@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -1093,8 +1095,8 @@ type CapturePageResolver interface {
 }
 
 type CaptureRequestResolver interface {
-	FailureCode(ctx context.Context, obj *capture.CaptureRequest) (*capture.RequestFailureCode, error)
-	IsOpen(ctx context.Context, obj *capture.CaptureRequest) (bool, error)
+	FailureCode(ctx context.Context, obj *capturerequest.CaptureRequest) (*capturerequest.RequestFailureCode, error)
+	IsOpen(ctx context.Context, obj *capturerequest.CaptureRequest) (bool, error)
 }
 
 type CaptureSettingsResolver interface {
@@ -2124,15 +2126,15 @@ type MutationResolver interface {
 	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
 	DiscardCaptureItem(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	DiscardCaptureBatch(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
-	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capture.CaptureRequest, error)
-	CancelCaptureRequest(ctx context.Context, id string) (*capture.CaptureRequest, error)
+	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error)
+	CancelCaptureRequest(ctx context.Context, id string) (*capturerequest.CaptureRequest, error)
 	CreateCaptureCoverSheets(ctx context.Context, sheets []*gqlmodel.CaptureCoverSheetInput) ([]*gqlmodel.CaptureCoverSheet, error)
 	ApproveCaptureDevicePairing(ctx context.Context, userCode string, deviceName *string) (bool, error)
 	DenyCaptureDevicePairing(ctx context.Context, userCode string) (bool, error)
 	RevokeMyCaptureDevice(ctx context.Context, id string, reason *string) (*capture.CaptureDevice, error)
 	RevokeCaptureDevice(ctx context.Context, id string, reason *string) (*capture.CaptureDevice, error)
-	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
-	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
+	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
+	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
 	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
@@ -2929,10 +2931,10 @@ type QueryResolver interface {
 	CaptureBatch(ctx context.Context, id string) (*capture.CaptureBatch, error)
 	MyCaptureDevices(ctx context.Context, status *capture.DeviceStatus) ([]*capture.CaptureDevice, error)
 	CaptureDevices(ctx context.Context, status *capture.DeviceStatus, query *string) ([]*capture.CaptureDevice, error)
-	AvailableCaptureProfiles(ctx context.Context) ([]*capture.CaptureProfile, error)
-	CaptureProfiles(ctx context.Context, status *capture.ProfileStatus, query *string) ([]*capture.CaptureProfile, error)
-	CaptureProfile(ctx context.Context, id string) (*capture.CaptureProfile, error)
-	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capture.CaptureRequest, error)
+	AvailableCaptureProfiles(ctx context.Context) ([]*captureprofile.CaptureProfile, error)
+	CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error)
+	CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error)
+	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error)
 	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)

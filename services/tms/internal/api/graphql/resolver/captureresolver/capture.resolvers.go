@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -128,11 +130,11 @@ func (r *CapturePageResolver) ThumbnailPath(ctx context.Context, obj *capture.Ca
 	return capturehandler.PageContentPath(obj.ID, captureservice.PageContentThumbnail), nil
 }
 
-func (r *CaptureRequestResolver) FailureCode(ctx context.Context, obj *capture.CaptureRequest) (*capture.RequestFailureCode, error) {
+func (r *CaptureRequestResolver) FailureCode(ctx context.Context, obj *capturerequest.CaptureRequest) (*capturerequest.RequestFailureCode, error) {
 	return stringutils.NilIfEmpty(obj.FailureCode), nil
 }
 
-func (r *CaptureRequestResolver) IsOpen(ctx context.Context, obj *capture.CaptureRequest) (bool, error) {
+func (r *CaptureRequestResolver) IsOpen(ctx context.Context, obj *capturerequest.CaptureRequest) (bool, error) {
 	return obj.IsOpen(timeutils.NowUnix()), nil
 }
 
@@ -257,7 +259,7 @@ func (r *MutationResolver) DiscardCaptureBatch(ctx context.Context, id string, v
 	})
 }
 
-func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capture.CaptureRequest, error) {
+func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -292,7 +294,7 @@ func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) CancelCaptureRequest(ctx context.Context, id string) (*capture.CaptureRequest, error) {
+func (r *MutationResolver) CancelCaptureRequest(ctx context.Context, id string) (*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -404,7 +406,7 @@ func (r *MutationResolver) RevokeCaptureDevice(ctx context.Context, id string, r
 	})
 }
 
-func (r *MutationResolver) CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error) {
+func (r *MutationResolver) CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -416,7 +418,7 @@ func (r *MutationResolver) CreateCaptureProfile(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error) {
+func (r *MutationResolver) UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -554,7 +556,7 @@ func (r *QueryResolver) CaptureDevices(ctx context.Context, status *capture.Devi
 	return r.ListCaptureDevices(ctx, authCtx, false, status, query)
 }
 
-func (r *QueryResolver) AvailableCaptureProfiles(ctx context.Context) ([]*capture.CaptureProfile, error) {
+func (r *QueryResolver) AvailableCaptureProfiles(ctx context.Context) ([]*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -563,7 +565,7 @@ func (r *QueryResolver) AvailableCaptureProfiles(ctx context.Context) ([]*captur
 	return r.CaptureService.AvailableProfiles(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) CaptureProfiles(ctx context.Context, status *capture.ProfileStatus, query *string) ([]*capture.CaptureProfile, error) {
+func (r *QueryResolver) CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -580,7 +582,7 @@ func (r *QueryResolver) CaptureProfiles(ctx context.Context, status *capture.Pro
 	return r.CaptureService.ListProfiles(ctx, in)
 }
 
-func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*capture.CaptureProfile, error) {
+func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -594,7 +596,7 @@ func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*capture
 	return r.CaptureService.GetProfile(ctx, resolvercore.TenantInfo(authCtx), profileID)
 }
 
-func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capture.CaptureRequest, error) {
+func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpRead)
 	if err != nil {
 		return nil, err

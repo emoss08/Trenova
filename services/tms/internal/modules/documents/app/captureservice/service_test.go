@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -176,12 +178,18 @@ func TestApprovalNeedsCapturePermissionAndCaptureOn(t *testing.T) {
 	require.NoError(t, err)
 
 	w.denied[permission.ResourceCaptureBatch.String()+":create"] = true
-	err = s.DecidePairing(t.Context(), &DecidePairingRequest{TenantInfo: w.tenant, UserCode: grant.UserCode, Approve: true})
+	err = s.DecidePairing(
+		t.Context(),
+		&DecidePairingRequest{TenantInfo: w.tenant, UserCode: grant.UserCode, Approve: true},
+	)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 
 	delete(w.denied, permission.ResourceCaptureBatch.String()+":create")
 	w.control.EnableCapture = false
-	err = s.DecidePairing(t.Context(), &DecidePairingRequest{TenantInfo: w.tenant, UserCode: grant.UserCode, Approve: true})
+	err = s.DecidePairing(
+		t.Context(),
+		&DecidePairingRequest{TenantInfo: w.tenant, UserCode: grant.UserCode, Approve: true},
+	)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
 
@@ -192,7 +200,10 @@ func TestRefreshRotatesAndReuseRevokes(t *testing.T) {
 	s := w.service()
 	first := pair(t, w, s)
 
-	second, err := s.Refresh(t.Context(), &RefreshRequest{RefreshToken: first.RefreshToken, AgentVersion: "1.1.0"})
+	second, err := s.Refresh(
+		t.Context(),
+		&RefreshRequest{RefreshToken: first.RefreshToken, AgentVersion: "1.1.0"},
+	)
 	require.NoError(t, err)
 	assert.NotEqual(t, first.RefreshToken, second.RefreshToken)
 	assert.Equal(t, "1.1.0", w.devices[first.DeviceID].AgentVersion)
@@ -221,13 +232,19 @@ func TestRefreshEnforcesMinimumVersion(t *testing.T) {
 	w.control.CaptureMinAgentVersion = "1.2.0"
 	w.control.CaptureAllowAutoUpdate = true
 
-	_, err := s.Refresh(t.Context(), &RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.1.9"})
+	_, err := s.Refresh(
+		t.Context(),
+		&RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.1.9"},
+	)
 	var outdated *OutdatedAgentError
 	require.ErrorAs(t, err, &outdated)
 	assert.Equal(t, "1.2.0", outdated.Minimum)
 	assert.True(t, outdated.AutoUpdate, "the companion is told it may update itself")
 
-	_, err = s.Refresh(t.Context(), &RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.2.0"})
+	_, err = s.Refresh(
+		t.Context(),
+		&RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.2.0"},
+	)
 	require.NoError(t, err, "a refused refresh does not consume the token")
 }
 
@@ -254,10 +271,16 @@ func TestRevokingAnotherPersonsDeviceNeedsPermission(t *testing.T) {
 	other := w.tenant
 	other.UserID = pulid.MustNew("usr_")
 	w.denied[permission.ResourceCaptureDevice.String()+":update"] = true
-	_, err := s.RevokeDevice(t.Context(), &RevokeDeviceRequest{TenantInfo: other, DeviceID: tokens.DeviceID})
+	_, err := s.RevokeDevice(
+		t.Context(),
+		&RevokeDeviceRequest{TenantInfo: other, DeviceID: tokens.DeviceID},
+	)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 
-	device, err := s.RevokeDevice(t.Context(), &RevokeDeviceRequest{TenantInfo: w.tenant, DeviceID: tokens.DeviceID})
+	device, err := s.RevokeDevice(
+		t.Context(),
+		&RevokeDeviceRequest{TenantInfo: w.tenant, DeviceID: tokens.DeviceID},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, capture.DeviceRevoked, device.Status)
 	assert.Contains(t, w.published, "capture_device:revoked")
@@ -307,16 +330,32 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
 
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
-	again, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan})
+	again, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, batch.ID, again.ID, "the same client key opens the same batch")
 
 	page := pdfPage(t, 200)
-	first, err := s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)})
+	first, err := s.PutPage(
+		t.Context(),
+		principal,
+		&PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)},
+	)
 	require.NoError(t, err)
-	retry, err := s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)})
+	retry, err := s.PutPage(
+		t.Context(),
+		principal,
+		&PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, retry.ID)
 	assert.Equal(t, 1, w.batches[batch.ID].ReceivedPageCount)
@@ -328,7 +367,12 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 
 	stored := w.objects[first.StoragePath]
 	assert.True(t, encryptionservice.IsBlob(stored), "pages are sealed at rest")
-	assert.NotContains(t, string(stored), string(page[:32]), "nothing of the page is stored in the clear")
+	assert.NotContains(
+		t,
+		string(stored),
+		string(page[:32]),
+		"nothing of the page is stored in the clear",
+	)
 }
 
 func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {
@@ -338,7 +382,11 @@ func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
 
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 
 	page, err := s.PutPage(t.Context(), principal, &PutPageInput{
@@ -362,7 +410,11 @@ func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {
 	w := newWorld()
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 
 	two := mergePDFs(t, pdfPage(t, 10), pdfPage(t, 20))
@@ -372,7 +424,11 @@ func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {
 		"empty":     {},
 		"two pages": two,
 	} {
-		_, err = s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(body)})
+		_, err = s.PutPage(
+			t.Context(),
+			principal,
+			&PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(body)},
+		)
 		assert.Error(t, err, name)
 	}
 
@@ -388,16 +444,32 @@ func TestSealVerifiesTheManifest(t *testing.T) {
 	w := newWorld()
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 	page := pdfPage(t, 5)
-	_, err = s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)})
+	_, err = s.PutPage(
+		t.Context(),
+		principal,
+		&PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(page)},
+	)
 	require.NoError(t, err)
 
-	_, err = s.SealBatch(t.Context(), principal, &SealBatchInput{BatchID: batch.ID, PageCount: 2, ManifestDigest: "x"})
+	_, err = s.SealBatch(
+		t.Context(),
+		principal,
+		&SealBatchInput{BatchID: batch.ID, PageCount: 2, ManifestDigest: "x"},
+	)
 	assert.True(t, errortypes.IsConflictError(err), "a missing page refuses the seal")
 
-	_, err = s.SealBatch(t.Context(), principal, &SealBatchInput{BatchID: batch.ID, PageCount: 1, ManifestDigest: "wrong"})
+	_, err = s.SealBatch(
+		t.Context(),
+		principal,
+		&SealBatchInput{BatchID: batch.ID, PageCount: 1, ManifestDigest: "wrong"},
+	)
 	assert.True(t, errortypes.IsConflictError(err), "a mismatched digest refuses the seal")
 
 	sealed, err := s.SealBatch(t.Context(), principal, &SealBatchInput{
@@ -434,7 +506,14 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 	require.NotNil(t, issued[0].QRCode, "a sheet comes with the code to print on it")
 	assert.Positive(t, issued[0].QRCode.Size)
 
-	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3), pdfPage(t, 4), pdfPage(t, 5), pdfPage(t, 6)}
+	pages := [][]byte{
+		pdfPage(t, 1),
+		pdfPage(t, 2),
+		pdfPage(t, 3),
+		pdfPage(t, 4),
+		pdfPage(t, 5),
+		pdfPage(t, 6),
+	}
 	w.inspections[string(pages[3])] = &pageReading{
 		InkCoverage: 0.1, Thumbnail: []byte("jpeg"), Codes: []string{issued[0].Payload},
 	}
@@ -453,7 +532,12 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 	assert.Len(t, items[2].PageIDs, 2, "a blank page is kept without a profile saying to drop it")
 	assert.Equal(t, capture.SuggestionCoverSheet, items[2].SuggestionSource)
 	assert.Equal(t, shipmentID, *items[2].SuggestedID)
-	assert.Equal(t, []pulid.ID{items[2].ID}, result.AutoFile, "cover-sheet routes are trusted by default")
+	assert.Equal(
+		t,
+		[]pulid.ID{items[2].ID},
+		result.AutoFile,
+		"cover-sheet routes are trusted by default",
+	)
 
 	processed := w.batches[batch.ID]
 	assert.Equal(t, capture.BatchReady, processed.Status)
@@ -481,7 +565,9 @@ func TestCoverSheetsDoNotAutoFileWhenTheOrganizationSaysNot(t *testing.T) {
 	docType := w.addDocType("BOL")
 	issued, err := s.CreateCoverSheets(t.Context(), &CreateCoverSheetsInput{
 		TenantInfo: w.tenant,
-		Sheets:     []CoverSheetSpec{{TargetType: "shipment", TargetID: &shipmentID, DocumentTypeID: &docType}},
+		Sheets: []CoverSheetSpec{
+			{TargetType: "shipment", TargetID: &shipmentID, DocumentTypeID: &docType},
+		},
 	})
 	require.NoError(t, err)
 
@@ -489,7 +575,14 @@ func TestCoverSheetsDoNotAutoFileWhenTheOrganizationSaysNot(t *testing.T) {
 	w.inspections[string(pages[0])] = &pageReading{
 		InkCoverage: 0.1, Codes: []string{issued[0].Payload},
 	}
-	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "c", Source: capture.SourceScan}, pages, nil)
+	batch := scan(
+		t,
+		s,
+		principal,
+		&OpenBatchInput{ClientKey: "c", Source: capture.SourceScan},
+		pages,
+		nil,
+	)
 
 	result, err := s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
@@ -505,7 +598,7 @@ func TestAnotherTenantsCoverSheetRoutesNothing(t *testing.T) {
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
 
-	foreign := &capture.CaptureCoverSheet{
+	foreign := &capturecoversheet.CaptureCoverSheet{
 		ID:             pulid.MustNew("ccs_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -516,9 +609,16 @@ func TestAnotherTenantsCoverSheetRoutesNothing(t *testing.T) {
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)}
 	w.inspections[string(pages[1])] = &pageReading{
-		InkCoverage: 0.1, Codes: []string{capture.CoverSheetPayload("stolen")},
+		InkCoverage: 0.1, Codes: []string{capturecoversheet.CoverSheetPayload("stolen")},
 	}
-	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "f", Source: capture.SourceScan}, pages, nil)
+	batch := scan(
+		t,
+		s,
+		principal,
+		&OpenBatchInput{ClientKey: "f", Source: capture.SourceScan},
+		pages,
+		nil,
+	)
 
 	_, err := s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
@@ -544,7 +644,7 @@ func TestScanFromARecordFilesItself(t *testing.T) {
 	req, err := s.CreateRequest(t.Context(), &CreateRequestInput{
 		TenantInfo:     w.tenant,
 		DeviceID:       tokens.DeviceID,
-		Mode:           capture.RequestModeScan,
+		Mode:           capturerequest.RequestModeScan,
 		TargetType:     "shipment",
 		TargetID:       shipmentID,
 		DocumentTypeID: &podType,
@@ -556,9 +656,15 @@ func TestScanFromARecordFilesItself(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, open, 1)
 
-	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "r", Source: capture.SourceScan, RequestID: &req.ID},
-		[][]byte{pdfPage(t, 1), pdfPage(t, 2)}, nil)
-	assert.Equal(t, capture.RequestCompleted, w.requests[req.ID].Status)
+	batch := scan(
+		t,
+		s,
+		principal,
+		&OpenBatchInput{ClientKey: "r", Source: capture.SourceScan, RequestID: &req.ID},
+		[][]byte{pdfPage(t, 1), pdfPage(t, 2)},
+		nil,
+	)
+	assert.Equal(t, capturerequest.RequestCompleted, w.requests[req.ID].Status)
 
 	result, err := s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
@@ -659,13 +765,19 @@ func TestEditItemsSplitsKeepingTheRoute(t *testing.T) {
 	principal := principalFor(t, s, tokens)
 	shipmentID := w.addRecord("shipment")
 	req, err := s.CreateRequest(t.Context(), &CreateRequestInput{
-		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capture.RequestModeScan,
+		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capturerequest.RequestModeScan,
 		TargetType: "shipment", TargetID: shipmentID,
 	})
 	require.NoError(t, err)
 
-	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "e", Source: capture.SourceScan, RequestID: &req.ID},
-		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)}, nil)
+	batch := scan(
+		t,
+		s,
+		principal,
+		&OpenBatchInput{ClientKey: "e", Source: capture.SourceScan, RequestID: &req.ID},
+		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)},
+		nil,
+	)
 	_, err = s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
@@ -687,7 +799,12 @@ func TestEditItemsSplitsKeepingTheRoute(t *testing.T) {
 	require.Len(t, edited.Items, 2)
 	assert.Equal(t, 2, edited.ItemCount)
 	for _, split := range edited.Items {
-		assert.Equal(t, capture.SuggestionRequest, split.SuggestionSource, "both halves keep the route")
+		assert.Equal(
+			t,
+			capture.SuggestionRequest,
+			split.SuggestionSource,
+			"both halves keep the route",
+		)
 		assert.Equal(t, shipmentID, *split.SuggestedID)
 	}
 	assert.Equal(t, 270, w.pages[item.PageIDs[1]].Rotation)
@@ -718,16 +835,21 @@ func TestPrintJobLandsOnTheArmedDestination(t *testing.T) {
 	first := w.addRecord("shipment")
 	second := w.addRecord("shipment")
 	armed, err := s.CreateRequest(t.Context(), &CreateRequestInput{
-		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capture.RequestModePrint,
+		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capturerequest.RequestModePrint,
 		TargetType: "shipment", TargetID: first,
 	})
 	require.NoError(t, err)
 	rearmed, err := s.CreateRequest(t.Context(), &CreateRequestInput{
-		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capture.RequestModePrint,
+		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capturerequest.RequestModePrint,
 		TargetType: "shipment", TargetID: second,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, capture.RequestCanceled, w.requests[armed.ID].Status, "arming again disarms the last")
+	assert.Equal(
+		t,
+		capturerequest.RequestCanceled,
+		w.requests[armed.ID].Status,
+		"arming again disarms the last",
+	)
 
 	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{
 		ClientKey: "print-1", Source: capture.SourcePrint, JobName: "Rate con 4471.pdf",
@@ -739,11 +861,15 @@ func TestPrintJobLandsOnTheArmedDestination(t *testing.T) {
 
 	job := mergePDFs(t, pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3))
 
-	sealed, err := s.PutPrintJob(t.Context(), principal, &PutPrintJobInput{BatchID: batch.ID, Body: bytes.NewReader(job)})
+	sealed, err := s.PutPrintJob(
+		t.Context(),
+		principal,
+		&PutPrintJobInput{BatchID: batch.ID, Body: bytes.NewReader(job)},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, capture.BatchSealed, sealed.Status)
 	assert.Len(t, w.pagesOf(batch.ID), 3)
-	assert.Equal(t, capture.RequestCompleted, w.requests[rearmed.ID].Status)
+	assert.Equal(t, capturerequest.RequestCompleted, w.requests[rearmed.ID].Status)
 }
 
 func TestRequestsOnlyDriveYourOwnDevice(t *testing.T) {
@@ -757,7 +883,7 @@ func TestRequestsOnlyDriveYourOwnDevice(t *testing.T) {
 	other := w.tenant
 	other.UserID = pulid.MustNew("usr_")
 	_, err := s.CreateRequest(t.Context(), &CreateRequestInput{
-		TenantInfo: other, DeviceID: tokens.DeviceID, Mode: capture.RequestModeScan,
+		TenantInfo: other, DeviceID: tokens.DeviceID, Mode: capturerequest.RequestModeScan,
 		TargetType: "shipment", TargetID: shipmentID,
 	})
 	require.Error(t, err)
@@ -795,7 +921,7 @@ func TestExpiredRequestsCloseAsNotDelivered(t *testing.T) {
 	tokens := pair(t, w, s)
 	shipmentID := w.addRecord("shipment")
 	req, err := s.CreateRequest(t.Context(), &CreateRequestInput{
-		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capture.RequestModeScan,
+		TenantInfo: w.tenant, DeviceID: tokens.DeviceID, Mode: capturerequest.RequestModeScan,
 		TargetType: "shipment", TargetID: shipmentID,
 	})
 	require.NoError(t, err)
@@ -804,8 +930,8 @@ func TestExpiredRequestsCloseAsNotDelivered(t *testing.T) {
 	count, err := s.ExpireRequests(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
-	assert.Equal(t, capture.RequestExpired, w.requests[req.ID].Status)
-	assert.Equal(t, capture.FailureNotDelivered, w.requests[req.ID].FailureCode)
+	assert.Equal(t, capturerequest.RequestExpired, w.requests[req.ID].Status)
+	assert.Equal(t, capturerequest.FailureNotDelivered, w.requests[req.ID].FailureCode)
 }
 
 func TestListBatchesNarrowsOwnScope(t *testing.T) {
@@ -814,7 +940,14 @@ func TestListBatchesNarrowsOwnScope(t *testing.T) {
 	w := newWorld()
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
-	scan(t, s, principal, &OpenBatchInput{ClientKey: "a", Source: capture.SourceScan}, [][]byte{pdfPage(t, 1)}, nil)
+	scan(
+		t,
+		s,
+		principal,
+		&OpenBatchInput{ClientKey: "a", Source: capture.SourceScan},
+		[][]byte{pdfPage(t, 1)},
+		nil,
+	)
 
 	w.ownScope = true
 	other := w.tenant
@@ -834,10 +967,18 @@ func TestPagesAreReadAsTheyArrive(t *testing.T) {
 	s.arrivals = newArrivalReaders(1, 4)
 	principal := principalFor(t, s, pair(t, w, s))
 
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "k", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 	data := pdfPage(t, 7)
-	page, err := s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(data)})
+	page, err := s.PutPage(
+		t.Context(),
+		principal,
+		&PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(data)},
+	)
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -857,7 +998,12 @@ func TestPagesAreReadAsTheyArrive(t *testing.T) {
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	assert.Equal(t, 1, w.inspected, "a page read on arrival is not read again when the batch is processed")
+	assert.Equal(
+		t,
+		1,
+		w.inspected,
+		"a page read on arrival is not read again when the batch is processed",
+	)
 }
 
 func TestPageContentIsTaggedForGood(t *testing.T) {
@@ -931,7 +1077,11 @@ func TestABarcodeOnThePagesSuggestsItsShipment(t *testing.T) {
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
 
-	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "b", Source: capture.SourceScan})
+	batch, err := s.OpenBatch(
+		t.Context(),
+		principal,
+		&OpenBatchInput{ClientKey: "b", Source: capture.SourceScan},
+	)
 	require.NoError(t, err)
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2)}
 	for i, data := range pages {

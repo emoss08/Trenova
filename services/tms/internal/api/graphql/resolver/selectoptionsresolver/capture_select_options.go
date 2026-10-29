@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -94,7 +95,7 @@ func (r *Deps) resolveCaptureProfileSelectOptions(
 		return nil, err
 	}
 
-	matched := withIDs(profiles, req.IDs, func(p *capture.CaptureProfile) pulid.ID {
+	matched := withIDs(profiles, req.IDs, func(p *captureprofile.CaptureProfile) pulid.ID {
 		return p.ID
 	})
 	query := strings.ToLower(strings.TrimSpace(req.SelectQuery.Query))
@@ -111,7 +112,9 @@ func (r *Deps) resolveCaptureProfileSelectOptions(
 	return pageSelectOptionItems(items, req)
 }
 
-func captureProfileSelectOptionItem(profile *capture.CaptureProfile) selectOptionConnectionItem {
+func captureProfileSelectOptionItem(
+	profile *captureprofile.CaptureProfile,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          profile.ID.String(),

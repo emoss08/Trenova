@@ -422,6 +422,11 @@ modules:
       - documentpacketrule
       - documentsearchprojection
       - accounttemplate
+      - capturecoversheet
+      - capturepairing
+      - captureprofile
+      - capturerequest
+      - capturesplit
       - detentiontemplate
       - documenttemplate
       - documentupload

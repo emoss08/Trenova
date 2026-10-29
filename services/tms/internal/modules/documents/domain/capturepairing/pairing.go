@@ -1,9 +1,10 @@
-package capture
+package capturepairing
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,27 +30,27 @@ const (
 type CapturePairing struct {
 	keel.Table `keel:"capture_pairings"`
 
-	ID             pulid.ID      `json:"id"             keel:"id,pk,autoid:cpair_"`
-	DeviceCodeHash string        `json:"-"              keel:"device_code_hash"`
-	UserCode       string        `json:"userCode"       keel:"user_code"`
-	Status         PairingStatus `json:"status"         keel:"status"`
-	MachineName    string        `json:"machineName"    keel:"machine_name"`
-	WindowsUser    string        `json:"windowsUser"    keel:"windows_user,nullzero"`
-	AgentVersion   string        `json:"agentVersion"   keel:"agent_version"`
-	Architecture   Architecture  `json:"architecture"   keel:"architecture"`
-	OSVersion      string        `json:"osVersion"      keel:"os_version,nullzero"`
-	ClientIP       string        `json:"clientIp"       keel:"client_ip,nullzero"`
-	OrganizationID *pulid.ID     `json:"organizationId" keel:"organization_id"`
-	BusinessUnitID *pulid.ID     `json:"businessUnitId" keel:"business_unit_id"`
-	ApprovedByID   *pulid.ID     `json:"approvedById"   keel:"approved_by_id"`
-	DeviceName     string        `json:"deviceName"     keel:"device_name,nullzero"`
-	DeviceID       *pulid.ID     `json:"deviceId"       keel:"device_id"`
-	LastPolledAt   *int64        `json:"-"              keel:"last_polled_at"`
-	ExpiresAt      int64         `json:"expiresAt"      keel:"expires_at"`
-	DecidedAt      *int64        `json:"decidedAt"      keel:"decided_at"`
-	Version        int64         `json:"version"        keel:"version,version"`
-	CreatedAt      int64         `json:"createdAt"      keel:"created_at,autocreate"`
-	UpdatedAt      int64         `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	ID             pulid.ID             `json:"id"             keel:"id,pk,autoid:cpair_"`
+	DeviceCodeHash string               `json:"-"              keel:"device_code_hash"`
+	UserCode       string               `json:"userCode"       keel:"user_code"`
+	Status         PairingStatus        `json:"status"         keel:"status"`
+	MachineName    string               `json:"machineName"    keel:"machine_name"`
+	WindowsUser    string               `json:"windowsUser"    keel:"windows_user,nullzero"`
+	AgentVersion   string               `json:"agentVersion"   keel:"agent_version"`
+	Architecture   capture.Architecture `json:"architecture"   keel:"architecture"`
+	OSVersion      string               `json:"osVersion"      keel:"os_version,nullzero"`
+	ClientIP       string               `json:"clientIp"       keel:"client_ip,nullzero"`
+	OrganizationID *pulid.ID            `json:"organizationId" keel:"organization_id"`
+	BusinessUnitID *pulid.ID            `json:"businessUnitId" keel:"business_unit_id"`
+	ApprovedByID   *pulid.ID            `json:"approvedById"   keel:"approved_by_id"`
+	DeviceName     string               `json:"deviceName"     keel:"device_name,nullzero"`
+	DeviceID       *pulid.ID            `json:"deviceId"       keel:"device_id"`
+	LastPolledAt   *int64               `json:"-"              keel:"last_polled_at"`
+	ExpiresAt      int64                `json:"expiresAt"      keel:"expires_at"`
+	DecidedAt      *int64               `json:"decidedAt"      keel:"decided_at"`
+	Version        int64                `json:"version"        keel:"version,version"`
+	CreatedAt      int64                `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 // IsExpired reports whether the code can no longer be approved or exchanged.

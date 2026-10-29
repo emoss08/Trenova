@@ -3209,13 +3209,13 @@ models:
         fieldName: OSVersion
   CaptureProfile:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureProfile
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.CaptureProfile
   CaptureRecordRef:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureRecordLabel
   CaptureRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureRequest
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.CaptureRequest
     fields:
       failureCode:
         resolver: true
@@ -3317,13 +3317,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.Source
   CaptureRequestMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestMode
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestMode
   CaptureRequestStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestStatus
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestStatus
   CaptureRequestFailureCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestFailureCode
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestFailureCode
   CaptureBatchStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.BatchStatus
@@ -3341,10 +3341,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.PixelType
   CaptureSeparatorStrategy:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SeparatorStrategy
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.SeparatorStrategy
   CaptureProfileStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.ProfileStatus
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.ProfileStatus
   CaptureSourceProtocol:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SourceProtocol

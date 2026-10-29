@@ -9,6 +9,9 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturesplit"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -94,7 +97,7 @@ func (s *Service) ProcessBatch(
 	}
 
 	profile := s.batchProfile(ctx, tenantInfo, batch)
-	split := capture.SplitPages(pages, capture.RulesFor(profile))
+	split := capturesplit.SplitPages(pages, capturesplit.RulesFor(profile))
 	if err = s.markSeparators(ctx, pages, split.Separators); err != nil {
 		return nil, err
 	}
@@ -350,7 +353,7 @@ func (s *Service) readCodes(
 ) {
 	page.Markers.ReadCodes = nil
 	for _, code := range codes {
-		token, ok := capture.CoverSheetToken(code)
+		token, ok := capturecoversheet.CoverSheetToken(code)
 		if !ok {
 			if len(page.Markers.ReadCodes) < maxReadCodes {
 				page.Markers.ReadCodes = append(
@@ -427,7 +430,7 @@ func (s *Service) batchProfile(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	batch *capture.CaptureBatch,
-) *capture.CaptureProfile {
+) *captureprofile.CaptureProfile {
 	if batch.ProfileID == nil {
 		return nil
 	}
@@ -454,9 +457,9 @@ func (s *Service) proposeItems(
 	tenantInfo pagination.TenantInfo,
 	batch *capture.CaptureBatch,
 	pages []*capture.CapturePage,
-	proposals []capture.Proposal,
+	proposals []capturesplit.Proposal,
 ) ([]*capture.CaptureItem, error) {
-	sheets := make(map[pulid.ID]*capture.CaptureCoverSheet)
+	sheets := make(map[pulid.ID]*capturecoversheet.CaptureCoverSheet)
 	items := make([]*capture.CaptureItem, 0, len(proposals))
 
 	for i, proposal := range proposals {
@@ -502,8 +505,8 @@ func (s *Service) coverSheet(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-	cache map[pulid.ID]*capture.CaptureCoverSheet,
-) (*capture.CaptureCoverSheet, error) {
+	cache map[pulid.ID]*capturecoversheet.CaptureCoverSheet,
+) (*capturecoversheet.CaptureCoverSheet, error) {
 	if sheet, ok := cache[id]; ok {
 		return sheet, nil
 	}

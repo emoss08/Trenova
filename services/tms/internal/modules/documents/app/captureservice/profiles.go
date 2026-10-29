@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,22 +29,22 @@ const (
 
 // ProfileSettings is everything a person sets on a scanning profile.
 type ProfileSettings struct {
-	Name                string                      `json:"name"`
-	Description         string                      `json:"description"`
-	Status              capture.ProfileStatus       `json:"status"`
-	IsDefault           bool                        `json:"isDefault"`
-	DPI                 int                         `json:"dpi"`
-	PixelType           capture.PixelType           `json:"pixelType"`
-	Duplex              bool                        `json:"duplex"`
-	UseFeeder           bool                        `json:"useFeeder"`
-	DiscardBlankPages   bool                        `json:"discardBlankPages"`
-	JPEGQuality         int                         `json:"jpegQuality"`
-	ShowDriverUI        bool                        `json:"showDriverUi"`
-	SeparatorStrategies []capture.SeparatorStrategy `json:"separatorStrategies"`
-	FixedPageCount      int                         `json:"fixedPageCount"`
+	Name                string                             `json:"name"`
+	Description         string                             `json:"description"`
+	Status              captureprofile.ProfileStatus       `json:"status"`
+	IsDefault           bool                               `json:"isDefault"`
+	DPI                 int                                `json:"dpi"`
+	PixelType           capture.PixelType                  `json:"pixelType"`
+	Duplex              bool                               `json:"duplex"`
+	UseFeeder           bool                               `json:"useFeeder"`
+	DiscardBlankPages   bool                               `json:"discardBlankPages"`
+	JPEGQuality         int                                `json:"jpegQuality"`
+	ShowDriverUI        bool                               `json:"showDriverUi"`
+	SeparatorStrategies []captureprofile.SeparatorStrategy `json:"separatorStrategies"`
+	FixedPageCount      int                                `json:"fixedPageCount"`
 }
 
-func (ps *ProfileSettings) apply(profile *capture.CaptureProfile) {
+func (ps *ProfileSettings) apply(profile *captureprofile.CaptureProfile) {
 	profile.Name = strings.TrimSpace(ps.Name)
 	profile.Description = strings.TrimSpace(ps.Description)
 	profile.Status = ps.Status
@@ -57,7 +58,7 @@ func (ps *ProfileSettings) apply(profile *capture.CaptureProfile) {
 	profile.ShowDriverUI = ps.ShowDriverUI
 	profile.FixedPageCount = ps.FixedPageCount
 
-	strategies := make([]capture.SeparatorStrategy, 0, len(ps.SeparatorStrategies))
+	strategies := make([]captureprofile.SeparatorStrategy, 0, len(ps.SeparatorStrategies))
 	for _, strategy := range ps.SeparatorStrategies {
 		if !slices.Contains(strategies, strategy) {
 			strategies = append(strategies, strategy)
@@ -68,16 +69,16 @@ func (ps *ProfileSettings) apply(profile *capture.CaptureProfile) {
 }
 
 type ListProfilesInput struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	Status     capture.ProfileStatus `json:"status"`
-	Query      string                `json:"query"`
+	TenantInfo pagination.TenantInfo        `json:"-"`
+	Status     captureprofile.ProfileStatus `json:"status"`
+	Query      string                       `json:"query"`
 }
 
 // ListProfiles is every profile, for the people who manage them.
 func (s *Service) ListProfiles(
 	ctx context.Context,
 	in *ListProfilesInput,
-) ([]*capture.CaptureProfile, error) {
+) ([]*captureprofile.CaptureProfile, error) {
 	if _, err := s.require(
 		ctx,
 		in.TenantInfo,
@@ -96,7 +97,7 @@ func (s *Service) ListProfiles(
 func (s *Service) AvailableProfiles(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*capture.CaptureProfile, error) {
+) ([]*captureprofile.CaptureProfile, error) {
 	if _, err := s.require(
 		ctx,
 		tenantInfo,
@@ -106,15 +107,15 @@ func (s *Service) AvailableProfiles(
 		return nil, err
 	}
 
-	return s.listProfiles(ctx, tenantInfo, capture.ProfileActive, "")
+	return s.listProfiles(ctx, tenantInfo, captureprofile.ProfileActive, "")
 }
 
 func (s *Service) listProfiles(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	status capture.ProfileStatus,
+	status captureprofile.ProfileStatus,
 	query string,
-) ([]*capture.CaptureProfile, error) {
+) ([]*captureprofile.CaptureProfile, error) {
 	if status != "" && !status.IsValid() {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid,
 			"Status must be Active or Inactive")
@@ -140,7 +141,7 @@ func (s *Service) GetProfile(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	profileID pulid.ID,
-) (*capture.CaptureProfile, error) {
+) (*captureprofile.CaptureProfile, error) {
 	if _, err := s.require(
 		ctx,
 		tenantInfo,
@@ -166,7 +167,7 @@ type CreateProfileInput struct {
 func (s *Service) CreateProfile(
 	ctx context.Context,
 	in *CreateProfileInput,
-) (*capture.CaptureProfile, error) {
+) (*captureprofile.CaptureProfile, error) {
 	if _, err := s.require(
 		ctx,
 		in.TenantInfo,
@@ -176,7 +177,7 @@ func (s *Service) CreateProfile(
 		return nil, err
 	}
 
-	profile := &capture.CaptureProfile{
+	profile := &captureprofile.CaptureProfile{
 		ID:             pulid.MustNew("cprf_"),
 		OrganizationID: in.TenantInfo.OrgID,
 		BusinessUnitID: in.TenantInfo.BuID,
@@ -211,7 +212,7 @@ type UpdateProfileInput struct {
 func (s *Service) UpdateProfile(
 	ctx context.Context,
 	in *UpdateProfileInput,
-) (*capture.CaptureProfile, error) {
+) (*captureprofile.CaptureProfile, error) {
 	if _, err := s.require(
 		ctx,
 		in.TenantInfo,
@@ -287,7 +288,7 @@ func (s *Service) DeleteProfile(
 	return nil
 }
 
-func validateProfile(profile *capture.CaptureProfile) error {
+func validateProfile(profile *captureprofile.CaptureProfile) error {
 	multiErr := errortypes.NewMultiError()
 	profile.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -320,7 +321,7 @@ func profileConstraintError(err error) error {
 func (s *Service) profileChanged(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	profile *capture.CaptureProfile,
+	profile *captureprofile.CaptureProfile,
 	op permission.Operation,
 	action string,
 	comment string,

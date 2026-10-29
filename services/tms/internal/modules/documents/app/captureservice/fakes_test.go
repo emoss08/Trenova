@@ -13,6 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -44,13 +48,13 @@ type world struct {
 
 	tenant      pagination.TenantInfo
 	devices     map[pulid.ID]*capture.CaptureDevice
-	pairings    map[pulid.ID]*capture.CapturePairing
-	profiles    map[pulid.ID]*capture.CaptureProfile
-	requests    map[pulid.ID]*capture.CaptureRequest
+	pairings    map[pulid.ID]*capturepairing.CapturePairing
+	profiles    map[pulid.ID]*captureprofile.CaptureProfile
+	requests    map[pulid.ID]*capturerequest.CaptureRequest
 	batches     map[pulid.ID]*capture.CaptureBatch
 	pages       map[pulid.ID]*capture.CapturePage
 	items       map[pulid.ID]*capture.CaptureItem
-	coverSheets map[pulid.ID]*capture.CaptureCoverSheet
+	coverSheets map[pulid.ID]*capturecoversheet.CaptureCoverSheet
 	records     map[string]bool
 	docTypes    map[pulid.ID]*documenttype.DocumentType
 	objects     map[string][]byte
@@ -73,13 +77,13 @@ func newWorld() *world {
 	return &world{
 		tenant:      pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		devices:     map[pulid.ID]*capture.CaptureDevice{},
-		pairings:    map[pulid.ID]*capture.CapturePairing{},
-		profiles:    map[pulid.ID]*capture.CaptureProfile{},
-		requests:    map[pulid.ID]*capture.CaptureRequest{},
+		pairings:    map[pulid.ID]*capturepairing.CapturePairing{},
+		profiles:    map[pulid.ID]*captureprofile.CaptureProfile{},
+		requests:    map[pulid.ID]*capturerequest.CaptureRequest{},
 		batches:     map[pulid.ID]*capture.CaptureBatch{},
 		pages:       map[pulid.ID]*capture.CapturePage{},
 		items:       map[pulid.ID]*capture.CaptureItem{},
-		coverSheets: map[pulid.ID]*capture.CaptureCoverSheet{},
+		coverSheets: map[pulid.ID]*capturecoversheet.CaptureCoverSheet{},
 		records:     map[string]bool{},
 		docTypes:    map[pulid.ID]*documenttype.DocumentType{},
 		objects:     map[string][]byte{},
@@ -280,8 +284,8 @@ type fakePairings struct{ w *world }
 
 func (f *fakePairings) Create(
 	_ context.Context,
-	e *capture.CapturePairing,
-) (*capture.CapturePairing, error) {
+	e *capturepairing.CapturePairing,
+) (*capturepairing.CapturePairing, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	if e.ID.IsNil() {
@@ -294,8 +298,8 @@ func (f *fakePairings) Create(
 
 func (f *fakePairings) Update(
 	_ context.Context,
-	e *capture.CapturePairing,
-) (*capture.CapturePairing, error) {
+	e *capturepairing.CapturePairing,
+) (*capturepairing.CapturePairing, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	cur, ok := f.w.pairings[e.ID]
@@ -311,7 +315,7 @@ func (f *fakePairings) Update(
 func (f *fakePairings) GetByDeviceCodeHash(
 	_ context.Context,
 	h string,
-) (*capture.CapturePairing, error) {
+) (*capturepairing.CapturePairing, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for _, p := range f.w.pairings {
@@ -326,12 +330,12 @@ func (f *fakePairings) GetByDeviceCodeHash(
 func (f *fakePairings) GetOpenByUserCode(
 	_ context.Context,
 	code string,
-) (*capture.CapturePairing, error) {
+) (*capturepairing.CapturePairing, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for _, p := range f.w.pairings {
 		if p.UserCode == code &&
-			(p.Status == capture.PairingPending || p.Status == capture.PairingApproved) {
+			(p.Status == capturepairing.PairingPending || p.Status == capturepairing.PairingApproved) {
 			return clone(p), nil
 		}
 	}
@@ -345,7 +349,7 @@ func (f *fakePairings) ExpireStale(_ context.Context, now int64) (int, error) {
 	n := 0
 	for _, p := range f.w.pairings {
 		if !p.Status.Terminal() && p.ExpiresAt <= now {
-			p.Status = capture.PairingExpired
+			p.Status = capturepairing.PairingExpired
 			n++
 		}
 	}
@@ -358,11 +362,11 @@ type fakeProfiles struct{ w *world }
 func (f *fakeProfiles) List(
 	_ context.Context,
 	req *captureports.ListCaptureProfilesRequest,
-) (*pagination.ListResult[*capture.CaptureProfile], error) {
+) (*pagination.ListResult[*captureprofile.CaptureProfile], error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 
-	out := make([]*capture.CaptureProfile, 0, len(f.w.profiles))
+	out := make([]*captureprofile.CaptureProfile, 0, len(f.w.profiles))
 	for _, p := range f.w.profiles {
 		if !inTenant(p.OrganizationID, p.BusinessUnitID, req.Filter.TenantInfo) {
 			continue
@@ -372,7 +376,7 @@ func (f *fakeProfiles) List(
 		}
 		out = append(out, clone(p))
 	}
-	slices.SortFunc(out, func(a, b *capture.CaptureProfile) int {
+	slices.SortFunc(out, func(a, b *captureprofile.CaptureProfile) int {
 		if a.IsDefault != b.IsDefault {
 			if a.IsDefault {
 				return -1
@@ -384,7 +388,7 @@ func (f *fakeProfiles) List(
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	return &pagination.ListResult[*capture.CaptureProfile]{
+	return &pagination.ListResult[*captureprofile.CaptureProfile]{
 		Items:      out,
 		Total:      len(out),
 		TotalExact: true,
@@ -394,7 +398,7 @@ func (f *fakeProfiles) List(
 func (f *fakeProfiles) GetByID(
 	_ context.Context,
 	req captureports.GetCaptureProfileByIDRequest,
-) (*capture.CaptureProfile, error) {
+) (*captureprofile.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	p, ok := f.w.profiles[req.ID]
@@ -408,7 +412,7 @@ func (f *fakeProfiles) GetByID(
 func (f *fakeProfiles) GetDefault(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) (*capture.CaptureProfile, error) {
+) (*captureprofile.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for _, p := range f.w.profiles {
@@ -422,7 +426,7 @@ func (f *fakeProfiles) GetDefault(
 
 // clearDefault mirrors the repository taking the flag off every other profile
 // in the same transaction as the save that claims it.
-func (f *fakeProfiles) clearDefault(e *capture.CaptureProfile) {
+func (f *fakeProfiles) clearDefault(e *captureprofile.CaptureProfile) {
 	if !e.IsDefault {
 		return
 	}
@@ -436,8 +440,8 @@ func (f *fakeProfiles) clearDefault(e *capture.CaptureProfile) {
 
 func (f *fakeProfiles) Create(
 	_ context.Context,
-	e *capture.CaptureProfile,
-) (*capture.CaptureProfile, error) {
+	e *captureprofile.CaptureProfile,
+) (*captureprofile.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	f.clearDefault(e)
@@ -448,8 +452,8 @@ func (f *fakeProfiles) Create(
 
 func (f *fakeProfiles) Update(
 	_ context.Context,
-	e *capture.CaptureProfile,
-) (*capture.CaptureProfile, error) {
+	e *captureprofile.CaptureProfile,
+) (*captureprofile.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	current, ok := f.w.profiles[e.ID]
@@ -485,8 +489,8 @@ type fakeRequests struct{ w *world }
 
 func (f *fakeRequests) Create(
 	_ context.Context,
-	e *capture.CaptureRequest,
-) (*capture.CaptureRequest, error) {
+	e *capturerequest.CaptureRequest,
+) (*capturerequest.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	if e.ID.IsNil() {
@@ -499,8 +503,8 @@ func (f *fakeRequests) Create(
 
 func (f *fakeRequests) Update(
 	_ context.Context,
-	e *capture.CaptureRequest,
-) (*capture.CaptureRequest, error) {
+	e *capturerequest.CaptureRequest,
+) (*capturerequest.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	cur, ok := f.w.requests[e.ID]
@@ -516,7 +520,7 @@ func (f *fakeRequests) Update(
 func (f *fakeRequests) GetByID(
 	_ context.Context,
 	req captureports.GetCaptureRequestByIDRequest,
-) (*capture.CaptureRequest, error) {
+) (*capturerequest.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	r, ok := f.w.requests[req.ID]
@@ -530,10 +534,10 @@ func (f *fakeRequests) GetByID(
 func (f *fakeRequests) ListOpen(
 	_ context.Context,
 	req captureports.ListOpenCaptureRequestsRequest,
-) ([]*capture.CaptureRequest, error) {
+) ([]*capturerequest.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
-	out := []*capture.CaptureRequest{}
+	out := []*capturerequest.CaptureRequest{}
 	for _, r := range f.w.requests {
 		if r.DeviceID == req.DeviceID && !r.Status.Terminal() {
 			out = append(out, clone(r))
@@ -541,7 +545,7 @@ func (f *fakeRequests) ListOpen(
 	}
 	slices.SortFunc(
 		out,
-		func(a, b *capture.CaptureRequest) int { return strings.Compare(a.ID.String(), b.ID.String()) },
+		func(a, b *capturerequest.CaptureRequest) int { return strings.Compare(a.ID.String(), b.ID.String()) },
 	)
 
 	return out, nil
@@ -550,7 +554,7 @@ func (f *fakeRequests) ListOpen(
 func (f *fakeRequests) ListForTarget(
 	context.Context,
 	captureports.ListCaptureRequestsForTargetRequest,
-) ([]*capture.CaptureRequest, error) {
+) ([]*capturerequest.CaptureRequest, error) {
 	return nil, nil
 }
 
@@ -558,10 +562,10 @@ func (f *fakeRequests) ListExpired(
 	_ context.Context,
 	now int64,
 	_ int,
-) ([]*capture.CaptureRequest, error) {
+) ([]*capturerequest.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
-	out := []*capture.CaptureRequest{}
+	out := []*capturerequest.CaptureRequest{}
 	for _, r := range f.w.requests {
 		if r.IsExpired(now) {
 			out = append(out, clone(r))
@@ -947,7 +951,10 @@ func (f *fakeItems) ReplaceOpen(
 
 type fakeCoverSheets struct{ w *world }
 
-func (f *fakeCoverSheets) CreateMany(_ context.Context, sheets []*capture.CaptureCoverSheet) error {
+func (f *fakeCoverSheets) CreateMany(
+	_ context.Context,
+	sheets []*capturecoversheet.CaptureCoverSheet,
+) error {
 	for _, s := range sheets {
 		f.w.coverSheets[s.ID] = clone(s)
 	}
@@ -958,7 +965,7 @@ func (f *fakeCoverSheets) CreateMany(_ context.Context, sheets []*capture.Captur
 func (f *fakeCoverSheets) GetByID(
 	_ context.Context,
 	req captureports.GetCaptureCoverSheetByIDRequest,
-) (*capture.CaptureCoverSheet, error) {
+) (*capturecoversheet.CaptureCoverSheet, error) {
 	s, ok := f.w.coverSheets[req.ID]
 	if !ok {
 		return nil, notFound("Cover sheet")
@@ -970,7 +977,7 @@ func (f *fakeCoverSheets) GetByID(
 func (f *fakeCoverSheets) GetByTokenHash(
 	_ context.Context,
 	req captureports.GetCaptureCoverSheetByTokenRequest,
-) (*capture.CaptureCoverSheet, error) {
+) (*capturecoversheet.CaptureCoverSheet, error) {
 	for _, s := range f.w.coverSheets {
 		if s.TokenHash == req.TokenHash &&
 			inTenant(s.OrganizationID, s.BusinessUnitID, req.TenantInfo) {

@@ -1,9 +1,11 @@
-package capture
+package capturerequest
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,8 +23,9 @@ const (
 	// It is longer because finding the right file and printing it takes longer
 	// than feeding a scanner.
 	PrintRequestLifetimeSeconds = 10 * 60
-	maxFailureMessageLength     = 500
-	maxSourceNameLength         = 255
+
+	maxRequestFailureMessageLength = 500
+	maxRequestSourceNameLength     = 255
 )
 
 // CaptureRequest is a person asking, from the web app, for their device to capture
@@ -54,9 +57,9 @@ type CaptureRequest struct {
 	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	CaptureProfile *CaptureProfile      `json:"profile,omitempty"      keel:"belongs:profile_id"`
-	Organization   *tenant.Organization `json:"organization,omitempty"`
-	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	CaptureProfile *captureprofile.CaptureProfile `json:"profile,omitempty"      keel:"belongs:profile_id"`
+	Organization   *tenant.Organization           `json:"organization,omitempty"`
+	BusinessUnit   *tenant.BusinessUnit           `json:"businessUnit,omitempty"`
 }
 
 func (r *CaptureRequest) Validate(multiErr *errortypes.MultiError) {
@@ -71,17 +74,17 @@ func (r *CaptureRequest) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[RequestStatus]("Status is not a request status"),
 		),
-		validation.Field(&r.SourceName, validation.Length(0, maxSourceNameLength)),
+		validation.Field(&r.SourceName, validation.Length(0, maxRequestSourceNameLength)),
 		validation.Field(
 			&r.FailureCode,
 			domainvalidation.ValidEnum[RequestFailureCode](
 				"Failure code is not one Trenova recognises",
 			),
 		),
-		validation.Field(&r.FailureMessage, validation.Length(0, maxFailureMessageLength)),
+		validation.Field(&r.FailureMessage, validation.Length(0, maxRequestFailureMessageLength)),
 	))
 
-	r.Target().Validate(multiErr, targetFields, true)
+	r.Target().Validate(multiErr, capture.DefaultTargetFields, true)
 
 	if r.Mode == RequestModePrint && r.ProfileID != nil {
 		multiErr.Add("profileId", errortypes.ErrInvalid, "A print has no scan profile")
@@ -89,18 +92,13 @@ func (r *CaptureRequest) Validate(multiErr *errortypes.MultiError) {
 }
 
 // Target is where the request's pages are to be filed.
-func (r *CaptureRequest) Target() Target {
+func (r *CaptureRequest) Target() capture.Target {
 	id := r.TargetID
-	return Target{ResourceType: r.TargetType, ResourceID: &id, DocumentTypeID: r.DocumentTypeID}
-}
-
-// Lifetime is how long a request of this mode waits for its device.
-func (m RequestMode) Lifetime() int64 {
-	if m == RequestModePrint {
-		return PrintRequestLifetimeSeconds
+	return capture.Target{
+		ResourceType:   r.TargetType,
+		ResourceID:     &id,
+		DocumentTypeID: r.DocumentTypeID,
 	}
-
-	return ScanRequestLifetimeSeconds
 }
 
 // IsExpired reports whether a request still waiting on its device has run out

@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -30,14 +32,14 @@ const (
 )
 
 type CreateRequestInput struct {
-	TenantInfo     pagination.TenantInfo `json:"-"`
-	DeviceID       pulid.ID              `json:"deviceId"`
-	Mode           capture.RequestMode   `json:"mode"`
-	TargetType     string                `json:"targetType"`
-	TargetID       pulid.ID              `json:"targetId"`
-	DocumentTypeID *pulid.ID             `json:"documentTypeId"`
-	ProfileID      *pulid.ID             `json:"profileId"`
-	SourceName     string                `json:"sourceName"`
+	TenantInfo     pagination.TenantInfo      `json:"-"`
+	DeviceID       pulid.ID                   `json:"deviceId"`
+	Mode           capturerequest.RequestMode `json:"mode"`
+	TargetType     string                     `json:"targetType"`
+	TargetID       pulid.ID                   `json:"targetId"`
+	DocumentTypeID *pulid.ID                  `json:"documentTypeId"`
+	ProfileID      *pulid.ID                  `json:"profileId"`
+	SourceName     string                     `json:"sourceName"`
 }
 
 // CreateRequest asks one of the person's own devices to capture into a
@@ -47,7 +49,7 @@ type CreateRequestInput struct {
 func (s *Service) CreateRequest(
 	ctx context.Context,
 	in *CreateRequestInput,
-) (*capture.CaptureRequest, error) {
+) (*capturerequest.CaptureRequest, error) {
 	if _, err := s.require(
 		ctx,
 		in.TenantInfo,
@@ -75,13 +77,13 @@ func (s *Service) CreateRequest(
 	}
 
 	now := timeutils.NowUnix()
-	req := &capture.CaptureRequest{
+	req := &capturerequest.CaptureRequest{
 		OrganizationID: in.TenantInfo.OrgID,
 		BusinessUnitID: in.TenantInfo.BuID,
 		UserID:         in.TenantInfo.UserID,
 		DeviceID:       device.ID,
 		Mode:           in.Mode,
-		Status:         capture.RequestPending,
+		Status:         capturerequest.RequestPending,
 		TargetType:     in.TargetType,
 		TargetID:       in.TargetID,
 		DocumentTypeID: in.DocumentTypeID,
@@ -89,7 +91,7 @@ func (s *Service) CreateRequest(
 		ExpiresAt:      now + in.Mode.Lifetime(),
 	}
 
-	if in.Mode == capture.RequestModeScan {
+	if in.Mode == capturerequest.RequestModeScan {
 		profileID, found, profileErr := s.resolveProfile(ctx, in.TenantInfo, in.ProfileID)
 		if profileErr != nil {
 			return nil, profileErr
@@ -107,7 +109,7 @@ func (s *Service) CreateRequest(
 		return nil, multiErr
 	}
 
-	if in.Mode == capture.RequestModePrint {
+	if in.Mode == capturerequest.RequestModePrint {
 		s.cancelArmedPrints(ctx, in.TenantInfo, device.ID)
 	}
 
@@ -145,10 +147,10 @@ func (s *Service) cancelArmedPrints(
 
 	now := timeutils.NowUnix()
 	for _, req := range open {
-		if req.Mode != capture.RequestModePrint || req.BatchID != nil {
+		if req.Mode != capturerequest.RequestModePrint || req.BatchID != nil {
 			continue
 		}
-		if !req.Transition(capture.RequestCanceled, now) {
+		if !req.Transition(capturerequest.RequestCanceled, now) {
 			continue
 		}
 		if _, err = s.requests.Update(ctx, req); err != nil {
@@ -290,7 +292,7 @@ func (s *Service) resolveProfile(
 
 		return pulid.Nil, false, err
 	}
-	if profile.Status != capture.ProfileActive {
+	if profile.Status != captureprofile.ProfileActive {
 		return pulid.Nil, false, errortypes.NewValidationError("profileId", errortypes.ErrInvalid,
 			"That profile is no longer offered")
 	}
@@ -303,7 +305,7 @@ func (s *Service) CancelRequest(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	requestID pulid.ID,
-) (*capture.CaptureRequest, error) {
+) (*capturerequest.CaptureRequest, error) {
 	req, err := s.requests.GetByID(ctx, captureports.GetCaptureRequestByIDRequest{
 		ID:         requestID,
 		TenantInfo: tenantInfo,
@@ -314,7 +316,7 @@ func (s *Service) CancelRequest(
 	if req.UserID != tenantInfo.UserID {
 		return nil, errortypes.NewAuthorizationError("You can only cancel your own requests")
 	}
-	if !req.Transition(capture.RequestCanceled, timeutils.NowUnix()) {
+	if !req.Transition(capturerequest.RequestCanceled, timeutils.NowUnix()) {
 		return req, nil
 	}
 
@@ -333,7 +335,7 @@ func (s *Service) CancelRequest(
 func (s *Service) OpenRequests(
 	ctx context.Context,
 	principal *DevicePrincipal,
-) ([]*capture.CaptureRequest, error) {
+) ([]*capturerequest.CaptureRequest, error) {
 	open, err := s.requests.ListOpen(ctx, captureports.ListOpenCaptureRequestsRequest{
 		TenantInfo: principal.TenantInfo(),
 		DeviceID:   principal.Device.ID,
@@ -343,7 +345,7 @@ func (s *Service) OpenRequests(
 	}
 
 	now := timeutils.NowUnix()
-	live := make([]*capture.CaptureRequest, 0, len(open))
+	live := make([]*capturerequest.CaptureRequest, 0, len(open))
 	for _, req := range open {
 		if req.IsExpired(now) {
 			s.expire(ctx, req, now)
@@ -357,10 +359,10 @@ func (s *Service) OpenRequests(
 }
 
 type RequestStatusReport struct {
-	RequestID      pulid.ID                   `json:"-"`
-	Status         capture.RequestStatus      `json:"status"`
-	FailureCode    capture.RequestFailureCode `json:"failureCode"`
-	FailureMessage string                     `json:"failureMessage"`
+	RequestID      pulid.ID                          `json:"-"`
+	Status         capturerequest.RequestStatus      `json:"status"`
+	FailureCode    capturerequest.RequestFailureCode `json:"failureCode"`
+	FailureMessage string                            `json:"failureMessage"`
 }
 
 // ReportRequestStatus is the device saying how a request is going. A report
@@ -370,30 +372,33 @@ func (s *Service) ReportRequestStatus(
 	ctx context.Context,
 	principal *DevicePrincipal,
 	report *RequestStatusReport,
-) (*capture.CaptureRequest, error) {
+) (*capturerequest.CaptureRequest, error) {
 	req, err := s.deviceRequest(ctx, principal, report.RequestID)
 	if err != nil {
 		return nil, err
 	}
 
 	switch report.Status {
-	case capture.RequestDelivered,
-		capture.RequestInProgress,
-		capture.RequestFailed,
-		capture.RequestCanceled:
-	case capture.RequestPending, capture.RequestCompleted, capture.RequestExpired:
+	case capturerequest.RequestDelivered,
+		capturerequest.RequestInProgress,
+		capturerequest.RequestFailed,
+		capturerequest.RequestCanceled:
+	case capturerequest.RequestPending,
+		capturerequest.RequestCompleted,
+		capturerequest.RequestExpired:
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid,
 			"A device may report a request delivered, in progress, failed or cancelled")
 	default:
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid, "Unknown status")
 	}
 
-	if report.Status == capture.RequestFailed || report.Status == capture.RequestCanceled {
+	if report.Status == capturerequest.RequestFailed ||
+		report.Status == capturerequest.RequestCanceled {
 		code := report.FailureCode
 		if code == "" {
-			code = capture.FailureInternal
-			if report.Status == capture.RequestCanceled {
-				code = capture.FailureCanceledByUser
+			code = capturerequest.FailureInternal
+			if report.Status == capturerequest.RequestCanceled {
+				code = capturerequest.FailureCanceledByUser
 			}
 		}
 		if !code.IsValid() {
@@ -425,7 +430,7 @@ func (s *Service) deviceRequest(
 	ctx context.Context,
 	principal *DevicePrincipal,
 	requestID pulid.ID,
-) (*capture.CaptureRequest, error) {
+) (*capturerequest.CaptureRequest, error) {
 	req, err := s.requests.GetByID(ctx, captureports.GetCaptureRequestByIDRequest{
 		ID:         requestID,
 		TenantInfo: principal.TenantInfo(),
@@ -452,7 +457,7 @@ type ListRequestsForTargetInput struct {
 func (s *Service) ListRequestsForTarget(
 	ctx context.Context,
 	in *ListRequestsForTargetInput,
-) ([]*capture.CaptureRequest, error) {
+) ([]*capturerequest.CaptureRequest, error) {
 	if _, err := s.require(
 		ctx,
 		in.TenantInfo,
@@ -498,11 +503,11 @@ func (s *Service) ExpireRequests(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-func (s *Service) expire(ctx context.Context, req *capture.CaptureRequest, now int64) bool {
-	if !req.Transition(capture.RequestExpired, now) {
+func (s *Service) expire(ctx context.Context, req *capturerequest.CaptureRequest, now int64) bool {
+	if !req.Transition(capturerequest.RequestExpired, now) {
 		return false
 	}
-	req.FailureCode = capture.FailureNotDelivered
+	req.FailureCode = capturerequest.FailureNotDelivered
 
 	updated, err := s.requests.Update(ctx, req)
 	if err != nil {
@@ -520,7 +525,11 @@ func (s *Service) expire(ctx context.Context, req *capture.CaptureRequest, now i
 // changed. It is addressed to the person, so the rest of the tenant never
 // hears about it, and it names the device so the person's other devices
 // ignore it.
-func (s *Service) signalRequest(ctx context.Context, req *capture.CaptureRequest, action string) {
+func (s *Service) signalRequest(
+	ctx context.Context,
+	req *capturerequest.CaptureRequest,
+	action string,
+) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  req.OrganizationID,
 		BuID:   req.BusinessUnitID,

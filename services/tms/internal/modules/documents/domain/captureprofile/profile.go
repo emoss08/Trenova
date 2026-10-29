@@ -1,10 +1,11 @@
-package capture
+package captureprofile
 
 import (
 	"context"
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -36,7 +37,7 @@ type CaptureProfile struct {
 	Status              ProfileStatus       `json:"status"              keel:"status"`
 	IsDefault           bool                `json:"isDefault"           keel:"is_default"`
 	DPI                 int                 `json:"dpi"                 keel:"dpi"`
-	PixelType           PixelType           `json:"pixelType"           keel:"pixel_type"`
+	PixelType           capture.PixelType   `json:"pixelType"           keel:"pixel_type"`
 	Duplex              bool                `json:"duplex"              keel:"duplex"`
 	UseFeeder           bool                `json:"useFeeder"           keel:"use_feeder"`
 	DiscardBlankPages   bool                `json:"discardBlankPages"   keel:"discard_blank_pages"`
@@ -70,7 +71,7 @@ func (p *CaptureProfile) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.PixelType,
 			validation.Required.Error("Colour mode is required"),
-			domainvalidation.ValidEnum[PixelType]("Colour mode is not one of the three"),
+			domainvalidation.ValidEnum[capture.PixelType]("Colour mode is not one of the three"),
 		),
 		validation.Field(&p.JPEGQuality,
 			validation.Required.Error("Image quality is required"),
@@ -117,7 +118,7 @@ func (p *CaptureProfile) ApplyDefaults() {
 		p.DPI = 300
 	}
 	if p.PixelType == "" {
-		p.PixelType = PixelBlackWhite
+		p.PixelType = capture.PixelBlackWhite
 	}
 	if p.JPEGQuality == 0 {
 		p.JPEGQuality = 80

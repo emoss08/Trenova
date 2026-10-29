@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -88,7 +89,7 @@ func (s *Service) DescribeDevice(
 func (s *Service) DeviceProfiles(
 	ctx context.Context,
 	principal *DevicePrincipal,
-) ([]*capture.CaptureProfile, error) {
+) ([]*captureprofile.CaptureProfile, error) {
 	if _, err := s.requireEnabled(ctx, principal.TenantInfo()); err != nil {
 		return nil, err
 	}
