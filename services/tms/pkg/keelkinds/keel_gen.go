@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
@@ -931,6 +933,146 @@ func (c GeofenceTypeCol) NotIn(vs ...geofence.Type) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
+// PermissionDataScopeCol is a column of permission.DataScope values.
+type PermissionDataScopeCol struct{ keel.StringCol }
+
+func (c PermissionDataScopeCol) Eq(v permission.DataScope) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c PermissionDataScopeCol) Ne(v permission.DataScope) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c PermissionDataScopeCol) Gt(v permission.DataScope) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c PermissionDataScopeCol) Gte(v permission.DataScope) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c PermissionDataScopeCol) Lt(v permission.DataScope) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c PermissionDataScopeCol) Lte(v permission.DataScope) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c PermissionDataScopeCol) IsDistinctFrom(v permission.DataScope) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c PermissionDataScopeCol) Between(lo, hi permission.DataScope) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c PermissionDataScopeCol) To(v permission.DataScope) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c PermissionDataScopeCol) In(vs ...permission.DataScope) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c PermissionDataScopeCol) NotIn(vs ...permission.DataScope) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// PermissionFieldSensitivityCol is a column of permission.FieldSensitivity values.
+type PermissionFieldSensitivityCol struct{ keel.StringCol }
+
+func (c PermissionFieldSensitivityCol) Eq(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c PermissionFieldSensitivityCol) Ne(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c PermissionFieldSensitivityCol) Gt(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c PermissionFieldSensitivityCol) Gte(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c PermissionFieldSensitivityCol) Lt(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c PermissionFieldSensitivityCol) Lte(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c PermissionFieldSensitivityCol) IsDistinctFrom(v permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c PermissionFieldSensitivityCol) Between(lo, hi permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c PermissionFieldSensitivityCol) To(v permission.FieldSensitivity) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c PermissionFieldSensitivityCol) In(vs ...permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c PermissionFieldSensitivityCol) NotIn(vs ...permission.FieldSensitivity) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// PermissionOperationCol is a column of permission.Operation values.
+type PermissionOperationCol struct{ keel.StringCol }
+
+func (c PermissionOperationCol) Eq(v permission.Operation) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c PermissionOperationCol) Ne(v permission.Operation) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c PermissionOperationCol) Gt(v permission.Operation) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c PermissionOperationCol) Gte(v permission.Operation) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c PermissionOperationCol) Lt(v permission.Operation) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c PermissionOperationCol) Lte(v permission.Operation) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c PermissionOperationCol) IsDistinctFrom(v permission.Operation) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c PermissionOperationCol) Between(lo, hi permission.Operation) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c PermissionOperationCol) To(v permission.Operation) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c PermissionOperationCol) In(vs ...permission.Operation) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c PermissionOperationCol) NotIn(vs ...permission.Operation) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// PermissionResourceCol is a column of permission.Resource values.
+type PermissionResourceCol struct{ keel.StringCol }
+
+func (c PermissionResourceCol) Eq(v permission.Resource) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c PermissionResourceCol) Ne(v permission.Resource) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c PermissionResourceCol) Gt(v permission.Resource) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c PermissionResourceCol) Gte(v permission.Resource) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c PermissionResourceCol) Lt(v permission.Resource) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c PermissionResourceCol) Lte(v permission.Resource) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c PermissionResourceCol) IsDistinctFrom(v permission.Resource) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c PermissionResourceCol) Between(lo, hi permission.Resource) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c PermissionResourceCol) To(v permission.Resource) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c PermissionResourceCol) In(vs ...permission.Resource) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c PermissionResourceCol) NotIn(vs ...permission.Resource) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
 // PgvectorHalfVectorCol is a column of pgvector.HalfVector values.
 type PgvectorHalfVectorCol struct{ keel.AnyCol }
 
@@ -991,5 +1133,28 @@ func (c RategeoScopeTypeCol) In(vs ...rategeo.ScopeType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c RategeoScopeTypeCol) NotIn(vs ...rategeo.ScopeType) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// RecordkindKindCol is a column of recordkind.Kind values.
+type RecordkindKindCol struct{ keel.StringCol }
+
+func (c RecordkindKindCol) Eq(v recordkind.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c RecordkindKindCol) Ne(v recordkind.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c RecordkindKindCol) Gt(v recordkind.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c RecordkindKindCol) Gte(v recordkind.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c RecordkindKindCol) Lt(v recordkind.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c RecordkindKindCol) Lte(v recordkind.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RecordkindKindCol) IsDistinctFrom(v recordkind.Kind) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c RecordkindKindCol) Between(lo, hi recordkind.Kind) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c RecordkindKindCol) To(v recordkind.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RecordkindKindCol) In(vs ...recordkind.Kind) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c RecordkindKindCol) NotIn(vs ...recordkind.Kind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

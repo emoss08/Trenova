@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -326,7 +325,7 @@ type PermissionsTable struct {
 	OrganizationID keelkinds.PulidIDCol
 	Resource       keel.StringCol
 	Operations     keel.StringArrayCol
-	DataScope      permissiondb.DataScopeCol
+	DataScope      keelkinds.PermissionDataScopeCol
 	CreatedAt      keel.Int64Col
 	UpdatedAt      keel.Int64Col
 }
@@ -340,7 +339,7 @@ var Permissions = &PermissionsTable{
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 3}}},
 	Resource:       keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 4}},
 	Operations:     keel.StringArrayCol{Col: keel.Col{Ref: &permissionsRef, Index: 5}},
-	DataScope:      permissiondb.DataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 6}}},
+	DataScope:      keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 6}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &permissionsRef, Index: 7}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &permissionsRef, Index: 8}},
 }
@@ -355,7 +354,7 @@ func BuildPermissions(r *keel.Ref) *PermissionsTable {
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Resource:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Operations:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 5}},
-		DataScope:      permissiondb.DataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		DataScope:      keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}

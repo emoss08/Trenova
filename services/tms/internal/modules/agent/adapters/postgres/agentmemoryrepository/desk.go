@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,7 +50,7 @@ func deskRows(memories []*agentmemory.Memory) []*agentmemoryports.DeskMemoryRow 
 func deskSelect() *keel.Query[*agentmemory.Memory] {
 	m := agentmemorydb.Memories
 	thread := conversationdb.Threads.As("desk_thread")
-	role := permissiondb.Roles.As("desk_role")
+	role := rbacdb.Roles.As("desk_role")
 
 	return m.LeftJoin(thread, thread.ID.EqCol(m.SourceThreadID)).
 		LeftJoin(role, role.ID.EqCol(m.RoleID)).

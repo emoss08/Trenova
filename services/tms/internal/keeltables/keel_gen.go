@@ -140,7 +140,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding/onboardingdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
@@ -658,13 +658,13 @@ func All() []*schema.Table {
 		reportdb.ReportRunsSchema(),
 		reportdb.ReportSchedulesSchema(),
 		reportdb.ReportViewsSchema(),
-		permissiondb.ResourcePermissionsSchema(),
+		rbacdb.ResourcePermissionsSchema(),
 		iamdb.RiskDecisionsSchema(),
-		permissiondb.RoleAgentGrantsSchema(),
-		permissiondb.RoleConstraintRolesSchema(),
-		permissiondb.RoleConstraintsSchema(),
-		permissiondb.RoleHierarchyEdgesSchema(),
-		permissiondb.RolesSchema(),
+		rbacdb.RoleAgentGrantsSchema(),
+		rbacdb.RoleConstraintRolesSchema(),
+		rbacdb.RoleConstraintsSchema(),
+		rbacdb.RoleHierarchyEdgesSchema(),
+		rbacdb.RolesSchema(),
 		tenderdb.RoutingGuideEntriesSchema(),
 		tenderdb.RoutingGuidesSchema(),
 		workersyncdriftdb.WorkerSyncDriftsSchema(),
@@ -730,7 +730,7 @@ func All() []*schema.Table {
 		notificationdb.PreferencesSchema(),
 		tenantdb.OrganizationMembershipsSchema(),
 		notificationdb.PushSubscriptionsSchema(),
-		permissiondb.UserRoleAssignmentsSchema(),
+		rbacdb.UserRoleAssignmentsSchema(),
 		tenantdb.UsersSchema(),
 		telematicsdb.VehicleInspectionsSchema(),
 		watchtowerdb.CursorsSchema(),

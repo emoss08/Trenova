@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
@@ -27,7 +27,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: tenantedvalidation.NewBuilder[*rbac.Role]().
 			WithModelName("Role").
 			WithUniquenessChecker(
-				keelcheck.NewChecker(p.DB, permissiondb.RolesSchema()),
+				keelcheck.NewChecker(p.DB, rbacdb.RolesSchema()),
 			).
 			WithUniqueField(
 				"name",

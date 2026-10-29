@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -260,7 +260,7 @@ func TestRoleRepository_GetRolesWithInheritanceStopsAtACycle(t *testing.T) {
 	second := newTestRole("Cycle Second", []pulid.ID{first.ID}, "driver")
 	require.NoError(t, f.repo.Create(f.ctx, second))
 
-	ro := permissiondb.Roles
+	ro := rbacdb.Roles
 	_, err := ro.Where(ro.ID.Eq(first.ID)).
 		Update(f.ctx, f.db, ro.ParentRoleIDs.To([]string{second.ID.String()}))
 	require.NoError(t, err)

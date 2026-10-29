@@ -4,12 +4,12 @@ package tenantdb
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"unsafe"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
@@ -848,8 +848,8 @@ func (t *UsersTable) Memberships() *OrganizationMembershipsTable {
 }
 
 // Assignments is the many relation.
-func (t *UsersTable) Assignments() *permissiondb.UserRoleAssignmentsTable {
-	return keel.Path(t.Ref, 2, permissiondb.BuildUserRoleAssignments)
+func (t *UsersTable) Assignments() *rbacdb.UserRoleAssignmentsTable {
+	return keel.Path(t.Ref, 2, rbacdb.BuildUserRoleAssignments)
 }
 
 // Get returns the users row with the given key, or keel.ErrNotFound.
@@ -1036,7 +1036,7 @@ func init() {
 	organizationMembershipsTable.Relations[2].Target = OrganizationsSchema()
 	usersTable.Relations[0].Target = OrganizationsSchema()
 	usersTable.Relations[1].Target = OrganizationMembershipsSchema()
-	usersTable.Relations[2].Target = permissiondb.UserRoleAssignmentsSchema()
+	usersTable.Relations[2].Target = rbacdb.UserRoleAssignmentsSchema()
 }
 
 var enumAvailabilityStatus = [...]schema.EnumValue{

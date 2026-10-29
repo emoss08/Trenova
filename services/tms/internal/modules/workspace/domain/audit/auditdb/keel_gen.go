@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey/apikeydb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -281,8 +280,8 @@ type EntriesTable struct {
 	PreviousState  keel.JSONBCol
 	CurrentState   keel.JSONBCol
 	Metadata       keel.JSONBCol
-	Resource       permissiondb.ResourceCol
-	Operation      permissiondb.OperationCol
+	Resource       keelkinds.PermissionResourceCol
+	Operation      keelkinds.PermissionOperationCol
 	ResourceID     keel.StringCol
 	CorrelationID  keel.StringCol
 	UserAgent      keel.StringCol
@@ -308,8 +307,8 @@ var Entries = &EntriesTable{
 	PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 9}},
 	CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 10}},
 	Metadata:       keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 11}},
-	Resource:       permissiondb.ResourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
-	Operation:      permissiondb.OperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
+	Resource:       keelkinds.PermissionResourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
+	Operation:      keelkinds.PermissionOperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
 	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 14}},
 	CorrelationID:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 15}},
 	UserAgent:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 16}},
@@ -336,8 +335,8 @@ func BuildEntries(r *keel.Ref) *EntriesTable {
 		PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		Metadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		Resource:       permissiondb.ResourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Operation:      permissiondb.OperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Resource:       keelkinds.PermissionResourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Operation:      keelkinds.PermissionOperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		CorrelationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		UserAgent:      keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},

@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -45,7 +45,7 @@ func withRole(
 		return q
 	}
 
-	return q.Load(permissiondb.UserRoleAssignments.Role())
+	return q.Load(rbacdb.UserRoleAssignments.Role())
 }
 
 func (r *repository) List(
@@ -56,7 +56,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*rbac.UserRoleAssignment], error) {
-			ura := permissiondb.UserRoleAssignments
+			ura := rbacdb.UserRoleAssignments
 			page := req.Filter.Pagination
 			rows := withRole(ura.Query(), req.ExpandRoles).
 				Limit(page.SafeLimit()).
@@ -84,7 +84,7 @@ func (r *repository) GetByID(
 	req permissionports.GetRoleAssignmentByIDRequest,
 ) (*rbac.UserRoleAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rbac.UserRoleAssignment, error) {
-		ura := permissiondb.UserRoleAssignments
+		ura := rbacdb.UserRoleAssignments
 		entity, err := withRole(ura.Where(ura.ID.Eq(req.RoleAssignmentID)), req.ExpandRoles).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {

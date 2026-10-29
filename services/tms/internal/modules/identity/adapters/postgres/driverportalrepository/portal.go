@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -294,7 +294,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 			return nil, fmt.Errorf("create portal user membership: %w", err)
 		}
 
-		if err = permissiondb.UserRoleAssignments.Create(ctx, db, &rbac.UserRoleAssignment{
+		if err = rbacdb.UserRoleAssignments.Create(ctx, db, &rbac.UserRoleAssignment{
 			ID:             pulid.MustNew("ura_"),
 			UserID:         req.User.ID,
 			OrganizationID: invitation.OrganizationID,
@@ -400,7 +400,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 	invitation *portalinvitation.PortalInvitation,
 	req *portalaccessports.ActivatePortalAccessRequest,
 ) (*rbac.Role, error) {
-	ro := permissiondb.Roles
+	ro := rbacdb.Roles
 	db := r.db.Keel(ctx)
 	role, err := ro.Where(ro.Name.Eq(req.RoleName), ro.IsSystem.IsTrue()).First(ctx, db)
 	if err == nil {

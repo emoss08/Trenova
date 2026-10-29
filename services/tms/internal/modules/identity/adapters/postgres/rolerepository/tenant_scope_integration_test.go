@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +39,7 @@ func seedRoleTenantFixture(
 		Name:           "Dispatcher " + tenant.Organization.ID.String(),
 		MaxSensitivity: permission.SensitivityInternal,
 	}
-	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
+	require.NoError(t, rbacdb.Roles.Create(ctx, db, role))
 
 	rp := &rbac.ResourcePermission{
 		RoleID:     role.ID,
@@ -47,7 +47,7 @@ func seedRoleTenantFixture(
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  permission.DataScopeOrganization,
 	}
-	require.NoError(t, permissiondb.ResourcePermissions.Create(ctx, db, rp))
+	require.NoError(t, rbacdb.ResourcePermissions.Create(ctx, db, rp))
 
 	assignment := &rbac.UserRoleAssignment{
 		UserID:         tenant.User.ID,
@@ -55,7 +55,7 @@ func seedRoleTenantFixture(
 		RoleID:         role.ID,
 		AssignedAt:     timeutils.NowUnix(),
 	}
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(ctx, db, assignment))
+	require.NoError(t, rbacdb.UserRoleAssignments.Create(ctx, db, assignment))
 
 	return roleTenantFixture{role: role, permission: rp, assignment: assignment}
 }
@@ -71,8 +71,8 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	ctx = tenantA.Ctx(ctx)
-	ura := permissiondb.UserRoleAssignments
-	rps := permissiondb.ResourcePermissions
+	ura := rbacdb.UserRoleAssignments
+	rps := rbacdb.ResourcePermissions
 
 	t.Run("an assignment cannot be deleted from another organization", func(t *testing.T) {
 		_, err := repo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{

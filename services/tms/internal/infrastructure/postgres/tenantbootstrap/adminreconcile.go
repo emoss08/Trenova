@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,7 +36,7 @@ func ReconcileAdminRole(
 		registry = permissioncatalog.NewRegistry()
 	}
 
-	r := permissiondb.Roles
+	r := rbacdb.Roles
 	roles, err := tenantscope.Scoped(ctx, r.Pick(r.ID).Where(
 		r.OrganizationID.Eq(scope.OrganizationID),
 		r.BusinessUnitID.Eq(scope.BusinessUnitID),
@@ -57,7 +57,7 @@ func ReconcileAdminRole(
 		roleIDs = append(roleIDs, role.ID)
 	}
 
-	rp := permissiondb.ResourcePermissions
+	rp := rbacdb.ResourcePermissions
 	existing, err := rp.Where(rp.RoleID.In(roleIDs...)).All(ctx, db)
 	if err != nil {
 		return result, fmt.Errorf("list administrator grants: %w", err)

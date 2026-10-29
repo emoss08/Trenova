@@ -14,9 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -301,7 +301,7 @@ func (f *integrationFixture) addRole(t *testing.T, role *rbac.Role) *rbac.Role {
 	if role.MaxSensitivity == "" {
 		role.MaxSensitivity = permission.SensitivityInternal
 	}
-	require.NoError(t, permissiondb.Roles.Create(f.ctx, f.db, role))
+	require.NoError(t, rbacdb.Roles.Create(f.ctx, f.db, role))
 	return role
 }
 
@@ -397,12 +397,12 @@ func seedActorRole(
 		})
 	}
 	if len(grants) > 0 {
-		require.NoError(t, permissiondb.ResourcePermissions.CreateMany(f.ctx, f.db, grants))
+		require.NoError(t, rbacdb.ResourcePermissions.CreateMany(f.ctx, f.db, grants))
 	}
 
 	require.NoError(
 		t,
-		permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &rbac.UserRoleAssignment{
+		rbacdb.UserRoleAssignments.Create(f.ctx, f.db, &rbac.UserRoleAssignment{
 			UserID:         f.actorID(),
 			OrganizationID: f.orgID(),
 			RoleID:         actorRole.ID,

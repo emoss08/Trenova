@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,14 +24,14 @@ func TestCountRolePermissions_FollowsInheritedRolesAndCountsEachOperation(t *tes
 	conn := postgres.NewTestConnection(db)
 	create := func(role *rbac.Role) {
 		t.Helper()
-		require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
+		require.NoError(t, rbacdb.Roles.Create(ctx, db, role))
 		for _, p := range role.Permissions {
 			p.RoleID = role.ID
 		}
 		if len(role.Permissions) > 0 {
 			require.NoError(
 				t,
-				permissiondb.ResourcePermissions.CreateMany(ctx, db, role.Permissions),
+				rbacdb.ResourcePermissions.CreateMany(ctx, db, role.Permissions),
 			)
 		}
 	}

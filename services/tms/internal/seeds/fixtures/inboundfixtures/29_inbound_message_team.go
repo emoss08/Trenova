@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/triagefixtures"
@@ -74,7 +74,7 @@ func administratorRole(
 	db *keel.DB,
 	org *tenant.Organization,
 ) (*rbac.Role, error) {
-	r := permissiondb.Roles
+	r := rbacdb.Roles
 	role, err := r.AllTenants().Where(
 		r.OrganizationID.Eq(org.ID),
 		r.BusinessUnitID.Eq(org.BusinessUnitID),

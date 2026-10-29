@@ -15,9 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -164,10 +164,10 @@ func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData
 		Name:           "Test Role",
 		MaxSensitivity: permission.SensitivityInternal,
 	}
-	require.NoError(t, permissiondb.Roles.Create(env.ctx, env.db, role))
+	require.NoError(t, rbacdb.Roles.Create(env.ctx, env.db, role))
 	require.NoError(
 		t,
-		permissiondb.ResourcePermissions.Create(env.ctx, env.db, &rbac.ResourcePermission{
+		rbacdb.ResourcePermissions.Create(env.ctx, env.db, &rbac.ResourcePermission{
 			RoleID:     role.ID,
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
@@ -176,7 +176,7 @@ func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData
 	)
 	require.NoError(
 		t,
-		permissiondb.UserRoleAssignments.Create(env.ctx, env.db, &rbac.UserRoleAssignment{
+		rbacdb.UserRoleAssignments.Create(env.ctx, env.db, &rbac.UserRoleAssignment{
 			UserID:         userID,
 			OrganizationID: env.data.Organization.ID,
 			RoleID:         role.ID,

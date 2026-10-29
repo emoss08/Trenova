@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -43,7 +43,7 @@ func CreateAdminRole(
 		UpdatedAt:      now,
 	}
 
-	if err := permissiondb.Roles.Create(ctx, db, role); err != nil {
+	if err := rbacdb.Roles.Create(ctx, db, role); err != nil {
 		return nil, fmt.Errorf("create admin role: %w", err)
 	}
 
@@ -53,7 +53,7 @@ func CreateAdminRole(
 	}
 
 	grants := planAdminGrants(registry, role.ID, nil, now).add
-	if err := permissiondb.ResourcePermissions.CreateMany(ctx, db, grants); err != nil {
+	if err := rbacdb.ResourcePermissions.CreateMany(ctx, db, grants); err != nil {
 		return nil, fmt.Errorf("grant the admin role every resource: %w", err)
 	}
 
@@ -78,7 +78,7 @@ func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) e
 		AssignedAt:     params.AssignedAt,
 	}
 
-	if err := permissiondb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
+	if err := rbacdb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
 		return fmt.Errorf("assign role %s to user %s: %w", params.RoleID, params.UserID, err)
 	}
 
