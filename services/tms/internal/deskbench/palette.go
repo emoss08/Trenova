@@ -22,7 +22,7 @@ func (s *Session) OpenPalette(
 		return nil, fmt.Errorf("ask from the command palette: %w", err)
 	}
 
-	benchTitle := benchTitlePrefix + strings.TrimSpace(title)
+	benchTitle := BenchTitlePrefix + strings.TrimSpace(title)
 	thread, err = s.bench.Assistant.UpdateThread(ctx, &assistantports.UpdateThreadRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: s.Tenant,
@@ -42,7 +42,7 @@ func (s *Session) OpenPalette(
 		session: s,
 		Agent:   definition,
 		Thread:  thread,
-		queue:   s.bench.watcher.watch(thread.ID),
+		queue:   s.bench.watcher.Watch(thread.ID),
 		palette: true,
 	}, nil
 }

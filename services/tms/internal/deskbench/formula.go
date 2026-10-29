@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -28,15 +29,6 @@ const (
 	libraryPageTitle = "Formula library"
 )
 
-type FormulaPage struct {
-	Template string `yaml:"template" json:"template,omitempty"`
-	Library  string `yaml:"library"  json:"library,omitempty"`
-}
-
-func (p *FormulaPage) editsLibrary() bool {
-	return strings.TrimSpace(p.Library) != ""
-}
-
 type formulaState struct {
 	library bool
 	id      string
@@ -53,11 +45,11 @@ var (
 func (s *Session) OpenFormula(
 	ctx context.Context,
 	label string,
-	page *FormulaPage,
+	page *benchscenario.FormulaPage,
 ) (*Conversation, error) {
 	ctx = s.Context(ctx)
 
-	state := &formulaState{library: page.editsLibrary()}
+	state := &formulaState{library: page.EditsLibrary()}
 	req := &assistantports.OpenPageThreadRequest{
 		TenantInfo:  s.Tenant,
 		Origin:      conversation.ThreadOriginFormula,
@@ -88,7 +80,7 @@ func (s *Session) OpenFormula(
 		Label:   label,
 		session: s,
 		Thread:  opened.Thread,
-		queue:   s.bench.watcher.watch(opened.Thread.ID),
+		queue:   s.bench.watcher.Watch(opened.Thread.ID),
 		formula: state,
 	}, nil
 }
@@ -239,6 +231,14 @@ func (f *formulaState) expression() string {
 	}
 
 	return f.source
+}
+
+func (c *Conversation) FormulaDescription() string {
+	return c.formula.describe()
+}
+
+func (c *Conversation) FormulaExpression() string {
+	return c.formula.expression()
 }
 
 func (f *formulaState) describe() string {

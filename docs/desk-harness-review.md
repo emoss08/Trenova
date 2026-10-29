@@ -701,7 +701,7 @@ succeeded, and steps and tokens per task.
 
 | Tool | What it measures | Size | Paths |
 |---|---|---|---|
-| Desk bench (`trenova desk run`) | Real turns on a seeded database through the production workflow. Deterministic checks: `calls`, `noCalls`, `maxCalls`, `maxFailedCalls`, `proposals`, `executed`, `replyIncludes/Excludes`, `facts`, `db`, `maxSeconds`. A provider matrix (`--provider A --provider B --repeat N`). | 134 scenarios, 202 steps, 20 files | `services/tms/deskbench/scenarios/`, `internal/deskbench/checks.go` |
+| Desk bench (`trenova desk run`) | Real turns on a seeded database through the production workflow. Deterministic checks: `calls`, `noCalls`, `maxCalls`, `maxFailedCalls`, `proposals`, `executed`, `replyIncludes/Excludes`, `facts`, `db`, `maxSeconds`. A provider matrix (`--provider A --provider B --repeat N`). | 134 scenarios, 202 steps, 20 files | `services/tms/deskbench/scenarios/`, `internal/deskbench/benchcheck/checks.go` |
 | Rubrics in the bench | 142 of the 202 steps carry a rubric. **None is scored**: each is printed beside the step. | – | `desk-bench.md:203` |
 | Routing bench (`trenova desk route`) | The pre-turn agent matcher. No model is called. | 33 labelled questions | `deskbench/routing/desk.yaml` |
 | Eval gate (CI) | `find_tools` / preselection **ranking**. It does not measure what a model chooses. | 557 keyword cases, 631 hybrid cases (557 plus 74 paraphrases) | `app/agentevalgate`, `evals/toolselection.floors.json` |
@@ -1058,7 +1058,7 @@ Where something is a hypothesis, it says so, and §6 says how to test it.
 ### 3.0 Two more audit facts, found while analysing
 
 1. **No unattended run is benched.** The desk bench drives chat turns only, through `StartTurn`.
-   There are no event-driven or scheduled scenarios (`internal/deskbench/scenario.go`,
+   There are no event-driven or scheduled scenarios (`internal/deskbench/benchscenario/scenario.go`,
    `deskbench/scenarios/*.yaml`), yet these are the owner's first-priority surface.
 2. **How unattended runs pick their first tools.** An unattended run's whole request is
    boilerplate (`agentdefinition/runinput.go`): "An event started this run: `<kind>`. It concerns
@@ -2240,7 +2240,7 @@ describes the design as built ("Job profiles in one runtime", "What a provider c
   - the delegate hands back its tool results verbatim, as structured findings
     (`DelegateReport.Findings`).
 - The routing bench reports profile selection as a confusion matrix, with recall and precision
-  for each profile (`deskbench.ProfileConfusion`).
+  for each profile (`benchrouting.ProfileConfusion`).
 
 **Stable prefix and deferred loading (Phase 1).**
 

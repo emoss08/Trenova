@@ -32,13 +32,13 @@ Four things make that observable and repeatable:
   run the bench again, and the new description is what the model reads. The edition's
   worker-only options are left out, since they add schedules of their own.
 - **A recorder on the model router.** `llmports.CompletionService` is decorated
-  (`deskbench.Recorder`) so every chat, streamed and structured call is copied as it was sent and
+  (`benchrecord.Recorder`) so every chat, streamed and structured call is copied as it was sent and
   as it came back: the system prompt, the messages, the tools offered, thinking, tool calls,
   tokens, latency, cost, retries, fallbacks and errors. Calls are tied to a turn by their usage
   attribution (`ThreadID`, `OwnerID`); a call that carries neither (the scope guard's
   classifier) is listed beside the turn it ran during.
 - **A watcher on the workflow starter.** `kernelports.WorkflowStarter` is decorated
-  (`deskbench.TurnWatcher`) so every `AssistantTurnWorkflow` started on a bench conversation, by
+  (`benchwatch.TurnWatcher`) so every `AssistantTurnWorkflow` started on a bench conversation, by
   the bench or by the application (a decision follow-up), is seen the moment it starts. The
   bench follows each one's stream from the first frame, waits for its result, and keeps
   waiting a few seconds for another turn the last one started.
@@ -57,6 +57,22 @@ Four things make that observable and repeatable:
 
 The worker's own log goes to `worker.log` in the run directory, so a tool's error that never
 reached the model is there too.
+
+## Code layout
+
+`internal/deskbench` is the harness: `Bench` opens the isolated application (`app.go`), and
+`Session` and `Conversation` drive turns through it. Each concern around it is its own
+package under `internal/deskbench/`, and `cmd/cli/desk` wires them:
+
+| Package | Holds |
+|---|---|
+| `benchscenario`, `benchagent`, `benchcell` | what a run runs: scenarios and their checks, the bench agents (`agents.yaml`, the unattended shapes), provider cells |
+| `benchrecord` | what a turn records: turn, call and proposal records, the model-call recorder, pricing, output encoding |
+| `benchlive`, `benchwatch`, `benchnamespace` | the live feed, the workflow-starter watcher, the namespace lock and Temporal namespace |
+| `benchrun` | the runner: plans cases, drives each step, fires unattended runs |
+| `benchcheck`, `benchsql`, `benchaudit` | grading a step, the bench's SQL (facts, setup, requirements, data profile), the unauthorized-effects audit |
+| `benchresult`, `benchstats`, `benchreport` | case results and metrics, the statistics, the report, summary and transcript |
+| `benchgate`, `benchbaseline`, `benchrouting`, `benchfindings` | the gate, baseline and sweep, routing scores, `findings.yaml` |
 
 ## Commands
 
@@ -586,7 +602,7 @@ keys by stratum. `TestScenarioSplits_MatchTheLedger` and `TestToolSelectionSplit
 fail when the assignment moves, naming what joined and what left the held-out set. Adding a
 scenario or a case moves its stratum's quota, and renaming or merging tools can move a case to
 another desk, so a move is expected; review it before rewriting the ledger (`go test -count=1 -run
-TestScenarioSplits ./internal/deskbench/ -update`, and `-run 'AgainstFloors|Splits'` with
+TestScenarioSplits ./internal/deskbench/benchscenario/ -update`, and `-run 'AgainstFloors|Splits'` with
 `-update` in `agentevalgate`). A scenario that joins the held-out set after living in development
 may have been tuned against: write a new scenario for that desk instead of keeping it held out.
 

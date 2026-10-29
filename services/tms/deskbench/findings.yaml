@@ -690,7 +690,7 @@ findings:
       A part that opens a /regex/ is joined back until the pattern closes. The LTL check now says
       what it means: every number literal in the formula is 100, so every rate and break is a
       variable.
-    files: [services/tms/internal/deskbench/checks.go]
+    files: [services/tms/internal/deskbench/benchscenario/match.go]
     fixedIn: this session
 
   - id: DB-030
@@ -835,9 +835,9 @@ findings:
       statements). The write scenarios roll their load's windows forward from now, name a driver
       who is compliant and free, and say dates relative to the day.
     files:
-      - services/tms/internal/deskbench/scenario.go
-      - services/tms/internal/deskbench/checks.go
-      - services/tms/internal/deskbench/runner.go
+      - services/tms/internal/deskbench/benchscenario/scenario.go
+      - services/tms/internal/deskbench/benchsql/setup.go
+      - services/tms/internal/deskbench/benchrun/runner.go
     fixedIn: this session
 
   - id: DB-036
@@ -941,7 +941,7 @@ findings:
       releases it on Close. A second bench in the same namespace refuses to start, naming the pid
       that holds it and --namespace as the way around.
     files:
-      - services/tms/internal/deskbench/lock.go
+      - services/tms/internal/deskbench/benchnamespace/lock.go
       - services/tms/internal/deskbench/app.go
       - services/tms/cmd/cli/desk/desk.go
     fixedIn: this session
@@ -1485,7 +1485,7 @@ findings:
       state (the person's call).
     fixedIn: uncommitted; the temporal container was restarted (2026-10-10) and the namespace kept for 1h; .deskbench/runs/20261010-001934-run ran clean
     files:
-      - services/tms/internal/deskbench/namespace.go
+      - services/tms/internal/deskbench/benchnamespace/namespace.go
 
   - id: DB-063
     title: An automatic tier raise on an agent with no tiers broke reading every agent
@@ -1818,7 +1818,7 @@ findings:
       lifecycle; invoice-a-ready-load accepts post_invoice.
     fixedIn: uncommitted; every setup ran in a rolled-back transaction and then for real
     files:
-      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/benchsql/setup.go
       - services/tms/deskbench/scenarios/
 
   - id: DB-079
@@ -2445,7 +2445,7 @@ findings:
     files:
       - services/tms/internal/deskbench/unlearned.go
       - services/tms/internal/deskbench/app.go
-      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/benchsql/setup.go
       - docs/engineering/desk-bench.md
 
   - id: DB-112
@@ -3649,14 +3649,14 @@ findings:
       profiles saved, all inactive — truth 4; missing from reply: 4": "saved as inactive, with one
       communication profile, four document profiles and three control numbers".
     cause: >
-      replyStates (internal/deskbench/checks.go) reads a numeric truth only through
+      replyStates (internal/deskbench/benchcheck/checks.go) reads a numeric truth only through
       numberguard.Cites, and numberguard.extractNumbers reads digits only.
     fix: >
       replyStates also accepts a whole count up to twelve written as its word
       (intutils.SmallNumberWord, word-bounded); numberguard is left alone because the grounding
       guard reads it.
     files:
-      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/benchcheck/checks.go
       - shared/numberguard/numberguard.go
       - services/tms/deskbench/scenarios/edi.yaml
     fixedIn: >
@@ -3722,6 +3722,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/querytools/ediquerytools/edi_document_preview_tool.go
       - services/tms/internal/deskbench/agents.go
+      - services/tms/internal/deskbench/benchagent/agentspec.go
       - services/tms/deskbench/agents.yaml
     fixedIn: >
       uncommitted; verified by .deskbench/runs/20261015-143405-run and 20261015-145941-run (the
@@ -4314,7 +4315,7 @@ findings:
       - shared/numberguard/numberguard.go
       - services/tms/internal/modules/agent/app/agentruntime/groundingguard.go
       - services/tms/internal/modules/agent/app/agentruntime/placement.go
-      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/benchcheck/checks.go
     fixedIn: >
       uncommitted; verified by .deskbench/runs/20261018-080008-run (every scenario once), then
       20261018-082639-run and 20261018-082950-run, where every remaining correction is arithmetic no tool returned
@@ -4988,8 +4989,9 @@ findings:
       a capture error still fails it, and a run the bench did not stop still fails on its own
       error.
     files:
-      - services/tms/internal/deskbench/checks.go
-      - services/tms/internal/deskbench/stop_test.go
+      - services/tms/internal/deskbench/benchcheck/checks.go
+      - services/tms/internal/deskbench/benchrun/stop_test.go
+      - services/tms/internal/deskbench/benchcheck/runchecks_test.go
     fixedIn: >
       .deskbench/runs/20261019-132930-run: unattended-billing-stopped-while-waiting-closes-the-run 0/3 → 3/3.
 
@@ -5122,8 +5124,8 @@ findings:
       from reply: 0", though the scenario's note says an empty group need not be named as zero.
     cause: statesInWords read 0 only as "zero".
     files:
-      - services/tms/internal/deskbench/checks.go
-      - services/tms/internal/deskbench/checks_test.go
+      - services/tms/internal/deskbench/benchcheck/checks.go
+      - services/tms/internal/deskbench/benchcheck/checks_test.go
     fix: >
       A zero is stated by zero, none or nothing, or by "no" directly before a noun ("no loads", "no delivered shipments"); "no problem", "no worries", "no longer" and a bare "no" are not counted (notCounted), so "no problem, there are 3" does not pass a fact of zero.
     fixedIn: >
@@ -5149,8 +5151,8 @@ findings:
       A proposal, for both checks, is a row that waited for a person: its tier is not
       AutoExecute. The transcript still lists every row.
     files:
-      - services/tms/internal/deskbench/checks.go
-      - services/tms/internal/deskbench/checks_test.go
+      - services/tms/internal/deskbench/benchcheck/checks.go
+      - services/tms/internal/deskbench/benchcheck/checks_test.go
     fixedIn: >
       .deskbench/runs/20261019-154944-run: unattended-insight-acme-on-time-decline 3/3, unattended-insight-unbilled-aging-not-borne-out (held-out) 3/3.
 

@@ -706,7 +706,7 @@ decides from its own use whether to keep it.
 | Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
 | The Desk card and the history | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
 | Red-team cases and harness | `agentredteam/testdata/cases/16_*`–`27_*`, `scripts.go` (`providerScripts`) |
-| Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench` |
+| Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench/benchscenario` |
 
 Everything Go stays inside the agent module apart from `pkg/scriptvm`, `pkg/wasmcache`, the trace
 attributes and the registry entries.

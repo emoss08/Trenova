@@ -357,7 +357,7 @@ case may deny the person a permission (`denied`):
 
 ## Paired bench scenarios
 
-5a adds `mode: discrete | script` and `pair:` to `deskbench.Scenario`, the loader's refusal of a
+5a adds `mode: discrete | script` and `pair:` to `benchscenario.Scenario`, the loader's refusal of a
 half pair, and the rule that both halves fall into the same split. 5b adds one mode,
 `script_writes`, which forces the gate open with writes (`OverrideWrites`); a pair has one
 discrete half and one script half. `TestBatchWritePairsAreGradedOnTheSameApproval` holds every

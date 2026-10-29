@@ -11,6 +11,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/deskbench/benchlive"
+	"github.com/emoss08/trenova/internal/deskbench/benchnamespace"
+	"github.com/emoss08/trenova/internal/deskbench/benchrecord"
+	"github.com/emoss08/trenova/internal/deskbench/benchwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -80,23 +84,19 @@ type deps struct {
 
 type Bench struct {
 	deps
-	recorder    *Recorder
-	disclosures *DisclosureLog
-	pricer      *pricer
-	watcher     *TurnWatcher
+	recorder    *benchrecord.Recorder
+	disclosures *benchrecord.DisclosureLog
+	pricer      *benchrecord.Pricer
+	watcher     *benchwatch.TurnWatcher
 	app         *fx.App
 	logPath     string
 	sdkLog      *os.File
-	live        *LiveFeed
+	live        *benchlive.Feed
 	locks       sync.Map
-	held        *namespaceLock
-	tidied      sync.Once
-	facts       factSource
+	held        *benchnamespace.Lock
 }
 
-type factSource func(ctx context.Context, session *Session, statement string) ([]string, error)
-
-func (b *Bench) exclusive(key string) func() {
+func (b *Bench) Exclusive(key string) func() {
 	value, _ := b.locks.LoadOrStore(key, &sync.Mutex{})
 	lock := value.(*sync.Mutex)
 	lock.Lock()
@@ -105,13 +105,13 @@ func (b *Bench) exclusive(key string) func() {
 }
 
 func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
-	held, err := lockNamespace(opts.LockDir, opts.Namespace)
+	held, err := benchnamespace.Acquire(opts.LockDir, opts.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	bench, err := open(ctx, opts)
 	if err != nil {
-		return nil, errors.Join(err, held.release())
+		return nil, errors.Join(err, held.Release())
 	}
 	bench.held = held
 
@@ -121,20 +121,20 @@ func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 	bench := &Bench{
 		logPath:     filepath.Join(opts.OutDir, logFileName),
-		disclosures: NewDisclosureLog(),
+		disclosures: benchrecord.NewDisclosureLog(),
 	}
 
 	sdkLog, err := os.OpenFile(
 		filepath.Join(opts.OutDir, sdkLogName),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		fileMode,
+		benchrecord.FileMode,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open the temporal log: %w", err)
 	}
 	bench.sdkLog = sdkLog
 
-	live, err := OpenLiveFeed(opts.LivePaths...)
+	live, err := benchlive.Open(opts.LivePaths...)
 	if err != nil {
 		_ = sdkLog.Close()
 		return nil, err
@@ -156,7 +156,7 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			return isolated
 		}),
 		fx.Decorate(func(inner llmports.CompletionService) llmports.CompletionService {
-			bench.recorder = NewRecorder(inner)
+			bench.recorder = benchrecord.NewRecorder(inner)
 			return bench.recorder
 		}),
 		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
@@ -179,14 +179,14 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			return unthrottledMatches{RateLimitStore: inner}
 		}),
 		fx.Decorate(func(inner kernelports.WorkflowStarter) kernelports.WorkflowStarter {
-			bench.watcher = NewTurnWatcher(inner)
+			bench.watcher = benchwatch.New(inner)
 			return bench.watcher
 		}),
 		fx.Provide(func() agenttoolports.ToolDisclosureObserver { return bench.disclosures }),
 		benchAgentScope(opts.WithoutBenchAgents),
 		fx.Invoke(func(d deps) {
 			bench.deps = d
-			bench.pricer = newPricer(d.Providers, d.PriceReference)
+			bench.pricer = benchrecord.NewPricer(d.Providers, d.PriceReference)
 		}),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger.Named("fx")}
@@ -228,11 +228,23 @@ func (b *Bench) Close() error {
 		stopErr = closeErr
 	}
 
-	return errors.Join(stopErr, b.held.release())
+	return errors.Join(stopErr, b.held.Release())
 }
 
 func (b *Bench) LogPath() string {
 	return b.logPath
+}
+
+func (b *Bench) Live() *benchlive.Feed {
+	return b.live
+}
+
+func (b *Bench) Recorder() *benchrecord.Recorder {
+	return b.recorder
+}
+
+func (b *Bench) Watcher() *benchwatch.TurnWatcher {
+	return b.watcher
 }
 
 func isolate(cfg *config.Config, namespace, logPath string) *config.Config {

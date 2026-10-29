@@ -35,7 +35,7 @@ from the reply's text.
 Adding an artifact kind: build its title with the functions above, never with
 `HumanizeSnakeCase` or `CapitalizeFirst` by hand, and decide whether `MustBeLinked` covers it.
 The Desk Bench checks every turn that shows an artifact for stray links, links whose words are
-not the title, and replies that needed a correction (`deskbench/checks.go`).
+not the title, and replies that needed a correction (`internal/deskbench/benchcheck/checks.go`).
 
 ## Layout
 

@@ -2,18 +2,14 @@ package deskbench
 
 import (
 	"context"
-	"strings"
 
+	"github.com/emoss08/trenova/internal/deskbench/benchagent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 )
-
-func IsBenchAgent(definition *agentdefinition.Definition) bool {
-	return definition != nil && strings.HasPrefix(definition.Name, BenchAgentPrefix)
-}
 
 func benchAgentScope(hidden bool) fx.Option {
 	if !hidden {
@@ -73,7 +69,7 @@ func (w withoutBenchAgents) organizationAgents(
 			return nil, err
 		}
 		for _, definition := range result.Items {
-			if !IsBenchAgent(definition) {
+			if !benchagent.IsBenchAgent(definition) {
 				kept = append(kept, definition)
 			}
 		}

@@ -4,23 +4,25 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/deskbench/benchlive"
+	"github.com/emoss08/trenova/internal/deskbench/benchrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 )
 
 type eventCollector struct {
-	live   *liveTurn
-	events []Event
+	live   *benchlive.Turn
+	events []benchrecord.Event
 	deltas int
-	tools  []*ToolCallRecord
-	byCall map[string]*ToolCallRecord
+	tools  []*benchrecord.ToolCallRecord
+	byCall map[string]*benchrecord.ToolCallRecord
 }
 
-func newEventCollector(live *liveTurn) *eventCollector {
+func newEventCollector(live *benchlive.Turn) *eventCollector {
 	return &eventCollector{
 		live:   live,
-		events: make([]Event, 0, 32),
-		tools:  make([]*ToolCallRecord, 0, 8),
-		byCall: make(map[string]*ToolCallRecord, 8),
+		events: make([]benchrecord.Event, 0, 32),
+		tools:  make([]*benchrecord.ToolCallRecord, 0, 8),
+		byCall: make(map[string]*benchrecord.ToolCallRecord, 8),
 	}
 }
 
@@ -37,14 +39,14 @@ func streamedText(event string) bool {
 }
 
 func (e *eventCollector) onFrame(frame assistantstreamports.TurnStreamFrame) error {
-	e.live.frame(frame)
+	e.live.Frame(frame)
 	if streamedText(frame.Event) {
 		e.deltas++
 		return nil
 	}
 
 	at := time.Now()
-	event := Event{At: at, Name: frame.Event}
+	event := benchrecord.Event{At: at, Name: frame.Event}
 	if len(frame.Data) > 0 {
 		var data any
 		if err := sonic.Unmarshal(frame.Data, &data); err != nil {
@@ -79,7 +81,7 @@ func (e *eventCollector) start(
 	at time.Time,
 	started *assistantstreamports.AssistantToolStartedEvent,
 ) {
-	record := &ToolCallRecord{
+	record := &benchrecord.ToolCallRecord{
 		CallID:         started.CallID,
 		Name:           started.Name,
 		Arguments:      started.Arguments,
@@ -99,7 +101,7 @@ func (e *eventCollector) finish(
 	key := callKey(finished.CallID, finished.DelegateCallID)
 	record, ok := e.byCall[key]
 	if !ok {
-		record = &ToolCallRecord{
+		record = &benchrecord.ToolCallRecord{
 			CallID:         finished.CallID,
 			Name:           finished.Name,
 			AgentID:        finished.AgentID,
@@ -122,7 +124,7 @@ func (e *eventCollector) finish(
 	}
 }
 
-func (e *eventCollector) into(record *TurnRecord) {
+func (e *eventCollector) into(record *benchrecord.TurnRecord) {
 	record.Events = e.events
 	record.StreamDeltas = e.deltas
 	record.Tools = e.tools

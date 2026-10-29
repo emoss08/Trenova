@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/deskbench/benchagent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -105,7 +106,12 @@ func TestWithoutBenchAgents_ListsTheOrganizationsAgentsAcrossEveryPage(t *testin
 func TestIsBenchAgent(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, IsBenchAgent(&agentdefinition.Definition{Name: BenchAgentPrefix + "Operations"}))
-	assert.False(t, IsBenchAgent(&agentdefinition.Definition{Name: "Dispatch desk"}))
-	assert.False(t, IsBenchAgent(nil))
+	assert.True(
+		t,
+		benchagent.IsBenchAgent(
+			&agentdefinition.Definition{Name: benchagent.BenchAgentPrefix + "Operations"},
+		),
+	)
+	assert.False(t, benchagent.IsBenchAgent(&agentdefinition.Definition{Name: "Dispatch desk"}))
+	assert.False(t, benchagent.IsBenchAgent(nil))
 }

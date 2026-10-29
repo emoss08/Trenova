@@ -1,96 +1,24 @@
 package deskbench
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"slices"
-	"strings"
 
+	"github.com/emoss08/trenova/internal/deskbench/benchagent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"gopkg.in/yaml.v3"
 )
 
-const (
-	BenchAgentPrefix = "Bench · "
-	agentSyncComment = "Synced from deskbench/agents.yaml by the desk bench"
-)
-
-type AgentSpec struct {
-	Name         string   `yaml:"name"`
-	Description  string   `yaml:"description"`
-	Template     string   `yaml:"template"`
-	Instructions string   `yaml:"instructions"`
-	Tools        []string `yaml:"tools"`
-	Delegates    []string `yaml:"delegates"`
-	MaxToolCalls int      `yaml:"maxToolCalls"`
-	Ceiling      string   `yaml:"autonomyCeiling"`
-	DataAccess   string   `yaml:"dataAccess"`
-}
-
-func (s *AgentSpec) dataAccess() agentdefinition.DataAccessCeiling {
-	if s.DataAccess == "" {
-		return agentdefinition.DataAccessInternal
-	}
-
-	return agentdefinition.DataAccessCeiling(s.DataAccess)
-}
-
-type AgentSync struct {
-	Created   []string
-	Updated   []string
-	Unchanged []string
-}
-
-var (
-	ErrAgentSpecUnnamed    = errors.New("a bench agent has no name")
-	ErrAgentSpecDataAccess = errors.New("dataAccess must be Internal or Restricted")
-)
-
-func LoadAgentSpecs(path string) ([]AgentSpec, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf("read %s: %w", path, err)
-	}
-
-	var doc struct {
-		Agents []AgentSpec `yaml:"agents"`
-	}
-	decoder := yaml.NewDecoder(bytes.NewReader(raw))
-	decoder.KnownFields(true)
-	if err = decoder.Decode(&doc); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", path, err)
-	}
-
-	for idx := range doc.Agents {
-		spec := &doc.Agents[idx]
-		if strings.TrimSpace(spec.Name) == "" {
-			return nil, fmt.Errorf("%s: agent %d: %w", path, idx+1, ErrAgentSpecUnnamed)
-		}
-		if !spec.dataAccess().IsValid() {
-			return nil, fmt.Errorf("%s: %s: %w", path, spec.Name, ErrAgentSpecDataAccess)
-		}
-		if !strings.HasPrefix(spec.Name, BenchAgentPrefix) {
-			spec.Name = BenchAgentPrefix + spec.Name
-		}
-	}
-
-	return doc.Agents, nil
-}
-
-func (s *Session) SyncAgents(ctx context.Context, specs []AgentSpec) (*AgentSync, error) {
+func (s *Session) SyncAgents(
+	ctx context.Context,
+	specs []benchagent.AgentSpec,
+) (*benchagent.AgentSync, error) {
 	ctx = s.Context(ctx)
-	outcome := &AgentSync{}
+	outcome := &benchagent.AgentSync{}
 	if len(specs) == 0 {
 		return outcome, nil
 	}
@@ -126,7 +54,11 @@ func (s *Session) benchAgent(
 	return nil, nil
 }
 
-func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *AgentSync) error {
+func (s *Session) syncAgent(
+	ctx context.Context,
+	spec *benchagent.AgentSpec,
+	outcome *benchagent.AgentSync,
+) error {
 	existing, err := s.benchAgent(ctx, spec.Name)
 	if err != nil {
 		return err
@@ -148,7 +80,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 				Instructions:      spec.Instructions,
 				ToolNames:         tools,
 				AutonomyCeiling:   ceiling,
-				DataAccessCeiling: spec.dataAccess(),
+				DataAccessCeiling: spec.DataAccessCeiling(),
 				Enabled:           true,
 				TriggerMode:       agentdefinition.TriggerChat,
 				MaxToolCalls:      spec.MaxToolCalls,
@@ -164,7 +96,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 		return nil
 	}
 
-	if agentMatches(existing, spec, tools, ceiling) {
+	if benchagent.AgentMatches(existing, spec, tools, ceiling) {
 		outcome.Unchanged = append(outcome.Unchanged, spec.Name)
 		return nil
 	}
@@ -173,14 +105,14 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 		ID:         existing.ID,
 		TenantInfo: s.Tenant,
 		Version:    existing.Version,
-		Comment:    agentSyncComment,
+		Comment:    benchagent.AgentSyncComment,
 		Edit: func(definition *agentdefinition.Definition) error {
 			definition.Description = spec.Description
 			definition.Template = agenttemplate.Template(spec.Template)
 			definition.Instructions = spec.Instructions
 			definition.ToolNames = tools
 			definition.AutonomyCeiling = ceiling
-			definition.DataAccessCeiling = spec.dataAccess()
+			definition.DataAccessCeiling = spec.DataAccessCeiling()
 			definition.Enabled = true
 			if spec.MaxToolCalls > 0 {
 				definition.MaxToolCalls = spec.MaxToolCalls
@@ -197,28 +129,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 	return nil
 }
 
-func agentMatches(
-	existing *agentdefinition.Definition,
-	spec *AgentSpec,
-	tools []string,
-	ceiling agent.AutonomyTier,
-) bool {
-	held := slices.Clone(existing.ToolNames)
-	wanted := slices.Clone(tools)
-	slices.Sort(held)
-	slices.Sort(wanted)
-
-	return existing.Enabled &&
-		existing.Description == spec.Description &&
-		string(existing.Template) == spec.Template &&
-		existing.Instructions == spec.Instructions &&
-		existing.AutonomyCeiling == ceiling &&
-		existing.DataAccessCeiling == spec.dataAccess() &&
-		(spec.MaxToolCalls == 0 || existing.MaxToolCalls == spec.MaxToolCalls) &&
-		slices.Equal(held, wanted)
-}
-
-func (s *Session) syncDelegates(ctx context.Context, spec *AgentSpec) error {
+func (s *Session) syncDelegates(ctx context.Context, spec *benchagent.AgentSpec) error {
 	if spec.Delegates == nil {
 		return nil
 	}
@@ -244,7 +155,7 @@ func (s *Session) syncDelegates(ctx context.Context, spec *AgentSpec) error {
 		ID:         existing.ID,
 		TenantInfo: s.Tenant,
 		Version:    existing.Version,
-		Comment:    agentSyncComment,
+		Comment:    benchagent.AgentSyncComment,
 		Edit: func(definition *agentdefinition.Definition) error {
 			definition.DelegateIDs = ids
 			return nil
