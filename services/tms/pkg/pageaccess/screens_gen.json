@@ -1750,6 +1750,22 @@
           "path": "/assistant/threads/:param/case/wake/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/"
         },
@@ -4545,6 +4561,22 @@
           "path": "/assistant/threads/:param/case/wake/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/"
         },
@@ -4933,6 +4965,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",
@@ -5360,6 +5408,22 @@
           "path": "/assistant/threads/:param/case/wake/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/"
         },
@@ -5747,6 +5811,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",
@@ -7543,6 +7623,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -7786,6 +7867,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",
@@ -8332,6 +8429,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -8575,6 +8673,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",
@@ -9194,6 +9308,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -9441,6 +9556,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",
@@ -14638,6 +14769,7 @@
         "WorkerBenefitEnrollments",
         "WorkerChecklists",
         "WorkerCredentialSummary",
+        "WorkerCredentialTypeChoices",
         "WorkerCredentials",
         "WorkerDisciplinaryActions",
         "WorkerDisciplinaryLadder",
@@ -16893,6 +17025,22 @@
           "path": "/assistant/threads/:param/case/wake/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/"
         },
@@ -17358,6 +17506,22 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
         },
         {
           "method": "POST",

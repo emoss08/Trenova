@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8500d42737feca2b57040ae05436ffe42efb76e556acb03d4c0b1711c88c7c74",
+  "version": "sha256:a0e6d363a2be8682f23572301da207bfbfed5a986a869c9c67c0dd566c08db1e",
   "screens": [
     {
       "path": "/",
@@ -2796,6 +2796,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -7489,6 +7509,26 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/",
           "requires": [
@@ -8217,6 +8257,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -8993,6 +9053,26 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/",
           "requires": [
@@ -9720,6 +9800,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -13135,6 +13235,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -13617,6 +13718,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -14555,6 +14676,7 @@
         "trailer",
         "worker",
         "worker_credential",
+        "worker_credential_type",
         "worker_pto"
       ],
       "references": [
@@ -14565,8 +14687,7 @@
         "fleet_code",
         "fuel_purchase_import",
         "organization",
-        "user",
-        "worker_credential_type"
+        "user"
       ],
       "declared": [
         "carrier",
@@ -14737,6 +14858,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -15219,6 +15341,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -16118,6 +16260,7 @@
         "trailer",
         "worker",
         "worker_credential",
+        "worker_credential_type",
         "worker_pto"
       ],
       "references": [
@@ -16128,8 +16271,7 @@
         "fleet_code",
         "fuel_purchase_import",
         "organization",
-        "user",
-        "worker_credential_type"
+        "user"
       ],
       "declared": [
         "carrier",
@@ -16402,6 +16544,7 @@
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
         "VoidInvoice",
+        "WorkerCredentialTypeChoices",
         "WorkerPtoChartData",
         "WorkerPtoTable"
       ],
@@ -16889,6 +17032,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -17831,6 +17994,7 @@
         "trailer",
         "worker",
         "worker_credential",
+        "worker_credential_type",
         "worker_pto"
       ],
       "references": [
@@ -17841,8 +18005,7 @@
         "fleet_code",
         "fuel_purchase_import",
         "organization",
-        "user",
-        "worker_credential_type"
+        "user"
       ],
       "declared": [
         "carrier",
@@ -26929,6 +27092,7 @@
         "WorkerBenefitEnrollments",
         "WorkerChecklists",
         "WorkerCredentialSummary",
+        "WorkerCredentialTypeChoices",
         "WorkerCredentials",
         "WorkerDisciplinaryActions",
         "WorkerDisciplinaryLadder",
@@ -27616,6 +27780,7 @@
         "worker_checklist",
         "worker_checklist_template",
         "worker_credential",
+        "worker_credential_type",
         "worker_disciplinary_action",
         "worker_dot_test",
         "worker_employment_event",
@@ -30830,6 +30995,26 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/compact/",
           "requires": [
@@ -31722,6 +31907,26 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/",
           "requires": []
         },
         {
@@ -42420,6 +42625,15 @@
       "declared": [
         "worker_credential_type"
       ]
+    },
+    {
+      "name": "WorkerCredentialTypeChoices",
+      "type": "query",
+      "reads": [
+        "worker_credential_type"
+      ],
+      "linked": [],
+      "declared": []
     },
     {
       "name": "WorkerCredentialTypeTable",
