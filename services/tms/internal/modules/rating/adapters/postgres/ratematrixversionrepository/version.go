@@ -53,7 +53,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixversion.RateMatrixVersion, error) {
-			if err := ratematrixversiondb.RateMatrixVersions.Create(ctx, r.db.Keel(ctx), version); err != nil {
+			if err := ratematrixversiondb.RateMatrixVersions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				version,
+			); err != nil {
 				r.l.Error("failed to create rate matrix version",
 					zap.String("matrixId", version.RateMatrixID.String()),
 					zap.Int64("versionNumber", version.VersionNumber),

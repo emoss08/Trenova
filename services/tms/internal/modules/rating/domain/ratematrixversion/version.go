@@ -14,10 +14,6 @@ type VersionKey struct {
 	VersionNumber int64    `json:"versionNumber"`
 }
 
-func (v *RateMatrixVersion) Key() VersionKey {
-	return VersionKey{RateMatrixID: v.RateMatrixID, VersionNumber: v.VersionNumber}
-}
-
 type RateMatrixVersion struct {
 	keel.Table `keel:"rate_matrix_versions"`
 
@@ -38,6 +34,10 @@ type RateMatrixVersion struct {
 
 	PublishedBy *tenant.User                      `json:"publishedBy,omitempty" keel:"belongs:published_by_id"`
 	Dimensions  []*ratematrix.RateMatrixDimension `json:"dimensions,omitempty"`
+}
+
+func (v *RateMatrixVersion) Key() VersionKey {
+	return VersionKey{RateMatrixID: v.RateMatrixID, VersionNumber: v.VersionNumber}
 }
 
 func NewVersionFromMatrix(

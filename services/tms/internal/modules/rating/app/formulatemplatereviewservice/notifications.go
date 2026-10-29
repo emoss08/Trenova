@@ -13,6 +13,7 @@ import (
 
 const (
 	notificationSource = "formula_template_service"
+	dataLink           = "link"
 
 	eventTemplateSubmitted         = "formula_template.submitted"
 	eventTemplateReviewRequested   = "formula_template.review_requested"
@@ -58,7 +59,7 @@ func (s *Service) notifySubmitted(
 			template.Name,
 		),
 		Source: notificationSource,
-		Data:   map[string]any{"link": templateReviewLink(template.ID)},
+		Data:   map[string]any{dataLink: templateReviewLink(template.ID)},
 	}
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
@@ -92,7 +93,7 @@ func (s *Service) notifyRequestedReviewer(
 			template.Name,
 		),
 		Source: notificationSource,
-		Data:   map[string]any{"link": templateReviewLink(template.ID)},
+		Data:   map[string]any{dataLink: templateReviewLink(template.ID)},
 	}
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
@@ -139,7 +140,7 @@ func (s *Service) notifyReviewOutcome(
 		Title:          title,
 		Message:        message,
 		Source:         notificationSource,
-		Data:           map[string]any{"link": templateStudioLink(outcome.Template.ID)},
+		Data:           map[string]any{dataLink: templateStudioLink(outcome.Template.ID)},
 	}
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
@@ -191,11 +192,19 @@ func describeReviewOutcome(
 			),
 			eventTemplateSubmissionExpired,
 			notification.PriorityMedium
+	case formulatemplate.ReviewDecisionSubmitted, formulatemplate.ReviewDecisionApproved:
+		return describeApproval(outcome)
 	default:
-		message = fmt.Sprintf("%q was approved and is now active.", name)
-		if outcome.Comment != "" {
-			message += " Reviewer note: " + outcome.Comment
-		}
-		return "Formula template approved", message, eventTemplateApproved, notification.PriorityMedium
+		return describeApproval(outcome)
 	}
+}
+
+func describeApproval(
+	outcome *reviewOutcome,
+) (title, message, eventType string, priority notification.Priority) {
+	message = fmt.Sprintf("%q was approved and is now active.", outcome.Template.Name)
+	if outcome.Comment != "" {
+		message += " Reviewer note: " + outcome.Comment
+	}
+	return "Formula template approved", message, eventTemplateApproved, notification.PriorityMedium
 }

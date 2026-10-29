@@ -225,8 +225,8 @@ func reviewStateChecks(
 	locale i18n.Locale,
 	template *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
-) (ReadinessCheck, ReadinessCheck) {
-	status := ReadinessCheck{
+) (status, reviewer ReadinessCheck) {
+	status = ReadinessCheck{
 		Key:   ReadinessCheckStatus,
 		Label: i18n.Translate(locale, "Review state"),
 	}
@@ -248,7 +248,7 @@ func reviewStateChecks(
 		status.Detail = i18n.Translate(locale, "Unknown status {0}", template.Status.String())
 	}
 
-	reviewer := ReadinessCheck{
+	reviewer = ReadinessCheck{
 		Key:   ReadinessCheckReviewer,
 		Label: i18n.Translate(locale, "Independent reviewer"),
 	}

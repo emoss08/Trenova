@@ -113,86 +113,17 @@ func (s *Service) ApproveFrom(
 	req := &approveReq.ApprovalActionRequest
 	effectiveFrom := timeutils.NowUnix()
 	if approveReq.EffectiveFrom != nil {
-		if err := formulatemplateservice.ValidateEffectiveFrom(*approveReq.EffectiveFrom); err != nil {
+		if err := formulatemplateservice.ValidateEffectiveFrom(
+			*approveReq.EffectiveFrom,
+		); err != nil {
 			return nil, err
 		}
 		effectiveFrom = max(*approveReq.EffectiveFrom, effectiveFrom)
 	}
 
 	var approved *formulatemplate.FormulaTemplate
-	var pinned *formulatemplateservice.ContentCheck
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
-			Operation:    "Approve",
-			From:         formulatemplate.StatusInReview,
-			To:           formulatemplate.StatusActive,
-			PermissionOp: permission.OpApprove,
-			AuditComment: "Formula template approved",
-			Validate: func(
-				vCtx context.Context,
-				template *formulatemplate.FormulaTemplate,
-				r *ApprovalActionRequest,
-			) error {
-				if err := r.RefuseOwn(
-					template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID,
-					errortypes.NewValidationError(
-						"approvedById",
-						errortypes.ErrInvalid,
-						"A template cannot be approved by its submitter",
-					),
-				); err != nil {
-					return err
-				}
-
-				if formulatemplate.SubmissionIsStale(
-					template.SubmittedAt,
-					s.approvals(vCtx).Clock(),
-				) {
-					return staleSubmissionError()
-				}
-
-				if err := s.refuseRevisionAuthor(vCtx, template, r); err != nil {
-					return err
-				}
-
-				content, err := s.approvalContent(vCtx, template)
-				if err != nil {
-					return err
-				}
-				pinned = content
-				return nil
-			},
-			Apply: func(
-				template *formulatemplate.FormulaTemplate,
-				r *ApprovalActionRequest,
-				now int64,
-			) {
-				userID := r.TenantInfo.UserID
-				template.ApprovedByID = &userID
-				template.ApprovedAt = &now
-				template.ReviewComment = r.Comment
-				formulatemplateservice.ApplyContent(template, pinned)
-				template.CurrentVersionNumber++
-			},
-			AfterSave: func(
-				aCtx context.Context,
-				updated *formulatemplate.FormulaTemplate,
-				r *ApprovalActionRequest,
-			) error {
-				if err := s.templates.CreateApprovedSnapshot(
-					aCtx,
-					updated,
-					r.TenantInfo.UserID,
-					effectiveFrom,
-				); err != nil {
-					return err
-				}
-				return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
-					Comment:  r.Comment,
-					Decision: formulatemplate.ReviewDecisionApproved,
-				})
-			},
-		})
+		result, txErr := s.approvals(ctx).Apply(txCtx, req, s.approveTransition(effectiveFrom))
 		if txErr != nil {
 			return txErr
 		}
@@ -212,6 +143,86 @@ func (s *Service) ApproveFrom(
 	})
 
 	return approved, nil
+}
+
+func (s *Service) approveTransition(effectiveFrom int64) templateTransition {
+	var pinned *formulatemplateservice.ContentCheck
+	return templateTransition{
+		Operation:    "Approve",
+		From:         formulatemplate.StatusInReview,
+		To:           formulatemplate.StatusActive,
+		PermissionOp: permission.OpApprove,
+		AuditComment: "Formula template approved",
+		Validate: func(
+			vCtx context.Context,
+			template *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			content, err := s.validateApproval(vCtx, template, r)
+			if err != nil {
+				return err
+			}
+			pinned = content
+			return nil
+		},
+		Apply: func(
+			template *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+			now int64,
+		) {
+			userID := r.TenantInfo.UserID
+			template.ApprovedByID = &userID
+			template.ApprovedAt = &now
+			template.ReviewComment = r.Comment
+			formulatemplateservice.ApplyContent(template, pinned)
+			template.CurrentVersionNumber++
+		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			if err := s.templates.CreateApprovedSnapshot(
+				aCtx,
+				updated,
+				r.TenantInfo.UserID,
+				effectiveFrom,
+			); err != nil {
+				return err
+			}
+			return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+				Comment:  r.Comment,
+				Decision: formulatemplate.ReviewDecisionApproved,
+			})
+		},
+	}
+}
+
+func (s *Service) validateApproval(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	r *ApprovalActionRequest,
+) (*formulatemplateservice.ContentCheck, error) {
+	if err := r.RefuseOwn(
+		template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID,
+		errortypes.NewValidationError(
+			"approvedById",
+			errortypes.ErrInvalid,
+			"A template cannot be approved by its submitter",
+		),
+	); err != nil {
+		return nil, err
+	}
+
+	if formulatemplate.SubmissionIsStale(template.SubmittedAt, s.approvals(ctx).Clock()) {
+		return nil, staleSubmissionError()
+	}
+
+	if err := s.refuseRevisionAuthor(ctx, template, r); err != nil {
+		return nil, err
+	}
+
+	return s.approvalContent(ctx, template)
 }
 
 func (s *Service) approvalContent(
@@ -376,8 +387,10 @@ func (s *Service) approvals(
 		) (*formulatemplate.FormulaTemplate, error) {
 			return s.templates.GetTemplateByIDWithTenant(ctx, id, tenant)
 		},
-		Save:     s.repo.Update,
-		StatusOf: func(t *formulatemplate.FormulaTemplate) formulatemplate.Status { return t.Status },
+		Save: s.repo.Update,
+		StatusOf: func(t *formulatemplate.FormulaTemplate) formulatemplate.Status {
+			return t.Status
+		},
 		SetStatus: func(t *formulatemplate.FormulaTemplate, status formulatemplate.Status) {
 			t.Status = status
 		},

@@ -53,7 +53,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixreview.RateMatrixReview, error) {
-			if err := ratematrixreviewdb.RateMatrixReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := ratematrixreviewdb.RateMatrixReviews.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to record rate matrix review",
 					zap.String("matrixId", entity.RateMatrixID.String()),
 					zap.Error(err),

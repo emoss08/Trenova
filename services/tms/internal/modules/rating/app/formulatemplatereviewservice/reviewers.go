@@ -30,7 +30,11 @@ func (s *Service) ListReviewers(
 	ctx context.Context,
 	req *ListReviewersRequest,
 ) ([]Reviewer, error) {
-	if _, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo); err != nil {
+	if _, err := s.templates.GetTemplateByIDWithTenant(
+		ctx,
+		req.TemplateID,
+		req.TenantInfo,
+	); err != nil {
 		return nil, err
 	}
 

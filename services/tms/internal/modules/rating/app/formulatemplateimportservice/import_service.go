@@ -26,7 +26,6 @@ type Service struct {
 	versionRepo formulatemplateports.FormulaTemplateVersionRepository
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
 	return &Service{
 		l:           p.Logger.Named("service.formulatemplate"),

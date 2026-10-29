@@ -27,7 +27,11 @@ func (s *Service) ListReviews(
 	ctx context.Context,
 	req *ListReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
-	if _, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo); err != nil {
+	if _, err := s.templates.GetTemplateByIDWithTenant(
+		ctx,
+		req.TemplateID,
+		req.TenantInfo,
+	); err != nil {
 		return nil, err
 	}
 

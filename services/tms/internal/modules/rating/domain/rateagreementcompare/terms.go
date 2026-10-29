@@ -89,17 +89,6 @@ func sameNullDecimal(a, b decimal.NullDecimal) bool {
 	return !a.Valid || a.Decimal.Equal(b.Decimal)
 }
 
-func samePulidPtr(a, b *pulid.ID) bool {
-	aNil := a == nil || a.IsNil()
-	bNil := b == nil || b.IsNil()
-
-	if aNil || bNil {
-		return aNil == bNil
-	}
-
-	return *a == *b
-}
-
 func sameFloatPtr(a, b *float64) bool {
 	if a == nil || b == nil {
 		return (a == nil) == (b == nil)

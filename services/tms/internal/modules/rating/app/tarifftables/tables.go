@@ -70,11 +70,6 @@ type tableSet struct {
 	order  []string
 }
 
-func (s *tableSet) table(code string) (*ratetablecache.Version, bool) {
-	version, ok := s.byCode[code]
-	return version, ok
-}
-
 func (t *Tables) served(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
