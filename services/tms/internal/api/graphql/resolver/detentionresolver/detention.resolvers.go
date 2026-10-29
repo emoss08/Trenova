@@ -111,7 +111,7 @@ func (r *MutationResolver) DetentionBacktest(ctx context.Context, input gqlmodel
 		req.Limit = *input.Limit
 	}
 
-	result, err := r.DetentionService.Backtest(ctx, req, resolvercore.TenantInfo(authCtx))
+	result, err := r.DetentionSimulation.Backtest(ctx, req, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input g
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Waive(ctx, detentionreview.WaiveParams{
+	occurrence, err := r.DetentionReview.Waive(ctx, detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Reason:       input.Reason,
@@ -155,7 +155,7 @@ func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occur
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Approve(ctx, detentionreview.ApproveParams{
+	occurrence, err := r.DetentionReview.Approve(ctx, detentionreview.ApproveParams{
 		OccurrenceID: id,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
@@ -178,7 +178,7 @@ func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Dispute(ctx, detentionreview.DisputeParams{
+	occurrence, err := r.DetentionReview.Dispute(ctx, detentionreview.DisputeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Note:         input.Note,
@@ -202,7 +202,7 @@ func (r *MutationResolver) SendDetentionNotice(ctx context.Context, occurrenceID
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.SendOccurrenceNotice(
+	occurrence, err := r.DetentionNotices.SendOccurrenceNotice(
 		ctx,
 		detentionnoticeservice.SendOccurrenceNoticeParams{
 			OccurrenceID: id,
@@ -276,7 +276,7 @@ func (r *QueryResolver) DetentionDesk(ctx context.Context, includeAwaitingApprov
 		return nil, err
 	}
 
-	entries, err := r.DetentionService.ListDeskEntries(ctx, resolvercore.TenantInfo(authCtx), filter)
+	entries, err := r.DetentionReview.ListDeskEntries(ctx, resolvercore.TenantInfo(authCtx), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ func (r *QueryResolver) DetentionOccurrence(ctx context.Context, id string) (*gq
 		return nil, err
 	}
 
-	detail, err := r.DetentionService.GetOccurrenceDetail(
+	detail, err := r.DetentionReview.GetOccurrenceDetail(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
@@ -328,7 +328,7 @@ func (r *QueryResolver) ShipmentDetention(ctx context.Context, shipmentID string
 		return nil, err
 	}
 
-	occurrences, err := r.DetentionService.ListByShipment(
+	occurrences, err := r.DetentionReview.ListByShipment(
 		ctx,
 		&detentionports.GetOccurrencesByShipmentRequest{
 			ShipmentID: id,
@@ -353,7 +353,7 @@ func (r *QueryResolver) DetentionDisputePacket(ctx context.Context, occurrenceID
 		return nil, err
 	}
 
-	packet, err := r.DetentionService.BuildDisputePacket(ctx, id, resolvercore.TenantInfo(authCtx))
+	packet, err := r.DetentionReview.BuildDisputePacket(ctx, id, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +372,7 @@ func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.FacilityProfiles(ctx, req)
+	stats, err := r.DetentionSimulation.FacilityProfiles(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.CustomerProfiles(ctx, req)
+	stats, err := r.DetentionSimulation.CustomerProfiles(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +426,7 @@ func (r *QueryResolver) DetentionWaiverStats(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	stats, err := r.DetentionService.WaiverLeakage(ctx, req)
+	stats, err := r.DetentionSimulation.WaiverLeakage(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +453,7 @@ func (r *QueryResolver) DetentionPolicyPreview(ctx context.Context, policy gqlmo
 		return nil, err
 	}
 
-	result, err := r.DetentionService.PreviewPolicy(
+	result, err := r.DetentionSimulation.PreviewPolicy(
 		ctx,
 		entity,
 		detentionPreviewScenarioFromInput(&scenario),

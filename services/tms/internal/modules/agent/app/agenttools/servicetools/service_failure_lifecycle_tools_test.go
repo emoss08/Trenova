@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -363,5 +363,5 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 			map[string]any{receivabletools.ParamOccurrenceID: occurrenceID.String()},
 		),
 	))
-	var _ detentionpreview.DetentionDisputer = (*detentionservice.Service)(nil)
+	var _ detentionpreview.DetentionDisputer = (*detentionreview.Service)(nil)
 }

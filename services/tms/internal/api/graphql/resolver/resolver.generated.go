@@ -704,7 +704,9 @@ func FromServices(s *Services) *Resolver {
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   s.Core,
-		DetentionService:       s.DetentionService,
+		DetentionReview:        s.DetentionReview,
+		DetentionSimulation:    s.DetentionSimulation,
+		DetentionNotices:       s.DetentionNotices,
 		DetentionPolicyService: s.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{

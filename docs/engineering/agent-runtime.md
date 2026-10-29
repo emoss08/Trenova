@@ -1618,7 +1618,7 @@ batch reader:
 - **Invoice**: status, settlement and dispute, bill-to, shipment and due date.
   Amounts are left to `invoice_get`, which gates them by the reader's data access.
 - **Detention occurrence**: status and notice, the clock, and the charge priced as
-  of now for a running clock (`detentionservice.PriceOpenClock`).
+  of now for a running clock (`detentionreview.PriceOpenClock`).
 - **Tractor**: status and last position. **Trailer**: status. **Worker**: hours of
   service, or that no ELD has reported any.
 

@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
@@ -57,7 +56,7 @@ type Params struct {
 	Trailers    trailerports.TrailerRepository
 	Telematics  telematicsports.TelematicsRepository
 	Detentions  detentionports.DetentionOccurrenceRepository
-	Pricer      *detentionservice.Service
+	Pricer      *detentionreview.Service
 	Orgs        tenantports.OrganizationRepository
 }
 

@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
@@ -46,7 +45,7 @@ type Params struct {
 	Controls     tenantports.ShipmentControlRepository
 	Accessorials accessorialchargeports.AccessorialChargeRepository
 	Console      dispatchboardports.DispatchConsoleRepository
-	Detention    *detentionservice.Service
+	Detention    *detentionreview.Service
 	Cache        shipmentboardports.ShipmentBoardCache
 	Logger       *zap.Logger
 }

@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 )
 
 type Service struct {
@@ -23,17 +25,23 @@ type Service struct {
 	effects        *detentioneffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
-	Now            func() int64
+	Now            func() int64 `optional:"true"`
 	Effects        *detentioneffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
+	now := p.Now
+	if now == nil {
+		now = timeutils.NowUnix
+	}
 	return &Service{
-		occurrenceRepo: d.OccurrenceRepo,
-		now:            d.Now,
-		effects:        d.Effects,
+		occurrenceRepo: p.OccurrenceRepo,
+		now:            now,
+		effects:        p.Effects,
 	}
 }
 

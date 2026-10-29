@@ -205,8 +205,10 @@ import (
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	detentionnoticeservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	detentionservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	detentionreview "github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	detentionsimulation "github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
@@ -343,8 +345,10 @@ type ResolverParams struct {
 	CustomerPaymentService            customerpaymentports.CustomerPaymentService
 	CustomerService                   *customerservice.Service
 	DashControlService                *dashcontrolservice.Service
+	DetentionNotices                  *detentionnoticeservice.Service
 	DetentionPolicyService            *detentionpolicyservice.Service
-	DetentionService                  *detentionservice.Service
+	DetentionReview                   *detentionreview.Service
+	DetentionSimulation               *detentionsimulation.Service
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
 	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
@@ -1374,7 +1378,9 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   core,
-		DetentionService:       p.DetentionService,
+		DetentionReview:        p.DetentionReview,
+		DetentionSimulation:    p.DetentionSimulation,
+		DetentionNotices:       p.DetentionNotices,
 		DetentionPolicyService: p.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{

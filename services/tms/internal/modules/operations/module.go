@@ -43,9 +43,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerstatustrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
@@ -238,7 +242,11 @@ func SharedOptions() fx.Option {
 				fx.As(new(weatheralertports.WeatherAlertService)),
 			),
 			recurringshipmentservice.New,
-			detentionservice.New,
+			detentioneffects.New,
+			detentionsync.New,
+			detentionsimulation.New,
+			detentionnoticeservice.New,
+			detentionreview.New,
 			shipmentquickfilterservice.New,
 			shipmentsuggestionservice.New,
 			shipmentsuggestionservice.NewReader,
@@ -276,7 +284,7 @@ func SharedOptions() fx.Option {
 			),
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,
-			func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },
+			func(s *detentionnoticeservice.Service) detentionports.DetentionNoticeService { return s },
 			detentionnoticerender.NewContextBuilder,
 			fx.Annotate(
 				func(b *detentionnoticerender.ContextBuilder) documenttemplateports.ContextBuilder { return b },

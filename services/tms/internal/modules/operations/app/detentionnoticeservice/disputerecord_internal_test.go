@@ -119,7 +119,7 @@ func newDisputeRig(t *testing.T) *disputeRig {
 		),
 		documentStore: rig.store,
 		documents:     rig.documents,
-		effects: detentioneffects.New(detentioneffects.Deps{
+		effects: detentioneffects.New(detentioneffects.Params{
 			Logger:        zap.NewNop(),
 			Organizations: organizations,
 		}),

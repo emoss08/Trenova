@@ -140,7 +140,7 @@ _Filled in as each area lands._
   - Nothing billed (the charge was never invoiced, or every invoice that billed it was voided
     or credited): the occurrence is waived as before. One still marked `Billed` with no invoice
     behind it (older data, the dev seed's `SEED-DET-008`) is released and waived in one write
-    (`detentionservice.WaiveUninvoiced`), with both steps on its evidence chain.
+    (`detentionreview.WaiveUninvoiced`), with both steps on its evidence chain.
   - Billed: the person needs `invoice:update` (the permission the invoice adjustment routes
     check), otherwise the mutation is refused with an authorization error. For every posted,
     non-credit-memo invoice with a line for the charge, billing submits a `CreditOnly`

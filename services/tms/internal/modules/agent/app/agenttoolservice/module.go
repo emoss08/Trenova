@@ -81,7 +81,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
@@ -324,11 +325,13 @@ func provideNotifyDriverTool(drivers *drivernotificationservice.Service) agentto
 	return operationstools.NewNotifyDriverTool(drivers)
 }
 
-func provideSendDetentionNoticeTool(detention *detentionservice.Service) agenttoolports.AgentTool {
+func provideSendDetentionNoticeTool(
+	detention *detentionnoticeservice.Service,
+) agenttoolports.AgentTool {
 	return operationstools.NewSendDetentionNoticeTool(detention)
 }
 
-func provideWaiveDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
+func provideWaiveDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
 	return operationstools.NewWaiveDetentionTool(detention)
 }
 
@@ -428,7 +431,7 @@ func provideResolveBankReceiptWorkItemTool(
 	return bankreceipttools.NewResolveBankReceiptWorkItemTool(items)
 }
 
-func provideEscalateDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
+func provideEscalateDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
 	return findingtools.NewEscalateDetentionTool(detention)
 }
 
@@ -496,7 +499,7 @@ func provideApproveBillingQueueItemsTool(
 	return invoicetools.NewApproveBillingQueueItemsTool(billing, invoices)
 }
 
-func provideApproveDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
+func provideApproveDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
 	return findingtools.NewApproveDetentionTool(detention)
 }
 

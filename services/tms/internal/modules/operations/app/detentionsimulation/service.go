@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 )
 
 // Backtest replays proposed policy terms against settled dwell history.
@@ -322,19 +324,25 @@ type Service struct {
 	effects         *detentioneffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	AccessorialRepo accessorialchargeports.AccessorialChargeRepository
 	AnalyticsRepo   detentionports.DetentionAnalyticsRepository
-	Now             func() int64
+	Now             func() int64 `optional:"true"`
 	Effects         *detentioneffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
+	now := p.Now
+	if now == nil {
+		now = timeutils.NowUnix
+	}
 	return &Service{
-		accessorialRepo: d.AccessorialRepo,
-		analyticsRepo:   d.AnalyticsRepo,
-		now:             d.Now,
-		effects:         d.Effects,
+		accessorialRepo: p.AccessorialRepo,
+		analyticsRepo:   p.AnalyticsRepo,
+		now:             now,
+		effects:         p.Effects,
 	}
 }
 

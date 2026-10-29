@@ -1,4 +1,4 @@
-package detentionservice_test
+package detentionnoticeservice_test
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"

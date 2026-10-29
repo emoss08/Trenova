@@ -118,8 +118,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
@@ -337,7 +339,9 @@ type Params struct {
 	FormulaLibraryService             *formulalibraryservice.Service
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
-	DetentionService                  *detentionservice.Service
+	DetentionReview                   *detentionreview.Service
+	DetentionSimulation               *detentionsimulation.Service
+	DetentionNotices                  *detentionnoticeservice.Service
 	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
 	AccountingCertificates            accountingconnectionports.AccountingCertificateService
@@ -615,7 +619,9 @@ type Services struct {
 	FormulaLibraryService             *formulalibraryservice.Service
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
-	DetentionService                  *detentionservice.Service
+	DetentionReview                   *detentionreview.Service
+	DetentionSimulation               *detentionsimulation.Service
+	DetentionNotices                  *detentionnoticeservice.Service
 	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
 	AccountingCertificates            accountingconnectionports.AccountingCertificateService
@@ -899,7 +905,9 @@ func newServices(p *Params) *Services {
 		FormulaLibraryService:             p.FormulaLibraryService,
 		FuelSurchargeService:              p.FuelSurchargeService,
 		CostingService:                    p.CostingService,
-		DetentionService:                  p.DetentionService,
+		DetentionReview:                   p.DetentionReview,
+		DetentionSimulation:               p.DetentionSimulation,
+		DetentionNotices:                  p.DetentionNotices,
 		AccountingConnectionStatus:        p.AccountingConnectionStatus,
 		AccountingAuthorization:           p.AccountingAuthorization,
 		AccountingCertificates:            p.AccountingCertificates,

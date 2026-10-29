@@ -627,11 +627,11 @@ modules:
       - customerupdateservice
       - detentioneffects
       - detentionengine
+      - detentionflows
       - detentionnoticerender
       - detentionnoticeservice
       - detentionpolicyservice
       - detentionreview
-      - detentionservice
       - detentionsimulation
       - detentionsync
       - dispatchcandidateservice

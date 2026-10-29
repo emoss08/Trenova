@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -105,7 +104,8 @@ type Params struct {
 	Holds       shipmentholdports.ShipmentHoldService
 	Comments    shipmentcommentports.ShipmentCommentService
 	Occurrences detentionports.DetentionOccurrenceRepository
-	Detention   *detentionservice.Service
+	Review      *detentionreview.Service
+	Notices     *detentionnoticeservice.Service
 	Credits     detentionports.BilledDetentionCreditor `optional:"true"`
 }
 
@@ -134,8 +134,8 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		holds:       p.Holds,
 		comments:    p.Comments,
 		occurrences: p.Occurrences,
-		detention:   p.Detention,
-		records:     p.Detention,
+		detention:   p.Review,
+		records:     p.Notices,
 		credits:     p.Credits,
 		now:         timeutils.NowUnix,
 	}

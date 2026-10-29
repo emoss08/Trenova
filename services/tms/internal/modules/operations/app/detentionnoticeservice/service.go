@@ -34,8 +34,10 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -263,7 +265,9 @@ type Service struct {
 	effects          *detentioneffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger           *zap.Logger
 	PolicyRepo       detentionports.DetentionPolicyRepository
 	OccurrenceRepo   detentionports.DetentionOccurrenceRepository
@@ -275,33 +279,37 @@ type Deps struct {
 	WorkflowStarter  kernelports.WorkflowStarter
 	Templates        documenttemplateports.DocumentTemplateResolver
 	ContextBuilder   *detentionnoticerender.ContextBuilder
-	Publisher        agenteventports.AgentEventPublisher
-	Senders          emailports.EmailSenderResolver
-	DocumentStore    documentports.DocumentStore
-	Documents        documentports.DocumentRepository
-	Now              func() int64
+	Publisher        agenteventports.AgentEventPublisher `optional:"true"`
+	Senders          emailports.EmailSenderResolver      `optional:"true"`
+	DocumentStore    documentports.DocumentStore         `optional:"true"`
+	Documents        documentports.DocumentRepository    `optional:"true"`
+	Now              func() int64                        `optional:"true"`
 	Effects          *detentioneffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
+	now := p.Now
+	if now == nil {
+		now = timeutils.NowUnix
+	}
 	return &Service{
-		l:                d.Logger,
-		policyRepo:       d.PolicyRepo,
-		occurrenceRepo:   d.OccurrenceRepo,
-		noticeRepo:       d.NoticeRepo,
-		customerRepo:     d.CustomerRepo,
-		documentTypeRepo: d.DocumentTypeRepo,
-		emailService:     d.EmailService,
-		uploadService:    d.UploadService,
-		workflowStarter:  d.WorkflowStarter,
-		templates:        d.Templates,
-		contextBuilder:   d.ContextBuilder,
-		publisher:        d.Publisher,
-		senders:          d.Senders,
-		documentStore:    d.DocumentStore,
-		documents:        d.Documents,
-		now:              d.Now,
-		effects:          d.Effects,
+		l:                p.Logger.Named("service.detention"),
+		policyRepo:       p.PolicyRepo,
+		occurrenceRepo:   p.OccurrenceRepo,
+		noticeRepo:       p.NoticeRepo,
+		customerRepo:     p.CustomerRepo,
+		documentTypeRepo: p.DocumentTypeRepo,
+		emailService:     p.EmailService,
+		uploadService:    p.UploadService,
+		workflowStarter:  p.WorkflowStarter,
+		templates:        p.Templates,
+		contextBuilder:   p.ContextBuilder,
+		publisher:        p.Publisher,
+		senders:          p.Senders,
+		documentStore:    p.DocumentStore,
+		documents:        p.Documents,
+		now:              now,
+		effects:          p.Effects,
 	}
 }
 
@@ -1202,3 +1210,5 @@ func (s *Service) renderScheduledNotice(
 		AttachPDF:    p.AttachPDF,
 	})
 }
+
+var _ detentionports.DetentionNoticeService = (*Service)(nil)

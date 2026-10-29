@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -23,14 +22,14 @@ type Params struct {
 	fx.In
 
 	Service              *detentionpolicyservice.Service
-	Engine               *detentionservice.Service
+	Engine               *detentionsimulation.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *detentionpolicyservice.Service
-	engine  *detentionservice.Service
+	engine  *detentionsimulation.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }

@@ -1,4 +1,4 @@
-package detentionservice
+package detentionflows
 
 import (
 	"context"
@@ -53,8 +53,8 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func eventService(publisher agenteventports.AgentEventPublisher) *Service {
-	return &Service{l: zap.NewNop(), watchtower: silentProjector{}, publisher: publisher}
+func eventWiring(publisher agenteventports.AgentEventPublisher) *wiring {
+	return &wiring{Logger: zap.NewNop(), Watchtower: silentProjector{}, Publisher: publisher}
 }
 
 type stubOccurrenceRepo struct {
@@ -113,15 +113,15 @@ func TestSweepNoticesDue_RaisesTheNoticesItLeavesOnTheDesk(t *testing.T) {
 			t.Parallel()
 
 			publisher := &recordingPublisher{}
-			svc := eventService(publisher)
-			svc.occurrenceRepo = stubOccurrenceRepo{
+			w := eventWiring(publisher)
+			w.OccurrenceRepo = stubOccurrenceRepo{
 				due: []*detention.DetentionOccurrence{
 					{ID: occurrenceID, DetentionPolicyID: &policyID},
 				},
 			}
-			svc.policyRepo = stubPolicyRepo{policy: tc.policy}
-			svc.now = func() int64 { return 1_767_225_600 }
-			svc.assemble()
+			w.PolicyRepo = stubPolicyRepo{policy: tc.policy}
+			w.Now = func() int64 { return 1_767_225_600 }
+			svc := wire(w)
 
 			result, err := svc.notices.SweepNoticesDue(t.Context(), tenant)
 			require.NoError(t, err)

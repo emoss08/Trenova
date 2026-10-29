@@ -23,7 +23,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -144,7 +146,9 @@ type Service struct {
 	effects           *detentioneffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger            *zap.Logger
 	PolicyRepo        detentionports.DetentionPolicyRepository
 	OccurrenceRepo    detentionports.DetentionOccurrenceRepository
@@ -154,27 +158,31 @@ type Deps struct {
 	PayAssignmentRepo driverpayports.WorkerPayAssignmentRepository
 	PayProfileRepo    driverpayports.PayProfileRepository
 	CommentRepo       shipmentcommentports.ShipmentCommentRepository
-	Watchtower        watchtowerports.WatchtowerProjector
-	Publisher         agenteventports.AgentEventPublisher
-	Now               func() int64
+	Watchtower        watchtowerports.WatchtowerProjector `optional:"true"`
+	Publisher         agenteventports.AgentEventPublisher `optional:"true"`
+	Now               func() int64                        `optional:"true"`
 	Effects           *detentioneffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
+	now := p.Now
+	if now == nil {
+		now = timeutils.NowUnix
+	}
 	return &Service{
-		l:                 d.Logger,
-		policyRepo:        d.PolicyRepo,
-		occurrenceRepo:    d.OccurrenceRepo,
-		evidenceRepo:      d.EvidenceRepo,
-		accessorialRepo:   d.AccessorialRepo,
-		agreementRepo:     d.AgreementRepo,
-		payAssignmentRepo: d.PayAssignmentRepo,
-		payProfileRepo:    d.PayProfileRepo,
-		commentRepo:       d.CommentRepo,
-		watchtower:        d.Watchtower,
-		publisher:         d.Publisher,
-		now:               d.Now,
-		effects:           d.Effects,
+		l:                 p.Logger.Named("service.detention"),
+		policyRepo:        p.PolicyRepo,
+		occurrenceRepo:    p.OccurrenceRepo,
+		evidenceRepo:      p.EvidenceRepo,
+		accessorialRepo:   p.AccessorialRepo,
+		agreementRepo:     p.AgreementRepo,
+		payAssignmentRepo: p.PayAssignmentRepo,
+		payProfileRepo:    p.PayProfileRepo,
+		commentRepo:       p.CommentRepo,
+		watchtower:        p.Watchtower,
+		publisher:         p.Publisher,
+		now:               now,
+		effects:           p.Effects,
 	}
 }
 

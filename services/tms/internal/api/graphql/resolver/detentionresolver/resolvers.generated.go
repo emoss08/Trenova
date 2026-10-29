@@ -4,13 +4,17 @@ package detentionresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	detentionnoticeservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	detentionservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	detentionreview "github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	detentionsimulation "github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	DetentionService       *detentionservice.Service
+	DetentionReview        *detentionreview.Service
+	DetentionSimulation    *detentionsimulation.Service
+	DetentionNotices       *detentionnoticeservice.Service
 	DetentionPolicyService *detentionpolicyservice.Service
 }
 

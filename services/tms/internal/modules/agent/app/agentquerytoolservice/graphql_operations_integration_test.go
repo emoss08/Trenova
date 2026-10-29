@@ -24,7 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
@@ -389,10 +390,10 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 	services.ServiceFailureSvc = servicefailureservice.New(servicefailureservice.Params{
 		Logger: logger, Repo: failures, ReasonCodeRepo: reasons,
 	})
-	services.DetentionService = detentionservice.New(detentionservice.Params{
-		Logger: logger,
+	services.DetentionReview = detentionreview.New(detentionreview.Params{
 		OccurrenceRepo: detentionrepository.NewOccurrenceRepository(
 			detentionrepository.OccurrenceParams{DB: conn, Logger: logger}),
+		Effects: detentioneffects.New(detentioneffects.Params{Logger: logger}),
 	})
 	services.TenderService = tenderservice.New(tenderservice.Params{
 		Logger: logger,
@@ -649,9 +650,9 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		assert.NotContains(t, all, other.String())
 
 		tenant := tenantInfoOf(env.mine)
-		open, err := services.DetentionService.ListDesk(ours, tenant)
+		open, err := services.DetentionReview.ListDesk(ours, tenant)
 		require.NoError(t, err)
-		waiting, err := services.DetentionService.ListAwaitingApproval(ours, tenant)
+		waiting, err := services.DetentionReview.ListAwaitingApproval(ours, tenant)
 		require.NoError(t, err)
 		before := make([]string, 0, len(open)+len(waiting))
 		for _, entry := range slices.Concat(open, waiting) {

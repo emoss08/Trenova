@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -47,7 +46,7 @@ type Params struct {
 	Capabilities    shipmentboardports.ShipmentBoardCapabilitiesReader
 	Watchlist       shipmentboardports.ShipmentWatchlistReader
 	Comments        shipmentcommentports.ShipmentCommentService
-	Detention       *detentionservice.Service
+	Detention       *detentionreview.Service
 	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
 	AssignmentReads assignmentports.AssignmentRepository
 	Tenders         tenderports.TenderRepository

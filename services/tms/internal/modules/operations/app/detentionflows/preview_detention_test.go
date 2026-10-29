@@ -1,4 +1,4 @@
-package detentionservice
+package detentionflows
 
 import (
 	"context"
@@ -109,15 +109,17 @@ func (previewOrganizations) GetByID(
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }
 
-func previewService(repo *previewOccurrenceRepo) *Service {
-	svc := &Service{
-		l:              zap.NewNop(),
-		occurrenceRepo: repo,
-		organizations:  previewOrganizations{},
-		now:            func() int64 { return 1_767_230_000 },
+func previewWiring(repo *previewOccurrenceRepo) *wiring {
+	return &wiring{
+		Logger:         zap.NewNop(),
+		OccurrenceRepo: repo,
+		Organizations:  previewOrganizations{},
+		Now:            func() int64 { return 1_767_230_000 },
 	}
-	svc.assemble()
-	return svc
+}
+
+func previewService(repo *previewOccurrenceRepo) services {
+	return wire(previewWiring(repo))
 }
 
 func tenantOfOccurrence(occ *detention.DetentionOccurrence) pagination.TenantInfo {
@@ -264,17 +266,17 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 		Return(&documenttemplateports.RenderedDocument{PDF: []byte("%PDF-1.7")}, nil).
 		Maybe()
 
-	svc := previewService(repo)
-	svc.customerRepo = &noticeCustomers{recipients: "ap@acme.test, ops@acme.test"}
-	svc.noticeRepo = &previewNoticeRepo{}
-	svc.policyRepo = stubPolicyRepo{
+	w := previewWiring(repo)
+	w.CustomerRepo = &noticeCustomers{recipients: "ap@acme.test, ops@acme.test"}
+	w.NoticeRepo = &previewNoticeRepo{}
+	w.PolicyRepo = stubPolicyRepo{
 		policy: &detentionpolicy.DetentionPolicy{ID: policyID, AttachNoticePDF: true},
 	}
-	svc.templates = resolver
-	svc.contextBuilder = &detentionnoticerender.ContextBuilder{}
-	svc.emailService = mailer
-	svc.senders = noticeSenders{}
-	svc.assemble()
+	w.Templates = resolver
+	w.ContextBuilder = &detentionnoticerender.ContextBuilder{}
+	w.EmailService = mailer
+	w.Senders = noticeSenders{}
+	svc := wire(w)
 
 	params := detentionnoticeservice.SendOccurrenceNoticeParams{
 		OccurrenceID: stored.ID,

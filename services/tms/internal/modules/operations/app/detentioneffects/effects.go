@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -30,23 +32,29 @@ type Effects struct {
 	now           func() int64
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger        *zap.Logger
 	EvidenceRepo  detentionports.DetentionEvidenceRepository
 	Organizations tenantports.OrganizationRepository
 	AuditService  auditports.AuditService
-	Realtime      realtimeports.RealtimeService
-	Now           func() int64
+	Realtime      realtimeports.RealtimeService `optional:"true"`
+	Now           func() int64                  `optional:"true"`
 }
 
-func New(d Deps) *Effects {
+func New(p Params) *Effects {
+	now := p.Now
+	if now == nil {
+		now = timeutils.NowUnix
+	}
 	return &Effects{
-		l:             d.Logger,
-		evidenceRepo:  d.EvidenceRepo,
-		organizations: d.Organizations,
-		auditService:  d.AuditService,
-		realtime:      d.Realtime,
-		now:           d.Now,
+		l:             p.Logger.Named("service.detention"),
+		evidenceRepo:  p.EvidenceRepo,
+		organizations: p.Organizations,
+		auditService:  p.AuditService,
+		realtime:      p.Realtime,
+		now:           now,
 	}
 }
 

@@ -1,4 +1,4 @@
-package detentionservice_test
+package detentionnoticeservice_test
 
 import (
 	"strings"

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -48,7 +48,7 @@ type Params struct {
 	QuoteRepo          ratequoteports.RateQuoteRepository
 	BillingControlRepo tenantports.BillingControlRepository
 	FuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
-	DetentionEngine    *detentionservice.Service
+	DetentionEngine    *detentionsync.Service
 	Hydrator           ratequoteports.ShipmentRatingHydrator
 }
 
@@ -60,7 +60,7 @@ type Calculator struct {
 	quoteRepo          ratequoteports.RateQuoteRepository
 	billingControlRepo tenantports.BillingControlRepository
 	fuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
-	detentionEngine    *detentionservice.Service
+	detentionEngine    *detentionsync.Service
 	hydrator           ratequoteports.ShipmentRatingHydrator
 	now                func() int64
 }

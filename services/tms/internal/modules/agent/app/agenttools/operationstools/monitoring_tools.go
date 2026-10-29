@@ -377,33 +377,33 @@ func (t *EmailCustomerTool) record(
 	return nil
 }
 
-// detentionActor is the slice of the detention service the tools act
-// through: send the customer notice, or waive the charge.
-type detentionActor interface {
+type detentionNoticeSender interface {
 	SendOccurrenceNotice(
 		ctx context.Context,
 		params detentionnoticeservice.SendOccurrenceNoticeParams,
-	) (*detention.DetentionOccurrence, error)
-	Waive(
-		ctx context.Context,
-		params detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewOccurrenceNotice(
 		ctx context.Context,
 		params *detentionnoticeservice.SendOccurrenceNoticeParams,
 	) (*detentionnoticeservice.NoticePreview, error)
+}
+
+type detentionWaiver interface {
+	Waive(
+		ctx context.Context,
+		params detentionreview.WaiveParams,
+	) (*detention.DetentionOccurrence, error)
 	PreviewWaive(
 		ctx context.Context,
 		params *detentionreview.WaiveParams,
 	) (*detentionreview.OccurrenceChange, error)
-	detentionpreview.DetentionDisputer
 }
 
 type SendDetentionNoticeTool struct {
-	detention detentionActor
+	detention detentionNoticeSender
 }
 
-func NewSendDetentionNoticeTool(detentions detentionActor) agenttoolports.AgentTool {
+func NewSendDetentionNoticeTool(detentions detentionNoticeSender) agenttoolports.AgentTool {
 	return &SendDetentionNoticeTool{detention: detentions}
 }
 
@@ -490,10 +490,10 @@ func (t *SendDetentionNoticeTool) request(
 }
 
 type WaiveDetentionTool struct {
-	detention detentionActor
+	detention detentionWaiver
 }
 
-func NewWaiveDetentionTool(detentions detentionActor) agenttoolports.AgentTool {
+func NewWaiveDetentionTool(detentions detentionWaiver) agenttoolports.AgentTool {
 	return &WaiveDetentionTool{detention: detentions}
 }
 

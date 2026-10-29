@@ -49,7 +49,7 @@ func detailService(t *testing.T, occurrence *detention.DetentionOccurrence, now 
 	return &Service{
 		occurrenceRepo: &detailOccurrences{occurrence: occurrence},
 		now:            func() int64 { return now },
-		effects: detentioneffects.New(detentioneffects.Deps{
+		effects: detentioneffects.New(detentioneffects.Params{
 			Logger:        zap.NewNop(),
 			Organizations: organizations,
 		}),
