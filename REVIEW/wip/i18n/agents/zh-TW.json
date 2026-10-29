@@ -1,0 +1,8 @@
+{
+  "Let agents propose booking, uploading or accepting on portals for this person, and open a portal task's signed-in live browser": "允許代理程式為此人在入口網站上提議預訂、上傳或接受，並開啟入口網站工作已登入的即時瀏覽器",
+  "Only a person can give an agent tools, because each tool is checked against the access of the person giving it": "只有人員才能為代理程式提供工具，因為每項工具都會依提供者本人的存取權限進行檢查",
+  "Opening a portal task's live browser needs permission to act on portals, because it is signed in with the organization's account": "開啟入口網站工作的即時瀏覽器需要在入口網站上執行操作的權限，因為它已使用組織的帳戶登入",
+  "The message was not sent: the account it was queued from can no longer use the assistant.": "訊息未傳送：將其加入佇列的帳戶已無法再使用助理。",
+  "The person whose conversation asked for this work can no longer be acted for, so nothing waits on it for them": "已無法再代表發起此工作的對話所屬人員執行操作，因此不會為其等待任何事項",
+  "You can give an agent {0} only if your own role can {1} {2} across the organization": "只有當您自己的角色可以在整個組織範圍內對 {2} 執行 {1} 時，您才能為代理程式提供 {0}"
+}

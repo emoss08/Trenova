@@ -1,0 +1,10 @@
+{
+  "Automatic and Required both reject an inbound document that is not signed with the partner signing certificate. Choose Not required only for a partner that cannot sign.": "Automático y Obligatorio rechazan un documento entrante que no esté firmado con el certificado de firma del socio. Elija No obligatorio solo para un socio que no pueda firmar.",
+  "Enter the SFTP password or private key again: the server changed, and a saved secret is never sent to a new one": "Vuelva a introducir la contraseña o la clave privada SFTP: el servidor cambió, y un secreto guardado nunca se envía a uno nuevo",
+  "Enter the password again: the site has a new domain, and a saved sign-in is never used on a new one": "Vuelva a introducir la contraseña: el sitio tiene un dominio nuevo, y un inicio de sesión guardado nunca se usa en uno nuevo",
+  "Enter this secret again: the destination changed, and a saved secret is never sent to a new one": "Vuelva a introducir este secreto: el destino cambió, y un secreto guardado nunca se envía a uno nuevo",
+  "Enter {0} again: the destination changed, and a saved secret is never sent to a new one": "Vuelva a introducir {0}: el destino cambió, y un secreto guardado nunca se envía a uno nuevo",
+  "OANDA exchange rate request failed with status {0}: {1}": "La solicitud de tipo de cambio de OANDA falló con el estado {0}: {1}",
+  "PC*Miler returned status {0}: {1}": "PC*Miler devolvió el estado {0}: {1}",
+  "{0} must be an HTTPS address on a public host name, with no user name, password, query or fragment": "{0} debe ser una dirección HTTPS en un nombre de host público, sin nombre de usuario, contraseña, consulta ni fragmento"
+}

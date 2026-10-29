@@ -1,0 +1,9 @@
+{
+  "A print job can have at most {0} pages": "列印工作最多只能有 {0} 頁",
+  "Document upload session not found within your organization": "在您的組織中找不到該文件上傳工作階段",
+  "File type could not be determined": "無法判斷檔案類型",
+  "Policy is invalid": "政策無效",
+  "Sign in to read documents": "請登入以閱讀文件",
+  "The print job's pages are too large to store": "列印工作的頁面太大，無法儲存",
+  "You do not have permission to read the documents of this record": "您無權閱讀此記錄的文件"
+}

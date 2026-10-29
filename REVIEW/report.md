@@ -1,5 +1,14 @@
 # Trenova review: bugs, security, tests and lint
 
+> **Status: paused for `claude/small-packages`.** That branch restructures the Go service
+> (9,242 files, more than 1,000 moves) and lands on master first. The findings below marked
+> "Not fixed" were in progress with fix agents when work paused; their unreviewed work and
+> the porting plan are in [wip/README.md](wip/README.md). The fixes on this branch get
+> ported onto the new structure, tests first, before one PR goes up. The frontend fixes
+> (`67025eee`..`95ce056b`) were reviewed and merged, but have not yet been through
+> `bundle:check` or a `pnpm install --frozen-lockfile` on a clean checkout. The numbers in §1
+> predate them.
+
 Branch `claude/sweet-johnson-ei4krw`, from `36d426b9`. Every fix is its own commit with a
 regression test; the commit hashes below are on this branch. The method and the baseline
 numbers are in [baseline.md](baseline.md).
@@ -95,24 +104,25 @@ model input.
 | M23 | Manual journals and journal reversals can be approved by the person who made them. | `manualjournalservice/service.go:316-418`, `journalreversalservice` | Not fixed: a segregation-of-duties setting |
 | M24 | The generic journal reversal can reverse a subledger's journal. | `journalreversalservice/validator.go:29-78` | Not fixed |
 | M25 | Customer payment post and PayWorkerNow have no durable idempotency key. | `customerpaymentservice`, settlement | Not fixed |
-| M26 | The web app keeps recent records, recent pages, desk searches, upload blobs and the full user in browser storage, keyed by org not user, and does not clear them at sign-out. | `recent-records-store.ts`, `recent-pages-store.ts`, `desk-settings-store.ts`, `document-upload-store.ts`, `auth-store.ts` | Not fixed: breaks the rule in `web-build.md`; each store needs to move off storage or into `clearSessionCache()` |
+| M26 | The web app keeps recent records, recent pages, desk searches, upload blobs and the full user in browser storage, keyed by org not user, and does not clear them at sign-out. | `recent-records-store.ts`, `recent-pages-store.ts`, `desk-settings-store.ts`, `document-upload-store.ts`, `auth-store.ts` | **Fixed** `67025eee`: records, pages, searches, drafts and the user are held in memory only; resumable upload files are scoped to the session; every session end, a 401 at page load included, clears them |
 | M27 | Agent module: scheduled conversations and resumed waits run as a deactivated or locked user; portal live view hands any `portal_automation:read` user a vendor browser signed in with org credentials; agent definitions are saved without checking the editor holds the tools' permissions; proposal list and get skip the private-thread rule. | `conversationscheduleservice`, `agentwaitservice`, `agentextensionhandler`, `agentdefinitionservice`, `agentproposalrepository` | Not fixed; each is its own change |
 
 ### Low
 
 Fixed: tokens in `webhookToken` and `mailboxToken` route params now redacted from logs
 (`565bd94a`); the update check moved off the public routes and behind `organization:update`
-(`5af8b829`); a dev dependency with a high-severity advisory (`e812f3f4`).
+(`5af8b829`); a dev dependency with a high-severity advisory (`e812f3f4`); printing a load
+plan, which the CSP blocked (`0d8175a3`); three debug `console` calls, now a lint error
+(`46146ef3`); katex below the advisory's fix (`3745afe6`); dev compose ports published on
+every interface (`6b12fcfc`); actions pinned by tag in the workflows that hold secrets
+(`36c125f0`); `unsafe-eval` in the Caddy CSP (`95ce056b`).
 
 Not fixed: report builder shows other users' private report definitions within the tenant;
 user and email-profile select options expose emails; `MyYtdPay` computes every worker then
 filters; forgot-password timing differs for unknown emails; a replaced carrier's tracking
 link stays readable after the move closes; `webhookToken` is tenant-settable and not unique;
 `Accept: text/event-stream` skips the request timeout on any route; all RFC1918 proxies
-trusted by default; Caddy CSP
-allows `unsafe-eval`; dev compose binds `0.0.0.0`; `native-capture.yml` uses unpinned
-actions with signing secrets; print-load-plan's inline script is blocked by CSP; three debug
-`console.log`s; presigned URLs return sealed ciphertext; empty content types skip the allow
+trusted by default; presigned URLs return sealed ciphertext; empty content types skip the allow
 list; SSO state is not bound to the browser; the watchtower hand-off starts any enabled agent
 without `MayUseAgent`; triage load instructions are stored as a system comment, so the
 agent's taint tracking treats outside text as internal.
@@ -208,9 +218,9 @@ No test was deleted, skipped or loosened, and no lint suppression was added.
 5. A REST counterpart to `authzlint` so a protected route without a permission check fails
    the build; several findings above (M9, M12) were exactly that gap.
 6. Re-record the agent eval embeddings and settle the desk bench ledger so CI is green.
-7. `katex` (low) is fixed by upgrading `remark-math`/`rehype-katex` to versions on katex
-   0.18.2 or later. `deepmerge` (low) has no patched release; it is only reached through dev
-   tooling (`shadcn`, rollup).
+7. `deepmerge` (low) has no patched release; it is only reached through dev tooling
+   (`shadcn`, rollup). katex is now forced to 0.19 by an override, because the latest
+   `rehype-katex` and `micromark-extension-math` still ask for 0.16.
 8. `pdf-lib` is unmaintained; it only generates cover sheets.
 9. Add `govulncheck` to CI (Rust already runs `cargo deny`); the Go scan could not run
    here. GitHub reports open Dependabot alerts on the default branch

@@ -1,0 +1,10 @@
+{
+  "Automatic and Required both reject an inbound document that is not signed with the partner signing certificate. Choose Not required only for a partner that cannot sign.": "“自动”和“必需”都会拒绝未使用合作伙伴签名证书签名的入站文档。仅当合作伙伴无法签名时才选择“不需要”。",
+  "Enter the SFTP password or private key again: the server changed, and a saved secret is never sent to a new one": "请重新输入 SFTP 密码或私钥：服务器已更改，已保存的密钥绝不会发送到新的服务器",
+  "Enter the password again: the site has a new domain, and a saved sign-in is never used on a new one": "请重新输入密码：该站点有新的域名，已保存的登录信息绝不会在新域名上使用",
+  "Enter this secret again: the destination changed, and a saved secret is never sent to a new one": "请重新输入此密钥：目标已更改，已保存的密钥绝不会发送到新的目标",
+  "Enter {0} again: the destination changed, and a saved secret is never sent to a new one": "请重新输入{0}：目标已更改，已保存的密钥绝不会发送到新的目标",
+  "OANDA exchange rate request failed with status {0}: {1}": "OANDA 汇率请求失败，状态为 {0}：{1}",
+  "PC*Miler returned status {0}: {1}": "PC*Miler 返回状态 {0}：{1}",
+  "{0} must be an HTTPS address on a public host name, with no user name, password, query or fragment": "{0} 必须是公共主机名上的 HTTPS 地址，不能包含用户名、密码、查询或片段"
+}

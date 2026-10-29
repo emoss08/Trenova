@@ -1,0 +1,9 @@
+{
+  "A print job can have at most {0} pages": "Un trabajo de impresión puede tener como máximo {0} páginas",
+  "Document upload session not found within your organization": "No se encontró la sesión de carga del documento en su organización",
+  "File type could not be determined": "No se pudo determinar el tipo de archivo",
+  "Policy is invalid": "La política no es válida",
+  "Sign in to read documents": "Inicie sesión para leer documentos",
+  "The print job's pages are too large to store": "Las páginas del trabajo de impresión son demasiado grandes para almacenarlas",
+  "You do not have permission to read the documents of this record": "No tiene permiso para leer los documentos de este registro"
+}

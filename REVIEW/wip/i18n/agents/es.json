@@ -1,0 +1,8 @@
+{
+  "Let agents propose booking, uploading or accepting on portals for this person, and open a portal task's signed-in live browser": "Permitir que los agentes propongan reservar, cargar o aceptar en portales para esta persona, y abrir el navegador en vivo con sesión iniciada de una tarea de portal",
+  "Only a person can give an agent tools, because each tool is checked against the access of the person giving it": "Solo una persona puede dar herramientas a un agente, porque cada herramienta se comprueba con el acceso de la persona que la da",
+  "Opening a portal task's live browser needs permission to act on portals, because it is signed in with the organization's account": "Abrir el navegador en vivo de una tarea de portal requiere permiso para actuar en portales, porque tiene la sesión iniciada con la cuenta de la organización",
+  "The message was not sent: the account it was queued from can no longer use the assistant.": "El mensaje no se envió: la cuenta desde la que se puso en cola ya no puede usar el asistente.",
+  "The person whose conversation asked for this work can no longer be acted for, so nothing waits on it for them": "Ya no se puede actuar en nombre de la persona cuya conversación pidió este trabajo, así que nada queda esperando por ella",
+  "You can give an agent {0} only if your own role can {1} {2} across the organization": "Solo puede dar {0} a un agente si su propio rol puede {1} {2} en toda la organización"
+}

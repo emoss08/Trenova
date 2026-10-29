@@ -1,0 +1,2123 @@
+From 11dd97e0655d703f7fbc8639f16a4c3c6f506dc8 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 20:47:10 +0000
+Subject: [PATCH 1/3] organizations: serve a cached organization only to its
+ own tenant
+
+GetByID answered from the organization cache whenever the cached row's
+business unit matched the request, before the row-level-security scoped
+query ran. A request scoped to one organization that asked for another
+organization of its business unit (or any request without a tenant scope)
+was served the other organization from the cache, though the database
+would have refused it. The cache is now used only when the request's
+tenant scope is that organization; otherwise the read goes to the scoped
+query.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01L7Gd5v8t2y7WHswGwtgbrn
+---
+ .../organizationrepository/organization.go    | 15 +++++-
+ .../organization_cache_integration_test.go    | 53 +++++++++++++++++++
+ 2 files changed, 66 insertions(+), 2 deletions(-)
+ create mode 100644 services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization_cache_integration_test.go
+
+diff --git a/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization.go b/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization.go
+index cc23ca6ba..517ad93ee 100644
+--- a/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization.go
++++ b/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization.go
+@@ -78,8 +78,7 @@ func (r *repository) GetByID(
+ 		)
+ 
+ 		cachedOrg, err := r.cache.GetByID(ctx, req.TenantInfo.OrgID)
+-		if err == nil && cachedOrg.ID.IsNotNil() &&
+-			cachedOrg.BusinessUnitID == req.TenantInfo.BuID {
++		if err == nil && cachedOrgVisible(ctx, req.TenantInfo, cachedOrg) {
+ 			needsRefresh := (req.IncludeState && cachedOrg.State == nil) ||
+ 				(req.IncludeBU && cachedOrg.BusinessUnit == nil)
+ 			if !needsRefresh {
+@@ -108,6 +107,18 @@ func (r *repository) GetByID(
+ 	})
+ }
+ 
++func cachedOrgVisible(
++	ctx context.Context,
++	requested pagination.TenantInfo,
++	cached *tenant.Organization,
++) bool {
++	if cached == nil || cached.ID.IsNil() || cached.BusinessUnitID != requested.BuID {
++		return false
++	}
++	scope, ok := dbscope.TenantFrom(ctx)
++	return ok && scope.OrganizationID == cached.ID && scope.BusinessUnitID == cached.BusinessUnitID
++}
++
+ func (r *repository) GetByIDs(
+ 	ctx context.Context,
+ 	req tenantports.GetOrganizationsByIDsQuery,
+diff --git a/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization_cache_integration_test.go b/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization_cache_integration_test.go
+new file mode 100644
+index 000000000..f7d5c85d9
+--- /dev/null
++++ b/services/tms/internal/modules/identity/adapters/postgres/organizationrepository/organization_cache_integration_test.go
+@@ -0,0 +1,53 @@
++//go:build integration
++
++package organizationrepository_test
++
++import (
++	"testing"
++
++	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
++	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
++	"github.com/emoss08/trenova/internal/testutil/dbtest"
++	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
++	"github.com/emoss08/trenova/internal/testutil/seedtest"
++	"github.com/emoss08/trenova/pkg/errortypes"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++	"github.com/stretchr/testify/mock"
++	"go.uber.org/zap"
++)
++
++func TestGetByID_ServesACachedOrganizationOnlyToItsOwnTenant(t *testing.T) {
++	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
++	t.Cleanup(cleanup)
++
++	tenantA := seedtest.SeedFullTestData(t, ctx, admin)
++	tenantB := seedtest.SeedAdditionalTenant(t, ctx, admin, "OCB")
++
++	cache := tenantportsmock.NewMockOrganizationCacheRepository(t)
++	cache.EXPECT().GetByID(mock.Anything, tenantB.Organization.ID).Return(tenantB.Organization, nil)
++	cache.EXPECT().GetByID(mock.Anything, tenantA.Organization.ID).Return(tenantA.Organization, nil)
++
++	repo := organizationrepository.New(organizationrepository.Params{
++		DB:     dbtest.NewRLSConnection(t, admin, dsn),
++		Logger: zap.NewNop(),
++		Cache:  cache,
++	})
++
++	t.Run("another tenant's cached organization is refused like the database refuses it", func(t *testing.T) {
++		org, err := repo.GetByID(tenantA.Ctx(ctx), tenantports.GetOrganizationByIDRequest{
++			TenantInfo: tenantB.Info(),
++		})
++		require.Error(t, err)
++		assert.True(t, errortypes.IsNotFoundError(err), "got %v", err)
++		assert.Nil(t, org)
++	})
++
++	t.Run("the tenant's own cached organization is served", func(t *testing.T) {
++		org, err := repo.GetByID(tenantA.Ctx(ctx), tenantports.GetOrganizationByIDRequest{
++			TenantInfo: tenantA.Info(),
++		})
++		require.NoError(t, err)
++		assert.Equal(t, tenantA.Organization.ID, org.ID)
++	})
++}
+-- 
+2.43.0
+
+
+From d232e58ddbc38ddc46ee6bba38c389f4454109cf Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 21:03:31 +0000
+Subject: [PATCH 2/3] select options: carry only what identifies a user or an
+ email profile
+
+The user select option returned each person's email address as its
+description and meta, and searched by it; the email profile option
+returned the sender address and provider. Select options are reference
+reads anyone signed in can make, and the reference views of both kinds
+carry only a name (and a user's username and picture). The user option
+now carries the name and username and searches only those; the email
+profile option carries only its name, and the REST select queries pick
+and search only those columns. The comment mention picker and the email
+profile picker show the username and name instead.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01L7Gd5v8t2y7WHswGwtgbrn
+---
+ .../src/components/autocomplete-fields.tsx    | 10 +--
+ .../use-comment-suggestions.ts                |  6 +-
+ .../capture_select_options.go                 |  4 +-
+ .../selectoptions_documents.go                | 10 +--
+ .../selectoptions_identifying_test.go         | 58 +++++++++++++++
+ .../selectoptions_people.go                   |  9 ++-
+ .../adapters/postgres/userrepository/user.go  |  2 -
+ .../userrepository/user_integration_test.go   |  9 +++
+ .../postgres/emailrepository/email.go         | 10 +--
+ .../selectoptions_integration_test.go         | 71 +++++++++++++++++++
+ 10 files changed, 152 insertions(+), 37 deletions(-)
+ create mode 100644 services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_identifying_test.go
+ create mode 100644 services/tms/internal/modules/workspace/adapters/postgres/emailrepository/selectoptions_integration_test.go
+
+diff --git a/client/apps/web/src/components/autocomplete-fields.tsx b/client/apps/web/src/components/autocomplete-fields.tsx
+index 8420b7b76..fde3d4290 100644
+--- a/client/apps/web/src/components/autocomplete-fields.tsx
++++ b/client/apps/web/src/components/autocomplete-fields.tsx
+@@ -1257,15 +1257,7 @@ export function EmailProfileAutocompleteField<T extends FieldValues>({
+       graphql={emailProfileSelectOptionsGraphQL}
+       getOptionValue={(option) => option.id || ""}
+       getDisplayValue={(option) => option.label || ""}
+-      renderOption={(option) => (
+-        <OptionStack
+-          primary={option.label || ""}
+-          secondary={
+-            option.description ||
+-            `${selectOptionMetaString(option, "senderEmail")} · ${selectOptionMetaString(option, "provider")}`.trim()
+-          }
+-        />
+-      )}
++      renderOption={(option) => option.label || ""}
+       {...props}
+     />
+   );
+diff --git a/client/apps/web/src/hooks/shipment-comments/use-comment-suggestions.ts b/client/apps/web/src/hooks/shipment-comments/use-comment-suggestions.ts
+index 36a33b1cd..0b833b7aa 100644
+--- a/client/apps/web/src/hooks/shipment-comments/use-comment-suggestions.ts
++++ b/client/apps/web/src/hooks/shipment-comments/use-comment-suggestions.ts
+@@ -28,7 +28,7 @@ const customerSelectOptionsGraphQL = {
+ interface UserSelectOption {
+   id: string;
+   name?: string;
+-  emailAddress?: string;
++  username?: string;
+ }
+ 
+ function selectOptionMetaString(option: SelectOption, key: string): string {
+@@ -47,8 +47,8 @@ export const fetchMentionCandidates: SuggestionFetcher = async (query, page) =>
+   return {
+     items: (response.results ?? []).map((user) => ({
+       id: user.id,
+-      label: user.name || user.emailAddress || user.id,
+-      description: user.name ? (user.emailAddress ?? null) : null,
++      label: user.name || user.username || user.id,
++      description: user.name ? (user.username ?? null) : null,
+     })),
+     hasMore: response.next != null,
+   };
+diff --git a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/capture_select_options.go b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/capture_select_options.go
+index 7b3e53400..bdeb7a426 100644
+--- a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/capture_select_options.go
++++ b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/capture_select_options.go
+@@ -17,7 +17,7 @@ import (
+ const maxCaptureDevices = 500
+ 
+ const (
+-	captureMetaName      = "name"
++	metaName             = "name"
+ 	captureMetaIsDefault = "isDefault"
+ )
+ 
+@@ -63,7 +63,7 @@ func captureDeviceSelectOptionItem(
+ 	for i := range device.Sources {
+ 		source := &device.Sources[i]
+ 		sources = append(sources, map[string]any{
+-			captureMetaName:      source.Name,
++			metaName:             source.Name,
+ 			"protocol":           source.Protocol,
+ 			captureMetaIsDefault: source.IsDefault,
+ 		})
+diff --git a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_documents.go b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_documents.go
+index 0a2f05368..99d61d34a 100644
+--- a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_documents.go
++++ b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_documents.go
+@@ -180,12 +180,8 @@ func emailProfileSelectOptionItem(entity *email.Profile) selectOptionConnectionI
+ 
+ func emailProfileSelectOption(entity *email.Profile) *gqlmodel.SelectOption {
+ 	return &gqlmodel.SelectOption{
+-		ID:          entity.ID.String(),
+-		Label:       entity.Name,
+-		Description: stringutils.Ptr(entity.SenderEmail),
+-		Meta: map[string]any{
+-			"senderEmail": entity.SenderEmail,
+-			"provider":    string(entity.Provider),
+-		},
++		ID:    entity.ID.String(),
++		Label: entity.Name,
++		Meta:  map[string]any{metaName: entity.Name},
+ 	}
+ }
+diff --git a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_identifying_test.go b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_identifying_test.go
+new file mode 100644
+index 000000000..bf61b6cb5
+--- /dev/null
++++ b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_identifying_test.go
+@@ -0,0 +1,58 @@
++package selectoptionsresolver
++
++import (
++	"testing"
++
++	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
++	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
++	"github.com/emoss08/trenova/shared/pulid"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestUserSelectOption_CarriesOnlyTheReferenceViewAndNoEmail(t *testing.T) {
++	t.Parallel()
++
++	id := pulid.MustNew("usr_")
++	option := userSelectOption(&tenant.User{
++		ID:           id,
++		Name:         "Dana Dispatcher",
++		Username:     "dana",
++		EmailAddress: "dana@example.com",
++	})
++
++	assert.Equal(t, id.String(), option.ID)
++	assert.Equal(t, "Dana Dispatcher", option.Label)
++	require.NotNil(t, option.Description)
++	assert.Equal(t, "dana", *option.Description)
++	assert.Equal(t, map[string]any{"name": "Dana Dispatcher", "username": "dana"}, option.Meta)
++}
++
++func TestUserSelectOption_FallsBackToTheUsernameNotTheEmail(t *testing.T) {
++	t.Parallel()
++
++	option := userSelectOption(&tenant.User{
++		ID:           pulid.MustNew("usr_"),
++		Username:     "dana",
++		EmailAddress: "dana@example.com",
++	})
++
++	assert.Equal(t, "dana", option.Label)
++}
++
++func TestEmailProfileSelectOption_CarriesOnlyTheName(t *testing.T) {
++	t.Parallel()
++
++	id := pulid.MustNew("emlprof_")
++	option := emailProfileSelectOption(&email.Profile{
++		ID:          id,
++		Name:        "Dispatch",
++		SenderEmail: "dispatch@example.com",
++		Provider:    email.ProviderResend,
++	})
++
++	assert.Equal(t, id.String(), option.ID)
++	assert.Equal(t, "Dispatch", option.Label)
++	assert.Nil(t, option.Description)
++	assert.Equal(t, map[string]any{"name": "Dispatch"}, option.Meta)
++}
+diff --git a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_people.go b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_people.go
+index bec9c1d15..2be40de37 100644
+--- a/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_people.go
++++ b/services/tms/internal/api/graphql/resolver/selectoptionsresolver/selectoptions_people.go
+@@ -234,16 +234,15 @@ func userSelectOptionItem(entity *tenant.User) selectOptionConnectionItem {
+ func userSelectOption(entity *tenant.User) *gqlmodel.SelectOption {
+ 	label := entity.Name
+ 	if label == "" {
+-		label = entity.EmailAddress
++		label = entity.Username
+ 	}
+ 	return &gqlmodel.SelectOption{
+ 		ID:          entity.ID.String(),
+ 		Label:       label,
+-		Description: stringutils.Ptr(entity.EmailAddress),
++		Description: stringutils.Ptr(entity.Username),
+ 		Meta: map[string]any{
+-			"name":         entity.Name,
+-			"email":        entity.EmailAddress,
+-			"emailAddress": entity.EmailAddress,
++			metaName:   entity.Name,
++			"username": entity.Username,
+ 		},
+ 	}
+ }
+diff --git a/services/tms/internal/modules/identity/adapters/postgres/userrepository/user.go b/services/tms/internal/modules/identity/adapters/postgres/userrepository/user.go
+index f45dbf17c..b41123aee 100644
+--- a/services/tms/internal/modules/identity/adapters/postgres/userrepository/user.go
++++ b/services/tms/internal/modules/identity/adapters/postgres/userrepository/user.go
+@@ -267,7 +267,6 @@ func (ur *repository) SelectOptions(
+ 					u.ID,
+ 					u.Name,
+ 					u.Username,
+-					u.EmailAddress,
+ 					u.Status,
+ 					u.IsLocked,
+ 					u.ProfilePicURL,
+@@ -284,7 +283,6 @@ func (ur *repository) SelectOptions(
+ 					return keel.Or(
+ 						u.Username.ContainsFold(search),
+ 						u.Name.ContainsFold(search),
+-						u.EmailAddress.ContainsFold(search),
+ 					)
+ 				},
+ 			)
+diff --git a/services/tms/internal/modules/identity/adapters/postgres/userrepository/user_integration_test.go b/services/tms/internal/modules/identity/adapters/postgres/userrepository/user_integration_test.go
+index b7df33484..c290d8918 100644
+--- a/services/tms/internal/modules/identity/adapters/postgres/userrepository/user_integration_test.go
++++ b/services/tms/internal/modules/identity/adapters/postgres/userrepository/user_integration_test.go
+@@ -409,6 +409,15 @@ func TestListConnectionHidesTheSystemUserAndOtherOrganizations(t *testing.T) {
+ 	require.NoError(t, err)
+ 	require.Len(t, options.Items, 1)
+ 	assert.Equal(t, "second", options.Items[0].Username)
++	assert.Empty(t, options.Items[0].EmailAddress)
++
++	byEmail, err := f.repo.SelectOptions(f.ctx, &pagination.SelectQueryRequest{
++		TenantInfo: f.data.Info(),
++		Pagination: pagination.Info{Limit: 10},
++		Query:      "@example.com",
++	})
++	require.NoError(t, err)
++	assert.Empty(t, byEmail.Items)
+ }
+ 
+ func TestUpdateColumnsWritesOnlyTheNamedColumnsAndChecksTheVersion(t *testing.T) {
+diff --git a/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/email.go b/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/email.go
+index cf9e7dac8..0995a0e8e 100644
+--- a/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/email.go
++++ b/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/email.go
+@@ -113,10 +113,6 @@ func (r *repository) SelectProfileOptions(
+ 				p.BusinessUnitID,
+ 				p.OrganizationID,
+ 				p.Name,
+-				p.SenderName,
+-				p.SenderEmail,
+-				p.ReplyToEmail,
+-				p.Provider,
+ 				p.Status,
+ 				p.UpdatedAt,
+ 			).
+@@ -129,11 +125,7 @@ func (r *repository) SelectProfileOptions(
+ 				q,
+ 				req.SelectQueryRequest,
+ 				func(s string) keel.Pred {
+-					return keel.Or(
+-						p.Name.ContainsFold(s),
+-						p.SenderEmail.ContainsFold(s),
+-						p.SenderName.ContainsFold(s),
+-					)
++					return p.Name.ContainsFold(s)
+ 				},
+ 			)
+ 		},
+diff --git a/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/selectoptions_integration_test.go b/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/selectoptions_integration_test.go
+new file mode 100644
+index 000000000..e128f102c
+--- /dev/null
++++ b/services/tms/internal/modules/workspace/adapters/postgres/emailrepository/selectoptions_integration_test.go
+@@ -0,0 +1,71 @@
++//go:build integration
++
++package emailrepository_test
++
++import (
++	"testing"
++
++	"github.com/emoss08/trenova/internal/infrastructure/postgres"
++	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/emailrepository"
++	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
++	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
++	"github.com/emoss08/trenova/internal/testutil/seedtest"
++	"github.com/emoss08/trenova/pkg/errortypes"
++	"github.com/emoss08/trenova/pkg/pagination"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++	"go.uber.org/zap"
++)
++
++func TestSelectProfileOptions_ReturnsAndSearchesOnlyTheName(t *testing.T) {
++	ctx, db, cleanup := seedtest.SetupTestDB(t)
++	t.Cleanup(cleanup)
++
++	data := seedtest.SeedFullTestData(t, ctx, db)
++	ctx = data.Ctx(ctx)
++	repo := emailrepository.New(emailrepository.Params{
++		DB:     postgres.NewTestConnection(db),
++		Logger: zap.NewNop(),
++	})
++
++	draft := &email.Profile{
++		BusinessUnitID: data.BusinessUnit.ID,
++		OrganizationID: data.Organization.ID,
++		Name:           "Dispatch desk",
++		Provider:       email.ProviderResend,
++		SenderName:     "Dispatch",
++		SenderEmail:    "hidden-sender@example.com",
++		ReplyToEmail:   "hidden-reply@example.com",
++		Status:         email.ProfileStatusActive,
++	}
++	multiErr := errortypes.NewMultiError()
++	draft.Validate(multiErr)
++	require.False(t, multiErr.HasErrors(), multiErr.Error())
++	_, err := repo.CreateProfile(ctx, draft)
++	require.NoError(t, err)
++
++	options := func(query string) *pagination.ListResult[*email.Profile] {
++		t.Helper()
++		result, listErr := repo.SelectProfileOptions(
++			ctx,
++			&emailports.EmailProfileSelectOptionsRequest{
++				SelectQueryRequest: &pagination.SelectQueryRequest{
++					TenantInfo: data.Info(),
++					Pagination: pagination.Info{Limit: 10},
++					Query:      query,
++				},
++			},
++		)
++		require.NoError(t, listErr)
++		return result
++	}
++
++	found := options("dispatch desk")
++	require.Len(t, found.Items, 1)
++	assert.Equal(t, "Dispatch desk", found.Items[0].Name)
++	assert.Empty(t, found.Items[0].SenderEmail)
++	assert.Empty(t, found.Items[0].ReplyToEmail)
++	assert.Empty(t, found.Items[0].SenderName)
++
++	assert.Empty(t, options("hidden-sender").Items)
++}
+-- 
+2.43.0
+
+
+From 57fced46afffdd495ca67e21c31dbe84f36bc82c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 29 Oct 2026 15:07:03 +0000
+Subject: [PATCH 3/3] wip: identity fixes paused before review
+
+Work in progress from the identity fix agent, stopped by the usage limit and paused while claude/small-packages lands. Not reviewed; kept as the spec for the port.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01L7Gd5v8t2y7WHswGwtgbrn
+---
+ .../api/handlers/userhandler/handler.go       |   2 +-
+ .../postgres/rlslint/allowlist_test.go        |   1 +
+ .../postgres/tenantbootstrap/roles.go         |   2 +-
+ .../adapters/postgres/rolerepository/role.go  |  74 ++++++++++
+ .../identity/app/adminguard/adminguard.go     | 119 +++++++++++++++
+ .../app/instancebootstrapservice/service.go   |   2 +-
+ .../identity/app/mfaservice/service.go        |  49 ++++---
+ .../modules/identity/app/outrank/outrank.go   | 130 +++++++++++++++++
+ .../app/passwordresetservice/service.go       |  14 +-
+ .../identity/app/roleservice/service.go       | 113 ++++++++++++++-
+ .../identity/app/userservice/membership.go    | 116 +++++++++++----
+ .../identity/app/userservice/outrank.go       |  66 ---------
+ .../modules/identity/app/userservice/patch.go |  11 +-
+ .../identity/app/userservice/service.go       |  79 +++++++++-
+ .../identity/domain/permission/role.go        |   6 +
+ .../identity/ports/permissionports/role.go    |  22 +++
+ .../app/reporting/reportaccess/access.go      |  31 +++-
+ .../app/reporting/reportaccess/kinds.go       |  35 ++++-
+ .../reporting/reportaccess/private_test.go    |  87 +++++++++++
+ .../modules/workspace/domain/report/run.go    |   2 +-
+ .../mock_RoleRepository.go                    | 136 ++++++++++++++++++
+ 21 files changed, 968 insertions(+), 129 deletions(-)
+ create mode 100644 services/tms/internal/modules/identity/app/adminguard/adminguard.go
+ create mode 100644 services/tms/internal/modules/identity/app/outrank/outrank.go
+ delete mode 100644 services/tms/internal/modules/identity/app/userservice/outrank.go
+ create mode 100644 services/tms/internal/modules/workspace/app/reporting/reportaccess/private_test.go
+
+diff --git a/services/tms/internal/api/handlers/userhandler/handler.go b/services/tms/internal/api/handlers/userhandler/handler.go
+index 8edf3ad4b..0fc8b0812 100644
+--- a/services/tms/internal/api/handlers/userhandler/handler.go
++++ b/services/tms/internal/api/handlers/userhandler/handler.go
+@@ -700,8 +700,8 @@ func (h *Handler) listOrganizationMemberships(c *gin.Context) {
+ 
+ 	memberships, err := h.service.ListOrganizationMemberships(
+ 		c.Request.Context(),
++		tenantInfoOf(authCtx),
+ 		userID,
+-		authCtx.BusinessUnitID,
+ 	)
+ 	if err != nil {
+ 		h.eh.HandleError(c, err)
+diff --git a/services/tms/internal/infrastructure/postgres/rlslint/allowlist_test.go b/services/tms/internal/infrastructure/postgres/rlslint/allowlist_test.go
+index d38b6ac67..72e0bd6c1 100644
+--- a/services/tms/internal/infrastructure/postgres/rlslint/allowlist_test.go
++++ b/services/tms/internal/infrastructure/postgres/rlslint/allowlist_test.go
+@@ -158,6 +158,7 @@ var allowed = map[string]string{
+ 	"internal/modules/operations/adapters/postgres/tenderrepository/tender.go:repository.ListForSweep":                                                          "list stalled tenders across every organization for the tender sweep",
+ 	"internal/modules/operations/adapters/postgres/tenderrepository/tender.go:repository.PurgeDeadOfferTokens":                                                  "purge dead tender offer tokens across every organization",
+ 	"internal/modules/identity/adapters/postgres/rolerepository/role.go:repository.ListOrphanedAssignments":                                                     "find role assignments in organizations their holders no longer belong to, across every organization, for the access sweep; each is then revoked in its own organization's scope",
++	"internal/modules/identity/adapters/postgres/rolerepository/role.go:repository.AdministeredOrganizations": "find which organizations of the caller's business unit keep an active administrator; a person's status is shared by every organization they belong to, so the check spans those organizations, filtered to the business unit and the organizations or holders asked about",
+ 	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.FindByEmail":                                                                 "resolve a sign-in email before any tenant is known",
+ 	"internal/modules/identity/adapters/postgres/userrepository/create.go:repository.FindIdentityConflicts":                                                     "email addresses and usernames are unique across every tenant, as sign-in requires",
+ 	"internal/modules/identity/adapters/postgres/userrepository/user.go:repository.FindByIDForLogin":                                                            "load the user an identity provider subject is linked to before a session exists",
+diff --git a/services/tms/internal/infrastructure/postgres/tenantbootstrap/roles.go b/services/tms/internal/infrastructure/postgres/tenantbootstrap/roles.go
+index 984a7573f..0ff7dc9b1 100644
+--- a/services/tms/internal/infrastructure/postgres/tenantbootstrap/roles.go
++++ b/services/tms/internal/infrastructure/postgres/tenantbootstrap/roles.go
+@@ -11,7 +11,7 @@ import (
+ )
+ 
+ const (
+-	AdministratorRoleName        = "Organization Administrator"
++	AdministratorRoleName        = permission.AdministratorRoleName
+ 	administratorRoleDescription = "Full access to all resources within the organization"
+ )
+ 
+diff --git a/services/tms/internal/modules/identity/adapters/postgres/rolerepository/role.go b/services/tms/internal/modules/identity/adapters/postgres/rolerepository/role.go
+index 03cd25db8..3725c4f2f 100644
+--- a/services/tms/internal/modules/identity/adapters/postgres/rolerepository/role.go
++++ b/services/tms/internal/modules/identity/adapters/postgres/rolerepository/role.go
+@@ -29,6 +29,7 @@ const (
+ 	parentRoleAlias          = "parent_role"
+ 	directAssignment         = "direct"
+ 	orphanedScopeReason      = "find role assignments in organizations their holders no longer belong to, across every organization"
++	administratorsReason     = "find which organizations of a business unit keep an active administrator, across the organizations a person administers"
+ 	roleClosureParentColumn  = "parent_role_ids"
+ 	roleClosureRoleColumn    = "id"
+ 	alreadyAssignedMessage   = "Role is already assigned to this user"
+@@ -561,6 +562,79 @@ func (r *repository) DeleteUserAssignments(
+ 	)
+ }
+ 
++func (r *repository) GetAssignment(
++	ctx context.Context,
++	req permissionports.GetRoleAssignmentRequest,
++) (*permission.UserRoleAssignment, error) {
++	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
++		ura := permissiondb.UserRoleAssignments
++		assignment, err := forTenant(
++			ctx,
++			ura.Query(),
++			ura.ID.Eq(req.AssignmentID),
++			ura.OrganizationID.Eq(req.OrganizationID),
++		).Load(ura.Role()).One(ctx, r.db.Keel(ctx))
++		if err != nil {
++			return nil, assignmentErrors.Map(err, req.AssignmentID.String())
++		}
++
++		return assignment, nil
++	})
++}
++
++func (r *repository) AdministeredOrganizations(
++	ctx context.Context,
++	req permissionports.AdministeredOrganizationsRequest,
++) ([]pulid.ID, error) {
++	ctx = dbscope.WithSystem(ctx, administratorsReason)
++	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
++		organizations, err := keel.Into[pulid.ID](
++			ctx,
++			r.db.Keel(ctx),
++			administeredOrganizationsQuery(&req),
++		)
++		if err != nil {
++			r.l.Error("failed to find administered organizations", zap.Error(err))
++			return nil, err
++		}
++		if organizations == nil {
++			return []pulid.ID{}, nil
++		}
++
++		return organizations, nil
++	})
++}
++
++func administeredOrganizationsQuery(
++	req *permissionports.AdministeredOrganizationsRequest,
++) *keel.Query[*permission.UserRoleAssignment] {
++	ura := permissiondb.UserRoleAssignments
++	ro := permissiondb.Roles
++	u := tenantdb.Users
++
++	return ura.Query().
++		AllTenants().
++		Join(ro, ro.ID.EqCol(ura.RoleID), ro.OrganizationID.EqCol(ura.OrganizationID)).
++		Join(u, u.ID.EqCol(ura.UserID)).
++		Distinct().
++		Pick(ura.OrganizationID).
++		Where(
++			ro.BusinessUnitID.Eq(req.BusinessUnitID),
++			ro.IsSystem.Eq(true),
++			ro.Name.Eq(permission.AdministratorRoleName),
++			keel.Or(ura.ExpiresAt.IsNull(), ura.ExpiresAt.Gt(req.Now)),
++			u.Status.Eq(domaintypes.StatusActive),
++			u.IsLocked.Eq(false),
++			keel.When(len(req.OrganizationIDs) > 0, ura.OrganizationID.In(req.OrganizationIDs...)),
++			keel.When(len(req.HolderIDs) > 0, ura.UserID.In(req.HolderIDs...)),
++			keel.When(len(req.ExcludeUserIDs) > 0, keel.Not(ura.UserID.In(req.ExcludeUserIDs...))),
++			keel.When(
++				len(req.ExcludeAssignmentIDs) > 0,
++				keel.Not(ura.ID.In(req.ExcludeAssignmentIDs...)),
++			),
++		)
++}
++
+ func (r *repository) ListOrphanedAssignments(
+ 	ctx context.Context,
+ 	now int64,
+diff --git a/services/tms/internal/modules/identity/app/adminguard/adminguard.go b/services/tms/internal/modules/identity/app/adminguard/adminguard.go
+new file mode 100644
+index 000000000..b4df0fce1
+--- /dev/null
++++ b/services/tms/internal/modules/identity/app/adminguard/adminguard.go
+@@ -0,0 +1,119 @@
++package adminguard
++
++import (
++	"context"
++	"slices"
++
++	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
++	"github.com/emoss08/trenova/pkg/errortypes"
++	"github.com/emoss08/trenova/shared/pulid"
++	"github.com/emoss08/trenova/shared/timeutils"
++	"go.uber.org/fx"
++)
++
++type Params struct {
++	fx.In
++
++	Roles permissionports.RoleRepository
++}
++
++type Guard struct {
++	roles permissionports.RoleRepository
++}
++
++func New(p Params) *Guard {
++	return &Guard{roles: p.Roles}
++}
++
++type UsersRemoval struct {
++	BusinessUnitID  pulid.ID
++	OrganizationIDs []pulid.ID
++	UserIDs         []pulid.ID
++}
++
++func (g *Guard) RequireAdministratorsRemainWithoutUsers(
++	ctx context.Context,
++	removal *UsersRemoval,
++) error {
++	if len(removal.UserIDs) == 0 {
++		return nil
++	}
++
++	now := timeutils.NowUnix()
++	administered, err := g.roles.AdministeredOrganizations(
++		ctx,
++		permissionports.AdministeredOrganizationsRequest{
++			BusinessUnitID:  removal.BusinessUnitID,
++			OrganizationIDs: removal.OrganizationIDs,
++			HolderIDs:       removal.UserIDs,
++			Now:             now,
++		},
++	)
++	if err != nil || len(administered) == 0 {
++		return err
++	}
++
++	remaining, err := g.roles.AdministeredOrganizations(
++		ctx,
++		permissionports.AdministeredOrganizationsRequest{
++			BusinessUnitID:  removal.BusinessUnitID,
++			OrganizationIDs: administered,
++			ExcludeUserIDs:  removal.UserIDs,
++			Now:             now,
++		},
++	)
++	if err != nil {
++		return err
++	}
++
++	return requireEveryOrganizationRemains(administered, remaining)
++}
++
++func (g *Guard) RequireAdministratorsRemainWithoutAssignment(
++	ctx context.Context,
++	businessUnitID, organizationID, assignmentID pulid.ID,
++) error {
++	now := timeutils.NowUnix()
++	administered, err := g.roles.AdministeredOrganizations(
++		ctx,
++		permissionports.AdministeredOrganizationsRequest{
++			BusinessUnitID:  businessUnitID,
++			OrganizationIDs: []pulid.ID{organizationID},
++			Now:             now,
++		},
++	)
++	if err != nil || len(administered) == 0 {
++		return err
++	}
++
++	remaining, err := g.roles.AdministeredOrganizations(
++		ctx,
++		permissionports.AdministeredOrganizationsRequest{
++			BusinessUnitID:       businessUnitID,
++			OrganizationIDs:      administered,
++			ExcludeAssignmentIDs: []pulid.ID{assignmentID},
++			Now:                  now,
++		},
++	)
++	if err != nil {
++		return err
++	}
++
++	return requireEveryOrganizationRemains(administered, remaining)
++}
++
++func requireEveryOrganizationRemains(before, after []pulid.ID) error {
++	for _, orgID := range before {
++		if !slices.Contains(after, orgID) {
++			return ErrLastAdministrator()
++		}
++	}
++
++	return nil
++}
++
++func ErrLastAdministrator() error {
++	return errortypes.NewBusinessError(
++		"This would leave an organization without an active administrator. Make someone else an Organization Administrator first.",
++	)
++}
+diff --git a/services/tms/internal/modules/identity/app/instancebootstrapservice/service.go b/services/tms/internal/modules/identity/app/instancebootstrapservice/service.go
+index 965c72031..4277179c2 100644
+--- a/services/tms/internal/modules/identity/app/instancebootstrapservice/service.go
++++ b/services/tms/internal/modules/identity/app/instancebootstrapservice/service.go
+@@ -297,7 +297,7 @@ func (s *Service) audit(ctx context.Context, out *created) {
+ 		BusinessUnitID: org.BusinessUnitID,
+ 		After: map[string]any{
+ 			keyRoleID:         out.tenant.AdminRoleID.String(),
+-			"name":            "Organization Administrator",
++			"name":            permission.AdministratorRoleName,
+ 			keyOrganizationID: org.ID.String(),
+ 		},
+ 		Comment:  "Instance bootstrap created the Organization Administrator role",
+diff --git a/services/tms/internal/modules/identity/app/mfaservice/service.go b/services/tms/internal/modules/identity/app/mfaservice/service.go
+index fac7df011..ce914253c 100644
+--- a/services/tms/internal/modules/identity/app/mfaservice/service.go
++++ b/services/tms/internal/modules/identity/app/mfaservice/service.go
+@@ -2,6 +2,7 @@ package mfaservice
+ 
+ import (
+ 	"context"
++
+ 	"crypto/hmac"
+ 	"crypto/sha256"
+ 	"encoding/hex"
+@@ -10,6 +11,8 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/emoss08/trenova/internal/modules/identity/app/outrank"
++
+ 	"github.com/emoss08/trenova/internal/infrastructure/config"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+@@ -61,15 +64,16 @@ var (
+ type Params struct {
+ 	fx.In
+ 
+-	Repository iamports.MFARepository
+-	Users      tenantports.UserRepository
+-	Sessions   sessionports.SessionRepository
+-	Encryption *encryptionservice.Service
+-	Auditor    permissionports.SecurityAuditor
+-	Config     *config.Config
+-	Logger     *zap.Logger
+-	Throttle   sessionports.LoginThrottleStore `optional:"true"`
+-	AuthEvents iamports.AuthEventRecorder      `optional:"true"`
++	Repository  iamports.MFARepository
++	Users       tenantports.UserRepository
++	Sessions    sessionports.SessionRepository
++	Permissions permissionports.PermissionEngine
++	Encryption  *encryptionservice.Service
++	Auditor     permissionports.SecurityAuditor
++	Config      *config.Config
++	Logger      *zap.Logger
++	Throttle    sessionports.LoginThrottleStore `optional:"true"`
++	AuthEvents  iamports.AuthEventRecorder      `optional:"true"`
+ }
+ 
+ type Service struct {
+@@ -80,6 +84,7 @@ type Service struct {
+ 	auditor     permissionports.SecurityAuditor
+ 	throttle    sessionports.LoginThrottleStore
+ 	authEvents  iamports.AuthEventRecorder
++	outrank     *outrank.Checker
+ 	recoveryKey []byte
+ 	issuer      string
+ 	l           *zap.Logger
+@@ -108,13 +113,17 @@ func newService(p *Params) (*Service, error) {
+ 	}
+ 
+ 	return &Service{
+-		repo:        p.Repository,
+-		users:       p.Users,
+-		sessions:    p.Sessions,
+-		enc:         p.Encryption,
+-		auditor:     p.Auditor,
+-		throttle:    p.Throttle,
+-		authEvents:  p.AuthEvents,
++		repo:       p.Repository,
++		users:      p.Users,
++		sessions:   p.Sessions,
++		enc:        p.Encryption,
++		auditor:    p.Auditor,
++		throttle:   p.Throttle,
++		authEvents: p.AuthEvents,
++		outrank: outrank.New(outrank.Params{
++			Permissions: p.Permissions,
++			Users:       p.Users,
++		}),
+ 		recoveryKey: recoveryKey,
+ 		issuer:      issuer,
+ 		l:           p.Logger.Named("service.mfa"),
+@@ -365,6 +374,14 @@ func (s *Service) ResetUserMFA(ctx context.Context, req *sessionports.ResetUserM
+ 		return err
+ 	}
+ 
++	if err := s.outrank.RequireActorCoversTarget(
++		ctx,
++		req.TenantInfo,
++		req.TargetUserID,
++	); err != nil {
++		return err
++	}
++
+ 	removed, err := s.repo.DeleteAll(ctx, req.TargetUserID)
+ 	if err != nil {
+ 		return err
+diff --git a/services/tms/internal/modules/identity/app/outrank/outrank.go b/services/tms/internal/modules/identity/app/outrank/outrank.go
+new file mode 100644
+index 000000000..f8f214b33
+--- /dev/null
++++ b/services/tms/internal/modules/identity/app/outrank/outrank.go
+@@ -0,0 +1,130 @@
++package outrank
++
++import (
++	"context"
++
++	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
++	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
++	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
++	"github.com/emoss08/trenova/pkg/authctx"
++	"github.com/emoss08/trenova/pkg/dbscope"
++	"github.com/emoss08/trenova/pkg/errortypes"
++	"github.com/emoss08/trenova/pkg/pagination"
++	"github.com/emoss08/trenova/shared/pulid"
++	"go.uber.org/fx"
++)
++
++type Params struct {
++	fx.In
++
++	Permissions permissionports.PermissionEngine
++	Users       tenantports.UserRepository
++}
++
++type Checker struct {
++	permissions permissionports.PermissionEngine
++	users       tenantports.UserRepository
++}
++
++func New(p Params) *Checker {
++	return &Checker{permissions: p.Permissions, users: p.Users}
++}
++
++func (c *Checker) RequireActorCoversTarget(
++	ctx context.Context,
++	actor pagination.TenantInfo,
++	targetID pulid.ID,
++) error {
++	if targetID.IsNil() || targetID == actor.UserID {
++		return nil
++	}
++
++	memberships, err := c.users.ListOrganizationMemberships(ctx, targetID, actor.BuID)
++	if err != nil {
++		return err
++	}
++	for _, membership := range memberships {
++		if membership == nil || membership.OrganizationID == actor.OrgID {
++			continue
++		}
++		allowed, checkErr := c.MayManageUsersIn(
++			ctx,
++			actor.UserID,
++			membership.OrganizationID,
++			membership.BusinessUnitID,
++		)
++		if checkErr != nil {
++			return checkErr
++		}
++		if !allowed {
++			return ErrTargetOutranksActor()
++		}
++	}
++
++	held, err := c.permissions.GetEffectivePermissions(ctx, actor.UserID, actor.OrgID)
++	if err != nil {
++		return err
++	}
++	theirs, err := c.permissions.GetEffectivePermissions(ctx, targetID, actor.OrgID)
++	if err != nil {
++		return err
++	}
++	if !held.MaxSensitivity.CanAccess(theirs.MaxSensitivity) {
++		return ErrTargetOutranksActor()
++	}
++	for resource, grant := range theirs.Resources {
++		if _, violated := held.DelegationViolation(
++			resource,
++			grant.Operations,
++			grant.DataScope,
++		); violated {
++			return ErrTargetOutranksActor()
++		}
++	}
++
++	return nil
++}
++
++func (c *Checker) MayManageUsersIn(
++	ctx context.Context,
++	actorID, orgID, buID pulid.ID,
++) (bool, error) {
++	return c.mayUsersIn(ctx, actorID, orgID, buID, permission.OpUpdate)
++}
++
++func (c *Checker) MayReadUsersIn(ctx context.Context, actorID, orgID, buID pulid.ID) (bool, error) {
++	return c.mayUsersIn(ctx, actorID, orgID, buID, permission.OpRead)
++}
++
++func (c *Checker) mayUsersIn(
++	ctx context.Context,
++	actorID, orgID, buID pulid.ID,
++	operation permission.Operation,
++) (bool, error) {
++	checkCtx := authctx.WithoutSessionRoleActivation(dbscope.WithTenant(ctx, dbscope.Tenant{
++		OrganizationID: orgID,
++		BusinessUnitID: buID,
++		UserID:         actorID,
++	}))
++
++	result, err := c.permissions.Check(checkCtx, &permissionports.PermissionCheckRequest{
++		PrincipalType:  permissionports.PrincipalTypeUser,
++		PrincipalID:    actorID,
++		UserID:         actorID,
++		BusinessUnitID: buID,
++		OrganizationID: orgID,
++		Resource:       permission.ResourceUser.String(),
++		Operation:      operation,
++	})
++	if err != nil {
++		return false, err
++	}
++
++	return result.Allowed, nil
++}
++
++func ErrTargetOutranksActor() error {
++	return errortypes.NewAuthorizationError(
++		"You can change another person's sign-in only when your own access covers everything theirs does",
++	)
++}
+diff --git a/services/tms/internal/modules/identity/app/passwordresetservice/service.go b/services/tms/internal/modules/identity/app/passwordresetservice/service.go
+index 23ad056c0..019697b56 100644
+--- a/services/tms/internal/modules/identity/app/passwordresetservice/service.go
++++ b/services/tms/internal/modules/identity/app/passwordresetservice/service.go
+@@ -11,10 +11,12 @@ import (
+ 	"github.com/emoss08/trenova/internal/infrastructure/config"
+ 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+ 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
++	"github.com/emoss08/trenova/internal/modules/identity/app/outrank"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
++	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+@@ -49,6 +51,7 @@ type Params struct {
+ 	fx.In
+ 
+ 	UserRepository   tenantports.UserRepository
++	Permissions      permissionports.PermissionEngine
+ 	TokenRepository  tenantports.PasswordResetTokenRepository
+ 	SessionRepo      sessionports.SessionRepository
+ 	OrganizationRepo tenantports.OrganizationRepository
+@@ -65,6 +68,7 @@ type Params struct {
+ 
+ type Service struct {
+ 	ur           tenantports.UserRepository
++	outrank      *outrank.Checker
+ 	tokens       tenantports.PasswordResetTokenRepository
+ 	sessions     sessionports.SessionRepository
+ 	orgs         tenantports.OrganizationRepository
+@@ -81,7 +85,11 @@ type Service struct {
+ 
+ func New(p Params) *Service {
+ 	return &Service{
+-		ur:           p.UserRepository,
++		ur: p.UserRepository,
++		outrank: outrank.New(outrank.Params{
++			Permissions: p.Permissions,
++			Users:       p.UserRepository,
++		}),
+ 		tokens:       p.TokenRepository,
+ 		sessions:     p.SessionRepo,
+ 		orgs:         p.OrganizationRepo,
+@@ -207,6 +215,10 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
+ 		)
+ 	}
+ 
++	if err = s.outrank.RequireActorCoversTarget(ctx, req.Actor, user.ID); err != nil {
++		return err
++	}
++
+ 	link := &linkRequest{user: user, purpose: tenant.PasswordResetPurposeReset}
+ 	comment := "Password reset link sent by an administrator"
+ 	if user.AwaitingAccountSetup() {
+diff --git a/services/tms/internal/modules/identity/app/roleservice/service.go b/services/tms/internal/modules/identity/app/roleservice/service.go
+index dd92c6be9..ce93b3f94 100644
+--- a/services/tms/internal/modules/identity/app/roleservice/service.go
++++ b/services/tms/internal/modules/identity/app/roleservice/service.go
+@@ -4,9 +4,12 @@ import (
+ 	"context"
+ 	"errors"
+ 
++	"github.com/emoss08/trenova/internal/modules/identity/app/adminguard"
++	"github.com/emoss08/trenova/internal/modules/identity/app/outrank"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+ 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
++	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+ 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+ 	"github.com/emoss08/trenova/pkg/dbscope"
+ 	"github.com/emoss08/trenova/pkg/errortypes"
+@@ -29,6 +32,7 @@ type Params struct {
+ 
+ 	Logger           *zap.Logger
+ 	RoleRepo         permissionports.RoleRepository
++	Users            tenantports.UserRepository
+ 	RBACRepo         permissionports.RBACRepository
+ 	PermissionEngine permissionports.PermissionEngine
+ 	Validator        *Validator
+@@ -52,6 +56,8 @@ type Service struct {
+ 	scopes     permissionports.ScopePolicy
+ 	activation iamports.RoleActivationPolicy
+ 	notifier   permissionports.PermissionChangeNotifier
++	outrank    *outrank.Checker
++	admins     *adminguard.Guard
+ }
+ 
+ //nolint:gocritic // dependencies injection
+@@ -67,6 +73,11 @@ func New(p Params) *Service {
+ 		notifier:   p.Notifier,
+ 		scopes:     p.Scopes,
+ 		activation: p.RoleActivation,
++		outrank: outrank.New(outrank.Params{
++			Permissions: p.PermissionEngine,
++			Users:       p.Users,
++		}),
++		admins: adminguard.New(adminguard.Params{Roles: p.RoleRepo}),
+ 	}
+ }
+ 
+@@ -213,6 +224,15 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
+ 		return ErrCannotModifySystemRole
+ 	}
+ 
++	if err = s.validateNoEscalation(
++		ctx,
++		req.ActorID,
++		req.OrganizationID,
++		existingRole,
++	); err != nil {
++		return err
++	}
++
+ 	updated := editableRoleUpdate(existingRole, req.Role)
+ 
+ 	if scopeErr := unenforcedScopes(
+@@ -302,6 +322,14 @@ func (s *Service) DeleteRole(ctx context.Context, req DeleteRoleRequest) error {
+ 		if err = s.requireUnassign(ctx, req.Tenant); err != nil {
+ 			return err
+ 		}
++		if err = s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
++			actorID:   req.Tenant.UserID,
++			orgID:     req.Tenant.OrgID,
++			role:      role,
++			parentIDs: role.ParentRoleIDs,
++		}); err != nil {
++			return err
++		}
+ 	}
+ 
+ 	if err = s.roleRepo.Delete(ctx, permissionports.DeleteRoleRequest{
+@@ -656,6 +684,10 @@ func (s *Service) DeleteRoleHierarchyEdge(
+ 	tenant pagination.TenantInfo,
+ 	edgeID pulid.ID,
+ ) error {
++	if err := s.requireHeldInheritance(ctx, tenant, edgeID); err != nil {
++		return err
++	}
++
+ 	if err := s.rbacRepo.DeleteRoleHierarchyEdge(
+ 		ctx,
+ 		permissionports.DeleteRoleHierarchyEdgeRequest{
+@@ -680,6 +712,37 @@ func (s *Service) DeleteRoleHierarchyEdge(
+ 	return nil
+ }
+ 
++func (s *Service) requireHeldInheritance(
++	ctx context.Context,
++	tenant pagination.TenantInfo,
++	edgeID pulid.ID,
++) error {
++	edges, err := s.rbacRepo.ListRoleHierarchyEdges(ctx, tenant.OrgID)
++	if err != nil {
++		return err
++	}
++	for _, edge := range edges {
++		if edge.ID != edgeID {
++			continue
++		}
++		junior, getErr := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
++			ID:         edge.JuniorRoleID,
++			TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID},
++		})
++		if getErr != nil {
++			return getErr
++		}
++		return s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
++			actorID:   tenant.UserID,
++			orgID:     tenant.OrgID,
++			role:      junior,
++			parentIDs: junior.ParentRoleIDs,
++		})
++	}
++
++	return nil
++}
++
+ func (s *Service) ListRoleConstraints(
+ 	ctx context.Context,
+ 	req permissionports.ListRoleConstraintsRequest,
+@@ -824,6 +887,10 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
+ 		zap.String("assignmentID", req.AssignmentID.String()),
+ 	)
+ 
++	if err := s.authorizeUnassign(ctx, &req); err != nil {
++		return err
++	}
++
+ 	deleted, err := s.roleRepo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
+ 		AssignmentID:   req.AssignmentID,
+ 		OrganizationID: req.OrganizationID,
+@@ -856,6 +923,31 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
+ 	return nil
+ }
+ 
++func (s *Service) authorizeUnassign(ctx context.Context, req *UnassignRoleRequest) error {
++	assignment, err := s.roleRepo.GetAssignment(ctx, permissionports.GetRoleAssignmentRequest{
++		AssignmentID:   req.AssignmentID,
++		OrganizationID: req.OrganizationID,
++	})
++	if err != nil {
++		return err
++	}
++
++	if err = s.outrank.RequireActorCoversTarget(ctx, pagination.TenantInfo{
++		OrgID:  req.OrganizationID,
++		BuID:   req.BusinessUnitID,
++		UserID: req.ActorID,
++	}, assignment.UserID); err != nil {
++		return err
++	}
++
++	return s.admins.RequireAdministratorsRemainWithoutAssignment(
++		ctx,
++		req.BusinessUnitID,
++		req.OrganizationID,
++		assignment.ID,
++	)
++}
++
+ type escalationCheck struct {
+ 	actorID   pulid.ID
+ 	orgID     pulid.ID
+@@ -1159,6 +1251,15 @@ func (s *Service) UpdateResourcePermission(
+ 	}
+ 
+ 	previous := findResourcePermission(role.Permissions, rp.ID)
++	if previous != nil {
++		if err = s.validateNoEscalation(ctx, actorID, orgID, &permission.Role{
++			ID:             role.ID,
++			BusinessUnitID: role.BusinessUnitID,
++			Permissions:    []*permission.ResourcePermission{previous},
++		}); err != nil {
++			return err
++		}
++	}
+ 
+ 	if scopeErr := unenforcedScopes(
+ 		s.scopes,
+@@ -1227,6 +1328,16 @@ func (s *Service) DeleteResourcePermission(
+ 		return ErrCannotModifySystemRole
+ 	}
+ 
++	if removed := findResourcePermission(role.Permissions, permID); removed != nil {
++		if err = s.validateNoEscalation(ctx, tenant.UserID, tenant.OrgID, &permission.Role{
++			ID:             role.ID,
++			BusinessUnitID: role.BusinessUnitID,
++			Permissions:    []*permission.ResourcePermission{removed},
++		}); err != nil {
++			return err
++		}
++	}
++
+ 	if err = s.roleRepo.DeleteResourcePermission(
+ 		ctx,
+ 		permissionports.DeleteResourcePermissionRequest{
+@@ -1269,7 +1380,7 @@ func (s *Service) InitializeOrganizationRoles(
+ 
+ 	adminRole := &permission.Role{
+ 		OrganizationID: orgID,
+-		Name:           "Organization Administrator",
++		Name:           permission.AdministratorRoleName,
+ 		Description:    "Full access to all resources within the organization",
+ 		MaxSensitivity: permission.SensitivityConfidential,
+ 		IsSystem:       true,
+diff --git a/services/tms/internal/modules/identity/app/userservice/membership.go b/services/tms/internal/modules/identity/app/userservice/membership.go
+index 7a2befa2e..6cca3e6cb 100644
+--- a/services/tms/internal/modules/identity/app/userservice/membership.go
++++ b/services/tms/internal/modules/identity/app/userservice/membership.go
+@@ -2,12 +2,12 @@ package userservice
+ 
+ import (
+ 	"context"
++	"slices"
++
++	"github.com/emoss08/trenova/internal/modules/identity/app/adminguard"
++	"github.com/emoss08/trenova/pkg/pagination"
+ 
+-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+-	"github.com/emoss08/trenova/pkg/authctx"
+-	"github.com/emoss08/trenova/pkg/dbscope"
+ 	"github.com/emoss08/trenova/pkg/errortypes"
+ 	"github.com/emoss08/trenova/shared/pulid"
+ )
+@@ -29,7 +29,7 @@ func (s *Service) authorizeMembershipChange(
+ 			continue
+ 		}
+ 
+-		allowed, err := s.mayManageUsersIn(ctx, req.actorID, orgID, req.businessUnitID)
++		allowed, err := s.outrank.MayManageUsersIn(ctx, req.actorID, orgID, req.businessUnitID)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -43,32 +43,6 @@ func (s *Service) authorizeMembershipChange(
+ 	return nil
+ }
+ 
+-func (s *Service) mayManageUsersIn(
+-	ctx context.Context,
+-	actorID, orgID, buID pulid.ID,
+-) (bool, error) {
+-	checkCtx := authctx.WithoutSessionRoleActivation(dbscope.WithTenant(ctx, dbscope.Tenant{
+-		OrganizationID: orgID,
+-		BusinessUnitID: buID,
+-		UserID:         actorID,
+-	}))
+-
+-	result, err := s.permissions.Check(checkCtx, &permissionports.PermissionCheckRequest{
+-		PrincipalType:  permissionports.PrincipalTypeUser,
+-		PrincipalID:    actorID,
+-		UserID:         actorID,
+-		BusinessUnitID: buID,
+-		OrganizationID: orgID,
+-		Resource:       permission.ResourceUser.String(),
+-		Operation:      permission.OpUpdate,
+-	})
+-	if err != nil {
+-		return false, err
+-	}
+-
+-	return result.Allowed, nil
+-}
+-
+ func changedOrganizations(
+ 	previous []*tenant.OrganizationMembership,
+ 	desired []pulid.ID,
+@@ -98,3 +72,83 @@ func changedOrganizations(
+ 
+ 	return changed
+ }
++
++func (s *Service) splitVisibleMemberships(
++	ctx context.Context,
++	actor pagination.TenantInfo,
++	userID pulid.ID,
++	memberships []*tenant.OrganizationMembership,
++) (visible []*tenant.OrganizationMembership, hidden []pulid.ID, err error) {
++	if userID == actor.UserID {
++		return memberships, nil, nil
++	}
++
++	visible = make([]*tenant.OrganizationMembership, 0, len(memberships))
++	for _, membership := range memberships {
++		if membership == nil {
++			continue
++		}
++		readable := membership.OrganizationID == actor.OrgID
++		if !readable {
++			readable, err = s.outrank.MayReadUsersIn(
++				ctx,
++				actor.UserID,
++				membership.OrganizationID,
++				membership.BusinessUnitID,
++			)
++			if err != nil {
++				return nil, nil, err
++			}
++		}
++		if readable {
++			visible = append(visible, membership)
++			continue
++		}
++		hidden = append(hidden, membership.OrganizationID)
++	}
++
++	return visible, hidden, nil
++}
++
++func keepHiddenOrganizations(desired, hidden []pulid.ID) []pulid.ID {
++	kept := slices.Clone(desired)
++	for _, orgID := range hidden {
++		if !slices.Contains(kept, orgID) {
++			kept = append(kept, orgID)
++		}
++	}
++	return kept
++}
++
++func removedOrganizationIDs(
++	previous []*tenant.OrganizationMembership,
++	desired []pulid.ID,
++) []pulid.ID {
++	removed := make([]pulid.ID, 0, len(previous))
++	for _, membership := range previous {
++		if !slices.Contains(desired, membership.OrganizationID) {
++			removed = append(removed, membership.OrganizationID)
++		}
++	}
++	return removed
++}
++
++func (s *Service) guardMembershipRemoval(
++	ctx context.Context,
++	actor pagination.TenantInfo,
++	userID pulid.ID,
++	removed []pulid.ID,
++) error {
++	if len(removed) == 0 {
++		return nil
++	}
++	if err := s.outrank.RequireActorCoversTarget(ctx, actor, userID); err != nil {
++		return err
++	}
++
++	return s.admins.RequireAdministratorsRemainWithoutUsers(ctx, &adminguard.UsersRemoval{
++		BusinessUnitID:  actor.BuID,
++		OrganizationIDs: removed,
++		UserIDs:         []pulid.ID{userID},
++	})
++}
+diff --git a/services/tms/internal/modules/identity/app/userservice/outrank.go b/services/tms/internal/modules/identity/app/userservice/outrank.go
+deleted file mode 100644
+index caa582dfe..000000000
+--- a/services/tms/internal/modules/identity/app/userservice/outrank.go
++++ /dev/null
+@@ -1,66 +0,0 @@
+-package userservice
+-
+-import (
+-	"context"
+-
+-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+-	"github.com/emoss08/trenova/pkg/errortypes"
+-	"github.com/emoss08/trenova/pkg/pagination"
+-)
+-
+-func (s *Service) requireActorCoversTarget(
+-	ctx context.Context,
+-	tenantInfo pagination.TenantInfo,
+-	target *tenant.User,
+-) error {
+-	if target == nil || target.ID == tenantInfo.UserID {
+-		return nil
+-	}
+-
+-	for _, membership := range target.Memberships {
+-		if membership == nil || membership.OrganizationID == tenantInfo.OrgID {
+-			continue
+-		}
+-		allowed, err := s.mayManageUsersIn(
+-			ctx,
+-			tenantInfo.UserID,
+-			membership.OrganizationID,
+-			membership.BusinessUnitID,
+-		)
+-		if err != nil {
+-			return err
+-		}
+-		if !allowed {
+-			return errTargetOutranksActor()
+-		}
+-	}
+-
+-	held, err := s.permissions.GetEffectivePermissions(ctx, tenantInfo.UserID, tenantInfo.OrgID)
+-	if err != nil {
+-		return err
+-	}
+-	theirs, err := s.permissions.GetEffectivePermissions(ctx, target.ID, tenantInfo.OrgID)
+-	if err != nil {
+-		return err
+-	}
+-	if !held.MaxSensitivity.CanAccess(theirs.MaxSensitivity) {
+-		return errTargetOutranksActor()
+-	}
+-	for resource, grant := range theirs.Resources {
+-		if _, violated := held.DelegationViolation(
+-			resource,
+-			grant.Operations,
+-			grant.DataScope,
+-		); violated {
+-			return errTargetOutranksActor()
+-		}
+-	}
+-
+-	return nil
+-}
+-
+-func errTargetOutranksActor() error {
+-	return errortypes.NewAuthorizationError(
+-		"You can change another person's sign-in only when your own access covers everything theirs does",
+-	)
+-}
+diff --git a/services/tms/internal/modules/identity/app/userservice/patch.go b/services/tms/internal/modules/identity/app/userservice/patch.go
+index f16c40dc8..83b11b427 100644
+--- a/services/tms/internal/modules/identity/app/userservice/patch.go
++++ b/services/tms/internal/modules/identity/app/userservice/patch.go
+@@ -5,6 +5,7 @@ import (
+ 	"strings"
+ 
+ 	"github.com/emoss08/keel"
++	"github.com/emoss08/trenova/internal/modules/identity/app/adminguard"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+@@ -131,7 +132,15 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
+ 
+ 	changes := diffPatchedUser(&original, user)
+ 	if len(changes.access) > 0 {
+-		if err = s.requireActorCoversTarget(ctx, req.TenantInfo, &original); err != nil {
++		if err = s.outrank.RequireActorCoversTarget(ctx, req.TenantInfo, original.ID); err != nil {
++			return nil, err
++		}
++	}
++	if lostSignInAccess(&original, user) {
++		if err = s.admins.RequireAdministratorsRemainWithoutUsers(ctx, &adminguard.UsersRemoval{
++			BusinessUnitID: req.TenantInfo.BuID,
++			UserIDs:        []pulid.ID{original.ID},
++		}); err != nil {
+ 			return nil, err
+ 		}
+ 	}
+diff --git a/services/tms/internal/modules/identity/app/userservice/service.go b/services/tms/internal/modules/identity/app/userservice/service.go
+index 0f1c40218..d47da885e 100644
+--- a/services/tms/internal/modules/identity/app/userservice/service.go
++++ b/services/tms/internal/modules/identity/app/userservice/service.go
+@@ -10,6 +10,8 @@ import (
+ 	"github.com/emoss08/trenova/internal/infrastructure/config"
+ 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+ 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
++	"github.com/emoss08/trenova/internal/modules/identity/app/adminguard"
++	"github.com/emoss08/trenova/internal/modules/identity/app/outrank"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+ 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+@@ -32,6 +34,8 @@ import (
+ 	"go.uber.org/zap"
+ )
+ 
++const maxBulkStatusUsers = 100
++
+ type Params struct {
+ 	fx.In
+ 
+@@ -72,6 +76,8 @@ type Service struct {
+ 	signIns      iamports.AuthEventHistoryRepository
+ 	authEvents   iamports.AuthEventRecorder
+ 	contentGate  contentscanports.Gate
++	outrank      *outrank.Checker
++	admins       *adminguard.Guard
+ }
+ 
+ func New(p Params) *Service { //nolint:gocritic // stable API shape
+@@ -93,6 +99,11 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
+ 		signIns:      p.AuthEventHistory,
+ 		authEvents:   p.AuthEvents,
+ 		contentGate:  p.ContentGate,
++		outrank: outrank.New(outrank.Params{
++			Permissions: p.PermissionEngine,
++			Users:       p.Repo,
++		}),
++		admins: adminguard.New(adminguard.Params{Roles: p.RoleRepository}),
+ 	}
+ }
+ 
+@@ -135,6 +146,14 @@ func (s *Service) BulkUpdateStatus(
+ 		)
+ 	}
+ 
++	if len(req.UserIDs) > maxBulkStatusUsers {
++		return nil, errortypes.NewValidationError(
++			"userIds",
++			errortypes.ErrInvalid,
++			"Change the status of at most 100 people at a time",
++		)
++	}
++
+ 	originalEntities, err := s.repo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
+ 		TenantInfo: req.TenantInfo,
+ 		UserIDs:    req.UserIDs,
+@@ -144,6 +163,10 @@ func (s *Service) BulkUpdateStatus(
+ 		return nil, err
+ 	}
+ 
++	if err = s.authorizeBulkStatus(ctx, req, originalEntities); err != nil {
++		return nil, err
++	}
++
+ 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
+ 	if err != nil {
+ 		log.Error("failed to bulk update user status", zap.Error(err))
+@@ -188,6 +211,32 @@ func (s *Service) BulkUpdateStatus(
+ 	return entities, nil
+ }
+ 
++func (s *Service) authorizeBulkStatus(
++	ctx context.Context,
++	req *tenantports.BulkUpdateUserStatusRequest,
++	originals []*tenant.User,
++) error {
++	changed := make([]pulid.ID, 0, len(originals))
++	for _, user := range originals {
++		if user.Status == req.Status {
++			continue
++		}
++		if err := s.outrank.RequireActorCoversTarget(ctx, req.TenantInfo, user.ID); err != nil {
++			return err
++		}
++		changed = append(changed, user.ID)
++	}
++
++	if req.Status == domaintypes.StatusActive {
++		return nil
++	}
++
++	return s.admins.RequireAdministratorsRemainWithoutUsers(ctx, &adminguard.UsersRemoval{
++		BusinessUnitID: req.TenantInfo.BuID,
++		UserIDs:        changed,
++	})
++}
++
+ func (s *Service) endSessionsAfterBulkStatus(
+ 	ctx context.Context,
+ 	tenantInfo pagination.TenantInfo,
+@@ -761,9 +810,16 @@ func (s *Service) ChangeMyPassword(
+ 
+ func (s *Service) ListOrganizationMemberships(
+ 	ctx context.Context,
+-	userID, businessUnitID pulid.ID,
++	actor pagination.TenantInfo,
++	userID pulid.ID,
+ ) ([]*tenant.OrganizationMembership, error) {
+-	return s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)
++	memberships, err := s.repo.ListOrganizationMemberships(ctx, userID, actor.BuID)
++	if err != nil {
++		return nil, err
++	}
++
++	visible, _, err := s.splitVisibleMemberships(ctx, actor, userID, memberships)
++	return visible, err
+ }
+ 
+ func (s *Service) ReplaceOrganizationMemberships(
+@@ -775,11 +831,18 @@ func (s *Service) ReplaceOrganizationMemberships(
+ 		return nil, tenant.NewNoOrganizationMembershipsError()
+ 	}
+ 
++	actor := pagination.TenantInfo{OrgID: organizationID, BuID: businessUnitID, UserID: actorID}
+ 	previous, err := s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 
++	_, hidden, err := s.splitVisibleMemberships(ctx, actor, userID, previous)
++	if err != nil {
++		return nil, err
++	}
++	organizationIDs = keepHiddenOrganizations(organizationIDs, hidden)
++
+ 	if err = s.authorizeMembershipChange(ctx, &membershipAuthorization{
+ 		actorID:        actorID,
+ 		organizationID: organizationID,
+@@ -790,6 +853,15 @@ func (s *Service) ReplaceOrganizationMemberships(
+ 		return nil, err
+ 	}
+ 
++	if err = s.guardMembershipRemoval(
++		ctx,
++		actor,
++		userID,
++		removedOrganizationIDs(previous, organizationIDs),
++	); err != nil {
++		return nil, err
++	}
++
+ 	memberships, err := s.repo.ReplaceOrganizationMemberships(
+ 		ctx,
+ 		tenantports.ReplaceOrganizationMembershipsRequest{
+@@ -833,5 +905,6 @@ func (s *Service) ReplaceOrganizationMemberships(
+ 		s.l.Warn("failed to publish user invalidation", zap.Error(err))
+ 	}
+ 
+-	return memberships, nil
++	visible, _, err := s.splitVisibleMemberships(ctx, actor, userID, memberships)
++	return visible, err
+ }
+diff --git a/services/tms/internal/modules/identity/domain/permission/role.go b/services/tms/internal/modules/identity/domain/permission/role.go
+index 233b6dd2b..56ad04c44 100644
+--- a/services/tms/internal/modules/identity/domain/permission/role.go
++++ b/services/tms/internal/modules/identity/domain/permission/role.go
+@@ -23,6 +23,8 @@ const (
+ 	CoreResponsibilityLeadership = CoreResponsibility("Leadership")
+ )
+ 
++const AdministratorRoleName = "Organization Administrator"
++
+ type Role struct {
+ 	keel.Table `keel:"roles"`
+ 
+@@ -50,6 +52,10 @@ func (r *Role) BeforeCreate(ctx context.Context) error {
+ 	return nil
+ }
+ 
++func (r *Role) IsAdministrator() bool {
++	return r.IsSystem && r.Name == AdministratorRoleName
++}
++
+ func (r *Role) GetID() pulid.ID {
+ 	return r.ID
+ }
+diff --git a/services/tms/internal/modules/identity/ports/permissionports/role.go b/services/tms/internal/modules/identity/ports/permissionports/role.go
+index 262703c3c..dce9449fc 100644
+--- a/services/tms/internal/modules/identity/ports/permissionports/role.go
++++ b/services/tms/internal/modules/identity/ports/permissionports/role.go
+@@ -73,6 +73,20 @@ type DeleteRoleRequest struct {
+ 	OrganizationID pulid.ID
+ }
+ 
++type GetRoleAssignmentRequest struct {
++	AssignmentID   pulid.ID
++	OrganizationID pulid.ID
++}
++
++type AdministeredOrganizationsRequest struct {
++	BusinessUnitID       pulid.ID
++	OrganizationIDs      []pulid.ID
++	HolderIDs            []pulid.ID
++	ExcludeUserIDs       []pulid.ID
++	ExcludeAssignmentIDs []pulid.ID
++	Now                  int64
++}
++
+ type OrphanedAssignment struct {
+ 	UserID         pulid.ID
+ 	OrganizationID pulid.ID
+@@ -120,6 +134,14 @@ type RoleRepository interface {
+ 		now int64,
+ 		limit int,
+ 	) ([]OrphanedAssignment, error)
++	GetAssignment(
++		ctx context.Context,
++		req GetRoleAssignmentRequest,
++	) (*permission.UserRoleAssignment, error)
++	AdministeredOrganizations(
++		ctx context.Context,
++		req AdministeredOrganizationsRequest,
++	) ([]pulid.ID, error)
+ 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
+ 	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
+ 	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error
+diff --git a/services/tms/internal/modules/workspace/app/reporting/reportaccess/access.go b/services/tms/internal/modules/workspace/app/reporting/reportaccess/access.go
+index c3af31d8c..de99cc2fd 100644
+--- a/services/tms/internal/modules/workspace/app/reporting/reportaccess/access.go
++++ b/services/tms/internal/modules/workspace/app/reporting/reportaccess/access.go
+@@ -153,6 +153,9 @@ func New(p Params) (*Resolver, error) {
+ 				k.ownership,
+ 			)
+ 		}
++		if err := k.private.validate(e); err != nil {
++			return nil, err
++		}
+ 		r.kinds[e] = k
+ 	}
+ 	for e, k := range r.kinds {
+@@ -455,10 +458,34 @@ func (a *Access) Edge(ctx context.Context, g *analytics.Edge, _ analytics.Path)
+ 
+ func (a *Access) Rows(_ context.Context, e *analytics.Entity) []keel.Pred {
+ 	k := a.resolver.kinds[e]
+-	if k.ownership == "" || a.Kind(k.resource).Scope != permission.DataScopeOwn {
++	var preds []keel.Pred
++	if k.private != nil {
++		preds = append(preds, k.private.visibleTo(e, a.tenant.UserID.String()))
++	}
++	if k.ownership != "" && a.Kind(k.resource).Scope == permission.DataScopeOwn {
++		preds = append(preds, keel.DynFrom(e.Table).Path(k.ownership).Eq(a.tenant.UserID.String()))
++	}
++	return preds
++}
++
++func (p *privateRows) validate(e *analytics.Entity) error {
++	if p == nil {
+ 		return nil
+ 	}
+-	return []keel.Pred{keel.DynFrom(e.Table).Path(k.ownership).Eq(a.tenant.UserID.String())}
++	for _, column := range []string{p.owner, p.sharedColumn} {
++		if column != "" && e.Table.Column(column) < 0 {
++			return fmt.Errorf("report access: entity %q has no privacy column %q", e.Key, column)
++		}
++	}
++	return nil
++}
++
++func (p *privateRows) visibleTo(e *analytics.Entity, userID string) keel.Pred {
++	own := keel.DynFrom(e.Table).Path(p.owner).Eq(userID)
++	if p.sharedColumn == "" {
++		return own
++	}
++	return keel.Or(own, keel.DynFrom(e.Table).Path(p.sharedColumn).Eq(p.sharedValue))
+ }
+ 
+ func (a *Access) needsExport(k kind, reference bool) bool {
+diff --git a/services/tms/internal/modules/workspace/app/reporting/reportaccess/kinds.go b/services/tms/internal/modules/workspace/app/reporting/reportaccess/kinds.go
+index 6737cdb3d..bad8b901c 100644
+--- a/services/tms/internal/modules/workspace/app/reporting/reportaccess/kinds.go
++++ b/services/tms/internal/modules/workspace/app/reporting/reportaccess/kinds.go
+@@ -1,13 +1,28 @@
+ package reportaccess
+ 
+-import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
++import (
++	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
++	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
++)
+ 
+-const ownerColumn = "owner_id"
++const (
++	ownerColumn       = "owner_id"
++	requesterColumn   = "requested_by_id"
++	visibilityColumn  = "visibility"
++	sharedVisibility  = string(report.VisibilityShared)
++)
+ 
+ type kind struct {
+ 	resource     permission.Resource
+ 	withinRecord bool
+ 	ownership    string
++	private      *privateRows
++}
++
++type privateRows struct {
++	owner        string
++	sharedColumn string
++	sharedValue  string
+ }
+ 
+ var entityKinds = map[string]kind{
+@@ -84,8 +99,20 @@ var entityKinds = map[string]kind{
+ 		resource:     permission.ResourceFactoringRemittance,
+ 		withinRecord: true,
+ 	},
+-	"report_definition": {resource: permission.ResourceReport, ownership: ownerColumn},
+-	"report_run":        {resource: permission.ResourceReport, withinRecord: true},
++	"report_definition": {
++		resource:  permission.ResourceReport,
++		ownership: ownerColumn,
++		private: &privateRows{
++			owner:        ownerColumn,
++			sharedColumn: visibilityColumn,
++			sharedValue:  sharedVisibility,
++		},
++	},
++	"report_run": {
++		resource:     permission.ResourceReport,
++		withinRecord: true,
++		private:      &privateRows{owner: requesterColumn},
++	},
+ 	"reserve_entry":     {resource: permission.ResourceFactoringReserve},
+ 	"return":            {resource: permission.ResourceIFTAReturn},
+ 	"return_line":       {resource: permission.ResourceIFTAReturn, withinRecord: true},
+diff --git a/services/tms/internal/modules/workspace/app/reporting/reportaccess/private_test.go b/services/tms/internal/modules/workspace/app/reporting/reportaccess/private_test.go
+new file mode 100644
+index 000000000..7e545653c
+--- /dev/null
++++ b/services/tms/internal/modules/workspace/app/reporting/reportaccess/private_test.go
+@@ -0,0 +1,87 @@
++package reportaccess_test
++
++import (
++	"testing"
++
++	"github.com/emoss08/keel"
++	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
++	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
++	"github.com/emoss08/trenova/internal/testutil/keeltest"
++	"github.com/emoss08/trenova/internal/testutil/permtest"
++	"github.com/emoss08/trenova/pkg/pagination"
++	"github.com/emoss08/trenova/shared/pulid"
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func (f *fixture) accessFor(t *testing.T, userID pulid.ID) *reportaccess.Access {
++	t.Helper()
++	access, err := f.resolver.For(t.Context(), pagination.TenantInfo{
++		OrgID:  keeltest.TestOrganizationID,
++		BuID:   keeltest.TestBusinessUnitID,
++		UserID: userID,
++	}, reportaccess.ModeRead)
++	require.NoError(t, err)
++	return access
++}
++
++func (f *fixture) renderRows(t *testing.T, access *reportaccess.Access, entity string) (string, []any) {
++	t.Helper()
++	e, ok := f.catalog.Entity(entity)
++	require.True(t, ok)
++	return keeltest.Render(t, keel.DynFrom(e.Table).Where(access.Rows(t.Context(), e)...))
++}
++
++func TestRows_AReportDefinitionIsVisibleToItsOwnerOrWhenShared(t *testing.T) {
++	t.Parallel()
++
++	f := newFixture(t, permission.AllFieldGroups())
++	viewer := pulid.MustNew("usr_")
++
++	sql, args := f.renderRows(t, f.accessFor(t, viewer), "report_definition")
++
++	assert.Contains(t, sql, `AND ((rd."owner_id" = $3) OR (rd."visibility" = 'shared'))`)
++	assert.Equal(t, []any{"bu_1", "org_1", viewer.String()}, args)
++}
++
++func TestRows_AnOwnScopeGrantNarrowsReportDefinitionsToTheOwner(t *testing.T) {
++	t.Parallel()
++
++	f := newFixture(t, permission.AllFieldGroups())
++	f.engine.Overrides[permission.ResourceReport.String()] = permtest.Grant{
++		Operations:     []permission.Operation{permission.OpRead},
++		DataScope:      permission.DataScopeOwn,
++		MaxSensitivity: permission.SensitivityConfidential,
++	}
++	viewer := pulid.MustNew("usr_")
++	access := f.accessFor(t, viewer)
++
++	definition, ok := f.catalog.Entity("report_definition")
++	require.True(t, ok)
++	assert.Len(t, access.Rows(t.Context(), definition), 2,
++		"the private-report rule and the own-scope rule both apply")
++}
++
++func TestRows_AReportRunIsVisibleOnlyToWhoeverRequestedIt(t *testing.T) {
++	t.Parallel()
++
++	f := newFixture(t, permission.AllFieldGroups())
++	viewer := pulid.MustNew("usr_")
++
++	sql, args := f.renderRows(t, f.accessFor(t, viewer), "report_run")
++
++	assert.Contains(t, sql, `."organization_id" = $2 AND `)
++	assert.Contains(t, sql, `."requested_by_id" = $3`)
++	assert.NotContains(t, sql, ` OR `)
++	assert.Equal(t, []any{"bu_1", "org_1", viewer.String()}, args)
++}
++
++func TestRows_AKindWithoutPrivateRecordsHasNoRowRuleAtOrganizationScope(t *testing.T) {
++	t.Parallel()
++
++	f := newFixture(t, permission.AllFieldGroups())
++	customer, ok := f.catalog.Entity("customer")
++	require.True(t, ok)
++
++	assert.Empty(t, f.accessFor(t, pulid.MustNew("usr_")).Rows(t.Context(), customer))
++}
+diff --git a/services/tms/internal/modules/workspace/domain/report/run.go b/services/tms/internal/modules/workspace/domain/report/run.go
+index ad08e42f6..1d3810a62 100644
+--- a/services/tms/internal/modules/workspace/domain/report/run.go
++++ b/services/tms/internal/modules/workspace/domain/report/run.go
+@@ -43,7 +43,7 @@ type ReportRun struct {
+ 	Truncated          bool           `json:"truncated"          keel:"truncated"`
+ 	Error              *RunError      `json:"error"              keel:"error,jsonb,noreport"`
+ 	ArtifactKey        string         `json:"artifactKey"        keel:"artifact_key,nullzero,noreport"`
+-	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero"`
++	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero,noreport"`
+ 	Sample             []byte         `json:"-"                  keel:"sample,noreport"`
+ 	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  keel:"artifact_expires_at,nullzero,noreport"`
+ 	CacheHit           bool           `json:"cacheHit"           keel:"cache_hit"`
+diff --git a/services/tms/internal/testutil/mocks/permissionportsmock/mock_RoleRepository.go b/services/tms/internal/testutil/mocks/permissionportsmock/mock_RoleRepository.go
+index c6c451f33..0806e1ee1 100644
+--- a/services/tms/internal/testutil/mocks/permissionportsmock/mock_RoleRepository.go
++++ b/services/tms/internal/testutil/mocks/permissionportsmock/mock_RoleRepository.go
+@@ -337,6 +337,142 @@ func (_c *MockRoleRepository_DeleteAssignment_Call) RunAndReturn(run func(ctx co
+ 	return _c
+ }
+ 
++// AdministeredOrganizations provides a mock function for the type MockRoleRepository
++func (_mock *MockRoleRepository) AdministeredOrganizations(ctx context.Context, req permissionports.AdministeredOrganizationsRequest) ([]pulid.ID, error) {
++	ret := _mock.Called(ctx, req)
++
++	if len(ret) == 0 {
++		panic("no return value specified for AdministeredOrganizations")
++	}
++
++	var r0 []pulid.ID
++	var r1 error
++	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.AdministeredOrganizationsRequest) ([]pulid.ID, error)); ok {
++		return returnFunc(ctx, req)
++	}
++	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.AdministeredOrganizationsRequest) []pulid.ID); ok {
++		r0 = returnFunc(ctx, req)
++	} else {
++		if ret.Get(0) != nil {
++			r0 = ret.Get(0).([]pulid.ID)
++		}
++	}
++	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.AdministeredOrganizationsRequest) error); ok {
++		r1 = returnFunc(ctx, req)
++	} else {
++		r1 = ret.Error(1)
++	}
++	return r0, r1
++}
++
++// MockRoleRepository_AdministeredOrganizations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdministeredOrganizations'
++type MockRoleRepository_AdministeredOrganizations_Call struct {
++	*mock.Call
++}
++
++// AdministeredOrganizations is a helper method to define mock.On call
++//   - ctx context.Context
++//   - req repositories.AdministeredOrganizationsRequest
++func (_e *MockRoleRepository_Expecter) AdministeredOrganizations(ctx any, req any) *MockRoleRepository_AdministeredOrganizations_Call {
++	return &MockRoleRepository_AdministeredOrganizations_Call{Call: _e.mock.On("AdministeredOrganizations", ctx, req)}
++}
++
++func (_c *MockRoleRepository_AdministeredOrganizations_Call) Run(run func(ctx context.Context, req permissionports.AdministeredOrganizationsRequest)) *MockRoleRepository_AdministeredOrganizations_Call {
++	_c.Call.Run(func(args mock.Arguments) {
++		var arg0 context.Context
++		if args[0] != nil {
++			arg0 = args[0].(context.Context)
++		}
++		var arg1 permissionports.AdministeredOrganizationsRequest
++		if args[1] != nil {
++			arg1 = args[1].(permissionports.AdministeredOrganizationsRequest)
++		}
++		run(
++			arg0,
++			arg1,
++		)
++	})
++	return _c
++}
++
++func (_c *MockRoleRepository_AdministeredOrganizations_Call) Return(iDs []pulid.ID, err error) *MockRoleRepository_AdministeredOrganizations_Call {
++	_c.Call.Return(iDs, err)
++	return _c
++}
++
++func (_c *MockRoleRepository_AdministeredOrganizations_Call) RunAndReturn(run func(ctx context.Context, req permissionports.AdministeredOrganizationsRequest) ([]pulid.ID, error)) *MockRoleRepository_AdministeredOrganizations_Call {
++	_c.Call.Return(run)
++	return _c
++}
++
++// GetAssignment provides a mock function for the type MockRoleRepository
++func (_mock *MockRoleRepository) GetAssignment(ctx context.Context, req permissionports.GetRoleAssignmentRequest) (*permission.UserRoleAssignment, error) {
++	ret := _mock.Called(ctx, req)
++
++	if len(ret) == 0 {
++		panic("no return value specified for GetAssignment")
++	}
++
++	var r0 *permission.UserRoleAssignment
++	var r1 error
++	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleAssignmentRequest) (*permission.UserRoleAssignment, error)); ok {
++		return returnFunc(ctx, req)
++	}
++	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleAssignmentRequest) *permission.UserRoleAssignment); ok {
++		r0 = returnFunc(ctx, req)
++	} else {
++		if ret.Get(0) != nil {
++			r0 = ret.Get(0).(*permission.UserRoleAssignment)
++		}
++	}
++	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.GetRoleAssignmentRequest) error); ok {
++		r1 = returnFunc(ctx, req)
++	} else {
++		r1 = ret.Error(1)
++	}
++	return r0, r1
++}
++
++// MockRoleRepository_GetAssignment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAssignment'
++type MockRoleRepository_GetAssignment_Call struct {
++	*mock.Call
++}
++
++// GetAssignment is a helper method to define mock.On call
++//   - ctx context.Context
++//   - req repositories.GetRoleAssignmentRequest
++func (_e *MockRoleRepository_Expecter) GetAssignment(ctx any, req any) *MockRoleRepository_GetAssignment_Call {
++	return &MockRoleRepository_GetAssignment_Call{Call: _e.mock.On("GetAssignment", ctx, req)}
++}
++
++func (_c *MockRoleRepository_GetAssignment_Call) Run(run func(ctx context.Context, req permissionports.GetRoleAssignmentRequest)) *MockRoleRepository_GetAssignment_Call {
++	_c.Call.Run(func(args mock.Arguments) {
++		var arg0 context.Context
++		if args[0] != nil {
++			arg0 = args[0].(context.Context)
++		}
++		var arg1 permissionports.GetRoleAssignmentRequest
++		if args[1] != nil {
++			arg1 = args[1].(permissionports.GetRoleAssignmentRequest)
++		}
++		run(
++			arg0,
++			arg1,
++		)
++	})
++	return _c
++}
++
++func (_c *MockRoleRepository_GetAssignment_Call) Return(userRoleAssignment *permission.UserRoleAssignment, err error) *MockRoleRepository_GetAssignment_Call {
++	_c.Call.Return(userRoleAssignment, err)
++	return _c
++}
++
++func (_c *MockRoleRepository_GetAssignment_Call) RunAndReturn(run func(ctx context.Context, req permissionports.GetRoleAssignmentRequest) (*permission.UserRoleAssignment, error)) *MockRoleRepository_GetAssignment_Call {
++	_c.Call.Return(run)
++	return _c
++}
++
+ // DeleteResourcePermission provides a mock function for the type MockRoleRepository
+ func (_mock *MockRoleRepository) DeleteResourcePermission(ctx context.Context, req permissionports.DeleteResourcePermissionRequest) error {
+ 	ret := _mock.Called(ctx, req)
+-- 
+2.43.0
+
