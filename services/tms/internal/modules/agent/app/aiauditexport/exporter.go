@@ -176,7 +176,12 @@ func (x *Exporter) stream(ctx context.Context, spec *ExportSpec, sink rowSink) (
 
 		linked := map[pulid.ID][]*audit.Entry{}
 		if spec.LinkAuditEntries {
-			if linked, err = aiauditcorrelate.Correlate(ctx, x.ledger, scope.TenantInfo, events); err != nil {
+			if linked, err = aiauditcorrelate.Correlate(
+				ctx,
+				x.ledger,
+				scope.TenantInfo,
+				events,
+			); err != nil {
 				return written, err
 			}
 		}

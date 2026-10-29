@@ -73,7 +73,9 @@ func (r *Recorder) extractionSource(documentID pulid.ID) extractionartifact.Extr
 	if err != nil {
 		r.logger.Debug("extraction evidence could not be read", zap.Error(err))
 	} else if stored != nil {
-		source.FieldEvidence, source.StopEvidence = extractionartifact.DraftEvidence(stored.DraftData)
+		source.FieldEvidence, source.StopEvidence = extractionartifact.DraftEvidence(
+			stored.DraftData,
+		)
 	}
 
 	return source

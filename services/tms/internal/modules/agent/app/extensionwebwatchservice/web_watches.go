@@ -356,7 +356,11 @@ func (s *Service) removeMonitor(ctx context.Context, call *webWatchCall, vendorI
 	if vendorID == "" {
 		return
 	}
-	if err := call.provider.DeleteWatch(context.WithoutCancel(ctx), call.Values, vendorID); err != nil {
+	if err := call.provider.DeleteWatch(
+		context.WithoutCancel(ctx),
+		call.Values,
+		vendorID,
+	); err != nil {
 		s.l.Warn("could not remove a web watch from its vendor",
 			zap.String("monitor", vendorID), zap.Error(err))
 	}

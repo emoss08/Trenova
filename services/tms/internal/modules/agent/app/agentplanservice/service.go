@@ -265,7 +265,9 @@ func (s *Service) prepare(
 			"Plans cannot be decided: no decision service is wired",
 		)
 	}
-	if err := agentdecision.CheckDecisionNote(agentdecision.NormalizeDecisionNote(req.Note)); err != nil {
+	if err := agentdecision.CheckDecisionNote(
+		agentdecision.NormalizeDecisionNote(req.Note),
+	); err != nil {
 		return nil, err
 	}
 

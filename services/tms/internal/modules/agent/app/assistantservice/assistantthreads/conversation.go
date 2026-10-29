@@ -216,7 +216,11 @@ func (s *Service) GetThread(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.access().MarkContinuable(ctx, agentaccess.ThreadReader(req.UserID, req.TenantInfo), thread); err != nil {
+	if err = s.access().MarkContinuable(
+		ctx,
+		agentaccess.ThreadReader(req.UserID, req.TenantInfo),
+		thread,
+	); err != nil {
 		return nil, err
 	}
 	if err = s.markCases(ctx, req.UserID, req.TenantInfo, thread); err != nil {
@@ -409,7 +413,10 @@ func (s *Service) withdrawPending(
 ) {
 	if s.proposals != nil {
 		if _, err := s.proposals.ExpirePendingByThread(ctx,
-			agentproposalports.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+			agentproposalports.ExpireAgentProposalsByThreadRequest{
+				ThreadID:   threadID,
+				TenantInfo: tenant,
+			},
 		); err != nil {
 			s.logger.Warn("could not withdraw a deleted conversation's proposals",
 				zap.String("thread", threadID.String()), zap.Error(err))

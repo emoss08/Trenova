@@ -367,20 +367,26 @@ func (s *Service) tidyKey(
 	}
 	if aiproviderkey.NeedsKeyFingerprint(provider) && apiKey != "" {
 		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
-		if err := s.keys.RecordFingerprint(ctx, aiproviderports.RecordAIProviderKeyFingerprintRequest{
-			ID:         provider.ID,
-			TenantInfo: tenantInfo,
-			Prefix:     fingerprint.Prefix,
-			LastFour:   fingerprint.LastFour,
-		}); err != nil {
+		if err := s.keys.RecordFingerprint(
+			ctx,
+			aiproviderports.RecordAIProviderKeyFingerprintRequest{
+				ID:         provider.ID,
+				TenantInfo: tenantInfo,
+				Prefix:     fingerprint.Prefix,
+				LastFour:   fingerprint.LastFour,
+			},
+		); err != nil {
 			s.l.Warn("failed to record ai provider key fingerprint", zap.Error(err))
 		}
 	}
 	if provider.PreviousKeyExpired(timeutils.NowUnix()) {
-		if _, err := s.keys.ClearExpiredPrevious(ctx, aiproviderports.ClearExpiredAIProviderKeysRequest{
-			TenantInfo: tenantInfo,
-			Now:        timeutils.NowUnix(),
-		}); err != nil {
+		if _, err := s.keys.ClearExpiredPrevious(
+			ctx,
+			aiproviderports.ClearExpiredAIProviderKeysRequest{
+				TenantInfo: tenantInfo,
+				Now:        timeutils.NowUnix(),
+			},
+		); err != nil {
 			s.l.Warn("failed to clear expired ai provider keys", zap.Error(err))
 		}
 	}
