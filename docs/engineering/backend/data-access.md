@@ -436,6 +436,12 @@ volume generator, not the query: give the table the rows and status mix producti
 - **A balance as of a past date** walks back from the stored balance through the changes after
   the window start, read by an index on (tenant, creation time), instead of summing every change
   ever made ("History in one pass" in [scale.md](scale.md)).
+- **A value derived from child rows that a list filters, counts or sorts by** (a shipment's last
+  delivered arrival, whether it has a live assignment) is a stored column on the parent, tagged
+  `readonly,noselect` so no `Save` overwrites it, recomputed by one set-based `UPDATE` in the
+  transaction of every write to its inputs and backfilled in its migration
+  (`shipmentprojection.Refresh`, which keeps `version` and `updated_at`). Call the refresh from the
+  repository method that writes the child rows, never from a service, so every caller is covered.
 - **More than eight joined relations** split a pipelined load's semi-join from its joins
   (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
   with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).

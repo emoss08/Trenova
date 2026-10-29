@@ -395,10 +395,8 @@ const (
 	detentionWatchlistLimit    = 10
 	customerMixLimit           = 5
 	mileageShipmentAlias       = "mi_sp"
-	readyAssignmentsCTE        = "shipment_assignments"
-	readyAssignmentsShipment   = "id"
-	readyAssignmentsWorker     = "primary_worker_id"
-	readyShipmentAlias         = "ra_sp"
+	driverAssignmentAlias      = "drv_a"
+	driverMoveAlias            = "drv_sm"
 	pickupLocationAlias        = "pickup_loc"
 	pickupWorkerAlias          = "wrk"
 	destinationStopAlias       = "stp_dest"
@@ -808,8 +806,6 @@ func (p *Provider) getAtRisk(
 
 func unassignedQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	sm := shipmentdb.ShipmentMoves
-	a := shipmentdb.Assignments
 
 	return sp.Pick(
 		keel.Count(),
@@ -818,14 +814,7 @@ func unassignedQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 		floatTotal(sp.TotalChargeAmount.Sum()),
 	).Where(
 		sp.Status.In(activeStatuses...),
-		keel.NotExists(sm.
-			Join(
-				a,
-				a.ShipmentMoveID.EqCol(sm.ID),
-				a.ArchivedAt.IsNull(),
-				a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
-			).
-			Where(sm.ShipmentID.EqCol(sp.ID), sm.Status.Ne(shipmentvocab.MoveStatusCanceled))),
+		sp.HasActiveAssignment.IsFalse(),
 	)
 }
 
@@ -854,37 +843,26 @@ func (p *Provider) getUnassigned(
 
 func readyToDispatchQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	assigned := shipmentdb.Shipments.As(readyShipmentAlias)
-	sm := shipmentdb.ShipmentMoves
-	a := shipmentdb.Assignments
+	a := shipmentdb.Assignments.As(driverAssignmentAlias)
+	sm := shipmentdb.ShipmentMoves.As(driverMoveAlias)
 
-	sa := keel.CTE(
-		readyAssignmentsCTE,
-		[]string{readyAssignmentsShipment, readyAssignmentsWorker},
-		assigned.
-			Join(
-				sm,
-				sm.ShipmentID.EqCol(assigned.ID),
-				sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
-			).
-			Join(
-				a,
-				a.ShipmentMoveID.EqCol(sm.ID),
-				a.ArchivedAt.IsNull(),
-				a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
-			).
-			DistinctOn(assigned.ID, a.PrimaryWorkerID).
-			Pick(assigned.ID, a.PrimaryWorkerID).
-			Where(assigned.Status.In(activeStatuses...)).
-			Order(assigned.ID.Asc(), a.PrimaryWorkerID.Asc()),
-	)
+	driver := a.Pick(a.ID).
+		Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
+		Where(
+			sp.HasActiveAssignment.IsTrue(),
+			sm.ShipmentID.EqCol(sp.ID),
+			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			a.ArchivedAt.IsNull(),
+			a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
+			a.PrimaryWorkerID.IsNotNull(),
+		).
+		Limit(1)
 	ready := keel.And(
 		sp.Status.Eq(shipmentvocab.StatusAssigned),
-		sa.Col(readyAssignmentsShipment).IsNotNull(),
+		sp.HasActiveAssignment.IsTrue(),
 	)
 
-	return sp.With(sa).
-		LeftJoin(sa, sa.Col(readyAssignmentsShipment).EqCol(sp.ID)).
+	return sp.LeftJoinLateral(driver).
 		Pick(
 			countWhere(ready),
 			countWhere(ready, within(sp.CreatedAt, window.TodayStart, window.Now)),
@@ -893,8 +871,8 @@ func readyToDispatchQuery(window analyticsWindow) *keel.Query[*shipment.Shipment
 				sp.CreatedAt.Gte(window.YesterdayStart),
 				sp.CreatedAt.Lt(window.YesterdayEnd),
 			),
-			countWhere(sa.Col(readyAssignmentsShipment).IsNull()),
-			countWhere(sa.Col(readyAssignmentsWorker).IsNotNull()),
+			countWhere(sp.HasActiveAssignment.IsFalse()),
+			countWhere(a.ID.IsNotNull()),
 		).
 		Where(sp.Status.In(activeStatuses...))
 }

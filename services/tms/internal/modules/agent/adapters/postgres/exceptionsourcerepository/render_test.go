@@ -47,7 +47,11 @@ func TestMissingPODsQuery(t *testing.T) {
 		Limit:           5000,
 	}))
 
-	assert.Contains(t, sql, "LATERAL")
+	assert.NotContains(t, sql, "LATERAL")
+	assert.NotContains(t, sql, `"stops"`)
+	assert.Contains(t, sql, `s."last_delivery_arrival_at" < $`)
+	assert.Contains(t, sql, `s."last_delivery_arrival_at" >= $`)
+	assert.Contains(t, sql, `ORDER BY s."last_delivery_arrival_at" ASC, s."id" ASC`)
 	assert.Contains(t, sql, "NOT (EXISTS")
 	assert.Contains(t, sql, `"document_types"`)
 	assert.Contains(t, sql, "LIMIT 2000")

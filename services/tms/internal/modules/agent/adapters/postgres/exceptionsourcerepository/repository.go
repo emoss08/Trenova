@@ -26,8 +26,6 @@ const (
 	maxLimit     = 2000
 
 	newerTenderAlias     = "newer_tnd"
-	latestStopAlias      = "last_stp"
-	latestMoveAlias      = "last_smv"
 	shipmentResourceType = "shipment"
 )
 
@@ -110,23 +108,6 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 	return q.Limit(boundedLimit(req.Limit))
 }
 
-func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[*shipment.Stop] {
-	stp := shipmentdb.Stops.As(latestStopAlias)
-	sm := shipmentdb.ShipmentMoves.As(latestMoveAlias)
-
-	return stp.Pick(stp.ActualArrival).
-		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
-		Where(
-			sm.ShipmentID.EqCol(sp.ID),
-			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
-			stp.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
-			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
-			stp.ActualArrival.IsNotNull(),
-		).
-		Order(sm.Sequence.Desc(), stp.Sequence.Desc()).
-		Limit(1)
-}
-
 func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
 	doc := documentdb.Documents
 
@@ -141,16 +122,15 @@ func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
 
 func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	delivered := shipmentdb.Stops.As(latestStopAlias).ActualArrival
+	delivered := sp.LastDeliveryArrivalAt
 
-	return sp.JoinLateral(lastDeliveryQuery(sp)).
-		Pick(
-			sp.ID,
-			sp.ProNumber,
-			sp.OwnerID,
-			sp.Customer().Name.Coalesce(""),
-			delivered,
-		).
+	return sp.Pick(
+		sp.ID,
+		sp.ProNumber,
+		sp.OwnerID,
+		sp.Customer().Name.Coalesce(""),
+		delivered,
+	).
 		Where(
 			sp.Status.In(deliveredShipmentStatuses()...),
 			delivered.Lt(req.DeliveredBefore),

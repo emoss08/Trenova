@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -104,6 +105,7 @@ func (h *harness) arrive(t *testing.T, stop *shipment.Stop, at int64) {
 	t.Helper()
 	h.exec(t, `UPDATE stops SET actual_arrival = $1, status = $2 WHERE id = $3`,
 		at, string(shipmentvocab.StopStatusCompleted), stop.ID.String())
+	require.NoError(t, shipmentprojection.RefreshMoves(h.ctx, h.db, stop.ShipmentMoveID))
 }
 
 func TestListMissedStopsFindsClosedWindowsWithoutAnArrival(t *testing.T) {

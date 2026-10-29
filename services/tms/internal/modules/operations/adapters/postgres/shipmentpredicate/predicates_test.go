@@ -92,9 +92,8 @@ func TestUnassignedShipmentPredicate_ExcludesLiveAssignments(t *testing.T) {
 
 	sql, _ := renderShipments(t, UnassignedPredicate())
 
-	assert.Contains(t, sql, "NOT EXISTS")
-	assert.Contains(t, sql, `"assignments"`)
-	assert.Contains(t, sql, `"archived_at" IS NULL`)
+	assert.Contains(t, sql, `s."has_active_assignment" IS FALSE`)
+	assert.NotContains(t, sql, `"assignments"`)
 }
 
 func TestShipmentOptionPredicates_EachPartyGroupMatchesAnyOfItsReadings(t *testing.T) {

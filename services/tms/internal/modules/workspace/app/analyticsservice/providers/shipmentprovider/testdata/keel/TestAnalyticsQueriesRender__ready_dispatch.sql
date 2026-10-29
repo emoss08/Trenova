@@ -1,14 +1,11 @@
-WITH shipment_assignments (id, primary_worker_id) AS (
-  SELECT DISTINCT ON (ra_sp.id, a.primary_worker_id) ra_sp.id, a.primary_worker_id
-  FROM shipments ra_sp
-  JOIN shipment_moves sm ON sm.business_unit_id = $1 AND sm.organization_id = $2 AND sm.shipment_id = ra_sp.id AND sm.status <> 'Canceled'
-  JOIN assignments a ON a.business_unit_id = $1 AND a.organization_id = $2 AND a.shipment_move_id = sm.id AND a.archived_at IS NULL AND a.status <> 'Canceled'
-  WHERE ra_sp.business_unit_id = $1 AND ra_sp.organization_id = $2 AND ra_sp.status IN ('New', 'PartiallyAssigned', 'Assigned', 'InTransit', 'Delayed', 'PartiallyCompleted')
-  ORDER BY ra_sp.id ASC, a.primary_worker_id ASC
-)
-SELECT count(*) FILTER (WHERE ((s.status = 'Assigned' AND sa.id IS NOT NULL))), count(*) FILTER (WHERE ((s.status = 'Assigned' AND sa.id IS NOT NULL) AND (s.created_at >= $3 AND s.created_at <= $4))), count(*) FILTER (WHERE ((s.status = 'Assigned' AND sa.id IS NOT NULL) AND s.created_at >= $5 AND s.created_at < $6)), count(*) FILTER (WHERE (sa.id IS NULL)), count(*) FILTER (WHERE (sa.primary_worker_id IS NOT NULL))
+SELECT count(*) FILTER (WHERE ((s.status = 'Assigned' AND s.has_active_assignment IS TRUE))), count(*) FILTER (WHERE ((s.status = 'Assigned' AND s.has_active_assignment IS TRUE) AND (s.created_at >= $3 AND s.created_at <= $4))), count(*) FILTER (WHERE ((s.status = 'Assigned' AND s.has_active_assignment IS TRUE) AND s.created_at >= $5 AND s.created_at < $6)), count(*) FILTER (WHERE (s.has_active_assignment IS FALSE)), count(*) FILTER (WHERE (drv_a.id IS NOT NULL))
 FROM shipments s
-LEFT JOIN shipment_assignments sa ON sa.id = s.id
+LEFT JOIN LATERAL (
+  SELECT drv_a2.id
+  FROM assignments drv_a2
+  JOIN shipment_moves drv_sm ON drv_sm.business_unit_id = $1 AND drv_sm.organization_id = $2 AND drv_sm.id = drv_a2.shipment_move_id
+  WHERE drv_a2.business_unit_id = $1 AND drv_a2.organization_id = $2 AND s.has_active_assignment IS TRUE AND drv_sm.shipment_id = s.id AND drv_sm.status <> 'Canceled' AND drv_a2.archived_at IS NULL AND drv_a2.status <> 'Canceled' AND drv_a2.primary_worker_id IS NOT NULL LIMIT 1
+) drv_a ON TRUE
 WHERE s.business_unit_id = $1 AND s.organization_id = $2 AND s.status IN ('New', 'PartiallyAssigned', 'Assigned', 'InTransit', 'Delayed', 'PartiallyCompleted')
 -- $1 = 'bu_1'
 -- $2 = 'org_1'
