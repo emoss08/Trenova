@@ -60,6 +60,22 @@ func (s *Service) GetCommunicationProfile(
 	return ediprofilesecret.WithSecretState(profile), nil
 }
 
+func (s *Service) GetCommunicationProfilesByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDICommunicationProfilesByIDsRequest,
+) ([]*edi.EDICommunicationProfile, error) {
+	profiles, err := s.profileRepo.GetProfilesByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, profile := range profiles {
+		profiles[i] = ediprofilesecret.WithSecretState(profile)
+	}
+
+	return profiles, nil
+}
+
 type TestCommunicationProfileConnectionRequest struct {
 	ProfileID  pulid.ID              `json:"-"`
 	TenantInfo pagination.TenantInfo `json:"-"`

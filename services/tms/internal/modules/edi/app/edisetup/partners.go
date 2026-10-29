@@ -34,6 +34,13 @@ func (s *Service) GetPartner(
 	return s.partnerRepo.GetByID(ctx, req)
 }
 
+func (s *Service) GetPartnersByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDIPartnersByIDsRequest,
+) ([]*edi.EDIPartner, error) {
+	return s.partnerRepo.GetByIDs(ctx, req)
+}
+
 func (s *Service) CreatePartner(
 	ctx context.Context,
 	entity *edi.EDIPartner,

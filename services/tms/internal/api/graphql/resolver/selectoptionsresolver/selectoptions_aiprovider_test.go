@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -25,7 +24,7 @@ type fakeAIProviderSelectService struct {
 	byID       map[pulid.ID]*aiprovider.Provider
 	selectReq  *aiproviderports.AIProviderSelectOptionsRequest
 	selectList []*aiprovider.Provider
-	lookups    []aiproviderports.GetAIProviderByIDRequest
+	lookups    []aiproviderports.GetAIProvidersByIDsRequest
 }
 
 func (f *fakeAIProviderSelectService) SelectOptions(
@@ -40,16 +39,18 @@ func (f *fakeAIProviderSelectService) SelectOptions(
 	}, nil
 }
 
-func (f *fakeAIProviderSelectService) GetByID(
+func (f *fakeAIProviderSelectService) GetByIDs(
 	_ context.Context,
-	req aiproviderports.GetAIProviderByIDRequest,
-) (*aiprovider.Provider, error) {
+	req aiproviderports.GetAIProvidersByIDsRequest,
+) ([]*aiprovider.Provider, error) {
 	f.lookups = append(f.lookups, req)
-	provider, ok := f.byID[req.ID]
-	if !ok {
-		return nil, errortypes.NewNotFoundError("AIProvider not found within your organization")
+	providers := make([]*aiprovider.Provider, 0, len(req.ProviderIDs))
+	for _, id := range req.ProviderIDs {
+		if provider, ok := f.byID[id]; ok {
+			providers = append(providers, provider)
+		}
 	}
-	return provider, nil
+	return providers, nil
 }
 
 type decidingPermissionEngine struct {
@@ -166,10 +167,9 @@ func TestSelectOptions_AIProviderByIDsKeepsKnownProvidersInTheTenant(t *testing.
 	require.Len(t, result.Edges, 1)
 	assert.Equal(t, kept.ID.String(), result.Edges[0].Node.ID)
 	assert.Equal(t, "Local vLLM", result.Edges[0].Node.Label)
-	require.Len(t, svc.lookups, 2)
-	for _, lookup := range svc.lookups {
-		assert.Equal(t, orgID, lookup.TenantInfo.OrgID)
-		assert.Equal(t, buID, lookup.TenantInfo.BuID)
-	}
+	require.Len(t, svc.lookups, 1, "every selected provider is read in one batch")
+	assert.Equal(t, []pulid.ID{kept.ID, gone}, svc.lookups[0].ProviderIDs)
+	assert.Equal(t, orgID, svc.lookups[0].TenantInfo.OrgID)
+	assert.Equal(t, buID, svc.lookups[0].TenantInfo.BuID)
 	assert.Nil(t, svc.selectReq)
 }

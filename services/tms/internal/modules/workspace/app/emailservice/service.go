@@ -169,6 +169,13 @@ func (s *Service) GetProfile(
 	return s.repo.GetProfile(ctx, req)
 }
 
+func (s *Service) GetProfilesByIDs(
+	ctx context.Context,
+	req emailports.GetEmailProfilesByIDsRequest,
+) ([]*email.Profile, error) {
+	return s.repo.GetProfilesByIDs(ctx, req)
+}
+
 func (s *Service) CreateProfile(
 	ctx context.Context,
 	profile *email.Profile,

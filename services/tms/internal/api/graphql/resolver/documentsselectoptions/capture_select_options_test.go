@@ -12,9 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func selectRequest(limit, offset int, ids ...pulid.ID) *selectoption.Request {
+func selectRequest(limit, offset int) *selectoption.Request {
 	return &selectoption.Request{
-		IDs: ids,
 		SelectQuery: &pagination.SelectQueryRequest{
 			Pagination: pagination.Info{Limit: limit, Offset: offset},
 		},
@@ -55,22 +54,6 @@ func TestPageSelectOptionItemsPagesAndReportsTheTotal(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, past.Edges)
 	assert.Equal(t, 5, *past.TotalCount)
-}
-
-func TestWithIDsKeepsOnlyTheAskedForEntitiesAndNothingElse(t *testing.T) {
-	a := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "A"}
-	b := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "B"}
-	c := &captureprofile.CaptureProfile{ID: pulid.MustNew("cprf_"), Name: "C"}
-	idOf := func(p *captureprofile.CaptureProfile) pulid.ID { return p.ID }
-
-	all := []*captureprofile.CaptureProfile{a, b, c}
-	assert.Equal(t, all, withIDs(all, nil, idOf))
-	assert.Equal(
-		t,
-		[]*captureprofile.CaptureProfile{a, c},
-		withIDs(all, []pulid.ID{c.ID, a.ID}, idOf),
-	)
-	assert.Empty(t, withIDs(all, []pulid.ID{pulid.MustNew("cprf_")}, idOf))
 }
 
 func TestCaptureDeviceOptionCarriesItsScannersAndWhetherItIsOnline(t *testing.T) {

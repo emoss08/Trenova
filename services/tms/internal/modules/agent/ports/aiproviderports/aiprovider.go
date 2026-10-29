@@ -14,6 +14,11 @@ type GetAIProviderByIDRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type GetAIProvidersByIDsRequest struct {
+	ProviderIDs []pulid.ID
+	TenantInfo  pagination.TenantInfo
+}
+
 type ListAIProviderRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
@@ -60,6 +65,7 @@ type AIProviderRepository interface {
 		req *ListAIProviderConnectionRequest,
 	) (*pagination.CursorListResult[*aiprovider.Provider], error)
 	GetByID(ctx context.Context, req GetAIProviderByIDRequest) (*aiprovider.Provider, error)
+	GetByIDs(ctx context.Context, req GetAIProvidersByIDsRequest) ([]*aiprovider.Provider, error)
 	// ListForTask returns the enabled providers assigned to a task, ordered by
 	// priority ascending, so the caller can fall through the chain in order.
 	ListForTask(

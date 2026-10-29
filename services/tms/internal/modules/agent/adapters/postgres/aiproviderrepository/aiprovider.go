@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -107,6 +108,31 @@ func (r *repository) GetByID(
 		}
 
 		return entity, nil
+	})
+}
+
+func providersByIDs(ids []pulid.ID) *keel.Query[*aiprovider.Provider] {
+	p := aiproviderdb.Providers
+
+	return p.Where(p.ID.In(ids...)).Limit(len(ids))
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req aiproviderports.GetAIProvidersByIDsRequest,
+) ([]*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
+		if len(req.ProviderIDs) == 0 {
+			return []*aiprovider.Provider{}, nil
+		}
+
+		entities, err := providersByIDs(req.ProviderIDs).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get ai providers", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
 	})
 }
 

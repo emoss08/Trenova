@@ -146,6 +146,29 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req documenttypeports.GetDocumentTypesByIDsRequest,
+) ([]*documenttype.DocumentType, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documenttype.DocumentType, error) {
+		if len(req.DocumentTypeIDs) == 0 {
+			return []*documenttype.DocumentType{}, nil
+		}
+
+		dt := documenttypedb.DocumentTypes
+		entities, err := dt.Where(dt.ID.In(req.DocumentTypeIDs...)).
+			Limit(len(req.DocumentTypeIDs)).
+			Cache(resultcache.Reference()...).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get document types", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByCode(
 	ctx context.Context,
 	req documenttypeports.GetDocumentTypeByCodeRequest,

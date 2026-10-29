@@ -23,6 +23,11 @@ type GetDocumentTypeByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type GetDocumentTypesByIDsRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	DocumentTypeIDs []pulid.ID            `json:"documentTypeIds"`
+}
+
 type GetDocumentTypeByCodeRequest struct {
 	Code       string                `json:"code" form:"code"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -46,6 +51,10 @@ type DocumentTypeRepository interface {
 		ctx context.Context,
 		req GetDocumentTypeByIDRequest,
 	) (*documenttype.DocumentType, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetDocumentTypesByIDsRequest,
+	) ([]*documenttype.DocumentType, error)
 	GetByCode(
 		ctx context.Context,
 		req GetDocumentTypeByCodeRequest,

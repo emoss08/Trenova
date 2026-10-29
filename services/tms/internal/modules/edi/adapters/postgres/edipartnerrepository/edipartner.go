@@ -157,6 +157,35 @@ func (r *repository) GetByID(
 	})
 }
 
+func partnersByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDIPartnersByIDsRequest,
+) *keel.Query[*edi.EDIPartner] {
+	ep := edidb.EDIPartners
+
+	return ediscope.Tenant(ctx, ep.Where(ep.ID.In(req.PartnerIDs...)), req.TenantInfo).
+		Limit(len(req.PartnerIDs))
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDIPartnersByIDsRequest,
+) ([]*edi.EDIPartner, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIPartner, error) {
+		if len(req.PartnerIDs) == 0 {
+			return []*edi.EDIPartner{}, nil
+		}
+
+		entities, err := partnersByIDs(ctx, req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get edi partners", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		db := r.db.Keel(ctx)

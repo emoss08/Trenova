@@ -26,6 +26,11 @@ type GetEDICommunicationProfileByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEDICommunicationProfilesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ProfileIDs []pulid.ID            `json:"profileIds"`
+}
+
 type GetActiveEDICommunicationProfileByPartnerRequest struct {
 	PartnerID  pulid.ID               `json:"partnerId"`
 	TenantInfo pagination.TenantInfo  `json:"tenantInfo"`
@@ -72,6 +77,10 @@ type EDICommunicationProfileRepository interface {
 		ctx context.Context,
 		req GetEDICommunicationProfileByIDRequest,
 	) (*edi.EDICommunicationProfile, error)
+	GetProfilesByIDs(
+		ctx context.Context,
+		req GetEDICommunicationProfilesByIDsRequest,
+	) ([]*edi.EDICommunicationProfile, error)
 	GetActiveProfileByPartner(
 		ctx context.Context,
 		req GetActiveEDICommunicationProfileByPartnerRequest,

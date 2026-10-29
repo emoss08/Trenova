@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -32,24 +31,23 @@ func (r *Sources) AIProvider(
 	}
 
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.AiProviderService.GetByID(
-				ctx,
-				aiproviderports.GetAIProviderByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				if errortypes.IsNotFoundError(err) {
-					continue
-				}
-				return nil, err
-			}
-			items = append(items, aiProviderSelectOptionItem(entity))
+		entities, err := r.AiProviderService.GetByIDs(
+			ctx,
+			aiproviderports.GetAIProvidersByIDsRequest{
+				ProviderIDs: req.IDs,
+				TenantInfo:  req.TenantInfo,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*aiprovider.Provider).GetID,
+			aiProviderSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

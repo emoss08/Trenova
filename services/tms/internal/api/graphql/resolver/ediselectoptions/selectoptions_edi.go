@@ -27,21 +27,23 @@ func (r *Sources) EDICommunicationProfile(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EdiSetupService.GetCommunicationProfile(
-				ctx,
-				edipartnerports.GetEDICommunicationProfileByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ediCommunicationProfileSelectOptionItem(entity))
+		entities, err := r.EdiSetupService.GetCommunicationProfilesByIDs(
+			ctx,
+			edipartnerports.GetEDICommunicationProfilesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				ProfileIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*edi.EDICommunicationProfile).GetID,
+			ediCommunicationProfileSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -152,21 +154,23 @@ func (r *Sources) EDIMappingProfile(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EdiSetupService.GetMappingProfileByID(
-				ctx,
-				edipartnerports.GetMappingProfileByIDRequest{
-					ProfileID:  id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ediMappingProfileSelectOptionItem(entity))
+		entities, err := r.EdiSetupService.GetMappingProfilesByIDs(
+			ctx,
+			edipartnerports.GetMappingProfilesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				ProfileIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*edi.EDIMappingProfile).GetID,
+			ediMappingProfileSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -192,21 +196,23 @@ func (r *Sources) EDIPartner(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EdiSetupService.GetPartner(
-				ctx,
-				edipartnerports.GetEDIPartnerByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ediPartnerSelectOptionItem(entity))
+		entities, err := r.EdiSetupService.GetPartnersByIDs(
+			ctx,
+			edipartnerports.GetEDIPartnersByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				PartnerIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*edi.EDIPartner).GetID,
+			ediPartnerSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

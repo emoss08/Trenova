@@ -379,6 +379,74 @@ func (_c *MockEDICommunicationProfileRepository_GetProfileByID_Call) RunAndRetur
 	return _c
 }
 
+// GetProfilesByIDs provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) GetProfilesByIDs(ctx context.Context, req edipartnerports.GetEDICommunicationProfilesByIDsRequest) ([]*edi.EDICommunicationProfile, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProfilesByIDs")
+	}
+
+	var r0 []*edi.EDICommunicationProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetEDICommunicationProfilesByIDsRequest) ([]*edi.EDICommunicationProfile, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetEDICommunicationProfilesByIDsRequest) []*edi.EDICommunicationProfile); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDICommunicationProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, edipartnerports.GetEDICommunicationProfilesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_GetProfilesByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProfilesByIDs'
+type MockEDICommunicationProfileRepository_GetProfilesByIDs_Call struct {
+	*mock.Call
+}
+
+// GetProfilesByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req edipartnerports.GetEDICommunicationProfilesByIDsRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) GetProfilesByIDs(ctx any, req any) *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call {
+	return &MockEDICommunicationProfileRepository_GetProfilesByIDs_Call{Call: _e.mock.On("GetProfilesByIDs", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call) Run(run func(ctx context.Context, req edipartnerports.GetEDICommunicationProfilesByIDsRequest)) *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 edipartnerports.GetEDICommunicationProfilesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(edipartnerports.GetEDICommunicationProfilesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call) Return(eDICommunicationProfiles []*edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call {
+	_c.Call.Return(eDICommunicationProfiles, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.GetEDICommunicationProfilesByIDsRequest) ([]*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_GetProfilesByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListInboundPollingProfiles provides a mock function for the type MockEDICommunicationProfileRepository
 func (_mock *MockEDICommunicationProfileRepository) ListInboundPollingProfiles(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
 	ret := _mock.Called(ctx)

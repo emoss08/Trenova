@@ -29,6 +29,11 @@ type GetMappingProfileByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetMappingProfilesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ProfileIDs []pulid.ID            `json:"profileIds"`
+}
+
 type SaveMappingItemsRequest struct {
 	PartnerID  pulid.ID                     `json:"partnerId"`
 	TenantInfo pagination.TenantInfo        `json:"tenantInfo"`
@@ -100,6 +105,10 @@ type EDIMappingProfileRepository interface {
 		ctx context.Context,
 		req GetMappingProfileByIDRequest,
 	) (*edi.EDIMappingProfile, error)
+	GetMappingProfilesByIDs(
+		ctx context.Context,
+		req GetMappingProfilesByIDsRequest,
+	) ([]*edi.EDIMappingProfile, error)
 	SaveMappingItems(
 		ctx context.Context,
 		req *SaveMappingItemsRequest,

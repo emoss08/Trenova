@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -142,6 +143,31 @@ func (r *repository) ListProfilesByPartner(
 		return cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).
 			Order(cp.Status.Asc(), cp.CreatedAt.Asc(), cp.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
+	})
+}
+
+func profilesByIDs(ids []pulid.ID) *keel.Query[*edi.EDICommunicationProfile] {
+	cp := edidb.EDICommunicationProfiles
+
+	return cp.Where(cp.ID.In(ids...)).Limit(len(ids))
+}
+
+func (r *repository) GetProfilesByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDICommunicationProfilesByIDsRequest,
+) ([]*edi.EDICommunicationProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*edi.EDICommunicationProfile{}, nil
+		}
+
+		entities, err := profilesByIDs(req.ProfileIDs).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get edi communication profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
 	})
 }
 

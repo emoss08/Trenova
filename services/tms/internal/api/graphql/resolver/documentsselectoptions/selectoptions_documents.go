@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -34,21 +33,23 @@ func (r *Sources) DocumentType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.DocumentTypeService.Get(
-				ctx,
-				documenttypeports.GetDocumentTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, documentTypeSelectOptionItem(entity))
+		entities, err := r.DocumentTypeService.GetByIDs(
+			ctx,
+			documenttypeports.GetDocumentTypesByIDsRequest{
+				TenantInfo:      req.TenantInfo,
+				DocumentTypeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*documenttype.DocumentType).GetID,
+			documentTypeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -72,21 +73,23 @@ func (r *Sources) EmailProfile(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EmailService.GetProfile(
-				ctx,
-				emailports.GetEmailEntityRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, emailProfileSelectOptionItem(entity))
+		entities, err := r.EmailService.GetProfilesByIDs(
+			ctx,
+			emailports.GetEmailProfilesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				ProfileIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*email.Profile).GetID,
+			emailProfileSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -172,11 +175,22 @@ func (r *Sources) CaptureDevice(
 	}
 
 	now := timeutils.NowUnix()
+	deviceItem := func(device *capture.CaptureDevice) selectoption.Item {
+		return captureDeviceSelectOptionItem(device, now)
+	}
+	if len(req.IDs) > 0 {
+		items := selectoption.OrderedItems(
+			req.IDs,
+			result.Items,
+			(*capture.CaptureDevice).GetID,
+			deviceItem,
+		)
+		return selectoption.Connection(items, len(items), 0)
+	}
+
 	items := make([]selectoption.Item, 0, len(result.Items))
-	for _, device := range withIDs(result.Items, req.IDs, func(d *capture.CaptureDevice) pulid.ID {
-		return d.ID
-	}) {
-		items = append(items, captureDeviceSelectOptionItem(device, now))
+	for _, device := range result.Items {
+		items = append(items, deviceItem(device))
 	}
 
 	return pageSelectOptionItems(items, req)
@@ -191,15 +205,21 @@ func (r *Sources) CaptureProfile(
 		return nil, err
 	}
 
-	matched := withIDs(profiles, req.IDs, func(p *captureprofile.CaptureProfile) pulid.ID {
-		return p.ID
-	})
+	if len(req.IDs) > 0 {
+		items := selectoption.OrderedItems(
+			req.IDs,
+			profiles,
+			(*captureprofile.CaptureProfile).GetID,
+			captureProfileSelectOptionItem,
+		)
+		return selectoption.Connection(items, len(items), 0)
+	}
+
 	query := strings.ToLower(strings.TrimSpace(req.SelectQuery.Query))
 
-	items := make([]selectoption.Item, 0, len(matched))
-	for _, profile := range matched {
-		if len(req.IDs) == 0 && query != "" &&
-			!strings.Contains(strings.ToLower(profile.Name), query) {
+	items := make([]selectoption.Item, 0, len(profiles))
+	for _, profile := range profiles {
+		if query != "" && !strings.Contains(strings.ToLower(profile.Name), query) {
 			continue
 		}
 		items = append(items, captureProfileSelectOptionItem(profile))

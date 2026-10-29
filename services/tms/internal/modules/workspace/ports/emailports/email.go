@@ -36,6 +36,11 @@ type GetEmailEntityRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEmailProfilesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ProfileIDs []pulid.ID            `json:"profileIds"`
+}
+
 type GetEmailMessageByProviderIDRequest struct {
 	Provider          email.Provider        `json:"provider"`
 	ProviderMessageID string                `json:"providerMessageId"`
@@ -77,6 +82,7 @@ type EmailRepository interface {
 		*EmailProfileSelectOptionsRequest,
 	) (*pagination.ListResult[*email.Profile], error)
 	GetProfile(context.Context, GetEmailEntityRequest) (*email.Profile, error)
+	GetProfilesByIDs(context.Context, GetEmailProfilesByIDsRequest) ([]*email.Profile, error)
 	CreateProfile(context.Context, *email.Profile) (*email.Profile, error)
 	UpdateProfile(context.Context, *email.Profile) (*email.Profile, error)
 	DeleteProfile(context.Context, GetEmailEntityRequest) error

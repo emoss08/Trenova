@@ -169,6 +169,31 @@ func (r *repository) GetMappingProfileByID(
 	})
 }
 
+func mappingProfilesByIDs(ids []pulid.ID) *keel.Query[*edi.EDIMappingProfile] {
+	mp := edidb.EDIMappingProfiles
+
+	return mp.Where(mp.ID.In(ids...)).Limit(len(ids))
+}
+
+func (r *repository) GetMappingProfilesByIDs(
+	ctx context.Context,
+	req edipartnerports.GetMappingProfilesByIDsRequest,
+) ([]*edi.EDIMappingProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*edi.EDIMappingProfile{}, nil
+		}
+
+		entities, err := mappingProfilesByIDs(req.ProfileIDs).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get edi mapping profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) SaveMappingItems(
 	ctx context.Context,
 	req *edipartnerports.SaveMappingItemsRequest,

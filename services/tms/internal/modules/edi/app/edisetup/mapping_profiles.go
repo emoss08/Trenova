@@ -36,6 +36,13 @@ func (s *Service) GetMappingProfileByID(
 	return s.mappingProfileRepo.GetMappingProfileByID(ctx, req)
 }
 
+func (s *Service) GetMappingProfilesByIDs(
+	ctx context.Context,
+	req edipartnerports.GetMappingProfilesByIDsRequest,
+) ([]*edi.EDIMappingProfile, error) {
+	return s.mappingProfileRepo.GetMappingProfilesByIDs(ctx, req)
+}
+
 func (s *Service) SaveMappingProfile(
 	ctx context.Context,
 	req *edipartnerports.SaveMappingItemsRequest,

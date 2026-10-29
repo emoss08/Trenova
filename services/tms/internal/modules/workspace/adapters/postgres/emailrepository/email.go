@@ -154,6 +154,28 @@ func (r *repository) GetProfile(
 	})
 }
 
+func (r *repository) GetProfilesByIDs(
+	ctx context.Context,
+	req emailports.GetEmailProfilesByIDsRequest,
+) ([]*email.Profile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*email.Profile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*email.Profile{}, nil
+		}
+
+		p := emaildb.Profiles
+		entities, err := p.Where(p.ID.In(req.ProfileIDs...)).
+			Limit(len(req.ProfileIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get email profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) CreateProfile(
 	ctx context.Context,
 	entity *email.Profile,

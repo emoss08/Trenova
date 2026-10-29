@@ -23,6 +23,11 @@ type GetEDIPartnerByIDRequest struct {
 	IncludeLinks bool                  `json:"-"`
 }
 
+type GetEDIPartnersByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerIDs []pulid.ID            `json:"partnerIds"`
+}
+
 type EDIPartnerSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	Kind               edi.PartnerKind                `json:"kind"`
@@ -79,6 +84,10 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req GetEDIPartnerByIDRequest,
 	) (*edi.EDIPartner, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetEDIPartnersByIDsRequest,
+	) ([]*edi.EDIPartner, error)
 	Create(
 		ctx context.Context,
 		entity *edi.EDIPartner,

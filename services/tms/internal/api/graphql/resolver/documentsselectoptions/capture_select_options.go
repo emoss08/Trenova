@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -67,34 +66,10 @@ func captureProfileSelectOptionItem(
 	)
 }
 
-func withIDs[T any](entities []T, ids []pulid.ID, idOf func(T) pulid.ID) []T {
-	if len(ids) == 0 {
-		return entities
-	}
-
-	wanted := make(map[pulid.ID]struct{}, len(ids))
-	for _, id := range ids {
-		wanted[id] = struct{}{}
-	}
-
-	kept := make([]T, 0, len(ids))
-	for _, entity := range entities {
-		if _, ok := wanted[idOf(entity)]; ok {
-			kept = append(kept, entity)
-		}
-	}
-
-	return kept
-}
-
 func pageSelectOptionItems(
 	items []selectoption.Item,
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	if len(req.IDs) > 0 {
-		return selectoption.Connection(items, len(items), 0)
-	}
-
 	total := len(items)
 	offset := min(req.SelectQuery.Pagination.SafeOffset(), total)
 	end := min(offset+req.SelectQuery.Pagination.SafeLimit(), total)

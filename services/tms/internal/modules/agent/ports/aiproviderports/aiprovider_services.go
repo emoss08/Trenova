@@ -308,6 +308,10 @@ type AIProviderService interface {
 		ctx context.Context,
 		req GetAIProviderByIDRequest,
 	) (*aiprovider.Provider, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetAIProvidersByIDsRequest,
+	) ([]*aiprovider.Provider, error)
 	SelectOptions(
 		ctx context.Context,
 		req *AIProviderSelectOptionsRequest,

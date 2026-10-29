@@ -164,6 +164,23 @@ func (s *Service) GetByID(
 	return provider.Redacted(), nil
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req aiproviderports.GetAIProvidersByIDsRequest,
+) ([]*aiprovider.Provider, error) {
+	providers, err := s.repo.GetByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	redacted := make([]*aiprovider.Provider, 0, len(providers))
+	for _, provider := range providers {
+		redacted = append(redacted, provider.Redacted())
+	}
+
+	return redacted, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	req *aiproviderports.SaveAIProviderRequest,
