@@ -60,6 +60,8 @@ func (s EvaluationStatus) Terminal() bool {
 	switch s {
 	case EvaluationStatusCompleted, EvaluationStatusFailed, EvaluationStatusSkipped:
 		return true
+	case EvaluationStatusPending, EvaluationStatusRunning:
+		return false
 	default:
 		return false
 	}

@@ -160,7 +160,7 @@ func TestPlanRouteToRefusesWhatWouldBreakOrChangeNothing(t *testing.T) {
 	ordered := []*aiprovider.Provider{only, untrusted, disabled}
 
 	_, err := PlanRouteTo(ordered, aitask.TaskBillingDiagnosis, untrusted.ID)
-	var refusal *RouteRefusal
+	var refusal *RouteRefusalError
 	require.ErrorAs(t, err, &refusal)
 	assert.Contains(t, refusal.Reason, "trusted")
 

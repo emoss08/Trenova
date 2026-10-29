@@ -13,7 +13,8 @@ func WarnWouldFail(preview *agentpreview.ToolPreview, err error) *agentpreview.T
 	if err == nil || preview == nil {
 		return preview
 	}
-	preview.AddWarning(toolpreview.WouldFail(err))
+	warning := toolpreview.WouldFail(err)
+	preview.AddWarning(&warning)
 
 	return preview
 }

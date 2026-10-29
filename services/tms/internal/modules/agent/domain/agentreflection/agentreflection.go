@@ -210,7 +210,7 @@ type ReflectionChange struct {
 	Reason       string                  `json:"reason,omitempty"`
 }
 
-func (c ReflectionChange) Kept() bool {
+func (c *ReflectionChange) Kept() bool {
 	return c.MemoryID != nil && c.MemoryID.IsNotNil() &&
 		(c.Action == ReflectionActionSaved || c.Action == ReflectionActionSuggested)
 }

@@ -36,7 +36,7 @@ func masterDataStewardTools() []string {
 		"customer_update",
 		"customer_set_status",
 		toolListCommodities,
-		"masterdata_create_commodity",
+		ToolCreateCommodity,
 		"masterdata_update_commodity",
 		"masterdata_set_commodity_status",
 		"masterdata_list_hazardous_materials",

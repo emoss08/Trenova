@@ -62,7 +62,7 @@ func Chain(steps []ChainStep) {
 						field.ProjectedFromStep = value.step
 					}
 				}
-				preview.AddWarning(agentpreview.PreviewWarning{
+				preview.AddWarning(&agentpreview.PreviewWarning{
 					Code: agentpreview.PreviewWarningDependsOnStep,
 					Args: []string{strconv.Itoa(earlier.step)},
 					Message: "This step changes a record step " + strconv.Itoa(earlier.step) +

@@ -248,6 +248,8 @@ func (s AssistantTurnStatus) Terminal() bool {
 		AssistantTurnStatusStopped,
 		AssistantTurnStatusFailed:
 		return true
+	case AssistantTurnStatusPending, AssistantTurnStatusRunning:
+		return false
 	default:
 		return false
 	}

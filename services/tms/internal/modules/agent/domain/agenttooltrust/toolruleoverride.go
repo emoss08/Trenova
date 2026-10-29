@@ -44,6 +44,8 @@ func ExternalReadRank(read ExternalRead) int {
 		return 1
 	case ExternalReadAlways:
 		return 2
+	case ExternalReadNever:
+		return 0
 	default:
 		return 0
 	}

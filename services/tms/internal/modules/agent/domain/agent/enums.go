@@ -362,6 +362,8 @@ func (t AutonomyTier) Label() string {
 		return "Ask first"
 	case TierAutoExecute:
 		return "Automatic"
+	case TierPropose:
+		return "Propose"
 	default:
 		return "Propose"
 	}

@@ -121,11 +121,11 @@ var (
 	ErrRouteUnchanged     = errors.New("the task already goes to this provider")
 )
 
-type RouteRefusal struct {
+type RouteRefusalError struct {
 	Reason string
 }
 
-func (r *RouteRefusal) Error() string {
+func (r *RouteRefusalError) Error() string {
 	return r.Reason
 }
 
@@ -147,7 +147,7 @@ func PlanRouteTo(
 		candidate.Tasks = append(slices.Clone(target.Tasks), task)
 	}
 	if ok, reason := candidate.CanServeTask(task); !ok {
-		return nil, &RouteRefusal{Reason: reason}
+		return nil, &RouteRefusalError{Reason: reason}
 	}
 
 	plan := &TaskRoutePlan{Target: target, Assign: !target.ServesTask(task)}
@@ -156,7 +156,7 @@ func PlanRouteTo(
 			continue
 		}
 		if len(provider.Tasks) == 1 {
-			return nil, &RouteRefusal{Reason: provider.Name +
+			return nil, &RouteRefusalError{Reason: provider.Name +
 				" takes no other task, so it can't give this one up; turn it off or move it behind instead"}
 		}
 		plan.Unassign = append(plan.Unassign, provider)

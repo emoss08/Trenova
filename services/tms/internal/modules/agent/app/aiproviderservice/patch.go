@@ -133,7 +133,7 @@ func (s *Service) patchEdits(
 		}
 		edits = append(
 			edits,
-			func(p *aiprovider.Provider) { aiproviderkey.ReplaceAPIKey(p, replacement) },
+			func(p *aiprovider.Provider) { aiproviderkey.ReplaceAPIKey(p, &replacement) },
 		)
 	}
 

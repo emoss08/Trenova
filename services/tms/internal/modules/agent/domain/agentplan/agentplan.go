@@ -52,17 +52,17 @@ type AgentPlan struct {
 	FailedStep     *int   `json:"failedStep"     keel:"failed_step"`
 	FailureError   string `json:"failureError"   keel:"failure_error,nullzero"`
 
-	DecidedByUserID *pulid.ID `json:"decidedByUserId"       keel:"decided_by_user_id"`
-	DecidedAt       *int64    `json:"decidedAt"             keel:"decided_at"`
+	DecidedByUserID *pulid.ID `json:"decidedByUserId" keel:"decided_by_user_id"`
+	DecidedAt       *int64    `json:"decidedAt"       keel:"decided_at"`
 	// ExpiresAt is the latest expiry among the plan's steps: while any step
 	// can still be decided, so can the plan.
-	ExpiresAt int64 `json:"expiresAt"             keel:"expires_at,nullzero"`
+	ExpiresAt int64 `json:"expiresAt" keel:"expires_at,nullzero"`
 	// CommitsAt is when a plan approved from the person's own conversation
 	// starts to run, unless it is undone first; UndoneAt and UndoneByUserID
 	// say it was. Empty for a plan decided anywhere else.
-	CommitsAt      *int64    `json:"commitsAt"             keel:"commits_at"`
-	UndoneAt       *int64    `json:"undoneAt"              keel:"undone_at"`
-	UndoneByUserID *pulid.ID `json:"undoneByUserId"        keel:"undone_by_user_id"`
+	CommitsAt      *int64    `json:"commitsAt"      keel:"commits_at"`
+	UndoneAt       *int64    `json:"undoneAt"       keel:"undone_at"`
+	UndoneByUserID *pulid.ID `json:"undoneByUserId" keel:"undone_by_user_id"`
 	// The decision as it was made: its reason, the decider's note and the
 	// digest of the preview they decided on. An approval in its undo window
 	// carries them until it commits.
@@ -71,10 +71,10 @@ type AgentPlan struct {
 	ApprovalPreviewDigest string `json:"approvalPreviewDigest" keel:"approval_preview_digest,nullzero"`
 	// ScriptStepKey is the ledger step of the script whose intents are the
 	// plan's steps; empty for a plan of the model's own calls.
-	ScriptStepKey string `json:"scriptStepKey"         keel:"script_step_key,nullzero"`
+	ScriptStepKey string `json:"scriptStepKey" keel:"script_step_key,nullzero"`
 	// Script is what the script that wrote the plan was asked to do and the
 	// code it ran, kept with the plan once the run's steps are swept.
-	Script *ScriptOrigin `json:"script"                keel:"script,jsonb"`
+	Script *ScriptOrigin `json:"script" keel:"script,jsonb"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

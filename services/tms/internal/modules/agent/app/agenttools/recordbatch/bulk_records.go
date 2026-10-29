@@ -203,7 +203,8 @@ func (b *RecordBatch) Preview(
 		preview.Partial = true
 	}
 	if len(refused) == len(items) {
-		preview.AddWarning(toolpreview.WouldFail(b.refusalOf(refused)))
+		warning := toolpreview.WouldFail(b.refusalOf(refused))
+		preview.AddWarning(&warning)
 	}
 
 	return preview, nil

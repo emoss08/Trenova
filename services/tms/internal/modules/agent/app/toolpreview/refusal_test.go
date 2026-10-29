@@ -105,7 +105,8 @@ func TestRefused_IsTheRefusalAPreviewWarnsOfWithoutItsPrefix(t *testing.T) {
 	}))
 
 	preview := &agentpreview.ToolPreview{}
-	preview.AddWarning(WouldFail(errortypes.NewBusinessError("The invoice is already posted")))
+	warning := WouldFail(errortypes.NewBusinessError("The invoice is already posted"))
+	preview.AddWarning(&warning)
 	err := Refused(preview)
 	require.Error(t, err)
 	assert.Equal(t, "The invoice is already posted", err.Error())

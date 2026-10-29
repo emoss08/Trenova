@@ -48,6 +48,89 @@ type RuntimeAttachment struct {
 	Shown string
 }
 
+type RuntimeContext struct {
+	OrganizationName string
+	BusinessUnitName string
+	Timezone         string
+	Now              int64
+	Trigger          agent.RunTrigger
+	Surface          agentpagecontext.Surface
+	SurfaceGuide     *RuntimePage
+	User             *RuntimeUser
+	Subject          *RuntimeSubject
+	Page             *PageContext
+	// Attachments and Mentions are what the person handed over with the
+	// message: files, and records named from the composer.
+	Attachments []RuntimeAttachment
+	Mentions    []RuntimeMention
+	// Facts are what the person pinned for the agents to keep in mind for
+	// the whole conversation. They are rendered into the system prompt, not
+	// the history, so no trimming of the history can drop one.
+	Facts []string
+	Tools []ToolSummary
+	// Memories is what the organization has recorded for its agents that this
+	// turn may read, best first: the organization-wide ones, any about this
+	// agent's tools, and any about the records the turn is about.
+	// BuildSystemPrompt carries as many as the agent's memory budget holds.
+	Memories []*agentmemory.Memory
+	// MemorySubjects are the records whose memories the turn reads, each
+	// marked as the record the turn is about or one it names.
+	MemorySubjects []agentmemory.MemorySubject
+	// MemoryRelevance says which of Memories bear on what the turn asked.
+	// Facts and Corrections to tools not in play are carried only when they
+	// do, and only those that do are counted and shown as used.
+	MemoryRelevance agentmemory.MemoryRelevance
+	// MemoriesHeldBack counts the candidates the fit left out, so the prompt
+	// can say agent_list_memories still finds them after Memories is narrowed to
+	// what was carried.
+	MemoriesHeldBack int
+	// DelegatorRecords are the records the turn that handed this one its
+	// task was about, so their memories reach the agent doing the task.
+	DelegatorRecords []agentpagecontext.EntityRef
+	// ToolsDisclosed reports that the turn opened with a subset of the agent's
+	// tools and can load the rest on demand. The prompt has to say so, because
+	// the alternative is a model that reads a short tool list as the limit of
+	// what the system can do and tells the person it is not possible.
+	ToolsDisclosed bool
+	ReachesBeyond  bool
+	ToolMap        []ToolNamespace
+	Frame          *TaskFrame
+	// PendingProposals are the writes earlier turns proposed that the person
+	// has not decided yet. The model is told so it points them at the card
+	// rather than proposing the same change again.
+	PendingProposals []PendingProposal
+	DecisionRequests bool
+	// Artifacts says the conversation keeps what the turn produces beside it:
+	// lists as tables, records as cards, and documents the model publishes.
+	Artifacts bool
+	// Inline says the reply is read on its own with nothing beside it — a
+	// quick question in the command palette — so everything it shows is
+	// written into it.
+	Inline bool
+	// PageGuide is what the product guide says about the page in Page: its
+	// name, where it sits and what it is for. A raw path tells the model
+	// nothing about what the person is looking at.
+	PageGuide *RuntimePage
+	// Guide says a person is in the conversation and the agent can read the
+	// product guide and move the app, so the prompt says how to use both.
+	Guide bool
+	// Delegates are the agents this one may hand a task to on this turn:
+	// those on its allowlist the person may use. Empty for a run nobody is
+	// watching and for a turn that is itself working for another agent.
+	Delegates []RuntimeDelegate
+	// DelegatedBy names the agent that handed this turn its task, when it is
+	// working for another agent rather than for the person directly.
+	DelegatedBy string
+	LooksUpOnly bool
+	Anchors     []RuntimeAnchor
+	// OrganizationProfile is what the organization's records and its people's
+	// guidance say about the business, written up each night. It is the same
+	// on every turn of the day, so it sits in the cached part of the prompt.
+	OrganizationProfile string
+	// UserProfile is what the person's own records say they work on.
+	UserProfile string
+}
+
 func (rc *RuntimeContext) MemoryRecords() []agentpagecontext.EntityRef {
 	records := make([]agentpagecontext.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
 	seen := make(map[agentpagecontext.EntityRef]struct{}, cap(records))
@@ -131,89 +214,6 @@ func ToolNamesOf(summaries []ToolSummary) []string {
 	}
 
 	return names
-}
-
-type RuntimeContext struct {
-	OrganizationName string
-	BusinessUnitName string
-	Timezone         string
-	Now              int64
-	Trigger          agent.RunTrigger
-	Surface          agentpagecontext.Surface
-	SurfaceGuide     *RuntimePage
-	User             *RuntimeUser
-	Subject          *RuntimeSubject
-	Page             *PageContext
-	// Attachments and Mentions are what the person handed over with the
-	// message: files, and records named from the composer.
-	Attachments []RuntimeAttachment
-	Mentions    []RuntimeMention
-	// Facts are what the person pinned for the agents to keep in mind for
-	// the whole conversation. They are rendered into the system prompt, not
-	// the history, so no trimming of the history can drop one.
-	Facts []string
-	Tools []ToolSummary
-	// Memories is what the organization has recorded for its agents that this
-	// turn may read, best first: the organization-wide ones, any about this
-	// agent's tools, and any about the records the turn is about.
-	// BuildSystemPrompt carries as many as the agent's memory budget holds.
-	Memories []*agentmemory.Memory
-	// MemorySubjects are the records whose memories the turn reads, each
-	// marked as the record the turn is about or one it names.
-	MemorySubjects []agentmemory.MemorySubject
-	// MemoryRelevance says which of Memories bear on what the turn asked.
-	// Facts and Corrections to tools not in play are carried only when they
-	// do, and only those that do are counted and shown as used.
-	MemoryRelevance agentmemory.MemoryRelevance
-	// MemoriesHeldBack counts the candidates the fit left out, so the prompt
-	// can say agent_list_memories still finds them after Memories is narrowed to
-	// what was carried.
-	MemoriesHeldBack int
-	// DelegatorRecords are the records the turn that handed this one its
-	// task was about, so their memories reach the agent doing the task.
-	DelegatorRecords []agentpagecontext.EntityRef
-	// ToolsDisclosed reports that the turn opened with a subset of the agent's
-	// tools and can load the rest on demand. The prompt has to say so, because
-	// the alternative is a model that reads a short tool list as the limit of
-	// what the system can do and tells the person it is not possible.
-	ToolsDisclosed bool
-	ReachesBeyond  bool
-	ToolMap        []ToolNamespace
-	Frame          *TaskFrame
-	// PendingProposals are the writes earlier turns proposed that the person
-	// has not decided yet. The model is told so it points them at the card
-	// rather than proposing the same change again.
-	PendingProposals []PendingProposal
-	DecisionRequests bool
-	// Artifacts says the conversation keeps what the turn produces beside it:
-	// lists as tables, records as cards, and documents the model publishes.
-	Artifacts bool
-	// Inline says the reply is read on its own with nothing beside it — a
-	// quick question in the command palette — so everything it shows is
-	// written into it.
-	Inline bool
-	// PageGuide is what the product guide says about the page in Page: its
-	// name, where it sits and what it is for. A raw path tells the model
-	// nothing about what the person is looking at.
-	PageGuide *RuntimePage
-	// Guide says a person is in the conversation and the agent can read the
-	// product guide and move the app, so the prompt says how to use both.
-	Guide bool
-	// Delegates are the agents this one may hand a task to on this turn:
-	// those on its allowlist the person may use. Empty for a run nobody is
-	// watching and for a turn that is itself working for another agent.
-	Delegates []RuntimeDelegate
-	// DelegatedBy names the agent that handed this turn its task, when it is
-	// working for another agent rather than for the person directly.
-	DelegatedBy string
-	LooksUpOnly bool
-	Anchors     []RuntimeAnchor
-	// OrganizationProfile is what the organization's records and its people's
-	// guidance say about the business, written up each night. It is the same
-	// on every turn of the day, so it sits in the cached part of the prompt.
-	OrganizationProfile string
-	// UserProfile is what the person's own records say they work on.
-	UserProfile string
 }
 
 type ToolNamespace struct {

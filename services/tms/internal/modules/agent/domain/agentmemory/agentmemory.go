@@ -83,6 +83,8 @@ func (k MemoryKind) Rank() int {
 		return 1
 	case MemoryKindProcedure:
 		return 2
+	case MemoryKindFact:
+		return 3
 	default:
 		return 3
 	}
@@ -197,6 +199,8 @@ func (r MemoryReader) Reads(m *Memory) bool {
 		}
 
 		return false
+	case MemoryScopeOrganization, MemoryScopeAgent:
+		return true
 	default:
 		return true
 	}
@@ -381,26 +385,26 @@ type Memory struct {
 	// OwnerUserID is the person a User-scoped memory is kept for, and RoleID
 	// the role a Role-scoped one is kept for. Each is empty for every other
 	// scope.
-	OwnerUserID *pulid.ID `json:"ownerUserId"       keel:"owner_user_id"`
-	RoleID      *pulid.ID `json:"roleId"            keel:"role_id"`
+	OwnerUserID *pulid.ID `json:"ownerUserId" keel:"owner_user_id"`
+	RoleID      *pulid.ID `json:"roleId"      keel:"role_id"`
 	// SourceThreadID is the conversation the run that recorded the memory
 	// was answering, so a list can say which conversation it came from.
-	SourceThreadID   *pulid.ID `json:"sourceThreadId"    keel:"source_thread_id"`
-	Tainted          bool      `json:"tainted"           keel:"tainted"`
-	TaintRunID       *pulid.ID `json:"taintRunId"        keel:"taint_run_id"`
-	SourceRunID      *pulid.ID `json:"sourceRunId"       keel:"source_run_id"`
-	SourceProposalID *pulid.ID `json:"sourceProposalId"  keel:"source_proposal_id"`
-	ReflectionID     *pulid.ID `json:"reflectionId"      keel:"reflection_id"`
-	SupersedesID     *pulid.ID `json:"supersedesId"      keel:"supersedes_id"`
-	CreatedByUserID  *pulid.ID `json:"createdByUserId"   keel:"created_by_user_id"`
-	RetiredByUserID  *pulid.ID `json:"retiredByUserId"   keel:"retired_by_user_id"`
-	RetiredAt        *int64    `json:"retiredAt"         keel:"retired_at"`
+	SourceThreadID   *pulid.ID `json:"sourceThreadId"   keel:"source_thread_id"`
+	Tainted          bool      `json:"tainted"          keel:"tainted"`
+	TaintRunID       *pulid.ID `json:"taintRunId"       keel:"taint_run_id"`
+	SourceRunID      *pulid.ID `json:"sourceRunId"      keel:"source_run_id"`
+	SourceProposalID *pulid.ID `json:"sourceProposalId" keel:"source_proposal_id"`
+	ReflectionID     *pulid.ID `json:"reflectionId"     keel:"reflection_id"`
+	SupersedesID     *pulid.ID `json:"supersedesId"     keel:"supersedes_id"`
+	CreatedByUserID  *pulid.ID `json:"createdByUserId"  keel:"created_by_user_id"`
+	RetiredByUserID  *pulid.ID `json:"retiredByUserId"  keel:"retired_by_user_id"`
+	RetiredAt        *int64    `json:"retiredAt"        keel:"retired_at"`
 	// ReviewedByUserID is the person who read a tainted memory and kept it,
 	// approving it as a suggestion or reviewing it in AI Control. Tainted
 	// still says where it came from; a reviewed memory taints no turn.
-	ReviewedByUserID *pulid.ID `json:"reviewedByUserId"  keel:"reviewed_by_user_id"`
-	ReviewedAt       *int64    `json:"reviewedAt"        keel:"reviewed_at"`
-	ExpiresAt        *int64    `json:"expiresAt"         keel:"expires_at"`
+	ReviewedByUserID *pulid.ID `json:"reviewedByUserId" keel:"reviewed_by_user_id"`
+	ReviewedAt       *int64    `json:"reviewedAt"       keel:"reviewed_at"`
+	ExpiresAt        *int64    `json:"expiresAt"        keel:"expires_at"`
 
 	UseCount   int    `json:"useCount"   keel:"use_count"`
 	LastUsedAt *int64 `json:"lastUsedAt" keel:"last_used_at"`
@@ -474,6 +478,21 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 
+	m.validateSubject(multiErr)
+
+	if m.Source == MemorySourceFeedback && m.Evidence.Count() == 0 {
+		multiErr.Add(
+			"evidence",
+			errortypes.ErrRequired,
+			"A memory drawn from feedback needs the ratings it was drawn from",
+		)
+	}
+
+	m.validateAudience(multiErr)
+	m.validateLineage(multiErr)
+}
+
+func (m *Memory) validateSubject(multiErr *errortypes.MultiError) {
 	hasType := m.SubjectType != ""
 	hasID := m.SubjectID != nil && m.SubjectID.IsNotNil()
 	switch {
@@ -490,14 +509,9 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	if m.ExpiresAt != nil && *m.ExpiresAt <= 0 {
 		multiErr.Add("expiresAt", errortypes.ErrInvalid, "Expiry must be a time")
 	}
+}
 
-	if m.Source == MemorySourceFeedback && m.Evidence.Count() == 0 {
-		multiErr.Add(
-			"evidence",
-			errortypes.ErrRequired,
-			"A memory drawn from feedback needs the ratings it was drawn from",
-		)
-	}
+func (m *Memory) validateAudience(multiErr *errortypes.MultiError) {
 	if m.AgentScoped() && (m.AgentDefinitionID == nil || m.AgentDefinitionID.IsNil()) {
 		multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one agent needs that agent")
 	}
@@ -518,7 +532,11 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 				"A memory kept for a role needs the role",
 			)
 		}
+	case MemoryScopeOrganization, MemoryScopeAgent:
 	}
+}
+
+func (m *Memory) validateLineage(multiErr *errortypes.MultiError) {
 	// A suggestion is drawn from feedback, offered by an agent to the person
 	// who asked to be asked first, or offered by a person for readers they may
 	// not keep a memory for; nothing else waits to be accepted.
@@ -561,6 +579,7 @@ func (m *Memory) SetAudience(scope MemoryScope, ownerID, roleID pulid.ID) {
 		if roleID.IsNotNil() {
 			m.RoleID = &roleID
 		}
+	case MemoryScopeOrganization, MemoryScopeAgent:
 	}
 }
 

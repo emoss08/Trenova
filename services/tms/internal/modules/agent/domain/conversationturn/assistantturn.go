@@ -79,11 +79,11 @@ type AssistantTurn struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ThreadID pulid.ID `json:"threadId"   keel:"thread_id"`
-	UserID   pulid.ID `json:"userId"     keel:"user_id"`
+	ThreadID pulid.ID `json:"threadId" keel:"thread_id"`
+	UserID   pulid.ID `json:"userId"   keel:"user_id"`
 	// RunID points at the agent run opened for this turn, which happens only
 	// when it proposed a change somebody has to decide on.
-	RunID pulid.ID `json:"runId"      keel:"run_id,nullzero"`
+	RunID pulid.ID `json:"runId" keel:"run_id,nullzero"`
 	// WorkflowID is the durable execution carrying the turn, empty until its
 	// start is recorded. ExecutionID answers for a turn either way.
 	WorkflowID string `json:"workflowId" keel:"workflow_id,nullzero"`
@@ -100,7 +100,7 @@ type AssistantTurn struct {
 	CompletedAt  *int64                           `json:"completedAt"  keel:"completed_at"`
 	Fingerprint  *agentfingerprint.Fingerprint    `json:"fingerprint"  keel:"fingerprint,jsonb"`
 	// TraceID is the turn's trace.
-	TraceID string `json:"traceId"      keel:"trace_id,nullzero"`
+	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

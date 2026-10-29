@@ -49,8 +49,9 @@ var ChangeRules = []editchange.Rule[aiprovider.Provider]{
 		},
 	},
 	{
-		Field: "scripts", Label: "Scripts",
-		Same: func(a, b *aiprovider.Provider) bool { return a.ScriptSettings() == b.ScriptSettings() },
+		Field: "scripts",
+		Label: "Scripts",
+		Same:  func(a, b *aiprovider.Provider) bool { return a.ScriptSettings() == b.ScriptSettings() },
 	},
 	{
 		Field: "embeddingDimensions", Label: "Embeddings",
@@ -60,8 +61,9 @@ var ChangeRules = []editchange.Rule[aiprovider.Provider]{
 		},
 	},
 	{
-		Field: "tasks", Label: "What it handles",
-		Same: func(a, b *aiprovider.Provider) bool { return setutils.SameMembers(a.Tasks, b.Tasks) },
+		Field: "tasks",
+		Label: "What it handles",
+		Same:  func(a, b *aiprovider.Provider) bool { return setutils.SameMembers(a.Tasks, b.Tasks) },
 	},
 	{
 		Field: "priority", Label: "Order",

@@ -46,6 +46,8 @@ func sourceRank(source conversation.WorkingSource) int {
 		return 3
 	case conversation.WorkingSourceMention, conversation.WorkingSourcePage:
 		return 2
+	case conversation.WorkingSourceRead:
+		return 1
 	default:
 		return 1
 	}

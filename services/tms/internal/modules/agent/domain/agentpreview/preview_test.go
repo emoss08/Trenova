@@ -197,9 +197,9 @@ func TestProposalPreviewWarnings_AreKeptOncePerCodeAndArguments(t *testing.T) {
 	t.Parallel()
 
 	preview := &ProposalPreview{}
-	preview.AddWarning(PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"1"}})
-	preview.AddWarning(PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"1"}})
-	preview.AddWarning(PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"2"}})
+	preview.AddWarning(&PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"1"}})
+	preview.AddWarning(&PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"1"}})
+	preview.AddWarning(&PreviewWarning{Code: PreviewWarningDependsOnStep, Args: []string{"2"}})
 
 	assert.Len(t, preview.Warnings, 2)
 	assert.True(t, preview.HasWarning(PreviewWarningDependsOnStep))

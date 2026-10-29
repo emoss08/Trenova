@@ -59,8 +59,8 @@ type AIUsageRecord struct {
 	SubjectType SubjectType `json:"subjectType" keel:"subject_type,nullzero"`
 	SubjectID   string      `json:"subjectId"   keel:"subject_id,nullzero"`
 
-	Succeeded  bool   `json:"succeeded"    keel:"succeeded"`
-	ErrorClass string `json:"errorClass"   keel:"error_class,nullzero"`
+	Succeeded  bool   `json:"succeeded"  keel:"succeeded"`
+	ErrorClass string `json:"errorClass" keel:"error_class,nullzero"`
 	// ErrorMessage is the provider's own words for a failed attempt, cut to
 	// fit. The class says what kind of failure it was; this says why, which
 	// is what an administrator needs when a provider refuses every request.
@@ -73,7 +73,7 @@ type AIUsageRecord struct {
 	ReasoningTokens int   `json:"reasoningTokens" keel:"reasoning_tokens"`
 	// CostUSD is nil when the provider carries no pricing. It is not zero:
 	// a call that cost something unknown must not be summed as free.
-	CostUSD *decimal.Decimal `json:"costUsd"         keel:"cost_usd"`
+	CostUSD *decimal.Decimal `json:"costUsd" keel:"cost_usd"`
 
 	// Provenance: the span the attempt ran in, the run or turn it was for and
 	// the task a delegate was working on, the agent's version, which try of
@@ -92,8 +92,8 @@ type AIUsageRecord struct {
 	// its reply, text or thinking: how long a person watched nothing. Nil for
 	// an attempt that wrote nothing a person reads, a reply that was only tool
 	// calls or one that was not streamed.
-	FirstTokenMs *int64 `json:"firstTokenMs"           keel:"first_token_ms"`
-	RecordedAtMs *int64 `json:"recordedAtMs"           keel:"recorded_at_ms,readonly"`
+	FirstTokenMs *int64 `json:"firstTokenMs" keel:"first_token_ms"`
+	RecordedAtMs *int64 `json:"recordedAtMs" keel:"recorded_at_ms,readonly"`
 
 	AdvisorModel            string           `json:"advisorModel"            keel:"advisor_model,nullzero"`
 	AdvisorCalls            int              `json:"advisorCalls"            keel:"advisor_calls"`
@@ -106,5 +106,5 @@ type AIUsageRecord struct {
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	// Batched is an attempt the provider answered through its batch API, at the
 	// batch discount: CostUSD is already discounted.
-	Batched bool `json:"batched"   keel:"batched"`
+	Batched bool `json:"batched" keel:"batched"`
 }

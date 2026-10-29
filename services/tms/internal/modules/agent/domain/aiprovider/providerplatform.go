@@ -46,7 +46,9 @@ func (p *Provider) platformBaseURL() string {
 		return p.Kind.DefaultBaseURL()
 	}
 
-	return platform.BaseURL(p.ResolvedSettings())
+	settings := p.ResolvedSettings()
+
+	return platform.BaseURL(&settings)
 }
 
 // CredentialFingerprintSubject is the part of a credential whose ends are kept

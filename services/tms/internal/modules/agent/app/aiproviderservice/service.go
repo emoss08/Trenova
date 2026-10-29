@@ -531,7 +531,7 @@ func (s *Service) replaceKey(provider *aiprovider.Provider, change *keyChange) e
 	if err != nil {
 		return err
 	}
-	aiproviderkey.ReplaceAPIKey(provider, replacement)
+	aiproviderkey.ReplaceAPIKey(provider, &replacement)
 
 	return nil
 }

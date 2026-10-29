@@ -71,7 +71,7 @@ type Provider struct {
 	BaseURL string `json:"baseUrl" keel:"base_url,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model"   keel:"model"`
+	Model string `json:"model" keel:"model"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
@@ -89,18 +89,18 @@ type Provider struct {
 	// operator knows it better than the model id does: a self-hosted model
 	// served with a shorter context than its family's, or an id nothing here
 	// can place. Nil reads the window off the model id.
-	ContextWindowTokens *int `json:"contextWindow"        keel:"context_window"`
+	ContextWindowTokens *int `json:"contextWindow" keel:"context_window"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort aireasoning.ReasoningEffort `json:"reasoningEffort"      keel:"reasoning_effort,nullzero"`
+	ReasoningEffort aireasoning.ReasoningEffort `json:"reasoningEffort" keel:"reasoning_effort,nullzero"`
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
-	ThinkingStyle aireasoning.ThinkingStyle `json:"thinkingStyle"        keel:"thinking_style,nullzero"`
+	ThinkingStyle aireasoning.ThinkingStyle `json:"thinkingStyle" keel:"thinking_style,nullzero"`
 	// Platform is the service an Anthropic Messages provider reaches Claude
 	// through, and PlatformSettings what that service needs besides the
 	// credential. Every other kind is called directly.
-	Platform         aiplatform.Platform          `json:"platform"             keel:"platform,nullzero"`
-	PlatformSettings *aiplatform.PlatformSettings `json:"platformSettings"     keel:"platform_settings,jsonb"`
+	Platform         aiplatform.Platform          `json:"platform"         keel:"platform,nullzero"`
+	PlatformSettings *aiplatform.PlatformSettings `json:"platformSettings" keel:"platform_settings,jsonb"`
 
 	// AdvisorEnabled has every chat call routed to this provider declare
 	// Anthropic's advisor tool, so the model consults AdvisorModel (empty is
@@ -118,8 +118,8 @@ type Provider struct {
 	// ScriptWrites lets those scripts prepare writes, proposed as one batch for
 	// a person, and is off by default. Both need the person's code_mode
 	// permission.
-	Scripts      bool `json:"scripts"        keel:"code_mode_scripts"`
-	ScriptWrites bool `json:"scriptWrites"   keel:"code_mode_writes"`
+	Scripts      bool `json:"scripts"      keel:"code_mode_scripts"`
+	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -180,19 +180,19 @@ type Provider struct {
 	TimeoutSeconds int `json:"timeoutSeconds" keel:"timeout_seconds,nullzero"`
 	// MaxConcurrent is how many calls this provider takes at once across
 	// every server. Past it, work moves to the next provider.
-	MaxConcurrent int `json:"maxConcurrent"  keel:"max_concurrent,nullzero"`
+	MaxConcurrent int `json:"maxConcurrent" keel:"max_concurrent,nullzero"`
 	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
 	// month, over the calls that carried a price. Nil means no cap.
-	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd"  keel:"monthly_cap_usd"`
-	OnCap         CapAction        `json:"onCap"          keel:"on_cap,nullzero"`
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" keel:"monthly_cap_usd"`
+	OnCap         CapAction        `json:"onCap"         keel:"on_cap,nullzero"`
 
 	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
 	// the clear: enough to tell two keys apart, never enough to use one.
-	APIKeyPrefix     string   `json:"apiKeyPrefix"      keel:"api_key_prefix,nullzero"`
-	APIKeyLastFour   string   `json:"apiKeyLastFour"    keel:"api_key_last_four,nullzero"`
-	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"     keel:"api_key_added_at"`
-	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"   keel:"api_key_added_by_id,nullzero"`
-	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt"  keel:"api_key_last_used_at"`
+	APIKeyPrefix     string   `json:"apiKeyPrefix"     keel:"api_key_prefix,nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"   keel:"api_key_last_four,nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    keel:"api_key_added_at"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  keel:"api_key_added_by_id,nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" keel:"api_key_last_used_at"`
 	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
 	// kept until RotationExpiresAt so calls refused with the new key can
 	// still be served while the change reaches the vendor.
@@ -424,7 +424,7 @@ func (p *Provider) ServesTask(t aitask.Task) bool {
 // CanServeTask reports whether this provider may serve t right now, and why not
 // when it may not. A disabled provider, or an untrusted one asked for work that
 // reaches the ledger, is not a candidate.
-func (p *Provider) CanServeTask(t aitask.Task) (bool, string) {
+func (p *Provider) CanServeTask(t aitask.Task) (servable bool, reason string) {
 	switch {
 	case !p.Enabled:
 		return false, "provider is disabled"

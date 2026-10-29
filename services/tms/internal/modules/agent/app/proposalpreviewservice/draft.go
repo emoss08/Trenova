@@ -94,7 +94,7 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 	d.preview.TargetVersion = found.version
 	if proposal.TargetID.IsNil() {
 		if _, targeted := targetOf(tool, params); targeted {
-			d.preview.AddWarning(agentpreview.PreviewWarning{
+			d.preview.AddWarning(&agentpreview.PreviewWarning{
 				Code: agentpreview.PreviewWarningUnpinned,
 				Message: "The record this change is for was not pinned when it was proposed, " +
 					"so whether it has changed since cannot be told.",
@@ -102,10 +102,11 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 		}
 	}
 	if d.preview.IsStale() {
-		d.preview.AddWarning(staleWarning(d.preview.Staleness, proposal.TargetResource))
+		stale := staleWarning(d.preview.Staleness, proposal.TargetResource)
+		d.preview.AddWarning(&stale)
 	}
-	for _, warning := range warnings {
-		d.preview.AddWarning(warning)
+	for i := range warnings {
+		d.preview.AddWarning(&warnings[i])
 	}
 
 	return d, nil
@@ -372,7 +373,7 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 			zap.Error(found.previewErr),
 		)
 		s.fallback(d, tool)
-		preview.AddWarning(agentpreview.PreviewWarning{
+		preview.AddWarning(&agentpreview.PreviewWarning{
 			Code: agentpreview.PreviewWarningPreviewFailed,
 			Args: []string{previewFailure(found.previewErr)},
 			Message: "What this change would do could not be worked out: " + previewFailure(
@@ -390,8 +391,8 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 	preview.Summary = found.preview.Summary
 	preview.Changes = found.preview.Changes
 	preview.OmittedRecords = found.preview.OmittedRecords
-	for _, warning := range found.preview.Warnings {
-		preview.AddWarning(warning)
+	for i := range found.preview.Warnings {
+		preview.AddWarning(&found.preview.Warnings[i])
 	}
 	preview.Coverage = agentpreview.PreviewCoverageFull
 	if found.preview.Partial {
@@ -413,7 +414,7 @@ func (s *Service) toolRemoved(d *draft) {
 	d.preview.Summary = "The tool " + d.proposal.ToolName + " that this change would run " +
 		"no longer exists, so it cannot run."
 	d.preview.Coverage = agentpreview.PreviewCoverageUnavailable
-	d.preview.AddWarning(agentpreview.PreviewWarning{
+	d.preview.AddWarning(&agentpreview.PreviewWarning{
 		Code:    agentpreview.PreviewWarningToolRemoved,
 		Args:    []string{d.proposal.ToolName},
 		Message: "The tool " + d.proposal.ToolName + " no longer exists.",

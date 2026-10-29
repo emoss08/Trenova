@@ -148,7 +148,7 @@ func TestReplaceAPIKey_KeepsTheReplacedKeyForADayWhenAsked(t *testing.T) {
 	user := pulid.MustNew("usr_")
 	now := int64(1_800_000_000)
 
-	aiproviderkey.ReplaceAPIKey(provider, aiproviderkey.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted:    "enc-new",
 		Prefix:       "sk-ant-",
 		LastFour:     "9876",
@@ -181,7 +181,7 @@ func TestReplaceAPIKey_DropsThePreviousKeyUnlessAsked(t *testing.T) {
 	used := int64(1_799_999_000)
 	provider.APIKeyLastUsedAt = &used
 
-	aiproviderkey.ReplaceAPIKey(provider, aiproviderkey.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted: "enc-new",
 		LastFour:  "1234",
 		Now:       1_800_000_000,
@@ -196,7 +196,7 @@ func TestReplaceAPIKey_ClearingTheKeyForgetsEverythingAboutIt(t *testing.T) {
 	t.Parallel()
 
 	provider := validProvider()
-	aiproviderkey.ReplaceAPIKey(provider, aiproviderkey.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted: "enc-old",
 		Prefix:    "sk-",
 		LastFour:  "1111",
@@ -205,7 +205,7 @@ func TestReplaceAPIKey_ClearingTheKeyForgetsEverythingAboutIt(t *testing.T) {
 	})
 	aiproviderkey.ReplaceAPIKey(
 		provider,
-		aiproviderkey.KeyReplacement{Now: 1_800_000_500, KeepPrevious: true},
+		&aiproviderkey.KeyReplacement{Now: 1_800_000_500, KeepPrevious: true},
 	)
 
 	assert.Empty(t, provider.APIKey)

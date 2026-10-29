@@ -150,7 +150,8 @@ func (t *previewingTool) Preview(
 	}
 	if t.refusal != nil {
 		preview := toolpreview.Build("Would set PRO " + t.state.ProNumber + ".")
-		preview.AddWarning(toolpreview.WouldFail(t.refusal))
+		warning := toolpreview.WouldFail(t.refusal)
+		preview.AddWarning(&warning)
 
 		return preview, nil
 	}

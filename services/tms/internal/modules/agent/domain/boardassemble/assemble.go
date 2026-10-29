@@ -218,7 +218,8 @@ func combined(source *board.FigureSource, values []board.RowMeasure) *board.Valu
 	}
 	currency := values[0].Value.Currency
 	total := values[0].Value.Number
-	for _, measure := range values[1:] {
+	for i := 1; i < len(values); i++ {
+		measure := &values[i]
 		if measure.Value.Currency != currency {
 			return nil
 		}
@@ -236,8 +237,8 @@ func counted(source *board.FigureSource, values []board.RowMeasure, readable int
 	count := readable
 	if source.Measure != "" {
 		count = 0
-		for _, measure := range values {
-			if measure.Value.Number.IsPositive() {
+		for i := range values {
+			if values[i].Value.Number.IsPositive() {
 				count++
 			}
 		}

@@ -158,107 +158,138 @@ func (v *PageView) Validate(prefix string, multiErr *errortypes.MultiError) {
 		validatePageFilters(field("fieldFilters"), v.FieldFilters, multiErr)
 	}
 
-	if len(v.FilterGroups) > MaxPageViewFilterGroups {
-		multiErr.Add(field("filterGroups"), errortypes.ErrInvalid, "Too many filter groups")
-	} else {
-		for i, group := range v.FilterGroups {
-			groupField := field("filterGroups") + "[" + strconv.Itoa(i) + "].filters"
-			if len(group.Filters) > MaxPageViewFieldFilters {
-				multiErr.Add(groupField, errortypes.ErrInvalid, "Too many filters")
-				continue
-			}
-			validatePageFilters(groupField, group.Filters, multiErr)
-		}
-	}
-
-	if len(v.Sort) > MaxPageViewSortFields {
-		multiErr.Add(field("sort"), errortypes.ErrInvalid, "Too many sort fields")
-	} else {
-		for i, sort := range v.Sort {
-			sortField := field("sort") + "[" + strconv.Itoa(i) + "]"
-			if !validFieldName(sort.Field) {
-				multiErr.Add(sortField+".field", errortypes.ErrInvalid, "Sort field is invalid")
-			}
-			if !sort.Direction.IsValid() {
-				multiErr.Add(
-					sortField+".direction",
-					errortypes.ErrInvalid,
-					"Sort direction is invalid",
-				)
-			}
-		}
-	}
+	validatePageFilterGroups(field("filterGroups"), v.FilterGroups, multiErr)
+	validatePageSort(field("sort"), v.Sort, multiErr)
 
 	if v.Selection != nil {
-		if v.Selection.Count < 0 {
-			multiErr.Add(
-				field("selection.count"),
-				errortypes.ErrInvalid,
-				"Selection count cannot be negative",
-			)
-		}
-		if len(v.Selection.IDs) > MaxPageViewSelectionIDs {
-			multiErr.Add(
-				field("selection.ids"),
-				errortypes.ErrInvalid,
-				"Too many selected identifiers",
-			)
-		} else {
-			for i, id := range v.Selection.IDs {
-				if _, err := pulid.Parse(id); err != nil {
-					multiErr.Add(
-						field("selection.ids")+"["+strconv.Itoa(i)+"]",
-						errortypes.ErrInvalid,
-						"Selected identifier is invalid",
-					)
-				}
-			}
-		}
-		if v.Selection.Count < len(v.Selection.IDs) {
-			multiErr.Add(
-				field("selection.count"),
-				errortypes.ErrInvalid,
-				"Selection count is below the identifiers sent",
-			)
-		}
+		v.Selection.validate(field, multiErr)
 	}
 
-	if len(v.KPIs) > MaxPageViewKPIs {
-		multiErr.Add(field("kpis"), errortypes.ErrInvalid, "Too many figures")
-	} else {
-		for i, kpi := range v.KPIs {
-			kpiField := field("kpis") + "[" + strconv.Itoa(i) + "]"
-			if strings.TrimSpace(kpi.Label) == "" {
-				multiErr.Add(kpiField+".label", errortypes.ErrRequired, "Figure label is required")
-			}
-			if len(kpi.Label) > MaxPageViewKPILabelLen {
-				multiErr.Add(kpiField+".label", errortypes.ErrInvalid, "Figure label is too long")
-			}
-			if len(kpi.Value) > MaxPageViewKPIValueLen {
-				multiErr.Add(kpiField+".value", errortypes.ErrInvalid, "Figure value is too long")
-			}
-			if len(kpi.Sub) > MaxPageViewKPILabelLen {
-				multiErr.Add(kpiField+".sub", errortypes.ErrInvalid, "Figure note is too long")
-			}
-		}
-	}
-
-	if len(v.VisibleColumns) > MaxPageViewColumns {
-		multiErr.Add(field("visibleColumns"), errortypes.ErrInvalid, "Too many columns")
-	} else {
-		for i, column := range v.VisibleColumns {
-			if !validFieldName(column) {
-				multiErr.Add(
-					field("visibleColumns")+"["+strconv.Itoa(i)+"]",
-					errortypes.ErrInvalid,
-					"Column name is invalid",
-				)
-			}
-		}
-	}
+	validatePageKPIs(field("kpis"), v.KPIs, multiErr)
+	validatePageColumns(field("visibleColumns"), v.VisibleColumns, multiErr)
 
 	if v.RowCount != nil && *v.RowCount < 0 {
 		multiErr.Add(field("rowCount"), errortypes.ErrInvalid, "Row count cannot be negative")
+	}
+}
+
+func validatePageFilterGroups(
+	prefix string,
+	groups []domaintypes.FilterGroup,
+	multiErr *errortypes.MultiError,
+) {
+	if len(groups) > MaxPageViewFilterGroups {
+		multiErr.Add(prefix, errortypes.ErrInvalid, "Too many filter groups")
+		return
+	}
+
+	for i, group := range groups {
+		groupField := prefix + "[" + strconv.Itoa(i) + "].filters"
+		if len(group.Filters) > MaxPageViewFieldFilters {
+			multiErr.Add(groupField, errortypes.ErrInvalid, "Too many filters")
+			continue
+		}
+		validatePageFilters(groupField, group.Filters, multiErr)
+	}
+}
+
+func validatePageSort(
+	prefix string,
+	sorts []domaintypes.SortField,
+	multiErr *errortypes.MultiError,
+) {
+	if len(sorts) > MaxPageViewSortFields {
+		multiErr.Add(prefix, errortypes.ErrInvalid, "Too many sort fields")
+		return
+	}
+
+	for i, sort := range sorts {
+		sortField := prefix + "[" + strconv.Itoa(i) + "]"
+		if !validFieldName(sort.Field) {
+			multiErr.Add(sortField+".field", errortypes.ErrInvalid, "Sort field is invalid")
+		}
+		if !sort.Direction.IsValid() {
+			multiErr.Add(
+				sortField+".direction",
+				errortypes.ErrInvalid,
+				"Sort direction is invalid",
+			)
+		}
+	}
+}
+
+func (s *PageSelection) validate(field func(string) string, multiErr *errortypes.MultiError) {
+	if s.Count < 0 {
+		multiErr.Add(
+			field("selection.count"),
+			errortypes.ErrInvalid,
+			"Selection count cannot be negative",
+		)
+	}
+	if len(s.IDs) > MaxPageViewSelectionIDs {
+		multiErr.Add(
+			field("selection.ids"),
+			errortypes.ErrInvalid,
+			"Too many selected identifiers",
+		)
+	} else {
+		for i, id := range s.IDs {
+			if _, err := pulid.Parse(id); err != nil {
+				multiErr.Add(
+					field("selection.ids")+"["+strconv.Itoa(i)+"]",
+					errortypes.ErrInvalid,
+					"Selected identifier is invalid",
+				)
+			}
+		}
+	}
+	if s.Count < len(s.IDs) {
+		multiErr.Add(
+			field("selection.count"),
+			errortypes.ErrInvalid,
+			"Selection count is below the identifiers sent",
+		)
+	}
+}
+
+func validatePageKPIs(prefix string, kpis []PageKPI, multiErr *errortypes.MultiError) {
+	if len(kpis) > MaxPageViewKPIs {
+		multiErr.Add(prefix, errortypes.ErrInvalid, "Too many figures")
+		return
+	}
+
+	for i := range kpis {
+		kpi := &kpis[i]
+		kpiField := prefix + "[" + strconv.Itoa(i) + "]"
+		if strings.TrimSpace(kpi.Label) == "" {
+			multiErr.Add(kpiField+".label", errortypes.ErrRequired, "Figure label is required")
+		}
+		if len(kpi.Label) > MaxPageViewKPILabelLen {
+			multiErr.Add(kpiField+".label", errortypes.ErrInvalid, "Figure label is too long")
+		}
+		if len(kpi.Value) > MaxPageViewKPIValueLen {
+			multiErr.Add(kpiField+".value", errortypes.ErrInvalid, "Figure value is too long")
+		}
+		if len(kpi.Sub) > MaxPageViewKPILabelLen {
+			multiErr.Add(kpiField+".sub", errortypes.ErrInvalid, "Figure note is too long")
+		}
+	}
+}
+
+func validatePageColumns(prefix string, columns []string, multiErr *errortypes.MultiError) {
+	if len(columns) > MaxPageViewColumns {
+		multiErr.Add(prefix, errortypes.ErrInvalid, "Too many columns")
+		return
+	}
+
+	for i, column := range columns {
+		if !validFieldName(column) {
+			multiErr.Add(
+				prefix+"["+strconv.Itoa(i)+"]",
+				errortypes.ErrInvalid,
+				"Column name is invalid",
+			)
+		}
 	}
 }
 

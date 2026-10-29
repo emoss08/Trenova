@@ -218,7 +218,8 @@ func BuildSystemPromptParts(
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
 		section(&stable, buildOutputSection(d, rc.Inline))
-		if d.OutputMode != agentdefinition.OutputReport && d.HasContextProvider(agentdefinition.ContextMemory) {
+		if d.OutputMode != agentdefinition.OutputReport &&
+			d.HasContextProvider(agentdefinition.ContextMemory) {
 			section(&stable, rememberingSection)
 		}
 	}
@@ -435,6 +436,28 @@ func buildGuardrailSection(d *agentdefinition.Definition) string {
 }
 
 func buildContextSection(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) string {
+	lines := contextLines(d, rc)
+	fenced := fencedContext(d, rc)
+
+	if len(lines) == 0 && len(fenced) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("## Runtime context")
+	for _, line := range lines {
+		builder.WriteString("\n")
+		builder.WriteString(line)
+	}
+	for _, block := range fenced {
+		builder.WriteString("\n")
+		builder.WriteString(block)
+	}
+
+	return builder.String()
+}
+
+func contextLines(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) []string {
 	lines := make([]string, 0, 8)
 
 	if d.HasContextProvider(agentdefinition.ContextOrganization) {
@@ -464,6 +487,10 @@ func buildContextSection(d *agentdefinition.Definition, rc *agentturn.RuntimeCon
 		lines = append(lines, describeUser(rc.User, rc.Timezone)...)
 	}
 
+	return lines
+}
+
+func fencedContext(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) []string {
 	fenced := make([]string, 0, 6)
 	if rc.Subject != nil {
 		fenced = append(fenced, describeSubject(rc.Subject))
@@ -484,22 +511,7 @@ func buildContextSection(d *agentdefinition.Definition, rc *agentturn.RuntimeCon
 		fenced = append(fenced, describeMentions(rc.Mentions))
 	}
 
-	if len(lines) == 0 && len(fenced) == 0 {
-		return ""
-	}
-
-	var builder strings.Builder
-	builder.WriteString("## Runtime context")
-	for _, line := range lines {
-		builder.WriteString("\n")
-		builder.WriteString(line)
-	}
-	for _, block := range fenced {
-		builder.WriteString("\n")
-		builder.WriteString(block)
-	}
-
-	return builder.String()
+	return fenced
 }
 
 // formatClock renders the day, deliberately without the minute.

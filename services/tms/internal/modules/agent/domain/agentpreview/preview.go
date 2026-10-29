@@ -348,15 +348,15 @@ func findWarning(warnings []PreviewWarning, code PreviewWarningCode) *PreviewWar
 }
 
 // AddWarning appends a warning once per code and arguments, within bounds.
-func (p *ProposalPreview) AddWarning(warning PreviewWarning) {
+func (p *ProposalPreview) AddWarning(warning *PreviewWarning) {
 	p.Warnings = appendWarning(p.Warnings, warning)
 }
 
-func (t *ToolPreview) AddWarning(warning PreviewWarning) {
+func (t *ToolPreview) AddWarning(warning *PreviewWarning) {
 	t.Warnings = appendWarning(t.Warnings, warning)
 }
 
-func appendWarning(warnings []PreviewWarning, warning PreviewWarning) []PreviewWarning {
+func appendWarning(warnings []PreviewWarning, warning *PreviewWarning) []PreviewWarning {
 	for i := range warnings {
 		if warnings[i].Code == warning.Code &&
 			strings.Join(warnings[i].Args, "\x00") == strings.Join(warning.Args, "\x00") {
@@ -367,7 +367,7 @@ func appendWarning(warnings []PreviewWarning, warning PreviewWarning) []PreviewW
 		return warnings
 	}
 
-	return append(warnings, warning)
+	return append(warnings, *warning)
 }
 
 // previewDigestDocument is what a digest covers: the proposal, the
@@ -483,7 +483,8 @@ func (t *ToolPreview) Bounded() *ToolPreview {
 	}
 
 	for i := range t.Warnings {
-		bounded.Warnings = appendWarning(bounded.Warnings, boundedWarning(t.Warnings[i]))
+		warning := boundedWarning(&t.Warnings[i])
+		bounded.Warnings = appendWarning(bounded.Warnings, &warning)
 	}
 
 	return bounded
@@ -568,7 +569,7 @@ func boundedList(values []string) []string {
 	return out
 }
 
-func boundedWarning(warning PreviewWarning) PreviewWarning {
+func boundedWarning(warning *PreviewWarning) PreviewWarning {
 	out := PreviewWarning{
 		Code:    warning.Code,
 		Message: stringutils.TruncateRunes(warning.Message, MaxPreviewSummaryRunes),

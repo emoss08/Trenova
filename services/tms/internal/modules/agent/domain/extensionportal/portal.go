@@ -304,7 +304,7 @@ type PortalRunOutcome struct {
 	CostUSD     decimal.Decimal
 }
 
-func OffSite(visited []string, domains []string) []string {
+func OffSite(visited, domains []string) []string {
 	off := make([]string, 0)
 	for _, target := range visited {
 		if strings.TrimSpace(target) == "" || URLAllowed(target, domains) {

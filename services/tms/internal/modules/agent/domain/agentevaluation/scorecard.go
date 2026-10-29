@@ -29,6 +29,8 @@ func (w ScorecardWindow) Days() int {
 		return 7
 	case ScorecardWindow90d:
 		return 90
+	case ScorecardWindow30d:
+		return 30
 	default:
 		return 30
 	}

@@ -19,8 +19,8 @@ type FailureDismissal struct {
 	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	ProviderID     pulid.ID `json:"providerId"     keel:"provider_id"`
 	// FailureAt is the last failure the person saw when they dismissed it.
-	FailureAt int64 `json:"failureAt"      keel:"failure_at"`
-	CreatedAt int64 `json:"createdAt"      keel:"created_at,autocreate"`
+	FailureAt int64 `json:"failureAt" keel:"failure_at"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 }
 
 // Covers reports whether the dismissal still hides a failure last seen at.

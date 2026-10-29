@@ -90,7 +90,7 @@ func (d *Definition) ResolvedAccent() string {
 
 	accents := agentmark.KnownAccents()
 
-	return accents[int(hasher.Sum32()%uint32(len(accents)))]
+	return accents[int(hasher.Sum32())%len(accents)]
 }
 
 var (

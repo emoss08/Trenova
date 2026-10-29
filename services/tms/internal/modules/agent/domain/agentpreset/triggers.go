@@ -31,6 +31,20 @@ func StarterTrigger(t agenttemplate.Template) agentdefinition.TriggerMode {
 		return agentdefinition.TriggerEvent
 	case agenttemplate.TemplateLoadMonitor:
 		return agentdefinition.TriggerScheduled
+	case agenttemplate.TemplateDispatchAssistant,
+		agenttemplate.TemplateBillingAssistant,
+		agenttemplate.TemplateComplianceAssistant,
+		agenttemplate.TemplateCustomerAssistant,
+		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateImportAssistant,
+		agenttemplate.TemplateFormulaAssistant,
+		agenttemplate.TemplateSettlementsClerk,
+		agenttemplate.TemplateReceivables,
+		agenttemplate.TemplateMasterDataSteward,
+		agenttemplate.TemplateWorkforceCoordinator,
+		agenttemplate.TemplateFuelTaxClerk,
+		agenttemplate.TemplateReportAnalyst:
+		return agentdefinition.TriggerChat
 	default:
 		return agentdefinition.TriggerChat
 	}
@@ -99,18 +113,32 @@ func StarterEvents(t agenttemplate.Template) []agenttrigger.EventKind {
 			agenttrigger.EventAccountingDriftDetected,
 			agenttrigger.EventAccountingReconciliationDue,
 		}
+	case agenttemplate.TemplateDispatchAssistant,
+		agenttemplate.TemplateBillingAssistant,
+		agenttemplate.TemplateComplianceAssistant,
+		agenttemplate.TemplateCustomerAssistant,
+		agenttemplate.TemplateGeneralAssistant,
+		agenttemplate.TemplateImportAssistant,
+		agenttemplate.TemplateLoadMonitor,
+		agenttemplate.TemplateFormulaAssistant,
+		agenttemplate.TemplateSettlementsClerk,
+		agenttemplate.TemplateReceivables,
+		agenttemplate.TemplateMasterDataSteward,
+		agenttemplate.TemplateWorkforceCoordinator,
+		agenttemplate.TemplateFuelTaxClerk,
+		agenttemplate.TemplateReportAnalyst:
+		return nil
 	default:
 		return nil
 	}
 }
 
 func StarterCron(t agenttemplate.Template) string {
-	switch t {
-	case agenttemplate.TemplateLoadMonitor:
+	if t == agenttemplate.TemplateLoadMonitor {
 		return "*/15 * * * *"
-	default:
-		return ""
 	}
+
+	return ""
 }
 
 func StarterCeiling(t agenttemplate.Template) agent.AutonomyTier {
@@ -136,6 +164,23 @@ func StarterCeiling(t agenttemplate.Template) agent.AutonomyTier {
 		agenttemplate.TemplateFuelTaxClerk,
 		agenttemplate.TemplateReportAnalyst:
 		return agent.TierPropose
+	case agenttemplate.TemplateDispatchAssistant,
+		agenttemplate.TemplateBillingAssistant,
+		agenttemplate.TemplateComplianceAssistant,
+		agenttemplate.TemplateBillingException,
+		agenttemplate.TemplateDispatchAssignment,
+		agenttemplate.TemplateImportAssistant,
+		agenttemplate.TemplateLoadMonitor,
+		agenttemplate.TemplateShipmentIntake,
+		agenttemplate.TemplateCashApplication,
+		agenttemplate.TemplateDetentionDesk,
+		agenttemplate.TemplateCredentialDesk,
+		agenttemplate.TemplateServiceFailureDesk,
+		agenttemplate.TemplateBooksKeeper,
+		agenttemplate.TemplateSettlementsClerk,
+		agenttemplate.TemplateReceivables,
+		agenttemplate.TemplateFactoringClerk:
+		return agent.TierActWithApproval
 	default:
 		return agent.TierActWithApproval
 	}

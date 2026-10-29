@@ -88,9 +88,9 @@ type Item struct {
 	Seen bool `json:"seen"`
 	// Inserted is set by an upsert that reports whether the row was created
 	// rather than replaced; it is never selected on its own.
-	Inserted bool `json:"-"    keel:"inserted,computed"`
+	Inserted bool `json:"-" keel:"inserted,computed"`
 	// Reopened is set by an upsert that brought a resolved item back.
-	Reopened  bool `json:"-"    keel:"reopened,computed"`
+	Reopened  bool `json:"-" keel:"reopened,computed"`
 	Unchanged bool `json:"-"`
 }
 

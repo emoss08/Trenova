@@ -87,7 +87,7 @@ type KeyReplacement struct {
 // ReplaceAPIKey stores a new credential. With KeepPrevious, a key it
 // replaces is kept as a fallback for RotationGrace; otherwise any replaced
 // key is dropped.
-func ReplaceAPIKey(p *aiprovider.Provider, r KeyReplacement) {
+func ReplaceAPIKey(p *aiprovider.Provider, r *KeyReplacement) {
 	if r.KeepPrevious && r.Encrypted != "" && p.HasStoredAPIKey() {
 		expires := r.Now + int64(RotationGrace/time.Second)
 		p.PreviousAPIKey = p.APIKey

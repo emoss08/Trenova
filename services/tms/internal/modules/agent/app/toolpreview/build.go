@@ -35,7 +35,7 @@ func Warn(
 	if preview == nil {
 		return nil
 	}
-	preview.AddWarning(agentpreview.PreviewWarning{
+	preview.AddWarning(&agentpreview.PreviewWarning{
 		Code:    code,
 		Args:    args,
 		Message: strings.TrimSpace(message),

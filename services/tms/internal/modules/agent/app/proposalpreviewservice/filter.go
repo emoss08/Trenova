@@ -96,7 +96,7 @@ func filter(ctx context.Context, preview *agentpreview.ProposalPreview, a reader
 
 	preview.WithheldCount = withheld
 	if withheld > 0 {
-		preview.AddWarning(agentpreview.PreviewWarning{
+		preview.AddWarning(&agentpreview.PreviewWarning{
 			Code:    agentpreview.PreviewWarningWithheld,
 			Args:    []string{strconv.Itoa(withheld)},
 			Message: "Part of this change is hidden by your data access.",

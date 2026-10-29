@@ -70,7 +70,7 @@ type Definition struct {
 
 	UnattendedRoleID pulid.ID `json:"unattendedRoleId" keel:"unattended_role_id,nullzero"`
 
-	Enabled bool `json:"enabled"                keel:"enabled"`
+	Enabled bool `json:"enabled" keel:"enabled"`
 	// DisabledAt and DisabledByID say when the agent was last turned off and
 	// by whom; both are cleared when it is turned back on.
 	DisabledAt             *int64    `json:"disabledAt,omitempty"   keel:"disabled_at"`
@@ -100,8 +100,8 @@ type Definition struct {
 	// SQL NULL for a nil map. Every insert of an agent with no per-tool cap —
 	// which is every system agent — was therefore rejected by the constraint.
 	// Its older sibling tool_tiers is nullable, which is why that one worked.
-	ToolDailyLimits map[string]int `json:"toolDailyLimits"  keel:"tool_daily_limits,jsonb"`
-	SimulationMode  bool           `json:"simulationMode"   keel:"simulation_mode"`
+	ToolDailyLimits map[string]int `json:"toolDailyLimits" keel:"tool_daily_limits,jsonb"`
+	SimulationMode  bool           `json:"simulationMode"  keel:"simulation_mode"`
 
 	MemoryTokenBudget *int `json:"memoryTokenBudget" keel:"memory_token_budget"`
 	LearningOff       bool `json:"learningOff"       keel:"learning_off"`
@@ -118,7 +118,7 @@ type Definition struct {
 	// talking to it: the ones it asks when the work needs tools it does not
 	// hold. Each delegate works with its own tools, tiers, ceiling and budget,
 	// as the same person, and never delegates further.
-	DelegateIDs []pulid.ID `json:"delegateIds"    keel:"delegate_ids,nullzero"`
+	DelegateIDs []pulid.ID `json:"delegateIds" keel:"delegate_ids,nullzero"`
 	// DelegateTopics names, per delegate id, the questions that go to that
 	// agent ("Pay rates, people records"), so a person reading what an agent
 	// does sees why it hands work on. A delegate without one is described by

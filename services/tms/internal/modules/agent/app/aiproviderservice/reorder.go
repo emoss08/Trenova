@@ -285,7 +285,7 @@ func (s *Service) RouteTask(
 }
 
 func routeRefusal(err error) error {
-	var refusal *airouting.RouteRefusal
+	var refusal *airouting.RouteRefusalError
 	switch {
 	case errors.As(err, &refusal):
 		return errortypes.NewValidationError(

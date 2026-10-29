@@ -155,18 +155,38 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 		builder.WriteString(strconv.Itoa(*view.RowCount))
 	}
 	if view.Selection != nil && view.Selection.Count > 0 {
-		builder.WriteString("\nselected: ")
-		builder.WriteString(strconv.Itoa(view.Selection.Count))
-		if len(view.Selection.IDs) > 0 {
-			builder.WriteString(" (ids: ")
-			builder.WriteString(strings.Join(view.Selection.IDs, ", "))
-			if view.Selection.Count > len(view.Selection.IDs) {
-				builder.WriteString(", …")
-			}
-			builder.WriteString(")")
-		}
+		writePageViewSelection(&builder, view.Selection)
 	}
-	for _, kpi := range view.KPIs {
+	writePageViewKPIs(&builder, view.KPIs)
+	if len(view.VisibleColumns) > 0 {
+		builder.WriteString("\ncolumns shown: ")
+		builder.WriteString(strings.Join(view.VisibleColumns, ", "))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(pageViewCloseTag)
+
+	return builder.String()
+}
+
+func writePageViewSelection(
+	builder *strings.Builder,
+	selection *agentpagecontext.PageSelection,
+) {
+	builder.WriteString("\nselected: ")
+	builder.WriteString(strconv.Itoa(selection.Count))
+	if len(selection.IDs) == 0 {
+		return
+	}
+	builder.WriteString(" (ids: ")
+	builder.WriteString(strings.Join(selection.IDs, ", "))
+	if selection.Count > len(selection.IDs) {
+		builder.WriteString(", …")
+	}
+	builder.WriteString(")")
+}
+
+func writePageViewKPIs(builder *strings.Builder, kpis []agentpagecontext.PageKPI) {
+	for _, kpi := range kpis {
 		builder.WriteString("\nfigure: ")
 		builder.WriteString(textfence.FenceText(kpi.Label, pageViewCloseTag))
 		builder.WriteString(" = ")
@@ -177,14 +197,6 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 			builder.WriteString(")")
 		}
 	}
-	if len(view.VisibleColumns) > 0 {
-		builder.WriteString("\ncolumns shown: ")
-		builder.WriteString(strings.Join(view.VisibleColumns, ", "))
-	}
-	builder.WriteString("\n")
-	builder.WriteString(pageViewCloseTag)
-
-	return builder.String()
 }
 
 func describeFilter(filter domaintypes.FieldFilter) string {

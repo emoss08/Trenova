@@ -14,9 +14,9 @@ const (
 	outsideMemoryCloseTag = "</memory_from_outside_content>"
 )
 
-func SplitMemories(memories []*agentmemory.Memory) ([]*agentmemory.Memory, []*agentmemory.Memory) {
-	recorded := make([]*agentmemory.Memory, 0, len(memories))
-	outside := make([]*agentmemory.Memory, 0)
+func SplitMemories(memories []*agentmemory.Memory) (recorded, outside []*agentmemory.Memory) {
+	recorded = make([]*agentmemory.Memory, 0, len(memories))
+	outside = make([]*agentmemory.Memory, 0)
 	for _, memory := range memories {
 		if memory == nil || strings.TrimSpace(memory.Content) == "" {
 			continue

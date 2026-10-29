@@ -99,6 +99,8 @@ func (e ReasoningEffort) Wire() string {
 		return "medium"
 	case ReasoningHigh:
 		return "high"
+	case ReasoningOff:
+		return ""
 	default:
 		return ""
 	}
@@ -115,6 +117,8 @@ func (e ReasoningEffort) ThinkingBudget() int {
 		return 4096
 	case ReasoningHigh:
 		return 16384
+	case ReasoningOff, ReasoningNone:
+		return 0
 	default:
 		return 0
 	}

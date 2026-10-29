@@ -34,7 +34,7 @@ var (
 	)
 	moneyPattern = regexp.MustCompile(
 		`(?i)(?:\$\s?|\busd\s?)\d{1,3}(?:,\d{3})+(?:\.\d{2})?\b|` +
-			`(?i)(?:\$\s?|\busd\s?)\d+(?:\.\d{2})?\b|` +
+			`(?:\$\s?|\busd\s?)\d+(?:\.\d{2})?\b|` +
 			`\b\d{1,3}(?:,\d{3})+\.\d{2}\b`,
 	)
 	taxIDPattern  = regexp.MustCompile(`\b\d{2}-\d{7}\b|\b\d{3}-\d{2}-\d{4}\b`)

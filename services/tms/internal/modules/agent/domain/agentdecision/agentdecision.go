@@ -27,15 +27,15 @@ type AgentDecision struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ProposalID      *pulid.ID      `json:"proposalId"           keel:"proposal_id"`
-	ExceptionID     *pulid.ID      `json:"exceptionId"          keel:"exception_id"`
-	DecidedByUserID pulid.ID       `json:"decidedByUserId"      keel:"decided_by_user_id"`
-	Decision        DecisionType   `json:"decision"             keel:"decision"`
-	Modifications   map[string]any `json:"modifications"        keel:"modifications,jsonb,nullzero"`
-	ReasonCode      string         `json:"reasonCode"           keel:"reason_code"`
-	Note            string         `json:"note"                 keel:"note,nullzero"`
+	ProposalID      *pulid.ID      `json:"proposalId"      keel:"proposal_id"`
+	ExceptionID     *pulid.ID      `json:"exceptionId"     keel:"exception_id"`
+	DecidedByUserID pulid.ID       `json:"decidedByUserId" keel:"decided_by_user_id"`
+	Decision        DecisionType   `json:"decision"        keel:"decision"`
+	Modifications   map[string]any `json:"modifications"   keel:"modifications,jsonb,nullzero"`
+	ReasonCode      string         `json:"reasonCode"      keel:"reason_code"`
+	Note            string         `json:"note"            keel:"note,nullzero"`
 	// TraceID is the trace the decision was made in.
-	TraceID string `json:"traceId"              keel:"trace_id,nullzero"`
+	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 	// Preview is what the decider was shown of the write, filtered for them,
 	// and PreviewDigest its digest. PreviewReviewed says the decision named
 	// that digest, so the person approved what they saw. PreviewTargetVersion

@@ -25,16 +25,19 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		Same: func(a, b *agentdefinition.Definition) bool { return a.Description == b.Description },
 	},
 	{
-		Field: "icon", Label: "Look",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.Icon == b.Icon && a.Accent == b.Accent },
+		Field: "icon",
+		Label: "Look",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.Icon == b.Icon && a.Accent == b.Accent },
 	},
 	{
-		Field: "instructions", Label: "Instructions",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.Instructions == b.Instructions },
+		Field: "instructions",
+		Label: "Instructions",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.Instructions == b.Instructions },
 	},
 	{
-		Field: "guardrails", Label: "Never list",
-		Same: func(a, b *agentdefinition.Definition) bool { return slices.Equal(a.Guardrails, b.Guardrails) },
+		Field: "guardrails",
+		Label: "Never list",
+		Same:  func(a, b *agentdefinition.Definition) bool { return slices.Equal(a.Guardrails, b.Guardrails) },
 	},
 	{Field: "triggerMode", Label: "When it runs", Same: sameSchedule},
 	{
@@ -49,8 +52,9 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		},
 	},
 	{
-		Field: "toolTiers", Label: "Freedom per tool",
-		Same: func(a, b *agentdefinition.Definition) bool { return maps.Equal(a.ToolTiers, b.ToolTiers) },
+		Field: "toolTiers",
+		Label: "Freedom per tool",
+		Same:  func(a, b *agentdefinition.Definition) bool { return maps.Equal(a.ToolTiers, b.ToolTiers) },
 	},
 	{
 		Field: "toolDailyLimits",
@@ -58,12 +62,14 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		Same:  func(a, b *agentdefinition.Definition) bool { return maps.Equal(a.ToolDailyLimits, b.ToolDailyLimits) },
 	},
 	{
-		Field: "autonomyCeiling", Label: "Ceiling",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.AutonomyCeiling == b.AutonomyCeiling },
+		Field: "autonomyCeiling",
+		Label: "Ceiling",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.AutonomyCeiling == b.AutonomyCeiling },
 	},
 	{
-		Field: "dataAccessCeiling", Label: "Data access",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.DataAccessCeiling == b.DataAccessCeiling },
+		Field: "dataAccessCeiling",
+		Label: "Data access",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.DataAccessCeiling == b.DataAccessCeiling },
 	},
 	{
 		Field: "decisionTimeoutSeconds", Label: "Proposals expire after",
@@ -72,8 +78,9 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		},
 	},
 	{
-		Field: "maxChangeItems", Label: "Records per change",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.MaxChangeItems == b.MaxChangeItems },
+		Field: "maxChangeItems",
+		Label: "Records per change",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.MaxChangeItems == b.MaxChangeItems },
 	},
 	{Field: "businessHoursOnly", Label: "Business hours", Same: sameBusinessHours},
 	{
@@ -83,20 +90,24 @@ var changeRules = []editchange.Rule[agentdefinition.Definition]{
 		},
 	},
 	{
-		Field: "dailyRunLimit", Label: "Runs per day",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.DailyRunLimit == b.DailyRunLimit },
+		Field: "dailyRunLimit",
+		Label: "Runs per day",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.DailyRunLimit == b.DailyRunLimit },
 	},
 	{
-		Field: "runTimeoutSeconds", Label: "Run timeout",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.RunTimeoutSeconds == b.RunTimeoutSeconds },
+		Field: "runTimeoutSeconds",
+		Label: "Run timeout",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.RunTimeoutSeconds == b.RunTimeoutSeconds },
 	},
 	{
-		Field: "maxToolCalls", Label: "Tool calls per run",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.MaxToolCalls == b.MaxToolCalls },
+		Field: "maxToolCalls",
+		Label: "Tool calls per run",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.MaxToolCalls == b.MaxToolCalls },
 	},
 	{
-		Field: "preferredProviderId", Label: "Preferred provider",
-		Same: func(a, b *agentdefinition.Definition) bool { return a.PreferredProviderID == b.PreferredProviderID },
+		Field: "preferredProviderId",
+		Label: "Preferred provider",
+		Same:  func(a, b *agentdefinition.Definition) bool { return a.PreferredProviderID == b.PreferredProviderID },
 	},
 	{
 		Field: "outputMode", Label: "Replies as",

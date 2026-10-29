@@ -194,7 +194,7 @@ func (p Platform) ResolveSettings(stored *PlatformSettings) PlatformSettings {
 // settings already held to their shapes. Empty when a setting it needs is
 // missing, which validation reports by name, and for PlatformDirect, whose
 // address is the protocol's own.
-func (p Platform) BaseURL(settings PlatformSettings) string {
+func (p Platform) BaseURL(settings *PlatformSettings) string {
 	switch p {
 	case PlatformBedrock:
 		if !awsRegionPattern.MatchString(settings.Region) {

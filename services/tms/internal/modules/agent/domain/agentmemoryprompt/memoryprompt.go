@@ -271,6 +271,8 @@ func memoryHeading(memory *agentmemory.Memory) string {
 		return roleMemoryHeading
 	case agentmemory.MemoryScopeAgent:
 		return agentMemoryHeading
+	case agentmemory.MemoryScopeOrganization:
+		return organizationMemoryHeading
 	default:
 		return organizationMemoryHeading
 	}
