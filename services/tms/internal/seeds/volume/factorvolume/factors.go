@@ -87,7 +87,7 @@ var facCatalog = []facProfile{
 	},
 	{
 		name: "Bluewater Receivables Finance", city: "Jacksonville", state: "FL",
-		advance: 9500, reserve: 300, minimumFee: 1_000,
+		advance: 9300, reserve: 300, minimumFee: 1_000,
 		recourse: factoring.RecourseFull, treatment: factoring.AccountingTreatmentSecuredBorrowing,
 		fundingDays: 1, style: facStyles[2],
 	},

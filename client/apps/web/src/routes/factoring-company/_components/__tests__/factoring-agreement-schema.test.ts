@@ -63,6 +63,36 @@ describe("factoring agreement form", () => {
     ]);
   });
 
+  it("refuses a fee band that with the advance would take more than the invoice", () => {
+    expect(
+      issuePaths(
+        values({
+          advanceRatePercent: 96,
+          reserveRatePercent: 4,
+          feeTiers: [
+            { daysTo: 30, ratePercent: 3, flatMinor: 0 },
+            { daysTo: null, ratePercent: 5, flatMinor: 0 },
+          ],
+        }),
+      ),
+    ).toEqual(["feeTiers.1.ratePercent"]);
+  });
+
+  it("accepts an advance and top fee that use exactly the invoice, whatever the flat fee", () => {
+    expect(
+      issuePaths(
+        values({
+          advanceRatePercent: 94.3,
+          reserveRatePercent: 5.7,
+          feeTiers: [
+            { daysTo: 30, ratePercent: 3, flatMinor: 50_000 },
+            { daysTo: null, ratePercent: 5.7, flatMinor: 0 },
+          ],
+        }),
+      ),
+    ).toEqual([]);
+  });
+
   it("refuses an end date that is not after the start", () => {
     expect(issuePaths(values({ effectiveTo: START }))).toEqual(["effectiveTo"]);
   });

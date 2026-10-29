@@ -166,6 +166,23 @@ func (a *Agreement) Validate(multiErr *errortypes.MultiError) {
 		)
 	}
 	ValidateFeeTiers(a.FeeTiers, multiErr)
+	a.validateFeesFitAfterAdvance(multiErr)
+}
+
+func (a *Agreement) validateFeesFitAfterAdvance(multiErr *errortypes.MultiError) {
+	if a.AdvanceRateBP <= 0 || a.AdvanceRateBP > BasisPoints || len(a.FeeTiers) > MaxFeeTiers {
+		return
+	}
+	for idx, tier := range a.FeeTiers {
+		if tier == nil || tier.RateBP > BasisPoints || a.AdvanceRateBP+tier.RateBP <= BasisPoints {
+			continue
+		}
+		multiErr.Add(
+			"feeTiers["+strconv.Itoa(idx)+"].rateBp",
+			errortypes.ErrInvalid,
+			"Advance and fee rate together cannot be more than 100% of the invoice",
+		)
+	}
 }
 
 func ValidateFeeTiers(tiers []*FeeTier, multiErr *errortypes.MultiError) {

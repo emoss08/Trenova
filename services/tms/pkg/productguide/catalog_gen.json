@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a107e8c0f5198d1fbfca03ede91b2e51e7c205a0c306750cbd944a92d92084b7",
+  "version": "sha256:dfd8ddc35056028d1a9f3d0804060f6cf994c352ab7b915db2dc5ebb4394f987",
   "modules": [
     {
       "id": "home",
@@ -7261,7 +7261,7 @@
             "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
             "Under **Agreements**, select **New agreement**.",
             "Fill in **Starts**, **Advance rate**, **Reserve rate**, **Chargeback window**, **Recourse** and **Accounting treatment**.",
-            "Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier** for another band and leave the last one open-ended.",
+            "Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier** for another band and leave the last one open-ended. The **Advance rate** plus any band's **Fee rate** cannot be more than 100% of the invoice.",
             "Fill in **Funding days** and **Daily schedule time**, and pick the **Documents the factor needs**.",
             "Select **Save draft**, then **Activate** once the contract is signed."
           ]
@@ -7338,7 +7338,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.\n\nSchedule delivery needs update access to factoring companies. A stored password or key is never shown again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused if it presents another, and only public addresses are reached.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nThe factor takes its fee out of the invoice, so the advance and the highest fee rate together must fit within it. A **Flat fee** or **Minimum fee** is an amount rather than a share of the invoice, so on a small invoice where it leaves less than the advance rate, the expected advance is lowered to what remains after the fee.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.\n\nSchedule delivery needs update access to factoring companies. A stored password or key is never shown again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused if it presents another, and only public addresses are reached.",
       "related": [
         "/billing/configuration-files/customers",
         "/billing/invoices",

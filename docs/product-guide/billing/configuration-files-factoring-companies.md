@@ -73,7 +73,8 @@ Keywords: factoring terms, advance rate, reserve, fee schedule, chargeback windo
 3. Fill in **Starts**, **Advance rate**, **Reserve rate**, **Chargeback window**, **Recourse** and
    **Accounting treatment**.
 4. Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier**
-   for another band and leave the last one open-ended.
+   for another band and leave the last one open-ended. The **Advance rate** plus any band's
+   **Fee rate** cannot be more than 100% of the invoice.
 5. Fill in **Funding days** and **Daily schedule time**, and pick the **Documents the factor needs**.
 6. Select **Save draft**, then **Activate** once the contract is signed.
 
@@ -126,6 +127,11 @@ a factor that has since been made inactive cannot post invoices until the assign
 Recourse is a property of the agreement, so it applies to every invoice assigned to the factor,
 including ones already posted. Credit standings follow at the next credit review, which runs each
 night and whenever the customer's receivables change.
+
+The factor takes its fee out of the invoice, so the advance and the highest fee rate together must
+fit within it. A **Flat fee** or **Minimum fee** is an amount rather than a share of the invoice, so
+on a small invoice where it leaves less than the advance rate, the expected advance is lowered to
+what remains after the fee.
 
 Agreements need factoring agreement access and notices need notice of assignment access. An ended
 agreement cannot be changed, and a factor has one active agreement at a time.

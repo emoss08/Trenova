@@ -72,6 +72,10 @@ func TestAgreementValidate(t *testing.T) {
 		"chargeback window too long": {
 			func(a *factoring.Agreement) { a.ChargebackWindowDays = 731 }, "chargebackWindowDays",
 		},
+		"advance and top fee tier over 100%": {
+			func(a *factoring.Agreement) { a.AdvanceRateBP = 9600; a.ReserveRateBP = 400 },
+			"feeTiers[0].rateBp",
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -81,6 +85,38 @@ func TestAgreementValidate(t *testing.T) {
 			assert.Contains(t, errorFields(a), tc.field)
 		})
 	}
+}
+
+func TestAgreementValidateFeesFitAfterAdvance(t *testing.T) {
+	t.Parallel()
+
+	a := validAgreement()
+	a.AdvanceRateBP = 9500
+	a.ReserveRateBP = 500
+	a.FeeTiers[0].FlatMinor = 50_000
+	assert.Empty(t, errorFields(a), "the whole face may go; flat fees are no share of it")
+
+	a.AdvanceRateBP = 9600
+	a.ReserveRateBP = 400
+	assert.Equal(t, []string{"feeTiers[0].rateBp"}, errorFields(a))
+
+	a.AdvanceRateBP = 9800
+	a.ReserveRateBP = 200
+	assert.Equal(t, []string{"feeTiers[0].rateBp", "feeTiers[1].rateBp"}, errorFields(a))
+
+	multiErr := errortypes.NewMultiError()
+	a.Validate(multiErr)
+	assert.Equal(
+		t,
+		"Advance and fee rate together cannot be more than 100% of the invoice",
+		multiErr.Errors[0].Message,
+	)
+
+	a.AdvanceRateBP = factoring.BasisPoints + 1
+	a.ReserveRateBP = 0
+	fields := errorFields(a)
+	assert.Contains(t, fields, "advanceRateBp")
+	assert.NotContains(t, fields, "feeTiers[0].rateBp", "an invalid advance is reported once")
 }
 
 func TestAgreementPostingAccounts(t *testing.T) {
