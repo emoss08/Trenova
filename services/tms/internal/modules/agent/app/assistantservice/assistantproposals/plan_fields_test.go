@@ -118,7 +118,7 @@ func TestListThreadPlans_SaysHowEachPlanRunsAndWhoDecidedItWithWhat(t *testing.T
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: fx.thread.ID},
+		&conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
@@ -156,7 +156,7 @@ func TestListThreadPlans_ADeciderWhoCannotBeReadLeavesTheNameEmpty(t *testing.T)
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: fx.thread.ID},
+		&conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
@@ -171,7 +171,7 @@ func TestListThreadPlans_ADeciderOutsideTheOrganizationIsNotNamed(t *testing.T) 
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: fx.thread.ID},
+		&conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	assert.Empty(t, listed[0].DecidedByName)

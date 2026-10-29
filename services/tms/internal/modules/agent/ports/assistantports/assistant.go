@@ -333,20 +333,20 @@ type AssistantArtifactService interface {
 type AssistantProposalService interface {
 	ListThreadProposals(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) ([]assistantproposalports.AssistantProposal, error)
 	// SaveProposalEdits keeps the values a person changed on one of the
 	// conversation's pending proposals, for the approval to go with; an empty
 	// set clears them.
 	SaveProposalEdits(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 		proposalID pulid.ID,
 		modifications map[string]any,
 	) (*assistantproposalports.ProposalEdits, error)
 	ListThreadPlans(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) ([]assistantproposalports.AssistantPlan, error)
 }
 

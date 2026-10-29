@@ -31,6 +31,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	logger        *zap.Logger
+	conversations conversationports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	proposals     proposalstores.ProposalStore
+	proposalEdits proposalEditStore
+	plans         proposalstores.PlanStore
+	shadow        *agentshadow.Resolver
+	decisions     agentdecisionports.AgentDecisionRepository
+	labeler       agentruntimeports.RecordLabeler
+	permissions   permissionports.PermissionEngine
+	tools         agenttoolports.AgentToolRegistry
+	runs          agentruntimeports.AgentRunRepository
+	users         tenantports.UserRepository
+}
+
 // SaveProposalEdits keeps the values a person changed on one of the
 // conversation's pending proposals, such as the wording of a drafted message,
 // so the edit is still there after a reload and goes with the approval.
@@ -41,11 +57,11 @@ import (
 // agent's own values is kept, and an empty set clears what was saved.
 func (s *Service) SaveProposalEdits(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	proposalID pulid.ID,
 	modifications map[string]any,
 ) (*assistantproposalports.ProposalEdits, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.proposals == nil || s.proposalEdits == nil {
@@ -113,9 +129,10 @@ func (s *Service) checkEditedFields(proposal *agent.AgentProposal, changed map[s
 	}
 
 	editableNames := make(map[string]struct{})
-	for _, field := range s.editableFields(proposal) {
-		if !field.ReadOnly {
-			editableNames[field.Name] = struct{}{}
+	fields := s.editableFields(proposal)
+	for idx := range fields {
+		if !fields[idx].ReadOnly {
+			editableNames[fields[idx].Name] = struct{}{}
 		}
 	}
 
@@ -140,9 +157,9 @@ func (s *Service) checkEditedFields(proposal *agent.AgentProposal, changed map[s
 // found rather than returned.
 func (s *Service) ListThreadProposals(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) ([]assistantproposalports.AssistantProposal, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 
@@ -264,9 +281,9 @@ func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Fie
 // decided.
 func (s *Service) ListThreadPlans(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) ([]assistantproposalports.AssistantPlan, error) {
-	if _, err := s.conversations.GetThread(ctx, &req); err != nil {
+	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.plans == nil {
@@ -281,7 +298,7 @@ func (s *Service) ListThreadPlans(
 		return nil, err
 	}
 
-	steps, err := s.threadPlanSteps(ctx, &req, len(stored) > 0)
+	steps, err := s.threadPlanSteps(ctx, req, len(stored) > 0)
 	if err != nil {
 		return nil, err
 	}
@@ -358,22 +375,6 @@ func (s *Service) threadPlanSteps(
 	}
 
 	return steps, nil
-}
-
-type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	proposals     proposalstores.ProposalStore
-	proposalEdits proposalEditStore
-	plans         proposalstores.PlanStore
-	shadow        *agentshadow.Resolver
-	decisions     agentdecisionports.AgentDecisionRepository
-	labeler       agentruntimeports.RecordLabeler
-	permissions   permissionports.PermissionEngine
-	tools         agenttoolports.AgentToolRegistry
-	runs          agentruntimeports.AgentRunRepository
-	users         tenantports.UserRepository
 }
 
 func (s *Service) attribution() *attribution.Attributor {

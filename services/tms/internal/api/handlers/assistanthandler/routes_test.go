@@ -109,7 +109,7 @@ func (s *reachedService) PinArtifact(
 
 func (s *reachedService) SaveProposalEdits(
 	context.Context,
-	conversationports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 	pulid.ID,
 	map[string]any,
 ) (*assistantproposalports.ProposalEdits, error) {

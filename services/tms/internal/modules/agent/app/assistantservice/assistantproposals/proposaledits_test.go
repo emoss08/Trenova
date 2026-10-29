@@ -32,7 +32,7 @@ func (r *recordingEdits) SetPendingModifications(
 type editsFixture struct {
 	svc      *Service
 	edits    *recordingEdits
-	request  conversationports.GetThreadRequest
+	request  *conversationports.GetThreadRequest
 	proposal *agent.AgentProposal
 }
 
@@ -59,7 +59,7 @@ func newEditsFixture(status agent.ProposalStatus) *editsFixture {
 	return &editsFixture{
 		svc:      svc,
 		edits:    edits,
-		request:  conversationports.GetThreadRequest{ID: threadID},
+		request:  &conversationports.GetThreadRequest{ID: threadID},
 		proposal: proposal,
 	}
 }

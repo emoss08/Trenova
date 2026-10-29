@@ -68,7 +68,7 @@ func TestListThreadProposals_ScopesToTheThreadAndReportsExecution(t *testing.T) 
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: threadID},
+		&conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 
@@ -91,7 +91,7 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	_, err := svc.ListThreadProposals(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		&conversationports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 	)
 
 	require.Error(t, err)
@@ -139,7 +139,7 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: threadID},
+		&conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 

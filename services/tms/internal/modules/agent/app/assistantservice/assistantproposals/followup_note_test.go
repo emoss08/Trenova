@@ -54,7 +54,7 @@ func TestListThreadProposals_SaysWhoDecidedEachAndWhatTheyWrote(t *testing.T) {
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: threadID},
+		&conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 	require.Len(t, result, 2)

@@ -69,7 +69,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 
 	listed, err := svc.ListThreadPlans(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 

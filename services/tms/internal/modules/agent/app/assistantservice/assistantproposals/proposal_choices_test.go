@@ -69,7 +69,7 @@ func (l *recordingLabeler) Labels(
 type choicesFixture struct {
 	svc      *Service
 	labeler  *recordingLabeler
-	request  conversationports.GetThreadRequest
+	request  *conversationports.GetThreadRequest
 	first    pulid.ID
 	second   pulid.ID
 	gone     pulid.ID
@@ -127,7 +127,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		},
 	}
 	threadID := pulid.MustNew("thr_")
-	f.request = conversationports.GetThreadRequest{
+	f.request = &conversationports.GetThreadRequest{
 		ID:     threadID,
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{

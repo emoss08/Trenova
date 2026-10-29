@@ -2,6 +2,7 @@ package assistantcompaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -32,6 +33,20 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
+
+type Service struct {
+	logger        *zap.Logger
+	conversations conversationports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	permissions   permissionports.PermissionEngine
+	queries       agenttoolports.AgentQueryToolRegistry
+	budgets       agentbudgetports.AgentBudgetService
+	agentControls tenantports.AgentControlRepository
+	quota         platformplanports.QuotaGuard
+	chapters      assistantchapterports.ChapterRepository
+	proposals     proposalstores.ProposalStore
+	decisions     agentdecisionports.AgentDecisionRepository
+}
 
 // PrepareCompaction reads a conversation and makes ready the request that
 // summarizes everything before its latest turns.
@@ -192,7 +207,7 @@ func (s *Service) FinishCompaction(
 		return nil, fmt.Errorf("save the compaction summary: %w", err)
 	}
 	if len(saved) == 0 {
-		return nil, fmt.Errorf("save the compaction summary: nothing was saved")
+		return nil, errors.New("save the compaction summary: nothing was saved")
 	}
 
 	s.usage().KeepContextUsage(ctx, thread, &usage, tenant)
@@ -215,20 +230,6 @@ func (s *Service) StopCompactingItself(
 		TenantInfo:     tenant,
 		AutoCompactOff: &off,
 	})
-}
-
-type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	permissions   permissionports.PermissionEngine
-	queries       agenttoolports.AgentQueryToolRegistry
-	budgets       agentbudgetports.AgentBudgetService
-	agentControls tenantports.AgentControlRepository
-	quota         platformplanports.QuotaGuard
-	chapters      assistantchapterports.ChapterRepository
-	proposals     proposalstores.ProposalStore
-	decisions     agentdecisionports.AgentDecisionRepository
 }
 
 func (s *Service) access() *agentaccess.Access {

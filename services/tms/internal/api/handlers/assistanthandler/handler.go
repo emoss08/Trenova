@@ -585,7 +585,7 @@ func (h *Handler) listThreadPlans(c *gin.Context) {
 		return
 	}
 
-	plans, err := h.proposals.ListThreadPlans(c.Request.Context(), req)
+	plans, err := h.proposals.ListThreadPlans(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -601,7 +601,7 @@ func (h *Handler) listThreadProposals(c *gin.Context) {
 		return
 	}
 
-	proposals, err := h.proposals.ListThreadProposals(c.Request.Context(), req)
+	proposals, err := h.proposals.ListThreadProposals(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -637,7 +637,7 @@ func (h *Handler) saveProposalEdits(c *gin.Context) {
 
 	edits, err := h.proposals.SaveProposalEdits(
 		c.Request.Context(),
-		req,
+		&req,
 		proposalID,
 		body.Modifications,
 	)
