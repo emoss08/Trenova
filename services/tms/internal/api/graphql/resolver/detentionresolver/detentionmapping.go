@@ -816,8 +816,8 @@ func detentionPreviewResultToModel(
 
 func detentionPreviewScenarioFromInput(
 	input *gqlmodel.DetentionPreviewScenarioInput,
-) detentionsimulation.PreviewScenario {
-	return detentionsimulation.PreviewScenario{
+) *detentionsimulation.PreviewScenario {
+	return &detentionsimulation.PreviewScenario{
 		ArrivedAt:        int64(input.ArrivedAt),
 		DepartedAt:       intPtrToInt64Ptr(input.DepartedAt),
 		AppointmentStart: intPtrToInt64Ptr(input.AppointmentStart),

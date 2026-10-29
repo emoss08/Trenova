@@ -2,6 +2,7 @@ package detentionsync
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -29,6 +30,22 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+type Service struct {
+	l                 *zap.Logger
+	policyRepo        detentionports.DetentionPolicyRepository
+	occurrenceRepo    detentionports.DetentionOccurrenceRepository
+	evidenceRepo      detentionports.DetentionEvidenceRepository
+	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	agreementRepo     rateagreementports.RateAgreementRepository
+	payAssignmentRepo driverpayports.WorkerPayAssignmentRepository
+	payProfileRepo    driverpayports.PayProfileRepository
+	commentRepo       shipmentcommentports.ShipmentCommentRepository
+	watchtower        watchtowerports.WatchtowerProjector
+	publisher         agenteventports.AgentEventPublisher
+	now               func() int64
+	effects           *detentioneffects.Effects
+}
 
 // recordChargeComment narrates a detention charge onto the shipment thread.
 //
@@ -131,22 +148,6 @@ func (s *Service) resolveContractPrices(
 	return prices
 }
 
-type Service struct {
-	l                 *zap.Logger
-	policyRepo        detentionports.DetentionPolicyRepository
-	occurrenceRepo    detentionports.DetentionOccurrenceRepository
-	evidenceRepo      detentionports.DetentionEvidenceRepository
-	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
-	agreementRepo     rateagreementports.RateAgreementRepository
-	payAssignmentRepo driverpayports.WorkerPayAssignmentRepository
-	payProfileRepo    driverpayports.PayProfileRepository
-	commentRepo       shipmentcommentports.ShipmentCommentRepository
-	watchtower        watchtowerports.WatchtowerProjector
-	publisher         agenteventports.AgentEventPublisher
-	now               func() int64
-	effects           *detentioneffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -165,6 +166,7 @@ type Params struct {
 	Effects           *detentioneffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
 	if now == nil {
@@ -240,15 +242,15 @@ func (s *Service) SyncShipment(
 				continue
 			}
 
-			existing, err := s.occurrenceRepo.GetByStop(
+			existing, lookupErr := s.occurrenceRepo.GetByStop(
 				ctx,
 				&detentionports.GetOccurrenceByStopRequest{
 					StopID:     stop.ID,
 					TenantInfo: tenantInfo,
 				},
 			)
-			if err != nil {
-				return nil, err
+			if lookupErr != nil {
+				return nil, lookupErr
 			}
 
 			if existing != nil && existing.IsFrozen() {
@@ -259,7 +261,7 @@ func (s *Service) SyncShipment(
 				continue
 			}
 
-			occurrence, err := s.computeStop(ctx, computeStopParams{
+			occurrence, computeErr := s.computeStop(ctx, &computeStopParams{
 				shipment:        entity,
 				move:            move,
 				stop:            stop,
@@ -273,14 +275,13 @@ func (s *Service) SyncShipment(
 				prices:          prices,
 				now:             now,
 			})
-			if err != nil {
-				log.Error("failed to compute detention for stop",
-					zap.String("stopId", stop.ID.String()), zap.Error(err))
-				return nil, err
-			}
-
-			if occurrence == nil {
+			if errors.Is(computeErr, errStopNotCharged) {
 				continue
+			}
+			if computeErr != nil {
+				log.Error("failed to compute detention for stop",
+					zap.String("stopId", stop.ID.String()), zap.Error(computeErr))
+				return nil, computeErr
 			}
 
 			result.Occurrences = append(result.Occurrences, occurrence)
@@ -292,21 +293,12 @@ func (s *Service) SyncShipment(
 	return result, nil
 }
 
+var errStopNotCharged = errors.New("no detention policy charges this stop")
+
 func (s *Service) computeStop(
 	ctx context.Context,
-	p computeStopParams,
+	p *computeStopParams,
 ) (*detention.DetentionOccurrence, error) {
-	matchInput := detentionpolicy.MatchInput{
-		CustomerID:     p.shipment.CustomerID,
-		LocationID:     p.stop.LocationID,
-		ShipmentTypeID: p.shipment.ShipmentTypeID,
-		ServiceTypeID:  p.shipment.ServiceTypeID,
-		CommodityIDs:   p.commodityIDs,
-		StopType:       p.stop.Type,
-		ScheduleType:   p.stop.ScheduleType,
-		Timestamp:      *p.stop.ActualArrival,
-	}
-
 	candidates, err := s.policyRepo.GetResolutionCandidates(
 		ctx,
 		&detentionports.GetResolutionCandidatesRequest{
@@ -319,50 +311,33 @@ func (s *Service) computeStop(
 		return nil, err
 	}
 
-	resolution := detentionengine.ResolvePolicy(candidates, &matchInput)
+	resolution := detentionengine.ResolvePolicy(candidates, &detentionpolicy.MatchInput{
+		CustomerID:     p.shipment.CustomerID,
+		LocationID:     p.stop.LocationID,
+		ShipmentTypeID: p.shipment.ShipmentTypeID,
+		ServiceTypeID:  p.shipment.ServiceTypeID,
+		CommodityIDs:   p.commodityIDs,
+		StopType:       p.stop.Type,
+		ScheduleType:   p.stop.ScheduleType,
+		Timestamp:      *p.stop.ActualArrival,
+	})
 	if !resolution.Found() {
-		return nil, nil
+		return nil, errStopNotCharged
 	}
 
 	policy := resolution.Policy
 
-	accessorial, err := s.accessorialRepo.GetByID(
-		ctx,
-		accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID:         policy.AccessorialChargeID,
-			TenantInfo: &p.tenantInfo,
-		},
-	)
+	snapshot, err := s.snapshotPolicy(ctx, p, policy)
 	if err != nil {
 		return nil, err
 	}
-
-	// The contract's price wins over the organization default, which is what
-	// makes the rate confirmation and the invoice agree on detention.
-	flatRate := accessorial.Amount
-	rateUnit := accessorial.RateUnit
-
-	if contractRate, contractUnit, priced := p.prices.priceFor(accessorial); priced {
-		flatRate = contractRate
-		rateUnit = contractUnit
-	}
-
-	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
-		Policy:          policy,
-		StopType:        string(p.stop.Type),
-		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
-		AccessorialCode: accessorial.Code,
-		FlatRate:        flatRate,
-		FlatRateUnit:    detentionengine.TierUnitFromAccessorial(rateUnit),
-		CapturedAt:      p.now,
-	})
 
 	var noticeSentAt *int64
 	if p.existing != nil {
 		noticeSentAt = p.existing.NoticeSentAt
 	}
 
-	computed := detentionengine.Compute(detentionengine.ComputeInput{
+	computed := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:         snapshot,
 		StopType:         p.stop.Type,
 		ScheduleType:     p.stop.ScheduleType,
@@ -379,16 +354,14 @@ func (s *Service) computeStop(
 	})
 
 	if !computed.Applicable {
-		return nil, nil
+		return nil, errStopNotCharged
 	}
 
 	for day, amount := range computed.DayAllocation {
 		p.dayAccrued[day] = p.dayAccrued[day].Add(amount)
 	}
 
-	occurrence := buildOccurrence(p, policy, snapshot, computed)
-
-	saved, err := s.occurrenceRepo.Upsert(ctx, occurrence)
+	saved, err := s.occurrenceRepo.Upsert(ctx, buildOccurrence(p, policy, &snapshot, &computed))
 	if err != nil {
 		return nil, err
 	}
@@ -401,8 +374,47 @@ func (s *Service) computeStop(
 		stop:       p.stop,
 	})
 	s.projectToWatchtower(ctx, saved, p)
+	s.publishOccurrenceOpened(ctx, saved, p)
 
 	return saved, nil
+}
+
+// snapshotPolicy freezes the governing policy at the contract's price, which
+// wins over the organization default so the rate confirmation and the invoice
+// agree on detention.
+func (s *Service) snapshotPolicy(
+	ctx context.Context,
+	p *computeStopParams,
+	policy *detentionpolicy.DetentionPolicy,
+) (detentionpolicy.PolicySnapshot, error) {
+	accessorial, err := s.accessorialRepo.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         policy.AccessorialChargeID,
+			TenantInfo: &p.tenantInfo,
+		},
+	)
+	if err != nil {
+		return detentionpolicy.PolicySnapshot{}, err
+	}
+
+	flatRate := accessorial.Amount
+	rateUnit := accessorial.RateUnit
+
+	if contractRate, contractUnit, priced := p.prices.priceFor(accessorial); priced {
+		flatRate = contractRate
+		rateUnit = contractUnit
+	}
+
+	return detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
+		Policy:          policy,
+		StopType:        string(p.stop.Type),
+		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
+		AccessorialCode: accessorial.Code,
+		FlatRate:        flatRate,
+		FlatRateUnit:    detentionengine.TierUnitFromAccessorial(rateUnit),
+		CapturedAt:      p.now,
+	}), nil
 }
 
 // recordRecalculation appends an evidence link whenever a stored amount moves,
@@ -499,7 +511,7 @@ func (s *Service) resolveDriverPayRate(
 func (s *Service) projectToWatchtower(
 	ctx context.Context,
 	saved *detention.DetentionOccurrence,
-	p computeStopParams,
+	p *computeStopParams,
 ) {
 	if s.watchtower == nil || saved == nil {
 		return
@@ -537,7 +549,7 @@ func (s *Service) projectToWatchtower(
 func (s *Service) publishOccurrenceOpened(
 	ctx context.Context,
 	saved *detention.DetentionOccurrence,
-	p computeStopParams,
+	p *computeStopParams,
 ) {
 	if saved == nil || !saved.IsOpen {
 		return

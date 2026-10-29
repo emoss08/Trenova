@@ -2,6 +2,7 @@ package recordanchorservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -326,10 +328,11 @@ func detentionAnchor(
 	billable := agentturn.AnchorFact{Name: "billable", SeenAt: occurrence.UpdatedAt}
 	if pricer != nil {
 		price, err := pricer.PriceOpenClock(ctx, read.tenant, occurrence)
-		if err != nil {
+		switch {
+		case errors.Is(err, detentionreview.ErrClockNotPriced):
+		case err != nil:
 			return nil, err
-		}
-		if price != nil {
+		default:
 			minutes, amount = price.BillableMinutes, price.BillableAmount
 			billable.SeenAt = 0
 			billable.Name = "billable if the truck left now"

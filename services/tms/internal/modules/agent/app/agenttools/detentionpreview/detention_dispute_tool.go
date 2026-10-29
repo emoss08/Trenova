@@ -10,7 +10,7 @@ import (
 type DetentionDisputer interface {
 	Dispute(
 		ctx context.Context,
-		params detentionreview.DisputeParams,
+		params *detentionreview.DisputeParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewDispute(
 		ctx context.Context,

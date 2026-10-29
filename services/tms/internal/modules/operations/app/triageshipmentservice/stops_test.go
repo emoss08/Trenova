@@ -102,9 +102,9 @@ func (f *fakeDecider) WaiveUninvoiced(
 
 func (f *fakeDecider) Waive(
 	_ context.Context,
-	p detentionreview.WaiveParams,
+	p *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.waived = append(f.waived, p)
+	f.waived = append(f.waived, *p)
 
 	return &detention.DetentionOccurrence{
 		ID:           p.OccurrenceID,
@@ -116,9 +116,9 @@ func (f *fakeDecider) Waive(
 
 func (f *fakeDecider) Dispute(
 	_ context.Context,
-	p detentionreview.DisputeParams,
+	p *detentionreview.DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.disputed = append(f.disputed, p)
+	f.disputed = append(f.disputed, *p)
 
 	return &detention.DetentionOccurrence{
 		ID:             p.OccurrenceID,

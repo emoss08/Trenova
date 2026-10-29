@@ -43,9 +43,9 @@ func (s *stubApprover) PreviewApprove(
 
 func (s *stubApprover) Approve(
 	_ context.Context,
-	p detentionreview.ApproveParams,
+	p *detentionreview.ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	s.approved = &p
+	s.approved = p
 
 	return s.occurrence, nil
 }

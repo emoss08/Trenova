@@ -77,26 +77,10 @@ type ComputeResult struct {
 
 // Compute derives a detention charge from immutable facts and frozen policy
 // terms. It never reads the clock or any external state beyond ComputeInput.
-func Compute(in ComputeInput) ComputeResult {
-	snap := in.Snapshot
+func Compute(in *ComputeInput) ComputeResult {
+	snap := &in.Snapshot
 	trace := detention.NewTrace(in.Now)
-	loc := in.Location
-	if loc == nil {
-		loc = time.UTC
-	}
-
-	result := ComputeResult{
-		BillableUnits:      decimal.Zero,
-		GrossAmount:        decimal.Zero,
-		BillableAmount:     decimal.Zero,
-		DriverPayAmount:    decimal.Zero,
-		NetMargin:          decimal.Zero,
-		CapApplied:         detention.CapKindNone,
-		Status:             detention.OccurrenceStatusNotBillable,
-		NotificationStatus: detention.NotificationStatusNotRequired,
-		DayAllocation:      map[string]decimal.Decimal{},
-		Trace:              trace,
-	}
+	result := newComputeResult(trace)
 
 	if in.ArrivedAt == nil || *in.ArrivedAt <= 0 {
 		return result
@@ -115,51 +99,20 @@ func Compute(in ComputeInput) ComputeResult {
 	result.ArrivedLate = lateness.isLate
 	result.LateByMinutes = lateness.byMinutes
 
-	freeMinutes := snap.FreeMinutes
-
-	if lateness.isLate {
-		switch snap.LateArrivalRule {
-		case detentionpolicy.LateArrivalRuleForfeit:
-			trace.AddMinutes(detention.TraceStepLateArrival,
-				"Detention forfeited",
-				fmt.Sprintf("Arrived %d min after the appointment window", lateness.byMinutes),
-				"Late arrival rule: Forfeit", lateness.byMinutes, true)
-			result.ClockStartAt = clockStart
-			result.FreeTimeExpiresAt = clockStart + int64(freeMinutes)*secondsPerMinute
-			result.FreeMinutesGranted = freeMinutes
-			result.IsOpen = in.DepartedAt == nil
-			result.Status = detention.OccurrenceStatusNotBillable
-			finalizeTrace(trace, result)
-			return result
-		case detentionpolicy.LateArrivalRuleClockFromAppointment:
-			if in.AppointmentStart != nil {
-				clockStart = *in.AppointmentStart
-				trace.AddTimestamp(detention.TraceStepLateArrival,
-					"Clock anchored to appointment",
-					"Lateness consumes the carrier's own free time",
-					"Late arrival rule: ClockFromAppointment", clockStart)
-			}
-		case detentionpolicy.LateArrivalRuleReduceFreeTime:
-			reduced := freeMinutes - lateness.byMinutes
-			if reduced < 0 {
-				reduced = 0
-			}
-			trace.AddMinutes(detention.TraceStepLateArrival,
-				"Free time reduced by lateness",
-				fmt.Sprintf("%d min granted instead of %d", reduced, freeMinutes),
-				"Late arrival rule: ReduceFreeTime", freeMinutes-reduced, true)
-			freeMinutes = reduced
-		case detentionpolicy.LateArrivalRuleNoEffect:
-			trace.AddMinutes(detention.TraceStepLateArrival,
-				"Late arrival noted, entitlement unaffected",
-				fmt.Sprintf("Arrived %d min late", lateness.byMinutes),
-				"Late arrival rule: NoEffect", lateness.byMinutes, false)
-		}
-	}
+	entitlement := applyLateArrival(in, lateness, clockStart, trace)
+	clockStart = entitlement.clockStart
+	freeMinutes := entitlement.freeMinutes
 
 	result.ClockStartAt = clockStart
 	result.FreeMinutesGranted = freeMinutes
 	result.FreeTimeExpiresAt = clockStart + int64(freeMinutes)*secondsPerMinute
+
+	if entitlement.forfeited {
+		result.IsOpen = in.DepartedAt == nil
+		result.Status = detention.OccurrenceStatusNotBillable
+		finalizeTrace(trace, &result)
+		return result
+	}
 
 	clockStop, isOpen := resolveClockStop(in, clockStart)
 	result.IsOpen = isOpen
@@ -172,115 +125,34 @@ func Compute(in ComputeInput) ComputeResult {
 		clockStopLabel(isOpen), clockStopDetail(isOpen),
 		"Clock stop basis: Departure", clockStop)
 
-	rawSeconds := clockStop - clockStart
-	if rawSeconds < 0 {
-		rawSeconds = 0
-	}
-	result.RawDwellMinutes = int32(rawSeconds / secondsPerMinute)
-
-	trace.AddMinutes(detention.TraceStepRawDwell, "Total time on site",
-		FormatMinutes(result.RawDwellMinutes), "", result.RawDwellMinutes, false)
-
-	trace.AddMinutes(detention.TraceStepFreeTime, "Free time deducted",
-		FormatMinutes(freeMinutes), fmt.Sprintf("%d min contractual free time", freeMinutes),
-		freeMinutes, true)
-
-	billable := result.RawDwellMinutes - freeMinutes
-	if billable < 0 {
-		billable = 0
-	}
+	billable := measureDwell(&result, clockStop-clockStart, freeMinutes, trace)
 
 	result.NotificationStatus, result.NoticeDueAt, result.NoticeDeadlineAt = resolveNotification(
 		in, result.FreeTimeExpiresAt,
 	)
 
-	if billable == 0 {
-		result.BillableMinutes = 0
-		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
-			in,
-			result.RawDwellMinutes,
-			trace,
-		)
-		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
-		finalizeTrace(trace, result)
-		return result
-	}
-
-	if snap.MinimumBillableMinutes > 0 && billable < snap.MinimumBillableMinutes {
-		trace.AddMinutes(
-			detention.TraceStepMinimum,
-			"Below minimum billable threshold",
-			fmt.Sprintf(
-				"%d min is under the %d min minimum",
-				billable,
-				snap.MinimumBillableMinutes,
-			),
-			fmt.Sprintf("Minimum billable: %d min", snap.MinimumBillableMinutes),
-			billable,
-			true,
-		)
-		result.BillableMinutes = 0
-		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
-			in,
-			result.RawDwellMinutes,
-			trace,
-		)
-		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
-		finalizeTrace(trace, result)
-		return result
+	if billable == 0 || belowMinimum(billable, snap, trace) {
+		return finishUnbilled(in, &result, trace)
 	}
 
 	result.BillableMinutes = billable
 
-	rounded := applyRounding(billable, snap.RoundingMode, snap.BillingIncrementMinutes)
-	if rounded != billable {
-		trace.AddMinutes(detention.TraceStepRounding,
-			fmt.Sprintf("Rounded %s to %s", FormatMinutes(billable), FormatMinutes(rounded)),
-			roundingDetail(snap.RoundingMode, snap.BillingIncrementMinutes),
-			fmt.Sprintf("%s to %d min increments", snap.RoundingMode, snap.BillingIncrementMinutes),
-			rounded, rounded < billable)
-	}
-
+	rounded := roundBillable(billable, snap, trace)
 	rounded, result.ConvertedToLayover, result.CapApplied = applyMinuteCaps(
 		rounded, freeMinutes, snap, trace, result.CapApplied,
 	)
 	result.RoundedMinutes = rounded
 
 	if rounded == 0 {
-		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
-			in,
-			result.RawDwellMinutes,
-			trace,
-		)
-		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
-		finalizeTrace(trace, result)
-		return result
+		return finishUnbilled(in, &result, trace)
 	}
 
-	units, gross := applyRate(rounded, snap, trace)
-	result.BillableUnits = units
-	result.GrossAmount = gross
-
-	capped, capKind, allocation := applyAmountCaps(applyAmountCapsInput{
-		gross:       gross,
+	priceBillable(in, &result, &billableWindow{
 		rounded:     rounded,
-		snapshot:    snap,
 		clockStart:  clockStart,
-		freeMins:    freeMinutes,
 		clockStop:   clockStop,
-		location:    loc,
-		dayAccrued:  in.DayAccrued,
-		shipAccrued: in.ShipmentAccrued,
-		trace:       trace,
-	})
-	result.BillableAmount = capped
-	result.DayAllocation = allocation
-	if capKind != detention.CapKindNone {
-		result.CapApplied = capKind
-	}
+		freeMinutes: freeMinutes,
+	}, trace)
 
 	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
 		in,
@@ -294,9 +166,191 @@ func Compute(in ComputeInput) ComputeResult {
 	result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
 	result.Status = resolveStatus(&result, snap, isOpen)
 
-	finalizeTrace(trace, result)
+	finalizeTrace(trace, &result)
 
 	return result
+}
+
+func newComputeResult(trace *detention.CalculationTrace) ComputeResult {
+	return ComputeResult{
+		BillableUnits:      decimal.Zero,
+		GrossAmount:        decimal.Zero,
+		BillableAmount:     decimal.Zero,
+		DriverPayAmount:    decimal.Zero,
+		NetMargin:          decimal.Zero,
+		CapApplied:         detention.CapKindNone,
+		Status:             detention.OccurrenceStatusNotBillable,
+		NotificationStatus: detention.NotificationStatusNotRequired,
+		DayAllocation:      map[string]decimal.Decimal{},
+		Trace:              trace,
+	}
+}
+
+type lateArrivalEntitlement struct {
+	clockStart  int64
+	freeMinutes int32
+	forfeited   bool
+}
+
+func applyLateArrival(
+	in *ComputeInput,
+	lateness latenessResult,
+	clockStart int64,
+	trace *detention.CalculationTrace,
+) lateArrivalEntitlement {
+	freeMinutes := in.Snapshot.FreeMinutes
+	entitlement := lateArrivalEntitlement{clockStart: clockStart, freeMinutes: freeMinutes}
+
+	if !lateness.isLate {
+		return entitlement
+	}
+
+	switch in.Snapshot.LateArrivalRule {
+	case detentionpolicy.LateArrivalRuleForfeit:
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Detention forfeited",
+			fmt.Sprintf("Arrived %d min after the appointment window", lateness.byMinutes),
+			"Late arrival rule: Forfeit", lateness.byMinutes, true)
+		entitlement.forfeited = true
+	case detentionpolicy.LateArrivalRuleClockFromAppointment:
+		if in.AppointmentStart != nil {
+			entitlement.clockStart = *in.AppointmentStart
+			trace.AddTimestamp(detention.TraceStepLateArrival,
+				"Clock anchored to appointment",
+				"Lateness consumes the carrier's own free time",
+				"Late arrival rule: ClockFromAppointment", entitlement.clockStart)
+		}
+	case detentionpolicy.LateArrivalRuleReduceFreeTime:
+		reduced := max(freeMinutes-lateness.byMinutes, 0)
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Free time reduced by lateness",
+			fmt.Sprintf("%d min granted instead of %d", reduced, freeMinutes),
+			"Late arrival rule: ReduceFreeTime", freeMinutes-reduced, true)
+		entitlement.freeMinutes = reduced
+	case detentionpolicy.LateArrivalRuleNoEffect:
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Late arrival noted, entitlement unaffected",
+			fmt.Sprintf("Arrived %d min late", lateness.byMinutes),
+			"Late arrival rule: NoEffect", lateness.byMinutes, false)
+	}
+
+	return entitlement
+}
+
+func measureDwell(
+	result *ComputeResult,
+	rawSeconds int64,
+	freeMinutes int32,
+	trace *detention.CalculationTrace,
+) int32 {
+	result.RawDwellMinutes = int32(max(rawSeconds, 0) / secondsPerMinute)
+
+	trace.AddMinutes(detention.TraceStepRawDwell, "Total time on site",
+		FormatMinutes(result.RawDwellMinutes), "", result.RawDwellMinutes, false)
+
+	trace.AddMinutes(detention.TraceStepFreeTime, "Free time deducted",
+		FormatMinutes(freeMinutes), fmt.Sprintf("%d min contractual free time", freeMinutes),
+		freeMinutes, true)
+
+	return max(result.RawDwellMinutes-freeMinutes, 0)
+}
+
+func belowMinimum(
+	billable int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) bool {
+	if snap.MinimumBillableMinutes <= 0 || billable >= snap.MinimumBillableMinutes {
+		return false
+	}
+
+	trace.AddMinutes(
+		detention.TraceStepMinimum,
+		"Below minimum billable threshold",
+		fmt.Sprintf(
+			"%d min is under the %d min minimum",
+			billable,
+			snap.MinimumBillableMinutes,
+		),
+		fmt.Sprintf("Minimum billable: %d min", snap.MinimumBillableMinutes),
+		billable,
+		true,
+	)
+
+	return true
+}
+
+func finishUnbilled(
+	in *ComputeInput,
+	result *ComputeResult,
+	trace *detention.CalculationTrace,
+) ComputeResult {
+	result.Status = openOrNotBillable(result.IsOpen)
+	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+		in,
+		result.RawDwellMinutes,
+		trace,
+	)
+	result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
+	finalizeTrace(trace, result)
+	return *result
+}
+
+func roundBillable(
+	billable int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) int32 {
+	rounded := applyRounding(billable, snap.RoundingMode, snap.BillingIncrementMinutes)
+	if rounded != billable {
+		trace.AddMinutes(detention.TraceStepRounding,
+			fmt.Sprintf("Rounded %s to %s", FormatMinutes(billable), FormatMinutes(rounded)),
+			roundingDetail(snap.RoundingMode, snap.BillingIncrementMinutes),
+			fmt.Sprintf("%s to %d min increments", snap.RoundingMode, snap.BillingIncrementMinutes),
+			rounded, rounded < billable)
+	}
+	return rounded
+}
+
+type billableWindow struct {
+	rounded     int32
+	clockStart  int64
+	clockStop   int64
+	freeMinutes int32
+}
+
+func priceBillable(
+	in *ComputeInput,
+	result *ComputeResult,
+	window *billableWindow,
+	trace *detention.CalculationTrace,
+) {
+	loc := in.Location
+	if loc == nil {
+		loc = time.UTC
+	}
+
+	units, gross := applyRate(window.rounded, &in.Snapshot, trace)
+	result.BillableUnits = units
+	result.GrossAmount = gross
+
+	capped, capKind, allocation := applyAmountCaps(&applyAmountCapsInput{
+		gross:       gross,
+		rounded:     window.rounded,
+		snapshot:    &in.Snapshot,
+		clockStart:  window.clockStart,
+		freeMins:    window.freeMinutes,
+		clockStop:   window.clockStop,
+		location:    loc,
+		dayAccrued:  in.DayAccrued,
+		shipAccrued: in.ShipmentAccrued,
+		trace:       trace,
+	})
+	result.BillableAmount = capped
+	result.DayAllocation = allocation
+	if capKind != detention.CapKindNone {
+		result.CapApplied = capKind
+	}
 }
 
 type latenessResult struct {
@@ -304,9 +358,12 @@ type latenessResult struct {
 	byMinutes int32
 }
 
-func resolveClockStart(in ComputeInput, trace *detention.CalculationTrace) (int64, latenessResult) {
+func resolveClockStart(
+	in *ComputeInput,
+	trace *detention.CalculationTrace,
+) (int64, latenessResult) {
 	arrival := *in.ArrivedAt
-	snap := in.Snapshot
+	snap := &in.Snapshot
 
 	clockStart := arrival
 	basisDetail := "Driver arrival"
@@ -344,7 +401,7 @@ func resolveClockStart(in ComputeInput, trace *detention.CalculationTrace) (int6
 
 // detectLateness measures arrival against the close of the appointment window,
 // falling back to the appointment start when no window end was scheduled.
-func detectLateness(in ComputeInput, arrival int64) latenessResult {
+func detectLateness(in *ComputeInput, arrival int64) latenessResult {
 	deadline := in.AppointmentEnd
 	if deadline == nil {
 		deadline = in.AppointmentStart
@@ -366,7 +423,7 @@ func detectLateness(in ComputeInput, arrival int64) latenessResult {
 	}
 }
 
-func resolveClockStop(in ComputeInput, clockStart int64) (int64, bool) {
+func resolveClockStop(in *ComputeInput, clockStart int64) (int64, bool) {
 	if in.DepartedAt != nil && *in.DepartedAt > 0 {
 		stop := *in.DepartedAt
 		if stop < clockStart {
@@ -418,12 +475,11 @@ func applyRounding(minutes int32, mode detentionpolicy.RoundingMode, increment i
 
 func applyMinuteCaps(
 	rounded, freeMinutes int32,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 	current detention.CapKind,
-) (int32, bool, detention.CapKind) {
-	capKind := current
-	convertedToLayover := false
+) (capped int32, convertedToLayover bool, capKind detention.CapKind) {
+	capKind = current
 
 	if snap.ConvertToLayoverAtMinutes != nil {
 		boundary := *snap.ConvertToLayoverAtMinutes - freeMinutes
@@ -459,15 +515,15 @@ func applyMinuteCaps(
 // multiplies the flat accessorial rate.
 func applyRate(
 	rounded int32,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
-) (decimal.Decimal, decimal.Decimal) {
+) (units, amount decimal.Decimal) {
 	if snap.RateSource == detentionpolicy.RateSourceTiers && len(snap.Tiers) > 0 {
 		return applyTieredRate(rounded, snap, trace)
 	}
 
-	units := unitsForMinutes(rounded, snap.FlatRateUnit)
-	amount := snap.FlatRate.Mul(units).Round(2)
+	units = unitsForMinutes(rounded, snap.FlatRateUnit)
+	amount = snap.FlatRate.Mul(units).Round(2)
 
 	trace.AddAmount(detention.TraceStepFlatRate,
 		fmt.Sprintf("%s × %s", units.StringFixed(2), RateLabel(snap.FlatRate, snap.FlatRateUnit)),
@@ -479,9 +535,9 @@ func applyRate(
 
 func applyTieredRate(
 	rounded int32,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
-) (decimal.Decimal, decimal.Decimal) {
+) (totalUnits, totalAmount decimal.Decimal) {
 	tiers := make([]detentionpolicy.TierSnapshot, len(snap.Tiers))
 	copy(tiers, snap.Tiers)
 	sort.SliceStable(
@@ -489,8 +545,8 @@ func applyTieredRate(
 		func(a, b int) bool { return tiers[a].FromMinute < tiers[b].FromMinute },
 	)
 
-	totalUnits := decimal.Zero
-	totalAmount := decimal.Zero
+	totalUnits = decimal.Zero
+	totalAmount = decimal.Zero
 
 	for _, tier := range tiers {
 		span := tier.SpanMinutes(rounded)
@@ -533,7 +589,7 @@ func unitsForMinutes(minutes int32, unit detentionpolicy.TierRateUnit) decimal.D
 type applyAmountCapsInput struct {
 	gross       decimal.Decimal
 	rounded     int32
-	snapshot    detentionpolicy.PolicySnapshot
+	snapshot    *detentionpolicy.PolicySnapshot
 	clockStart  int64
 	freeMins    int32
 	clockStop   int64
@@ -548,7 +604,7 @@ type applyAmountCapsInput struct {
 // generate two full daily charges, so the amount is allocated across calendar
 // days in the organization's timezone and each day is capped independently.
 func applyAmountCaps(
-	in applyAmountCapsInput,
+	in *applyAmountCapsInput,
 ) (decimal.Decimal, detention.CapKind, map[string]decimal.Decimal) {
 	amount := in.gross
 	capKind := detention.CapKindNone
@@ -745,7 +801,7 @@ func rescaleAllocation(
 // lose margin when a customer negotiates longer free time than the driver's pay
 // profile grants; surfacing both numbers on one record makes that visible.
 func computeDriverPay(
-	in ComputeInput,
+	in *ComputeInput,
 	rawDwellMinutes int32,
 	trace *detention.CalculationTrace,
 ) (int32, decimal.Decimal) {
@@ -771,30 +827,30 @@ func computeDriverPay(
 }
 
 func resolveNotification(
-	in ComputeInput,
+	in *ComputeInput,
 	freeTimeExpiresAt int64,
-) (detention.NotificationStatus, *int64, *int64) {
-	snap := in.Snapshot
+) (status detention.NotificationStatus, dueAt, deadlineAt *int64) {
+	snap := &in.Snapshot
 
 	if snap.NotificationRequirement == detentionpolicy.NotificationRequirementNone {
 		return detention.NotificationStatusNotRequired, nil, nil
 	}
 
-	dueAt := freeTimeExpiresAt - int64(snap.NotificationLeadMinutes)*secondsPerMinute
-	deadlineAt := freeTimeExpiresAt + int64(snap.NotificationDeadlineMinutes)*secondsPerMinute
+	due := freeTimeExpiresAt - int64(snap.NotificationLeadMinutes)*secondsPerMinute
+	deadline := freeTimeExpiresAt + int64(snap.NotificationDeadlineMinutes)*secondsPerMinute
 
 	if in.NoticeSentAt != nil {
-		if *in.NoticeSentAt <= deadlineAt {
-			return detention.NotificationStatusSent, &dueAt, &deadlineAt
+		if *in.NoticeSentAt <= deadline {
+			return detention.NotificationStatusSent, &due, &deadline
 		}
-		return detention.NotificationStatusLate, &dueAt, &deadlineAt
+		return detention.NotificationStatusLate, &due, &deadline
 	}
 
-	if in.Now > deadlineAt {
-		return detention.NotificationStatusMissed, &dueAt, &deadlineAt
+	if in.Now > deadline {
+		return detention.NotificationStatusMissed, &due, &deadline
 	}
 
-	return detention.NotificationStatusPending, &dueAt, &deadlineAt
+	return detention.NotificationStatusPending, &due, &deadline
 }
 
 // applyNotificationGate enforces the contractual requirement that the customer
@@ -802,7 +858,7 @@ func resolveNotification(
 // otherwise-valid detention claim goes uncollected.
 func applyNotificationGate(
 	result *ComputeResult,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) {
 	if snap.NotificationRequirement != detentionpolicy.NotificationRequirementRequired {
@@ -858,7 +914,7 @@ func applyNotificationGate(
 
 func applyApprovalThresholds(
 	result *ComputeResult,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) {
 	if snap.RequireApprovalOverAmount.Valid &&
@@ -877,7 +933,7 @@ func applyApprovalThresholds(
 
 func resolveStatus(
 	result *ComputeResult,
-	snap detentionpolicy.PolicySnapshot,
+	snap *detentionpolicy.PolicySnapshot,
 	isOpen bool,
 ) detention.OccurrenceStatus {
 	if isOpen {
@@ -907,7 +963,7 @@ func openOrNotBillable(isOpen bool) detention.OccurrenceStatus {
 	return detention.OccurrenceStatusNotBillable
 }
 
-func finalizeTrace(trace *detention.CalculationTrace, result ComputeResult) {
+func finalizeTrace(trace *detention.CalculationTrace, result *ComputeResult) {
 	trace.AddAmount(detention.TraceStepFinal, "Billable detention",
 		fmt.Sprintf("%s billable of %s on site",
 			FormatMinutes(result.RoundedMinutes), FormatMinutes(result.RawDwellMinutes)),

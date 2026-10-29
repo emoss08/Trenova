@@ -1466,13 +1466,13 @@ func (s *DetentionSeed) createOccurrences(
 
 		// The notice is placed relative to free-time expiry, which the engine
 		// itself derives, so the first pass exists only to learn that instant.
-		computed := detentionengine.Compute(input)
+		computed := detentionengine.Compute(&input)
 		var noticeSentAt *int64
 		if stopDef.notice != nil && computed.Applicable {
 			sentAt := computed.FreeTimeExpiresAt + stopDef.notice.offsetFromExpiry*detentionMinute
 			noticeSentAt = &sentAt
 			input.NoticeSentAt = noticeSentAt
-			computed = detentionengine.Compute(input)
+			computed = detentionengine.Compute(&input)
 		}
 
 		if !computed.Applicable {

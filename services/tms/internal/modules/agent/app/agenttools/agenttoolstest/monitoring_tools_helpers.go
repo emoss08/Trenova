@@ -238,18 +238,18 @@ type FakeDetention struct {
 
 func (f *FakeDetention) SendOccurrenceNotice(
 	_ context.Context,
-	params detentionnoticeservice.SendOccurrenceNoticeParams,
+	params *detentionnoticeservice.SendOccurrenceNoticeParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.Noticed = &params
+	f.Noticed = params
 
 	return &detention.DetentionOccurrence{}, nil
 }
 
 func (f *FakeDetention) Waive(
 	_ context.Context,
-	params detentionreview.WaiveParams,
+	params *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.Waived = &params
+	f.Waived = params
 
 	return &detention.DetentionOccurrence{}, nil
 }
@@ -265,12 +265,12 @@ func (f *FakeDetention) PreviewOccurrenceNotice(
 
 func (f *FakeDetention) Dispute(
 	_ context.Context,
-	params detentionreview.DisputeParams,
+	params *detentionreview.DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
 	if err := f.Guard.Write(); err != nil {
 		return nil, err
 	}
-	f.Disputed = &params
+	f.Disputed = params
 
 	return &detention.DetentionOccurrence{ID: params.OccurrenceID}, nil
 }

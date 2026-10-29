@@ -107,7 +107,7 @@ func NewDisputeDetentionTool(
 			req *detentionreview.DisputeParams,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			saved, err := detentions.Dispute(ctx, *req)
+			saved, err := detentions.Dispute(ctx, req)
 			if err != nil {
 				return nil, err
 			}

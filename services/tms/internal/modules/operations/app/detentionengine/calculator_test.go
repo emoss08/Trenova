@@ -58,8 +58,8 @@ func baseSnapshot() detentionpolicy.PolicySnapshot {
 	}
 }
 
-func baseInput(snap detentionpolicy.PolicySnapshot) detentionengine.ComputeInput {
-	return detentionengine.ComputeInput{
+func baseInput(snap detentionpolicy.PolicySnapshot) *detentionengine.ComputeInput {
+	return &detentionengine.ComputeInput{
 		Snapshot:        snap,
 		StopType:        shipmentvocab.StopTypeDelivery,
 		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,

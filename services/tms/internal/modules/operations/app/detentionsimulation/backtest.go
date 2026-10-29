@@ -64,7 +64,7 @@ const defaultBacktestLimit = 2000
 func accumulate(
 	buckets map[string]*BacktestBucket,
 	key string,
-	computed detentionengine.ComputeResult,
+	computed *detentionengine.ComputeResult,
 	baseline decimal.Decimal,
 ) {
 	bucket, ok := buckets[key]

@@ -59,7 +59,7 @@ var carrierFindingResolutions = agenttoolschema.Source(
 type detentionEscalator interface {
 	Escalate(
 		ctx context.Context,
-		params detentionreview.EscalateParams,
+		params *detentionreview.EscalateParams,
 	) (*detention.DetentionOccurrence, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
@@ -194,7 +194,7 @@ func (t *EscalateDetentionTool) Execute(
 		return err
 	}
 
-	_, err = t.detention.Escalate(ctx, detentionreview.EscalateParams{
+	_, err = t.detention.Escalate(ctx, &detentionreview.EscalateParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   toolparams.TenantFrom(&params),
 		Reason:       reason,
@@ -211,7 +211,7 @@ func (t *EscalateDetentionTool) Target(params map[string]any) (agenttoolports.To
 type detentionApprover interface {
 	Approve(
 		ctx context.Context,
-		params detentionreview.ApproveParams,
+		params *detentionreview.ApproveParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewApprove(
 		ctx context.Context,
@@ -394,7 +394,7 @@ func (t *ApproveDetentionTool) Execute(
 		return err
 	}
 
-	_, err = t.detention.Approve(ctx, request)
+	_, err = t.detention.Approve(ctx, &request)
 
 	return err
 }

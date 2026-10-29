@@ -361,7 +361,7 @@ func (h *Handler) preview(c *gin.Context) {
 	result, err := h.engine.PreviewPolicy(
 		c.Request.Context(),
 		req.Policy,
-		req.Scenario,
+		&req.Scenario,
 		pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,

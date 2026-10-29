@@ -39,10 +39,10 @@ type computeStopParams struct {
 }
 
 func buildOccurrence(
-	p computeStopParams,
+	p *computeStopParams,
 	policy *detentionpolicy.DetentionPolicy,
-	snapshot detentionpolicy.PolicySnapshot,
-	computed detentionengine.ComputeResult,
+	snapshot *detentionpolicy.PolicySnapshot,
+	computed *detentionengine.ComputeResult,
 ) *detention.DetentionOccurrence {
 	policyID := policy.ID
 
@@ -55,7 +55,7 @@ func buildOccurrence(
 		CustomerID:         p.shipment.CustomerID,
 		LocationID:         p.stop.LocationID,
 		DetentionPolicyID:  &policyID,
-		PolicySnapshot:     &snapshot,
+		PolicySnapshot:     snapshot,
 		CalculationTrace:   computed.Trace,
 		StopType:           p.stop.Type,
 		ScheduleType:       p.stop.ScheduleType,

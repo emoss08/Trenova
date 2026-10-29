@@ -22,7 +22,7 @@ func replay(
 	arrival, departure int64,
 	payRate decimal.NullDecimal,
 ) detentionengine.ComputeResult {
-	return detentionengine.Compute(detentionengine.ComputeInput{
+	return detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:        snap,
 		StopType:        shipmentvocab.StopTypeDelivery,
 		ScheduleType:    shipmentvocab.StopScheduleTypeAppointment,
@@ -81,7 +81,7 @@ func TestBacktest_ForfeitTermsCollapseRevenueOnLateStops(t *testing.T) {
 	strict := baseSnapshot()
 	strict.LateArrivalRule = detentionpolicy.LateArrivalRuleForfeit
 
-	lenientResult := detentionengine.Compute(detentionengine.ComputeInput{
+	lenientResult := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:       lenient,
 		StopType:       shipmentvocab.StopTypeDelivery,
 		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
@@ -91,7 +91,7 @@ func TestBacktest_ForfeitTermsCollapseRevenueOnLateStops(t *testing.T) {
 		Now:            departure,
 		Location:       time.UTC,
 	})
-	strictResult := detentionengine.Compute(detentionengine.ComputeInput{
+	strictResult := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:       strict,
 		StopType:       shipmentvocab.StopTypeDelivery,
 		ScheduleType:   shipmentvocab.StopScheduleTypeAppointment,
@@ -118,7 +118,7 @@ func TestBacktest_NoticeComplianceAssumptionChangesTheAnswer(t *testing.T) {
 	arrival := baseTime
 	departure := baseTime + 5*hour
 
-	compliant := detentionengine.Compute(detentionengine.ComputeInput{
+	compliant := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:     snap,
 		StopType:     shipmentvocab.StopTypeDelivery,
 		ScheduleType: shipmentvocab.StopScheduleTypeAppointment,
@@ -128,7 +128,7 @@ func TestBacktest_NoticeComplianceAssumptionChangesTheAnswer(t *testing.T) {
 		Now:          departure,
 		Location:     time.UTC,
 	})
-	asHappened := detentionengine.Compute(detentionengine.ComputeInput{
+	asHappened := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:     snap,
 		StopType:     shipmentvocab.StopTypeDelivery,
 		ScheduleType: shipmentvocab.StopScheduleTypeAppointment,

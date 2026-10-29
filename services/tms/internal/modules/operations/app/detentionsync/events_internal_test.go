@@ -59,7 +59,7 @@ func TestPublishOccurrenceOpened_FiresOnlyWhenTheClockStarts(t *testing.T) {
 			publisher := &recordingPublisher{}
 			svc := eventService(publisher)
 
-			svc.publishOccurrenceOpened(t.Context(), tc.saved, computeStopParams{
+			svc.publishOccurrenceOpened(t.Context(), tc.saved, &computeStopParams{
 				existing:   tc.existing,
 				tenantInfo: tenant,
 			})

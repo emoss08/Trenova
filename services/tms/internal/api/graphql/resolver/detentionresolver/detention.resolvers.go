@@ -130,7 +130,7 @@ func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input g
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionReview.Waive(ctx, detentionreview.WaiveParams{
+	occurrence, err := r.DetentionReview.Waive(ctx, &detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Reason:       input.Reason,
@@ -155,7 +155,7 @@ func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occur
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionReview.Approve(ctx, detentionreview.ApproveParams{
+	occurrence, err := r.DetentionReview.Approve(ctx, &detentionreview.ApproveParams{
 		OccurrenceID: id,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
@@ -178,7 +178,7 @@ func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionReview.Dispute(ctx, detentionreview.DisputeParams{
+	occurrence, err := r.DetentionReview.Dispute(ctx, &detentionreview.DisputeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Note:         input.Note,
@@ -204,7 +204,7 @@ func (r *MutationResolver) SendDetentionNotice(ctx context.Context, occurrenceID
 
 	occurrence, err := r.DetentionNotices.SendOccurrenceNotice(
 		ctx,
-		detentionnoticeservice.SendOccurrenceNoticeParams{
+		&detentionnoticeservice.SendOccurrenceNoticeParams{
 			OccurrenceID: id,
 			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			UserID:       authCtx.UserID,

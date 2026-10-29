@@ -145,7 +145,7 @@ func TestPreviewWaive_IsWhatWaiveSaves(t *testing.T) {
 	require.Empty(t, repo.saved, "a preview must not save")
 
 	repo.readOnly = false
-	saved, err := svc.review.Waive(t.Context(), params)
+	saved, err := svc.review.Waive(t.Context(), &params)
 	require.NoError(t, err)
 
 	assert.Equal(t, saved, preview.After)
@@ -173,7 +173,7 @@ func TestPreviewApprove_IsWhatApproveSaves(t *testing.T) {
 	require.NoError(t, err)
 
 	repo.readOnly = false
-	saved, err := svc.review.Approve(t.Context(), params)
+	saved, err := svc.review.Approve(t.Context(), &params)
 	require.NoError(t, err)
 
 	assert.Equal(t, saved, preview.After)
@@ -193,7 +193,7 @@ func TestPreviewApprove_RefusesWhatApproveRefuses(t *testing.T) {
 	}
 
 	_, previewErr := svc.review.PreviewApprove(t.Context(), &params)
-	_, executeErr := svc.review.Approve(t.Context(), params)
+	_, executeErr := svc.review.Approve(t.Context(), &params)
 
 	require.Error(t, previewErr)
 	require.Error(t, executeErr)
@@ -290,7 +290,7 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 	require.Empty(t, repo.saved, "a preview must not save")
 
 	repo.readOnly = false
-	updated, err := svc.notices.SendOccurrenceNotice(t.Context(), params)
+	updated, err := svc.notices.SendOccurrenceNotice(t.Context(), &params)
 	require.NoError(t, err)
 	require.Len(t, mailer.sent, 1)
 
@@ -322,7 +322,7 @@ func TestWaiveUninvoiced_ReleasesAStaleBilledCharge(t *testing.T) {
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	_, err := svc.review.Waive(t.Context(), params)
+	_, err := svc.review.Waive(t.Context(), &params)
 	require.Error(t, err, "a billed charge is never waived without asking billing")
 
 	saved, err := svc.review.WaiveUninvoiced(t.Context(), &params)

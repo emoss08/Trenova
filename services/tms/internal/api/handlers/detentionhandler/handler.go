@@ -266,7 +266,7 @@ func (h *Handler) waive(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.review.Waive(c.Request.Context(), detentionreview.WaiveParams{
+	occurrence, err := h.review.Waive(c.Request.Context(), &detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		Reason:       req.Reason,
@@ -301,7 +301,7 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.review.Approve(c.Request.Context(), detentionreview.ApproveParams{
+	occurrence, err := h.review.Approve(c.Request.Context(), &detentionreview.ApproveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		UserID:       authCtx.UserID,
@@ -346,7 +346,7 @@ func (h *Handler) dispute(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.review.Dispute(c.Request.Context(), detentionreview.DisputeParams{
+	occurrence, err := h.review.Dispute(c.Request.Context(), &detentionreview.DisputeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		Note:         req.Note,

@@ -32,12 +32,12 @@ type stubEscalator struct {
 
 func (s *stubEscalator) Escalate(
 	_ context.Context,
-	p detentionreview.EscalateParams,
+	p *detentionreview.EscalateParams,
 ) (*detention.DetentionOccurrence, error) {
 	if err := s.guard.Write(); err != nil {
 		return nil, err
 	}
-	s.escalated = &p
+	s.escalated = p
 	if err := s.occurrence.Escalate(timeutils.NowUnix()); err != nil {
 		return nil, err
 	}

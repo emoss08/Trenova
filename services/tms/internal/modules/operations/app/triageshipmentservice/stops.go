@@ -147,7 +147,7 @@ func (s *Service) SettleDetention(
 	case inboundmessage.StopsDecisionWaive:
 		return s.waive(ctx, req, occurrence)
 	case inboundmessage.StopsDecisionStandBy:
-		settled, disputeErr := s.detention.Dispute(ctx, detentionreview.DisputeParams{
+		settled, disputeErr := s.detention.Dispute(ctx, &detentionreview.DisputeParams{
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   req.TenantInfo,
 			Note:         req.Note,
@@ -179,7 +179,7 @@ func (s *Service) waive(
 		return settledOf(occurrence.WaivedAmount, occurrence.Currency), nil
 	}
 	if s.credits == nil {
-		return waivedOf(s.detention.Waive(ctx, params))
+		return waivedOf(s.detention.Waive(ctx, &params))
 	}
 	if occurrence.AdditionalChargeID == nil {
 		return waivedOf(s.detention.WaiveUninvoiced(ctx, &params))

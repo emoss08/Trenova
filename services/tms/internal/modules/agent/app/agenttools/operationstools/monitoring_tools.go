@@ -382,7 +382,7 @@ func (t *EmailCustomerTool) record(
 type detentionNoticeSender interface {
 	SendOccurrenceNotice(
 		ctx context.Context,
-		params detentionnoticeservice.SendOccurrenceNoticeParams,
+		params *detentionnoticeservice.SendOccurrenceNoticeParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewOccurrenceNotice(
 		ctx context.Context,
@@ -393,7 +393,7 @@ type detentionNoticeSender interface {
 type detentionWaiver interface {
 	Waive(
 		ctx context.Context,
-		params detentionreview.WaiveParams,
+		params *detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewWaive(
 		ctx context.Context,
@@ -473,7 +473,7 @@ func (t *SendDetentionNoticeTool) Execute(
 		return err
 	}
 
-	_, err = t.detention.SendOccurrenceNotice(ctx, request)
+	_, err = t.detention.SendOccurrenceNotice(ctx, &request)
 
 	return err
 }
@@ -577,7 +577,7 @@ func (t *WaiveDetentionTool) Execute(
 		return err
 	}
 
-	_, err = t.detention.Waive(ctx, request)
+	_, err = t.detention.Waive(ctx, &request)
 
 	return err
 }

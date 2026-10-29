@@ -74,7 +74,7 @@ type occurrenceReader interface {
 type detentionDecider interface {
 	Waive(
 		ctx context.Context,
-		p detentionreview.WaiveParams,
+		p *detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	WaiveUninvoiced(
 		ctx context.Context,
@@ -82,7 +82,7 @@ type detentionDecider interface {
 	) (*detention.DetentionOccurrence, error)
 	Dispute(
 		ctx context.Context,
-		p detentionreview.DisputeParams,
+		p *detentionreview.DisputeParams,
 	) (*detention.DetentionOccurrence, error)
 }
 

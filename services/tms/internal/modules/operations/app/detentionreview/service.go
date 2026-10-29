@@ -2,6 +2,7 @@ package detentionreview
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -186,10 +187,13 @@ func (s *Service) GetOccurrenceDetail(
 	}
 
 	current, err := s.PriceOpenClock(ctx, req.TenantInfo, occurrence)
-	if err != nil {
+	switch {
+	case errors.Is(err, ErrClockNotPriced):
+	case err != nil:
 		return nil, err
+	default:
+		detail.CurrentlyBillable = current
 	}
-	detail.CurrentlyBillable = current
 
 	return detail, nil
 }
@@ -250,7 +254,7 @@ func (s *Service) PriceOpenClock(
 	occurrence *detention.DetentionOccurrence,
 ) (*ClockPrice, error) {
 	if occurrence == nil {
-		return nil, nil
+		return nil, ErrClockNotPriced
 	}
 
 	now := s.now()
@@ -262,7 +266,7 @@ func (s *Service) PriceOpenClock(
 	}
 	current, ok := priced[occurrence.ID]
 	if !ok {
-		return nil, nil
+		return nil, ErrClockNotPriced
 	}
 
 	return &ClockPrice{
@@ -289,7 +293,7 @@ func (s *Service) priceOpenClocks(
 		}
 	}
 	if len(shipments) == 0 {
-		return nil, nil
+		return map[pulid.ID]detentionengine.ComputeResult{}, nil
 	}
 
 	location, err := s.effects.TenantLocation(ctx, tenantInfo)
@@ -385,14 +389,14 @@ func (s *Service) ListDeskEntries(
 // revenue loss stays measurable instead of disappearing into free text.
 func (s *Service) Waive(
 	ctx context.Context,
-	p WaiveParams,
+	p *WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	change, err := s.planWaive(ctx, &p)
+	change, err := s.planWaive(ctx, p)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.saveWaiver(ctx, &p, change, false)
+	return s.saveWaiver(ctx, p, change, false)
 }
 
 func (s *Service) WaiveUninvoiced(
@@ -454,9 +458,9 @@ func (s *Service) saveWaiver(
 
 func (s *Service) Approve(
 	ctx context.Context,
-	p ApproveParams,
+	p *ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	change, err := s.planApprove(ctx, &p)
+	change, err := s.planApprove(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -484,9 +488,9 @@ func (s *Service) Approve(
 // computation, which is exactly what the claim needs to be worked.
 func (s *Service) Dispute(
 	ctx context.Context,
-	p DisputeParams,
+	p *DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	change, err := s.planDispute(ctx, &p)
+	change, err := s.planDispute(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +517,7 @@ func (s *Service) Dispute(
 // to: the charge stands, and somebody has to decide what happens to it.
 func (s *Service) Escalate(
 	ctx context.Context,
-	p EscalateParams,
+	p *EscalateParams,
 ) (*detention.DetentionOccurrence, error) {
 	occurrence, err := s.occurrenceRepo.GetByID(
 		ctx,

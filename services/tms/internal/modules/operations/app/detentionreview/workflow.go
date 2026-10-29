@@ -2,6 +2,7 @@ package detentionreview
 
 import (
 	"cmp"
+	"errors"
 	"slices"
 	"time"
 
@@ -46,6 +47,8 @@ type ClockPrice struct {
 	AsOf            int64
 }
 
+var ErrClockNotPriced = errors.New("detention occurrence has no running clock to price")
+
 func priceShipmentClocks(
 	occurrences []*detention.DetentionOccurrence,
 	now int64,
@@ -70,7 +73,7 @@ func priceShipmentClocks(
 			continue
 		}
 
-		computed := detentionengine.Compute(detentionengine.ComputeInput{
+		computed := detentionengine.Compute(&detentionengine.ComputeInput{
 			Snapshot:         *occurrence.PolicySnapshot,
 			StopType:         occurrence.StopType,
 			ScheduleType:     occurrence.ScheduleType,
@@ -135,13 +138,8 @@ func deskUrgency(occurrence *detention.DetentionOccurrence, now int64) string {
 	}
 
 	if occurrence.NotificationStatus == detention.NotificationStatusPending {
-		if remaining := occurrence.MinutesUntilNoticeDue(now); remaining != nil {
-			if *remaining <= 0 {
-				return "NoticeOverdue"
-			}
-			if *remaining <= 30 {
-				return "NoticeDueSoon"
-			}
+		if urgency := noticeUrgency(occurrence, now); urgency != "" {
+			return urgency
 		}
 	}
 
@@ -154,6 +152,20 @@ func deskUrgency(occurrence *detention.DetentionOccurrence, now int64) string {
 	}
 
 	return "Normal"
+}
+
+func noticeUrgency(occurrence *detention.DetentionOccurrence, now int64) string {
+	remaining := occurrence.MinutesUntilNoticeDue(now)
+	switch {
+	case remaining == nil:
+		return ""
+	case *remaining <= 0:
+		return "NoticeOverdue"
+	case *remaining <= 30:
+		return "NoticeDueSoon"
+	default:
+		return ""
+	}
 }
 
 // WaiveParams describes a discretionary write-off.

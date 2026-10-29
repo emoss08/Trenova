@@ -43,6 +43,7 @@ type Params struct {
 	Now           func() int64                  `optional:"true"`
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Effects {
 	now := p.Now
 	if now == nil {

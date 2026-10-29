@@ -41,6 +41,26 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                *zap.Logger
+	policyRepo       detentionports.DetentionPolicyRepository
+	occurrenceRepo   detentionports.DetentionOccurrenceRepository
+	noticeRepo       detentionports.DetentionNoticeRepository
+	customerRepo     customerports.CustomerRepository
+	documentTypeRepo documenttypeports.DocumentTypeRepository
+	emailService     emailports.EmailService
+	uploadService    documentuploadports.DocumentUploadService
+	workflowStarter  kernelports.WorkflowStarter
+	templates        documenttemplateports.DocumentTemplateResolver
+	contextBuilder   *detentionnoticerender.ContextBuilder
+	publisher        agenteventports.AgentEventPublisher
+	senders          emailports.EmailSenderResolver
+	documentStore    documentports.DocumentStore
+	documents        documentports.DocumentRepository
+	now              func() int64
+	effects          *detentioneffects.Effects
+}
+
 func (s *Service) DisputeRecord(
 	ctx context.Context,
 	p *DisputeRecordParams,
@@ -245,26 +265,6 @@ func (s *Service) recordDisputeRecord(
 	}
 }
 
-type Service struct {
-	l                *zap.Logger
-	policyRepo       detentionports.DetentionPolicyRepository
-	occurrenceRepo   detentionports.DetentionOccurrenceRepository
-	noticeRepo       detentionports.DetentionNoticeRepository
-	customerRepo     customerports.CustomerRepository
-	documentTypeRepo documenttypeports.DocumentTypeRepository
-	emailService     emailports.EmailService
-	uploadService    documentuploadports.DocumentUploadService
-	workflowStarter  kernelports.WorkflowStarter
-	templates        documenttemplateports.DocumentTemplateResolver
-	contextBuilder   *detentionnoticerender.ContextBuilder
-	publisher        agenteventports.AgentEventPublisher
-	senders          emailports.EmailSenderResolver
-	documentStore    documentports.DocumentStore
-	documents        documentports.DocumentRepository
-	now              func() int64
-	effects          *detentioneffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -287,6 +287,7 @@ type Params struct {
 	Effects          *detentioneffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
 	if now == nil {
@@ -408,7 +409,7 @@ func (s *Service) BuildNotice(
 // before the free-time clock runs out.
 func (s *Service) ScheduleNotice(
 	ctx context.Context,
-	p ScheduleNoticeParams,
+	p *ScheduleNoticeParams,
 ) (*ScheduledNotice, error) {
 	if p.Occurrence == nil {
 		return nil, errortypes.NewValidationError(
@@ -416,7 +417,7 @@ func (s *Service) ScheduleNotice(
 	}
 
 	occ := p.Occurrence
-	content, err := s.renderScheduledNotice(ctx, &p)
+	content, err := s.renderScheduledNotice(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -574,9 +575,9 @@ func (s *Service) applyNoticeToOccurrence(
 // profile, because the notice must reach whoever receives the invoice.
 func (s *Service) SendOccurrenceNotice(
 	ctx context.Context,
-	p SendOccurrenceNoticeParams,
+	p *SendOccurrenceNoticeParams,
 ) (*detention.DetentionOccurrence, error) {
-	plan, err := s.planOccurrenceNotice(ctx, &p)
+	plan, err := s.planOccurrenceNotice(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +585,7 @@ func (s *Service) SendOccurrenceNotice(
 	occurrence := plan.schedule.Occurrence
 	original := *occurrence
 
-	scheduled, err := s.ScheduleNotice(ctx, plan.schedule)
+	scheduled, err := s.ScheduleNotice(ctx, &plan.schedule)
 	if err != nil {
 		return nil, err
 	}
@@ -682,7 +683,7 @@ func (s *Service) SweepNoticesDue(
 			continue
 		}
 
-		if _, sendErr := s.SendOccurrenceNotice(ctx, SendOccurrenceNoticeParams{
+		if _, sendErr := s.SendOccurrenceNotice(ctx, &SendOccurrenceNoticeParams{
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   tenantInfo,
 			Automatic:    true,

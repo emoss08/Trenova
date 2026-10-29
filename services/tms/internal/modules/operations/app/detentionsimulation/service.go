@@ -2,12 +2,14 @@ package detentionsimulation
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,6 +18,13 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
+
+type Service struct {
+	accessorialRepo accessorialchargeports.AccessorialChargeRepository
+	analyticsRepo   detentionports.DetentionAnalyticsRepository
+	now             func() int64
+	effects         *detentioneffects.Effects
+}
 
 // Backtest replays proposed policy terms against settled dwell history.
 //
@@ -29,20 +38,8 @@ func (s *Service) Backtest(
 	req BacktestRequest,
 	tenantInfo pagination.TenantInfo,
 ) (*BacktestResult, error) {
-	if req.Policy == nil {
-		return nil, errortypes.NewValidationError(
-			"policy", errortypes.ErrRequired, "A policy is required to backtest")
-	}
-
-	multiErr := errortypes.NewMultiError()
-	req.Policy.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	if s.analyticsRepo == nil {
-		return nil, errortypes.NewValidationError(
-			"policy", errortypes.ErrSystemError, "Backtesting is not available")
+	if err := s.validateBacktest(&req); err != nil {
+		return nil, err
 	}
 
 	limit := req.Limit
@@ -60,7 +57,55 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	result := &BacktestResult{
+	result := newBacktestResult(&req)
+
+	if len(facts) > limit {
+		result.Truncated = true
+		facts = facts[:limit]
+	}
+
+	replay, err := s.newBacktestReplay(ctx, &req, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, fact := range facts {
+		replay.apply(result, fact)
+	}
+
+	result.RevenueDelta = result.ProposedRevenue.Sub(result.BaselineRevenue)
+	result.ByCustomer = rankBuckets(replay.byCustomer)
+	result.ByFacility = rankBuckets(replay.byFacility)
+
+	if err = s.labelBuckets(ctx, tenantInfo, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) validateBacktest(req *BacktestRequest) error {
+	if req.Policy == nil {
+		return errortypes.NewValidationError(
+			"policy", errortypes.ErrRequired, "A policy is required to backtest")
+	}
+
+	multiErr := errortypes.NewMultiError()
+	req.Policy.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	if s.analyticsRepo == nil {
+		return errortypes.NewValidationError(
+			"policy", errortypes.ErrSystemError, "Backtesting is not available")
+	}
+
+	return nil
+}
+
+func newBacktestResult(req *BacktestRequest) *BacktestResult {
+	return &BacktestResult{
 		ProposedRevenue:     decimal.Zero,
 		BaselineRevenue:     decimal.Zero,
 		RevenueDelta:        decimal.Zero,
@@ -70,12 +115,24 @@ func (s *Service) Backtest(
 		From:                req.From,
 		To:                  req.To,
 	}
+}
 
-	if len(facts) > limit {
-		result.Truncated = true
-		facts = facts[:limit]
-	}
+type backtestReplay struct {
+	policy       *detentionpolicy.DetentionPolicy
+	accessorial  *accessorialcharge.AccessorialCharge
+	payRate      decimal.NullDecimal
+	location     *time.Location
+	baseline     map[string]decimal.Decimal
+	assumeNotice bool
+	byCustomer   map[string]*BacktestBucket
+	byFacility   map[string]*BacktestBucket
+}
 
+func (s *Service) newBacktestReplay(
+	ctx context.Context,
+	req *BacktestRequest,
+	tenantInfo pagination.TenantInfo,
+) (*backtestReplay, error) {
 	accessorial, err := s.accessorialRepo.GetByID(
 		ctx,
 		accessorialchargeports.GetAccessorialChargeByIDRequest{
@@ -99,98 +156,102 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	assumeNotice := req.AssumeNoticeCompliance == nil || *req.AssumeNoticeCompliance
+	return &backtestReplay{
+		policy:       req.Policy,
+		accessorial:  accessorial,
+		payRate:      payRate,
+		location:     location,
+		baseline:     baseline,
+		assumeNotice: req.AssumeNoticeCompliance == nil || *req.AssumeNoticeCompliance,
+		byCustomer:   map[string]*BacktestBucket{},
+		byFacility:   map[string]*BacktestBucket{},
+	}, nil
+}
 
-	byCustomer := map[string]*BacktestBucket{}
-	byFacility := map[string]*BacktestBucket{}
-
-	for _, fact := range facts {
-		if fact == nil || fact.ActualArrival == nil {
-			continue
-		}
-
-		result.StopsEvaluated++
-
-		if fact.CountDetentionOverride != nil && !*fact.CountDetentionOverride {
-			continue
-		}
-
-		stopType := shipmentvocab.StopType(fact.StopType)
-		scheduleType := shipmentvocab.StopScheduleType(fact.ScheduleType)
-
-		if !req.Policy.Matches(&detentionpolicy.MatchInput{
-			CustomerID:     fact.CustomerID,
-			LocationID:     fact.LocationID,
-			ShipmentTypeID: fact.ShipmentTypeID,
-			ServiceTypeID:  fact.ServiceTypeID,
-			StopType:       stopType,
-			ScheduleType:   scheduleType,
-			Timestamp:      *fact.ActualArrival,
-		}) {
-			continue
-		}
-
-		result.StopsMatched++
-
-		snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
-			Policy:          req.Policy,
-			StopType:        fact.StopType,
-			FreeMinutes:     req.Policy.FreeMinutesForStopType(stopType),
-			AccessorialCode: accessorial.Code,
-			FlatRate:        accessorial.Amount,
-			FlatRateUnit:    detentionengine.TierUnitFromAccessorial(accessorial.RateUnit),
-			CapturedAt:      *fact.ActualArrival,
-		})
-
-		computed := detentionengine.Compute(detentionengine.ComputeInput{
-			Snapshot:         snapshot,
-			StopType:         stopType,
-			ScheduleType:     scheduleType,
-			ArrivedAt:        fact.ActualArrival,
-			DepartedAt:       fact.ActualDeparture,
-			AppointmentStart: appointmentStartFromFact(fact),
-			AppointmentEnd:   fact.ScheduledWindowEnd,
-			NoticeSentAt:     noticeSentFor(assumeNotice, fact.ActualArrival),
-			Now:              derefOr(fact.ActualDeparture, *fact.ActualArrival),
-			Location:         location,
-			DriverPayRate:    payRate,
-			ShipmentAccrued:  decimal.Zero,
-		})
-
-		if computed.ArrivedLate &&
-			req.Policy.LateArrivalRule == detentionpolicy.LateArrivalRuleForfeit {
-			result.StopsForfeited++
-		}
-		if computed.SuppressedByGate {
-			result.StopsSuppressed++
-		}
-		if computed.BillableAmount.IsPositive() {
-			result.StopsBillable++
-		}
-		if computed.NetMargin.IsNegative() {
-			*result.NegativeMarginStops++
-		}
-
-		prior := baseline[fact.StopID.String()]
-
-		result.ProposedRevenue = result.ProposedRevenue.Add(computed.BillableAmount)
-		result.BaselineRevenue = result.BaselineRevenue.Add(prior)
-		result.ProposedDriverPay = addNull(result.ProposedDriverPay, computed.DriverPayAmount)
-		result.ProposedNetMargin = addNull(result.ProposedNetMargin, computed.NetMargin)
-
-		accumulate(byCustomer, fact.CustomerID.String(), computed, prior)
-		accumulate(byFacility, fact.LocationID.String(), computed, prior)
+func (r *backtestReplay) apply(result *BacktestResult, fact *detentionports.StopFact) {
+	if fact == nil || fact.ActualArrival == nil {
+		return
 	}
 
-	result.RevenueDelta = result.ProposedRevenue.Sub(result.BaselineRevenue)
-	result.ByCustomer = rankBuckets(byCustomer)
-	result.ByFacility = rankBuckets(byFacility)
+	result.StopsEvaluated++
 
-	if err = s.labelBuckets(ctx, tenantInfo, result); err != nil {
-		return nil, err
+	if fact.CountDetentionOverride != nil && !*fact.CountDetentionOverride {
+		return
 	}
 
-	return result, nil
+	stopType := shipmentvocab.StopType(fact.StopType)
+	scheduleType := shipmentvocab.StopScheduleType(fact.ScheduleType)
+
+	if !r.policy.Matches(&detentionpolicy.MatchInput{
+		CustomerID:     fact.CustomerID,
+		LocationID:     fact.LocationID,
+		ShipmentTypeID: fact.ShipmentTypeID,
+		ServiceTypeID:  fact.ServiceTypeID,
+		StopType:       stopType,
+		ScheduleType:   scheduleType,
+		Timestamp:      *fact.ActualArrival,
+	}) {
+		return
+	}
+
+	result.StopsMatched++
+
+	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
+		Policy:          r.policy,
+		StopType:        fact.StopType,
+		FreeMinutes:     r.policy.FreeMinutesForStopType(stopType),
+		AccessorialCode: r.accessorial.Code,
+		FlatRate:        r.accessorial.Amount,
+		FlatRateUnit:    detentionengine.TierUnitFromAccessorial(r.accessorial.RateUnit),
+		CapturedAt:      *fact.ActualArrival,
+	})
+
+	computed := detentionengine.Compute(&detentionengine.ComputeInput{
+		Snapshot:         snapshot,
+		StopType:         stopType,
+		ScheduleType:     scheduleType,
+		ArrivedAt:        fact.ActualArrival,
+		DepartedAt:       fact.ActualDeparture,
+		AppointmentStart: appointmentStartFromFact(fact),
+		AppointmentEnd:   fact.ScheduledWindowEnd,
+		NoticeSentAt:     noticeSentFor(r.assumeNotice, fact.ActualArrival),
+		Now:              derefOr(fact.ActualDeparture, *fact.ActualArrival),
+		Location:         r.location,
+		DriverPayRate:    r.payRate,
+		ShipmentAccrued:  decimal.Zero,
+	})
+
+	r.tally(result, fact, &computed)
+}
+
+func (r *backtestReplay) tally(
+	result *BacktestResult,
+	fact *detentionports.StopFact,
+	computed *detentionengine.ComputeResult,
+) {
+	if computed.ArrivedLate &&
+		r.policy.LateArrivalRule == detentionpolicy.LateArrivalRuleForfeit {
+		result.StopsForfeited++
+	}
+	if computed.SuppressedByGate {
+		result.StopsSuppressed++
+	}
+	if computed.BillableAmount.IsPositive() {
+		result.StopsBillable++
+	}
+	if computed.NetMargin.IsNegative() {
+		*result.NegativeMarginStops++
+	}
+
+	prior := r.baseline[fact.StopID.String()]
+
+	result.ProposedRevenue = result.ProposedRevenue.Add(computed.BillableAmount)
+	result.BaselineRevenue = result.BaselineRevenue.Add(prior)
+	result.ProposedDriverPay = addNull(result.ProposedDriverPay, computed.DriverPayAmount)
+	result.ProposedNetMargin = addNull(result.ProposedNetMargin, computed.NetMargin)
+
+	accumulate(r.byCustomer, fact.CustomerID.String(), computed, prior)
+	accumulate(r.byFacility, fact.LocationID.String(), computed, prior)
 }
 
 // labelBuckets swaps raw IDs for display names so a backtest reads as
@@ -317,13 +378,6 @@ func (s *Service) WaiverLeakage(
 	return s.analyticsRepo.WaiverStats(ctx, req)
 }
 
-type Service struct {
-	accessorialRepo accessorialchargeports.AccessorialChargeRepository
-	analyticsRepo   detentionports.DetentionAnalyticsRepository
-	now             func() int64
-	effects         *detentioneffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -354,7 +408,7 @@ func New(p Params) *Service {
 func (s *Service) PreviewPolicy(
 	ctx context.Context,
 	policy *detentionpolicy.DetentionPolicy,
-	scenario PreviewScenario,
+	scenario *PreviewScenario,
 	tenantInfo pagination.TenantInfo,
 ) (*PreviewResult, error) {
 	if policy == nil {
@@ -373,11 +427,13 @@ func (s *Service) PreviewPolicy(
 			"scenario.arrivedAt", errortypes.ErrRequired, "An arrival time is required")
 	}
 
-	if scenario.StopType == "" {
-		scenario.StopType = shipmentvocab.StopTypeDelivery
+	stopType := scenario.StopType
+	if stopType == "" {
+		stopType = shipmentvocab.StopTypeDelivery
 	}
-	if scenario.ScheduleType == "" {
-		scenario.ScheduleType = shipmentvocab.StopScheduleTypeAppointment
+	scheduleType := scenario.ScheduleType
+	if scheduleType == "" {
+		scheduleType = shipmentvocab.StopScheduleTypeAppointment
 	}
 
 	accessorial, err := s.accessorialRepo.GetByID(
@@ -400,8 +456,8 @@ func (s *Service) PreviewPolicy(
 
 	snapshot := detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
 		Policy:          policy,
-		StopType:        string(scenario.StopType),
-		FreeMinutes:     policy.FreeMinutesForStopType(scenario.StopType),
+		StopType:        string(stopType),
+		FreeMinutes:     policy.FreeMinutesForStopType(stopType),
 		AccessorialCode: accessorial.Code,
 		FlatRate:        accessorial.Amount,
 		FlatRateUnit:    detentionengine.TierUnitFromAccessorial(accessorial.RateUnit),
@@ -413,10 +469,10 @@ func (s *Service) PreviewPolicy(
 		return nil, err
 	}
 
-	computed := detentionengine.Compute(detentionengine.ComputeInput{
+	computed := detentionengine.Compute(&detentionengine.ComputeInput{
 		Snapshot:         snapshot,
-		StopType:         scenario.StopType,
-		ScheduleType:     scenario.ScheduleType,
+		StopType:         stopType,
+		ScheduleType:     scheduleType,
 		ArrivedAt:        &scenario.ArrivedAt,
 		DepartedAt:       scenario.DepartedAt,
 		AppointmentStart: scenario.AppointmentStart,
