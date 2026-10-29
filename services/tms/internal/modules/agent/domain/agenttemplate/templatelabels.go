@@ -1,68 +1,42 @@
 package agenttemplate
 
-func (t Template) Label() string { //nolint:cyclop // the i18n extractor reads each caption from a literal return in Label
-	switch t {
-	case TemplateDispatchAssistant:
-		return "Dispatch assistant"
-	case TemplateBillingAssistant:
-		return "Billing assistant"
-	case TemplateComplianceAssistant:
-		return "Compliance assistant"
-	case TemplateCustomerAssistant:
-		return "Customer assistant"
-	case TemplateGeneralAssistant:
-		return "General assistant"
-	case TemplateBillingException:
-		return "Billing exception agent"
-	case TemplateDispatchAssignment:
-		return "Dispatch coverage agent"
-	case TemplateImportAssistant:
-		return "Shipment import assistant"
-	case TemplateLoadMonitor:
-		return "Load monitor"
-	case TemplateShipmentIntake:
-		return "Shipment intake agent"
-	case TemplateCashApplication:
-		return "Cash application agent"
-	case TemplateDetentionDesk:
-		return "Detention desk"
-	case TemplateCredentialDesk:
-		return "Credential desk"
-	case TemplateCustomerUpdateDesk:
-		return "Customer update desk"
-	case TemplateCarrierRiskDesk:
-		return "Carrier risk desk"
-	case TemplateIntakeDesk:
-		return "Intake desk"
-	case TemplateLoadEntryCheck:
-		return "Load entry check"
-	case TemplateServiceFailureDesk:
-		return "Service failure desk"
-	case TemplateInsightAnalyst:
-		return "Insight analyst"
-	case TemplateEDIDesk:
-		return "EDI desk"
-	case TemplateFormulaAssistant:
-		return "Formula assistant"
-	case TemplateBooksKeeper:
-		return "Books keeper"
-	case TemplateSettlementsClerk:
-		return "Settlements clerk"
-	case TemplateReceivables:
-		return "Receivables assistant"
-	case TemplateMasterDataSteward:
-		return "Master data steward"
-	case TemplateWorkforceCoordinator:
-		return "Workforce coordinator"
-	case TemplateFuelTaxClerk:
-		return "Fuel and IFTA clerk"
-	case TemplateReportAnalyst:
-		return "Report analyst"
-	case TemplateFactoringClerk:
-		return "Factoring clerk"
-	default:
-		return string(t)
+var templateLabels = map[Template]string{
+	TemplateDispatchAssistant:    "Dispatch assistant",
+	TemplateBillingAssistant:     "Billing assistant",
+	TemplateComplianceAssistant:  "Compliance assistant",
+	TemplateCustomerAssistant:    "Customer assistant",
+	TemplateGeneralAssistant:     "General assistant",
+	TemplateBillingException:     "Billing exception agent",
+	TemplateDispatchAssignment:   "Dispatch coverage agent",
+	TemplateImportAssistant:      "Shipment import assistant",
+	TemplateLoadMonitor:          "Load monitor",
+	TemplateShipmentIntake:       "Shipment intake agent",
+	TemplateCashApplication:      "Cash application agent",
+	TemplateDetentionDesk:        "Detention desk",
+	TemplateCredentialDesk:       "Credential desk",
+	TemplateCustomerUpdateDesk:   "Customer update desk",
+	TemplateCarrierRiskDesk:      "Carrier risk desk",
+	TemplateIntakeDesk:           "Intake desk",
+	TemplateLoadEntryCheck:       "Load entry check",
+	TemplateServiceFailureDesk:   "Service failure desk",
+	TemplateInsightAnalyst:       "Insight analyst",
+	TemplateEDIDesk:              "EDI desk",
+	TemplateFormulaAssistant:     "Formula assistant",
+	TemplateBooksKeeper:          "Books keeper",
+	TemplateSettlementsClerk:     "Settlements clerk",
+	TemplateReceivables:          "Receivables assistant",
+	TemplateMasterDataSteward:    "Master data steward",
+	TemplateWorkforceCoordinator: "Workforce coordinator",
+	TemplateFuelTaxClerk:         "Fuel and IFTA clerk",
+	TemplateReportAnalyst:        "Report analyst",
+	TemplateFactoringClerk:       "Factoring clerk",
+}
+
+func (t Template) Label() string {
+	if label, ok := templateLabels[t]; ok {
+		return label
 	}
+	return string(t)
 }
 
 func (t Template) Description() string {
