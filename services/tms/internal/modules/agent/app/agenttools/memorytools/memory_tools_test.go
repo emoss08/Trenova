@@ -253,7 +253,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	require.NotNil(t, memory.OwnerUserID)
 	assert.Equal(t, params.Actor.UserID, *memory.OwnerUserID)
 	assert.Equal(t, agentmemory.MemoryStatusActive, memory.Status)
-	assert.Equal(t, agent.EgressPersonal, tool.Policy().Classified(params).Egress)
+	assert.Equal(t, agent.EgressPersonal, policyOf(tool).Classified(params).Egress)
 
 	team := agenttoolstest.MemoryParams(
 		map[string]any{"content": "Columbus loads need a lumper receipt.", "visibleTo": "team"},
@@ -263,7 +263,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	assert.Equal(t, agentmemory.MemoryScopeRole, memory.Scope)
 	require.NotNil(t, memory.RoleID)
 	assert.Equal(t, roleID, *memory.RoleID)
-	assert.Equal(t, agent.EgressInternal, tool.Policy().Classified(team).Egress)
+	assert.Equal(t, agent.EgressInternal, policyOf(tool).Classified(team).Egress)
 
 	org := agenttoolstest.MemoryParams(
 		map[string]any{"content": "Use the DOE weekly average.", "visibleTo": "organization"},
@@ -338,4 +338,10 @@ func TestMemoryTools_AreGatedOnUsingTheAssistant(t *testing.T) {
 		assert.Equal(t, permission.ResourceAssistant, tool.Policy().Resource, tool.Name())
 		assert.Equal(t, permission.OpCreate, tool.Policy().Operation, tool.Name())
 	}
+}
+
+func policyOf(tool interface{ Policy() agenttoolports.ToolPolicy }) *agenttoolports.ToolPolicy {
+	policy := tool.Policy()
+
+	return &policy
 }

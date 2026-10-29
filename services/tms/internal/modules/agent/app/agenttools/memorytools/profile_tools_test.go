@@ -68,7 +68,7 @@ func TestGuideProfile_WritesGuidanceForTheProfileItNames(t *testing.T) {
 	assert.Equal(t, mine.Actor.UserID, guide.added.Ref.PersonID)
 	assert.Equal(t, "I only handle the Midwest accounts.", guide.added.Content)
 	assert.Equal(t, agentprofile.GuidanceSourceAgent, guide.added.Source)
-	assert.Equal(t, agent.EgressPersonal, tool.Policy().Classified(mine).Egress,
+	assert.Equal(t, agent.EgressPersonal, policyOf(tool).Classified(mine).Egress,
 		"guidance about the person's own work reaches only their conversations")
 
 	org := agenttoolstest.MemoryParams(map[string]any{
@@ -77,7 +77,7 @@ func TestGuideProfile_WritesGuidanceForTheProfileItNames(t *testing.T) {
 	})
 	require.NoError(t, tool.Execute(t.Context(), org))
 	assert.Equal(t, agentprofile.SubjectOrganization, guide.added.Ref.Subject)
-	assert.Equal(t, agent.EgressInternal, tool.Policy().Classified(org).Egress)
+	assert.Equal(t, agent.EgressInternal, policyOf(tool).Classified(org).Egress)
 }
 
 func TestGuideProfile_RefusesWhatItCannotWriteDown(t *testing.T) {

@@ -220,15 +220,15 @@ func (a *recordingAction) Prerequisites() []string { return prerequisitesOf(a.in
 
 func (a *recordingAction) Companions() []string { return companionsOf(a.inner) }
 
-//nolint:gocritic // agenttoolports tools take their execute params by value
 func (a *recordingAction) Execute(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
+	policy := a.inner.Policy()
 	a.rec.executed(&ExecutionRecord{
 		Tool:   a.Name(),
 		Params: *params,
-		Egress: a.inner.Policy().Classified(params).Egress,
+		Egress: policy.Classified(params).Egress,
 	})
 
 	if slices.Contains(passthroughTools, a.Name()) {

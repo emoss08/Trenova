@@ -555,7 +555,9 @@ func (s *Service) CallEgress(
 
 	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
 
-	return tool.Policy().Classified(&agenttoolports.ToolExecuteParams{
+	policy := tool.Policy()
+
+	return policy.Classified(&agenttoolports.ToolExecuteParams{
 		OrganizationID: proposal.OrganizationID,
 		BusinessUnitID: proposal.BusinessUnitID,
 		Params:         params,

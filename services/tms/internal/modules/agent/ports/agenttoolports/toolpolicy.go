@@ -80,7 +80,7 @@ func (p ToolPolicy) HeldWhenTainted() bool {
 	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)
 }
 
-func (p ToolPolicy) Classified(params *ToolExecuteParams) CallPolicy {
+func (p *ToolPolicy) Classified(params *ToolExecuteParams) CallPolicy {
 	if p.Classify != nil {
 		return p.Classify(params)
 	}
@@ -159,7 +159,7 @@ func (p ToolPolicy) Bounded() bool {
 	return p.Condition != nil && p.Condition.Bounds != nil
 }
 
-func (p ToolPolicy) TaintHolds(params *ToolExecuteParams, call CallPolicy) bool {
+func (p *ToolPolicy) TaintHolds(params *ToolExecuteParams, call CallPolicy) bool {
 	if call.Egress.Leaves() {
 		return true
 	}
