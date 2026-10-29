@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionwebwatchservice
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
@@ -31,7 +33,7 @@ const (
 )
 
 type fakeWatcher struct {
-	*fakeWeb
+	*agentextensiontest.FakeWeb
 
 	mu        sync.Mutex
 	created   []*agentextensionports.WebWatchCreateRequest
@@ -116,7 +118,7 @@ func (m *memoryWatches) Create(
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	watch.CreatedAt = testNow
+	watch.CreatedAt = agentextensiontest.Now
 	stored := *watch
 	m.watches[watch.ID] = &stored
 
@@ -315,19 +317,21 @@ func (w *watchWorkflows) SignalWorkflow(
 func (w *watchWorkflows) Enabled() bool { return true }
 
 type watchFixture struct {
-	*fixture
-
+	svc       *Service
+	core      *agentextensionservice.Service
+	usage     *agentextensiontest.MemoryUsage
 	watcher   *fakeWatcher
 	watches   *memoryWatches
 	findings  *memoryFindings
 	workflows *watchWorkflows
+	tenant    pagination.TenantInfo
 }
 
 func newWatchFixture(t *testing.T, webBase string) *watchFixture {
 	t.Helper()
 
 	w := newBareWatchFixture(t, webBase)
-	w.enable(t, map[string]string{"apiKey": testAPIKey})
+	w.enable(t, map[string]string{"apiKey": agentextensiontest.APIKey})
 
 	return w
 }
@@ -336,35 +340,71 @@ func newWatchFixture(t *testing.T, webBase string) *watchFixture {
 func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 	t.Helper()
 
-	f := newFixture(t)
 	w := &watchFixture{
-		fixture:   f,
-		watcher:   &fakeWatcher{fakeWeb: f.web},
+		usage: &agentextensiontest.MemoryUsage{Cost: decimal.Zero},
+		watcher: &fakeWatcher{FakeWeb: &agentextensiontest.FakeWeb{
+			Kind:       agentextension.TypeExa,
+			SearchCost: decimal.RequireFromString("0.005"),
+			ReadCost:   decimal.RequireFromString("0.001"),
+		}},
 		watches:   &memoryWatches{watches: make(map[pulid.ID]*extensionwebwatch.WebWatch)},
 		findings:  &memoryFindings{},
 		workflows: &watchWorkflows{},
-	}
-	f.svc = New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         f.repo,
-		Usage:        f.usage,
-		Encryption:   testEncryptionService(),
-		AuditService: f.audit,
-		Connectors: []agentextensionports.ExtensionConnector{
-			w.watcher,
-			f.parallel,
-			f.browser,
+		tenant: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
 		},
-		Sites:     f.sites,
-		Runs:      f.runs,
-		Watches:   w.watches,
-		Findings:  w.findings,
-		Workflows: w.workflows,
-		AppConfig: &appconfig.Config{WebBaseURL: webBase},
+	}
+	encryption := agentextensiontest.EncryptionService()
+	connectors := []agentextensionports.ExtensionConnector{
+		w.watcher,
+		&agentextensiontest.FakeWeb{
+			Kind:       agentextension.TypeParallel,
+			SearchCost: decimal.RequireFromString("0.001"),
+			ReadCost:   decimal.RequireFromString("0.001"),
+		},
+	}
+	w.core = agentextensionservice.New(agentextensionservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         agentextensiontest.NewMemoryRepo(),
+		Usage:        w.usage,
+		Encryption:   encryption,
+		AuditService: &agentextensiontest.RecordingAudit{},
+		Connectors:   connectors,
 	})
-	f.svc.now = func() int64 { return testNow }
+	w.svc = New(Params{
+		Logger:     zap.NewNop(),
+		Extensions: w.core,
+		Encryption: encryption,
+		Connectors: connectors,
+		Watches:    w.watches,
+		Findings:   w.findings,
+		Workflows:  w.workflows,
+		AppConfig:  &appconfig.Config{WebBaseURL: webBase},
+	})
+	w.svc.now = func() int64 { return agentextensiontest.Now }
 
 	return w
+}
+
+func (w *watchFixture) enable(
+	t *testing.T,
+	configuration map[string]string,
+) *agentextensionports.AgentExtensionConfigResponse {
+	t.Helper()
+
+	return w.enableType(t, agentextension.TypeExa, configuration)
+}
+
+func (w *watchFixture) enableType(
+	t *testing.T,
+	typ agentextension.Type,
+	configuration map[string]string,
+) *agentextensionports.AgentExtensionConfigResponse {
+	t.Helper()
+
+	return agentextensiontest.EnableType(t, w.core, w.tenant, typ, configuration)
 }
 
 func (w *watchFixture) request() *agentextensionports.WebWatchRequest {
@@ -429,7 +469,7 @@ func TestPlanningAWatchSaysWhatItWillCostWithoutReachingTheVendor(t *testing.T) 
 	assert.Equal(t, []string{"fmcsa.dot.gov", "federalregister.gov"}, plan.Sites)
 	assert.Equal(t, extensionwebwatch.WebWatchCadenceWeekly, plan.Cadence)
 	assert.Equal(t, 28, plan.Days)
-	assert.Equal(t, testNow+28*24*60*60, plan.EndsAt)
+	assert.Equal(t, agentextensiontest.Now+28*24*60*60, plan.EndsAt)
 	assert.Equal(t, "Exa", plan.Vendor)
 	assert.True(t, decimal.RequireFromString("0.06").Equal(plan.EstimatedCost),
 		"four weekly checks at $0.015")
@@ -484,7 +524,7 @@ func TestAWatchIsRefusedPastTheOrganizationsLimit(t *testing.T) {
 
 	w := newWatchFixture(t, testWebBase)
 	w.enable(t, map[string]string{
-		"apiKey":                                 testAPIKey,
+		"apiKey":                                 agentextensiontest.APIKey,
 		agentextension.ConfigKeyMaxActiveWatches: "1",
 	})
 	w.set(t)
@@ -514,7 +554,11 @@ func TestAVendorThatCannotWatchIsRefused(t *testing.T) {
 	t.Parallel()
 
 	w := newBareWatchFixture(t, testWebBase)
-	w.enableType(t, agentextension.TypeParallel, map[string]string{"apiKey": testAPIKey})
+	w.enableType(
+		t,
+		agentextension.TypeParallel,
+		map[string]string{"apiKey": agentextensiontest.APIKey},
+	)
 
 	_, err := w.svc.PlanWebWatch(t.Context(), w.request())
 	require.Error(t, err)
@@ -530,10 +574,14 @@ func TestACheckRecordsEachSettledRunOnceAndHandsOnWhatIsNew(t *testing.T) {
 	w.watcher.runs = []agentextensionports.WebWatchRun{
 		{
 			ID: "run_3", Phase: agentextensionports.WebWatchRunPending,
-			CreatedAt: testNow + 300,
+			CreatedAt: agentextensiontest.Now + 300,
 		},
-		completedRun("run_2", testNow+200, "javascript:alert(1)"),
-		completedRun("run_1", testNow+100, "https://www.federalregister.gov/d/2026-1"),
+		completedRun("run_2", agentextensiontest.Now+200, "javascript:alert(1)"),
+		completedRun(
+			"run_1",
+			agentextensiontest.Now+100,
+			"https://www.federalregister.gov/d/2026-1",
+		),
 	}
 
 	check, err := w.svc.CheckWebWatch(t.Context(), w.tenant, view.ID)
@@ -546,13 +594,13 @@ func TestACheckRecordsEachSettledRunOnceAndHandsOnWhatIsNew(t *testing.T) {
 	assert.Equal(t, 1, check.Watch.FindingCount)
 	assert.True(t, decimal.RequireFromString("0.03").Equal(check.Watch.CostUSD))
 	require.NotNil(t, check.Watch.LastRunAt)
-	assert.Equal(t, testNow+200, *check.Watch.LastRunAt)
-	assert.True(t, decimal.RequireFromString("0.03").Equal(w.usage.cost))
+	assert.Equal(t, agentextensiontest.Now+200, *check.Watch.LastRunAt)
+	assert.True(t, decimal.RequireFromString("0.03").Equal(w.usage.Cost))
 
 	again, err := w.svc.CheckWebWatch(t.Context(), w.tenant, view.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, again.Watch.RunCount, "a run already counted is not counted again")
-	assert.Equal(t, []int64{0, testNow + 200}, w.watcher.after,
+	assert.Equal(t, []int64{0, agentextensiontest.Now + 200}, w.watcher.after,
 		"the vendor is told which runs were already counted")
 	assert.Len(t, w.findings.findings, 1)
 
@@ -602,8 +650,8 @@ func TestAFailedRunIsBilledAndExplained(t *testing.T) {
 		ID:        "run_1",
 		Phase:     agentextensionports.WebWatchRunFailed,
 		Failure:   "insufficient_credits",
-		CreatedAt: testNow + 100,
-		SettledAt: testNow + 110,
+		CreatedAt: agentextensiontest.Now + 100,
+		SettledAt: agentextensiontest.Now + 110,
 		CostUSD:   extensionwebwatch.ExaMonitorRunCostUSD,
 	}}
 
@@ -613,7 +661,7 @@ func TestAFailedRunIsBilledAndExplained(t *testing.T) {
 	assert.False(t, check.Ended, "a failed run does not end the watch")
 	assert.Contains(t, check.Watch.Failure, "ran out of credits")
 	assert.Equal(t, 1, check.Watch.RunCount)
-	assert.Equal(t, 1, w.usage.failures)
+	assert.Equal(t, 1, w.usage.Failures)
 }
 
 func TestOnlyWhoAWatchWasSetForStopsIt(t *testing.T) {

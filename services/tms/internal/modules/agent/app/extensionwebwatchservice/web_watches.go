@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionwebwatchservice
 
 import (
 	"cmp"
@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,6 @@ import (
 )
 
 const (
-	webWatchSecretKind    = "agent_web_watch"
 	webWatchAPIBase       = "/api/v1"
 	webWatchMetadataKey   = "trenovaWebWatch"
 	webWatchNamePrefix    = "Trenova: "
@@ -46,17 +45,8 @@ var (
 	_ agentextensionports.WebWatchDeliveries = (*Service)(nil)
 )
 
-func webWatchScope(tenantInfo pagination.TenantInfo, watchID pulid.ID) secretconfig.Scope {
-	return secretconfig.Scope{
-		Purpose:      encryptionservice.PurposeAgentExtensionSecret,
-		Tenant:       tenantInfo,
-		ResourceKind: webWatchSecretKind,
-		Subject:      watchID.String(),
-	}
-}
-
 type webWatchCall struct {
-	*extensionSettings
+	*agentextensionservice.ExtensionSettings
 	excluded []string
 	allowed  int
 	provider agentextensionports.WebWatchProvider
@@ -68,7 +58,7 @@ func (s *Service) webWatching(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*webWatchCall, error) {
-	extension, err := s.serving(ctx, tenantInfo, agentextension.CapabilityWebResearch)
+	extension, err := s.core.Serving(ctx, tenantInfo, agentextension.CapabilityWebResearch)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +73,7 @@ func (s *Service) webWatchCallOf(
 	tenantInfo pagination.TenantInfo,
 	typ agentextension.Type,
 ) (*webWatchCall, error) {
-	extension, err := s.settingsFor(ctx, tenantInfo, typ)
+	extension, err := s.core.SettingsFor(ctx, tenantInfo, typ)
 	if err != nil {
 		return nil, err
 	}
@@ -91,28 +81,34 @@ func (s *Service) webWatchCallOf(
 	return s.webWatchCallFor(extension)
 }
 
-func (s *Service) webWatchCallFor(extension *extensionSettings) (*webWatchCall, error) {
-	spec, _ := agentextension.SpecFor(extension.typ)
-	provider, ok := s.watchers[extension.typ]
+func (s *Service) webWatchCallFor(
+	extension *agentextensionservice.ExtensionSettings,
+) (*webWatchCall, error) {
+	spec, _ := agentextension.SpecFor(extension.Type)
+	provider, ok := s.watchers[extension.Type]
 	if !ok || spec.Omits(agentextension.ToolWatchWeb) {
-		return nil, &ToolError{Message: extension.def.Vendor + " cannot watch the web on a " +
-			"schedule. Search again later instead, or an administrator can use Exa for web " +
-			"research under AI Control, Extensions."}
+		return nil, &agentextensionservice.ToolError{
+			Message: extension.Def.Vendor + " cannot watch the web on a " +
+				"schedule. Search again later instead, or an administrator can use Exa for web " +
+				"research under AI Control, Extensions.",
+		}
 	}
 
 	multiErr := errortypes.NewMultiError()
-	agentextension.ValidateSettings(extension.typ, extension.values, multiErr)
-	settings, err := agentextension.ParseWebResearchSettings(extension.values)
+	agentextension.ValidateSettings(extension.Type, extension.Values, multiErr)
+	settings, err := agentextension.ParseWebResearchSettings(extension.Values)
 	if multiErr.HasErrors() || err != nil {
 		s.l.Error("stored web research settings are invalid",
-			zap.String("type", extension.typ.String()), zap.Error(errors.Join(multiErr, err)))
-		return nil, &ToolError{Message: "The " + extension.def.title() + invalidSettingsSuffix}
+			zap.String("type", extension.Type.String()), zap.Error(errors.Join(multiErr, err)))
+		return nil, &agentextensionservice.ToolError{
+			Message: "The " + extension.Def.Title() + agentextensionservice.InvalidSettingsSuffix,
+		}
 	}
 
 	return &webWatchCall{
-		extensionSettings: extension,
+		ExtensionSettings: extension,
 		excluded:          settings.ExcludedDomains,
-		allowed:           extensionwebwatch.MaxActiveWebWatches(extension.typ, extension.values),
+		allowed:           extensionwebwatch.MaxActiveWebWatches(extension.Type, extension.Values),
 		provider:          provider,
 	}, nil
 }
@@ -123,16 +119,16 @@ func (s *Service) webWatchCallFor(extension *extensionSettings) (*webWatchCall, 
 func (s *Service) webhookBase() (string, error) {
 	parsed, err := url.Parse(s.webBase)
 	if s.webBase == "" || err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" {
-		return "", &ToolError{Message: webWatchNeedsPublicAddress}
+		return "", &agentextensionservice.ToolError{Message: webWatchNeedsPublicAddress}
 	}
 	host := strings.ToLower(parsed.Hostname())
 	if host == "localhost" || strings.HasSuffix(host, ".localhost") ||
 		strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
-		return "", &ToolError{Message: webWatchNeedsPublicAddress}
+		return "", &agentextensionservice.ToolError{Message: webWatchNeedsPublicAddress}
 	}
 	if ip := net.ParseIP(host); ip != nil &&
 		(ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified()) {
-		return "", &ToolError{Message: webWatchNeedsPublicAddress}
+		return "", &agentextensionservice.ToolError{Message: webWatchNeedsPublicAddress}
 	}
 
 	return strings.TrimSuffix(s.webBase, "/") + webWatchAPIBase, nil
@@ -155,7 +151,7 @@ func (s *Service) draftWebWatch(
 		ID:                pulid.MustNew(extensionwebwatch.WebWatchIDPrefix),
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
-		ExtensionType:     call.typ,
+		ExtensionType:     call.Type,
 		Query:             req.Query,
 		Purpose:           req.Purpose,
 		IncludeDomains:    req.Sites,
@@ -180,7 +176,9 @@ func (s *Service) draftWebWatch(
 	}
 	for _, text := range []string{watch.Query, watch.Purpose} {
 		if err = agentextension.CheckSearchQuery(text); err != nil {
-			return nil, 0, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
+			return nil, 0, &agentextensionservice.ToolError{
+				Message: textcase.CapitalizeFirst(err.Error()) + ".",
+			}
 		}
 	}
 
@@ -220,8 +218,8 @@ func (s *Service) planWith(
 		return nil, errortypes.NewBusinessError("failed to count web watches").WithInternal(err)
 	}
 	if active >= call.allowed {
-		return nil, &ToolError{Message: "This organization already has " +
-			strconv.Itoa(active) + " web watches running, the most " + call.def.Vendor +
+		return nil, &agentextensionservice.ToolError{Message: "This organization already has " +
+			strconv.Itoa(active) + " web watches running, the most " + call.Def.Vendor +
 			" is set to allow. Stop one the person no longer needs with web_stop_watch, or an " +
 			"administrator can raise the limit under AI Control, Extensions."}
 	}
@@ -235,7 +233,7 @@ func (s *Service) planWith(
 		Cadence:        watch.Cadence,
 		Days:           days,
 		EndsAt:         watch.EndsAt,
-		Vendor:         call.def.Vendor,
+		Vendor:         call.Def.Vendor,
 		CostPerCheck:   extensionwebwatch.ExaMonitorRunCostUSD,
 		EstimatedCost:  extensionwebwatch.ExaMonitorRunCostUSD.Mul(decimal.NewFromInt(checks)),
 		ActiveWatches:  active,
@@ -276,7 +274,7 @@ func (s *Service) WatchWeb(
 	}
 
 	created, err := call.provider.CreateWatch(ctx, &agentextensionports.WebWatchCreateRequest{
-		Settings:       call.values,
+		Settings:       call.Values,
 		Name:           vendorMonitorName(watch.Purpose),
 		Query:          watch.Query,
 		IncludeDomains: watch.IncludeDomains,
@@ -288,7 +286,7 @@ func (s *Service) WatchWeb(
 		Metadata: map[string]string{webWatchMetadataKey: watch.ID.String()},
 	})
 	if err != nil {
-		failure := s.providerError(call.failing(err, "set the web watch"))
+		failure := s.core.ProviderError(call.Failing(err, "set the web watch"))
 		s.endQuietly(ctx, watch, extensionwebwatch.WebWatchStatusFailed, failure.Error())
 		return nil, failure
 	}
@@ -298,7 +296,7 @@ func (s *Service) WatchWeb(
 		extensionwebwatch.WebWatchSecretFields(),
 		map[string]string{extensionwebwatch.WebWatchSecretField: created.Secret},
 		nil,
-		webWatchScope(req.TenantInfo, watch.ID),
+		extensionsecrets.WebWatchScope(req.TenantInfo, watch.ID),
 	)
 	if err == nil {
 		watch, err = s.watches.Update(ctx, watch)
@@ -358,7 +356,7 @@ func (s *Service) removeMonitor(ctx context.Context, call *webWatchCall, vendorI
 	if vendorID == "" {
 		return
 	}
-	if err := call.provider.DeleteWatch(context.WithoutCancel(ctx), call.values, vendorID); err != nil {
+	if err := call.provider.DeleteWatch(context.WithoutCancel(ctx), call.Values, vendorID); err != nil {
 		s.l.Warn("could not remove a web watch from its vendor",
 			zap.String("monitor", vendorID), zap.Error(err))
 	}
@@ -441,10 +439,12 @@ func (s *Service) StopWebWatch(
 	if watch.VendorMonitorID != "" {
 		call, callErr := s.webWatchCallOf(ctx, req.TenantInfo, watch.ExtensionType)
 		if callErr != nil {
-			return nil, asBusinessError(callErr)
+			return nil, agentextensionservice.AsBusinessError(callErr)
 		}
-		if err = call.provider.DeleteWatch(ctx, call.values, watch.VendorMonitorID); err != nil {
-			return nil, asBusinessError(s.providerError(call.failing(err, "stop the web watch")))
+		if err = call.provider.DeleteWatch(ctx, call.Values, watch.VendorMonitorID); err != nil {
+			return nil, agentextensionservice.AsBusinessError(
+				s.core.ProviderError(call.Failing(err, "stop the web watch")),
+			)
 		}
 	}
 
@@ -496,20 +496,20 @@ func (s *Service) CheckWebWatch(
 	}
 
 	if watch.Due(s.now()) {
-		if err = call.provider.DeleteWatch(ctx, call.values, watch.VendorMonitorID); err != nil {
+		if err = call.provider.DeleteWatch(ctx, call.Values, watch.VendorMonitorID); err != nil {
 			return nil, err
 		}
 		return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusEnded, "")
 	}
 
-	state, err := call.provider.WatchState(ctx, call.values, watch.VendorMonitorID)
+	state, err := call.provider.WatchState(ctx, call.Values, watch.VendorMonitorID)
 	if err != nil {
 		return nil, err
 	}
 	if state.Disabled {
 		s.removeMonitor(ctx, call, watch.VendorMonitorID)
 		return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusFailed,
-			call.def.Vendor+" turned the watch off after its requests kept failing. An "+
+			call.Def.Vendor+" turned the watch off after its requests kept failing. An "+
 				"administrator can check the API key under AI Control, Extensions.")
 	}
 
@@ -518,7 +518,7 @@ func (s *Service) CheckWebWatch(
 		after = *watch.LastRunAt
 	}
 	runs, err := call.provider.WatchRuns(ctx, &agentextensionports.WebWatchRunsRequest{
-		Settings: call.values,
+		Settings: call.Values,
 		VendorID: watch.VendorMonitorID,
 		After:    after,
 	})
@@ -537,7 +537,11 @@ func (s *Service) CheckWebWatch(
 		return nil, err
 	}
 	for _, outcome := range billed {
-		s.settle(ctx, meteredCall{tenant: tenantInfo, typ: updated.ExtensionType}, outcome)
+		s.core.Settle(
+			ctx,
+			agentextensionservice.MeteredCall{Tenant: tenantInfo, Type: updated.ExtensionType},
+			outcome,
+		)
 	}
 
 	undelivered, err := s.findings.ListUndelivered(ctx, tenantInfo, updated.ID)
@@ -558,13 +562,13 @@ func (s *Service) recordRuns(
 	watch *extensionwebwatch.WebWatch,
 	call *webWatchCall,
 	vendorRuns []agentextensionports.WebWatchRun,
-) ([]settledCall, error) {
+) ([]agentextensionservice.SettledCall, error) {
 	runs := slices.Clone(vendorRuns)
 	slices.SortFunc(runs, func(a, b agentextensionports.WebWatchRun) int {
 		return cmp.Compare(a.CreatedAt, b.CreatedAt)
 	})
 
-	billed := make([]settledCall, 0, len(runs))
+	billed := make([]agentextensionservice.SettledCall, 0, len(runs))
 	for idx := range runs {
 		run := &runs[idx]
 		if watch.LastRunAt != nil && run.CreatedAt <= *watch.LastRunAt {
@@ -575,15 +579,15 @@ func (s *Service) recordRuns(
 		}
 
 		watch.CountRun(run.CreatedAt, run.CostUSD)
-		billed = append(billed, settledCall{
-			day:    timeutils.DayKeyUTC(run.SettledAt),
-			failed: run.Phase == agentextensionports.WebWatchRunFailed,
-			cost:   run.CostUSD,
+		billed = append(billed, agentextensionservice.SettledCall{
+			Day:    timeutils.DayKeyUTC(run.SettledAt),
+			Failed: run.Phase == agentextensionports.WebWatchRunFailed,
+			Cost:   run.CostUSD,
 		})
 
 		switch run.Phase {
 		case agentextensionports.WebWatchRunFailed:
-			watch.NoteFailure(runFailureMessage(call.def.Vendor, run.Failure))
+			watch.NoteFailure(runFailureMessage(call.Def.Vendor, run.Failure))
 		case agentextensionports.WebWatchRunCompleted:
 			if err := s.recordFinding(ctx, watch, run); err != nil {
 				return nil, err
@@ -676,7 +680,7 @@ func (s *Service) endUnreachable(
 	tenantInfo pagination.TenantInfo,
 	watch *extensionwebwatch.WebWatch,
 ) (*agentextensionports.WebWatchCheck, error) {
-	def, _ := definitionFor(watch.ExtensionType)
+	def, _ := agentextensionservice.DefinitionFor(watch.ExtensionType)
 
 	return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusEnded,
 		"The watch's time ran out, but its extension is no longer set up, so Trenova could "+
@@ -721,7 +725,7 @@ func (s *Service) ReceiveWebWatchDelivery(
 	values, err := s.secrets.ReadAll(
 		watch.Secrets,
 		extensionwebwatch.WebWatchSecretFields(),
-		webWatchScope(req.TenantInfo, watch.ID),
+		extensionsecrets.WebWatchScope(req.TenantInfo, watch.ID),
 	)
 	if err != nil {
 		return errortypes.NewBusinessError("failed to read the web watch's secret").

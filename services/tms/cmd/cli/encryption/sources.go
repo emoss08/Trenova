@@ -4,8 +4,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
@@ -22,7 +22,7 @@ func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 		Columns: slices.Concat(
 			accountingconnectionservice.EnvelopeColumns(),
 			aiproviderservice.EnvelopeColumns(),
-			agentextensionservice.EnvelopeColumns(),
+			extensionsecrets.EnvelopeColumns(),
 			integrationservice.EnvelopeColumns(),
 			factoringtransportservice.EnvelopeColumns(),
 			inboundmessageservice.EnvelopeColumns(),

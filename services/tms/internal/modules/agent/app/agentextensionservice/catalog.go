@@ -72,7 +72,7 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 	},
 }
 
-type definition struct {
+type Definition struct {
 	Type         agentextension.Type
 	Name         string
 	Vendor       string
@@ -90,11 +90,11 @@ type definition struct {
 	ReleasedAt   int64
 }
 
-func (d *definition) title() string {
+func (d *Definition) Title() string {
 	return d.Vendor + " " + d.Name
 }
 
-var definitions = []definition{
+var definitions = []Definition{
 	{
 		Type:    agentextension.TypeExa,
 		Name:    "Web search",
@@ -186,14 +186,14 @@ var definitions = []definition{
 	},
 }
 
-func definitionFor(typ agentextension.Type) (definition, bool) {
+func DefinitionFor(typ agentextension.Type) (Definition, bool) {
 	for idx := range definitions {
 		if definitions[idx].Type == typ {
 			return definitions[idx], true
 		}
 	}
 
-	return definition{}, false
+	return Definition{}, false
 }
 
 func categoryOptions() []agentextensionports.AgentExtensionCategoryOption {

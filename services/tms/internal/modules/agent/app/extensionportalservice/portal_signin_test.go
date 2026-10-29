@@ -1,8 +1,9 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
@@ -159,7 +160,7 @@ func TestAPortalThatAsksForACodeSaysWhatToChange(t *testing.T) {
 		SiteID:     site.ID,
 		Question:   "Which dock appointments are open on October 20?",
 	})
-	require.True(t, IsToolError(err))
+	require.True(t, agentextensionservice.IsToolError(err))
 	assert.Contains(t, err.Error(), "Acme DC asked for a sign-in code the browser was not given")
 	assert.Contains(t, err.Error(), "add the portal's authenticator key")
 
@@ -205,7 +206,11 @@ func TestTrenovaItselfCannotBeAPortalSite(t *testing.T) {
 		SiteID:      stored.ID,
 		Instruction: "Post the comment Eric was here on SEED-SHP-003",
 	})
-	require.True(t, IsToolError(err), "a site saved before the rule is refused when used")
+	require.True(
+		t,
+		agentextensionservice.IsToolError(err),
+		"a site saved before the rule is refused when used",
+	)
 	assert.Contains(t, err.Error(), "Trenova itself cannot be a portal site")
 	assert.Empty(t, f.browser.started)
 }

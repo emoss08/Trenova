@@ -62,7 +62,7 @@ func (h *Handler) listWebWatches(c *gin.Context) {
 		req.Limit = limit
 	}
 
-	watches, err := h.service.ListWebWatches(c.Request.Context(), req)
+	watches, err := h.webWatches.ListWebWatches(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -88,7 +88,7 @@ func (h *Handler) webWatchFindings(c *gin.Context) {
 		return
 	}
 
-	findings, err := h.service.WebWatchFindings(c.Request.Context(), tenantOf(c), id)
+	findings, err := h.webWatches.WebWatchFindings(c.Request.Context(), tenantOf(c), id)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -116,7 +116,7 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 	}
 
 	tenant := tenantOf(c)
-	watch, err := h.service.StopWebWatch(
+	watch, err := h.webWatches.StopWebWatch(
 		c.Request.Context(),
 		&agentextensionports.StopWebWatchRequest{
 			TenantInfo:  tenant,
@@ -158,7 +158,7 @@ func (h *Handler) receiveWatchDelivery(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebWatchDelivery(
+	err = h.webWatches.ReceiveWebWatchDelivery(
 		c.Request.Context(),
 		&agentextensionports.ReceiveWebWatchDeliveryRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},

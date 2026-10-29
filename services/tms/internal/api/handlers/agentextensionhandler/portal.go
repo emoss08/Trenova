@@ -16,7 +16,7 @@ import (
 const maxRunsPerPage = 200
 
 func (h *Handler) listSites(c *gin.Context) {
-	sites, err := h.service.ListSites(c.Request.Context(), tenantOf(c))
+	sites, err := h.portals.ListSites(c.Request.Context(), tenantOf(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -33,7 +33,7 @@ func (h *Handler) createSite(c *gin.Context) {
 	}
 	req.TenantInfo = tenantOf(c)
 
-	site, err := h.service.CreateSite(c.Request.Context(), req)
+	site, err := h.portals.CreateSite(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -57,7 +57,7 @@ func (h *Handler) updateSite(c *gin.Context) {
 	req.TenantInfo = tenantOf(c)
 	req.ID = id
 
-	site, err := h.service.UpdateSite(c.Request.Context(), req)
+	site, err := h.portals.UpdateSite(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -74,7 +74,7 @@ func (h *Handler) deleteSite(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.DeleteSite(c.Request.Context(), tenantOf(c), id); err != nil {
+	if err = h.portals.DeleteSite(c.Request.Context(), tenantOf(c), id); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -112,7 +112,7 @@ func (h *Handler) listRuns(c *gin.Context) {
 		req.Limit = limit
 	}
 
-	runs, err := h.service.ListRuns(c.Request.Context(), req)
+	runs, err := h.portals.ListRuns(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -129,7 +129,7 @@ func (h *Handler) runRecording(c *gin.Context) {
 		return
 	}
 
-	recording, err := h.service.RunRecording(c.Request.Context(), tenantOf(c), id)
+	recording, err := h.portals.RunRecording(c.Request.Context(), tenantOf(c), id)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -146,7 +146,7 @@ func (h *Handler) portalRun(c *gin.Context) {
 		return
 	}
 
-	run, err := h.service.PortalRunFor(c.Request.Context(), req)
+	run, err := h.portals.PortalRunFor(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -164,7 +164,7 @@ func (h *Handler) portalRunLive(c *gin.Context) {
 		return
 	}
 
-	live, err := h.service.PortalRunLive(c.Request.Context(), req)
+	live, err := h.portals.PortalRunLive(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -228,7 +228,7 @@ func (h *Handler) provideSignInCode(c *gin.Context) {
 		return
 	}
 
-	run, err := h.service.ProvidePortalCode(
+	run, err := h.portals.ProvidePortalCode(
 		c.Request.Context(),
 		&agentextensionports.ProvidePortalCodeRequest{
 			TenantInfo:  tenantOf(c),

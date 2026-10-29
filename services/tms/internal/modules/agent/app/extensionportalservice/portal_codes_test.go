@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -128,15 +129,15 @@ func TestAReadStoppedForATextedCodeWaitsWithItsBrowserOpen(t *testing.T) {
 	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, run.Status)
 	assert.Equal(t, textedCodePrompt, run.CodePrompt)
 	require.NotNil(t, run.CodeRequestedAt)
-	assert.Equal(t, testNow, *run.CodeRequestedAt)
+	assert.Equal(t, agentextensiontest.Now, *run.CodeRequestedAt)
 	assert.Nil(t, run.FinishedAt)
 	assert.Equal(t, 2, run.Steps)
 	assert.Empty(t, f.browser.closed, "the browser stays on the code prompt")
 	assert.Empty(t, f.browser.stopped)
 	assert.Equal(t, []string{portalcontract.WorkflowIDFor(run.ID)}, f.workflows.ids,
 		"the read is followed from the code prompt to its end")
-	assert.Zero(t, f.usage.failures, "the read is settled when it ends, not while it waits")
-	assert.True(t, f.usage.cost.IsZero())
+	assert.Zero(t, f.usage.Failures, "the read is settled when it ends, not while it waits")
+	assert.True(t, f.usage.Cost.IsZero())
 }
 
 func TestARelayedCodeContinuesTheTaskInTheSameBrowser(t *testing.T) {
@@ -216,7 +217,7 @@ func TestACodeNotEnteredInTimeClosesTheBrowser(t *testing.T) {
 
 	f := newCodeFixture(t)
 	outcome := f.readAwaitingCode(t)
-	f.svc.now = func() int64 { return testNow + extensionportal.PortalCodeWaitSeconds }
+	f.svc.now = func() int64 { return agentextensiontest.Now + extensionportal.PortalCodeWaitSeconds }
 
 	_, err := f.enterCode(t, outcome.RunID, "123456")
 	require.True(t, errortypes.IsBusinessError(err))

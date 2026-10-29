@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,24 +21,30 @@ type Params struct {
 	fx.In
 
 	Service              *agentextensionservice.Service
+	Portals              *extensionportalservice.Service
+	WebWatches           *extensionwebwatchservice.Service
 	Waits                agentextensionports.WebWatchWaits `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *agentextensionservice.Service
-	waits   agentextensionports.WebWatchWaits
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service    *agentextensionservice.Service
+	portals    *extensionportalservice.Service
+	webWatches *extensionwebwatchservice.Service
+	waits      agentextensionports.WebWatchWaits
+	eh         *helpers.ErrorHandler
+	pm         *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		waits:   p.Waits,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:    p.Service,
+		portals:    p.Portals,
+		webWatches: p.WebWatches,
+		waits:      p.Waits,
+		eh:         p.ErrorHandler,
+		pm:         p.PermissionMiddleware,
 	}
 }
 

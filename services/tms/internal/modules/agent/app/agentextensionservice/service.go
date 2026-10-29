@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"math"
-	"net/url"
 	"slices"
 	"sort"
-	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -18,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,8 +27,7 @@ import (
 )
 
 const (
-	secretResourceKind = "agent_extension"
-	unlimitedRequests  = math.MaxInt32
+	unlimitedRequests = math.MaxInt32
 )
 
 var (
@@ -49,12 +45,6 @@ type Params struct {
 	AuditService auditports.AuditService
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
 	Plans        platformplanports.PlanService            `                                   optional:"true"`
-	Sites        agentextensionports.PortalSiteRepository
-	Runs         agentextensionports.PortalRunRepository
-	Watches      agentextensionports.WebWatchRepository
-	Findings     agentextensionports.WebWatchFindingRepository
-	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
-	AppConfig    *appconfig.Config           `                                   optional:"true"`
 }
 
 type Service struct {
@@ -65,16 +55,7 @@ type Service struct {
 	audit      auditports.AuditService
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
-	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
-	watchers   map[agentextension.Type]agentextensionports.WebWatchProvider
 	plans      platformplanports.PlanService
-	sites      agentextensionports.PortalSiteRepository
-	runs       agentextensionports.PortalRunRepository
-	watches    agentextensionports.WebWatchRepository
-	findings   agentextensionports.WebWatchFindingRepository
-	workflows  kernelports.WorkflowStarter
-	appHost    string
-	webBase    string
 	now        func() int64
 }
 
@@ -87,14 +68,6 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.WebSearchProvider,
 		len(p.Connectors),
 	)
-	browsers := make(
-		map[agentextension.Type]agentextensionports.BrowserProvider,
-		len(p.Connectors),
-	)
-	watchers := make(
-		map[agentextension.Type]agentextensionports.WebWatchProvider,
-		len(p.Connectors),
-	)
 	for _, connector := range p.Connectors {
 		if connector == nil {
 			continue
@@ -103,12 +76,6 @@ func New(p Params) *Service {
 		connectors[typ] = connector
 		if provider, ok := connector.(agentextensionports.WebSearchProvider); ok {
 			webSearch[typ] = provider
-		}
-		if provider, ok := connector.(agentextensionports.BrowserProvider); ok {
-			browsers[typ] = provider
-		}
-		if provider, ok := connector.(agentextensionports.WebWatchProvider); ok {
-			watchers[typ] = provider
 		}
 	}
 
@@ -120,58 +87,16 @@ func New(p Params) *Service {
 		audit:      p.AuditService,
 		connectors: connectors,
 		webSearch:  webSearch,
-		browsers:   browsers,
-		watchers:   watchers,
 		plans:      p.Plans,
-		sites:      p.Sites,
-		runs:       p.Runs,
-		watches:    p.Watches,
-		findings:   p.Findings,
-		workflows:  p.Workflows,
-		appHost:    appHostOf(p.AppConfig),
-		webBase:    webBaseOf(p.AppConfig),
 		now:        timeutils.NowUnix,
 	}
 }
 
-// appHostOf is the host Trenova's own web app is served from, which no portal
-// site may cover.
-func appHostOf(cfg *appconfig.Config) string {
-	if cfg == nil {
-		return ""
-	}
-	parsed, err := url.Parse(cfg.GetWebBaseURL())
-	if err != nil {
-		return ""
-	}
-
-	return strings.ToLower(parsed.Hostname())
-}
-
-// webBaseOf is the public address Trenova is served from, where a vendor
-// reports back.
-func webBaseOf(cfg *appconfig.Config) string {
-	if cfg == nil {
-		return ""
-	}
-
-	return cfg.GetWebBaseURL()
-}
-
-func secretScope(tenantInfo pagination.TenantInfo, typ agentextension.Type) secretconfig.Scope {
-	return secretconfig.Scope{
-		Purpose:      encryptionservice.PurposeAgentExtensionSecret,
-		Tenant:       tenantInfo,
-		ResourceKind: secretResourceKind,
-		Subject:      typ.String(),
-	}
-}
-
-func lookup(typ agentextension.Type) (agentextension.Spec, definition, error) {
+func lookup(typ agentextension.Type) (agentextension.Spec, Definition, error) {
 	spec, hasSpec := agentextension.SpecFor(typ)
-	def, hasDef := definitionFor(typ)
+	def, hasDef := DefinitionFor(typ)
 	if !hasSpec || !hasDef {
-		return agentextension.Spec{}, definition{}, errortypes.NewNotFoundError(
+		return agentextension.Spec{}, Definition{}, errortypes.NewNotFoundError(
 			"There is no extension named {0}", typ.String(),
 		)
 	}
@@ -213,7 +138,7 @@ func (s *Service) ListCatalog(
 		}
 		item := catalogItem(def, spec, byType[def.Type], usage[def.Type])
 		if holder := enabledFor(installed, spec.Capability, def.Type); holder != nil {
-			if held, found := definitionFor(holder.Type); found {
+			if held, found := DefinitionFor(holder.Type); found {
 				item.CapabilityHeldBy = held.Vendor
 			}
 		}
@@ -252,7 +177,7 @@ func servedToolsOf(spec *agentextension.Spec) []agentextensionports.AgentExtensi
 }
 
 func catalogItem(
-	def *definition,
+	def *Definition,
 	spec agentextension.Spec,
 	record *agentextension.Extension,
 	usage agentextension.UsageSummary,
@@ -403,7 +328,7 @@ func (s *Service) UpdateConfig(
 	if existing != nil {
 		existingConfig = existing.Configuration
 	}
-	scope := secretScope(tenantInfo, typ)
+	scope := extensionsecrets.ExtensionScope(tenantInfo, typ)
 	merged, err := s.secrets.Merge(spec.Fields, req.Configuration, existingConfig, scope)
 	if err != nil {
 		return nil, err
@@ -448,11 +373,11 @@ func (s *Service) UpdateConfig(
 	}
 
 	s.logChange(auditChange{
-		tenant:   tenantInfo,
+		Tenant:   tenantInfo,
 		before:   existing,
 		after:    saved,
 		spec:     spec,
-		name:     def.title(),
+		name:     def.Title(),
 		critical: existing == nil || existing.Enabled != saved.Enabled,
 	})
 
@@ -462,7 +387,7 @@ func (s *Service) UpdateConfig(
 func (s *Service) checkCapabilityFree(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	def *definition,
+	def *Definition,
 	spec agentextension.Spec,
 ) error {
 	installed, err := s.repo.ListByTenant(ctx, tenantInfo)
@@ -474,7 +399,7 @@ func (s *Service) checkCapabilityFree(
 	if holder == nil {
 		return nil
 	}
-	held, ok := definitionFor(holder.Type)
+	held, ok := DefinitionFor(holder.Type)
 	if !ok {
 		return nil
 	}
@@ -582,7 +507,7 @@ func validate(
 }
 
 type auditChange struct {
-	tenant   pagination.TenantInfo
+	Tenant   pagination.TenantInfo
 	before   *agentextension.Extension
 	after    *agentextension.Extension
 	spec     agentextension.Spec
@@ -611,7 +536,7 @@ func (s *Service) logChange(change auditChange) {
 		Resource:       permission.ResourceAgentExtension,
 		ResourceID:     change.after.ID.String(),
 		Operation:      operation,
-		UserID:         change.tenant.UserID,
+		UserID:         change.Tenant.UserID,
 		CurrentState:   after,
 		PreviousState:  before,
 		BusinessUnitID: change.after.BusinessUnitID,
@@ -671,18 +596,18 @@ func (s *Service) ActiveCapabilities(
 	return active, nil
 }
 
-type extensionSettings struct {
-	typ       agentextension.Type
-	def       definition
-	values    map[string]string
+type ExtensionSettings struct {
+	Type      agentextension.Type
+	Def       Definition
+	Values    map[string]string
 	connector agentextensionports.ExtensionConnector
 }
 
-func (s *Service) serving(
+func (s *Service) Serving(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	capability agentextension.Capability,
-) (*extensionSettings, error) {
+) (*ExtensionSettings, error) {
 	label := capabilityDefinitions[capability].Label
 	allowed, err := s.allows(ctx, tenantInfo, capability)
 	if err != nil {
@@ -728,11 +653,11 @@ func (s *Service) serving(
 	)
 }
 
-func (s *Service) settingsFor(
+func (s *Service) SettingsFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ agentextension.Type,
-) (*extensionSettings, error) {
+) (*ExtensionSettings, error) {
 	spec, def, err := lookup(typ)
 	if err != nil {
 		return nil, err
@@ -743,7 +668,7 @@ func (s *Service) settingsFor(
 		return nil, err
 	}
 	if record == nil || !spec.Configured(record.Configuration) {
-		return nil, &ToolError{Message: def.title() + " is not set up for this organization. " +
+		return nil, &ToolError{Message: def.Title() + " is not set up for this organization. " +
 			"An administrator can set it up under AI Control, Extensions."}
 	}
 
@@ -753,7 +678,7 @@ func (s *Service) settingsFor(
 func (s *Service) settingsOf(
 	tenantInfo pagination.TenantInfo,
 	record *agentextension.Extension,
-) (*extensionSettings, error) {
+) (*ExtensionSettings, error) {
 	spec, def, err := lookup(record.Type)
 	if err != nil {
 		return nil, err
@@ -769,7 +694,7 @@ func (s *Service) settingsOf(
 	values, err := s.secrets.ReadAll(
 		record.Configuration,
 		spec.Fields,
-		secretScope(tenantInfo, record.Type),
+		extensionsecrets.ExtensionScope(tenantInfo, record.Type),
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -777,10 +702,10 @@ func (s *Service) settingsOf(
 		).WithInternal(err)
 	}
 
-	return &extensionSettings{
-		typ:       record.Type,
-		def:       def,
-		values:    values,
+	return &ExtensionSettings{
+		Type:      record.Type,
+		Def:       def,
+		Values:    values,
 		connector: connector,
 	}, nil
 }
@@ -817,20 +742,20 @@ func IsToolError(err error) bool {
 	return errors.As(err, &toolErr)
 }
 
-type meteredCall struct {
-	tenant pagination.TenantInfo
-	typ    agentextension.Type
-	limit  int
+type MeteredCall struct {
+	Tenant pagination.TenantInfo
+	Type   agentextension.Type
+	Limit  int
 }
 
-func (s *Service) reserve(ctx context.Context, call meteredCall) (int, error) {
+func (s *Service) Reserve(ctx context.Context, call MeteredCall) (int, error) {
 	now := s.now()
 	day := timeutils.DayKeyUTC(now)
 	reserved, err := s.usage.Reserve(ctx, agentextensionports.ReserveExtensionRequestParams{
-		TenantInfo: call.tenant,
-		Type:       call.typ,
+		TenantInfo: call.Tenant,
+		Type:       call.Type,
 		Day:        day,
-		Limit:      call.limit,
+		Limit:      call.Limit,
 		Now:        now,
 	})
 	if err != nil {
@@ -838,24 +763,24 @@ func (s *Service) reserve(ctx context.Context, call meteredCall) (int, error) {
 			WithInternal(err)
 	}
 	if !reserved {
-		spec, _ := agentextension.SpecFor(call.typ)
+		spec, _ := agentextension.SpecFor(call.Type)
 		capability, _ := agentextension.CapabilitySpecFor(spec.Capability)
-		return 0, &ToolError{Message: dailyLimitMessage(capability, call.limit)}
+		return 0, &ToolError{Message: dailyLimitMessage(capability, call.Limit)}
 	}
 
 	return day, nil
 }
 
-func (s *Service) settle(ctx context.Context, call meteredCall, outcome settledCall) {
+func (s *Service) Settle(ctx context.Context, call MeteredCall, outcome SettledCall) {
 	if err := s.usage.RecordOutcome(ctx, agentextensionports.RecordExtensionOutcomeParams{
-		TenantInfo: call.tenant,
-		Type:       call.typ,
-		Day:        outcome.day,
-		Failed:     outcome.failed,
-		CostUSD:    outcome.cost,
+		TenantInfo: call.Tenant,
+		Type:       call.Type,
+		Day:        outcome.Day,
+		Failed:     outcome.Failed,
+		CostUSD:    outcome.Cost,
 		Now:        s.now(),
 	}); err != nil {
 		s.l.Warn("could not record extension usage", zap.Error(err),
-			zap.String("type", call.typ.String()))
+			zap.String("type", call.Type.String()))
 	}
 }

@@ -19612,3 +19612,5 @@ github.com/emoss08/trenova/internal/modules/edi/app/ediservice.TransferVerbRejec
 github.com/emoss08/trenova/internal/modules/edi/app/ediservice.UpsertEDICommunicationProfileRequest	github.com/emoss08/trenova/internal/modules/edi/app/edisetup.UpsertEDICommunicationProfileRequest
 github.com/emoss08/trenova/internal/modules/edi/app/ediservice.ValidateBulkEDIActionIDs	github.com/emoss08/trenova/internal/modules/edi/app/edibulk.ValidateIDs
 github.com/emoss08/trenova/internal/modules/edi/app/ediservice.Validator	github.com/emoss08/trenova/internal/modules/edi/app/edivalidation.Validator
+github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.ReadBudget	github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice.ReadBudget
+github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice.EnvelopeColumns	github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets.EnvelopeColumns

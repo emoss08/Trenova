@@ -1,9 +1,10 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -70,7 +71,7 @@ func (s *Service) release(ctx context.Context, call *portalCall, run *extensionp
 		return
 	}
 
-	err := call.provider.StopSession(context.WithoutCancel(ctx), call.values, run.VendorSessionID)
+	err := call.provider.StopSession(context.WithoutCancel(ctx), call.Values, run.VendorSessionID)
 	if err != nil {
 		s.l.Warn("could not close a portal task's browser",
 			zap.String("portalRun", run.ID.String()), zap.Error(err))
@@ -89,7 +90,7 @@ func mayReach(administers bool, run *extensionportal.PortalRun, userID pulid.ID)
 }
 
 type awaitingRead struct {
-	tenant  pagination.TenantInfo
+	Tenant  pagination.TenantInfo
 	call    *portalCall
 	site    *extensionportal.PortalSite
 	run     *extensionportal.PortalRun
@@ -108,12 +109,12 @@ func (s *Service) readAwaitingCode(
 	awaiting, err := s.awaitCode(ctx, read.run, read.outcome)
 	if err == nil {
 		current = awaiting
-		err = s.TrackPortalRun(ctx, read.tenant, awaiting.ID, read.site.Name)
+		err = s.TrackPortalRun(ctx, read.Tenant, awaiting.ID, read.site.Name)
 	}
 	if err != nil {
 		s.l.Error("could not keep a portal read open for a sign-in code",
 			zap.String("portalRun", read.run.ID.String()), zap.Error(err))
-		finished := s.finish(ctx, read.tenant, current, read.outcome)
+		finished := s.finish(ctx, read.Tenant, current, read.outcome)
 		s.release(ctx, read.call, finished)
 		return nil, s.portalOutcomeError(finished, nil, read.call)
 	}
@@ -174,7 +175,7 @@ func (s *Service) ProvidePortalCode(
 
 	call, err := s.portalCallOf(ctx, req.TenantInfo, run.ExtensionType)
 	if err != nil {
-		return nil, asBusinessError(err)
+		return nil, agentextensionservice.AsBusinessError(err)
 	}
 	site, err := s.sites.Get(ctx, req.TenantInfo, run.SiteID)
 	if err != nil {
@@ -193,7 +194,7 @@ func (s *Service) ProvidePortalCode(
 
 	text := taskText(site, run.Mode, "", run.Details)
 	started, err := call.provider.StartTask(ctx, &agentextensionports.PortalTaskRequest{
-		Settings:       call.values,
+		Settings:       call.Values,
 		Instruction:    instruction,
 		Guidance:       text.Guidance(),
 		AllowedDomains: site.Domains,
@@ -205,11 +206,11 @@ func (s *Service) ProvidePortalCode(
 		},
 	})
 	if err != nil {
-		failure := s.providerError(call.failing(err, "continue the portal task"))
+		failure := s.core.ProviderError(call.Failing(err, "continue the portal task"))
 		finished := s.finish(ctx, req.TenantInfo, run, heldProgress(run,
 			extensionportal.PortalRunStatusFailed, failure.Error()))
 		s.release(ctx, call, finished)
-		return nil, asBusinessError(failure)
+		return nil, agentextensionservice.AsBusinessError(failure)
 	}
 
 	run.ContinuedWith(started.TaskID)
@@ -264,11 +265,13 @@ func (s *Service) PortalRunLive(
 
 	call, err := s.portalCallOf(ctx, req.TenantInfo, run.ExtensionType)
 	if err != nil {
-		return nil, asBusinessError(err)
+		return nil, agentextensionservice.AsBusinessError(err)
 	}
-	live, err := call.provider.LiveView(ctx, call.values, run.VendorSessionID)
+	live, err := call.provider.LiveView(ctx, call.Values, run.VendorSessionID)
 	if err != nil {
-		return nil, asBusinessError(s.providerError(call.failing(err, "open the live browser")))
+		return nil, agentextensionservice.AsBusinessError(
+			s.core.ProviderError(call.Failing(err, "open the live browser")),
+		)
 	}
 	if live == "" {
 		return nil, errortypes.NewBusinessError("The vendor has no live view of this browser")

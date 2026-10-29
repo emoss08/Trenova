@@ -1,14 +1,14 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,18 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const portalSiteSecretKind = "agent_portal_site"
-
 var _ agentextensionports.PortalSites = (*Service)(nil)
-
-func portalSiteScope(tenantInfo pagination.TenantInfo, siteID pulid.ID) secretconfig.Scope {
-	return secretconfig.Scope{
-		Purpose:      encryptionservice.PurposeAgentExtensionSecret,
-		Tenant:       tenantInfo,
-		ResourceKind: portalSiteSecretKind,
-		Subject:      siteID.String(),
-	}
-}
 
 func portalSiteView(site *extensionportal.PortalSite) agentextensionports.PortalSiteView {
 	return agentextensionports.PortalSiteView{
@@ -95,7 +84,7 @@ func (s *Service) CreateSite(
 		return nil, err
 	}
 	s.logSiteChange(&siteChange{
-		tenant:    req.TenantInfo,
+		Tenant:    req.TenantInfo,
 		after:     created,
 		operation: permission.OpCreate,
 		comment:   "Portal site added for agents",
@@ -128,7 +117,7 @@ func (s *Service) UpdateSite(
 		return nil, err
 	}
 	s.logSiteChange(&siteChange{
-		tenant:    req.TenantInfo,
+		Tenant:    req.TenantInfo,
 		before:    &before,
 		after:     updated,
 		operation: permission.OpUpdate,
@@ -197,7 +186,7 @@ func (s *Service) applySiteRequest(
 			extensionportal.PortalCredentialAuthenticator: authenticator,
 		},
 		site.Credentials,
-		portalSiteScope(pagination.TenantInfo{
+		extensionsecrets.PortalSiteScope(pagination.TenantInfo{
 			OrgID: site.OrganizationID,
 			BuID:  site.BusinessUnitID,
 		}, site.ID),
@@ -243,7 +232,7 @@ func (s *Service) DeleteSite(
 		return err
 	}
 	s.logSiteChange(&siteChange{
-		tenant:    tenantInfo,
+		Tenant:    tenantInfo,
 		before:    site,
 		after:     site,
 		operation: permission.OpDelete,
@@ -336,9 +325,9 @@ func (s *Service) RunRecording(
 		return nil, errortypes.NewBusinessError("This portal task has no recording")
 	}
 
-	extension, err := s.settingsFor(ctx, tenantInfo, run.ExtensionType)
+	extension, err := s.core.SettingsFor(ctx, tenantInfo, run.ExtensionType)
 	if err != nil {
-		return nil, asBusinessError(err)
+		return nil, agentextensionservice.AsBusinessError(err)
 	}
 	provider, ok := s.browsers[run.ExtensionType]
 	if !ok {
@@ -346,9 +335,11 @@ func (s *Service) RunRecording(
 			run.ExtensionType.String())
 	}
 
-	recording, err := provider.Recording(ctx, extension.values, run.VendorSessionID)
+	recording, err := provider.Recording(ctx, extension.Values, run.VendorSessionID)
 	if err != nil {
-		return nil, asBusinessError(s.providerError(extension.failing(err, "find the recording")))
+		return nil, agentextensionservice.AsBusinessError(
+			s.core.ProviderError(extension.Failing(err, "find the recording")),
+		)
 	}
 	if recording.RecordingURL == "" && recording.ShareURL == "" {
 		return nil, errortypes.NewBusinessError(
@@ -364,7 +355,7 @@ func (s *Service) RunRecording(
 }
 
 type siteChange struct {
-	tenant    pagination.TenantInfo
+	Tenant    pagination.TenantInfo
 	before    *extensionportal.PortalSite
 	after     *extensionportal.PortalSite
 	operation permission.Operation
@@ -376,7 +367,7 @@ func (s *Service) logSiteChange(change *siteChange) {
 		Resource:       permission.ResourceAgentExtension,
 		ResourceID:     change.after.ID.String(),
 		Operation:      change.operation,
-		UserID:         change.tenant.UserID,
+		UserID:         change.Tenant.UserID,
 		CurrentState:   siteSnapshot(change.after),
 		PreviousState:  siteSnapshot(change.before),
 		BusinessUnitID: change.after.BusinessUnitID,

@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
@@ -42,7 +44,7 @@ var (
 )
 
 type portalCall struct {
-	*extensionSettings
+	*agentextensionservice.ExtensionSettings
 	settings agentextension.PortalAutomationSettings
 	provider agentextensionports.BrowserProvider
 }
@@ -51,7 +53,7 @@ func (s *Service) portalAutomation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*portalCall, error) {
-	extension, err := s.serving(ctx, tenantInfo, agentextension.CapabilityPortalAutomation)
+	extension, err := s.core.Serving(ctx, tenantInfo, agentextension.CapabilityPortalAutomation)
 	if err != nil {
 		return nil, err
 	}
@@ -59,28 +61,36 @@ func (s *Service) portalAutomation(
 	return s.portalCallFor(extension)
 }
 
-func (s *Service) portalCallFor(extension *extensionSettings) (*portalCall, error) {
-	provider, ok := s.browsers[extension.typ]
+func (s *Service) portalCallFor(
+	extension *agentextensionservice.ExtensionSettings,
+) (*portalCall, error) {
+	provider, ok := s.browsers[extension.Type]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
-			"the {0} extension cannot browse", extension.typ.String(),
+			"the {0} extension cannot browse", extension.Type.String(),
 		)
 	}
 
 	multiErr := errortypes.NewMultiError()
-	agentextension.ValidateSettings(extension.typ, extension.values, multiErr)
-	settings, err := agentextension.ParsePortalAutomationSettings(extension.values)
+	agentextension.ValidateSettings(extension.Type, extension.Values, multiErr)
+	settings, err := agentextension.ParsePortalAutomationSettings(extension.Values)
 	if multiErr.HasErrors() || err != nil {
 		s.l.Error("stored portal automation settings are invalid",
-			zap.String("type", extension.typ.String()), zap.Error(errors.Join(multiErr, err)))
-		return nil, &ToolError{Message: "The " + extension.def.title() + invalidSettingsSuffix}
+			zap.String("type", extension.Type.String()), zap.Error(errors.Join(multiErr, err)))
+		return nil, &agentextensionservice.ToolError{
+			Message: "The " + extension.Def.Title() + agentextensionservice.InvalidSettingsSuffix,
+		}
 	}
 
-	return &portalCall{extensionSettings: extension, settings: settings, provider: provider}, nil
+	return &portalCall{ExtensionSettings: extension, settings: settings, provider: provider}, nil
 }
 
-func (c *portalCall) metered(tenantInfo pagination.TenantInfo) meteredCall {
-	return meteredCall{tenant: tenantInfo, typ: c.typ, limit: c.settings.DailyRequestLimit}
+func (c *portalCall) metered(tenantInfo pagination.TenantInfo) agentextensionservice.MeteredCall {
+	return agentextensionservice.MeteredCall{
+		Tenant: tenantInfo,
+		Type:   c.Type,
+		Limit:  c.settings.DailyRequestLimit,
+	}
 }
 
 func summaryOf(site *extensionportal.PortalSite) agentextensionports.PortalSiteSummary {
@@ -124,24 +134,32 @@ func (s *Service) site(
 ) (*extensionportal.PortalSite, error) {
 	site, err := s.sites.Get(ctx, tenantInfo, id)
 	if errortypes.IsNotFoundError(err) {
-		return nil, &ToolError{Message: "There is no portal site with that id. " +
-			s.knownSites(ctx, tenantInfo)}
+		return nil, &agentextensionservice.ToolError{
+			Message: "There is no portal site with that id. " +
+				s.knownSites(ctx, tenantInfo),
+		}
 	}
 	if err != nil {
 		return nil, err
 	}
 	if !site.Enabled {
-		return nil, &ToolError{Message: site.Name + " is turned off for agents. " +
-			s.knownSites(ctx, tenantInfo)}
+		return nil, &agentextensionservice.ToolError{
+			Message: site.Name + " is turned off for agents. " +
+				s.knownSites(ctx, tenantInfo),
+		}
 	}
 	if s.appHost != "" && extensionportal.HostAllowed(s.appHost, site.Domains) {
-		return nil, &ToolError{Message: portalOnTrenovaMessage + " Use the tools for it instead, " +
-			"or tell the person what to do there."}
+		return nil, &agentextensionservice.ToolError{
+			Message: portalOnTrenovaMessage + " Use the tools for it instead, " +
+				"or tell the person what to do there.",
+		}
 	}
 	if acting && !site.AllowActions {
-		return nil, &ToolError{Message: "Agents may only read " + site.Name + ", not act on " +
-			"it. Tell the person what to do there, or ask an administrator to let agents act " +
-			"on it under AI Control, Extensions."}
+		return nil, &agentextensionservice.ToolError{
+			Message: "Agents may only read " + site.Name + ", not act on " +
+				"it. Tell the person what to do there, or ask an administrator to let agents act " +
+				"on it under AI Control, Extensions.",
+		}
 	}
 
 	return site, nil
@@ -181,7 +199,7 @@ func (s *Service) signIn(site *extensionportal.PortalSite) (map[string]string, e
 	values, err := s.secrets.ReadAll(
 		site.Credentials,
 		extensionportal.PortalCredentialFields(),
-		portalSiteScope(pagination.TenantInfo{
+		extensionsecrets.PortalSiteScope(pagination.TenantInfo{
 			OrgID: site.OrganizationID,
 			BuID:  site.BusinessUnitID,
 		}, site.ID),
@@ -223,14 +241,16 @@ func taskText(
 
 func checkTask(instruction string, raw map[string]string) (map[string]string, error) {
 	if err := extensionportal.CheckPortalInstruction(instruction); err != nil {
-		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
+		return nil, &agentextensionservice.ToolError{
+			Message: textcase.CapitalizeFirst(err.Error()) + ".",
+		}
 	}
 
 	return extensionportal.NormalizePortalDetails(raw)
 }
 
 type portalStart struct {
-	tenant pagination.TenantInfo
+	Tenant pagination.TenantInfo
 	call   *portalCall
 	site   *extensionportal.PortalSite
 	text   *extensionportal.PortalTaskText
@@ -252,7 +272,7 @@ func (s *Service) begin(ctx context.Context, start *portalStart) error {
 	start.run = created
 
 	started, err := start.call.provider.StartTask(ctx, &agentextensionports.PortalTaskRequest{
-		Settings:       start.call.values,
+		Settings:       start.call.Values,
 		Instruction:    start.run.Instruction,
 		Guidance:       start.text.Guidance(),
 		StartURL:       start.site.StartURL,
@@ -265,8 +285,8 @@ func (s *Service) begin(ctx context.Context, start *portalStart) error {
 		},
 	})
 	if err != nil {
-		failure := s.providerError(start.call.failing(err, "start the portal task"))
-		s.finish(ctx, start.tenant, start.run, &extensionportal.PortalRunOutcome{
+		failure := s.core.ProviderError(start.call.Failing(err, "start the portal task"))
+		s.finish(ctx, start.Tenant, start.run, &extensionportal.PortalRunOutcome{
 			Status:  extensionportal.PortalRunStatusFailed,
 			Failure: failure.Error(),
 		})
@@ -293,10 +313,10 @@ func (s *Service) newRun(
 ) *extensionportal.PortalRun {
 	run := &extensionportal.PortalRun{
 		ID:                pulid.MustNew(extensionportal.PortalRunIDPrefix),
-		OrganizationID:    start.tenant.OrgID,
-		BusinessUnitID:    start.tenant.BuID,
+		OrganizationID:    start.Tenant.OrgID,
+		BusinessUnitID:    start.Tenant.BuID,
 		SiteID:            start.site.ID,
-		ExtensionType:     start.call.typ,
+		ExtensionType:     start.call.Type,
 		Mode:              start.text.Mode,
 		Status:            extensionportal.PortalRunStatusRunning,
 		Instruction:       start.text.Task(),
@@ -342,12 +362,12 @@ func (s *Service) ReadPortal(
 	}
 
 	start := &portalStart{
-		tenant: req.TenantInfo,
+		Tenant: req.TenantInfo,
 		call:   call,
 		site:   site,
 		text:   taskText(site, extensionportal.PortalRunModeRead, req.Question, details),
 	}
-	if _, err = s.reserve(ctx, call.metered(req.TenantInfo)); err != nil {
+	if _, err = s.core.Reserve(ctx, call.metered(req.TenantInfo)); err != nil {
 		return nil, err
 	}
 	start.run = s.newRun(start, req.Owner, details)
@@ -369,7 +389,7 @@ func (s *Service) ReadPortal(
 	outcome, asked := outcomeOf(start.run, state, site, timedOut)
 	if asked && relays(start.run) {
 		return s.readAwaitingCode(ctx, &awaitingRead{
-			tenant:  req.TenantInfo,
+			Tenant:  req.TenantInfo,
 			call:    call,
 			site:    site,
 			run:     start.run,
@@ -404,7 +424,7 @@ func (s *Service) await(
 ) (*agentextensionports.PortalTaskState, bool, error) {
 	failures := 0
 	for {
-		state, err := call.provider.TaskState(ctx, call.values, taskID)
+		state, err := call.provider.TaskState(ctx, call.Values, taskID)
 		switch {
 		case err != nil:
 			failures++
@@ -420,7 +440,7 @@ func (s *Service) await(
 
 		if !time.Now().Before(deadline) {
 			s.stopQuietly(ctx, call, taskID)
-			last, lastErr := call.provider.TaskState(ctx, call.values, taskID)
+			last, lastErr := call.provider.TaskState(ctx, call.Values, taskID)
 			if lastErr != nil || last == nil {
 				last = &agentextensionports.PortalTaskState{}
 			}
@@ -439,7 +459,7 @@ func (s *Service) await(
 }
 
 func (s *Service) stopQuietly(ctx context.Context, call *portalCall, taskID string) {
-	if err := call.provider.StopTask(ctx, call.values, taskID); err != nil {
+	if err := call.provider.StopTask(ctx, call.Values, taskID); err != nil {
 		s.l.Warn("could not stop a portal task", zap.String("task", taskID), zap.Error(err))
 	}
 }
@@ -552,11 +572,15 @@ func (s *Service) finish(
 		run = updated
 	}
 
-	s.settle(ctx, meteredCall{tenant: tenantInfo, typ: run.ExtensionType}, settledCall{
-		day:    timeutils.DayKeyUTC(run.StartedAt),
-		failed: run.Status != extensionportal.PortalRunStatusSucceeded,
-		cost:   run.CostUSD,
-	})
+	s.core.Settle(
+		ctx,
+		agentextensionservice.MeteredCall{Tenant: tenantInfo, Type: run.ExtensionType},
+		agentextensionservice.SettledCall{
+			Day:    timeutils.DayKeyUTC(run.StartedAt),
+			Failed: run.Status != extensionportal.PortalRunStatusSucceeded,
+			Cost:   run.CostUSD,
+		},
+	)
 
 	return run
 }
@@ -568,15 +592,15 @@ func (s *Service) portalOutcomeError(
 ) error {
 	switch run.Status {
 	case extensionportal.PortalRunStatusStrayed:
-		return &ToolError{Message: portalStrayedMessage}
+		return &agentextensionservice.ToolError{Message: portalStrayedMessage}
 	case extensionportal.PortalRunStatusTimedOut:
-		return &ToolError{Message: portalTimedOutMessage}
+		return &agentextensionservice.ToolError{Message: portalTimedOutMessage}
 	}
 	if cause != nil {
-		return s.providerError(call.failing(cause, "follow the portal task"))
+		return s.core.ProviderError(call.Failing(cause, "follow the portal task"))
 	}
 
-	return &ToolError{Message: "The portal task did not succeed: " +
+	return &agentextensionservice.ToolError{Message: "The portal task did not succeed: " +
 		stringutils.Ellipsize(run.Failure, extensionportal.MaxPortalFailureRunes) +
 		" Tell the person, and do not try the same task again unchanged."}
 }
@@ -608,7 +632,7 @@ func (s *Service) PlanPortalAction(
 		Details:     details,
 		SentTask:    text.Task(),
 		UsesSignIn:  site.HasSignIn(),
-		Vendor:      call.def.Vendor,
+		Vendor:      call.Def.Vendor,
 
 		UsesAuthenticator: text.UsesAuthenticator,
 	}, nil
@@ -647,12 +671,12 @@ func (s *Service) StartPortalAction(
 	}
 
 	start := &portalStart{
-		tenant: req.TenantInfo,
+		Tenant: req.TenantInfo,
 		call:   call,
 		site:   site,
 		text:   taskText(site, extensionportal.PortalRunModeAct, req.Instruction, details),
 	}
-	if _, err = s.reserve(ctx, call.metered(req.TenantInfo)); err != nil {
+	if _, err = s.core.Reserve(ctx, call.metered(req.TenantInfo)); err != nil {
 		return nil, err
 	}
 	start.run = s.newRun(start, req.Owner, details)
@@ -773,7 +797,7 @@ func (s *Service) PollPortalRun(
 		return &agentextensionports.PortalPoll{Run: run}, nil
 	}
 
-	state, err := call.provider.TaskState(ctx, call.values, run.VendorTaskID)
+	state, err := call.provider.TaskState(ctx, call.Values, run.VendorTaskID)
 	if err != nil {
 		return nil, err
 	}
@@ -837,7 +861,7 @@ func (s *Service) StopPortalRun(
 	}
 
 	s.stopQuietly(ctx, call, run.VendorTaskID)
-	state, stateErr := call.provider.TaskState(ctx, call.values, run.VendorTaskID)
+	state, stateErr := call.provider.TaskState(ctx, call.Values, run.VendorTaskID)
 	site, siteErr := s.sites.Get(ctx, tenantInfo, run.SiteID)
 	if stateErr == nil && siteErr == nil {
 		outcome = progressOf(run, state, site)
@@ -856,7 +880,7 @@ func (s *Service) portalCallOf(
 	tenantInfo pagination.TenantInfo,
 	typ agentextension.Type,
 ) (*portalCall, error) {
-	extension, err := s.settingsFor(ctx, tenantInfo, typ)
+	extension, err := s.core.SettingsFor(ctx, tenantInfo, typ)
 	if err != nil {
 		return nil, err
 	}

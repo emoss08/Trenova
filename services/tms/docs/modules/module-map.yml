@@ -1042,6 +1042,7 @@ modules:
       - agentevents
       - agentexceptionservice
       - agentextensionservice
+      - agentextensiontest
       - agentguard
       - agentmemoryrank
       - agentmemoryservice
@@ -1099,6 +1100,9 @@ modules:
       - casechecklistservice
       - conversationscheduleservice
       - dispatchautoassignservice
+      - extensionportalservice
+      - extensionsecrets
+      - extensionwebwatchservice
       - extractionfailure
       - insightservice
       - productguideservice

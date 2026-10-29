@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionsecrets
 
 import (
 	"github.com/emoss08/keel"
@@ -23,7 +23,7 @@ func EnvelopeColumns() []kernelports.EnvelopeColumn {
 			Rebind:  true,
 			Scopes: func(row *kernelports.EnvelopeRow, field string) []kernelports.SecretScope {
 				typ := agentextension.Type(row.Extra[extensionType])
-				scope := secretScope(row.Tenant, typ)
+				scope := ExtensionScope(row.Tenant, typ)
 				return scope.SecretScopes(field)
 			},
 		},
@@ -33,7 +33,7 @@ func EnvelopeColumns() []kernelports.EnvelopeColumn {
 			JSONMap: true,
 			Rebind:  true,
 			Scopes: func(row *kernelports.EnvelopeRow, field string) []kernelports.SecretScope {
-				scope := portalSiteScope(row.Tenant, pulid.ID(row.ID))
+				scope := PortalSiteScope(row.Tenant, pulid.ID(row.ID))
 				return scope.SecretScopes(field)
 			},
 		},
@@ -43,7 +43,7 @@ func EnvelopeColumns() []kernelports.EnvelopeColumn {
 			JSONMap: true,
 			Rebind:  true,
 			Scopes: func(row *kernelports.EnvelopeRow, field string) []kernelports.SecretScope {
-				scope := webWatchScope(row.Tenant, pulid.ID(row.ID))
+				scope := WebWatchScope(row.Tenant, pulid.ID(row.ID))
 				return scope.SecretScopes(field)
 			},
 		},

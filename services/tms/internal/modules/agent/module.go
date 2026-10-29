@@ -127,6 +127,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/formulastudioservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
@@ -409,6 +411,8 @@ func SharedOptions() fx.Option {
 			aidocumentservice.NewContract,
 		),
 		agentextensionservice.Module,
+		extensionportalservice.Module,
+		extensionwebwatchservice.Module,
 		scriptrunner.Module,
 		analysisrunservice.Module,
 		productguideservice.Module,

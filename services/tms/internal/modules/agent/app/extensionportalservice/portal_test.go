@@ -1,4 +1,4 @@
-package agentextensionservice
+package extensionportalservice
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -229,7 +231,7 @@ type fakeBrowser struct {
 func (f *fakeBrowser) Type() agentextension.Type { return agentextension.TypeBrowserUse }
 
 func (f *fakeBrowser) Classify(err error) agentextensionports.ProviderFailure {
-	return (&fakeWeb{}).Classify(err)
+	return (&agentextensiontest.FakeWeb{}).Classify(err)
 }
 
 func (f *fakeBrowser) Test(
@@ -449,7 +451,7 @@ func TestReadingAPortalSendsTheSiteConfinedTaskAndReturnsTheAnswer(t *testing.T)
 	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, run.Status)
 	assert.Equal(t, "task-1", run.VendorTaskID)
 	assert.True(t, run.UsedSignIn)
-	assert.Equal(t, 1, f.usage.requests)
+	assert.Equal(t, 1, f.usage.Requests)
 }
 
 func TestAReadThatLeftTheSiteIsWithheld(t *testing.T) {
@@ -466,7 +468,7 @@ func TestAReadThatLeftTheSiteIsWithheld(t *testing.T) {
 		SiteID:     site.ID,
 		Question:   "Which dock appointments are open on October 20?",
 	})
-	require.True(t, IsToolError(err))
+	require.True(t, agentextensionservice.IsToolError(err))
 	assert.Contains(t, err.Error(), "was withheld")
 	assert.NotContains(t, err.Error(), "rate sheet")
 
@@ -487,7 +489,7 @@ func TestAReadOfAnUnknownSiteListsTheSitesThatExist(t *testing.T) {
 		SiteID:     pulid.MustNew(extensionportal.PortalSiteIDPrefix),
 		Question:   "Which dock appointments are open on October 20?",
 	})
-	require.True(t, IsToolError(err))
+	require.True(t, agentextensionservice.IsToolError(err))
 	assert.Contains(t, err.Error(), "The sites set up are: Acme DC (")
 	assert.Empty(t, f.browser.started)
 }
@@ -504,7 +506,7 @@ func TestActingOnAReadOnlySiteIsRefusedBeforeAnythingIsFiled(t *testing.T) {
 		SiteID:      site.ID,
 		Instruction: "Book the 8:00 AM dock appointment on October 20",
 	})
-	require.True(t, IsToolError(err))
+	require.True(t, agentextensionservice.IsToolError(err))
 	assert.Contains(t, err.Error(), "Agents may only read Acme DC")
 }
 
@@ -552,7 +554,7 @@ func TestStartingAnActionTwiceFromOneApprovalActsOnce(t *testing.T) {
 	assert.True(t, second.Resumed)
 	assert.Equal(t, first.RunID, second.RunID)
 	assert.Len(t, f.browser.started, 1)
-	assert.Equal(t, 1, f.usage.requests)
+	assert.Equal(t, 1, f.usage.Requests)
 }
 
 func TestPollingAnActionRecordsHowItEnded(t *testing.T) {
@@ -626,6 +628,6 @@ func TestPortalTasksNeedTheExtensionOn(t *testing.T) {
 		SiteID:     site.ID,
 		Question:   "Which dock appointments are open on October 20?",
 	})
-	require.True(t, IsToolError(err))
+	require.True(t, agentextensionservice.IsToolError(err))
 	assert.True(t, strings.Contains(err.Error(), "Portal work is not set up"))
 }
