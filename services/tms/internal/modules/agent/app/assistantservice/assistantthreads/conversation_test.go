@@ -235,7 +235,7 @@ func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	conversations := &recordingDelete{}
 	schedules := &heldSchedules{held: held, deleted: &conversations.deleted}
 	svc := &Service{logger: zap.NewNop(), conversations: conversations, schedules: schedules}
-	require.NoError(t, svc.DeleteThread(t.Context(), &req))
+	require.NoError(t, svc.DeleteThread(t.Context(), req))
 	assert.True(t, schedules.readBefore, "the schedules are read before the cascade takes them")
 	require.Len(t, schedules.asked, 1)
 	assert.Equal(t, req.ID, schedules.asked[0].ThreadID)
@@ -245,13 +245,13 @@ func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	refused := &recordingDelete{err: errors.New("not yours")}
 	kept := &heldSchedules{held: held, deleted: &refused.deleted}
 	svc = &Service{logger: zap.NewNop(), conversations: refused, schedules: kept}
-	require.Error(t, svc.DeleteThread(t.Context(), &req))
+	require.Error(t, svc.DeleteThread(t.Context(), req))
 	assert.Empty(t, kept.forgot, "a delete that did not happen forgets no schedule")
 
 	unread := &recordingDelete{}
 	failing := &heldSchedules{readErr: errors.New("unavailable"), deleted: &unread.deleted}
 	svc = &Service{logger: zap.NewNop(), conversations: unread, schedules: failing}
-	require.NoError(t, svc.DeleteThread(t.Context(), &req))
+	require.NoError(t, svc.DeleteThread(t.Context(), req))
 	assert.True(t, unread.deleted, "a failed read does not stop the delete")
 	assert.Empty(t, failing.forgot)
 
@@ -259,7 +259,7 @@ func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	svc = &Service{logger: zap.NewNop(), conversations: plain}
 	require.NoError(
 		t,
-		svc.DeleteThread(t.Context(), &req),
+		svc.DeleteThread(t.Context(), req),
 		"without the schedule service it deletes",
 	)
 	assert.True(t, plain.deleted)
