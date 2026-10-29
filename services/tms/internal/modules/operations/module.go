@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/documentshipmentdraftrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/ratingreviewrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/routingguiderepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurereasoncoderepository"
@@ -23,9 +24,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenteventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentinsightrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentlistreadrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsearchcardrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
@@ -120,7 +124,7 @@ func SharedOptions() fx.Option {
 			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentStageSummaryReader { return s },
 			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentBoardGroupSummarizer { return s },
 			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentQuickFilterCounter { return s },
-			shipmentrepository.NewInsightSource,
+			shipmentinsightrepository.NewInsightSource,
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
 			documentshipmentdraftrepository.New,
@@ -137,11 +141,11 @@ func SharedOptions() fx.Option {
 			shipmentholdrepository.New,
 			shipmentmoverepository.New,
 			shipmentrepository.New,
-			shipmentrepository.NewRatingReviewRepository,
-			shipmentrepository.NewSearchCardReader,
-			shipmentrepository.NewOrderReferenceMatcher,
-			shipmentrepository.NewActiveHoldReader,
-			shipmentrepository.NewNewestCommentReader,
+			ratingreviewrepository.NewRatingReviewRepository,
+			shipmentsearchcardrepository.NewSearchCardReader,
+			shipmentlistreadrepository.NewOrderReferenceMatcher,
+			shipmentlistreadrepository.NewActiveHoldReader,
+			shipmentlistreadrepository.NewNewestCommentReader,
 			shipmentboardrepository.New,
 			shipmentboardrepository.NewBoardRepository,
 			shipmentboardrepository.NewWatchlistRepository,

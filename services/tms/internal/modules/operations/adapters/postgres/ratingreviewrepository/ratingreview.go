@@ -1,4 +1,4 @@
-package shipmentrepository
+package ratingreviewrepository
 
 import (
 	"context"
@@ -9,8 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
 )
+
+var shipmentRatingErrors = dberror.Mapping{Entity: "Shipment"}
 
 type RatingReviewParams struct {
 	fx.In
@@ -37,7 +40,7 @@ func (r *ratingReviewRepository) GetForRatingReview(
 			Lock(keel.ForUpdate).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, shipmentErrors.Map(err, req.ShipmentID.String())
+			return nil, shipmentRatingErrors.Map(err, req.ShipmentID.String())
 		}
 		return entity, nil
 	})
@@ -50,7 +53,7 @@ func (r *ratingReviewRepository) SaveRatingReview(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := shipmentdb.Shipments
 		if err := sp.Save(ctx, r.db.Keel(ctx), entity, sp.RatingDetail); err != nil {
-			return nil, shipmentErrors.Map(err, entity.ID.String())
+			return nil, shipmentRatingErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})

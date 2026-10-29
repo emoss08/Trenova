@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentlistreadrepository
 
 import (
 	"context"

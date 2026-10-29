@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentpredicate
 
 import (
 	"errors"
@@ -322,5 +322,5 @@ func AggregateScope(
 		return nil, err
 	}
 
-	return shipmentScope(filter, opts, quick), nil
+	return Scope(filter, opts, quick), nil
 }

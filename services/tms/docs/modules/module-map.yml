@@ -658,6 +658,12 @@ modules:
       - shipmentmovejurisdictionmilerepository
       - shipmentmoverepository
       - shipmentrepository
+      - ratingreviewrepository
+      - shipmentgraph
+      - shipmentinsightrepository
+      - shipmentlistreadrepository
+      - shipmentpredicate
+      - shipmentsearchcardrepository
       - shipmentsuggestionrepository
       - shipmenttrackingrepository
       - tenderrepository

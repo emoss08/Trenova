@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentinsightrepository
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -101,10 +102,10 @@ func (s *insightSource) baseQuery(
 		}
 	}
 
-	quick, err := QuickFilterConditions(&opts)
+	quick, err := shipmentpredicate.QuickFilterConditions(&opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return tableinsight.Typed(shipmentScope(scope.Filter, &opts, quick)), nil
+	return tableinsight.Typed(shipmentpredicate.Scope(scope.Filter, &opts, quick)), nil
 }

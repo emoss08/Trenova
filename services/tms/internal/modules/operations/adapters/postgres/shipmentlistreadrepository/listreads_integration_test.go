@@ -1,11 +1,12 @@
 //go:build integration
 
-package shipmentrepository
+package shipmentlistreadrepository
 
 import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -79,7 +80,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 
 	sp := shipmentdb.Shipments
 	byOrder, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(shipmentOptionPredicates(&shipmentports.ShipmentOptions{
+		Where(shipmentpredicate.OptionPredicates(&shipmentports.ShipmentOptions{
 			PartyGroups: []shipmentports.ShipmentPartyGroup{{OrderIDs: []pulid.ID{orderID}}},
 		})...))
 	require.NoError(t, err)
@@ -93,7 +94,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 
 	onHold := true
 	heldIDs, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(shipmentOptionPredicates(&shipmentports.ShipmentOptions{
+		Where(shipmentpredicate.OptionPredicates(&shipmentports.ShipmentOptions{
 			IDs:             []pulid.ID{held.ShipmentID, free.ShipmentID},
 			ActiveHold:      &onHold,
 			HoldReasonCodes: []string{"credit_hold"},
@@ -103,7 +104,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 
 	notHeld := false
 	freeIDs, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(shipmentOptionPredicates(&shipmentports.ShipmentOptions{
+		Where(shipmentpredicate.OptionPredicates(&shipmentports.ShipmentOptions{
 			IDs:        []pulid.ID{held.ShipmentID, free.ShipmentID},
 			ActiveHold: &notHeld,
 		})...))

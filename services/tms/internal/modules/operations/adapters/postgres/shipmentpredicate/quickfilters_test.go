@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentpredicate
 
 import (
 	"testing"

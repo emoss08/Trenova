@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentgraph
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ type fieldPlan struct {
 var shipmentCopyPlan = map[string]fieldPlan{
 	"ID":        {setByCopy, "a copy is a new row and gets a fresh identifier"},
 	"Status":    {setByCopy, "every copy re-enters the lifecycle at New"},
-	"ProNumber": {setByCopy, "the caller supplies the pro number through ShipmentCopySpec"},
+	"ProNumber": {setByCopy, "the caller supplies the pro number through CopySpec"},
 	"BOL":       {setByCopy, "derived from the source BOL with a copy suffix"},
 	"ExternalReference": {
 		intentionallyDropped,
@@ -81,7 +81,10 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"TemperatureMin": {copiedFromSource, "handling requirements carry over"},
 	"TemperatureMax": {copiedFromSource, "handling requirements carry over"},
 	"TariffInputs":   {copiedFromSource, "the rating basis carries over"},
-	"FreightLines":   {copiedFromSource, "quoted freight lines carry over until the copy is re-rated"},
+	"FreightLines": {
+		copiedFromSource,
+		"quoted freight lines carry over until the copy is re-rated",
+	},
 
 	"OwnerID":      {intentionallyDropped, "ownership is assigned by dispatch, never inherited"},
 	"CanceledByID": {intentionallyDropped, "cancellation state belongs to the original"},
@@ -195,7 +198,7 @@ func TestCopyShipmentGraph_EveryFieldIsClassified(t *testing.T) {
 			t,
 			ok,
 			"shipment.Shipment.%s is not classified in shipmentCopyPlan. Decide whether "+
-				"CopyShipmentGraph should carry it to a duplicate, then record that decision "+
+				"Copy should carry it to a duplicate, then record that decision "+
 				"in the plan with a reason.",
 			field.Name,
 		)
@@ -223,7 +226,7 @@ func TestCopyShipmentGraph_HonorsFieldPlan(t *testing.T) {
 	source := duplicateSourceFixture()
 	fillScalarFields(t, reflect.ValueOf(source).Elem())
 
-	duplicated := CopyShipmentGraph(source, ShipmentCopySpec{
+	duplicated := Copy(source, CopySpec{
 		ProNumber:   "PRO-COPY",
 		BOL:         "COPY-BOL",
 		RequestedBy: pulid.MustNew("usr_"),
@@ -251,7 +254,7 @@ func TestCopyShipmentGraph_HonorsFieldPlan(t *testing.T) {
 			assert.Truef(
 				t,
 				reflect.DeepEqual(sourceField.Interface(), copyField.Interface()),
-				"%s is planned as copied (%s) but CopyShipmentGraph did not carry it over",
+				"%s is planned as copied (%s) but Copy did not carry it over",
 				field.Name,
 				plan.reason,
 			)
@@ -284,7 +287,7 @@ func TestCopyShipmentGraph_HonorsFieldPlan(t *testing.T) {
 			assert.Truef(
 				t,
 				copyField.IsZero(),
-				"%s is planned as dropped (%s) but CopyShipmentGraph carried a value over",
+				"%s is planned as dropped (%s) but Copy carried a value over",
 				field.Name,
 				plan.reason,
 			)

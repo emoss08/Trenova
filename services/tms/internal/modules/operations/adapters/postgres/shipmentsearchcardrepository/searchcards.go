@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentsearchcardrepository
 
 import (
 	"context"
@@ -7,11 +7,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
@@ -35,20 +34,12 @@ func NewSearchCardReader(p SearchCardParams) shipmentports.ShipmentSearchCardRea
 }
 
 const (
-	originStopAlias     = "origin_stp"
-	originMoveAlias     = "origin_sm"
-	originLocationAlias = "origin_loc"
-	originStateAlias    = "origin_ust"
-	destStopAlias       = "dest_stp"
-	destMoveAlias       = "dest_sm"
-	destLocationAlias   = "dest_loc"
-	destStateAlias      = "dest_ust"
-	driverAssignAlias   = "drv_asg"
-	driverMoveAlias     = "drv_sm"
-	driverSeatAlias     = "drv_seat"
-	driverWorkerAlias   = "drv"
-	seatSourceName      = "seat"
-	seatSourceWorkerID  = "worker_id"
+	driverAssignAlias  = "drv_asg"
+	driverMoveAlias    = "drv_sm"
+	driverSeatAlias    = "drv_seat"
+	driverWorkerAlias  = "drv"
+	seatSourceName     = "seat"
+	seatSourceWorkerID = "worker_id"
 )
 
 var liveShipmentStatuses = []shipment.Status{
@@ -66,65 +57,6 @@ var openMoveStatuses = []shipment.MoveStatus{
 	shipment.MoveStatusInTransit,
 }
 
-type stopPlace struct {
-	stop  *shipmentdb.StopsTable
-	loc   *locationdb.LocationsTable
-	state *usstatedb.UsStatesTable
-	query *keel.Query[*shipment.Stop]
-}
-
-func firstPickupPlace() stopPlace {
-	st := shipmentdb.Stops.As(originStopAlias)
-	sm := shipmentdb.ShipmentMoves.As(originMoveAlias)
-
-	return stopPlace{
-		stop:  st,
-		loc:   locationdb.Locations.As(originLocationAlias),
-		state: usstatedb.UsStates.As(originStateAlias),
-		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
-			Where(
-				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
-				st.Type.In(shipment.PickupStopTypes()...),
-			).
-			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
-			Limit(1).
-			Pick(st.LocationID),
-	}
-}
-
-func lastDeliveryPlace() stopPlace {
-	st := shipmentdb.Stops.As(destStopAlias)
-	sm := shipmentdb.ShipmentMoves.As(destMoveAlias)
-
-	return stopPlace{
-		stop:  st,
-		loc:   locationdb.Locations.As(destLocationAlias),
-		state: usstatedb.UsStates.As(destStateAlias),
-		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
-			Where(
-				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
-				st.Type.In(shipment.DeliveryStopTypes()...),
-			).
-			Order(sm.Sequence.Desc(), st.Sequence.Desc()).
-			Limit(1).
-			Pick(st.LocationID),
-	}
-}
-
-func (p stopPlace) join(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
-	return q.LeftJoinLateral(p.query).
-		LeftJoin(p.loc, p.loc.ID.EqCol(p.stop.LocationID)).
-		LeftJoin(p.state, p.state.ID.EqCol(p.loc.StateID))
-}
-
-func (p stopPlace) city() keel.StringExpr {
-	return p.loc.City.Coalesce("")
-}
-
-func (p stopPlace) stateCode() keel.StringExpr {
-	return p.state.Abbreviation.Coalesce("")
-}
-
 func (r *searchCardReader) ListSearchCards(
 	ctx context.Context,
 	req *shipmentports.ListShipmentSearchCardsRequest,
@@ -138,8 +70,8 @@ func (r *searchCardReader) ListSearchCards(
 			}
 
 			sp := shipmentdb.Shipments
-			origin := firstPickupPlace()
-			dest := lastDeliveryPlace()
+			origin := shipmentpredicate.FirstPickupPlace()
+			dest := shipmentpredicate.LastDeliveryPlace()
 			asg := shipmentdb.Assignments.As(driverAssignAlias)
 			sm := shipmentdb.ShipmentMoves.As(driverMoveAlias)
 			seat := workerdb.Workers.As(driverSeatAlias)
@@ -156,7 +88,7 @@ func (r *searchCardReader) ListSearchCards(
 				Limit(1).
 				Pick(asg.PrimaryWorkerID)
 
-			q := dest.join(origin.join(sp.Query())).
+			q := dest.Join(origin.Join(sp.Query())).
 				LeftJoinLateral(driver).
 				LeftJoin(drv, drv.ID.EqCol(asg.PrimaryWorkerID)).
 				Pick(
@@ -168,10 +100,10 @@ func (r *searchCardReader) ListSearchCards(
 					sp.Customer().Name.Coalesce(""),
 					sp.Customer().Code.Coalesce(""),
 					sp.ServiceType().Code.Coalesce(""),
-					origin.city(),
-					origin.stateCode(),
-					dest.city(),
-					dest.stateCode(),
+					origin.City(),
+					origin.StateCode(),
+					dest.City(),
+					dest.StateCode(),
 					drv.ID.Coalesce(""),
 					keel.ConcatWS(" ", drv.FirstName, drv.LastName).Coalesce(""),
 				).

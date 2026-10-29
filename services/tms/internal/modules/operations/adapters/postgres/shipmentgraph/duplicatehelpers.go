@@ -1,57 +1,53 @@
-package shipmentrepository
+package shipmentgraph
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const maxShipmentBOLLength = 100
 
-// ShipmentCopySpec drives a single graph copy of a source shipment. DateAnchor,
+// CopySpec drives a single graph copy of a source shipment. DateAnchor,
 // when set, re-anchors the first stop's scheduled window start to the given
 // unix time and shifts every other stop window by the same offset.
-type ShipmentCopySpec struct {
+type CopySpec struct {
 	ProNumber   string
 	BOL         string
 	RequestedBy pulid.ID
 	DateAnchor  *int64
 }
 
-type duplicatedShipmentGraph struct {
-	shipments         []*shipment.Shipment
-	moves             []*shipment.ShipmentMove
-	stops             []*shipment.Stop
-	additionalCharges []*shipment.AdditionalCharge
-	chargeAllocations []*shipment.ChargeAllocation
-	commodities       []*shipment.ShipmentCommodity
+type Batch struct {
+	Shipments         []*shipment.Shipment
+	Moves             []*shipment.ShipmentMove
+	Stops             []*shipment.Stop
+	AdditionalCharges []*shipment.AdditionalCharge
+	ChargeAllocations []*shipment.ChargeAllocation
+	Commodities       []*shipment.ShipmentCommodity
 }
 
-func buildDuplicatedShipmentGraph(
+func BuildBatch(
 	source *shipment.Shipment,
 	proNumbers []string,
 	dateAnchor *int64,
 	requestedBy pulid.ID,
-) *duplicatedShipmentGraph {
-	graph := &duplicatedShipmentGraph{
-		shipments: make([]*shipment.Shipment, 0, len(proNumbers)),
-		moves:     make([]*shipment.ShipmentMove, 0, len(source.Moves)*len(proNumbers)),
-		stops:     make([]*shipment.Stop, 0, countStops(source)*len(proNumbers)),
-		additionalCharges: make(
+) *Batch {
+	graph := &Batch{
+		Shipments: make([]*shipment.Shipment, 0, len(proNumbers)),
+		Moves:     make([]*shipment.ShipmentMove, 0, len(source.Moves)*len(proNumbers)),
+		Stops:     make([]*shipment.Stop, 0, countStops(source)*len(proNumbers)),
+		AdditionalCharges: make(
 			[]*shipment.AdditionalCharge,
 			0,
 			len(source.AdditionalCharges)*len(proNumbers),
 		),
-		commodities: make(
+		Commodities: make(
 			[]*shipment.ShipmentCommodity,
 			0,
 			len(source.Commodities)*len(proNumbers),
@@ -59,30 +55,30 @@ func buildDuplicatedShipmentGraph(
 	}
 
 	for idx, proNumber := range proNumbers {
-		duplicated := CopyShipmentGraph(source, ShipmentCopySpec{
+		duplicated := Copy(source, CopySpec{
 			ProNumber:   proNumber,
 			BOL:         deriveDuplicateBOL(source.BOL, idx+1),
 			RequestedBy: requestedBy,
 			DateAnchor:  dateAnchor,
 		})
 
-		graph.shipments = append(graph.shipments, duplicated)
-		graph.moves = append(graph.moves, duplicated.Moves...)
+		graph.Shipments = append(graph.Shipments, duplicated)
+		graph.Moves = append(graph.Moves, duplicated.Moves...)
 		for _, move := range duplicated.Moves {
-			graph.stops = append(graph.stops, move.Stops...)
+			graph.Stops = append(graph.Stops, move.Stops...)
 		}
-		graph.additionalCharges = append(graph.additionalCharges, duplicated.AdditionalCharges...)
-		graph.chargeAllocations = append(graph.chargeAllocations, duplicated.ChargeAllocations...)
-		graph.commodities = append(graph.commodities, duplicated.Commodities...)
+		graph.AdditionalCharges = append(graph.AdditionalCharges, duplicated.AdditionalCharges...)
+		graph.ChargeAllocations = append(graph.ChargeAllocations, duplicated.ChargeAllocations...)
+		graph.Commodities = append(graph.Commodities, duplicated.Commodities...)
 	}
 
 	return graph
 }
 
-// CopyShipmentGraph produces one fresh copy of the source shipment with new
+// Copy produces one fresh copy of the source shipment with new
 // identifiers, reset operational state, and its full move/stop/charge/commodity
 // graph attached.
-func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipment.Shipment {
+func Copy(source *shipment.Shipment, spec CopySpec) *shipment.Shipment {
 	duplicated := &shipment.Shipment{
 		ID:                  pulid.MustNew("shp_"),
 		BusinessUnitID:      source.BusinessUnitID,
@@ -198,38 +194,6 @@ func BuildAutoOrder(entity *shipment.Shipment, orderNumber string) *order.Order 
 		CurrencyCode:   "USD",
 		TotalAmount:    entity.TotalChargeAmount,
 	}
-}
-
-// LoadShipmentGraphSource loads a tenant-scoped shipment with its ordered
-// moves/stops, additional charges, and commodities — the full graph needed to
-// produce copies.
-func LoadShipmentGraphSource(
-	ctx context.Context,
-	db *keel.DB,
-	tenantInfo pagination.TenantInfo,
-	shipmentID pulid.ID,
-) (*shipment.Shipment, error) {
-	q, err := tenantShipments(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sp := shipmentdb.Shipments
-	m := sp.Moves()
-	st := m.Stops()
-	entity, err := q.Where(sp.ID.Eq(shipmentID)).
-		Load(
-			m.Order(m.Sequence.Asc()).Load(st.Order(st.Sequence.Asc())),
-			sp.AdditionalCharges(),
-			sp.ChargeAllocations(),
-			sp.Commodities(),
-		).
-		One(ctx, db)
-	if err != nil {
-		return nil, shipmentErrors.Map(err, shipmentID.String())
-	}
-
-	return entity, nil
 }
 
 func duplicateMovesAndStops(

@@ -1,4 +1,4 @@
-package shipmentrepository
+package shipmentgraph
 
 import (
 	"testing"
@@ -17,15 +17,15 @@ func TestBuildDuplicatedShipmentGraph_ResetsOperationalState(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	source := duplicateSourceFixture()
 
-	graph := buildDuplicatedShipmentGraph(source, []string{"PRO-1", "PRO-2"}, nil, userID)
+	graph := BuildBatch(source, []string{"PRO-1", "PRO-2"}, nil, userID)
 
-	require.Len(t, graph.shipments, 2)
-	require.Len(t, graph.moves, 2)
-	require.Len(t, graph.stops, 4)
-	require.Len(t, graph.additionalCharges, 2)
-	require.Len(t, graph.commodities, 2)
+	require.Len(t, graph.Shipments, 2)
+	require.Len(t, graph.Moves, 2)
+	require.Len(t, graph.Stops, 4)
+	require.Len(t, graph.AdditionalCharges, 2)
+	require.Len(t, graph.Commodities, 2)
 
-	firstCopy := graph.shipments[0]
+	firstCopy := graph.Shipments[0]
 	assert.Equal(t, shipment.StatusNew, firstCopy.Status)
 	assert.Equal(t, "PRO-1", firstCopy.ProNumber)
 	assert.Equal(t, source.FormulaTemplateID, firstCopy.FormulaTemplateID)

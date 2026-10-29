@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -50,7 +50,7 @@ func scoped(scope *shipmentboardports.ShipmentBoardScope) (*keel.Query[*shipment
 		return nil, ErrScopeMissing
 	}
 
-	return shipmentrepository.AggregateScope(scope.Filter, &scope.Options)
+	return shipmentpredicate.AggregateScope(scope.Filter, &scope.Options)
 }
 
 func revenueSum() keel.Expr {
@@ -155,7 +155,7 @@ func quickFilterTotalsQuery(
 	counts := make([]keel.Int64Value, 0, len(filters))
 	revenues := make([]keel.StringValue, 0, len(filters))
 	for _, spec := range filters {
-		cond, err := shipmentrepository.QuickFilterCondition(basis, spec)
+		cond, err := shipmentpredicate.QuickFilterCondition(basis, spec)
 		if err != nil {
 			return nil, err
 		}

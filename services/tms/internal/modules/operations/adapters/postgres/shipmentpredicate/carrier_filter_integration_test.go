@@ -1,6 +1,6 @@
 //go:build integration
 
-package shipmentrepository
+package shipmentpredicate
 
 import (
 	"testing"
@@ -76,11 +76,16 @@ func TestCarrierIDsFilter_MatchesShipmentsTenderedToTheCarrier(t *testing.T) {
 	})
 	sp := shipmentdb.Shipments
 	matched, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(shipmentOptionPredicates(&shipmentports.ShipmentOptions{
+		Where(OptionPredicates(&shipmentports.ShipmentOptions{
 			CarrierIDs: []pulid.ID{pulid.ID(carrierID)},
 		})...))
 	require.NoError(t, err)
 
 	assert.Contains(t, matched, moves[0].ShipmentID)
-	assert.NotContains(t, matched, moves[1].ShipmentID, "a canceled tender is not the carrier's load")
+	assert.NotContains(
+		t,
+		matched,
+		moves[1].ShipmentID,
+		"a canceled tender is not the carrier's load",
+	)
 }

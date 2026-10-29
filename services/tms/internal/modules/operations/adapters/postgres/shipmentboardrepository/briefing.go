@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -36,7 +36,7 @@ func (r *Repository) LeadingLateReason(
 				Pick(rc.Label, count).
 				Where(
 					sf.Status.In(servicefailure.UnresolvedStatuses()...),
-					shipmentrepository.StageCondition(shipment.StageLate),
+					shipmentpredicate.StageCondition(shipment.StageLate),
 				).
 				Group(rc.Label).
 				Order(keel.Desc(count), rc.Label.Asc()).
