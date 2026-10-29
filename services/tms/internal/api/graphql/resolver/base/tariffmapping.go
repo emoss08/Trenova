@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 )
 
@@ -27,12 +26,16 @@ func TariffInputsFromModel(field string, values map[string]any) (tarifftypes.Inp
 
 var exactTrace = sonic.Config{UseNumber: true}.Froze()
 
-func TariffTraceToModel(trace rules.RawJSON) (map[string]any, error) {
-	if len(trace) == 0 {
+func TariffTraceToModel(trace *shipmentdomain.RatingTrace) (map[string]any, error) {
+	if trace == nil {
 		return nil, nil //nolint:nilnil // a rating with no trace maps to null
 	}
+	encoded, err := sonic.Marshal(trace)
+	if err != nil {
+		return nil, err
+	}
 	var out map[string]any
-	if err := exactTrace.Unmarshal(trace, &out); err != nil {
+	if err = exactTrace.Unmarshal(encoded, &out); err != nil {
 		return nil, err
 	}
 	return out, nil

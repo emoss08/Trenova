@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -206,4 +207,34 @@ func TestRatingDetailToModel_AnswersNoChoicesAsAnEmptyList(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, model.Choices)
 	assert.Empty(t, model.Choices)
+}
+
+func TestRatingDetailToModel_MapsTheTraceStatementsAndLookups(t *testing.T) {
+	t.Parallel()
+
+	model, err := ratingDetailToModel(&shipmentdomain.RatingDetail{
+		Trace: &shipmentdomain.RatingTrace{
+			Statements: rules.RawJSON(
+				`[{"code":null,"kind":"charge","label":"Flat Rate","value":{"u":"$","$q":"2450"},"display":"$2450.00"}]`,
+			),
+			Lookups: rules.RawJSON(`[{"table":"fuel","key":"2026-10","row":3}]`),
+		},
+	})
+	require.NoError(t, err)
+
+	statements, ok := model.Trace["statements"].([]any)
+	require.True(t, ok)
+	require.Len(t, statements, 1)
+	assert.Equal(t, "Flat Rate", statements[0].(map[string]any)["label"])
+	lookups, ok := model.Trace["lookups"].([]any)
+	require.True(t, ok)
+	assert.Len(t, lookups, 1)
+}
+
+func TestRatingDetailToModel_AnswersNoTraceAsNull(t *testing.T) {
+	t.Parallel()
+
+	model, err := ratingDetailToModel(&shipmentdomain.RatingDetail{})
+	require.NoError(t, err)
+	assert.Nil(t, model.Trace)
 }

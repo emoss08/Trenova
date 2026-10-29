@@ -7,7 +7,7 @@ func (s *Shipment) WithoutFormulaContent() *Shipment {
 
 	redacted := *s
 	redacted.FormulaTemplate = nil
-	if redacted.RatingDetail != nil && len(redacted.RatingDetail.Trace) > 0 {
+	if redacted.RatingDetail != nil && redacted.RatingDetail.Trace != nil {
 		detail := *redacted.RatingDetail
 		detail.Trace = nil
 		redacted.RatingDetail = &detail
@@ -18,7 +18,7 @@ func (s *Shipment) WithoutFormulaContent() *Shipment {
 
 func (s *Shipment) hasFormulaContent() bool {
 	return s.FormulaTemplate != nil ||
-		(s.RatingDetail != nil && len(s.RatingDetail.Trace) > 0)
+		(s.RatingDetail != nil && s.RatingDetail.Trace != nil)
 }
 
 func WithoutFormulaContent(items []*Shipment) []*Shipment {

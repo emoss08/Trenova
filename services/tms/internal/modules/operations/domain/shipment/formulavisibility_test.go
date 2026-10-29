@@ -18,7 +18,7 @@ func ratedShipment() *Shipment {
 		FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per pound"},
 		RatingDetail: &RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Trace:               &RatingTrace{Statements: rules.RawJSON(`["weight * 2"]`)},
 			Bill:                &tarifftypes.Bill{Total: decimal.NewFromInt(42)},
 		},
 	}
