@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -196,7 +197,7 @@ func (w *writer) writeControlNumbers(ctx context.Context) error {
 			&edipartnerports.ResetEDIControlNumberRequest{
 				TenantInfo:     w.tenant,
 				PartnerID:      w.partner.ID,
-				DocumentTypeID: w.p.docTypes[setKey(control.set, control.direction)],
+				DocumentTypeID: w.p.docTypes[ediconnectionfield.SetKey(control.set, control.direction)],
 				Kind:           control.kind,
 				NextValue:      control.next,
 			},

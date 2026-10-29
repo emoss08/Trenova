@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"fmt"
@@ -9,112 +9,112 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 )
 
-type candidate struct {
-	value      string
+type Candidate struct {
+	Value      string
 	confidence float64
 	source     ediconnectiondraftports.DraftSource
-	status     ediconnectiondraftports.ValueStatus
+	Status     ediconnectiondraftports.ValueStatus
 	problem    string
 }
 
-func (c *candidate) public() ediconnectiondraftports.DraftCandidate {
+func (c *Candidate) public() ediconnectiondraftports.DraftCandidate {
 	return ediconnectiondraftports.DraftCandidate{
-		Value:      c.value,
+		Value:      c.Value,
 		Confidence: c.confidence,
 		Source:     c.source,
 		Problem:    c.problem,
 	}
 }
 
-type evidence struct {
-	byField     map[string][]*candidate
-	resolutions map[string]ediconnectiondraftports.DraftResolutionInput
+type Evidence struct {
+	ByField     map[string][]*Candidate
+	Resolutions map[string]ediconnectiondraftports.DraftResolutionInput
 }
 
-func newEvidence() *evidence {
-	return &evidence{
-		byField:     make(map[string][]*candidate),
-		resolutions: make(map[string]ediconnectiondraftports.DraftResolutionInput),
+func NewEvidence() *Evidence {
+	return &Evidence{
+		ByField:     make(map[string][]*Candidate),
+		Resolutions: make(map[string]ediconnectiondraftports.DraftResolutionInput),
 	}
 }
 
-func (e *evidence) add(field string, c *candidate) {
-	e.byField[field] = append(e.byField[field], c)
+func (e *Evidence) Add(field string, c *Candidate) {
+	e.ByField[field] = append(e.ByField[field], c)
 }
 
-func readValue(
-	pages *pageIndex,
-	spec *fieldSpec,
+func ReadValue(
+	pages *Pages,
+	spec *Spec,
 	input *ediconnectiondraftports.DraftValueInput,
-) *candidate {
+) *Candidate {
 	raw := input.Value
-	c := &candidate{value: strings.TrimSpace(raw), confidence: input.Confidence}
+	c := &Candidate{Value: strings.TrimSpace(raw), confidence: input.Confidence}
 
-	check := pages.locate(input.Citation)
-	page := check.page
+	check := pages.Locate(input.Citation)
+	page := check.Page
 	if page == 0 {
 		page = input.Citation.Page
 	}
-	c.source = documentSource(page, input.Citation, check.problem)
+	c.source = DocumentSource(page, input.Citation, check.Problem)
 
-	normalized, err := spec.normalize(raw)
+	normalized, err := spec.Normalize(raw)
 	switch {
-	case !check.ok:
-		c.status = ediconnectiondraftports.ValueStatusUnverified
-		c.problem = check.problem
+	case !check.OK:
+		c.Status = ediconnectiondraftports.ValueStatusUnverified
+		c.problem = check.Problem
 	case err != nil:
-		c.status = ediconnectiondraftports.ValueStatusInvalid
-		c.problem = fmt.Sprintf("%s %s", spec.label, err.Error())
+		c.Status = ediconnectiondraftports.ValueStatusInvalid
+		c.problem = fmt.Sprintf("%s %s", spec.Label, err.Error())
 	case !valueInQuote(spec, normalized, input.Citation.Quote) &&
 		!valueInQuote(spec, strings.TrimSpace(raw), input.Citation.Quote):
-		c.value = normalized
-		c.status = ediconnectiondraftports.ValueStatusUnverified
+		c.Value = normalized
+		c.Status = ediconnectiondraftports.ValueStatusUnverified
 		c.problem = "The quote does not contain this value"
-	case input.Confidence < confidenceFloor:
-		c.value = normalized
-		c.status = ediconnectiondraftports.ValueStatusHeld
+	case input.Confidence < ConfidenceFloor:
+		c.Value = normalized
+		c.Status = ediconnectiondraftports.ValueStatusHeld
 		c.problem = fmt.Sprintf(
 			"Confidence %.2f is below %.2f",
 			input.Confidence,
-			confidenceFloor,
+			ConfidenceFloor,
 		)
 	default:
-		c.value = normalized
-		c.status = ediconnectiondraftports.ValueStatusAccepted
+		c.Value = normalized
+		c.Status = ediconnectiondraftports.ValueStatusAccepted
 	}
-	if c.status == ediconnectiondraftports.ValueStatusInvalid ||
-		c.status == ediconnectiondraftports.ValueStatusUnverified {
-		c.value = x12field.RedactSecrets(c.value)
+	if c.Status == ediconnectiondraftports.ValueStatusInvalid ||
+		c.Status == ediconnectiondraftports.ValueStatusUnverified {
+		c.Value = x12field.RedactSecrets(c.Value)
 	}
 
 	return c
 }
 
-type fallback struct {
-	value  string
-	source ediconnectiondraftports.DraftSource
-	status ediconnectiondraftports.ValueStatus
+type Fallback struct {
+	Value  string
+	Source ediconnectiondraftports.DraftSource
+	Status ediconnectiondraftports.ValueStatus
 }
 
-func resolveField(
-	spec *fieldSpec,
-	e *evidence,
+func Resolve(
+	spec *Spec,
+	e *Evidence,
 	current string,
-	alternative *fallback,
+	alternative *Fallback,
 	required bool,
 ) ediconnectiondraftports.DraftValue {
 	out := &ediconnectiondraftports.DraftValue{
-		Field:    spec.key,
-		Label:    spec.label,
+		Field:    spec.Key,
+		Label:    spec.Label,
 		Current:  current,
 		Required: required,
 	}
-	candidates := e.byField[spec.key]
+	candidates := e.ByField[spec.Key]
 	for _, c := range candidates {
 		out.Candidates = append(out.Candidates, c.public())
 	}
 
-	switch resolution, resolved := e.resolutions[spec.key]; {
+	switch resolution, resolved := e.Resolutions[spec.Key]; {
 	case resolved:
 		applyResolution(spec, out, candidates, &resolution)
 	case len(candidates) > 0:
@@ -125,11 +125,11 @@ func resolveField(
 	return *out
 }
 
-func resolveCandidates(out *ediconnectiondraftports.DraftValue, candidates []*candidate) {
-	verified := make([]*candidate, 0, len(candidates))
+func resolveCandidates(out *ediconnectiondraftports.DraftValue, candidates []*Candidate) {
+	verified := make([]*Candidate, 0, len(candidates))
 	for _, c := range candidates {
-		if c.status == ediconnectiondraftports.ValueStatusAccepted ||
-			c.status == ediconnectiondraftports.ValueStatusHeld {
+		if c.Status == ediconnectiondraftports.ValueStatusAccepted ||
+			c.Status == ediconnectiondraftports.ValueStatusHeld {
 			verified = append(verified, c)
 		}
 	}
@@ -146,8 +146,8 @@ func resolveCandidates(out *ediconnectiondraftports.DraftValue, candidates []*ca
 		keepCurrent(out)
 	case len(values) == 1:
 		best := strongest(verified)
-		if best.status != ediconnectiondraftports.ValueStatusAccepted && out.Current != "" &&
-			best.value == out.Current {
+		if best.Status != ediconnectiondraftports.ValueStatusAccepted && out.Current != "" &&
+			best.Value == out.Current {
 			out.Value = out.Current
 			out.Status = ediconnectiondraftports.ValueStatusKept
 			out.Confidence = best.confidence
@@ -156,30 +156,30 @@ func resolveCandidates(out *ediconnectiondraftports.DraftValue, candidates []*ca
 			out.Change = ediconnectiondraftports.ChangeKindSame
 			return
 		}
-		if best.status != ediconnectiondraftports.ValueStatusAccepted {
+		if best.Status != ediconnectiondraftports.ValueStatusAccepted {
 			out.Status = ediconnectiondraftports.ValueStatusHeld
 			out.Confidence = best.confidence
 			out.Reason = best.problem
 			keepCurrent(out)
 			return
 		}
-		out.Value = best.value
+		out.Value = best.Value
 		out.Status = ediconnectiondraftports.ValueStatusAccepted
 		out.Confidence = best.confidence
 		out.Source = best.source
 		if len(candidates) == 1 {
 			out.Candidates = nil
 		}
-		withChange(out)
+		WithChange(out)
 	default:
 		first := candidates[0]
-		out.Status = first.status
+		out.Status = first.Status
 		out.Reason = first.problem
 		keepCurrent(out)
 	}
 }
 
-func resolveAbsent(out *ediconnectiondraftports.DraftValue, alternative *fallback, required bool) {
+func resolveAbsent(out *ediconnectiondraftports.DraftValue, alternative *Fallback, required bool) {
 	out.Candidates = nil
 	switch {
 	case out.Current != "":
@@ -190,10 +190,10 @@ func resolveAbsent(out *ediconnectiondraftports.DraftValue, alternative *fallbac
 			Note: "The partner's current setting; the document does not mention it",
 		}
 		out.Change = ediconnectiondraftports.ChangeKindSame
-	case alternative != nil && alternative.value != "":
-		out.Value = alternative.value
-		out.Status = alternative.status
-		out.Source = alternative.source
+	case alternative != nil && alternative.Value != "":
+		out.Value = alternative.Value
+		out.Status = alternative.Status
+		out.Source = alternative.Source
 		out.Change = ediconnectiondraftports.ChangeKindAdd
 	case required:
 		out.Status = ediconnectiondraftports.ValueStatusMissing
@@ -206,15 +206,15 @@ func resolveAbsent(out *ediconnectiondraftports.DraftValue, alternative *fallbac
 }
 
 func applyResolution(
-	spec *fieldSpec,
+	spec *Spec,
 	out *ediconnectiondraftports.DraftValue,
-	candidates []*candidate,
+	candidates []*Candidate,
 	resolution *ediconnectiondraftports.DraftResolutionInput,
 ) {
-	normalized, err := spec.normalize(resolution.Value)
+	normalized, err := spec.Normalize(resolution.Value)
 	if err != nil {
 		out.Status = ediconnectiondraftports.ValueStatusInvalid
-		out.Reason = fmt.Sprintf("The chosen value is not valid: %s %s", spec.label, err)
+		out.Reason = fmt.Sprintf("The chosen value is not valid: %s %s", spec.Label, err)
 		keepCurrent(out)
 		return
 	}
@@ -222,23 +222,23 @@ func applyResolution(
 	switch resolution.Source {
 	case ediconnectiondraftports.ResolutionSourceCandidate:
 		for _, c := range candidates {
-			if c.value != normalized ||
-				(c.status != ediconnectiondraftports.ValueStatusAccepted && c.status != ediconnectiondraftports.ValueStatusHeld) {
+			if c.Value != normalized ||
+				(c.Status != ediconnectiondraftports.ValueStatusAccepted && c.Status != ediconnectiondraftports.ValueStatusHeld) {
 				continue
 			}
 			out.Value = normalized
 			out.Status = ediconnectiondraftports.ValueStatusAccepted
 			out.Confidence = c.confidence
 			out.Source = c.source
-			out.Source.Note = joinNotes(c.source.Note, "Chosen by the person")
-			withChange(out)
+			out.Source.Note = JoinNotes(c.source.Note, "Chosen by the person")
+			WithChange(out)
 			return
 		}
 		out.Status = ediconnectiondraftports.ValueStatusInvalid
 		out.Reason = fmt.Sprintf(
 			"%q is not one of the values the document gives for %s",
 			normalized,
-			spec.label,
+			spec.Label,
 		)
 		keepCurrent(out)
 	case ediconnectiondraftports.ResolutionSourcePerson:
@@ -246,12 +246,12 @@ func applyResolution(
 		out.Status = ediconnectiondraftports.ValueStatusAccepted
 		out.Source = ediconnectiondraftports.DraftSource{
 			Kind: ediconnectiondraftports.SourceKindPerson,
-			Note: joinNotes(
+			Note: JoinNotes(
 				"Given by the person in this conversation",
 				strings.TrimSpace(resolution.Note),
 			),
 		}
-		withChange(out)
+		WithChange(out)
 	default:
 		out.Status = ediconnectiondraftports.ValueStatusInvalid
 		out.Reason = "A resolution must say whether it picks a cited value or one the person gave"
@@ -269,7 +269,7 @@ func keepCurrent(out *ediconnectiondraftports.DraftValue) {
 	out.Change = ediconnectiondraftports.ChangeKindNone
 }
 
-func withChange(out *ediconnectiondraftports.DraftValue) {
+func WithChange(out *ediconnectiondraftports.DraftValue) {
 	switch out.Current {
 	case "":
 		out.Change = ediconnectiondraftports.ChangeKindAdd
@@ -280,17 +280,17 @@ func withChange(out *ediconnectiondraftports.DraftValue) {
 	}
 }
 
-func distinctValues(candidates []*candidate) []string {
+func distinctValues(candidates []*Candidate) []string {
 	values := make([]string, 0, len(candidates))
 	for _, c := range candidates {
-		if !slices.Contains(values, c.value) {
-			values = append(values, c.value)
+		if !slices.Contains(values, c.Value) {
+			values = append(values, c.Value)
 		}
 	}
 	return values
 }
 
-func strongest(candidates []*candidate) *candidate {
+func strongest(candidates []*Candidate) *Candidate {
 	best := candidates[0]
 	for _, c := range candidates[1:] {
 		if rank(c) > rank(best) {
@@ -300,9 +300,9 @@ func strongest(candidates []*candidate) *candidate {
 	return best
 }
 
-func rank(c *candidate) float64 {
+func rank(c *Candidate) float64 {
 	score := c.confidence
-	if c.status == ediconnectiondraftports.ValueStatusAccepted {
+	if c.Status == ediconnectiondraftports.ValueStatusAccepted {
 		score += 2
 	}
 	if c.source.Kind == ediconnectiondraftports.SourceKindDocument {
@@ -319,7 +319,7 @@ func quoteValues(values []string) string {
 	return strings.Join(quoted, ", ")
 }
 
-func joinNotes(notes ...string) string {
+func JoinNotes(notes ...string) string {
 	kept := make([]string, 0, len(notes))
 	for _, note := range notes {
 		if note = strings.TrimSpace(note); note != "" {
@@ -327,4 +327,34 @@ func joinNotes(notes ...string) string {
 		}
 	}
 	return strings.Join(kept, ". ")
+}
+
+type IdentityHints struct {
+	Code         string
+	Name         string
+	ISAQualifier string
+	ISAID        string
+	AS2ID        string
+}
+
+func (e *Evidence) Hint(field string) string {
+	spec, ok := Catalog[field]
+	if !ok {
+		return ""
+	}
+	settled := Resolve(spec, e, "", nil, false)
+	if settled.Status != ediconnectiondraftports.ValueStatusAccepted {
+		return ""
+	}
+	return settled.Value
+}
+
+func (e *Evidence) Hints() *IdentityHints {
+	return &IdentityHints{
+		Code:         e.Hint(PartnerCode),
+		Name:         e.Hint(PartnerName),
+		ISAQualifier: e.Hint(PartnerQualifier),
+		ISAID:        e.Hint(PartnerID),
+		AS2ID:        e.Hint("as2.partnerAs2Id"),
+	}
 }

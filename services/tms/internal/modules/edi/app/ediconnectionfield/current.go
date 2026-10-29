@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -10,80 +10,80 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type currentSetup struct {
-	setup     *ediconnectiondraftports.EDIPartnerSetup
-	transport *edi.EDICommunicationProfile
-	version   *ladingproject.LadingVersion
-	exchanged map[string]bool
-	values    map[string]string
+type Current struct {
+	Setup     *ediconnectiondraftports.EDIPartnerSetup
+	Transport *edi.EDICommunicationProfile
+	Version   *ladingproject.LadingVersion
+	Exchanged map[string]bool
+	Values    map[string]string
 }
 
-func readCurrent(
+func ReadCurrent(
 	setup *ediconnectiondraftports.EDIPartnerSetup,
 	method edi.ConnectionMethod,
-) *currentSetup {
-	current := &currentSetup{
-		setup:     setup,
-		exchanged: map[string]bool{},
-		values:    map[string]string{},
+) *Current {
+	current := &Current{
+		Setup:     setup,
+		Exchanged: map[string]bool{},
+		Values:    map[string]string{},
 	}
 	if setup == nil {
 		return current
 	}
 
 	partner := setup.Partner
-	current.values[fieldPartnerCode] = partner.Code
-	current.values[fieldPartnerName] = partner.Name
-	current.values[fieldPartnerContactName] = partner.ContactName
-	current.values[fieldPartnerContactEmail] = partner.ContactEmail
-	current.values[fieldPartnerContactPhone] = partner.ContactPhone
-	current.values[fieldPartnerTimezone] = partner.Timezone
-	current.values[fieldPartnerCountry] = partner.Country
+	current.Values[PartnerCode] = partner.Code
+	current.Values[PartnerName] = partner.Name
+	current.Values[PartnerContactName] = partner.ContactName
+	current.Values[PartnerContactEmail] = partner.ContactEmail
+	current.Values[PartnerContactPhone] = partner.ContactPhone
+	current.Values[PartnerTimezone] = partner.Timezone
+	current.Values[PartnerCountry] = partner.Country
 
-	current.transport = pickTransport(setup.CommunicationProfiles, method)
-	if current.transport != nil {
-		current.values[fieldTransportMethod] = string(current.transport.Method)
-		for key, spec := range fieldCatalog {
-			if spec.scope == scopeTransport && spec.configKey != "" {
-				current.values[key] = maputils.StringValue(current.transport.Config, spec.configKey)
+	current.Transport = pickTransport(setup.CommunicationProfiles, method)
+	if current.Transport != nil {
+		current.Values[TransportMethod] = string(current.Transport.Method)
+		for key, spec := range Catalog {
+			if spec.Scope == ScopeTransport && spec.ConfigKey != "" {
+				current.Values[key] = maputils.StringValue(current.Transport.Config, spec.ConfigKey)
 			}
 		}
 	}
 
 	if setup.LatestVersion != nil {
-		current.version = setup.LatestVersion
+		current.Version = setup.LatestVersion
 		readManifest(current, &setup.LatestVersion.Manifest)
 	}
 	return current
 }
 
-func readManifest(current *currentSetup, manifest *lading.Check) {
+func readManifest(current *Current, manifest *lading.Check) {
 	if manifest.Partner != nil && manifest.Partner.Interchange != nil {
-		readInterchange(current.values, manifest.Partner.Interchange)
+		readInterchange(current.Values, manifest.Partner.Interchange)
 	}
 	readMaps(current, manifest)
-	readAcknowledgments(current.values, manifest)
+	readAcknowledgments(current.Values, manifest)
 }
 
 func readInterchange(values map[string]string, interchange *lading.Interchange) {
 	if interchange.Them != nil {
-		values[fieldPartnerQualifier] = interchange.Them.Qualifier
-		values[fieldPartnerID] = interchange.Them.ID
+		values[PartnerQualifier] = interchange.Them.Qualifier
+		values[PartnerID] = interchange.Them.ID
 	}
 	if interchange.Us != nil {
-		values[fieldOurQualifier] = interchange.Us.Qualifier
-		values[fieldOurID] = interchange.Us.ID
+		values[OurQualifier] = interchange.Us.Qualifier
+		values[OurID] = interchange.Us.ID
 	}
 	if interchange.Group != nil {
-		values[fieldPartnerGSID] = interchange.Group.Theirs
-		values[fieldOurGSID] = interchange.Group.Ours
+		values[PartnerGSID] = interchange.Group.Theirs
+		values[OurGSID] = interchange.Group.Ours
 	}
-	values[fieldX12Version] = interchange.Version
-	values[fieldUsageIndicator] = "T"
-	if interchange.Usage == valueProduction {
-		values[fieldUsageIndicator] = "P"
+	values[X12Version] = interchange.Version
+	values[UsageIndicator] = "T"
+	if interchange.Usage == ValueProduction {
+		values[UsageIndicator] = "P"
 	}
-	keys := []string{fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep}
+	keys := []string{ElementSep, SegmentSep, ComponentSep, RepetitionSep}
 	for index, separator := range interchange.Separators {
 		if index < len(keys) {
 			values[keys[index]] = separator
@@ -91,7 +91,7 @@ func readInterchange(values map[string]string, interchange *lading.Interchange) 
 	}
 }
 
-func readMaps(current *currentSetup, manifest *lading.Check) {
+func readMaps(current *Current, manifest *lading.Check) {
 	versions := make(map[string]string, len(manifest.Guides))
 	for _, guide := range manifest.Guides {
 		versions[guide.Name] = guide.Version
@@ -108,10 +108,10 @@ func readMaps(current *currentSetup, manifest *lading.Check) {
 			direction = edidocument.DocumentDirectionInbound
 			guide = item.From
 		}
-		current.exchanged[setKey(set, direction)] = true
-		current.values[setField(set, direction, setAttrSupported)] = valueTrue
+		current.Exchanged[SetKey(set, direction)] = true
+		current.Values[SetField(set, direction, SetAttrSupported)] = ValueTrue
 		if version := versions[guide]; version != "" {
-			current.values[setField(set, direction, setAttrVersion)] = version
+			current.Values[SetField(set, direction, SetAttrVersion)] = version
 		}
 	}
 }
@@ -125,10 +125,10 @@ func readAcknowledgments(values map[string]string, manifest *lading.Check) {
 			}
 			ack := clause.Acknowledge
 			if ack == lading.AcknowledgeNone {
-				ack = ackNone
+				ack = AckNone
 			}
 			set := edidocument.TransactionSet(clause.Set)
-			values[setField(set, edidocument.DocumentDirectionInbound, setAttrAck)] = ack
+			values[SetField(set, edidocument.DocumentDirectionInbound, SetAttrAck)] = ack
 		}
 	}
 }
@@ -155,14 +155,14 @@ func pickTransport(
 	return first
 }
 
-func (c *currentSetup) sequence(
+func (c *Current) Sequence(
 	documentTypeID pulid.ID,
 	kind edidocument.ControlNumberKind,
 ) *edidocument.EDIControlNumberSequence {
-	if c.setup == nil {
+	if c.Setup == nil {
 		return nil
 	}
-	for _, sequence := range c.setup.ControlNumbers {
+	for _, sequence := range c.Setup.ControlNumbers {
 		if sequence.DocumentTypeID == documentTypeID && sequence.Kind == kind {
 			return sequence
 		}
@@ -170,17 +170,21 @@ func (c *currentSetup) sequence(
 	return nil
 }
 
-func (c *currentSetup) mapping(
+func (c *Current) Mapping(
 	entityType edi.MappingEntityType,
 	sourceID pulid.ID,
 ) *edi.EDIMappingProfileItem {
-	if c.setup == nil {
+	if c.Setup == nil {
 		return nil
 	}
-	for _, item := range c.setup.MappingItems {
+	for _, item := range c.Setup.MappingItems {
 		if item.EntityType == entityType && item.SourceID == sourceID {
 			return item
 		}
 	}
 	return nil
+}
+
+func SetKey(set edidocument.TransactionSet, direction edidocument.DocumentDirection) string {
+	return string(set) + "/" + string(direction)
 }

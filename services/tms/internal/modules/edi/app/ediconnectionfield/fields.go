@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"errors"
@@ -15,71 +15,71 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 )
 
-type fieldScope int
+type Scope int
 
 const (
-	scopePartner fieldScope = iota
-	scopeTransport
-	scopeInterchange
-	scopeSet
-	scopeControlNumber
+	ScopePartner Scope = iota
+	ScopeTransport
+	ScopeInterchange
+	ScopeSet
+	ScopeControlNumber
 )
 
 type normalizer func(string) (string, error)
 
 type quoteMatcher func(value, quote string) bool
 
-type fieldSpec struct {
-	key       string
-	label     string
-	scope     fieldScope
-	configKey string
+type Spec struct {
+	Key       string
+	Label     string
+	Scope     Scope
+	ConfigKey string
 	methods   []edi.ConnectionMethod
-	required  bool
-	normalize normalizer
+	Required  bool
+	Normalize normalizer
 	spelled   map[string][]string
 	matches   quoteMatcher
-	fallback  string
+	Fallback  string
 }
 
 const (
-	fieldPartnerCode         = "partner.code"
-	fieldPartnerName         = "partner.name"
-	fieldPartnerContactName  = "partner.contactName"
-	fieldPartnerContactEmail = "partner.contactEmail"
-	fieldPartnerContactPhone = "partner.contactPhone"
-	fieldPartnerTimezone     = "partner.timezone"
-	fieldPartnerCountry      = "partner.country"
+	PartnerCode         = "partner.code"
+	PartnerName         = "partner.name"
+	PartnerContactName  = "partner.contactName"
+	PartnerContactEmail = "partner.contactEmail"
+	PartnerContactPhone = "partner.contactPhone"
+	PartnerTimezone     = "partner.timezone"
+	PartnerCountry      = "partner.country"
 
-	fieldTransportMethod      = "transport.method"
-	fieldTransportEnvironment = "transport.environment"
+	TransportMethod      = "transport.method"
+	TransportEnvironment = "transport.environment"
 
-	fieldPartnerQualifier = "isa.partnerQualifier"
-	fieldPartnerID        = "isa.partnerId"
-	fieldOurQualifier     = "isa.ourQualifier"
-	fieldOurID            = "isa.ourId"
-	fieldPartnerGSID      = "gs.partnerId"
-	fieldOurGSID          = "gs.ourId"
-	fieldUsageIndicator   = "isa.usageIndicator"
-	fieldX12Version       = "x12.version"
-	fieldElementSep       = "separators.element"
-	fieldSegmentSep       = "separators.segment"
-	fieldComponentSep     = "separators.component"
-	fieldRepetitionSep    = "separators.repetition"
+	PartnerQualifier = "isa.partnerQualifier"
+	PartnerID        = "isa.partnerId"
+	OurQualifier     = "isa.ourQualifier"
+	OurID            = "isa.ourId"
+	PartnerGSID      = "gs.partnerId"
+	OurGSID          = "gs.ourId"
+	UsageIndicator   = "isa.usageIndicator"
+	X12Version       = "x12.version"
+	ElementSep       = "separators.element"
+	SegmentSep       = "separators.segment"
+	ComponentSep     = "separators.component"
+	RepetitionSep    = "separators.repetition"
 
-	setAttrSupported        = "supported"
-	setAttrVersion          = "version"
-	setAttrAck              = "ack"
-	setAttrAckWindowMinutes = "ackWindowMinutes"
+	SetAttrSupported        = "supported"
+	SetAttrVersion          = "version"
+	SetAttrAck              = "ack"
+	SetAttrAckWindowMinutes = "ackWindowMinutes"
 
 	controlNumberAttrStart = "start"
 
-	ackNone = "None"
+	AckNone = "None"
 
-	valueTrue       = "true"
-	valueFalse      = "false"
-	valueTest       = "test"
-	valueProduction = "production"
+	ValueTrue       = "true"
+	ValueFalse      = "false"
+	ValueTest       = "test"
+	ValueProduction = "production"
 	valueSync       = "sync"
 	valueAsync      = "async"
 	valueNone       = "none"
@@ -108,17 +108,17 @@ var (
 	fileMethods   = []edi.ConnectionMethod{edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
 	as2Only       = []edi.ConnectionMethod{edi.ConnectionMethodAS2}
 	vanOnly       = []edi.ConnectionMethod{edi.ConnectionMethodVAN}
-	supportedSets = []edidocument.TransactionSet{
+	SupportedSets = []edidocument.TransactionSet{
 		edidocument.TransactionSet204,
 		edidocument.TransactionSet210,
 		edidocument.TransactionSet214,
 		edidocument.TransactionSet990,
 	}
-	directions = []edidocument.DocumentDirection{
+	Directions = []edidocument.DocumentDirection{
 		edidocument.DocumentDirectionInbound,
 		edidocument.DocumentDirectionOutbound,
 	}
-	controlNumberKinds = []edidocument.ControlNumberKind{
+	ControlNumberKinds = []edidocument.ControlNumberKind{
 		edidocument.ControlNumberKindInterchange,
 		edidocument.ControlNumberKindGroup,
 		edidocument.ControlNumberKindTransaction,
@@ -195,7 +195,7 @@ func spelledOut(normalize normalizer, spelled map[string][]string) normalizer {
 }
 
 func spelledValue(value string, spelled map[string][]string) (string, bool) {
-	haystack := normalizeForMatch(value)
+	haystack := NormalizeForMatch(value)
 	matches := make([]spelledMatch, 0, 4)
 	for target, phrases := range spelled {
 		matches = appendSpelled(matches, haystack, target, target)
@@ -218,7 +218,7 @@ func spelledValue(value string, spelled map[string][]string) (string, bool) {
 }
 
 func appendSpelled(matches []spelledMatch, haystack, target, phrase string) []spelledMatch {
-	needle := normalizeForMatch(phrase)
+	needle := NormalizeForMatch(phrase)
 	if needle == "" {
 		return matches
 	}

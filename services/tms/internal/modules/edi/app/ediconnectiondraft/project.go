@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionguide"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -16,37 +18,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/lading"
-	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	projectRecord    = "Lading project"
-	guideDirectory   = "guides/"
 	keptSetLabel     = "The document says this set is not exchanged; the project keeps what it has for it"
 	keptGuideLabel   = "The project's guide is kept as it is; add the document's requirements to it in the Lading studio"
 	noMapSummary     = "The project has no map for %s; add one in the Lading studio"
 	ackConflict      = "The document asks for %s; the project acknowledges every set with %s"
 	draftNotes       = "Drafted from %s"
-	conditionalNote  = "The partner's map writes it only under a condition"
-	maxGuideCodes    = 50
-	maxDiagnostics   = 100
 	maxGuideAttempts = 3
 )
 
 var (
-	partnerHeader   = regexp.MustCompile(`(?m)^partner\s+([A-Za-z_][A-Za-z0-9_]*)`)
 	interchangeArea = regexp.MustCompile(`(?s)interchange\s*\{[^{}]*\}`)
 	zoneLine        = regexp.MustCompile(`(?m)^zone\s+\S+[ \t]*$`)
-	baseGuideRef    = regexp.MustCompile(`(?m)^(\s*(?:from|to)\s+)x12\.\d{6}\.(\d{3})([ \t]*)$`)
 	segmentID       = regexp.MustCompile(`^[A-Z][A-Z0-9]{1,2}$`)
 )
-
-type requirement struct {
-	input  *ediconnectiondraftports.DraftRequirementInput
-	source ediconnectiondraftports.DraftSource
-	ref    string
-}
 
 type exchange struct {
 	set          edidocument.TransactionSet
@@ -55,7 +44,7 @@ type exchange struct {
 	version      string
 	ack          string
 	window       int
-	requirements []*requirement
+	requirements []*ediconnectionguide.Requirement
 }
 
 type projectWrite struct {
@@ -65,40 +54,12 @@ type projectWrite struct {
 	change  ediconnectiondraftports.ChangeKind
 }
 
-type guideLine struct {
-	requirement *requirement
-	line        int
-}
-
-type guideFile struct {
-	set   edidocument.TransactionSet
-	name  string
-	path  string
-	file  lading.File
-	lines []guideLine
-}
-
-func setKey(set edidocument.TransactionSet, direction edidocument.DocumentDirection) string {
-	return string(set) + "/" + string(direction)
-}
-
-func guidePath(set edidocument.TransactionSet) string {
-	return guideDirectory + string(set) + ".lading"
-}
-
-func elementRef(segment string, position int) string {
-	if position <= 0 {
-		return segment
-	}
-	return fmt.Sprintf("%s%02d", segment, position)
-}
-
 func (p *planner) documentTypeID(
 	ctx context.Context,
 	set edidocument.TransactionSet,
 	direction edidocument.DocumentDirection,
 ) (pulid.ID, error) {
-	key := setKey(set, direction)
+	key := ediconnectionfield.SetKey(set, direction)
 	if id, ok := p.docTypes[key]; ok {
 		return id, nil
 	}
@@ -123,67 +84,55 @@ func (p *planner) documentTypeID(
 func (p *planner) requirementsFor(
 	set edidocument.TransactionSet,
 	direction edidocument.DocumentDirection,
-) ([]*requirement, []ediconnectiondraftports.DraftRequirementCheck) {
-	accepted := make([]*requirement, 0)
+) ([]*ediconnectionguide.Requirement, []ediconnectiondraftports.DraftRequirementCheck) {
+	accepted := make([]*ediconnectionguide.Requirement, 0)
 	unverified := make([]ediconnectiondraftports.DraftRequirementCheck, 0)
 	for inputIndex := range p.req.Requirements {
 		input := &p.req.Requirements[inputIndex]
 		if input.TransactionSet != set || input.Direction != direction {
 			continue
 		}
-		check := p.pages.locate(input.Citation)
-		page := check.page
+		check := p.pages.Locate(input.Citation)
+		page := check.Page
 		if page == 0 {
 			page = input.Citation.Page
 		}
-		source := documentSource(page, input.Citation, check.problem)
+		source := ediconnectionfield.DocumentSource(page, input.Citation, check.Problem)
 		segment := strings.ToUpper(strings.TrimSpace(input.SegmentID))
-		problem := check.problem
+		problem := check.Problem
 		switch {
-		case !check.ok:
+		case !check.OK:
 		case !segmentID.MatchString(segment):
 			problem = fmt.Sprintf("%s is not an X12 segment ID", segment)
-		case !containsToken(normalizeForMatch(input.Citation.Quote), strings.ToLower(segment)) &&
+		case !ediconnectionfield.ContainsToken(ediconnectionfield.NormalizeForMatch(input.Citation.Quote), strings.ToLower(segment)) &&
 			!strings.Contains(strings.ToUpper(input.Citation.Quote), segment):
 			problem = fmt.Sprintf("The quote does not mention %s", segment)
 		default:
-			accepted = append(accepted, &requirement{
-				input:  input,
-				source: source,
-				ref:    elementRef(segment, input.ElementPosition),
+			accepted = append(accepted, &ediconnectionguide.Requirement{
+				Input:  input,
+				Source: source,
+				Ref:    ediconnectionguide.ElementRef(segment, input.ElementPosition),
 			})
 			continue
 		}
-		unverified = append(unverified, requirementCheck(input, segment, source, problem))
+		unverified = append(
+			unverified,
+			ediconnectionguide.RequirementCheck(input, segment, source, problem),
+		)
 	}
 	return accepted, unverified
 }
 
-func requirementCheck(
-	input *ediconnectiondraftports.DraftRequirementInput,
-	segment string,
-	source ediconnectiondraftports.DraftSource,
-	problem string,
-) ediconnectiondraftports.DraftRequirementCheck {
-	return ediconnectiondraftports.DraftRequirementCheck{
-		SegmentID:       segment,
-		ElementPosition: input.ElementPosition,
-		Usage:           input.Usage,
-		Codes:           input.Codes,
-		Problem:         problem,
-		Source:          source,
-	}
-}
-
 func (p *planner) buildSets(ctx context.Context) ([]*exchange, error) {
 	exchanges := make([]*exchange, 0)
-	for _, set := range supportedSets {
-		for _, direction := range directions {
-			supported := p.values[setField(set, direction, setAttrSupported)]
-			current := p.current.exchanged[setKey(set, direction)]
-			wanted := supported.Status.Usable() && supported.Value == valueTrue
+	for _, set := range ediconnectionfield.SupportedSets {
+		for _, direction := range ediconnectionfield.Directions {
+			supported := p.values[ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrSupported)]
+			current := p.current.Exchanged[ediconnectionfield.SetKey(set, direction)]
+			wanted := supported.Status.Usable() && supported.Value == ediconnectionfield.ValueTrue
 			if !wanted {
-				if current && supported.Status.Usable() && supported.Value == valueFalse &&
+				if current && supported.Status.Usable() &&
+					supported.Value == ediconnectionfield.ValueFalse &&
 					supported.Change != ediconnectiondraftports.ChangeKindSame {
 					p.draft.Kept = append(p.draft.Kept, ediconnectiondraftports.DraftKept{
 						Record: projectRecord + " " + titleSet(set, direction),
@@ -212,24 +161,39 @@ func (p *planner) buildSet(
 	if err != nil {
 		return nil, err
 	}
-	interchangeVersion, _ := p.usable(fieldX12Version)
-	versionFallback := &fallback{
-		value:  interchangeVersion,
-		status: ediconnectiondraftports.ValueStatusDefaulted,
-		source: ediconnectiondraftports.DraftSource{
+	interchangeVersion, _ := p.usable(ediconnectionfield.X12Version)
+	versionFallback := &ediconnectionfield.Fallback{
+		Value:  interchangeVersion,
+		Status: ediconnectiondraftports.ValueStatusDefaulted,
+		Source: ediconnectiondraftports.DraftSource{
 			Kind: ediconnectiondraftports.SourceKindDefault,
 			Note: versionFromISA,
 		},
 	}
-	if source, ok := p.values[fieldX12Version]; ok && source.Status.Usable() {
-		versionFallback.source = source.Source
-		versionFallback.source.Note = joinNotes(source.Source.Note, versionFromISA)
+	if source, ok := p.values[ediconnectionfield.X12Version]; ok && source.Status.Usable() {
+		versionFallback.Source = source.Source
+		versionFallback.Source.Note = ediconnectionfield.JoinNotes(
+			source.Source.Note,
+			versionFromISA,
+		)
 	}
-	version := p.resolve(setField(set, direction, setAttrVersion), versionFallback, true)
-	ack := p.resolve(setField(set, direction, setAttrAck), nil, false)
-	window := p.resolve(setField(set, direction, setAttrAckWindowMinutes), nil, false)
+	version := p.resolve(
+		ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrVersion),
+		versionFallback,
+		true,
+	)
+	ack := p.resolve(
+		ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrAck),
+		nil,
+		false,
+	)
+	window := p.resolve(
+		ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrAckWindowMinutes),
+		nil,
+		false,
+	)
 	fields := []ediconnectiondraftports.DraftValue{
-		p.values[setField(set, direction, setAttrSupported)],
+		p.values[ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrSupported)],
 		version,
 		ack,
 		window,
@@ -289,9 +253,13 @@ func (p *planner) controlNumbers(
 	direction edidocument.DocumentDirection,
 	documentTypeID pulid.ID,
 ) []ediconnectiondraftports.DraftControlNumber {
-	out := make([]ediconnectiondraftports.DraftControlNumber, 0, len(controlNumberKinds))
-	for _, kind := range controlNumberKinds {
-		value, ok := p.values[controlNumberField(kind)]
+	out := make(
+		[]ediconnectiondraftports.DraftControlNumber,
+		0,
+		len(ediconnectionfield.ControlNumberKinds),
+	)
+	for _, kind := range ediconnectionfield.ControlNumberKinds {
+		value, ok := p.values[ediconnectionfield.ControlNumberField(kind)]
 		if !ok || !value.Status.Usable() || value.Value == "" {
 			continue
 		}
@@ -302,7 +270,7 @@ func (p *planner) controlNumbers(
 			Change: ediconnectiondraftports.ChangeKindAdd,
 			Source: value.Source,
 		}
-		if sequence := p.current.sequence(documentTypeID, kind); sequence != nil {
+		if sequence := p.current.Sequence(documentTypeID, kind); sequence != nil {
 			control.Current = sequence.NextValue
 			switch {
 			case sequence.NextValue == start:
@@ -347,7 +315,7 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 	change := ediconnectiondraftports.ChangeKindAdd
 	project := &ediconnectiondraftports.DraftProject{Role: request.Role}
 	var guided map[string]string
-	if version := p.current.version; version != nil {
+	if version := p.current.Version; version != nil {
 		files, guided = p.adaptProject(version, starter.Files, exchanges)
 		kept, keptErr := p.s.projects.Samples(ctx, p.req.TenantInfo, version)
 		if keptErr != nil {
@@ -357,16 +325,16 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 		checked = edilading.MergeSamples(kept, samples)
 		project.ProjectID = version.ProjectID
 	}
-	name := partnerName(files)
+	name := ediconnectionguide.PartnerName(files)
 	if name == "" {
-		name = partnerName(starter.Files)
+		name = ediconnectionguide.PartnerName(starter.Files)
 	}
 
 	var check *lading.Check
-	var guides []*guideFile
+	var guides []*ediconnectionguide.GuideFile
 	for attempt := 1; ; attempt++ {
 		guides = p.guides(name, request.Version, exchanges, guided)
-		check, err = p.check(ctx, withGuides(files, guides), checked)
+		check, err = p.check(ctx, ediconnectionguide.WithGuides(files, guides), checked)
 		if err != nil {
 			return err
 		}
@@ -374,17 +342,17 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 			break
 		}
 	}
-	files = withGuides(files, guides)
+	files = ediconnectionguide.WithGuides(files, guides)
 
 	p.unmet(check, exchanges)
 	p.projectFailures(check, guides)
-	project.Files = projectFiles(check, files, p.current.version)
+	project.Files = ediconnectionguide.ProjectFiles(check, files, p.current.Version)
 	project.Errors = check.Errors
 	project.Warnings = check.Warnings
-	project.Diagnostics = projectDiagnostics(check)
-	if p.current.version != nil {
+	project.Diagnostics = ediconnectionguide.ProjectDiagnostics(check)
+	if p.current.Version != nil {
 		change = ediconnectiondraftports.ChangeKindChange
-		if sameFiles(p.current.version.Files, files) {
+		if ediconnectionguide.SameFiles(p.current.Version.Files, files) {
 			change = ediconnectiondraftports.ChangeKindSame
 		}
 	}
@@ -407,14 +375,14 @@ func (p *planner) starterRequest(exchanges []*exchange) *lading.StarterRequest {
 		Role:  roleFor(exchanges),
 		Zone:  partner.Timezone,
 	}
-	if version, ok := p.usable(fieldX12Version); ok {
+	if version, ok := p.usable(ediconnectionfield.X12Version); ok {
 		request.Version = version
 	}
-	request.Them = p.pair(fieldPartnerQualifier, fieldPartnerID)
-	request.Us = p.pair(fieldOurQualifier, fieldOurID)
-	request.Group = p.pair(fieldPartnerGSID, fieldOurGSID)
+	request.Them = p.pair(ediconnectionfield.PartnerQualifier, ediconnectionfield.PartnerID)
+	request.Us = p.pair(ediconnectionfield.OurQualifier, ediconnectionfield.OurID)
+	request.Group = p.pair(ediconnectionfield.PartnerGSID, ediconnectionfield.OurGSID)
 	separators := make([]string, 0, 4)
-	for _, key := range []string{fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep} {
+	for _, key := range []string{ediconnectionfield.ElementSep, ediconnectionfield.SegmentSep, ediconnectionfield.ComponentSep, ediconnectionfield.RepetitionSep} {
 		if value, ok := p.usable(key); ok {
 			separators = append(separators, value)
 		}
@@ -422,9 +390,9 @@ func (p *planner) starterRequest(exchanges []*exchange) *lading.StarterRequest {
 	if len(separators) == 4 {
 		request.Separators = separators
 	}
-	request.Usage = valueTest
-	if usage, ok := p.usable(fieldUsageIndicator); ok && usage == "P" {
-		request.Usage = valueProduction
+	request.Usage = ediconnectionfield.ValueTest
+	if usage, ok := p.usable(ediconnectionfield.UsageIndicator); ok && usage == "P" {
+		request.Usage = ediconnectionfield.ValueProduction
 	}
 	request.Acknowledge, request.AckWithin = p.acknowledgment(exchanges)
 	for _, exchanged := range exchanges {
@@ -502,19 +470,10 @@ func (p *planner) acknowledgment(exchanges []*exchange) (acknowledge string, win
 			},
 		})
 	}
-	if chosen == ackNone {
+	if chosen == ediconnectionfield.AckNone {
 		return lading.AcknowledgeNone, window
 	}
 	return chosen, window
-}
-
-func partnerName(files []lading.File) string {
-	for _, file := range files {
-		if match := partnerHeader.FindStringSubmatch(file.Source); match != nil {
-			return match[1]
-		}
-	}
-	return ""
 }
 
 func (p *planner) adaptProject(
@@ -525,14 +484,14 @@ func (p *planner) adaptProject(
 	files = slices.Clone(version.Files)
 	var interchange, zone string
 	for _, file := range starter {
-		if partnerHeader.MatchString(file.Source) {
+		if ediconnectionguide.PartnerHeader.MatchString(file.Source) {
 			interchange = interchangeArea.FindString(file.Source)
 			zone = zoneLine.FindString(file.Source)
 		}
 	}
 	for index := range files {
 		source := files[index].Source
-		if !partnerHeader.MatchString(source) {
+		if !ediconnectionguide.PartnerHeader.MatchString(source) {
 			continue
 		}
 		if interchange != "" {
@@ -548,7 +507,7 @@ func (p *planner) adaptProject(
 	guided = map[string]string{}
 	for _, guide := range manifest.Guides {
 		if guide.Set != "" && guide.Path != "" &&
-			guide.Path != guidePath(edidocument.TransactionSet(guide.Set)) {
+			guide.Path != ediconnectionguide.GuidePath(edidocument.TransactionSet(guide.Set)) {
 			guided[guide.Set] = guide.Name
 		}
 	}
@@ -559,7 +518,7 @@ func (p *planner) adaptProject(
 				Label:  keptGuideLabel,
 			})
 		}
-		if !mapsSet(manifest, exchanged.set, exchanged.direction) {
+		if !ediconnectionguide.MapsSet(manifest, exchanged.set, exchanged.direction) {
 			p.draft.Gaps = append(p.draft.Gaps, ediconnectiondraftports.DraftGap{
 				Kind:    ediconnectiondraftports.GapKindUnsupported,
 				Summary: fmt.Sprintf(noMapSummary, titleSet(exchanged.set, exchanged.direction)),
@@ -572,29 +531,12 @@ func (p *planner) adaptProject(
 	return files, guided
 }
 
-func mapsSet(
-	manifest *lading.Check,
-	set edidocument.TransactionSet,
-	direction edidocument.DocumentDirection,
-) bool {
-	wanted := lading.DirectionOutbound
-	if direction == edidocument.DocumentDirectionInbound {
-		wanted = lading.DirectionInbound
-	}
-	for index := range manifest.Maps {
-		if item := &manifest.Maps[index]; item.Set == string(set) && item.Direction == wanted {
-			return true
-		}
-	}
-	return false
-}
-
 func (p *planner) guides(
 	name, version string,
 	exchanges []*exchange,
 	kept map[string]string,
-) []*guideFile {
-	bySet := map[edidocument.TransactionSet]*guideFile{}
+) []*ediconnectionguide.GuideFile {
+	bySet := map[edidocument.TransactionSet]*ediconnectionguide.GuideFile{}
 	order := make([]edidocument.TransactionSet, 0)
 	label := firstNonEmpty(p.plannedPartner().Name, name)
 	for _, exchanged := range exchanges {
@@ -604,17 +546,17 @@ func (p *planner) guides(
 		guide, ok := bySet[exchanged.set]
 		if !ok {
 			base := firstNonEmpty(exchanged.version, version, "004010")
-			guide = &guideFile{
-				set:  exchanged.set,
-				name: name + "." + string(exchanged.set),
-				path: guidePath(exchanged.set),
+			guide = &ediconnectionguide.GuideFile{
+				Set:  exchanged.set,
+				Name: name + "." + string(exchanged.set),
+				Path: ediconnectionguide.GuidePath(exchanged.set),
 			}
-			guide.file = lading.File{Path: guide.path, Source: fmt.Sprintf(
+			guide.File = lading.File{Path: guide.Path, Source: fmt.Sprintf(
 				"guide %s from x12.%s.%s %s\n",
-				guide.name,
+				guide.Name,
 				base,
 				exchanged.set,
-				quoteLading(
+				ediconnectionguide.QuoteLading(
 					fmt.Sprintf("%s %s, from %s", label, exchanged.set, p.req.Document.FileName),
 				),
 			)}
@@ -622,126 +564,26 @@ func (p *planner) guides(
 			order = append(order, exchanged.set)
 		}
 		for _, item := range exchanged.requirements {
-			line, found := guideRule(item.input)
+			line, found := ediconnectionguide.GuideRule(item.Input)
 			if !found {
 				continue
 			}
-			doc := fmt.Sprintf("/// p.%d: %s\n", item.source.Page, oneLine(item.source.Quote))
-			guide.file.Source += "\n" + doc
-			guide.lines = append(guide.lines, guideLine{
-				requirement: item,
-				line:        strings.Count(guide.file.Source, "\n") + 1,
+			doc := fmt.Sprintf(
+				"/// p.%d: %s\n",
+				item.Source.Page,
+				ediconnectionguide.OneLine(item.Source.Quote),
+			)
+			guide.File.Source += "\n" + doc
+			guide.Lines = append(guide.Lines, ediconnectionguide.GuideLine{
+				Requirement: item,
+				Line:        strings.Count(guide.File.Source, "\n") + 1,
 			})
-			guide.file.Source += line + "\n"
+			guide.File.Source += line + "\n"
 		}
 	}
-	out := make([]*guideFile, 0, len(order))
+	out := make([]*ediconnectionguide.GuideFile, 0, len(order))
 	for _, set := range order {
 		out = append(out, bySet[set])
-	}
-	return out
-}
-
-func guideRule(input *ediconnectiondraftports.DraftRequirementInput) (string, bool) {
-	segment := strings.ToUpper(strings.TrimSpace(input.SegmentID))
-	usage := ""
-	switch input.Usage {
-	case ediconnectiondraftports.RequirementUsageMandatory:
-		usage = "required"
-	case ediconnectiondraftports.RequirementUsageNotUsed:
-		usage = "unused"
-	case ediconnectiondraftports.RequirementUsageOptional,
-		ediconnectiondraftports.RequirementUsageConditional:
-	}
-	if input.ElementPosition <= 0 {
-		if usage == "" {
-			return "", false
-		}
-		return segment + " " + usage, true
-	}
-	rules := make([]string, 0, 2)
-	if usage != "" {
-		rules = append(rules, usage)
-	}
-	if codes := guideCodes(
-		input.Codes,
-	); codes != "" &&
-		input.Usage != ediconnectiondraftports.RequirementUsageNotUsed {
-		rules = append(rules, "codes "+codes)
-	}
-	if len(rules) == 0 {
-		return "", false
-	}
-	return fmt.Sprintf(
-		"%s { %02d %s }",
-		segment,
-		input.ElementPosition,
-		strings.Join(rules, " "),
-	), true
-}
-
-func guideCodes(codes []string) string {
-	quoted := make([]string, 0, len(codes))
-	seen := map[string]bool{}
-	for _, code := range codes {
-		code = strings.TrimSpace(code)
-		if code == "" || seen[code] || len(quoted) == maxGuideCodes {
-			continue
-		}
-		seen[code] = true
-		quoted = append(quoted, quoteLading(code))
-	}
-	return strings.Join(quoted, ", ")
-}
-
-func quoteLading(text string) string {
-	replacer := strings.NewReplacer(
-		`\`,
-		`\\`,
-		`"`,
-		`\"`,
-		"{",
-		"{{",
-		"}",
-		"}}",
-		"\n",
-		" ",
-		"\r",
-		" ",
-	)
-	return `"` + replacer.Replace(text) + `"`
-}
-
-func oneLine(text string) string {
-	return strings.Join(strings.Fields(clampQuote(text)), " ")
-}
-
-func withGuides(files []lading.File, guides []*guideFile) []lading.File {
-	replaced := make(map[string]string, len(guides))
-	paths := make(map[string]bool, len(guides))
-	for _, guide := range guides {
-		replaced[string(guide.set)] = guide.name
-		paths[guide.path] = true
-	}
-	out := make([]lading.File, 0, len(files)+len(guides))
-	for _, file := range files {
-		if paths[file.Path] {
-			continue
-		}
-		if strings.HasPrefix(strings.TrimSpace(file.Source), "map ") {
-			file.Source = baseGuideRef.ReplaceAllStringFunc(file.Source, func(line string) string {
-				match := baseGuideRef.FindStringSubmatch(line)
-				name, ok := replaced[match[2]]
-				if !ok {
-					return line
-				}
-				return match[1] + name + match[3]
-			})
-		}
-		out = append(out, file)
-	}
-	for _, guide := range guides {
-		out = append(out, guide.file)
 	}
 	return out
 }
@@ -770,12 +612,12 @@ func (p *planner) check(
 
 func (p *planner) dropFailingGuideLines(
 	check *lading.Check,
-	guides []*guideFile,
+	guides []*ediconnectionguide.GuideFile,
 	exchanges []*exchange,
 ) bool {
 	dropped := false
 	for _, guide := range guides {
-		checked := checkedFile(check, guide.path)
+		checked := ediconnectionguide.CheckedFile(check, guide.Path)
 		if checked == nil {
 			continue
 		}
@@ -784,12 +626,12 @@ func (p *planner) dropFailingGuideLines(
 			if diagnostic.Severity != lading.SeverityError {
 				continue
 			}
-			line := lineAt(guide.file.Source, diagnostic.Range.From)
-			for _, item := range guide.lines {
-				if item.line != line {
+			line := ediconnectionguide.LineAt(guide.File.Source, diagnostic.Range.From)
+			for _, item := range guide.Lines {
+				if item.Line != line {
 					continue
 				}
-				p.unverify(exchanges, item.requirement, diagnostic.Message.String())
+				p.unverify(exchanges, item.Requirement, diagnostic.Message.String())
 				dropped = true
 			}
 		}
@@ -797,7 +639,11 @@ func (p *planner) dropFailingGuideLines(
 	return dropped
 }
 
-func (p *planner) unverify(exchanges []*exchange, item *requirement, problem string) {
+func (p *planner) unverify(
+	exchanges []*exchange,
+	item *ediconnectionguide.Requirement,
+	problem string,
+) {
 	for _, exchanged := range exchanges {
 		index := slices.Index(exchanged.requirements, item)
 		if index < 0 {
@@ -806,36 +652,17 @@ func (p *planner) unverify(exchanges []*exchange, item *requirement, problem str
 		exchanged.requirements = slices.Delete(exchanged.requirements, index, index+1)
 		set := &p.draft.Sets[exchanged.index]
 		set.Requirements--
-		set.Unverified = append(set.Unverified, requirementCheck(
-			item.input,
-			strings.ToUpper(strings.TrimSpace(item.input.SegmentID)),
-			item.source,
+		set.Unverified = append(set.Unverified, ediconnectionguide.RequirementCheck(
+			item.Input,
+			strings.ToUpper(strings.TrimSpace(item.Input.SegmentID)),
+			item.Source,
 			problem,
 		))
 	}
 }
 
-func checkedFile(check *lading.Check, path string) *lading.CheckedFile {
-	for index := range check.Files {
-		if check.Files[index].Path == path {
-			return &check.Files[index]
-		}
-	}
-	return nil
-}
-
-func lineAt(source string, offset int) int {
-	if offset > len(source) {
-		offset = len(source)
-	}
-	if offset < 0 {
-		offset = 0
-	}
-	return strings.Count(source[:offset], "\n") + 1
-}
-
 func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
-	unwritten := unwrittenBySet(check)
+	unwritten := ediconnectionguide.UnwrittenBySet(check)
 	for _, exchanged := range exchanges {
 		if exchanged.direction != edidocument.DocumentDirectionOutbound {
 			continue
@@ -843,89 +670,31 @@ func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
 		names := unwritten[string(exchanged.set)]
 		set := &p.draft.Sets[exchanged.index]
 		for _, item := range exchanged.requirements {
-			if item.input.Usage != ediconnectiondraftports.RequirementUsageMandatory {
+			if item.Input.Usage != ediconnectiondraftports.RequirementUsageMandatory {
 				continue
 			}
-			problem, ok := names[item.ref]
+			problem, ok := names[item.Ref]
 			if !ok {
 				continue
 			}
-			set.Unmet = append(set.Unmet, requirementCheck(
-				item.input,
-				strings.ToUpper(strings.TrimSpace(item.input.SegmentID)),
-				item.source,
+			set.Unmet = append(set.Unmet, ediconnectionguide.RequirementCheck(
+				item.Input,
+				strings.ToUpper(strings.TrimSpace(item.Input.SegmentID)),
+				item.Source,
 				problem,
 			))
 		}
 	}
 }
 
-func unwrittenBySet(check *lading.Check) map[string]map[string]string {
-	unwritten := map[string]map[string]string{}
-	for index := range check.Maps {
-		item := &check.Maps[index]
-		if item.Direction != lading.DirectionOutbound || item.Set == "" {
-			continue
-		}
-		checked := checkedFile(check, item.Path)
-		if checked == nil {
-			continue
-		}
-		for diagnosticIndex := range checked.Diagnostics {
-			diagnostic := &checked.Diagnostics[diagnosticIndex]
-			problem, unmet := unmetProblem(diagnostic)
-			if !unmet {
-				continue
-			}
-			if unwritten[item.Set] == nil {
-				unwritten[item.Set] = map[string]string{}
-			}
-			for _, name := range unwrittenNames(diagnostic.Message) {
-				if _, seen := unwritten[item.Set][name]; !seen {
-					unwritten[item.Set][name] = problem
-				}
-			}
-		}
-	}
-	return unwritten
-}
-
-func unmetProblem(diagnostic *lading.Diagnostic) (problem string, unmet bool) {
-	switch diagnostic.Code {
-	case "x12-mandatory-unwritten":
-		return diagnostic.Message.String(), true
-	case "x12-mandatory-conditional":
-		return conditionalNote, true
-	default:
-		return "", false
-	}
-}
-
-func unwrittenNames(message wasmmodule.Message) []string {
-	if len(message.Args) == 0 {
-		return nil
-	}
-	text, ok := message.Args[0].(string)
-	if !ok {
-		return nil
-	}
-	names := make([]string, 0)
-	for name := range strings.SplitSeq(text, ",") {
-		if name = strings.TrimSpace(name); name != "" {
-			names = append(names, name)
-		}
-	}
-	return names
-}
-
-func (p *planner) projectFailures(check *lading.Check, guides []*guideFile) {
+func (p *planner) projectFailures(check *lading.Check, guides []*ediconnectionguide.GuideFile) {
 	owned := map[string]bool{}
 	for _, guide := range guides {
-		owned[guide.path] = true
+		owned[guide.Path] = true
 	}
 	for index := range check.Files {
 		file := &check.Files[index]
-		if file.Kind != "partner" && !owned[file.Path] && p.current.version != nil {
+		if file.Kind != "partner" && !owned[file.Path] && p.current.Version != nil {
 			continue
 		}
 		for diagnosticIndex := range file.Diagnostics {
@@ -943,68 +712,16 @@ func (p *planner) projectFailures(check *lading.Check, guides []*guideFile) {
 	}
 }
 
-func projectFiles(
-	check *lading.Check,
-	files []lading.File,
-	before *ladingproject.LadingVersion,
-) []ediconnectiondraftports.DraftProjectFile {
-	previous := map[string]string{}
-	if before != nil {
-		for _, file := range before.Files {
-			previous[file.Path] = file.Source
-		}
-	}
-	out := make([]ediconnectiondraftports.DraftProjectFile, 0, len(files))
-	for _, file := range files {
-		change := ediconnectiondraftports.ChangeKindAdd
-		if source, ok := previous[file.Path]; ok {
-			change = ediconnectiondraftports.ChangeKindChange
-			if source == file.Source {
-				change = ediconnectiondraftports.ChangeKindSame
-			}
-		}
-		kind := ""
-		if checked := checkedFile(check, file.Path); checked != nil {
-			kind = checked.Kind
-		}
-		out = append(
-			out,
-			ediconnectiondraftports.DraftProjectFile{Path: file.Path, Kind: kind, Change: change},
-		)
-	}
-	return out
-}
-
-func projectDiagnostics(check *lading.Check) []ediconnectiondraftports.DraftDiagnostic {
-	out := make([]ediconnectiondraftports.DraftDiagnostic, 0)
-	for fileIndex := range check.Files {
-		file := &check.Files[fileIndex]
-		for index := range file.Diagnostics {
-			diagnostic := &file.Diagnostics[index]
-			if diagnostic.Severity == lading.SeverityInfo || len(out) == maxDiagnostics {
-				continue
-			}
-			out = append(out, ediconnectiondraftports.DraftDiagnostic{
-				Path:     file.Path,
-				Severity: diagnostic.Severity,
-				Code:     diagnostic.Code,
-				Message:  diagnostic.Message.String(),
-			})
-		}
-	}
-	return out
-}
-
 // specSamples are the spec's sample interchanges, kept with the project for its tests.
 func (p *planner) specSamples() []lading.Sample {
 	samples := make([]lading.Sample, 0, len(p.samples))
 	for _, sample := range p.samples {
-		if sample.err != nil || strings.TrimSpace(sample.raw) == "" {
+		if sample.Err != nil || strings.TrimSpace(sample.Raw) == "" {
 			continue
 		}
 		samples = append(samples, lading.Sample{
-			Path:    fmt.Sprintf("samples/spec-page-%d.x12", sample.page),
-			Content: sample.raw,
+			Path:    fmt.Sprintf("samples/spec-page-%d.x12", sample.Page),
+			Content: sample.Raw,
 		})
 	}
 	return samples
@@ -1015,19 +732,19 @@ func (p *planner) specSamples() []lading.Sample {
 // requires.
 func (p *planner) sampleUnmapped(
 	ctx context.Context,
-	sample *specSample,
+	sample *ediconnectionfield.Sample,
 	mapped map[mappingKey]bool,
 ) []ediconnectiondraftports.DraftUnmappedCode {
 	out := make([]ediconnectiondraftports.DraftUnmappedCode, 0)
-	if p.encoded == nil || sample.direction != edidocument.DocumentDirectionInbound ||
-		sample.transactionSet() != edidocument.TransactionSet204 {
+	if p.encoded == nil || sample.Direction != edidocument.DocumentDirectionInbound ||
+		sample.TransactionSet() != edidocument.TransactionSet204 {
 		return out
 	}
 	_, clause := p.manifest.Receiving(string(edidocument.TransactionSet204))
 	if clause == nil {
 		return out
 	}
-	request := &lading.RunRequest{Map: clause.Map, Input: lading.X12Input(sample.raw)}
+	request := &lading.RunRequest{Map: clause.Map, Input: lading.X12Input(sample.Raw)}
 	result, err := p.s.lading.Client().Run(ctx, p.encoded, request)
 	if err != nil || result.Error != nil {
 		return out
@@ -1087,20 +804,4 @@ func appendUnmapped(
 		}
 	}
 	return out
-}
-
-func sameFiles(before, after []lading.File) bool {
-	if len(before) != len(after) {
-		return false
-	}
-	sources := make(map[string]string, len(before))
-	for _, file := range before {
-		sources[file.Path] = file.Source
-	}
-	for _, file := range after {
-		if source, ok := sources[file.Path]; !ok || source != file.Source {
-			return false
-		}
-	}
-	return true
 }

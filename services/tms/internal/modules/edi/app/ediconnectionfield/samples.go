@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"context"
@@ -17,16 +17,16 @@ const (
 	maxSampleBytes  = 64 * 1024
 )
 
-type specSample struct {
-	page        int
-	raw         string
-	parsed      *ediinboundservice.ParsedSample
-	err         error
-	direction   edidocument.DocumentDirection
-	identifying bool
+type Sample struct {
+	Page        int
+	Raw         string
+	Parsed      *ediinboundservice.ParsedSample
+	Err         error
+	Direction   edidocument.DocumentDirection
+	Identifying bool
 }
 
-func (p *pageIndex) joined() (text string, starts, numbers []int) {
+func (p *Pages) joined() (text string, starts, numbers []int) {
 	var builder strings.Builder
 	starts = make([]int, 0, len(p.order))
 	for _, number := range p.order {
@@ -50,12 +50,12 @@ func pageAt(offset int, starts, numbers []int) int {
 	return page
 }
 
-func findSamples(pages *pageIndex) []*specSample {
+func FindSamples(pages *Pages) []*Sample {
 	if len(pages.order) == 0 {
 		return nil
 	}
 	text, starts, numbers := pages.joined()
-	samples := make([]*specSample, 0, 2)
+	samples := make([]*Sample, 0, 2)
 	for offset := 0; offset < len(text) && len(samples) < maxSamples; {
 		index := strings.Index(text[offset:], "ISA")
 		if index < 0 {
@@ -67,9 +67,9 @@ func findSamples(pages *pageIndex) []*specSample {
 			offset = start + 3
 			continue
 		}
-		samples = append(samples, &specSample{
-			page: pageAt(start, starts, numbers),
-			raw:  raw,
+		samples = append(samples, &Sample{
+			Page: pageAt(start, starts, numbers),
+			Raw:  raw,
 		})
 		offset = end
 	}
@@ -132,66 +132,66 @@ func cleanSample(raw string, terminator byte) string {
 	return strings.Join(lines, "")
 }
 
-func (s *specSample) parse(ctx context.Context) {
-	s.parsed, s.err = ediinboundservice.ParseSample(ctx, s.raw)
+func (s *Sample) Parse(ctx context.Context) {
+	s.Parsed, s.Err = ediinboundservice.ParseSample(ctx, s.Raw)
 }
 
-func (s *specSample) transactionSet() edidocument.TransactionSet {
-	if s.parsed == nil || len(s.parsed.Transactions) == 0 {
+func (s *Sample) TransactionSet() edidocument.TransactionSet {
+	if s.Parsed == nil || len(s.Parsed.Transactions) == 0 {
 		return ""
 	}
-	return s.parsed.Transactions[0].TransactionSet
+	return s.Parsed.Transactions[0].TransactionSet
 }
 
-func (s *specSample) isaSegment() string {
-	if s.parsed == nil {
+func (s *Sample) ISASegment() string {
+	if s.Parsed == nil {
 		return ""
 	}
-	separator := s.parsed.Separators.Segment
+	separator := s.Parsed.Separators.Segment
 	if separator == "" {
 		return ""
 	}
-	index := strings.Index(s.raw, separator)
+	index := strings.Index(s.Raw, separator)
 	if index < 0 {
 		return ""
 	}
-	return s.raw[:index+len(separator)]
+	return s.Raw[:index+len(separator)]
 }
 
-func (s *specSample) source(note string) ediconnectiondraftports.DraftSource {
+func (s *Sample) source(note string) ediconnectiondraftports.DraftSource {
 	return ediconnectiondraftports.DraftSource{
 		Kind:  ediconnectiondraftports.SourceKindSample,
-		Page:  s.page,
-		Quote: clampQuote(x12field.RedactSecrets(s.isaSegment())),
+		Page:  s.Page,
+		Quote: ClampQuote(x12field.RedactSecrets(s.ISASegment())),
 		Note:  note,
 	}
 }
 
-func (s *specSample) orient(partnerIDs []string) {
-	if s.parsed == nil {
+func (s *Sample) Orient(partnerIDs []string) {
+	if s.Parsed == nil {
 		return
 	}
 	for _, id := range partnerIDs {
 		switch id {
-		case s.parsed.SenderID:
-			s.direction = edidocument.DocumentDirectionInbound
-			s.identifying = true
+		case s.Parsed.SenderID:
+			s.Direction = edidocument.DocumentDirectionInbound
+			s.Identifying = true
 			return
-		case s.parsed.ReceiverID:
-			s.direction = edidocument.DocumentDirectionOutbound
-			s.identifying = true
+		case s.Parsed.ReceiverID:
+			s.Direction = edidocument.DocumentDirectionOutbound
+			s.Identifying = true
 			return
 		}
 	}
-	switch s.transactionSet() {
+	switch s.TransactionSet() {
 	case edidocument.TransactionSet204:
-		s.direction = edidocument.DocumentDirectionInbound
-		s.identifying = true
+		s.Direction = edidocument.DocumentDirectionInbound
+		s.Identifying = true
 	case edidocument.TransactionSet210,
 		edidocument.TransactionSet214,
 		edidocument.TransactionSet990:
-		s.direction = edidocument.DocumentDirectionOutbound
-		s.identifying = true
+		s.Direction = edidocument.DocumentDirectionOutbound
+		s.Identifying = true
 	case edidocument.TransactionSet997, edidocument.TransactionSet999:
 	}
 }
@@ -205,9 +205,9 @@ type sampleParties struct {
 	ourGS            string
 }
 
-func (s *specSample) parties() sampleParties {
-	p := s.parsed
-	if s.direction == edidocument.DocumentDirectionOutbound {
+func (s *Sample) parties() sampleParties {
+	p := s.Parsed
+	if s.Direction == edidocument.DocumentDirectionOutbound {
 		return sampleParties{
 			partnerQualifier: p.ReceiverQualifier,
 			partnerID:        p.ReceiverID,
@@ -227,54 +227,54 @@ func (s *specSample) parties() sampleParties {
 	}
 }
 
-func (s *specSample) envelopeValues() map[string]string {
+func (s *Sample) EnvelopeValues() map[string]string {
 	parties := s.parties()
 	return map[string]string{
-		fieldPartnerQualifier: parties.partnerQualifier,
-		fieldPartnerID:        parties.partnerID,
-		fieldOurQualifier:     parties.ourQualifier,
-		fieldOurID:            parties.ourID,
-		fieldPartnerGSID:      parties.partnerGS,
-		fieldOurGSID:          parties.ourGS,
-		fieldUsageIndicator:   s.parsed.UsageIndicator,
-		fieldX12Version:       s.parsed.GroupVersion,
-		fieldElementSep:       s.parsed.Separators.Element,
-		fieldSegmentSep:       s.parsed.Separators.Segment,
-		fieldComponentSep:     s.parsed.Separators.Component,
+		PartnerQualifier: parties.partnerQualifier,
+		PartnerID:        parties.partnerID,
+		OurQualifier:     parties.ourQualifier,
+		OurID:            parties.ourID,
+		PartnerGSID:      parties.partnerGS,
+		OurGSID:          parties.ourGS,
+		UsageIndicator:   s.Parsed.UsageIndicator,
+		X12Version:       s.Parsed.GroupVersion,
+		ElementSep:       s.Parsed.Separators.Element,
+		SegmentSep:       s.Parsed.Separators.Segment,
+		ComponentSep:     s.Parsed.Separators.Component,
 	}
 }
 
-func (s *specSample) contribute(e *evidence) {
-	if s.parsed == nil || !s.identifying {
+func (s *Sample) Contribute(e *Evidence) {
+	if s.Parsed == nil || !s.Identifying {
 		return
 	}
-	note := "Read from the sample " + string(s.transactionSet()) + " in the document"
-	values := s.envelopeValues()
-	if repetition := s.parsed.Separators.Repetition; repetition != "" &&
+	note := "Read from the sample " + string(s.TransactionSet()) + " in the document"
+	values := s.EnvelopeValues()
+	if repetition := s.Parsed.Separators.Repetition; repetition != "" &&
 		!strings.EqualFold(repetition, "U") {
-		values[fieldRepetitionSep] = repetition
+		values[RepetitionSep] = repetition
 	}
-	for _, key := range sampleFieldOrder {
+	for _, key := range SampleFieldOrder {
 		value := values[key]
 		if value == "" {
 			continue
 		}
-		spec := fieldCatalog[key]
-		normalized, err := spec.normalize(value)
+		spec := Catalog[key]
+		normalized, err := spec.Normalize(value)
 		if err != nil {
 			continue
 		}
-		e.add(key, &candidate{
-			value:      normalized,
+		e.Add(key, &Candidate{
+			Value:      normalized,
 			confidence: 1,
 			source:     s.source(note),
-			status:     ediconnectiondraftports.ValueStatusAccepted,
+			Status:     ediconnectiondraftports.ValueStatusAccepted,
 		})
 	}
 }
 
-var sampleFieldOrder = []string{
-	fieldPartnerQualifier, fieldPartnerID, fieldOurQualifier, fieldOurID,
-	fieldPartnerGSID, fieldOurGSID, fieldUsageIndicator, fieldX12Version,
-	fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep,
+var SampleFieldOrder = []string{
+	PartnerQualifier, PartnerID, OurQualifier, OurID,
+	PartnerGSID, OurGSID, UsageIndicator, X12Version,
+	ElementSep, SegmentSep, ComponentSep, RepetitionSep,
 }

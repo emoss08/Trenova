@@ -4,42 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-type identityHints struct {
-	code         string
-	name         string
-	isaQualifier string
-	isaID        string
-	as2ID        string
-}
-
-func (e *evidence) hint(field string) string {
-	spec, ok := fieldCatalog[field]
-	if !ok {
-		return ""
-	}
-	settled := resolveField(spec, e, "", nil, false)
-	if settled.Status != ediconnectiondraftports.ValueStatusAccepted {
-		return ""
-	}
-	return settled.Value
-}
-
-func (e *evidence) hints() *identityHints {
-	return &identityHints{
-		code:         e.hint(fieldPartnerCode),
-		name:         e.hint(fieldPartnerName),
-		isaQualifier: e.hint(fieldPartnerQualifier),
-		isaID:        e.hint(fieldPartnerID),
-		as2ID:        e.hint("as2.partnerAs2Id"),
-	}
-}
 
 type partnerMatch struct {
 	draft ediconnectiondraftports.DraftPartner
@@ -49,7 +20,7 @@ type partnerMatch struct {
 func (s *Service) matchPartner(
 	ctx context.Context,
 	req *ediconnectiondraftports.ConnectionDraftRequest,
-	hints *identityHints,
+	hints *ediconnectionfield.IdentityHints,
 ) (*partnerMatch, error) {
 	if req.PartnerID.IsNotNil() {
 		return s.namedPartner(ctx, req)
@@ -59,11 +30,11 @@ func (s *Service) matchPartner(
 		ctx,
 		&ediconnectiondraftports.FindEDIPartnerMatchesRequest{
 			TenantInfo:   req.TenantInfo,
-			Code:         hints.code,
-			Name:         hints.name,
-			ISAQualifier: hints.isaQualifier,
-			ISAID:        hints.isaID,
-			AS2ID:        hints.as2ID,
+			Code:         hints.Code,
+			Name:         hints.Name,
+			ISAQualifier: hints.ISAQualifier,
+			ISAID:        hints.ISAID,
+			AS2ID:        hints.AS2ID,
 			CustomerID:   req.CustomerID,
 		},
 	)

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
@@ -66,24 +67,44 @@ func value(field, v string, page int, quote string) ediconnectiondraftports.Draf
 
 func acmeValues() []ediconnectiondraftports.DraftValueInput {
 	return []ediconnectiondraftports.DraftValueInput{
-		value(fieldPartnerCode, "ACMERETAIL", 1, "Trading Partner Code: ACMERETAIL"),
-		value(fieldPartnerName, "Acme Retail Group", 1, "Trading Partner Name: Acme Retail Group"),
-		value(fieldPartnerContactName, "Dana Whitfield", 1, "EDI Coordinator: Dana Whitfield"),
+		value(ediconnectionfield.PartnerCode, "ACMERETAIL", 1, "Trading Partner Code: ACMERETAIL"),
 		value(
-			fieldPartnerContactEmail,
+			ediconnectionfield.PartnerName,
+			"Acme Retail Group",
+			1,
+			"Trading Partner Name: Acme Retail Group",
+		),
+		value(
+			ediconnectionfield.PartnerContactName,
+			"Dana Whitfield",
+			1,
+			"EDI Coordinator: Dana Whitfield",
+		),
+		value(
+			ediconnectionfield.PartnerContactEmail,
 			"edi@acmeretail.example",
 			1,
 			"Email: edi@acmeretail.example",
 		),
-		value(fieldPartnerContactPhone, "+1 312 555 0142", 1, "Phone: +1 312 555 0142"),
-		value(fieldPartnerTimezone, "America/Chicago", 1, "Central Time (America/Chicago)"),
 		value(
-			fieldTransportMethod,
+			ediconnectionfield.PartnerContactPhone,
+			"+1 312 555 0142",
+			1,
+			"Phone: +1 312 555 0142",
+		),
+		value(
+			ediconnectionfield.PartnerTimezone,
+			"America/Chicago",
+			1,
+			"Central Time (America/Chicago)",
+		),
+		value(
+			ediconnectionfield.TransportMethod,
 			"AS2",
 			2,
 			"Acme exchanges all documents over AS2 (Applicability Statement 2).",
 		),
-		value(fieldTransportEnvironment, "test", 2, "Begin in the test environment"),
+		value(ediconnectionfield.TransportEnvironment, "test", 2, "Begin in the test environment"),
 		value("as2.partnerAs2Id", "ACMERETAILAS2", 2, "Acme AS2 Identifier: ACMERETAILAS2"),
 		value("as2.localAs2Id", "TRENOVA-AS2", 2, "Carrier AS2 Identifier: TRENOVA-AS2"),
 		value("as2.endpointUrl", "https://as2-test.acmeretail.example/as2/receive", 2,
@@ -92,108 +113,122 @@ func acmeValues() []ediconnectiondraftports.DraftValueInput {
 		value("as2.signingAlgorithm", "sha256", 2, "Signing algorithm: SHA-256."),
 		value("as2.encryptionAlgorithm", "aes256-cbc", 2, "Encryption algorithm: AES-256 (CBC)."),
 		value(
-			fieldPartnerQualifier,
+			ediconnectionfield.PartnerQualifier,
 			"01",
 			3,
 			"Acme interchange sender: qualifier 01 (DUNS), ID 007912345",
 		),
 		value(
-			fieldPartnerID,
+			ediconnectionfield.PartnerID,
 			"007912345",
 			3,
 			"Acme interchange sender: qualifier 01 (DUNS), ID 007912345",
 		),
 		value(
-			fieldOurQualifier,
+			ediconnectionfield.OurQualifier,
 			"02",
 			3,
 			"Carrier interchange receiver: qualifier 02 (SCAC), ID TRNV",
 		),
-		value(fieldOurID, "TRNV", 3, "Carrier interchange receiver: qualifier 02 (SCAC), ID TRNV"),
-		value(fieldPartnerGSID, "ACMERETAIL", 3, "GS02 Application Sender Code: ACMERETAIL"),
-		value(fieldOurGSID, "TRNV", 3, "GS03 Application Receiver Code: TRNV"),
-		value(fieldX12Version, "004010", 3, "GS08 Version: 004010"),
-		value(fieldUsageIndicator, "T", 3, "ISA15 usage indicator: T during testing"),
-		value(fieldElementSep, "*", 3, "Element separator: * (asterisk)."),
-		value(fieldSegmentSep, "~", 3, "Segment terminator: ~ (tilde)."),
-		value(fieldComponentSep, ">", 3, "Sub-element separator: > (greater than)."),
-		value(controlNumberField(edidocument.ControlNumberKindInterchange), "1000", 3,
-			"Carrier interchange control numbers (ISA13) must start at 1000"),
 		value(
-			setField(
+			ediconnectionfield.OurID,
+			"TRNV",
+			3,
+			"Carrier interchange receiver: qualifier 02 (SCAC), ID TRNV",
+		),
+		value(
+			ediconnectionfield.PartnerGSID,
+			"ACMERETAIL",
+			3,
+			"GS02 Application Sender Code: ACMERETAIL",
+		),
+		value(ediconnectionfield.OurGSID, "TRNV", 3, "GS03 Application Receiver Code: TRNV"),
+		value(ediconnectionfield.X12Version, "004010", 3, "GS08 Version: 004010"),
+		value(ediconnectionfield.UsageIndicator, "T", 3, "ISA15 usage indicator: T during testing"),
+		value(ediconnectionfield.ElementSep, "*", 3, "Element separator: * (asterisk)."),
+		value(ediconnectionfield.SegmentSep, "~", 3, "Segment terminator: ~ (tilde)."),
+		value(ediconnectionfield.ComponentSep, ">", 3, "Sub-element separator: > (greater than)."),
+		value(
+			ediconnectionfield.ControlNumberField(edidocument.ControlNumberKindInterchange),
+			"1000",
+			3,
+			"Carrier interchange control numbers (ISA13) must start at 1000",
+		),
+		value(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet204,
 				edidocument.DocumentDirectionInbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			4,
 			"Acme sends the 204 Motor Carrier Load Tender to the carrier.",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			4,
 			"The carrier answers each tender with a 990 Response to a Load Tender",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet214,
 				edidocument.DocumentDirectionOutbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			4,
 			"The carrier sends the 214 Transportation Carrier Shipment Status Message",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet210,
 				edidocument.DocumentDirectionOutbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			4,
 			"The carrier invoices with the 210 Motor Carrier Freight Details and Invoice.",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAck,
+				ediconnectionfield.SetAttrAck,
 			),
 			"997",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAckWindowMinutes,
+				ediconnectionfield.SetAttrAckWindowMinutes,
 			),
 			"240",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet214,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAck,
+				ediconnectionfield.SetAttrAck,
 			),
 			"997",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
 		value(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet210,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAck,
+				ediconnectionfield.SetAttrAck,
 			),
 			"997",
 			4,
@@ -311,17 +346,17 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	assert.Equal(t, 7, draft.PageCount)
 	assert.Regexp(t, `^sha256:[0-9a-f]{64}$`, draft.DocumentDigest)
 
-	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
+	name := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerName)
 	assert.Equal(t, "Acme Retail Group", name.Value)
 	assert.Equal(t, ediconnectiondraftports.SourceKindDocument, name.Source.Kind)
 	assert.Equal(t, 1, name.Source.Page)
 	assert.Equal(t, "Trading Partner Name: Acme Retail Group", name.Source.Quote)
 	assert.InDelta(t, 0.95, name.Confidence, 0.001)
-	assert.Equal(t, "US", valueOf(t, draft.Partner.Fields, fieldPartnerCountry).Value)
+	assert.Equal(t, "US", valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCountry).Value)
 	assert.Equal(
 		t,
 		ediconnectiondraftports.ValueStatusDefaulted,
-		valueOf(t, draft.Partner.Fields, fieldPartnerCountry).Status,
+		valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCountry).Status,
 	)
 
 	assert.True(t, draft.Connection.Inbound)
@@ -337,10 +372,10 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 		valueOf(
 			t,
 			tender.Fields,
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet204,
 				edidocument.DocumentDirectionInbound,
-				setAttrVersion,
+				ediconnectionfield.SetAttrVersion,
 			),
 		).Value,
 	)
@@ -351,7 +386,11 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	ack := valueOf(
 		t,
 		status.Fields,
-		setField(edidocument.TransactionSet214, edidocument.DocumentDirectionOutbound, setAttrAck),
+		ediconnectionfield.SetField(
+			edidocument.TransactionSet214,
+			edidocument.DocumentDirectionOutbound,
+			ediconnectionfield.SetAttrAck,
+		),
 	)
 	assert.Equal(t, "997", ack.Value)
 	require.Len(t, status.ControlNumbers, 1)
@@ -391,10 +430,10 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 	window := valueOf(
 		t,
 		response.Fields,
-		setField(
+		ediconnectionfield.SetField(
 			edidocument.TransactionSet990,
 			edidocument.DocumentDirectionOutbound,
-			setAttrAckWindowMinutes,
+			ediconnectionfield.SetAttrAckWindowMinutes,
 		),
 	)
 	assert.Equal(t, "240", window.Value, "4 hours")
@@ -444,13 +483,13 @@ func TestPlan_TakesSettingsAsTheGuideWritesThem(t *testing.T) {
 	t.Parallel()
 
 	written := map[string]string{
-		"as2.mdnMode":             "Synchronous, signed",
-		"as2.signingAlgorithm":    "SHA-256",
-		"as2.encryptionAlgorithm": "AES-256 (CBC)",
-		fieldPartnerQualifier:     "qualifier 01 (DUNS)",
-		fieldOurQualifier:         "SCAC",
-		fieldElementSep:           "* (asterisk)",
-		fieldSegmentSep:           "tilde",
+		"as2.mdnMode":                       "Synchronous, signed",
+		"as2.signingAlgorithm":              "SHA-256",
+		"as2.encryptionAlgorithm":           "AES-256 (CBC)",
+		ediconnectionfield.PartnerQualifier: "qualifier 01 (DUNS)",
+		ediconnectionfield.OurQualifier:     "SCAC",
+		ediconnectionfield.ElementSep:       "* (asterisk)",
+		ediconnectionfield.SegmentSep:       "tilde",
 	}
 	req := acmeRequest(t)
 	for idx := range req.Values {
@@ -473,10 +512,10 @@ func TestPlan_TakesSettingsAsTheGuideWritesThem(t *testing.T) {
 		"aes256-cbc",
 		valueOf(t, draft.Transport.Fields, "as2.encryptionAlgorithm").Value,
 	)
-	assert.Equal(t, "01", valueOf(t, draft.Interchange, fieldPartnerQualifier).Value)
-	assert.Equal(t, "02", valueOf(t, draft.Interchange, fieldOurQualifier).Value)
-	assert.Equal(t, "*", valueOf(t, draft.Interchange, fieldElementSep).Value)
-	assert.Equal(t, "~", valueOf(t, draft.Interchange, fieldSegmentSep).Value)
+	assert.Equal(t, "01", valueOf(t, draft.Interchange, ediconnectionfield.PartnerQualifier).Value)
+	assert.Equal(t, "02", valueOf(t, draft.Interchange, ediconnectionfield.OurQualifier).Value)
+	assert.Equal(t, "*", valueOf(t, draft.Interchange, ediconnectionfield.ElementSep).Value)
+	assert.Equal(t, "~", valueOf(t, draft.Interchange, ediconnectionfield.SegmentSep).Value)
 }
 
 func TestCatalog_ReadsAValueThroughItsSpellings(t *testing.T) {
@@ -497,18 +536,18 @@ func TestCatalog_ReadsAValueThroughItsSpellings(t *testing.T) {
 		{field: "as2.encryptionAlgorithm", value: "AES-256-GCM", want: "aes256-gcm"},
 		{field: "as2.encryptionAlgorithm", value: "AES-128 (CBC)", want: "aes128-cbc"},
 		{field: "as2.encryptionAlgorithm", value: "3DES", want: "3des"},
-		{field: fieldPartnerQualifier, value: "DUNS plus 4", want: "16"},
-		{field: fieldPartnerQualifier, value: "DUNS or SCAC", fails: true},
-		{field: fieldTransportMethod, value: "AS2 over HTTPS", want: "AS2"},
-		{field: fieldTransportEnvironment, value: "test or production", fails: true},
-		{field: fieldElementSep, value: "| (pipe)", want: "|"},
+		{field: ediconnectionfield.PartnerQualifier, value: "DUNS plus 4", want: "16"},
+		{field: ediconnectionfield.PartnerQualifier, value: "DUNS or SCAC", fails: true},
+		{field: ediconnectionfield.TransportMethod, value: "AS2 over HTTPS", want: "AS2"},
+		{field: ediconnectionfield.TransportEnvironment, value: "test or production", fails: true},
+		{field: ediconnectionfield.ElementSep, value: "| (pipe)", want: "|"},
 		{field: "as2.mdnMode", value: "   ", fails: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.field+"/"+tt.value, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := fieldCatalog[tt.field].normalize(tt.value)
+			got, err := ediconnectionfield.Catalog[tt.field].Normalize(tt.value)
 			if tt.fails {
 				require.Error(t, err)
 				return
@@ -523,12 +562,17 @@ func TestPlan_HoldsAValueWhoseQuoteIsNotOnThePage(t *testing.T) {
 	t.Parallel()
 
 	req := acmeRequest(t)
-	req.Values[0] = value(fieldPartnerCode, "ACMERETAIL", 3, "Partner code is ACMERETAIL")
+	req.Values[0] = value(
+		ediconnectionfield.PartnerCode,
+		"ACMERETAIL",
+		3,
+		"Partner code is ACMERETAIL",
+	)
 
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	code := valueOf(t, draft.Partner.Fields, fieldPartnerCode)
+	code := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCode)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusUnverified, code.Status)
 	assert.Empty(t, code.Value)
 	assert.Contains(t, code.Reason, "does not appear on page 3")
@@ -540,12 +584,17 @@ func TestPlan_FollowsAQuoteToThePageItIsOn(t *testing.T) {
 	t.Parallel()
 
 	req := acmeRequest(t)
-	req.Values[0] = value(fieldPartnerCode, "ACMERETAIL", 2, "Trading Partner Code: ACMERETAIL")
+	req.Values[0] = value(
+		ediconnectionfield.PartnerCode,
+		"ACMERETAIL",
+		2,
+		"Trading Partner Code: ACMERETAIL",
+	)
 
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	code := valueOf(t, draft.Partner.Fields, fieldPartnerCode)
+	code := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCode)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusAccepted, code.Status)
 	assert.Equal(t, 1, code.Source.Page)
 	assert.Equal(t, "Cited as page 2; the quote is on page 1", code.Source.Note)
@@ -556,7 +605,7 @@ func TestPlan_RefusesAValueTheQuoteDoesNotSay(t *testing.T) {
 
 	req := acmeRequest(t)
 	req.Values[1] = value(
-		fieldPartnerName,
+		ediconnectionfield.PartnerName,
 		"Acme Wholesale",
 		1,
 		"Trading Partner Name: Acme Retail Group",
@@ -565,7 +614,7 @@ func TestPlan_RefusesAValueTheQuoteDoesNotSay(t *testing.T) {
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
+	name := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerName)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusUnverified, name.Status)
 	assert.Equal(t, "The quote does not contain this value", name.Reason)
 }
@@ -579,12 +628,12 @@ func TestPlan_HoldsALowConfidenceValue(t *testing.T) {
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	name := valueOf(t, draft.Partner.Fields, fieldPartnerName)
+	name := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerName)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusHeld, name.Status)
 	assert.Empty(t, name.Value, "a held value is never written")
 	assert.Contains(t, name.Reason, "Confidence 0.55")
 	require.Len(t, draft.Decisions, 1)
-	assert.Equal(t, fieldPartnerName, draft.Decisions[0].Field)
+	assert.Equal(t, ediconnectionfield.PartnerName, draft.Decisions[0].Field)
 	assert.Contains(t, draft.Blockers, "Decide partner name")
 	assert.False(t, draft.Ready)
 }
@@ -643,9 +692,9 @@ func TestPlan_HoldsAValueTheSpecsOwnSampleContradicts(t *testing.T) {
 
 	req := acmeRequest(t)
 	for index := range req.Values {
-		if req.Values[index].Field == fieldOurID {
+		if req.Values[index].Field == ediconnectionfield.OurID {
 			req.Values[index] = value(
-				fieldOurID,
+				ediconnectionfield.OurID,
 				"TRENOVA",
 				2,
 				"Carrier AS2 Identifier: TRENOVA-AS2",
@@ -656,7 +705,7 @@ func TestPlan_HoldsAValueTheSpecsOwnSampleContradicts(t *testing.T) {
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	ours := valueOf(t, draft.Interchange, fieldOurID)
+	ours := valueOf(t, draft.Interchange, ediconnectionfield.OurID)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusHeld, ours.Status)
 	kinds := make([]ediconnectiondraftports.SourceKind, 0, len(ours.Candidates))
 	for _, candidate := range ours.Candidates {
@@ -679,7 +728,8 @@ func TestPlan_TakesEnvelopeValuesFromTheSampleWhenTheTextIsSilent(t *testing.T) 
 	req := acmeRequest(t)
 	kept := make([]ediconnectiondraftports.DraftValueInput, 0, len(req.Values))
 	for _, input := range req.Values {
-		if input.Field != fieldPartnerQualifier && input.Field != fieldElementSep {
+		if input.Field != ediconnectionfield.PartnerQualifier &&
+			input.Field != ediconnectionfield.ElementSep {
 			kept = append(kept, input)
 		}
 	}
@@ -688,12 +738,12 @@ func TestPlan_TakesEnvelopeValuesFromTheSampleWhenTheTextIsSilent(t *testing.T) 
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	qualifier := valueOf(t, draft.Interchange, fieldPartnerQualifier)
+	qualifier := valueOf(t, draft.Interchange, ediconnectionfield.PartnerQualifier)
 	assert.Equal(t, "01", qualifier.Value)
 	assert.Equal(t, ediconnectiondraftports.SourceKindSample, qualifier.Source.Kind)
 	assert.Equal(t, 7, qualifier.Source.Page)
 	assert.True(t, strings.HasPrefix(qualifier.Source.Quote, "ISA*00*"))
-	assert.Equal(t, "*", valueOf(t, draft.Interchange, fieldElementSep).Value)
+	assert.Equal(t, "*", valueOf(t, draft.Interchange, ediconnectionfield.ElementSep).Value)
 }
 
 func TestPlan_RefusesSecretsAndUnknownFields(t *testing.T) {
@@ -726,7 +776,7 @@ func TestPlan_DraftsTheSameFromAQuoteWhoseSecretWasRedacted(t *testing.T) {
 	planWith := func(quote string) *ediconnectiondraftports.ConnectionDraft {
 		req := acmeRequest(t)
 		for index := range req.Values {
-			if req.Values[index].Field == fieldTransportEnvironment {
+			if req.Values[index].Field == ediconnectionfield.TransportEnvironment {
 				req.Values[index].Citation = cite(2, quote)
 			}
 		}
@@ -740,12 +790,20 @@ func TestPlan_DraftsTheSameFromAQuoteWhoseSecretWasRedacted(t *testing.T) {
 
 	require.NotNil(t, fromRaw.Transport)
 	require.NotNil(t, fromRedacted.Transport)
-	environment := valueOf(t, fromRedacted.Transport.Fields, fieldTransportEnvironment)
+	environment := valueOf(
+		t,
+		fromRedacted.Transport.Fields,
+		ediconnectionfield.TransportEnvironment,
+	)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusAccepted, environment.Status)
 	assert.Equal(t, "test", environment.Value)
 	assert.Equal(t, 2, environment.Source.Page)
 	assert.Equal(t, redacted, environment.Source.Quote)
-	assert.Equal(t, valueOf(t, fromRaw.Transport.Fields, fieldTransportEnvironment), environment)
+	assert.Equal(
+		t,
+		valueOf(t, fromRaw.Transport.Fields, ediconnectionfield.TransportEnvironment),
+		environment,
+	)
 	assert.Equal(t, fromRaw.Ready, fromRedacted.Ready)
 	assert.Equal(t, fromRaw.Blockers, fromRedacted.Blockers)
 }
@@ -774,7 +832,7 @@ func acmeVersion(t *testing.T, projectID pulid.ID) *ladingproject.LadingVersion 
 		Them:        &[2]string{"01", "007912345"},
 		Us:          &[2]string{"02", "TRNV"},
 		Group:       &[2]string{"ACMERETAIL", "TRNV"},
-		Usage:       valueTest,
+		Usage:       ediconnectionfield.ValueTest,
 		Acknowledge: "997",
 		AckWithin:   240,
 		Sets:        []string{"204", "214"},
@@ -872,14 +930,14 @@ func TestPlan_ARevisedSpecForAKnownPartnerIsAChangeSet(t *testing.T) {
 	assert.Contains(t, draft.Partner.Reasons, "Same partner code")
 	assert.Equal(t, domaintypes.StatusActive, draft.Partner.Status, "a re-run never changes status")
 	assert.Equal(t, ediconnectiondraftports.ChangeKindChange, draft.Partner.Change)
-	contact := valueOf(t, draft.Partner.Fields, fieldPartnerContactName)
+	contact := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerContactName)
 	assert.Equal(t, ediconnectiondraftports.ChangeKindChange, contact.Change)
 	assert.Equal(t, "Lee Park", contact.Current)
 	assert.Equal(t, "Dana Whitfield", contact.Value)
 	assert.Equal(
 		t,
 		ediconnectiondraftports.ChangeKindSame,
-		valueOf(t, draft.Partner.Fields, fieldPartnerName).Change,
+		valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerName).Change,
 	)
 
 	require.NotNil(t, draft.Transport)
@@ -1060,10 +1118,10 @@ func TestPlan_NamesTheAcknowledgmentItChoseWhenTheGuideAsksForTwo(t *testing.T) 
 
 	req := acmeRequest(t)
 	for index := range req.Values {
-		if req.Values[index].Field == setField(
+		if req.Values[index].Field == ediconnectionfield.SetField(
 			edidocument.TransactionSet210,
 			edidocument.DocumentDirectionOutbound,
-			setAttrAck,
+			ediconnectionfield.SetAttrAck,
 		) {
 			req.Values[index] = value(req.Values[index].Field, "999", 4,
 				"Acme does not support the 999 Implementation Acknowledgment.")
@@ -1085,11 +1143,15 @@ func TestDocumentDigest_IsTheTextInPageOrder(t *testing.T) {
 
 	pages := []ediconnectiondraftports.SpecPage{{Number: 2, Text: "b"}, {Number: 1, Text: "a"}}
 	reordered := []ediconnectiondraftports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "b"}}
-	assert.Equal(t, DocumentDigest(pages), DocumentDigest(reordered))
+	assert.Equal(
+		t,
+		ediconnectionfield.DocumentDigest(pages),
+		ediconnectionfield.DocumentDigest(reordered),
+	)
 	assert.NotEqual(
 		t,
-		DocumentDigest(pages),
-		DocumentDigest(
+		ediconnectionfield.DocumentDigest(pages),
+		ediconnectionfield.DocumentDigest(
 			[]ediconnectiondraftports.SpecPage{{Number: 1, Text: "a"}, {Number: 2, Text: "c"}},
 		),
 	)

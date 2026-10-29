@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionguide"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -33,7 +35,7 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 		t.Context(),
 		&ediconnectiondraftports.ApplyConnectionDraftRequest{
 			Draft:                  req,
-			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			ExpectedDocumentDigest: ediconnectionfield.DocumentDigest(req.Document.Pages),
 			Actor:                  approver(req),
 		},
 	)
@@ -83,7 +85,7 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	)
 	guides := map[string]string{}
 	for _, file := range imported.Files {
-		if strings.HasPrefix(file.Path, guideDirectory) {
+		if strings.HasPrefix(file.Path, ediconnectionguide.GuideDirectory) {
 			guides[file.Path] = file.Source
 		}
 	}
@@ -127,7 +129,7 @@ func TestApply_UpdatesOnlyWhatChangedOnAKnownPartner(t *testing.T) {
 		t.Context(),
 		&ediconnectiondraftports.ApplyConnectionDraftRequest{
 			Draft:                  req,
-			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			ExpectedDocumentDigest: ediconnectionfield.DocumentDigest(req.Document.Pages),
 			Actor:                  approver(req),
 		},
 	)
@@ -163,7 +165,7 @@ func TestApply_RefusesWhatThePersonDidNotApprove(t *testing.T) {
 	t.Parallel()
 
 	req := acmeRequest(t)
-	digest := DocumentDigest(req.Document.Pages)
+	digest := ediconnectionfield.DocumentDigest(req.Document.Pages)
 	cases := map[string]struct {
 		request  func() *ediconnectiondraftports.ApplyConnectionDraftRequest
 		contains string
@@ -233,7 +235,7 @@ func TestApply_StopsAtTheFirstFailedWrite(t *testing.T) {
 		t.Context(),
 		&ediconnectiondraftports.ApplyConnectionDraftRequest{
 			Draft:                  req,
-			ExpectedDocumentDigest: DocumentDigest(req.Document.Pages),
+			ExpectedDocumentDigest: ediconnectionfield.DocumentDigest(req.Document.Pages),
 			Actor:                  approver(req),
 		},
 	)

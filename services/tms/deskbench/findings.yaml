@@ -3579,7 +3579,7 @@ findings:
       mode Trenova accepts. Which should it use?". Both turns ended on the question with no reply,
       so no proposal was filed.
     cause: >
-      In ediconnectiondraft/catalog.go the normalizer and the spelled list disagree. as2.mdnMode's
+      In ediconnectionfield/catalog.go the normalizer and the spelled list disagree. as2.mdnMode's
       choice() accepts "sync" and "synchronous" but not "synchronous, signed"; as2.signingAlgorithm
       uses as2Algorithms(), which accepts only "sha256", while its spelled list already names
       "sha-256" and "sha 256". The values schema gives no hint of the accepted forms.
@@ -3590,8 +3590,8 @@ findings:
       "qualifier 01 (DUNS)" and "* (asterisk)" now normalize; the plan test passes them as the
       guide writes them.
     files:
-      - services/tms/internal/modules/edi/app/ediconnectiondraft/catalog.go
-      - services/tms/internal/modules/edi/app/ediconnectiondraft/fields.go
+      - services/tms/internal/modules/edi/app/ediconnectionfield/catalog.go
+      - services/tms/internal/modules/edi/app/ediconnectionfield/fields.go
     fixedIn: >
       uncommitted; verified by .deskbench/runs/20261015-123455-run, 20261015-125246-run,
       20261015-130724-run and 20261015-132109-run (no MDN mode, signing or encryption value held

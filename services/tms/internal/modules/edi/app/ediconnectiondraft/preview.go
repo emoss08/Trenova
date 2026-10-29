@@ -3,6 +3,7 @@ package ediconnectiondraft
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -45,10 +46,10 @@ func (s *Service) PreviewConnectionDraft(
 		if p.match.setup != nil {
 			plan.Project.Project = p.match.setup.Project
 		}
-		plan.Project.Before = p.current.version
+		plan.Project.Before = p.current.Version
 	}
 	for _, item := range p.writes.mappings {
-		before := p.current.mapping(item.EntityType, item.SourceID)
+		before := p.current.Mapping(item.EntityType, item.SourceID)
 		change := ediconnectiondraftports.ChangeKindAdd
 		if before != nil {
 			change = ediconnectiondraftports.ChangeKindChange
@@ -60,8 +61,8 @@ func (s *Service) PreviewConnectionDraft(
 		})
 	}
 	for _, control := range p.writes.controls {
-		documentTypeID := p.docTypes[setKey(control.set, control.direction)]
-		before := p.current.sequence(documentTypeID, control.kind)
+		documentTypeID := p.docTypes[ediconnectionfield.SetKey(control.set, control.direction)]
+		before := p.current.Sequence(documentTypeID, control.kind)
 		change := ediconnectiondraftports.ChangeKindAdd
 		if before != nil {
 			change = ediconnectiondraftports.ChangeKindChange
@@ -106,7 +107,7 @@ func (p *planner) plannedTransport() *ediconnectiondraftports.PlannedTransport {
 		Change: p.writes.transportChange,
 	}
 	if request.ProfileID.IsNotNil() {
-		planned.Before = p.current.transport
+		planned.Before = p.current.Transport
 	}
 	return planned
 }

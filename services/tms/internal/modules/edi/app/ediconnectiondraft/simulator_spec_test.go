@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,21 +35,29 @@ func simulatorValues() []ediconnectiondraftports.DraftValueInput {
 		return value(field, v, 1, quote)
 	}
 	return []ediconnectiondraftports.DraftValueInput{
-		sim(fieldPartnerCode, "SIMPARTNER", "Trading Partner Code: SIMPARTNER"),
+		sim(ediconnectionfield.PartnerCode, "SIMPARTNER", "Trading Partner Code: SIMPARTNER"),
 		sim(
-			fieldPartnerName,
+			ediconnectionfield.PartnerName,
 			"Trenova Partner Simulator",
 			"Trading Partner Name: Trenova Partner Simulator",
 		),
-		sim(fieldPartnerContactName, "Simulator EDI desk", "EDI Contact: Simulator EDI desk"),
 		sim(
-			fieldPartnerContactEmail,
+			ediconnectionfield.PartnerContactName,
+			"Simulator EDI desk",
+			"EDI Contact: Simulator EDI desk",
+		),
+		sim(
+			ediconnectionfield.PartnerContactEmail,
 			"sim-edi@partner-sim.example",
 			"Email: sim-edi@partner-sim.example",
 		),
-		sim(fieldPartnerContactPhone, "+1 312 555 0190", "Phone: +1 312 555 0190"),
-		sim(fieldPartnerTimezone, "Etc/UTC", "UTC (Etc/UTC)"),
-		sim(fieldTransportMethod, "AS2", "The simulator exchanges documents over AS2."),
+		sim(ediconnectionfield.PartnerContactPhone, "+1 312 555 0190", "Phone: +1 312 555 0190"),
+		sim(ediconnectionfield.PartnerTimezone, "Etc/UTC", "UTC (Etc/UTC)"),
+		sim(
+			ediconnectionfield.TransportMethod,
+			"AS2",
+			"The simulator exchanges documents over AS2.",
+		),
 		sim("as2.partnerAs2Id", "SIMPARTNER", "Simulator AS2 Identifier: SIMPARTNER"),
 		sim("as2.localAs2Id", "TRENOVA", "Carrier AS2 Identifier: TRENOVA"),
 		sim("as2.endpointUrl", "http://localhost:9210/as2", "AS2 URL: http://localhost:9210/as2"),
@@ -56,75 +65,79 @@ func simulatorValues() []ediconnectiondraftports.DraftValueInput {
 		sim("as2.signingAlgorithm", "sha256", "Signing algorithm: SHA-256."),
 		sim("as2.encryptionAlgorithm", "aes256-cbc", "Encryption algorithm: AES-256 (CBC)."),
 		sim(
-			fieldPartnerQualifier,
+			ediconnectionfield.PartnerQualifier,
 			"ZZ",
 			"Simulator interchange sender: qualifier ZZ (mutually defined), ID SIMPARTNER",
 		),
 		sim(
-			fieldPartnerID,
+			ediconnectionfield.PartnerID,
 			"SIMPARTNER",
 			"Simulator interchange sender: qualifier ZZ (mutually defined), ID SIMPARTNER",
 		),
 		sim(
-			fieldOurQualifier,
+			ediconnectionfield.OurQualifier,
 			"ZZ",
 			"Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA",
 		),
 		sim(
-			fieldOurID,
+			ediconnectionfield.OurID,
 			"TRENOVA",
 			"Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA",
 		),
-		sim(fieldPartnerGSID, "SIMPARTNER", "GS02 Application Sender Code: SIMPARTNER"),
-		sim(fieldOurGSID, "TRENOVA", "GS03 Application Receiver Code: TRENOVA"),
-		sim(fieldX12Version, "004010", "GS08 Version: 004010"),
-		sim(fieldUsageIndicator, "T", "ISA15 usage indicator: T."),
-		sim(fieldElementSep, "*", "Element separator: * (asterisk)."),
-		sim(fieldSegmentSep, "~", "Segment terminator: ~ (tilde)."),
-		sim(fieldComponentSep, ">", "Sub-element separator: > (greater than)."),
-		sim(controlNumberField(edidocument.ControlNumberKindInterchange), "1",
+		sim(
+			ediconnectionfield.PartnerGSID,
+			"SIMPARTNER",
+			"GS02 Application Sender Code: SIMPARTNER",
+		),
+		sim(ediconnectionfield.OurGSID, "TRENOVA", "GS03 Application Receiver Code: TRENOVA"),
+		sim(ediconnectionfield.X12Version, "004010", "GS08 Version: 004010"),
+		sim(ediconnectionfield.UsageIndicator, "T", "ISA15 usage indicator: T."),
+		sim(ediconnectionfield.ElementSep, "*", "Element separator: * (asterisk)."),
+		sim(ediconnectionfield.SegmentSep, "~", "Segment terminator: ~ (tilde)."),
+		sim(ediconnectionfield.ComponentSep, ">", "Sub-element separator: > (greater than)."),
+		sim(ediconnectionfield.ControlNumberField(edidocument.ControlNumberKindInterchange), "1",
 			"Carrier interchange control numbers (ISA13) start at 1"),
 		sim(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet204,
 				edidocument.DocumentDirectionInbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			"The simulator sends the 204 Motor Carrier Load Tender to the carrier.",
 		),
 		sim(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			"The carrier answers each tender with a 990 Response to a Load Tender.",
 		),
 		sim(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet214,
 				edidocument.DocumentDirectionOutbound,
-				setAttrSupported,
+				ediconnectionfield.SetAttrSupported,
 			),
 			"true",
 			"The carrier sends the 214 Transportation Carrier Shipment Status Message",
 		),
 		sim(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAck,
+				ediconnectionfield.SetAttrAck,
 			),
 			"997",
 			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",
 		),
 		sim(
-			setField(
+			ediconnectionfield.SetField(
 				edidocument.TransactionSet214,
 				edidocument.DocumentDirectionOutbound,
-				setAttrAck,
+				ediconnectionfield.SetAttrAck,
 			),
 			"997",
 			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",

@@ -3,7 +3,7 @@
 A trading partner sends an implementation guide (a PDF, a DOCX, or a text file of sample X12).
 An agent on the Desk reads it, drafts the whole connection, and proposes it. A person reviews the
 draft and approves it. Nothing is written before that approval. Read this before changing
-`modules/edi/app/ediconnectiondraft`, its ports (`ediports/ediconnectiondraft.go`) or repository
+`modules/edi/app/ediconnectiondraft` (with `ediconnectionfield` and `ediconnectionguide`), its ports (`ediports/ediconnectiondraft.go`) or repository
 (`ediconnectiondraftrepository`), the `edi_draft_connection` or `edi_apply_connection_draft` tools,
 the `edi_connection_draft` Desk artifact, or the communication profile validator's credential rules.
 
@@ -56,7 +56,7 @@ against the stored pages either way:
   a partner, the planner matches one.
 - `values[]`: `{field, value, confidence, citation: {page, quote, section}}`. `field` names a slot
   the planner knows (`partner.name`, `isa.ourId`, `sets.214.outbound.ack`, `as2.partnerAs2Id`, ...;
-  the catalog is `ediconnectiondraft/catalog.go`, exposed as the `edi.connectionDraftField` enum
+  the catalog is `ediconnectionfield/catalog.go`, exposed as the `edi.connectionDraftField` enum
   source). Secret slots do not exist.
 - `requirements[]`: `{transactionSet, direction, segment, elementPosition, usage, codes, citation}`,
   the segment and element usage the spec states.
@@ -246,7 +246,9 @@ document digest.
 
 | Piece | Where |
 |---|---|
-| Planner, verification, diff, apply | `modules/edi/app/ediconnectiondraft/` |
+| Planner, diff, apply | `modules/edi/app/ediconnectiondraft/` |
+| Field catalog, citation checks, spec samples, evidence and resolution | `modules/edi/app/ediconnectionfield/` |
+| Guide files and project check reading | `modules/edi/app/ediconnectionguide/` |
 | Plan types and ports | `modules/edi/ports/ediconnectiondraftports/ediconnectiondraft.go` |
 | Repository | `modules/edi/adapters/postgres/ediconnectiondraftrepository/` |
 | Sample parse | `ediinboundservice.ParseSample` |

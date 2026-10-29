@@ -2,7 +2,7 @@ package edispec
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	fieldSource = agenttoolschema.Source("edi.connectionDraftField", ediconnectiondraft.FieldKeys())
+	fieldSource = agenttoolschema.Source("edi.connectionDraftField", ediconnectionfield.Keys())
 	setSource   = agenttoolschema.Source(
 		"edi.connectionDraftTransactionSet",
 		[]edidocument.TransactionSet{
@@ -136,7 +136,7 @@ func ParamSchema(withDigest bool) map[string]any {
 				keyConfidence: confidenceSchema(),
 				keyCitation:   citationSchema(),
 			}, "field", "value", keyConfidence, keyCitation),
-			ediconnectiondraft.MaxValues,
+			ediconnectionfield.MaxValues,
 		),
 		ParamRequirements: jsonschemautils.DescribedArray(
 			"What the guide requires of a segment or element of a transaction set.",
@@ -158,7 +158,7 @@ func ParamSchema(withDigest bool) map[string]any {
 					jsonschemautils.String(maxCodeRunes), maxCodes),
 				keyCitation: citationSchema(),
 			}, "transactionSet", "direction", "segment", "usage", keyCitation),
-			ediconnectiondraft.MaxRequirements,
+			ediconnectionfield.MaxRequirements,
 		),
 		ParamMappings: jsonschemautils.DescribedArray(
 			"A code the partner uses and the Trenova record it means.",
@@ -177,17 +177,17 @@ func ParamSchema(withDigest bool) map[string]any {
 				keyConfidence: confidenceSchema(),
 				keyCitation:   citationSchema(),
 			}, "entityType", "sourceValue", "targetId", keyConfidence, keyCitation),
-			ediconnectiondraft.MaxMappings,
+			ediconnectionfield.MaxMappings,
 		),
 		ParamGaps: jsonschemautils.DescribedArray(
 			"What the guide asks for that Trenova does not do, or leaves unclear.",
 			jsonschemautils.Object(map[string]any{
 				"kind": agenttoolschema.Enum("", gapSource),
-				"summary": described(jsonschemautils.String(ediconnectiondraft.MaxSummaryRunes),
+				"summary": described(jsonschemautils.String(ediconnectionfield.MaxSummaryRunes),
 					"What the person needs to know, in a sentence."),
 				keyCitation: citationSchema(),
 			}, "kind", "summary", keyCitation),
-			ediconnectiondraft.MaxGaps,
+			ediconnectionfield.MaxGaps,
 		),
 		ParamResolutions: jsonschemautils.DescribedArray(
 			"The person's answer to a setting the last draft held for them.",
@@ -201,7 +201,7 @@ func ParamSchema(withDigest bool) map[string]any {
 				"note": described(jsonschemautils.String(maxNoteRunes),
 					"What they said, in their words."),
 			}, "field", "value", "source"),
-			ediconnectiondraft.MaxResolutions,
+			ediconnectionfield.MaxResolutions,
 		),
 	}
 	required := []string{ParamDocumentID, ParamValues}

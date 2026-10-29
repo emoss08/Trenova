@@ -18645,3 +18645,11 @@ github.com/emoss08/trenova/shared/quickbooks.MaxQueryIDs	github.com/emoss08/tren
 github.com/emoss08/trenova/shared/quickbooks.Client.QueryByIDs	github.com/emoss08/trenova/shared/quickbookssync.QueryByIDs
 github.com/emoss08/trenova/shared/quickbooks.Client.QueryChangedSince	github.com/emoss08/trenova/shared/quickbookssync.QueryChangedSince
 github.com/emoss08/trenova/shared/quickbooks.ReferenceChangeEntity	github.com/emoss08/trenova/shared/quickbookssync.ReferenceChangeEntity
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.DocumentDigest	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.DocumentDigest
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxGaps	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxGaps
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxMappings	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxMappings
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxRequirements	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxRequirements
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxResolutions	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxResolutions
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxSummaryRunes	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxSummaryRunes
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.MaxValues	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.MaxValues
+github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft.FieldKeys	github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield.Keys

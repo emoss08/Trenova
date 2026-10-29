@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"testing"
@@ -18,28 +18,28 @@ const pdfSamplePage = "9. Sample 204\n" +
 func TestFindSamples_ReadsASamplePrintedInAPDF(t *testing.T) {
 	t.Parallel()
 
-	samples := findSamples(
-		newPageIndex([]ediconnectiondraftports.SpecPage{{Number: 7, Text: pdfSamplePage}}),
+	samples := FindSamples(
+		NewPages([]ediconnectiondraftports.SpecPage{{Number: 7, Text: pdfSamplePage}}),
 	)
 	require.Len(t, samples, 1)
 	sample := samples[0]
-	sample.parse(t.Context())
+	sample.Parse(t.Context())
 	require.NoError(
 		t,
-		sample.err,
+		sample.Err,
 		"a PDF squeezes the ISA's padding and wraps it; the sample still reads",
 	)
 
-	assert.Equal(t, 7, sample.page)
-	assert.Equal(t, edidocument.TransactionSet204, sample.transactionSet())
-	assert.Equal(t, "01", sample.parsed.SenderQualifier)
-	assert.Equal(t, "007912345", sample.parsed.SenderID)
-	assert.Equal(t, "02", sample.parsed.ReceiverQualifier)
-	assert.Equal(t, "TRNV", sample.parsed.ReceiverID)
-	assert.Equal(t, "T", sample.parsed.UsageIndicator)
-	assert.Equal(t, ">", sample.parsed.Separators.Component)
-	assert.Equal(t, "~", sample.parsed.Separators.Segment)
+	assert.Equal(t, 7, sample.Page)
+	assert.Equal(t, edidocument.TransactionSet204, sample.TransactionSet())
+	assert.Equal(t, "01", sample.Parsed.SenderQualifier)
+	assert.Equal(t, "007912345", sample.Parsed.SenderID)
+	assert.Equal(t, "02", sample.Parsed.ReceiverQualifier)
+	assert.Equal(t, "TRNV", sample.Parsed.ReceiverID)
+	assert.Equal(t, "T", sample.Parsed.UsageIndicator)
+	assert.Equal(t, ">", sample.Parsed.Separators.Component)
+	assert.Equal(t, "~", sample.Parsed.Separators.Segment)
 	assert.Equal(t,
 		"ISA*00*   *00*   *01*007912345   *02*TRNV   *261014*0930*U*00401*000000123*0*T*>~",
-		sample.isaSegment(), "the quote is the ISA as the page prints it, its wrap joined")
+		sample.ISASegment(), "the quote is the ISA as the page prints it, its wrap joined")
 }

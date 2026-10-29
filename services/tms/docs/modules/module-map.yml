@@ -688,6 +688,9 @@ modules:
       - ladingproject
       - x12field
     service:
+      - ediconnectiondraft
+      - ediconnectionfield
+      - ediconnectionguide
       - ediinboundas2
       - ediinboundpoll
       - ediinboundservice

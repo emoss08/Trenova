@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ func TestPlan_AHeldOptionalValueIsListedButDoesNotBlock(t *testing.T) {
 
 	req := acmeRequest(t)
 	for index := range req.Values {
-		if req.Values[index].Field == fieldPartnerContactPhone {
+		if req.Values[index].Field == ediconnectionfield.PartnerContactPhone {
 			req.Values[index].Confidence = 0.4
 		}
 	}
@@ -23,11 +24,11 @@ func TestPlan_AHeldOptionalValueIsListedButDoesNotBlock(t *testing.T) {
 	draft, err := newHarness(t).service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	phone := valueOf(t, draft.Partner.Fields, fieldPartnerContactPhone)
+	phone := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerContactPhone)
 	assert.Equal(t, ediconnectiondraftports.ValueStatusHeld, phone.Status)
 	assert.Empty(t, phone.Value, "a held value is never written")
 	require.Len(t, draft.Decisions, 1, "the person still sees it under To decide")
-	assert.Equal(t, fieldPartnerContactPhone, draft.Decisions[0].Field)
+	assert.Equal(t, ediconnectionfield.PartnerContactPhone, draft.Decisions[0].Field)
 	assert.Empty(t, draft.Blockers)
 	assert.True(t, draft.Ready)
 }
@@ -38,13 +39,20 @@ func TestPlan_NeverMatchesAPartnerOnAValueItHolds(t *testing.T) {
 	h := newHarness(t)
 	req := acmeRequest(t)
 	h.repo.partners = []*ediconnectiondraftports.EDIPartnerSetup{existingAcme(t, req)}
-	req.Values = append(req.Values,
-		value(fieldPartnerCode, "ACMERETAILAS2", 2, "Acme AS2 Identifier: ACMERETAILAS2"))
+	req.Values = append(
+		req.Values,
+		value(
+			ediconnectionfield.PartnerCode,
+			"ACMERETAILAS2",
+			2,
+			"Acme AS2 Identifier: ACMERETAILAS2",
+		),
+	)
 
 	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	code := valueOf(t, draft.Partner.Fields, fieldPartnerCode)
+	code := valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCode)
 	require.Equal(t, ediconnectiondraftports.ValueStatusHeld, code.Status)
 	assert.NotContains(t, draft.Partner.Reasons, "Same partner code",
 		"a code the draft refuses to use is not evidence of who the partner is")
@@ -56,10 +64,17 @@ func TestPlan_MatchesAPartnerOnTheValueThePersonPicked(t *testing.T) {
 	h := newHarness(t)
 	req := acmeRequest(t)
 	h.repo.partners = []*ediconnectiondraftports.EDIPartnerSetup{existingAcme(t, req)}
-	req.Values = append(req.Values,
-		value(fieldPartnerCode, "ACMERETAILAS2", 2, "Acme AS2 Identifier: ACMERETAILAS2"))
+	req.Values = append(
+		req.Values,
+		value(
+			ediconnectionfield.PartnerCode,
+			"ACMERETAILAS2",
+			2,
+			"Acme AS2 Identifier: ACMERETAILAS2",
+		),
+	)
 	req.Resolutions = []ediconnectiondraftports.DraftResolutionInput{{
-		Field: fieldPartnerCode, Value: "ACMERETAIL", Source: ediconnectiondraftports.ResolutionSourceCandidate,
+		Field: ediconnectionfield.PartnerCode, Value: "ACMERETAIL", Source: ediconnectiondraftports.ResolutionSourceCandidate,
 	}}
 
 	draft, err := h.service.PlanConnectionDraft(t.Context(), req)
@@ -68,7 +83,7 @@ func TestPlan_MatchesAPartnerOnTheValueThePersonPicked(t *testing.T) {
 	assert.Equal(
 		t,
 		ediconnectiondraftports.ValueStatusAccepted,
-		valueOf(t, draft.Partner.Fields, fieldPartnerCode).Status,
+		valueOf(t, draft.Partner.Fields, ediconnectionfield.PartnerCode).Status,
 	)
 	assert.Contains(t, draft.Partner.Reasons, "Same partner code")
 }
@@ -117,7 +132,7 @@ func TestPlan_KeepsAGuideWrittenInTheStudio(t *testing.T) {
 	h := newHarness(t)
 	req := acmeRequest(t)
 	h.repo.partners = []*ediconnectiondraftports.EDIPartnerSetup{
-		acmeWithOwnGuide(t, req, valueTest),
+		acmeWithOwnGuide(t, req, ediconnectionfield.ValueTest),
 	}
 
 	plan, err := h.service.PreviewConnectionDraft(t.Context(), req)
@@ -145,13 +160,13 @@ func TestPlan_WritesTheGuidesInterchangeIntoThePartnerFile(t *testing.T) {
 	h := newHarness(t)
 	req := acmeRequest(t)
 	h.repo.partners = []*ediconnectiondraftports.EDIPartnerSetup{
-		acmeWithOwnGuide(t, req, valueProduction),
+		acmeWithOwnGuide(t, req, ediconnectionfield.ValueProduction),
 	}
 
 	plan, err := h.service.PreviewConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 
-	usage := valueOf(t, plan.Draft.Interchange, fieldUsageIndicator)
+	usage := valueOf(t, plan.Draft.Interchange, ediconnectionfield.UsageIndicator)
 	assert.Equal(t, "T", usage.Value)
 	assert.Equal(t, "P", usage.Current)
 	assert.Equal(t, ediconnectiondraftports.ChangeKindChange, usage.Change)

@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"fmt"
@@ -24,10 +24,10 @@ var qualifierNames = map[string][]string{
 	"ZZ": {"mutually defined", "mutually-defined"},
 }
 
-var fieldCatalog = buildCatalog()
+var Catalog = buildCatalog()
 
-func buildCatalog() map[string]*fieldSpec {
-	groups := [][]*fieldSpec{
+func buildCatalog() map[string]*Spec {
+	groups := [][]*Spec{
 		partnerFields(),
 		transportFields(),
 		as2Fields(),
@@ -36,76 +36,76 @@ func buildCatalog() map[string]*fieldSpec {
 		setFields(),
 		controlNumberFields(),
 	}
-	catalog := make(map[string]*fieldSpec)
+	catalog := make(map[string]*Spec)
 	for _, group := range groups {
 		for _, spec := range group {
 			if len(spec.spelled) > 0 {
-				spec.normalize = spelledOut(spec.normalize, spec.spelled)
+				spec.Normalize = spelledOut(spec.Normalize, spec.spelled)
 			}
-			catalog[spec.key] = spec
+			catalog[spec.Key] = spec
 		}
 	}
 	return catalog
 }
 
-func partnerFields() []*fieldSpec {
-	return []*fieldSpec{
+func partnerFields() []*Spec {
+	return []*Spec{
 		{
-			key:       fieldPartnerCode,
-			label:     "Partner code",
-			scope:     scopePartner,
-			required:  true,
-			normalize: text(100),
+			Key:       PartnerCode,
+			Label:     "Partner code",
+			Scope:     ScopePartner,
+			Required:  true,
+			Normalize: text(100),
 		},
 		{
-			key:       fieldPartnerName,
-			label:     "Partner name",
-			scope:     scopePartner,
-			required:  true,
-			normalize: text(200),
+			Key:       PartnerName,
+			Label:     "Partner name",
+			Scope:     ScopePartner,
+			Required:  true,
+			Normalize: text(200),
 		},
 		{
-			key:       fieldPartnerContactName,
-			label:     "Contact name",
-			scope:     scopePartner,
-			normalize: text(150),
+			Key:       PartnerContactName,
+			Label:     "Contact name",
+			Scope:     ScopePartner,
+			Normalize: text(150),
 		},
 		{
-			key:       fieldPartnerContactEmail,
-			label:     "Contact email",
-			scope:     scopePartner,
-			normalize: normalizeEmail,
+			Key:       PartnerContactEmail,
+			Label:     "Contact email",
+			Scope:     ScopePartner,
+			Normalize: normalizeEmail,
 		},
 		{
-			key:       fieldPartnerContactPhone,
-			label:     "Contact phone",
-			scope:     scopePartner,
-			normalize: text(30),
+			Key:       PartnerContactPhone,
+			Label:     "Contact phone",
+			Scope:     ScopePartner,
+			Normalize: text(30),
 		},
 		{
-			key:       fieldPartnerTimezone,
-			label:     "Time zone",
-			scope:     scopePartner,
-			normalize: normalizeTimezone,
+			Key:       PartnerTimezone,
+			Label:     "Time zone",
+			Scope:     ScopePartner,
+			Normalize: normalizeTimezone,
 		},
 		{
-			key:       fieldPartnerCountry,
-			label:     "Country",
-			scope:     scopePartner,
-			normalize: normalizeCountry,
-			fallback:  "US",
+			Key:       PartnerCountry,
+			Label:     "Country",
+			Scope:     ScopePartner,
+			Normalize: normalizeCountry,
+			Fallback:  "US",
 		},
 	}
 }
 
-func transportFields() []*fieldSpec {
-	return []*fieldSpec{
+func transportFields() []*Spec {
+	return []*Spec{
 		{
-			key:      fieldTransportMethod,
-			label:    "Connection method",
-			scope:    scopeTransport,
-			required: true,
-			normalize: choice(map[string]string{
+			Key:      TransportMethod,
+			Label:    "Connection method",
+			Scope:    ScopeTransport,
+			Required: true,
+			Normalize: choice(map[string]string{
 				"as2": valueAS2, "applicability statement 2": valueAS2, "sftp": valueSFTP,
 				"secure ftp": valueSFTP, "ssh file transfer": valueSFTP, "van": valueVAN,
 				"value added network": valueVAN, "value-added network": valueVAN,
@@ -117,20 +117,20 @@ func transportFields() []*fieldSpec {
 			},
 		},
 		{
-			key:       fieldTransportEnvironment,
-			label:     "Environment",
-			scope:     scopeTransport,
-			configKey: "environment",
+			Key:       TransportEnvironment,
+			Label:     "Environment",
+			Scope:     ScopeTransport,
+			ConfigKey: "environment",
 			methods:   externalMethods,
-			required:  true,
-			fallback:  valueTest,
-			normalize: choice(map[string]string{
-				valueTest: valueTest, "testing": valueTest, valueProduction: valueProduction,
-				"prod": valueProduction, "live": valueProduction,
+			Required:  true,
+			Fallback:  ValueTest,
+			Normalize: choice(map[string]string{
+				ValueTest: ValueTest, "testing": ValueTest, ValueProduction: ValueProduction,
+				"prod": ValueProduction, "live": ValueProduction,
 			}),
 			spelled: map[string][]string{
-				valueTest:       {valueTest},
-				valueProduction: {valueProduction, "prod", "live"},
+				ValueTest:       {ValueTest},
+				ValueProduction: {ValueProduction, "prod", "live"},
 			},
 		},
 	}
@@ -140,19 +140,19 @@ func transportText(
 	key, label, configKey string,
 	methods []edi.ConnectionMethod,
 	required bool,
-) *fieldSpec {
-	return &fieldSpec{
-		key:       key,
-		label:     label,
-		scope:     scopeTransport,
-		configKey: configKey,
+) *Spec {
+	return &Spec{
+		Key:       key,
+		Label:     label,
+		Scope:     ScopeTransport,
+		ConfigKey: configKey,
 		methods:   methods,
-		required:  required,
-		normalize: text(255),
+		Required:  required,
+		Normalize: text(255),
 	}
 }
 
-func as2Fields() []*fieldSpec {
+func as2Fields() []*Spec {
 	endpoint := transportText(
 		"as2.endpointUrl",
 		"AS2 endpoint URL",
@@ -160,7 +160,7 @@ func as2Fields() []*fieldSpec {
 		as2Only,
 		true,
 	)
-	endpoint.normalize = normalizeURL
+	endpoint.Normalize = normalizeURL
 	mdnURL := transportText(
 		"as2.mdnUrl",
 		"Async MDN return URL",
@@ -168,9 +168,9 @@ func as2Fields() []*fieldSpec {
 		as2Only,
 		false,
 	)
-	mdnURL.normalize = normalizeURL
+	mdnURL.Normalize = normalizeURL
 
-	return []*fieldSpec{
+	return []*Spec{
 		transportText(
 			"as2.localAs2Id",
 			"Your AS2 ID",
@@ -187,13 +187,13 @@ func as2Fields() []*fieldSpec {
 		),
 		endpoint,
 		{
-			key:       "as2.mdnMode",
-			label:     "MDN mode",
-			scope:     scopeTransport,
-			configKey: editransport.ConfigKeyMDNMode,
+			Key:       "as2.mdnMode",
+			Label:     "MDN mode",
+			Scope:     ScopeTransport,
+			ConfigKey: editransport.ConfigKeyMDNMode,
 			methods:   as2Only,
-			required:  true,
-			normalize: choice(map[string]string{
+			Required:  true,
+			Normalize: choice(map[string]string{
 				valueSync: valueSync, "synchronous": valueSync,
 				valueAsync: valueAsync, "asynchronous": valueAsync,
 			}),
@@ -206,12 +206,12 @@ func as2Fields() []*fieldSpec {
 		signingAlgorithmField(),
 		encryptionAlgorithmField(),
 		{
-			key:       "as2.compressionAlgorithm",
-			label:     "Compression",
-			scope:     scopeTransport,
-			configKey: editransport.ConfigKeyCompressionAlgorithm,
+			Key:       "as2.compressionAlgorithm",
+			Label:     "Compression",
+			Scope:     ScopeTransport,
+			ConfigKey: editransport.ConfigKeyCompressionAlgorithm,
 			methods:   as2Only,
-			normalize: choice(
+			Normalize: choice(
 				map[string]string{valueNone: valueNone, "zlib": editransport.CompressionZlib},
 			),
 			spelled: map[string][]string{valueNone: {"no compression", "uncompressed"}},
@@ -223,13 +223,13 @@ func as2Fields() []*fieldSpec {
 	}
 }
 
-func fileTransferFields() []*fieldSpec {
+func fileTransferFields() []*Spec {
 	port := transportText("transport.port", "Port", "port", fileMethods, true)
-	port.normalize = normalizePort
-	port.fallback = "22"
+	port.Normalize = normalizePort
+	port.Fallback = "22"
 	port.matches = matchesNumber
 
-	directories := make([]*fieldSpec, 0, 3)
+	directories := make([]*Spec, 0, 3)
 	for _, directory := range []struct{ key, label string }{
 		{"inboundDirectory", "Inbound directory"},
 		{"outboundDirectory", "Outbound directory"},
@@ -242,22 +242,22 @@ func fileTransferFields() []*fieldSpec {
 			fileMethods,
 			false,
 		)
-		spec.normalize = normalizePath
+		spec.Normalize = normalizePath
 		directories = append(directories, spec)
 	}
 
-	fields := []*fieldSpec{
+	fields := []*Spec{
 		transportText("transport.host", "Host", "host", fileMethods, true),
 		port,
 		transportText("transport.username", "Username", "username", fileMethods, true),
 		{
-			key:       "transport.authMode",
-			label:     "Authentication",
-			scope:     scopeTransport,
-			configKey: "authMode",
+			Key:       "transport.authMode",
+			Label:     "Authentication",
+			Scope:     ScopeTransport,
+			ConfigKey: "authMode",
 			methods:   fileMethods,
-			required:  true,
-			normalize: choice(map[string]string{
+			Required:  true,
+			Normalize: choice(map[string]string{
 				valuePassword: valuePassword,
 				"privatekey":  valuePrivateKey,
 				"private key": valuePrivateKey,
@@ -286,75 +286,75 @@ func fileTransferFields() []*fieldSpec {
 	)
 }
 
-func separatorField(key, label, fallback string) *fieldSpec {
-	return &fieldSpec{
-		key:       key,
-		label:     label,
-		scope:     scopeInterchange,
-		required:  true,
-		normalize: normalizeSeparator,
+func separatorField(key, label, fallback string) *Spec {
+	return &Spec{
+		Key:       key,
+		Label:     label,
+		Scope:     ScopeInterchange,
+		Required:  true,
+		Normalize: normalizeSeparator,
 		spelled:   spelledSeparators(),
-		fallback:  fallback,
+		Fallback:  fallback,
 	}
 }
 
-func interchangeFields() []*fieldSpec {
-	return []*fieldSpec{
+func interchangeFields() []*Spec {
+	return []*Spec{
 		{
-			key: fieldPartnerQualifier, label: "Partner ISA qualifier", scope: scopeInterchange,
-			required: true, normalize: normalizeQualifier, spelled: qualifierNames,
+			Key: PartnerQualifier, Label: "Partner ISA qualifier", Scope: ScopeInterchange,
+			Required: true, Normalize: normalizeQualifier, spelled: qualifierNames,
 		},
 		{
-			key:       fieldPartnerID,
-			label:     "Partner ISA ID",
-			scope:     scopeInterchange,
-			required:  true,
-			normalize: normalizeISAID,
+			Key:       PartnerID,
+			Label:     "Partner ISA ID",
+			Scope:     ScopeInterchange,
+			Required:  true,
+			Normalize: normalizeISAID,
 		},
 		{
-			key: fieldOurQualifier, label: "Your ISA qualifier", scope: scopeInterchange,
-			required: true, normalize: normalizeQualifier, spelled: qualifierNames,
+			Key: OurQualifier, Label: "Your ISA qualifier", Scope: ScopeInterchange,
+			Required: true, Normalize: normalizeQualifier, spelled: qualifierNames,
 		},
 		{
-			key:       fieldOurID,
-			label:     "Your ISA ID",
-			scope:     scopeInterchange,
-			required:  true,
-			normalize: normalizeISAID,
+			Key:       OurID,
+			Label:     "Your ISA ID",
+			Scope:     ScopeInterchange,
+			Required:  true,
+			Normalize: normalizeISAID,
 		},
 		{
-			key:       fieldPartnerGSID,
-			label:     "Partner GS ID",
-			scope:     scopeInterchange,
-			normalize: normalizeGSID,
+			Key:       PartnerGSID,
+			Label:     "Partner GS ID",
+			Scope:     ScopeInterchange,
+			Normalize: normalizeGSID,
 		},
-		{key: fieldOurGSID, label: "Your GS ID", scope: scopeInterchange, normalize: normalizeGSID},
+		{Key: OurGSID, Label: "Your GS ID", Scope: ScopeInterchange, Normalize: normalizeGSID},
 		{
-			key:      fieldUsageIndicator,
-			label:    "Usage indicator",
-			scope:    scopeInterchange,
-			required: true,
-			fallback: "T",
-			normalize: choice(
-				map[string]string{"t": "T", valueTest: "T", "p": "P", valueProduction: "P"},
+			Key:      UsageIndicator,
+			Label:    "Usage indicator",
+			Scope:    ScopeInterchange,
+			Required: true,
+			Fallback: "T",
+			Normalize: choice(
+				map[string]string{"t": "T", ValueTest: "T", "p": "P", ValueProduction: "P"},
 			),
-			spelled: map[string][]string{"T": {valueTest}, "P": {valueProduction}},
+			spelled: map[string][]string{"T": {ValueTest}, "P": {ValueProduction}},
 		},
 		{
-			key: fieldX12Version, label: "X12 version", scope: scopeInterchange,
-			required: true, normalize: normalizeVersion, matches: matchesVersion,
+			Key: X12Version, Label: "X12 version", Scope: ScopeInterchange,
+			Required: true, Normalize: normalizeVersion, matches: matchesVersion,
 		},
-		separatorField(fieldElementSep, "Element separator", "*"),
-		separatorField(fieldSegmentSep, "Segment terminator", "~"),
-		separatorField(fieldComponentSep, "Component separator", ">"),
-		separatorField(fieldRepetitionSep, "Repetition separator", "^"),
+		separatorField(ElementSep, "Element separator", "*"),
+		separatorField(SegmentSep, "Segment terminator", "~"),
+		separatorField(ComponentSep, "Component separator", ">"),
+		separatorField(RepetitionSep, "Repetition separator", "^"),
 	}
 }
 
-func setFields() []*fieldSpec {
-	fields := make([]*fieldSpec, 0, len(supportedSets)*len(directions)*5)
-	for _, set := range supportedSets {
-		for _, direction := range directions {
+func setFields() []*Spec {
+	fields := make([]*Spec, 0, len(SupportedSets)*len(Directions)*5)
+	for _, set := range SupportedSets {
+		for _, direction := range Directions {
 			fields = append(fields, setFieldsFor(set, direction)...)
 		}
 	}
@@ -364,38 +364,38 @@ func setFields() []*fieldSpec {
 func setFieldsFor(
 	set edidocument.TransactionSet,
 	direction edidocument.DocumentDirection,
-) []*fieldSpec {
+) []*Spec {
 	prefix := setFieldPrefix(set, direction)
 	name := fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
-	return []*fieldSpec{
+	return []*Spec{
 		{
-			key:   prefix + setAttrSupported,
-			label: name + " exchanged",
-			scope: scopeSet,
-			normalize: choice(map[string]string{
-				valueTrue: valueTrue, "yes": valueTrue, valueFalse: valueFalse, "no": valueFalse,
+			Key:   prefix + SetAttrSupported,
+			Label: name + " exchanged",
+			Scope: ScopeSet,
+			Normalize: choice(map[string]string{
+				ValueTrue: ValueTrue, "yes": ValueTrue, ValueFalse: ValueFalse, "no": ValueFalse,
 			}),
 			matches: anyQuote,
 		},
 		{
-			key: prefix + setAttrVersion, label: name + " version", scope: scopeSet,
-			normalize: normalizeVersion, matches: matchesVersion,
+			Key: prefix + SetAttrVersion, Label: name + " version", Scope: ScopeSet,
+			Normalize: normalizeVersion, matches: matchesVersion,
 		},
 		{
-			key:   prefix + setAttrAck,
-			label: name + " functional acknowledgment",
-			scope: scopeSet,
-			normalize: choice(map[string]string{
+			Key:   prefix + SetAttrAck,
+			Label: name + " functional acknowledgment",
+			Scope: ScopeSet,
+			Normalize: choice(map[string]string{
 				"997":          "997",
 				"999":          "999",
-				valueNone:      ackNone,
-				"no":           ackNone,
-				"not required": ackNone,
+				valueNone:      AckNone,
+				"no":           AckNone,
+				"not required": AckNone,
 			}),
 			spelled: map[string][]string{
 				"997": {"functional acknowledgment", "functional acknowledgement"},
 				"999": {"implementation acknowledgment", "implementation acknowledgement"},
-				ackNone: {
+				AckNone: {
 					"not required",
 					"no acknowledgment",
 					"no acknowledgement",
@@ -405,23 +405,23 @@ func setFieldsFor(
 			},
 		},
 		{
-			key:       prefix + setAttrAckWindowMinutes,
-			label:     name + " acknowledgment window",
-			scope:     scopeSet,
-			normalize: normalizeMinutes,
+			Key:       prefix + SetAttrAckWindowMinutes,
+			Label:     name + " acknowledgment window",
+			Scope:     ScopeSet,
+			Normalize: normalizeMinutes,
 			matches:   matchesMinutes,
 		},
 	}
 }
 
-func controlNumberFields() []*fieldSpec {
-	fields := make([]*fieldSpec, 0, len(controlNumberKinds))
-	for _, kind := range controlNumberKinds {
-		fields = append(fields, &fieldSpec{
-			key:       controlNumberField(kind),
-			label:     fmt.Sprintf("First %s control number", strings.ToLower(string(kind))),
-			scope:     scopeControlNumber,
-			normalize: normalizeControlNumber,
+func controlNumberFields() []*Spec {
+	fields := make([]*Spec, 0, len(ControlNumberKinds))
+	for _, kind := range ControlNumberKinds {
+		fields = append(fields, &Spec{
+			Key:       ControlNumberField(kind),
+			Label:     fmt.Sprintf("First %s control number", strings.ToLower(string(kind))),
+			Scope:     ScopeControlNumber,
+			Normalize: normalizeControlNumber,
 			matches:   matchesNumber,
 		})
 	}
@@ -435,7 +435,7 @@ func setFieldPrefix(
 	return fmt.Sprintf("sets.%s.%s.", set, strings.ToLower(string(direction)))
 }
 
-func setField(
+func SetField(
 	set edidocument.TransactionSet,
 	direction edidocument.DocumentDirection,
 	attr string,
@@ -443,7 +443,7 @@ func setField(
 	return setFieldPrefix(set, direction) + attr
 }
 
-func controlNumberField(kind edidocument.ControlNumberKind) string {
+func ControlNumberField(kind edidocument.ControlNumberKind) string {
 	return fmt.Sprintf(
 		"controlNumbers.%s.%s",
 		strings.ToLower(string(kind)),
@@ -451,27 +451,27 @@ func controlNumberField(kind edidocument.ControlNumberKind) string {
 	)
 }
 
-func FieldKeys() []string {
-	keys := make([]string, 0, len(fieldCatalog))
-	for key := range fieldCatalog {
+func Keys() []string {
+	keys := make([]string, 0, len(Catalog))
+	for key := range Catalog {
 		keys = append(keys, key)
 	}
 	slices.Sort(keys)
 	return keys
 }
 
-func (s *fieldSpec) usedBy(method edi.ConnectionMethod) bool {
+func (s *Spec) UsedBy(method edi.ConnectionMethod) bool {
 	return len(s.methods) == 0 || slices.Contains(s.methods, method)
 }
 
-func signingAlgorithmField() *fieldSpec {
-	return &fieldSpec{
-		key:       "as2.signingAlgorithm",
-		label:     "Signing algorithm",
-		scope:     scopeTransport,
-		configKey: editransport.ConfigKeySigningAlgorithm,
+func signingAlgorithmField() *Spec {
+	return &Spec{
+		Key:       "as2.signingAlgorithm",
+		Label:     "Signing algorithm",
+		Scope:     ScopeTransport,
+		ConfigKey: editransport.ConfigKeySigningAlgorithm,
 		methods:   as2Only,
-		normalize: as2Algorithms(
+		Normalize: as2Algorithms(
 			smime.SigningAlgorithmSHA1, smime.SigningAlgorithmSHA256,
 			smime.SigningAlgorithmSHA384, smime.SigningAlgorithmSHA512,
 		),
@@ -484,14 +484,14 @@ func signingAlgorithmField() *fieldSpec {
 	}
 }
 
-func encryptionAlgorithmField() *fieldSpec {
-	return &fieldSpec{
-		key:       "as2.encryptionAlgorithm",
-		label:     "Encryption algorithm",
-		scope:     scopeTransport,
-		configKey: editransport.ConfigKeyEncryptionAlgorithm,
+func encryptionAlgorithmField() *Spec {
+	return &Spec{
+		Key:       "as2.encryptionAlgorithm",
+		Label:     "Encryption algorithm",
+		Scope:     ScopeTransport,
+		ConfigKey: editransport.ConfigKeyEncryptionAlgorithm,
 		methods:   as2Only,
-		normalize: as2Algorithms(
+		Normalize: as2Algorithms(
 			smime.EncryptionAlgorithmTripleDES, smime.EncryptionAlgorithmAES128CBC,
 			smime.EncryptionAlgorithmAES256CBC, smime.EncryptionAlgorithmAES128GCM,
 			smime.EncryptionAlgorithmAES256GCM,

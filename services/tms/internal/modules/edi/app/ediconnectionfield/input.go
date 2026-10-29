@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"crypto/sha256"
@@ -37,7 +37,7 @@ func DocumentDigest(pages []ediconnectiondraftports.SpecPage) string {
 	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
 }
 
-func validateRequest(req *ediconnectiondraftports.ConnectionDraftRequest) error {
+func ValidateRequest(req *ediconnectiondraftports.ConnectionDraftRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrRequired, "A draft request is required")
@@ -132,7 +132,7 @@ func checkFieldKey(multiErr *errortypes.MultiError, key string) {
 		)
 		return
 	}
-	if _, ok := fieldCatalog[key]; !ok {
+	if _, ok := Catalog[key]; !ok {
 		multiErr.Add(
 			"field",
 			errortypes.ErrInvalid,
@@ -146,14 +146,14 @@ func checkSetDirection(
 	set edidocument.TransactionSet,
 	direction edidocument.DocumentDirection,
 ) {
-	if !slices.Contains(supportedSets, set) {
+	if !slices.Contains(SupportedSets, set) {
 		multiErr.Add(
 			"transactionSet",
 			errortypes.ErrInvalid,
 			"Transaction set must be 204, 210, 214 or 990",
 		)
 	}
-	if !slices.Contains(directions, direction) {
+	if !slices.Contains(Directions, direction) {
 		multiErr.Add("direction", errortypes.ErrInvalid, "Direction must be Inbound or Outbound")
 	}
 }
@@ -170,7 +170,7 @@ func validUsage(usage ediconnectiondraftports.RequirementUsage) bool {
 	}
 }
 
-func withRedactedQuotes(
+func WithRedactedQuotes(
 	req *ediconnectiondraftports.ConnectionDraftRequest,
 ) *ediconnectiondraftports.ConnectionDraftRequest {
 	redacted := *req

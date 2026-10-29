@@ -1,4 +1,4 @@
-package ediconnectiondraft
+package ediconnectionfield
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 const (
 	maxQuoteRunes   = 400
 	minQuoteRunes   = 3
-	confidenceFloor = 0.8
+	ConfidenceFloor = 0.8
 )
 
 var (
@@ -22,15 +22,15 @@ var (
 	)
 )
 
-type pageIndex struct {
+type Pages struct {
 	pages      map[int]string
 	order      []int
 	normalized map[int]string
 	redacted   map[int]string
 }
 
-func newPageIndex(pages []ediconnectiondraftports.SpecPage) *pageIndex {
-	index := &pageIndex{
+func NewPages(pages []ediconnectiondraftports.SpecPage) *Pages {
+	index := &Pages{
 		pages:      make(map[int]string, len(pages)),
 		order:      make([]int, 0, len(pages)),
 		normalized: make(map[int]string, len(pages)),
@@ -44,20 +44,20 @@ func newPageIndex(pages []ediconnectiondraftports.SpecPage) *pageIndex {
 			index.order = append(index.order, page.Number)
 		}
 		text := index.pages[page.Number]
-		index.normalized[page.Number] = normalizeForMatch(text)
-		index.redacted[page.Number] = normalizeForMatch(x12field.RedactSecrets(text))
+		index.normalized[page.Number] = NormalizeForMatch(text)
+		index.redacted[page.Number] = NormalizeForMatch(x12field.RedactSecrets(text))
 	}
 	return index
 }
 
-func (p *pageIndex) onPage(number int, quote string) bool {
+func (p *Pages) onPage(number int, quote string) bool {
 	if text, ok := p.normalized[number]; ok && strings.Contains(text, quote) {
 		return true
 	}
 	return strings.Contains(p.redacted[number], quote)
 }
 
-func normalizeForMatch(value string) string {
+func NormalizeForMatch(value string) string {
 	value = quoteFolds.Replace(value)
 	var builder strings.Builder
 	builder.Grow(len(value))
@@ -76,31 +76,31 @@ func normalizeForMatch(value string) string {
 	return builder.String()
 }
 
-type citationCheck struct {
-	page    int
-	ok      bool
-	problem string
+type CitationCheck struct {
+	Page    int
+	OK      bool
+	Problem string
 }
 
-func (p *pageIndex) locate(citation ediconnectiondraftports.DraftCitation) citationCheck {
-	quote := normalizeForMatch(citation.Quote)
+func (p *Pages) Locate(citation ediconnectiondraftports.DraftCitation) CitationCheck {
+	quote := NormalizeForMatch(citation.Quote)
 	if len([]rune(quote)) < minQuoteRunes {
-		return citationCheck{problem: "The citation has no quote to check"}
+		return CitationCheck{Problem: "The citation has no quote to check"}
 	}
 	if len([]rune(citation.Quote)) > maxQuoteRunes {
-		return citationCheck{
-			problem: fmt.Sprintf("The quote is longer than %d characters", maxQuoteRunes),
+		return CitationCheck{
+			Problem: fmt.Sprintf("The quote is longer than %d characters", maxQuoteRunes),
 		}
 	}
 	if p.onPage(citation.Page, quote) {
-		return citationCheck{page: citation.Page, ok: true}
+		return CitationCheck{Page: citation.Page, OK: true}
 	}
 	for _, number := range p.order {
 		if p.onPage(number, quote) {
-			return citationCheck{
-				page: number,
-				ok:   true,
-				problem: fmt.Sprintf(
+			return CitationCheck{
+				Page: number,
+				OK:   true,
+				Problem: fmt.Sprintf(
 					"Cited as page %d; the quote is on page %d",
 					citation.Page,
 					number,
@@ -109,35 +109,35 @@ func (p *pageIndex) locate(citation ediconnectiondraftports.DraftCitation) citat
 		}
 	}
 	if _, ok := p.normalized[citation.Page]; !ok {
-		return citationCheck{
-			problem: fmt.Sprintf("The document has no page %d", citation.Page),
+		return CitationCheck{
+			Problem: fmt.Sprintf("The document has no page %d", citation.Page),
 		}
 	}
-	return citationCheck{
-		problem: fmt.Sprintf("The quote does not appear on page %d", citation.Page),
+	return CitationCheck{
+		Problem: fmt.Sprintf("The quote does not appear on page %d", citation.Page),
 	}
 }
 
-func valueInQuote(spec *fieldSpec, value, quote string) bool {
+func valueInQuote(spec *Spec, value, quote string) bool {
 	if spec.matches != nil && spec.matches(value, quote) {
 		return true
 	}
-	normalizedQuote := normalizeForMatch(quote)
+	normalizedQuote := NormalizeForMatch(quote)
 	if value != "\n" {
-		if needle := normalizeForMatch(value); needle != "" &&
-			containsToken(normalizedQuote, needle) {
+		if needle := NormalizeForMatch(value); needle != "" &&
+			ContainsToken(normalizedQuote, needle) {
 			return true
 		}
 	}
 	for _, phrase := range spec.spelled[value] {
-		if strings.Contains(normalizedQuote, normalizeForMatch(phrase)) {
+		if strings.Contains(normalizedQuote, NormalizeForMatch(phrase)) {
 			return true
 		}
 	}
 	return false
 }
 
-func containsToken(haystack, needle string) bool {
+func ContainsToken(haystack, needle string) bool {
 	return tokenIndex(haystack, needle, 0) >= 0
 }
 
@@ -175,7 +175,7 @@ func boundary(value string, index int) bool {
 	return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 }
 
-func clampQuote(value string) string {
+func ClampQuote(value string) string {
 	runes := []rune(strings.TrimSpace(value))
 	if len(runes) <= maxQuoteRunes {
 		return string(runes)
@@ -183,7 +183,7 @@ func clampQuote(value string) string {
 	return string(runes[:maxQuoteRunes]) + "…"
 }
 
-func documentSource(
+func DocumentSource(
 	page int,
 	citation ediconnectiondraftports.DraftCitation,
 	note string,
@@ -191,7 +191,7 @@ func documentSource(
 	return ediconnectiondraftports.DraftSource{
 		Kind:    ediconnectiondraftports.SourceKindDocument,
 		Page:    page,
-		Quote:   clampQuote(x12field.RedactSecrets(citation.Quote)),
+		Quote:   ClampQuote(x12field.RedactSecrets(citation.Quote)),
 		Section: strings.TrimSpace(citation.Section),
 		Note:    note,
 	}
