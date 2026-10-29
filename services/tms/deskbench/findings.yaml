@@ -1144,7 +1144,7 @@ findings:
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (the queue item found by pro number, approved and posted)
     files:
       - services/tms/internal/infrastructure/postgres/migrations/20261231008650_billing_queue_search_vector.tx.up.sql
-      - services/tms/internal/modules/identity/domain/permission/resources_billing.go
+      - services/tms/internal/modules/identity/domain/billingperms/billing.go
 
   - id: DB-049
     title: The pickup arrival and departure could not be proposed together
