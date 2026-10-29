@@ -22,13 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/portaltools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/scheduletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/webwatchtools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
@@ -119,7 +119,7 @@ func ToolProviders() []any {
 		dashboardtools.NewAddDashboardTileTool,
 		alerttools.NewScheduleReportTool,
 		alerttools.NewCreateTableChangeAlertTool,
-		workforcetools.NewRequestMissingDocsTool,
+		qualificationtools.NewRequestMissingDocsTool,
 		provideAttachDocumentTool,
 		movetools.NewAssignMoveTool,
 		exceptiontools.NewRaiseExceptionTool,

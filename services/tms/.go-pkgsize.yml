@@ -45,7 +45,6 @@ debt:
   services/tms/internal/modules/agent/app/agenttools/operationstools: 3373
   services/tms/internal/modules/agent/app/agenttools/settlementtools: 3663
   services/tms/internal/modules/agent/app/agenttools/shipmenttools: 3956
-  services/tms/internal/modules/agent/app/agenttools/workforcetools: 8777
   services/tms/internal/modules/agent/app/aiauditservice: 5108
   services/tms/internal/modules/agent/app/assistantservice: 14610
   services/tms/internal/modules/agent/app/watchtowersources: 3873

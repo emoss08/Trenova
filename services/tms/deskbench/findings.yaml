@@ -886,8 +886,8 @@ findings:
       the sender, so a missing profile is refused before anyone approves. To verify in a run.
     files:
       - services/tms/internal/modules/agent/app/agenttools/operationstools/monitoring_tools.go
-      - services/tms/internal/modules/agent/app/agenttools/workforcetools/preview_email.go
-      - services/tms/internal/modules/agent/app/agenttools/workforcetools/inbound_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/qualificationtools/preview_email.go
+      - services/tms/internal/modules/agent/app/agenttools/inboundtools/inbound_tools.go
     fixedIn: .deskbench/runs/20261009-185431-run
 
   - id: DB-038
@@ -1944,7 +1944,7 @@ findings:
       and scan can follow, renew when one of the kind is on file.
     fixedIn: uncommitted
     files:
-      - services/tms/internal/modules/agent/app/agenttools/workforcetools/workforce_credential_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/qualificationtools/workforce_credential_tools.go
 
   - id: DB-086
     title: Seven more control repositories aborted a preview's read-only transaction on a missing row
@@ -2092,7 +2092,7 @@ findings:
       start date says "next Friday" is the coming Friday.
     fixedIn: uncommitted; to verify in a run
     files:
-      - services/tms/internal/modules/agent/app/agenttools/workforcetools/workforce_pto_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/timeofftools/workforce_pto_tools.go
       - services/tms/internal/api/toolcontract/bindings.go
 
   - id: DB-094
@@ -4550,7 +4550,7 @@ findings:
       it.
     files:
       - services/tms/internal/modules/agent/domain/agentpreset/tools.go
-      - services/tms/internal/modules/agent/app/agenttools/workforcetools/request_missing_docs.go
+      - services/tms/internal/modules/agent/app/agenttools/qualificationtools/request_missing_docs.go
 
   - id: DB-197
     title: LoadMonitor emails customers who asked for no status updates

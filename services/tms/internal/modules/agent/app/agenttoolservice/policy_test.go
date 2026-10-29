@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,7 +28,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 		&operationstools.EmailCustomerTool{},
 		&operationstools.SendDetentionNoticeTool{},
 		&operationstools.NotifyDriverTool{},
-		&workforcetools.RequestMissingDocsTool{},
+		&qualificationtools.RequestMissingDocsTool{},
 		&findingtools.RequestCredentialRenewalTool{},
 		&tendertools.TenderToRoutingGuideTool{},
 		&tendertools.TenderToCarriersTool{},

@@ -1,25 +1,32 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/drugalcoholtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/payrolltools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/permittools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reviewtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/safetytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/timeofftools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/trainingtools"
 )
 
 func workforceToolProviders() []any {
 	providers := make([]any, 0, 64)
 	for _, group := range [][]any{
-		workforcetools.SafetyToolProviders(),
-		workforcetools.DrugAlcoholToolProviders(),
-		workforcetools.LeaveToolProviders(),
-		workforcetools.TrainingToolProviders(),
-		workforcetools.ChecklistToolProviders(),
-		workforcetools.ReviewToolProviders(),
-		workforcetools.DqfToolProviders(),
-		workforcetools.CredentialToolProviders(),
-		workforcetools.InjuryToolProviders(),
-		workforcetools.PtoToolProviders(),
-		workforcetools.PermitToolProviders(),
-		workforcetools.DriverPayReviewToolProviders(),
-		workforcetools.PayrollToolProviders(),
+		safetytools.SafetyToolProviders(),
+		drugalcoholtools.DrugAlcoholToolProviders(),
+		timeofftools.LeaveToolProviders(),
+		trainingtools.TrainingToolProviders(),
+		trainingtools.ChecklistToolProviders(),
+		reviewtools.ReviewToolProviders(),
+		qualificationtools.DqfToolProviders(),
+		qualificationtools.CredentialToolProviders(),
+		safetytools.InjuryToolProviders(),
+		timeofftools.PtoToolProviders(),
+		permittools.PermitToolProviders(),
+		payrolltools.DriverPayReviewToolProviders(),
+		payrolltools.PayrollToolProviders(),
 	} {
 		providers = append(providers, group...)
 	}
