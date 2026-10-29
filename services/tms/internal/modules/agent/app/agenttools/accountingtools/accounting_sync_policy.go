@@ -11,29 +11,29 @@ import (
 )
 
 type SyncPolicySpec struct {
-	resource   permission.Resource
-	operation  permission.Operation
-	tier       agent.AutonomyTier
-	reversible bool
-	idempotent bool
-	rationale  string
+	Resource   permission.Resource
+	Operation  permission.Operation
+	Tier       agent.AutonomyTier
+	Reversible bool
+	Idempotent bool
+	Rationale  string
 }
 
 func SyncPolicy(name string, spec SyncPolicySpec) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
 		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      spec.resource,
-		Operation:     spec.operation,
+		Resource:      spec.Resource,
+		Operation:     spec.Operation,
 		Scope:         agenttooltrust.ToolScopeTenant,
-		DefaultTier:   spec.tier,
-		MaxTier:       spec.tier,
+		DefaultTier:   spec.Tier,
+		MaxTier:       spec.Tier,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Effect:        agenttooltrust.ToolEffectChange,
-		Reversible:    spec.reversible,
-		Idempotent:    spec.idempotent,
+		Reversible:    spec.Reversible,
+		Idempotent:    spec.Idempotent,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
-		Rationale:     spec.rationale,
+		Rationale:     spec.Rationale,
 	}
 }
 

@@ -254,10 +254,10 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 
 func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingSync,
-		operation: permission.OpUpdate,
-		tier:      agent.TierActWithApproval,
-		rationale: "Keeps a payment the books hold out of Trenova for good, so a person " +
+		Resource:  permission.ResourceAccountingSync,
+		Operation: permission.OpUpdate,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Keeps a payment the books hold out of Trenova for good, so a person " +
 			"approves it.",
 	})
 }

@@ -258,11 +258,11 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 
 func (t *RetryAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:   permission.ResourceAccountingSync,
-		operation:  permission.OpUpdate,
-		tier:       agent.TierAutoExecute,
-		idempotent: true,
-		rationale: "Sends again, to the organization's own books, documents Trenova already " +
+		Resource:   permission.ResourceAccountingSync,
+		Operation:  permission.OpUpdate,
+		Tier:       agent.TierAutoExecute,
+		Idempotent: true,
+		Rationale: "Sends again, to the organization's own books, documents Trenova already " +
 			"decided to send; the accounting system recognizes a repeat by its request id, so " +
 			"nothing is entered twice, and a document held for release stays held.",
 	})
@@ -512,10 +512,10 @@ func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 
 func (t *SkipAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingSync,
-		operation: permission.OpUpdate,
-		tier:      agent.TierActWithApproval,
-		rationale: "Leaves a document out of the organization's books for good; nothing sends " +
+		Resource:  permission.ResourceAccountingSync,
+		Operation: permission.OpUpdate,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Leaves a document out of the organization's books for good; nothing sends " +
 			"it again, so a person approves it.",
 	})
 }
@@ -628,10 +628,10 @@ func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 
 func (t *redateAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingSync,
-		operation: permission.OpUpdate,
-		tier:      agent.TierActWithApproval,
-		rationale: "Changes the date the organization's books record for a document, " +
+		Resource:  permission.ResourceAccountingSync,
+		Operation: permission.OpUpdate,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Changes the date the organization's books record for a document, " +
 			"so a person approves it.",
 	})
 }
@@ -726,11 +726,11 @@ func (t *PauseAccountingSyncTool) ParamSchema() map[string]any {
 
 func (t *PauseAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:   permission.ResourceAccountingSync,
-		operation:  permission.OpUpdate,
-		tier:       agent.TierAutoExecute,
-		reversible: true,
-		rationale: "Holds what is waiting to go to the books; nothing is sent, changed or " +
+		Resource:   permission.ResourceAccountingSync,
+		Operation:  permission.OpUpdate,
+		Tier:       agent.TierAutoExecute,
+		Reversible: true,
+		Rationale: "Holds what is waiting to go to the books; nothing is sent, changed or " +
 			"lost, and resuming sends it on.",
 	})
 }
@@ -839,10 +839,10 @@ func (t *ResumeAccountingSyncTool) ParamSchema() map[string]any {
 
 func (t *ResumeAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingSync,
-		operation: permission.OpUpdate,
-		tier:      agent.TierActWithApproval,
-		rationale: "Releases everything held to the organization's books at once, and a " +
+		Resource:  permission.ResourceAccountingSync,
+		Operation: permission.OpUpdate,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Releases everything held to the organization's books at once, and a " +
 			"person paused it for a reason, so a person approves it; what is sent cannot be " +
 			"called back.",
 	})
@@ -951,10 +951,10 @@ func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 
 func (t *RequestAccountingBackfillTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingIntegration,
-		operation: permission.OpManage,
-		tier:      agent.TierActWithApproval,
-		rationale: "Sends historical documents to the organization's books, some of which may " +
+		Resource:  permission.ResourceAccountingIntegration,
+		Operation: permission.OpManage,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Sends historical documents to the organization's books, some of which may " +
 			"already be there by hand, and cannot be called back; a person who manages the " +
 			"integration approves it.",
 	})

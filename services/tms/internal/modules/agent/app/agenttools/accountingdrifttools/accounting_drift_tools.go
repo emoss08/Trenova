@@ -269,10 +269,10 @@ func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 
 func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:  permission.ResourceAccountingSync,
-		operation: permission.OpUpdate,
-		tier:      agent.TierActWithApproval,
-		rationale: "Closes a difference with the books without fixing it, so a person " +
+		Resource:  permission.ResourceAccountingSync,
+		Operation: permission.OpUpdate,
+		Tier:      agent.TierActWithApproval,
+		Rationale: "Closes a difference with the books without fixing it, so a person " +
 			"approves it.",
 	})
 }
@@ -374,11 +374,11 @@ func (t *CheckAccountingDriftTool) ParamSchema() map[string]any {
 
 func (t *CheckAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		resource:   permission.ResourceAccountingSync,
-		operation:  permission.OpUpdate,
-		tier:       agent.TierActWithApproval,
-		idempotent: true,
-		rationale: "Reads every synced document back from the accounting system, which " +
+		Resource:   permission.ResourceAccountingSync,
+		Operation:  permission.OpUpdate,
+		Tier:       agent.TierActWithApproval,
+		Idempotent: true,
+		Rationale: "Reads every synced document back from the accounting system, which " +
 			"spends the provider's call allowance, so a person approves it.",
 	})
 }
