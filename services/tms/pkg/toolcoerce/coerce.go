@@ -1,4 +1,4 @@
-package toolschema
+package toolcoerce
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 // Coercion is one value read the way the schema declares it rather than the
@@ -22,26 +23,8 @@ type Coercion struct {
 	Omitted bool
 }
 
-// KeepEmpty marks a parameter whose empty value means something other than
-// leaving it out, so it reaches the tool as sent: an update's field that an
-// empty value clears, or a list whose absence means "every one" and whose
-// empty value means "none" (the carrier intelligence fields to apply, the pay
-// events to pay now). Every other optional parameter sent as "" or an empty
-// list is read as not sent (see Coerce). It returns the property it marks.
-func KeepEmpty(property map[string]any) map[string]any {
-	property[KeyKeepEmpty] = true
-
-	return property
-}
-
-func Clamped(property map[string]any) map[string]any {
-	property[KeyClamp] = true
-
-	return property
-}
-
 func clamps(property map[string]any) bool {
-	clamped, _ := property[KeyClamp].(bool)
+	clamped, _ := property[toolschema.KeyClamp].(bool)
 
 	return clamped
 }
@@ -69,14 +52,14 @@ func (c *coercer) clamp(property map[string]any, value any, path string) (any, b
 	if !ok || !clamps(property) {
 		return value, false
 	}
-	if most, bounded := boundOf(property, KeyMaximum); bounded && number > most {
+	if most, bounded := boundOf(property, toolschema.KeyMaximum); bounded && number > most {
 		c.note(path, "%s %s is past its most, %s, and was read as %s",
 			path, strconv.FormatFloat(number, 'f', -1, 64),
 			strconv.FormatFloat(most, 'f', -1, 64), strconv.FormatFloat(most, 'f', -1, 64))
 
 		return most, true
 	}
-	if least, bounded := boundOf(property, KeyMinimum); bounded && number < least {
+	if least, bounded := boundOf(property, toolschema.KeyMinimum); bounded && number < least {
 		c.note(path, "%s %s is below its least, %s, and was read as %s",
 			path, strconv.FormatFloat(number, 'f', -1, 64),
 			strconv.FormatFloat(least, 'f', -1, 64), strconv.FormatFloat(least, 'f', -1, 64))
@@ -88,7 +71,7 @@ func (c *coercer) clamp(property map[string]any, value any, path string) (any, b
 }
 
 func keepsEmpty(property map[string]any) bool {
-	clears, _ := property[KeyKeepEmpty].(bool)
+	clears, _ := property[toolschema.KeyKeepEmpty].(bool)
 
 	return clears
 }
@@ -118,7 +101,7 @@ var idPlaceholders = map[string]struct{}{
 }
 
 func isRecordID(property map[string]any) bool {
-	return RecordOf(property) != "" || len(RecordKinds(property)) > 0
+	return toolschema.RecordOf(property) != "" || len(toolschema.RecordKinds(property)) > 0
 }
 
 func idPlaceholder(value any) bool {
@@ -141,7 +124,7 @@ func trimmedID(value any) (string, bool) {
 	return trimmed, trimmed != text
 }
 
-// Coerce returns a copy of the arguments with each value read as
+// Apply returns a copy of the arguments with each value read as
 // the schema declares it, wherever that reading is certain: a numeral sent
 // as text becomes the number, a number sent for a text amount becomes its
 // text, a lone value sent for a list becomes a list of one, a list sent as
@@ -168,7 +151,7 @@ func trimmedID(value any) (string, bool) {
 // for the schema to refuse by name. What was sent is never changed: the
 // result is a copy. The runtime reads a model's call with it, and the
 // proposal executor what an approver typed into a proposal.
-func Coerce(schema, args map[string]any, opts ...CoerceOption) (map[string]any, []Coercion) {
+func Apply(schema, args map[string]any, opts ...Option) (map[string]any, []Coercion) {
 	if len(args) == 0 {
 		return args, nil
 	}
@@ -197,16 +180,16 @@ type coercer struct {
 	today *time.Time
 }
 
-// CoerceOption adds a reading Coerce can only make with something the
+// Option adds a reading Apply can only make with something the
 // caller knows.
-type CoerceOption func(*coercer)
+type Option func(*coercer)
 
 // WithToday lets a day parameter take "today", "yesterday" and "tomorrow",
 // read as the calendar day they name in the timezone now is given in. A
 // person asks for "what delivered today", a model passes the word on, and
 // several reads used to parse it themselves while the rest refused it; the
 // runtime reads it once, for every tool, as the organization's own day.
-func WithToday(now time.Time) CoerceOption {
+func WithToday(now time.Time) Option {
 	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	return func(c *coercer) { c.today = &day }
@@ -227,7 +210,7 @@ func (c *coercer) object(
 	out := make(map[string]any, len(args))
 	maps.Copy(out, args)
 	changed := false
-	required := requiredSet(schema)
+	required := toolschema.RequiredSet(schema)
 
 	for sent, value := range args {
 		key := sent
@@ -242,9 +225,14 @@ func (c *coercer) object(
 			out[target] = value
 			key = target
 			changed = true
-			c.note(JoinPath(path, key), "%s was read as %s", JoinPath(path, sent), key)
+			c.note(
+				toolschema.JoinPath(path, key),
+				"%s was read as %s",
+				toolschema.JoinPath(path, sent),
+				key,
+			)
 		}
-		at := JoinPath(path, key)
+		at := toolschema.JoinPath(path, key)
 		if value == nil {
 			if !required[key] {
 				if current, still := out[key]; still && current == nil {
@@ -294,28 +282,13 @@ func (c *coercer) object(
 	return out, changed
 }
 
-// JoinPath writes a nested field's path the way the validator writes one.
-func JoinPath(path, name string) string {
-	if path == "" {
-		return name
-	}
-
-	return path + "." + name
-}
-
-// NameShape is a parameter name with case and separators taken out, so
-// shipment_id, shipmentID and ShipmentId read as the same name.
-func NameShape(name string) string {
-	return strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(name))
-}
-
 // undeclaredTarget finds the declared parameter an undeclared key plainly
 // means: the same name in another spelling, when that parameter was not
 // also sent under its own name.
 func undeclaredTarget(properties, args map[string]any, key string) (string, bool) {
-	shape := NameShape(key)
+	shape := toolschema.NameShape(key)
 	for name := range properties {
-		if NameShape(name) != shape {
+		if toolschema.NameShape(name) != shape {
 			continue
 		}
 		if value, sent := args[name]; sent && value != nil {
@@ -332,7 +305,7 @@ func (c *coercer) value(property map[string]any, value any, path string) (any, b
 	if len(property) == 0 {
 		return value, false
 	}
-	kind := DeclaredType(property)
+	kind := toolschema.DeclaredType(property)
 
 	switch kind {
 	case "object":
@@ -425,7 +398,7 @@ func (c *coercer) asList(items map[string]any, value any, path string) ([]any, b
 		return list, true
 	}
 	if isScalar(value) {
-		if text, ok := value.(string); ok && DeclaredType(items) == "string" &&
+		if text, ok := value.(string); ok && toolschema.DeclaredType(items) == "string" &&
 			strings.Contains(text, ",") {
 			parts := strings.Split(text, ",")
 			list := make([]any, 0, len(parts))
@@ -484,7 +457,7 @@ func (c *coercer) number(kind string, value any, path string) (any, bool) {
 }
 
 func (c *coercer) text(property map[string]any, value any, path string) (any, bool) {
-	if format, dated := DateFormatNamed(FormatOf(property)); dated {
+	if format, dated := toolschema.DateFormatNamed(toolschema.FormatOf(property)); dated {
 		return c.date(format, value, path)
 	}
 
@@ -526,7 +499,7 @@ var (
 // A number is never read as a date. It is almost always Unix seconds, and
 // converting one lands on a day in UTC that may not be the person's; it is
 // passed on as its digits, which the format refuses as the Unix time it is.
-func (c *coercer) date(format DateFormat, value any, path string) (any, bool) {
+func (c *coercer) date(format toolschema.DateFormat, value any, path string) (any, bool) {
 	text, isText := value.(string)
 	if !isText {
 		if digits, numeric := numberText(value); numeric {
@@ -538,7 +511,7 @@ func (c *coercer) date(format DateFormat, value any, path string) (any, bool) {
 	trimmed := strings.TrimSpace(text)
 
 	switch format.Name {
-	case FormatDate:
+	case toolschema.FormatDate:
 		if offset, relative := relativeDays[strings.ToLower(trimmed)]; relative && c.today != nil {
 			day := c.today.AddDate(0, 0, offset).Format(time.DateOnly)
 			c.note(path, "%s %q was read as the day %s", path, text, day)
@@ -551,7 +524,7 @@ func (c *coercer) date(format DateFormat, value any, path string) (any, bool) {
 
 			return match[1], true
 		}
-	case FormatLocalDateTime:
+	case toolschema.FormatLocalDateTime:
 		if match := localMinute.FindStringSubmatch(trimmed); match != nil {
 			read := match[1] + "T" + match[2]
 			if read != text {
@@ -581,7 +554,7 @@ func numberText(value any) (string, bool) {
 // enum reads a value spelled in another case or with other separators as
 // the declared value it plainly means.
 func (c *coercer) enum(property map[string]any, text string, path string) (any, bool) {
-	allowed := EnumValues(property)
+	allowed := toolschema.EnumValues(property)
 	if len(allowed) == 0 {
 		return text, false
 	}
@@ -590,9 +563,9 @@ func (c *coercer) enum(property map[string]any, text string, path string) (any, 
 			return text, false
 		}
 	}
-	shape := NameShape(strings.TrimSpace(text))
+	shape := toolschema.NameShape(strings.TrimSpace(text))
 	for _, option := range allowed {
-		if NameShape(option) == shape {
+		if toolschema.NameShape(option) == shape {
 			c.note(path, "%s %q was read as %q", path, text, option)
 
 			return option, true
@@ -618,74 +591,6 @@ func (c *coercer) boolean(value any, path string) (any, bool) {
 		return false, true
 	default:
 		return value, false
-	}
-}
-
-// DeclaredType is the one type a property declares, the first non-null one
-// when it declares several.
-func DeclaredType(property map[string]any) string {
-	if definition := localDefinition(property); definition != nil {
-		return DeclaredType(definition)
-	}
-	switch typed := property["type"].(type) {
-	case string:
-		return typed
-	case []string:
-		for _, kind := range typed {
-			if kind != "null" {
-				return kind
-			}
-		}
-	case []any:
-		for _, kind := range typed {
-			if name, ok := kind.(string); ok && name != "null" {
-				return name
-			}
-		}
-	}
-
-	return ""
-}
-
-// localDefinition is the definition a property's $ref names among its own
-// $defs, for a property that is a whole schema of its own, as a report
-// definition is: its root is a $ref with no type beside it. Without it a
-// report sent as JSON text was refused as "got string, want object" rather
-// than read as the object it holds.
-func localDefinition(property map[string]any) map[string]any {
-	if _, typed := property["type"]; typed {
-		return nil
-	}
-	ref, _ := property["$ref"].(string)
-	name, local := strings.CutPrefix(ref, "#/$defs/")
-	if !local {
-		return nil
-	}
-	definitions, _ := property["$defs"].(map[string]any)
-	definition, _ := definitions[name].(map[string]any)
-	if _, nested := definition["$ref"]; nested {
-		return nil
-	}
-
-	return definition
-}
-
-// EnumValues is the values a property allows, whichever way the schema lists them.
-func EnumValues(property map[string]any) []string {
-	switch typed := property["enum"].(type) {
-	case []string:
-		return typed
-	case []any:
-		values := make([]string, 0, len(typed))
-		for _, value := range typed {
-			if text, ok := value.(string); ok {
-				values = append(values, text)
-			}
-		}
-
-		return values
-	default:
-		return nil
 	}
 }
 

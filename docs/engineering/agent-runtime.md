@@ -1826,7 +1826,7 @@ records `accounting_retry_sync_record` retries, the suggestions
 holds every write whose description says leaving a parameter out means every
 record to marking it. What was left out is told back on one
 line ("Left out because they were empty: …"). The
-readings live in `toolschema.Coerce`, and the proposal executor makes the same
+readings live in `toolcoerce.Apply`, and the proposal executor makes the same
 ones (`proposalexecutor.CoerceParams`) on a proposal's parameters with the
 approver's changes laid over them, before they are checked and run: the
 approval editor sends what a person typed (`30`, `2026-10-01 08:00`), and a
@@ -1853,7 +1853,7 @@ three (an empty string passes for a parameter marked `KeepEmpty`; elsewhere
 it never reaches the format, being read as not sent) and
 refuses a value of another shape in one sentence naming the shape and an
 example. "today", "yesterday" and "tomorrow" sent for a day become the day they
-name in the organization's timezone (`toolschema.WithToday`, which dispatch
+name in the organization's timezone (`toolcoerce.WithToday`, which dispatch
 passes; the query tools' own "or today" parser and the master data kit's day
 field are retired onto `agenttoolschema.Date`). Midnight UTC sent for a day
 becomes the day, and a local time written

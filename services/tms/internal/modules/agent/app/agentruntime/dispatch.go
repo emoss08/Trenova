@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -691,8 +691,8 @@ func deniedAccess(
 // organizationToday is the reading of "today" for a call's day parameters:
 // the calendar day it is now in the organization's timezone, which is the
 // day the runtime context told the model.
-func organizationToday(req *agentruntimeports.RunRequest) toolschema.CoerceOption {
-	return toolschema.WithToday(
+func organizationToday(req *agentruntimeports.RunRequest) toolcoerce.Option {
+	return toolcoerce.WithToday(
 		time.Unix(timeutils.NowUnix(), 0).In(timeutils.LoadLocation(req.Context.Timezone)),
 	)
 }

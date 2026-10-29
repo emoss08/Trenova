@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -57,7 +58,7 @@ func contractCall(
 	validator *toolschema.Validator,
 	name string,
 	schema, args map[string]any,
-	opts ...toolschema.CoerceOption,
+	opts ...toolcoerce.Option,
 ) (argumentContract, error) {
 	aliased, aliases := aliasArguments(schema, args)
 	if _, owned := aliased[agenttoolports.SelfScopeOwnerParam]; owned {

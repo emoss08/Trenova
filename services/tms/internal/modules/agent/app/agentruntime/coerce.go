@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,21 +15,21 @@ import (
 
 // argumentCoercion is one value the runtime read the way the tool declares
 // it rather than the way the model sent it.
-type argumentCoercion = toolschema.Coercion
+type argumentCoercion = toolcoerce.Coercion
 
 // maxCoercionsNoted bounds how many adjustments a result names. The point of
 // naming them is to teach the next call; a list of twenty teaches nothing.
 const maxCoercionsNoted = 5
 
 // coerceArguments reads a call's arguments as the tool declares them,
-// wherever the reading is certain (toolschema.Coerce). The proposal executor
+// wherever the reading is certain (toolcoerce.Apply). The proposal executor
 // applies the same readings to what an approver changed, so a value the
 // runtime would have read is read the same way when it runs.
 func coerceArguments(
 	schema, args map[string]any,
-	opts ...toolschema.CoerceOption,
+	opts ...toolcoerce.Option,
 ) (map[string]any, []argumentCoercion) {
-	return toolschema.Coerce(schema, args, opts...)
+	return toolcoerce.Apply(schema, args, opts...)
 }
 
 // coercionNote tells the model what was read differently from how it was

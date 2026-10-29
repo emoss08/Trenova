@@ -1,26 +1,40 @@
-package toolschema
+package toolcoerce
 
 import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/pkg/toolschematest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func coercedSchema() map[string]any {
 	return map[string]any{
-		KeyType: TypeObject,
-		KeyProperties: map[string]any{
-			"limit":  map[string]any{KeyType: TypeInteger},
-			"ids":    map[string]any{KeyType: TypeArray, KeyItems: map[string]any{KeyType: TypeString}},
-			"shared": map[string]any{KeyType: TypeBoolean},
-			"status": map[string]any{KeyType: TypeString, KeyEnum: []string{"Late", "OnTime"}},
-			"note":   map[string]any{KeyType: TypeString},
-			"day":    map[string]any{KeyType: TypeString, KeyFormat: FormatDate},
-			"pickup": map[string]any{KeyType: TypeString, KeyFormat: FormatLocalDateTime},
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"limit": map[string]any{toolschema.KeyType: toolschema.TypeInteger},
+			"ids": map[string]any{
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+			},
+			"shared": map[string]any{toolschema.KeyType: toolschema.TypeBoolean},
+			"status": map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyEnum: []string{"Late", "OnTime"},
+			},
+			"note": map[string]any{toolschema.KeyType: toolschema.TypeString},
+			"day": map[string]any{
+				toolschema.KeyType:   toolschema.TypeString,
+				toolschema.KeyFormat: toolschema.FormatDate,
+			},
+			"pickup": map[string]any{
+				toolschema.KeyType:   toolschema.TypeString,
+				toolschema.KeyFormat: toolschema.FormatLocalDateTime,
+			},
 		},
-		KeyRequired: []string{"limit"},
+		toolschema.KeyRequired: []string{"limit"},
 	}
 }
 
@@ -39,7 +53,7 @@ func TestCoerce_ReadsValuesTheWayTheSchemaDeclaresThem(t *testing.T) {
 		"pickup": "2026-10-01 08:00",
 	}
 
-	got, coercions := Coerce(coercedSchema(), sent)
+	got, coercions := Apply(coercedSchema(), sent)
 
 	assert.Equal(t, map[string]any{
 		"limit":  float64(30),
@@ -50,7 +64,7 @@ func TestCoerce_ReadsValuesTheWayTheSchemaDeclaresThem(t *testing.T) {
 		"pickup": "2026-10-01T08:00",
 	}, got)
 	assert.Len(t, coercions, 6)
-	require.NoError(t, Validate(coercedSchema(), got))
+	require.NoError(t, toolschema.Validate(coercedSchema(), got))
 	assert.Equal(t, "30", sent["limit"], "what was sent is never changed")
 }
 
@@ -61,22 +75,14 @@ func TestCoerce_LeavesUncertainValuesAlone(t *testing.T) {
 
 	sent := map[string]any{"limit": "thirty", "status": "Delayed"}
 
-	got, coercions := Coerce(coercedSchema(), sent)
+	got, coercions := Apply(coercedSchema(), sent)
 
 	assert.Equal(t, sent, got)
 	assert.Empty(t, coercions)
 
-	dated, _ := Coerce(coercedSchema(), map[string]any{"limit": 1, "day": float64(1790812800)})
-	errs := fieldErrors(t, Validate(coercedSchema(), dated))
+	dated, _ := Apply(coercedSchema(), map[string]any{"limit": 1, "day": float64(1790812800)})
+	errs := toolschematest.FieldErrors(t, toolschema.Validate(coercedSchema(), dated))
 	assert.Contains(t, errs["day"], "is a Unix time")
-}
-
-func TestNameShape(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, NameShape("shipmentId"), NameShape("shipment_id"))
-	assert.Equal(t, "ab.c", JoinPath("ab", "c"))
-	assert.Equal(t, "c", JoinPath("", "c"))
 }
 
 /*
@@ -92,16 +98,16 @@ func TestCoerce_ReadsRelativeDaysInTheOrganizationsTimezone(t *testing.T) {
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"asOf":  map[string]any{"type": "string", "format": FormatDate},
-			"from":  map[string]any{"type": "string", "format": FormatDate},
-			"until": map[string]any{"type": "string", "format": FormatDate},
+			"asOf":  map[string]any{"type": "string", "format": toolschema.FormatDate},
+			"from":  map[string]any{"type": "string", "format": toolschema.FormatDate},
+			"until": map[string]any{"type": "string", "format": toolschema.FormatDate},
 		},
 	}
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 	lateEvening := time.Date(2026, 10, 9, 23, 30, 0, 0, chicago)
 
-	got, notes := Coerce(schema, map[string]any{
+	got, notes := Apply(schema, map[string]any{
 		"asOf": "Today", "from": "yesterday", "until": "tomorrow",
 	}, WithToday(lateEvening))
 
@@ -110,7 +116,7 @@ func TestCoerce_ReadsRelativeDaysInTheOrganizationsTimezone(t *testing.T) {
 	}, got, "the organization's day, not UTC's, which is already the 10th")
 	assert.Len(t, notes, 3)
 
-	unread, _ := Coerce(schema, map[string]any{"asOf": "today"})
+	unread, _ := Apply(schema, map[string]any{"asOf": "today"})
 	assert.Equal(t, "today", unread["asOf"])
 }
 
@@ -139,7 +145,7 @@ func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
 		},
 	}
 
-	got, coercions := Coerce(schema, map[string]any{
+	got, coercions := Apply(schema, map[string]any{
 		"filters": ` [{"field": "status", "value": "Available"}]`,
 		"window":  `{"days": "3"}`,
 	})
@@ -149,9 +155,9 @@ func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
 		"window":  map[string]any{"days": float64(3)},
 	}, got)
 	assert.Len(t, coercions, 3)
-	require.NoError(t, Validate(schema, got))
+	require.NoError(t, toolschema.Validate(schema, got))
 
-	left, none := Coerce(schema, map[string]any{"filters": "[not json"})
+	left, none := Apply(schema, map[string]any{"filters": "[not json"})
 	assert.Equal(t, []any{"[not json"}, left["filters"])
 	assert.Len(t, none, 1)
 }
@@ -181,32 +187,47 @@ func TestCoerce_ReadsJSONTextAsTheObjectALocalRefNames(t *testing.T) {
 		},
 	}
 
-	got, coercions := Coerce(schema, map[string]any{"definition": `{"entity": "invoice"}`})
+	got, coercions := Apply(schema, map[string]any{"definition": `{"entity": "invoice"}`})
 
 	assert.Equal(t, map[string]any{"definition": map[string]any{"entity": "invoice"}}, got)
 	assert.Len(t, coercions, 1)
-	require.NoError(t, Validate(schema, got))
+	require.NoError(t, toolschema.Validate(schema, got))
 }
 
 func TestCoerce_ReadsAClampedNumberPastItsBoundsAsTheBound(t *testing.T) {
 	t.Parallel()
 
 	schema := map[string]any{
-		KeyType: TypeObject,
-		KeyProperties: map[string]any{
-			"limit": Clamped(map[string]any{KeyType: TypeInteger, KeyMinimum: 1, KeyMaximum: 50}),
-			"days":  map[string]any{KeyType: TypeInteger, KeyMaximum: 30},
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"limit": toolschema.Clamped(
+				map[string]any{
+					toolschema.KeyType:    toolschema.TypeInteger,
+					toolschema.KeyMinimum: 1,
+					toolschema.KeyMaximum: 50,
+				},
+			),
+			"days": map[string]any{
+				toolschema.KeyType:    toolschema.TypeInteger,
+				toolschema.KeyMaximum: 30,
+			},
 		},
 	}
 
-	got, coercions := Coerce(schema, map[string]any{"limit": float64(500), "days": float64(90)})
+	got, coercions := Apply(schema, map[string]any{"limit": float64(500), "days": float64(90)})
 	assert.Equal(t, map[string]any{"limit": float64(50), "days": float64(90)}, got,
 		"only a clamped number is read as its bound; any other is left for the schema")
 	require.Len(t, coercions, 1)
 	assert.Contains(t, coercions[0].Note, "read as 50")
 
-	got, _ = Coerce(schema, map[string]any{"limit": "0"})
+	got, _ = Apply(schema, map[string]any{"limit": "0"})
 	assert.Equal(t, float64(1), got["limit"])
-	require.NoError(t, Validate(schema, map[string]any{"limit": got["limit"]}))
-	assert.NotContains(t, ForModel(schema[KeyProperties].(map[string]any)["limit"].(map[string]any)), KeyClamp)
+	require.NoError(t, toolschema.Validate(schema, map[string]any{"limit": got["limit"]}))
+	assert.NotContains(
+		t,
+		toolschema.ForModel(
+			schema[toolschema.KeyProperties].(map[string]any)["limit"].(map[string]any),
+		),
+		toolschema.KeyClamp,
+	)
 }

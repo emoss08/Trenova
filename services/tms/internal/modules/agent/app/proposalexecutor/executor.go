@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -906,7 +907,7 @@ func (s *Service) validateParams(tool agenttoolports.AgentTool, params map[strin
 
 // CoerceParams reads the parameters that are about to be checked and run the
 // way the tool declares them, wherever the reading is certain
-// (toolschema.Coerce): the same readings the runtime makes of a model's call.
+// (toolcoerce.Apply): the same readings the runtime makes of a model's call.
 // The approval editor sends what a person typed, "30" for a number or
 // "2026-10-01 08:00" for a local time, and a proposal filed before a
 // parameter's shape was asserted carries what the model sent; either used to
@@ -924,7 +925,7 @@ func CoerceParams(tool agenttoolports.AgentTool, params map[string]any) map[stri
 		}
 	}
 
-	coerced, _ := toolschema.Coerce(tool.ParamSchema(), declared)
+	coerced, _ := toolcoerce.Apply(tool.ParamSchema(), declared)
 	if !owned {
 		return coerced
 	}

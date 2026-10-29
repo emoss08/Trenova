@@ -73,7 +73,7 @@ var multilineNames = map[string]struct{}{
 // ones first and then by name, since a map carries no order of its own.
 func Fields(schema map[string]any) []Field {
 	properties, _ := schema["properties"].(map[string]any)
-	required := requiredSet(schema)
+	required := RequiredSet(schema)
 
 	fields := make([]Field, 0, len(properties))
 	for name, raw := range properties {
@@ -95,7 +95,7 @@ func Fields(schema map[string]any) []Field {
 	return fields
 }
 
-func requiredSet(schema map[string]any) map[string]bool {
+func RequiredSet(schema map[string]any) map[string]bool {
 	required := make(map[string]bool)
 	switch names := schema["required"].(type) {
 	case []string:

@@ -17245,3 +17245,7 @@ github.com/emoss08/trenova/internal/modules/agent/domain/board.EventSentence	git
 github.com/emoss08/trenova/internal/modules/agent/domain/board.Markdown	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.Markdown
 github.com/emoss08/trenova/internal/modules/agent/domain/board.MarkdownMeta	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.MarkdownMeta
 github.com/emoss08/trenova/internal/modules/agent/domain/board.NoteLabel	github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown.NoteLabel
+github.com/emoss08/trenova/pkg/toolschema.Coerce	github.com/emoss08/trenova/pkg/toolcoerce.Apply
+github.com/emoss08/trenova/pkg/toolschema.Coercion	github.com/emoss08/trenova/pkg/toolcoerce.Coercion
+github.com/emoss08/trenova/pkg/toolschema.CoerceOption	github.com/emoss08/trenova/pkg/toolcoerce.Option
+github.com/emoss08/trenova/pkg/toolschema.WithToday	github.com/emoss08/trenova/pkg/toolcoerce.WithToday
