@@ -162,7 +162,7 @@ func TestFindingsFlagAChargeTheRateConDoesNotPrice(t *testing.T) {
 		},
 	)
 
-	findings := Findings(FindingInput{CustomerName: "Acme", Charges: charges})
+	findings := Findings(&FindingInput{CustomerName: "Acme", Charges: charges})
 
 	require.Len(t, findings, 1)
 	issue := findings[0]
@@ -186,7 +186,7 @@ func TestFindingsFlagNothingWhenNothingPricedTheLoad(t *testing.T) {
 	t.Parallel()
 
 	charge := pulid.MustNew("ac_")
-	findings := Findings(FindingInput{Charges: chargesWith(
+	findings := Findings(&FindingInput{Charges: chargesWith(
 		&billingqueue.ChargeLine{Key: "freight", Label: "Freight", Billed: dec("900")},
 		&billingqueue.ChargeLine{
 			Key:                charge.String(),
@@ -203,7 +203,7 @@ func TestFindingsOfferTheRateConPriceForAnOvercharge(t *testing.T) {
 	t.Parallel()
 
 	stop := pulid.MustNew("ac_")
-	findings := Findings(FindingInput{Charges: chargesWith(
+	findings := Findings(&FindingInput{Charges: chargesWith(
 		&billingqueue.ChargeLine{
 			Key:                stop.String(),
 			AdditionalChargeID: stop,
@@ -254,7 +254,7 @@ func TestFindingsAskForASignedPODOnlyWhenOneIsKnownMissingOrUnsigned(t *testing.
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			findings := Findings(FindingInput{CustomerName: "Acme", POD: tc.pod})
+			findings := Findings(&FindingInput{CustomerName: "Acme", POD: tc.pod})
 			if tc.code == "" {
 				assert.Empty(t, findings)
 				return
@@ -277,7 +277,7 @@ func TestFindingsAskForASignedPODOnlyWhenOneIsKnownMissingOrUnsigned(t *testing.
 func TestFindingsOnlyOfferToAskWhenThereIsADriverToAsk(t *testing.T) {
 	t.Parallel()
 
-	findings := Findings(FindingInput{POD: &PODState{Required: true}})
+	findings := Findings(&FindingInput{POD: &PODState{Required: true}})
 
 	require.Len(t, findings, 1)
 	require.Len(t, findings[0].Options, 1)
@@ -300,7 +300,7 @@ func TestFindingsSetDetentionAgainstTheELD(t *testing.T) {
 		ELDAmount:     dec("32.50"),
 	}
 
-	findings := Findings(FindingInput{Detention: []*DetentionDwell{dwell}})
+	findings := Findings(&FindingInput{Detention: []*DetentionDwell{dwell}})
 
 	require.Len(t, findings, 1)
 	issue := findings[0]
@@ -325,7 +325,7 @@ func TestFindingsLeaveDetentionAloneWithinTheTolerance(t *testing.T) {
 		HourlyRate: dec("65"), BilledAmount: dec("65"), ELDAmount: dec("56.33"),
 	}
 
-	assert.Empty(t, Findings(FindingInput{Detention: []*DetentionDwell{dwell}}))
+	assert.Empty(t, Findings(&FindingInput{Detention: []*DetentionDwell{dwell}}))
 }
 
 func TestFindingsNameTheOtherBillForAShipment(t *testing.T) {
@@ -337,7 +337,7 @@ func TestFindingsNameTheOtherBillForAShipment(t *testing.T) {
 		Number: "INV-24090",
 	}
 	findings := Findings(
-		FindingInput{
+		&FindingInput{
 			CustomerName: "Acme",
 			ShipmentRef:  "S-1001",
 			Duplicates:   []*billingqueue.DuplicateRef{dup},
@@ -374,7 +374,7 @@ func TestFindingsAreDeterministic(t *testing.T) {
 		POD: &PODState{Required: true},
 	}
 
-	first, second := Findings(in), Findings(in)
+	first, second := Findings(&in), Findings(&in)
 	require.Len(t, second, len(first))
 	for i := range first {
 		assert.Equal(t, first[i].FindingKey(), second[i].FindingKey())

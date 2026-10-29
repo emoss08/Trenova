@@ -109,7 +109,7 @@ func TestPODFindingFollowsTheSignatureStatus(t *testing.T) {
 			assert.Equal(t, tc.tileState, tiles[0].State)
 			assert.Equal(t, tc.signed, tiles[0].Signed)
 
-			findings := billingqueuereview.Findings(billingqueuereview.FindingInput{
+			findings := billingqueuereview.Findings(&billingqueuereview.FindingInput{
 				CustomerName: "Acme",
 				POD:          pod,
 			})
@@ -141,7 +141,7 @@ func TestPODFindingPrefersASignedCopyOverAnUnsignedOne(t *testing.T) {
 		assert.True(t, pod.Signed)
 		assert.False(t, pod.Unsigned)
 		assert.Equal(t, signed.ID, pod.DocumentID)
-		assert.Empty(t, billingqueuereview.Findings(billingqueuereview.FindingInput{POD: pod}))
+		assert.Empty(t, billingqueuereview.Findings(&billingqueuereview.FindingInput{POD: pod}))
 
 		tiles := documentTiles(docs, required)
 		require.Len(t, tiles, 1)

@@ -357,7 +357,8 @@ func (s *Service) resolveDependencyShipment(
 		if item.BillToCustomerID.IsNotNil() {
 			return shp, item.BillToCustomerID, nil
 		}
-		return shp, shp.PayerID(), nil
+		payerID := shp.PayerID()
+		return shp, payerID, nil
 	}
 
 	if item.BillToCustomerID.IsNotNil() &&
@@ -608,7 +609,8 @@ func invoiceLines(ctx context.Context, p *buildInvoiceParams) ([]*invoice.Invoic
 	// invoice is rendered.
 	switch {
 	case p.OrderChargeShare != nil:
-		for _, charge := range p.OrderChargeShare.Charges {
+		for i := range p.OrderChargeShare.Charges {
+			charge := &p.OrderChargeShare.Charges[i]
 			if charge.Kind != shipmentvocab.ChargeAllocationKindOrderCharge {
 				continue
 			}
@@ -661,7 +663,7 @@ func applyInvoiceScopeHeader(entity *invoice.Invoice, p *buildInvoiceParams) {
 		entity.InvoiceRunID = p.RunID
 		entity.PeriodStart = p.PeriodStart
 		entity.PeriodEnd = p.PeriodEnd
-	case invoice.ScopeAdjustment:
+	case invoice.ScopeAdjustment, invoice.ScopeMemo:
 	}
 }
 
@@ -675,7 +677,7 @@ func applyShipper(entity *invoice.Invoice, p *buildInvoiceParams) {
 	switch p.Scope {
 	case invoice.ScopeShipment, invoice.ScopeOrder:
 		entity.ShipperCustomerID = p.Shipper.ID
-	case invoice.ScopeConsolidated, invoice.ScopeAdjustment:
+	case invoice.ScopeConsolidated, invoice.ScopeAdjustment, invoice.ScopeMemo:
 	}
 }
 

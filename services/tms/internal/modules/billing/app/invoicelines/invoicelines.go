@@ -66,7 +66,8 @@ func ForShipmentShare(
 	freight := shp.FreightChargeAmount.Decimal
 	lineNumber := startLineNumber
 
-	for _, charge := range share.Charges {
+	for i := range share.Charges {
+		charge := &share.Charges[i]
 		switch charge.Kind {
 		case shipmentvocab.ChargeAllocationKindFreight:
 			freightLines := freightLines(billType, shp, charge, lineNumber)
@@ -92,7 +93,7 @@ func ForShipmentShare(
 // trailing section when the invoice is rendered.
 func ForOrderChargeShare(
 	billType billingqueue.BillType,
-	charge chargeallocation.AllocatedCharge,
+	charge *chargeallocation.AllocatedCharge,
 	lineNumber int,
 ) *invoice.InvoiceLine {
 	amount := SignedAmount(billType, charge.Amount)
@@ -111,7 +112,7 @@ func ForOrderChargeShare(
 
 // ShareDescription appends the billed share to a description when the line
 // bills less than the whole charge.
-func ShareDescription(base string, charge chargeallocation.AllocatedCharge) string {
+func ShareDescription(base string, charge *chargeallocation.AllocatedCharge) string {
 	if !charge.Partial {
 		return base
 	}
@@ -126,7 +127,7 @@ func ShareDescription(base string, charge chargeallocation.AllocatedCharge) stri
 	return base + " (partial share)"
 }
 
-func stampShare(line *invoice.InvoiceLine, charge chargeallocation.AllocatedCharge) {
+func stampShare(line *invoice.InvoiceLine, charge *chargeallocation.AllocatedCharge) {
 	if !charge.Partial {
 		return
 	}
@@ -137,7 +138,7 @@ func stampShare(line *invoice.InvoiceLine, charge chargeallocation.AllocatedChar
 func freightLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	charge chargeallocation.AllocatedCharge,
+	charge *chargeallocation.AllocatedCharge,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
 	billed := shipmentrating.BilledFreightLines(shp, FreightDescription)
@@ -205,7 +206,7 @@ func itemized(
 func accessorialLine(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	allocated chargeallocation.AllocatedCharge,
+	allocated *chargeallocation.AllocatedCharge,
 	freight decimal.Decimal,
 	lineNumber int,
 ) *invoice.InvoiceLine {

@@ -11,7 +11,7 @@ func (s *Service) resolveDeliveryProfile(
 	ctx context.Context,
 	params invoicedocument.DeliveryProfileParams,
 ) (*invoicedocument.DeliveryProfile, error) {
-	return invoicedocument.ResolveDeliveryProfile(ctx, invoicedocument.DeliveryProfileRepos{
+	return invoicedocument.ResolveDeliveryProfile(ctx, &invoicedocument.DeliveryProfileRepos{
 		CustomerRepo:     s.customerRepo,
 		ShipmentRepo:     s.shipmentRepo,
 		BillingRepo:      s.billingRepo,

@@ -53,7 +53,7 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		return nil, err
 	}
 	if !invoicedocument.AutoSendsOnGeneration(cus, entity) {
-		return nil, nil
+		return &invoiceports.InvoiceSendResult{Invoice: entity}, nil
 	}
 
 	return s.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{

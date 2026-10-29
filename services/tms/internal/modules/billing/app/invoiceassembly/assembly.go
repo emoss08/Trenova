@@ -10,13 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func basicShipmentByIDRequest(
-	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) *shipmentports.GetShipmentByIDRequest {
-	return ShipmentByIDRequest(id, tenantInfo, false)
-}
-
 func ExpandedShipmentByIDRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,

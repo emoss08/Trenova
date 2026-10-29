@@ -222,7 +222,7 @@ func (s *Reviewer) storedIssues(
 	result, err := s.reviewRepo.SyncIssues(ctx, &billingqueueports.SyncBillingQueueIssuesRequest{
 		TenantInfo: tenantInfo,
 		ItemID:     item.ID,
-		Findings:   billingqueuereview.Findings(facts.findings),
+		Findings:   billingqueuereview.Findings(&facts.findings),
 	})
 	if err != nil {
 		s.l.Warn(

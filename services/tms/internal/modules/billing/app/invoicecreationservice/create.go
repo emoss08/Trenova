@@ -584,11 +584,12 @@ func orderChargeShareFor(
 	// A share for the default payer also carries the implicit rows of charges
 	// allocated wholly to somebody else with a zero amount; drop them.
 	kept := make([]chargeallocation.AllocatedCharge, 0, len(share.Charges))
-	for _, charge := range share.Charges {
+	for i := range share.Charges {
+		charge := &share.Charges[i]
 		if charge.Amount.IsZero() && charge.AllocationID.IsNil() && charge.Partial {
 			continue
 		}
-		kept = append(kept, charge)
+		kept = append(kept, *charge)
 	}
 	share.Charges = kept
 	if len(kept) == 0 {
@@ -695,7 +696,8 @@ func (s *Service) markOrderChargeSharesInvoiced(
 
 	chargeIDs := make([]pulid.ID, 0, len(share.Charges))
 	allocationIDs := make([]pulid.ID, 0, len(share.Charges))
-	for _, charge := range share.Charges {
+	for i := range share.Charges {
+		charge := &share.Charges[i]
 		switch {
 		case charge.AllocationID.IsNotNil():
 			allocationIDs = append(allocationIDs, charge.AllocationID)

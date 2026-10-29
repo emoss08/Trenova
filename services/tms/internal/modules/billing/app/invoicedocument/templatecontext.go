@@ -78,7 +78,7 @@ func (b *ContextBuilder) Build(
 
 	deliveryProfile, err := ResolveDeliveryProfile(
 		ctx,
-		b.profileRepos,
+		&b.profileRepos,
 		DeliveryProfileParams{
 			Entity:                 entity,
 			TenantInfo:             req.TenantInfo,

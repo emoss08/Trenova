@@ -34,7 +34,6 @@ import (
 	"go.uber.org/zap"
 )
 
-//nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *Service) Post( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	req *invoiceports.PostInvoiceRequest,
@@ -67,31 +66,21 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		if planErr != nil {
 			return planErr
 		}
-		if !alreadyPosted {
-			if guardErr := s.guardPoster(txCtx, req, actor); guardErr != nil {
-				return guardErr
-			}
-			if guardErr := s.guardMemoPoster(
+		if alreadyPosted {
+			if confirmErr := s.confirmQueuePosted(
 				txCtx,
 				entity,
-				actor,
 				req.TenantInfo,
-			); guardErr != nil {
-				return guardErr
+				auditActor,
+			); confirmErr != nil {
+				return confirmErr
 			}
-		}
-
-		if alreadyPosted {
-			queueUpdate, err := s.markBillingQueueItemPosted(txCtx, entity, req.TenantInfo)
-			if err != nil {
-				return err
-			}
-
-			s.logBillingQueuePosted(queueUpdate, auditActor)
-			s.rec.PublishBillingQueueInvalidation(txCtx, queueUpdate, auditActor)
 
 			posted = entity
 			return nil
+		}
+		if guardErr := s.guardPosting(txCtx, entity, req, actor); guardErr != nil {
+			return guardErr
 		}
 
 		entity.PDFDocumentID = pulid.Nil
@@ -162,6 +151,36 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	}
 
 	return posted, nil
+}
+
+func (s *Service) guardPosting(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	req *invoiceports.PostInvoiceRequest,
+	actor *permissionports.RequestActor,
+) error {
+	if err := s.guardPoster(ctx, req, actor); err != nil {
+		return err
+	}
+
+	return s.guardMemoPoster(ctx, entity, actor, req.TenantInfo)
+}
+
+func (s *Service) confirmQueuePosted(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+	auditActor kernelports.AuditActor,
+) error {
+	queueUpdate, err := s.markBillingQueueItemPosted(ctx, entity, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	s.logBillingQueuePosted(queueUpdate, auditActor)
+	s.rec.PublishBillingQueueInvalidation(ctx, queueUpdate, auditActor)
+
+	return nil
 }
 
 func (s *Service) generatePDFAfterPost(

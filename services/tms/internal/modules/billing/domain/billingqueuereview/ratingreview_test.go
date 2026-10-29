@@ -82,7 +82,7 @@ func TestFindings_RaiseTheRatingReviewAsABlockingCheck(t *testing.T) {
 
 	hold := billingqueue.NewRatingReviewHold(reviewedItem("Holiday pickup"))
 
-	issues := Findings(FindingInput{RatingReview: hold})
+	issues := Findings(&FindingInput{RatingReview: hold})
 
 	require.Len(t, issues, 1)
 	assert.Equal(t, billingqueue.CheckCharges, issues[0].CheckKey)
@@ -90,5 +90,5 @@ func TestFindings_RaiseTheRatingReviewAsABlockingCheck(t *testing.T) {
 	assert.Equal(t, hold.ShipmentID.String(), issues[0].SubjectKey)
 	assert.Contains(t, issues[0].Reasoning, "Holiday pickup")
 	assert.Empty(t, issues[0].Options, "only approving the rating settles it")
-	assert.Empty(t, Findings(FindingInput{}))
+	assert.Empty(t, Findings(&FindingInput{}))
 }

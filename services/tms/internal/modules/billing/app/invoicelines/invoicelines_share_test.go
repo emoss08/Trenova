@@ -189,7 +189,7 @@ func TestForOrderChargeShare(t *testing.T) {
 
 	whole := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeInvoice,
-		chargeallocation.AllocatedCharge{
+		&chargeallocation.AllocatedCharge{
 			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			Description:   "Customs brokerage",
@@ -209,7 +209,7 @@ func TestForOrderChargeShare(t *testing.T) {
 
 	partial := invoicelines.ForOrderChargeShare(
 		billingqueue.BillTypeCreditMemo,
-		chargeallocation.AllocatedCharge{
+		&chargeallocation.AllocatedCharge{
 			Kind:          shipmentvocab.ChargeAllocationKindOrderCharge,
 			OrderChargeID: chargeID,
 			AllocationID:  allocationID,
@@ -267,7 +267,7 @@ func TestShareDescription(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.want, invoicelines.ShareDescription("Freight charge", tc.charge))
+			assert.Equal(t, tc.want, invoicelines.ShareDescription("Freight charge", &tc.charge))
 		})
 	}
 }

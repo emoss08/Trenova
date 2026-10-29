@@ -86,7 +86,7 @@ func resolveDeliveryShipments(
 
 func ResolveDeliveryProfile(
 	ctx context.Context,
-	repos DeliveryProfileRepos,
+	repos *DeliveryProfileRepos,
 	params DeliveryProfileParams,
 ) (*DeliveryProfile, error) {
 	result := &DeliveryProfile{}
@@ -95,52 +95,17 @@ func ResolveDeliveryProfile(
 		return result, nil
 	}
 
-	if entity.Customer != nil {
-		result.Customer = entity.Customer
-		if params.IncludeCustomerEmailProfile {
-			result.Email = entity.Customer.EmailProfile
-		}
-		result.Organization = entity.Customer.Organization
-	}
-	if entity.Shipment != nil {
-		result.Shipment = entity.Shipment
-	}
-	if params.IncludeCustomer && repos.CustomerRepo != nil && entity.CustomerID.IsNotNil() {
-		cus, err := repos.CustomerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
-			ID:         entity.CustomerID,
-			TenantInfo: params.TenantInfo,
-			CustomerFilterOptions: customerports.CustomerFilterOptions{
-				IncludeState:          params.IncludeCustomerState,
-				IncludeBillingProfile: params.IncludeCustomerBillingProfile,
-				IncludeEmailProfile:   params.IncludeCustomerEmailProfile,
-			},
-		})
-		if err != nil && !errortypes.IsNotFoundError(err) {
-			return nil, err
-		}
-		if cus != nil {
-			result.Customer = cus
-			if params.IncludeCustomerEmailProfile {
-				result.Email = cus.EmailProfile
-			}
-			if cus.Organization != nil {
-				result.Organization = cus.Organization
-			}
-		}
+	applyLoadedParties(result, entity, params)
+	if err := resolveDeliveryCustomer(ctx, repos.CustomerRepo, result, params); err != nil {
+		return nil, err
 	}
 	if params.IncludeShipmentDetails && repos.ShipmentRepo != nil {
 		if err := resolveDeliveryShipments(ctx, repos.ShipmentRepo, result, params); err != nil {
 			return nil, err
 		}
 	}
-	if params.IncludeBillingControl && repos.BillingRepo != nil {
-		control, err := repos.BillingRepo.GetByOrgID(ctx, params.TenantInfo.OrgID)
-		if err != nil && !errortypes.IsNotFoundError(err) {
-			return nil, err
-		}
-		if control != nil {
-			result.BillingControl = control
-		}
+	if err := resolveDeliveryBillingControl(ctx, repos.BillingRepo, result, params); err != nil {
+		return nil, err
 	}
 	factor, err := resolveFactor(
 		ctx,
@@ -154,6 +119,78 @@ func ResolveDeliveryProfile(
 	}
 	result.Factor = factor
 	return result, nil
+}
+
+func applyLoadedParties(
+	result *DeliveryProfile,
+	entity *invoice.Invoice,
+	params DeliveryProfileParams,
+) {
+	if entity.Customer != nil {
+		result.Customer = entity.Customer
+		if params.IncludeCustomerEmailProfile {
+			result.Email = entity.Customer.EmailProfile
+		}
+		result.Organization = entity.Customer.Organization
+	}
+	if entity.Shipment != nil {
+		result.Shipment = entity.Shipment
+	}
+}
+
+func resolveDeliveryCustomer(
+	ctx context.Context,
+	customerRepo customerports.CustomerRepository,
+	result *DeliveryProfile,
+	params DeliveryProfileParams,
+) error {
+	if !params.IncludeCustomer || customerRepo == nil || params.Entity.CustomerID.IsNil() {
+		return nil
+	}
+	cus, err := customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
+		ID:         params.Entity.CustomerID,
+		TenantInfo: params.TenantInfo,
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
+			IncludeState:          params.IncludeCustomerState,
+			IncludeBillingProfile: params.IncludeCustomerBillingProfile,
+			IncludeEmailProfile:   params.IncludeCustomerEmailProfile,
+		},
+	})
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return err
+	}
+	if cus == nil {
+		return nil
+	}
+	result.Customer = cus
+	if params.IncludeCustomerEmailProfile {
+		result.Email = cus.EmailProfile
+	}
+	if cus.Organization != nil {
+		result.Organization = cus.Organization
+	}
+
+	return nil
+}
+
+func resolveDeliveryBillingControl(
+	ctx context.Context,
+	billingRepo tenantports.BillingControlRepository,
+	result *DeliveryProfile,
+	params DeliveryProfileParams,
+) error {
+	if !params.IncludeBillingControl || billingRepo == nil {
+		return nil
+	}
+	control, err := billingRepo.GetByOrgID(ctx, params.TenantInfo.OrgID)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return err
+	}
+	if control != nil {
+		result.BillingControl = control
+	}
+
+	return nil
 }
 
 func ResolveDeliveryOrganization(

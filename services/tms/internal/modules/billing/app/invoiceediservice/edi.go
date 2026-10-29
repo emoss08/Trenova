@@ -264,6 +264,8 @@ func buildEDISendPlan(
 	case invoice.StatusVoided:
 		plan.Blockers = append(plan.Blockers, ediBlockerVoided)
 	case invoice.StatusPosted:
+	case invoice.StatusDraft:
+		plan.Blockers = append(plan.Blockers, ediBlockerNotPosted)
 	default:
 		plan.Blockers = append(plan.Blockers, ediBlockerNotPosted)
 	}

@@ -261,13 +261,10 @@ func defaultCheck(key billingqueue.CheckKey, facts CheckFacts) *billingqueue.Che
 			contact = terms.Recipients[0]
 		}
 		return &billingqueue.Check{
-			Key:   key,
-			State: billingqueue.CheckStateOK,
-			Code:  billingqueue.CheckCodeTerms,
-			Detail: strings.TrimPrefix(
-				strings.Join([]string{contact, terms.PaymentTerm}, " · "),
-				" · ",
-			),
+			Key:    key,
+			State:  billingqueue.CheckStateOK,
+			Code:   billingqueue.CheckCodeTerms,
+			Detail: strings.TrimPrefix(contact+" · "+terms.PaymentTerm, " · "),
 			Facts: map[string]any{
 				"contact":     contact,
 				"paymentTerm": terms.PaymentTerm,

@@ -293,7 +293,7 @@ func TestResolveDeliveryProfileFindsFreightWithNoHeaderShipment(t *testing.T) {
 
 	profile, err := ResolveDeliveryProfile(
 		t.Context(),
-		DeliveryProfileRepos{ShipmentRepo: shipmentRepo},
+		&DeliveryProfileRepos{ShipmentRepo: shipmentRepo},
 		DeliveryProfileParams{Entity: entity, IncludeShipmentDetails: true},
 	)
 
@@ -322,7 +322,7 @@ func TestResolveDeliveryProfileLoadsTheWholeShipmentWhenThereIsOne(t *testing.T)
 
 	profile, err := ResolveDeliveryProfile(
 		t.Context(),
-		DeliveryProfileRepos{ShipmentRepo: shipmentRepo},
+		&DeliveryProfileRepos{ShipmentRepo: shipmentRepo},
 		DeliveryProfileParams{Entity: entity, IncludeShipmentDetails: true},
 	)
 

@@ -431,7 +431,10 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 			)
 
 			require.NoError(t, err)
-			require.Nil(t, result)
+			require.NotNil(t, result)
+			assert.Same(t, entity, result.Invoice)
+			assert.Nil(t, result.Plan)
+			assert.Empty(t, result.Attempts)
 		})
 	}
 }

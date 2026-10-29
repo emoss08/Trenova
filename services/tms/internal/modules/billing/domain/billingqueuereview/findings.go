@@ -50,6 +50,8 @@ func (d *DetentionDwell) Disagrees() bool {
 	return delta >= eldToleranceMinutes && !d.ELDAmount.Equal(d.BilledAmount)
 }
 
+const optionKeep = "keep"
+
 // FindingInput is what the deterministic checks look at.
 type FindingInput struct {
 	CustomerName     string
@@ -68,7 +70,7 @@ type FindingInput struct {
 // Findings is every issue the item has right now, unsaved. The same input
 // gives the same findings with the same keys, which is what lets the sync
 // that stores them run on every read without raising anything twice.
-func Findings(in FindingInput) []*billingqueue.Issue {
+func Findings(in *FindingInput) []*billingqueue.Issue {
 	out := make([]*billingqueue.Issue, 0, 4)
 	customer := in.CustomerName
 	if customer == "" {
@@ -191,7 +193,7 @@ func detentionFindings(dwells []*DetentionDwell) []*billingqueue.Issue {
 			})
 		} else {
 			options = append(options, billingqueue.IssueOption{
-				Key:    "keep",
+				Key:    optionKeep,
 				Label:  "Keep it · bill " + FormatMoney(dwell.BilledAmount),
 				Amount: decimal.NewNullDecimal(dwell.BilledAmount),
 				Done:   "Detention kept as logged",
@@ -255,7 +257,7 @@ func chargeFindings(
 				FlaggedChargeID: &chargeID,
 				Options: []billingqueue.IssueOption{
 					{
-						Key:    "keep",
+						Key:    optionKeep,
 						Label:  "Keep it · bill " + FormatMoney(line.Billed),
 						Amount: decimal.NewNullDecimal(line.Billed),
 						Done:   capitalize(label) + " kept",
@@ -300,7 +302,7 @@ func chargeFindings(
 						},
 					},
 					{
-						Key:    "keep",
+						Key:    optionKeep,
 						Label:  "Keep " + FormatMoney(line.Billed),
 						Amount: decimal.NewNullDecimal(line.Billed),
 						Done:   capitalize(label) + " kept at " + FormatMoney(line.Billed),

@@ -74,12 +74,12 @@ func (s *Service) DownloadSharedDocument(
 	}, nil
 }
 
-func newShareToken() (string, string, error) {
+func newShareToken() (raw, hash string, err error) {
 	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
+	if _, err = rand.Read(buf); err != nil {
 		return "", "", err
 	}
-	raw := base64.RawURLEncoding.EncodeToString(buf)
+	raw = base64.RawURLEncoding.EncodeToString(buf)
 	return raw, tokenHash(raw), nil
 }
 
