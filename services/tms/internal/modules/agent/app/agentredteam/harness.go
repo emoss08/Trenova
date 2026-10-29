@@ -448,6 +448,7 @@ func (fx *effects) DispatchReads(
 	return outcomes
 }
 
+//nolint:gocritic // agentruntime.TurnEffects takes the call and outcome by value
 func (fx *effects) Dispatch(
 	t *agentruntime.Turn,
 	call toolcall.Call,
@@ -490,6 +491,7 @@ func (fx *effects) Emit(event kernelports.StreamEvent) {
 	fx.emitted = append(fx.emitted, event)
 }
 
+//nolint:gocritic // agentruntime.TurnEffects takes the call and outcome by value
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
 	call *llmports.ToolCall,
@@ -513,7 +515,7 @@ func (fx *effects) Delegate(
 ) []delegation.Run {
 	runs := make([]delegation.Run, 0, len(calls))
 	for idx := range calls {
-		runs = append(runs, fx.delegate(t, calls[idx]))
+		runs = append(runs, fx.delegate(t, &calls[idx]))
 	}
 
 	return runs
@@ -521,12 +523,12 @@ func (fx *effects) Delegate(
 
 func (fx *effects) delegate(
 	t *agentruntime.Turn,
-	call delegation.Call,
+	call *delegation.Call,
 ) delegation.Run {
 	parent := t.Definition()
 	record := DelegationRecord{
 		Parent:     parent,
-		Call:       call,
+		Call:       *call,
 		SourceRead: fx.rec.hasReadSource(),
 	}
 

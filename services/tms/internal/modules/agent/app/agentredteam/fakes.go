@@ -57,12 +57,14 @@ func (r *inboundMessageRepository) GetByID(
 	return r.desk.GetByID(ctx, req)
 }
 
+//nolint:gocritic // the inbound tools' message desk port takes the request by value
 func (d *inboundDesk) CheckLink(_ context.Context, req inboundqueue.LinkRequest) error {
 	d.rec.read(ReadInboundBox, "CheckLink", req.TenantInfo)
 
 	return nil
 }
 
+//nolint:gocritic // the inbound tools' message desk port takes the request by value
 func (d *inboundDesk) Link(
 	ctx context.Context,
 	req inboundqueue.LinkRequest,
@@ -73,6 +75,7 @@ func (d *inboundDesk) Link(
 	})
 }
 
+//nolint:gocritic // the inbound tools' message desk port takes the request by value
 func (d *inboundDesk) Review(
 	ctx context.Context,
 	req inboundqueue.ReviewRequest,
@@ -114,6 +117,7 @@ func (r *memoryRepository) Create(
 	return &created, nil
 }
 
+//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) FindActive(
 	_ context.Context,
 	req agentmemoryports.FindActiveAgentMemoryRequest,
@@ -139,6 +143,8 @@ func (r *memoryRepository) FindActive(
 // service refreshes it. The service counts the use on the row FindActive
 // handed it, which here is the stored row itself, so the fake only records
 // which tenant was touched.
+//
+//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) MarkUsed(
 	_ context.Context,
 	req agentmemoryports.MarkAgentMemoriesUsedRequest,
@@ -178,6 +184,7 @@ func (r *memoryRepository) GetByID(
 	return nil, errortypes.NewNotFoundError("Agent memory not found")
 }
 
+//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) Search(
 	_ context.Context,
 	req agentmemoryports.SearchAgentMemoriesRequest,
@@ -187,6 +194,7 @@ func (r *memoryRepository) Search(
 	return nil, nil
 }
 
+//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) ListActive(
 	_ context.Context,
 	req agentmemoryports.ListActiveAgentMemoriesRequest,
