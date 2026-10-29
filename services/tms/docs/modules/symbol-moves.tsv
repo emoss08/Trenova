@@ -18939,3 +18939,4 @@ github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools.Ne
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools.NewTransferToBillingTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools.NewTransferToBillingTool
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools.NewUndoBillingQueueIssueTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingissuetools.NewUndoBillingQueueIssueTool
 github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools.TransferToBillingTool	github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools.TransferToBillingTool
+github.com/emoss08/trenova/internal/api/graphql/resolver/selectoptionsresolver.SelectOptionsRequest	github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption.Request
