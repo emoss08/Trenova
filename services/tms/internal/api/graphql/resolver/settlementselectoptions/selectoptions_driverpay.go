@@ -238,15 +238,12 @@ func (r *Sources) IFTAFuelType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			fuelType := domaintypes.IFTAFuelType(id.String())
-			if !fuelType.IsValid() {
-				continue
-			}
-			items = append(items, iftaFuelTypeSelectOptionItem(fuelType))
-		}
-
+		items := selectoption.OrderedItems(
+			req.IDs,
+			domaintypes.AllIFTAFuelTypes(),
+			iftaFuelTypeID,
+			iftaFuelTypeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

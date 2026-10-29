@@ -97,13 +97,17 @@ func iftaFuelTypeMatches(fuelType domaintypes.IFTAFuelType, needle string) bool 
 		strings.Contains(strings.ToLower(fuelType.Label()), needle)
 }
 
+func iftaFuelTypeID(fuelType domaintypes.IFTAFuelType) pulid.ID {
+	return pulid.ID(fuelType.String())
+}
+
 func iftaFuelTypeSelectOptionItem(
 	fuelType domaintypes.IFTAFuelType,
 ) selectoption.Item {
 	return selectoption.ItemFor(
 		iftaFuelTypeSelectOption(fuelType),
 		0,
-		pulid.ID(fuelType.String()),
+		iftaFuelTypeID(fuelType),
 	)
 }
 
