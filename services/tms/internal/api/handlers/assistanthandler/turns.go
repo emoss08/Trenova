@@ -116,7 +116,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), assistantturnports.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), &assistantturnports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
@@ -429,7 +429,7 @@ func (h *Handler) stopTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), assistantturnports.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), &assistantturnports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,

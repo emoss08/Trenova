@@ -114,7 +114,6 @@ func (r *memoryRepository) Create(
 	return &created, nil
 }
 
-//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) FindActive(
 	_ context.Context,
 	req *agentmemoryports.FindActiveAgentMemoryRequest,
@@ -140,8 +139,6 @@ func (r *memoryRepository) FindActive(
 // service refreshes it. The service counts the use on the row FindActive
 // handed it, which here is the stored row itself, so the fake only records
 // which tenant was touched.
-//
-//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) MarkUsed(
 	_ context.Context,
 	req *agentmemoryports.MarkAgentMemoriesUsedRequest,
@@ -181,7 +178,6 @@ func (r *memoryRepository) GetByID(
 	return nil, errortypes.NewNotFoundError("Agent memory not found")
 }
 
-//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) Search(
 	_ context.Context,
 	req *agentmemoryports.SearchAgentMemoriesRequest,
@@ -191,7 +187,6 @@ func (r *memoryRepository) Search(
 	return nil, nil
 }
 
-//nolint:gocritic // agentmemoryports.AgentMemoryRepository takes the request by value
 func (r *memoryRepository) ListActive(
 	_ context.Context,
 	req *agentmemoryports.ListActiveAgentMemoriesRequest,

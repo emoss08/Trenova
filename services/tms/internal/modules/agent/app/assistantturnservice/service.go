@@ -140,8 +140,6 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 }
 
 // Active is the turn a conversation is still producing, or nil.
-//
-//nolint:gocritic // AssistantTurnRepository and the services that read turns take the request by value
 func (s *Service) Active(
 	ctx context.Context,
 	req *assistantturnports.ActiveAssistantTurnRequest,
@@ -152,8 +150,6 @@ func (s *Service) Active(
 // ListLive is every reply one person still has in progress, across all of
 // their conversations, so a reply started in one tab can be found from any
 // other.
-//
-//nolint:gocritic // AssistantTurnRepository and the services that read turns take the request by value
 func (s *Service) ListLive(
 	ctx context.Context,
 	req *assistantturnports.ListLiveAssistantTurnsRequest,
@@ -162,13 +158,11 @@ func (s *Service) ListLive(
 }
 
 // Get reads one turn, scoped to whoever asked for it.
-//
-//nolint:gocritic // AssistantTurnRepository and the services that read turns take the request by value
 func (s *Service) Get(
 	ctx context.Context,
-	req assistantturnports.GetAssistantTurnRequest,
+	req *assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
-	return s.turns.GetByID(ctx, &req)
+	return s.turns.GetByID(ctx, req)
 }
 
 // Close closes the turn's record and tells the person's other tabs the reply

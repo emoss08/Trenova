@@ -734,7 +734,7 @@ func (c *Conversation) lookupTurn(
 
 	var lastErr error
 	for range lookupAttempts {
-		turn, err := c.session.bench.Turns.Get(ctx, req)
+		turn, err := c.session.bench.Turns.Get(ctx, &req)
 		if err == nil {
 			return turn, nil
 		}
