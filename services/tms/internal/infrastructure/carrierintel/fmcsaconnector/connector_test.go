@@ -14,6 +14,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -157,8 +158,8 @@ func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	assert.Empty(t, prices)
 	assert.Equal(
 		t,
-		carrierintel.BillingModelFree,
-		prices.Price(carrierintel.EndpointComposite).Model,
+		carrierintelusage.BillingModelFree,
+		prices.Price(carrierintelusage.EndpointComposite).Model,
 	)
 }
 
@@ -268,7 +269,7 @@ func TestClient_LookupByDOT(t *testing.T) {
 		Depth:      carrierintel.LookupDepthFull,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, carrierintel.EndpointComposite, result.Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointComposite, result.Endpoint)
 	assert.Equal(t, carrierintel.LookupDepthFMCSA, result.Depth)
 	assert.Equal(t, "818175-MC277621", result.ProviderRef)
 	assert.Contains(t, string(result.Raw), `"basics"`)
@@ -276,7 +277,7 @@ func TestClient_LookupByDOT(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
-	assert.Equal(t, carrierintel.EndpointComposite, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointComposite, calls[0].Endpoint)
 	assert.Equal(t, "818175", calls[0].DOTNumber)
 	assert.True(t, calls[0].Found)
 	assert.Equal(t, 1, calls[0].Units)
@@ -454,10 +455,10 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 3)
-	assert.Equal(t, carrierintel.EndpointSearch, calls[0].Endpoint)
-	assert.Equal(t, carrierintel.EndpointSearch, calls[1].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointSearch, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointSearch, calls[1].Endpoint)
 	assert.False(t, calls[1].Found)
-	assert.Equal(t, carrierintel.EndpointAutocomplete, calls[2].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointAutocomplete, calls[2].Endpoint)
 }
 
 func TestNormalizeComposite(t *testing.T) {

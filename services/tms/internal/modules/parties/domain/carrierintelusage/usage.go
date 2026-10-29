@@ -1,9 +1,10 @@
-package carrierintel
+package carrierintelusage
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -70,26 +71,26 @@ func BillingDedupeKey(endpoint Endpoint, price EndpointPrice, dotNumber string, 
 type CarrierIntelUsageRecord struct {
 	keel.Table `keel:"carrier_intel_usage_ledger"`
 
-	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:ciuse_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
-	Provider        integration.Type `json:"provider"        keel:"provider"`
-	Endpoint        Endpoint         `json:"endpoint"        keel:"endpoint"`
-	Purpose         Purpose          `json:"purpose"         keel:"purpose"`
-	DOTNumber       string           `json:"dotNumber"       keel:"dot_number,nullzero"`
-	CarrierID       pulid.ID         `json:"carrierId"       keel:"carrier_id,nullzero"`
-	Billable        bool             `json:"billable"        keel:"billable"`
-	BillableUnits   int              `json:"billableUnits"   keel:"billable_units"`
-	EstimatedCost   decimal.Decimal  `json:"estimatedCost"   keel:"estimated_cost"`
-	Currency        string           `json:"currency"        keel:"currency"`
-	DedupeKey       string           `json:"dedupeKey"       keel:"dedupe_key,nullzero"`
-	StatusCode      int              `json:"statusCode"      keel:"status_code"`
-	Outcome         UsageOutcome     `json:"outcome"         keel:"outcome"`
-	LatencyMS       int              `json:"latencyMs"       keel:"latency_ms"`
-	InitiatedByType string           `json:"initiatedByType" keel:"initiated_by_type"`
-	InitiatedByID   pulid.ID         `json:"initiatedById"   keel:"initiated_by_id,nullzero"`
-	WorkflowID      string           `json:"workflowId"      keel:"workflow_id,nullzero"`
-	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
+	ID              pulid.ID             `json:"id"              keel:"id,pk,autoid:ciuse_"`
+	BusinessUnitID  pulid.ID             `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID             `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	Provider        integration.Type     `json:"provider"        keel:"provider"`
+	Endpoint        Endpoint             `json:"endpoint"        keel:"endpoint"`
+	Purpose         carrierintel.Purpose `json:"purpose"         keel:"purpose"`
+	DOTNumber       string               `json:"dotNumber"       keel:"dot_number,nullzero"`
+	CarrierID       pulid.ID             `json:"carrierId"       keel:"carrier_id,nullzero"`
+	Billable        bool                 `json:"billable"        keel:"billable"`
+	BillableUnits   int                  `json:"billableUnits"   keel:"billable_units"`
+	EstimatedCost   decimal.Decimal      `json:"estimatedCost"   keel:"estimated_cost"`
+	Currency        string               `json:"currency"        keel:"currency"`
+	DedupeKey       string               `json:"dedupeKey"       keel:"dedupe_key,nullzero"`
+	StatusCode      int                  `json:"statusCode"      keel:"status_code"`
+	Outcome         UsageOutcome         `json:"outcome"         keel:"outcome"`
+	LatencyMS       int                  `json:"latencyMs"       keel:"latency_ms"`
+	InitiatedByType string               `json:"initiatedByType" keel:"initiated_by_type"`
+	InitiatedByID   pulid.ID             `json:"initiatedById"   keel:"initiated_by_id,nullzero"`
+	WorkflowID      string               `json:"workflowId"      keel:"workflow_id,nullzero"`
+	CreatedAt       int64                `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 func (u *CarrierIntelUsageRecord) BeforeCreate(_ context.Context) error {

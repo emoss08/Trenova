@@ -1,10 +1,10 @@
-package carrierintel_test
+package carrierinteldiff_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,6 +52,6 @@ func TestFormatFieldValue(t *testing.T) {
 		{name: "text", path: "safety.rating", value: "Satisfactory", want: "Satisfactory"},
 	}
 	for _, tc := range cases {
-		assert.Equal(t, tc.want, carrierintel.FormatFieldValue(tc.path, tc.value), tc.name)
+		assert.Equal(t, tc.want, carrierinteldiff.FormatFieldValue(tc.path, tc.value), tc.name)
 	}
 }

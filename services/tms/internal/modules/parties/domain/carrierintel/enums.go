@@ -87,25 +87,6 @@ func (a RuleAction) Severity() Severity {
 	}
 }
 
-type EnrollmentPolicy string
-
-const (
-	EnrollmentPolicyAllActive    = EnrollmentPolicy("AllActive")
-	EnrollmentPolicyRecentlyUsed = EnrollmentPolicy("RecentlyUsed")
-	EnrollmentPolicyManual       = EnrollmentPolicy("Manual")
-)
-
-func (p EnrollmentPolicy) String() string { return string(p) }
-
-func (p EnrollmentPolicy) IsValid() bool {
-	switch p {
-	case EnrollmentPolicyAllActive, EnrollmentPolicyRecentlyUsed, EnrollmentPolicyManual:
-		return true
-	default:
-		return false
-	}
-}
-
 type SubjectType string
 
 const (
@@ -164,97 +145,6 @@ func (d LookupDepth) Rank() int {
 
 func (d LookupDepth) Satisfies(minimum LookupDepth) bool {
 	return d.Rank() >= minimum.Rank()
-}
-
-type SnapshotSource string
-
-const (
-	SnapshotSourcePrimary         = SnapshotSource("Primary")
-	SnapshotSourceFallback        = SnapshotSource("Fallback")
-	SnapshotSourceChangeFeedPatch = SnapshotSource("ChangeFeedPatch")
-)
-
-func (s SnapshotSource) String() string { return string(s) }
-
-func (s SnapshotSource) IsValid() bool {
-	switch s {
-	case SnapshotSourcePrimary, SnapshotSourceFallback, SnapshotSourceChangeFeedPatch:
-		return true
-	default:
-		return false
-	}
-}
-
-type EventSource string
-
-const (
-	EventSourceNativeChangeFeed      = EventSource("NativeChangeFeed")
-	EventSourceSnapshotDiff          = EventSource("SnapshotDiff")
-	EventSourceRuleEvaluation        = EventSource("RuleEvaluation")
-	EventSourceEquipmentVerification = EventSource("EquipmentVerification")
-	EventSourceEnrollment            = EventSource("Enrollment")
-	EventSourceProviderError         = EventSource("ProviderError")
-	EventSourceOverride              = EventSource("Override")
-)
-
-func (s EventSource) String() string { return string(s) }
-
-func (s EventSource) IsValid() bool {
-	switch s {
-	case EventSourceNativeChangeFeed, EventSourceSnapshotDiff, EventSourceRuleEvaluation,
-		EventSourceEquipmentVerification, EventSourceEnrollment, EventSourceProviderError,
-		EventSourceOverride:
-		return true
-	default:
-		return false
-	}
-}
-
-type EventStatus string
-
-const (
-	EventStatusOpen         = EventStatus("Open")
-	EventStatusAcknowledged = EventStatus("Acknowledged")
-	EventStatusResolved     = EventStatus("Resolved")
-	EventStatusDismissed    = EventStatus("Dismissed")
-)
-
-func (s EventStatus) String() string { return string(s) }
-
-func (s EventStatus) IsValid() bool {
-	switch s {
-	case EventStatusOpen, EventStatusAcknowledged, EventStatusResolved, EventStatusDismissed:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s EventStatus) IsClosed() bool {
-	return s == EventStatusResolved || s == EventStatusDismissed
-}
-
-type EventResolution string
-
-const (
-	EventResolutionCarrierUpdated   = EventResolution("CarrierUpdated")
-	EventResolutionCarrierBlocked   = EventResolution("CarrierBlocked")
-	EventResolutionOverrideGranted  = EventResolution("OverrideGranted")
-	EventResolutionNoActionRequired = EventResolution("NoActionRequired")
-	EventResolutionFalsePositive    = EventResolution("FalsePositive")
-)
-
-func (r EventResolution) String() string { return string(r) }
-
-func (r EventResolution) IsValid() bool {
-	switch r {
-	case EventResolutionCarrierUpdated, EventResolutionCarrierBlocked,
-		EventResolutionOverrideGranted, EventResolutionNoActionRequired,
-		EventResolutionFalsePositive:
-		return true
-	default:
-		return false
-	}
 }
 
 type Severity string
@@ -335,60 +225,6 @@ func (l RiskLevel) Rank() int {
 	}
 }
 
-type ReviewState string
-
-const (
-	ReviewStateNone        = ReviewState("None")
-	ReviewStateNeedsReview = ReviewState("NeedsReview")
-	ReviewStateReviewed    = ReviewState("Reviewed")
-)
-
-func (s ReviewState) String() string { return string(s) }
-
-func (s ReviewState) IsValid() bool {
-	switch s {
-	case ReviewStateNone, ReviewStateNeedsReview, ReviewStateReviewed:
-		return true
-	default:
-		return false
-	}
-}
-
-type VerificationResult string
-
-const (
-	VerificationResultMatch         = VerificationResult("Match")
-	VerificationResultMismatch      = VerificationResult("Mismatch")
-	VerificationResultNotFound      = VerificationResult("NotFound")
-	VerificationResultUnverifiable  = VerificationResult("Unverifiable")
-	VerificationResultProviderError = VerificationResult("ProviderError")
-)
-
-func (r VerificationResult) String() string { return string(r) }
-
-func (r VerificationResult) IsValid() bool {
-	switch r {
-	case VerificationResultMatch, VerificationResultMismatch, VerificationResultNotFound,
-		VerificationResultUnverifiable, VerificationResultProviderError:
-		return true
-	default:
-		return false
-	}
-}
-
-type OutagePolicy string
-
-const (
-	OutagePolicyFailOpen   = OutagePolicy("FailOpen")
-	OutagePolicyFailClosed = OutagePolicy("FailClosed")
-)
-
-func (p OutagePolicy) String() string { return string(p) }
-
-func (p OutagePolicy) IsValid() bool {
-	return p == OutagePolicyFailOpen || p == OutagePolicyFailClosed
-}
-
 type Purpose string
 
 const (
@@ -448,101 +284,6 @@ func (m EnrollmentMode) IsValid() bool {
 	return m == EnrollmentModeNative || m == EnrollmentModeSnapshotDiff
 }
 
-type DesiredState string
-
-const (
-	DesiredStateEnrolled    = DesiredState("Enrolled")
-	DesiredStateNotEnrolled = DesiredState("NotEnrolled")
-)
-
-func (s DesiredState) String() string { return string(s) }
-
-func (s DesiredState) IsValid() bool {
-	return s == DesiredStateEnrolled || s == DesiredStateNotEnrolled
-}
-
-type VendorState string
-
-const (
-	VendorStateUnknown       = VendorState("Unknown")
-	VendorStatePendingAdd    = VendorState("PendingAdd")
-	VendorStateActive        = VendorState("Active")
-	VendorStatePendingRemove = VendorState("PendingRemove")
-	VendorStateRemoved       = VendorState("Removed")
-	VendorStateFailed        = VendorState("Failed")
-)
-
-func (s VendorState) String() string { return string(s) }
-
-func (s VendorState) IsValid() bool {
-	switch s {
-	case VendorStateUnknown, VendorStatePendingAdd, VendorStateActive, VendorStatePendingRemove,
-		VendorStateRemoved, VendorStateFailed:
-		return true
-	default:
-		return false
-	}
-}
-
-type EnrollmentReason string
-
-const (
-	EnrollmentReasonPolicyAllActive    = EnrollmentReason("PolicyAllActive")
-	EnrollmentReasonPolicyRecentUse    = EnrollmentReason("PolicyRecentUse")
-	EnrollmentReasonAssignedOrTendered = EnrollmentReason("AssignedOrTendered")
-	EnrollmentReasonManual             = EnrollmentReason("Manual")
-	EnrollmentReasonSelfMonitor        = EnrollmentReason("SelfMonitor")
-	EnrollmentReasonCustomerBroker     = EnrollmentReason("CustomerBroker")
-)
-
-func (r EnrollmentReason) String() string { return string(r) }
-
-func (r EnrollmentReason) IsValid() bool {
-	switch r {
-	case EnrollmentReasonPolicyAllActive, EnrollmentReasonPolicyRecentUse,
-		EnrollmentReasonAssignedOrTendered, EnrollmentReasonManual,
-		EnrollmentReasonSelfMonitor, EnrollmentReasonCustomerBroker:
-		return true
-	default:
-		return false
-	}
-}
-
-type FeedType string
-
-const (
-	FeedTypeChangeFeed      = FeedType("ChangeFeed")
-	FeedTypeSnapshotRefresh = FeedType("SnapshotRefresh")
-)
-
-func (t FeedType) String() string { return string(t) }
-
-func (t FeedType) IsValid() bool {
-	return t == FeedTypeChangeFeed || t == FeedTypeSnapshotRefresh
-}
-
-type FeedPauseReason string
-
-const (
-	FeedPauseReasonNone            = FeedPauseReason("")
-	FeedPauseReasonPaymentRequired = FeedPauseReason("PaymentRequired")
-	FeedPauseReasonSpendCap        = FeedPauseReason("SpendCap")
-	FeedPauseReasonUnauthorized    = FeedPauseReason("Unauthorized")
-	FeedPauseReasonDisabled        = FeedPauseReason("Disabled")
-)
-
-func (r FeedPauseReason) String() string { return string(r) }
-
-func (r FeedPauseReason) IsValid() bool {
-	switch r {
-	case FeedPauseReasonNone, FeedPauseReasonPaymentRequired, FeedPauseReasonSpendCap,
-		FeedPauseReasonUnauthorized, FeedPauseReasonDisabled:
-		return true
-	default:
-		return false
-	}
-}
-
 type UnitType string
 
 const (
@@ -560,31 +301,6 @@ func (t UnitType) String() string { return string(t) }
 func (t UnitType) IsValid() bool {
 	switch t {
 	case UnitTypeTractor, UnitTypeTrailer, UnitTypeStraight:
-		return true
-	default:
-		return false
-	}
-}
-
-type UsageOutcome string
-
-const (
-	UsageOutcomeSuccess     = UsageOutcome("Success")
-	UsageOutcomeNotFound    = UsageOutcome("NotFound")
-	UsageOutcomeRateLimited = UsageOutcome("RateLimited")
-	UsageOutcomeClientError = UsageOutcome("ClientError")
-	UsageOutcomeServerError = UsageOutcome("ServerError")
-	UsageOutcomeTransport   = UsageOutcome("TransportError")
-	UsageOutcomeDenied      = UsageOutcome("Denied")
-)
-
-func (o UsageOutcome) String() string { return string(o) }
-
-func (o UsageOutcome) IsValid() bool {
-	switch o {
-	case UsageOutcomeSuccess, UsageOutcomeNotFound, UsageOutcomeRateLimited,
-		UsageOutcomeClientError, UsageOutcomeServerError, UsageOutcomeTransport,
-		UsageOutcomeDenied:
 		return true
 	default:
 		return false

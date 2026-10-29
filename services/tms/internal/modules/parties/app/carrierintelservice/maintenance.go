@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -194,7 +195,7 @@ type UsageSummary struct {
 	Cap            *decimal.Decimal
 	SoftCapPercent int
 	ByEndpoint     []carrierintelports.CarrierIntelUsageSummaryRow
-	Daily          []*carrierintel.CarrierIntelUsageDaily
+	Daily          []*carrierintelusage.CarrierIntelUsageDaily
 }
 
 func (s *Service) Usage(

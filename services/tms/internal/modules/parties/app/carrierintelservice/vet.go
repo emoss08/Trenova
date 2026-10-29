@@ -6,6 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -71,7 +74,7 @@ func (s *Service) VetCarrier(ctx context.Context, req *VetCarrierRequest) (*Fetc
 		MinDepth:   depth,
 		Purpose:    purpose,
 		Force:      req.Force,
-		Source:     carrierintel.EventSourceSnapshotDiff,
+		Source:     carrierintelevent.EventSourceSnapshotDiff,
 	})
 }
 
@@ -93,7 +96,7 @@ func (s *Service) LookupProspect(
 			"Enter a DOT or MC number")
 	}
 
-	subjectID := carrierintel.ProspectSubjectID(dot)
+	subjectID := carrierintelsnapshot.ProspectSubjectID(dot)
 	if dot == "" {
 		subjectID = "MC" + docket
 	}
@@ -112,7 +115,7 @@ func (s *Service) LookupProspect(
 		},
 		MinDepth: depth,
 		Purpose:  carrierintel.PurposeSourcing,
-		Source:   carrierintel.EventSourceSnapshotDiff,
+		Source:   carrierintelevent.EventSourceSnapshotDiff,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -135,7 +138,7 @@ func (s *Service) LookupProspect(
 type SelfIntelligenceResult struct {
 	Configured bool
 	DOTNumber  string
-	Snapshot   *carrierintel.CarrierIntelSnapshot
+	Snapshot   *carrierintelsnapshot.CarrierIntelSnapshot
 }
 
 func (s *Service) MyIntelligence(
@@ -172,7 +175,7 @@ func (s *Service) MyIntelligence(
 		Subject:    *org,
 		Purpose:    carrierintel.PurposeSelfMonitor,
 		Force:      true,
-		Source:     carrierintel.EventSourceSnapshotDiff,
+		Source:     carrierintelevent.EventSourceSnapshotDiff,
 	})
 	if err != nil {
 		return nil, err
@@ -203,7 +206,7 @@ func (s *Service) VetCustomerBroker(
 		MinDepth:   carrierintel.LookupDepthFMCSA,
 		Purpose:    carrierintel.PurposeVet,
 		Force:      force,
-		Source:     carrierintel.EventSourceSnapshotDiff,
+		Source:     carrierintelevent.EventSourceSnapshotDiff,
 	})
 }
 
@@ -211,7 +214,7 @@ func (s *Service) SyncPlan(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
-) (*carrierintel.SyncPlan, error) {
+) (*carrierintelsync.SyncPlan, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -238,13 +241,13 @@ func (s *Service) SyncPlan(
 		return nil, err
 	}
 	if snapshot == nil || snapshot.NotFound {
-		empty := carrierintel.PlanCarrierSync(nil, nil, control.SyncSettings(), s.now())
+		empty := carrierintelsync.PlanCarrierSync(nil, nil, control.SyncSettings(), s.now())
 		return &empty, nil
 	}
-	plan := carrierintel.PlanCarrierSync(
+	plan := carrierintelsync.PlanCarrierSync(
 		entity,
 		snapshot.Profile,
-		carrierintel.SyncSettings{},
+		carrierintelsync.SyncSettings{},
 		s.now(),
 	)
 	return &plan, nil
@@ -253,7 +256,7 @@ func (s *Service) SyncPlan(
 type ApplySuggestionsRequest struct {
 	TenantInfo pagination.TenantInfo
 	CarrierID  pulid.ID
-	Fields     []carrierintel.SyncField
+	Fields     []carrierintelsync.SyncField
 	PolicyIDs  []pulid.ID
 }
 

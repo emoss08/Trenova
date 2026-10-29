@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -303,7 +304,7 @@ func DescribeServiceFailure(
 // CarrierIntelEventOnTower reports whether a change belongs on the feed.
 // An informational or low finding is part of the carrier's record rather
 // than something a person has to act on, and a closed event is over.
-func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
+func CarrierIntelEventOnTower(entity *carrierintelevent.CarrierIntelEvent) bool {
 	if entity == nil || entity.Status.IsClosed() {
 		return false
 	}
@@ -315,7 +316,7 @@ func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
 // DescribeCarrierIntelEvent is a change on a carrier's authority, insurance
 // or safety record.
 func DescribeCarrierIntelEvent(
-	entity *carrierintel.CarrierIntelEvent,
+	entity *carrierintelevent.CarrierIntelEvent,
 ) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	switch entity.Severity {

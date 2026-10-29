@@ -1,9 +1,11 @@
-package carrierintel
+package carrierinteloverride
 
 import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -12,21 +14,21 @@ import (
 type CarrierIntelOverride struct {
 	keel.Table `keel:"carrier_intel_overrides"`
 
-	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ciovr_"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
-	RuleCode       RuleCode `json:"ruleCode"       keel:"rule_code"`
-	Reason         string   `json:"reason"         keel:"reason"`
-	GrantedByID    pulid.ID `json:"grantedById"    keel:"granted_by_id"`
-	GrantedAt      int64    `json:"grantedAt"      keel:"granted_at"`
-	ExpiresAt      int64    `json:"expiresAt"      keel:"expires_at"`
-	RevokedByID    pulid.ID `json:"revokedById"    keel:"revoked_by_id,nullzero"`
-	RevokedAt      *int64   `json:"revokedAt"      keel:"revoked_at"`
-	RevokeReason   string   `json:"revokeReason"   keel:"revoke_reason,nullzero"`
-	Version        int64    `json:"version"        keel:"version,version"`
-	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	ID             pulid.ID                  `json:"id"             keel:"id,pk,autoid:ciovr_"`
+	BusinessUnitID pulid.ID                  `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID                  `json:"organizationId" keel:"organization_id,pk,tenant"`
+	CarrierID      pulid.ID                  `json:"carrierId"      keel:"carrier_id"`
+	RuleCode       carrierintelrule.RuleCode `json:"ruleCode"       keel:"rule_code"`
+	Reason         string                    `json:"reason"         keel:"reason"`
+	GrantedByID    pulid.ID                  `json:"grantedById"    keel:"granted_by_id"`
+	GrantedAt      int64                     `json:"grantedAt"      keel:"granted_at"`
+	ExpiresAt      int64                     `json:"expiresAt"      keel:"expires_at"`
+	RevokedByID    pulid.ID                  `json:"revokedById"    keel:"revoked_by_id,nullzero"`
+	RevokedAt      *int64                    `json:"revokedAt"      keel:"revoked_at"`
+	RevokeReason   string                    `json:"revokeReason"   keel:"revoke_reason,nullzero"`
+	Version        int64                     `json:"version"        keel:"version,version"`
+	CreatedAt      int64                     `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                     `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (o *CarrierIntelOverride) Validate(multiErr *errortypes.MultiError) {
@@ -40,7 +42,7 @@ func (o *CarrierIntelOverride) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	def, ok := RuleByCode(o.RuleCode)
+	def, ok := carrierintelrule.RuleByCode(o.RuleCode)
 	switch {
 	case !ok:
 		multiErr.Add("ruleCode", errortypes.ErrInvalid, "Rule is invalid")
@@ -56,7 +58,7 @@ func (o *CarrierIntelOverride) Validate(multiErr *errortypes.MultiError) {
 			"An override must expire after it is granted",
 		)
 	}
-	if o.ExpiresAt-o.GrantedAt > MaxOverrideDurationSeconds {
+	if o.ExpiresAt-o.GrantedAt > carrierintelcontrol.MaxOverrideDurationSeconds {
 		multiErr.Add(
 			"expiresAt",
 			errortypes.ErrInvalid,
@@ -84,12 +86,12 @@ func (o *CarrierIntelOverride) Revoke(userID pulid.ID, reason string, now int64)
 	return nil
 }
 
-func (o *CarrierIntelOverride) Ref() OverrideRef {
-	return OverrideRef{ID: o.ID, RuleCode: o.RuleCode, ExpiresAt: o.ExpiresAt}
+func (o *CarrierIntelOverride) Ref() carrierintelrule.OverrideRef {
+	return carrierintelrule.OverrideRef{ID: o.ID, RuleCode: o.RuleCode, ExpiresAt: o.ExpiresAt}
 }
 
-func OverrideRefs(overrides []*CarrierIntelOverride, now int64) []OverrideRef {
-	refs := make([]OverrideRef, 0, len(overrides))
+func OverrideRefs(overrides []*CarrierIntelOverride, now int64) []carrierintelrule.OverrideRef {
+	refs := make([]carrierintelrule.OverrideRef, 0, len(overrides))
 	for _, o := range overrides {
 		if o != nil && o.IsActive(now) {
 			refs = append(refs, o.Ref())

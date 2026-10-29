@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -89,7 +89,7 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():           permission.ResourceBenefitPlan,
 	reflect.TypeFor[employment.WorkerEmploymentVerification]():     permission.ResourceQualification,
 	reflect.TypeFor[fleetsafety.WorkerSafetyViolation]():           permission.ResourceWorkerSafetyEvent,
-	reflect.TypeFor[carrierintel.CarrierIntelEvent]():              permission.ResourceCarrierIntelligence,
+	reflect.TypeFor[carrierintelevent.CarrierIntelEvent]():         permission.ResourceCarrierIntelligence,
 	reflect.TypeFor[driverpay.PayProfile]():                        permission.ResourceDriverPayProfile,
 	reflect.TypeFor[driverpay.WorkerPayAssignment]():               permission.ResourceDriverPayProfile,
 	reflect.TypeFor[driversettlement.PayEvent]():                   permission.ResourceDriverSettlement,

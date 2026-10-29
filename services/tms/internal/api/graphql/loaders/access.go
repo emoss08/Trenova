@@ -42,7 +42,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -1227,11 +1228,11 @@ func (f *InvoiceEDISendPlanByInvoiceIDLoaderFactory) Attach(
 func CarrierIntelSnapshotByCarrierID(
 	ctx context.Context,
 	key string,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
+		func(s *set) *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot] {
 			return s.carrierIntelSnapshotByCarrierID
 		},
 	)
@@ -1249,11 +1250,11 @@ func (f *CarrierIntelSnapshotByCarrierIDLoaderFactory) Attach(
 func CarrierIntelSnapshotByCustomerID(
 	ctx context.Context,
 	key string,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
+		func(s *set) *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot] {
 			return s.carrierIntelSnapshotByCustomerID
 		},
 	)
@@ -1398,11 +1399,11 @@ func (f *CaptureRecordLabelLoaderFactory) Attach(
 func CarrierMonitoringEnrollmentByCarrierID(
 	ctx context.Context,
 	key string,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment] {
+		func(s *set) *dataloadgen.Loader[string, []*carrierintelenrollment.CarrierMonitoringEnrollment] {
 			return s.carrierMonitoringEnrollmentByCarrierID
 		},
 	)

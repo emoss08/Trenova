@@ -14,6 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelmerge"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -29,25 +37,25 @@ import (
 
 type ingestInput struct {
 	tenant  pagination.TenantInfo
-	control *carrierintel.CarrierIntelControl
+	control *carrierintelcontrol.CarrierIntelControl
 	subject carrierintelports.CarrierIntelSubject
 	bound   *boundProvider
 	result  *carrierintelports.CarrierIntelLookupResult
-	current *carrierintel.CarrierIntelSnapshot
-	source  carrierintel.EventSource
+	current *carrierintelsnapshot.CarrierIntelSnapshot
+	source  carrierintelevent.EventSource
 	purpose carrierintel.Purpose
 }
 
 func (s *Service) evaluateSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *carrierintel.CarrierIntelControl,
+	control *carrierintelcontrol.CarrierIntelControl,
 	subject carrierintelports.CarrierIntelSubject,
 	profile *carrierintel.Profile,
 	notFound bool,
-) ([]carrierintel.Finding, error) {
+) ([]carrierintelrule.Finding, error) {
 	now := s.now()
-	var overrides []carrierintel.OverrideRef
+	var overrides []carrierintelrule.OverrideRef
 	if subject.CarrierID.IsNotNil() {
 		active, err := s.overrideRepo.ListActiveByCarrierIDs(
 			ctx, tenantInfo, []pulid.ID{subject.CarrierID}, now,
@@ -55,10 +63,10 @@ func (s *Service) evaluateSubject(
 		if err != nil {
 			return nil, err
 		}
-		overrides = carrierintel.OverrideRefs(active, now)
+		overrides = carrierinteloverride.OverrideRefs(active, now)
 	}
 
-	return carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
+	return carrierintelrule.EvaluateFindings(&carrierintelrule.EvaluateInput{
 		Profile:         profile,
 		Now:             now,
 		Subject:         subject.SubjectType,
@@ -78,13 +86,13 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 		current = nil
 	}
 
-	resolved := carrierintel.ProfileMergeResult{
+	resolved := carrierintelmerge.ProfileMergeResult{
 		Profile:        &carrierintel.Profile{Coverage: []carrierintel.Section{}},
 		Depth:          result.Depth,
 		DepthFetchedAt: now,
 	}
 	if !result.NotFound && result.Profile != nil {
-		resolved = carrierintel.ResolveIncomingProfile(&carrierintel.ProfileMergeInput{
+		resolved = carrierintelmerge.ResolveIncomingProfile(&carrierintelmerge.ProfileMergeInput{
 			Current:       current,
 			Incoming:      result.Profile,
 			IncomingDepth: result.Depth,
@@ -117,15 +125,15 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 		return s.confirmUnchanged(ctx, in, current, findings, now)
 	}
 
-	var priorFindings []carrierintel.Finding
-	var changes []carrierintel.FieldChange
+	var priorFindings []carrierintelrule.Finding
+	var changes []carrierinteldiff.FieldChange
 	if current != nil {
 		priorFindings = current.Findings
 		if !current.NotFound && !result.NotFound {
-			changes, err = carrierintel.DiffProfiles(
+			changes, err = carrierinteldiff.DiffProfiles(
 				current.Profile,
 				profile,
-				carrierintel.DiffOptionsForDepths(current.Depth, result.Depth),
+				carrierinteldiff.DiffOptionsForDepths(current.Depth, result.Depth),
 			)
 			if err != nil {
 				return nil, err
@@ -135,7 +143,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 
 	findings = s.confirmNewBlocks(ctx, in, priorFindings, findings)
 
-	snapshot := &carrierintel.CarrierIntelSnapshot{
+	snapshot := &carrierintelsnapshot.CarrierIntelSnapshot{
 		OrganizationID: in.tenant.OrgID,
 		BusinessUnitID: in.tenant.BuID,
 		SubjectType:    in.subject.SubjectType,
@@ -159,12 +167,12 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 	snapshot.ApplyFindings(findings, in.control.PolicyVersion)
 	snapshot.ReviewState = nextReviewState(current, priorFindings, findings)
 
-	raised := carrierintel.NewlyRaised(priorFindings, findings)
+	raised := carrierintelrule.NewlyRaised(priorFindings, findings)
 	events := s.buildEvents(in, snapshot, changes, raised, current, now)
 
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if len(result.Raw) > 0 {
-			raw, rawErr := s.rawRepo.Insert(txCtx, &carrierintel.CarrierIntelRawPayload{
+			raw, rawErr := s.rawRepo.Insert(txCtx, &carrierintelsnapshot.CarrierIntelRawPayload{
 				OrganizationID: in.tenant.OrgID,
 				BusinessUnitID: in.tenant.BuID,
 				Provider:       in.bound.provider,
@@ -207,8 +215,8 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 func (s *Service) confirmUnchanged(
 	ctx context.Context,
 	in *ingestInput,
-	current *carrierintel.CarrierIntelSnapshot,
-	findings []carrierintel.Finding,
+	current *carrierintelsnapshot.CarrierIntelSnapshot,
+	findings []carrierintelrule.Finding,
 	now int64,
 ) (*FetchResult, error) {
 	current.DepthFetchedAt = current.DepthAsOf()
@@ -217,7 +225,7 @@ func (s *Service) confirmUnchanged(
 	}
 	current.FetchedDepth = in.result.Depth
 	current.ConfirmedAt = &now
-	raised := carrierintel.NewlyRaised(current.Findings, findings)
+	raised := carrierintelrule.NewlyRaised(current.Findings, findings)
 	priorFindings := current.Findings
 	current.ApplyFindings(findings, in.control.PolicyVersion)
 	current.ReviewState = nextReviewState(current, priorFindings, findings)
@@ -250,13 +258,13 @@ func (s *Service) confirmUnchanged(
 func (s *Service) confirmNewBlocks(
 	ctx context.Context,
 	in *ingestInput,
-	prior, findings []carrierintel.Finding,
-) []carrierintel.Finding {
+	prior, findings []carrierintelrule.Finding,
+) []carrierintelrule.Finding {
 	if !in.control.ConfirmBlockingChanges || in.current == nil || in.bound.fallback ||
-		in.source == carrierintel.EventSourceRuleEvaluation {
+		in.source == carrierintelevent.EventSourceRuleEvaluation {
 		return findings
 	}
-	added := carrierintel.NewBlockingCodes(prior, findings)
+	added := carrierintelrule.NewBlockingCodes(prior, findings)
 	if len(added) == 0 {
 		return findings
 	}
@@ -289,14 +297,14 @@ func (s *Service) confirmNewBlocks(
 		finding := &findings[idx]
 		if !slices.ContainsFunc(
 			added,
-			func(f carrierintel.Finding) bool { return f.Code == finding.Code },
+			func(f carrierintelrule.Finding) bool { return f.Code == finding.Code },
 		) {
 			continue
 		}
 		if !confirmation.Profile.CoversAll(ruleSections(finding.Code)) {
 			continue
 		}
-		reproduced := slices.ContainsFunc(confirmed, func(f carrierintel.Finding) bool {
+		reproduced := slices.ContainsFunc(confirmed, func(f carrierintelrule.Finding) bool {
 			return f.Code == finding.Code && !f.Unverifiable
 		})
 		if !reproduced {
@@ -306,38 +314,38 @@ func (s *Service) confirmNewBlocks(
 	return findings
 }
 
-func ruleSections(code carrierintel.RuleCode) []carrierintel.Section {
-	def, ok := carrierintel.RuleByCode(code)
+func ruleSections(code carrierintelrule.RuleCode) []carrierintel.Section {
+	def, ok := carrierintelrule.RuleByCode(code)
 	if !ok {
 		return nil
 	}
 	return def.RequiredSections
 }
 
-func snapshotSource(in *ingestInput) carrierintel.SnapshotSource {
+func snapshotSource(in *ingestInput) carrierintelsnapshot.SnapshotSource {
 	if in.bound.fallback {
-		return carrierintel.SnapshotSourceFallback
+		return carrierintelsnapshot.SnapshotSourceFallback
 	}
-	if in.source == carrierintel.EventSourceNativeChangeFeed {
-		return carrierintel.SnapshotSourceChangeFeedPatch
+	if in.source == carrierintelevent.EventSourceNativeChangeFeed {
+		return carrierintelsnapshot.SnapshotSourceChangeFeedPatch
 	}
-	return carrierintel.SnapshotSourcePrimary
+	return carrierintelsnapshot.SnapshotSourcePrimary
 }
 
 func nextReviewState(
-	current *carrierintel.CarrierIntelSnapshot,
-	prior, findings []carrierintel.Finding,
-) carrierintel.ReviewState {
-	if len(carrierintel.NewBlockingCodes(prior, findings)) > 0 {
-		return carrierintel.ReviewStateNeedsReview
+	current *carrierintelsnapshot.CarrierIntelSnapshot,
+	prior, findings []carrierintelrule.Finding,
+) carrierintelsnapshot.ReviewState {
+	if len(carrierintelrule.NewBlockingCodes(prior, findings)) > 0 {
+		return carrierintelsnapshot.ReviewStateNeedsReview
 	}
-	if len(carrierintel.BlockingCodes(findings)) == 0 {
-		return carrierintel.ReviewStateNone
+	if len(carrierintelrule.BlockingCodes(findings)) == 0 {
+		return carrierintelsnapshot.ReviewStateNone
 	}
 	if current != nil && current.ReviewState.IsValid() {
 		return current.ReviewState
 	}
-	return carrierintel.ReviewStateNeedsReview
+	return carrierintelsnapshot.ReviewStateNeedsReview
 }
 
 func docketOf(profile *carrierintel.Profile, subject carrierintelports.CarrierIntelSubject) string {
@@ -363,18 +371,18 @@ func subjectLabel(
 
 func (s *Service) buildEvents(
 	in *ingestInput,
-	snapshot *carrierintel.CarrierIntelSnapshot,
-	changes []carrierintel.FieldChange,
-	raised []carrierintel.Finding,
-	current *carrierintel.CarrierIntelSnapshot,
+	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
+	changes []carrierinteldiff.FieldChange,
+	raised []carrierintelrule.Finding,
+	current *carrierintelsnapshot.CarrierIntelSnapshot,
 	now int64,
-) []*carrierintel.CarrierIntelEvent {
+) []*carrierintelevent.CarrierIntelEvent {
 	day := timeutils.DayIndexUTC(now)
 	name := subjectLabel(in.subject, snapshot.Profile)
-	events := make([]*carrierintel.CarrierIntelEvent, 0, len(changes)+len(raised)+1)
+	events := make([]*carrierintelevent.CarrierIntelEvent, 0, len(changes)+len(raised)+1)
 
-	base := func() *carrierintel.CarrierIntelEvent {
-		return &carrierintel.CarrierIntelEvent{
+	base := func() *carrierintelevent.CarrierIntelEvent {
+		return &carrierintelevent.CarrierIntelEvent{
 			OrganizationID: in.tenant.OrgID,
 			BusinessUnitID: in.tenant.BuID,
 			SubjectType:    in.subject.SubjectType,
@@ -384,7 +392,7 @@ func (s *Service) buildEvents(
 			SubjectName:    name,
 			Provider:       in.bound.provider,
 			DetectedAt:     now,
-			Status:         carrierintel.EventStatusOpen,
+			Status:         carrierintelevent.EventStatusOpen,
 		}
 	}
 
@@ -402,17 +410,19 @@ func (s *Service) buildEvents(
 		event.CurrentValue = change.Current
 		event.Summary = fmt.Sprintf("%s changed from %s to %s",
 			change.Label,
-			carrierintel.FormatFieldValue(change.Path, change.Prior),
-			carrierintel.FormatFieldValue(change.Path, change.Current))
-		event.Fingerprint = carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
-			Provider:    in.bound.provider,
-			SubjectType: in.subject.SubjectType,
-			SubjectID:   in.subject.SubjectID,
-			Discriminat: "field:" + change.Path,
-			Prior:       change.Prior,
-			Current:     change.Current,
-			Day:         day,
-		})
+			carrierinteldiff.FormatFieldValue(change.Path, change.Prior),
+			carrierinteldiff.FormatFieldValue(change.Path, change.Current))
+		event.Fingerprint = carrierintelevent.EventFingerprint(
+			carrierintelevent.EventFingerprintInput{
+				Provider:    in.bound.provider,
+				SubjectType: in.subject.SubjectType,
+				SubjectID:   in.subject.SubjectID,
+				Discriminat: "field:" + change.Path,
+				Prior:       change.Prior,
+				Current:     change.Current,
+				Day:         day,
+			},
+		)
 		events = append(events, event)
 	}
 
@@ -422,20 +432,22 @@ func (s *Service) buildEvents(
 			continue
 		}
 		event := base()
-		event.Source = carrierintel.EventSourceRuleEvaluation
+		event.Source = carrierintelevent.EventSourceRuleEvaluation
 		event.Category = finding.Category
 		event.RuleCode = finding.Code
 		event.Action = finding.Action
 		event.Severity = finding.Severity
 		event.Summary = finding.Message
-		event.Fingerprint = carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
-			Provider:    in.bound.provider,
-			SubjectType: in.subject.SubjectType,
-			SubjectID:   in.subject.SubjectID,
-			Discriminat: "rule:" + finding.Code.String() + ":" + finding.Action.String(),
-			Current:     finding.Message,
-			Day:         day,
-		})
+		event.Fingerprint = carrierintelevent.EventFingerprint(
+			carrierintelevent.EventFingerprintInput{
+				Provider:    in.bound.provider,
+				SubjectType: in.subject.SubjectType,
+				SubjectID:   in.subject.SubjectID,
+				Discriminat: "rule:" + finding.Code.String() + ":" + finding.Action.String(),
+				Current:     finding.Message,
+				Day:         day,
+			},
+		)
 		events = append(events, event)
 	}
 
@@ -451,15 +463,17 @@ func (s *Service) buildEvents(
 		if snapshot.NotFound {
 			event.Summary = "Provider no longer has a record for this USDOT number"
 		}
-		event.Fingerprint = carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
-			Provider:    in.bound.provider,
-			SubjectType: in.subject.SubjectType,
-			SubjectID:   in.subject.SubjectID,
-			Discriminat: "found",
-			Prior:       !current.NotFound,
-			Current:     !snapshot.NotFound,
-			Day:         day,
-		})
+		event.Fingerprint = carrierintelevent.EventFingerprint(
+			carrierintelevent.EventFingerprintInput{
+				Provider:    in.bound.provider,
+				SubjectType: in.subject.SubjectType,
+				SubjectID:   in.subject.SubjectID,
+				Discriminat: "found",
+				Prior:       !current.NotFound,
+				Current:     !snapshot.NotFound,
+				Day:         day,
+			},
+		)
 		events = append(events, event)
 	}
 
@@ -470,7 +484,7 @@ func (s *Service) updateCarrierSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	subject carrierintelports.CarrierIntelSubject,
-	snapshot *carrierintel.CarrierIntelSnapshot,
+	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
 ) error {
 	if subject.SubjectType != carrierintel.SubjectTypeCarrier || subject.CarrierID.IsNil() {
 		return nil
@@ -485,7 +499,7 @@ func (s *Service) updateCarrierSummary(
 			TenantInfo:     tenantInfo,
 			CarrierID:      subject.CarrierID,
 			RiskLevel:      risk,
-			ReviewRequired: snapshot.ReviewState == carrierintel.ReviewStateNeedsReview,
+			ReviewRequired: snapshot.ReviewState == carrierintelsnapshot.ReviewStateNeedsReview,
 			BlockingCount:  len(snapshot.BlockingCodes),
 		},
 	)
@@ -494,9 +508,9 @@ func (s *Service) updateCarrierSummary(
 func (s *Service) afterIngest(
 	ctx context.Context,
 	in *ingestInput,
-	snapshot *carrierintel.CarrierIntelSnapshot,
-	raised []carrierintel.Finding,
-	events []*carrierintel.CarrierIntelEvent,
+	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
+	raised []carrierintelrule.Finding,
+	events []*carrierintelevent.CarrierIntelEvent,
 ) {
 	ctx = context.WithoutCancel(ctx)
 
@@ -539,7 +553,7 @@ func (s *Service) afterIngest(
 // the carrier's page.
 func (s *Service) projectEventsToWatchtower(
 	ctx context.Context,
-	events []*carrierintel.CarrierIntelEvent,
+	events []*carrierintelevent.CarrierIntelEvent,
 ) {
 	if s.watchtower == nil {
 		return
@@ -559,7 +573,7 @@ func (s *Service) projectEventsToWatchtower(
 func (s *Service) publishEventsToAgents(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	events []*carrierintel.CarrierIntelEvent,
+	events []*carrierintelevent.CarrierIntelEvent,
 ) {
 	if s.publisher == nil {
 		return
@@ -577,7 +591,7 @@ func (s *Service) publishEventsToAgents(
 	}
 }
 
-func snapshotAuditView(snapshot *carrierintel.CarrierIntelSnapshot) map[string]any {
+func snapshotAuditView(snapshot *carrierintelsnapshot.CarrierIntelSnapshot) map[string]any {
 	return map[string]any{
 		"subjectType":   snapshot.SubjectType,
 		"subjectId":     snapshot.SubjectID,
@@ -624,8 +638,8 @@ func (s *Service) publish(
 func (s *Service) notifyRaised(
 	ctx context.Context,
 	in *ingestInput,
-	snapshot *carrierintel.CarrierIntelSnapshot,
-	raised []carrierintel.Finding,
+	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
+	raised []carrierintelrule.Finding,
 ) {
 	name := subjectLabel(in.subject, snapshot.Profile)
 	link := monitoringLink
@@ -675,8 +689,8 @@ func (s *Service) notifyRaised(
 func (s *Service) syncCarrierRecord(
 	ctx context.Context,
 	in *ingestInput,
-	snapshot *carrierintel.CarrierIntelSnapshot,
-	raised []carrierintel.Finding,
+	snapshot *carrierintelsnapshot.CarrierIntelSnapshot,
+	raised []carrierintelrule.Finding,
 ) {
 	if snapshot.NotFound || s.carrierService == nil {
 		return
@@ -704,14 +718,14 @@ func (s *Service) syncCarrierRecord(
 			return
 		}
 
-		plan := carrierintel.PlanCarrierSync(
+		plan := carrierintelsync.PlanCarrierSync(
 			entity,
 			snapshot.Profile,
 			in.control.SyncSettings(),
 			s.now(),
 		)
-		applied := carrierintel.ApplyFieldUpdates(entity, plan.AutoApply)
-		insuranceApplied := carrierintel.ApplyInsuranceChanges(entity, plan.InsuranceAutoApply)
+		applied := carrierintelsync.ApplyFieldUpdates(entity, plan.AutoApply)
+		insuranceApplied := carrierintelsync.ApplyInsuranceChanges(entity, plan.InsuranceAutoApply)
 
 		disqualify := in.control.AutoDisqualifyOnBlock && len(newBlocks) > 0 &&
 			entity.ComplianceStatus != carrier.ComplianceStatusDisqualified

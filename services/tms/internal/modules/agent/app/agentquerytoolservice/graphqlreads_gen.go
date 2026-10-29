@@ -3,6 +3,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -30,7 +31,6 @@ import (
 	servicefailure "github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	carrier "github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	carriercapacity "github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
-	carrierintel "github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	customer "github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	location "github.com/emoss08/trenova/internal/modules/places/domain/location"
 	locationcategory "github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
@@ -791,7 +791,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "carrierIntelEvents",
 		Node:      "CarrierIntelEvent",
 		Resource:  "carrier_intelligence",
-		Entity:    func() domaintypes.PostgresSearchable { return new(carrierintel.CarrierIntelEvent) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(carrierintelevent.CarrierIntelEvent) },
 		Variables: []graphQLVariable{
 			{Name: "filter", Type: "CarrierIntelEventFilterInput", NonNull: false, List: false, Kind: "input"},
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},

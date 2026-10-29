@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/stretchr/testify/assert"
@@ -493,29 +495,29 @@ func TestFullProfileRuleMessages(t *testing.T) {
 	t.Parallel()
 
 	profile := normalizeProfile(fixtureProfile(t, fullProfileFixture))
-	findings := carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
+	findings := carrierintelrule.EvaluateFindings(&carrierintelrule.EvaluateInput{
 		Profile: profile,
 		Now:     unixDate(t, "2026-09-16"),
 		Subject: carrierintel.SubjectTypeCarrier,
 	})
 
-	messages := make(map[carrierintel.RuleCode]string, len(findings))
+	messages := make(map[carrierintelrule.RuleCode]string, len(findings))
 	for idx := range findings {
 		messages[findings[idx].Code] = findings[idx].Message
 	}
 	assert.Equal(
 		t,
 		"BIPD liability coverage on file ($0) is below the required $5,000,000",
-		messages[carrierintel.RuleInsuranceBIPDBelow],
+		messages[carrierintelrule.RuleInsuranceBIPDBelow],
 	)
 	assert.Equal(
 		t,
 		"Shares identifiers with other USDOT numbers: address (4), phone (2), email (1), ein (1)",
-		messages[carrierintel.RuleFraudNetworkSharing],
+		messages[carrierintelrule.RuleFraudNetworkSharing],
 	)
-	assert.NotContains(t, messages, carrierintel.RuleIdentityNewEntrant)
-	assert.NotContains(t, messages, carrierintel.RuleInsurancePendingCancel)
-	assert.NotContains(t, messages, carrierintel.RuleInspectionsOOSHigh)
+	assert.NotContains(t, messages, carrierintelrule.RuleIdentityNewEntrant)
+	assert.NotContains(t, messages, carrierintelrule.RuleInsurancePendingCancel)
+	assert.NotContains(t, messages, carrierintelrule.RuleInspectionsOOSHigh)
 }
 
 func TestFilingType(t *testing.T) {
@@ -567,7 +569,7 @@ func TestVendorFieldPath(t *testing.T) {
 func TestVendorFieldPath_MatchesFlattenedProfile(t *testing.T) {
 	t.Parallel()
 
-	flat, err := carrierintel.FlattenProfile(
+	flat, err := carrierinteldiff.FlattenProfile(
 		normalizeProfile(fixtureProfile(t, fullProfileFixture)),
 	)
 	require.NoError(t, err)

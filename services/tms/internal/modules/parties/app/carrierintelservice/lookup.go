@@ -5,6 +5,12 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,26 +25,26 @@ type FetchRequest struct {
 	MaxAgeSeconds int64
 	Purpose       carrierintel.Purpose
 	Force         bool
-	Source        carrierintel.EventSource
-	Control       *carrierintel.CarrierIntelControl
+	Source        carrierintelevent.EventSource
+	Control       *carrierintelcontrol.CarrierIntelControl
 }
 
 type FetchResult struct {
-	Snapshot     *carrierintel.CarrierIntelSnapshot
+	Snapshot     *carrierintelsnapshot.CarrierIntelSnapshot
 	FromCache    bool
 	UsedFallback bool
-	Changes      []carrierintel.FieldChange
-	Raised       []carrierintel.Finding
+	Changes      []carrierinteldiff.FieldChange
+	Raised       []carrierintelrule.Finding
 }
 
-func depthEndpoint(depth carrierintel.LookupDepth) carrierintel.Endpoint {
+func depthEndpoint(depth carrierintel.LookupDepth) carrierintelusage.Endpoint {
 	switch depth {
 	case carrierintel.LookupDepthFull:
-		return carrierintel.EndpointProfileFull
+		return carrierintelusage.EndpointProfileFull
 	case carrierintel.LookupDepthLite:
-		return carrierintel.EndpointProfileLite
+		return carrierintelusage.EndpointProfileLite
 	default:
-		return carrierintel.EndpointProfileFMCSA
+		return carrierintelusage.EndpointProfileFMCSA
 	}
 }
 
@@ -112,7 +118,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 
 	source := req.Source
 	if !source.IsValid() {
-		source = carrierintel.EventSourceSnapshotDiff
+		source = carrierintelevent.EventSourceSnapshotDiff
 	}
 
 	ingested, err := s.ingest(ctx, &ingestInput{
@@ -134,7 +140,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 
 type lookupAttempt struct {
 	tenant  pagination.TenantInfo
-	control *carrierintel.CarrierIntelControl
+	control *carrierintelcontrol.CarrierIntelControl
 	primary *boundProvider
 	subject carrierintelports.CarrierIntelSubject
 	wanted  carrierintel.LookupDepth
@@ -203,9 +209,9 @@ func (s *Service) chooseDepth(
 		return depth
 	}
 
-	price := bound.prices.Price(carrierintel.EndpointProfileFull)
-	dedupe := carrierintel.BillingDedupeKey(
-		carrierintel.EndpointProfileFull, price, attempt.subject.DOTNumber, s.now(),
+	price := bound.prices.Price(carrierintelusage.EndpointProfileFull)
+	dedupe := carrierintelusage.BillingDedupeKey(
+		carrierintelusage.EndpointProfileFull, price, attempt.subject.DOTNumber, s.now(),
 	)
 	if dedupe == "" {
 		return depth

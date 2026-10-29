@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
@@ -73,22 +74,46 @@ func (c *Connector) Descriptor() carrierintel.ProviderDescriptor {
 	}
 }
 
-func (c *Connector) PriceBook() carrierintel.PriceBook {
-	return carrierintel.PriceBook{
-		carrierintel.EndpointProfileFull:   price(carrierintel.BillingModelPerDOTMonth, "3.00"),
-		carrierintel.EndpointProfileLite:   price(carrierintel.BillingModelPerDOTMonth, "0.50"),
-		carrierintel.EndpointProfileFMCSA:  price(carrierintel.BillingModelPerMatch, "0.10"),
-		carrierintel.EndpointAutocomplete:  price(carrierintel.BillingModelPerRequest, "0.003"),
-		carrierintel.EndpointSearch:        price(carrierintel.BillingModelPerRequest, "0.003"),
-		carrierintel.EndpointMonitorAdd:    price(carrierintel.BillingModelPerDOTMonth, "0.50"),
-		carrierintel.EndpointMonitorRemove: price(carrierintel.BillingModelFree, "0"),
-		carrierintel.EndpointMonitorList:   price(carrierintel.BillingModelFree, "0"),
-		carrierintel.EndpointEquipment:     price(carrierintel.BillingModelPerDOTMonth, "3.00"),
+func (c *Connector) PriceBook() carrierintelusage.PriceBook {
+	return carrierintelusage.PriceBook{
+		carrierintelusage.EndpointProfileFull: price(
+			carrierintelusage.BillingModelPerDOTMonth,
+			"3.00",
+		),
+		carrierintelusage.EndpointProfileLite: price(
+			carrierintelusage.BillingModelPerDOTMonth,
+			"0.50",
+		),
+		carrierintelusage.EndpointProfileFMCSA: price(
+			carrierintelusage.BillingModelPerMatch,
+			"0.10",
+		),
+		carrierintelusage.EndpointAutocomplete: price(
+			carrierintelusage.BillingModelPerRequest,
+			"0.003",
+		),
+		carrierintelusage.EndpointSearch: price(
+			carrierintelusage.BillingModelPerRequest,
+			"0.003",
+		),
+		carrierintelusage.EndpointMonitorAdd: price(
+			carrierintelusage.BillingModelPerDOTMonth,
+			"0.50",
+		),
+		carrierintelusage.EndpointMonitorRemove: price(carrierintelusage.BillingModelFree, "0"),
+		carrierintelusage.EndpointMonitorList:   price(carrierintelusage.BillingModelFree, "0"),
+		carrierintelusage.EndpointEquipment: price(
+			carrierintelusage.BillingModelPerDOTMonth,
+			"3.00",
+		),
 	}
 }
 
-func price(model carrierintel.BillingModel, unitCost string) carrierintel.EndpointPrice {
-	return carrierintel.EndpointPrice{Model: model, UnitCost: decimal.RequireFromString(unitCost)}
+func price(model carrierintelusage.BillingModel, unitCost string) carrierintelusage.EndpointPrice {
+	return carrierintelusage.EndpointPrice{
+		Model:    model,
+		UnitCost: decimal.RequireFromString(unitCost),
+	}
 }
 
 func (c *Connector) TestConnection(ctx context.Context, cfg map[string]string) error {

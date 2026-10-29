@@ -1,10 +1,12 @@
-package carrierintel
+package carrierintelsnapshot
 
 import (
 	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,50 +18,50 @@ import (
 type CarrierIntelSnapshot struct {
 	keel.Table `keel:"carrier_intel_snapshots"`
 
-	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:cisnap_"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
-	SubjectType    SubjectType      `json:"subjectType"    keel:"subject_type"`
-	SubjectID      string           `json:"subjectId"      keel:"subject_id"`
-	CarrierID      pulid.ID         `json:"carrierId"      keel:"carrier_id,nullzero"`
-	DOTNumber      string           `json:"dotNumber"      keel:"dot_number"`
-	DocketNumber   string           `json:"docketNumber"   keel:"docket_number,nullzero"`
-	Provider       integration.Type `json:"provider"       keel:"provider"`
-	ProviderRef    string           `json:"providerRef"    keel:"provider_ref,nullzero"`
-	Depth          LookupDepth      `json:"depth"          keel:"depth"`
-	Source         SnapshotSource   `json:"source"         keel:"source"`
-	IsCurrent      bool             `json:"isCurrent"      keel:"is_current"`
-	NotFound       bool             `json:"notFound"       keel:"not_found"`
-	Profile        *Profile         `json:"profile"        keel:"profile,jsonb"`
-	Findings       []Finding        `json:"findings"       keel:"findings,jsonb"`
-	BlockingCodes  []string         `json:"blockingCodes"  keel:"blocking_codes"`
-	AdvisoryCodes  []string         `json:"advisoryCodes"  keel:"advisory_codes"`
-	RiskLevel      RiskLevel        `json:"riskLevel"      keel:"risk_level"`
-	ReviewState    ReviewState      `json:"reviewState"    keel:"review_state"`
-	ReviewedByID   pulid.ID         `json:"reviewedById"   keel:"reviewed_by_id,nullzero"`
-	ReviewedAt     *int64           `json:"reviewedAt"     keel:"reviewed_at"`
-	ReviewNote     string           `json:"reviewNote"     keel:"review_note,nullzero"`
-	PolicyVersion  int64            `json:"policyVersion"  keel:"policy_version"`
-	RawPayloadID   pulid.ID         `json:"rawPayloadId"   keel:"raw_payload_id,nullzero"`
-	ContentHash    string           `json:"contentHash"    keel:"content_hash"`
-	FetchedAt      int64            `json:"fetchedAt"      keel:"fetched_at"`
-	FetchedDepth   LookupDepth      `json:"fetchedDepth"   keel:"fetched_depth"`
-	DepthFetchedAt int64            `json:"depthFetchedAt" keel:"depth_fetched_at"`
-	SourceAsOf     *int64           `json:"sourceAsOf"     keel:"source_as_of"`
-	ConfirmedAt    *int64           `json:"confirmedAt"    keel:"confirmed_at"`
-	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
-	UpdatedAt      int64            `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	ID             pulid.ID                   `json:"id"             keel:"id,pk,autoid:cisnap_"`
+	BusinessUnitID pulid.ID                   `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID                   `json:"organizationId" keel:"organization_id,pk,tenant"`
+	SubjectType    carrierintel.SubjectType   `json:"subjectType"    keel:"subject_type"`
+	SubjectID      string                     `json:"subjectId"      keel:"subject_id"`
+	CarrierID      pulid.ID                   `json:"carrierId"      keel:"carrier_id,nullzero"`
+	DOTNumber      string                     `json:"dotNumber"      keel:"dot_number"`
+	DocketNumber   string                     `json:"docketNumber"   keel:"docket_number,nullzero"`
+	Provider       integration.Type           `json:"provider"       keel:"provider"`
+	ProviderRef    string                     `json:"providerRef"    keel:"provider_ref,nullzero"`
+	Depth          carrierintel.LookupDepth   `json:"depth"          keel:"depth"`
+	Source         SnapshotSource             `json:"source"         keel:"source"`
+	IsCurrent      bool                       `json:"isCurrent"      keel:"is_current"`
+	NotFound       bool                       `json:"notFound"       keel:"not_found"`
+	Profile        *carrierintel.Profile      `json:"profile"        keel:"profile,jsonb"`
+	Findings       []carrierintelrule.Finding `json:"findings"       keel:"findings,jsonb"`
+	BlockingCodes  []string                   `json:"blockingCodes"  keel:"blocking_codes"`
+	AdvisoryCodes  []string                   `json:"advisoryCodes"  keel:"advisory_codes"`
+	RiskLevel      carrierintel.RiskLevel     `json:"riskLevel"      keel:"risk_level"`
+	ReviewState    ReviewState                `json:"reviewState"    keel:"review_state"`
+	ReviewedByID   pulid.ID                   `json:"reviewedById"   keel:"reviewed_by_id,nullzero"`
+	ReviewedAt     *int64                     `json:"reviewedAt"     keel:"reviewed_at"`
+	ReviewNote     string                     `json:"reviewNote"     keel:"review_note,nullzero"`
+	PolicyVersion  int64                      `json:"policyVersion"  keel:"policy_version"`
+	RawPayloadID   pulid.ID                   `json:"rawPayloadId"   keel:"raw_payload_id,nullzero"`
+	ContentHash    string                     `json:"contentHash"    keel:"content_hash"`
+	FetchedAt      int64                      `json:"fetchedAt"      keel:"fetched_at"`
+	FetchedDepth   carrierintel.LookupDepth   `json:"fetchedDepth"   keel:"fetched_depth"`
+	DepthFetchedAt int64                      `json:"depthFetchedAt" keel:"depth_fetched_at"`
+	SourceAsOf     *int64                     `json:"sourceAsOf"     keel:"source_as_of"`
+	ConfirmedAt    *int64                     `json:"confirmedAt"    keel:"confirmed_at"`
+	CreatedAt      int64                      `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                      `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (s *CarrierIntelSnapshot) BeforeCreate(_ context.Context) error {
 	if s.Findings == nil {
-		s.Findings = []Finding{}
+		s.Findings = []carrierintelrule.Finding{}
 	}
 	if s.Profile == nil {
-		s.Profile = &Profile{Coverage: []Section{}}
+		s.Profile = &carrierintel.Profile{Coverage: []carrierintel.Section{}}
 	}
 	if s.RiskLevel == "" {
-		s.RiskLevel = RiskLevelUnknown
+		s.RiskLevel = carrierintel.RiskLevelUnknown
 	}
 	if s.ReviewState == "" {
 		s.ReviewState = ReviewStateNone
@@ -78,7 +80,7 @@ func (s *CarrierIntelSnapshot) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(s,
 		validation.Field(&s.SubjectType,
 			validation.Required.Error("Subject type is required"),
-			domainvalidation.ValidEnum[SubjectType]("Subject type is invalid"),
+			domainvalidation.ValidEnum[carrierintel.SubjectType]("Subject type is invalid"),
 		),
 		validation.Field(&s.SubjectID, validation.Required.Error("Subject is required")),
 		validation.Field(&s.DOTNumber,
@@ -87,7 +89,7 @@ func (s *CarrierIntelSnapshot) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&s.Depth,
 			validation.Required.Error("Depth is required"),
-			domainvalidation.ValidEnum[LookupDepth]("Depth is invalid"),
+			domainvalidation.ValidEnum[carrierintel.LookupDepth]("Depth is invalid"),
 		),
 		validation.Field(&s.Source,
 			validation.Required.Error("Source is required"),
@@ -128,19 +130,22 @@ func (s *CarrierIntelSnapshot) DepthIsFresh(now, maxAgeSeconds int64) bool {
 	return now-s.DepthAsOf() <= maxAgeSeconds
 }
 
-func (s *CarrierIntelSnapshot) AsOfForDepth(wanted LookupDepth) int64 {
+func (s *CarrierIntelSnapshot) AsOfForDepth(wanted carrierintel.LookupDepth) int64 {
 	if !s.FetchedDepth.IsValid() || s.FetchedDepth.Satisfies(wanted) {
 		return s.EffectiveAsOf()
 	}
 	return s.DepthAsOf()
 }
 
-func (s *CarrierIntelSnapshot) IsFreshForDepth(now, maxAgeSeconds int64, wanted LookupDepth) bool {
+func (s *CarrierIntelSnapshot) IsFreshForDepth(
+	now, maxAgeSeconds int64,
+	wanted carrierintel.LookupDepth,
+) bool {
 	return now-s.AsOfForDepth(wanted) <= maxAgeSeconds
 }
 
-func (s *CarrierIntelSnapshot) BlockingFindings() []Finding {
-	out := make([]Finding, 0, len(s.BlockingCodes))
+func (s *CarrierIntelSnapshot) BlockingFindings() []carrierintelrule.Finding {
+	out := make([]carrierintelrule.Finding, 0, len(s.BlockingCodes))
 	for idx := range s.Findings {
 		if s.Findings[idx].IsBlocking() {
 			out = append(out, s.Findings[idx])
@@ -149,13 +154,16 @@ func (s *CarrierIntelSnapshot) BlockingFindings() []Finding {
 	return out
 }
 
-func (s *CarrierIntelSnapshot) ApplyFindings(findings []Finding, policyVersion int64) {
+func (s *CarrierIntelSnapshot) ApplyFindings(
+	findings []carrierintelrule.Finding,
+	policyVersion int64,
+) {
 	s.Findings = findings
-	s.BlockingCodes = BlockingCodes(findings)
-	s.AdvisoryCodes = AdvisoryCodes(findings)
-	s.RiskLevel = s.Profile.DeriveRiskLevel(findings)
+	s.BlockingCodes = carrierintelrule.BlockingCodes(findings)
+	s.AdvisoryCodes = carrierintelrule.AdvisoryCodes(findings)
+	s.RiskLevel = carrierintelrule.DeriveRiskLevel(s.Profile, findings)
 	if s.NotFound {
-		s.RiskLevel = RiskLevelUnknown
+		s.RiskLevel = carrierintel.RiskLevelUnknown
 	}
 	s.PolicyVersion = policyVersion
 }
@@ -190,7 +198,7 @@ func (r *CarrierIntelRawPayload) BeforeCreate(_ context.Context) error {
 	return nil
 }
 
-func SubjectKey(subjectType SubjectType, id string) string {
+func SubjectKey(subjectType carrierintel.SubjectType, id string) string {
 	return subjectType.String() + ":" + id
 }
 

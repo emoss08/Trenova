@@ -41,7 +41,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -328,8 +329,8 @@ type set struct {
 	factoringLiveItemByInvoiceID              *dataloadgen.Loader[string, *factoringsubmissionports.LiveItem]
 	lateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	invoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
-	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
-	carrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
+	carrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot]
+	carrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot]
 	carrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
 	inboundAttachmentCount                    *dataloadgen.Loader[string, int]
 	inboundThreadCount                        *dataloadgen.Loader[string, int]
@@ -348,7 +349,7 @@ type set struct {
 	inboundReplyByID                          *dataloadgen.Loader[string, *triage.Reply]
 	inboundDocumentReadingByDocumentID        *dataloadgen.Loader[string, *inboundmessageports.DocumentReading]
 	captureRecordLabel                        *dataloadgen.Loader[string, *captureports.CaptureRecordLabel]
-	carrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
+	carrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintelenrollment.CarrierMonitoringEnrollment]
 	auditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
 	// SubsetLabels names the records each record-subset field offers.
 	subsetLabels *dataloadgen.Loader[string, agentruntimeports.RecordLabels]

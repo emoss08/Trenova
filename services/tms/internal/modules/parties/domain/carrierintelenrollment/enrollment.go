@@ -1,9 +1,10 @@
-package carrierintel
+package carrierintelenrollment
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -15,32 +16,32 @@ import (
 type CarrierMonitoringEnrollment struct {
 	keel.Table `keel:"carrier_monitoring_enrollments"`
 
-	ID              pulid.ID         `json:"id"              keel:"id,pk,autoid:cienr_"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
-	OrganizationID  pulid.ID         `json:"organizationId"  keel:"organization_id,pk,tenant"`
-	SubjectType     SubjectType      `json:"subjectType"     keel:"subject_type"`
-	SubjectID       string           `json:"subjectId"       keel:"subject_id"`
-	CarrierID       pulid.ID         `json:"carrierId"       keel:"carrier_id,nullzero"`
-	SubjectName     string           `json:"subjectName"     keel:"subject_name,nullzero"`
-	DOTNumber       string           `json:"dotNumber"       keel:"dot_number"`
-	DocketNumber    string           `json:"docketNumber"    keel:"docket_number,nullzero"`
-	Provider        integration.Type `json:"provider"        keel:"provider"`
-	ProviderRef     string           `json:"providerRef"     keel:"provider_ref,nullzero"`
-	Mode            EnrollmentMode   `json:"mode"            keel:"mode"`
-	DesiredState    DesiredState     `json:"desiredState"    keel:"desired_state"`
-	VendorState     VendorState      `json:"vendorState"     keel:"vendor_state"`
-	Reason          EnrollmentReason `json:"reason"          keel:"reason"`
-	OwnedByTrenova  bool             `json:"ownedByTrenova"  keel:"owned_by_trenova"`
-	EnrolledAt      *int64           `json:"enrolledAt"      keel:"enrolled_at"`
-	UnenrolledAt    *int64           `json:"unenrolledAt"    keel:"unenrolled_at"`
-	LastSyncedAt    *int64           `json:"lastSyncedAt"    keel:"last_synced_at"`
-	LastConfirmedAt *int64           `json:"lastConfirmedAt" keel:"last_confirmed_at"`
-	LastUsedAt      *int64           `json:"lastUsedAt"      keel:"last_used_at"`
-	FailureCount    int              `json:"failureCount"    keel:"failure_count"`
-	LastError       string           `json:"lastError"       keel:"last_error,nullzero"`
-	Version         int64            `json:"version"         keel:"version,version"`
-	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
-	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
+	ID              pulid.ID                    `json:"id"              keel:"id,pk,autoid:cienr_"`
+	BusinessUnitID  pulid.ID                    `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID                    `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	SubjectType     carrierintel.SubjectType    `json:"subjectType"     keel:"subject_type"`
+	SubjectID       string                      `json:"subjectId"       keel:"subject_id"`
+	CarrierID       pulid.ID                    `json:"carrierId"       keel:"carrier_id,nullzero"`
+	SubjectName     string                      `json:"subjectName"     keel:"subject_name,nullzero"`
+	DOTNumber       string                      `json:"dotNumber"       keel:"dot_number"`
+	DocketNumber    string                      `json:"docketNumber"    keel:"docket_number,nullzero"`
+	Provider        integration.Type            `json:"provider"        keel:"provider"`
+	ProviderRef     string                      `json:"providerRef"     keel:"provider_ref,nullzero"`
+	Mode            carrierintel.EnrollmentMode `json:"mode"            keel:"mode"`
+	DesiredState    DesiredState                `json:"desiredState"    keel:"desired_state"`
+	VendorState     VendorState                 `json:"vendorState"     keel:"vendor_state"`
+	Reason          EnrollmentReason            `json:"reason"          keel:"reason"`
+	OwnedByTrenova  bool                        `json:"ownedByTrenova"  keel:"owned_by_trenova"`
+	EnrolledAt      *int64                      `json:"enrolledAt"      keel:"enrolled_at"`
+	UnenrolledAt    *int64                      `json:"unenrolledAt"    keel:"unenrolled_at"`
+	LastSyncedAt    *int64                      `json:"lastSyncedAt"    keel:"last_synced_at"`
+	LastConfirmedAt *int64                      `json:"lastConfirmedAt" keel:"last_confirmed_at"`
+	LastUsedAt      *int64                      `json:"lastUsedAt"      keel:"last_used_at"`
+	FailureCount    int                         `json:"failureCount"    keel:"failure_count"`
+	LastError       string                      `json:"lastError"       keel:"last_error,nullzero"`
+	Version         int64                       `json:"version"         keel:"version,version"`
+	CreatedAt       int64                       `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt       int64                       `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
 
 func (e *CarrierMonitoringEnrollment) BeforeCreate(_ context.Context) error {
@@ -55,7 +56,7 @@ func (e *CarrierMonitoringEnrollment) Validate(multiErr *errortypes.MultiError) 
 	multiErr.AddOzzoError(validation.ValidateStruct(e,
 		validation.Field(&e.SubjectType,
 			validation.Required.Error("Subject type is required"),
-			domainvalidation.ValidEnum[SubjectType]("Subject type is invalid"),
+			domainvalidation.ValidEnum[carrierintel.SubjectType]("Subject type is invalid"),
 		),
 		validation.Field(&e.SubjectID, validation.Required.Error("Subject is required")),
 		validation.Field(&e.DOTNumber,
@@ -64,7 +65,7 @@ func (e *CarrierMonitoringEnrollment) Validate(multiErr *errortypes.MultiError) 
 		),
 		validation.Field(&e.Mode,
 			validation.Required.Error("Mode is required"),
-			domainvalidation.ValidEnum[EnrollmentMode]("Mode is invalid"),
+			domainvalidation.ValidEnum[carrierintel.EnrollmentMode]("Mode is invalid"),
 		),
 		validation.Field(&e.DesiredState,
 			validation.Required.Error("Desired state is required"),

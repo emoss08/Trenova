@@ -4,8 +4,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +26,7 @@ func eventTestInput() *ingestInput {
 			DOTNumber:   "265752",
 		},
 		bound:  &boundProvider{provider: integration.TypeCarrierOK},
-		source: carrierintel.EventSourceSnapshotDiff,
+		source: carrierintelevent.EventSourceSnapshotDiff,
 	}
 }
 
@@ -30,8 +34,8 @@ func TestBuildEventsFormatsChangeSummaries(t *testing.T) {
 	t.Parallel()
 
 	in := eventTestInput()
-	snapshot := &carrierintel.CarrierIntelSnapshot{DOTNumber: "265752"}
-	changes := []carrierintel.FieldChange{
+	snapshot := &carrierintelsnapshot.CarrierIntelSnapshot{DOTNumber: "265752"}
+	changes := []carrierinteldiff.FieldChange{
 		{
 			Path:     "safety.ratingDate",
 			Section:  carrierintel.SectionSafety,
@@ -73,9 +77,9 @@ func TestBuildEventsRuleEventsCarryTheMessageOnlyInTheSummary(t *testing.T) {
 	t.Parallel()
 
 	in := eventTestInput()
-	snapshot := &carrierintel.CarrierIntelSnapshot{DOTNumber: "265752"}
-	finding := carrierintel.Finding{
-		Code:     carrierintel.RuleInsuranceBIPDBelow,
+	snapshot := &carrierintelsnapshot.CarrierIntelSnapshot{DOTNumber: "265752"}
+	finding := carrierintelrule.Finding{
+		Code:     carrierintelrule.RuleInsuranceBIPDBelow,
 		Category: carrierintel.SectionInsurance,
 		Action:   carrierintel.RuleActionBlock,
 		Severity: carrierintel.SeverityCritical,
@@ -85,15 +89,15 @@ func TestBuildEventsRuleEventsCarryTheMessageOnlyInTheSummary(t *testing.T) {
 	other.Message = "BIPD liability coverage on file ($0) is below the required $750,000"
 
 	svc := &Service{}
-	events := svc.buildEvents(in, snapshot, nil, []carrierintel.Finding{finding}, nil, testNow)
+	events := svc.buildEvents(in, snapshot, nil, []carrierintelrule.Finding{finding}, nil, testNow)
 	require.Len(t, events, 1)
 	assert.Equal(t, finding.Message, events[0].Summary)
 	assert.Nil(t, events[0].CurrentValue)
 	assert.Nil(t, events[0].PriorValue)
 
-	again := svc.buildEvents(in, snapshot, nil, []carrierintel.Finding{finding}, nil, testNow)
+	again := svc.buildEvents(in, snapshot, nil, []carrierintelrule.Finding{finding}, nil, testNow)
 	assert.Equal(t, events[0].Fingerprint, again[0].Fingerprint)
 
-	changed := svc.buildEvents(in, snapshot, nil, []carrierintel.Finding{other}, nil, testNow)
+	changed := svc.buildEvents(in, snapshot, nil, []carrierintelrule.Finding{other}, nil, testNow)
 	assert.NotEqual(t, events[0].Fingerprint, changed[0].Fingerprint)
 }

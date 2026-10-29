@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -41,46 +41,50 @@ func NewControlRepository(p Params) carrierintelports.CarrierIntelControlReposit
 func (r *controlRepository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*carrierintel.CarrierIntelControl, error) {
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	c := carrierinteldb.CarrierIntelControls
-	newDefault := func() *carrierintel.CarrierIntelControl {
-		return carrierintel.NewDefaultControl(tenantInfo.OrgID, tenantInfo.BuID)
+	newDefault := func() *carrierintelcontrol.CarrierIntelControl {
+		return carrierintelcontrol.NewDefaultControl(tenantInfo.OrgID, tenantInfo.BuID)
 	}
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*carrierintel.CarrierIntelControl]{
-		Find: func(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
-			return c.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
-		},
-		Create: func(ctx context.Context) error {
-			if _, err := c.CreateOrSkip(
-				ctx,
-				r.db.Keel(ctx),
-				[]*carrierintel.CarrierIntelControl{newDefault()},
-				c.OrganizationID,
-				c.BusinessUnitID,
-			); err != nil {
-				r.l.Error("failed to create default carrier intel control", zap.Error(err))
-				return fmt.Errorf("create default carrier intel control: %w", err)
-			}
+	return dbtx.GetOrCreate(
+		ctx,
+		r.db,
+		dbtx.GetOrCreateSpec[*carrierintelcontrol.CarrierIntelControl]{
+			Find: func(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error) {
+				return c.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
+			},
+			Create: func(ctx context.Context) error {
+				if _, err := c.CreateOrSkip(
+					ctx,
+					r.db.Keel(ctx),
+					[]*carrierintelcontrol.CarrierIntelControl{newDefault()},
+					c.OrganizationID,
+					c.BusinessUnitID,
+				); err != nil {
+					r.l.Error("failed to create default carrier intel control", zap.Error(err))
+					return fmt.Errorf("create default carrier intel control: %w", err)
+				}
 
-			return nil
+				return nil
+			},
+			Default: newDefault,
+			MapError: func(err error) error {
+				r.l.Error("failed to get carrier intel control", zap.Error(err))
+				return controlErrors.Map(err, tenantInfo.OrgID.String())
+			},
 		},
-		Default: newDefault,
-		MapError: func(err error) error {
-			r.l.Error("failed to get carrier intel control", zap.Error(err))
-			return controlErrors.Map(err, tenantInfo.OrgID.String())
-		},
-	})
+	)
 }
 
 func (r *controlRepository) Update(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelControl,
-) (*carrierintel.CarrierIntelControl, error) {
+	entity *carrierintelcontrol.CarrierIntelControl,
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
+		func(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error) {
 			err := carrierinteldb.CarrierIntelControls.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel control", zap.Error(err))
@@ -100,12 +104,12 @@ func (r *controlRepository) Update(
 func (r *controlRepository) ListConfigured(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelTenantsRequest,
-) ([]*carrierintel.CarrierIntelControl, error) {
+) ([]*carrierintelcontrol.CarrierIntelControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with carrier intelligence configured")
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierIntelControl, error) {
+		func(ctx context.Context) ([]*carrierintelcontrol.CarrierIntelControl, error) {
 			c := carrierinteldb.CarrierIntelControls
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultConfiguredTenantLimit),

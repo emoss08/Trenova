@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -39,12 +39,12 @@ func NewRawPayloadRepository(p Params) carrierintelports.CarrierIntelRawPayloadR
 
 func (r *rawPayloadRepository) Insert(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelRawPayload,
-) (*carrierintel.CarrierIntelRawPayload, error) {
+	entity *carrierintelsnapshot.CarrierIntelRawPayload,
+) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
+		func(ctx context.Context) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
 			err := carrierinteldb.CarrierIntelRawPayloads.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to insert carrier intel raw payload", zap.Error(err))
@@ -60,11 +60,11 @@ func (r *rawPayloadRepository) GetByID(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*carrierintel.CarrierIntelRawPayload, error) {
+) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelRawPayload, error) {
+		func(ctx context.Context) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
 			entity, err := carrierinteldb.CarrierIntelRawPayloads.Get(ctx, r.db.Keel(ctx), id)
 			if err != nil {
 				return nil, rawPayloadErrors.Map(err, id.String())

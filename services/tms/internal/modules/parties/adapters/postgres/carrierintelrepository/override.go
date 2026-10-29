@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,13 +39,13 @@ func (r *overrideRepository) ListActiveByCarrierIDs(
 	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
 	now int64,
-) ([]*carrierintel.CarrierIntelOverride, error) {
+) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierIntelOverride, error) {
+		func(ctx context.Context) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 			if len(carrierIDs) == 0 {
-				return []*carrierintel.CarrierIntelOverride{}, nil
+				return []*carrierinteloverride.CarrierIntelOverride{}, nil
 			}
 
 			o := carrierinteldb.CarrierIntelOverrides
@@ -70,11 +70,11 @@ func (r *overrideRepository) ListByCarrier(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	carrierID pulid.ID,
-) ([]*carrierintel.CarrierIntelOverride, error) {
+) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierIntelOverride, error) {
+		func(ctx context.Context) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 			o := carrierinteldb.CarrierIntelOverrides
 			entities, err := o.Where(o.CarrierID.Eq(carrierID)).
 				Order(o.GrantedAt.Desc(), o.ID.Desc()).
@@ -94,11 +94,11 @@ func (r *overrideRepository) GetByID(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*carrierintel.CarrierIntelOverride, error) {
+) (*carrierinteloverride.CarrierIntelOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
+		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
 			entity, err := carrierinteldb.CarrierIntelOverrides.Get(ctx, r.db.Keel(ctx), id)
 			if err != nil {
 				return nil, overrideErrors.Map(err, id.String())
@@ -111,12 +111,12 @@ func (r *overrideRepository) GetByID(
 
 func (r *overrideRepository) Create(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelOverride,
-) (*carrierintel.CarrierIntelOverride, error) {
+	entity *carrierinteloverride.CarrierIntelOverride,
+) (*carrierinteloverride.CarrierIntelOverride, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
+		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
 			err := carrierinteldb.CarrierIntelOverrides.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create carrier intel override", zap.Error(err))
@@ -130,12 +130,12 @@ func (r *overrideRepository) Create(
 
 func (r *overrideRepository) Update(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelOverride,
-) (*carrierintel.CarrierIntelOverride, error) {
+	entity *carrierinteloverride.CarrierIntelOverride,
+) (*carrierinteloverride.CarrierIntelOverride, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
+		func(ctx context.Context) (*carrierinteloverride.CarrierIntelOverride, error) {
 			err := carrierinteldb.CarrierIntelOverrides.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel override", zap.Error(err))

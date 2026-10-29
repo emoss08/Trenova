@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/restx"
@@ -81,7 +82,7 @@ type CarrierIntelLookupRequest struct {
 type CarrierIntelLookupResult struct {
 	Profile     *carrierintel.Profile
 	Raw         []byte
-	Endpoint    carrierintel.Endpoint
+	Endpoint    carrierintelusage.Endpoint
 	ProviderRef string
 	Depth       carrierintel.LookupDepth
 	NotFound    bool
@@ -89,7 +90,7 @@ type CarrierIntelLookupResult struct {
 }
 
 type CarrierIntelCall struct {
-	Endpoint   carrierintel.Endpoint
+	Endpoint   carrierintelusage.Endpoint
 	DOTNumber  string
 	StatusCode int
 	Latency    time.Duration
@@ -110,7 +111,7 @@ type CarrierIntelBindParams struct {
 type CarrierIntelConnector interface {
 	IntegrationType() integration.Type
 	Descriptor() carrierintel.ProviderDescriptor
-	PriceBook() carrierintel.PriceBook
+	PriceBook() carrierintelusage.PriceBook
 	TestConnection(ctx context.Context, config map[string]string) error
 	Bind(params *CarrierIntelBindParams) (CarrierIntelClient, error)
 }

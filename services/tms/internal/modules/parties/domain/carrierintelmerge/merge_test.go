@@ -1,16 +1,21 @@
-package carrierintel_test
+package carrierintelmerge_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelmerge"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/partiestest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const fullFetchedAt = testNow - 3*timeutils.SecondsPerDay
+const fullFetchedAt = partiestest.CarrierIntelNow - 3*timeutils.SecondsPerDay
 
 func fullProfileBelowRequired() *carrierintel.Profile {
 	p := &carrierintel.Profile{
@@ -38,9 +43,9 @@ func fullProfileBelowRequired() *carrierintel.Profile {
 			},
 		},
 		Insurance: &carrierintel.Insurance{
-			BIPDOnFile:   dec(1_000_000),
-			BIPDRequired: dec(5_000_000),
-			BondRequired: dec(75_000),
+			BIPDOnFile:   partiestest.Decimal(1_000_000),
+			BIPDRequired: partiestest.Decimal(5_000_000),
+			BondRequired: partiestest.Decimal(75_000),
 			Filings: []carrierintel.InsuranceFiling{
 				{Type: carrierintel.InsuranceFilingTypeBIPD, InsurerName: "ACME MUTUAL"},
 			},
@@ -73,7 +78,7 @@ func liteProfile() *carrierintel.Profile {
 			Common: &carrierintel.AuthorityGrant{Status: carrierintel.AuthorityStatusUnknown},
 		},
 		Insurance: &carrierintel.Insurance{
-			BIPDOnFile: dec(1_000_000),
+			BIPDOnFile: partiestest.Decimal(1_000_000),
 		},
 		Safety: &carrierintel.Safety{
 			Rating:    carrierintel.SafetyRatingSatisfactory,
@@ -89,8 +94,8 @@ func snapshotAt(
 	profile *carrierintel.Profile,
 	depth carrierintel.LookupDepth,
 	fetchedAt int64,
-) *carrierintel.CarrierIntelSnapshot {
-	return &carrierintel.CarrierIntelSnapshot{
+) *carrierintelsnapshot.CarrierIntelSnapshot {
+	return &carrierintelsnapshot.CarrierIntelSnapshot{
 		Depth:          depth,
 		FetchedDepth:   depth,
 		FetchedAt:      fetchedAt,
@@ -102,12 +107,12 @@ func snapshotAt(
 func TestResolveIncomingProfile(t *testing.T) {
 	t.Parallel()
 
-	control := carrierintel.NewDefaultControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
-	expiredFullAt := testNow - control.FullProfileTTLSeconds() - timeutils.SecondsPerDay
+	control := carrierintelcontrol.NewDefaultControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	expiredFullAt := partiestest.CarrierIntelNow - control.FullProfileTTLSeconds() - timeutils.SecondsPerDay
 
 	tests := []struct {
 		name           string
-		current        *carrierintel.CarrierIntelSnapshot
+		current        *carrierintelsnapshot.CarrierIntelSnapshot
 		incoming       *carrierintel.Profile
 		incomingDepth  carrierintel.LookupDepth
 		wantMerged     bool
@@ -143,7 +148,7 @@ func TestResolveIncomingProfile(t *testing.T) {
 			incoming:       liteProfile(),
 			incomingDepth:  carrierintel.LookupDepthLite,
 			wantDepth:      carrierintel.LookupDepthLite,
-			wantDepthAsOf:  testNow,
+			wantDepthAsOf:  partiestest.CarrierIntelNow,
 			wantPowerUnits: true,
 		},
 		{
@@ -152,7 +157,7 @@ func TestResolveIncomingProfile(t *testing.T) {
 			incoming:      fullProfileBelowRequired(),
 			incomingDepth: carrierintel.LookupDepthFull,
 			wantDepth:     carrierintel.LookupDepthFull,
-			wantDepthAsOf: testNow,
+			wantDepthAsOf: partiestest.CarrierIntelNow,
 			wantBIPDReq:   true,
 			wantBlocker:   true,
 		},
@@ -162,12 +167,12 @@ func TestResolveIncomingProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := carrierintel.ResolveIncomingProfile(&carrierintel.ProfileMergeInput{
+			result := carrierintelmerge.ResolveIncomingProfile(&carrierintelmerge.ProfileMergeInput{
 				Current:       tt.current,
 				Incoming:      tt.incoming,
 				IncomingDepth: tt.incomingDepth,
 				Control:       control,
-				Now:           testNow,
+				Now:           partiestest.CarrierIntelNow,
 			})
 
 			assert.Equal(t, tt.wantMerged, result.Merged)
@@ -177,8 +182,11 @@ func TestResolveIncomingProfile(t *testing.T) {
 			assert.Equal(t, tt.wantBIPDReq, result.Profile.Insurance.BIPDRequired != nil)
 			assert.Equal(t, tt.wantPowerUnits, result.Profile.Fleet != nil)
 
-			findings := evaluate(result.Profile, nil)
-			finding := findingByCode(findings, carrierintel.RuleInsuranceBIPDBelow)
+			findings := partiestest.EvaluateCarrierIntel(result.Profile, nil)
+			finding := partiestest.CarrierIntelFinding(
+				findings,
+				carrierintelrule.RuleInsuranceBIPDBelow,
+			)
 			if tt.wantBlocker {
 				require.NotNil(t, finding)
 				assert.True(t, finding.IsBlocking())
@@ -195,9 +203,9 @@ func TestMergeProfilesFieldLevel(t *testing.T) {
 	base := fullProfileBelowRequired()
 	overlay := liteProfile()
 	overlay.Identity.LegalName = "FEDEX GROUND PACKAGE SYSTEM, INC."
-	overlay.Insurance.BIPDOnFile = dec(6_000_000)
+	overlay.Insurance.BIPDOnFile = partiestest.Decimal(6_000_000)
 
-	merged := carrierintel.MergeProfiles(base, overlay)
+	merged := carrierintelmerge.MergeProfiles(base, overlay)
 
 	assert.Equal(t, "FEDEX GROUND PACKAGE SYSTEM, INC.", merged.Identity.LegalName)
 	assert.Equal(t, "FEDEX GROUND", merged.Identity.DBAName)
@@ -209,9 +217,9 @@ func TestMergeProfilesFieldLevel(t *testing.T) {
 	assert.NotNil(t, merged.Authority.Common.GrantedAt)
 	assert.Len(t, merged.Authority.History, 1)
 
-	assert.True(t, merged.Insurance.BIPDOnFile.Equal(*dec(6_000_000)))
-	assert.True(t, merged.Insurance.BIPDRequired.Equal(*dec(5_000_000)))
-	assert.True(t, merged.Insurance.BondRequired.Equal(*dec(75_000)))
+	assert.True(t, merged.Insurance.BIPDOnFile.Equal(*partiestest.Decimal(6_000_000)))
+	assert.True(t, merged.Insurance.BIPDRequired.Equal(*partiestest.Decimal(5_000_000)))
+	assert.True(t, merged.Insurance.BondRequired.Equal(*partiestest.Decimal(75_000)))
 	assert.Len(t, merged.Insurance.Filings, 1)
 
 	assert.Equal(t, int64(843609600), *merged.Safety.RatingDate)
@@ -231,36 +239,6 @@ func TestMergeProfilesFieldLevel(t *testing.T) {
 		assert.True(t, merged.Covers(section), section)
 	}
 
-	assert.True(t, base.Insurance.BIPDOnFile.Equal(*dec(1_000_000)))
+	assert.True(t, base.Insurance.BIPDOnFile.Equal(*partiestest.Decimal(1_000_000)))
 	assert.Nil(t, base.Fleet)
-}
-
-func TestSnapshotFreshnessTracksDeeperFetch(t *testing.T) {
-	t.Parallel()
-
-	merged := &carrierintel.CarrierIntelSnapshot{
-		Depth:          carrierintel.LookupDepthFull,
-		FetchedDepth:   carrierintel.LookupDepthLite,
-		FetchedAt:      testNow - timeutils.SecondsPerDay,
-		DepthFetchedAt: testNow - 29*timeutils.SecondsPerDay,
-	}
-	fullTTL := int64(30 * timeutils.SecondsPerDay)
-	liteTTL := int64(2 * timeutils.SecondsPerDay)
-
-	assert.True(t, merged.IsFreshForDepth(testNow, liteTTL, carrierintel.LookupDepthLite))
-	assert.True(t, merged.IsFreshForDepth(testNow, fullTTL, carrierintel.LookupDepthFull))
-	later := testNow + 2*timeutils.SecondsPerDay
-	assert.False(t, merged.IsFreshForDepth(later, fullTTL, carrierintel.LookupDepthFull))
-	assert.Equal(t, merged.DepthFetchedAt, merged.AsOfForDepth(carrierintel.LookupDepthFull))
-
-	confirmedAt := testNow
-	full := &carrierintel.CarrierIntelSnapshot{
-		Depth:          carrierintel.LookupDepthFull,
-		FetchedDepth:   carrierintel.LookupDepthFull,
-		FetchedAt:      testNow - 40*timeutils.SecondsPerDay,
-		DepthFetchedAt: testNow - 40*timeutils.SecondsPerDay,
-		ConfirmedAt:    &confirmedAt,
-	}
-	assert.Equal(t, confirmedAt, full.DepthAsOf())
-	assert.True(t, full.IsFreshForDepth(testNow, fullTTL, carrierintel.LookupDepthFull))
 }

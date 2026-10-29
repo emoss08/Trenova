@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
@@ -177,6 +177,6 @@ func (s *Service) Connector(typ integration.Type) (carrierintelports.CarrierInte
 func (s *Service) Control(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*carrierintel.CarrierIntelControl, error) {
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	return s.controlRepo.GetOrCreate(ctx, tenantInfo)
 }

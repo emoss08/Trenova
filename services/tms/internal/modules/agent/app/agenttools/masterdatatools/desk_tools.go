@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -48,11 +48,11 @@ const maxRenewalNoteChars = 2000
 
 var carrierFindingResolutions = agenttoolschema.Source(
 	"carrierIntel.findingResolution",
-	[]carrierintel.EventResolution{
-		carrierintel.EventResolutionCarrierUpdated,
-		carrierintel.EventResolutionCarrierBlocked,
-		carrierintel.EventResolutionNoActionRequired,
-		carrierintel.EventResolutionFalsePositive,
+	[]carrierintelevent.EventResolution{
+		carrierintelevent.EventResolutionCarrierUpdated,
+		carrierintelevent.EventResolutionCarrierBlocked,
+		carrierintelevent.EventResolutionNoActionRequired,
+		carrierintelevent.EventResolutionFalsePositive,
 	},
 )
 
@@ -703,12 +703,12 @@ type carrierIntelActor interface {
 	ResolveEvent(
 		ctx context.Context,
 		req *carrierintelservice.ResolveEventRequest,
-	) (*carrierintel.CarrierIntelEvent, error)
+	) (*carrierintelevent.CarrierIntelEvent, error)
 	GetEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		eventID pulid.ID,
-	) (*carrierintel.CarrierIntelEvent, error)
+	) (*carrierintelevent.CarrierIntelEvent, error)
 }
 
 // The two tools share everything but their name, their outcome and whether
@@ -869,7 +869,7 @@ func (t *carrierIntelEventTool) arguments(
 	if err != nil {
 		return nil, err
 	}
-	resolution := carrierintel.EventResolution(rawResolution)
+	resolution := carrierintelevent.EventResolution(rawResolution)
 	if !resolution.IsValid() {
 		return nil, fmt.Errorf("%q is not an outcome a finding can be closed with", rawResolution)
 	}

@@ -1,4 +1,4 @@
-package carrierintel
+package carrierinteldiff
 
 import (
 	"fmt"

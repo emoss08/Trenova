@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -25,7 +29,7 @@ type Optional[T any] = optional.Value[T]
 func Some[T any](v T) Optional[T] { return optional.Some(v) }
 
 type ControlPatch struct {
-	EnrollmentPolicy        Optional[carrierintel.EnrollmentPolicy]
+	EnrollmentPolicy        Optional[carrierintelcontrol.EnrollmentPolicy]
 	RecentUsageDays         Optional[int]
 	IncludeOpenTenders      Optional[bool]
 	AutoEnrollOnCreate      Optional[bool]
@@ -38,11 +42,11 @@ type ControlPatch struct {
 	PreTenderMaxAgeHours    Optional[int]
 	HardMaxAgeHours         Optional[int]
 	ConfirmBlockingChanges  Optional[bool]
-	OutagePolicy            Optional[carrierintel.OutagePolicy]
+	OutagePolicy            Optional[carrierintelcontrol.OutagePolicy]
 	AutoDisqualifyOnBlock   Optional[bool]
 	AutoApplySafetyRating   Optional[bool]
-	Rules                   Optional[carrierintel.RuleSettings]
-	AutoSyncFields          Optional[[]carrierintel.SyncField]
+	Rules                   Optional[carrierintelrule.RuleSettings]
+	AutoSyncFields          Optional[[]carrierintelsync.SyncField]
 	MonthlySpendCap         Optional[*decimal.Decimal]
 	SoftCapPercent          Optional[int]
 	DailyFullProfileCap     Optional[*int]
@@ -61,7 +65,7 @@ func (s *Service) UpdateControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	patch *ControlPatch,
-) (*carrierintel.CarrierIntelControl, error) {
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	log := s.l.With(zap.String("operation", "UpdateControl"))
 
 	original, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
@@ -102,12 +106,12 @@ func (s *Service) UpdateControl(
 	policyChanged := false
 	if applyPatch(&entity.Rules, patch.Rules) {
 		if entity.Rules == nil {
-			entity.Rules = carrierintel.RuleSettings{}
+			entity.Rules = carrierintelrule.RuleSettings{}
 		}
 		policyChanged = !rulesEqual(original.Rules, entity.Rules)
 	}
 	if applyPatch(&entity.AutoSyncFields, patch.AutoSyncFields) && entity.AutoSyncFields == nil {
-		entity.AutoSyncFields = []carrierintel.SyncField{}
+		entity.AutoSyncFields = []carrierintelsync.SyncField{}
 	}
 	if applyPatch(&entity.AutoApplySafetyRating, patch.AutoApplySafetyRating) &&
 		entity.AutoApplySafetyRating != original.AutoApplySafetyRating {
@@ -125,8 +129,8 @@ func (s *Service) UpdateControl(
 		entity.IncludeOpenTenders != original.IncludeOpenTenders ||
 		entity.SelfMonitoringEnabled != original.SelfMonitoringEnabled
 
-	if entity.EnrollmentPolicy == carrierintel.EnrollmentPolicyAllActive &&
-		original.EnrollmentPolicy != carrierintel.EnrollmentPolicyAllActive &&
+	if entity.EnrollmentPolicy == carrierintelcontrol.EnrollmentPolicyAllActive &&
+		original.EnrollmentPolicy != carrierintelcontrol.EnrollmentPolicyAllActive &&
 		!patch.ConfirmEstimatedCost {
 		return nil, errortypes.NewBusinessError(
 			"Monitoring every active carrier is billed per carrier each month. Review the cost estimate and confirm to continue",
@@ -180,7 +184,7 @@ func (s *Service) UpdateControl(
 	return updated, nil
 }
 
-func rulesEqual(a, b carrierintel.RuleSettings) bool {
+func rulesEqual(a, b carrierintelrule.RuleSettings) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -193,8 +197,8 @@ func rulesEqual(a, b carrierintel.RuleSettings) bool {
 	return true
 }
 
-func (s *Service) RuleCatalog() []carrierintel.RuleDefinition {
-	return carrierintel.Catalog()
+func (s *Service) RuleCatalog() []carrierintelrule.RuleDefinition {
+	return carrierintelrule.Catalog()
 }
 
 func (s *Service) ProviderDescriptor(
@@ -220,7 +224,7 @@ func (s *Service) SwitchPrimaryProvider(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
-) (*carrierintel.CarrierIntelControl, error) {
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	if !provider.SupportsCarrierIntelligence() {
 		return nil, errortypes.NewValidationError("provider", errortypes.ErrInvalid,
 			"Provider is not a carrier intelligence provider")
@@ -300,7 +304,7 @@ func (s *Service) releaseWatchlist(
 	}
 	now := s.now()
 	for _, row := range rows {
-		row.MarkDesired(carrierintel.DesiredStateNotEnrolled, "", now)
+		row.MarkDesired(carrierintelenrollment.DesiredStateNotEnrolled, "", now)
 	}
 	if err = s.enrollmentRepo.Upsert(ctx, rows); err != nil {
 		s.l.Warn("failed to mark enrollments for release", zap.Error(err))
@@ -340,9 +344,9 @@ func (s *Service) releaseWatchlist(
 }
 
 func withRefs(
-	rows []*carrierintel.CarrierMonitoringEnrollment,
-) []*carrierintel.CarrierMonitoringEnrollment {
-	out := make([]*carrierintel.CarrierMonitoringEnrollment, 0, len(rows))
+	rows []*carrierintelenrollment.CarrierMonitoringEnrollment,
+) []*carrierintelenrollment.CarrierMonitoringEnrollment {
+	out := make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(rows))
 	for _, row := range rows {
 		if row.ProviderRef != "" {
 			out = append(out, row)

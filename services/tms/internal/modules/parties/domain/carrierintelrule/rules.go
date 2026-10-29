@@ -1,10 +1,11 @@
-package carrierintel
+package carrierintelrule
 
 import (
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -65,16 +66,16 @@ type RuleParamSpec struct {
 }
 
 type RuleSetting struct {
-	Action RuleAction        `json:"action"`
-	Params map[string]string `json:"params,omitempty"`
+	Action carrierintel.RuleAction `json:"action"`
+	Params map[string]string       `json:"params,omitempty"`
 }
 
 type RuleSettings map[RuleCode]RuleSetting
 
 type RuleContext struct {
-	Profile         *Profile
+	Profile         *carrierintel.Profile
 	Now             int64
-	Subject         SubjectType
+	Subject         carrierintel.SubjectType
 	BrokerAuthority bool
 	AuthorityExempt bool
 	NotFound        bool
@@ -85,20 +86,20 @@ type RuleContext struct {
 type evaluateFunc func(ctx *RuleContext) (hit bool, message string)
 
 type RuleDefinition struct {
-	Code              RuleCode        `json:"code"`
-	Label             string          `json:"label"`
-	Description       string          `json:"description"`
-	Category          Section         `json:"category"`
-	DefaultAction     RuleAction      `json:"defaultAction"`
-	RecommendedAction RuleAction      `json:"recommendedAction"`
-	RequiredSections  []Section       `json:"requiredSections"`
-	Params            []RuleParamSpec `json:"params"`
-	Subjects          []SubjectType   `json:"subjects"`
-	GateRelevant      bool            `json:"gateRelevant"`
+	Code              RuleCode                   `json:"code"`
+	Label             string                     `json:"label"`
+	Description       string                     `json:"description"`
+	Category          carrierintel.Section       `json:"category"`
+	DefaultAction     carrierintel.RuleAction    `json:"defaultAction"`
+	RecommendedAction carrierintel.RuleAction    `json:"recommendedAction"`
+	RequiredSections  []carrierintel.Section     `json:"requiredSections"`
+	Params            []RuleParamSpec            `json:"params"`
+	Subjects          []carrierintel.SubjectType `json:"subjects"`
+	GateRelevant      bool                       `json:"gateRelevant"`
 	evaluate          evaluateFunc
 }
 
-func (d *RuleDefinition) AppliesTo(subject SubjectType) bool {
+func (d *RuleDefinition) AppliesTo(subject carrierintel.SubjectType) bool {
 	return len(d.Subjects) == 0 || slices.Contains(d.Subjects, subject)
 }
 
@@ -112,27 +113,28 @@ func (d *RuleDefinition) paramSpec(key string) *RuleParamSpec {
 }
 
 type Finding struct {
-	Code              RuleCode   `json:"code"`
-	Category          Section    `json:"category"`
-	Action            RuleAction `json:"action"`
-	Severity          Severity   `json:"severity"`
-	Message           string     `json:"message"`
-	Unverifiable      bool       `json:"unverifiable"`
-	Unconfirmed       bool       `json:"unconfirmed"`
-	Overridden        bool       `json:"overridden"`
-	OverrideID        pulid.ID   `json:"overrideId,omitempty"`
-	OverrideExpiresAt *int64     `json:"overrideExpiresAt,omitempty"`
+	Code              RuleCode                `json:"code"`
+	Category          carrierintel.Section    `json:"category"`
+	Action            carrierintel.RuleAction `json:"action"`
+	Severity          carrierintel.Severity   `json:"severity"`
+	Message           string                  `json:"message"`
+	Unverifiable      bool                    `json:"unverifiable"`
+	Unconfirmed       bool                    `json:"unconfirmed"`
+	Overridden        bool                    `json:"overridden"`
+	OverrideID        pulid.ID                `json:"overrideId,omitempty"`
+	OverrideExpiresAt *int64                  `json:"overrideExpiresAt,omitempty"`
 }
 
 func (f *Finding) IsBlocking() bool {
-	return f.Action == RuleActionBlock && !f.Unverifiable && !f.Overridden
+	return f.Action == carrierintel.RuleActionBlock && !f.Unverifiable && !f.Overridden
 }
 
 func (f *Finding) IsAdvisory() bool {
 	if f.Unverifiable {
 		return false
 	}
-	return f.Action == RuleActionWarn || (f.Action == RuleActionBlock && f.Overridden)
+	return f.Action == carrierintel.RuleActionWarn ||
+		(f.Action == carrierintel.RuleActionBlock && f.Overridden)
 }
 
 type OverrideRef struct {
@@ -208,9 +210,9 @@ func ResolveRuleSetting(settings RuleSettings, def *RuleDefinition) RuleSetting 
 }
 
 type EvaluateInput struct {
-	Profile         *Profile
+	Profile         *carrierintel.Profile
 	Now             int64
-	Subject         SubjectType
+	Subject         carrierintel.SubjectType
 	BrokerAuthority bool
 	AuthorityExempt bool
 	NotFound        bool
@@ -228,7 +230,7 @@ func EvaluateFindings(in *EvaluateInput) []Finding {
 			continue
 		}
 		setting := ResolveRuleSetting(in.Settings, def)
-		if setting.Action == RuleActionOff {
+		if setting.Action == carrierintel.RuleActionOff {
 			continue
 		}
 
@@ -256,7 +258,7 @@ func EvaluateFindings(in *EvaluateInput) []Finding {
 			}
 			if !in.Profile.CoversAll(def.RequiredSections) {
 				finding.Unverifiable = true
-				finding.Severity = SeverityInfo
+				finding.Severity = carrierintel.SeverityInfo
 				finding.Message = def.Label + " could not be checked with the current provider"
 				findings = append(findings, finding)
 				continue
@@ -276,7 +278,8 @@ func EvaluateFindings(in *EvaluateInput) []Finding {
 }
 
 func applyOverride(finding *Finding, overrides []OverrideRef, now int64) {
-	if finding.Action != RuleActionBlock && finding.Action != RuleActionWarn {
+	if finding.Action != carrierintel.RuleActionBlock &&
+		finding.Action != carrierintel.RuleActionWarn {
 		return
 	}
 	for idx := range overrides {
@@ -293,11 +296,11 @@ func applyOverride(finding *Finding, overrides []OverrideRef, now int64) {
 }
 
 func (f *Finding) MarkUnconfirmed(confirmingProvider string) {
-	if f.Action != RuleActionBlock {
+	if f.Action != carrierintel.RuleActionBlock {
 		return
 	}
-	f.Action = RuleActionWarn
-	f.Severity = RuleActionWarn.Severity()
+	f.Action = carrierintel.RuleActionWarn
+	f.Severity = carrierintel.RuleActionWarn.Severity()
 	f.Unconfirmed = true
 	f.Message += " (not confirmed by " + confirmingProvider + ")"
 }
@@ -314,10 +317,10 @@ func CarryUnconfirmed(stored, recomputed []Finding) []Finding {
 	}
 	for idx := range recomputed {
 		prior, ok := unconfirmed[recomputed[idx].Code]
-		if !ok || recomputed[idx].Action != RuleActionBlock {
+		if !ok || recomputed[idx].Action != carrierintel.RuleActionBlock {
 			continue
 		}
-		recomputed[idx].Action = RuleActionWarn
+		recomputed[idx].Action = carrierintel.RuleActionWarn
 		recomputed[idx].Severity = prior.Severity
 		recomputed[idx].Message = prior.Message
 		recomputed[idx].Unconfirmed = true
@@ -365,7 +368,7 @@ func NewBlockingCodes(prior, current []Finding) []Finding {
 }
 
 func NewlyRaised(prior, current []Finding) []Finding {
-	priorCodes := make(map[RuleCode]RuleAction, len(prior))
+	priorCodes := make(map[RuleCode]carrierintel.RuleAction, len(prior))
 	for idx := range prior {
 		if !prior[idx].Unverifiable {
 			priorCodes[prior[idx].Code] = prior[idx].Action
@@ -383,4 +386,46 @@ func NewlyRaised(prior, current []Finding) []Finding {
 		raised = append(raised, finding)
 	}
 	return raised
+}
+
+func DeriveRiskLevel(p *carrierintel.Profile, findings []Finding) carrierintel.RiskLevel {
+	if p == nil {
+		return carrierintel.RiskLevelUnknown
+	}
+	level := carrierintel.RiskLevelUnknown
+	if p.Safety != nil && p.Safety.RiskScore.IsValid() &&
+		p.Safety.RiskScore != carrierintel.RiskLevelUnknown {
+		level = p.Safety.RiskScore
+	}
+
+	blocking, warnings := 0, 0
+	for idx := range findings {
+		finding := &findings[idx]
+		if finding.Unverifiable || finding.Overridden {
+			continue
+		}
+		switch finding.Action {
+		case carrierintel.RuleActionBlock:
+			blocking++
+		case carrierintel.RuleActionWarn:
+			warnings++
+		}
+	}
+
+	derived := carrierintel.RiskLevelLow
+	switch {
+	case blocking > 0:
+		derived = carrierintel.RiskLevelVeryHigh
+	case warnings >= 3:
+		derived = carrierintel.RiskLevelHigh
+	case warnings == 2:
+		derived = carrierintel.RiskLevelElevated
+	case warnings == 1:
+		derived = carrierintel.RiskLevelModerate
+	}
+
+	if derived.Rank() > level.Rank() {
+		return derived
+	}
+	return level
 }

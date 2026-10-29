@@ -304,6 +304,17 @@ modules:
       - carrier
       - carriercapacity
       - carrierintel
+      - carrierintelcontrol
+      - carrierinteldiff
+      - carrierintelenrollment
+      - carrierintelevent
+      - carrierintelmerge
+      - carrierinteloverride
+      - carrierintelrule
+      - carrierintelsnapshot
+      - carrierintelsync
+      - carrierintelusage
+      - carrierintelverification
       - customer
       - factoringcompany
     service:

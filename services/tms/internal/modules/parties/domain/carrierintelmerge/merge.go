@@ -1,16 +1,22 @@
-package carrierintel
+package carrierintelmerge
+
+import (
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+)
 
 type ProfileMergeInput struct {
-	Current       *CarrierIntelSnapshot
-	Incoming      *Profile
-	IncomingDepth LookupDepth
-	Control       *CarrierIntelControl
+	Current       *carrierintelsnapshot.CarrierIntelSnapshot
+	Incoming      *carrierintel.Profile
+	IncomingDepth carrierintel.LookupDepth
+	Control       *carrierintelcontrol.CarrierIntelControl
 	Now           int64
 }
 
 type ProfileMergeResult struct {
-	Profile        *Profile
-	Depth          LookupDepth
+	Profile        *carrierintel.Profile
+	Depth          carrierintel.LookupDepth
 	DepthFetchedAt int64
 	Merged         bool
 }
@@ -38,7 +44,7 @@ func ResolveIncomingProfile(in *ProfileMergeInput) ProfileMergeResult {
 	}
 }
 
-func MergeProfiles(base, overlay *Profile) *Profile {
+func MergeProfiles(base, overlay *carrierintel.Profile) *carrierintel.Profile {
 	if overlay == nil {
 		return base
 	}
@@ -46,7 +52,7 @@ func MergeProfiles(base, overlay *Profile) *Profile {
 		return overlay
 	}
 
-	merged := &Profile{
+	merged := &carrierintel.Profile{
 		Identity:      mergeStruct(base.Identity, overlay.Identity, mergeIdentity),
 		Authority:     mergeStruct(base.Authority, overlay.Authority, mergeAuthority),
 		Insurance:     mergeStruct(base.Insurance, overlay.Insurance, mergeInsurance),
@@ -64,8 +70,8 @@ func MergeProfiles(base, overlay *Profile) *Profile {
 		Benchmarks:    mergeStruct(base.Benchmarks, overlay.Benchmarks, mergeBenchmarks),
 	}
 
-	sections := AllSections()
-	merged.Coverage = make([]Section, 0, len(sections))
+	sections := carrierintel.AllSections()
+	merged.Coverage = make([]carrierintel.Section, 0, len(sections))
 	for _, section := range sections {
 		if base.Covers(section) || overlay.Covers(section) {
 			merged.Coverage = append(merged.Coverage, section)
@@ -106,7 +112,7 @@ func mergeSlice[S ~[]E, E any](base, overlay S) S {
 	return base
 }
 
-func mergeIdentity(dst, overlay *Identity) {
+func mergeIdentity(dst, overlay *carrierintel.Identity) {
 	mergeText(&dst.DOTNumber, overlay.DOTNumber)
 	if overlay.DocketNumber != "" {
 		dst.DocketNumber = overlay.DocketNumber
@@ -128,7 +134,7 @@ func mergeIdentity(dst, overlay *Identity) {
 	}
 }
 
-func mergeAuthority(dst, overlay *Authority) {
+func mergeAuthority(dst, overlay *carrierintel.Authority) {
 	dst.Common = mergeStruct(dst.Common, overlay.Common, mergeGrant)
 	dst.Contract = mergeStruct(dst.Contract, overlay.Contract, mergeGrant)
 	dst.Broker = mergeStruct(dst.Broker, overlay.Broker, mergeGrant)
@@ -137,7 +143,7 @@ func mergeAuthority(dst, overlay *Authority) {
 	dst.History = mergeSlice(dst.History, overlay.History)
 }
 
-func mergeGrant(dst, overlay *AuthorityGrant) {
+func mergeGrant(dst, overlay *carrierintel.AuthorityGrant) {
 	if overlay.IsKnown() {
 		dst.Status = overlay.Status
 		dst.RevocationPending = overlay.RevocationPending
@@ -148,7 +154,7 @@ func mergeGrant(dst, overlay *AuthorityGrant) {
 	mergePtr(&dst.AgeDays, overlay.AgeDays)
 }
 
-func mergeInsurance(dst, overlay *Insurance) {
+func mergeInsurance(dst, overlay *carrierintel.Insurance) {
 	mergePtr(&dst.BIPDOnFile, overlay.BIPDOnFile)
 	mergePtr(&dst.BIPDRequired, overlay.BIPDRequired)
 	mergePtr(&dst.CargoOnFile, overlay.CargoOnFile)
@@ -161,12 +167,12 @@ func mergeInsurance(dst, overlay *Insurance) {
 	dst.Filings = mergeSlice(dst.Filings, overlay.Filings)
 }
 
-func mergeSafety(dst, overlay *Safety) {
+func mergeSafety(dst, overlay *carrierintel.Safety) {
 	mergeText(&dst.Rating, overlay.Rating)
 	mergePtr(&dst.RatingDate, overlay.RatingDate)
 	mergePtr(&dst.ISSValue, overlay.ISSValue)
 	mergeText(&dst.ISSRecommendation, overlay.ISSRecommendation)
-	if overlay.RiskScore != RiskLevelUnknown {
+	if overlay.RiskScore != carrierintel.RiskLevelUnknown {
 		mergeText(&dst.RiskScore, overlay.RiskScore)
 	}
 	mergePtr(&dst.RiskProbability, overlay.RiskProbability)
@@ -177,7 +183,7 @@ func mergeSafety(dst, overlay *Safety) {
 	mergePtr(&dst.LatestReviewAt, overlay.LatestReviewAt)
 }
 
-func mergeInspections(dst, overlay *Inspections) {
+func mergeInspections(dst, overlay *carrierintel.Inspections) {
 	mergePtr(&dst.Total, overlay.Total)
 	mergePtr(&dst.Driver, overlay.Driver)
 	mergePtr(&dst.Vehicle, overlay.Vehicle)
@@ -194,7 +200,7 @@ func mergeInspections(dst, overlay *Inspections) {
 	mergePtr(&dst.LastInspectionAt, overlay.LastInspectionAt)
 }
 
-func mergeCrashes(dst, overlay *Crashes) {
+func mergeCrashes(dst, overlay *carrierintel.Crashes) {
 	mergePtr(&dst.Total, overlay.Total)
 	mergePtr(&dst.Fatal, overlay.Fatal)
 	mergePtr(&dst.Injury, overlay.Injury)
@@ -202,7 +208,7 @@ func mergeCrashes(dst, overlay *Crashes) {
 	mergePtr(&dst.LastCrashAt, overlay.LastCrashAt)
 }
 
-func mergeFleet(dst, overlay *Fleet) {
+func mergeFleet(dst, overlay *carrierintel.Fleet) {
 	mergePtr(&dst.PowerUnits, overlay.PowerUnits)
 	mergePtr(&dst.Drivers, overlay.Drivers)
 	mergePtr(&dst.CDLDrivers, overlay.CDLDrivers)
@@ -214,7 +220,7 @@ func mergeFleet(dst, overlay *Fleet) {
 	mergePtr(&dst.Trucks, overlay.Trucks)
 }
 
-func mergeContacts(dst, overlay *Contacts) {
+func mergeContacts(dst, overlay *carrierintel.Contacts) {
 	mergeText(&dst.Phone, overlay.Phone)
 	mergeText(&dst.Cellphone, overlay.Cellphone)
 	mergeText(&dst.Fax, overlay.Fax)
@@ -223,7 +229,7 @@ func mergeContacts(dst, overlay *Contacts) {
 	mergeText(&dst.SecondaryContact, overlay.SecondaryContact)
 }
 
-func mergeOperations(dst, overlay *Operations) {
+func mergeOperations(dst, overlay *carrierintel.Operations) {
 	dst.Classification = mergeSlice(dst.Classification, overlay.Classification)
 	dst.CargoCarried = mergeSlice(dst.CargoCarried, overlay.CargoCarried)
 	mergePtr(&dst.HazmatCarrier, overlay.HazmatCarrier)
@@ -236,7 +242,7 @@ func mergeOperations(dst, overlay *Operations) {
 	mergePtr(&dst.PHMSA, overlay.PHMSA)
 }
 
-func mergeChangeHistory(dst, overlay *ChangeHistory) {
+func mergeChangeHistory(dst, overlay *carrierintel.ChangeHistory) {
 	mergePtr(&dst.NameChanges, overlay.NameChanges)
 	mergePtr(&dst.NameLastChangedAt, overlay.NameLastChangedAt)
 	mergePtr(&dst.EmailChanges, overlay.EmailChanges)
@@ -249,7 +255,7 @@ func mergeChangeHistory(dst, overlay *ChangeHistory) {
 	mergePtr(&dst.ContactLastChangeAt, overlay.ContactLastChangeAt)
 }
 
-func mergeNetwork(dst, overlay *Network) {
+func mergeNetwork(dst, overlay *carrierintel.Network) {
 	mergePtr(&dst.SharedAddresses, overlay.SharedAddresses)
 	mergePtr(&dst.SharedPhones, overlay.SharedPhones)
 	mergePtr(&dst.SharedEmails, overlay.SharedEmails)
@@ -258,7 +264,7 @@ func mergeNetwork(dst, overlay *Network) {
 	dst.Links = mergeSlice(dst.Links, overlay.Links)
 }
 
-func mergeLanes(dst, overlay *Lanes) {
+func mergeLanes(dst, overlay *carrierintel.Lanes) {
 	mergePtr(&dst.TotalLoads, overlay.TotalLoads)
 	mergePtr(&dst.FTLPercent, overlay.FTLPercent)
 	mergePtr(&dst.LTLPercent, overlay.LTLPercent)
@@ -269,7 +275,7 @@ func mergeLanes(dst, overlay *Lanes) {
 	dst.PreferredStates = mergeSlice(dst.PreferredStates, overlay.PreferredStates)
 }
 
-func mergeBenchmarks(dst, overlay *Benchmarks) {
+func mergeBenchmarks(dst, overlay *carrierintel.Benchmarks) {
 	mergePtr(&dst.AnyAnomaly, overlay.AnyAnomaly)
 	mergePtr(&dst.InspectionMileageAnomaly, overlay.InspectionMileageAnomaly)
 	mergePtr(&dst.InspectedUnitsAnomaly, overlay.InspectedUnitsAnomaly)

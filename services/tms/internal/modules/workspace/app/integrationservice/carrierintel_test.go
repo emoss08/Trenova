@@ -3,14 +3,14 @@ package integrationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestControl() *carrierintel.CarrierIntelControl {
-	return carrierintel.NewDefaultControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+func newTestControl() *carrierintelcontrol.CarrierIntelControl {
+	return carrierintelcontrol.NewDefaultControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
 }
 
 func TestApplyCarrierIntelRole(t *testing.T) {

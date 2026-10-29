@@ -1,10 +1,11 @@
-package carrierintel
+package carrierintelsync
 
 import (
 	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -109,31 +110,36 @@ func (p *SyncPlan) Suggestion(field SyncField) (FieldUpdate, bool) {
 	return FieldUpdate{}, false
 }
 
-func mapSafetyRating(rating SafetyRating) carrier.SafetyRating {
+func mapSafetyRating(rating carrierintel.SafetyRating) carrier.SafetyRating {
 	switch rating {
-	case SafetyRatingSatisfactory:
+	case carrierintel.SafetyRatingSatisfactory:
 		return carrier.SafetyRatingSatisfactory
-	case SafetyRatingConditional:
+	case carrierintel.SafetyRatingConditional:
 		return carrier.SafetyRatingConditional
-	case SafetyRatingUnsatisfactory:
+	case carrierintel.SafetyRatingUnsatisfactory:
 		return carrier.SafetyRatingUnsatisfactory
 	default:
 		return carrier.SafetyRatingNotRated
 	}
 }
 
-func mapFilingType(t InsuranceFilingType) (carrier.InsurancePolicyType, bool) {
+func mapFilingType(t carrierintel.InsuranceFilingType) (carrier.InsurancePolicyType, bool) {
 	switch t {
-	case InsuranceFilingTypeBIPD:
+	case carrierintel.InsuranceFilingTypeBIPD:
 		return carrier.InsurancePolicyTypeAutoLiability, true
-	case InsuranceFilingTypeCargo:
+	case carrierintel.InsuranceFilingTypeCargo:
 		return carrier.InsurancePolicyTypeCargoLiability, true
 	default:
 		return "", false
 	}
 }
 
-func PlanCarrierSync(c *carrier.Carrier, p *Profile, settings SyncSettings, now int64) SyncPlan {
+func PlanCarrierSync(
+	c *carrier.Carrier,
+	p *carrierintel.Profile,
+	settings SyncSettings,
+	now int64,
+) SyncPlan {
 	plan := SyncPlan{
 		AutoApply:            make([]FieldUpdate, 0, 2),
 		Suggestions:          make([]FieldUpdate, 0, 4),
@@ -184,7 +190,12 @@ func PlanCarrierSync(c *carrier.Carrier, p *Profile, settings SyncSettings, now 
 	return plan
 }
 
-func planIdentity(plan *SyncPlan, c *carrier.Carrier, identity *Identity, settings SyncSettings) {
+func planIdentity(
+	plan *SyncPlan,
+	c *carrier.Carrier,
+	identity *carrierintel.Identity,
+	settings SyncSettings,
+) {
 	docket := stringutils.DigitsOnly(identity.DocketNumber)
 	prefix := strings.ToUpper(identity.DocketPrefix)
 	if docket != "" && (prefix == "" || prefix == "MC") {
@@ -253,7 +264,7 @@ func planScalar(
 	plan.Suggestions = append(plan.Suggestions, update)
 }
 
-func planInsurance(plan *SyncPlan, c *carrier.Carrier, ins *Insurance, now int64) {
+func planInsurance(plan *SyncPlan, c *carrier.Carrier, ins *carrierintel.Insurance, now int64) {
 	for idx := range ins.Filings {
 		filing := &ins.Filings[idx]
 		policyType, ok := mapFilingType(filing.Type)

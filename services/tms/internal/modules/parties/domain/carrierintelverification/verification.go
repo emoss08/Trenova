@@ -1,4 +1,4 @@
-package carrierintel
+package carrierintelverification
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,31 +23,31 @@ var (
 type CarrierEquipmentVerification struct {
 	keel.Table `keel:"carrier_equipment_verifications"`
 
-	ID                  pulid.ID           `json:"id"                  keel:"id,pk,autoid:ceqv_"`
-	BusinessUnitID      pulid.ID           `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
-	OrganizationID      pulid.ID           `json:"organizationId"      keel:"organization_id,pk,tenant"`
-	CarrierAssignmentID pulid.ID           `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
-	ShipmentMoveID      pulid.ID           `json:"shipmentMoveId"      keel:"shipment_move_id,nullzero"`
-	CarrierID           pulid.ID           `json:"carrierId"           keel:"carrier_id"`
-	ExpectedDOTNumber   string             `json:"expectedDotNumber"   keel:"expected_dot_number,nullzero"`
-	UnitType            UnitType           `json:"unitType"            keel:"unit_type"`
-	VIN                 string             `json:"vin"                 keel:"vin,nullzero"`
-	PlateNumber         string             `json:"plateNumber"         keel:"plate_number,nullzero"`
-	PlateState          string             `json:"plateState"          keel:"plate_state,nullzero"`
-	UnitNumber          string             `json:"unitNumber"          keel:"unit_number,nullzero"`
-	Result              VerificationResult `json:"result"              keel:"result"`
-	MatchedDOTNumbers   []string           `json:"matchedDotNumbers"   keel:"matched_dot_numbers"`
-	MatchedLegalName    string             `json:"matchedLegalName"    keel:"matched_legal_name,nullzero"`
-	Detail              *Equipment         `json:"detail"              keel:"detail,jsonb"`
-	MismatchReason      string             `json:"mismatchReason"      keel:"mismatch_reason,nullzero"`
-	Provider            integration.Type   `json:"provider"            keel:"provider,nullzero"`
-	VerifiedByID        pulid.ID           `json:"verifiedById"        keel:"verified_by_id"`
-	VerifiedAt          int64              `json:"verifiedAt"          keel:"verified_at"`
-	OverrideByID        pulid.ID           `json:"overrideById"        keel:"override_by_id,nullzero"`
-	OverrideReason      string             `json:"overrideReason"      keel:"override_reason,nullzero"`
-	OverriddenAt        *int64             `json:"overriddenAt"        keel:"overridden_at"`
-	CreatedAt           int64              `json:"createdAt"           keel:"created_at,autocreate"`
-	UpdatedAt           int64              `json:"updatedAt"           keel:"updated_at,autoupdate"`
+	ID                  pulid.ID                `json:"id"                  keel:"id,pk,autoid:ceqv_"`
+	BusinessUnitID      pulid.ID                `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID                `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	CarrierAssignmentID pulid.ID                `json:"carrierAssignmentId" keel:"carrier_assignment_id"`
+	ShipmentMoveID      pulid.ID                `json:"shipmentMoveId"      keel:"shipment_move_id,nullzero"`
+	CarrierID           pulid.ID                `json:"carrierId"           keel:"carrier_id"`
+	ExpectedDOTNumber   string                  `json:"expectedDotNumber"   keel:"expected_dot_number,nullzero"`
+	UnitType            carrierintel.UnitType   `json:"unitType"            keel:"unit_type"`
+	VIN                 string                  `json:"vin"                 keel:"vin,nullzero"`
+	PlateNumber         string                  `json:"plateNumber"         keel:"plate_number,nullzero"`
+	PlateState          string                  `json:"plateState"          keel:"plate_state,nullzero"`
+	UnitNumber          string                  `json:"unitNumber"          keel:"unit_number,nullzero"`
+	Result              VerificationResult      `json:"result"              keel:"result"`
+	MatchedDOTNumbers   []string                `json:"matchedDotNumbers"   keel:"matched_dot_numbers"`
+	MatchedLegalName    string                  `json:"matchedLegalName"    keel:"matched_legal_name,nullzero"`
+	Detail              *carrierintel.Equipment `json:"detail"              keel:"detail,jsonb"`
+	MismatchReason      string                  `json:"mismatchReason"      keel:"mismatch_reason,nullzero"`
+	Provider            integration.Type        `json:"provider"            keel:"provider,nullzero"`
+	VerifiedByID        pulid.ID                `json:"verifiedById"        keel:"verified_by_id"`
+	VerifiedAt          int64                   `json:"verifiedAt"          keel:"verified_at"`
+	OverrideByID        pulid.ID                `json:"overrideById"        keel:"override_by_id,nullzero"`
+	OverrideReason      string                  `json:"overrideReason"      keel:"override_reason,nullzero"`
+	OverriddenAt        *int64                  `json:"overriddenAt"        keel:"overridden_at"`
+	CreatedAt           int64                   `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64                   `json:"updatedAt"           keel:"updated_at,autoupdate"`
 }
 
 func (v *CarrierEquipmentVerification) BeforeCreate(_ context.Context) error {
@@ -81,7 +82,7 @@ func (v *CarrierEquipmentVerification) Validate(multiErr *errortypes.MultiError)
 		validation.Field(&v.CarrierID, validation.Required.Error("Carrier is required")),
 		validation.Field(&v.UnitType,
 			validation.Required.Error("Unit type is required"),
-			domainvalidation.ValidEnum[UnitType]("Unit type is invalid"),
+			domainvalidation.ValidEnum[carrierintel.UnitType]("Unit type is invalid"),
 		),
 		validation.Field(&v.VIN,
 			validation.When(

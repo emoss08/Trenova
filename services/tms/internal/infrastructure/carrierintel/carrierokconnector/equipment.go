@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -28,7 +29,7 @@ func (c *Client) FindByEquipment(
 	}
 
 	outcome := &intelkit.CallOutcome{
-		Endpoint: carrierintel.EndpointEquipment,
+		Endpoint: carrierintelusage.EndpointEquipment,
 		Started:  time.Now(),
 		Units:    1,
 	}

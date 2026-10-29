@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -23,7 +26,7 @@ const maxBulkEventIDs = 500
 func (s *Service) ListEvents(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelEventsRequest,
-) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
+) (*pagination.CursorListResult[*carrierintelevent.CarrierIntelEvent], error) {
 	return s.eventRepo.ListConnection(ctx, req)
 }
 
@@ -31,7 +34,7 @@ func (s *Service) GetEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	eventID pulid.ID,
-) (*carrierintel.CarrierIntelEvent, error) {
+) (*carrierintelevent.CarrierIntelEvent, error) {
 	events, err := s.eventRepo.GetByIDs(ctx, tenantInfo, []pulid.ID{eventID})
 	if err != nil {
 		return nil, err
@@ -100,12 +103,12 @@ func (s *Service) AcknowledgeEvents(
 type ResolveEventRequest struct {
 	TenantInfo pagination.TenantInfo
 	EventID    pulid.ID
-	Resolution carrierintel.EventResolution
+	Resolution carrierintelevent.EventResolution
 	Note       string
 }
 
 func PlanResolve(
-	event *carrierintel.CarrierIntelEvent,
+	event *carrierintelevent.CarrierIntelEvent,
 	req *ResolveEventRequest,
 	now int64,
 ) error {
@@ -122,7 +125,7 @@ func checkResolveNote(req *ResolveEventRequest) error {
 		return errortypes.NewValidationError("note", errortypes.ErrInvalid,
 			"Note cannot exceed 2000 characters")
 	}
-	if req.Resolution == carrierintel.EventResolutionFalsePositive && note == "" {
+	if req.Resolution == carrierintelevent.EventResolutionFalsePositive && note == "" {
 		return errortypes.NewValidationError("note", errortypes.ErrRequired,
 			"Explain why this change is a false positive")
 	}
@@ -133,7 +136,7 @@ func checkResolveNote(req *ResolveEventRequest) error {
 func (s *Service) ResolveEvent(
 	ctx context.Context,
 	req *ResolveEventRequest,
-) (*carrierintel.CarrierIntelEvent, error) {
+) (*carrierintelevent.CarrierIntelEvent, error) {
 	if err := checkResolveNote(req); err != nil {
 		return nil, err
 	}
@@ -269,7 +272,7 @@ func (s *Service) ReviewQueue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	limit int,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.ListReviewQueue(
 		ctx,
 		&carrierintelports.ListCarrierIntelReviewQueueRequest{
@@ -282,7 +285,7 @@ func (s *Service) ReviewQueue(
 func (s *Service) SnapshotHistory(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelSnapshotHistoryRequest,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.ListHistory(ctx, req)
 }
 
@@ -290,7 +293,7 @@ func (s *Service) CurrentSnapshot(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	subject carrierintelports.CarrierIntelSubjectRef,
-) (*carrierintel.CarrierIntelSnapshot, error) {
+) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.GetCurrent(ctx, tenantInfo, subject)
 }
 
@@ -298,7 +301,7 @@ func (s *Service) CurrentSnapshotsByCarrierIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierIDs []pulid.ID,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.GetCurrentByCarrierIDs(ctx, tenantInfo, carrierIDs)
 }
 
@@ -307,7 +310,7 @@ func (s *Service) CurrentSnapshotsBySubjects(
 	tenantInfo pagination.TenantInfo,
 	subjectType carrierintel.SubjectType,
 	subjectIDs []string,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.GetCurrentBySubjectIDs(ctx, tenantInfo, subjectType, subjectIDs)
 }
 
@@ -323,14 +326,14 @@ func (s *Service) EnrollmentsByCarrierIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierIDs []pulid.ID,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return s.enrollmentRepo.GetByCarrierIDs(ctx, tenantInfo, carrierIDs)
 }
 
 func (s *Service) ListEnrollments(
 	ctx context.Context,
 	req *carrierintelports.ListEnrollmentConnectionRequest,
-) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
+) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
 	return s.enrollmentRepo.ListConnection(ctx, req)
 }
 
@@ -352,18 +355,18 @@ func (s *Service) EnrollmentCounts(
 func (s *Service) FeedStates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*carrierintel.CarrierIntelFeedState, error) {
+) ([]*carrierintelenrollment.CarrierIntelFeedState, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	provider, ok := control.PrimaryType()
 	if !ok {
-		return []*carrierintel.CarrierIntelFeedState{}, nil
+		return []*carrierintelenrollment.CarrierIntelFeedState{}, nil
 	}
-	states := make([]*carrierintel.CarrierIntelFeedState, 0, 2)
-	for _, feedType := range []carrierintel.FeedType{
-		carrierintel.FeedTypeChangeFeed, carrierintel.FeedTypeSnapshotRefresh,
+	states := make([]*carrierintelenrollment.CarrierIntelFeedState, 0, 2)
+	for _, feedType := range []carrierintelenrollment.FeedType{
+		carrierintelenrollment.FeedTypeChangeFeed, carrierintelenrollment.FeedTypeSnapshotRefresh,
 	} {
 		state, getErr := s.feedRepo.Get(ctx, carrierintelports.CarrierIntelFeedStateKey{
 			TenantInfo: tenantInfo, Provider: provider, FeedType: feedType,

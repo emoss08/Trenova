@@ -906,7 +906,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RiskLevel
   CarrierIntelReviewState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.ReviewState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot.ReviewState
   CarrierIntelDepth:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.LookupDepth
@@ -915,31 +915,31 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SubjectType
   CarrierIntelEventStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventStatus
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventStatus
   CarrierIntelEventResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventResolution
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventResolution
   CarrierIntelEventSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventSource
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventSource
   CarrierIntelEnrollmentPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentPolicy
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.EnrollmentPolicy
   CarrierIntelOutagePolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.OutagePolicy
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.OutagePolicy
   CarrierIntelEnrollmentMode:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentMode
   CarrierIntelDesiredState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.DesiredState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.DesiredState
   CarrierIntelVendorState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.VendorState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.VendorState
   CarrierIntelEnrollmentReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentReason
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.EnrollmentReason
   CarrierIntelAuthorityStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.AuthorityStatus
@@ -954,19 +954,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.UnitType
   CarrierEquipmentVerificationResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.VerificationResult
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification.VerificationResult
   CarrierIntelFeedType:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.FeedType
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.FeedType
   CarrierIntelSyncField:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SyncField
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.SyncField
   CarrierIntelInsuranceChangeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.InsuranceChangeKind
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.InsuranceChangeKind
   CarrierIntelRuleParamType:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleParamType
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleParamType
   CarrierIntelAddress:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Address
@@ -1095,7 +1095,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Profile
   CarrierIntelFinding:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Finding
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.Finding
     fields:
       code:
         resolver: true
@@ -1103,7 +1103,7 @@ models:
         resolver: true
   CarrierIntelSnapshot:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelSnapshot
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot.CarrierIntelSnapshot
     fields:
       carrierId:
         resolver: true
@@ -1119,7 +1119,7 @@ models:
         resolver: true
   CarrierIntelEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelEvent
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.CarrierIntelEvent
     fields:
       carrierId:
         resolver: true
@@ -1143,7 +1143,7 @@ models:
         resolver: true
   CarrierMonitoringEnrollment:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierMonitoringEnrollment
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.CarrierMonitoringEnrollment
     fields:
       carrierId:
         resolver: true
@@ -1151,7 +1151,7 @@ models:
         resolver: true
   CarrierIntelOverride:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelOverride
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride.CarrierIntelOverride
     fields:
       ruleCode:
         resolver: true
@@ -1161,7 +1161,7 @@ models:
         resolver: true
   CarrierEquipmentVerification:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierEquipmentVerification
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification.CarrierEquipmentVerification
     fields:
       vin:
         fieldName: VIN
@@ -1175,7 +1175,7 @@ models:
         resolver: true
   CarrierIntelControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelControl
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.CarrierIntelControl
     fields:
       primaryProvider:
         resolver: true
@@ -1187,19 +1187,19 @@ models:
         resolver: true
   CarrierIntelRuleParam:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleParamSpec
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleParamSpec
   CarrierIntelRuleDefinition:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleDefinition
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleDefinition
     fields:
       code:
         resolver: true
   CarrierIntelFieldUpdate:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.FieldUpdate
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.FieldUpdate
   CarrierIntelInsuranceChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.InsuranceChange
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.InsuranceChange
     fields:
       policyId:
         resolver: true
@@ -1209,7 +1209,7 @@ models:
         resolver: true
   CarrierIntelSyncPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SyncPlan
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.SyncPlan
   CarrierIntelSuggestion:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports.CarrierIntelSuggestion
@@ -1227,7 +1227,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingSort
   CarrierIntelFeedState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelFeedState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.CarrierIntelFeedState
     fields:
       provider:
         resolver: true

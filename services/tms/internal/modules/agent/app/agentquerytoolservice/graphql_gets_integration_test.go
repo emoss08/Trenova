@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workercredentialrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdrugalcoholrepository"
@@ -137,15 +138,15 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 		tool: "carrier_get_intelligence_event",
 		write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, _ bool) (pulid.ID, error) {
 			bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
-			rows, err := events.InsertIgnoreDuplicates(ctx, []*carrierintel.CarrierIntelEvent{{
+			rows, err := events.InsertIgnoreDuplicates(ctx, []*carrierintelevent.CarrierIntelEvent{{
 				ID: pulid.MustNew("cievt_"), BusinessUnitID: bu, OrganizationID: org,
 				SubjectType: carrierintel.SubjectTypeCarrier, SubjectID: "DOT" + label,
 				DOTNumber: "100" + label[1:], SubjectName: "Carrier " + label,
-				Provider: integration.TypeCarrierOK, Source: carrierintel.EventSourceSnapshotDiff,
+				Provider: integration.TypeCarrierOK, Source: carrierintelevent.EventSourceSnapshotDiff,
 				Category: carrierintel.SectionInsurance, Severity: carrierintel.SeverityHigh,
 				PriorValue: "Active", CurrentValue: "Lapsed", Summary: "Insurance lapsed",
 				DetectedAt: timeutils.NowUnix(), Fingerprint: "fp" + label,
-				Status: carrierintel.EventStatusOpen,
+				Status: carrierintelevent.EventStatusOpen,
 			}})
 			if err != nil {
 				return pulid.Nil, err

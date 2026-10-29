@@ -1,4 +1,4 @@
-package carrierintel
+package carrierintelrule
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,29 +20,32 @@ var (
 )
 
 var (
-	carrierSubjects   = []SubjectType{SubjectTypeCarrier, SubjectTypeProspect}
-	operatingSubjects = []SubjectType{
-		SubjectTypeCarrier,
-		SubjectTypeProspect,
-		SubjectTypeOrganization,
+	carrierSubjects = []carrierintel.SubjectType{
+		carrierintel.SubjectTypeCarrier,
+		carrierintel.SubjectTypeProspect,
 	}
-	authoritySubjects = []SubjectType{
-		SubjectTypeCarrier,
-		SubjectTypeProspect,
-		SubjectTypeOrganization,
-		SubjectTypeCustomer,
+	operatingSubjects = []carrierintel.SubjectType{
+		carrierintel.SubjectTypeCarrier,
+		carrierintel.SubjectTypeProspect,
+		carrierintel.SubjectTypeOrganization,
 	}
-	brokerBondSubjects = []SubjectType{
-		SubjectTypeCarrier,
-		SubjectTypeProspect,
-		SubjectTypeCustomer,
+	authoritySubjects = []carrierintel.SubjectType{
+		carrierintel.SubjectTypeCarrier,
+		carrierintel.SubjectTypeProspect,
+		carrierintel.SubjectTypeOrganization,
+		carrierintel.SubjectTypeCustomer,
+	}
+	brokerBondSubjects = []carrierintel.SubjectType{
+		carrierintel.SubjectTypeCarrier,
+		carrierintel.SubjectTypeProspect,
+		carrierintel.SubjectTypeCustomer,
 	}
 	allNetworkKindNames = []string{
-		NetworkKindAddress.String(),
-		NetworkKindPhone.String(),
-		NetworkKindEmail.String(),
-		NetworkKindEIN.String(),
-		NetworkKindEquipment.String(),
+		carrierintel.NetworkKindAddress.String(),
+		carrierintel.NetworkKindPhone.String(),
+		carrierintel.NetworkKindEmail.String(),
+		carrierintel.NetworkKindEIN.String(),
+		carrierintel.NetworkKindEquipment.String(),
 	}
 )
 
@@ -71,10 +75,10 @@ func buildCatalog() {
 			Code:              RuleUSDOTInactive,
 			Label:             "USDOT number inactive",
 			Description:       "The USDOT registration is not active with FMCSA.",
-			Category:          SectionAuthority,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionIdentity},
+			Category:          carrierintel.SectionAuthority,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionIdentity},
 			Subjects:          authoritySubjects,
 			GateRelevant:      true,
 			evaluate:          evalUSDOTInactive,
@@ -83,10 +87,10 @@ func buildCatalog() {
 			Code:              RuleAuthorityInactive,
 			Label:             "Operating authority inactive",
 			Description:       "The operating authority the party needs (common or contract for carriers, broker for brokers) is not active.",
-			Category:          SectionAuthority,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionAuthority},
+			Category:          carrierintel.SectionAuthority,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionAuthority},
 			Subjects:          authoritySubjects,
 			GateRelevant:      true,
 			evaluate:          evalAuthorityInactive,
@@ -95,10 +99,10 @@ func buildCatalog() {
 			Code:              RuleAuthorityRevoked,
 			Label:             "Operating authority revoked",
 			Description:       "FMCSA has revoked the operating authority.",
-			Category:          SectionAuthority,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionAuthority},
+			Category:          carrierintel.SectionAuthority,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionAuthority},
 			Subjects:          authoritySubjects,
 			GateRelevant:      true,
 			evaluate:          evalAuthorityRevoked,
@@ -107,10 +111,10 @@ func buildCatalog() {
 			Code:              RuleAuthorityPendingRevoke,
 			Label:             "Authority revocation pending",
 			Description:       "FMCSA has served a pending revocation against the operating authority.",
-			Category:          SectionAuthority,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionAuthority},
+			Category:          carrierintel.SectionAuthority,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionAuthority},
 			Subjects:          authoritySubjects,
 			GateRelevant:      true,
 			evaluate:          evalAuthorityPendingRevocation,
@@ -119,10 +123,10 @@ func buildCatalog() {
 			Code:              RuleInsuranceNoneOnFile,
 			Label:             "No liability insurance on file",
 			Description:       "No BIPD liability filing is on record with FMCSA.",
-			Category:          SectionInsurance,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionInsurance},
+			Category:          carrierintel.SectionInsurance,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInsurance},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			evaluate:          evalInsuranceNoneOnFile,
@@ -131,10 +135,10 @@ func buildCatalog() {
 			Code:              RuleInsuranceBIPDBelow,
 			Label:             "Liability coverage below requirement",
 			Description:       "BIPD liability on file is below the FMCSA requirement or the organization's minimum.",
-			Category:          SectionInsurance,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionInsurance},
+			Category:          carrierintel.SectionInsurance,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInsurance},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -152,10 +156,10 @@ func buildCatalog() {
 			Code:              RuleInsuranceCargoBelow,
 			Label:             "Cargo coverage below requirement",
 			Description:       "Cargo insurance on file is below the FMCSA requirement or the organization's minimum.",
-			Category:          SectionInsurance,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionInsurance},
+			Category:          carrierintel.SectionInsurance,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInsurance},
 			Subjects:          carrierSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -173,10 +177,10 @@ func buildCatalog() {
 			Code:              RuleInsuranceBondBelow,
 			Label:             "Broker bond below requirement",
 			Description:       "The broker surety bond or trust fund on file is below the requirement.",
-			Category:          SectionInsurance,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionInsurance},
+			Category:          carrierintel.SectionInsurance,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInsurance},
 			Subjects:          brokerBondSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -194,10 +198,10 @@ func buildCatalog() {
 			Code:              RuleInsurancePendingCancel,
 			Label:             "Insurance cancellation pending",
 			Description:       "An insurer has filed a cancellation that takes effect soon.",
-			Category:          SectionInsurance,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionInsurance},
+			Category:          carrierintel.SectionInsurance,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInsurance},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -216,10 +220,10 @@ func buildCatalog() {
 			Code:              RuleSafetyOOSOrder,
 			Label:             "Out-of-service order",
 			Description:       "FMCSA has placed the operation under an out-of-service order.",
-			Category:          SectionSafety,
-			DefaultAction:     RuleActionBlock,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionSafety},
+			Category:          carrierintel.SectionSafety,
+			DefaultAction:     carrierintel.RuleActionBlock,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionSafety},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			evaluate:          evalOOSOrder,
@@ -228,10 +232,10 @@ func buildCatalog() {
 			Code:              RuleSafetyUnsatisfactory,
 			Label:             "Unsatisfactory safety rating",
 			Description:       "The most recent compliance review produced an Unsatisfactory rating.",
-			Category:          SectionSafety,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionBlock,
-			RequiredSections:  []Section{SectionSafety},
+			Category:          carrierintel.SectionSafety,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionBlock,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionSafety},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			evaluate:          evalRatingUnsatisfactory,
@@ -240,10 +244,10 @@ func buildCatalog() {
 			Code:              RuleSafetyConditional,
 			Label:             "Conditional safety rating",
 			Description:       "The most recent compliance review produced a Conditional rating.",
-			Category:          SectionSafety,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionSafety},
+			Category:          carrierintel.SectionSafety,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionSafety},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			evaluate:          evalRatingConditional,
@@ -252,10 +256,10 @@ func buildCatalog() {
 			Code:              RuleBasicsAlert,
 			Label:             "BASIC over intervention threshold",
 			Description:       "One or more CSA BASICs is in alert or above the configured percentile.",
-			Category:          SectionBasics,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionBasics},
+			Category:          carrierintel.SectionBasics,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionBasics},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -281,10 +285,10 @@ func buildCatalog() {
 			Code:              RuleSafetyISSHigh,
 			Label:             "High inspection selection score",
 			Description:       "The Inspection Selection System score marks the carrier for roadside inspection.",
-			Category:          SectionSafety,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionSafety},
+			Category:          carrierintel.SectionSafety,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionSafety},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -303,10 +307,10 @@ func buildCatalog() {
 			Code:              RuleSafetyRiskScoreHigh,
 			Label:             "High provider risk score",
 			Description:       "The provider's composite risk model rates the carrier at or above the configured level.",
-			Category:          SectionSafety,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionSafety},
+			Category:          carrierintel.SectionSafety,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionSafety},
 			Subjects:          carrierSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -314,12 +318,12 @@ func buildCatalog() {
 					Key:     "minimumLevel",
 					Label:   "Minimum risk level",
 					Type:    RuleParamTypeSelect,
-					Default: RiskLevelHigh.String(),
+					Default: carrierintel.RiskLevelHigh.String(),
 					Options: []string{
-						RiskLevelModerate.String(),
-						RiskLevelElevated.String(),
-						RiskLevelHigh.String(),
-						RiskLevelVeryHigh.String(),
+						carrierintel.RiskLevelModerate.String(),
+						carrierintel.RiskLevelElevated.String(),
+						carrierintel.RiskLevelHigh.String(),
+						carrierintel.RiskLevelVeryHigh.String(),
 					},
 				},
 			},
@@ -329,10 +333,10 @@ func buildCatalog() {
 			Code:              RuleInspectionsOOSHigh,
 			Label:             "Out-of-service rate above national average",
 			Description:       "Vehicle or driver out-of-service rates exceed the national average by the configured multiple.",
-			Category:          SectionInspections,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionInspections},
+			Category:          carrierintel.SectionInspections,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionInspections},
 			Subjects:          operatingSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -359,10 +363,10 @@ func buildCatalog() {
 			Code:              RuleIdentityNewEntrant,
 			Label:             "New entrant",
 			Description:       "The operating authority is younger than the configured age.",
-			Category:          SectionAuthority,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionAuthority},
+			Category:          carrierintel.SectionAuthority,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionAuthority},
 			Subjects:          carrierSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -381,10 +385,10 @@ func buildCatalog() {
 			Code:              RuleOperationsMCS150Stale,
 			Label:             "MCS-150 update overdue",
 			Description:       "The biennial MCS-150 update has not been filed within the configured window.",
-			Category:          SectionOperations,
-			DefaultAction:     RuleActionNotify,
-			RecommendedAction: RuleActionNotify,
-			RequiredSections:  []Section{SectionOperations},
+			Category:          carrierintel.SectionOperations,
+			DefaultAction:     carrierintel.RuleActionNotify,
+			RecommendedAction: carrierintel.RuleActionNotify,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionOperations},
 			Subjects:          operatingSubjects,
 			Params: []RuleParamSpec{
 				{
@@ -402,10 +406,10 @@ func buildCatalog() {
 			Code:              RuleFraudNetworkSharing,
 			Label:             "Shares identity with other carriers",
 			Description:       "The carrier shares addresses, phones, emails, EINs or equipment with other USDOT numbers, a common sign of chameleon or double-brokering operations.",
-			Category:          SectionNetwork,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionNetwork},
+			Category:          carrierintel.SectionNetwork,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionNetwork},
 			Subjects:          carrierSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -431,10 +435,10 @@ func buildCatalog() {
 			Code:              RuleFraudContactChurn,
 			Label:             "Recent contact changes",
 			Description:       "Name, phone, email or address changed repeatedly within the window, a common sign of an account takeover.",
-			Category:          SectionChangeHistory,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionChangeHistory},
+			Category:          carrierintel.SectionChangeHistory,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionChangeHistory},
 			Subjects:          carrierSubjects,
 			GateRelevant:      true,
 			Params: []RuleParamSpec{
@@ -461,10 +465,10 @@ func buildCatalog() {
 			Code:              RuleBenchmarksAnomaly,
 			Label:             "Operating profile anomaly",
 			Description:       "Reported mileage, inspections and power units fall outside industry benchmarks.",
-			Category:          SectionBenchmarks,
-			DefaultAction:     RuleActionNotify,
-			RecommendedAction: RuleActionWarn,
-			RequiredSections:  []Section{SectionBenchmarks},
+			Category:          carrierintel.SectionBenchmarks,
+			DefaultAction:     carrierintel.RuleActionNotify,
+			RecommendedAction: carrierintel.RuleActionWarn,
+			RequiredSections:  []carrierintel.Section{carrierintel.SectionBenchmarks},
 			Subjects:          carrierSubjects,
 			evaluate:          evalBenchmarksAnomaly,
 		},
@@ -472,9 +476,9 @@ func buildCatalog() {
 			Code:              RuleIdentityNotFound,
 			Label:             "Not found with provider",
 			Description:       "The provider has no record for the USDOT or docket number.",
-			Category:          SectionIdentity,
-			DefaultAction:     RuleActionWarn,
-			RecommendedAction: RuleActionBlock,
+			Category:          carrierintel.SectionIdentity,
+			DefaultAction:     carrierintel.RuleActionWarn,
+			RecommendedAction: carrierintel.RuleActionBlock,
 			Subjects:          authoritySubjects,
 			GateRelevant:      true,
 			evaluate:          evalNotFound,
@@ -487,15 +491,15 @@ func buildCatalog() {
 	}
 }
 
-func relevantGrants(ctx *RuleContext) []*AuthorityGrant {
+func relevantGrants(ctx *RuleContext) []*carrierintel.AuthorityGrant {
 	auth := ctx.Profile.Authority
 	if auth == nil {
 		return nil
 	}
 	if ctx.BrokerAuthority {
-		return []*AuthorityGrant{auth.Broker}
+		return []*carrierintel.AuthorityGrant{auth.Broker}
 	}
-	return []*AuthorityGrant{auth.Common, auth.Contract}
+	return []*carrierintel.AuthorityGrant{auth.Common, auth.Contract}
 }
 
 func authorityLabel(ctx *RuleContext) string {
@@ -544,7 +548,7 @@ func evalAuthorityRevoked(ctx *RuleContext) (bool, string) {
 		if grant.IsActive() {
 			return false, ""
 		}
-		if grant != nil && grant.Status == AuthorityStatusRevoked {
+		if grant != nil && grant.Status == carrierintel.AuthorityStatusRevoked {
 			revoked = true
 		}
 	}
@@ -665,14 +669,14 @@ func evalOOSOrder(ctx *RuleContext) (bool, string) {
 }
 
 func evalRatingUnsatisfactory(ctx *RuleContext) (bool, string) {
-	if ctx.Profile.Safety.Rating != SafetyRatingUnsatisfactory {
+	if ctx.Profile.Safety.Rating != carrierintel.SafetyRatingUnsatisfactory {
 		return false, ""
 	}
 	return true, "FMCSA safety rating is Unsatisfactory"
 }
 
 func evalRatingConditional(ctx *RuleContext) (bool, string) {
-	if ctx.Profile.Safety.Rating != SafetyRatingConditional {
+	if ctx.Profile.Safety.Rating != carrierintel.SafetyRatingConditional {
 		return false, ""
 	}
 	return true, "FMCSA safety rating is Conditional"
@@ -713,12 +717,12 @@ func evalISSHigh(ctx *RuleContext) (bool, string) {
 
 func evalRiskScoreHigh(ctx *RuleContext) (bool, string) {
 	score := ctx.Profile.Safety.RiskScore
-	if !score.IsValid() || score == RiskLevelUnknown {
+	if !score.IsValid() || score == carrierintel.RiskLevelUnknown {
 		return false, ""
 	}
-	minimum := RiskLevel(ctx.paramString("minimumLevel"))
+	minimum := carrierintel.RiskLevel(ctx.paramString("minimumLevel"))
 	if !minimum.IsValid() {
-		minimum = RiskLevelHigh
+		minimum = carrierintel.RiskLevelHigh
 	}
 	if score.Rank() < minimum.Rank() {
 		return false, ""
@@ -807,7 +811,7 @@ func evalNetworkSharing(ctx *RuleContext) (bool, string) {
 	}
 	flagged := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
-		count := ctx.Profile.Network.SharedCount(NetworkKind(kind))
+		count := ctx.Profile.Network.SharedCount(carrierintel.NetworkKind(kind))
 		if count >= minimum {
 			flagged = append(flagged, fmt.Sprintf("%s (%d)", strings.ToLower(kind), count))
 		}

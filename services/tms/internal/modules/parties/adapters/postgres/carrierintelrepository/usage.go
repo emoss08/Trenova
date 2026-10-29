@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -38,13 +38,13 @@ func NewUsageRepository(p Params) carrierintelports.CarrierIntelUsageRepository 
 
 func (r *usageRepository) Insert(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelUsageRecord,
+	entity *carrierintelusage.CarrierIntelUsageRecord,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		inserted, err := carrierinteldb.CarrierIntelUsageRecords.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
-			[]*carrierintel.CarrierIntelUsageRecord{entity},
+			[]*carrierintelusage.CarrierIntelUsageRecord{entity},
 		)
 		if err != nil {
 			r.l.Error("failed to insert carrier intel usage record", zap.Error(err))
@@ -158,11 +158,11 @@ func (r *usageRepository) Summary(
 func (r *usageRepository) ListDaily(
 	ctx context.Context,
 	req *carrierintelports.ListCarrierIntelUsageDailyRequest,
-) ([]*carrierintel.CarrierIntelUsageDaily, error) {
+) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierIntelUsageDaily, error) {
+		func(ctx context.Context) ([]*carrierintelusage.CarrierIntelUsageDaily, error) {
 			d := carrierinteldb.CarrierIntelUsageDailies
 			entities, err := d.Where(d.Day.Between(int64(req.FromDay), int64(req.ToDay))).
 				Order(d.Day.Asc(), d.Provider.Asc(), d.Endpoint.Asc()).

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,7 +31,7 @@ type CarrierIntelEventReader interface {
 	ListEvents(
 		ctx context.Context,
 		req *ListCarrierIntelEventsRequest,
-	) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error)
+	) (*pagination.CursorListResult[*carrierintelevent.CarrierIntelEvent], error)
 }
 
 type CarrierLifecycleEvent struct {

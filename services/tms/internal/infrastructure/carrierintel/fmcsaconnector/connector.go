@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
@@ -76,8 +77,8 @@ func (c *Connector) Descriptor() carrierintel.ProviderDescriptor {
 	}
 }
 
-func (c *Connector) PriceBook() carrierintel.PriceBook {
-	return carrierintel.PriceBook{}
+func (c *Connector) PriceBook() carrierintelusage.PriceBook {
+	return carrierintelusage.PriceBook{}
 }
 
 func (c *Connector) TestConnection(ctx context.Context, cfg map[string]string) error {

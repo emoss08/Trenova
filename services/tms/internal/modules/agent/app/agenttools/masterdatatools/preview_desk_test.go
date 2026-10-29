@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -164,7 +164,7 @@ func TestResolveCarrierIntelEvent_PreviewMatchesWhatIsSaved(t *testing.T) {
 	tool := NewResolveCarrierIntelEventTool(stub).(*ResolveCarrierIntelEventTool)
 	params := agenttoolstest.DeskParams(map[string]any{
 		"eventId":    event.ID.String(),
-		"resolution": string(carrierintel.EventResolutionCarrierBlocked),
+		"resolution": string(carrierintelevent.EventResolutionCarrierBlocked),
 		"note":       "authority revoked; not to be tendered",
 	})
 
@@ -226,7 +226,7 @@ func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 			t.Parallel()
 
 			event := openFinding()
-			event.Status = carrierintel.EventStatusResolved
+			event.Status = carrierintelevent.EventStatusResolved
 			stub := &stubCarrierIntel{event: event}
 			tool := build(stub).(agenttoolports.ToolPreviewer)
 
@@ -236,7 +236,7 @@ func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 				func() (*agentpreview.ToolPreview, error) {
 					return tool.Preview(t.Context(), agenttoolstest.DeskParams(map[string]any{
 						"eventId":    event.ID.String(),
-						"resolution": string(carrierintel.EventResolutionCarrierUpdated),
+						"resolution": string(carrierintelevent.EventResolutionCarrierUpdated),
 						"note":       "already done",
 					}))
 				},

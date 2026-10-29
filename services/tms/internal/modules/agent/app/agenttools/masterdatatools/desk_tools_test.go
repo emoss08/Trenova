@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -227,7 +228,7 @@ func TestPlaceWorkerDispatchHold_RefusesADriverAlreadyHeld(t *testing.T) {
 }
 
 type stubCarrierIntel struct {
-	event        *carrierintel.CarrierIntelEvent
+	event        *carrierintelevent.CarrierIntelEvent
 	acknowledged []pulid.ID
 	resolved     *carrierintelservice.ResolveEventRequest
 	guard        agenttoolstest.WriteGuard
@@ -252,7 +253,7 @@ func (s *stubCarrierIntel) AcknowledgeEvents(
 func (s *stubCarrierIntel) ResolveEvent(
 	_ context.Context,
 	req *carrierintelservice.ResolveEventRequest,
-) (*carrierintel.CarrierIntelEvent, error) {
+) (*carrierintelevent.CarrierIntelEvent, error) {
 	if err := s.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -268,16 +269,16 @@ func (s *stubCarrierIntel) GetEvent(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*carrierintel.CarrierIntelEvent, error) {
+) (*carrierintelevent.CarrierIntelEvent, error) {
 	copied := *s.event
 
 	return &copied, nil
 }
 
-func openFinding() *carrierintel.CarrierIntelEvent {
-	return &carrierintel.CarrierIntelEvent{
+func openFinding() *carrierintelevent.CarrierIntelEvent {
+	return &carrierintelevent.CarrierIntelEvent{
 		ID:       pulid.MustNew("ciev_"),
-		Status:   carrierintel.EventStatusOpen,
+		Status:   carrierintelevent.EventStatusOpen,
 		Severity: carrierintel.SeverityHigh,
 		Category: carrierintel.SectionAuthority,
 	}
@@ -294,13 +295,13 @@ func TestResolveCarrierIntelEvent_SaysWhatCameOfIt(t *testing.T) {
 
 	params := agenttoolstest.DeskParams(map[string]any{
 		"eventId":    event.ID.String(),
-		"resolution": string(carrierintel.EventResolutionCarrierBlocked),
+		"resolution": string(carrierintelevent.EventResolutionCarrierBlocked),
 		"note":       "authority revoked; not to be tendered",
 	})
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, stub.resolved)
-	require.Equal(t, carrierintel.EventResolutionCarrierBlocked, stub.resolved.Resolution)
+	require.Equal(t, carrierintelevent.EventResolutionCarrierBlocked, stub.resolved.Resolution)
 	require.Empty(t, stub.acknowledged)
 }
 
@@ -347,7 +348,7 @@ func TestCarrierIntelEventTools_RefuseAFindingAlreadyClosed(t *testing.T) {
 	t.Parallel()
 
 	event := openFinding()
-	event.Status = carrierintel.EventStatusResolved
+	event.Status = carrierintelevent.EventStatusResolved
 
 	for name, tool := range map[string]agenttoolports.AgentTool{
 		"acknowledge": NewAcknowledgeCarrierIntelEventTool(&stubCarrierIntel{event: event}),
@@ -360,7 +361,7 @@ func TestCarrierIntelEventTools_RefuseAFindingAlreadyClosed(t *testing.T) {
 				t.Context(),
 				agenttoolstest.DeskParams(map[string]any{
 					"eventId":    event.ID.String(),
-					"resolution": string(carrierintel.EventResolutionCarrierUpdated),
+					"resolution": string(carrierintelevent.EventResolutionCarrierUpdated),
 					"note":       "already done",
 				}),
 			)

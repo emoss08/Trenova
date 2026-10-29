@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -23,9 +24,9 @@ func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEv
 
 func findingOf(
 	severity carrierintel.Severity,
-	status carrierintel.EventStatus,
-) *carrierintel.CarrierIntelEvent {
-	return &carrierintel.CarrierIntelEvent{
+	status carrierintelevent.EventStatus,
+) *carrierintelevent.CarrierIntelEvent {
+	return &carrierintelevent.CarrierIntelEvent{
 		ID:       pulid.MustNew("ciev_"),
 		Severity: severity,
 		Status:   status,
@@ -42,39 +43,39 @@ func TestPublishEventsToAgents_MatchesTheTowerFilter(t *testing.T) {
 
 	cases := []struct {
 		name  string
-		event *carrierintel.CarrierIntelEvent
+		event *carrierintelevent.CarrierIntelEvent
 		want  bool
 	}{
 		{
 			name:  "critical wakes the desk",
-			event: findingOf(carrierintel.SeverityCritical, carrierintel.EventStatusOpen),
+			event: findingOf(carrierintel.SeverityCritical, carrierintelevent.EventStatusOpen),
 			want:  true,
 		},
 		{
 			name:  "high wakes the desk",
-			event: findingOf(carrierintel.SeverityHigh, carrierintel.EventStatusOpen),
+			event: findingOf(carrierintel.SeverityHigh, carrierintelevent.EventStatusOpen),
 			want:  true,
 		},
 		{
 			name:  "medium wakes the desk",
-			event: findingOf(carrierintel.SeverityMedium, carrierintel.EventStatusOpen),
+			event: findingOf(carrierintel.SeverityMedium, carrierintelevent.EventStatusOpen),
 			want:  true,
 		},
 		{
 			name:  "low is part of the record, not news",
-			event: findingOf(carrierintel.SeverityLow, carrierintel.EventStatusOpen),
+			event: findingOf(carrierintel.SeverityLow, carrierintelevent.EventStatusOpen),
 			want:  false,
 		},
 		{
 			name:  "info is part of the record, not news",
-			event: findingOf(carrierintel.SeverityInfo, carrierintel.EventStatusOpen),
+			event: findingOf(carrierintel.SeverityInfo, carrierintelevent.EventStatusOpen),
 			want:  false,
 		},
 		{
 			name: "a finding that arrives already closed wakes nobody",
 			event: findingOf(
 				carrierintel.SeverityCritical,
-				carrierintel.EventStatusResolved,
+				carrierintelevent.EventStatusResolved,
 			),
 			want: false,
 		},
@@ -82,7 +83,7 @@ func TestPublishEventsToAgents_MatchesTheTowerFilter(t *testing.T) {
 			name: "an override lands acknowledged and wakes nobody",
 			event: findingOf(
 				carrierintel.SeverityInfo,
-				carrierintel.EventStatusAcknowledged,
+				carrierintelevent.EventStatusAcknowledged,
 			),
 			want: false,
 		},
@@ -98,7 +99,7 @@ func TestPublishEventsToAgents_MatchesTheTowerFilter(t *testing.T) {
 			svc.publishEventsToAgents(
 				t.Context(),
 				tenant,
-				[]*carrierintel.CarrierIntelEvent{tc.event},
+				[]*carrierintelevent.CarrierIntelEvent{tc.event},
 			)
 
 			if !tc.want {

@@ -11,6 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,7 +74,7 @@ type SourcingResult struct {
 	LegalName         string
 	ExistingCarrierID pulid.ID
 	LaneMatches       int
-	Findings          []carrierintel.Finding
+	Findings          []carrierintelrule.Finding
 	RiskLevel         carrierintel.RiskLevel
 	Score             float64
 }
@@ -85,7 +89,7 @@ type SourcingPage struct {
 func (s *Service) searchCapable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*boundProvider, carrierintelports.CarrierIntelSearcher, *carrierintel.CarrierIntelControl, error) {
+) (*boundProvider, carrierintelports.CarrierIntelSearcher, *carrierintelcontrol.CarrierIntelControl, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, nil, err
@@ -130,7 +134,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 		tenant:   query.TenantInfo,
 		control:  control,
 		bound:    bound,
-		endpoint: carrierintel.EndpointSearch,
+		endpoint: carrierintelusage.EndpointSearch,
 	}); err != nil {
 		return nil, err
 	}
@@ -197,17 +201,17 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 			filteredOut++
 			continue
 		}
-		entry.Findings = carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
+		entry.Findings = carrierintelrule.EvaluateFindings(&carrierintelrule.EvaluateInput{
 			Profile:  profile,
 			Now:      now,
 			Subject:  carrierintel.SubjectTypeProspect,
 			Settings: control.Rules,
 		})
-		if query.ExcludeBlocking && len(carrierintel.BlockingCodes(entry.Findings)) > 0 {
+		if query.ExcludeBlocking && len(carrierintelrule.BlockingCodes(entry.Findings)) > 0 {
 			filteredOut++
 			continue
 		}
-		entry.RiskLevel = profile.DeriveRiskLevel(entry.Findings)
+		entry.RiskLevel = carrierintelrule.DeriveRiskLevel(profile, entry.Findings)
 		entry.LaneMatches = laneMatches(profile, query.OriginState, query.DestinationState)
 		entry.Score = sourcingScore(entry)
 		items = append(items, entry)
@@ -431,7 +435,7 @@ func (s *Service) AutocompleteCarriers(
 		tenant:   tenantInfo,
 		control:  control,
 		bound:    bound,
-		endpoint: carrierintel.EndpointAutocomplete,
+		endpoint: carrierintelusage.EndpointAutocomplete,
 	}); err != nil {
 		return nil, err
 	}
@@ -507,7 +511,7 @@ func (s *Service) ImportProspect(
 		Subject:    subject,
 		MinDepth:   carrierintel.LookupDepthFMCSA,
 		Purpose:    carrierintel.PurposeVet,
-		Source:     carrierintel.EventSourceSnapshotDiff,
+		Source:     carrierintelevent.EventSourceSnapshotDiff,
 	}); fetchErr != nil {
 		s.l.Warn("failed to attach intelligence to imported carrier", zap.Error(fetchErr))
 	}

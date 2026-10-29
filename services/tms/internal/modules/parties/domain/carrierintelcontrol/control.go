@@ -1,10 +1,12 @@
-package carrierintel
+package carrierintelcontrol
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,47 +32,47 @@ const (
 type CarrierIntelControl struct {
 	keel.Table `keel:"carrier_intel_controls"`
 
-	ID                      pulid.ID          `json:"id"                      keel:"id,pk,autoid:cictl_"`
-	BusinessUnitID          pulid.ID          `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
-	OrganizationID          pulid.ID          `json:"organizationId"          keel:"organization_id,pk,tenant"`
-	PrimaryProvider         *integration.Type `json:"primaryProvider"         keel:"primary_provider"`
-	FallbackProvider        *integration.Type `json:"fallbackProvider"        keel:"fallback_provider"`
-	EnrollmentPolicy        EnrollmentPolicy  `json:"enrollmentPolicy"        keel:"enrollment_policy"`
-	RecentUsageDays         int               `json:"recentUsageDays"         keel:"recent_usage_days"`
-	IncludeOpenTenders      bool              `json:"includeOpenTenders"      keel:"include_open_tenders"`
-	AutoEnrollOnCreate      bool              `json:"autoEnrollOnCreate"      keel:"auto_enroll_on_create"`
-	AutoUnenrollOnInactive  bool              `json:"autoUnenrollOnInactive"  keel:"auto_unenroll_on_inactive"`
-	ExclusiveWatchlist      bool              `json:"exclusiveWatchlist"      keel:"exclusive_watchlist"`
-	PollIntervalMinutes     int               `json:"pollIntervalMinutes"     keel:"poll_interval_minutes"`
-	SnapshotTTLHours        int               `json:"snapshotTtlHours"        keel:"snapshot_ttl_hours"`
-	FullProfileTTLDays      int               `json:"fullProfileTtlDays"      keel:"full_profile_ttl_days"`
-	PreTenderRefreshEnabled bool              `json:"preTenderRefreshEnabled" keel:"pretender_refresh_enabled"`
-	PreTenderMaxAgeHours    int               `json:"preTenderMaxAgeHours"    keel:"pretender_max_age_hours"`
-	HardMaxAgeHours         int               `json:"hardMaxAgeHours"         keel:"hard_max_age_hours"`
-	ConfirmBlockingChanges  bool              `json:"confirmBlockingChanges"  keel:"confirm_blocking_changes"`
-	OutagePolicy            OutagePolicy      `json:"outagePolicy"            keel:"outage_policy"`
-	AutoDisqualifyOnBlock   bool              `json:"autoDisqualifyOnBlock"   keel:"auto_disqualify_on_block"`
-	AutoApplySafetyRating   bool              `json:"autoApplySafetyRating"   keel:"auto_apply_safety_rating"`
-	Rules                   RuleSettings      `json:"rules"                   keel:"rules,jsonb"`
-	AutoSyncFields          []SyncField       `json:"autoSyncFields"          keel:"auto_sync_fields,jsonb"`
-	MonthlySpendCap         *decimal.Decimal  `json:"monthlySpendCap"         keel:"monthly_spend_cap"`
-	SoftCapPercent          int               `json:"softCapPercent"          keel:"soft_cap_percent"`
-	DailyFullProfileCap     *int              `json:"dailyFullProfileCap"     keel:"daily_full_profile_cap"`
-	RawRetentionDays        int               `json:"rawRetentionDays"        keel:"raw_retention_days"`
-	SnapshotHistoryLimit    int               `json:"snapshotHistoryLimit"    keel:"snapshot_history_limit"`
-	SelfMonitoringEnabled   bool              `json:"selfMonitoringEnabled"   keel:"self_monitoring_enabled"`
-	PolicyVersion           int64             `json:"policyVersion"           keel:"policy_version"`
-	Version                 int64             `json:"version"                 keel:"version,version"`
-	CreatedAt               int64             `json:"createdAt"               keel:"created_at,autocreate"`
-	UpdatedAt               int64             `json:"updatedAt"               keel:"updated_at,autoupdate"`
+	ID                      pulid.ID                      `json:"id"                      keel:"id,pk,autoid:cictl_"`
+	BusinessUnitID          pulid.ID                      `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID                      `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	PrimaryProvider         *integration.Type             `json:"primaryProvider"         keel:"primary_provider"`
+	FallbackProvider        *integration.Type             `json:"fallbackProvider"        keel:"fallback_provider"`
+	EnrollmentPolicy        EnrollmentPolicy              `json:"enrollmentPolicy"        keel:"enrollment_policy"`
+	RecentUsageDays         int                           `json:"recentUsageDays"         keel:"recent_usage_days"`
+	IncludeOpenTenders      bool                          `json:"includeOpenTenders"      keel:"include_open_tenders"`
+	AutoEnrollOnCreate      bool                          `json:"autoEnrollOnCreate"      keel:"auto_enroll_on_create"`
+	AutoUnenrollOnInactive  bool                          `json:"autoUnenrollOnInactive"  keel:"auto_unenroll_on_inactive"`
+	ExclusiveWatchlist      bool                          `json:"exclusiveWatchlist"      keel:"exclusive_watchlist"`
+	PollIntervalMinutes     int                           `json:"pollIntervalMinutes"     keel:"poll_interval_minutes"`
+	SnapshotTTLHours        int                           `json:"snapshotTtlHours"        keel:"snapshot_ttl_hours"`
+	FullProfileTTLDays      int                           `json:"fullProfileTtlDays"      keel:"full_profile_ttl_days"`
+	PreTenderRefreshEnabled bool                          `json:"preTenderRefreshEnabled" keel:"pretender_refresh_enabled"`
+	PreTenderMaxAgeHours    int                           `json:"preTenderMaxAgeHours"    keel:"pretender_max_age_hours"`
+	HardMaxAgeHours         int                           `json:"hardMaxAgeHours"         keel:"hard_max_age_hours"`
+	ConfirmBlockingChanges  bool                          `json:"confirmBlockingChanges"  keel:"confirm_blocking_changes"`
+	OutagePolicy            OutagePolicy                  `json:"outagePolicy"            keel:"outage_policy"`
+	AutoDisqualifyOnBlock   bool                          `json:"autoDisqualifyOnBlock"   keel:"auto_disqualify_on_block"`
+	AutoApplySafetyRating   bool                          `json:"autoApplySafetyRating"   keel:"auto_apply_safety_rating"`
+	Rules                   carrierintelrule.RuleSettings `json:"rules"                   keel:"rules,jsonb"`
+	AutoSyncFields          []carrierintelsync.SyncField  `json:"autoSyncFields"          keel:"auto_sync_fields,jsonb"`
+	MonthlySpendCap         *decimal.Decimal              `json:"monthlySpendCap"         keel:"monthly_spend_cap"`
+	SoftCapPercent          int                           `json:"softCapPercent"          keel:"soft_cap_percent"`
+	DailyFullProfileCap     *int                          `json:"dailyFullProfileCap"     keel:"daily_full_profile_cap"`
+	RawRetentionDays        int                           `json:"rawRetentionDays"        keel:"raw_retention_days"`
+	SnapshotHistoryLimit    int                           `json:"snapshotHistoryLimit"    keel:"snapshot_history_limit"`
+	SelfMonitoringEnabled   bool                          `json:"selfMonitoringEnabled"   keel:"self_monitoring_enabled"`
+	PolicyVersion           int64                         `json:"policyVersion"           keel:"policy_version"`
+	Version                 int64                         `json:"version"                 keel:"version,version"`
+	CreatedAt               int64                         `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64                         `json:"updatedAt"               keel:"updated_at,autoupdate"`
 }
 
 func (c *CarrierIntelControl) BeforeCreate(_ context.Context) error {
 	if c.Rules == nil {
-		c.Rules = RuleSettings{}
+		c.Rules = carrierintelrule.RuleSettings{}
 	}
 	if c.AutoSyncFields == nil {
-		c.AutoSyncFields = []SyncField{}
+		c.AutoSyncFields = []carrierintelsync.SyncField{}
 	}
 
 	return nil
@@ -92,8 +94,8 @@ func NewDefaultControl(orgID, buID pulid.ID) *CarrierIntelControl {
 		ConfirmBlockingChanges: true,
 		OutagePolicy:           OutagePolicyFailOpen,
 		AutoApplySafetyRating:  true,
-		Rules:                  RuleSettings{},
-		AutoSyncFields:         []SyncField{},
+		Rules:                  carrierintelrule.RuleSettings{},
+		AutoSyncFields:         []carrierintelsync.SyncField{},
 		SoftCapPercent:         DefaultSoftCapPercent,
 		RawRetentionDays:       DefaultRawRetentionDays,
 		SnapshotHistoryLimit:   DefaultSnapshotHistoryLimit,
@@ -182,93 +184,11 @@ func (c *CarrierIntelControl) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 
-	ValidateRuleSettings(c.Rules, multiErr.WithPrefix("rules"))
+	carrierintelrule.ValidateRuleSettings(c.Rules, multiErr.WithPrefix("rules"))
 }
 
-func ValidateRuleSettings(settings RuleSettings, multiErr *errortypes.MultiError) {
-	for code, setting := range settings {
-		def, ok := RuleByCode(code)
-		if !ok {
-			multiErr.Add(code.String(), errortypes.ErrInvalid, "Unknown rule")
-			continue
-		}
-		if !setting.Action.IsValid() {
-			multiErr.Add(code.String()+".action", errortypes.ErrInvalid, "Rule action is invalid")
-		}
-		for key, raw := range setting.Params {
-			spec := def.paramSpec(key)
-			if spec == nil {
-				multiErr.Add(code.String()+".params."+key, errortypes.ErrInvalid,
-					"Unknown rule parameter")
-				continue
-			}
-			if msg := validateParam(spec, raw); msg != "" {
-				multiErr.Add(code.String()+".params."+key, errortypes.ErrInvalid, msg)
-			}
-		}
-	}
-}
-
-func validateParam(spec *RuleParamSpec, raw string) string {
-	if raw == "" {
-		return ""
-	}
-	var value float64
-	switch spec.Type {
-	case RuleParamTypeInteger:
-		v, err := strconv.Atoi(raw)
-		if err != nil {
-			return spec.Label + " must be a whole number"
-		}
-		value = float64(v)
-	case RuleParamTypeDecimal:
-		v, err := decimal.NewFromString(raw)
-		if err != nil {
-			return spec.Label + " must be a number"
-		}
-		value = v.InexactFloat64()
-	case RuleParamTypeNumber:
-		v, err := strconv.ParseFloat(raw, 64)
-		if err != nil {
-			return spec.Label + " must be a number"
-		}
-		value = v
-	case RuleParamTypeSelect:
-		for _, option := range spec.Options {
-			if option == raw {
-				return ""
-			}
-		}
-		return spec.Label + " has an invalid option"
-	case RuleParamTypeMultiSelect:
-		ctx := &RuleContext{params: map[string]string{spec.Key: raw}, spec: &RuleDefinition{}}
-		for _, item := range ctx.paramList(spec.Key) {
-			found := false
-			for _, option := range spec.Options {
-				if option == item {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return spec.Label + " has an invalid option"
-			}
-		}
-		return ""
-	default:
-		return ""
-	}
-	if spec.Min != nil && value < *spec.Min {
-		return spec.Label + " is below the minimum"
-	}
-	if spec.Max != nil && value > *spec.Max {
-		return spec.Label + " is above the maximum"
-	}
-	return ""
-}
-
-func (c *CarrierIntelControl) SyncSettings() SyncSettings {
-	return SyncSettings{
+func (c *CarrierIntelControl) SyncSettings() carrierintelsync.SyncSettings {
+	return carrierintelsync.SyncSettings{
 		AutoApplySafetyRating: c.AutoApplySafetyRating,
 		AutoFillFields:        c.AutoSyncFields,
 	}
@@ -296,8 +216,8 @@ func (c *CarrierIntelControl) FullProfileTTLSeconds() int64 {
 	return int64(c.FullProfileTTLDays) * 86400
 }
 
-func (c *CarrierIntelControl) TTLSecondsForDepth(depth LookupDepth) int64 {
-	if depth == LookupDepthFull {
+func (c *CarrierIntelControl) TTLSecondsForDepth(depth carrierintel.LookupDepth) int64 {
+	if depth == carrierintel.LookupDepthFull {
 		return c.FullProfileTTLSeconds()
 	}
 	return c.SnapshotTTLSeconds()

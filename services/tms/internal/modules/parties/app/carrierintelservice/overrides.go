@@ -7,6 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -22,7 +26,7 @@ import (
 type GrantOverrideRequest struct {
 	TenantInfo pagination.TenantInfo
 	CarrierID  pulid.ID
-	RuleCode   carrierintel.RuleCode
+	RuleCode   carrierintelrule.RuleCode
 	Reason     string
 	ExpiresAt  int64
 }
@@ -30,14 +34,14 @@ type GrantOverrideRequest struct {
 func (s *Service) GrantOverride(
 	ctx context.Context,
 	req *GrantOverrideRequest,
-) (*carrierintel.CarrierIntelOverride, error) {
+) (*carrierinteloverride.CarrierIntelOverride, error) {
 	now := s.now()
 	expires := req.ExpiresAt
 	if expires == 0 {
-		expires = now + carrierintel.DefaultOverrideDurationSecond
+		expires = now + carrierintelcontrol.DefaultOverrideDurationSecond
 	}
 
-	entity := &carrierintel.CarrierIntelOverride{
+	entity := &carrierinteloverride.CarrierIntelOverride{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		CarrierID:      req.CarrierID,
@@ -98,7 +102,7 @@ type RevokeOverrideRequest struct {
 func (s *Service) RevokeOverride(
 	ctx context.Context,
 	req *RevokeOverrideRequest,
-) (*carrierintel.CarrierIntelOverride, error) {
+) (*carrierinteloverride.CarrierIntelOverride, error) {
 	entity, err := s.overrideRepo.GetByID(ctx, req.TenantInfo, req.OverrideID)
 	if err != nil {
 		return nil, err
@@ -124,13 +128,13 @@ func (s *Service) ListOverrides(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
-) ([]*carrierintel.CarrierIntelOverride, error) {
+) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 	return s.overrideRepo.ListByCarrier(ctx, tenantInfo, carrierID)
 }
 
 func (s *Service) auditOverride(
 	tenantInfo pagination.TenantInfo,
-	current, previous *carrierintel.CarrierIntelOverride,
+	current, previous *carrierinteloverride.CarrierIntelOverride,
 	comment string,
 ) {
 	params := &auditports.LogActionParams{
@@ -156,7 +160,7 @@ func (s *Service) auditOverride(
 func (s *Service) recordOverrideEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	override *carrierintel.CarrierIntelOverride,
+	override *carrierinteloverride.CarrierIntelOverride,
 	summary string,
 ) {
 	snapshot, err := s.snapshotRepo.GetCurrent(
@@ -170,13 +174,13 @@ func (s *Service) recordOverrideEvent(
 	if err != nil || snapshot == nil {
 		return
 	}
-	def, _ := carrierintel.RuleByCode(override.RuleCode)
+	def, _ := carrierintelrule.RuleByCode(override.RuleCode)
 	category := carrierintel.SectionIdentity
 	if def != nil {
 		category = def.Category
 	}
 	now := s.now()
-	event := &carrierintel.CarrierIntelEvent{
+	event := &carrierintelevent.CarrierIntelEvent{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		SubjectType:      carrierintel.SubjectTypeCarrier,
@@ -184,17 +188,17 @@ func (s *Service) recordOverrideEvent(
 		CarrierID:        override.CarrierID,
 		DOTNumber:        snapshot.DOTNumber,
 		Provider:         snapshot.Provider,
-		Source:           carrierintel.EventSourceOverride,
+		Source:           carrierintelevent.EventSourceOverride,
 		Category:         category,
 		RuleCode:         override.RuleCode,
 		Severity:         carrierintel.SeverityInfo,
 		Summary:          summary,
 		DetectedAt:       now,
 		SnapshotID:       snapshot.ID,
-		Status:           carrierintel.EventStatusAcknowledged,
+		Status:           carrierintelevent.EventStatusAcknowledged,
 		AcknowledgedByID: tenantInfo.UserID,
 		AcknowledgedAt:   &now,
-		Fingerprint: carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
+		Fingerprint: carrierintelevent.EventFingerprint(carrierintelevent.EventFingerprintInput{
 			Provider:    snapshot.Provider,
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   override.CarrierID.String(),
@@ -204,7 +208,7 @@ func (s *Service) recordOverrideEvent(
 	}
 	if _, err = s.eventRepo.InsertIgnoreDuplicates(
 		ctx,
-		[]*carrierintel.CarrierIntelEvent{event},
+		[]*carrierintelevent.CarrierIntelEvent{event},
 	); err != nil {
 		s.l.Warn("failed to record override event", zap.Error(err))
 	}

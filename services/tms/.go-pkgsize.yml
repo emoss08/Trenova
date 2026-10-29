@@ -71,7 +71,6 @@ debt:
   services/tms/internal/modules/operations/domain/detention: 3019
   services/tms/internal/modules/operations/domain/shipment: 6025
   services/tms/internal/modules/parties/app/carrierintelservice: 6726
-  services/tms/internal/modules/parties/domain/carrierintel: 4990
   services/tms/internal/modules/rating/app/formulatemplateservice: 5231
   services/tms/internal/modules/rating/app/tariff: 3048
   services/tms/internal/modules/rating/domain/rateagreement: 2322

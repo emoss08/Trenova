@@ -15,6 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +38,7 @@ type fakeCarrierIntel struct {
 	applied   *carrierintelservice.ApplySuggestionsRequest
 	imported  *carrierintelservice.ImportProspectRequest
 	verified  *carrierintelservice.VerifyEquipmentRequest
-	enrollOld carrierintel.DesiredState
+	enrollOld carrierintelenrollment.DesiredState
 }
 
 func newFakeCarrierIntel() *fakeCarrierIntel {
@@ -48,7 +52,7 @@ func newFakeCarrierIntel() *fakeCarrierIntel {
 			City:      "Dallas",
 			Version:   3,
 		},
-		enrollOld: carrierintel.DesiredStateNotEnrolled,
+		enrollOld: carrierintelenrollment.DesiredStateNotEnrolled,
 	}
 }
 
@@ -60,7 +64,7 @@ func (f *fakeCarrierIntel) vetPlan() *carrierintelservice.VetPlan {
 		},
 		Provider: integration.TypeCarrierOK,
 		Depth:    carrierintel.LookupDepthFull,
-		Current:  &carrierintel.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelLow},
+		Current:  &carrierintelsnapshot.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelLow},
 	}
 }
 
@@ -73,7 +77,7 @@ func (f *fakeCarrierIntel) VetCarrier(
 	}
 	f.vetted = req
 
-	return &carrierintelservice.FetchResult{Snapshot: &carrierintel.CarrierIntelSnapshot{
+	return &carrierintelservice.FetchResult{Snapshot: &carrierintelsnapshot.CarrierIntelSnapshot{
 		RiskLevel: carrierintel.RiskLevelLow,
 	}}, nil
 }
@@ -126,9 +130,9 @@ func (f *fakeCarrierIntel) PlanManualEnrollment(
 	_ context.Context,
 	req *carrierintelservice.EnrollSubjectsRequest,
 ) ([]carrierintelservice.EnrollmentChange, error) {
-	after := carrierintel.DesiredStateNotEnrolled
+	after := carrierintelenrollment.DesiredStateNotEnrolled
 	if req.Enroll {
-		after = carrierintel.DesiredStateEnrolled
+		after = carrierintelenrollment.DesiredStateEnrolled
 	}
 
 	return []carrierintelservice.EnrollmentChange{{
@@ -155,7 +159,7 @@ func (f *fakeCarrierIntel) PlanMarkReviewed(
 	_ context.Context,
 	req *carrierintelservice.MarkReviewedRequest,
 ) (*carrierintelservice.SnapshotChange, error) {
-	before := &carrierintel.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelElevated}
+	before := &carrierintelsnapshot.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelElevated}
 	after := *before
 	now := int64(1_900_000_000)
 	after.ReviewedAt = &now
@@ -169,10 +173,10 @@ func (f *fakeCarrierIntel) SyncPlan(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*carrierintel.SyncPlan, error) {
-	return &carrierintel.SyncPlan{Suggestions: []carrierintel.FieldUpdate{
-		{Field: carrierintel.SyncFieldMCNumber, Current: "MC-1", Proposed: "MC-2"},
-		{Field: carrierintel.SyncFieldCity, Current: "Dallas", Proposed: "Fort Worth"},
+) (*carrierintelsync.SyncPlan, error) {
+	return &carrierintelsync.SyncPlan{Suggestions: []carrierintelsync.FieldUpdate{
+		{Field: carrierintelsync.SyncFieldMCNumber, Current: "MC-1", Proposed: "MC-2"},
+		{Field: carrierintelsync.SyncFieldCity, Current: "Dallas", Proposed: "Fort Worth"},
 	}}, nil
 }
 
@@ -193,15 +197,15 @@ func (f *fakeCarrierIntel) PlanApplySuggestions(
 	req *carrierintelservice.ApplySuggestionsRequest,
 ) (*carrierintelservice.SuggestionPlan, error) {
 	after := *f.carrier
-	updates := make([]carrierintel.FieldUpdate, 0, len(req.Fields))
+	updates := make([]carrierintelsync.FieldUpdate, 0, len(req.Fields))
 	for _, field := range req.Fields {
 		switch field {
-		case carrierintel.SyncFieldMCNumber:
+		case carrierintelsync.SyncFieldMCNumber:
 			after.MCNumber = "MC-2"
-		case carrierintel.SyncFieldCity:
+		case carrierintelsync.SyncFieldCity:
 			after.City = "Fort Worth"
 		}
-		updates = append(updates, carrierintel.FieldUpdate{Field: field})
+		updates = append(updates, carrierintelsync.FieldUpdate{Field: field})
 	}
 
 	return &carrierintelservice.SuggestionPlan{
@@ -239,22 +243,22 @@ func (f *fakeCarrierIntel) PlanImportProspect(
 func (f *fakeCarrierIntel) VerifyEquipment(
 	_ context.Context,
 	req *carrierintelservice.VerifyEquipmentRequest,
-) (*carrierintel.CarrierEquipmentVerification, error) {
+) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.verified = req
 
-	return &carrierintel.CarrierEquipmentVerification{
-		Result: carrierintel.VerificationResultMatch,
+	return &carrierintelverification.CarrierEquipmentVerification{
+		Result: carrierintelverification.VerificationResultMatch,
 	}, nil
 }
 
 func (f *fakeCarrierIntel) PlanVerifyEquipment(
 	_ context.Context,
 	req *carrierintelservice.VerifyEquipmentRequest,
-) (*carrierintel.CarrierEquipmentVerification, *carrier.Carrier, error) {
-	return &carrierintel.CarrierEquipmentVerification{
+) (*carrierintelverification.CarrierEquipmentVerification, *carrier.Carrier, error) {
+	return &carrierintelverification.CarrierEquipmentVerification{
 		CarrierAssignmentID: req.CarrierAssignmentID,
 		CarrierID:           f.carrier.ID,
 		ExpectedDOTNumber:   f.carrier.DOTNumber,
@@ -433,8 +437,8 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	assert.Equal(t, "Fort Worth", agenttoolstest.FieldByPath(t, change, "city").After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	assert.ElementsMatch(t, []carrierintel.SyncField{
-		carrierintel.SyncFieldMCNumber, carrierintel.SyncFieldCity,
+	assert.ElementsMatch(t, []carrierintelsync.SyncField{
+		carrierintelsync.SyncFieldMCNumber, carrierintelsync.SyncFieldCity,
 	}, intel.applied.Fields)
 	require.NotEmpty(t, permissions.Requests)
 	assert.Equal(t, permission.ResourceCarrier.String(), permissions.Requests[0].Resource)
@@ -445,7 +449,11 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 		paramSuggestionFields:     []any{"city"},
 	})
 	require.NoError(t, tool.Execute(t.Context(), named))
-	assert.Equal(t, []carrierintel.SyncField{carrierintel.SyncFieldCity}, intel.applied.Fields)
+	assert.Equal(
+		t,
+		[]carrierintelsync.SyncField{carrierintelsync.SyncFieldCity},
+		intel.applied.Fields,
+	)
 
 	refused := NewApplyCarrierIntelSuggestionsTool(
 		intel,

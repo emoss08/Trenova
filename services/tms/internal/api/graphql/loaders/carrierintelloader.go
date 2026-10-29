@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -16,13 +18,13 @@ type carrierIntelReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	CurrentSnapshotsBySubjects(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		subjectType carrierintel.SubjectType,
 		subjectIDs []string,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	OpenEventCountsByCarrierIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -32,7 +34,7 @@ type carrierIntelReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 }
 
 type CarrierIntelLoaderFactoryParams struct {
@@ -53,14 +55,17 @@ func NewCarrierIntelSnapshotByCarrierIDLoaderFactory(
 
 func newCarrierIntelSnapshotByCarrierIDLoader(f *CarrierIntelSnapshotByCarrierIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
+) *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot] {
 	return newLoader(batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintel.CarrierIntelSnapshot, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 			snapshots, err := f.reader.CurrentSnapshotsByCarrierIDs(ctx, tenantInfo, ids)
 			if err != nil {
 				return nil, err
 			}
-			grouped := make(map[pulid.ID][]*carrierintel.CarrierIntelSnapshot, len(snapshots))
+			grouped := make(
+				map[pulid.ID][]*carrierintelsnapshot.CarrierIntelSnapshot,
+				len(snapshots),
+			)
 			for _, snapshot := range snapshots {
 				grouped[snapshot.CarrierID] = append(grouped[snapshot.CarrierID], snapshot)
 			}
@@ -81,9 +86,9 @@ func NewCarrierIntelSnapshotByCustomerIDLoaderFactory(
 
 func newCarrierIntelSnapshotByCustomerIDLoader(f *CarrierIntelSnapshotByCustomerIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot] {
+) *dataloadgen.Loader[string, []*carrierintelsnapshot.CarrierIntelSnapshot] {
 	return newLoader(batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintel.CarrierIntelSnapshot, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 			subjectIDs := make([]string, 0, len(ids))
 			for _, id := range ids {
 				subjectIDs = append(subjectIDs, id.String())
@@ -94,7 +99,10 @@ func newCarrierIntelSnapshotByCustomerIDLoader(f *CarrierIntelSnapshotByCustomer
 			if err != nil {
 				return nil, err
 			}
-			grouped := make(map[pulid.ID][]*carrierintel.CarrierIntelSnapshot, len(snapshots))
+			grouped := make(
+				map[pulid.ID][]*carrierintelsnapshot.CarrierIntelSnapshot,
+				len(snapshots),
+			)
 			for _, snapshot := range snapshots {
 				customerID, parseErr := pulid.Parse(snapshot.SubjectID)
 				if parseErr != nil {
@@ -140,14 +148,17 @@ func NewCarrierMonitoringEnrollmentByCarrierIDLoaderFactory(
 func newCarrierMonitoringEnrollmentByCarrierIDLoader(
 	f *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment] {
+) *dataloadgen.Loader[string, []*carrierintelenrollment.CarrierMonitoringEnrollment] {
 	return newLoader(batchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintel.CarrierMonitoringEnrollment, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 			rows, err := f.reader.EnrollmentsByCarrierIDs(ctx, tenantInfo, ids)
 			if err != nil {
 				return nil, err
 			}
-			grouped := make(map[pulid.ID][]*carrierintel.CarrierMonitoringEnrollment, len(rows))
+			grouped := make(
+				map[pulid.ID][]*carrierintelenrollment.CarrierMonitoringEnrollment,
+				len(rows),
+			)
 			for _, row := range rows {
 				grouped[row.CarrierID] = append(grouped[row.CarrierID], row)
 			}

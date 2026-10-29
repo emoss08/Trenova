@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -23,7 +27,7 @@ type VetPlan struct {
 	Subject  carrierintelports.CarrierIntelSubject
 	Provider integration.Type
 	Depth    carrierintel.LookupDepth
-	Current  *carrierintel.CarrierIntelSnapshot
+	Current  *carrierintelsnapshot.CarrierIntelSnapshot
 }
 
 func (s *Service) PlanVetCarrier(ctx context.Context, req *VetCarrierRequest) (*VetPlan, error) {
@@ -96,8 +100,8 @@ type EnrollmentChange struct {
 	CarrierID pulid.ID
 	Name      string
 	DOTNumber string
-	Before    carrierintel.DesiredState
-	After     carrierintel.DesiredState
+	Before    carrierintelenrollment.DesiredState
+	After     carrierintelenrollment.DesiredState
 }
 
 func (s *Service) PlanManualEnrollment(
@@ -158,20 +162,20 @@ func (s *Service) PlanManualEnrollment(
 	if err != nil {
 		return nil, err
 	}
-	existing := make(map[string]carrierintel.DesiredState, len(rows))
+	existing := make(map[string]carrierintelenrollment.DesiredState, len(rows))
 	for _, row := range rows {
 		existing[row.SubjectID] = row.DesiredState
 	}
 
-	after := carrierintel.DesiredStateNotEnrolled
+	after := carrierintelenrollment.DesiredStateNotEnrolled
 	if req.Enroll {
-		after = carrierintel.DesiredStateEnrolled
+		after = carrierintelenrollment.DesiredStateEnrolled
 	}
 	changes := make([]EnrollmentChange, 0, len(subjects))
 	for _, subject := range subjects {
 		before, found := existing[subject.SubjectID]
 		if !found {
-			before = carrierintel.DesiredStateNotEnrolled
+			before = carrierintelenrollment.DesiredStateNotEnrolled
 		}
 		changes = append(changes, EnrollmentChange{
 			CarrierID: subject.CarrierID,
@@ -188,8 +192,8 @@ func (s *Service) PlanManualEnrollment(
 // SnapshotChange is a carrier's intelligence snapshot before and after a
 // review is recorded on it.
 type SnapshotChange struct {
-	Before *carrierintel.CarrierIntelSnapshot
-	After  *carrierintel.CarrierIntelSnapshot
+	Before *carrierintelsnapshot.CarrierIntelSnapshot
+	After  *carrierintelsnapshot.CarrierIntelSnapshot
 }
 
 func (s *Service) PlanMarkReviewed(
@@ -235,8 +239,8 @@ func (s *Service) PlanMarkReviewed(
 type SuggestionPlan struct {
 	Before    *carrier.Carrier
 	After     *carrier.Carrier
-	Fields    []carrierintel.FieldUpdate
-	Insurance []carrierintel.InsuranceChange
+	Fields    []carrierintelsync.FieldUpdate
+	Insurance []carrierintelsync.InsuranceChange
 	Applied   int
 }
 
@@ -290,19 +294,19 @@ func (s *Service) PlanApplySuggestions(
 		return nil, err
 	}
 
-	plan := carrierintel.PlanCarrierSync(
+	plan := carrierintelsync.PlanCarrierSync(
 		entity,
 		snapshot.Profile,
-		carrierintel.SyncSettings{},
+		carrierintelsync.SyncSettings{},
 		s.now(),
 	)
-	selected := make([]carrierintel.FieldUpdate, 0, len(req.Fields))
+	selected := make([]carrierintelsync.FieldUpdate, 0, len(req.Fields))
 	for idx := range plan.Suggestions {
 		if slices.Contains(req.Fields, plan.Suggestions[idx].Field) {
 			selected = append(selected, plan.Suggestions[idx])
 		}
 	}
-	selectedInsurance := make([]carrierintel.InsuranceChange, 0, len(req.PolicyIDs))
+	selectedInsurance := make([]carrierintelsync.InsuranceChange, 0, len(req.PolicyIDs))
 	for idx := range plan.InsuranceSuggestions {
 		change := &plan.InsuranceSuggestions[idx]
 		if change.PolicyID.IsNotNil() && slices.Contains(req.PolicyIDs, change.PolicyID) {
@@ -315,8 +319,8 @@ func (s *Service) PlanApplySuggestions(
 		)
 	}
 
-	applied := len(carrierintel.ApplyFieldUpdates(entity, selected))
-	applied += carrierintel.ApplyInsuranceChanges(entity, selectedInsurance)
+	applied := len(carrierintelsync.ApplyFieldUpdates(entity, selected))
+	applied += carrierintelsync.ApplyInsuranceChanges(entity, selectedInsurance)
 
 	return &SuggestionPlan{
 		Before:    before,
@@ -379,7 +383,7 @@ func (s *Service) PlanImportProspect(
 func (s *Service) PlanVerifyEquipment(
 	ctx context.Context,
 	req *VerifyEquipmentRequest,
-) (*carrierintel.CarrierEquipmentVerification, *carrier.Carrier, error) {
+) (*carrierintelverification.CarrierEquipmentVerification, *carrier.Carrier, error) {
 	assignment, err := s.assignmentRepo.GetByID(
 		ctx,
 		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
@@ -399,7 +403,7 @@ func (s *Service) PlanVerifyEquipment(
 		return nil, nil, err
 	}
 
-	entity := &carrierintel.CarrierEquipmentVerification{
+	entity := &carrierintelverification.CarrierEquipmentVerification{
 		OrganizationID:      req.TenantInfo.OrgID,
 		BusinessUnitID:      req.TenantInfo.BuID,
 		CarrierAssignmentID: assignment.ID,

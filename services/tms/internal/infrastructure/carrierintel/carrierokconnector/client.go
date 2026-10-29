@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
@@ -61,7 +62,7 @@ func (c *Client) Lookup(
 	id := trimIdentifier(req.Identifier)
 
 	var (
-		endpoint carrierintel.Endpoint
+		endpoint carrierintelusage.Endpoint
 		fetch    func(ctx context.Context) (*carrierok.Profile, error)
 	)
 	switch depth {
@@ -70,19 +71,19 @@ func (c *Client) Lookup(
 		if !ok {
 			return nil, errorMapper.InvalidRequest(messageFMCSAIdentifier)
 		}
-		endpoint = carrierintel.EndpointProfileFMCSA
+		endpoint = carrierintelusage.EndpointProfileFMCSA
 		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
 			return c.sdk.ProfileFMCSA(ctx, query)
 		}
 	case carrierintel.LookupDepthLite:
 		query := profileQuery(id)
-		endpoint = carrierintel.EndpointProfileLite
+		endpoint = carrierintelusage.EndpointProfileLite
 		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
 			return c.sdk.ProfileLite(ctx, query)
 		}
 	default:
 		query := profileQuery(id)
-		endpoint = carrierintel.EndpointProfileFull
+		endpoint = carrierintelusage.EndpointProfileFull
 		fetch = func(ctx context.Context) (*carrierok.Profile, error) {
 			return c.sdk.Profile(ctx, query)
 		}
@@ -141,7 +142,7 @@ func (c *Client) Search(
 	}
 
 	outcome := &intelkit.CallOutcome{
-		Endpoint: carrierintel.EndpointSearch,
+		Endpoint: carrierintelusage.EndpointSearch,
 		Started:  time.Now(),
 		Units:    1,
 	}
@@ -180,7 +181,7 @@ func (c *Client) Autocomplete(
 	}
 
 	outcome := &intelkit.CallOutcome{
-		Endpoint: carrierintel.EndpointAutocomplete,
+		Endpoint: carrierintelusage.EndpointAutocomplete,
 		Started:  time.Now(),
 		Units:    1,
 	}

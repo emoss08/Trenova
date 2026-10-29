@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -54,7 +56,7 @@ type boundProvider struct {
 	connector  carrierintelports.CarrierIntelConnector
 	client     carrierintelports.CarrierIntelClient
 	descriptor carrierintel.ProviderDescriptor
-	prices     carrierintel.PriceBook
+	prices     carrierintelusage.PriceBook
 	fallback   bool
 	tenant     pagination.TenantInfo
 }
@@ -152,7 +154,7 @@ func (s *Service) bind(
 func (s *Service) resolvePrimary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *carrierintel.CarrierIntelControl,
+	control *carrierintelcontrol.CarrierIntelControl,
 ) (*boundProvider, error) {
 	provider, ok := control.PrimaryType()
 	if !ok {
@@ -166,7 +168,7 @@ func (s *Service) resolvePrimary(
 func (s *Service) resolveFallback(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *carrierintel.CarrierIntelControl,
+	control *carrierintelcontrol.CarrierIntelControl,
 ) (*boundProvider, bool) {
 	provider, ok := control.FallbackType()
 	if !ok {
@@ -199,7 +201,7 @@ func (s *Service) recordCall(
 		purpose = carrierintel.PurposeRefresh
 	}
 
-	record := &carrierintel.CarrierIntelUsageRecord{
+	record := &carrierintelusage.CarrierIntelUsageRecord{
 		OrganizationID: bound.tenant.OrgID,
 		BusinessUnitID: bound.tenant.BuID,
 		Provider:       bound.provider,
@@ -220,7 +222,12 @@ func (s *Service) recordCall(
 		record.Billable = true
 		record.BillableUnits = units
 		record.EstimatedCost = price.UnitCost.Mul(decimalFromInt(units))
-		record.DedupeKey = carrierintel.BillingDedupeKey(call.Endpoint, price, call.DOTNumber, now)
+		record.DedupeKey = carrierintelusage.BillingDedupeKey(
+			call.Endpoint,
+			price,
+			call.DOTNumber,
+			now,
+		)
 	}
 
 	inserted, err := s.usageRepo.Insert(context.WithoutCancel(ctx), record)
@@ -248,10 +255,10 @@ func (s *Service) recordCall(
 }
 
 func isBillable(
-	price carrierintel.EndpointPrice,
+	price carrierintelusage.EndpointPrice,
 	call carrierintelports.CarrierIntelCall,
 ) (billable bool, units int) {
-	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
+	if price.Model == carrierintelusage.BillingModelFree || !price.UnitCost.IsPositive() {
 		return false, 0
 	}
 	if call.Err != nil && !call.Found {
@@ -259,37 +266,37 @@ func isBillable(
 	}
 	units = max(call.Units, 1)
 	switch price.Model {
-	case carrierintel.BillingModelPerMatch, carrierintel.BillingModelPerDOTMonth:
+	case carrierintelusage.BillingModelPerMatch, carrierintelusage.BillingModelPerDOTMonth:
 		return call.Found, units
-	case carrierintel.BillingModelPerRequest:
+	case carrierintelusage.BillingModelPerRequest:
 		return call.Err == nil, units
 	default:
 		return false, 0
 	}
 }
 
-func usageOutcome(call carrierintelports.CarrierIntelCall) carrierintel.UsageOutcome {
+func usageOutcome(call carrierintelports.CarrierIntelCall) carrierintelusage.UsageOutcome {
 	if call.Err == nil {
 		if call.Found {
-			return carrierintel.UsageOutcomeSuccess
+			return carrierintelusage.UsageOutcomeSuccess
 		}
-		return carrierintel.UsageOutcomeNotFound
+		return carrierintelusage.UsageOutcomeNotFound
 	}
 	kind, ok := carrierintelports.CarrierIntelErrorKindOf(call.Err)
 	var limited *restx.RateLimitedError
 	switch {
 	case errors.As(call.Err, &limited):
-		return carrierintel.UsageOutcomeDenied
+		return carrierintelusage.UsageOutcomeDenied
 	case !ok:
-		return carrierintel.UsageOutcomeTransport
+		return carrierintelusage.UsageOutcomeTransport
 	case kind == carrierintelports.CarrierIntelErrorNotFound:
-		return carrierintel.UsageOutcomeNotFound
+		return carrierintelusage.UsageOutcomeNotFound
 	case kind == carrierintelports.CarrierIntelErrorRateLimited:
-		return carrierintel.UsageOutcomeRateLimited
+		return carrierintelusage.UsageOutcomeRateLimited
 	case kind == carrierintelports.CarrierIntelErrorUnavailable:
-		return carrierintel.UsageOutcomeServerError
+		return carrierintelusage.UsageOutcomeServerError
 	default:
-		return carrierintel.UsageOutcomeClientError
+		return carrierintelusage.UsageOutcomeClientError
 	}
 }
 

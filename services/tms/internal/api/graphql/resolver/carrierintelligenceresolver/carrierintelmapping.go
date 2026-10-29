@@ -15,6 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -171,7 +176,7 @@ func controlPatchFromInput(
 	}
 
 	if input.Rules.IsSet() {
-		rules := make(carrierintel.RuleSettings, len(input.Rules.Value()))
+		rules := make(carrierintelrule.RuleSettings, len(input.Rules.Value()))
 		for _, rule := range input.Rules.Value() {
 			if rule == nil {
 				continue
@@ -183,7 +188,7 @@ func controlPatchFromInput(
 				}
 				params[param.Key] = param.Value
 			}
-			rules[carrierintel.RuleCode(rule.Code)] = carrierintel.RuleSetting{
+			rules[carrierintelrule.RuleCode(rule.Code)] = carrierintelrule.RuleSetting{
 				Action: rule.Action,
 				Params: params,
 			}
@@ -200,7 +205,9 @@ func controlPatchFromInput(
 	return patch, nil
 }
 
-func ruleSettingsToModel(settings carrierintel.RuleSettings) []*gqlmodel.CarrierIntelRuleSetting {
+func ruleSettingsToModel(
+	settings carrierintelrule.RuleSettings,
+) []*gqlmodel.CarrierIntelRuleSetting {
 	codes := make([]string, 0, len(settings))
 	for code := range settings {
 		codes = append(codes, code.String())
@@ -209,7 +216,7 @@ func ruleSettingsToModel(settings carrierintel.RuleSettings) []*gqlmodel.Carrier
 
 	out := make([]*gqlmodel.CarrierIntelRuleSetting, 0, len(codes))
 	for _, code := range codes {
-		setting := settings[carrierintel.RuleCode(code)]
+		setting := settings[carrierintelrule.RuleCode(code)]
 		keys := make([]string, 0, len(setting.Params))
 		for key := range setting.Params {
 			keys = append(keys, key)
@@ -327,11 +334,11 @@ func monthFromTimestamp(value *int) time.Time {
 }
 
 func carrierIntelEventConnectionToModel(
-	result *pagination.CursorListResult[*carrierintel.CarrierIntelEvent],
+	result *pagination.CursorListResult[*carrierintelevent.CarrierIntelEvent],
 ) (*gqlmodel.CarrierIntelEventConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *carrierintel.CarrierIntelEvent, cursor string) *gqlmodel.CarrierIntelEventEdge {
+		func(node *carrierintelevent.CarrierIntelEvent, cursor string) *gqlmodel.CarrierIntelEventEdge {
 			return &gqlmodel.CarrierIntelEventEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.CarrierIntelEventEdge) string { return edge.Cursor },
@@ -348,11 +355,11 @@ func carrierIntelEventConnectionToModel(
 }
 
 func carrierMonitoringEnrollmentConnectionToModel(
-	result *pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment],
+	result *pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment],
 ) (*gqlmodel.CarrierMonitoringEnrollmentConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *carrierintel.CarrierMonitoringEnrollment, cursor string) *gqlmodel.CarrierMonitoringEnrollmentEdge {
+		func(node *carrierintelenrollment.CarrierMonitoringEnrollment, cursor string) *gqlmodel.CarrierMonitoringEnrollmentEdge {
 			return &gqlmodel.CarrierMonitoringEnrollmentEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.CarrierMonitoringEnrollmentEdge) string { return edge.Cursor },
@@ -410,10 +417,10 @@ func parseCarrierIntelID(raw, field, label string) (pulid.ID, error) {
 
 func loadCarrierSnapshot(
 	ctx context.Context,
-	fetch func() ([]*carrierintel.CarrierIntelSnapshot, error),
-	loader func() ([]*carrierintel.CarrierIntelSnapshot, error),
-) (*carrierintel.CarrierIntelSnapshot, error) {
-	var snapshots []*carrierintel.CarrierIntelSnapshot
+	fetch func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error),
+	loader func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error),
+) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+	var snapshots []*carrierintelsnapshot.CarrierIntelSnapshot
 	var err error
 	if loaders.Available(ctx) {
 		snapshots, err = loader()
@@ -427,9 +434,9 @@ func loadCarrierSnapshot(
 }
 
 func preferredEnrollment(
-	rows []*carrierintel.CarrierMonitoringEnrollment,
-) *carrierintel.CarrierMonitoringEnrollment {
-	var best *carrierintel.CarrierMonitoringEnrollment
+	rows []*carrierintelenrollment.CarrierMonitoringEnrollment,
+) *carrierintelenrollment.CarrierMonitoringEnrollment {
+	var best *carrierintelenrollment.CarrierMonitoringEnrollment
 	for _, row := range rows {
 		if row == nil {
 			continue
@@ -474,19 +481,19 @@ func sourcingSortValue(sort *carrierintelservice.SourcingSort) carrierintelservi
 	return *sort
 }
 
-func carrierIntelEventFieldLabel(event *carrierintel.CarrierIntelEvent) *string {
+func carrierIntelEventFieldLabel(event *carrierintelevent.CarrierIntelEvent) *string {
 	if event.FieldPath == "" {
 		return nil
 	}
-	label, _ := carrierintel.DescribeField(event.FieldPath)
+	label, _ := carrierinteldiff.DescribeField(event.FieldPath)
 	return &label
 }
 
-func carrierIntelEventRuleLabel(event *carrierintel.CarrierIntelEvent) *string {
+func carrierIntelEventRuleLabel(event *carrierintelevent.CarrierIntelEvent) *string {
 	if event.RuleCode == "" {
 		return nil
 	}
-	def, ok := carrierintel.RuleByCode(event.RuleCode)
+	def, ok := carrierintelrule.RuleByCode(event.RuleCode)
 	if !ok {
 		return nil
 	}

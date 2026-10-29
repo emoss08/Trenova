@@ -39,7 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
@@ -842,7 +842,7 @@ func (s *Service) carrierIntelEvent(
 		"dotNumber":   event.DOTNumber,
 		"detectedAt":  event.DetectedAt,
 	}
-	if definition, ok := carrierintel.RuleByCode(event.RuleCode); ok {
+	if definition, ok := carrierintelrule.RuleByCode(event.RuleCode); ok {
 		notes["gateRelevant"] = definition.GateRelevant
 	}
 	if event.CarrierID.IsNotNil() {

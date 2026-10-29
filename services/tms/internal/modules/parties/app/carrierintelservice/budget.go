@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -76,21 +77,26 @@ func (s *Service) monthToDateSpend(
 
 type budgetCheck struct {
 	tenant    pagination.TenantInfo
-	control   *carrierintel.CarrierIntelControl
+	control   *carrierintelcontrol.CarrierIntelControl
 	bound     *boundProvider
-	endpoint  carrierintel.Endpoint
+	endpoint  carrierintelusage.Endpoint
 	dotNumber string
 	units     int
 }
 
 func (s *Service) marginalCost(ctx context.Context, check *budgetCheck) (decimal.Decimal, error) {
 	price := check.bound.prices.Price(check.endpoint)
-	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
+	if price.Model == carrierintelusage.BillingModelFree || !price.UnitCost.IsPositive() {
 		return decimal.Zero, nil
 	}
 	units := max(check.units, 1)
-	if price.Model == carrierintel.BillingModelPerDOTMonth {
-		dedupe := carrierintel.BillingDedupeKey(check.endpoint, price, check.dotNumber, s.now())
+	if price.Model == carrierintelusage.BillingModelPerDOTMonth {
+		dedupe := carrierintelusage.BillingDedupeKey(
+			check.endpoint,
+			price,
+			check.dotNumber,
+			s.now(),
+		)
 		if dedupe != "" {
 			exists, err := s.usageRepo.ExistsDedupeKey(
 				ctx,
@@ -123,7 +129,8 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 		return nil
 	}
 
-	if control.DailyFullProfileCap != nil && check.endpoint == carrierintel.EndpointProfileFull {
+	if control.DailyFullProfileCap != nil &&
+		check.endpoint == carrierintelusage.EndpointProfileFull {
 		count, countErr := s.usageRepo.CountBillableSince(
 			ctx,
 			&carrierintelports.CountBillableUsageRequest{

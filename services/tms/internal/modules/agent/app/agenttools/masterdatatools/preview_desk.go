@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -115,7 +115,7 @@ func (t *PlaceWorkerDispatchHoldTool) Preview(
 
 var carrierIntelVolatileFields = []string{"acknowledgedAt", "resolvedAt"}
 
-func carrierIntelRecord(event *carrierintel.CarrierIntelEvent) toolpreview.Record {
+func carrierIntelRecord(event *carrierintelevent.CarrierIntelEvent) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceCarrierIntelligence,
 		ID:       event.ID,
@@ -147,7 +147,7 @@ func (t *carrierIntelEventTool) Preview(
 	plan, err := changepreview.PlanUpdate(
 		carrierIntelRecord(event),
 		event,
-		func(closed *carrierintel.CarrierIntelEvent) error {
+		func(closed *carrierintelevent.CarrierIntelEvent) error {
 			return carrierintelservice.PlanResolve(closed, request, now)
 		},
 		opts...,
@@ -166,7 +166,7 @@ func (t *carrierIntelEventTool) Preview(
 }
 
 func (t *carrierIntelEventTool) previewAcknowledge(
-	event *carrierintel.CarrierIntelEvent,
+	event *carrierintelevent.CarrierIntelEvent,
 	request *carrierintelservice.ResolveEventRequest,
 	now int64,
 	opts []toolpreview.Option,
@@ -188,7 +188,7 @@ func (t *carrierIntelEventTool) previewAcknowledge(
 	plan, err := changepreview.PlanUpdate(
 		carrierIntelRecord(event),
 		event,
-		func(seen *carrierintel.CarrierIntelEvent) error {
+		func(seen *carrierintelevent.CarrierIntelEvent) error {
 			acknowledged = seen.Acknowledge(request.TenantInfo.UserID, now)
 
 			return nil

@@ -9,6 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -34,7 +37,7 @@ type VerifyEquipmentRequest struct {
 func (s *Service) VerifyEquipment(
 	ctx context.Context,
 	req *VerifyEquipmentRequest,
-) (*carrierintel.CarrierEquipmentVerification, error) {
+) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	ctx = carrierintel.WithPurpose(ctx, carrierintel.PurposeVerify)
 	if err := s.requirePaidLookups(ctx, req.TenantInfo); err != nil {
 		return nil, err
@@ -66,7 +69,7 @@ func (s *Service) VerifyEquipment(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if created.Result == carrierintel.VerificationResultMismatch {
+	if created.Result == carrierintelverification.VerificationResultMismatch {
 		s.flagEquipmentMismatch(ctx, req.TenantInfo, created, carrierEntity.Name)
 	}
 
@@ -77,18 +80,18 @@ func (s *Service) VerifyEquipment(
 func (s *Service) runEquipmentLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	entity *carrierintel.CarrierEquipmentVerification,
+	entity *carrierintelverification.CarrierEquipmentVerification,
 	carrierName string,
 ) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
-		entity.Result = carrierintel.VerificationResultProviderError
+		entity.Result = carrierintelverification.VerificationResultProviderError
 		entity.MismatchReason = "Carrier intelligence settings could not be loaded"
 		return
 	}
 	bound, err := s.resolvePrimary(ctx, tenantInfo, control)
 	if err != nil {
-		entity.Result = carrierintel.VerificationResultUnverifiable
+		entity.Result = carrierintelverification.VerificationResultUnverifiable
 		entity.MismatchReason = "No carrier intelligence provider is enabled"
 		return
 	}
@@ -96,12 +99,12 @@ func (s *Service) runEquipmentLookup(
 
 	lookup, ok := bound.client.(carrierintelports.CarrierIntelEquipmentLookup)
 	if !ok || !bound.capabilities().Has(carrierintel.CapabilityEquipmentLookup) {
-		entity.Result = carrierintel.VerificationResultUnverifiable
+		entity.Result = carrierintelverification.VerificationResultUnverifiable
 		entity.MismatchReason = bound.provider.String() + " cannot look up equipment by VIN or plate"
 		return
 	}
 	if entity.ExpectedDOTNumber == "" {
-		entity.Result = carrierintel.VerificationResultUnverifiable
+		entity.Result = carrierintelverification.VerificationResultUnverifiable
 		entity.MismatchReason = carrierName + " has no DOT number to compare against"
 		return
 	}
@@ -110,9 +113,9 @@ func (s *Service) runEquipmentLookup(
 		tenant:   tenantInfo,
 		control:  control,
 		bound:    bound,
-		endpoint: carrierintel.EndpointEquipment,
+		endpoint: carrierintelusage.EndpointEquipment,
 	}); err != nil {
-		entity.Result = carrierintel.VerificationResultProviderError
+		entity.Result = carrierintelverification.VerificationResultProviderError
 		entity.MismatchReason = errorSummary(err)
 		return
 	}
@@ -137,11 +140,11 @@ func (s *Service) runEquipmentLookup(
 			err,
 			carrierintelports.CarrierIntelErrorNotFound,
 		) {
-			entity.Result = carrierintel.VerificationResultNotFound
+			entity.Result = carrierintelverification.VerificationResultNotFound
 			entity.MismatchReason = "No carrier is registered to this equipment"
 			return
 		}
-		entity.Result = carrierintel.VerificationResultProviderError
+		entity.Result = carrierintelverification.VerificationResultProviderError
 		entity.MismatchReason = errorSummary(toBusinessError(bound.provider, err))
 		return
 	}
@@ -150,12 +153,12 @@ func (s *Service) runEquipmentLookup(
 }
 
 func applyEquipmentMatches(
-	entity *carrierintel.CarrierEquipmentVerification,
+	entity *carrierintelverification.CarrierEquipmentVerification,
 	result *carrierintelports.CarrierIntelEquipmentResult,
 	carrierName string,
 ) {
 	if result == nil || len(result.Matches) == 0 {
-		entity.Result = carrierintel.VerificationResultNotFound
+		entity.Result = carrierintelverification.VerificationResultNotFound
 		entity.MismatchReason = "No carrier is registered to this equipment"
 		return
 	}
@@ -183,10 +186,10 @@ func applyEquipmentMatches(
 	}
 
 	if slices.Contains(dots, expected) {
-		entity.Result = carrierintel.VerificationResultMatch
+		entity.Result = carrierintelverification.VerificationResultMatch
 		return
 	}
-	entity.Result = carrierintel.VerificationResultMismatch
+	entity.Result = carrierintelverification.VerificationResultMismatch
 	entity.MismatchReason = fmt.Sprintf(
 		"Equipment is registered to USDOT %s (%s), not %s (USDOT %s)",
 		strings.Join(dots, ", "), entity.MatchedLegalName, carrierName, expected,
@@ -200,12 +203,12 @@ func applyEquipmentMatches(
 func (s *Service) flagEquipmentMismatch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	verification *carrierintel.CarrierEquipmentVerification,
+	verification *carrierintelverification.CarrierEquipmentVerification,
 	carrierName string,
 ) {
 	now := s.now()
 	provider := verification.Provider
-	event := &carrierintel.CarrierIntelEvent{
+	event := &carrierintelevent.CarrierIntelEvent{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		SubjectType:    carrierintel.SubjectTypeCarrier,
@@ -214,15 +217,15 @@ func (s *Service) flagEquipmentMismatch(
 		DOTNumber:      verification.ExpectedDOTNumber,
 		SubjectName:    carrierName,
 		Provider:       provider,
-		Source:         carrierintel.EventSourceEquipmentVerification,
+		Source:         carrierintelevent.EventSourceEquipmentVerification,
 		Category:       carrierintel.SectionEquipment,
 		FieldPath:      "equipment.verification",
 		Severity:       carrierintel.SeverityHigh,
 		CurrentValue:   verification.MatchedDOTNumbers,
 		Summary:        verification.MismatchReason,
 		DetectedAt:     now,
-		Status:         carrierintel.EventStatusOpen,
-		Fingerprint: carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
+		Status:         carrierintelevent.EventStatusOpen,
+		Fingerprint: carrierintelevent.EventFingerprint(carrierintelevent.EventFingerprintInput{
 			Provider:    provider,
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   verification.CarrierID.String(),
@@ -233,7 +236,7 @@ func (s *Service) flagEquipmentMismatch(
 	}
 	if _, err := s.eventRepo.InsertIgnoreDuplicates(
 		ctx,
-		[]*carrierintel.CarrierIntelEvent{event},
+		[]*carrierintelevent.CarrierIntelEvent{event},
 	); err != nil {
 		s.l.Warn("failed to record equipment mismatch event", zap.Error(err))
 	}
@@ -263,7 +266,7 @@ type OverrideVerificationRequest struct {
 func (s *Service) OverrideVerification(
 	ctx context.Context,
 	req *OverrideVerificationRequest,
-) (*carrierintel.CarrierEquipmentVerification, error) {
+) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	entity, err := s.verifyRepo.GetByID(ctx, req.TenantInfo, req.VerificationID)
 	if err != nil {
 		return nil, err
@@ -301,6 +304,6 @@ func (s *Service) VerificationsByAssignmentIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	assignmentIDs []pulid.ID,
-) ([]*carrierintel.CarrierEquipmentVerification, error) {
+) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
 	return s.verifyRepo.ListByAssignmentIDs(ctx, tenantInfo, assignmentIDs)
 }

@@ -20,6 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,7 +83,10 @@ var lookupDepths = agenttoolschema.Source(
 
 var unitTypes = agenttoolschema.Source("carrierIntel.unitType", carrierintel.UnitTypeValues())
 
-var syncFieldValues = agenttoolschema.Source("carrierIntel.syncField", carrierintel.AllSyncFields())
+var syncFieldValues = agenttoolschema.Source(
+	"carrierIntel.syncField",
+	carrierintelsync.AllSyncFields(),
+)
 
 type carrierIntelOperator interface {
 	VetCarrier(
@@ -119,7 +125,7 @@ type carrierIntelOperator interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierID pulid.ID,
-	) (*carrierintel.SyncPlan, error)
+	) (*carrierintelsync.SyncPlan, error)
 	ApplySuggestions(
 		ctx context.Context,
 		req *carrierintelservice.ApplySuggestionsRequest,
@@ -139,11 +145,11 @@ type carrierIntelOperator interface {
 	VerifyEquipment(
 		ctx context.Context,
 		req *carrierintelservice.VerifyEquipmentRequest,
-	) (*carrierintel.CarrierEquipmentVerification, error)
+	) (*carrierintelverification.CarrierEquipmentVerification, error)
 	PlanVerifyEquipment(
 		ctx context.Context,
 		req *carrierintelservice.VerifyEquipmentRequest,
-	) (*carrierintel.CarrierEquipmentVerification, *carrier.Carrier, error)
+	) (*carrierintelverification.CarrierEquipmentVerification, *carrier.Carrier, error)
 }
 
 type permissionChecker interface {
@@ -416,7 +422,7 @@ func NewVetCustomerBrokerTool(intel carrierIntelOperator) agenttoolports.AgentTo
 }
 
 type monitoringView struct {
-	Monitoring carrierintel.DesiredState `json:"monitoring"`
+	Monitoring carrierintelenrollment.DesiredState `json:"monitoring"`
 }
 
 func NewSetCarrierMonitoringTool(intel carrierIntelOperator) agenttoolports.AgentTool {
@@ -657,7 +663,7 @@ func (c *suggestionChoice) resolve(
 		return nil, err
 	}
 	resolved := *c.req
-	resolved.Fields = make([]carrierintel.SyncField, 0, len(plan.Suggestions))
+	resolved.Fields = make([]carrierintelsync.SyncField, 0, len(plan.Suggestions))
 	for idx := range plan.Suggestions {
 		resolved.Fields = append(resolved.Fields, plan.Suggestions[idx].Field)
 	}
@@ -1058,7 +1064,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierIntelOperator) agenttoolports.Ag
 }
 
 type verificationPlan struct {
-	verification *carrierintel.CarrierEquipmentVerification
+	verification *carrierintelverification.CarrierEquipmentVerification
 	carrier      *carrier.Carrier
 }
 

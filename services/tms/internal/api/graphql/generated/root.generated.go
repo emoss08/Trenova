@@ -3,6 +3,14 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
@@ -1096,9 +1104,9 @@ type CaptureSettingsResolver interface {
 }
 
 type CarrierResolver interface {
-	Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierIntelSnapshot, error)
+	Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (int, error)
-	MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierMonitoringEnrollment, error)
+	MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 }
 
 type CarrierAssignmentResolver interface {
@@ -1118,10 +1126,10 @@ type CarrierCapacityPostingResolver interface {
 }
 
 type CarrierEquipmentVerificationResolver interface {
-	ShipmentMoveID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	OverrideByID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	Cleared(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (bool, error)
+	ShipmentMoveID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	OverrideByID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	Cleared(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (bool, error)
 }
 
 type CarrierInsurancePolicyResolver interface {
@@ -1129,10 +1137,10 @@ type CarrierInsurancePolicyResolver interface {
 }
 
 type CarrierIntelControlResolver interface {
-	PrimaryProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
-	FallbackProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
-	Rules(ctx context.Context, obj *carrierintel.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error)
-	MonthlySpendCap(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
+	PrimaryProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
+	FallbackProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
+	Rules(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error)
+	MonthlySpendCap(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
 }
 
 type CarrierIntelEquipmentResolver interface {
@@ -1140,30 +1148,30 @@ type CarrierIntelEquipmentResolver interface {
 }
 
 type CarrierIntelEventResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (string, error)
-	FieldLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	RuleLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	Action(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.RuleAction, error)
-	PriorValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	CurrentValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	AcknowledgedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	AcknowledgedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
-	ResolvedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	ResolvedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
-	Resolution(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.EventResolution, error)
-	SnapshotID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
+	CarrierID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (string, error)
+	FieldLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	RuleCode(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	RuleLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	Action(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintel.RuleAction, error)
+	PriorValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	CurrentValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	AcknowledgedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	AcknowledgedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error)
+	ResolvedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	ResolvedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error)
+	Resolution(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintelevent.EventResolution, error)
+	SnapshotID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
 }
 
 type CarrierIntelFeedStateResolver interface {
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (string, error)
-	PausedReason(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (string, error)
+	PausedReason(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (*string, error)
 }
 
 type CarrierIntelFindingResolver interface {
-	Code(ctx context.Context, obj *carrierintel.Finding) (string, error)
-	OverrideID(ctx context.Context, obj *carrierintel.Finding) (*string, error)
+	Code(ctx context.Context, obj *carrierintelrule.Finding) (string, error)
+	OverrideID(ctx context.Context, obj *carrierintelrule.Finding) (*string, error)
 }
 
 type CarrierIntelInsuranceResolver interface {
@@ -1176,9 +1184,9 @@ type CarrierIntelInsuranceResolver interface {
 }
 
 type CarrierIntelInsuranceChangeResolver interface {
-	PolicyID(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
-	CurrentCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
-	ProposedCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
+	PolicyID(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
+	CurrentCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
+	ProposedCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
 }
 
 type CarrierIntelInsuranceFilingResolver interface {
@@ -1186,13 +1194,13 @@ type CarrierIntelInsuranceFilingResolver interface {
 }
 
 type CarrierIntelOverrideResolver interface {
-	RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (string, error)
-	RevokedByID(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (*string, error)
-	Active(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (bool, error)
+	RuleCode(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (string, error)
+	RevokedByID(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (*string, error)
+	Active(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (bool, error)
 }
 
 type CarrierIntelRuleDefinitionResolver interface {
-	Code(ctx context.Context, obj *carrierintel.RuleDefinition) (string, error)
+	Code(ctx context.Context, obj *carrierintelrule.RuleDefinition) (string, error)
 }
 
 type CarrierIntelSafetyResolver interface {
@@ -1201,17 +1209,17 @@ type CarrierIntelSafetyResolver interface {
 }
 
 type CarrierIntelSnapshotResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error)
-	Source(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error)
-	ReviewedByID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error)
-	EffectiveAsOf(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (int, error)
-	HasRawPayload(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (bool, error)
+	CarrierID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error)
+	Source(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error)
+	ReviewedByID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error)
+	EffectiveAsOf(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (int, error)
+	HasRawPayload(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (bool, error)
 }
 
 type CarrierMonitoringEnrollmentResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (string, error)
+	CarrierID(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (string, error)
 }
 
 type CarrierSettlementResolver interface {
@@ -1241,7 +1249,7 @@ type CommodityResolver interface {
 }
 
 type CustomerResolver interface {
-	BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintel.CarrierIntelSnapshot, error)
+	BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 }
 
 type CustomerBillingProfileResolver interface {
@@ -2129,21 +2137,21 @@ type MutationResolver interface {
 	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
-	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error)
-	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error)
+	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintelcontrol.CarrierIntelControl, error)
+	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintelcontrol.CarrierIntelControl, error)
 	ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error)
 	VetCarrier(ctx context.Context, carrierID string, depth *carrierintel.LookupDepth, force *bool) (*gqlmodel.CarrierIntelFetchResult, error)
 	VetCustomerBroker(ctx context.Context, customerID string, force *bool) (*gqlmodel.CarrierIntelFetchResult, error)
 	SetCarrierMonitoring(ctx context.Context, carrierIds []string, enabled bool) (int, error)
 	AcknowledgeCarrierIntelEvents(ctx context.Context, ids []string) (int, error)
-	ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintel.CarrierIntelEvent, error)
+	ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintelevent.CarrierIntelEvent, error)
 	MarkCarrierIntelReviewed(ctx context.Context, carrierID string, note string) (bool, error)
-	GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierintel.CarrierIntelOverride, error)
-	RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierintel.CarrierIntelOverride, error)
+	GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierinteloverride.CarrierIntelOverride, error)
+	RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierinteloverride.CarrierIntelOverride, error)
 	ApplyCarrierIntelSuggestions(ctx context.Context, input gqlmodel.ApplyCarrierIntelSuggestionsInput) (int, error)
 	ImportSourcedCarrier(ctx context.Context, input gqlmodel.ImportSourcedCarrierInput) (*carrier.Carrier, error)
-	VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintel.CarrierEquipmentVerification, error)
-	OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintel.CarrierEquipmentVerification, error)
+	VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintelverification.CarrierEquipmentVerification, error)
+	OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintelverification.CarrierEquipmentVerification, error)
 	GenerateCarrierSettlementBatch(ctx context.Context, input gqlmodel.GenerateCarrierSettlementBatchInput) (*carriersettlement.CarrierSettlementBatch, error)
 	SubmitCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	ApproveCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
@@ -2930,24 +2938,24 @@ type QueryResolver interface {
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
 	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
 	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
-	CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error)
+	CarrierIntelControl(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error)
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
-	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
+	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintelrule.RuleDefinition, error)
 	CarrierIntelEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierIntelEventFilterInput) (*gqlmodel.CarrierIntelEventConnection, error)
-	CarrierIntelEvent(ctx context.Context, id string) (*carrierintel.CarrierIntelEvent, error)
+	CarrierIntelEvent(ctx context.Context, id string) (*carrierintelevent.CarrierIntelEvent, error)
 	CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error)
 	CarrierMonitoringEnrollments(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierMonitoringEnrollmentFilterInput) (*gqlmodel.CarrierMonitoringEnrollmentConnection, error)
-	CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error)
-	CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error)
+	CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
+	CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	CarrierIntelUsage(ctx context.Context, month *int) (*gqlmodel.CarrierIntelUsageSummary, error)
-	CarrierIntelCostEstimate(ctx context.Context, policy carrierintel.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error)
-	CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintel.SyncPlan, error)
-	CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierintel.CarrierIntelOverride, error)
+	CarrierIntelCostEstimate(ctx context.Context, policy carrierintelcontrol.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error)
+	CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintelsync.SyncPlan, error)
+	CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierinteloverride.CarrierIntelOverride, error)
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
 	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
 	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
-	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error)
+	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintelverification.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)
 	CarrierSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementConnection, error)
 	CarrierSettlement(ctx context.Context, id string) (*carriersettlement.CarrierSettlement, error)
