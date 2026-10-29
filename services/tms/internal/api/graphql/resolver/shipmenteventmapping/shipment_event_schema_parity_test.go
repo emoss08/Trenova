@@ -1,4 +1,4 @@
-package shipmentresolver_test
+package shipmenteventmapping_test
 
 import (
 	"sort"

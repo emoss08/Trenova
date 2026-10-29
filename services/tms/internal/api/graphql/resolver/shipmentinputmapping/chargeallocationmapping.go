@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmentinputmapping
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmenteventmapping
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func shipmentEventsToModel(events []*shipmentevent.Event) ([]gqlmodel.ShipmentEvent, error) {
+func ToModels(events []*shipmentevent.Event) ([]gqlmodel.ShipmentEvent, error) {
 	items := make([]gqlmodel.ShipmentEvent, 0, len(events))
 	for _, event := range events {
 		item, err := shipmentEventToModel(event)
@@ -24,7 +24,7 @@ func shipmentEventsToModel(events []*shipmentevent.Event) ([]gqlmodel.ShipmentEv
 	return items, nil
 }
 
-func shipmentEventTypesFromGraphQL(
+func TypesFromGraphQL(
 	values []gqlmodel.ShipmentEventType,
 ) []shipmentevent.Type {
 	if len(values) == 0 {
@@ -38,7 +38,7 @@ func shipmentEventTypesFromGraphQL(
 }
 
 func shipmentEventToModel(event *shipmentevent.Event) (gqlmodel.ShipmentEvent, error) {
-	metadata, err := optionalJSON(event.Metadata)
+	metadata, err := gqlscalar.OptionalJSON(event.Metadata)
 	if err != nil {
 		return nil, err
 	}

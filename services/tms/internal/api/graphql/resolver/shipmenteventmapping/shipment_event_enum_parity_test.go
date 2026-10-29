@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmenteventmapping
 
 import (
 	"testing"

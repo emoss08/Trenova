@@ -1,24 +1,23 @@
-package shipmentresolver
+package shipmentmapping
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func shipmentConnectionToModel(
+func ShipmentConnectionToModel(
 	ctx context.Context,
 	result *pagination.CursorListResult[*shipmentdomain.Shipment],
 ) (*gqlmodel.ShipmentConnection, error) {
-	edges, endCursor, err := mappedEntityCursorEdges(
+	edges, endCursor, err := gqlconnection.MappedEntityCursorEdges(
 		result.Items,
 		result,
 		func(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
-			return shipmentmapping.ShipmentToModel(ctx, entity)
+			return ShipmentToModel(ctx, entity)
 		},
 		func(node *gqlmodel.Shipment, cursor string) *gqlmodel.ShipmentEdge {
 			return &gqlmodel.ShipmentEdge{
@@ -41,13 +40,13 @@ func shipmentConnectionToModel(
 	}, nil
 }
 
-func shipmentCommentConnectionToModel(
+func ShipmentCommentConnectionToModel(
 	result *pagination.CursorListResult[*shipmentdomain.ShipmentComment],
 ) (*gqlmodel.ShipmentCommentConnection, error) {
-	edges, endCursor, err := mappedEntityCursorEdges(
+	edges, endCursor, err := gqlconnection.MappedEntityCursorEdges(
 		result.Items,
 		result,
-		shipmentCommentToModel,
+		ShipmentCommentToModel,
 		func(node *gqlmodel.ShipmentComment, cursor string) *gqlmodel.ShipmentCommentEdge {
 			return &gqlmodel.ShipmentCommentEdge{
 				Node:   node,

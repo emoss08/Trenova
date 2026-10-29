@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmentmapping
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 )
 
-func shipmentProfitabilityEstimateToModel(
+func ProfitabilityEstimateToModel(
 	estimate *costingservice.ShipmentProfitabilityEstimate,
 ) *gqlmodel.ShipmentProfitabilityEstimate {
 	if estimate == nil {

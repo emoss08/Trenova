@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmentanalyticsmapping
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func shipmentAnalyticsToModel(data kernelports.AnalyticsData) (*gqlmodel.ShipmentAnalytics, error) {
+func ToModel(data kernelports.AnalyticsData) (*gqlmodel.ShipmentAnalytics, error) {
 	page := kernelports.ShipmentAnalyticsPage
 	if value, ok := data["page"].(string); ok && value != "" {
 		page = kernelports.AnalyticsPage(value)
@@ -32,7 +32,7 @@ func shipmentAnalyticsToModel(data kernelports.AnalyticsData) (*gqlmodel.Shipmen
 	}, nil
 }
 
-func analyticsDateRange(startDate, endDate *int) *kernelports.DateRange {
+func DateRange(startDate, endDate *int) *kernelports.DateRange {
 	if startDate == nil && endDate == nil {
 		return nil
 	}
@@ -308,7 +308,7 @@ func analyticsObject(value any) map[string]any {
 	if typed, ok := value.(map[string]any); ok {
 		return typed
 	}
-	object, err := optionalJSON(value)
+	object, err := gqlscalar.OptionalJSON(value)
 	if err != nil {
 		return nil
 	}

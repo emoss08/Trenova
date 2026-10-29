@@ -1,11 +1,10 @@
-package shipmentresolver
+package gqlconnection
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func mappedEntityCursorEdges[TEntity pagination.CursorEntity, TNode any, TEdge any](
+func MappedEntityCursorEdges[TEntity pagination.CursorEntity, TNode any, TEdge any](
 	items []TEntity,
 	cursors pagination.EdgeCursorProvider,
 	mapNode func(TEntity) (TNode, error),
@@ -22,7 +21,7 @@ func mappedEntityCursorEdges[TEntity pagination.CursorEntity, TNode any, TEdge a
 			return nil, nil, mapErr
 		}
 
-		cursor, cursorErr := gqlconnection.EdgeCursor(cursors, i)
+		cursor, cursorErr := EdgeCursor(cursors, i)
 		if cursorErr != nil {
 			return nil, nil, cursorErr
 		}

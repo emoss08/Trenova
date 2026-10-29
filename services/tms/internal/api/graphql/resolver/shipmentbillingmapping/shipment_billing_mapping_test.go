@@ -1,10 +1,12 @@
-package shipmentresolver
+package shipmentbillingmapping
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +36,7 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 		`pq: duplicate key value violates unique constraint "billing_queue_items_pkey"`,
 	)
 
-	model, err := bulkTransferToBillingToModel(
+	model, err := BulkTransferToModel(
 		t.Context(),
 		&shipmentbillingports.BulkTransferToBillingResponse{
 			TotalCount:   3,
@@ -131,4 +133,44 @@ func TestBulkTransferToBillingToModel(t *testing.T) {
 	require.NotNil(t, broken.Error)
 	assert.NotContains(t, *broken.Error, "pq:")
 	assert.NotContains(t, *broken.Error, "billing_queue_items_pkey")
+}
+
+func TestShipmentBillingReadinessToModel_MapsWarningContext(t *testing.T) {
+	t.Parallel()
+
+	model := ReadinessToModel(&shipmentbillingports.ShipmentBillingReadiness{
+		ShipmentID:     "shp_1",
+		ShipmentStatus: shipmentdomain.StatusCompleted,
+		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
+			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelWarn,
+			RateValidationEnforcement:             tenant.EnforcementLevelWarn,
+		},
+		Warnings: []shipmentbillingports.ShipmentBillingWarning{
+			{
+				Code:    "missing_documents",
+				Message: "Missing documents",
+				Context: map[string]any{
+					"documentTypeId":          "dt_1",
+					"documentTypeCode":        "POD",
+					"documentTypeName":        "Proof of Delivery",
+					"documentCount":           1,
+					"requirementCount":        float64(2),
+					"missingRequirementCount": int64(1),
+					"serviceFailureIds":       []any{"sf_1", "sf_2"},
+					"unresolvedCount":         2,
+				},
+			},
+		},
+	})
+
+	require.Len(t, model.Warnings, 1)
+	require.NotNil(t, model.Warnings[0].Context)
+	assert.Equal(t, "dt_1", *model.Warnings[0].Context.DocumentTypeID)
+	assert.Equal(t, "POD", *model.Warnings[0].Context.DocumentTypeCode)
+	assert.Equal(t, "Proof of Delivery", *model.Warnings[0].Context.DocumentTypeName)
+	assert.Equal(t, 1, *model.Warnings[0].Context.DocumentCount)
+	assert.Equal(t, 2, *model.Warnings[0].Context.RequirementCount)
+	assert.Equal(t, 1, *model.Warnings[0].Context.MissingRequirementCount)
+	assert.Equal(t, []string{"sf_1", "sf_2"}, model.Warnings[0].Context.ServiceFailureIds)
+	assert.Equal(t, 2, *model.Warnings[0].Context.UnresolvedCount)
 }

@@ -1,4 +1,4 @@
-package shipmentresolver
+package shipmentbillingmapping
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func shipmentBillingReadinessToModel(
+func ReadinessToModel(
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) *gqlmodel.ShipmentBillingReadiness {
 	warnings := make([]*gqlmodel.ShipmentBillingWarning, 0, len(readiness.Warnings))
@@ -85,7 +85,7 @@ func shipmentBillingPayersToModel(
 	return out
 }
 
-func transferToBillingResultToModel(
+func TransferResultToModel(
 	ctx context.Context,
 	result *billingqueueports.TransferToBillingResult,
 ) (*gqlmodel.ShipmentTransferToBillingResult, error) {
@@ -181,7 +181,7 @@ func shipmentBillingIneligibleDocumentsToModel(
 	return out
 }
 
-func bulkTransferToBillingToModel(
+func BulkTransferToModel(
 	ctx context.Context,
 	response *shipmentbillingports.BulkTransferToBillingResponse,
 ) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error) {
@@ -241,7 +241,7 @@ func bulkTransferToBillingToModel(
 	}, nil
 }
 
-func billingTransferCandidateIDsToModel(
+func CandidateIDsToModel(
 	response *shipmentbillingports.BillingTransferCandidateIDsResponse,
 ) *gqlmodel.ShipmentBillingTransferCandidateIds {
 	ids := make([]string, 0, len(response.IDs))
@@ -256,7 +256,7 @@ func billingTransferCandidateIDsToModel(
 	}
 }
 
-func parseBillType(value *billingqueue.BillType) billingqueue.BillType {
+func ParseBillType(value *billingqueue.BillType) billingqueue.BillType {
 	if value == nil || *value == "" {
 		return billingqueue.BillTypeInvoice
 	}
