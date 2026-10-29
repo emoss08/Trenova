@@ -122,7 +122,7 @@ and takes exactly one of:
   backlog; they are counted, never failed.
 
 The generator refuses, and `+"`TestCoverageIsCurrent`"+` and the `+"`Agent write coverage`"+`
-step of `+"`Codegen Checks`"+` fail, when a write has no entry, an entry names a
+step of the Go `+"`Lint`"+` job fail, when a write has no entry, an entry names a
 write the app no longer exposes, an entry names a tool that does not exist, an
 exemption has no reason or an unknown category, or this page differs from what
 the generator writes. Each message names the key and the file to edit. After
