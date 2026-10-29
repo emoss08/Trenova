@@ -65,7 +65,7 @@ func (s *Service) PollChangeFeed(
 		return nil, err
 	}
 	if state == nil {
-		state = carrierintelenrollmentservice.NewFeedState(key)
+		state = carrierintelenrollmentservice.NewFeedState(&key)
 	}
 	now := s.now()
 	if state.IsPaused() {
@@ -89,93 +89,20 @@ func (s *Service) PollChangeFeed(
 		since = timeutils.DayStartUTC(*state.LastSuccessAt) - timeutils.SecondsPerDay
 	}
 
-	result := &PollResult{}
-	changedRefs := make(map[string]carrierintelports.CarrierIntelChangedProfile, 64)
-	for page := 1; page <= maxChangeFeedPages; page++ {
-		var feed *carrierintelports.CarrierIntelChangeFeedPage
-		listErr := s.intel.WithRateLimitWait(ctx, func() error {
-			var callErr error
-			feed, callErr = monitor.ListChanges(
-				ctx,
-				&carrierintelports.CarrierIntelChangeFeedRequest{
-					Since:    since,
-					Until:    now,
-					Page:     page,
-					PageSize: changeFeedPageSize,
-				},
-			)
-			return callErr
-		})
-		if listErr != nil {
-			return s.recordFeedFailure(ctx, &feedFailure{
-				tenant:   tenantInfo,
-				provider: provider,
-				state:    state,
-				control:  control,
-				err:      listErr,
-				result:   result,
-			})
-		}
-		for _, item := range feed.Items {
-			changedRefs[item.ProviderRef] = item
-		}
-		if heartbeat != nil {
-			heartbeat(page, len(changedRefs))
-		}
-		if !feed.HasMore || len(feed.Items) == 0 {
-			break
-		}
+	run := &changeFeedRun{
+		tenant:    tenantInfo,
+		provider:  provider,
+		state:     state,
+		control:   control,
+		result:    &PollResult{},
+		heartbeat: heartbeat,
 	}
-
-	if len(changedRefs) > 0 {
-		refs := make([]string, 0, len(changedRefs))
-		for ref := range changedRefs {
-			refs = append(refs, ref)
-		}
-		enrollments, listErr := s.enrollmentRepo.ListByProviderRefs(ctx, tenantInfo, provider, refs)
-		if listErr != nil {
-			return nil, listErr
-		}
-		result.Changed = len(enrollments)
-
-		subjects, resolveErr := s.resolveEnrollmentSubjects(ctx, tenantInfo, enrollments)
-		if resolveErr != nil {
-			return nil, resolveErr
-		}
-		for _, subject := range subjects {
-			if ctx.Err() != nil {
-				return result, ctx.Err()
-			}
-			_, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
-				TenantInfo: tenantInfo,
-				Subject:    subject,
-				MinDepth:   carrierintel.LookupDepthFMCSA,
-				Purpose:    carrierintel.PurposeMonitor,
-				Force:      true,
-				Source:     carrierintelevent.EventSourceNativeChangeFeed,
-				Control:    control,
-			})
-			if fetchErr != nil {
-				if carrierintelenrollmentservice.IsPausingError(fetchErr) {
-					return s.recordFeedFailure(ctx, &feedFailure{
-						tenant:   tenantInfo,
-						provider: provider,
-						state:    state,
-						control:  control,
-						err:      fetchErr,
-						result:   result,
-					})
-				}
-				result.Failed++
-				s.l.Info("change feed refresh failed",
-					zap.String("subjectId", subject.SubjectID), zap.Error(fetchErr))
-				continue
-			}
-			result.Refreshed++
-			if heartbeat != nil {
-				heartbeat(result.Refreshed)
-			}
-		}
+	changedRefs, listErr := s.collectChanges(ctx, run, monitor, since, now)
+	if listErr != nil {
+		return s.recordFeedFailure(ctx, run.failure(listErr))
+	}
+	if res, stopped, refreshErr := s.refreshChangedProfiles(ctx, run, changedRefs); stopped {
+		return res, refreshErr
 	}
 
 	if err = s.confirmUnchangedEnrollments(
@@ -192,7 +119,117 @@ func (s *Service) PollChangeFeed(
 	if err = s.feedRepo.Upsert(ctx, state); err != nil {
 		return nil, err
 	}
-	return result, nil
+	return run.result, nil
+}
+
+type changeFeedRun struct {
+	tenant    pagination.TenantInfo
+	provider  integration.Type
+	state     *carrierintelenrollment.CarrierIntelFeedState
+	control   *carrierintelcontrol.CarrierIntelControl
+	result    *PollResult
+	heartbeat HeartbeatFunc
+}
+
+func (run *changeFeedRun) failure(err error) *feedFailure {
+	return &feedFailure{
+		tenant:   run.tenant,
+		provider: run.provider,
+		state:    run.state,
+		control:  run.control,
+		err:      err,
+		result:   run.result,
+	}
+}
+
+func (s *Service) collectChanges(
+	ctx context.Context,
+	run *changeFeedRun,
+	monitor carrierintelports.CarrierIntelNativeMonitor,
+	since, until int64,
+) (map[string]carrierintelports.CarrierIntelChangedProfile, error) {
+	changedRefs := make(map[string]carrierintelports.CarrierIntelChangedProfile, 64)
+	for page := 1; page <= maxChangeFeedPages; page++ {
+		var feed *carrierintelports.CarrierIntelChangeFeedPage
+		if err := s.intel.WithRateLimitWait(ctx, func() error {
+			var callErr error
+			feed, callErr = monitor.ListChanges(
+				ctx,
+				&carrierintelports.CarrierIntelChangeFeedRequest{
+					Since:    since,
+					Until:    until,
+					Page:     page,
+					PageSize: changeFeedPageSize,
+				},
+			)
+			return callErr
+		}); err != nil {
+			return nil, err
+		}
+		for _, item := range feed.Items {
+			changedRefs[item.ProviderRef] = item
+		}
+		if run.heartbeat != nil {
+			run.heartbeat(page, len(changedRefs))
+		}
+		if !feed.HasMore || len(feed.Items) == 0 {
+			break
+		}
+	}
+	return changedRefs, nil
+}
+
+func (s *Service) refreshChangedProfiles(
+	ctx context.Context,
+	run *changeFeedRun,
+	changedRefs map[string]carrierintelports.CarrierIntelChangedProfile,
+) (res *PollResult, stopped bool, err error) {
+	if len(changedRefs) == 0 {
+		return nil, false, nil
+	}
+	refs := make([]string, 0, len(changedRefs))
+	for ref := range changedRefs {
+		refs = append(refs, ref)
+	}
+	enrollments, err := s.enrollmentRepo.ListByProviderRefs(ctx, run.tenant, run.provider, refs)
+	if err != nil {
+		return nil, true, err
+	}
+	run.result.Changed = len(enrollments)
+
+	subjects, err := s.resolveEnrollmentSubjects(ctx, run.tenant, enrollments)
+	if err != nil {
+		return nil, true, err
+	}
+	for _, subject := range subjects {
+		if ctx.Err() != nil {
+			return run.result, true, ctx.Err()
+		}
+		_, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
+			TenantInfo: run.tenant,
+			Subject:    subject,
+			MinDepth:   carrierintel.LookupDepthFMCSA,
+			Purpose:    carrierintel.PurposeMonitor,
+			Force:      true,
+			Source:     carrierintelevent.EventSourceNativeChangeFeed,
+			Control:    run.control,
+		})
+		if fetchErr != nil && carrierintelenrollmentservice.IsPausingError(fetchErr) {
+			res, err = s.recordFeedFailure(ctx, run.failure(fetchErr))
+			return res, true, err
+		}
+		if fetchErr != nil {
+			run.result.Failed++
+			s.l.Info("change feed refresh failed",
+				zap.String("subjectId", subject.SubjectID), zap.Error(fetchErr))
+			continue
+		}
+		run.result.Refreshed++
+		if run.heartbeat != nil {
+			run.heartbeat(run.result.Refreshed)
+		}
+	}
+	return nil, false, nil
 }
 
 type feedFailure struct {
@@ -212,7 +249,11 @@ func (s *Service) recordFeedFailure(
 	reason := carrierintelenrollmentservice.PauseReasonFor(failure.err)
 	if reason != carrierintelenrollment.FeedPauseReasonNone {
 		if err := s.enrollment.PauseFeed(
-			ctx, failure.tenant, failure.provider, carrierintelenrollment.FeedTypeChangeFeed, reason,
+			ctx,
+			failure.tenant,
+			failure.provider,
+			carrierintelenrollment.FeedTypeChangeFeed,
+			reason,
 			carrierintelservice.ErrorSummary(failure.err),
 		); err != nil {
 			return failure.result, err
@@ -223,13 +264,8 @@ func (s *Service) recordFeedFailure(
 	}
 
 	steps := min(failure.state.FailureCount+1, feedFailureBackoffSteps)
-	backoff := int64(
-		failure.control.PollIntervalMinutes,
-	) * 60 / int64(
-		feedFailureBackoffSteps,
-	) * int64(
-		steps,
-	)
+	interval := int64(failure.control.PollIntervalMinutes) * 60
+	backoff := interval / feedFailureBackoffSteps * int64(steps)
 	failure.state.RecordFailure(
 		carrierintelservice.ErrorSummary(failure.err),
 		now,
@@ -368,45 +404,15 @@ func (s *Service) RefreshDueSnapshots(
 		return nil, err
 	}
 
-	confirmed := make([]string, 0, len(subjects))
-	for _, subject := range subjects {
-		if ctx.Err() != nil {
-			break
-		}
-		fetched, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
-			TenantInfo:    tenantInfo,
-			Subject:       subject,
-			MinDepth:      carrierintel.LookupDepthFMCSA,
-			MaxAgeSeconds: control.SnapshotTTLSeconds(),
-			Purpose:       carrierintel.PurposeMonitor,
-			Source:        carrierintelevent.EventSourceSnapshotDiff,
-			Control:       control,
-		})
-		if fetchErr != nil {
-			if carrierintelenrollmentservice.IsPausingError(fetchErr) {
-				if state == nil {
-					state = carrierintelenrollmentservice.NewFeedState(key)
-				}
-				if pauseErr := s.enrollment.PauseFeed(
-					ctx, tenantInfo, provider, carrierintelenrollment.FeedTypeSnapshotRefresh,
-					carrierintelenrollmentservice.PauseReasonFor(fetchErr),
-					carrierintelservice.ErrorSummary(fetchErr),
-				); pauseErr != nil {
-					return result, pauseErr
-				}
-				result.Paused = true
-				break
-			}
-			result.Failed++
-			continue
-		}
-		if !fetched.FromCache {
-			result.Refreshed++
-		}
-		confirmed = append(confirmed, subject.SubjectID)
-		if heartbeat != nil {
-			heartbeat(result.Refreshed)
-		}
+	confirmed, err := s.refreshDueSubjects(ctx, &snapshotRefresh{
+		tenant:    tenantInfo,
+		provider:  provider,
+		control:   control,
+		result:    result,
+		heartbeat: heartbeat,
+	}, subjects)
+	if err != nil {
+		return result, err
 	}
 
 	if len(confirmed) > 0 {
@@ -424,6 +430,73 @@ func (s *Service) RefreshDueSnapshots(
 		}
 	}
 	return result, nil
+}
+
+type snapshotRefresh struct {
+	tenant    pagination.TenantInfo
+	provider  integration.Type
+	control   *carrierintelcontrol.CarrierIntelControl
+	result    *PollResult
+	heartbeat HeartbeatFunc
+}
+
+func (s *Service) refreshDueSubjects(
+	ctx context.Context,
+	run *snapshotRefresh,
+	subjects []carrierintelports.CarrierIntelSubject,
+) ([]string, error) {
+	confirmed := make([]string, 0, len(subjects))
+	for _, subject := range subjects {
+		if ctx.Err() != nil {
+			break
+		}
+		fetched, fetchErr := s.intel.Fetch(ctx, &carrierintelservice.FetchRequest{
+			TenantInfo:    run.tenant,
+			Subject:       subject,
+			MinDepth:      carrierintel.LookupDepthFMCSA,
+			MaxAgeSeconds: run.control.SnapshotTTLSeconds(),
+			Purpose:       carrierintel.PurposeMonitor,
+			Source:        carrierintelevent.EventSourceSnapshotDiff,
+			Control:       run.control,
+		})
+		if fetchErr != nil && carrierintelenrollmentservice.IsPausingError(fetchErr) {
+			if err := s.pauseSnapshotRefresh(ctx, run, fetchErr); err != nil {
+				return nil, err
+			}
+			break
+		}
+		if fetchErr != nil {
+			run.result.Failed++
+			continue
+		}
+		if !fetched.FromCache {
+			run.result.Refreshed++
+		}
+		confirmed = append(confirmed, subject.SubjectID)
+		if run.heartbeat != nil {
+			run.heartbeat(run.result.Refreshed)
+		}
+	}
+	return confirmed, nil
+}
+
+func (s *Service) pauseSnapshotRefresh(
+	ctx context.Context,
+	run *snapshotRefresh,
+	cause error,
+) error {
+	if err := s.enrollment.PauseFeed(
+		ctx,
+		run.tenant,
+		run.provider,
+		carrierintelenrollment.FeedTypeSnapshotRefresh,
+		carrierintelenrollmentservice.PauseReasonFor(cause),
+		carrierintelservice.ErrorSummary(cause),
+	); err != nil {
+		return err
+	}
+	run.result.Paused = true
+	return nil
 }
 
 func (s *Service) resolveEnrollmentSubjects(

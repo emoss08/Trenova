@@ -66,8 +66,6 @@ func (s *Service) UpdateControl(
 	tenantInfo pagination.TenantInfo,
 	patch *ControlPatch,
 ) (*carrierintelcontrol.CarrierIntelControl, error) {
-	log := s.l.With(zap.String("operation", "UpdateControl"))
-
 	original, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -77,7 +75,48 @@ func (s *Service) UpdateControl(
 			"Carrier intelligence settings were changed by someone else. Reload and try again")
 	}
 
-	entity := *original
+	entity, policyChanged := applyControlPatch(original, patch)
+
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	enrollmentChanged := enrollmentSettingsChanged(entity, original)
+
+	if entity.EnrollmentPolicy == carrierintelcontrol.EnrollmentPolicyAllActive &&
+		original.EnrollmentPolicy != carrierintelcontrol.EnrollmentPolicyAllActive &&
+		!patch.ConfirmEstimatedCost {
+		return nil, errortypes.NewBusinessError(
+			"Monitoring every active carrier is billed per carrier each month. Review the cost estimate and confirm to continue",
+		).WithParam("requiresCostConfirmation", "true")
+	}
+
+	if policyChanged {
+		entity.PolicyVersion = original.PolicyVersion + 1
+	}
+
+	updated, err := s.controlRepo.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.afterControlUpdate(ctx, &controlUpdate{
+		tenant:            tenantInfo,
+		original:          original,
+		updated:           updated,
+		enrollmentChanged: enrollmentChanged,
+	})
+	return updated, nil
+}
+
+func applyControlPatch(
+	original *carrierintelcontrol.CarrierIntelControl,
+	patch *ControlPatch,
+) (entity *carrierintelcontrol.CarrierIntelControl, policyChanged bool) {
+	clone := *original
+	entity = &clone
 	entity.Rules = maps.Clone(original.Rules)
 	entity.AutoSyncFields = slices.Clone(original.AutoSyncFields)
 
@@ -103,7 +142,6 @@ func (s *Service) UpdateControl(
 	applyPatch(&entity.SnapshotHistoryLimit, patch.SnapshotHistoryLimit)
 	applyPatch(&entity.SelfMonitoringEnabled, patch.SelfMonitoringEnabled)
 
-	policyChanged := false
 	if applyPatch(&entity.Rules, patch.Rules) {
 		if entity.Rules == nil {
 			entity.Rules = carrierintelrule.RuleSettings{}
@@ -117,70 +155,64 @@ func (s *Service) UpdateControl(
 		entity.AutoApplySafetyRating != original.AutoApplySafetyRating {
 		policyChanged = true
 	}
+	return entity, policyChanged
+}
 
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	enrollmentChanged := entity.EnrollmentPolicy != original.EnrollmentPolicy ||
+func enrollmentSettingsChanged(entity, original *carrierintelcontrol.CarrierIntelControl) bool {
+	return entity.EnrollmentPolicy != original.EnrollmentPolicy ||
 		entity.RecentUsageDays != original.RecentUsageDays ||
 		entity.IncludeOpenTenders != original.IncludeOpenTenders ||
 		entity.SelfMonitoringEnabled != original.SelfMonitoringEnabled
+}
 
-	if entity.EnrollmentPolicy == carrierintelcontrol.EnrollmentPolicyAllActive &&
-		original.EnrollmentPolicy != carrierintelcontrol.EnrollmentPolicyAllActive &&
-		!patch.ConfirmEstimatedCost {
-		return nil, errortypes.NewBusinessError(
-			"Monitoring every active carrier is billed per carrier each month. Review the cost estimate and confirm to continue",
-		).WithParam("requiresCostConfirmation", "true")
-	}
+type controlUpdate struct {
+	tenant            pagination.TenantInfo
+	original          *carrierintelcontrol.CarrierIntelControl
+	updated           *carrierintelcontrol.CarrierIntelControl
+	enrollmentChanged bool
+}
 
-	if policyChanged {
-		entity.PolicyVersion = original.PolicyVersion + 1
-	}
+func (u *controlUpdate) spendCapRaised() bool {
+	return u.original.MonthlySpendCap != nil && (u.updated.MonthlySpendCap == nil ||
+		u.updated.MonthlySpendCap.GreaterThan(*u.original.MonthlySpendCap))
+}
 
-	updated, err := s.controlRepo.Update(ctx, &entity)
-	if err != nil {
-		return nil, err
-	}
+func (s *Service) afterControlUpdate(ctx context.Context, u *controlUpdate) {
+	log := s.l.With(zap.String("operation", "UpdateControl"))
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
-		ResourceID:     updated.ID.String(),
+		ResourceID:     u.updated.ID.String(),
 		Operation:      permission.OpManage,
-		UserID:         tenantInfo.UserID,
+		UserID:         u.tenant.UserID,
 		PrincipalType:  permissionports.PrincipalTypeUser,
-		PrincipalID:    tenantInfo.UserID,
-		CurrentState:   jsonutils.MustToJSON(updated),
-		PreviousState:  jsonutils.MustToJSON(original),
-		OrganizationID: updated.OrganizationID,
-		BusinessUnitID: updated.BusinessUnitID,
+		PrincipalID:    u.tenant.UserID,
+		CurrentState:   jsonutils.MustToJSON(u.updated),
+		PreviousState:  jsonutils.MustToJSON(u.original),
+		OrganizationID: u.updated.OrganizationID,
+		BusinessUnitID: u.updated.BusinessUnitID,
 		Critical:       true,
 	},
 		auditservice.WithComment("Carrier intelligence settings updated"),
-		auditservice.WithDiff(original, updated),
+		auditservice.WithDiff(u.original, u.updated),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if enrollmentChanged {
-		if _, err = s.ReconcileDesired(ctx, tenantInfo); err != nil {
+	if u.enrollmentChanged {
+		if _, err := s.ReconcileDesired(ctx, u.tenant); err != nil {
 			log.Warn(
 				"failed to reconcile monitoring enrollment after settings change",
 				zap.Error(err),
 			)
 		}
 	}
-	if original.MonthlySpendCap != nil && (updated.MonthlySpendCap == nil ||
-		updated.MonthlySpendCap.GreaterThan(*original.MonthlySpendCap)) {
-		if err = s.ResumeFeeds(ctx, tenantInfo); err != nil {
+	if u.spendCapRaised() {
+		if err := s.ResumeFeeds(ctx, u.tenant); err != nil {
 			log.Warn("failed to resume paused feeds", zap.Error(err))
 		}
 	}
-	s.intel.Publish(ctx, tenantInfo, "carrier_intelligence_control", "updated", updated.ID)
-	return updated, nil
+	s.intel.Publish(ctx, u.tenant, "carrier_intelligence_control", "updated", u.updated.ID)
 }
 
 func rulesEqual(a, b carrierintelrule.RuleSettings) bool {

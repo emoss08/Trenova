@@ -37,6 +37,8 @@ func policyReason(
 		return carrierintelenrollment.EnrollmentReasonPolicyAllActive
 	case carrierintelcontrol.EnrollmentPolicyRecentlyUsed:
 		return carrierintelenrollment.EnrollmentReasonPolicyRecentUse
+	case carrierintelcontrol.EnrollmentPolicyManual:
+		return carrierintelenrollment.EnrollmentReasonManual
 	default:
 		return carrierintelenrollment.EnrollmentReasonManual
 	}
@@ -50,6 +52,8 @@ func isPolicyReason(reason carrierintelenrollment.EnrollmentReason) bool {
 		carrierintelenrollment.EnrollmentReasonSelfMonitor,
 		carrierintelenrollment.EnrollmentReasonCustomerBroker:
 		return true
+	case carrierintelenrollment.EnrollmentReasonManual:
+		return false
 	default:
 		return false
 	}
@@ -191,8 +195,52 @@ func (s *Service) setDesired(ctx context.Context, req *desireRequest) error {
 	}
 	mode := connector.Descriptor().Capabilities.MonitoringMode()
 
+	existing, err := s.existingEnrollments(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	changed := make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(req.subjects))
+	for idx := range req.subjects {
+		subject := &req.subjects[idx]
+		if subject.DOTNumber == "" {
+			continue
+		}
+		key := carrierintelsnapshot.SubjectKey(subject.SubjectType, subject.SubjectID)
+		row, found := existing[key]
+		if !found {
+			if req.state == carrierintelenrollment.DesiredStateNotEnrolled {
+				continue
+			}
+			row = req.newEnrollment(subject, mode)
+		}
+		if req.onlyIfPolicy && found && !isPolicyReason(row.Reason) &&
+			req.state == carrierintelenrollment.DesiredStateNotEnrolled {
+			continue
+		}
+
+		dirty := row.MarkDesired(req.state, req.reason, req.now)
+		if applySubject(row, subject, mode) {
+			dirty = true
+		}
+		if dirty || !found {
+			changed = append(changed, row)
+		}
+	}
+
+	if len(changed) == 0 {
+		return nil
+	}
+	return s.enrollmentRepo.Upsert(ctx, changed)
+}
+
+func (s *Service) existingEnrollments(
+	ctx context.Context,
+	req *desireRequest,
+) (map[string]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	bySubjectType := make(map[carrierintel.SubjectType][]string, 2)
-	for _, subject := range req.subjects {
+	for idx := range req.subjects {
+		subject := &req.subjects[idx]
 		bySubjectType[subject.SubjectType] = append(
 			bySubjectType[subject.SubjectType],
 			subject.SubjectID,
@@ -214,67 +262,55 @@ func (s *Service) setDesired(ctx context.Context, req *desireRequest) error {
 			},
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, row := range rows {
 			existing[carrierintelsnapshot.SubjectKey(row.SubjectType, row.SubjectID)] = row
 		}
 	}
+	return existing, nil
+}
 
-	changed := make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(req.subjects))
-	for _, subject := range req.subjects {
-		if subject.DOTNumber == "" {
-			continue
-		}
-		key := carrierintelsnapshot.SubjectKey(subject.SubjectType, subject.SubjectID)
-		row, found := existing[key]
-		if !found {
-			if req.state == carrierintelenrollment.DesiredStateNotEnrolled {
-				continue
-			}
-			row = &carrierintelenrollment.CarrierMonitoringEnrollment{
-				OrganizationID: req.tenant.OrgID,
-				BusinessUnitID: req.tenant.BuID,
-				SubjectType:    subject.SubjectType,
-				SubjectID:      subject.SubjectID,
-				Provider:       req.provider,
-				Mode:           mode,
-				DesiredState:   carrierintelenrollment.DesiredStateNotEnrolled,
-				VendorState:    carrierintelenrollment.VendorStateUnknown,
-				Reason:         req.reason,
-			}
-		}
-		if req.onlyIfPolicy && found && !isPolicyReason(row.Reason) &&
-			req.state == carrierintelenrollment.DesiredStateNotEnrolled {
-			continue
-		}
-
-		dirty := row.MarkDesired(req.state, req.reason, req.now)
-		if row.DOTNumber != subject.DOTNumber || row.DocketNumber != subject.DocketNumber ||
-			row.SubjectName != subject.Name || row.Mode != mode {
-			row.DOTNumber = subject.DOTNumber
-			row.DocketNumber = subject.DocketNumber
-			row.SubjectName = subject.Name
-			row.Mode = mode
-			dirty = true
-		}
-		if subject.CarrierID.IsNotNil() && row.CarrierID != subject.CarrierID {
-			row.CarrierID = subject.CarrierID
-			dirty = true
-		}
-		if subject.LastUsedAt != nil {
-			row.LastUsedAt = subject.LastUsedAt
-			dirty = true
-		}
-		if dirty || !found {
-			changed = append(changed, row)
-		}
+func (req *desireRequest) newEnrollment(
+	subject *carrierintelports.CarrierIntelSubject,
+	mode carrierintel.EnrollmentMode,
+) *carrierintelenrollment.CarrierMonitoringEnrollment {
+	return &carrierintelenrollment.CarrierMonitoringEnrollment{
+		OrganizationID: req.tenant.OrgID,
+		BusinessUnitID: req.tenant.BuID,
+		SubjectType:    subject.SubjectType,
+		SubjectID:      subject.SubjectID,
+		Provider:       req.provider,
+		Mode:           mode,
+		DesiredState:   carrierintelenrollment.DesiredStateNotEnrolled,
+		VendorState:    carrierintelenrollment.VendorStateUnknown,
+		Reason:         req.reason,
 	}
+}
 
-	if len(changed) == 0 {
-		return nil
+func applySubject(
+	row *carrierintelenrollment.CarrierMonitoringEnrollment,
+	subject *carrierintelports.CarrierIntelSubject,
+	mode carrierintel.EnrollmentMode,
+) bool {
+	dirty := false
+	if row.DOTNumber != subject.DOTNumber || row.DocketNumber != subject.DocketNumber ||
+		row.SubjectName != subject.Name || row.Mode != mode {
+		row.DOTNumber = subject.DOTNumber
+		row.DocketNumber = subject.DocketNumber
+		row.SubjectName = subject.Name
+		row.Mode = mode
+		dirty = true
 	}
-	return s.enrollmentRepo.Upsert(ctx, changed)
+	if subject.CarrierID.IsNotNil() && row.CarrierID != subject.CarrierID {
+		row.CarrierID = subject.CarrierID
+		dirty = true
+	}
+	if subject.LastUsedAt != nil {
+		row.LastUsedAt = subject.LastUsedAt
+		dirty = true
+	}
+	return dirty
 }
 
 type EnrollSubjectsRequest struct {
@@ -394,13 +430,15 @@ func (s *Service) desiredSubjects(
 
 func reasonForSubject(
 	control *carrierintelcontrol.CarrierIntelControl,
-	subject carrierintelports.CarrierIntelSubject,
+	subject *carrierintelports.CarrierIntelSubject,
 ) carrierintelenrollment.EnrollmentReason {
 	switch subject.SubjectType {
 	case carrierintel.SubjectTypeOrganization:
 		return carrierintelenrollment.EnrollmentReasonSelfMonitor
 	case carrierintel.SubjectTypeCustomer:
 		return carrierintelenrollment.EnrollmentReasonCustomerBroker
+	case carrierintel.SubjectTypeCarrier, carrierintel.SubjectTypeProspect:
+		return policyReason(control.EnrollmentPolicy)
 	default:
 		return policyReason(control.EnrollmentPolicy)
 	}
@@ -439,9 +477,10 @@ func (s *Service) ReconcileDesired(
 		3,
 	)
 	want := make(map[string]struct{}, len(subjects))
-	for _, subject := range subjects {
+	for idx := range subjects {
+		subject := &subjects[idx]
 		reason := reasonForSubject(control, subject)
-		byReason[reason] = append(byReason[reason], subject)
+		byReason[reason] = append(byReason[reason], *subject)
 		want[carrierintelsnapshot.SubjectKey(subject.SubjectType, subject.SubjectID)] = struct{}{}
 	}
 	for reason, group := range byReason {
@@ -542,57 +581,58 @@ func (s *Service) SyncPendingEnrollments(
 		return nil, err
 	}
 
-	adds := make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(pending))
-	removes := make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(pending))
-	for _, row := range pending {
-		if row.WantsEnrolled() {
-			adds = append(adds, row)
-		} else {
-			removes = append(removes, row)
-		}
-	}
-
+	adds, removes := partitionByIntent(pending)
 	result := &SyncResult{}
-	if pauseErr := s.syncBatches(ctx, &syncBatch{
-		tenant:  tenantInfo,
-		control: control,
-		bound:   bound,
-		rows:    adds,
-		add:     true,
-		call:    monitor.Enroll,
-		result:  result,
-	}); pauseErr != nil {
-		return s.pauseFromError(
-			ctx,
-			tenantInfo,
-			provider,
-			carrierintelenrollment.FeedTypeChangeFeed,
-			pauseErr,
-			result,
-		)
-	}
-	if pauseErr := s.syncBatches(ctx, &syncBatch{
-		tenant:  tenantInfo,
-		control: control,
-		bound:   bound,
-		rows:    removes,
-		call:    monitor.Unenroll,
-		result:  result,
-	}); pauseErr != nil {
-		return s.pauseFromError(
-			ctx,
-			tenantInfo,
-			provider,
-			carrierintelenrollment.FeedTypeChangeFeed,
-			pauseErr,
-			result,
-		)
+	for _, batch := range []*syncBatch{
+		{
+			tenant:  tenantInfo,
+			control: control,
+			bound:   bound,
+			rows:    adds,
+			add:     true,
+			call:    monitor.Enroll,
+			result:  result,
+		},
+		{
+			tenant:  tenantInfo,
+			control: control,
+			bound:   bound,
+			rows:    removes,
+			call:    monitor.Unenroll,
+			result:  result,
+		},
+	} {
+		if pauseErr := s.syncBatches(ctx, batch); pauseErr != nil {
+			return s.pauseFromError(
+				ctx,
+				tenantInfo,
+				provider,
+				carrierintelenrollment.FeedTypeChangeFeed,
+				pauseErr,
+				result,
+			)
+		}
 	}
 
 	if result.Enrolled+result.Removed > 0 {
 		s.intel.Publish(ctx, tenantInfo, "carrier_monitoring_enrollments", "updated", pulid.Nil)
 	}
 	return result, nil
+}
+
+func partitionByIntent(
+	rows []*carrierintelenrollment.CarrierMonitoringEnrollment,
+) (adds, removes []*carrierintelenrollment.CarrierMonitoringEnrollment) {
+	adds = make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(rows))
+	removes = make([]*carrierintelenrollment.CarrierMonitoringEnrollment, 0, len(rows))
+	for _, row := range rows {
+		if row.WantsEnrolled() {
+			adds = append(adds, row)
+		} else {
+			removes = append(removes, row)
+		}
+	}
+	return adds, removes
 }
 
 func (s *Service) fillProviderRefs(
@@ -643,66 +683,89 @@ type syncBatch struct {
 func (s *Service) syncBatches(ctx context.Context, batch *syncBatch) error {
 	for start := 0; start < len(batch.rows); start += enrollmentBatchSize {
 		end := min(start+enrollmentBatchSize, len(batch.rows))
-		chunk := batch.rows[start:end]
-		refs := make([]string, 0, len(chunk))
-		byRef := make(map[string]*carrierintelenrollment.CarrierMonitoringEnrollment, len(chunk))
-		for _, row := range chunk {
-			refs = append(refs, row.ProviderRef)
-			byRef[row.ProviderRef] = row
-		}
-
-		if batch.add {
-			for _, row := range chunk {
-				if err := s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
-					Tenant:    batch.tenant,
-					Control:   batch.control,
-					Bound:     batch.bound,
-					Endpoint:  carrierintelusage.EndpointMonitorAdd,
-					DOTNumber: row.DOTNumber,
-				}); err != nil {
-					return err
-				}
-			}
-		}
-
-		outcome, err := batch.call(ctx, refs)
-		now := s.now()
-		if err != nil {
-			if IsPausingError(err) {
-				return err
-			}
-			for _, row := range chunk {
-				row.MarkFailed(carrierintelservice.ErrorSummary(err), now)
-			}
-			batch.result.Failed += len(chunk)
-			if saveErr := s.enrollmentRepo.SaveSyncState(ctx, chunk); saveErr != nil {
-				return saveErr
-			}
-			continue
-		}
-
-		failed := make(map[string]string, len(outcome.Failed))
-		for _, f := range outcome.Failed {
-			failed[f.ProviderRef] = f.Message
-		}
-		for ref, row := range byRef {
-			if message, bad := failed[ref]; bad {
-				row.MarkFailed(message, now)
-				batch.result.Failed++
-				continue
-			}
-			row.MarkSynced(now)
-			if batch.add {
-				batch.result.Enrolled++
-			} else {
-				batch.result.Removed++
-			}
-		}
-		if err = s.enrollmentRepo.SaveSyncState(ctx, chunk); err != nil {
+		if err := s.syncChunk(ctx, batch, batch.rows[start:end]); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (s *Service) syncChunk(
+	ctx context.Context,
+	batch *syncBatch,
+	chunk []*carrierintelenrollment.CarrierMonitoringEnrollment,
+) error {
+	refs := make([]string, 0, len(chunk))
+	byRef := make(map[string]*carrierintelenrollment.CarrierMonitoringEnrollment, len(chunk))
+	for _, row := range chunk {
+		refs = append(refs, row.ProviderRef)
+		byRef[row.ProviderRef] = row
+	}
+
+	if batch.add {
+		if err := s.guardChunkBudget(ctx, batch, chunk); err != nil {
+			return err
+		}
+	}
+
+	outcome, err := batch.call(ctx, refs)
+	now := s.now()
+	if err != nil {
+		if IsPausingError(err) {
+			return err
+		}
+		for _, row := range chunk {
+			row.MarkFailed(carrierintelservice.ErrorSummary(err), now)
+		}
+		batch.result.Failed += len(chunk)
+		return s.enrollmentRepo.SaveSyncState(ctx, chunk)
+	}
+
+	batch.applyOutcome(outcome, byRef, now)
+	return s.enrollmentRepo.SaveSyncState(ctx, chunk)
+}
+
+func (s *Service) guardChunkBudget(
+	ctx context.Context,
+	batch *syncBatch,
+	chunk []*carrierintelenrollment.CarrierMonitoringEnrollment,
+) error {
+	for _, row := range chunk {
+		if err := s.intel.GuardBudget(ctx, &carrierintelservice.BudgetCheck{
+			Tenant:    batch.tenant,
+			Control:   batch.control,
+			Bound:     batch.bound,
+			Endpoint:  carrierintelusage.EndpointMonitorAdd,
+			DOTNumber: row.DOTNumber,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (batch *syncBatch) applyOutcome(
+	outcome *carrierintelports.CarrierIntelEnrollResult,
+	byRef map[string]*carrierintelenrollment.CarrierMonitoringEnrollment,
+	now int64,
+) {
+	failed := make(map[string]string, len(outcome.Failed))
+	for _, f := range outcome.Failed {
+		failed[f.ProviderRef] = f.Message
+	}
+	for ref, row := range byRef {
+		if message, bad := failed[ref]; bad {
+			row.MarkFailed(message, now)
+			batch.result.Failed++
+			continue
+		}
+		row.MarkSynced(now)
+		if batch.add {
+			batch.result.Enrolled++
+		} else {
+			batch.result.Removed++
+		}
+	}
 }
 
 func IsPausingError(err error) bool {
@@ -724,6 +787,12 @@ func PauseReasonFor(err error) carrierintelenrollment.FeedPauseReason {
 		return carrierintelenrollment.FeedPauseReasonPaymentRequired
 	case carrierintelports.CarrierIntelErrorUnauthorized:
 		return carrierintelenrollment.FeedPauseReasonUnauthorized
+	case carrierintelports.CarrierIntelErrorRateLimited,
+		carrierintelports.CarrierIntelErrorNotFound,
+		carrierintelports.CarrierIntelErrorInvalidRequest,
+		carrierintelports.CarrierIntelErrorUnavailable,
+		carrierintelports.CarrierIntelErrorUnsupported:
+		return carrierintelenrollment.FeedPauseReasonNone
 	default:
 		return carrierintelenrollment.FeedPauseReasonNone
 	}
@@ -774,7 +843,7 @@ func (s *Service) PauseFeed(
 		return err
 	}
 	if state == nil {
-		state = NewFeedState(key)
+		state = NewFeedState(&key)
 	}
 	alreadyPaused := state.PausedReason == reason
 	state.Pause(reason, message, s.now())
@@ -806,7 +875,7 @@ func (s *Service) PauseFeed(
 }
 
 func NewFeedState(
-	key carrierintelports.CarrierIntelFeedStateKey,
+	key *carrierintelports.CarrierIntelFeedStateKey,
 ) *carrierintelenrollment.CarrierIntelFeedState {
 	return &carrierintelenrollment.CarrierIntelFeedState{
 		OrganizationID: key.TenantInfo.OrgID,
@@ -926,18 +995,9 @@ func (s *Service) DriftCheck(
 		return &ReconcileResult{}, nil
 	}
 
-	vendorRefs := make(map[string]struct{}, 256)
-	for page := 1; ; page++ {
-		result, listErr := monitor.ListWatchlist(ctx, page, watchlistPageSize)
-		if listErr != nil {
-			return nil, listErr
-		}
-		for _, ref := range result.ProviderRefs {
-			vendorRefs[ref] = struct{}{}
-		}
-		if !result.HasMore || len(result.ProviderRefs) == 0 {
-			break
-		}
+	vendorRefs, err := listVendorWatchlist(ctx, monitor)
+	if err != nil {
+		return nil, err
 	}
 
 	desired, err := s.enrollmentRepo.ListDesired(ctx, tenantInfo, provider)
@@ -967,6 +1027,34 @@ func (s *Service) DriftCheck(
 	if !control.ExclusiveWatchlist {
 		return result, nil
 	}
+	return result, removeForeignRefs(ctx, monitor, vendorRefs, ours, result)
+}
+
+func listVendorWatchlist(
+	ctx context.Context,
+	monitor carrierintelports.CarrierIntelNativeMonitor,
+) (map[string]struct{}, error) {
+	vendorRefs := make(map[string]struct{}, 256)
+	for page := 1; ; page++ {
+		result, err := monitor.ListWatchlist(ctx, page, watchlistPageSize)
+		if err != nil {
+			return nil, err
+		}
+		for _, ref := range result.ProviderRefs {
+			vendorRefs[ref] = struct{}{}
+		}
+		if !result.HasMore || len(result.ProviderRefs) == 0 {
+			return vendorRefs, nil
+		}
+	}
+}
+
+func removeForeignRefs(
+	ctx context.Context,
+	monitor carrierintelports.CarrierIntelNativeMonitor,
+	vendorRefs, ours map[string]struct{},
+	result *ReconcileResult,
+) error {
 	extra := make([]string, 0)
 	for ref := range vendorRefs {
 		if _, mine := ours[ref]; !mine {
@@ -975,11 +1063,11 @@ func (s *Service) DriftCheck(
 	}
 	for start := 0; start < len(extra); start += enrollmentBatchSize {
 		end := min(start+enrollmentBatchSize, len(extra))
-		removed, removeErr := monitor.Unenroll(ctx, extra[start:end])
-		if removeErr != nil {
-			return result, removeErr
+		removed, err := monitor.Unenroll(ctx, extra[start:end])
+		if err != nil {
+			return err
 		}
 		result.DriftRemove += len(removed.Succeeded)
 	}
-	return result, nil
+	return nil
 }
