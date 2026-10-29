@@ -89,6 +89,13 @@ func (s *Service) GetProfile(
 	return s.profileRepo.GetByID(ctx, req)
 }
 
+func (s *Service) GetProfilesByIDs(
+	ctx context.Context,
+	req driverpayports.GetPayProfilesByIDsRequest,
+) ([]*driverpay.PayProfile, error) {
+	return s.profileRepo.GetByIDs(ctx, req)
+}
+
 func (s *Service) ProfileSelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayProfileSelectOptionsRequest,

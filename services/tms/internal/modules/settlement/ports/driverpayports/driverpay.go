@@ -20,6 +20,11 @@ type GetPayProfileByIDRequest struct {
 	IncludeComponents bool                  `json:"includeComponents"`
 }
 
+type GetPayProfilesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ProfileIDs []pulid.ID            `json:"profileIds"`
+}
+
 type ListPayProfilesRequest struct {
 	Filter         *pagination.QueryOptions      `json:"filter"`
 	Classification driverpay.PayeeClassification `json:"classification"`
@@ -54,6 +59,10 @@ type PayProfileRepository interface {
 		req *PayProfileSelectOptionsRequest,
 	) (*pagination.ListResult[*driverpay.PayProfile], error)
 	GetByID(ctx context.Context, req GetPayProfileByIDRequest) (*driverpay.PayProfile, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetPayProfilesByIDsRequest,
+	) ([]*driverpay.PayProfile, error)
 	Create(ctx context.Context, entity *driverpay.PayProfile) (*driverpay.PayProfile, error)
 	Update(ctx context.Context, entity *driverpay.PayProfile) (*driverpay.PayProfile, error)
 	CountActiveAssignments(

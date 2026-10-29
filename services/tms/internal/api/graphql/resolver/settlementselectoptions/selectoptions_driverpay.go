@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
@@ -29,18 +30,17 @@ func (r *Sources) PayCode(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.DriverPayService.GetPayCode(ctx, driverpayports.GetPayCodeByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, payCodeSelectOptionItem(entity))
+		entities, err := r.DriverPayService.GetPayCodesByIDs(ctx, req.TenantInfo, req.IDs)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*paycode.PayCode).GetID,
+			payCodeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -89,21 +89,23 @@ func (r *Sources) PayProfile(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.DriverPayService.GetProfile(
-				ctx,
-				driverpayports.GetPayProfileByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, payProfileSelectOptionItem(entity))
+		entities, err := r.DriverPayService.GetProfilesByIDs(
+			ctx,
+			driverpayports.GetPayProfilesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				ProfileIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*driverpay.PayProfile).GetID,
+			payProfileSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -208,23 +210,17 @@ func (r *Sources) IFTAJurisdiction(
 		return nil, err
 	}
 
-	sortJurisdictions(jurisdictions)
-
 	if len(req.IDs) > 0 {
-		wanted := make(map[string]struct{}, len(req.IDs))
-		for _, id := range req.IDs {
-			wanted[id.String()] = struct{}{}
-		}
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, jurisdiction := range jurisdictions {
-			if _, ok := wanted[jurisdiction.ID.String()]; ok {
-				items = append(items, iftaJurisdictionSelectOptionItem(jurisdiction))
-			}
-		}
-
+		items := selectoption.OrderedItems(
+			req.IDs,
+			jurisdictions,
+			(*ifta.Jurisdiction).GetID,
+			iftaJurisdictionSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
+	sortJurisdictions(jurisdictions)
 	matches := matchingJurisdictions(jurisdictions, req.SelectQuery.Query)
 	offset := req.SelectQuery.Pagination.SafeOffset()
 	page := sliceutils.Page(matches, offset, req.SelectQuery.Pagination.SafeLimit())

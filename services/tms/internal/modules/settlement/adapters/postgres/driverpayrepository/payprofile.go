@@ -152,6 +152,28 @@ func (r *payProfileRepository) GetByID(
 	})
 }
 
+func (r *payProfileRepository) GetByIDs(
+	ctx context.Context,
+	req driverpayports.GetPayProfilesByIDsRequest,
+) ([]*driverpay.PayProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayProfile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*driverpay.PayProfile{}, nil
+		}
+
+		pp := driverpaydb.PayProfiles
+		entities, err := pp.Where(pp.ID.In(req.ProfileIDs...)).
+			Limit(len(req.ProfileIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get pay profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *payProfileRepository) Create(
 	ctx context.Context,
 	entity *driverpay.PayProfile,

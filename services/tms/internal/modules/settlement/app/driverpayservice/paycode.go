@@ -67,6 +67,14 @@ func (s *Service) GetPayCode(
 	return s.payCodeRepo.GetByID(ctx, req)
 }
 
+func (s *Service) GetPayCodesByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*paycode.PayCode, error) {
+	return s.payCodeRepo.GetByIDs(ctx, tenantInfo, ids)
+}
+
 func (s *Service) CreatePayCode(
 	ctx context.Context,
 	entity *paycode.PayCode,
