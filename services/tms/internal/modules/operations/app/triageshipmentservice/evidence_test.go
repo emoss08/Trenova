@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,7 +57,7 @@ func TestDetentionEvidenceAsksForTheDisputedOccurrencesRecord(t *testing.T) {
 
 	evidence, err := service.DetentionEvidence(
 		t.Context(),
-		&inboundmessageports.TriageDetentionEvidenceRequest{
+		&triageworkports.TriageDetentionEvidenceRequest{
 			TenantInfo: tenantInfo,
 			ShipmentID: pulid.MustNew("shp_"),
 		},
@@ -84,7 +84,7 @@ func TestDetentionEvidenceWithoutAnOccurrenceIsNothing(t *testing.T) {
 
 	evidence, err := service.DetentionEvidence(
 		t.Context(),
-		&inboundmessageports.TriageDetentionEvidenceRequest{
+		&triageworkports.TriageDetentionEvidenceRequest{
 			ShipmentID: pulid.MustNew("shp_"),
 		},
 	)

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -178,13 +178,13 @@ func newSettleFixture(status detention.OccurrenceStatus) *settleFixture {
 func (f *settleFixture) settle(
 	t *testing.T,
 	decision inboundmessage.StopsDecision,
-) (*inboundmessageports.SettledTriageDetention, error) {
+) (*triageworkports.SettledTriageDetention, error) {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	tenantInfo.UserID = pulid.MustNew("usr_")
 
-	return f.service.SettleDetention(t.Context(), &inboundmessageports.SettleTriageDetentionRequest{
+	return f.service.SettleDetention(t.Context(), &triageworkports.SettleTriageDetentionRequest{
 		TenantInfo: tenantInfo,
 		Actor:      permissionports.UserActor(tenantInfo),
 		ShipmentID: f.occurrence.ShipmentID,

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,7 +46,7 @@ type LogExceptionRequest struct {
 type ExceptionPlan struct {
 	Message *inboundmessage.InboundMessage
 	After   *inboundmessage.InboundMessage
-	Hold    *inboundmessageports.LogTriageExceptionRequest
+	Hold    *triageworkports.LogTriageExceptionRequest
 	Summary string
 }
 
@@ -114,7 +115,7 @@ func (s *Service) PlanLogException(
 	return &ExceptionPlan{
 		Message: message,
 		After:   &after,
-		Hold: &inboundmessageports.LogTriageExceptionRequest{
+		Hold: &triageworkports.LogTriageExceptionRequest{
 			TenantInfo: req.TenantInfo,
 			Actor:      permissionports.UserActor(actorTenant),
 			ShipmentID: message.MatchedShipmentID,
@@ -474,11 +475,11 @@ func (s *Service) DecideStops(
 		return s.refreshed(ctx, req.TenantInfo, message.ID)
 	}
 
-	settled := &inboundmessageports.SettledTriageDetention{}
+	settled := &triageworkports.SettledTriageDetention{}
 	if s.detention != nil {
 		settled, err = s.detention.SettleDetention(
 			ctx,
-			&inboundmessageports.SettleTriageDetentionRequest{
+			&triageworkports.SettleTriageDetentionRequest{
 				TenantInfo: req.TenantInfo,
 				Actor:      req.Actor,
 				ShipmentID: message.MatchedShipmentID,
@@ -570,7 +571,7 @@ func ApplyStopsDecision(
 	message *inboundmessage.InboundMessage,
 	decision inboundmessage.StopsDecision,
 	now int64,
-	settled *inboundmessageports.SettledTriageDetention,
+	settled *triageworkports.SettledTriageDetention,
 ) {
 	message.ActionState.StopsDecision = decision
 	message.ActionState.StopsDecidedAt = now
@@ -579,7 +580,7 @@ func ApplyStopsDecision(
 
 func waiverOf(
 	decision inboundmessage.StopsDecision,
-	settled *inboundmessageports.SettledTriageDetention,
+	settled *triageworkports.SettledTriageDetention,
 ) *inboundmessage.DetentionWaiver {
 	if decision != inboundmessage.StopsDecisionWaive || settled == nil || !settled.Settled {
 		return nil
@@ -594,7 +595,7 @@ func waiverOf(
 	}
 }
 
-func stopsDetail(settled *inboundmessageports.SettledTriageDetention) string {
+func stopsDetail(settled *triageworkports.SettledTriageDetention) string {
 	if settled == nil || !settled.Settled || settled.Amount == "" {
 		return ""
 	}

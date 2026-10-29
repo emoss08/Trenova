@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,7 +81,7 @@ func TestSendKeepsTheSnapshotWhenTheDocumentIsRenamedLater(t *testing.T) {
 	require.NoError(t, err)
 	eld.OriginalName = "renamed.pdf"
 
-	stored, err := f.replies.GetByID(t.Context(), inboundmessageports.GetInboundReplyRequest{
+	stored, err := f.replies.GetByID(t.Context(), inboundreplyports.GetInboundReplyRequest{
 		ID:         reply.ID,
 		TenantInfo: testTenant,
 	})
@@ -110,7 +111,9 @@ func TestSendRetryToAnAlternateAddressCarriesTheSameAttachments(t *testing.T) {
 
 	f := newFixture()
 	eld := f.documents.add("ELD.pdf", 1_000)
-	f.email.err = errortypes.NewBusinessError("Recipient edi@partner.example was rejected by the provider")
+	f.email.err = errortypes.NewBusinessError(
+		"Recipient edi@partner.example was rejected by the provider",
+	)
 	first := sendRequest(f, "key-first")
 	first.DocumentIDs = []pulid.ID{eld.ID}
 
@@ -238,7 +241,7 @@ func TestStandByDraftAttachesTheDetentionEvidence(t *testing.T) {
 
 	f := standByFixture(t)
 	eld := f.documents.add("ELD_SEED-PAY-002_Oct3.pdf", 48_000)
-	f.evidence.evidence = &inboundmessageports.TriageDetentionEvidence{
+	f.evidence.evidence = &triageworkports.TriageDetentionEvidence{
 		DocumentID: eld.ID,
 		FileName:   eld.OriginalName,
 	}
@@ -291,7 +294,9 @@ func TestOtherNovaDraftsAttachNothing(t *testing.T) {
 
 	f := newFixture()
 	f.nova.text = `{"body":"Hi Dana,\n\nS-104251 is running behind.\n\nTrenova Freight Dispatch"}`
-	f.evidence.evidence = &inboundmessageports.TriageDetentionEvidence{DocumentID: pulid.MustNew("doc_")}
+	f.evidence.evidence = &triageworkports.TriageDetentionEvidence{
+		DocumentID: pulid.MustNew("doc_"),
+	}
 
 	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Background)
 	require.NoError(t, err)
@@ -306,7 +311,7 @@ func TestNovaRedraftKeepsWhatAPersonAttached(t *testing.T) {
 	f := standByFixture(t)
 	bol := f.documents.add("BOL.pdf", 1_000)
 	eld := f.documents.add("ELD.pdf", 2_000)
-	f.evidence.evidence = &inboundmessageports.TriageDetentionEvidence{DocumentID: eld.ID}
+	f.evidence.evidence = &triageworkports.TriageDetentionEvidence{DocumentID: eld.ID}
 	_, err := f.service.SaveDraft(t.Context(), &SaveDraftRequest{
 		TenantInfo:         testTenant,
 		UserID:             testUserID,

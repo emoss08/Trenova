@@ -3,7 +3,7 @@ package carriersettlementcostservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -13,7 +13,7 @@ var errNoInvoiceReading = errortypes.NewBusinessError(
 
 func (s *Service) QueueCarrierInvoice(
 	ctx context.Context,
-	req *inboundmessageports.QueueCarrierInvoiceRequest,
+	req *triageworkports.QueueCarrierInvoiceRequest,
 ) error {
 	if req.DocumentAIExtractionID.IsNil() {
 		return errNoInvoiceReading
@@ -32,4 +32,4 @@ func (s *Service) QueueCarrierInvoice(
 	return err
 }
 
-var _ inboundmessageports.TriageCarrierPayQueuer = (*Service)(nil)
+var _ triageworkports.TriageCarrierPayQueuer = (*Service)(nil)

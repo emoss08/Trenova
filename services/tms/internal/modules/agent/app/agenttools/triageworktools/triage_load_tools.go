@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -79,7 +79,7 @@ func loadDraftView(draft *inboundmessage.LoadDraft) *loadFieldsView {
 	return &view
 }
 
-func loadValuesView(fields []inboundmessageports.TriageLoadFieldValue) *loadFieldsView {
+func loadValuesView(fields []triageworkports.TriageLoadFieldValue) *loadFieldsView {
 	view := make(loadFieldsView, len(fields))
 	for _, field := range fields {
 		if field.Value != "" {

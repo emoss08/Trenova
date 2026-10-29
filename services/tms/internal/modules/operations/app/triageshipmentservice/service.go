@@ -3,7 +3,7 @@ package triageshipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
@@ -142,11 +142,11 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 }
 
 var (
-	_ inboundmessageports.TriageShipmentPeeker   = (*Service)(nil)
-	_ inboundmessageports.TriageStopTimesReader  = (*Service)(nil)
-	_ inboundmessageports.TriageLoadCreator      = (*Service)(nil)
-	_ inboundmessageports.TriageExceptionLogger  = (*Service)(nil)
-	_ inboundmessageports.TriageDetentionSettler = (*Service)(nil)
+	_ triageworkports.TriageShipmentPeeker   = (*Service)(nil)
+	_ triageworkports.TriageStopTimesReader  = (*Service)(nil)
+	_ triageworkports.TriageLoadCreator      = (*Service)(nil)
+	_ triageworkports.TriageExceptionLogger  = (*Service)(nil)
+	_ triageworkports.TriageDetentionSettler = (*Service)(nil)
 
-	_ inboundmessageports.TriageDetentionEvidenceSource = (*Service)(nil)
+	_ triageworkports.TriageDetentionEvidenceSource = (*Service)(nil)
 )

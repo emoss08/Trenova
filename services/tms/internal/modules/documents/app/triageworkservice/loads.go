@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -448,7 +448,7 @@ func ApplyDiscardLoad(message *inboundmessage.InboundMessage) error {
 
 type CreateLoadPlan struct {
 	Message        *inboundmessage.InboundMessage
-	Load           *inboundmessageports.CreateTriageLoadRequest
+	Load           *triageworkports.CreateTriageLoadRequest
 	AlreadyCreated bool
 }
 
@@ -521,7 +521,7 @@ func (s *Service) PlanCreateLoad(
 
 	return &CreateLoadPlan{
 		Message: message,
-		Load: &inboundmessageports.CreateTriageLoadRequest{
+		Load: &triageworkports.CreateTriageLoadRequest{
 			TenantInfo:       req.TenantInfo,
 			Actor:            permissionports.UserActor(actorTenant),
 			CustomerID:       message.MatchedCustomerID,
@@ -534,7 +534,7 @@ func (s *Service) PlanCreateLoad(
 
 func ApplyCreatedLoad(
 	message *inboundmessage.InboundMessage,
-	fields []inboundmessageports.TriageLoadFieldValue,
+	fields []triageworkports.TriageLoadFieldValue,
 	shipmentID pulid.ID,
 	now int64,
 ) {
@@ -551,10 +551,10 @@ func ApplyCreatedLoad(
 
 func validateLoadFields(
 	input []LoadFieldInput,
-) ([]inboundmessageports.TriageLoadFieldValue, error) {
+) ([]triageworkports.TriageLoadFieldValue, error) {
 	multiErr := errortypes.NewMultiError()
 	seen := make(map[inboundmessage.LoadFieldKey]struct{}, len(input))
-	fields := make([]inboundmessageports.TriageLoadFieldValue, 0, len(input))
+	fields := make([]triageworkports.TriageLoadFieldValue, 0, len(input))
 	for i, field := range input {
 		path := fmt.Sprintf("fields[%d]", i)
 		if !field.Key.IsValid() {
@@ -581,7 +581,7 @@ func validateLoadFields(
 
 			continue
 		}
-		fields = append(fields, inboundmessageports.TriageLoadFieldValue{
+		fields = append(fields, triageworkports.TriageLoadFieldValue{
 			Index: i,
 			Key:   field.Key,
 			Value: value,
@@ -595,7 +595,7 @@ func validateLoadFields(
 }
 
 func fieldValues(
-	fields []inboundmessageports.TriageLoadFieldValue,
+	fields []triageworkports.TriageLoadFieldValue,
 ) map[inboundmessage.LoadFieldKey]string {
 	values := make(map[inboundmessage.LoadFieldKey]string, len(fields))
 	for _, field := range fields {

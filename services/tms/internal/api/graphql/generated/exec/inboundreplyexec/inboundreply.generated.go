@@ -3,6 +3,7 @@
 package inboundreplyexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"context"
 	"errors"
 
@@ -363,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -373,7 +374,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.FileName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -383,7 +384,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.ContentType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -393,7 +394,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.DocumentType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -403,7 +404,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.ByteSize, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -413,7 +414,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -423,7 +424,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageports.ReplyAttachable)
+					obj := o.(*inboundreplyports.ReplyAttachable)
 					return obj.Source, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachableSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtriageᚐAttachableSource),
@@ -784,7 +785,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundReplyAttachables(ctx, fc.Args["messageId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachableᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundreplyportsᚐReplyAttachableᚄ),
 			},
 			{
 				Name:       "inboundReplyAttachmentLimit",
@@ -1562,7 +1563,7 @@ type resolverQuery interface {
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
 	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
-	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error)
 	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 }
 
@@ -2459,15 +2460,15 @@ func marshalNInboundReply2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "InboundReply", v)
 }
 
-func marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachableᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessageports.ReplyAttachable) graphql.Marshaler {
-	return gqlexec.List[*inboundmessageports.ReplyAttachable]{
-		Elem:        marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachable,
+func marshalNInboundReplyAttachable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundreplyportsᚐReplyAttachableᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundreplyports.ReplyAttachable) graphql.Marshaler {
+	return gqlexec.List[*inboundreplyports.ReplyAttachable]{
+		Elem:        marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundreplyportsᚐReplyAttachable,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundmessageportsᚐReplyAttachable(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageports.ReplyAttachable) graphql.Marshaler {
+func marshalNInboundReplyAttachable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋinboundreplyportsᚐReplyAttachable(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundreplyports.ReplyAttachable) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

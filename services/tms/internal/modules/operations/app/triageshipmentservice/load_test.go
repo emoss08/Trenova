@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -152,13 +152,13 @@ func newLoadService() (*Service, *fakeLookup, *fakeCreator, *fakeComments) {
 }
 
 func loadRequest(
-	fields ...inboundmessageports.TriageLoadFieldValue,
-) *inboundmessageports.CreateTriageLoadRequest {
+	fields ...triageworkports.TriageLoadFieldValue,
+) *triageworkports.CreateTriageLoadRequest {
 	for i := range fields {
 		fields[i].Index = i
 	}
 
-	return &inboundmessageports.CreateTriageLoadRequest{
+	return &triageworkports.CreateTriageLoadRequest{
 		TenantInfo:     testTenant,
 		Actor:          permissionports.UserActor(testTenant),
 		Fields:         fields,
@@ -166,8 +166,8 @@ func loadRequest(
 	}
 }
 
-func field(key inboundmessage.LoadFieldKey, value string) inboundmessageports.TriageLoadFieldValue {
-	return inboundmessageports.TriageLoadFieldValue{Key: key, Value: value}
+func field(key inboundmessage.LoadFieldKey, value string) triageworkports.TriageLoadFieldValue {
+	return triageworkports.TriageLoadFieldValue{Key: key, Value: value}
 }
 
 func multiFields(err error) []string {

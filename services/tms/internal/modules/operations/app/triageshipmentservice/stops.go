@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
@@ -132,14 +133,14 @@ func paysWhenLate(snapshot *detentionpolicy.PolicySnapshot) bool {
 
 func (s *Service) SettleDetention(
 	ctx context.Context,
-	req *inboundmessageports.SettleTriageDetentionRequest,
-) (*inboundmessageports.SettledTriageDetention, error) {
+	req *triageworkports.SettleTriageDetentionRequest,
+) (*triageworkports.SettledTriageDetention, error) {
 	occurrence, err := s.disputedOccurrence(ctx, req.TenantInfo, req.ShipmentID, false)
 	if err != nil {
 		return nil, err
 	}
 	if occurrence == nil {
-		return &inboundmessageports.SettledTriageDetention{}, nil
+		return &triageworkports.SettledTriageDetention{}, nil
 	}
 
 	switch req.Decision {
@@ -158,15 +159,15 @@ func (s *Service) SettleDetention(
 
 		return settledOf(settled.BillableAmount, settled.Currency), nil
 	default:
-		return &inboundmessageports.SettledTriageDetention{}, nil
+		return &triageworkports.SettledTriageDetention{}, nil
 	}
 }
 
 func (s *Service) waive(
 	ctx context.Context,
-	req *inboundmessageports.SettleTriageDetentionRequest,
+	req *triageworkports.SettleTriageDetentionRequest,
 	occurrence *detention.DetentionOccurrence,
-) (*inboundmessageports.SettledTriageDetention, error) {
+) (*triageworkports.SettledTriageDetention, error) {
 	params := detentionreview.WaiveParams{
 		OccurrenceID: occurrence.ID,
 		TenantInfo:   req.TenantInfo,
@@ -215,7 +216,7 @@ func (s *Service) waive(
 func waivedOf(
 	waived *detention.DetentionOccurrence,
 	err error,
-) (*inboundmessageports.SettledTriageDetention, error) {
+) (*triageworkports.SettledTriageDetention, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -226,8 +227,8 @@ func waivedOf(
 func settledOf(
 	amount decimal.Decimal,
 	currency string,
-) *inboundmessageports.SettledTriageDetention {
-	return &inboundmessageports.SettledTriageDetention{
+) *triageworkports.SettledTriageDetention {
+	return &triageworkports.SettledTriageDetention{
 		Amount:   amount.StringFixed(amountPlaces),
 		Currency: currency,
 		Settled:  true,

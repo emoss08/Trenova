@@ -3,7 +3,7 @@ package operations
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
@@ -187,12 +187,12 @@ func SharedOptions() fx.Option {
 			shipmenteventservice.New,
 			triagedeliveryrelay.New,
 			triageshipmentservice.New,
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageShipmentPeeker { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageStopTimesReader { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageLoadCreator { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageExceptionLogger { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionSettler { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionEvidenceSource {
+			func(s *triageshipmentservice.Service) triageworkports.TriageShipmentPeeker { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageStopTimesReader { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageLoadCreator { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageExceptionLogger { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageDetentionSettler { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageDetentionEvidenceSource {
 				return s
 			},
 			fx.Annotate(

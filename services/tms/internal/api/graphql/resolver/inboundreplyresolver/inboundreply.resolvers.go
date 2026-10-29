@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -654,7 +655,7 @@ func (r *TriageStopTimesResolver) Shipment(ctx context.Context, obj *inboundmess
 	return documentloaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
 }
 
-func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error) {
+func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInboundMessage, permission.OpRead)
 	if err != nil {
 		return nil, err

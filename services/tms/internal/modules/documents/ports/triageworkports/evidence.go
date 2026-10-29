@@ -1,4 +1,4 @@
-package inboundmessageports
+package triageworkports
 
 import (
 	"context"

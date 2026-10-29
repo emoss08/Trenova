@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -84,11 +85,11 @@ func newInboundAttachmentByIDLoader(
 type InboundReplyLoaderFactoryParams struct {
 	fx.In
 
-	ReplyRepo inboundmessageports.InboundReplyRepository
+	ReplyRepo inboundreplyports.InboundReplyRepository
 }
 
 type InboundReplyLoaderFactory struct {
-	replies inboundmessageports.InboundReplyRepository
+	replies inboundreplyports.InboundReplyRepository
 }
 
 func NewInboundReplyLoaderFactory(p InboundReplyLoaderFactoryParams) *InboundReplyLoaderFactory {
@@ -114,7 +115,7 @@ func newInboundReplyDraftByMessageIDLoader(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*triage.Reply, error) {
 			return f.replies.DraftsByMessageIDs(
 				ctx,
-				inboundmessageports.InboundRepliesByMessagesRequest{
+				inboundreplyports.InboundRepliesByMessagesRequest{
 					TenantInfo: tenantInfo,
 					MessageIDs: ids,
 				},
@@ -131,7 +132,7 @@ func newInboundRepliesByMessageIDLoader(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*triage.Reply, error) {
 			return f.replies.ListByMessageIDs(
 				ctx,
-				inboundmessageports.InboundRepliesByMessagesRequest{
+				inboundreplyports.InboundRepliesByMessagesRequest{
 					TenantInfo: tenantInfo,
 					MessageIDs: ids,
 				},
@@ -146,7 +147,7 @@ func newInboundReplyByIDLoader(
 ) *dataloadgen.Loader[string, *triage.Reply] {
 	return loadercore.NewLoader(loadercore.BatchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*triage.Reply, error) {
-			return f.replies.GetByIDs(ctx, inboundmessageports.GetInboundRepliesRequest{
+			return f.replies.GetByIDs(ctx, inboundreplyports.GetInboundRepliesRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})

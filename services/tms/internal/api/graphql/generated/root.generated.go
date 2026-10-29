@@ -3,6 +3,7 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
@@ -3243,7 +3244,7 @@ type QueryResolver interface {
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
 	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
-	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error)
 	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)

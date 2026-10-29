@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +127,7 @@ func (s *Service) DiscardDraft(
 		return nil, err
 	}
 
-	removed, err := s.replies.DeleteDraft(ctx, inboundmessageports.InboundReplyMessageRequest{
+	removed, err := s.replies.DeleteDraft(ctx, inboundreplyports.InboundReplyMessageRequest{
 		TenantInfo: tenantInfo,
 		MessageID:  messageID,
 	})

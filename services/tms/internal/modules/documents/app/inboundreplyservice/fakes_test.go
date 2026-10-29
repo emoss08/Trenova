@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -96,7 +98,7 @@ func (f *fakeReplies) Update(_ context.Context, entity *triage.Reply) (*triage.R
 
 func (f *fakeReplies) GetByID(
 	_ context.Context,
-	req inboundmessageports.GetInboundReplyRequest,
+	req inboundreplyports.GetInboundReplyRequest,
 ) (*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -111,14 +113,14 @@ func (f *fakeReplies) GetByID(
 
 func (f *fakeReplies) GetByIDs(
 	context.Context,
-	inboundmessageports.GetInboundRepliesRequest,
+	inboundreplyports.GetInboundRepliesRequest,
 ) ([]*triage.Reply, error) {
 	return nil, nil
 }
 
 func (f *fakeReplies) GetByIdempotencyKey(
 	_ context.Context,
-	req inboundmessageports.GetInboundReplyByKeyRequest,
+	req inboundreplyports.GetInboundReplyByKeyRequest,
 ) (*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -155,7 +157,7 @@ func (f *fakeReplies) UpsertDraft(_ context.Context, entity *triage.Reply) (*tri
 
 func (f *fakeReplies) DeleteDraft(
 	_ context.Context,
-	req inboundmessageports.InboundReplyMessageRequest,
+	req inboundreplyports.InboundReplyMessageRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -172,14 +174,14 @@ func (f *fakeReplies) DeleteDraft(
 
 func (f *fakeReplies) ListByMessageIDs(
 	context.Context,
-	inboundmessageports.InboundRepliesByMessagesRequest,
+	inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID][]*triage.Reply, error) {
 	return nil, nil
 }
 
 func (f *fakeReplies) DraftsByMessageIDs(
 	_ context.Context,
-	req inboundmessageports.InboundRepliesByMessagesRequest,
+	req inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID]*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -252,7 +254,7 @@ func (f *fakeTemplates) Count(context.Context, pagination.TenantInfo) (int, erro
 
 func (f *fakeTemplates) GetByID(
 	_ context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) (*triage.ReplyTemplate, error) {
 	template, ok := f.templates[req.ID]
 	if !ok {
@@ -299,7 +301,7 @@ func (f *fakeTemplates) Update(
 
 func (f *fakeTemplates) Delete(
 	_ context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) error {
 	delete(f.templates, req.ID)
 
@@ -307,14 +309,14 @@ func (f *fakeTemplates) Delete(
 }
 
 type fakeWork struct {
-	inboundmessageports.TriageWorkRepository
+	triageworkports.TriageWorkRepository
 	alternates []string
-	asked      *inboundmessageports.AlternateAddressRequest
+	asked      *triageworkports.AlternateAddressRequest
 }
 
 func (f *fakeWork) AlternateAddresses(
 	_ context.Context,
-	req *inboundmessageports.AlternateAddressRequest,
+	req *triageworkports.AlternateAddressRequest,
 ) ([]string, error) {
 	f.asked = req
 
@@ -447,9 +449,9 @@ func (f *fakePeeks) ShipmentPeeks(
 
 func (f *fakePeeks) CustomerShipments(
 	context.Context,
-	*inboundmessageports.TriageCustomerShipmentsRequest,
-) (*inboundmessageports.TriageCustomerShipments, error) {
-	return &inboundmessageports.TriageCustomerShipments{}, nil
+	*triageworkports.TriageCustomerShipmentsRequest,
+) (*triageworkports.TriageCustomerShipments, error) {
+	return &triageworkports.TriageCustomerShipments{}, nil
 }
 
 type fakeAttachments struct {
@@ -528,15 +530,15 @@ func (f *fakeAttachments) last() *documentports.ResolveMailAttachmentsRequest {
 }
 
 type fakeEvidence struct {
-	evidence *inboundmessageports.TriageDetentionEvidence
+	evidence *triageworkports.TriageDetentionEvidence
 	err      error
-	asked    []*inboundmessageports.TriageDetentionEvidenceRequest
+	asked    []*triageworkports.TriageDetentionEvidenceRequest
 }
 
 func (f *fakeEvidence) DetentionEvidence(
 	_ context.Context,
-	req *inboundmessageports.TriageDetentionEvidenceRequest,
-) (*inboundmessageports.TriageDetentionEvidence, error) {
+	req *triageworkports.TriageDetentionEvidenceRequest,
+) (*triageworkports.TriageDetentionEvidence, error) {
 	f.asked = append(f.asked, req)
 
 	return f.evidence, f.err

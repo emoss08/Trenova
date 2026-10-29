@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -52,7 +52,7 @@ func (s *Service) queueForPay(
 		actor = permissionports.UserActor(tenantInfo)
 	}
 
-	if err = s.carrierPay.QueueCarrierInvoice(ctx, &inboundmessageports.QueueCarrierInvoiceRequest{
+	if err = s.carrierPay.QueueCarrierInvoice(ctx, &triageworkports.QueueCarrierInvoiceRequest{
 		TenantInfo:             f.tenantInfo,
 		Actor:                  actor,
 		ShipmentID:             f.message.MatchedShipmentID,

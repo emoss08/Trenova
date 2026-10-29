@@ -1,10 +1,11 @@
-package inboundmessageports
+package triageworkports
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +16,7 @@ type TriageShipmentPeeker interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		shipmentIDs []pulid.ID,
-	) (map[pulid.ID]*ShipmentPeek, error)
+	) (map[pulid.ID]*inboundmessageports.ShipmentPeek, error)
 	CustomerShipments(
 		ctx context.Context,
 		req *TriageCustomerShipmentsRequest,
@@ -39,7 +40,7 @@ type TriageStopTimesReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
-	) (*StopTimes, error)
+	) (*inboundmessageports.StopTimes, error)
 }
 
 type TriageLoadFieldValue struct {
@@ -140,7 +141,7 @@ type CustomerTriageRequest struct {
 
 type CustomerTriage struct {
 	Waiting int
-	Recent  []*Sample
+	Recent  []*inboundmessageports.Sample
 }
 
 type TriageWorkRepository interface {
@@ -167,14 +168,4 @@ type TriageWorkRepository interface {
 	) (pulid.ID, error)
 	AlternateAddresses(ctx context.Context, req *AlternateAddressRequest) ([]string, error)
 	CustomerTriage(ctx context.Context, req *CustomerTriageRequest) (*CustomerTriage, error)
-}
-
-type GetInboundAttachmentRequest struct {
-	ID         pulid.ID
-	TenantInfo pagination.TenantInfo
-}
-
-type GetInboundAttachmentsRequest struct {
-	IDs        []pulid.ID
-	TenantInfo pagination.TenantInfo
 }

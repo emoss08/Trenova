@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -172,8 +173,8 @@ func deliveredProgress(peek *inboundmessageports.ShipmentPeek) float64 {
 
 func (s *Service) CustomerShipments(
 	ctx context.Context,
-	req *inboundmessageports.TriageCustomerShipmentsRequest,
-) (*inboundmessageports.TriageCustomerShipments, error) {
+	req *triageworkports.TriageCustomerShipmentsRequest,
+) (*triageworkports.TriageCustomerShipments, error) {
 	ids, thisWeek, err := s.lookup.CustomerShipments(
 		ctx,
 		&triagelookupports.TriageCustomerShipmentsQuery{
@@ -187,5 +188,5 @@ func (s *Service) CustomerShipments(
 		return nil, err
 	}
 
-	return &inboundmessageports.TriageCustomerShipments{ShipmentIDs: ids, ThisWeek: thisWeek}, nil
+	return &triageworkports.TriageCustomerShipments{ShipmentIDs: ids, ThisWeek: thisWeek}, nil
 }

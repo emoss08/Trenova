@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -163,7 +163,7 @@ func TestDecideStopsRecordsTheCreditOfABilledCharge(t *testing.T) {
 
 	f := newFixture()
 	f.messages.messages[f.message.ID].Classification = inboundmessage.ClassificationDetentionDispute
-	f.detention.settled = &inboundmessageports.SettledTriageDetention{
+	f.detention.settled = &triageworkports.SettledTriageDetention{
 		Amount:            "185.00",
 		Currency:          "USD",
 		Settled:           true,
@@ -197,7 +197,7 @@ func TestDecideStopsWithACreditWaitingForApproval(t *testing.T) {
 
 	f := newFixture()
 	f.messages.messages[f.message.ID].Classification = inboundmessage.ClassificationDetentionDispute
-	f.detention.settled = &inboundmessageports.SettledTriageDetention{
+	f.detention.settled = &triageworkports.SettledTriageDetention{
 		Amount:         "185.00",
 		Currency:       "USD",
 		Settled:        true,

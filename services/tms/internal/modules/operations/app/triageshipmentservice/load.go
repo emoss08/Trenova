@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
@@ -39,8 +39,8 @@ type resolvedPlace struct {
 }
 
 type loadBuild struct {
-	req      *inboundmessageports.CreateTriageLoadRequest
-	fields   map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue
+	req      *triageworkports.CreateTriageLoadRequest
+	fields   map[inboundmessage.LoadFieldKey]triageworkports.TriageLoadFieldValue
 	multiErr *errortypes.MultiError
 	now      time.Time
 }
@@ -69,12 +69,12 @@ func (b *loadBuild) fail(
 
 func (s *Service) CreateLoad(
 	ctx context.Context,
-	req *inboundmessageports.CreateTriageLoadRequest,
-) (*inboundmessageports.CreatedTriageLoad, error) {
+	req *triageworkports.CreateTriageLoadRequest,
+) (*triageworkports.CreatedTriageLoad, error) {
 	build := &loadBuild{
 		req: req,
 		fields: make(
-			map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue,
+			map[inboundmessage.LoadFieldKey]triageworkports.TriageLoadFieldValue,
 			len(req.Fields),
 		),
 		multiErr: errortypes.NewMultiError(),
@@ -113,7 +113,7 @@ func (s *Service) CreateLoad(
 		}
 	}
 
-	return &inboundmessageports.CreatedTriageLoad{
+	return &triageworkports.CreatedTriageLoad{
 		ShipmentID: created.ID,
 		ProNumber:  created.ProNumber,
 	}, nil

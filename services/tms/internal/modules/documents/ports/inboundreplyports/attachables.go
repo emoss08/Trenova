@@ -1,4 +1,4 @@
-package inboundmessageports
+package inboundreplyports
 
 import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"

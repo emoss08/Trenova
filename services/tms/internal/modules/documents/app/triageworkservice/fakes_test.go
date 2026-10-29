@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -147,7 +148,10 @@ func (f *fakeMailboxes) GetByID(
 	return &copied, nil
 }
 
-func (f *fakeMailboxes) Update(_ context.Context, entity *inboundmessage.Mailbox) (*inboundmessage.Mailbox, error) {
+func (f *fakeMailboxes) Update(
+	_ context.Context,
+	entity *inboundmessage.Mailbox,
+) (*inboundmessage.Mailbox, error) {
 	stored := *entity
 	f.mailboxes[entity.ID] = &stored
 
@@ -160,7 +164,11 @@ type fakeShipments struct {
 	known map[pulid.ID]bool
 }
 
-func (f *fakeShipments) ShipmentExists(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (bool, error) {
+func (f *fakeShipments) ShipmentExists(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	id pulid.ID,
+) (bool, error) {
 	return f.known[id], nil
 }
 
@@ -212,7 +220,11 @@ func (f *fakeDocuments) GetDownloadContent(
 	return &documentports.DocumentContent{Body: io.NopCloser(bytes.NewReader(f.content))}, nil
 }
 
-func (f *fakeDocuments) Delete(_ context.Context, req documentports.DeleteDocumentRequest, _ pulid.ID) error {
+func (f *fakeDocuments) Delete(
+	_ context.Context,
+	req documentports.DeleteDocumentRequest,
+	_ pulid.ID,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deleted = append(f.deleted, req.ID)
@@ -239,7 +251,10 @@ func (f *fakeDocumentRepo) GetByID(
 	return &copied, nil
 }
 
-func (f *fakeDocumentRepo) Update(_ context.Context, entity *document.Document) (*document.Document, error) {
+func (f *fakeDocumentRepo) Update(
+	_ context.Context,
+	entity *document.Document,
+) (*document.Document, error) {
 	stored := *entity
 	f.docs[entity.ID] = &stored
 
@@ -278,7 +293,7 @@ func (f *fakeDocumentTypes) GetByCode(
 }
 
 type fakeWork struct {
-	inboundmessageports.TriageWorkRepository
+	triageworkports.TriageWorkRepository
 
 	current []pulid.ID
 }
@@ -399,7 +414,10 @@ type fakeNotifier struct {
 	changed []pulid.ID
 }
 
-func (f *fakeNotifier) MessagesChanged(_ context.Context, messages ...*inboundmessage.InboundMessage) {
+func (f *fakeNotifier) MessagesChanged(
+	_ context.Context,
+	messages ...*inboundmessage.InboundMessage,
+) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, message := range messages {
@@ -413,7 +431,11 @@ type fakeEvents struct {
 
 func (f *fakeEvents) ShipmentDelivered(context.Context, pagination.TenantInfo, pulid.ID) {}
 
-func (f *fakeEvents) DocumentAttached(_ context.Context, _ pagination.TenantInfo, _, documentTypeID pulid.ID) {
+func (f *fakeEvents) DocumentAttached(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_, documentTypeID pulid.ID,
+) {
 	f.attached = append(f.attached, documentTypeID)
 }
 
@@ -434,42 +456,48 @@ func (f *fakeDrafter) DraftReplyFor(
 }
 
 type fakeLoads struct {
-	requests []*inboundmessageports.CreateTriageLoadRequest
+	requests []*triageworkports.CreateTriageLoadRequest
 	err      error
 }
 
 func (f *fakeLoads) CreateLoad(
 	_ context.Context,
-	req *inboundmessageports.CreateTriageLoadRequest,
-) (*inboundmessageports.CreatedTriageLoad, error) {
+	req *triageworkports.CreateTriageLoadRequest,
+) (*triageworkports.CreatedTriageLoad, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &inboundmessageports.CreatedTriageLoad{ShipmentID: pulid.MustNew("shp_"), ProNumber: "S-200001"}, nil
+	return &triageworkports.CreatedTriageLoad{
+		ShipmentID: pulid.MustNew("shp_"),
+		ProNumber:  "S-200001",
+	}, nil
 }
 
 type fakeExceptions struct {
-	requests []*inboundmessageports.LogTriageExceptionRequest
+	requests []*triageworkports.LogTriageExceptionRequest
 }
 
-func (f *fakeExceptions) LogException(_ context.Context, req *inboundmessageports.LogTriageExceptionRequest) error {
+func (f *fakeExceptions) LogException(
+	_ context.Context,
+	req *triageworkports.LogTriageExceptionRequest,
+) error {
 	f.requests = append(f.requests, req)
 
 	return nil
 }
 
 type fakeDetention struct {
-	requests []*inboundmessageports.SettleTriageDetentionRequest
-	settled  *inboundmessageports.SettledTriageDetention
+	requests []*triageworkports.SettleTriageDetentionRequest
+	settled  *triageworkports.SettledTriageDetention
 	err      error
 }
 
 func (f *fakeDetention) SettleDetention(
 	_ context.Context,
-	req *inboundmessageports.SettleTriageDetentionRequest,
-) (*inboundmessageports.SettledTriageDetention, error) {
+	req *triageworkports.SettleTriageDetentionRequest,
+) (*triageworkports.SettledTriageDetention, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
@@ -478,7 +506,11 @@ func (f *fakeDetention) SettleDetention(
 		return f.settled, nil
 	}
 
-	return &inboundmessageports.SettledTriageDetention{Amount: "150.00", Currency: "USD", Settled: true}, nil
+	return &triageworkports.SettledTriageDetention{
+		Amount:   "150.00",
+		Currency: "USD",
+		Settled:  true,
+	}, nil
 }
 
 type fixture struct {
@@ -534,7 +566,11 @@ func newFixture() *fixture {
 		ContentType:    "application/pdf",
 		Kind:           inboundmessage.AttachmentProofOfDelivery,
 	}
-	pod := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
+	pod := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "POD",
+		Name: "Proof of Delivery",
+	}
 	bol := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "BOL", Name: "Bill of Lading"}
 
 	docRepo := &fakeDocumentRepo{docs: map[pulid.ID]*document.Document{
@@ -545,12 +581,17 @@ func newFixture() *fixture {
 			messages:    map[pulid.ID]*inboundmessage.InboundMessage{message.ID: message},
 			attachments: map[pulid.ID]*inboundmessage.InboundAttachment{attachment.ID: attachment},
 		},
-		mailboxes:  &fakeMailboxes{mailboxes: map[pulid.ID]*inboundmessage.Mailbox{mailbox.ID: mailbox}},
-		docRepo:    docRepo,
-		documents:  &fakeDocuments{repo: docRepo, content: []byte("%PDF")},
-		work:       &fakeWork{},
-		pdf:        newFakePDF(4),
-		uploads:    &fakeUploads{sessions: map[pulid.ID]*documentuploadports.CreateSessionRequest{}, parts: map[pulid.ID][]byte{}},
+		mailboxes: &fakeMailboxes{
+			mailboxes: map[pulid.ID]*inboundmessage.Mailbox{mailbox.ID: mailbox},
+		},
+		docRepo:   docRepo,
+		documents: &fakeDocuments{repo: docRepo, content: []byte("%PDF")},
+		work:      &fakeWork{},
+		pdf:       newFakePDF(4),
+		uploads: &fakeUploads{
+			sessions: map[pulid.ID]*documentuploadports.CreateSessionRequest{},
+			parts:    map[pulid.ID][]byte{},
+		},
 		recorder:   &fakeRecorder{},
 		notifier:   &fakeNotifier{},
 		events:     &fakeEvents{},
@@ -565,24 +606,26 @@ func newFixture() *fixture {
 		bol:        bol,
 	}
 	f.service = &Service{
-		l:             zap.NewNop(),
-		messages:      f.messages,
-		mailboxes:     f.mailboxes,
-		work:          f.work,
-		activities:    f.recorder,
-		notifier:      f.notifier,
-		shipments:     &fakeShipments{known: map[pulid.ID]bool{shipmentID: true}},
-		documentRepo:  docRepo,
-		documents:     f.documents,
-		documentTypes: &fakeDocumentTypes{types: map[pulid.ID]*documenttype.DocumentType{pod.ID: pod, bol.ID: bol}},
-		uploads:       f.uploads,
-		imaging:       f.pdf,
-		replies:       f.drafter,
-		events:        f.events,
-		loads:         f.loads,
-		exceptions:    f.exceptions,
-		detention:     f.detention,
-		now:           func() int64 { return 1_791_000_000 },
+		l:            zap.NewNop(),
+		messages:     f.messages,
+		mailboxes:    f.mailboxes,
+		work:         f.work,
+		activities:   f.recorder,
+		notifier:     f.notifier,
+		shipments:    &fakeShipments{known: map[pulid.ID]bool{shipmentID: true}},
+		documentRepo: docRepo,
+		documents:    f.documents,
+		documentTypes: &fakeDocumentTypes{
+			types: map[pulid.ID]*documenttype.DocumentType{pod.ID: pod, bol.ID: bol},
+		},
+		uploads:    f.uploads,
+		imaging:    f.pdf,
+		replies:    f.drafter,
+		events:     f.events,
+		loads:      f.loads,
+		exceptions: f.exceptions,
+		detention:  f.detention,
+		now:        func() int64 { return 1_791_000_000 },
 	}
 
 	return f

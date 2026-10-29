@@ -3765,7 +3765,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/triage.AttachableSource
   InboundReplyAttachable:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ReplyAttachable
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports.ReplyAttachable
   TriageReplyTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyTemplate

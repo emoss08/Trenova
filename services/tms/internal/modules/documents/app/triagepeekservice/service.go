@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,20 +32,20 @@ type Params struct {
 	fx.In
 
 	Messages  inboundmessageports.InboundMessageRepository
-	Work      inboundmessageports.TriageWorkRepository
+	Work      triageworkports.TriageWorkRepository
 	Customers customerports.CustomerRepository
 	Orgs      tenantports.OrganizationRepository
-	Peeks     inboundmessageports.TriageShipmentPeeker  `optional:"true"`
-	Stops     inboundmessageports.TriageStopTimesReader `optional:"true"`
+	Peeks     triageworkports.TriageShipmentPeeker  `optional:"true"`
+	Stops     triageworkports.TriageStopTimesReader `optional:"true"`
 }
 
 type Service struct {
 	messages  inboundmessageports.InboundMessageRepository
-	work      inboundmessageports.TriageWorkRepository
+	work      triageworkports.TriageWorkRepository
 	customers customerports.CustomerRepository
 	orgs      tenantports.OrganizationRepository
-	peeks     inboundmessageports.TriageShipmentPeeker
-	stops     inboundmessageports.TriageStopTimesReader
+	peeks     triageworkports.TriageShipmentPeeker
+	stops     triageworkports.TriageStopTimesReader
 	now       func() int64
 }
 
@@ -130,7 +131,7 @@ func (s *Service) CustomerPeek(
 		return nil, err
 	}
 
-	triage, err := s.work.CustomerTriage(ctx, &inboundmessageports.CustomerTriageRequest{
+	triage, err := s.work.CustomerTriage(ctx, &triageworkports.CustomerTriageRequest{
 		TenantInfo: req.TenantInfo,
 		CustomerID: req.CustomerID,
 		Limit:      customerPeekMessages,
@@ -159,7 +160,7 @@ func (s *Service) CustomerPeek(
 
 	recent, err := s.peeks.CustomerShipments(
 		ctx,
-		&inboundmessageports.TriageCustomerShipmentsRequest{
+		&triageworkports.TriageCustomerShipmentsRequest{
 			TenantInfo: req.TenantInfo,
 			CustomerID: req.CustomerID,
 			WeekStart:  timeutils.WeekStart(s.now(), location),

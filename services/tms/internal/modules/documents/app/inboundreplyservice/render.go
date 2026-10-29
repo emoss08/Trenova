@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 )
 
 const (
@@ -31,7 +31,7 @@ var placeholderFallbacks = map[string]string{
 	placeholderSender:   "you",
 }
 
-func RenderTemplate(body string, values *inboundmessageports.ReplyContext) string {
+func RenderTemplate(body string, values *inboundreplyports.ReplyContext) string {
 	known := map[string]string{
 		placeholderFirst:    values.SenderFirstName,
 		placeholderPro:      values.ProNumber,

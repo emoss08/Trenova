@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) inboundmessageports.InboundReplyRepository {
+func New(p Params) inboundreplyports.InboundReplyRepository {
 	return &repository{db: p.DB}
 }
 
@@ -68,7 +68,7 @@ func save(ctx context.Context, db *keel.DB, entity *triage.Reply) (*triage.Reply
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req inboundmessageports.GetInboundReplyRequest,
+	req inboundreplyports.GetInboundReplyRequest,
 ) (*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
 		entity, err := triagedb.Replies.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -82,7 +82,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req inboundmessageports.GetInboundRepliesRequest,
+	req inboundreplyports.GetInboundRepliesRequest,
 ) ([]*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.Reply, error) {
 		if len(req.IDs) == 0 {
@@ -106,7 +106,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) GetByIdempotencyKey(
 	ctx context.Context,
-	req inboundmessageports.GetInboundReplyByKeyRequest,
+	req inboundreplyports.GetInboundReplyByKeyRequest,
 ) (*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
 		rp := triagedb.Replies
@@ -174,7 +174,7 @@ func lockMessage(ctx context.Context, db *keel.DB, messageID pulid.ID) error {
 
 func (r *repository) DeleteDraft(
 	ctx context.Context,
-	req inboundmessageports.InboundReplyMessageRequest,
+	req inboundreplyports.InboundReplyMessageRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		rp := triagedb.Replies
@@ -190,7 +190,7 @@ func (r *repository) DeleteDraft(
 
 func (r *repository) ListByMessageIDs(
 	ctx context.Context,
-	req inboundmessageports.InboundRepliesByMessagesRequest,
+	req inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID][]*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*triage.Reply, error) {
 		grouped := make(map[pulid.ID][]*triage.Reply, len(req.MessageIDs))
@@ -219,7 +219,7 @@ func (r *repository) ListByMessageIDs(
 
 func (r *repository) DraftsByMessageIDs(
 	ctx context.Context,
-	req inboundmessageports.InboundRepliesByMessagesRequest,
+	req inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID]*triage.Reply, error) {
 	return r.distinctByMessage(ctx, req.MessageIDs, true)
 }

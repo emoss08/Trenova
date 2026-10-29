@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -167,8 +168,8 @@ func TestCreateInboundLoad_CreatesFromTheCheckedFieldsOnce(t *testing.T) {
 	f := agenttoolstest.NewFakeTriage()
 	f.CreateLoadPlan = &triageworkservice.CreateLoadPlan{
 		Message: f.Message,
-		Load: &inboundmessageports.CreateTriageLoadRequest{
-			Fields: []inboundmessageports.TriageLoadFieldValue{
+		Load: &triageworkports.CreateTriageLoadRequest{
+			Fields: []triageworkports.TriageLoadFieldValue{
 				{Key: inboundmessage.LoadFieldOrigin, Value: "Columbus, OH"},
 			},
 		},
@@ -380,7 +381,7 @@ func TestLogInboundException_HoldsTheShipmentWithTheCountGiven(t *testing.T) {
 	f.ExceptionPlan = &triageworkservice.ExceptionPlan{
 		Message: f.Message,
 		After:   &after,
-		Hold: &inboundmessageports.LogTriageExceptionRequest{
+		Hold: &triageworkports.LogTriageExceptionRequest{
 			Kind:     inboundmessage.ExceptionShortage,
 			Quantity: 2,
 			Unit:     "pallets",

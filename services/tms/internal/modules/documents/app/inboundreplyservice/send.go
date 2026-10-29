@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -54,7 +55,7 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 	if req.IdempotencyKey != "" {
 		existing, err := s.replies.GetByIdempotencyKey(
 			ctx,
-			inboundmessageports.GetInboundReplyByKeyRequest{
+			inboundreplyports.GetInboundReplyByKeyRequest{
 				TenantInfo:     req.TenantInfo,
 				IdempotencyKey: req.IdempotencyKey,
 			},
@@ -95,7 +96,7 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 		if req.IdempotencyKey != "" && dberror.IsUniqueConstraintViolation(err) {
 			return s.replies.GetByIdempotencyKey(
 				ctx,
-				inboundmessageports.GetInboundReplyByKeyRequest{
+				inboundreplyports.GetInboundReplyByKeyRequest{
 					TenantInfo:     req.TenantInfo,
 					IdempotencyKey: req.IdempotencyKey,
 				},
@@ -105,7 +106,7 @@ func (s *Service) Send(ctx context.Context, req *SendRequest) (*triage.Reply, er
 		return nil, err
 	}
 
-	if _, err = s.replies.DeleteDraft(ctx, inboundmessageports.InboundReplyMessageRequest{
+	if _, err = s.replies.DeleteDraft(ctx, inboundreplyports.InboundReplyMessageRequest{
 		TenantInfo: req.TenantInfo,
 		MessageID:  message.ID,
 	}); err != nil {
@@ -200,7 +201,7 @@ func (s *Service) dispatch(
 		HTML:           stringutils.TextToHTMLParagraph(reply.Body),
 		Attachments:    attachments,
 		Headers:        threadHeaders(message, reply),
-		IdempotencyKey: inboundmessageports.InboundReplyIdempotencyPrefix + reply.ID.String(),
+		IdempotencyKey: inboundreplyports.InboundReplyIdempotencyPrefix + reply.ID.String(),
 	})
 	if err != nil {
 		return s.fail(ctx, &failure{
@@ -293,7 +294,7 @@ func (s *tracker) suggestAddress(
 	message *inboundmessage.InboundMessage,
 	refused string,
 ) string {
-	addresses, err := s.work.AlternateAddresses(ctx, &inboundmessageports.AlternateAddressRequest{
+	addresses, err := s.work.AlternateAddresses(ctx, &triageworkports.AlternateAddressRequest{
 		TenantInfo: tenantOf(message),
 		Domain:     emailutils.Domain(refused),
 		Exclude:    refused,
@@ -443,7 +444,7 @@ func (s *tracker) EmailMessageChanged(ctx context.Context, change emailports.Ema
 
 	tenantInfo := pagination.TenantInfo{OrgID: sent.OrganizationID, BuID: sent.BusinessUnitID}
 	ctx = dbscope.EnsureTenant(ctx, tenantInfo.DBTenant())
-	reply, err := s.replies.GetByID(ctx, inboundmessageports.GetInboundReplyRequest{
+	reply, err := s.replies.GetByID(ctx, inboundreplyports.GetInboundReplyRequest{
 		ID:         replyID,
 		TenantInfo: tenantInfo,
 	})
@@ -474,7 +475,7 @@ func (s *tracker) EmailMessageChanged(ctx context.Context, change emailports.Ema
 }
 
 func replyIDFromKey(key string) (pulid.ID, bool) {
-	raw, found := strings.CutPrefix(key, inboundmessageports.InboundReplyIdempotencyPrefix)
+	raw, found := strings.CutPrefix(key, inboundreplyports.InboundReplyIdempotencyPrefix)
 	if !found {
 		return pulid.Nil, false
 	}
