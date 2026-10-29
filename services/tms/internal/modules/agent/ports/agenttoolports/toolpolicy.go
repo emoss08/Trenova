@@ -91,7 +91,7 @@ func (p ToolPolicy) Classified(params ToolExecuteParams) CallPolicy {
 	return CallPolicy{Egress: p.HighestEgress()}
 }
 
-func (p ToolPolicy) EffectiveEffect() agenttooltrust.ToolEffect {
+func (p *ToolPolicy) EffectiveEffect() agenttooltrust.ToolEffect {
 	if p.Effect.IsValid() {
 		return p.Effect
 	}

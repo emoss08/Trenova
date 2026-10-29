@@ -43,11 +43,11 @@ type scriptedOpener struct {
 func (o *scriptedOpener) OpenDelegate(
 	ctx context.Context,
 	run RunContext,
-	call delegation.Call,
+	call *delegation.Call,
 ) (*DelegateOpening, error) {
 	o.mu.Lock()
 	o.opened++
-	o.calls = append(o.calls, call)
+	o.calls = append(o.calls, *call)
 	o.mu.Unlock()
 
 	if o.declined != "" {

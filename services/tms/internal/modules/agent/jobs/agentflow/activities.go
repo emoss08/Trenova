@@ -40,7 +40,7 @@ type ToolObserver interface {
 	ObserveTool(
 		ctx context.Context,
 		run RunContext,
-		observation agentruntimeports.ToolObservation,
+		observation *agentruntimeports.ToolObservation,
 		emit kernelports.AssistantStreamEmitter,
 	) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
@@ -53,7 +53,7 @@ type DelegateOpener interface {
 	OpenDelegate(
 		ctx context.Context,
 		run RunContext,
-		call delegation.Call,
+		call *delegation.Call,
 	) (*DelegateOpening, error)
 }
 
@@ -240,7 +240,7 @@ func (a *Activities) OpenDelegateActivity(
 	ctx, span := startDelegateOpen(ctx, in)
 	defer span.End()
 
-	opening, err := a.delegates.OpenDelegate(ctx, in.Run, in.Call)
+	opening, err := a.delegates.OpenDelegate(ctx, in.Run, &in.Call)
 	if err != nil {
 		var declined *DelegateDeclinedError
 		if errors.As(err, &declined) {
@@ -369,7 +369,7 @@ func (a *Activities) observing(
 	}
 
 	observe := func(observation agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
-		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, observation, emit)
+		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, &observation, emit)
 		*kept = append(*kept, artifacts...)
 
 		return shown, err

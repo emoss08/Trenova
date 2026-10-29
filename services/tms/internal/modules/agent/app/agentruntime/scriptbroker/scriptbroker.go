@@ -155,6 +155,12 @@ func scriptMayCall(tool agenttoolports.AgentQueryTool) bool {
 		!agentextension.IsExtensionTool(name)
 }
 
+func queryEffect(tool agenttoolports.AgentQueryTool) agenttooltrust.ToolEffect {
+	policy := tool.Policy()
+
+	return policy.EffectiveEffect()
+}
+
 // CallID names a read a script made after the call that ran the script,
 // so its step in the ledger reads back to the script's own.
 func CallID(parent string, seq int) string {
@@ -253,7 +259,7 @@ func (b *Broker) refusal(call codemode.Call) (codemode.Reply, bool) {
 		}, true
 	}
 	if tool, isQuery := b.s.QueryTools().Get(call.Tool); isQuery &&
-		tool.Policy().EffectiveEffect() != agenttooltrust.ToolEffectLookup {
+		queryEffect(tool) != agenttooltrust.ToolEffectLookup {
 		return codemode.Reply{
 			Status:  codemode.CallInvalid,
 			Message: fmt.Sprintf(scriptWriteRefusal, call.Tool),

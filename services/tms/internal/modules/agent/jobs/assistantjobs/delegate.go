@@ -21,14 +21,14 @@ func newDelegateOpener(assistant *assistantservice.Service) agentflow.DelegateOp
 func (o *delegateOpener) OpenDelegate(
 	ctx context.Context,
 	run agentflow.RunContext,
-	call delegation.Call,
+	call *delegation.Call,
 ) (*agentflow.DelegateOpening, error) {
 	opened, err := o.assistant.OpenDelegate(ctx, &assistantservice.OpenDelegateRequest{
 		Parent:    run.Definition,
 		Actor:     run.Actor,
 		ThreadID:  run.ThreadID,
 		StepOwner: run.StepOwner,
-		Call:      call,
+		Call:      *call,
 		Records:   run.Records,
 		Inline:    run.Inline,
 	})

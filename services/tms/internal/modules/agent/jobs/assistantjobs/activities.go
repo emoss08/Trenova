@@ -571,11 +571,12 @@ func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput)
 		return
 	}
 
-	if err := a.turnRepo.RecordFingerprint(ctx, assistantturnports.RecordAssistantTurnFingerprintRequest{
+	req := assistantturnports.RecordAssistantTurnFingerprintRequest{
 		ID:          in.Payload.TurnID,
 		TenantInfo:  in.Payload.TenantInfo(),
 		Fingerprint: fingerprint,
-	}); err != nil {
+	}
+	if err := a.turnRepo.RecordFingerprint(ctx, req); err != nil {
 		a.logger.Warn("could not keep the agent a turn ran as",
 			zap.String("turn", in.Payload.TurnID.String()),
 			zap.Error(err),
@@ -930,7 +931,7 @@ func newArtifactObserver(assistant *assistantservice.Service) agentflow.ToolObse
 func (o *artifactObserver) ObserveTool(
 	ctx context.Context,
 	run agentflow.RunContext,
-	observation agentruntimeports.ToolObservation,
+	observation *agentruntimeports.ToolObservation,
 	emit kernelports.AssistantStreamEmitter,
 ) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	o.assistant.WaitOnUnreadFile(ctx, &assistantservice.UnreadFileRun{
@@ -938,9 +939,9 @@ func (o *artifactObserver) ObserveTool(
 		DefinitionID: definitionIDOf(run.Definition),
 		Actor:        run.Actor,
 		Delegated:    run.Delegation != nil,
-	}, &observation)
+	}, observation)
 
-	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, observation, emit)
+	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, *observation, emit)
 }
 
 func definitionIDOf(definition *agentdefinition.Definition) pulid.ID {

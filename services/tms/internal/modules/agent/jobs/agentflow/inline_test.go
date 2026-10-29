@@ -23,7 +23,7 @@ type countingObserver struct {
 func (o *countingObserver) ObserveTool(
 	context.Context,
 	RunContext,
-	agentruntimeports.ToolObservation,
+	*agentruntimeports.ToolObservation,
 	kernelports.AssistantStreamEmitter,
 ) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	o.calls++
