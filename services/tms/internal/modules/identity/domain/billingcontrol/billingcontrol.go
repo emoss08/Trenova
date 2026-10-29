@@ -59,7 +59,7 @@ type BillingControl struct {
 	// late-charge debit memos; the rate and grace live on each customer.
 	LateChargeAssessmentMode LateChargeAssessmentMode `json:"lateChargeAssessmentMode" keel:"late_charge_assessment_mode"`
 	// LateChargeMinimumAmount is the smallest total a run will bill a customer.
-	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount"  keel:"late_charge_minimum_amount"`
+	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount" keel:"late_charge_minimum_amount"`
 
 	// PaymentRemindersEnabled emails customers about their overdue invoices on
 	// the days past due in PaymentReminderDays, one reminder per step.

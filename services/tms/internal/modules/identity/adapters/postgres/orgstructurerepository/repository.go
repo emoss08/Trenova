@@ -221,7 +221,11 @@ func (r *repository) CreateDelegation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
-			if err := approvaldelegationdb.ApprovalDelegations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := approvaldelegationdb.ApprovalDelegations.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create approval delegation", zap.Error(err))
 				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
 			}
@@ -239,7 +243,11 @@ func (r *repository) UpdateDelegation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
-			if err := approvaldelegationdb.ApprovalDelegations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := approvaldelegationdb.ApprovalDelegations.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to update approval delegation", zap.Error(err))
 				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
 			}

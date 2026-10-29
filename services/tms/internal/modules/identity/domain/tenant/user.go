@@ -33,7 +33,7 @@ type OrganizationMembership struct {
 	// PositionID is the title the user holds in this organisation. It sits on
 	// the membership rather than the user because a position belongs to one
 	// organisation and the same person may hold different titles in two.
-	PositionID pulid.ID `json:"positionId"     keel:"position_id,nullzero"`
+	PositionID pulid.ID `json:"positionId" keel:"position_id,nullzero"`
 
 	// Relationships
 	User         *User         `json:"user,omitempty"         keel:"belongs:user_id"`

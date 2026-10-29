@@ -21,10 +21,25 @@ func withImplications(
 // resource that declares it, and the agent-facing operations are granted
 // through role grants rather than chosen by hand.
 var listedOperations = []permission.Operation{
-	permission.OpRead, permission.OpCreate, permission.OpUpdate, permission.OpExport, permission.OpImport,
-	permission.OpApprove, permission.OpReject, permission.OpAssign, permission.OpUnassign,
-	permission.OpArchive, permission.OpRestore, permission.OpSubmit, permission.OpCancel, permission.OpDuplicate,
-	permission.OpClose, permission.OpLock, permission.OpUnlock, permission.OpActivate, permission.OpReopen,
+	permission.OpRead,
+	permission.OpCreate,
+	permission.OpUpdate,
+	permission.OpExport,
+	permission.OpImport,
+	permission.OpApprove,
+	permission.OpReject,
+	permission.OpAssign,
+	permission.OpUnassign,
+	permission.OpArchive,
+	permission.OpRestore,
+	permission.OpSubmit,
+	permission.OpCancel,
+	permission.OpDuplicate,
+	permission.OpClose,
+	permission.OpLock,
+	permission.OpUnlock,
+	permission.OpActivate,
+	permission.OpReopen,
 }
 
 func GetAllOperations() []permissionspec.OperationDefinition {

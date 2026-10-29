@@ -50,7 +50,7 @@ const (
 	InvoiceAdjustment        Kind = "invoice_adjustment"
 	InvoiceRunGroup          Kind = "invoice_run_group"
 	InvoiceRunItem           Kind = "invoice_run_item"
-	CreditMemoApplication    Kind = "credit_memo_application"
+	CreditMemoApplication    Kind = "credit_memo_application" //nolint:gosec // G101: a record kind, not a credential
 	RateAgreementLane        Kind = "rate_agreement_lane"
 	RateImport               Kind = "rate_import"
 	FuelIndex                Kind = "fuel_index"

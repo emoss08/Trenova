@@ -120,7 +120,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-			if err := accountingcontroldb.AccountingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := accountingcontroldb.AccountingControls.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error(
 					"failed to update accounting control",
 					zap.String("orgID", entity.OrganizationID.String()),

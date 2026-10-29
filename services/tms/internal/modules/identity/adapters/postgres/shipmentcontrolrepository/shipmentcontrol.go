@@ -100,7 +100,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentcontrol.ShipmentControl, error) {
-			if err := shipmentcontroldb.ShipmentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := shipmentcontroldb.ShipmentControls.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error(
 					"failed to update shipment control",
 					zap.String("orgID", entity.OrganizationID.String()),

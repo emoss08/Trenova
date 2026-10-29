@@ -82,7 +82,11 @@ func (r *portalAccessRepository) CreateInvitation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			if err := portalinvitationdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := portalinvitationdb.PortalInvitations.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, fmt.Errorf(
 					"create portal invitation: %w",
 					invitationErrors.Map(err, entity.ID.String()),
@@ -101,7 +105,11 @@ func (r *portalAccessRepository) UpdateInvitation(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*portalinvitation.PortalInvitation, error) {
-			if err := portalinvitationdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := portalinvitationdb.PortalInvitations.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, invitationErrors.Map(err, entity.ID.String())
 			}
 			return entity, nil

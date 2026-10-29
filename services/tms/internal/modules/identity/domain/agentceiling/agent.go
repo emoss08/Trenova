@@ -15,7 +15,7 @@ import (
 //
 // OpApprove is deliberately absent: guardExecute refuses it to an agent
 // principal outright, so approving is a person's, whatever any list says.
-var agentAllowedPermissions = map[permission.Resource]map[permission.Operation]struct{}{
+var agentAllowedPermissions = map[permission.Resource]map[permission.Operation]struct{}{ //nolint:exhaustive // an allow-list: a missing resource is refused
 	// The factoring clerk reads the agreements it works under and drafts,
 	// sends, records and releases notices of assignment. Agreement terms are
 	// copied from the signed contract by a person, so writing them is not

@@ -18,7 +18,7 @@ import (
 // belonged. Before, an id of the wrong kind passed every check, the service
 // answered "not found", and the model told the person the record did not
 // exist.
-var recordIDPrefixes = map[permission.Resource]string{
+var recordIDPrefixes = map[permission.Resource]string{ //nolint:exhaustive // only single-kind resources have a prefix
 	permission.ResourceShipment:            "shp_",
 	permission.ResourceShipmentMove:        "sm_",
 	permission.ResourceShipmentComment:     "shc_",

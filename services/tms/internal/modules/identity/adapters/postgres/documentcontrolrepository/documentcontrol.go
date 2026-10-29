@@ -68,7 +68,11 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
-			if err := documentcontroldb.DocumentControls.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := documentcontroldb.DocumentControls.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, documentControlErrors.Map(err, entity.ID.String())
 			}
 
@@ -85,7 +89,11 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
-			if err := documentcontroldb.DocumentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := documentcontroldb.DocumentControls.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, documentControlErrors.Map(err, entity.ID.String())
 			}
 
