@@ -46,7 +46,6 @@ type config struct {
 	Budgets    budgets              `yaml:"budgets"`
 	Foundation []string             `yaml:"foundation"`
 	Exceptions map[string]exception `yaml:"exceptions"`
-	Debt       map[string]int       `yaml:"debt"`
 }
 
 type checker struct {
@@ -61,7 +60,7 @@ func main() {
 	update := flag.Bool(
 		"update",
 		false,
-		"lower debt ceilings to current sizes and drop entries that are within budget",
+		"lower exception ceilings to current sizes and drop exceptions that are within budget",
 	)
 	flag.Parse()
 	if err := run(*update); err != nil {
@@ -86,7 +85,6 @@ func run(update bool) error {
 
 	c := &checker{cfg: cfg, foundation: foundation, sizes: sizes, update: update}
 	c.checkExceptions()
-	c.checkDebt()
 	c.checkBudgets()
 
 	if update {
@@ -129,9 +127,6 @@ func (c *checker) withinBudget(pkg string) bool {
 func (c *checker) checkExceptions() {
 	for _, pkg := range slices.Sorted(maps.Keys(c.cfg.Exceptions)) {
 		entry := c.cfg.Exceptions[pkg]
-		if _, ok := c.cfg.Debt[pkg]; ok {
-			c.report("%s: listed under both exceptions and debt", pkg)
-		}
 		if strings.TrimSpace(entry.Reason) == "" {
 			c.report("%s: exception has no reason", pkg)
 		}
@@ -139,30 +134,12 @@ func (c *checker) checkExceptions() {
 			c.retire(pkg, "exception", func() { delete(c.cfg.Exceptions, pkg) })
 			continue
 		}
-		if size := c.sizes[pkg]; size > entry.Ceiling {
+		switch size := c.sizes[pkg]; {
+		case size > entry.Ceiling:
 			c.report("%s: %d lines, past its %d-line exception ceiling", pkg, size, entry.Ceiling)
-		}
-	}
-}
-
-func (c *checker) checkDebt() {
-	for _, pkg := range slices.Sorted(maps.Keys(c.cfg.Debt)) {
-		ceiling := c.cfg.Debt[pkg]
-		if c.withinBudget(pkg) {
-			c.retire(pkg, "debt", func() { delete(c.cfg.Debt, pkg) })
-			continue
-		}
-		size := c.sizes[pkg]
-		switch {
-		case size > ceiling:
-			c.report(
-				"%s: %d lines, grew past its %d-line debt ceiling; split it before adding to it",
-				pkg,
-				size,
-				ceiling,
-			)
-		case size < ceiling && c.update:
-			c.cfg.Debt[pkg] = size
+		case size < entry.Ceiling && c.update:
+			entry.Ceiling = size
+			c.cfg.Exceptions[pkg] = entry
 		}
 	}
 }
@@ -186,9 +163,6 @@ func (c *checker) checkBudgets() {
 		if size <= limit {
 			continue
 		}
-		if _, ok := c.cfg.Debt[pkg]; ok {
-			continue
-		}
 		if _, ok := c.cfg.Exceptions[pkg]; ok {
 			continue
 		}
@@ -210,9 +184,6 @@ func loadConfig() (*config, error) {
 	}
 	if cfg.Exceptions == nil {
 		cfg.Exceptions = make(map[string]exception)
-	}
-	if cfg.Debt == nil {
-		cfg.Debt = make(map[string]int)
 	}
 
 	return cfg, nil

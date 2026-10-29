@@ -85,11 +85,11 @@ sees. To hide a package tree's implementation, use an `internal/` subdirectory.
 
 **Enforcement.** `go run ./scripts/pkgsizelint` (part of `task lint` and CI) measures every
 package in `services/tms` and `shared` and fails on any package over its budget that has no entry
-in `.go-pkgsize.yml`. An entry under `debt` caps a package at the size it had when the rule
-landed. The cap only goes down: a debt package that grows fails the lint, so split it before
-adding to it. `go run ./scripts/pkgsizelint -update` lowers each cap to the package's current
-size and removes entries that are back within budget. Never raise a cap or add a debt entry: split
-the package. An `exceptions` entry needs a reason that names one of the exceptions above.
+under `exceptions` in `.go-pkgsize.yml`. An exception names one of the reasons above and caps the
+package at a ceiling; a package that grows past its ceiling fails the lint.
+`go run ./scripts/pkgsizelint -update` lowers each ceiling to the package's current size and
+removes exceptions that are back within budget. Never raise a ceiling to fit new code: move out
+whatever does not have to share the package.
 
 ### Names
 
