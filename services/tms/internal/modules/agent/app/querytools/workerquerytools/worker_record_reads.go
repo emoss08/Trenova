@@ -70,18 +70,15 @@ const (
 
 	workerCredentialsSummary = "List worker credentials: the licences, medical cards and " +
 		"endorsements workers hold, those falling due, or who holds a type. With workerIds " +
-		"and no expiry window it returns every credential those workers hold, every worker " +
-		"in one call, with its dates and whether it is verified, and the credential types " +
-		"the organization tracks; a required type with nothing on file was never recorded, " +
-		"worse than expiring soon. With expiringWithinDays or includeExpired, or with " +
-		"neither workers nor a type, it lists active credentials expiring within that many " +
-		"days from now, soonest first, a page at a time: the tool for any question about " +
-		"who is expiring, lapsed or out of compliance by a date. A credentialTypeCode, such " +
-		"as MED_CARD or ROAD_TEST, with no worker and no window lists every active one of " +
-		"that type: who holds it. Who lacks one is worker_list with withoutCredential, never " +
-		"a call per worker. Each row's worker says if dispatchable; canBeAssigned false is " +
-		"already off dispatch, so no hold. It yields the credentialId and credentialTypeId " +
-		"the credential tools take."
+		"and no expiry window: every credential those workers hold, in one call, with dates, " +
+		"verification and the organization's types; a required type with nothing on file " +
+		"was never recorded, worse than expiring soon. With expiringWithinDays or " +
+		"includeExpired, or no worker and no type: active credentials expiring within that " +
+		"many days, soonest first, paged: who is expiring, lapsed or out of compliance by a " +
+		"date. credentialTypeCode alone: who holds that type. Who lacks one: worker_list " +
+		"withoutCredential, never a call per worker. Each row's worker says if " +
+		"dispatchable; canBeAssigned false is already off dispatch: no hold. It yields the " +
+		"credentialId and credentialTypeId the credential tools take."
 	noteFallingDue = "Leave it out for the credentials across the organization."
 	paramWorkerIDs = "workerIds"
 

@@ -76,16 +76,16 @@ func NewWaitUntilTool(waits agentwaitports.AgentWaitService) agenttoolports.Agen
 func (t *waitUntilTool) Name() string { return waitUntilName }
 
 func (t *waitUntilTool) Description() string {
-	return "Use it when someone asks to be told when something happens (\"let me know when it " +
-		"delivers\", \"tell me when the driver gets there\"): it parks the work until then, " +
-		"instead of checking back. It waits for a stop's arrival or departure (StopArrival, " +
-		"StopDeparture: met when the truck is seen there or the time is recorded), a reply about " +
-		"a shipment or from a carrier or customer (Reply), an appointment coming round " +
-		"(AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive " +
-		"time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after " +
-		"giveUpAfterHours, you are started again here, told what happened and what you said you " +
-		"would do. A wait on something already true is refused with what is true now. After " +
-		"setting one, end your turn: say in one line what you wait for and what you will do then."
+	return "Park your work until something happens (\"let me know when it delivers\", \"tell " +
+		"me when the driver gets there\") instead of checking back. It waits for a stop's " +
+		"arrival or departure (StopArrival, StopDeparture: met when the truck is seen there " +
+		"or the time is recorded), a reply about a shipment or from a carrier or customer " +
+		"(Reply), an appointment coming round (AppointmentNear), detention free time running " +
+		"out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time " +
+		"(Time). When it ends, or gives up after giveUpAfterHours, you are started again " +
+		"here, told what happened and what you said you would do. A wait on something " +
+		"already true is refused with what is true now. After setting one, end your turn: " +
+		"say in one line what you wait for and what you will do then."
 }
 
 func (t *waitUntilTool) ParamSchema() map[string]any {

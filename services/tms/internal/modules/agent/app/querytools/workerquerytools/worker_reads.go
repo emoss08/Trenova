@@ -16,11 +16,9 @@ import (
 
 const (
 	workersSummary = "Find workers (drivers) by name, closest first, or the roster by employment " +
-		"or qualification. Workers without a credential, such as no road test on file or an " +
-		"expired one, in one call: withoutCredential with its code. Credentials due: " +
-		"worker_list_credentials. " +
-		"\"none on file\" was never recorded: worse than expiring soon. dispatchable says " +
-		"if a driver can take a load; canBeAssigned false is already off dispatch, so no hold."
+		"or qualification. Lacking a credential: withoutCredential; due: " +
+		"worker_list_credentials. \"none on file\" was never recorded, worse than expiring " +
+		"soon. dispatchable: can take a load now."
 	workersQueryNote = "A worker's name, first, last or both; each word matches the start of a " +
 		"name and the closest names come first. Omit it to list the roster or to filter " +
 		"on a field."

@@ -58,7 +58,7 @@ func (c *TLSConfig) IsEnabled() bool {
 
 type SecurityConfig struct {
 	EnableEncryption     bool   `mapstructure:"enableEncryption"`
-	EncryptionKeyID      string `mapstructure:"encryptionKeyID"      validate:"required_if=EnableEncryption true,omitempty,max=100"`
+	EncryptionKeyID      string `mapstructure:"encryptionKeyID"      validate:"required_if=EnableEncryption true,min=1,max=100"`
 	EnableCompression    bool   `mapstructure:"enableCompression"`
 	CompressionThreshold int    `mapstructure:"compressionThreshold" validate:"min=0,max=1048576"`
 }

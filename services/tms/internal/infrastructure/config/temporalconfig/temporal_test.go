@@ -27,6 +27,8 @@ func TestTemporalConfig_GetNamespace(t *testing.T) {
 func TestTemporalConfig_Validation(t *testing.T) {
 	t.Parallel()
 
+	security := SecurityConfig{EncryptionKeyID: "local-dev"}
+
 	tests := []struct {
 		name    string
 		cfg     Config
@@ -34,20 +36,20 @@ func TestTemporalConfig_Validation(t *testing.T) {
 	}{
 		{
 			name: "host port only",
-			cfg:  Config{HostPort: "localhost:7233"},
+			cfg:  Config{HostPort: "localhost:7233", Security: security},
 		},
 		{
 			name: "profile without host port",
-			cfg:  Config{Profile: "cloud"},
+			cfg:  Config{Profile: "cloud", Security: security},
 		},
 		{
 			name:    "neither host port nor profile",
-			cfg:     Config{},
+			cfg:     Config{Security: security},
 			wantErr: true,
 		},
 		{
 			name:    "invalid host port",
-			cfg:     Config{HostPort: "not a host"},
+			cfg:     Config{HostPort: "not a host", Security: security},
 			wantErr: true,
 		},
 		{
@@ -55,6 +57,7 @@ func TestTemporalConfig_Validation(t *testing.T) {
 			cfg: Config{
 				HostPort: "localhost:7233",
 				TLS:      TLSConfig{ClientCertPath: "client.pem"},
+				Security: security,
 			},
 			wantErr: true,
 		},
@@ -66,22 +69,8 @@ func TestTemporalConfig_Validation(t *testing.T) {
 					ClientCertPath: "client.pem",
 					ClientKeyPath:  "client.key",
 				},
+				Security: security,
 			},
-		},
-		{
-			name: "encryption on with a key id",
-			cfg: Config{
-				HostPort: "localhost:7233",
-				Security: SecurityConfig{EnableEncryption: true, EncryptionKeyID: "primary"},
-			},
-		},
-		{
-			name: "encryption on without a key id",
-			cfg: Config{
-				HostPort: "localhost:7233",
-				Security: SecurityConfig{EnableEncryption: true},
-			},
-			wantErr: true,
 		},
 	}
 

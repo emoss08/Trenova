@@ -6,10 +6,10 @@ import (
 
 type Config struct {
 	BufferFlushInterval time.Duration `mapstructure:"bufferFlushInterval"`
-	BatchSize           int           `mapstructure:"batchSize"           validate:"omitempty,min=1,max=5000"`
-	MaxEntriesPerFlush  int           `mapstructure:"maxEntriesPerFlush"  validate:"omitempty,min=100,max=50000"`
+	BatchSize           int           `mapstructure:"batchSize"           validate:"min=1,max=5000"`
+	MaxEntriesPerFlush  int           `mapstructure:"maxEntriesPerFlush"  validate:"min=100,max=50000"`
 	DLQRetryInterval    time.Duration `mapstructure:"dlqRetryInterval"`
-	DLQMaxRetries       int           `mapstructure:"dlqMaxRetries"       validate:"omitempty,min=1,max=20"`
+	DLQMaxRetries       int           `mapstructure:"dlqMaxRetries"       validate:"min=1,max=20"`
 }
 
 func (c *Config) GetBufferFlushInterval() time.Duration {

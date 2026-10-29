@@ -1,5 +1,4 @@
 app:
-  name: trenova
   env: test
   debug: true
   version: 0.0.1
@@ -39,13 +38,8 @@ cache:
 storage:
   provider: minio
   endpoint: localhost:9001
-  accessKey: minioadmin
-  secretKey: minioadmin
   bucket: trenova-test
   autoCreateBucket: true
-
-system:
-  systemUserPassword: test-system-password
 
 temporal:
   namespace: test

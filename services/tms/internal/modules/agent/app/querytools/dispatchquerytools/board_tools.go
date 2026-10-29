@@ -177,23 +177,17 @@ func NewGetDispatchBoardTool(board boardReader) agenttoolports.AgentQueryTool {
 func (t *getDispatchBoardTool) Name() string { return "dispatch_get_board" }
 
 func (t *getDispatchBoardTool) Description() string {
-	return "The dispatch board: moves in the window with their urgency and coverage, the " +
-		"furthest behind first, and the drivers with availability, hours remaining and last " +
-		"position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who " +
-		"covers it and its pickup and delivery windows. This is the one call for \"what is " +
-		"late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". " +
-		"Urgency follows the move's next stop: the pickup window until it is picked up, then " +
-		"the delivery window. Each late move's lateTo says whether it is late to pick up or " +
-		"to deliver, and lateBy how long past the window's close it is, the way to say it. " +
-		"late lists every late move and no others, a page at a time, without the drivers " +
-		"unless asked; check shipment_get_tracking on a late move before acting on it, since " +
-		"arrivals are sometimes recorded late. A rundown or a list answers from the board as " +
-		"it stands, saying what each is late to do, rather than tracking each move. summary " +
-		"counts every move in the window, listed or not: overdueMoves, dueNowMoves and " +
-		"dueTodayMoves by urgency, and uncoveredPastPickup and uncoveredPickupSoon among the " +
-		"uncovered. On a board, show them with the metrics movesLate, movesDueNow, " +
-		"movesDueToday and movesUncovered. To act on one load, such as a note or a change, " +
-		"find it with shipment_list."
+	return "The dispatch board: moves in the window, furthest behind first, with urgency and " +
+		"coverage, and drivers with availability, hours left and position. Urgency (Late, " +
+		"Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked " +
+		"up, then delivery window. The one call for \"what is late\" (late), \"what is " +
+		"uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo " +
+		"(late to pick up or to deliver) and lateBy (how far past the window). Answer a " +
+		"rundown from the board as it stands, not by tracking each move; check " +
+		"shipment_get_tracking before acting on a late move, since arrivals are sometimes " +
+		"recorded late. summary counts every move in the window, listed or not; on a board, " +
+		"show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. " +
+		"To act on one load, find it with shipment_list."
 }
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
@@ -213,8 +207,8 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 			"type": "boolean",
 			"description": "Only the moves late now: past the pickup window's close with no " +
 				"arrival, or past the delivery window's close once picked up, the same rule as " +
-				"shipment_list's late. A move inside its window is due now, not late. Default " +
-				"false.",
+				"shipment_list's late. A move inside its window is due now, not late. Every " +
+				"late move and no others, a page at a time. Default false.",
 		},
 		paramBoardDrivers: map[string]any{
 			"type": "boolean",

@@ -85,10 +85,10 @@ func (t *CreateScheduleTool) SearchTerms() []string {
 }
 
 func (t *CreateScheduleTool) Description() string {
-	return "Repeat a request in this conversation on a schedule, when the person asks for " +
-		"something every day, every weekday or one day a week (\"schedule this to run " +
-		"everyday at 9:30 AM EST\", \"give me this board every Monday at 8\"). Each run asks " +
-		"request again here, as the person, and the answer posts into this conversation. " +
+	return "Repeat a request in this conversation every day, every weekday or one day a " +
+		"week, when the person asks for it on a schedule. For example, \"schedule this to " +
+		"run everyday at 9:30 AM EST\" or \"give me this board every Monday at 8\". Each run " +
+		"asks request again here, as the person, and the answer posts into this conversation. " +
 		"Write request in full so it stands alone: when they say \"this\", write out what " +
 		"they asked for. time is 24-hour HH:MM. timezone is the clock they named " +
 		"(America/New_York for EST or Eastern); leave it out for their own clock, which is " +

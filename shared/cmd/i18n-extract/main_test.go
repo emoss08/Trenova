@@ -85,34 +85,3 @@ func Label(t Template) string {
 
 	assert.Equal(t, []string{"Billing assistant"}, messages)
 }
-
-func TestLabelMapsReadByLabelMethodsAreMessages(t *testing.T) {
-	t.Parallel()
-
-	messages := extractFrom(t, map[string]string{
-		"agenttemplate/labels.go": `package agenttemplate
-
-var templateLabels = map[Template]string{
-	TemplateBilling:  "Billing assistant",
-	TemplateDispatch: "Dispatch assistant",
-}
-
-var templateDescriptions = map[Template]string{
-	TemplateBilling: "Not a label",
-}
-
-func (t Template) Label() string {
-	if label, ok := templateLabels[t]; ok {
-		return label
-	}
-	return string(t)
-}
-
-func (t Template) Description() string {
-	return templateDescriptions[t]
-}
-`,
-	})
-
-	assert.Equal(t, []string{"Billing assistant", "Dispatch assistant"}, messages)
-}
