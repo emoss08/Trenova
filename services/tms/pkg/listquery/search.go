@@ -16,11 +16,11 @@ func (p *plan) search(query string) keel.Pred {
 		return nil
 	}
 
-	if p.cat.vector >= 0 {
+	if p.cat.Vector >= 0 {
 		return p.vector().Match(query, searchOptions(query)...)
 	}
 
-	if len(p.cat.search) > 0 {
+	if len(p.cat.Search) > 0 {
 		return p.configuredSearch(query)
 	}
 
@@ -28,7 +28,7 @@ func (p *plan) search(query string) keel.Pred {
 }
 
 func (p *plan) rank(query string) keel.Expr {
-	if query == "" || p.cat.vector < 0 {
+	if query == "" || p.cat.Vector < 0 {
 		return nil
 	}
 
@@ -36,7 +36,7 @@ func (p *plan) rank(query string) keel.Expr {
 }
 
 func (p *plan) vector() keel.TSVectorCol {
-	return keel.TSVectorCol{Col: p.baseColumn(p.cat.vector)}
+	return keel.TSVectorCol{Col: p.baseColumn(p.cat.Vector)}
 }
 
 func searchOptions(query string) []keel.SearchOption {
@@ -67,16 +67,16 @@ func hasWebsearchOperators(query string) bool {
 }
 
 func (p *plan) configuredSearch(query string) keel.Pred {
-	alternatives := make([]keel.Pred, 0, len(p.cat.search))
+	alternatives := make([]keel.Pred, 0, len(p.cat.Search))
 	_, numeric := strconv.ParseFloat(query, 64)
 
-	for _, sc := range p.cat.search {
-		expr := keel.DynOf(p.baseColumn(sc.index))
-		switch sc.kind {
+	for _, sc := range p.cat.Search {
+		expr := keel.DynOf(p.baseColumn(sc.Index))
+		switch sc.Kind {
 		case domaintypes.FieldTypeText, domaintypes.FieldTypeComposite:
 			alternatives = append(
 				alternatives,
-				textOf(expr, &p.cat.table.Columns[sc.index]).ContainsFold(query),
+				textOf(expr, &p.cat.Table.Columns[sc.Index]).ContainsFold(query),
 			)
 		case domaintypes.FieldTypeEnum:
 			alternatives = append(alternatives, expr.Cast(keel.TypeString).ContainsFold(query))
@@ -104,12 +104,12 @@ func textOf(expr keel.DynExpr, col *schema.Column) keel.DynExpr {
 }
 
 func (p *plan) columnSearch(query string) keel.Pred {
-	if len(p.cat.strings) == 0 {
+	if len(p.cat.Strings) == 0 {
 		return nil
 	}
 
-	alternatives := make([]keel.Pred, 0, len(p.cat.strings))
-	for _, index := range p.cat.strings {
+	alternatives := make([]keel.Pred, 0, len(p.cat.Strings))
+	for _, index := range p.cat.Strings {
 		alternatives = append(alternatives, keel.DynOf(p.baseColumn(index)).ContainsFold(query))
 	}
 

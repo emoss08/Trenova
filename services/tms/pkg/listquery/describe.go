@@ -3,6 +3,7 @@ package listquery
 import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 )
 
 func Describe(
@@ -13,31 +14,31 @@ func Describe(
 		return nil
 	}
 
-	c := catalogOf(table, func() *domaintypes.PostgresSearchConfig {
+	c := listcatalog.Of(table, func() *domaintypes.PostgresSearchConfig {
 		config := model.GetPostgresSearchConfig()
 		return &config
 	})
 
 	out := &domaintypes.FieldConfiguration{
-		FilterableFields:  make(map[string]bool, len(c.fields)),
-		SortableFields:    make(map[string]bool, len(c.fields)),
-		NonNullableFields: make(map[string]bool, len(c.fields)),
+		FilterableFields:  make(map[string]bool, len(c.Fields)),
+		SortableFields:    make(map[string]bool, len(c.Fields)),
+		NonNullableFields: make(map[string]bool, len(c.Fields)),
 		IntegerFields:     make(map[string]bool),
-		FieldMap:          make(map[string]string, len(c.fields)),
+		FieldMap:          make(map[string]string, len(c.Fields)),
 		EnumMap:           make(map[string]bool),
 	}
-	for name, index := range c.fields {
+	for name, index := range c.Fields {
 		describeColumn(out, name, &table.Columns[index], true)
 	}
-	for name, index := range c.computed {
+	for name, index := range c.Computed {
 		describeColumn(out, name, &table.Columns[index], false)
 	}
-	for relName, rel := range c.relations {
-		if !rel.toOne() {
+	for relName, rel := range c.Relations {
+		if !rel.ToOne() {
 			continue
 		}
-		for name, index := range rel.fields {
-			describeColumn(out, relName+"."+name, &rel.target.Columns[index], false)
+		for name, index := range rel.Fields {
+			describeColumn(out, relName+"."+name, &rel.Target.Columns[index], false)
 		}
 	}
 

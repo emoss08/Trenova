@@ -1,4 +1,4 @@
-package listquery
+package listcatalog
 
 import (
 	"slices"
@@ -11,43 +11,43 @@ import (
 
 const defaultSearchVectorColumn = "search_vector"
 
-type relation struct {
-	index  int32
-	name   string
-	kind   schema.RelKind
-	target *schema.Table
-	fields map[string]int32
+type Relation struct {
+	Index  int32
+	Name   string
+	Kind   schema.RelKind
+	Target *schema.Table
+	Fields map[string]int32
 }
 
-type searchColumn struct {
-	index int32
-	kind  domaintypes.FieldType
+type SearchColumn struct {
+	Index int32
+	Kind  domaintypes.FieldType
 }
 
-type catalog struct {
-	table     *schema.Table
-	fields    map[string]int32
-	computed  map[string]int32
-	relations map[string]relation
-	vector    int32
-	search    []searchColumn
-	fuzzy     [][]int32
-	strings   []int32
+type Catalog struct {
+	Table     *schema.Table
+	Fields    map[string]int32
+	Computed  map[string]int32
+	Relations map[string]Relation
+	Vector    int32
+	Search    []SearchColumn
+	Fuzzy     [][]int32
+	Strings   []int32
 }
 
 var catalogs = struct {
 	sync.RWMutex
-	m map[*schema.Table]*catalog
-}{m: make(map[*schema.Table]*catalog)}
+	m map[*schema.Table]*Catalog
+}{m: make(map[*schema.Table]*Catalog)}
 
-func catalogFor[T any](table *schema.Table) *catalog {
-	return catalogOf(table, searchConfigOf[T])
+func For[T any](table *schema.Table) *Catalog {
+	return Of(table, searchConfigOf[T])
 }
 
-func catalogOf(
+func Of(
 	table *schema.Table,
 	config func() *domaintypes.PostgresSearchConfig,
-) *catalog {
+) *Catalog {
 	catalogs.RLock()
 	c, ok := catalogs.m[table]
 	catalogs.RUnlock()
@@ -55,7 +55,7 @@ func catalogOf(
 		return c
 	}
 
-	c = buildCatalog(table, config())
+	c = Build(table, config())
 
 	catalogs.Lock()
 	defer catalogs.Unlock()
@@ -77,44 +77,44 @@ func searchConfigOf[T any]() *domaintypes.PostgresSearchConfig {
 	return &config
 }
 
-func buildCatalog(
+func Build(
 	table *schema.Table,
 	config *domaintypes.PostgresSearchConfig,
-) *catalog {
-	c := &catalog{
-		table:     table,
-		fields:    columnsByJSON(table),
-		computed:  make(map[string]int32),
-		relations: make(map[string]relation),
-		vector:    -1,
+) *Catalog {
+	c := &Catalog{
+		Table:     table,
+		Fields:    columnsByJSON(table),
+		Computed:  make(map[string]int32),
+		Relations: make(map[string]Relation),
+		Vector:    -1,
 	}
 
-	for _, index := range c.fields {
+	for _, index := range c.Fields {
 		col := &table.Columns[index]
 		if col.Kind == schema.KindString && len(col.Enum) == 0 {
-			c.strings = append(c.strings, index)
+			c.Strings = append(c.Strings, index)
 		}
 	}
-	slices.Sort(c.strings)
+	slices.Sort(c.Strings)
 
 	if config == nil {
 		return c
 	}
 
-	c.relations = queryableRelations(table, config.Relationships)
-	c.computed = computedFields(table, config.ComputedFilters)
+	c.Relations = queryableRelations(table, config.Relationships)
+	c.Computed = computedFields(table, config.ComputedFilters)
 	if config.UseSearchVector {
-		c.vector = vectorColumn(table, config.SearchVectorColumn)
+		c.Vector = vectorColumn(table, config.SearchVectorColumn)
 	}
 	for _, field := range config.SearchableFields {
 		if strings.Contains(field.Name, ".") {
 			continue
 		}
 		if index := table.Column(field.Name); index >= 0 && table.Columns[index].Stored() {
-			c.search = append(c.search, searchColumn{index: index, kind: field.Type})
+			c.Search = append(c.Search, SearchColumn{Index: index, Kind: field.Type})
 		}
 	}
-	c.fuzzy = fuzzyColumns(table, config.FuzzyFields)
+	c.Fuzzy = fuzzyColumns(table, config.FuzzyFields)
 
 	return c
 }
@@ -167,7 +167,7 @@ func vectorColumn(table *schema.Table, name string) int32 {
 func queryableRelations(
 	table *schema.Table,
 	defs []*domaintypes.RelationshipDefintion,
-) map[string]relation {
+) map[string]Relation {
 	allowed := make(map[string]struct{}, len(defs))
 	for _, def := range defs {
 		if def != nil && def.Queryable {
@@ -175,7 +175,7 @@ func queryableRelations(
 		}
 	}
 
-	out := make(map[string]relation, len(allowed))
+	out := make(map[string]Relation, len(allowed))
 	if len(allowed) == 0 {
 		return out
 	}
@@ -191,12 +191,12 @@ func queryableRelations(
 			continue
 		}
 
-		out[rel.JSON] = relation{
-			index:  int32(i),
-			name:   rel.Name,
-			kind:   rel.Kind,
-			target: rel.Target,
-			fields: columnsByJSON(rel.Target),
+		out[rel.JSON] = Relation{
+			Index:  int32(i),
+			Name:   rel.Name,
+			Kind:   rel.Kind,
+			Target: rel.Target,
+			Fields: columnsByJSON(rel.Target),
 		}
 	}
 
@@ -262,13 +262,13 @@ func filterableKind(kind schema.Kind) bool {
 	}
 }
 
-func (c *catalog) relation(name string) (relation, bool) {
-	rel, ok := c.relations[name]
+func (c *Catalog) Relation(name string) (Relation, bool) {
+	rel, ok := c.Relations[name]
 	return rel, ok
 }
 
-func (r relation) toOne() bool {
-	switch r.kind {
+func (r Relation) ToOne() bool {
+	switch r.Kind {
 	case schema.BelongsTo, schema.HasOne, schema.Pick:
 		return true
 	case schema.HasMany, schema.ManyToMany:
@@ -278,6 +278,6 @@ func (r relation) toOne() bool {
 	}
 }
 
-func (r relation) countable() bool {
-	return r.kind == schema.HasMany || r.kind == schema.HasOne
+func (r Relation) Countable() bool {
+	return r.Kind == schema.HasMany || r.Kind == schema.HasOne
 }

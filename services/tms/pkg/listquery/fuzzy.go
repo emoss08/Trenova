@@ -54,7 +54,7 @@ func wordBreak(r rune) bool {
 }
 
 func (p *plan) fuzzy(filter *pagination.QueryOptions) (fuzzyMatch, bool) {
-	if len(p.cat.fuzzy) == 0 {
+	if len(p.cat.Fuzzy) == 0 {
 		return fuzzyMatch{}, false
 	}
 
@@ -83,8 +83,8 @@ func (p *plan) fuzzy(filter *pagination.QueryOptions) (fuzzyMatch, bool) {
 }
 
 func (p *plan) fuzzyTargets() []keel.StringExpr {
-	targets := make([]keel.StringExpr, 0, len(p.cat.fuzzy))
-	for _, columns := range p.cat.fuzzy {
+	targets := make([]keel.StringExpr, 0, len(p.cat.Fuzzy))
+	for _, columns := range p.cat.Fuzzy {
 		expr := keel.DynOf(p.baseColumn(columns[0]))
 		for _, index := range columns[1:] {
 			expr = expr.Concat(keel.DynConst(" ")).Concat(keel.DynOf(p.baseColumn(index)))

@@ -88,7 +88,6 @@ debt:
   services/tms/internal/modules/workspace/jobs/reportjobs: 3282
   services/tms/internal/seeds/fixtures: 23241
   services/tms/internal/seeds/volume: 20065
-  services/tms/pkg/listquery: 1930
   services/tms/pkg/templateengine: 2338
   services/tms/pkg/toolschema: 1782
   services/tms/pkg/validationframework: 2291

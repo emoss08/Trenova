@@ -1,4 +1,4 @@
-package listquery
+package listvalue
 
 import (
 	"math"
@@ -12,32 +12,32 @@ import (
 
 const maxExactJSONInteger = 1 << 53
 
-type valueKind uint8
+type Kind uint8
 
 const (
-	valueText valueKind = iota + 1
-	valueInt
-	valueFloat
-	valueBool
-	valueTime
+	KindText Kind = iota + 1
+	KindInt
+	KindFloat
+	KindBool
+	KindTime
 )
 
-func kindOf(col *schema.Column, text bool) (valueKind, bool) {
+func KindOf(col *schema.Column, text bool) (Kind, bool) {
 	if text {
-		return valueText, true
+		return KindText, true
 	}
 
 	switch col.Kind {
 	case schema.KindString:
-		return valueText, true
+		return KindText, true
 	case schema.KindInt16, schema.KindInt32, schema.KindInt64:
-		return valueInt, true
+		return KindInt, true
 	case schema.KindFloat32, schema.KindFloat64:
-		return valueFloat, true
+		return KindFloat, true
 	case schema.KindBool:
-		return valueBool, true
+		return KindBool, true
 	case schema.KindTime:
-		return valueTime, true
+		return KindTime, true
 	case schema.KindOther,
 		schema.KindBytes,
 		schema.KindJSON,
@@ -50,39 +50,39 @@ func kindOf(col *schema.Column, text bool) (valueKind, bool) {
 	}
 }
 
-func convert(kind valueKind, value any) (any, bool) {
+func Convert(kind Kind, value any) (any, bool) {
 	switch kind {
-	case valueText:
-		return toText(value)
-	case valueInt:
+	case KindText:
+		return ToText(value)
+	case KindInt:
 		return toInt(value)
-	case valueFloat:
-		return toFloat(value)
-	case valueBool:
+	case KindFloat:
+		return ToFloat(value)
+	case KindBool:
 		return toBool(value)
-	case valueTime:
+	case KindTime:
 		return toTime(value)
 	default:
 		return nil, false
 	}
 }
 
-func convertList(kind valueKind, value any) (any, bool) {
+func ConvertList(kind Kind, value any) (any, bool) {
 	items, ok := listItems(value)
 	if !ok {
 		return nil, false
 	}
 
 	switch kind {
-	case valueText:
-		return convertEach[string](items, toText)
-	case valueInt:
+	case KindText:
+		return convertEach[string](items, ToText)
+	case KindInt:
 		return convertEach[int64](items, toInt)
-	case valueFloat:
-		return convertEach[float64](items, toFloat)
-	case valueBool:
+	case KindFloat:
+		return convertEach[float64](items, ToFloat)
+	case KindBool:
 		return convertEach[bool](items, toBool)
-	case valueTime:
+	case KindTime:
 		return convertEach[time.Time](items, toTime)
 	default:
 		return nil, false
@@ -133,7 +133,7 @@ type jsonNumber interface {
 	String() string
 }
 
-func toText(value any) (any, bool) {
+func ToText(value any) (any, bool) {
 	switch v := value.(type) {
 	case string:
 		return v, true
@@ -193,7 +193,7 @@ func wholeNumber(f float64) (any, bool) {
 	return int64(f), true
 }
 
-func toFloat(value any) (any, bool) {
+func ToFloat(value any) (any, bool) {
 	if n, ok := integerOf(value); ok {
 		return float64(n), true
 	}
@@ -276,21 +276,4 @@ func stringOf(value any) (string, bool) {
 	}
 
 	return rv.String(), true
-}
-
-func escapeLike(s string) string {
-	if !strings.ContainsAny(s, `\%_`) {
-		return s
-	}
-
-	var b strings.Builder
-	b.Grow(len(s) + 4)
-	for _, r := range s {
-		if r == '\\' || r == '%' || r == '_' {
-			b.WriteByte('\\')
-		}
-		b.WriteRune(r)
-	}
-
-	return b.String()
 }

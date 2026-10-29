@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -640,7 +641,10 @@ func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, _, err := newPlan(testTrucks.Query(), nil).keysetOrder([]domaintypes.SortField{tc.sort})
+			_, _, err := newPlan(
+				testTrucks.Query(),
+				nil,
+			).keysetOrder([]domaintypes.SortField{tc.sort})
 
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
@@ -728,24 +732,24 @@ func TestKeysetAfter_RefusesACursorOfAnotherSort(t *testing.T) {
 func TestCatalog_ResolvesJSONNamesThroughTheSchema(t *testing.T) {
 	t.Parallel()
 
-	cat := catalogFor[testTruck](testTrucks.Ref.Table)
+	cat := listcatalog.For[testTruck](testTrucks.Ref.Table)
 
-	assert.Contains(t, cat.fields, "createdAt")
-	assert.Contains(t, cat.fields, "ownerId")
-	assert.NotContains(t, cat.fields, "token")
-	assert.NotContains(t, cat.fields, "created_at")
-	assert.NotContains(t, cat.fields, "searchVector")
-	assert.Equal(t, int32(10), cat.vector)
+	assert.Contains(t, cat.Fields, "createdAt")
+	assert.Contains(t, cat.Fields, "ownerId")
+	assert.NotContains(t, cat.Fields, "token")
+	assert.NotContains(t, cat.Fields, "created_at")
+	assert.NotContains(t, cat.Fields, "searchVector")
+	assert.Equal(t, int32(10), cat.Vector)
 
-	owner, ok := cat.relation("owner")
+	owner, ok := cat.Relation("owner")
 	require.True(t, ok)
-	assert.True(t, owner.toOne())
-	assert.Contains(t, owner.fields, "name")
-	assert.NotContains(t, owner.fields, "secret")
+	assert.True(t, owner.ToOne())
+	assert.Contains(t, owner.Fields, "name")
+	assert.NotContains(t, owner.Fields, "secret")
 
-	loads, ok := cat.relation("loads")
+	loads, ok := cat.Relation("loads")
 	require.True(t, ok)
-	assert.True(t, loads.countable())
+	assert.True(t, loads.Countable())
 }
 
 func TestComputedFilters_ResolveOnlyWithTheRepositorysExpression(t *testing.T) {
@@ -761,19 +765,23 @@ func TestComputedFilters_ResolveOnlyWithTheRepositorysExpression(t *testing.T) {
 		Flags:  schema.FlagComputed | schema.FlagNullable,
 	})
 	config := &domaintypes.PostgresSearchConfig{ComputedFilters: []string{"lastSeenId"}}
-	cat := buildCatalog(table, config)
+	cat := listcatalog.Build(table, config)
 	ref := &keel.Ref{Table: table}
 
 	_, ok := (&plan{cat: cat, ref: ref}).resolve("lastSeenId")
 	assert.False(t, ok, "a computed field without its expression is not filterable")
 
-	p := &plan{cat: cat, ref: ref, computed: map[string]keel.Expr{"lastSeenId": keel.DynLit("loc_1")}}
+	p := &plan{
+		cat:      cat,
+		ref:      ref,
+		computed: map[string]keel.Expr{"lastSeenId": keel.DynLit("loc_1")},
+	}
 	fd, ok := p.resolve("lastSeenId")
 	require.True(t, ok)
 	assert.False(t, fd.base)
 	assert.Equal(t, "last_seen_id", fd.col.Name)
 
-	_, ok = (&plan{cat: buildCatalog(table, &domaintypes.PostgresSearchConfig{}), ref: ref,
+	_, ok = (&plan{cat: listcatalog.Build(table, &domaintypes.PostgresSearchConfig{}), ref: ref,
 		computed: p.computed}).resolve("lastSeenId")
 	assert.False(t, ok, "a computed field the entity does not list stays unfilterable")
 }

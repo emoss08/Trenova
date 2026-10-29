@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func TestCatalog_KeepsOnlyFuzzyFieldsOfStoredTextColumns(t *testing.T) {
 	t.Parallel()
 
 	table := newTrucksTable("test_fuzzy_trucks", "ft", testOwners)
-	cat := buildCatalog(table, &domaintypes.PostgresSearchConfig{
+	cat := listcatalog.Build(table, &domaintypes.PostgresSearchConfig{
 		FuzzyFields: []domaintypes.FuzzyField{
 			{"code"},
 			{"code", "description"},
@@ -64,7 +65,7 @@ func TestCatalog_KeepsOnlyFuzzyFieldsOfStoredTextColumns(t *testing.T) {
 
 	code := table.Column("code")
 	description := table.Column("description")
-	assert.Equal(t, [][]int32{{code}, {code, description}}, cat.fuzzy)
+	assert.Equal(t, [][]int32{{code}, {code, description}}, cat.Fuzzy)
 }
 
 func closeSpelling(n int) string {
