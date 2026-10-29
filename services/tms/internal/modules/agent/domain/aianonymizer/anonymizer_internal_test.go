@@ -1,4 +1,4 @@
-package aitraining
+package aianonymizer
 
 import (
 	"math/rand/v2"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +74,7 @@ func sampleSource() *Source {
 
 	return &Source{
 		FileName:   "AFB-7731902 Rate Con Northstar.PDF",
-		Pages:      []ExamplePage{{Number: 1, Text: rateConfirmation}},
+		Pages:      []aitraining.ExamplePage{{Number: 1, Text: rateConfirmation}},
 		Target:     target,
 		Prediction: prediction,
 		Issuer:     "Acme Freight Brokerage",
@@ -170,14 +171,16 @@ func TestAnonymizeDropsWhenAKnownValueSurvives(t *testing.T) {
 	t.Parallel()
 
 	src := sampleSource()
-	src.Pages = []ExamplePage{{Number: 1, Text: "Shipper: Pacific-Coast/Produce loads at dock"}}
+	src.Pages = []aitraining.ExamplePage{
+		{Number: 1, Text: "Shipper: Pacific-Coast/Produce loads at dock"},
+	}
 	src.Target.Stops[0].Name = "Pacific Coast Produce"
 	src.Target.Fields[aicorrection.FieldShipper] = "PacificCoastProduce Incorporated Holdings"
 
 	_, err := Anonymize(src, nil, newRNG(3))
 	require.NoError(t, err)
 
-	src.Pages = []ExamplePage{{Number: 1, Text: "Ship from Pacific Coast Produce"}}
+	src.Pages = []aitraining.ExamplePage{{Number: 1, Text: "Ship from Pacific Coast Produce"}}
 	src.Target.Fields["billTo"] = "Coastline"
 	identity := NewIdentity(&IdentityValues{Cities: []string{"Coast Produce Line"}})
 	out, err := Anonymize(src, identity, newRNG(3))
@@ -190,13 +193,13 @@ func TestResidualCheckRejectsSurvivors(t *testing.T) {
 
 	known := []*knownValue{partyKnown("Pacific Coast Produce"), identifierKnown("AFB-7731902")}
 	assert.True(t, residual(&Anonymized{
-		Pages: []ExamplePage{{Text: "pacific  coast produce"}},
+		Pages: []aitraining.ExamplePage{{Text: "pacific  coast produce"}},
 	}, known))
 	assert.True(t, residual(&Anonymized{
-		Pages: []ExamplePage{{Text: "ref AFB 7731902"}},
+		Pages: []aitraining.ExamplePage{{Text: "ref AFB 7731902"}},
 	}, known))
 	assert.False(t, residual(&Anonymized{
-		Pages: []ExamplePage{{Text: "Harbor Supply"}},
+		Pages: []aitraining.ExamplePage{{Text: "Harbor Supply"}},
 	}, known))
 }
 
@@ -233,7 +236,7 @@ func TestCompactDatesAreKept(t *testing.T) {
 	t.Parallel()
 
 	out, err := Anonymize(&Source{
-		Pages: []ExamplePage{{Number: 1, Text: "Ship date 20260314 ref 44871203"}},
+		Pages: []aitraining.ExamplePage{{Number: 1, Text: "Ship date 20260314 ref 44871203"}},
 	}, nil, newRNG(9))
 	require.NoError(t, err)
 	assert.Contains(t, out.Pages[0].Text, "20260314")

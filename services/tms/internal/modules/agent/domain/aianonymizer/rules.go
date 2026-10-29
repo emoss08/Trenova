@@ -1,4 +1,4 @@
-package aitraining
+package aianonymizer
 
 import (
 	"regexp"

@@ -590,7 +590,7 @@ GPU timer          trenova ai retraining run
 - **Policy.** The `aiRetraining` section of the configuration, off until `enabled: true`. Each
   cycle copies the policy it was planned under (`ai_retraining_cycles`), so a later change to the
   gate never rewrites an old verdict.
-- **The decision.** `aitraining.PlanRetraining`, a pure function. In order:
+- **The decision.** `airetraining.PlanRetraining`, a pure function. In order:
   - an open cycle (exporting, ready or training) or a running training export skips it;
   - fewer than `minIntervalDays` since the last cycle that exported skips it (`TooSoon`), unless a
     provider is drifting and `retrainOnDrift` is on;

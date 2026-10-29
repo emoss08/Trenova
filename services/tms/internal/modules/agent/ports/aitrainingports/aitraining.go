@@ -3,6 +3,7 @@ package aitrainingports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,22 +97,22 @@ type AITrainingRecordRepository interface {
 }
 
 type ListRetrainingCyclesRequest struct {
-	Statuses []aitraining.RetrainingStatus
+	Statuses []airetraining.RetrainingStatus
 	Limit    int
 }
 
 type RetrainingCycleRepository interface {
 	Create(
 		ctx context.Context,
-		entity *aitraining.RetrainingCycle,
-	) (*aitraining.RetrainingCycle, error)
-	GetByID(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
+		entity *airetraining.RetrainingCycle,
+	) (*airetraining.RetrainingCycle, error)
+	GetByID(ctx context.Context, id pulid.ID) (*airetraining.RetrainingCycle, error)
 	List(
 		ctx context.Context,
 		req ListRetrainingCyclesRequest,
-	) ([]*aitraining.RetrainingCycle, error)
+	) ([]*airetraining.RetrainingCycle, error)
 	Update(
 		ctx context.Context,
-		entity *aitraining.RetrainingCycle,
-	) (*aitraining.RetrainingCycle, error)
+		entity *airetraining.RetrainingCycle,
+	) (*airetraining.RetrainingCycle, error)
 }

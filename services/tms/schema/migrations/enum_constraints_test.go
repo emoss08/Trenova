@@ -28,8 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -106,15 +106,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_ai_retraining_cycles_status",
-			values: stringsOf(aitraining.AllRetrainingStatuses()),
+			values: stringsOf(airetraining.AllRetrainingStatuses()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_trigger",
-			values: stringsOf(aitraining.AllRetrainingTriggers()),
+			values: stringsOf(airetraining.AllRetrainingTriggers()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_skip_reason",
-			values: stringsOf(aitraining.AllRetrainingSkipReasons()),
+			values: stringsOf(airetraining.AllRetrainingSkipReasons()),
 		},
 		{
 			name:   "ck_ai_providers_reasoning_effort",

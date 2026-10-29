@@ -1,10 +1,11 @@
-package aitraining
+package airetraining
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -20,8 +21,8 @@ func testPolicy() RetrainingPolicy {
 		MinNewExamples:       1000,
 		MinIntervalDays:      28,
 		RetrainOnDrift:       true,
-		MaxPerOrganization:   DefaultMaxPerOrganization,
-		ValidationPercent:    DefaultValidationPercent,
+		MaxPerOrganization:   aitraining.DefaultMaxPerOrganization,
+		ValidationPercent:    aitraining.DefaultValidationPercent,
 		StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 		Gate:                 RetrainingGate{MinAccuracyPercent: 85, MaxRegressionPoints: 0},
 	}
@@ -46,7 +47,12 @@ func TestNewRetrainingWindow(t *testing.T) {
 	first := NewRetrainingWindow(retrainingNow, &policy, nil)
 	assert.Equal(t, daysAgo(365), first.CapturedFrom)
 	assert.Equal(t, retrainingNow, first.CapturedTo)
-	assert.Equal(t, first.CapturedFrom, first.NewSince, "a first cycle counts the whole window as new")
+	assert.Equal(
+		t,
+		first.CapturedFrom,
+		first.NewSince,
+		"a first cycle counts the whole window as new",
+	)
 
 	after := NewRetrainingWindow(retrainingNow, &policy, lastCycle(30))
 	assert.Equal(t, daysAgo(30), after.NewSince, "only corrections after the last window are new")
@@ -207,40 +213,50 @@ func TestRetrainingCycleExportFinished(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		export  TrainingExport
+		export  aitraining.TrainingExport
 		changed bool
 		status  RetrainingStatus
 		message string
 	}{
 		{
 			name:    "still running",
-			export:  TrainingExport{Status: ExportStatusRunning},
+			export:  aitraining.TrainingExport{Status: aitraining.ExportStatusRunning},
 			changed: false,
 			status:  RetrainingStatusExporting,
 		},
 		{
-			name:    "completed with both splits",
-			export:  TrainingExport{Status: ExportStatusCompleted, TrainExamples: 900, ValidationExamples: 100},
+			name: "completed with both splits",
+			export: aitraining.TrainingExport{
+				Status:             aitraining.ExportStatusCompleted,
+				TrainExamples:      900,
+				ValidationExamples: 100,
+			},
 			changed: true,
 			status:  RetrainingStatusReady,
 		},
 		{
-			name:    "completed without a validation set",
-			export:  TrainingExport{Status: ExportStatusCompleted, TrainExamples: 12},
+			name: "completed without a validation set",
+			export: aitraining.TrainingExport{
+				Status:        aitraining.ExportStatusCompleted,
+				TrainExamples: 12,
+			},
 			changed: true,
 			status:  RetrainingStatusFailed,
 			message: "The export kept 12 training and 0 validation examples; both are needed",
 		},
 		{
-			name:    "failed",
-			export:  TrainingExport{Status: ExportStatusFailed, FailureMessage: "storage unavailable"},
+			name: "failed",
+			export: aitraining.TrainingExport{
+				Status:         aitraining.ExportStatusFailed,
+				FailureMessage: "storage unavailable",
+			},
 			changed: true,
 			status:  RetrainingStatusFailed,
 			message: "The training export was Failed: storage unavailable",
 		},
 		{
 			name:    "canceled",
-			export:  TrainingExport{Status: ExportStatusCanceled},
+			export:  aitraining.TrainingExport{Status: aitraining.ExportStatusCanceled},
 			changed: true,
 			status:  RetrainingStatusFailed,
 			message: "The training export was Canceled",
@@ -263,8 +279,14 @@ func TestRetrainingCycleExportFinished(t *testing.T) {
 	}
 
 	ready := &RetrainingCycle{Status: RetrainingStatusReady}
-	assert.False(t, ready.ExportFinished(&TrainingExport{Status: ExportStatusFailed}, retrainingNow),
-		"only an exporting cycle follows its export")
+	assert.False(
+		t,
+		ready.ExportFinished(
+			&aitraining.TrainingExport{Status: aitraining.ExportStatusFailed},
+			retrainingNow,
+		),
+		"only an exporting cycle follows its export",
+	)
 }
 
 func TestRetrainingCycleClaimAndLease(t *testing.T) {
@@ -311,11 +333,13 @@ func trainingCycle(gate RetrainingGate) *RetrainingCycle {
 	}
 }
 
-func report(modelCorrect, modelScored, baselineCorrect, baselineScored int) *ScoreReport {
-	return &ScoreReport{
+func report(
+	modelCorrect, modelScored, baselineCorrect, baselineScored int,
+) *aitraining.ScoreReport {
+	return &aitraining.ScoreReport{
 		Examples: 40,
-		Model:    ScoreSide{Correct: modelCorrect, Scored: modelScored},
-		Baseline: ScoreSide{Correct: baselineCorrect, Scored: baselineScored},
+		Model:    aitraining.ScoreSide{Correct: modelCorrect, Scored: modelScored},
+		Baseline: aitraining.ScoreSide{Correct: baselineCorrect, Scored: baselineScored},
 	}
 }
 
@@ -325,7 +349,7 @@ func TestRetrainingCycleSettle(t *testing.T) {
 	tests := []struct {
 		name    string
 		gate    RetrainingGate
-		report  *ScoreReport
+		report  *aitraining.ScoreReport
 		status  RetrainingStatus
 		message string
 	}{
@@ -398,8 +422,11 @@ func TestRetrainingCycleSettleNeedsTheLeaseAndAReport(t *testing.T) {
 	t.Parallel()
 
 	cycle := trainingCycle(RetrainingGate{})
-	require.ErrorIs(t, cycle.Settle("gpu-2", &RetrainingResult{Report: report(1, 1, 1, 1)}, retrainingNow),
-		ErrRetrainingLeaseLost)
+	require.ErrorIs(
+		t,
+		cycle.Settle("gpu-2", &RetrainingResult{Report: report(1, 1, 1, 1)}, retrainingNow),
+		ErrRetrainingLeaseLost,
+	)
 
 	var validation *errortypes.Error
 	err := cycle.Settle("gpu-1", &RetrainingResult{}, retrainingNow)
@@ -434,7 +461,9 @@ func TestRetrainingCycleCancel(t *testing.T) {
 func TestRetrainingCycleValidate(t *testing.T) {
 	t.Parallel()
 
-	cycle := PlanRetraining(&RetrainingPlanInput{Now: retrainingNow, Policy: testPolicy(), NewExamples: 5000})
+	cycle := PlanRetraining(
+		&RetrainingPlanInput{Now: retrainingNow, Policy: testPolicy(), NewExamples: 5000},
+	)
 	cycle.SkipReason = RetrainingSkipTooSoon
 	cycle.ValidationPercent = 0
 	multiErr := errortypes.NewMultiError()
@@ -466,7 +495,12 @@ func TestRetrainingAlertSummary(t *testing.T) {
 			text:  "12 new corrections, 1000 needed",
 		},
 		{
-			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusExporting, Trigger: RetrainingTriggerDrift, NewExamples: 1400},
+			cycle: RetrainingCycle{
+				ID:          id,
+				Status:      RetrainingStatusExporting,
+				Trigger:     RetrainingTriggerDrift,
+				NewExamples: 1400,
+			},
 			event: "retraining.exporting",
 			text:  "started (drift) with 1400 new corrections",
 		},
@@ -479,12 +513,20 @@ func TestRetrainingAlertSummary(t *testing.T) {
 			text:  "model 91.00% against production 89.00% on 40 validation examples. Model: /m",
 		},
 		{
-			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusRejected, GateMessage: "Accuracy 80.00% is below the minimum of 85%"},
+			cycle: RetrainingCycle{
+				ID:          id,
+				Status:      RetrainingStatusRejected,
+				GateMessage: "Accuracy 80.00% is below the minimum of 85%",
+			},
 			event: "retraining.rejected",
 			text:  "rejected by its gate: Accuracy 80.00% is below the minimum of 85%",
 		},
 		{
-			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusFailed, FailureMessage: "out of GPU memory"},
+			cycle: RetrainingCycle{
+				ID:             id,
+				Status:         RetrainingStatusFailed,
+				FailureMessage: "out of GPU memory",
+			},
 			event: "retraining.failed",
 			text:  "failed: out of GPU memory",
 		},

@@ -1,4 +1,4 @@
-package aitraining
+package airetraining
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -39,7 +40,7 @@ type RetrainingGate struct {
 	MaxRegressionPoints int `json:"maxRegressionPoints"`
 }
 
-func (g RetrainingGate) Check(model, baseline *ScoreSide) (passed bool, reason string) {
+func (g RetrainingGate) Check(model, baseline *aitraining.ScoreSide) (passed bool, reason string) {
 	if model.Scored == 0 {
 		return false, "No field of the validation set was scored"
 	}
@@ -171,7 +172,7 @@ type RetrainingResult struct {
 	RunDirectory   string
 	ModelDirectory string
 	PromptSHA256   string
-	Report         *ScoreReport
+	Report         *aitraining.ScoreReport
 }
 
 type RetrainingCycle struct {
@@ -246,25 +247,25 @@ func (c *RetrainingCycle) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&c.RequestedBy,
 			validation.Required.Error("Say who is requesting the retraining"),
-			validation.RuneLength(1, MaxRequestedByRunes).Error(
-				fmt.Sprintf("Requested by must be at most %d characters", MaxRequestedByRunes),
+			validation.RuneLength(1, aitraining.MaxRequestedByRunes).Error(
+				fmt.Sprintf("Requested by must be at most %d characters", aitraining.MaxRequestedByRunes),
 			),
 		),
 		validation.Field(&c.Note,
-			validation.RuneLength(0, MaxNoteRunes).Error(
-				fmt.Sprintf("The note must be at most %d characters", MaxNoteRunes),
+			validation.RuneLength(0, aitraining.MaxNoteRunes).Error(
+				fmt.Sprintf("The note must be at most %d characters", aitraining.MaxNoteRunes),
 			),
 		),
 		validation.Field(&c.MaxPerOrganization,
 			validation.Min(1).Error("Export at least one example per organization"),
-			validation.Max(MaxMaxPerOrganization).Error(
-				fmt.Sprintf("Export at most %d examples per organization", MaxMaxPerOrganization),
+			validation.Max(aitraining.MaxMaxPerOrganization).Error(
+				fmt.Sprintf("Export at most %d examples per organization", aitraining.MaxMaxPerOrganization),
 			),
 		),
 		validation.Field(&c.ValidationPercent,
 			validation.Min(1).Error("Hold out at least one percent for validation"),
-			validation.Max(MaxValidationPercent).Error(
-				fmt.Sprintf("The validation share must be at most %d percent", MaxValidationPercent),
+			validation.Max(aitraining.MaxValidationPercent).Error(
+				fmt.Sprintf("The validation share must be at most %d percent", aitraining.MaxValidationPercent),
 			),
 		),
 		validation.Field(&c.MinAccuracyPercent,
@@ -315,13 +316,13 @@ func (c *RetrainingCycle) StartedExport(exportID pulid.ID) {
 	c.ExportID = &exportID
 }
 
-func (c *RetrainingCycle) ExportFinished(export *TrainingExport, now int64) bool {
+func (c *RetrainingCycle) ExportFinished(export *aitraining.TrainingExport, now int64) bool {
 	if c.Status != RetrainingStatusExporting || export == nil {
 		return false
 	}
 
 	switch export.Status {
-	case ExportStatusCompleted:
+	case aitraining.ExportStatusCompleted:
 		if export.TrainExamples == 0 || export.ValidationExamples == 0 {
 			c.fail(fmt.Sprintf(
 				"The export kept %d training and %d validation examples; both are needed",
@@ -332,7 +333,7 @@ func (c *RetrainingCycle) ExportFinished(export *TrainingExport, now int64) bool
 		}
 		c.Status = RetrainingStatusReady
 		return true
-	case ExportStatusFailed, ExportStatusCanceled:
+	case aitraining.ExportStatusFailed, aitraining.ExportStatusCanceled:
 		message := "The training export was " + stringutils.HumanizeCamelCase(
 			export.Status.String(),
 		)
@@ -341,7 +342,7 @@ func (c *RetrainingCycle) ExportFinished(export *TrainingExport, now int64) bool
 		}
 		c.fail(message, now)
 		return true
-	case ExportStatusQueued, ExportStatusRunning:
+	case aitraining.ExportStatusQueued, aitraining.ExportStatusRunning:
 		return false
 	default:
 		return false
@@ -478,7 +479,7 @@ func (c *RetrainingCycle) BaselineAccuracy() float64 {
 
 func (c *RetrainingCycle) fail(message string, now int64) {
 	c.Status = RetrainingStatusFailed
-	c.FailureMessage = stringutils.TruncateRunes(message, MaxFailureRunes)
+	c.FailureMessage = stringutils.TruncateRunes(message, aitraining.MaxFailureRunes)
 	c.release(now)
 }
 

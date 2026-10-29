@@ -69,7 +69,7 @@ A correction is left out, and counted in `dropped`, for any of these reasons:
 
 ## Anonymization
 
-`aitraining.Anonymize` runs inside the worker, before anything is written, and no model is
+`aianonymizer.Anonymize` runs inside the worker, before anything is written, and no model is
 called. It replaces the values Trenova knows and the patterns below; an identifier it does not
 know can survive in free text (see **Known limits**). Each example gets its own random
 surrogates, from a fresh ChaCha8 seed. The same original becomes the same surrogate throughout one example, in the

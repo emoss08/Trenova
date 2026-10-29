@@ -350,7 +350,7 @@ chain is signed with symmetric HMAC; Ed25519 signatures would let third parties 
 
 `shared/piiscrub` runs six RE2 patterns plus Luhn, ABA and IBAN checks over embedding inputs
 (`agentcompletion/completionrouter/embed.go:105`) and training-export text
-(`aitraining/anonymizer.go:197`), and the anonymizer adds about twelve more regex passes. Rust's
+(`aianonymizer/anonymizer.go`), and the anonymizer adds about twelve more regex passes. Rust's
 `RegexSet` matches all patterns in one pass and is much faster per byte. Volume is modest today, so act
 only if it shows up in a profile.
 

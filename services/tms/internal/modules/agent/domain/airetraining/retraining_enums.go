@@ -1,4 +1,4 @@
-package aitraining
+package airetraining
 
 type RetrainingStatus string
 

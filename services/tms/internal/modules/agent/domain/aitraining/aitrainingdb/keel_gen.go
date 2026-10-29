@@ -3,6 +3,7 @@
 package aitrainingdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"context"
 	"unsafe"
 
@@ -15,12 +16,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// retrainingCyclesTable is the schema of aitraining.RetrainingCycle.
+// retrainingCyclesTable is the schema of airetraining.RetrainingCycle.
 var retrainingCyclesTable = schema.Table{
 	Name:   "ai_retraining_cycles",
 	Quoted: `"ai_retraining_cycles"`,
 	Alias:  "arc",
-	Model:  "aitraining.RetrainingCycle",
+	Model:  "airetraining.RetrainingCycle",
 	Label:  `Retraining Cycle`,
 	Plural: `Retraining Cycles`,
 	Columns: []schema.Column{
@@ -76,16 +77,16 @@ var retrainingCyclesTable = schema.Table{
 	IDPrefix:   "airc_",
 	New:        newRetrainingCycle,
 	NewN:       newNRetrainingCycle,
-	Size:       unsafe.Sizeof(aitraining.RetrainingCycle{}),
+	Size:       unsafe.Sizeof(airetraining.RetrainingCycle{}),
 	Ptr:        ptrRetrainingCycle,
 	Value:      valueRetrainingCycle,
 }
 
 var retrainingCyclesRef = keel.Ref{Table: &retrainingCyclesTable}
 
-// RetrainingCyclesTable is the table of aitraining.RetrainingCycle.
+// RetrainingCyclesTable is the table of airetraining.RetrainingCycle.
 type RetrainingCyclesTable struct {
-	keel.Handle[*aitraining.RetrainingCycle]
+	keel.Handle[*airetraining.RetrainingCycle]
 	ID                   keelkinds.PulidIDCol
 	Task                 aicorrectiondb.TaskCol
 	Trigger              RetrainingTriggerCol
@@ -128,7 +129,7 @@ type RetrainingCyclesTable struct {
 
 // RetrainingCycles references the ai_retraining_cycles table.
 var RetrainingCycles = &RetrainingCyclesTable{
-	Handle:               keel.Handle[*aitraining.RetrainingCycle]{Ref: &retrainingCyclesRef},
+	Handle:               keel.Handle[*airetraining.RetrainingCycle]{Ref: &retrainingCyclesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 0}}},
 	Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 1}}},
 	Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 2}}},
@@ -172,7 +173,7 @@ var RetrainingCycles = &RetrainingCyclesTable{
 // BuildRetrainingCycles builds the handle of ai_retraining_cycles for ref. Generated relation and alias methods call it.
 func BuildRetrainingCycles(r *keel.Ref) *RetrainingCyclesTable {
 	return &RetrainingCyclesTable{
-		Handle:               keel.Handle[*aitraining.RetrainingCycle]{Ref: r},
+		Handle:               keel.Handle[*airetraining.RetrainingCycle]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -223,18 +224,18 @@ func (t *RetrainingCyclesTable) As(alias string) *RetrainingCyclesTable {
 }
 
 // Get returns the ai_retraining_cycles row with the given key, or keel.ErrNotFound.
-func (t *RetrainingCyclesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aitraining.RetrainingCycle, error) {
+func (t *RetrainingCyclesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*airetraining.RetrainingCycle, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRetrainingCycle() unsafe.Pointer { return unsafe.Pointer(new(aitraining.RetrainingCycle)) }
+func newRetrainingCycle() unsafe.Pointer { return unsafe.Pointer(new(airetraining.RetrainingCycle)) }
 
 func newNRetrainingCycle(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]aitraining.RetrainingCycle, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]airetraining.RetrainingCycle, n)))
 }
 
 func ptrRetrainingCycle(p unsafe.Pointer, c int32) any {
-	r := (*aitraining.RetrainingCycle)(p)
+	r := (*airetraining.RetrainingCycle)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -317,7 +318,7 @@ func ptrRetrainingCycle(p unsafe.Pointer, c int32) any {
 }
 
 func valueRetrainingCycle(p unsafe.Pointer, c int32) any {
-	r := (*aitraining.RetrainingCycle)(p)
+	r := (*airetraining.RetrainingCycle)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1007,114 +1008,114 @@ func (c ExportStatusCol) NotIn(vs ...aitraining.ExportStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RetrainingSkipReasonCol is a column of aitraining.RetrainingSkipReason values.
+// RetrainingSkipReasonCol is a column of airetraining.RetrainingSkipReason values.
 type RetrainingSkipReasonCol struct{ keel.StringCol }
 
-func (c RetrainingSkipReasonCol) Eq(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Eq(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RetrainingSkipReasonCol) Ne(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Ne(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RetrainingSkipReasonCol) Gt(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Gt(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RetrainingSkipReasonCol) Gte(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Gte(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RetrainingSkipReasonCol) Lt(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Lt(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RetrainingSkipReasonCol) Lte(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Lte(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RetrainingSkipReasonCol) IsDistinctFrom(v aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) IsDistinctFrom(v airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RetrainingSkipReasonCol) Between(lo, hi aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) Between(lo, hi airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RetrainingSkipReasonCol) To(v aitraining.RetrainingSkipReason) keel.Assignment {
+func (c RetrainingSkipReasonCol) To(v airetraining.RetrainingSkipReason) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RetrainingSkipReasonCol) In(vs ...aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) In(vs ...airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RetrainingSkipReasonCol) NotIn(vs ...aitraining.RetrainingSkipReason) keel.Pred {
+func (c RetrainingSkipReasonCol) NotIn(vs ...airetraining.RetrainingSkipReason) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RetrainingStatusCol is a column of aitraining.RetrainingStatus values.
+// RetrainingStatusCol is a column of airetraining.RetrainingStatus values.
 type RetrainingStatusCol struct{ keel.StringCol }
 
-func (c RetrainingStatusCol) Eq(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Eq(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RetrainingStatusCol) Ne(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Ne(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RetrainingStatusCol) Gt(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Gt(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RetrainingStatusCol) Gte(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Gte(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RetrainingStatusCol) Lt(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Lt(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RetrainingStatusCol) Lte(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Lte(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RetrainingStatusCol) IsDistinctFrom(v aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) IsDistinctFrom(v airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RetrainingStatusCol) Between(lo, hi aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) Between(lo, hi airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RetrainingStatusCol) To(v aitraining.RetrainingStatus) keel.Assignment {
+func (c RetrainingStatusCol) To(v airetraining.RetrainingStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RetrainingStatusCol) In(vs ...aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) In(vs ...airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RetrainingStatusCol) NotIn(vs ...aitraining.RetrainingStatus) keel.Pred {
+func (c RetrainingStatusCol) NotIn(vs ...airetraining.RetrainingStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RetrainingTriggerCol is a column of aitraining.RetrainingTrigger values.
+// RetrainingTriggerCol is a column of airetraining.RetrainingTrigger values.
 type RetrainingTriggerCol struct{ keel.StringCol }
 
-func (c RetrainingTriggerCol) Eq(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Eq(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RetrainingTriggerCol) Ne(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Ne(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RetrainingTriggerCol) Gt(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Gt(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RetrainingTriggerCol) Gte(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Gte(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RetrainingTriggerCol) Lt(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Lt(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RetrainingTriggerCol) Lte(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Lte(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RetrainingTriggerCol) IsDistinctFrom(v aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) IsDistinctFrom(v airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RetrainingTriggerCol) Between(lo, hi aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) Between(lo, hi airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RetrainingTriggerCol) To(v aitraining.RetrainingTrigger) keel.Assignment {
+func (c RetrainingTriggerCol) To(v airetraining.RetrainingTrigger) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RetrainingTriggerCol) In(vs ...aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) In(vs ...airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RetrainingTriggerCol) NotIn(vs ...aitraining.RetrainingTrigger) keel.Pred {
+func (c RetrainingTriggerCol) NotIn(vs ...airetraining.RetrainingTrigger) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

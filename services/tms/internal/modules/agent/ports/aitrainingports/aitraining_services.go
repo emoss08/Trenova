@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -121,7 +122,7 @@ type HeartbeatAIRetrainingRequest struct {
 type RecordAIRetrainingRequest struct {
 	CycleID pulid.ID
 	Trainer string
-	Result  *aitraining.RetrainingResult
+	Result  *airetraining.RetrainingResult
 }
 
 type FailAIRetrainingRequest struct {
@@ -131,30 +132,30 @@ type FailAIRetrainingRequest struct {
 }
 
 type AIRetrainingService interface {
-	Plan(ctx context.Context, req *PlanAIRetrainingRequest) (*aitraining.RetrainingCycle, error)
+	Plan(ctx context.Context, req *PlanAIRetrainingRequest) (*airetraining.RetrainingCycle, error)
 	Reconcile(ctx context.Context) (int, error)
 	ClaimNext(
 		ctx context.Context,
 		req *ClaimAIRetrainingRequest,
-	) (*aitraining.RetrainingCycle, error)
+	) (*airetraining.RetrainingCycle, error)
 	Heartbeat(
 		ctx context.Context,
 		req *HeartbeatAIRetrainingRequest,
-	) (*aitraining.RetrainingCycle, error)
+	) (*airetraining.RetrainingCycle, error)
 	Record(
 		ctx context.Context,
 		req *RecordAIRetrainingRequest,
-	) (*aitraining.RetrainingCycle, error)
+	) (*airetraining.RetrainingCycle, error)
 	FailTraining(
 		ctx context.Context,
 		req *FailAIRetrainingRequest,
-	) (*aitraining.RetrainingCycle, error)
-	Cancel(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
-	List(ctx context.Context, limit int) ([]*aitraining.RetrainingCycle, error)
-	Get(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
+	) (*airetraining.RetrainingCycle, error)
+	Cancel(ctx context.Context, id pulid.ID) (*airetraining.RetrainingCycle, error)
+	List(ctx context.Context, limit int) ([]*airetraining.RetrainingCycle, error)
+	Get(ctx context.Context, id pulid.ID) (*airetraining.RetrainingCycle, error)
 	LeaseDuration() time.Duration
 }
 
 type RetrainingAlerter interface {
-	AlertRetraining(ctx context.Context, cycle *aitraining.RetrainingCycle) error
+	AlertRetraining(ctx context.Context, cycle *airetraining.RetrainingCycle) error
 }

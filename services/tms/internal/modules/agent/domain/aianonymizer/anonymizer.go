@@ -1,4 +1,4 @@
-package aitraining
+package aianonymizer
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/piiscrub"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -42,7 +43,7 @@ var (
 
 type Source struct {
 	FileName   string
-	Pages      []ExamplePage
+	Pages      []aitraining.ExamplePage
 	Target     *aicorrection.Snapshot
 	Prediction *aicorrection.Snapshot
 	Issuer     string
@@ -50,9 +51,9 @@ type Source struct {
 
 type Anonymized struct {
 	FileName   string
-	Pages      []ExamplePage
-	Target     *ExampleSnapshot
-	Prediction *ExampleSnapshot
+	Pages      []aitraining.ExamplePage
+	Target     *aitraining.ExampleSnapshot
+	Prediction *aitraining.ExampleSnapshot
 }
 
 func Anonymize(src *Source, identity *Identity, rng *rand.Rand) (*Anonymized, error) {
@@ -70,10 +71,10 @@ func Anonymize(src *Source, identity *Identity, rng *rand.Rand) (*Anonymized, er
 	p := newPseudonymizer(rng)
 	out := &Anonymized{
 		FileName: anonymousFileName(src.FileName),
-		Pages:    make([]ExamplePage, 0, len(src.Pages)),
+		Pages:    make([]aitraining.ExamplePage, 0, len(src.Pages)),
 	}
 	for i := range src.Pages {
-		out.Pages = append(out.Pages, ExamplePage{
+		out.Pages = append(out.Pages, aitraining.ExamplePage{
 			Number: src.Pages[i].Number,
 			Text:   p.text(src.Pages[i].Text, known),
 		})
@@ -295,8 +296,11 @@ func (p *pseudonymizer) money(original string, amount decimal.Decimal) string {
 func (p *pseudonymizer) snapshot(
 	snapshot *aicorrection.Snapshot,
 	known []*knownValue,
-) *ExampleSnapshot {
-	out := &ExampleSnapshot{Fields: map[string]string{}, Stops: []ExampleStop{}}
+) *aitraining.ExampleSnapshot {
+	out := &aitraining.ExampleSnapshot{
+		Fields: map[string]string{},
+		Stops:  []aitraining.ExampleStop{},
+	}
 	if snapshot == nil {
 		return out
 	}
@@ -307,7 +311,7 @@ func (p *pseudonymizer) snapshot(
 	}
 	for i := range snapshot.Stops {
 		stop := &snapshot.Stops[i]
-		out.Stops = append(out.Stops, ExampleStop{
+		out.Stops = append(out.Stops, aitraining.ExampleStop{
 			Role:                stop.Role,
 			Sequence:            stop.Sequence,
 			Name:                p.text(stop.Name, known),
@@ -352,7 +356,7 @@ func residual(out *Anonymized, known []*knownValue) bool {
 	return false
 }
 
-func writeSnapshot(b *strings.Builder, snapshot *ExampleSnapshot) {
+func writeSnapshot(b *strings.Builder, snapshot *aitraining.ExampleSnapshot) {
 	if snapshot == nil {
 		return
 	}

@@ -920,6 +920,7 @@ modules:
       - agentversion
       - agentwait
       - aianalytics
+      - aianonymizer
       - aiaudit
       - aicontrolsummary
       - aicorrection
@@ -932,6 +933,7 @@ modules:
       - aiproviderdismissal
       - aiproviderkey
       - aireasoning
+      - airetraining
       - airetrieval
       - airouting
       - aitask
