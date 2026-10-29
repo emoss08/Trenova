@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -46,12 +47,12 @@ type shopper interface {
 type tenderer interface {
 	CreateSpot(
 		ctx context.Context,
-		req *tenderservice.CreateSpotTenderRequest,
+		req *tendercreate.CreateSpotTenderRequest,
 	) (*tender.Tender, error)
 	CreateWaterfall(
 		ctx context.Context,
-		req *tenderservice.CreateWaterfallTenderRequest,
-	) (*tenderservice.CreateWaterfallResult, error)
+		req *tendercreate.CreateWaterfallTenderRequest,
+	) (*tendercreate.CreateWaterfallResult, error)
 }
 
 type Params struct {

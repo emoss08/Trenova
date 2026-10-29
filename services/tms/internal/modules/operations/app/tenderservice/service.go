@@ -2,7 +2,6 @@ package tenderservice
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
@@ -10,7 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderescalation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -20,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
@@ -28,21 +34,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// ErrOfferNoLongerAvailable is returned to any channel whose response arrived
-// after the offer left its live window. The copy is deliberately identical for
-// expired, superseded, withdrawn, and already-answered offers.
-var ErrOfferNoLongerAvailable = errortypes.NewBusinessError(
-	"This offer is no longer available",
-)
-
-var ErrNoRoutingGuideMatch = errors.New("no routing guide matches the lane")
 
 type Params struct {
 	fx.In
@@ -101,10 +97,19 @@ type Service struct {
 	permissions           permissionports.PermissionEngine
 	intelGate             carrierintelports.CarrierIntelGate
 	lifecycle             carrierintelports.CarrierLifecycleObserver
+	effects               *tendereffects.Effects
+	creator               *tendercreate.Service
+	dispatcher            *tenderdispatch.Service
+	negotiator            *tendernegotiation.Service
+	bouncer               *tenderbounce.Service
+	canceler              *tendercancel.Service
+	escalator             *tenderescalation.Service
+	offerLifecycle        *tenderlifecycle.Service
+	responder             *tenderresponse.Service
 }
 
 func New(p Params) *Service {
-	return &Service{
+	s := &Service{
 		l:                     p.Logger.Named("service.tender"),
 		db:                    p.DB,
 		repo:                  p.Repo,
@@ -130,31 +135,8 @@ func New(p Params) *Service {
 		dispatchControls:      p.DispatchControls,
 		permissions:           p.Permissions,
 	}
-}
-
-// tenderPolicy is how the organization's tenders treat counter-offers and an
-// exhausted waterfall. Settings that cannot be read fall back to the default
-// policy rather than stopping a tender mid-flight.
-func (s *Service) tenderPolicy(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) dispatchcontrol.TenderPolicy {
-	if s.dispatchControls == nil {
-		return dispatchcontrol.DefaultTenderPolicy()
-	}
-	control, err := s.dispatchControls.GetByOrgID(
-		ctx,
-		dispatchcontrolports.GetDispatchControlRequest{
-			TenantInfo: tenantInfo,
-		},
-	)
-	if err != nil {
-		if !errortypes.IsNotFoundError(err) {
-			s.l.Warn("failed to read tender policy; using defaults", zap.Error(err))
-		}
-		return dispatchcontrol.DefaultTenderPolicy()
-	}
-	return control.TenderPolicy()
+	s.assemble()
+	return s
 }
 
 // AssignerSetter breaks the construction cycle between the tender service
@@ -167,37 +149,19 @@ type AssignerSetter interface {
 
 func (s *Service) SetCarrierMoveAssigner(assigner tenderports.CarrierMoveAssigner) {
 	s.assigner = assigner
+	s.bouncer.SetCarrierMoveAssigner(assigner)
+	s.offerLifecycle.SetCarrierMoveAssigner(assigner)
 }
 
 func (s *Service) SetIntelGate(gate carrierintelports.CarrierIntelGate) {
 	s.intelGate = gate
+	s.effects.SetIntelGate(gate)
+	s.dispatcher.SetIntelGate(gate)
 }
 
 func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecycleObserver) {
 	s.lifecycle = observer
-}
-
-func (s *Service) intelGates(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	carrierIDs []pulid.ID,
-	refresh bool,
-) map[pulid.ID]*carrier.IntelGate {
-	if s.intelGate == nil || len(carrierIDs) == 0 {
-		return nil
-	}
-	if refresh {
-		s.intelGate.EnsureFresh(ctx, &carrierintelports.CarrierIntelEnsureFreshRequest{
-			TenantInfo: tenantInfo,
-			CarrierIDs: carrierIDs,
-		})
-	}
-	gates, err := s.intelGate.GateFor(ctx, tenantInfo, carrierIDs)
-	if err != nil {
-		s.l.Warn("failed to evaluate carrier intelligence gates", zap.Error(err))
-		return nil
-	}
-	return gates
+	s.effects.SetLifecycleObserver(observer)
 }
 
 // SetEDITenderChannel injects the EDI delivery seam after construction:
@@ -205,6 +169,7 @@ func (s *Service) intelGates(
 // -> TenderGuard -> tenderservice -> EDITenderChannel.
 func (s *Service) SetEDITenderChannel(channel tenderports.EDITenderChannel) {
 	s.ediChannel = channel
+	s.dispatcher.SetEDITenderChannel(channel)
 }
 
 var (
@@ -241,15 +206,239 @@ func (s *Service) GetLiveByMoveID(
 	return s.repo.GetLiveByMoveID(ctx, req)
 }
 
-func (s *Service) recordEvent(
+func (s *Service) CreateWaterfall(
 	ctx context.Context,
-	params *shipmenteventports.RecordShipmentEventParams,
-) {
-	if params == nil || params.ShipmentID.IsNil() {
-		return
-	}
+	req *tendercreate.CreateWaterfallTenderRequest,
+) (*tendercreate.CreateWaterfallResult, error) {
+	return s.creator.CreateWaterfall(ctx, req)
+}
 
-	if err := s.eventService.Record(ctx, params); err != nil {
-		s.l.Warn("failed to record tender event", zap.Error(err))
-	}
+func (s *Service) CreateSpot(
+	ctx context.Context,
+	req *tendercreate.CreateSpotTenderRequest,
+) (*tender.Tender, error) {
+	return s.creator.CreateSpot(ctx, req)
+}
+
+func (s *Service) PreviewWaterfall(
+	ctx context.Context,
+	req *tendercreate.CreateWaterfallTenderRequest,
+) (*tendercreate.TenderPreview, error) {
+	return s.creator.PreviewWaterfall(ctx, req)
+}
+
+func (s *Service) PreviewSpot(
+	ctx context.Context,
+	req *tendercreate.CreateSpotTenderRequest,
+) (*tendercreate.TenderPreview, error) {
+	return s.creator.PreviewSpot(ctx, req)
+}
+
+func (s *Service) DispatchOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+) (*tenderports.TenderDispatchResult, error) {
+	return s.dispatcher.DispatchOffer(ctx, tenantInfo, offerID)
+}
+
+func (s *Service) RecordCounter(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	req *tenderports.RecordCounterRequest,
+) (*tenderports.TenderCounterResult, error) {
+	return s.negotiator.RecordCounter(ctx, tenantInfo, req)
+}
+
+func (s *Service) DecideCounter(
+	ctx context.Context,
+	req *tendernegotiation.DecideCounterRequest,
+) error {
+	return s.negotiator.DecideCounter(ctx, req)
+}
+
+func (s *Service) PreviewDecideCounter(
+	ctx context.Context,
+	req *tendernegotiation.DecideCounterRequest,
+) (*tendernegotiation.ResponsePreview, error) {
+	return s.negotiator.PreviewDecideCounter(ctx, req)
+}
+
+func (s *Service) PreviewBounce(
+	ctx context.Context,
+	req *tenderbounce.BounceTenderRequest,
+) (*tenderbounce.BouncePreview, error) {
+	return s.bouncer.PreviewBounce(ctx, req)
+}
+
+func (s *Service) Bounce(
+	ctx context.Context,
+	req *tenderbounce.BounceTenderRequest,
+) (*tender.Tender, error) {
+	return s.bouncer.Bounce(ctx, req)
+}
+
+func (s *Service) Cancel(ctx context.Context, req *tendercancel.CancelTenderRequest) error {
+	return s.canceler.Cancel(ctx, req)
+}
+
+func (s *Service) CancelLiveTenderForMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+	reason string,
+) error {
+	return s.canceler.CancelLiveTenderForMove(ctx, tenantInfo, moveID, reason)
+}
+
+func (s *Service) CancelLiveTendersForShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+	reason string,
+) error {
+	return s.canceler.CancelLiveTendersForShipment(ctx, tenantInfo, shipmentID, reason)
+}
+
+func (s *Service) CancelDirect(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *tender.Tender,
+	reason string,
+) error {
+	return s.canceler.CancelDirect(ctx, tenantInfo, entity, reason)
+}
+
+func (s *Service) PreviewCancel(
+	ctx context.Context,
+	req *tendercancel.CancelTenderRequest,
+) (*tendercancel.CancelPreview, error) {
+	return s.canceler.PreviewCancel(ctx, req)
+}
+
+func (s *Service) PreviewLiveTenders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) ([]*tender.Tender, error) {
+	return s.canceler.PreviewLiveTenders(ctx, tenantInfo, shipmentID)
+}
+
+func (s *Service) LoadPlan(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tenderID pulid.ID,
+) (*tenderports.TenderPlan, error) {
+	return s.offerLifecycle.LoadPlan(ctx, tenantInfo, tenderID)
+}
+
+func (s *Service) ExpireOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+) error {
+	return s.offerLifecycle.ExpireOffer(ctx, tenantInfo, offerID)
+}
+
+func (s *Service) DeclineOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+	source tender.ResponseSource,
+	reason string,
+) error {
+	return s.offerLifecycle.DeclineOffer(ctx, tenantInfo, offerID, source, reason)
+}
+
+func (s *Service) AcceptOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+	source tender.ResponseSource,
+) (*tenderports.TenderAcceptResult, error) {
+	return s.offerLifecycle.AcceptOffer(ctx, tenantInfo, offerID, source)
+}
+
+func (s *Service) FinalizeAccepted(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tenderID pulid.ID,
+	acceptedOfferID pulid.ID,
+) error {
+	return s.offerLifecycle.FinalizeAccepted(ctx, tenantInfo, tenderID, acceptedOfferID)
+}
+
+func (s *Service) MarkNeedsReview(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tenderID pulid.ID,
+	offerID pulid.ID,
+	reason string,
+) error {
+	return s.offerLifecycle.MarkNeedsReview(ctx, tenantInfo, tenderID, offerID, reason)
+}
+
+func (s *Service) MarkExhausted(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tenderID pulid.ID,
+) error {
+	return s.offerLifecycle.MarkExhausted(ctx, tenantInfo, tenderID)
+}
+
+func (s *Service) IssueRateConfirmation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+) error {
+	return s.offerLifecycle.IssueRateConfirmation(ctx, tenantInfo, offerID)
+}
+
+func (s *Service) CancelFromWorkflow(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tenderID pulid.ID,
+	reason string,
+	actorUserID pulid.ID,
+) error {
+	return s.offerLifecycle.CancelFromWorkflow(ctx, tenantInfo, tenderID, reason, actorUserID)
+}
+
+func (s *Service) RecordResponse(
+	ctx context.Context,
+	req *tenderports.TenderResponseRequest,
+) error {
+	return s.responder.RecordResponse(ctx, req)
+}
+
+func (s *Service) RecordLateResponse(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+	action tender.ResponseAction,
+	source tender.ResponseSource,
+) error {
+	return s.responder.RecordLateResponse(ctx, tenantInfo, offerID, action, source)
+}
+
+func (s *Service) PreviewResponse(
+	ctx context.Context,
+	req *tenderports.TenderResponseRequest,
+) (*tendernegotiation.ResponsePreview, error) {
+	return s.responder.PreviewResponse(ctx, req)
+}
+
+func (s *Service) PreviewByToken(
+	ctx context.Context,
+	rawToken string,
+) (*tenderresponse.PublicOfferView, error) {
+	return s.responder.PreviewByToken(ctx, rawToken)
+}
+
+func (s *Service) RespondByToken(
+	ctx context.Context,
+	rawToken string,
+	response tenderresponse.PublicResponse,
+) error {
+	return s.responder.RespondByToken(ctx, rawToken, response)
 }

@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -133,8 +136,8 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Tenders
 // @Accept json
 // @Produce json
-// @Param request body tenderservice.CreateWaterfallTenderRequest true "Waterfall tender request"
-// @Success 201 {object} tenderservice.CreateWaterfallResult
+// @Param request body tendercreate.CreateWaterfallTenderRequest true "Waterfall tender request"
+// @Success 201 {object} tendercreate.CreateWaterfallResult
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -143,7 +146,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tenders/waterfall/ [post]
 func (h *Handler) createWaterfall(c *gin.Context) {
-	req := new(tenderservice.CreateWaterfallTenderRequest)
+	req := new(tendercreate.CreateWaterfallTenderRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -164,7 +167,7 @@ func (h *Handler) createWaterfall(c *gin.Context) {
 // @Tags Tenders
 // @Accept json
 // @Produce json
-// @Param request body tenderservice.CreateSpotTenderRequest true "Spot tender request"
+// @Param request body tendercreate.CreateSpotTenderRequest true "Spot tender request"
 // @Success 201 {object} tender.Tender
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -174,7 +177,7 @@ func (h *Handler) createWaterfall(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tenders/spot/ [post]
 func (h *Handler) createSpot(c *gin.Context) {
-	req := new(tenderservice.CreateSpotTenderRequest)
+	req := new(tendercreate.CreateSpotTenderRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -196,7 +199,7 @@ func (h *Handler) createSpot(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param tenderID path string true "Tender ID"
-// @Param request body tenderservice.CancelTenderRequest true "Cancellation request"
+// @Param request body tendercancel.CancelTenderRequest true "Cancellation request"
 // @Success 204
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -213,7 +216,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	req := new(tenderservice.CancelTenderRequest)
+	req := new(tendercancel.CancelTenderRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -317,7 +320,7 @@ func (h *Handler) bounce(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Bounce(c.Request.Context(), &tenderservice.BounceTenderRequest{
+	entity, err := h.service.Bounce(c.Request.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: tenantInfoFor(c),
 		TenderID:   tenderID,
 		Reason:     req.Reason,

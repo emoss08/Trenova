@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +127,7 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agentpreview.RecordChang
 		if offer == nil {
 			continue
 		}
-		next, moves := tenderservice.WithdrawnOfferStatus(offer.Status)
+		next, moves := tendercancel.WithdrawnOfferStatus(offer.Status)
 		if !moves || next != tender.OfferStatusWithdrawn {
 			continue
 		}

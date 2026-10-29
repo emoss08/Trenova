@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -46,15 +47,16 @@ func TestRecordResponse_RefusesAnOfferPastItsExpiry(t *testing.T) {
 		auditService: &recordingAuditService{},
 		l:            zap.NewNop(),
 	}
+	svc.assemble()
 
-	err := svc.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
+	err := svc.responder.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
 		Source:     tender.ResponseSourceEmail,
 	})
 
-	require.ErrorIs(t, err, ErrOfferNoLongerAvailable)
+	require.ErrorIs(t, err, tenderresponse.ErrOfferNoLongerAvailable)
 	require.Len(t, repo.late, 1, "the answer is kept as a late response")
 	assert.Equal(t, entity.Offers[0].ID, repo.late[0].OfferID)
 	assert.Equal(t, tender.ResponseActionAccept, repo.late[0].Action)
@@ -66,13 +68,13 @@ func TestPreviewResponse_RefusesAnOfferPastItsExpiry(t *testing.T) {
 	entity := expiredSentTender()
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	_, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionDecline,
 		Source:     tender.ResponseSourceManual,
 	})
-	require.ErrorIs(t, err, ErrOfferNoLongerAvailable)
+	require.ErrorIs(t, err, tenderresponse.ErrOfferNoLongerAvailable)
 }
 
 func TestPreviewResponse_AcceptsAnOfferBeforeItsExpiry(t *testing.T) {
@@ -83,7 +85,7 @@ func TestPreviewResponse_AcceptsAnOfferBeforeItsExpiry(t *testing.T) {
 	entity.Offers[0].ExpiresAt = &expiresAt
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	preview, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	preview, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
@@ -99,7 +101,11 @@ func TestDispatchOffer_DoesNotRedeliverAnOfferThatHasExpired(t *testing.T) {
 	entity := expiredSentTender()
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	result, err := svc.DispatchOffer(t.Context(), createTestTenant(), entity.Offers[0].ID)
+	result, err := svc.dispatcher.DispatchOffer(
+		t.Context(),
+		createTestTenant(),
+		entity.Offers[0].ID,
+	)
 
 	require.NoError(t, err)
 	assert.True(t, result.Delivered, "the workflow expires it at its deadline")

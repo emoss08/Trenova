@@ -1,21 +1,25 @@
-package tenderservice
+package tenderdispatch
 
 import (
 	"context"
 	"fmt"
 	"html/template"
 	"net/url"
+	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/tendertemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -110,15 +114,15 @@ func (s *Service) DispatchOffer(
 		return s.dispatchDeliveryOutcome(ctx, tenantInfo, offer, err)
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderOffered(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderOffered(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		offer.Rank,
 		offer.Channel,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_sent")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_sent")
 
 	return &tenderports.TenderDispatchResult{
 		Delivered: true,
@@ -155,7 +159,7 @@ func (s *Service) dispatchDeliveryOutcome(
 	offer *tender.TenderOffer,
 	deliveryErr error,
 ) (*tenderports.TenderDispatchResult, error) {
-	if !isAssignBusinessFailure(deliveryErr) {
+	if !tendereffects.IsAssignBusinessFailure(deliveryErr) {
 		return nil, deliveryErr
 	}
 
@@ -199,7 +203,7 @@ func (s *Service) deliverByEmail(
 		return err
 	}
 
-	data, err := s.buildOfferEmailContext(ctx, tenantInfo, offer, token, expiresAt)
+	data, err := s.BuildOfferEmailContext(ctx, tenantInfo, offer, token, expiresAt)
 	if err != nil {
 		return err
 	}
@@ -287,31 +291,31 @@ func (s *Service) markDeliveryFailed(
 		s.l.Warn("failed to revoke tokens for failed tender offer", zap.Error(err))
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderDeliveryFailed(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderDeliveryFailed(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		offer.Channel,
 		reason,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_delivery_failed",
-		Priority:  notificationPriorityHigh,
+		Priority:  tendereffects.NotificationPriorityHigh,
 		Title:     "Tender offer could not be delivered",
 		Message: fmt.Sprintf(
 			"The offer to %s could not be delivered: %s",
-			carrierNameOf(offer), reason,
+			tendereffects.CarrierNameOf(offer), reason,
 		),
 		CorrelationID: offer.ID.String(),
-		Link:          dispatchConsoleOfferLink(offer),
+		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
 }
 
-// buildOfferEmailContext assembles the carrier-facing summary from the
+// BuildOfferEmailContext assembles the carrier-facing summary from the
 // shipment the offer covers. Only lane, timing, equipment, weight, and the
 // offered rate are exposed — never customer or revenue data.
-func (s *Service) buildOfferEmailContext(
+func (s *Service) BuildOfferEmailContext(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
@@ -319,7 +323,7 @@ func (s *Service) buildOfferEmailContext(
 	expiresAt int64,
 ) (tendertemplate.TenderOfferEmailContext, error) {
 	data := tendertemplate.TenderOfferEmailContext{
-		CarrierName:     carrierNameOf(offer),
+		CarrierName:     tendereffects.CarrierNameOf(offer),
 		CompanyName:     s.companyName(ctx, tenantInfo),
 		RateAmount:      "$" + offer.Rate.StringFixed(2),
 		RateMethodLabel: rateMethodLabel(offer.RateMethod),
@@ -414,47 +418,108 @@ func (s *Service) offerResponseURL(token, action string) string {
 	return base + path
 }
 
-// HashOfferToken derives the stored lookup hash for a raw token.
-
-func rateMethodLabel(method shipment.CarrierRateMethod) string {
-	return method.Label()
+type Service struct {
+	l            *zap.Logger
+	repo         tenderports.TenderRepository
+	carrierRepo  carrierports.CarrierRepository
+	shipmentRepo shipmentports.ShipmentRepository
+	orgRepo      tenantports.OrganizationRepository
+	cfg          *config.Config
+	templates    documenttemplateports.DocumentTemplateResolver
+	emailService emailports.EmailService
+	ediChannel   tenderports.EDITenderChannel
+	intelGate    carrierintelports.CarrierIntelGate
+	effects      *tendereffects.Effects
 }
 
-func carrierNameOf(offer *tender.TenderOffer) string {
-	if offer == nil || offer.Carrier == nil {
-		return "the carrier"
-	}
-	return offer.Carrier.Name
+type Deps struct {
+	Logger       *zap.Logger
+	Repo         tenderports.TenderRepository
+	CarrierRepo  carrierports.CarrierRepository
+	ShipmentRepo shipmentports.ShipmentRepository
+	OrgRepo      tenantports.OrganizationRepository
+	Config       *config.Config
+	Templates    documenttemplateports.DocumentTemplateResolver
+	EmailService emailports.EmailService
+	EDIChannel   tenderports.EDITenderChannel
+	IntelGate    carrierintelports.CarrierIntelGate
+	Effects      *tendereffects.Effects
 }
 
-func tenderRefForOffer(offer *tender.TenderOffer) shipmenteventservice.TenderRef {
-	ref := shipmenteventservice.TenderRef{
-		TenderID: offer.TenderID,
-		OfferID:  offer.ID,
+func New(d Deps) *Service {
+	return &Service{
+		l:            d.Logger,
+		repo:         d.Repo,
+		carrierRepo:  d.CarrierRepo,
+		shipmentRepo: d.ShipmentRepo,
+		orgRepo:      d.OrgRepo,
+		cfg:          d.Config,
+		templates:    d.Templates,
+		emailService: d.EmailService,
+		ediChannel:   d.EDIChannel,
+		intelGate:    d.IntelGate,
+		effects:      d.Effects,
 	}
-	if offer.Tender != nil {
-		ref.ShipmentID = offer.Tender.ShipmentID
-		ref.MoveID = offer.Tender.ShipmentMoveID
-	}
-	return ref
 }
 
-func (s *Service) publishTenderShipmentInvalidation(
+func (s *Service) SetIntelGate(value carrierintelports.CarrierIntelGate) {
+	s.intelGate = value
+}
+
+func (s *Service) SetEDITenderChannel(value tenderports.EDITenderChannel) {
+	s.ediChannel = value
+}
+
+func (s *Service) skipIneligibleOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
-	action string,
-) {
-	if offer.Tender == nil {
-		return
+) (*tenderports.TenderDispatchResult, error) {
+	if s.intelGate == nil {
+		return nil, nil
 	}
-	shipmentinvalidationports.InvalidateShipments(
-		ctx,
-		s.invalidator,
-		shipmentinvalidationports.ShipmentInvalidationByUser(
-			tenantInfo,
-			offer.Tender.ShipmentID,
-			action,
-		),
-	)
+
+	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
+		TenantInfo: tenantInfo,
+		CarrierIDs: []pulid.ID{offer.CarrierID},
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
+			IncludeInsurancePolicies: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(carriers) == 0 {
+		return nil, nil
+	}
+
+	gates := s.effects.IntelGates(ctx, tenantInfo, []pulid.ID{offer.CarrierID}, true)
+	eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
+		Carrier: carriers[0],
+		Now:     timeutils.NowUnix(),
+		Intel:   gates[offer.CarrierID],
+	})
+	if !eligibility.IsBlocked() {
+		return nil, nil
+	}
+
+	reason := "Carrier became ineligible before the offer was sent: " +
+		strings.Join(eligibility.Blockers, "; ")
+	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
+		TenantInfo:    tenantInfo,
+		OfferID:       offer.ID,
+		FromStatus:    []tender.OfferStatus{tender.OfferStatusPending},
+		ToStatus:      tender.OfferStatusSkipped,
+		DeclineReason: reason,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if moved {
+		s.l.Info("skipped tender offer for ineligible carrier",
+			zap.String("offerId", offer.ID.String()),
+			zap.String("carrierId", offer.CarrierID.String()))
+		s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_skipped")
+	}
+	return &tenderports.TenderDispatchResult{Delivered: false, Reason: reason}, nil
 }

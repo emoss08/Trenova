@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
@@ -54,13 +54,13 @@ func (f *fakeShopper) Shop(
 
 type fakeTenderer struct {
 	waterfallErr error
-	spots        []*tenderservice.CreateSpotTenderRequest
-	waterfalls   []*tenderservice.CreateWaterfallTenderRequest
+	spots        []*tendercreate.CreateSpotTenderRequest
+	waterfalls   []*tendercreate.CreateWaterfallTenderRequest
 }
 
 func (f *fakeTenderer) CreateSpot(
 	_ context.Context,
-	req *tenderservice.CreateSpotTenderRequest,
+	req *tendercreate.CreateSpotTenderRequest,
 ) (*tender.Tender, error) {
 	f.spots = append(f.spots, req)
 
@@ -69,15 +69,15 @@ func (f *fakeTenderer) CreateSpot(
 
 func (f *fakeTenderer) CreateWaterfall(
 	_ context.Context,
-	req *tenderservice.CreateWaterfallTenderRequest,
-) (*tenderservice.CreateWaterfallResult, error) {
+	req *tendercreate.CreateWaterfallTenderRequest,
+) (*tendercreate.CreateWaterfallResult, error) {
 	f.waterfalls = append(f.waterfalls, req)
 	if f.waterfallErr != nil {
 		return nil, f.waterfallErr
 	}
 	guideCarrier := &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Werner"}
 
-	return &tenderservice.CreateWaterfallResult{Tender: &tender.Tender{
+	return &tendercreate.CreateWaterfallResult{Tender: &tender.Tender{
 		ID: pulid.MustNew("tnd_"),
 		Offers: []*tender.TenderOffer{
 			{CarrierID: guideCarrier.ID, Carrier: guideCarrier},
@@ -206,7 +206,7 @@ func TestTenderShipments_FallsBackToTheBestPricedCarrierOnlyWhenNoGuideMatches(t
 	sp := uncoveredShipment(move(0, shipment.MoveCoverageTypeUnassigned))
 	noGuide := newTenderFixture(sp)
 	noGuide.tenderer.waterfallErr = errortypes.NewBusinessError("No routing guide matches this lane").
-		WithInternal(tenderservice.ErrNoRoutingGuideMatch)
+		WithInternal(tendercreate.ErrNoRoutingGuideMatch)
 
 	result, err := noGuide.service.TenderShipments(
 		t.Context(),

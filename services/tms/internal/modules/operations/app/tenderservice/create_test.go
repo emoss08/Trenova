@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -185,6 +186,7 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 			Realtime: &mocks.NoopRealtimeService{},
 		}),
 	}
+	deps.svc.assemble()
 
 	return deps
 }
@@ -257,8 +259,8 @@ func warnedCarrier(name string) *carrier.Carrier {
 	return entity
 }
 
-func spotLine(carrierID pulid.ID) SpotTenderLine {
-	return SpotTenderLine{
+func spotLine(carrierID pulid.ID) tendercreate.SpotTenderLine {
+	return tendercreate.SpotTenderLine{
 		CarrierID:  carrierID,
 		RateMethod: shipment.CarrierRateMethodFlat,
 		Rate:       decimal.NewFromInt(1500),
@@ -303,11 +305,11 @@ func TestCreateSpotBlockedCarrierFailsPerLine(t *testing.T) {
 		}).
 		Return([]*carrier.Carrier{healthy, blocked}, nil)
 
-	created, err := deps.svc.CreateSpot(t.Context(), &CreateSpotTenderRequest{
+	created, err := deps.svc.creator.CreateSpot(t.Context(), &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: move.ID,
 		Mode:           tender.ModeSpotBroadcast,
-		Lines:          []SpotTenderLine{spotLine(healthy.ID), spotLine(blocked.ID)},
+		Lines:          []tendercreate.SpotTenderLine{spotLine(healthy.ID), spotLine(blocked.ID)},
 	})
 
 	require.Nil(t, created)
@@ -333,11 +335,11 @@ func TestCreateSpotWarningWithoutOverrideIsOverridable(t *testing.T) {
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{warned}, nil)
 
-	created, err := deps.svc.CreateSpot(t.Context(), &CreateSpotTenderRequest{
+	created, err := deps.svc.creator.CreateSpot(t.Context(), &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: move.ID,
 		Mode:           tender.ModeSpotBroadcast,
-		Lines:          []SpotTenderLine{spotLine(warned.ID)},
+		Lines:          []tendercreate.SpotTenderLine{spotLine(warned.ID)},
 	})
 
 	require.Nil(t, created)
@@ -361,11 +363,11 @@ func TestCreateSpotWarningWithOverrideProceeds(t *testing.T) {
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{warned}, nil)
 
-	created, err := deps.svc.CreateSpot(t.Context(), &CreateSpotTenderRequest{
+	created, err := deps.svc.creator.CreateSpot(t.Context(), &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:                tenantInfo,
 		ShipmentMoveID:            move.ID,
 		Mode:                      tender.ModeSpotBroadcast,
-		Lines:                     []SpotTenderLine{spotLine(warned.ID)},
+		Lines:                     []tendercreate.SpotTenderLine{spotLine(warned.ID)},
 		OverrideInsuranceWarnings: true,
 	})
 
@@ -413,10 +415,13 @@ func TestCreateWaterfallSkipsBlockedEntriesWithAudit(t *testing.T) {
 		}).
 		Return(&notification.Notification{}, nil)
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, created)
@@ -469,10 +474,13 @@ func TestCreateWaterfallAllBlockedFails(t *testing.T) {
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{first, second}, nil)
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.Nil(t, created)
 	require.Error(t, err)
@@ -492,13 +500,16 @@ func TestCreateWaterfallNamesAMissingGuide(t *testing.T) {
 	expectTenderableMove(deps, tenantInfo, move)
 	deps.guideRepo.matched = nil
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.Nil(t, created)
-	require.ErrorIs(t, err, ErrNoRoutingGuideMatch)
+	require.ErrorIs(t, err, tendercreate.ErrNoRoutingGuideMatch)
 	var bizErr *errortypes.BusinessError
 	require.ErrorAs(t, err, &bizErr)
 	assert.Contains(t, bizErr.Message, "No routing guide matches this lane")

@@ -1,4 +1,4 @@
-package tenderservice
+package tenderescalation
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -13,22 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// escalationMode is the kind of tender an escalation policy follows an
-// exhausted one with.
-func escalationMode(action dispatchcontrol.TenderExhaustedAction) (tender.Mode, bool) {
-	switch action {
-	case dispatchcontrol.TenderExhaustedActionRebroadcast:
-		return tender.ModeSpotBroadcast, true
-	case dispatchcontrol.TenderExhaustedActionRewaterfall:
-		return tender.ModeSpotSequential, true
-	case dispatchcontrol.TenderExhaustedActionNotify:
-		return "", false
-	default:
-		return "", false
-	}
-}
-
-// escalateExhausted follows an exhausted tender with the next round the
+// Escalate follows an exhausted tender with the next round the
 // organization's policy asks for: the same carriers again, all at once or in
 // rank order, at the escalation rate and expiry. It stops at the policy's
 // round limit, and never when the move has since been covered, held or
@@ -37,12 +24,12 @@ func escalationMode(action dispatchcontrol.TenderExhaustedAction) (tender.Mode, 
 //
 // It never fails the exhaustion it follows. A round that cannot start is
 // told to dispatch, and the move stays on the exception queue as exhausted.
-func (s *Service) escalateExhausted(
+func (s *Service) Escalate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	exhausted *tender.Tender,
 ) {
-	policy := s.tenderPolicy(ctx, tenantInfo)
+	policy := s.effects.Policy(ctx, tenantInfo)
 	mode, escalates := escalationMode(policy.ExhaustedAction)
 	if !escalates {
 		return
@@ -54,7 +41,7 @@ func (s *Service) escalateExhausted(
 		return
 	}
 
-	move, sh, err := s.loadTenderableMove(ctx, tenantInfo, exhausted.ShipmentMoveID)
+	move, sh, err := s.creator.LoadTenderableMove(ctx, tenantInfo, exhausted.ShipmentMoveID)
 	if err != nil {
 		s.l.Info("exhausted tender not escalated",
 			zap.String("tenderId", exhausted.ID.String()), zap.Error(err))
@@ -91,7 +78,7 @@ func (s *Service) escalateExhausted(
 		EscalationRound: exhausted.EscalationRound + 1,
 		Offers:          offers,
 	}
-	created, err := s.persistAndStart(ctx, tenantInfo, next)
+	created, err := s.creator.PersistAndStart(ctx, tenantInfo, next)
 	if err != nil {
 		s.l.Warn("failed to start the escalation tender",
 			zap.String("tenderId", exhausted.ID.String()), zap.Error(err))
@@ -109,7 +96,7 @@ func (s *Service) announceEscalation(
 	policy *dispatchcontrol.TenderPolicy,
 ) {
 	increase := policy.EscalationRateIncrease.Round(2).String()
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderEscalated(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderEscalated(
 		shipmenteventservice.TenantRefFor(tenantInfo),
 		shipmenteventservice.TenderRef{
 			ShipmentID: created.ShipmentID,
@@ -122,22 +109,22 @@ func (s *Service) announceEscalation(
 		len(created.Offers),
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_escalated",
-		Priority:  notificationPriorityMed,
+		Priority:  tendereffects.NotificationPriorityMed,
 		Title:     "Exhausted tender escalated",
 		Message: fmt.Sprintf(
 			"Nobody accepted the tender, so it went back to %d %s at up to %s%% more (round %d of %d)",
 			len(created.Offers),
-			pluralCarriers(len(created.Offers)),
+			tendercreate.PluralCarriers(len(created.Offers)),
 			increase,
 			created.EscalationRound,
 			policy.MaxEscalations,
 		),
 		CorrelationID: created.ID.String(),
-		Link:          dispatchConsoleMoveLink(created.ShipmentMoveID),
+		Link:          tendereffects.DispatchConsoleMoveLink(created.ShipmentMoveID),
 	})
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,
@@ -155,9 +142,9 @@ func (s *Service) notifyEscalationStopped(
 	exhausted *tender.Tender,
 	reason string,
 ) {
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_escalation_stopped",
-		Priority:  notificationPriorityHigh,
+		Priority:  tendereffects.NotificationPriorityHigh,
 		Title:     "Exhausted tender was not escalated",
 		Message: fmt.Sprintf(
 			"The tender for move %s was not offered again because %s. The move still needs coverage",
@@ -165,6 +152,26 @@ func (s *Service) notifyEscalationStopped(
 			reason,
 		),
 		CorrelationID: exhausted.ID.String(),
-		Link:          dispatchConsoleMoveLink(exhausted.ShipmentMoveID),
+		Link:          tendereffects.DispatchConsoleMoveLink(exhausted.ShipmentMoveID),
 	})
+}
+
+type Service struct {
+	l       *zap.Logger
+	creator *tendercreate.Service
+	effects *tendereffects.Effects
+}
+
+type Deps struct {
+	Logger  *zap.Logger
+	Creator *tendercreate.Service
+	Effects *tendereffects.Effects
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:       d.Logger,
+		creator: d.Creator,
+		effects: d.Effects,
+	}
 }

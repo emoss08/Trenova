@@ -3,6 +3,7 @@ package tenderservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -35,15 +36,18 @@ func TestPreviewWaterfall_IsTheTenderCreateWaterfallStarts(t *testing.T) {
 		Return([]*carrier.Carrier{blocked, warned, healthy}, nil)
 	deps.notifRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&notification.Notification{}, nil).Maybe()
-	request := &CreateWaterfallTenderRequest{TenantInfo: tenantInfo, ShipmentMoveID: move.ID}
+	request := &tendercreate.CreateWaterfallTenderRequest{
+		TenantInfo:     tenantInfo,
+		ShipmentMoveID: move.ID,
+	}
 
-	preview, err := deps.svc.PreviewWaterfall(t.Context(), request)
+	preview, err := deps.svc.creator.PreviewWaterfall(t.Context(), request)
 	require.NoError(t, err)
 	assert.Nil(t, deps.tenderRepo.created, "a preview must not save a tender")
 	assert.Empty(t, deps.workflows.started, "a preview must not start a workflow")
 	assert.Empty(t, deps.events.events, "a preview must not record events")
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), request)
+	created, err := deps.svc.creator.CreateWaterfall(t.Context(), request)
 	require.NoError(t, err)
 
 	require.Len(t, preview.Tender.Offers, len(created.Offers))
@@ -67,19 +71,19 @@ func TestPreviewSpot_ReturnsTheRefusalCreateSpotMakes(t *testing.T) {
 	warned := warnedCarrier("expiring")
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{warned}, nil)
-	request := &CreateSpotTenderRequest{
+	request := &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: move.ID,
 		Mode:           tender.ModeSpotBroadcast,
-		Lines:          []SpotTenderLine{spotLine(warned.ID)},
+		Lines:          []tendercreate.SpotTenderLine{spotLine(warned.ID)},
 	}
 
-	preview, err := deps.svc.PreviewSpot(t.Context(), request)
+	preview, err := deps.svc.creator.PreviewSpot(t.Context(), request)
 	require.NoError(t, err)
 	require.Len(t, preview.Warnings, 1)
 	require.Error(t, preview.RefusalError)
 
-	_, createErr := deps.svc.CreateSpot(t.Context(), request)
+	_, createErr := deps.svc.creator.CreateSpot(t.Context(), request)
 	require.Error(t, createErr)
 	assert.Equal(t, createErr.Error(), preview.RefusalError.Error())
 	assert.Nil(t, deps.tenderRepo.created)

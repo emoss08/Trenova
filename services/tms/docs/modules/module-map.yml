@@ -623,6 +623,15 @@ modules:
       - shipmentsuggestionservice
       - shipmenttracking
       - shipmentwatchlistservice
+      - tenderbounce
+      - tendercancel
+      - tendercreate
+      - tenderdispatch
+      - tendereffects
+      - tenderescalation
+      - tenderlifecycle
+      - tendernegotiation
+      - tenderresponse
       - tenderservice
       - trackingeventservice
       - checkcallservice

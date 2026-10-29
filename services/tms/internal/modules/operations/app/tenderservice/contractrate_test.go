@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -96,11 +97,15 @@ func TestCreateWaterfall_ContractEntryOffersTheContractsRate(t *testing.T) {
 	deps.svc.rateEngine = &stubRateEngine{
 		byCarrier: map[pulid.ID]*ratequoteports.RatedShipment{healthy.ID: contractRated("1875.50")},
 	}
+	deps.svc.assemble()
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created.Offers, 1)
@@ -130,11 +135,15 @@ func TestCreateWaterfall_EntryWithoutContractPricingKeepsItsOwnRate(t *testing.T
 
 	engine := &stubRateEngine{}
 	deps.svc.rateEngine = engine
+	deps.svc.assemble()
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created.Offers, 1)
@@ -168,11 +177,15 @@ func TestCreateWaterfall_ContractEntryWithNoContractIsSkippedNotOfferedAtZero(t 
 	deps.svc.rateEngine = &stubRateEngine{
 		byCarrier: map[pulid.ID]*ratequoteports.RatedShipment{covered.ID: contractRated("1500")},
 	}
+	deps.svc.assemble()
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created.Offers, 1)
@@ -206,11 +219,15 @@ func TestCreateWaterfall_ContractEntryIsSkippedWhenTheEngineFails(t *testing.T) 
 		Return([]*carrier.Carrier{healthy, other}, nil)
 
 	deps.svc.rateEngine = &stubRateEngine{err: assert.AnError}
+	deps.svc.assemble()
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created.Offers, 1)
@@ -237,11 +254,15 @@ func TestCreateWaterfall_ContractEntryFallsBackWhenNoEngineIsWired(t *testing.T)
 		Return([]*carrier.Carrier{healthy}, nil)
 
 	deps.svc.rateEngine = nil
+	deps.svc.assemble()
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created.Offers, 1)

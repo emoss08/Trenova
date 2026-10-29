@@ -1,4 +1,4 @@
-package tenderservice
+package tendercreate
 
 import (
 	"context"
@@ -9,14 +9,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchguard"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,107 +31,105 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
-type CreateWaterfallTenderRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"-"`
-	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
-	RoutingGuideID *pulid.ID             `json:"routingGuideId"`
-}
+// priceGuideEntry decides what to offer, reading the carrier's contract when
+// the entry asks for it.
+//
+// An entry that did not ask keeps the rate the guide carries, so turning this
+// feature on changes nothing about the guides an organization already wrote.
+//
+// A contract-priced entry that cannot be priced is refused rather than offered
+// at the frozen rate. Somebody marked that entry to follow the contract, and
+// quietly tendering last year's number instead is the opposite of what they
+// asked for. The one exception is a deployment with no engine wired at all,
+// where the frozen rate is the only rate there is.
+func (s *Service) priceGuideEntry(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entry *tender.RoutingGuideEntry,
+	entity *shipment.Shipment,
+) offerPrice {
+	frozen := offerPrice{method: entry.RateMethod, rate: entry.Rate}
 
-func (r *CreateWaterfallTenderRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r.ShipmentMoveID.IsNil() {
-		multiErr.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move is required")
+	if !entry.UseContractRate || s.rateEngine == nil || entity == nil {
+		return frozen
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
 
-type SpotTenderLine struct {
-	CarrierID       pulid.ID                   `json:"carrierId"`
-	RateMethod      shipment.CarrierRateMethod `json:"rateMethod"`
-	Rate            decimal.Decimal            `json:"rate"`
-	OfferTTLSeconds int32                      `json:"offerTtlSeconds"`
-	Channel         tender.Channel             `json:"channel"`
-	Email           string                     `json:"email"`
-}
-
-type CreateSpotTenderRequest struct {
-	TenantInfo                pagination.TenantInfo `json:"-"`
-	ShipmentMoveID            pulid.ID              `json:"shipmentMoveId"`
-	Mode                      tender.Mode           `json:"mode"`
-	Lines                     []SpotTenderLine      `json:"lines"`
-	OverrideInsuranceWarnings bool                  `json:"overrideInsuranceWarnings"`
-}
-
-func (r *CreateSpotTenderRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r.ShipmentMoveID.IsNil() {
-		multiErr.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move is required")
-	}
-	if r.Mode != tender.ModeSpotBroadcast && r.Mode != tender.ModeSpotSequential {
-		multiErr.Add(
-			"mode",
-			errortypes.ErrInvalid,
-			"Spot tenders must be broadcast or sequential",
+	rated, err := s.rateEngine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
+		Shipment:   entity,
+		TenantInfo: tenantInfo,
+		PartyType:  rateagreement.PartyTypeCarrier,
+		PartyID:    entry.CarrierID,
+		Purpose:    ratequote.PurposeShopping,
+		UserID:     tenantInfo.UserID,
+	})
+	if err != nil {
+		s.l.Warn("failed to price a routing guide entry from its carrier's contract",
+			zap.String("carrierId", entry.CarrierID.String()),
+			zap.Error(err),
 		)
+
+		return offerPrice{reason: "The carrier's contract could not be read to price this offer"}
 	}
-	if len(r.Lines) == 0 {
-		multiErr.Add("lines", errortypes.ErrRequired, "At least one carrier line is required")
+
+	if !rated.Outcome.Priced() {
+		return offerPrice{reason: "No carrier agreement covers this lane"}
 	}
-	seen := make(map[pulid.ID]struct{}, len(r.Lines))
-	for idx, line := range r.Lines {
-		lineErr := multiErr.WithIndex("lines", idx)
-		if line.CarrierID.IsNil() {
-			lineErr.Add("carrierId", errortypes.ErrRequired, "Carrier is required")
-		}
-		if _, dup := seen[line.CarrierID]; dup {
-			lineErr.Add("carrierId", errortypes.ErrInvalid, "Carrier is already on this tender")
-		}
-		seen[line.CarrierID] = struct{}{}
-		if line.RateMethod != "" && !line.RateMethod.IsValid() {
-			lineErr.Add("rateMethod", errortypes.ErrInvalid, "Rate method is invalid")
-		}
-		if line.Rate.IsNegative() {
-			lineErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
-		}
-		if line.Channel != "" && !line.Channel.IsValid() {
-			lineErr.Add("channel", errortypes.ErrInvalid, "Channel is invalid")
-		}
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+
+	// The contract produced one number, already through its own minimums and
+	// rounding. Offering it as a per-mile rate would invite the offer to be
+	// recomputed into something the contract never said.
+	return offerPrice{method: shipment.CarrierRateMethodFlat, rate: rated.Total}
 }
 
-// GuideEntryScreeningResult is one routing guide entry's eligibility verdict as
-// reported back to the caller that started the tender.
-type GuideEntryScreeningResult struct {
-	CarrierName string   `json:"carrierName"`
-	Rank        int16    `json:"rank"`
-	Reasons     []string `json:"reasons"`
-}
+// shipmentForContractPricing loads the shipment a contract-priced entry needs.
+//
+// It returns nothing when no entry asks for contract pricing, so a guide that
+// has always used its own rates never pays for a read it does not use. A read
+// that fails is logged and treated as absent, which sends every contract-priced
+// entry down the "cannot be priced" path rather than tendering the wrong number.
+func (s *Service) shipmentForContractPricing(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	guide *tender.RoutingGuide,
+	move *shipment.ShipmentMove,
+) *shipment.Shipment {
+	if s.rateEngine == nil || move == nil || move.ShipmentID.IsNil() {
+		return nil
+	}
 
-// GuideScreeningSummary reports which routing guide entries never became offers
-// and which were offered despite a warning.
-type GuideScreeningSummary struct {
-	Skipped []GuideEntryScreeningResult `json:"skipped"`
-	Warned  []GuideEntryScreeningResult `json:"warned"`
-}
+	wanted := false
+	for _, entry := range guide.Entries {
+		if entry != nil && entry.UseContractRate {
+			wanted = true
+			break
+		}
+	}
 
-// CreateWaterfallResult embeds the created tender so the response body stays a
-// superset of the tender itself, with the screening summary attached.
-type CreateWaterfallResult struct {
-	*tender.Tender
+	if !wanted {
+		return nil
+	}
 
-	Screening *GuideScreeningSummary `json:"screening,omitempty"`
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         move.ShipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		s.l.Warn("failed to load the shipment for contract priced tender offers",
+			zap.String("shipmentId", move.ShipmentID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return entity
 }
 
 // CreateWaterfall starts a routing-guide-driven tender for a move. The guide
@@ -139,12 +144,12 @@ func (s *Service) CreateWaterfall(
 	}
 	guide, plan := waterfall.guide, waterfall.offers
 
-	created, err := s.persistAndStart(ctx, req.TenantInfo, waterfall.tender)
+	created, err := s.PersistAndStart(ctx, req.TenantInfo, waterfall.tender)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,
@@ -172,12 +177,12 @@ func (s *Service) CreateSpot(
 	}
 	offers := spot.tender.Offers
 
-	created, err := s.persistAndStart(ctx, req.TenantInfo, spot.tender)
+	created, err := s.PersistAndStart(ctx, req.TenantInfo, spot.tender)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,
@@ -191,10 +196,10 @@ func (s *Service) CreateSpot(
 	return created, nil
 }
 
-// loadTenderableMove enforces every precondition shared by both tender modes:
+// LoadTenderableMove enforces every precondition shared by both tender modes:
 // the move must be assignable, hold-free, and not already covered by a driver,
 // a carrier, or another live tender.
-func (s *Service) loadTenderableMove(
+func (s *Service) LoadTenderableMove(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
@@ -352,23 +357,6 @@ func (s *Service) buildMatchLaneRequest(
 	return req
 }
 
-// guideEntryScreening captures one routing guide entry's eligibility verdict
-// so the audit trail can be written after the tender row exists.
-type guideEntryScreening struct {
-	carrierName string
-	rank        int16
-	reasons     []string
-}
-
-// guideOfferPlan is the screened offer plan for a waterfall tender: the offers
-// that survived the eligibility gate plus the entries skipped or warned on.
-type guideOfferPlan struct {
-	offers   []*tender.TenderOffer
-	skipped  []guideEntryScreening
-	warned   []guideEntryScreening
-	carriers map[pulid.ID]string
-}
-
 // buildGuideOffers screens every guide entry's carrier before it can be
 // offered: blocked carriers are skipped so one lapsed certificate cannot stall
 // the lane, carriers with insurance warnings pass through flagged, and a guide
@@ -403,7 +391,7 @@ func (s *Service) buildGuideOffers(
 	}
 
 	now := timeutils.NowUnix()
-	gates := s.intelGates(ctx, tenantInfo, carrierIDs, refreshIntel)
+	gates := s.effects.IntelGates(ctx, tenantInfo, carrierIDs, refreshIntel)
 	plan := &guideOfferPlan{
 		offers:   make([]*tender.TenderOffer, 0, len(guide.Entries)),
 		carriers: carrierNames(carriers),
@@ -501,35 +489,6 @@ func (s *Service) buildGuideOffers(
 	return plan, nil
 }
 
-func (p *guideOfferPlan) screeningSummary() *GuideScreeningSummary {
-	if len(p.skipped) == 0 && len(p.warned) == 0 {
-		return nil
-	}
-	return &GuideScreeningSummary{
-		Skipped: screeningResults(p.skipped),
-		Warned:  screeningResults(p.warned),
-	}
-}
-
-func screeningResults(entries []guideEntryScreening) []GuideEntryScreeningResult {
-	results := make([]GuideEntryScreeningResult, 0, len(entries))
-	for _, entry := range entries {
-		results = append(results, GuideEntryScreeningResult{
-			CarrierName: entry.carrierName,
-			Rank:        entry.rank,
-			Reasons:     entry.reasons,
-		})
-	}
-	return results
-}
-
-func guideEntryCarrierName(entry *tender.RoutingGuideEntry) string {
-	if entry.Carrier != nil && entry.Carrier.Name != "" {
-		return entry.Carrier.Name
-	}
-	return entry.CarrierID.String()
-}
-
 // auditGuideScreening writes the skip-with-audit trail after the tender row
 // exists: one shipment event per screened entry and a single dispatch
 // notification summarizing the skips. Failures never unwind the created
@@ -553,12 +512,12 @@ func (s *Service) auditGuideScreening(
 	actor := shipmenteventservice.ActorFor(tenantInfo)
 
 	for _, skip := range plan.skipped {
-		s.recordEvent(ctx, shipmenteventservice.BuildTenderEntrySkipped(
+		s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderEntrySkipped(
 			tenant, ref, skip.carrierName, skip.rank, skip.reasons, actor,
 		))
 	}
 	for _, warned := range plan.warned {
-		s.recordEvent(ctx, shipmenteventservice.BuildTenderEntryWarned(
+		s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderEntryWarned(
 			tenant, ref, warned.carrierName, warned.rank, warned.reasons, actor,
 		))
 	}
@@ -570,9 +529,9 @@ func (s *Service) auditGuideScreening(
 	for _, skip := range plan.skipped {
 		names = append(names, skip.carrierName)
 	}
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_entries_skipped",
-		Priority:  notificationPriorityMed,
+		Priority:  tendereffects.NotificationPriorityMed,
 		Title:     "Ineligible carriers skipped on tender",
 		Message: fmt.Sprintf(
 			"%d of %d routing guide carriers were skipped for eligibility: %s. "+
@@ -582,7 +541,7 @@ func (s *Service) auditGuideScreening(
 			strings.Join(names, ", "),
 		),
 		CorrelationID: entity.ID.String(),
-		Link:          dispatchConsoleMoveLink(entity.ShipmentMoveID),
+		Link:          tendereffects.DispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
 }
 
@@ -612,7 +571,7 @@ func (s *Service) buildSpotOffers(
 	}
 
 	now := timeutils.NowUnix()
-	gates := s.intelGates(ctx, req.TenantInfo, carrierIDs, refreshIntel)
+	gates := s.effects.IntelGates(ctx, req.TenantInfo, carrierIDs, refreshIntel)
 	offers := make([]*tender.TenderOffer, 0, len(req.Lines))
 	warnings := make([]string, 0, len(req.Lines))
 	multiErr := errortypes.NewMultiError()
@@ -746,10 +705,10 @@ func (s *Service) resolveOfferChannel(
 	return nil
 }
 
-// persistAndStart writes the tender with its offer plan in one transaction,
+// PersistAndStart writes the tender with its offer plan in one transaction,
 // then starts the owning workflow. A workflow that cannot start cancels the
 // tender immediately rather than leaving an orphaned Active row.
-func (s *Service) persistAndStart(
+func (s *Service) PersistAndStart(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entity *tender.Tender,
@@ -773,7 +732,7 @@ func (s *Service) persistAndStart(
 		return nil, err
 	}
 
-	if err = s.startRound(ctx, tenantInfo, entity); err != nil {
+	if err = s.StartRound(ctx, tenantInfo, entity); err != nil {
 		return nil, err
 	}
 
@@ -786,16 +745,16 @@ func (s *Service) persistAndStart(
 			"tender_created",
 		),
 	)
-	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
+	s.effects.MarkCarriersUsed(ctx, tenantInfo, entity.Offers)
 
 	return entity, nil
 }
 
-// startRound starts the workflow that drives the tender's current round and
+// StartRound starts the workflow that drives the tender's current round and
 // records its identifier. A tender whose workflow cannot be started is
 // canceled, so it never occupies the move's live-tender slot with nobody
 // driving it.
-func (s *Service) startRound(
+func (s *Service) StartRound(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entity *tender.Tender,
@@ -855,10 +814,172 @@ func (s *Service) cancelAfterStartFailure(
 	}
 }
 
-func userIDPtr(tenantInfo pagination.TenantInfo) *pulid.ID {
-	if tenantInfo.UserID.IsNil() {
-		return nil
+type Service struct {
+	l                     *zap.Logger
+	db                    kernelports.Transactor
+	repo                  tenderports.TenderRepository
+	guideRepo             tenderports.RoutingGuideRepository
+	carrierRepo           carrierports.CarrierRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	assignmentRepo        assignmentports.AssignmentRepository
+	shipmentRepo          shipmentports.ShipmentRepository
+	holdRepo              shipmentholdports.ShipmentHoldRepository
+	workflows             kernelports.WorkflowStarter
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
+	rateEngine            ratequoteports.RateEngine
+	effects               *tendereffects.Effects
+}
+
+type Deps struct {
+	Logger                *zap.Logger
+	DB                    kernelports.Transactor
+	Repo                  tenderports.TenderRepository
+	GuideRepo             tenderports.RoutingGuideRepository
+	CarrierRepo           carrierports.CarrierRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	AssignmentRepo        assignmentports.AssignmentRepository
+	ShipmentRepo          shipmentports.ShipmentRepository
+	HoldRepo              shipmentholdports.ShipmentHoldRepository
+	Workflows             kernelports.WorkflowStarter
+	Invalidator           shipmentinvalidationports.ShipmentInvalidator
+	RateEngine            ratequoteports.RateEngine
+	Effects               *tendereffects.Effects
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:                     d.Logger,
+		db:                    d.DB,
+		repo:                  d.Repo,
+		guideRepo:             d.GuideRepo,
+		carrierRepo:           d.CarrierRepo,
+		carrierAssignmentRepo: d.CarrierAssignmentRepo,
+		assignmentRepo:        d.AssignmentRepo,
+		shipmentRepo:          d.ShipmentRepo,
+		holdRepo:              d.HoldRepo,
+		workflows:             d.Workflows,
+		invalidator:           d.Invalidator,
+		rateEngine:            d.RateEngine,
+		effects:               d.Effects,
 	}
-	userID := tenantInfo.UserID
-	return &userID
+}
+
+// PreviewWaterfall is CreateWaterfall without the save: the guide the lane
+// matches and the offers its entries become, with the carriers it skips.
+func (s *Service) PreviewWaterfall(
+	ctx context.Context,
+	req *CreateWaterfallTenderRequest,
+) (*TenderPreview, error) {
+	waterfall, err := s.planWaterfall(ctx, req, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TenderPreview{
+		Tender:    waterfall.tender,
+		Carriers:  waterfall.offers.carriers,
+		Guide:     waterfall.guide,
+		Screening: waterfall.offers.screeningSummary(),
+	}, nil
+}
+
+// PreviewSpot is CreateSpot without the save. Insurance warnings the call
+// does not override are returned as the refusal CreateSpot would make.
+func (s *Service) PreviewSpot(
+	ctx context.Context,
+	req *CreateSpotTenderRequest,
+) (*TenderPreview, error) {
+	spot, err := s.planSpot(ctx, req, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TenderPreview{
+		Tender:       spot.tender,
+		Carriers:     spot.offers.carriers,
+		Warnings:     spot.offers.warnings,
+		RefusalError: spot.refusal(req),
+	}, nil
+}
+
+// planWaterfall is everything CreateWaterfall decides before it saves: the
+// move is tenderable, the guide resolves, and its entries are screened into
+// offers. refreshIntel refreshes carrier intelligence before screening,
+// which writes, so only the write asks for it.
+func (s *Service) planWaterfall(
+	ctx context.Context,
+	req *CreateWaterfallTenderRequest,
+	refreshIntel bool,
+) (*waterfallPlan, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	move, sh, err := s.LoadTenderableMove(ctx, req.TenantInfo, req.ShipmentMoveID)
+	if err != nil {
+		return nil, err
+	}
+
+	guide, err := s.resolveGuide(ctx, req, move, sh)
+	if err != nil {
+		return nil, err
+	}
+
+	offers, err := s.buildGuideOffers(ctx, req.TenantInfo, guide, move, refreshIntel)
+	if err != nil {
+		return nil, err
+	}
+
+	guideID := guide.ID
+
+	return &waterfallPlan{
+		guide:  guide,
+		offers: offers,
+		tender: &tender.Tender{
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			ShipmentID:     move.ShipmentID,
+			ShipmentMoveID: move.ID,
+			RoutingGuideID: &guideID,
+			Mode:           tender.ModeWaterfall,
+			Status:         tender.StatusActive,
+			CreatedByID:    tendereffects.UserIDPtr(req.TenantInfo),
+			Offers:         offers.offers,
+		},
+	}, nil
+}
+
+// planSpot is everything CreateSpot decides before it saves.
+func (s *Service) planSpot(
+	ctx context.Context,
+	req *CreateSpotTenderRequest,
+	refreshIntel bool,
+) (*spotPlan, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	move, _, err := s.LoadTenderableMove(ctx, req.TenantInfo, req.ShipmentMoveID)
+	if err != nil {
+		return nil, err
+	}
+
+	offers, err := s.buildSpotOffers(ctx, req, move, refreshIntel)
+	if err != nil {
+		return nil, err
+	}
+
+	return &spotPlan{
+		offers: offers,
+		tender: &tender.Tender{
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			ShipmentID:     move.ShipmentID,
+			ShipmentMoveID: move.ID,
+			Mode:           req.Mode,
+			Status:         tender.StatusActive,
+			CreatedByID:    tendereffects.UserIDPtr(req.TenantInfo),
+			Offers:         offers.offers,
+		},
+	}, nil
 }

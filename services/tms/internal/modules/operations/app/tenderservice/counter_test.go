@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -233,6 +234,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 		auditService:     &recordingAuditService{},
 		invalidator:      noopInvalidator{},
 	}
+	deps.svc.assemble()
 	return deps
 }
 
@@ -249,12 +251,16 @@ func (d *counterDeps) expectSellPrice(sell int64) {
 
 func (d *counterDeps) counter(t *testing.T, rate int64) *tenderports.TenderCounterResult {
 	t.Helper()
-	result, err := d.svc.RecordCounter(t.Context(), d.tenant, &tenderports.RecordCounterRequest{
-		OfferID: d.offer.ID,
-		Rate:    decimal.NewFromInt(rate),
-		Note:    "  Fuel is up on this lane  ",
-		Source:  tender.ResponseSourceEmail,
-	})
+	result, err := d.svc.negotiator.RecordCounter(
+		t.Context(),
+		d.tenant,
+		&tenderports.RecordCounterRequest{
+			OfferID: d.offer.ID,
+			Rate:    decimal.NewFromInt(rate),
+			Note:    "  Fuel is up on this lane  ",
+			Source:  tender.ResponseSourceEmail,
+		},
+	)
 	require.NoError(t, err)
 	return result
 }
@@ -336,7 +342,7 @@ func TestCountersAreRefusedWhenTurnedOff(t *testing.T) {
 		control.TenderCounterOffersEnabled = false
 	})
 
-	_, err := deps.svc.planResponse(t.Context(), &tenderports.TenderResponseRequest{
+	_, err := deps.svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:  deps.tenant,
 		OfferID:     deps.offer.ID,
 		Action:      tender.ResponseActionCounter,
@@ -351,7 +357,7 @@ func TestCountersAreRefusedWhenTurnedOff(t *testing.T) {
 func TestACounterNeedsAPositiveRate(t *testing.T) {
 	deps := setupCounter(t, nil)
 
-	_, err := deps.svc.planResponse(t.Context(), &tenderports.TenderResponseRequest{
+	_, err := deps.svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:  deps.tenant,
 		OfferID:     deps.offer.ID,
 		Action:      tender.ResponseActionCounter,
@@ -375,7 +381,7 @@ func TestApprovingACounterBelowTheFloorNeedsTheApprovePermission(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, true)
 
-	err := deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
+	err := deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
 		TenantInfo: deps.tenant,
 		OfferID:    deps.offer.ID,
 		Approve:    true,
@@ -390,11 +396,14 @@ func TestApprovingACounterBelowTheFloorNeedsTheApprovePermission(t *testing.T) {
 	assert.Equal(t, deps.tenant.UserID, deps.permissions.checked[0].UserID)
 
 	deps.permissions.allowApprove = true
-	require.NoError(t, deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    deps.offer.ID,
-		Approve:    true,
-	}))
+	require.NoError(
+		t,
+		deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    deps.offer.ID,
+			Approve:    true,
+		}),
+	)
 	require.Len(t, deps.workflows.signals, 1)
 	sent := deps.workflows.signals[0]
 	assert.Equal(t, "carrier-tender-"+deps.entity.ID.String()+"-r2", sent.workflowID)
@@ -407,11 +416,14 @@ func TestACounterWithinTheFloorNeedsNoApprovePermission(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, false)
 
-	require.NoError(t, deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    deps.offer.ID,
-		Approve:    true,
-	}))
+	require.NoError(
+		t,
+		deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    deps.offer.ID,
+			Approve:    true,
+		}),
+	)
 
 	assert.Empty(t, deps.permissions.checked)
 	require.Len(t, deps.workflows.signals, 1)
@@ -421,11 +433,14 @@ func TestRefusingACounterNeedsNoApprovePermission(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, true)
 
-	require.NoError(t, deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    deps.offer.ID,
-		Reason:     "Too rich for this lane",
-	}))
+	require.NoError(
+		t,
+		deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    deps.offer.ID,
+			Reason:     "Too rich for this lane",
+		}),
+	)
 
 	require.Len(t, deps.workflows.signals, 1)
 	assert.Equal(t, tender.ResponseActionDecline, deps.workflows.signals[0].payload.Action)
@@ -435,7 +450,7 @@ func TestRefusingACounterNeedsNoApprovePermission(t *testing.T) {
 func TestOnlyAStandingCounterCanBeDecided(t *testing.T) {
 	deps := setupCounter(t, nil)
 
-	err := deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
+	err := deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
 		TenantInfo: deps.tenant,
 		OfferID:    deps.offer.ID,
 		Approve:    true,
@@ -446,7 +461,7 @@ func TestOnlyAStandingCounterCanBeDecided(t *testing.T) {
 	countered(deps, false)
 	lapsed := timeutils.NowUnix() - 1
 	deps.offer.ExpiresAt = &lapsed
-	err = deps.svc.DecideCounter(t.Context(), &DecideCounterRequest{
+	err = deps.svc.negotiator.DecideCounter(t.Context(), &tendernegotiation.DecideCounterRequest{
 		TenantInfo: deps.tenant,
 		OfferID:    deps.offer.ID,
 		Approve:    true,
@@ -459,7 +474,7 @@ func TestRefusingACounterClosesTheOfferForTheNextCarrier(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, true)
 
-	err := deps.svc.DeclineOffer(
+	err := deps.svc.offerLifecycle.DeclineOffer(
 		t.Context(), deps.tenant, deps.offer.ID, tender.ResponseSourceManual, "Too rich",
 	)
 
@@ -478,7 +493,7 @@ func TestACounterNobodyDecidedLapses(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, false)
 
-	require.NoError(t, deps.svc.ExpireOffer(t.Context(), deps.tenant, deps.offer.ID))
+	require.NoError(t, deps.svc.offerLifecycle.ExpireOffer(t.Context(), deps.tenant, deps.offer.ID))
 
 	assert.Equal(t, tender.OfferStatusExpired, deps.offer.Status)
 	decided := deps.events.eventsOfType(shipmentevent.TypeTenderCounterDecided)
@@ -519,8 +534,9 @@ func TestTakingACounterPaysTheCarrierItsCounterRate(t *testing.T) {
 	assigner := &recordingAssigner{}
 	deps.svc.assigner = assigner
 	deps.svc.carrierAssignmentRepo = &stubCarrierAssignmentRepo{}
+	deps.svc.assemble()
 
-	result, err := deps.svc.AcceptOffer(
+	result, err := deps.svc.offerLifecycle.AcceptOffer(
 		t.Context(),
 		deps.tenant,
 		deps.offer.ID,
@@ -544,12 +560,15 @@ func TestAPersonsAcceptOnACounteredOfferTakesTheCounter(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, false)
 
-	require.NoError(t, deps.svc.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    deps.offer.ID,
-		Action:     tender.ResponseActionAccept,
-		Source:     tender.ResponseSourceManual,
-	}))
+	require.NoError(
+		t,
+		deps.svc.responder.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    deps.offer.ID,
+			Action:     tender.ResponseActionAccept,
+			Source:     tender.ResponseSourceManual,
+		}),
+	)
 
 	require.Len(t, deps.workflows.signals, 1)
 	assert.Equal(t, tender.ResponseActionAccept, deps.workflows.signals[0].payload.Action)
@@ -561,13 +580,16 @@ func TestARecordedRefusalOfACounterBelowTheFloorNeedsNoApproval(t *testing.T) {
 	deps := setupCounter(t, nil)
 	countered(deps, true)
 
-	preview, err := deps.svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
-		TenantInfo:    deps.tenant,
-		OfferID:       deps.offer.ID,
-		Action:        tender.ResponseActionDecline,
-		Source:        tender.ResponseSourceManual,
-		DeclineReason: "Too rich",
-	})
+	preview, err := deps.svc.responder.PreviewResponse(
+		t.Context(),
+		&tenderports.TenderResponseRequest{
+			TenantInfo:    deps.tenant,
+			OfferID:       deps.offer.ID,
+			Action:        tender.ResponseActionDecline,
+			Source:        tender.ResponseSourceManual,
+			DeclineReason: "Too rich",
+		},
+	)
 	require.NoError(t, err)
 	refused := preview.TenderAfter.FindOffer(deps.offer.ID)
 	require.NotNil(t, refused)

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -40,7 +42,7 @@ func (m *memoryTenderRepo) GetByID(
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Tender not found")
 	}
-	return copyTender(entity, func(*tender.TenderOffer) {}), nil
+	return tendereffects.CopyTender(entity, func(*tender.TenderOffer) {}), nil
 }
 
 func (m *memoryTenderRepo) GetOfferByID(
@@ -50,7 +52,7 @@ func (m *memoryTenderRepo) GetOfferByID(
 	for _, entity := range m.tenders {
 		if offer := entity.FindOffer(req.OfferID); offer != nil {
 			copied := *offer
-			copied.Tender = copyTender(entity, func(*tender.TenderOffer) {})
+			copied.Tender = tendereffects.CopyTender(entity, func(*tender.TenderOffer) {})
 			return &copied, nil
 		}
 	}
@@ -236,6 +238,7 @@ func setupBounce(t *testing.T) *bounceDeps {
 		auditService:          deps.audit,
 		invalidator:           noopInvalidator{},
 	}
+	deps.svc.assemble()
 	return deps
 }
 
@@ -251,7 +254,7 @@ func TestBounceTakesTheCarrierOffAndSendsTheNextRanks(t *testing.T) {
 	deps := setupBounce(t)
 	revokedID := *deps.entity.AcceptedOfferID
 
-	got, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	got, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down in Joliet",
@@ -301,7 +304,7 @@ func TestBounceRetryAfterTheCarrierCameOffCarriesOn(t *testing.T) {
 	deps := setupBounce(t)
 	deps.assignments.active = nil
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Driver no-show",
@@ -317,7 +320,7 @@ func TestBounceRefusesATenderNobodyAccepted(t *testing.T) {
 	deps := setupBounce(t)
 	deps.entity.Status = tender.StatusActive
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Changed their mind",
@@ -334,7 +337,7 @@ func TestBounceRefusesAMoveSomebodyElseCovers(t *testing.T) {
 	deps := setupBounce(t)
 	deps.assignments.active.CarrierID = pulid.MustNew("car_")
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -350,7 +353,7 @@ func TestBounceRefusesWhileAnotherTenderIsLiveOnTheMove(t *testing.T) {
 	deps := setupBounce(t)
 	deps.repo.live = &tender.Tender{ID: pulid.MustNew("tnd_"), Status: tender.StatusActive}
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -367,7 +370,7 @@ func TestBounceStopsWhenTheCarrierCannotComeOff(t *testing.T) {
 		"Only fresh assigned shipment moves can have their carrier assignment canceled",
 	)
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -381,7 +384,7 @@ func TestBounceStopsWhenTheCarrierCannotComeOff(t *testing.T) {
 func TestBounceRequiresAReason(t *testing.T) {
 	deps := setupBounce(t)
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "   ",
@@ -400,7 +403,7 @@ func TestBounceWithNobodyLeftStillStartsTheRoundSoItExhausts(t *testing.T) {
 		}
 	}
 
-	preview, err := deps.svc.PreviewBounce(t.Context(), &BounceTenderRequest{
+	preview, err := deps.svc.bouncer.PreviewBounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -411,7 +414,7 @@ func TestBounceWithNobodyLeftStillStartsTheRoundSoItExhausts(t *testing.T) {
 	assert.Empty(t, preview.Reoffers)
 	assert.Equal(t, tender.StatusAccepted, deps.entity.Status, "a preview writes nothing")
 
-	_, err = deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err = deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -427,7 +430,7 @@ func TestBounceThatCannotStartItsRoundCancelsTheTender(t *testing.T) {
 	deps := setupBounce(t)
 	deps.workflows.err = errors.New("temporal unavailable")
 
-	_, err := deps.svc.Bounce(t.Context(), &BounceTenderRequest{
+	_, err := deps.svc.bouncer.Bounce(t.Context(), &tenderbounce.BounceTenderRequest{
 		TenantInfo: deps.tenant,
 		TenderID:   deps.entity.ID,
 		Reason:     "Truck broke down",
@@ -442,7 +445,7 @@ func TestAnEDIDeclineOfAnAcceptedOfferBouncesTheTender(t *testing.T) {
 	deps := setupBounce(t)
 	accepted := *deps.entity.AcceptedOfferID
 
-	err := deps.svc.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
+	err := deps.svc.responder.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:    deps.tenant,
 		OfferID:       accepted,
 		Action:        tender.ResponseActionDecline,
@@ -463,21 +466,27 @@ func TestOnlyAnEDIDeclineOfTheAcceptedOfferIsABounce(t *testing.T) {
 	accepted := *deps.entity.AcceptedOfferID
 	declined := deps.entity.Offers[0].ID
 
-	bounced, err := deps.svc.bounceOnCarrierDecline(t.Context(), &tenderports.TenderResponseRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    accepted,
-		Action:     tender.ResponseActionDecline,
-		Source:     tender.ResponseSourceManual,
-	})
+	bounced, err := deps.svc.bouncer.BounceOnCarrierDecline(
+		t.Context(),
+		&tenderports.TenderResponseRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    accepted,
+			Action:     tender.ResponseActionDecline,
+			Source:     tender.ResponseSourceManual,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, bounced, "a person bounces a tender explicitly")
 
-	bounced, err = deps.svc.bounceOnCarrierDecline(t.Context(), &tenderports.TenderResponseRequest{
-		TenantInfo: deps.tenant,
-		OfferID:    declined,
-		Action:     tender.ResponseActionDecline,
-		Source:     tender.ResponseSourceEDI,
-	})
+	bounced, err = deps.svc.bouncer.BounceOnCarrierDecline(
+		t.Context(),
+		&tenderports.TenderResponseRequest{
+			TenantInfo: deps.tenant,
+			OfferID:    declined,
+			Action:     tender.ResponseActionDecline,
+			Source:     tender.ResponseSourceEDI,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, bounced)
 	assert.Zero(t, deps.repo.reopens)

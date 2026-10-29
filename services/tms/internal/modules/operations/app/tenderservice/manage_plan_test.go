@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,13 +68,15 @@ func sequentialTender(status tender.Status, offers ...tender.OfferStatus) *tende
 }
 
 func managedService(entity *tender.Tender, workflows *fakeWorkflowStarter) *Service {
-	return &Service{
+	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         &readingTenderRepo{entity: entity},
 		workflows:    workflows,
 		eventService: &recordingEventService{},
 		auditService: &recordingAuditService{},
 	}
+	svc.assemble()
+	return svc
 }
 
 func TestPreviewCancel_WithdrawsTheTenderAndTheOffersCarriersHold(t *testing.T) {
@@ -82,7 +86,7 @@ func TestPreviewCancel_WithdrawsTheTenderAndTheOffersCarriersHold(t *testing.T) 
 		tender.OfferStatusDeclined, tender.OfferStatusSent, tender.OfferStatusPending)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewCancel(t.Context(), &CancelTenderRequest{
+	plan, err := svc.canceler.PreviewCancel(t.Context(), &tendercancel.CancelTenderRequest{
 		TenantInfo: createTestTenant(),
 		TenderID:   entity.ID,
 		Reason:     "Covered by our own driver",
@@ -96,7 +100,12 @@ func TestPreviewCancel_WithdrawsTheTenderAndTheOffersCarriersHold(t *testing.T) 
 	assert.Equal(t, tender.OfferStatusDeclined, plan.After.Offers[0].Status)
 	assert.Equal(t, tender.OfferStatusWithdrawn, plan.After.Offers[1].Status)
 	assert.Equal(t, tender.OfferStatusSkipped, plan.After.Offers[2].Status)
-	assert.Equal(t, tender.OfferStatusSent, entity.Offers[1].Status, "the stored offer is untouched")
+	assert.Equal(
+		t,
+		tender.OfferStatusSent,
+		entity.Offers[1].Status,
+		"the stored offer is untouched",
+	)
 }
 
 // A tender that already ended cannot be canceled, and the preview says so in
@@ -106,14 +115,14 @@ func TestPreviewCancel_RefusesWhatCancelRefuses(t *testing.T) {
 
 	entity := sequentialTender(tender.StatusAccepted, tender.OfferStatusAccepted)
 	svc := managedService(entity, &fakeWorkflowStarter{})
-	req := &CancelTenderRequest{
+	req := &tendercancel.CancelTenderRequest{
 		TenantInfo: createTestTenant(),
 		TenderID:   entity.ID,
 		Reason:     "No longer needed",
 	}
 
-	_, previewErr := svc.PreviewCancel(t.Context(), req)
-	writeErr := svc.Cancel(t.Context(), req)
+	_, previewErr := svc.canceler.PreviewCancel(t.Context(), req)
+	writeErr := svc.canceler.Cancel(t.Context(), req)
 
 	require.Error(t, previewErr)
 	assert.True(t, errortypes.IsBusinessError(previewErr))
@@ -128,7 +137,7 @@ func TestPreviewResponse_AcceptCloseOutTheRestOfThePlan(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	plan, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
@@ -154,7 +163,7 @@ func TestPreviewResponse_DeclineOffersTheNextCarrierInAWaterfall(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	plan, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:    createTestTenant(),
 		OfferID:       entity.Offers[0].ID,
 		Action:        tender.ResponseActionDecline,
@@ -178,7 +187,7 @@ func TestPreviewResponse_DeclineOfTheLastCarrierExhaustsTheTender(t *testing.T) 
 		tender.OfferStatusDeclined, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	plan, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[1].ID,
 		Action:     tender.ResponseActionDecline,
@@ -201,13 +210,13 @@ func TestPreviewResponse_RefusesAnOfferNoLongerOpen(t *testing.T) {
 		tender.OfferStatusExpired, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	_, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
 		Source:     tender.ResponseSourceManual,
 	})
-	require.ErrorIs(t, err, ErrOfferNoLongerAvailable)
+	require.ErrorIs(t, err, tenderresponse.ErrOfferNoLongerAvailable)
 }
 
 func TestPreviewResponse_RefusesAnUnknownAction(t *testing.T) {
@@ -216,12 +225,12 @@ func TestPreviewResponse_RefusesAnUnknownAction(t *testing.T) {
 	entity := sequentialTender(tender.StatusActive, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
+	_, err := svc.responder.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseAction("Maybe"),
 		Source:     tender.ResponseSourceManual,
 	})
 	require.Error(t, err)
-	assert.False(t, errors.Is(err, ErrOfferNoLongerAvailable))
+	assert.False(t, errors.Is(err, tenderresponse.ErrOfferNoLongerAvailable))
 }

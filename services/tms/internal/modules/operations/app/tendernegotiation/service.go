@@ -1,50 +1,28 @@
-package tenderservice
+package tendernegotiation
 
 import (
 	"context"
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
-
-// validateCounter checks a counter-offer's own shape. Whether the offer can
-// still take one is planResponse's call.
-func validateCounter(req *tenderports.TenderResponseRequest) error {
-	multiErr := errortypes.NewMultiError()
-	switch {
-	case !req.CounterRate.IsPositive():
-		multiErr.Add(
-			"counterRate",
-			errortypes.ErrRequired,
-			"A counter-offer needs a rate above zero",
-		)
-	case req.CounterRate.GreaterThanOrEqual(tender.MaxCounterRate):
-		multiErr.Add("counterRate", errortypes.ErrInvalid, "Counter-offer rate is too large")
-	}
-	if utf8.RuneCountInString(req.CounterNote) > tender.MaxCounterNoteLength {
-		multiErr.Add("counterNote", errortypes.ErrInvalid, "Note must be at most 500 characters")
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
 
 // RecordCounter lands a carrier's counter-offer. The offer moves to
 // Countered and holds until the decision deadline; the verdict against the
@@ -68,7 +46,7 @@ func (s *Service) RecordCounter(
 		return nil, errortypes.NewBusinessError("Offer is not attached to a tender")
 	}
 
-	policy := s.tenderPolicy(ctx, tenantInfo)
+	policy := s.effects.Policy(ctx, tenantInfo)
 	verdict := s.evaluateCounter(ctx, tenantInfo, offer, req.Rate, &policy)
 	now := timeutils.NowUnix()
 	deadline := now + policy.CounterDecisionSeconds
@@ -94,7 +72,13 @@ func (s *Service) RecordCounter(
 		return nil, err
 	}
 	if !moved {
-		s.recordLateOfferResponse(ctx, tenantInfo, offer, tender.ResponseActionCounter, req.Source)
+		s.effects.RecordLateOfferResponse(
+			ctx,
+			tenantInfo,
+			offer,
+			tender.ResponseActionCounter,
+			req.Source,
+		)
 		return &tenderports.TenderCounterResult{Ignored: true}, nil
 	}
 
@@ -154,25 +138,16 @@ func (s *Service) evaluateCounter(
 	return tender.EvaluateCounter(terms)
 }
 
-type counterAnnouncement struct {
-	offer    *tender.TenderOffer
-	rate     decimal.Decimal
-	note     string
-	source   tender.ResponseSource
-	verdict  tender.CounterVerdict
-	deadline int64
-}
-
 func (s *Service) announceCounter(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	a *counterAnnouncement,
 ) {
-	carrierName := carrierNameOf(a.offer)
+	carrierName := tendereffects.CarrierNameOf(a.offer)
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderCountered(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderCountered(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(a.offer),
+		tendereffects.TenderRefForOffer(a.offer),
 		&shipmenteventservice.TenderCounter{
 			CarrierName:   carrierName,
 			OfferedRate:   a.offer.Rate.StringFixed(2),
@@ -185,7 +160,7 @@ func (s *Service) announceCounter(
 	))
 
 	if !a.verdict.AutoAccept {
-		priority := notificationPriorityMed
+		priority := tendereffects.NotificationPriorityMed
 		message := fmt.Sprintf(
 			"%s countered at %s against %s offered. Take or refuse it by %s, or it lapses and the tender moves on",
 			carrierName,
@@ -194,7 +169,7 @@ func (s *Service) announceCounter(
 			timeutils.FormatInstantUTC(a.deadline),
 		)
 		if a.verdict.NeedsApproval {
-			priority = notificationPriorityHigh
+			priority = tendereffects.NotificationPriorityHigh
 			message = fmt.Sprintf(
 				"%s countered at %s against %s offered, and %s. Approving it needs the tender approve permission. Decide by %s, or it lapses and the tender moves on",
 				carrierName,
@@ -204,13 +179,13 @@ func (s *Service) announceCounter(
 				timeutils.FormatInstantUTC(a.deadline),
 			)
 		}
-		s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+		s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 			EventType:     "tender_countered",
 			Priority:      priority,
 			Title:         "Carrier counter-offer to decide",
 			Message:       message,
 			CorrelationID: a.offer.TenderID.String(),
-			Link:          dispatchConsoleOfferLink(a.offer),
+			Link:          tendereffects.DispatchConsoleOfferLink(a.offer),
 		})
 	}
 
@@ -220,7 +195,7 @@ func (s *Service) announceCounter(
 	if a.note != "" {
 		comment += ": " + a.note
 	}
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   a.offer.TenderID,
 		Operation:  permission.OpUpdate,
@@ -228,37 +203,7 @@ func (s *Service) announceCounter(
 		Comment:    comment,
 		Current:    a.offer.Tender,
 	})
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, a.offer, "tender_countered")
-}
-
-// DecideCounterRequest takes or refuses a carrier's counter-offer.
-type DecideCounterRequest struct {
-	TenantInfo pagination.TenantInfo         `json:"-"`
-	Actor      *permissionports.RequestActor `json:"-"`
-	OfferID    pulid.ID                      `json:"offerId"`
-	Approve    bool                          `json:"approve"`
-	Reason     string                        `json:"reason"`
-}
-
-func (r *DecideCounterRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r.OfferID.IsNil() {
-		multiErr.Add("offerId", errortypes.ErrRequired, "Offer is required")
-	}
-	if utf8.RuneCountInString(r.Reason) > maxDeclineReasonLength {
-		multiErr.Add("reason", errortypes.ErrInvalid, "Reason must be at most 500 characters")
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
-func (r *DecideCounterRequest) actor() *permissionports.RequestActor {
-	if r.Actor != nil {
-		return r.Actor
-	}
-	return permissionports.UserActor(r.TenantInfo)
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, a.offer, "tender_countered")
 }
 
 // planCounterDecision is every check DecideCounter makes before it signals:
@@ -388,18 +333,18 @@ func (s *Service) PreviewDecideCounter(
 	now := timeutils.NowUnix()
 	out := &ResponsePreview{Tender: entity, Offer: offer}
 	if req.Approve {
-		out.TenderAfter = acceptedTender(entity, offer.ID, offer.ResponseSource, now)
+		out.TenderAfter = AcceptedTender(entity, offer.ID, offer.ResponseSource, now)
 		return out, nil
 	}
-	out.TenderAfter = copyTender(entity, func(o *tender.TenderOffer) {
+	out.TenderAfter = tendereffects.CopyTender(entity, func(o *tender.TenderOffer) {
 		if o.ID == offer.ID {
 			o.Status = tender.OfferStatusCounterRejected
 			o.CounterDecidedAt = &now
 			o.DeclineReason = strings.TrimSpace(req.Reason)
 		}
 	})
-	out.NextOffer = nextOfferAfterDecline(out.TenderAfter)
-	if out.NextOffer == nil && !hasOutstandingOffer(out.TenderAfter) {
+	out.NextOffer = NextOfferAfterDecline(out.TenderAfter)
+	if out.NextOffer == nil && !HasOutstandingOffer(out.TenderAfter) {
 		out.Exhausted = true
 		out.TenderAfter.Status = tender.StatusExhausted
 		out.TenderAfter.ExhaustedAt = &now
@@ -407,13 +352,9 @@ func (s *Service) PreviewDecideCounter(
 	return out, nil
 }
 
-func decisionStamp(tenantInfo pagination.TenantInfo, at int64) *tenderports.DecisionStamp {
-	return &tenderports.DecisionStamp{At: at, UserID: userIDPtr(tenantInfo)}
-}
-
-// refuseCounter closes an offer whose counter somebody refused, so the tender
+// RefuseCounter closes an offer whose counter somebody refused, so the tender
 // moves on to its next carrier.
-func (s *Service) refuseCounter(
+func (s *Service) RefuseCounter(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
@@ -426,7 +367,7 @@ func (s *Service) refuseCounter(
 		FromStatus:     []tender.OfferStatus{tender.OfferStatusCountered},
 		ToStatus:       tender.OfferStatusCounterRejected,
 		DeclineReason:  reason,
-		CounterDecided: decisionStamp(tenantInfo, now),
+		CounterDecided: DecisionStamp(tenantInfo, now),
 	})
 	if err != nil || !moved {
 		return err
@@ -435,9 +376,9 @@ func (s *Service) refuseCounter(
 	return nil
 }
 
-// lapseCounter closes an offer whose counter nobody decided before its
+// LapseCounter closes an offer whose counter nobody decided before its
 // deadline, so the tender moves on to its next carrier.
-func (s *Service) lapseCounter(
+func (s *Service) LapseCounter(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
@@ -465,10 +406,10 @@ func (s *Service) closeCounter(
 	reason string,
 	auditFormat string,
 ) {
-	carrierName := carrierNameOf(offer)
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderCounterDecided(
+	carrierName := tendereffects.CarrierNameOf(offer)
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderCounterDecided(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
+		tendereffects.TenderRefForOffer(offer),
 		carrierName,
 		offer.CounterRate.Decimal.StringFixed(2),
 		reason,
@@ -479,7 +420,7 @@ func (s *Service) closeCounter(
 	if reason != "" {
 		comment += ": " + reason
 	}
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
 		Operation:  permission.OpUpdate,
@@ -487,13 +428,13 @@ func (s *Service) closeCounter(
 		Comment:    comment,
 		Current:    offer.Tender,
 	})
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_counter_closed")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_counter_closed")
 }
 
-// counterDecisionFor reads a person's Accept or Decline on an offer that holds
+// CounterDecisionFor reads a person's Accept or Decline on an offer that holds
 // a counter as their decision on the counter: taking it, or refusing it. Any
 // other answer is not a decision and is left to the response path.
-func (s *Service) counterDecisionFor(
+func (s *Service) CounterDecisionFor(
 	ctx context.Context,
 	req *tenderports.TenderResponseRequest,
 ) (*DecideCounterRequest, error) {
@@ -521,4 +462,36 @@ func (s *Service) counterDecisionFor(
 		Approve:    req.Action == tender.ResponseActionAccept,
 		Reason:     req.DeclineReason,
 	}, nil
+}
+
+type Service struct {
+	l              *zap.Logger
+	repo           tenderports.TenderRepository
+	assignmentRepo assignmentports.AssignmentRepository
+	shipmentRepo   shipmentports.ShipmentRepository
+	workflows      kernelports.WorkflowStarter
+	permissions    permissionports.PermissionEngine
+	effects        *tendereffects.Effects
+}
+
+type Deps struct {
+	Logger         *zap.Logger
+	Repo           tenderports.TenderRepository
+	AssignmentRepo assignmentports.AssignmentRepository
+	ShipmentRepo   shipmentports.ShipmentRepository
+	Workflows      kernelports.WorkflowStarter
+	Permissions    permissionports.PermissionEngine
+	Effects        *tendereffects.Effects
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:              d.Logger,
+		repo:           d.Repo,
+		assignmentRepo: d.AssignmentRepo,
+		shipmentRepo:   d.ShipmentRepo,
+		workflows:      d.Workflows,
+		permissions:    d.Permissions,
+		effects:        d.Effects,
+	}
 }

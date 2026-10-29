@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -60,21 +62,21 @@ const maxTenderDeclineReason = 500
 // tenderManager is the slice of the tender service that withdraws a tender
 // and records a carrier's answer to an offer.
 type tenderManager interface {
-	Cancel(ctx context.Context, req *tenderservice.CancelTenderRequest) error
+	Cancel(ctx context.Context, req *tendercancel.CancelTenderRequest) error
 	PreviewCancel(
 		ctx context.Context,
-		req *tenderservice.CancelTenderRequest,
-	) (*tenderservice.CancelPreview, error)
+		req *tendercancel.CancelTenderRequest,
+	) (*tendercancel.CancelPreview, error)
 	RecordResponse(ctx context.Context, req *tenderports.TenderResponseRequest) error
 	PreviewResponse(
 		ctx context.Context,
 		req *tenderports.TenderResponseRequest,
-	) (*tenderservice.ResponsePreview, error)
-	Bounce(ctx context.Context, req *tenderservice.BounceTenderRequest) (*tender.Tender, error)
+	) (*tendernegotiation.ResponsePreview, error)
+	Bounce(ctx context.Context, req *tenderbounce.BounceTenderRequest) (*tender.Tender, error)
 	PreviewBounce(
 		ctx context.Context,
-		req *tenderservice.BounceTenderRequest,
-	) (*tenderservice.BouncePreview, error)
+		req *tenderbounce.BounceTenderRequest,
+	) (*tenderbounce.BouncePreview, error)
 }
 
 // cancelTenderTool withdraws a live tender, which is the dispatch console's
@@ -188,7 +190,7 @@ func (t *CancelTenderTool) Execute(
 
 func (t *CancelTenderTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*tenderservice.CancelTenderRequest, error) {
+) (*tendercancel.CancelTenderRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -202,7 +204,7 @@ func (t *CancelTenderTool) request(
 		return nil, err
 	}
 
-	return &tenderservice.CancelTenderRequest{
+	return &tendercancel.CancelTenderRequest{
 		TenantInfo: toolparams.TenantFrom(*params),
 		TenderID:   tenderID,
 		Reason:     strings.TrimSpace(reason),
@@ -420,7 +422,7 @@ func (t *RecordTenderResponseTool) request(
 // offer it had accepted; any other answer returns nil.
 func (t *RecordTenderResponseTool) bounceRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*tenderservice.BounceTenderRequest, error) {
+) (*tenderbounce.BounceTenderRequest, error) {
 	if tenderAnswer(toolparams.OptionalString(params.Params, fieldAction)) != answerBackedOut {
 		return nil, nil //nolint:nilnil // not a bounce is not an error
 	}
@@ -441,7 +443,7 @@ func (t *RecordTenderResponseTool) bounceRequest(
 	if _, _, err = counterTerms(params, false); err != nil {
 		return nil, err
 	}
-	return &tenderservice.BounceTenderRequest{
+	return &tenderbounce.BounceTenderRequest{
 		TenantInfo: toolparams.TenantFrom(*params),
 		OfferID:    offerID,
 		Reason:     reason,

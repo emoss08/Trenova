@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -27,9 +30,9 @@ type fakeTenderManager struct {
 	guard    agenttoolstest.WriteGuard
 	entity   *tender.Tender
 	refusal  error
-	canceled *tenderservice.CancelTenderRequest
+	canceled *tendercancel.CancelTenderRequest
 	answered *tenderports.TenderResponseRequest
-	bounced  *tenderservice.BounceTenderRequest
+	bounced  *tenderbounce.BounceTenderRequest
 }
 
 func newFakeTenderManager(status tender.Status, offers ...tender.OfferStatus) *fakeTenderManager {
@@ -73,23 +76,23 @@ func (f *fakeTenderManager) copyOffers(change func(*tender.TenderOffer)) *tender
 
 func (f *fakeTenderManager) PreviewCancel(
 	_ context.Context,
-	req *tenderservice.CancelTenderRequest,
-) (*tenderservice.CancelPreview, error) {
+	req *tendercancel.CancelTenderRequest,
+) (*tendercancel.CancelPreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 	after := f.copyOffers(func(offer *tender.TenderOffer) {
-		offer.Status, _ = tenderservice.WithdrawnOfferStatus(offer.Status)
+		offer.Status, _ = tendercancel.WithdrawnOfferStatus(offer.Status)
 	})
 	after.Status = tender.StatusCanceled
 	after.CancellationReason = req.Reason
 
-	return &tenderservice.CancelPreview{Before: f.entity, After: after}, nil
+	return &tendercancel.CancelPreview{Before: f.entity, After: after}, nil
 }
 
 func (f *fakeTenderManager) Cancel(
 	_ context.Context,
-	req *tenderservice.CancelTenderRequest,
+	req *tendercancel.CancelTenderRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -102,12 +105,12 @@ func (f *fakeTenderManager) Cancel(
 func (f *fakeTenderManager) PreviewResponse(
 	_ context.Context,
 	req *tenderports.TenderResponseRequest,
-) (*tenderservice.ResponsePreview, error) {
+) (*tendernegotiation.ResponsePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 	offer := f.entity.FindOffer(req.OfferID)
-	plan := &tenderservice.ResponsePreview{Tender: f.entity, Offer: offer}
+	plan := &tendernegotiation.ResponsePreview{Tender: f.entity, Offer: offer}
 	if req.Action == tender.ResponseActionCounter {
 		plan.TenderAfter = f.copyOffers(func(o *tender.TenderOffer) {
 			if o.ID == req.OfferID {
@@ -170,8 +173,8 @@ func (f *fakeTenderManager) RecordResponse(
 
 func (f *fakeTenderManager) PreviewBounce(
 	_ context.Context,
-	req *tenderservice.BounceTenderRequest,
-) (*tenderservice.BouncePreview, error) {
+	req *tenderbounce.BounceTenderRequest,
+) (*tenderbounce.BouncePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -185,7 +188,7 @@ func (f *fakeTenderManager) PreviewBounce(
 	after.Status = tender.StatusActive
 	after.BounceCount++
 	after.AcceptedOfferID = nil
-	plan := &tenderservice.BouncePreview{
+	plan := &tenderbounce.BouncePreview{
 		Before:    f.entity,
 		After:     after,
 		Revoked:   revoked,
@@ -211,7 +214,7 @@ func (f *fakeTenderManager) carrierOf(carrierID pulid.ID) *carrier.Carrier {
 
 func (f *fakeTenderManager) Bounce(
 	_ context.Context,
-	req *tenderservice.BounceTenderRequest,
+	req *tenderbounce.BounceTenderRequest,
 ) (*tender.Tender, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -462,7 +465,7 @@ func TestRecordTenderResponse_PreviewWarnsOfAnOfferNoLongerOpen(t *testing.T) {
 	t.Parallel()
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusExpired)
-	tenders.refusal = tenderservice.ErrOfferNoLongerAvailable
+	tenders.refusal = tenderresponse.ErrOfferNoLongerAvailable
 	tool := NewRecordTenderResponseTool(tenders).(*RecordTenderResponseTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(

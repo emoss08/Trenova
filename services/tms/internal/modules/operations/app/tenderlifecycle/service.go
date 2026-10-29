@@ -1,4 +1,4 @@
-package tenderservice
+package tenderlifecycle
 
 import (
 	"context"
@@ -8,6 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderescalation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
@@ -20,6 +24,54 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
+
+type Service struct {
+	l                     *zap.Logger
+	db                    kernelports.Transactor
+	repo                  tenderports.TenderRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
+	assigner              tenderports.CarrierMoveAssigner
+	rateConIssuer         rateconfirmationports.RateConfirmationIssuer
+	canceler              *tendercancel.Service
+	effects               *tendereffects.Effects
+	escalator             *tenderescalation.Service
+	negotiator            *tendernegotiation.Service
+}
+
+type Deps struct {
+	Logger                *zap.Logger
+	DB                    kernelports.Transactor
+	Repo                  tenderports.TenderRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	Invalidator           shipmentinvalidationports.ShipmentInvalidator
+	Assigner              tenderports.CarrierMoveAssigner
+	RateConIssuer         rateconfirmationports.RateConfirmationIssuer
+	Canceler              *tendercancel.Service
+	Effects               *tendereffects.Effects
+	Escalator             *tenderescalation.Service
+	Negotiator            *tendernegotiation.Service
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:                     d.Logger,
+		db:                    d.DB,
+		repo:                  d.Repo,
+		carrierAssignmentRepo: d.CarrierAssignmentRepo,
+		invalidator:           d.Invalidator,
+		assigner:              d.Assigner,
+		rateConIssuer:         d.RateConIssuer,
+		canceler:              d.Canceler,
+		effects:               d.Effects,
+		escalator:             d.Escalator,
+		negotiator:            d.Negotiator,
+	}
+}
+
+func (s *Service) SetCarrierMoveAssigner(value tenderports.CarrierMoveAssigner) {
+	s.assigner = value
+}
 
 // LoadPlan returns the tender's ordered offer plan with live statuses, so a
 // (re)started workflow resumes exactly where the rows say it left off.
@@ -76,7 +128,7 @@ func (s *Service) ExpireOffer(
 	}
 
 	if offer.Status == tender.OfferStatusCountered {
-		return s.lapseCounter(ctx, tenantInfo, offer)
+		return s.negotiator.LapseCounter(ctx, tenantInfo, offer)
 	}
 
 	now := timeutils.NowUnix()
@@ -97,13 +149,13 @@ func (s *Service) ExpireOffer(
 		s.l.Warn("failed to revoke tokens for expired tender offer", zap.Error(err))
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderExpired(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderExpired(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_expired")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_expired")
 
 	return nil
 }
@@ -128,7 +180,7 @@ func (s *Service) DeclineOffer(
 	}
 
 	if offer.Status == tender.OfferStatusCountered {
-		return s.refuseCounter(ctx, tenantInfo, offer, reason)
+		return s.negotiator.RefuseCounter(ctx, tenantInfo, offer, reason)
 	}
 
 	now := timeutils.NowUnix()
@@ -164,25 +216,25 @@ func (s *Service) DeclineOffer(
 		s.l.Warn("failed to revoke tokens for declined tender offer", zap.Error(err))
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderDeclined(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderDeclined(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		reason,
 		source,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
 		Operation:  permission.OpUpdate,
 		UserID:     tenantInfo.UserID,
 		Comment: fmt.Sprintf(
-			"Offer declined by %s via %s", carrierNameOf(offer), source.String(),
+			"Offer declined by %s via %s", tendereffects.CarrierNameOf(offer), source.String(),
 		),
 		Current: offer.Tender,
 	})
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_declined")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_declined")
 
 	return nil
 }
@@ -254,7 +306,7 @@ func (s *Service) AcceptOffer(
 					acceptReq.FromStatus = []tender.OfferStatus{tender.OfferStatusCountered}
 					acceptReq.RespondedAt = nil
 					acceptReq.ResponseSource = ""
-					acceptReq.CounterDecided = decisionStamp(tenantInfo, now)
+					acceptReq.CounterDecided = tendernegotiation.DecisionStamp(tenantInfo, now)
 				}
 				offerMoved, txErr := s.repo.UpdateOfferStatus(txCtx, acceptReq)
 				if txErr != nil {
@@ -302,63 +354,48 @@ func (s *Service) AcceptOffer(
 	}
 
 	if countered || offer.CounterRate.Valid {
-		s.recordEvent(ctx, shipmenteventservice.BuildTenderCounterDecided(
+		s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderCounterDecided(
 			shipmenteventservice.TenantRefFor(tenantInfo),
-			tenderRefForOffer(offer),
-			carrierNameOf(offer),
+			tendereffects.TenderRefForOffer(offer),
+			tendereffects.CarrierNameOf(offer),
 			offer.AgreedRate().StringFixed(2),
 			"",
 			true,
 			shipmenteventservice.ActorFor(tenantInfo),
 		))
 	}
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderAccepted(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderAccepted(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		source,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_accepted",
-		Priority:  notificationPriorityMed,
+		Priority:  tendereffects.NotificationPriorityMed,
 		Title:     "Tender accepted",
 		Message: fmt.Sprintf(
 			"%s accepted the tender and has been assigned to the move",
-			carrierNameOf(offer),
+			tendereffects.CarrierNameOf(offer),
 		),
 		CorrelationID: offer.TenderID.String(),
-		Link:          dispatchConsoleOfferLink(offer),
+		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
 		Operation:  permission.OpUpdate,
 		UserID:     tenantInfo.UserID,
 		Comment: fmt.Sprintf(
-			"Offer accepted by %s via %s", carrierNameOf(offer), source.String(),
+			"Offer accepted by %s via %s", tendereffects.CarrierNameOf(offer), source.String(),
 		),
 		Previous: offer.Tender,
-		Current:  acceptedTender(offer.Tender, offer.ID, source, now),
+		Current:  tendernegotiation.AcceptedTender(offer.Tender, offer.ID, source, now),
 	})
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_accepted")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_accepted")
 
 	return result, nil
-}
-
-// errRollbackAccept aborts the acceptance transaction when the offer lost its
-// CAS, unwinding the tender transition with it.
-var errRollbackAccept = errors.New("tender accept rolled back: offer already terminal")
-
-// isAssignBusinessFailure separates deterministic assignment rejections
-// (eligibility, coverage, validation — park for review) from transient
-// failures (deadlocks, serialization conflicts mapped to ConflictError, raw
-// infra errors — let the activity retry).
-func isAssignBusinessFailure(err error) bool {
-	if errortypes.IsConflictError(err) {
-		return false
-	}
-	return errortypes.IsBusinessError(err) || errortypes.IsError(err)
 }
 
 // assignAcceptedOffer lands the accepted offer on the assignment spine
@@ -408,7 +445,7 @@ func (s *Service) assignAcceptedOffer(
 		},
 	)
 	if assignErr != nil {
-		if !isAssignBusinessFailure(assignErr) {
+		if !tendereffects.IsAssignBusinessFailure(assignErr) {
 			return nil, assignErr
 		}
 		s.l.Warn("tender acceptance could not be auto-assigned",
@@ -453,12 +490,12 @@ func (s *Service) FinalizeAccepted(
 	tenderID pulid.ID,
 	acceptedOfferID pulid.ID,
 ) error {
-	for _, settlement := range acceptSettlements {
+	for _, settlement := range tendernegotiation.AcceptSettlements {
 		if _, err := s.repo.BulkUpdateOfferStatus(ctx, &tenderports.BulkOfferStatusRequest{
 			TenantInfo: tenantInfo,
 			TenderID:   tenderID,
-			FromStatus: []tender.OfferStatus{settlement.from},
-			ToStatus:   settlement.to,
+			FromStatus: []tender.OfferStatus{settlement.From},
+			ToStatus:   settlement.To,
 			ExceptID:   acceptedOfferID,
 		}); err != nil {
 			return err
@@ -536,32 +573,32 @@ func (s *Service) MarkNeedsReview(
 		return err
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderNeedsReview(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderNeedsReview(
 		shipmenteventservice.TenantRefFor(tenantInfo),
-		tenderRefForOffer(offer),
-		carrierNameOf(offer),
+		tendereffects.TenderRefForOffer(offer),
+		tendereffects.CarrierNameOf(offer),
 		reason,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_needs_review",
-		Priority:  notificationPriorityHigh,
+		Priority:  tendereffects.NotificationPriorityHigh,
 		Title:     "Tender acceptance needs review",
 		Message: fmt.Sprintf(
 			"%s accepted the tender but could not be assigned automatically: %s",
-			carrierNameOf(offer), reason,
+			tendereffects.CarrierNameOf(offer), reason,
 		),
 		CorrelationID: tenderID.String(),
-		Link:          dispatchConsoleOfferLink(offer),
+		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   tenderID,
 		Operation:  permission.OpUpdate,
 		Comment:    "Tender needs review: " + reason,
 		Current:    offer.Tender,
 	})
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_needs_review")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "tender_needs_review")
 
 	return nil
 }
@@ -605,7 +642,7 @@ func (s *Service) MarkExhausted(
 		return err
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildRoutingGuideExhausted(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildRoutingGuideExhausted(
 		shipmenteventservice.TenantRefFor(tenantInfo),
 		shipmenteventservice.TenderRef{
 			ShipmentID: entity.ShipmentID,
@@ -615,18 +652,18 @@ func (s *Service) MarkExhausted(
 		entity.Mode,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "tender_waterfall_exhausted",
-		Priority:  notificationPriorityHigh,
+		Priority:  tendereffects.NotificationPriorityHigh,
 		Title:     "Tender exhausted with no acceptance",
 		Message: fmt.Sprintf(
 			"Every carrier on the tender for move %s declined, expired, or failed. The move still needs coverage",
 			entity.ShipmentMoveID.String(),
 		),
 		CorrelationID: entity.ID.String(),
-		Link:          dispatchConsoleMoveLink(entity.ShipmentMoveID),
+		Link:          tendereffects.DispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpUpdate,
@@ -642,7 +679,7 @@ func (s *Service) MarkExhausted(
 			"tender_exhausted",
 		),
 	)
-	s.escalateExhausted(ctx, tenantInfo, entity)
+	s.escalator.Escalate(ctx, tenantInfo, entity)
 
 	return nil
 }
@@ -695,7 +732,7 @@ func (s *Service) IssueRateConfirmation(
 		},
 	)
 	if issueErr != nil {
-		if !isAssignBusinessFailure(issueErr) {
+		if !tendereffects.IsAssignBusinessFailure(issueErr) {
 			return issueErr
 		}
 		s.l.Warn("rate confirmation could not be issued for the accepted tender",
@@ -711,7 +748,7 @@ func (s *Service) IssueRateConfirmation(
 		return nil
 	}
 
-	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "rate_confirmation_issued")
+	s.effects.PublishShipmentInvalidation(ctx, tenantInfo, offer, "rate_confirmation_issued")
 
 	return nil
 }
@@ -722,17 +759,17 @@ func (s *Service) notifyRateConIssueFailed(
 	offer *tender.TenderOffer,
 	reason string,
 ) {
-	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, tenantInfo, &tendereffects.DispatchNotification{
 		EventType: "rate_confirmation_issue_failed",
-		Priority:  notificationPriorityHigh,
+		Priority:  tendereffects.NotificationPriorityHigh,
 		Title:     "Rate confirmation could not be issued",
 		Message: fmt.Sprintf(
 			"%s accepted the tender but no rate confirmation was issued automatically: %s. Generate it manually",
-			carrierNameOf(offer),
+			tendereffects.CarrierNameOf(offer),
 			reason,
 		),
 		CorrelationID: offer.TenderID.String(),
-		Link:          dispatchConsoleOfferLink(offer),
+		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
 }
 
@@ -759,5 +796,5 @@ func (s *Service) CancelFromWorkflow(
 
 	actorTenant := tenantInfo
 	actorTenant.UserID = actorUserID
-	return s.CancelDirect(ctx, actorTenant, entity, reason)
+	return s.canceler.CancelDirect(ctx, actorTenant, entity, reason)
 }

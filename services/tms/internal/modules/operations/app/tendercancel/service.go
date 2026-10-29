@@ -1,10 +1,12 @@
-package tenderservice
+package tendercancel
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
@@ -15,26 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
-
-type CancelTenderRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	TenderID   pulid.ID              `json:"tenderId"`
-	Reason     string                `json:"reason"`
-}
-
-func (r *CancelTenderRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r.TenderID.IsNil() {
-		multiErr.Add("tenderId", errortypes.ErrRequired, "Tender is required")
-	}
-	if r.Reason == "" {
-		multiErr.Add("reason", errortypes.ErrRequired, "Cancellation reason is required")
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
 
 // Cancel withdraws a live tender. An Active tender is canceled through its
 // workflow so an in-flight response cannot race the withdrawal; a NeedsReview
@@ -148,7 +130,7 @@ func (s *Service) CancelDirect(
 			tender.StatusNeedsReview,
 		},
 		ToStatus:           tender.StatusCanceled,
-		CanceledByID:       userIDPtr(tenantInfo),
+		CanceledByID:       tendereffects.UserIDPtr(tenantInfo),
 		CancellationReason: reason,
 		CanceledAt:         &now,
 	})
@@ -181,7 +163,7 @@ func (s *Service) CancelDirect(
 		}
 	}
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderWithdrawn(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderWithdrawn(
 		shipmenteventservice.TenantRefFor(tenantInfo),
 		shipmenteventservice.TenderRef{
 			ShipmentID: entity.ShipmentID,
@@ -192,7 +174,7 @@ func (s *Service) CancelDirect(
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
 
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpCancel,
@@ -212,4 +194,125 @@ func (s *Service) CancelDirect(
 	)
 
 	return nil
+}
+
+type Service struct {
+	l           *zap.Logger
+	repo        tenderports.TenderRepository
+	workflows   kernelports.WorkflowStarter
+	invalidator shipmentinvalidationports.ShipmentInvalidator
+	effects     *tendereffects.Effects
+}
+
+type Deps struct {
+	Logger      *zap.Logger
+	Repo        tenderports.TenderRepository
+	Workflows   kernelports.WorkflowStarter
+	Invalidator shipmentinvalidationports.ShipmentInvalidator
+	Effects     *tendereffects.Effects
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:           d.Logger,
+		repo:        d.Repo,
+		workflows:   d.Workflows,
+		invalidator: d.Invalidator,
+		effects:     d.Effects,
+	}
+}
+
+// PreviewCancel is what Cancel would do, from the same checks, without
+// signalling the workflow or writing.
+func (s *Service) PreviewCancel(
+	ctx context.Context,
+	req *CancelTenderRequest,
+) (*CancelPreview, error) {
+	entity, err := s.planCancel(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CancelPreview{
+		Before: entity,
+		After:  withdrawnTender(entity, req.TenantInfo, req.Reason, timeutils.NowUnix()),
+	}, nil
+}
+
+// planCancel is everything Cancel decides before it acts: the tender, with
+// its offers, is still live.
+func (s *Service) planCancel(
+	ctx context.Context,
+	req *CancelTenderRequest,
+) (*tender.Tender, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
+		TenantInfo:    req.TenantInfo,
+		TenderID:      req.TenderID,
+		IncludeOffers: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !entity.IsLive() {
+		return nil, errortypes.NewBusinessError("Tender has already finished").
+			WithParam("tenderId", entity.ID.String()).
+			WithParam("status", entity.Status.String())
+	}
+
+	return entity, nil
+}
+
+// PreviewLiveTenders is what cancelling a shipment withdraws: every live
+// tender on it, with the offers carriers hold.
+func (s *Service) PreviewLiveTenders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) ([]*tender.Tender, error) {
+	live, err := s.liveTendersForShipment(ctx, tenantInfo, shipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	withOffers := make([]*tender.Tender, 0, len(live))
+	for _, entity := range live {
+		loaded, gErr := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
+			TenantInfo:    tenantInfo,
+			TenderID:      entity.ID,
+			IncludeOffers: true,
+		})
+		if gErr != nil {
+			return nil, gErr
+		}
+		withOffers = append(withOffers, loaded)
+	}
+
+	return withOffers, nil
+}
+
+func (s *Service) liveTendersForShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) ([]*tender.Tender, error) {
+	tenders, err := s.repo.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
+		TenantInfo: tenantInfo,
+		ShipmentID: shipmentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	live := make([]*tender.Tender, 0, len(tenders))
+	for _, entity := range tenders {
+		if entity.IsLive() {
+			live = append(live, entity)
+		}
+	}
+
+	return live, nil
 }

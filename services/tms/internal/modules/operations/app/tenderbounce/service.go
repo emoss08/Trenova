@@ -1,80 +1,23 @@
-package tenderservice
+package tenderbounce
 
 import (
 	"context"
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
-
-const maxBounceReasonLength = 500
-
-// BounceTenderRequest records a carrier backing out of a tender it accepted.
-type BounceTenderRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	TenderID   pulid.ID              `json:"tenderId"`
-	// OfferID names the tender by the offer the carrier accepted, for a caller
-	// that holds the offer rather than the tender. It must be that tender's
-	// accepted offer.
-	OfferID pulid.ID              `json:"offerId"`
-	Reason  string                `json:"reason"`
-	Source  tender.ResponseSource `json:"source"`
-}
-
-func (r *BounceTenderRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if r.TenderID.IsNil() && r.OfferID.IsNil() {
-		multiErr.Add("tenderId", errortypes.ErrRequired, "Tender is required")
-	}
-	reason := strings.TrimSpace(r.Reason)
-	switch {
-	case reason == "":
-		multiErr.Add("reason", errortypes.ErrRequired, "Say why the carrier backed out")
-	case utf8.RuneCountInString(reason) > maxBounceReasonLength:
-		multiErr.Add("reason", errortypes.ErrInvalid, "Reason must be at most 500 characters")
-	}
-	if r.Source != "" && r.Source != tender.ResponseSourceManual &&
-		r.Source != tender.ResponseSourceEDI {
-		multiErr.Add("source", errortypes.ErrInvalid, "Bounce source is invalid")
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
-// BouncePreview is what bouncing a tender would do: the tender as it stands
-// and as the bounce leaves it, the offers it sends next, and whether the
-// carrier comes off the move. Nothing in it has been saved.
-type BouncePreview struct {
-	Before      *tender.Tender
-	After       *tender.Tender
-	Revoked     *tender.TenderOffer
-	Reoffers    []*tender.TenderOffer
-	Unassigns   bool
-	WillExhaust bool
-}
-
-type bouncePlan struct {
-	entity     *tender.Tender
-	revoked    *tender.TenderOffer
-	assignment *shipment.CarrierAssignment
-	reoffers   []*tender.TenderOffer
-}
 
 // planBounce is every check Bounce makes before it acts, so a preview refuses
 // exactly what the write would.
@@ -209,7 +152,7 @@ func (s *Service) Bounce(ctx context.Context, req *BounceTenderRequest) (*tender
 		TenderID:       plan.entity.ID,
 		RevokedOfferID: plan.revoked.ID,
 		Reason:         reason,
-		RevokedByID:    userIDPtr(req.TenantInfo),
+		RevokedByID:    tendereffects.UserIDPtr(req.TenantInfo),
 		At:             now,
 		Reoffers:       plan.reoffers,
 	})
@@ -231,7 +174,7 @@ func (s *Service) Bounce(ctx context.Context, req *BounceTenderRequest) (*tender
 	if err = s.repo.RevokeTokensForOffer(ctx, req.TenantInfo, plan.revoked.ID, now); err != nil {
 		s.l.Warn("failed to revoke tokens for bounced tender offer", zap.Error(err))
 	}
-	if err = s.startRound(ctx, req.TenantInfo, entity); err != nil {
+	if err = s.creator.StartRound(ctx, req.TenantInfo, entity); err != nil {
 		return nil, err
 	}
 
@@ -247,12 +190,12 @@ func (s *Service) announceBounce(
 ) {
 	offer := plan.revoked
 	offer.Tender = entity
-	carrierName := carrierNameOf(offer)
+	carrierName := tendereffects.CarrierNameOf(offer)
 	reason := strings.TrimSpace(req.Reason)
 
-	s.recordEvent(ctx, shipmenteventservice.BuildTenderBounced(
+	s.effects.RecordEvent(ctx, shipmenteventservice.BuildTenderBounced(
 		shipmenteventservice.TenantRefFor(req.TenantInfo),
-		tenderRefForOffer(offer),
+		tendereffects.TenderRefForOffer(offer),
 		shipmenteventservice.TenderBounce{
 			CarrierName: carrierName,
 			Reason:      reason,
@@ -265,7 +208,7 @@ func (s *Service) announceBounce(
 
 	message := fmt.Sprintf(
 		"%s backed out of the tender after accepting it (%s). The tender goes on to %d more %s",
-		carrierName, reason, len(plan.reoffers), pluralCarriers(len(plan.reoffers)),
+		carrierName, reason, len(plan.reoffers), tendercreate.PluralCarriers(len(plan.reoffers)),
 	)
 	if len(plan.reoffers) == 0 {
 		message = fmt.Sprintf(
@@ -274,15 +217,15 @@ func (s *Service) announceBounce(
 			reason,
 		)
 	}
-	s.notifyDispatch(ctx, req.TenantInfo, &dispatchNotification{
+	s.effects.NotifyDispatch(ctx, req.TenantInfo, &tendereffects.DispatchNotification{
 		EventType:     "tender_bounced",
-		Priority:      notificationPriorityHigh,
+		Priority:      tendereffects.NotificationPriorityHigh,
 		Title:         "Carrier backed out of a tender",
 		Message:       message,
 		CorrelationID: entity.ID.String(),
-		Link:          dispatchConsoleMoveLink(entity.ShipmentMoveID),
+		Link:          tendereffects.DispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
-	s.logTenderAudit(&tenderAuditParams{
+	s.effects.LogAudit(&tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpUpdate,
@@ -304,45 +247,11 @@ func (s *Service) announceBounce(
 	)
 }
 
-func pluralCarriers(n int) string {
-	if n == 1 {
-		return "carrier"
-	}
-	return "carriers"
-}
-
-// bouncedTender is the tender as Bounce leaves it: live again on the next
-// round, the acceptance revoked and the re-offers waiting. The stored tender
-// is left as it is.
-func bouncedTender(plan *bouncePlan, req *BounceTenderRequest, now int64) *tender.Tender {
-	reason := strings.TrimSpace(req.Reason)
-	out := copyTender(plan.entity, func(offer *tender.TenderOffer) {
-		if offer.ID != plan.revoked.ID {
-			return
-		}
-		offer.Status = tender.OfferStatusRevoked
-		offer.RevokedAt = &now
-		offer.RevokeReason = reason
-		offer.RevokedByID = userIDPtr(req.TenantInfo)
-	})
-	out.Status = tender.StatusActive
-	out.BounceCount++
-	out.LastBouncedAt = &now
-	out.AcceptedOfferID = nil
-	out.AcceptedAt = nil
-	out.CurrentRank = 0
-	for _, offer := range plan.reoffers {
-		copied := *offer
-		out.Offers = append(out.Offers, &copied)
-	}
-	return out
-}
-
-// bounceOnCarrierDecline treats a carrier's EDI decline of an offer it had
+// BounceOnCarrierDecline treats a carrier's EDI decline of an offer it had
 // already accepted as the carrier backing out: a 990 is the carrier's own word,
 // so the tender is bounced on it. Every other answer to an accepted offer is
 // late and is filed as such by the caller.
-func (s *Service) bounceOnCarrierDecline(
+func (s *Service) BounceOnCarrierDecline(
 	ctx context.Context,
 	req *tenderports.TenderResponseRequest,
 ) (bool, error) {
@@ -378,4 +287,40 @@ func (s *Service) bounceOnCarrierDecline(
 		Source:     tender.ResponseSourceEDI,
 	})
 	return true, err
+}
+
+type Service struct {
+	l                     *zap.Logger
+	repo                  tenderports.TenderRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
+	assigner              tenderports.CarrierMoveAssigner
+	creator               *tendercreate.Service
+	effects               *tendereffects.Effects
+}
+
+type Deps struct {
+	Logger                *zap.Logger
+	Repo                  tenderports.TenderRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	Invalidator           shipmentinvalidationports.ShipmentInvalidator
+	Assigner              tenderports.CarrierMoveAssigner
+	Creator               *tendercreate.Service
+	Effects               *tendereffects.Effects
+}
+
+func New(d Deps) *Service {
+	return &Service{
+		l:                     d.Logger,
+		repo:                  d.Repo,
+		carrierAssignmentRepo: d.CarrierAssignmentRepo,
+		invalidator:           d.Invalidator,
+		assigner:              d.Assigner,
+		creator:               d.Creator,
+		effects:               d.Effects,
+	}
+}
+
+func (s *Service) SetCarrierMoveAssigner(value tenderports.CarrierMoveAssigner) {
+	s.assigner = value
 }

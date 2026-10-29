@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -13,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,6 +89,7 @@ func setupIssueLifecycleTest(t *testing.T, offer *tender.TenderOffer) *issueLife
 		}),
 		rateConIssuer: deps.issuer,
 	}
+	deps.svc.assemble()
 	return deps
 }
 
@@ -109,7 +109,7 @@ func TestIssueRateConfirmationBuildsRequestFromOffer(t *testing.T) {
 	}
 	tenantInfo := issueLifecycleTenant()
 
-	err := deps.svc.IssueRateConfirmation(t.Context(), tenantInfo, offer.ID)
+	err := deps.svc.offerLifecycle.IssueRateConfirmation(t.Context(), tenantInfo, offer.ID)
 
 	require.NoError(t, err)
 	require.NotNil(t, deps.issuer.req)
@@ -136,7 +136,11 @@ func TestIssueRateConfirmationDeterministicFailureNotifiesDispatch(t *testing.T)
 		}).
 		Return(&notification.Notification{}, nil)
 
-	err := deps.svc.IssueRateConfirmation(t.Context(), issueLifecycleTenant(), offer.ID)
+	err := deps.svc.offerLifecycle.IssueRateConfirmation(
+		t.Context(),
+		issueLifecycleTenant(),
+		offer.ID,
+	)
 
 	require.NoError(t, err, "a deterministic issuance failure must not fail the acceptance")
 	require.NotNil(t, notified)
@@ -163,7 +167,11 @@ func TestIssueRateConfirmationNotIssuedNotifiesDispatch(t *testing.T) {
 		}).
 		Return(&notification.Notification{}, nil)
 
-	err := deps.svc.IssueRateConfirmation(t.Context(), issueLifecycleTenant(), offer.ID)
+	err := deps.svc.offerLifecycle.IssueRateConfirmation(
+		t.Context(),
+		issueLifecycleTenant(),
+		offer.ID,
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, notified)
@@ -175,7 +183,11 @@ func TestIssueRateConfirmationInfraFailurePropagates(t *testing.T) {
 	deps := setupIssueLifecycleTest(t, offer)
 	deps.issuer.err = errortypes.NewConflictError("Rate confirmation is busy. Retry the request.")
 
-	err := deps.svc.IssueRateConfirmation(t.Context(), issueLifecycleTenant(), offer.ID)
+	err := deps.svc.offerLifecycle.IssueRateConfirmation(
+		t.Context(),
+		issueLifecycleTenant(),
+		offer.ID,
+	)
 
 	require.Error(t, err, "transient failures must propagate so the activity retries")
 }
@@ -184,8 +196,13 @@ func TestIssueRateConfirmationNoIssuerWiredNoOps(t *testing.T) {
 	offer := acceptedOfferFixture()
 	deps := setupIssueLifecycleTest(t, offer)
 	deps.svc.rateConIssuer = nil
+	deps.svc.assemble()
 
-	err := deps.svc.IssueRateConfirmation(t.Context(), issueLifecycleTenant(), offer.ID)
+	err := deps.svc.offerLifecycle.IssueRateConfirmation(
+		t.Context(),
+		issueLifecycleTenant(),
+		offer.ID,
+	)
 
 	require.NoError(t, err)
 	assert.Nil(t, deps.issuer.req)

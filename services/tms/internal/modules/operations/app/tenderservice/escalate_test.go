@@ -72,6 +72,7 @@ func setupEscalation(
 		policy(control)
 	}
 	deps.svc.dispatchControls = &stubDispatchControls{control: control}
+	deps.svc.assemble()
 	allowNotifications(deps)
 
 	deps.assignmentRepo.On("GetMoveByID", mock.Anything, tenantInfo, move.ID).
@@ -94,7 +95,7 @@ func setupEscalation(
 func TestAnExhaustedTenderIsRebroadcastAtTheEscalationRate(t *testing.T) {
 	deps, tenantInfo, exhausted := setupEscalation(t, nil, 2000)
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhausted)
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhausted)
 
 	created := deps.tenderRepo.created
 	require.NotNil(t, created)
@@ -123,11 +124,15 @@ func TestAnExhaustedTenderIsRebroadcastAtTheEscalationRate(t *testing.T) {
 }
 
 func TestRewaterfallWalksTheCarriersInRankOrder(t *testing.T) {
-	deps, tenantInfo, exhausted := setupEscalation(t, func(control *dispatchcontrol.DispatchControl) {
-		control.TenderExhaustedAction = dispatchcontrol.TenderExhaustedActionRewaterfall
-	}, 2000)
+	deps, tenantInfo, exhausted := setupEscalation(
+		t,
+		func(control *dispatchcontrol.DispatchControl) {
+			control.TenderExhaustedAction = dispatchcontrol.TenderExhaustedActionRewaterfall
+		},
+		2000,
+	)
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhausted)
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhausted)
 
 	created := deps.tenderRepo.created
 	require.NotNil(t, created)
@@ -137,11 +142,15 @@ func TestRewaterfallWalksTheCarriersInRankOrder(t *testing.T) {
 }
 
 func TestNotifyOnlyNeverEscalates(t *testing.T) {
-	deps, tenantInfo, exhausted := setupEscalation(t, func(control *dispatchcontrol.DispatchControl) {
-		control.TenderExhaustedAction = dispatchcontrol.TenderExhaustedActionNotify
-	}, 2000)
+	deps, tenantInfo, exhausted := setupEscalation(
+		t,
+		func(control *dispatchcontrol.DispatchControl) {
+			control.TenderExhaustedAction = dispatchcontrol.TenderExhaustedActionNotify
+		},
+		2000,
+	)
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhausted)
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhausted)
 
 	assert.Nil(t, deps.tenderRepo.created)
 	assert.Empty(t, deps.workflows.started)
@@ -153,7 +162,7 @@ func TestEscalationStopsAtTheRoundLimit(t *testing.T) {
 	from := pulid.MustNew("tnd_")
 	exhausted.EscalatedFromID = &from
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhausted)
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhausted)
 
 	assert.Nil(t, deps.tenderRepo.created)
 	assert.Empty(t, deps.workflows.started)
@@ -162,7 +171,7 @@ func TestEscalationStopsAtTheRoundLimit(t *testing.T) {
 func TestEscalationWithoutASellPriceKeepsTheRates(t *testing.T) {
 	deps, tenantInfo, exhausted := setupEscalation(t, nil, 0)
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhausted)
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhausted)
 
 	created := deps.tenderRepo.created
 	require.NotNil(t, created)
@@ -178,6 +187,7 @@ func TestEscalationLeavesAMoveSomebodyCoveredAlone(t *testing.T) {
 		TenderExhaustedAction: dispatchcontrol.TenderExhaustedActionRebroadcast,
 		TenderMaxEscalations:  1,
 	}}
+	deps.svc.assemble()
 	allowNotifications(deps)
 	deps.assignmentRepo.On("GetMoveByID", mock.Anything, tenantInfo, move.ID).Return(move, nil)
 	deps.holdRepo.On("HasActiveDispatchHold", mock.Anything, mock.Anything).Return(false, nil)
@@ -185,7 +195,7 @@ func TestEscalationLeavesAMoveSomebodyCoveredAlone(t *testing.T) {
 	deps.carrierAssignmentRepo.On("GetActiveByMoveID", mock.Anything, tenantInfo, move.ID).
 		Return(&shipment.CarrierAssignment{ID: pulid.MustNew("casn_")}, nil)
 
-	deps.svc.escalateExhausted(t.Context(), tenantInfo, exhaustedWaterfall(tenantInfo, move))
+	deps.svc.escalator.Escalate(t.Context(), tenantInfo, exhaustedWaterfall(tenantInfo, move))
 
 	assert.Nil(t, deps.tenderRepo.created)
 	assert.Empty(t, deps.workflows.started)
@@ -195,5 +205,6 @@ func allowNotifications(deps *createTestDeps) {
 	deps.notifRepo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *notification.Notification) (*notification.Notification, error) {
 			return entity, nil
-		}).Maybe()
+		}).
+		Maybe()
 }

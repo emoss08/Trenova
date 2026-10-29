@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -192,7 +192,7 @@ func (t *RecordTenderResponseTool) Preview(
 // tender live again for the carriers it had not reached.
 func (t *RecordTenderResponseTool) previewBounce(
 	ctx context.Context,
-	request *tenderservice.BounceTenderRequest,
+	request *tenderbounce.BounceTenderRequest,
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would record that the carrier backed out of its acceptance. Reason: " +
 		request.Reason

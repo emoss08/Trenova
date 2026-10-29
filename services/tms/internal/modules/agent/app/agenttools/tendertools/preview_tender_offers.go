@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/shopspring/decimal"
@@ -20,7 +20,7 @@ import (
 // each offered rate as a line, and the offer each carrier would be sent.
 func TenderPreview(
 	summary string,
-	planned *tenderservice.TenderPreview,
+	planned *tendercreate.TenderPreview,
 ) (*agentpreview.ToolPreview, error) {
 	entity := planned.Tender
 	created, err := toolpreview.Create(
@@ -71,7 +71,7 @@ func TenderPreview(
 // tenderOfferSend is the offer one carrier would receive: by email to the
 // address on file or the one the call names, or over the carrier's EDI link.
 func tenderOfferSend(
-	planned *tenderservice.TenderPreview,
+	planned *tendercreate.TenderPreview,
 	offer *tender.TenderOffer,
 	index int,
 ) *agentpreview.RecordChange {
@@ -109,7 +109,7 @@ func sequential(mode tender.Mode) bool {
 	return mode == tender.ModeWaterfall || mode == tender.ModeSpotSequential
 }
 
-func offerCarrierName(planned *tenderservice.TenderPreview, offer *tender.TenderOffer) string {
+func offerCarrierName(planned *tendercreate.TenderPreview, offer *tender.TenderOffer) string {
 	if name := strings.TrimSpace(planned.Carriers[offer.CarrierID]); name != "" {
 		return name
 	}
@@ -117,7 +117,7 @@ func offerCarrierName(planned *tenderservice.TenderPreview, offer *tender.Tender
 	return changepreview.LabelCarrier
 }
 
-func tenderLabel(planned *tenderservice.TenderPreview) string {
+func tenderLabel(planned *tendercreate.TenderPreview) string {
 	if planned.Guide != nil {
 		return "Routing guide tender: " + planned.Guide.Name
 	}
@@ -125,7 +125,7 @@ func tenderLabel(planned *tenderservice.TenderPreview) string {
 	return string(planned.Tender.Mode) + " tender"
 }
 
-func ScreeningSentence(lead string, entries []tenderservice.GuideEntryScreeningResult) string {
+func ScreeningSentence(lead string, entries []tendercreate.GuideEntryScreeningResult) string {
 	if len(entries) == 0 {
 		return ""
 	}

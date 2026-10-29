@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -109,11 +110,11 @@ func TestCreateSpotLogsTenderAudit(t *testing.T) {
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{healthy}, nil)
 
-	created, err := deps.svc.CreateSpot(t.Context(), &CreateSpotTenderRequest{
+	created, err := deps.svc.creator.CreateSpot(t.Context(), &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: move.ID,
 		Mode:           tender.ModeSpotBroadcast,
-		Lines:          []SpotTenderLine{spotLine(healthy.ID)},
+		Lines:          []tendercreate.SpotTenderLine{spotLine(healthy.ID)},
 	})
 
 	require.NoError(t, err)
@@ -146,10 +147,13 @@ func TestCreateWaterfallLogsTenderAudit(t *testing.T) {
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{healthy}, nil)
 
-	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: move.ID,
-	})
+	created, err := deps.svc.creator.CreateWaterfall(
+		t.Context(),
+		&tendercreate.CreateWaterfallTenderRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: move.ID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, created)
@@ -189,8 +193,9 @@ func TestAcceptOfferLogsTenderAudit(t *testing.T) {
 		eventService:          &recordingEventService{},
 		auditService:          audit,
 	}
+	svc.assemble()
 
-	result, err := svc.AcceptOffer(
+	result, err := svc.offerLifecycle.AcceptOffer(
 		t.Context(), tenantInfo, offer.ID, tender.ResponseSourceManual,
 	)
 
@@ -225,8 +230,9 @@ func TestMarkNeedsReviewLogsSystemTenderAudit(t *testing.T) {
 		eventService: &recordingEventService{},
 		auditService: audit,
 	}
+	svc.assemble()
 
-	err := svc.MarkNeedsReview(
+	err := svc.offerLifecycle.MarkNeedsReview(
 		t.Context(), tenantInfo, offer.TenderID, offer.ID, "Move is already covered",
 	)
 
