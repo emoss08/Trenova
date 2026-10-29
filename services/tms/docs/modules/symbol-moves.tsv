@@ -19703,3 +19703,13 @@ github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/account
 github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository.LedgerSourceParams	github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository.LedgerSourceParams
 github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository.NewLedgerSource	github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository.NewLedgerSource
 github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository.SendableJournals	github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository.SendableJournals
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.ContextBuilder	github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument.ContextBuilder
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.ContextBuilderParams	github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument.ContextBuilderParams
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.EmailContextParams	github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument.EmailContextParams
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.NewContextBuilder	github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument.NewContextBuilder
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.NewValidator	github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation.NewValidator
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.Validator	github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation.Validator
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.ValidatorParams	github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation.ValidatorParams
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.LegChange	github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice.LegChange
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.PostPreview	github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice.PostPreview
+github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice.ConsolidatedInvoiceParams	github.com/emoss08/trenova/internal/modules/billing/app/invoicecreationservice.ConsolidatedInvoiceParams

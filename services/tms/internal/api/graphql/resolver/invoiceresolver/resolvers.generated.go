@@ -10,8 +10,12 @@ import (
 
 type Deps struct {
 	*resolvercore.Core
-	CustomerService *customerservice.Service
-	InvoiceService  invoiceports.InvoiceService
+	CustomerService        *customerservice.Service
+	InvoiceQueryService    invoiceports.InvoiceQueryService
+	InvoiceCreationService invoiceports.InvoiceCreationService
+	InvoiceMemoService     invoiceports.InvoiceMemoService
+	InvoiceVoidService     invoiceports.InvoiceVoidService
+	InvoiceEDIService      invoiceports.InvoiceEDIService
 }
 
 type InvoiceChargeGroupResolver struct{ *Deps }

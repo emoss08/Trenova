@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -49,7 +49,7 @@ type invoicePoster interface {
 		ctx context.Context,
 		req *invoiceports.PostInvoiceRequest,
 		actor *permissionports.RequestActor,
-	) (*invoiceservice.PostPreview, error)
+	) (*invoicepostingservice.PostPreview, error)
 }
 
 type invoiceSender interface {

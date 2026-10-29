@@ -15,7 +15,7 @@ func (a *Activities) ReportAutoPostFailureActivity(
 	ctx context.Context,
 	payload *billingcontract.AutoPostFailurePayload,
 ) error {
-	return a.invoiceService.ReportAutoPostFailure(ctx, &invoiceports.ReportAutoPostFailureRequest{
+	return a.invoicePosting.ReportAutoPostFailure(ctx, &invoiceports.ReportAutoPostFailureRequest{
 		InvoiceID: payload.InvoiceID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  payload.OrganizationID,

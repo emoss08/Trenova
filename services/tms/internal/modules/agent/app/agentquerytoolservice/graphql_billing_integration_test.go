@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicequeryservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -250,8 +250,8 @@ func billingServices(
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	_, services := convertedListCases(conn, admin)
-	services.InvoiceService = invoiceservice.New(invoiceservice.Params{
-		Logger: logger, Repo: invoices,
+	services.InvoiceQueryService = invoicequeryservice.New(invoicequeryservice.Params{
+		Repo: invoices,
 	})
 	services.CustomerPaymentRepo = customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger})

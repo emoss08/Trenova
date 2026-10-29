@@ -58,7 +58,7 @@ func (r *CustomerPaymentApplicationResolver) Invoice(ctx context.Context, obj *c
 		return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 	}
 
-	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	return r.InvoiceQueryService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         obj.InvoiceID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})

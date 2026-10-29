@@ -203,7 +203,7 @@ func TestShipments_RejectsAMalformedCarrierID(t *testing.T) {
 }
 
 type invoicesByIDService struct {
-	invoiceports.InvoiceService
+	invoiceports.InvoiceQueryService
 
 	invoices []*invoicedomain.Invoice
 	requests []invoiceports.GetInvoicesByIDsRequest
@@ -219,7 +219,7 @@ func (s *invoicesByIDService) GetByIDs(
 
 func newInvoiceShipmentsResolver(
 	service shipmentserviceports.ShipmentService,
-	invoices invoiceports.InvoiceService,
+	invoices invoiceports.InvoiceQueryService,
 	mayReadInvoices bool,
 ) *QueryResolver {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
@@ -227,9 +227,9 @@ func newInvoiceShipmentsResolver(
 		permission.ResourceInvoice.String() + "|" + string(permission.OpRead):  mayReadInvoices,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &resolvercore.Core{PermissionEngine: engine},
-		ShipmentService: service,
-		InvoiceService:  invoices,
+		Core:                &resolvercore.Core{PermissionEngine: engine},
+		ShipmentService:     service,
+		InvoiceQueryService: invoices,
 	}}
 }
 
@@ -494,7 +494,7 @@ func TestShipments_SeveralScopesListOnlyTheLoadsTheyShare(t *testing.T) {
 			permission.ResourceInvoice:          true,
 			permission.ResourceDriverSettlement: true,
 		},
-		Deps{InvoiceService: invoices, DriverSettlementRepo: repo},
+		Deps{InvoiceQueryService: invoices, DriverSettlementRepo: repo},
 	).Shipments(
 		shipmentListContext(t),
 		gqlmodel.ShipmentsInput{

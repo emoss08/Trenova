@@ -454,7 +454,7 @@ func (s *Service) runAdjustment(
 		}
 		return reversed.ID, nil
 	case accountingdrift.DriftFixInvoiceVoid:
-		voided, err := s.invoices.VoidInvoice(ctx, &invoiceports.VoidInvoiceRequest{
+		voided, err := s.voids.VoidInvoice(ctx, &invoiceports.VoidInvoiceRequest{
 			InvoiceID:   plan.invoice.ID,
 			TenantInfo:  tenant,
 			Reason:      reason,
@@ -490,7 +490,7 @@ func (s *Service) postMemo(
 	if plan.fixObject == accountingdrift.DriftFixCreditMemo {
 		billType = billingqueue.BillTypeCreditMemo
 	}
-	memo, err := s.invoices.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
+	memo, err := s.memos.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
 		TenantInfo: tenant,
 		CustomerID: plan.invoice.CustomerID,
 		BillType:   billType,

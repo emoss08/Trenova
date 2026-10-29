@@ -151,7 +151,7 @@ func (r *InvoiceResolver) ReferenceInvoice(ctx context.Context, obj *invoice.Inv
 		return billingloaders.InvoiceByID(ctx, obj.ReferenceInvoiceID.String())
 	}
 
-	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	return r.InvoiceQueryService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         obj.ReferenceInvoiceID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
@@ -269,7 +269,7 @@ func (r *MutationResolver) CreateInvoicesFromShipments(ctx context.Context, ship
 		return nil, err
 	}
 
-	return r.InvoiceService.CreateInvoicesFromShipments(
+	return r.InvoiceCreationService.CreateInvoicesFromShipments(
 		ctx,
 		&invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    ids,
@@ -291,7 +291,7 @@ func (r *MutationResolver) CreateInvoicesFromOrder(ctx context.Context, orderID 
 		return nil, err
 	}
 
-	return r.InvoiceService.CreateInvoicesFromOrder(
+	return r.InvoiceCreationService.CreateInvoicesFromOrder(
 		ctx,
 		&invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        id,
@@ -313,7 +313,7 @@ func (r *MutationResolver) VoidInvoice(ctx context.Context, input gqlmodel.VoidI
 		return nil, err
 	}
 
-	return r.InvoiceService.VoidInvoice(
+	return r.InvoiceVoidService.VoidInvoice(
 		ctx,
 		&invoiceports.VoidInvoiceRequest{
 			InvoiceID:   invoiceID,
@@ -336,7 +336,7 @@ func (r *MutationResolver) CreateMemo(ctx context.Context, input gqlmodel.Create
 		return nil, err
 	}
 
-	return r.InvoiceService.CreateMemo(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.InvoiceMemoService.CreateMemo(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error) {
@@ -350,7 +350,7 @@ func (r *MutationResolver) SendInvoiceEDI(ctx context.Context, invoiceID string,
 		return nil, err
 	}
 
-	return r.InvoiceService.SendEDI(
+	return r.InvoiceEDIService.SendEDI(
 		ctx,
 		&invoiceports.SendInvoiceEDIRequest{
 			InvoiceID:  id,
@@ -372,7 +372,7 @@ func (r *QueryResolver) Invoices(ctx context.Context, input gqlmodel.DataTableCo
 		return nil, err
 	}
 
-	result, err := r.InvoiceService.ListConnection(
+	result, err := r.InvoiceQueryService.ListConnection(
 		ctx,
 		&invoiceports.ListInvoiceConnectionRequest{
 			Filter: tableInput.Filter,
@@ -397,7 +397,7 @@ func (r *QueryResolver) Invoice(ctx context.Context, id string) (*invoice.Invoic
 		return nil, err
 	}
 
-	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	return r.InvoiceQueryService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})

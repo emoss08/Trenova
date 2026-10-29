@@ -39,7 +39,7 @@ type Params struct {
 	DB                  kernelports.Transactor
 	Repo                latechargeports.LateChargeRepository
 	BillingControlRepo  tenantports.BillingControlRepository
-	InvoiceService      invoiceports.InvoiceService
+	InvoiceMemos        invoiceports.InvoiceMemoService
 	AuditService        auditports.AuditService
 	NotificationService *notificationservice.Service `optional:"true"`
 }
@@ -52,7 +52,7 @@ type Service struct {
 	db                  kernelports.Transactor
 	repo                latechargeports.LateChargeRepository
 	billingRepo         tenantports.BillingControlRepository
-	invoiceService      invoiceports.InvoiceService
+	invoiceMemos        invoiceports.InvoiceMemoService
 	auditService        auditports.AuditService
 	notificationService *notificationservice.Service
 }
@@ -63,7 +63,7 @@ func New(p Params) latechargeports.LateChargeService {
 		db:                  p.DB,
 		repo:                p.Repo,
 		billingRepo:         p.BillingControlRepo,
-		invoiceService:      p.InvoiceService,
+		invoiceMemos:        p.InvoiceMemos,
 		auditService:        p.AuditService,
 		notificationService: p.NotificationService,
 	}
@@ -411,7 +411,7 @@ func (s *Service) raiseMemo(
 			plan.result.Lines,
 		)
 
-		memo, txErr = s.invoiceService.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
+		memo, txErr = s.invoiceMemos.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
 			ID:               memoID,
 			TenantInfo:       tenantInfo,
 			CustomerID:       plan.result.CustomerID,

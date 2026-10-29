@@ -82,7 +82,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	current, err := a.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -105,7 +105,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		}, nil
 	}
 
-	plans, err := a.invoiceService.ResolveEDISendPlans(
+	plans, err := a.invoiceEDI.ResolveEDISendPlans(
 		ctx,
 		&invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: tenantInfo,

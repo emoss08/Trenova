@@ -195,7 +195,8 @@ type createdMemo struct {
 }
 
 type fakeInvoices struct {
-	invoiceports.InvoiceService
+	invoiceports.InvoiceMemoService
+	invoiceports.InvoiceVoidService
 	book            *bookEnqueuer
 	memos           []createdMemo
 	voids           []invoiceports.VoidInvoiceRequest

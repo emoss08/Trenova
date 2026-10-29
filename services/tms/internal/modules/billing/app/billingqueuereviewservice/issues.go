@@ -622,7 +622,7 @@ func (s *Service) Post(
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
-	if s.invoiceSvc == nil || s.invoiceRepo == nil {
+	if s.invoicePosting == nil || s.invoiceRepo == nil {
 		return nil, errortypes.NewBusinessError("Posting is unavailable")
 	}
 
@@ -657,7 +657,7 @@ func (s *Service) Post(
 	}
 
 	wasPosted := item.Status == billingqueue.StatusPosted
-	posted, err := s.invoiceSvc.Post(ctx, &invoiceports.PostInvoiceRequest{
+	posted, err := s.invoicePosting.Post(ctx, &invoiceports.PostInvoiceRequest{
 		InvoiceID:   inv.ID,
 		TenantInfo:  req.TenantInfo,
 		TriggeredBy: "billing_queue_item",

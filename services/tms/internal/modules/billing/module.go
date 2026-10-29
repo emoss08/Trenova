@@ -53,10 +53,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentdraftservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicecreationservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedraftservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicememoservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepdfservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicequeryservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicesendservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
@@ -130,7 +140,7 @@ func SharedOptions() fx.Option {
 			billingqueuereviewrepository.New,
 			customerpaymentservice.NewValidator,
 			invoiceadjustmentengine.NewValidator,
-			invoiceservice.NewValidator,
+			invoicevalidation.NewValidator,
 			invoicerunservice.NewValidator,
 			billingqueueservice.NewValidator,
 			billingtransferservice.New,
@@ -154,8 +164,24 @@ func SharedOptions() fx.Option {
 			invoiceadjustmentdraftservice.New,
 			detentioncreditservice.New,
 			func(s *detentioncreditservice.Service) detentionports.BilledDetentionCreditor { return s },
-			invoiceservice.NewService,
-			func(s *invoiceservice.Service) invoiceports.InvoiceService { return s },
+			invoicequeryservice.New,
+			func(s *invoicequeryservice.Service) invoiceports.InvoiceQueryService { return s },
+			invoicecreationservice.New,
+			func(s *invoicecreationservice.Service) invoiceports.InvoiceCreationService { return s },
+			invoiceediservice.New,
+			func(s *invoiceediservice.Service) invoiceports.InvoiceEDIService { return s },
+			invoicepdfservice.New,
+			func(s *invoicepdfservice.Service) invoiceports.InvoicePDFService { return s },
+			invoicepostingservice.New,
+			func(s *invoicepostingservice.Service) invoiceports.InvoicePostingService { return s },
+			invoicesendservice.New,
+			func(s *invoicesendservice.Service) invoiceports.InvoiceSendService { return s },
+			invoicememoservice.New,
+			func(s *invoicememoservice.Service) invoiceports.InvoiceMemoService { return s },
+			invoicevoidservice.New,
+			func(s *invoicevoidservice.Service) invoiceports.InvoiceVoidService { return s },
+			invoicedraftservice.New,
+			func(s *invoicedraftservice.Service) invoiceports.InvoiceDraftService { return s },
 			invoicerunservice.New,
 			invoicedisputeservice.New,
 			latechargeservice.New,
@@ -164,9 +190,9 @@ func SharedOptions() fx.Option {
 			func(s *billingqueueservice.Service) billingqueueports.BillingQueueService { return s },
 			billingqueuereviewservice.New,
 			billingqueueapprovalservice.New,
-			invoiceservice.NewContextBuilder,
+			invoicedocument.NewContextBuilder,
 			fx.Annotate(
-				func(b *invoiceservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
+				func(b *invoicedocument.ContextBuilder) documenttemplateports.ContextBuilder { return b },
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 		),

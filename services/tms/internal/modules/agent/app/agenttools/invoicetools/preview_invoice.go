@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -103,7 +103,9 @@ func (t *PostInvoiceTool) Preview(
 	return toolpreview.Build(postSummary(post, label, total), changes...), nil
 }
 
-func postedInvoiceChange(post *invoiceservice.PostPreview) (*agentpreview.RecordChange, error) {
+func postedInvoiceChange(
+	post *invoicepostingservice.PostPreview,
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       post.Before.ID,
@@ -184,7 +186,7 @@ func journalEntryChange(
 	return change, nil
 }
 
-func postSummary(post *invoiceservice.PostPreview, label, total string) string {
+func postSummary(post *invoicepostingservice.PostPreview, label, total string) string {
 	if post.AlreadyPosted {
 		return fmt.Sprintf(
 			"%s is already posted; posting it again only settles its billing queue item.",

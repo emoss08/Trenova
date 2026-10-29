@@ -23,15 +23,15 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Queue        *billingqueueservice.Service
-	Repo         billingqueueports.BillingQueueRepository
-	ShipmentRepo shipmentports.ShipmentRepository
-	CustomerRepo customerports.CustomerRepository
-	UserRepo     tenantports.UserRepository
-	InvoiceRepo  invoiceports.InvoiceRepository
-	InvoiceSvc   invoiceports.InvoiceService
-	Realtime     realtimeports.RealtimeService
+	Logger         *zap.Logger
+	Queue          *billingqueueservice.Service
+	Repo           billingqueueports.BillingQueueRepository
+	ShipmentRepo   shipmentports.ShipmentRepository
+	CustomerRepo   customerports.CustomerRepository
+	UserRepo       tenantports.UserRepository
+	InvoiceRepo    invoiceports.InvoiceRepository
+	InvoicePosting invoiceports.InvoicePostingService
+	Realtime       realtimeports.RealtimeService
 	// The review reads: issues and activity, the shipment's paperwork and
 	// detention evidence, the contract's accessorials, and the driver to ask
 	// for a missing signature.
@@ -53,7 +53,7 @@ type Service struct {
 	shipmentRepo    shipmentports.ShipmentRepository
 	customerRepo    customerports.CustomerRepository
 	invoiceRepo     invoiceports.InvoiceRepository
-	invoiceSvc      invoiceports.InvoiceService
+	invoicePosting  invoiceports.InvoicePostingService
 	reviewRepo      billingqueueports.BillingQueueReviewRepository
 	documentRepo    documentports.DocumentRepository
 	drivers         driverNotifier
@@ -80,7 +80,7 @@ func New(p Params) billingqueueports.BillingQueueReviewService {
 		shipmentRepo:    p.ShipmentRepo,
 		customerRepo:    p.CustomerRepo,
 		invoiceRepo:     p.InvoiceRepo,
-		invoiceSvc:      p.InvoiceSvc,
+		invoicePosting:  p.InvoicePosting,
 		reviewRepo:      p.ReviewRepo,
 		documentRepo:    p.DocumentRepo,
 		drivers:         notifierOrNil(p.DriverNotifier),

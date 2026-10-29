@@ -29,8 +29,8 @@ type ediPlanInvoicesGetter interface {
 type InvoiceEDISendPlanByInvoiceIDLoaderFactoryParams struct {
 	fx.In
 
-	InvoiceService invoiceports.InvoiceService
-	InvoiceRepo    invoiceports.InvoiceRepository
+	InvoiceEDIService invoiceports.InvoiceEDIService
+	InvoiceRepo       invoiceports.InvoiceRepository
 }
 
 // InvoiceEDISendPlanByInvoiceIDLoaderFactory resolves EDI send plans for a
@@ -45,7 +45,7 @@ func NewInvoiceEDISendPlanByInvoiceIDLoaderFactory(
 	p InvoiceEDISendPlanByInvoiceIDLoaderFactoryParams,
 ) *InvoiceEDISendPlanByInvoiceIDLoaderFactory {
 	return &InvoiceEDISendPlanByInvoiceIDLoaderFactory{
-		plans:    p.InvoiceService,
+		plans:    p.InvoiceEDIService,
 		invoices: p.InvoiceRepo,
 	}
 }

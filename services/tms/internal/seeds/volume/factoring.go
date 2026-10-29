@@ -57,7 +57,7 @@ const (
 
 // facPeriod is a span in which a customer's invoices were assigned to one
 // factor: billing stamps an invoice with the factor whose period covers the
-// moment it posted, as invoiceservice.assignFactoring does.
+// moment it posted, as invoicepostingservice.assignFactoring does.
 type facPeriod struct {
 	factor *facFactor
 	from   int64

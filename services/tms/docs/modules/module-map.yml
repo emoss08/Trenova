@@ -869,7 +869,10 @@ modules:
       - bankreceiptworkitemservice
       - billingcontrolpolicyservice
       - billingnumber
+      - billingqueueactivity
       - billingqueueapprovalservice
+      - billingqueuereadiness
+      - billingqueuereviewservice
       - billingqueueservice
       - billingtransfercriteria
       - billingtransferservice
@@ -880,14 +883,36 @@ modules:
       - customerstatementservice
       - detentionbillingservice
       - detentioncreditservice
+      - factoringaction
+      - factoringagreementservice
+      - factoringledgerservice
+      - factoringnoaservice
+      - factoringreadinessservice
+      - factoringremittanceservice
+      - factoringsubmissionservice
+      - factoringtransportservice
+      - invoiceaction
+      - invoiceadjustmentdraftservice
+      - invoiceadjustmentengine
       - invoiceadjustmentservice
+      - invoiceassembly
+      - invoicecreationservice
       - invoicedisputeservice
+      - invoicedocument
+      - invoicedraftservice
+      - invoiceediservice
       - invoiceledger
       - invoicelines
+      - invoicememoservice
+      - invoicepdfservice
+      - invoicepostingservice
+      - invoicequeryservice
       - invoicerunservice
-      - invoiceservice
+      - invoicesendservice
       - invoiceshareservice
+      - invoicevalidation
       - invoicevoid
+      - invoicevoidservice
       - latechargeservice
       - paymentreminderservice
     job:

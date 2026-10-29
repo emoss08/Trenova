@@ -87,20 +87,21 @@ func TestAutoPostInvoiceActivityTreatsVoidedAsDone(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 	invoiceID := pulid.MustNew("inv_")
-	invoiceService := invoiceportsmock.NewMockInvoiceService(t)
+	invoiceService := invoiceportsmock.NewMockInvoiceQueryService(t)
+	posting := invoiceportsmock.NewMockInvoicePostingService(t)
 	invoiceService.EXPECT().
 		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
 		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusVoided}, nil).
 		Once()
 
-	a := &Activities{invoiceService: invoiceService, logger: zap.NewNop()}
+	a := &Activities{invoices: invoiceService, invoicePosting: posting, logger: zap.NewNop()}
 	result, err := a.AutoPostInvoiceActivity(t.Context(), autoPostPayload(invoiceID, tenantInfo))
 
 	require.NoError(t, err)
 	assert.True(t, result.AlreadyPosted)
 	assert.True(t, result.Voided)
 	assert.Equal(t, int64(0), result.PostedAt)
-	invoiceService.AssertNotCalled(t, "Post", mock.Anything, mock.Anything, mock.Anything)
+	posting.AssertNotCalled(t, "Post", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestAutoPostInvoiceActivityReportsAPostedInvoiceWithoutVoidFlag(t *testing.T) {
@@ -109,13 +110,13 @@ func TestAutoPostInvoiceActivityReportsAPostedInvoiceWithoutVoidFlag(t *testing.
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	invoiceID := pulid.MustNew("inv_")
 	postedAt := int64(1_700_000_000)
-	invoiceService := invoiceportsmock.NewMockInvoiceService(t)
+	invoiceService := invoiceportsmock.NewMockInvoiceQueryService(t)
 	invoiceService.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusPosted, PostedAt: &postedAt}, nil).
 		Once()
 
-	a := &Activities{invoiceService: invoiceService, logger: zap.NewNop()}
+	a := &Activities{invoices: invoiceService, logger: zap.NewNop()}
 	result, err := a.AutoPostInvoiceActivity(t.Context(), autoPostPayload(invoiceID, tenantInfo))
 
 	require.NoError(t, err)
@@ -127,7 +128,8 @@ func TestAutoPostInvoiceActivityReportsAPostedInvoiceWithoutVoidFlag(t *testing.
 type ediActivityFixture struct {
 	tenantInfo     pagination.TenantInfo
 	inv            *invoice.Invoice
-	invoiceService *invoiceportsmock.MockInvoiceService
+	invoiceService *invoiceportsmock.MockInvoiceQueryService
+	invoiceEDI     *invoiceportsmock.MockInvoiceEDIService
 	invoiceRepo    *invoiceportsmock.MockInvoiceRepository
 	ediService     *ediportsmock.MockEDIDocumentService
 	activities     *Activities
@@ -141,7 +143,8 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 			BuID:   pulid.MustNew("bu_"),
 			UserID: pulid.MustNew("usr_"),
 		},
-		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
+		invoiceService: invoiceportsmock.NewMockInvoiceQueryService(t),
+		invoiceEDI:     invoiceportsmock.NewMockInvoiceEDIService(t),
 		invoiceRepo:    invoiceportsmock.NewMockInvoiceRepository(t),
 		ediService:     ediportsmock.NewMockEDIDocumentService(t),
 	}
@@ -155,10 +158,11 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 		Return(f.inv, nil).
 		Maybe()
 	f.activities = &Activities{
-		invoiceService: f.invoiceService,
-		invoiceRepo:    f.invoiceRepo,
-		ediService:     f.ediService,
-		logger:         zap.NewNop(),
+		invoices:    f.invoiceService,
+		invoiceEDI:  f.invoiceEDI,
+		invoiceRepo: f.invoiceRepo,
+		ediService:  f.ediService,
+		logger:      zap.NewNop(),
 	}
 
 	return f
@@ -177,7 +181,7 @@ func (f *ediActivityFixture) payload(force bool) *billingcontract.SendInvoiceEDI
 }
 
 func (f *ediActivityFixture) expectPlan(plan *invoiceports.InvoiceEDISendPlan) {
-	f.invoiceService.EXPECT().
+	f.invoiceEDI.EXPECT().
 		ResolveEDISendPlans(mock.Anything, &invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: f.tenantInfo,
 			Invoices:   []*invoice.Invoice{f.inv},

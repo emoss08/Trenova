@@ -344,7 +344,11 @@ type Params struct {
 	ServiceFailureSvc             servicefailureports.ServiceFailureService
 	BillingQueueService           billingqueueports.BillingQueueService
 	BillingQueueReviewService     billingqueueports.BillingQueueReviewService
-	InvoiceService                invoiceports.InvoiceService
+	InvoiceQueryService           invoiceports.InvoiceQueryService
+	InvoiceCreationService        invoiceports.InvoiceCreationService
+	InvoiceMemoService            invoiceports.InvoiceMemoService
+	InvoiceVoidService            invoiceports.InvoiceVoidService
+	InvoiceEDIService             invoiceports.InvoiceEDIService
 	InvoiceAdjustmentService      invoiceadjustmentports.InvoiceAdjustmentService
 	FactoringAgreementService     factoringports.AgreementService
 	FactoringNoaService           factoringports.NoaService
@@ -591,7 +595,11 @@ type Services struct {
 	ServiceFailureSvc             servicefailureports.ServiceFailureService
 	BillingQueueService           billingqueueports.BillingQueueService
 	BillingQueueReviewService     billingqueueports.BillingQueueReviewService
-	InvoiceService                invoiceports.InvoiceService
+	InvoiceQueryService           invoiceports.InvoiceQueryService
+	InvoiceCreationService        invoiceports.InvoiceCreationService
+	InvoiceMemoService            invoiceports.InvoiceMemoService
+	InvoiceVoidService            invoiceports.InvoiceVoidService
+	InvoiceEDIService             invoiceports.InvoiceEDIService
 	InvoiceAdjustmentService      invoiceadjustmentports.InvoiceAdjustmentService
 	FactoringAgreementService     factoringports.AgreementService
 	FactoringNoaService           factoringports.NoaService
@@ -844,7 +852,11 @@ func newServices(p *Params) *Services {
 		ServiceFailureSvc:             p.ServiceFailureSvc,
 		BillingQueueService:           p.BillingQueueService,
 		BillingQueueReviewService:     p.BillingQueueReviewService,
-		InvoiceService:                p.InvoiceService,
+		InvoiceQueryService:           p.InvoiceQueryService,
+		InvoiceCreationService:        p.InvoiceCreationService,
+		InvoiceMemoService:            p.InvoiceMemoService,
+		InvoiceVoidService:            p.InvoiceVoidService,
+		InvoiceEDIService:             p.InvoiceEDIService,
 		InvoiceAdjustmentService:      p.InvoiceAdjustmentService,
 		InvoiceDisputeService:         p.InvoiceDisputeService,
 		FactoringAgreementService:     p.FactoringAgreementService,

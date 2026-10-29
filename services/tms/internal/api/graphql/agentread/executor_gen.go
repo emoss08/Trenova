@@ -358,7 +358,11 @@ type ResolverParams struct {
 	InvoiceAdjustmentService      invoiceadjustmentports.InvoiceAdjustmentService
 	InvoiceDisputeRepo            invoiceports.InvoiceDisputeRepository
 	InvoiceDisputeService         invoiceports.InvoiceDisputeService
-	InvoiceService                invoiceports.InvoiceService
+	InvoiceCreationService        invoiceports.InvoiceCreationService
+	InvoiceEDIService             invoiceports.InvoiceEDIService
+	InvoiceMemoService            invoiceports.InvoiceMemoService
+	InvoiceQueryService           invoiceports.InvoiceQueryService
+	InvoiceVoidService            invoiceports.InvoiceVoidService
 	JournalCards                  *journalcardservice.Service
 	JournalEntryService           *journalentryservice.Service
 	JournalReversalService        *journalreversalservice.Service
@@ -1306,7 +1310,7 @@ func NewSchema(p ResolverParams) Schema {
 		CustomerPaymentService: p.CustomerPaymentService,
 		CustomerPaymentRepo:    p.CustomerPaymentRepo,
 		CustomerService:        p.CustomerService,
-		InvoiceService:         p.InvoiceService,
+		InvoiceQueryService:    p.InvoiceQueryService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   core,
@@ -1441,9 +1445,13 @@ func NewSchema(p ResolverParams) Schema {
 		TriagePeekService:   p.TriagePeekService,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
-		Core:            core,
-		CustomerService: p.CustomerService,
-		InvoiceService:  p.InvoiceService,
+		Core:                   core,
+		CustomerService:        p.CustomerService,
+		InvoiceQueryService:    p.InvoiceQueryService,
+		InvoiceCreationService: p.InvoiceCreationService,
+		InvoiceMemoService:     p.InvoiceMemoService,
+		InvoiceVoidService:     p.InvoiceVoidService,
+		InvoiceEDIService:      p.InvoiceEDIService,
 	}
 	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
 		Core:                     core,
@@ -1528,7 +1536,7 @@ func NewSchema(p ResolverParams) Schema {
 		ShipmentEventService:        p.ShipmentEventService,
 		TrackingEventService:        p.TrackingEventService,
 		ShipmentImportAssistant:     p.ShipmentImportAssistant,
-		InvoiceService:              p.InvoiceService,
+		InvoiceQueryService:         p.InvoiceQueryService,
 		DriverSettlementRepo:        p.DriverSettlementRepo,
 		CarrierSettlementRepo:       p.CarrierSettlementRepo,
 	}

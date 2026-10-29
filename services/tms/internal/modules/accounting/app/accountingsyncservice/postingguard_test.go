@@ -24,8 +24,11 @@ type postingPackage struct {
 
 func postingPackages() []postingPackage {
 	return []postingPackage{
-		{name: "invoiceservice", enqueuePoints: []string{"Service.Post"}},
-		{name: "invoiceadjustmentservice", enqueuePoints: []string{"Service.executeApprovedAdjustment"}},
+		{name: "invoicepostingservice", enqueuePoints: []string{"Service.Post"}},
+		{
+			name:          "invoiceadjustmentengine",
+			enqueuePoints: []string{"Engine.ExecuteApprovedAdjustment"},
+		},
 		{name: "customerpaymentservice", enqueuePoints: []string{
 			"Service.PostAndApply",
 			"Service.ApplyUnapplied",
@@ -33,11 +36,23 @@ func postingPackages() []postingPackage {
 			"Service.ApplyCreditMemo",
 			"Service.UnapplyCreditMemoApplication",
 		}},
-		{name: "customerservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
+		{
+			name:          "customerservice",
+			partyWrite:    true,
+			enqueuePoints: []string{"Service.updateAndQueueSync"},
+		},
 		{name: "carriersettlementservice", enqueuePoints: []string{"Service.queueSync"}},
 		{name: "driversettlementservice", enqueuePoints: []string{"Service.queueSync"}},
-		{name: "carrierservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
-		{name: "workerservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
+		{
+			name:          "carrierservice",
+			partyWrite:    true,
+			enqueuePoints: []string{"Service.updateAndQueueSync"},
+		},
+		{
+			name:          "workerservice",
+			partyWrite:    true,
+			enqueuePoints: []string{"Service.updateAndQueueSync"},
+		},
 	}
 }
 
@@ -45,7 +60,7 @@ var postingAllowList = map[string]string{
 	"customerpaymentservice.Service.planPost": "builds the payment a post would record without " +
 		"saving it, for the preview and for PostAndApply; PostAndApply, the only caller that " +
 		"saves it, enqueues the sync record",
-	"invoiceservice.Service.planPost": "marks the loaded invoice Posted without saving it, for " +
+	"invoicepostingservice.Service.planPost": "marks the loaded invoice Posted without saving it, for " +
 		"PreviewPost and for Post; Post, the only caller that saves it, enqueues the sync " +
 		"record in the same transaction",
 	"carriersettlementservice.PlanPost": "marks the loaded settlement Posted without saving it, " +
@@ -282,7 +297,12 @@ func parsePackageDir(t *testing.T, fset *token.FileSet, dir string) []*ast.File 
 		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		file, parseErr := parser.ParseFile(fset, filepath.Join(dir, name), nil, parser.SkipObjectResolution)
+		file, parseErr := parser.ParseFile(
+			fset,
+			filepath.Join(dir, name),
+			nil,
+			parser.SkipObjectResolution,
+		)
 		require.NoError(t, parseErr)
 		files = append(files, file)
 	}
@@ -297,21 +317,41 @@ func TestEveryPostingPathEnqueues(t *testing.T) {
 	for _, pkg := range postingPackages() {
 		t.Run(pkg.name, func(t *testing.T) {
 			fset := token.NewFileSet()
-			graph := buildPostingGraph(fset, parsePackageDir(t, fset, servicePackageDir(t, pkg.name)), pkg.partyWrite)
+			graph := buildPostingGraph(
+				fset,
+				parsePackageDir(t, fset, servicePackageDir(t, pkg.name)),
+				pkg.partyWrite,
+			)
 
 			sinks := 0
 			for _, fn := range graph.funcs {
 				sinks += len(fn.sinks)
 				if len(fn.sinks) > 0 {
-					t.Logf("%s %s; enqueues itself: %t; callers: %v",
-						fn.key, strings.Join(slices.Compact(fn.sinks), " and "), fn.enqueues, graph.callers[fn.key])
+					t.Logf(
+						"%s %s; enqueues itself: %t; callers: %v",
+						fn.key,
+						strings.Join(slices.Compact(fn.sinks), " and "),
+						fn.enqueues,
+						graph.callers[fn.key],
+					)
 				}
 			}
-			require.Positive(t, sinks, "the guard found no posting in %s; the matchers are stale", pkg.name)
+			require.Positive(
+				t,
+				sinks,
+				"the guard found no posting in %s; the matchers are stale",
+				pkg.name,
+			)
 
 			for _, point := range pkg.enqueuePoints {
 				fn, ok := graph.funcs[point]
-				if assert.True(t, ok, "%s.%s is a named enqueue point but no longer exists", pkg.name, point) {
+				if assert.True(
+					t,
+					ok,
+					"%s.%s is a named enqueue point but no longer exists",
+					pkg.name,
+					point,
+				) {
 					assert.True(t, fn.enqueues, "%s.%s must call %s", pkg.name, point, enqueueCall)
 				}
 			}
@@ -333,7 +373,12 @@ func TestEveryPostingPathEnqueues(t *testing.T) {
 	}
 
 	for qualified := range postingAllowList {
-		assert.True(t, usedAllowances[qualified], "%s is allow-listed but no longer needs it", qualified)
+		assert.True(
+			t,
+			usedAllowances[qualified],
+			"%s is allow-listed but no longer needs it",
+			qualified,
+		)
 	}
 }
 
@@ -386,8 +431,12 @@ func (s *Service) Compare(entity *invoice.Invoice) bool {
 		flagged = append(flagged, fn.key)
 	}
 
-	assert.Equal(t, []string{"Service.Adjust", "Service.Save", "Service.Settle", "Service.createPosting"}, flagged,
-		"a helper is covered only when every caller enqueues")
+	assert.Equal(
+		t,
+		[]string{"Service.Adjust", "Service.Save", "Service.Settle", "Service.createPosting"},
+		flagged,
+		"a helper is covered only when every caller enqueues",
+	)
 	assert.True(t, graph.funcs["Service.Post"].enqueues)
 	assert.Empty(t, graph.funcs["Service.Compare"].sinks, "reading a Posted status is not a write")
 }

@@ -30,7 +30,8 @@ type holdFixture struct {
 	tenantInfo pagination.TenantInfo
 	item       *billingqueue.BillingQueueItem
 	repo       *billingqueueportsmock.MockBillingQueueRepository
-	invoices   *invoiceportsmock.MockInvoiceService
+	invoices   *invoiceportsmock.MockInvoiceCreationService
+	voids      *invoiceportsmock.MockInvoiceVoidService
 	detention  *detentionportsmock.MockDetentionBillingService
 	svc        *Service
 }
@@ -57,7 +58,8 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 			BillType:         billType,
 		},
 		repo:      billingqueueportsmock.NewMockBillingQueueRepository(t),
-		invoices:  invoiceportsmock.NewMockInvoiceService(t),
+		invoices:  invoiceportsmock.NewMockInvoiceCreationService(t),
+		voids:     invoiceportsmock.NewMockInvoiceVoidService(t),
 		detention: detentionportsmock.NewMockDetentionBillingService(t),
 	}
 
@@ -70,7 +72,8 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 		l:                zap.NewNop(),
 		db:               passthroughDB{},
 		repo:             f.repo,
-		invoiceSvc:       f.invoices,
+		invoiceCreation:  f.invoices,
+		invoiceVoids:     f.voids,
 		auditService:     audit,
 		realtime:         realtime,
 		validator:        testValidator(),

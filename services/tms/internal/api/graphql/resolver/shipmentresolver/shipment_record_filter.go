@@ -39,7 +39,7 @@ func (r *QueryResolver) shipmentsInvoicesBill(
 		return []pulid.ID{}, nil
 	}
 
-	invoices, err := r.InvoiceService.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+	invoices, err := r.InvoiceQueryService.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		InvoiceIDs: invoiceIDs,
 	})

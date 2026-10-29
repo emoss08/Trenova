@@ -198,6 +198,7 @@ func (m *memoryReview) eventTexts() []string {
 // read and written through kept in step like a database would.
 type reviewWorld struct {
 	deps     billingqueueservice.Params
+	posting  invoiceports.InvoicePostingService
 	review   *memoryReview
 	tenant   pagination.TenantInfo
 	actor    *permissionports.RequestActor
@@ -379,16 +380,16 @@ func (w *reviewWorld) queue() *billingqueueservice.Service {
 // reviews is the review over the world's dependencies as they stand.
 func (w *reviewWorld) reviews() *Service {
 	return New(Params{
-		Logger:       w.deps.Logger,
-		Queue:        w.queue(),
-		Repo:         w.deps.Repo,
-		ShipmentRepo: w.deps.ShipmentRepo,
-		CustomerRepo: w.deps.CustomerRepo,
-		UserRepo:     w.deps.UserRepo,
-		InvoiceRepo:  w.deps.InvoiceRepo,
-		InvoiceSvc:   w.deps.InvoiceSvc,
-		Realtime:     w.deps.Realtime,
-		ReviewRepo:   w.deps.ReviewRepo,
+		Logger:         w.deps.Logger,
+		Queue:          w.queue(),
+		Repo:           w.deps.Repo,
+		ShipmentRepo:   w.deps.ShipmentRepo,
+		CustomerRepo:   w.deps.CustomerRepo,
+		UserRepo:       w.deps.UserRepo,
+		InvoiceRepo:    w.deps.InvoiceRepo,
+		InvoicePosting: w.posting,
+		Realtime:       w.deps.Realtime,
+		ReviewRepo:     w.deps.ReviewRepo,
 	}).(*Service)
 }
 
@@ -648,7 +649,7 @@ func TestPostPostsTheItemsInvoiceAndSaysWhereItWent(t *testing.T) {
 	}
 	invoices := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoices.EXPECT().GetByBillingQueueItemID(mock.Anything, mock.Anything).Return(draft, nil)
-	invoiceSvc := invoiceportsmock.NewMockInvoiceService(t)
+	invoiceSvc := invoiceportsmock.NewMockInvoicePostingService(t)
 	invoiceSvc.EXPECT().Post(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *invoiceports.PostInvoiceRequest, _ *permissionports.RequestActor) (*invoice.Invoice, error) {
 			assert.Equal(t, draft.ID, req.InvoiceID)
@@ -660,7 +661,7 @@ func TestPostPostsTheItemsInvoiceAndSaysWhereItWent(t *testing.T) {
 			return &posted, nil
 		})
 	w.deps.InvoiceRepo = invoices
-	w.deps.InvoiceSvc = invoiceSvc
+	w.posting = invoiceSvc
 
 	result, err := w.reviews().Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
@@ -677,7 +678,7 @@ func TestPostRefusesAnItemNotYetApproved(t *testing.T) {
 	t.Parallel()
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
-	w.deps.InvoiceSvc = invoiceportsmock.NewMockInvoiceService(t)
+	w.posting = invoiceportsmock.NewMockInvoicePostingService(t)
 
 	_, err := w.reviews().Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,

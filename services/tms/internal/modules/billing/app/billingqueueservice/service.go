@@ -60,7 +60,9 @@ type Params struct {
 	UserRepo             tenantports.UserRepository
 	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
 	InvoiceRepo          invoiceports.InvoiceRepository
-	InvoiceSvc           invoiceports.InvoiceService
+	InvoiceCreation      invoiceports.InvoiceCreationService
+	InvoicePosting       invoiceports.InvoicePostingService
+	InvoiceVoids         invoiceports.InvoiceVoidService
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	Commercial           *shipmentcommercial.Calculator
 	Generator            seqgen.Generator
@@ -92,7 +94,9 @@ type Service struct {
 	userRepo             tenantports.UserRepository
 	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
 	invoiceRepo          invoiceports.InvoiceRepository
-	invoiceSvc           invoiceports.InvoiceService
+	invoiceCreation      invoiceports.InvoiceCreationService
+	invoicePosting       invoiceports.InvoicePostingService
+	invoiceVoids         invoiceports.InvoiceVoidService
 	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	commercial           *shipmentcommercial.Calculator
 	generator            seqgen.Generator
@@ -141,7 +145,9 @@ func NewService(p Params) *Service {
 		userRepo:             p.UserRepo,
 		adjustmentRepo:       p.AdjustmentRepo,
 		invoiceRepo:          p.InvoiceRepo,
-		invoiceSvc:           p.InvoiceSvc,
+		invoiceCreation:      p.InvoiceCreation,
+		invoicePosting:       p.InvoicePosting,
+		invoiceVoids:         p.InvoiceVoids,
 		chargeAllocationRepo: p.ChargeAllocationRepo,
 		commercial:           p.Commercial,
 		generator:            p.Generator,
@@ -827,11 +833,11 @@ func (s *Service) UpdateStatus(
 		}
 		updated = updatedEntity
 
-		if req.NewStatus == billingqueue.StatusApproved && s.invoiceSvc != nil {
+		if req.NewStatus == billingqueue.StatusApproved && s.invoiceCreation != nil {
 			// Approving means the freight is verified, not that it bills today. A
 			// statement customer's item is approved onto their statement and waits
 			// for their cycle; everyone else is invoiced here as before.
-			createResult, updateErr = s.invoiceSvc.CreateFromApprovedBillingQueueItem(
+			createResult, updateErr = s.invoiceCreation.CreateFromApprovedBillingQueueItem(
 				txCtx,
 				&invoiceports.CreateInvoiceFromBillingQueueRequest{
 					BillingQueueItemID: updated.ID,
@@ -859,8 +865,9 @@ func (s *Service) UpdateStatus(
 		s.createOpsComment(ctx, updated, actor)
 	}
 
-	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil {
-		if err = s.invoiceSvc.EnqueueAutoPost(ctx, createResult.Invoice, actor); err != nil {
+	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil &&
+		s.invoicePosting != nil {
+		if err = s.invoicePosting.EnqueueAutoPost(ctx, createResult.Invoice, actor); err != nil {
 			s.l.Warn("failed to enqueue invoice auto-post workflow",
 				zap.String("billingQueueItemId", updated.ID.String()),
 				zap.String("invoiceId", createResult.Invoice.ID.String()),
@@ -895,13 +902,13 @@ func (s *Service) discardStaleDraft(
 	req *billingqueueports.UpdateBillingQueueStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if s.invoiceSvc == nil ||
+	if s.invoiceVoids == nil ||
 		entity.Status != billingqueue.StatusApproved ||
 		req.NewStatus != billingqueue.StatusInReview {
 		return entity, nil
 	}
 
-	if err := s.invoiceSvc.DiscardDraftForReview(
+	if err := s.invoiceVoids.DiscardDraftForReview(
 		ctx,
 		&invoiceports.DiscardDraftForReviewRequest{
 			BillingQueueItemID: entity.ID,

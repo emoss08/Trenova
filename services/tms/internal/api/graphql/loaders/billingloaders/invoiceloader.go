@@ -22,7 +22,7 @@ type invoicesByIDsGetter interface {
 type InvoiceByIDLoaderFactoryParams struct {
 	fx.In
 
-	InvoiceService invoiceports.InvoiceService
+	InvoiceQueryService invoiceports.InvoiceQueryService
 }
 
 type InvoiceByIDLoaderFactory struct {
@@ -33,7 +33,7 @@ func NewInvoiceByIDLoaderFactory(
 	p InvoiceByIDLoaderFactoryParams,
 ) *InvoiceByIDLoaderFactory {
 	return &InvoiceByIDLoaderFactory{
-		invoices: p.InvoiceService,
+		invoices: p.InvoiceQueryService,
 	}
 }
 

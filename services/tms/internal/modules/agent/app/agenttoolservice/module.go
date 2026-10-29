@@ -50,9 +50,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicecreationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedraftservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicememoservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepdfservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicesendservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -469,14 +476,14 @@ func provideTransitionItemsToInReviewTool(
 }
 
 func providePostInvoicesTool(
-	invoices *invoiceservice.Service,
+	invoices *invoicepostingservice.Service,
 	numbers invoiceports.InvoiceRepository,
 ) agenttoolports.AgentTool {
 	return invoicetools.NewPostInvoicesTool(invoices, numbers)
 }
 
 func provideSendInvoicesTool(
-	invoices *invoiceservice.Service,
+	invoices *invoicesendservice.Service,
 	numbers invoiceports.InvoiceRepository,
 ) agenttoolports.AgentTool {
 	return invoicetools.NewSendInvoicesTool(invoices, numbers)
@@ -484,7 +491,7 @@ func provideSendInvoicesTool(
 
 func provideApproveBillingQueueItemsTool(
 	billing billingqueueports.BillingQueueService,
-	invoices *invoiceservice.Service,
+	invoices *invoicecreationservice.Service,
 ) agenttoolports.AgentTool {
 	return invoicetools.NewApproveBillingQueueItemsTool(billing, invoices)
 }
@@ -707,26 +714,26 @@ func provideShareInvoiceTool(shares *invoiceshareservice.Service) agenttoolports
 	return receivabletools.NewShareInvoiceTool(shares)
 }
 
-func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideUpdateInvoiceDraftTool(invoices *invoicedraftservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewUpdateInvoiceDraftTool(invoices)
 }
 
-func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideGenerateInvoicePDFTool(invoices *invoicepdfservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewGenerateInvoicePDFTool(invoices)
 }
 
-func provideCreateInvoiceTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideCreateInvoiceTool(invoices *invoicecreationservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewCreateInvoiceTool(invoices)
 }
 
-func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideCreateInvoiceMemoTool(invoices *invoicememoservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewCreateInvoiceMemoTool(invoices)
 }
 
-func provideVoidInvoiceTool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideVoidInvoiceTool(invoices *invoicevoidservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewVoidInvoiceTool(invoices)
 }
 
-func provideSendInvoiceEDITool(invoices *invoiceservice.Service) agenttoolports.AgentTool {
+func provideSendInvoiceEDITool(invoices *invoiceediservice.Service) agenttoolports.AgentTool {
 	return invoicelifecycletools.NewSendInvoiceEDITool(invoices)
 }

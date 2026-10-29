@@ -25,7 +25,7 @@ type Deps struct {
 	ShipmentEventService        shipmenteventports.ShipmentEventService
 	TrackingEventService        trackingeventports.TrackingEventService
 	ShipmentImportAssistant     shipmentimportassistantports.ShipmentImportAssistantService
-	InvoiceService              invoiceports.InvoiceService
+	InvoiceQueryService         invoiceports.InvoiceQueryService
 	DriverSettlementRepo        driversettlementports.DriverSettlementRepository
 	CarrierSettlementRepo       carriersettlementports.CarrierSettlementRepository
 }

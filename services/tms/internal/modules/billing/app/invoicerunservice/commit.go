@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicecreationservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -128,7 +128,7 @@ func (s *Service) commitGroup(
 
 	invoiceEntity, err := s.consolidatedMaker.CreateConsolidated(
 		ctx,
-		&invoiceservice.ConsolidatedInvoiceParams{
+		&invoicecreationservice.ConsolidatedInvoiceParams{
 			TenantInfo:  tenantInfo,
 			Legs:        legs,
 			QueueItems:  queueItems,

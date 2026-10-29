@@ -55,7 +55,7 @@ type SubmissionParams struct {
 	States           factoringports.InvoiceStateRepository
 	Agreements       factoringports.AgreementRepository
 	Invoices         invoiceports.InvoiceRepository
-	InvoiceService   invoiceports.InvoiceService `optional:"true"`
+	InvoicePDF       invoiceports.InvoicePDFService `optional:"true"`
 	InvoiceDocuments documentports.InvoiceDocumentService
 	Documents        documentports.DocumentRepository
 	Store            documentports.DocumentStore
@@ -82,7 +82,7 @@ type SubmissionService struct {
 	states           factoringports.InvoiceStateRepository
 	agreements       factoringports.AgreementRepository
 	invoices         invoiceports.InvoiceRepository
-	invoiceService   invoiceports.InvoiceService
+	invoicePreviews  invoiceports.InvoicePDFService
 	invoiceDocuments documentports.InvoiceDocumentService
 	documents        documentports.DocumentRepository
 	store            documentports.DocumentStore
@@ -114,7 +114,7 @@ func NewSubmissionService(p SubmissionParams) factoringsubmissionports.Submissio
 		states:           p.States,
 		agreements:       p.Agreements,
 		invoices:         p.Invoices,
-		invoiceService:   p.InvoiceService,
+		invoicePreviews:  p.InvoicePDF,
 		invoiceDocuments: p.InvoiceDocuments,
 		documents:        p.Documents,
 		store:            p.Store,

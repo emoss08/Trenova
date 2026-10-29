@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -28,7 +28,7 @@ import (
 var errPostedDuringPreview = errors.New("a preview posted an invoice")
 
 type fakeInvoicePoster struct {
-	preview *invoiceservice.PostPreview
+	preview *invoicepostingservice.PostPreview
 	posted  *invoiceports.PostInvoiceRequest
 	locked  bool
 }
@@ -50,11 +50,11 @@ func (f *fakeInvoicePoster) PreviewPost(
 	context.Context,
 	*invoiceports.PostInvoiceRequest,
 	*permissionports.RequestActor,
-) (*invoiceservice.PostPreview, error) {
+) (*invoicepostingservice.PostPreview, error) {
 	return f.preview, nil
 }
 
-func postPreviewFixture() *invoiceservice.PostPreview {
+func postPreviewFixture() *invoicepostingservice.PostPreview {
 	before := &invoice.Invoice{
 		ID:               pulid.MustNew("inv_"),
 		Number:           "INV-7001",
@@ -89,10 +89,10 @@ func postPreviewFixture() *invoiceservice.PostPreview {
 	queueAfter := *queueBefore
 	queueAfter.Status = billingqueue.StatusPosted
 
-	return &invoiceservice.PostPreview{
+	return &invoicepostingservice.PostPreview{
 		Before:      before,
 		After:       &after,
-		Legs:        []invoiceservice.LegChange{{Before: leg, After: &invoicedLeg}},
+		Legs:        []invoicepostingservice.LegChange{{Before: leg, After: &invoicedLeg}},
 		QueueBefore: queueBefore,
 		QueueAfter:  &queueAfter,
 		Journal: &kernelports.JournalPreview{

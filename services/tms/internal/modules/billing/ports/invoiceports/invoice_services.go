@@ -319,16 +319,8 @@ type CreateInvoicesResult struct {
 	Primary  *invoice.Invoice   `json:"primary"`
 }
 
-type InvoiceService interface {
-	ResolveEDISendPlans(
-		ctx context.Context,
-		req *ResolveInvoiceEDISendPlansRequest,
-	) (map[pulid.ID]*InvoiceEDISendPlan, error)
-	SendEDI(
-		ctx context.Context,
-		req *SendInvoiceEDIRequest,
-		actor *permissionports.RequestActor,
-	) (*InvoiceEDISendResult, error)
+// InvoiceQueryService reads invoices and their email attempts.
+type InvoiceQueryService interface {
 	List(
 		ctx context.Context,
 		req *ListInvoicesRequest,
@@ -345,6 +337,14 @@ type InvoiceService interface {
 		ctx context.Context,
 		req GetInvoicesByIDsRequest,
 	) ([]*invoice.Invoice, error)
+	ListEmailAttempts(
+		ctx context.Context,
+		req ListInvoiceEmailAttemptsRequest,
+	) (*pagination.ListResult[*invoice.EmailAttempt], error)
+}
+
+// InvoiceCreationService creates invoices from approved billing queue items, shipments and orders.
+type InvoiceCreationService interface {
 	CreateFromApprovedBillingQueueItem(
 		ctx context.Context,
 		req *CreateInvoiceFromBillingQueueRequest,
@@ -370,67 +370,10 @@ type InvoiceService interface {
 		req *CreateInvoiceFromOrderRequest,
 		actor *permissionports.RequestActor,
 	) (*CreateInvoicesResult, error)
-	AttachGeneratedPDF(
-		ctx context.Context,
-		req *AttachGeneratedPDFRequest,
-	) (*invoice.Invoice, error)
-	ReportAutoPostFailure(ctx context.Context, req *ReportAutoPostFailureRequest) error
-	DiscardDraftForReview(
-		ctx context.Context,
-		req *DiscardDraftForReviewRequest,
-		actor *permissionports.RequestActor,
-	) error
-	VoidInvoice(
-		ctx context.Context,
-		req *VoidInvoiceRequest,
-		actor *permissionports.RequestActor,
-	) (*VoidInvoiceResult, error)
-	CreateMemo(
-		ctx context.Context,
-		req *CreateMemoRequest,
-		actor *permissionports.RequestActor,
-	) (*invoice.Invoice, error)
-	UpdateDraft(
-		ctx context.Context,
-		req *UpdateInvoiceDraftRequest,
-		actor *permissionports.RequestActor,
-	) (*invoice.Invoice, error)
-	RenderPreview(
-		ctx context.Context,
-		req *InvoicePreviewRequest,
-	) (*InvoicePreviewResult, error)
-	GeneratePDF(
-		ctx context.Context,
-		req *InvoicePreviewRequest,
-		actor *permissionports.RequestActor,
-	) (*GenerateInvoicePDFResult, error)
-	AutoSendInvoiceAfterPDFGeneration(
-		ctx context.Context,
-		req *AutoSendInvoiceAfterPDFGenerationRequest,
-		actor *permissionports.RequestActor,
-	) (*InvoiceSendResult, error)
-	PlanSend(
-		ctx context.Context,
-		req *InvoiceSendPlanRequest,
-	) (*InvoiceSendPlan, error)
-	Send(
-		ctx context.Context,
-		req *InvoiceSendRequest,
-		actor *permissionports.RequestActor,
-	) (*InvoiceSendResult, error)
-	SendFromWorkflow(
-		ctx context.Context,
-		req *InvoiceSendRequest,
-		actor *permissionports.RequestActor,
-	) (*InvoiceSendResult, error)
-	ListEmailAttempts(
-		ctx context.Context,
-		req ListInvoiceEmailAttemptsRequest,
-	) (*pagination.ListResult[*invoice.EmailAttempt], error)
-	DownloadSharedDocument(
-		ctx context.Context,
-		req *DownloadInvoiceDocumentRequest,
-	) (*DownloadInvoiceDocumentResult, error)
+}
+
+// InvoicePostingService posts invoices.
+type InvoicePostingService interface {
 	Post(
 		ctx context.Context,
 		req *PostInvoiceRequest,
@@ -446,6 +389,96 @@ type InvoiceService interface {
 		req *PostInvoiceRequest,
 		actor *permissionports.RequestActor,
 	) (*InvoicePostPreview, error)
+	ReportAutoPostFailure(ctx context.Context, req *ReportAutoPostFailureRequest) error
+}
+
+// InvoicePDFService renders an invoice and generates and attaches its PDF.
+type InvoicePDFService interface {
+	RenderPreview(
+		ctx context.Context,
+		req *InvoicePreviewRequest,
+	) (*InvoicePreviewResult, error)
+	GeneratePDF(
+		ctx context.Context,
+		req *InvoicePreviewRequest,
+		actor *permissionports.RequestActor,
+	) (*GenerateInvoicePDFResult, error)
+	AttachGeneratedPDF(
+		ctx context.Context,
+		req *AttachGeneratedPDFRequest,
+	) (*invoice.Invoice, error)
+}
+
+// InvoiceSendService emails invoices and serves their shared documents.
+type InvoiceSendService interface {
+	PlanSend(
+		ctx context.Context,
+		req *InvoiceSendPlanRequest,
+	) (*InvoiceSendPlan, error)
+	Send(
+		ctx context.Context,
+		req *InvoiceSendRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoiceSendResult, error)
+	SendFromWorkflow(
+		ctx context.Context,
+		req *InvoiceSendRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoiceSendResult, error)
+	AutoSendInvoiceAfterPDFGeneration(
+		ctx context.Context,
+		req *AutoSendInvoiceAfterPDFGenerationRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoiceSendResult, error)
+	DownloadSharedDocument(
+		ctx context.Context,
+		req *DownloadInvoiceDocumentRequest,
+	) (*DownloadInvoiceDocumentResult, error)
+}
+
+// InvoiceEDIService resolves and sends invoices' outbound 210s.
+type InvoiceEDIService interface {
+	ResolveEDISendPlans(
+		ctx context.Context,
+		req *ResolveInvoiceEDISendPlansRequest,
+	) (map[pulid.ID]*InvoiceEDISendPlan, error)
+	SendEDI(
+		ctx context.Context,
+		req *SendInvoiceEDIRequest,
+		actor *permissionports.RequestActor,
+	) (*InvoiceEDISendResult, error)
+}
+
+// InvoiceMemoService raises credit and debit memos.
+type InvoiceMemoService interface {
+	CreateMemo(
+		ctx context.Context,
+		req *CreateMemoRequest,
+		actor *permissionports.RequestActor,
+	) (*invoice.Invoice, error)
+}
+
+// InvoiceVoidService voids invoices and discards drafts sent back for review.
+type InvoiceVoidService interface {
+	VoidInvoice(
+		ctx context.Context,
+		req *VoidInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*VoidInvoiceResult, error)
+	DiscardDraftForReview(
+		ctx context.Context,
+		req *DiscardDraftForReviewRequest,
+		actor *permissionports.RequestActor,
+	) error
+}
+
+// InvoiceDraftService edits a draft invoice's delivery details.
+type InvoiceDraftService interface {
+	UpdateDraft(
+		ctx context.Context,
+		req *UpdateInvoiceDraftRequest,
+		actor *permissionports.RequestActor,
+	) (*invoice.Invoice, error)
 }
 
 // InvoicePostPreview is what posting an invoice would do, for the person

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -29,7 +29,7 @@ import (
 )
 
 type fakeBatchPoster struct {
-	previews map[pulid.ID]*invoiceservice.PostPreview
+	previews map[pulid.ID]*invoicepostingservice.PostPreview
 	failPost map[pulid.ID]error
 	posted   []pulid.ID
 	locked   bool
@@ -59,7 +59,7 @@ func (f *fakeBatchPoster) PreviewPost(
 	_ context.Context,
 	req *invoiceports.PostInvoiceRequest,
 	_ *permissionports.RequestActor,
-) (*invoiceservice.PostPreview, error) {
+) (*invoicepostingservice.PostPreview, error) {
 	preview, ok := f.previews[req.InvoiceID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Invoice not found")
@@ -88,7 +88,7 @@ func (f fakeInvoiceNumbers) GetByIDs(
 
 func batchOfDrafts(n int) (*fakeBatchPoster, []pulid.ID, fakeInvoiceNumbers) {
 	poster := &fakeBatchPoster{
-		previews: make(map[pulid.ID]*invoiceservice.PostPreview, n),
+		previews: make(map[pulid.ID]*invoicepostingservice.PostPreview, n),
 		failPost: map[pulid.ID]error{},
 	}
 	numbers := fakeInvoiceNumbers{numbers: make(map[pulid.ID]string, n)}

@@ -130,7 +130,7 @@ type lateChargeFixture struct {
 	actor          *permissionports.RequestActor
 	repo           *latechargeportsmock.MockLateChargeRepository
 	billingRepo    *tenantportsmock.MockBillingControlRepository
-	invoiceService *invoiceportsmock.MockInvoiceService
+	invoiceService *invoiceportsmock.MockInvoiceMemoService
 	svc            *Service
 }
 
@@ -144,16 +144,16 @@ func newLateChargeFixture(t *testing.T, control *billingcontrol.BillingControl) 
 		actor:          testutil.NewSessionActor(userID, orgID, buID),
 		repo:           latechargeportsmock.NewMockLateChargeRepository(t),
 		billingRepo:    tenantportsmock.NewMockBillingControlRepository(t),
-		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
+		invoiceService: invoiceportsmock.NewMockInvoiceMemoService(t),
 	}
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Once()
 	f.svc = &Service{
-		l:              zap.NewNop(),
-		db:             markingDB{},
-		repo:           f.repo,
-		billingRepo:    f.billingRepo,
-		invoiceService: f.invoiceService,
-		auditService:   &mocks.NoopAuditService{},
+		l:            zap.NewNop(),
+		db:           markingDB{},
+		repo:         f.repo,
+		billingRepo:  f.billingRepo,
+		invoiceMemos: f.invoiceService,
+		auditService: &mocks.NoopAuditService{},
 	}
 
 	return f

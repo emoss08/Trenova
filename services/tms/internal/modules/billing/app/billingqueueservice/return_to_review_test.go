@@ -31,7 +31,7 @@ func TestUpdateStatus_ReturningAnApprovedItemToReviewDiscardsItsDraft(t *testing
 	f.item.Number = "INV-1001"
 	f.item.Version = 3
 	f.expectRead()
-	f.invoices.EXPECT().
+	f.voids.EXPECT().
 		DiscardDraftForReview(mock.Anything, &invoiceports.DiscardDraftForReviewRequest{
 			BillingQueueItemID: f.item.ID,
 			TenantInfo:         f.tenantInfo,
@@ -76,7 +76,7 @@ func TestUpdateStatus_ReturningToReviewIsRefusedWhenTheInvoiceIsPosted(t *testin
 		errortypes.ErrInvalidOperation,
 		"Invoice is already Posted",
 	)
-	f.invoices.EXPECT().
+	f.voids.EXPECT().
 		DiscardDraftForReview(mock.Anything, mock.Anything, mock.Anything).
 		Return(refused).
 		Once()
@@ -104,5 +104,5 @@ func TestUpdateStatus_MovingIntoReviewFromElsewhereLeavesInvoicesAlone(t *testin
 	_, err := f.returnToReview(t)
 
 	require.NoError(t, err)
-	f.invoices.AssertNotCalled(t, "DiscardDraftForReview", mock.Anything, mock.Anything, mock.Anything)
+	f.voids.AssertNotCalled(t, "DiscardDraftForReview", mock.Anything, mock.Anything, mock.Anything)
 }

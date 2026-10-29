@@ -60,7 +60,8 @@ type Params struct {
 	Organizations     tenantports.OrganizationRepository
 	InvoiceRepo       invoiceports.InvoiceRepository
 	Controls          tenantports.AccountingControlRepository
-	Invoices          invoiceports.InvoiceService
+	Memos             invoiceports.InvoiceMemoService
+	Voids             invoiceports.InvoiceVoidService
 	Payments          customerpaymentports.CustomerPaymentService
 	Permissions       permissionports.PermissionEngine
 	AuditService      auditports.AuditService
@@ -85,7 +86,8 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	invoiceRepo   invoiceports.InvoiceRepository
 	controls      tenantports.AccountingControlRepository
-	invoices      invoiceports.InvoiceService
+	memos         invoiceports.InvoiceMemoService
+	voids         invoiceports.InvoiceVoidService
 	payments      customerpaymentports.CustomerPaymentService
 	permissions   permissionports.PermissionEngine
 	audit         auditports.AuditService
@@ -119,7 +121,8 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		invoiceRepo:   p.InvoiceRepo,
 		controls:      p.Controls,
-		invoices:      p.Invoices,
+		memos:         p.Memos,
+		voids:         p.Voids,
 		payments:      p.Payments,
 		permissions:   p.Permissions,
 		audit:         p.AuditService,

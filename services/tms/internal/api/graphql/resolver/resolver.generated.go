@@ -660,7 +660,7 @@ func FromServices(s *Services) *Resolver {
 		CustomerPaymentService: s.CustomerPaymentService,
 		CustomerPaymentRepo:    s.CustomerPaymentRepo,
 		CustomerService:        s.CustomerService,
-		InvoiceService:         s.InvoiceService,
+		InvoiceQueryService:    s.InvoiceQueryService,
 	}
 	customertrackingDeps := &customertrackingresolver.Deps{
 		Core:                    s.Core,
@@ -859,9 +859,13 @@ func FromServices(s *Services) *Resolver {
 		TriagePeekService:   s.TriagePeekService,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
-		Core:            s.Core,
-		CustomerService: s.CustomerService,
-		InvoiceService:  s.InvoiceService,
+		Core:                   s.Core,
+		CustomerService:        s.CustomerService,
+		InvoiceQueryService:    s.InvoiceQueryService,
+		InvoiceCreationService: s.InvoiceCreationService,
+		InvoiceMemoService:     s.InvoiceMemoService,
+		InvoiceVoidService:     s.InvoiceVoidService,
+		InvoiceEDIService:      s.InvoiceEDIService,
 	}
 	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
 		Core:                     s.Core,
@@ -1051,7 +1055,7 @@ func FromServices(s *Services) *Resolver {
 		ShipmentEventService:        s.ShipmentEventService,
 		TrackingEventService:        s.TrackingEventService,
 		ShipmentImportAssistant:     s.ShipmentImportAssistant,
-		InvoiceService:              s.InvoiceService,
+		InvoiceQueryService:         s.InvoiceQueryService,
 		DriverSettlementRepo:        s.DriverSettlementRepo,
 		CarrierSettlementRepo:       s.CarrierSettlementRepo,
 	}

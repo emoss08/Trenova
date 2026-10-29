@@ -33,14 +33,18 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	InvoiceService    invoiceports.InvoiceService
-	Templates         documenttemplateports.DocumentTemplateResolver
-	InvoiceRepo       invoiceports.InvoiceRepository
-	DocumentService   documentports.InvoiceDocumentService
-	UploadService     documentuploadports.DocumentUploadService
-	DocumentTypeRepo  documenttypeports.DocumentTypeRepository
-	InvoiceRunSweeper invoicerunports.InvoiceRunSweeper
-	Logger            *zap.Logger
+	InvoiceQueryService   invoiceports.InvoiceQueryService
+	InvoicePostingService invoiceports.InvoicePostingService
+	InvoiceSendService    invoiceports.InvoiceSendService
+	InvoicePDFService     invoiceports.InvoicePDFService
+	InvoiceEDIService     invoiceports.InvoiceEDIService
+	Templates             documenttemplateports.DocumentTemplateResolver
+	InvoiceRepo           invoiceports.InvoiceRepository
+	DocumentService       documentports.InvoiceDocumentService
+	UploadService         documentuploadports.DocumentUploadService
+	DocumentTypeRepo      documenttypeports.DocumentTypeRepository
+	InvoiceRunSweeper     invoicerunports.InvoiceRunSweeper
+	Logger                *zap.Logger
 
 	LateChargeService  latechargeports.LateChargeService    `optional:"true"`
 	LateChargeRepo     latechargeports.LateChargeRepository `optional:"true"`
@@ -49,7 +53,11 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	invoiceService    invoiceports.InvoiceService
+	invoices          invoiceports.InvoiceQueryService
+	invoicePosting    invoiceports.InvoicePostingService
+	invoiceSend       invoiceports.InvoiceSendService
+	invoicePDF        invoiceports.InvoicePDFService
+	invoiceEDI        invoiceports.InvoiceEDIService
 	templates         documenttemplateports.DocumentTemplateResolver
 	invoiceRepo       invoiceports.InvoiceRepository
 	documentService   documentports.InvoiceDocumentService
@@ -66,7 +74,11 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		invoiceService:    p.InvoiceService,
+		invoices:          p.InvoiceQueryService,
+		invoicePosting:    p.InvoicePostingService,
+		invoiceSend:       p.InvoiceSendService,
+		invoicePDF:        p.InvoicePDFService,
+		invoiceEDI:        p.InvoiceEDIService,
 		templates:         p.Templates,
 		invoiceRepo:       p.InvoiceRepo,
 		documentService:   p.DocumentService,
@@ -92,7 +104,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		UserID: payload.UserID,
 	}
 
-	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	current, err := a.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -110,7 +122,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		}, nil
 	}
 
-	posted, err := a.invoiceService.Post(ctx, &invoiceports.PostInvoiceRequest{
+	posted, err := a.invoicePosting.Post(ctx, &invoiceports.PostInvoiceRequest{
 		InvoiceID:   payload.InvoiceID,
 		TenantInfo:  tenantInfo,
 		TriggeredBy: "auto-post-workflow",
@@ -147,7 +159,7 @@ func (a *Activities) SendInvoiceEmailActivity(
 	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
 	defer stopHeartbeat()
 
-	result, err := a.invoiceService.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
+	result, err := a.invoiceSend.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 		BaseURL:    payload.BaseURL,
@@ -182,7 +194,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		UserID: payload.UserID,
 	}
 
-	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	current, err := a.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -194,7 +206,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		return nil, err
 	}
 
-	preview, err := a.invoiceService.RenderPreview(ctx, &invoiceports.InvoicePreviewRequest{
+	preview, err := a.invoicePDF.RenderPreview(ctx, &invoiceports.InvoicePreviewRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -267,7 +279,7 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	if _, err := a.invoiceService.AttachGeneratedPDF(ctx, &invoiceports.AttachGeneratedPDFRequest{
+	if _, err := a.invoicePDF.AttachGeneratedPDF(ctx, &invoiceports.AttachGeneratedPDFRequest{
 		InvoiceID:  payload.InvoiceID,
 		DocumentID: documentID,
 		TenantInfo: tenantInfo,
@@ -283,7 +295,7 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 
 	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
 	defer stopHeartbeat()
-	if _, err := a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
+	if _, err := a.invoiceSend.AutoSendInvoiceAfterPDFGeneration(
 		ctx,
 		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,

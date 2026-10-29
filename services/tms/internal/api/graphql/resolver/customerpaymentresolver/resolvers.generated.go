@@ -14,7 +14,7 @@ type Deps struct {
 	CustomerPaymentService customerpaymentports.CustomerPaymentService
 	CustomerPaymentRepo    customerpaymentports.CustomerPaymentRepository
 	CustomerService        *customerservice.Service
-	InvoiceService         invoiceports.InvoiceService
+	InvoiceQueryService    invoiceports.InvoiceQueryService
 }
 
 type CustomerPaymentApplicationResolver struct{ *Deps }
