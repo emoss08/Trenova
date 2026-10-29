@@ -586,8 +586,7 @@ func onTimeQuery(window analyticsWindow) *keel.Query[*shipment.Stop] {
 	).Where(
 		stp.Status.Eq(shipmentvocab.StopStatusCompleted),
 		stp.Type.In(shipmentvocab.DeliveryStopTypes()...),
-		stp.ActualArrival.IsNotNull(),
-		stp.ActualArrival.Gt(0),
+		within(stp.ActualArrival, window.SevenDayStart, window.Now),
 		stp.ScheduledWindowStart.Gt(0),
 	)
 }
@@ -773,7 +772,7 @@ func atRiskQuery(window analyticsWindow) *keel.Query[*shipment.Shipment] {
 		keel.Or(
 			sp.Status.Eq(shipmentvocab.StatusDelayed),
 			moves.Any(stops.Any(
-				stops.Status.Ne(shipmentvocab.StopStatusCompleted),
+				stops.Status.In(shipmentvocab.StopStatusNew, shipmentvocab.StopStatusInTransit),
 				stops.ScheduledWindowStart.Gt(0),
 				stops.ScheduledWindowStart.Lt(window.Now),
 			)),
@@ -948,12 +947,14 @@ func detentionWatchlistQuery(now int64) *keel.Query[*shipment.Stop] {
 		Pick(sp.ProNumber, cus.Name, dwell).
 		Where(
 			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
-			stp.ActualArrival.IsNotNull(),
-			stp.ActualArrival.Gt(0),
-			keel.Or(stp.ActualDeparture.IsNull(), stp.ActualDeparture.Eq(0)),
-			dwell.Gt(detentionDwellFloorSeconds),
+			keel.Int64Of(stp.ActualArrival).GtExpr(keel.ConstInt64(0)),
+			keel.Or(
+				stp.ActualDeparture.IsNull(),
+				keel.Int64Of(stp.ActualDeparture).EqExpr(keel.ConstInt64(0)),
+			),
+			stp.ActualArrival.Lt(now-detentionDwellFloorSeconds),
 		).
-		Order(dwell.Desc(), sp.ProNumber.Asc()).
+		Order(stp.ActualArrival.Asc(), sp.ProNumber.Asc()).
 		Limit(detentionWatchlistLimit)
 }
 

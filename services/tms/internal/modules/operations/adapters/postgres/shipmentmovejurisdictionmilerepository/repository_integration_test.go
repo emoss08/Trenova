@@ -66,6 +66,7 @@ func setup(t *testing.T) *fixture {
 	seeded, err := keel.IntoOne[seededStop](tenantCtx, db, st.
 		Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
 		Pick(sm.ShipmentID, st.LocationID).
+		Order(st.ID.Asc()).
 		Limit(1))
 	require.NoError(t, err)
 

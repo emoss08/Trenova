@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -154,18 +155,27 @@ func (r *repository) RotaLeaveRanges(
 
 func (r *repository) assignedDaysQuery(req *workerscheduleports.RotaQuery) *keel.Query[*keel.Row] {
 	a := r.assignments
-	secondsPerDay := keel.ConstInt64(86400)
+	secondsPerDay := keel.ConstInt64(timeutils.SecondsPerDay)
 	day := a.CreatedAt.Div(secondsPerDay).Mul(secondsPerDay)
 
 	return keel.Handle[*keel.Row]{Ref: a.WorkerID.Ref}.
 		Pick(a.WorkerID, day, keel.Count()).
 		Where(
 			a.ArchivedAt.IsNull(),
-			day.Gte(req.WeekStart),
-			day.Lt(req.WeekEnd),
+			a.CreatedAt.Gte(firstDayStartFrom(req.WeekStart)),
+			a.CreatedAt.Lt(firstDayStartFrom(req.WeekEnd)),
 			a.WorkerID.InQuery(rosterQuery(req)),
 		).
 		Group(a.WorkerID, day)
+}
+
+func firstDayStartFrom(at int64) int64 {
+	start := timeutils.DayStartUTC(at)
+	if start < at {
+		start += timeutils.SecondsPerDay
+	}
+
+	return start
 }
 
 // RotaAssignedDays counts the work dispatch has already put on each day. The

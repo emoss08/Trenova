@@ -82,7 +82,7 @@ func TestDetentionStats_NarrowToTheLocationAsked(t *testing.T) {
 				AND d.organization_id = s.organization_id
 				AND d.business_unit_id = s.business_unit_id
 		)
-		ORDER BY s.organization_id, s.business_unit_id, s.id
+		ORDER BY s.organization_id, s.business_unit_id, s.shipment_move_id, s.sequence
 		LIMIT 3`,
 	)
 	require.NoError(t, err)

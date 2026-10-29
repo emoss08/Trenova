@@ -56,6 +56,7 @@ func setupStopReview(t *testing.T) *stopReviewFixture {
 				sm.BusinessUnitID.EqCol(st.BusinessUnitID),
 			)).
 			Pick(st.OrganizationID, st.BusinessUnitID, sm.ShipmentID, st.LocationID).
+			Order(st.ID.Asc()).
 			Limit(1),
 	)
 	require.NoError(t, err)

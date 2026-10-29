@@ -14,7 +14,7 @@ WHERE s.business_unit_id = $1 AND s.organization_id = $2 AND s.status IN ('New',
   WHERE m.business_unit_id = $1 AND m.organization_id = $2 AND m.shipment_id = s.id AND EXISTS (
     SELECT 1
     FROM stops s2
-    WHERE s2.business_unit_id = $1 AND s2.organization_id = $2 AND s2.shipment_move_id = m.id AND s2.status <> 'Completed' AND s2.scheduled_window_start > $3 AND s2.scheduled_window_start < $4
+    WHERE s2.business_unit_id = $1 AND s2.organization_id = $2 AND s2.shipment_move_id = m.id AND s2.status IN ('New', 'InTransit') AND s2.scheduled_window_start > $3 AND s2.scheduled_window_start < $4
   )
 ) OR EXISTS (
   SELECT 1
