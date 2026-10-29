@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/pkg/rankquery"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -586,15 +585,6 @@ func (r *repository) GetCollectionTotals(
 	)
 }
 
-var topOverdueColumns = []string{
-	"customer_id",
-	"customer_name",
-	"overdue_minor",
-	"total_open_minor",
-	"oldest_days_past_due",
-	"open_invoice_count",
-}
-
 type topOverdueRecord struct {
 	CustomerID        string
 	CustomerName      string
@@ -616,7 +606,7 @@ func (r *repository) ListTopOverdueCustomers(
 			open := receivablesql.OpenMinor(inv)
 			overdue := overdueAt(inv, req.AsOfDate)
 			overdueMinor := amountWhen(overdue, open).Sum()
-			grouped := inv.
+			records, err := keel.Into[topOverdueRecord](ctx, r.db.Keel(ctx), inv.
 				Pick(
 					inv.CustomerID,
 					inv.BillToName,
@@ -630,16 +620,9 @@ func (r *repository) ListTopOverdueCustomers(
 				).
 				Where(receivablesql.Open(inv)).
 				Group(inv.CustomerID, inv.BillToName).
-				Having(overdueMinor.Gt(0))
-			records, err := keel.Into[topOverdueRecord](ctx, r.db.Keel(ctx), rankquery.Top(
-				grouped,
-				rankquery.Params{
-					Name:    "overdue_customers",
-					Columns: topOverdueColumns,
-					Rank:    []keel.Order{overdueMinor.Desc()},
-					Limit:   req.Limit,
-				},
-			))
+				Having(overdueMinor.Gt(0)).
+				Order(overdueMinor.Desc()).
+				Limit(req.Limit))
 			if err != nil {
 				return nil, fmt.Errorf("list ar top overdue customers: %w", err)
 			}

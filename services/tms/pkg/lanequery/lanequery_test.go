@@ -47,11 +47,8 @@ func TestLanes_CountsShipmentsBetweenTheirFirstPickupAndLastDeliveryState(t *tes
 	assert.Contains(
 		t,
 		sql,
-		`row_number() OVER (ORDER BY count(*) DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC)`,
+		`ORDER BY 3 DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC LIMIT 5`,
 	)
-	assert.Contains(t, sql, `WHERE l."row_rank" <= $1 ORDER BY l."row_rank" ASC`)
-	assert.Contains(t, args, int64(5))
-	assert.NotContains(t, sql, "LIMIT")
 	assert.Contains(t, args, keeltest.TestOrganizationID.String())
 	assert.Contains(t, sql, `s."status" <> 'Canceled'`)
 	assert.NotContains(t, args, string(shipmentvocab.StatusCanceled))
@@ -62,10 +59,5 @@ func TestLanes_WithoutALimitReadsEveryLane(t *testing.T) {
 
 	sql, _ := keeltest.Render(t, lanes(Options{}))
 
-	assert.NotContains(t, sql, "row_rank")
-	assert.Contains(
-		t,
-		sql,
-		`ORDER BY 3 DESC, ust_orig."abbreviation" ASC, ust_dest."abbreviation" ASC`,
-	)
+	assert.NotContains(t, sql, "LIMIT")
 }

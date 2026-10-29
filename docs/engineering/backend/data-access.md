@@ -407,9 +407,10 @@ is rewritten as a range on the column itself.
 - **Write a partial index's predicate as the query writes it.** keel renders `IsTrue()` and
   `IsFalse()` as `IS TRUE` and `IS FALSE`, which Postgres does not prove from `= true` or
   `NOT col`, so an index for those reads says `WHERE "is_posted" IS TRUE`.
-- **A sort of an aggregate** (a top-N card) ranks the aggregated rows with `rankquery.Top`
-  (`row_number()` over the groups in a CTE, filtered by rank) instead of `ORDER BY … LIMIT`: the
-  guard counts every relation under a sort, and no index can order an aggregate.
+- **A sort of an aggregate** (a top-N card) is `ORDER BY … LIMIT` over the grouped rows: the guard
+  judges it by the rows the `Aggregate` returns, not the tables it reads, since no index can order
+  an aggregate. A grouping wide enough to cross the threshold still fails, and is fixed by
+  narrowing the groups (a window, a filter) or keeping a rollup.
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.

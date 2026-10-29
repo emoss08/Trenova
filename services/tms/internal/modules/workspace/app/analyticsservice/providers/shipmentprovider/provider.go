@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/rankquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -985,21 +984,12 @@ func (p *Provider) getDetentionWatchlist(ctx context.Context) (*DetentionWatchli
 	})
 }
 
-var customerMixColumns = []string{
-	"customer_id",
-	"name",
-	"revenue",
-	"loads",
-	"previous_revenue",
-	"total_revenue",
-}
-
-func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*keel.Row] {
+func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
 	revenue := floatTotal(sp.TotalChargeAmount.Sum().Filter(sp.CreatedAt.Gte(currentStart)))
 
-	grouped := sp.
+	return sp.
 		Join(cus, cus.ID.EqCol(sp.CustomerID)).
 		Pick(
 			sp.CustomerID,
@@ -1017,14 +1007,9 @@ func customerMixQuery(now, currentStart, previousStart int64) *keel.Query[*keel.
 			sp.Status.Ne(shipmentvocab.StatusCanceled),
 		).
 		Group(sp.CustomerID, cus.Name).
-		Having(revenue.Gt(0))
-
-	return rankquery.Top(grouped, rankquery.Params{
-		Name:    "customer_mix",
-		Columns: customerMixColumns,
-		Rank:    []keel.Order{revenue.Desc()},
-		Limit:   customerMixLimit,
-	})
+		Having(revenue.Gt(0)).
+		Order(revenue.Desc()).
+		Limit(customerMixLimit)
 }
 
 func (p *Provider) getCustomerMix(ctx context.Context) (*CustomerMixCard, error) {
