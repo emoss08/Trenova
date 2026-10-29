@@ -404,6 +404,22 @@ tenant's rows gets an index bounded by its `WHERE` (tenant, status, time range) 
 range: a bucketed or computed timestamp (`created_at / 86400 * 86400 >= $1`, `$now - arrival > $2`)
 is rewritten as a range on the column itself.
 
+- **Write a partial index's predicate as the query writes it.** keel renders `IsTrue()` and
+  `IsFalse()` as `IS TRUE` and `IS FALSE`, which Postgres does not prove from `= true` or
+  `NOT col`, so an index for those reads says `WHERE "is_posted" IS TRUE`.
+- **A sort of an aggregate** (a top-N card) ranks the aggregated rows with `rankquery.Top`
+  (`row_number()` over the groups in a CTE, filtered by rank) instead of `ORDER BY … LIMIT`: the
+  guard counts every relation under a sort, and no index can order an aggregate.
+- **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
+  page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
+  guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
+- **A computed time** (a move's completion: its last stop time, else its last change) is found
+  through index ranges on its inputs first (`movecompletion.Candidates`), then computed exactly
+  for those candidates.
+- **More than eight joined relations** split a pipelined load's semi-join from its joins
+  (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
+  with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).
+
 ## Migrations
 
 Migrations are keel files in `schema/migrations/`, one per change, `<version>_<snake_name>.sql`;
