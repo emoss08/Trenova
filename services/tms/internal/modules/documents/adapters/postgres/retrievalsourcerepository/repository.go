@@ -304,7 +304,7 @@ type keywordPlan struct {
 }
 
 func planKeywordSearch(
-	req retrievalports.RetrievalKeywordSearchRequest,
+	req *retrievalports.RetrievalKeywordSearchRequest,
 ) (keywordPlan, bool, error) {
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return keywordPlan{}, false, err
@@ -325,7 +325,7 @@ func planKeywordSearch(
 
 func (r *repository) SearchDocuments(
 	ctx context.Context,
-	req retrievalports.RetrievalKeywordSearchRequest,
+	req *retrievalports.RetrievalKeywordSearchRequest,
 ) ([]retrievalports.RetrievalKeywordHit, error) {
 	return dbtx.Read(
 		ctx,
@@ -377,7 +377,7 @@ func searchDocumentsQuery(plan keywordPlan) *keel.Query[*document.Document] {
 
 func (r *repository) SearchInboundMessages(
 	ctx context.Context,
-	req retrievalports.RetrievalKeywordSearchRequest,
+	req *retrievalports.RetrievalKeywordSearchRequest,
 ) ([]retrievalports.RetrievalKeywordHit, error) {
 	return dbtx.Read(
 		ctx,

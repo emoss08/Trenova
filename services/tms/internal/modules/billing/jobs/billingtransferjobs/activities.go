@@ -256,7 +256,7 @@ func (a *Activities) ProcessBatchActivity(
 					return
 				}
 
-				pending = append(pending, itemOutcomeFrom(outcome))
+				pending = append(pending, itemOutcomeFrom(&outcome))
 				done++
 				result.Processed++
 				if outcome.Success {
@@ -388,7 +388,7 @@ const (
 )
 
 func itemOutcomeFrom(
-	result shipmentbillingports.BulkTransferToBillingResult,
+	result *shipmentbillingports.BulkTransferToBillingResult,
 ) billingtransferports.BillingTransferItemOutcome {
 	outcome := billingtransferports.BillingTransferItemOutcome{
 		ShipmentID:           result.ShipmentID,

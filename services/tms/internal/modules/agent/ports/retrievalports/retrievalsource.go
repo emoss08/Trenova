@@ -88,10 +88,10 @@ type RetrievalSourceRepository interface {
 	ListSourceIDs(ctx context.Context, req *ListRetrievalSourceIDsRequest) ([]pulid.ID, error)
 	SearchDocuments(
 		ctx context.Context,
-		req RetrievalKeywordSearchRequest,
+		req *RetrievalKeywordSearchRequest,
 	) ([]RetrievalKeywordHit, error)
 	SearchInboundMessages(
 		ctx context.Context,
-		req RetrievalKeywordSearchRequest,
+		req *RetrievalKeywordSearchRequest,
 	) ([]RetrievalKeywordHit, error)
 }

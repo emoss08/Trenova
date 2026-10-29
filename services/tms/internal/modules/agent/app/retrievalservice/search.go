@@ -118,7 +118,7 @@ func (s *Searcher) plan(req *retrievalports.RetrievalSearchRequest) (searchPlan,
 
 type keywordLeg func(
 	context.Context,
-	retrievalports.RetrievalKeywordSearchRequest,
+	*retrievalports.RetrievalKeywordSearchRequest,
 ) ([]retrievalports.RetrievalKeywordHit, error)
 
 func (s *Searcher) legs(
@@ -137,7 +137,7 @@ func (s *Searcher) legs(
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
-		hits, err := keyword(groupCtx, retrievalports.RetrievalKeywordSearchRequest{
+		hits, err := keyword(groupCtx, &retrievalports.RetrievalKeywordSearchRequest{
 			TenantInfo: req.TenantInfo,
 			Query:      plan.query,
 			Limit:      plan.candidates,

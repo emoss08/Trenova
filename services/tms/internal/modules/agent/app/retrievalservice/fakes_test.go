@@ -316,16 +316,16 @@ func (f *fakeSources) ListSourceIDs(
 
 func (f *fakeSources) SearchDocuments(
 	context.Context,
-	retrievalports.RetrievalKeywordSearchRequest,
+	*retrievalports.RetrievalKeywordSearchRequest,
 ) ([]retrievalports.RetrievalKeywordHit, error) {
 	return f.keyword, nil
 }
 
 func (f *fakeSources) SearchInboundMessages(
 	_ context.Context,
-	req retrievalports.RetrievalKeywordSearchRequest,
+	req *retrievalports.RetrievalKeywordSearchRequest,
 ) ([]retrievalports.RetrievalKeywordHit, error) {
-	f.searched = append(f.searched, req)
+	f.searched = append(f.searched, *req)
 
 	return f.keyword, nil
 }
