@@ -221,11 +221,11 @@ type EvaluateInput struct {
 }
 
 func EvaluateFindings(in *EvaluateInput) []Finding {
-	catalog := Catalog()
+	defs := Catalog()
 	findings := make([]Finding, 0, 4)
 
-	for idx := range catalog {
-		def := &catalog[idx]
+	for idx := range defs {
+		def := &defs[idx]
 		if !def.AppliesTo(in.Subject) {
 			continue
 		}
@@ -409,6 +409,7 @@ func DeriveRiskLevel(p *carrierintel.Profile, findings []Finding) carrierintel.R
 			blocking++
 		case carrierintel.RuleActionWarn:
 			warnings++
+		case carrierintel.RuleActionNotify, carrierintel.RuleActionOff:
 		}
 	}
 

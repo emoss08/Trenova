@@ -413,7 +413,7 @@ func (s *Service) buildEvents(
 			carrierinteldiff.FormatFieldValue(change.Path, change.Prior),
 			carrierinteldiff.FormatFieldValue(change.Path, change.Current))
 		event.Fingerprint = carrierintelevent.EventFingerprint(
-			carrierintelevent.EventFingerprintInput{
+			&carrierintelevent.EventFingerprintInput{
 				Provider:    in.bound.provider,
 				SubjectType: in.subject.SubjectType,
 				SubjectID:   in.subject.SubjectID,
@@ -439,7 +439,7 @@ func (s *Service) buildEvents(
 		event.Severity = finding.Severity
 		event.Summary = finding.Message
 		event.Fingerprint = carrierintelevent.EventFingerprint(
-			carrierintelevent.EventFingerprintInput{
+			&carrierintelevent.EventFingerprintInput{
 				Provider:    in.bound.provider,
 				SubjectType: in.subject.SubjectType,
 				SubjectID:   in.subject.SubjectID,
@@ -464,7 +464,7 @@ func (s *Service) buildEvents(
 			event.Summary = "Provider no longer has a record for this USDOT number"
 		}
 		event.Fingerprint = carrierintelevent.EventFingerprint(
-			carrierintelevent.EventFingerprintInput{
+			&carrierintelevent.EventFingerprintInput{
 				Provider:    in.bound.provider,
 				SubjectType: in.subject.SubjectType,
 				SubjectID:   in.subject.SubjectID,

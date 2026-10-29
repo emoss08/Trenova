@@ -118,6 +118,8 @@ func mapSafetyRating(rating carrierintel.SafetyRating) carrier.SafetyRating {
 		return carrier.SafetyRatingConditional
 	case carrierintel.SafetyRatingUnsatisfactory:
 		return carrier.SafetyRatingUnsatisfactory
+	case carrierintel.SafetyRatingNotRated:
+		return carrier.SafetyRatingNotRated
 	default:
 		return carrier.SafetyRatingNotRated
 	}
@@ -129,6 +131,8 @@ func mapFilingType(t carrierintel.InsuranceFilingType) (carrier.InsurancePolicyT
 		return carrier.InsurancePolicyTypeAutoLiability, true
 	case carrierintel.InsuranceFilingTypeCargo:
 		return carrier.InsurancePolicyTypeCargoLiability, true
+	case carrierintel.InsuranceFilingTypeBond, carrierintel.InsuranceFilingTypeOther:
+		return "", false
 	default:
 		return "", false
 	}
@@ -375,7 +379,8 @@ func ApplyFieldUpdates(c *carrier.Carrier, updates []FieldUpdate) []SyncField {
 
 func ApplyInsuranceChanges(c *carrier.Carrier, changes []InsuranceChange) int {
 	applied := 0
-	for _, change := range changes {
+	for idx := range changes {
+		change := &changes[idx]
 		if change.PolicyID.IsNil() {
 			continue
 		}
@@ -397,6 +402,7 @@ func ApplyInsuranceChanges(c *carrier.Carrier, changes []InsuranceChange) int {
 					policy.IsVerified = false
 					applied++
 				}
+			case InsuranceChangeNewFiling:
 			}
 		}
 	}

@@ -198,7 +198,7 @@ func (s *Service) recordOverrideEvent(
 		Status:           carrierintelevent.EventStatusAcknowledged,
 		AcknowledgedByID: tenantInfo.UserID,
 		AcknowledgedAt:   &now,
-		Fingerprint: carrierintelevent.EventFingerprint(carrierintelevent.EventFingerprintInput{
+		Fingerprint: carrierintelevent.EventFingerprint(&carrierintelevent.EventFingerprintInput{
 			Provider:    snapshot.Provider,
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   override.CarrierID.String(),

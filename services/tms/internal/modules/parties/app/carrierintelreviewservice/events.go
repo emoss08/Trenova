@@ -231,11 +231,16 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		return err
 	}
 	if snapshot != nil && subjectType == carrierintel.SubjectTypeCarrier {
-		if err = s.intel.UpdateCarrierSummary(ctx, req.TenantInfo, carrierintelports.CarrierIntelSubject{
-			SubjectType: subjectType,
-			SubjectID:   subjectID,
-			CarrierID:   snapshot.CarrierID,
-		}, snapshot); err != nil {
+		if err = s.intel.UpdateCarrierSummary(
+			ctx,
+			req.TenantInfo,
+			carrierintelports.CarrierIntelSubject{
+				SubjectType: subjectType,
+				SubjectID:   subjectID,
+				CarrierID:   snapshot.CarrierID,
+			},
+			snapshot,
+		); err != nil {
 			return err
 		}
 	}

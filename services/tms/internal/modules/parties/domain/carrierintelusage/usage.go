@@ -63,6 +63,8 @@ func BillingDedupeKey(endpoint Endpoint, price EndpointPrice, dotNumber string, 
 			return ""
 		}
 		return endpoint.String() + ":" + dotNumber + ":" + timeutils.MonthKeyUTC(now)
+	case BillingModelFree, BillingModelPerMatch, BillingModelPerRequest:
+		return ""
 	default:
 		return ""
 	}

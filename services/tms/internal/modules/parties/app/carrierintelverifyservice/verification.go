@@ -229,7 +229,7 @@ func (s *Service) flagEquipmentMismatch(
 		Summary:        verification.MismatchReason,
 		DetectedAt:     now,
 		Status:         carrierintelevent.EventStatusOpen,
-		Fingerprint: carrierintelevent.EventFingerprint(carrierintelevent.EventFingerprintInput{
+		Fingerprint: carrierintelevent.EventFingerprint(&carrierintelevent.EventFingerprintInput{
 			Provider:    provider,
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   verification.CarrierID.String(),

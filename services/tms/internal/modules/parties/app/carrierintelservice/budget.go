@@ -91,28 +91,27 @@ func (s *Service) marginalCost(ctx context.Context, check *BudgetCheck) (decimal
 	}
 	units := max(check.Units, 1)
 	if price.Model == carrierintelusage.BillingModelPerDOTMonth {
-		dedupe := carrierintelusage.BillingDedupeKey(
-			check.Endpoint,
-			price,
-			check.DOTNumber,
-			s.now(),
-		)
-		if dedupe != "" {
-			exists, err := s.usageRepo.ExistsDedupeKey(
-				ctx,
-				check.Tenant,
-				check.Bound.provider,
-				dedupe,
-			)
-			if err != nil {
-				return decimal.Zero, err
-			}
-			if exists {
-				return decimal.Zero, nil
-			}
+		billed, err := s.alreadyBilledThisMonth(ctx, check, price)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		if billed {
+			return decimal.Zero, nil
 		}
 	}
 	return price.UnitCost.Mul(decimalFromInt(units)), nil
+}
+
+func (s *Service) alreadyBilledThisMonth(
+	ctx context.Context,
+	check *BudgetCheck,
+	price carrierintelusage.EndpointPrice,
+) (bool, error) {
+	dedupe := carrierintelusage.BillingDedupeKey(check.Endpoint, price, check.DOTNumber, s.now())
+	if dedupe == "" {
+		return false, nil
+	}
+	return s.usageRepo.ExistsDedupeKey(ctx, check.Tenant, check.Bound.provider, dedupe)
 }
 
 func (s *Service) GuardBudget(ctx context.Context, check *BudgetCheck) error {

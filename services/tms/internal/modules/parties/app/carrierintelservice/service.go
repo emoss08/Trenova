@@ -58,11 +58,11 @@ type Params struct {
 	Realtime                  realtimeports.RealtimeService
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
-	Watchtower watchtowerports.WatchtowerProjector `                                                          optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
-	Publisher agenteventports.AgentEventPublisher `                                                          optional:"true"`
-	Plans     platformplanports.PlanService       `                                                          optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
+	Plans     platformplanports.PlanService       `optional:"true"`
 }
 
 type Service struct {

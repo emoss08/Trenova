@@ -1,6 +1,7 @@
 package carrierintelrule
 
 import (
+	"slices"
 	"strconv"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,44 +36,22 @@ func validateParam(spec *RuleParamSpec, raw string) string {
 	if raw == "" {
 		return ""
 	}
-	var value float64
 	switch spec.Type {
-	case RuleParamTypeInteger:
-		v, err := strconv.Atoi(raw)
-		if err != nil {
-			return spec.Label + " must be a whole number"
+	case RuleParamTypeInteger, RuleParamTypeDecimal, RuleParamTypeNumber:
+		value, msg := parseNumericParam(spec, raw)
+		if msg != "" {
+			return msg
 		}
-		value = float64(v)
-	case RuleParamTypeDecimal:
-		v, err := decimal.NewFromString(raw)
-		if err != nil {
-			return spec.Label + " must be a number"
-		}
-		value = v.InexactFloat64()
-	case RuleParamTypeNumber:
-		v, err := strconv.ParseFloat(raw, 64)
-		if err != nil {
-			return spec.Label + " must be a number"
-		}
-		value = v
+		return validateParamRange(spec, value)
 	case RuleParamTypeSelect:
-		for _, option := range spec.Options {
-			if option == raw {
-				return ""
-			}
+		if slices.Contains(spec.Options, raw) {
+			return ""
 		}
 		return spec.Label + " has an invalid option"
 	case RuleParamTypeMultiSelect:
 		ctx := &RuleContext{params: map[string]string{spec.Key: raw}, spec: &RuleDefinition{}}
 		for _, item := range ctx.paramList(spec.Key) {
-			found := false
-			for _, option := range spec.Options {
-				if option == item {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !slices.Contains(spec.Options, item) {
 				return spec.Label + " has an invalid option"
 			}
 		}
@@ -80,6 +59,36 @@ func validateParam(spec *RuleParamSpec, raw string) string {
 	default:
 		return ""
 	}
+}
+
+func parseNumericParam(spec *RuleParamSpec, raw string) (value float64, msg string) {
+	switch spec.Type {
+	case RuleParamTypeInteger:
+		v, err := strconv.Atoi(raw)
+		if err != nil {
+			return 0, spec.Label + " must be a whole number"
+		}
+		return float64(v), ""
+	case RuleParamTypeDecimal:
+		v, err := decimal.NewFromString(raw)
+		if err != nil {
+			return 0, spec.Label + " must be a number"
+		}
+		return v.InexactFloat64(), ""
+	case RuleParamTypeNumber:
+		v, err := strconv.ParseFloat(raw, 64)
+		if err != nil {
+			return 0, spec.Label + " must be a number"
+		}
+		return v, ""
+	case RuleParamTypeSelect, RuleParamTypeMultiSelect:
+		return 0, ""
+	default:
+		return 0, ""
+	}
+}
+
+func validateParamRange(spec *RuleParamSpec, value float64) string {
 	if spec.Min != nil && value < *spec.Min {
 		return spec.Label + " is below the minimum"
 	}

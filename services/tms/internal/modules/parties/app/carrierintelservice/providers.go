@@ -217,7 +217,7 @@ func (s *Service) recordCall(
 		Purpose:        purpose,
 		DOTNumber:      call.DOTNumber,
 		StatusCode:     call.StatusCode,
-		Outcome:        usageOutcome(call),
+		Outcome:        usageOutcome(&call),
 		LatencyMS:      int(call.Latency / time.Millisecond),
 		CreatedAt:      now,
 	}
@@ -283,7 +283,7 @@ func isBillable(
 	}
 }
 
-func usageOutcome(call carrierintelports.CarrierIntelCall) carrierintelusage.UsageOutcome {
+func usageOutcome(call *carrierintelports.CarrierIntelCall) carrierintelusage.UsageOutcome {
 	if call.Err == nil {
 		if call.Found {
 			return carrierintelusage.UsageOutcomeSuccess

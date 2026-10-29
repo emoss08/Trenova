@@ -73,7 +73,7 @@ func (s *Service) RecomputeStalePolicy(
 				current: snap,
 				source:  carrierintelevent.EventSourceRuleEvaluation,
 				purpose: carrierintel.PurposeReconcile,
-			}, snap, s.recomputeFindings(ctx, tenantInfo, control, subject, snap), snap.EffectiveAsOf())
+			}, snap, s.recomputeFindings(ctx, tenantInfo, control, &subject, snap), snap.EffectiveAsOf())
 			if ingestErr != nil {
 				s.l.Warn("failed to recompute snapshot findings", zap.Error(ingestErr))
 				continue
@@ -94,14 +94,14 @@ func (s *Service) recomputeFindings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintelcontrol.CarrierIntelControl,
-	subject carrierintelports.CarrierIntelSubject,
+	subject *carrierintelports.CarrierIntelSubject,
 	snap *carrierintelsnapshot.CarrierIntelSnapshot,
 ) []carrierintelrule.Finding {
 	findings, err := s.evaluateSubject(
 		ctx,
 		tenantInfo,
 		control,
-		subject,
+		*subject,
 		snap.Profile,
 		snap.NotFound,
 	)
@@ -148,6 +148,7 @@ func (s *Service) subjectForSnapshot(
 				return *customer, nil
 			}
 		}
+	case carrierintel.SubjectTypeProspect:
 	}
 	return carrierintelports.CarrierIntelSubject{
 		SubjectType:  snap.SubjectType,
@@ -182,7 +183,7 @@ func (s *Service) RefreshStoredEvaluation(
 	if err != nil {
 		return
 	}
-	findings := s.recomputeFindings(ctx, tenantInfo, control, subject, snapshot)
+	findings := s.recomputeFindings(ctx, tenantInfo, control, &subject, snapshot)
 	prior := snapshot.Findings
 	snapshot.ApplyFindings(findings, control.PolicyVersion)
 	snapshot.ReviewState = nextReviewState(snapshot, prior, findings)

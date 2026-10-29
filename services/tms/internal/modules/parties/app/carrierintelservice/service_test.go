@@ -450,34 +450,34 @@ func TestUsageOutcomeAndOutageClassification(t *testing.T) {
 	limited := &restx.RateLimitedError{RetryAfter: time.Second}
 
 	assert.Equal(t, carrierintelusage.UsageOutcomeSuccess,
-		usageOutcome(carrierintelports.CarrierIntelCall{Found: true}))
+		usageOutcome(&carrierintelports.CarrierIntelCall{Found: true}))
 	assert.Equal(
 		t,
 		carrierintelusage.UsageOutcomeNotFound,
-		usageOutcome(carrierintelports.CarrierIntelCall{}),
+		usageOutcome(&carrierintelports.CarrierIntelCall{}),
 	)
 	assert.Equal(t, carrierintelusage.UsageOutcomeDenied,
-		usageOutcome(carrierintelports.CarrierIntelCall{Err: limited}))
+		usageOutcome(&carrierintelports.CarrierIntelCall{Err: limited}))
 	assert.Equal(t, carrierintelusage.UsageOutcomeTransport,
-		usageOutcome(carrierintelports.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
+		usageOutcome(&carrierintelports.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
 	assert.Equal(
 		t,
 		carrierintelusage.UsageOutcomeRateLimited,
-		usageOutcome(carrierintelports.CarrierIntelCall{
+		usageOutcome(&carrierintelports.CarrierIntelCall{
 			Err: providerError(carrierintelports.CarrierIntelErrorRateLimited),
 		}),
 	)
 	assert.Equal(
 		t,
 		carrierintelusage.UsageOutcomeServerError,
-		usageOutcome(carrierintelports.CarrierIntelCall{
+		usageOutcome(&carrierintelports.CarrierIntelCall{
 			Err: providerError(carrierintelports.CarrierIntelErrorUnavailable),
 		}),
 	)
 	assert.Equal(
 		t,
 		carrierintelusage.UsageOutcomeClientError,
-		usageOutcome(carrierintelports.CarrierIntelCall{
+		usageOutcome(&carrierintelports.CarrierIntelCall{
 			Err: providerError(carrierintelports.CarrierIntelErrorUnauthorized),
 		}),
 	)

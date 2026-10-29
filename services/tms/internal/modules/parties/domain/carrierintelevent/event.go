@@ -171,7 +171,7 @@ type EventFingerprintInput struct {
 	Day         int64
 }
 
-func EventFingerprint(in EventFingerprintInput) string {
+func EventFingerprint(in *EventFingerprintInput) string {
 	prior, _ := sonic.Marshal(in.Prior)
 	current, _ := sonic.Marshal(in.Current)
 	raw := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%d",

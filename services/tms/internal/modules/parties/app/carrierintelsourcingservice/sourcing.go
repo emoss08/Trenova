@@ -519,11 +519,14 @@ func (s *Service) ImportProspect(
 	}
 
 	if req.EnrollMonitoring {
-		if _, enrollErr := s.enrollment.SetManualEnrollment(ctx, &carrierintelenrollmentservice.EnrollSubjectsRequest{
-			TenantInfo: req.TenantInfo,
-			CarrierIDs: []pulid.ID{created.ID},
-			Enroll:     true,
-		}); enrollErr != nil {
+		if _, enrollErr := s.enrollment.SetManualEnrollment(
+			ctx,
+			&carrierintelenrollmentservice.EnrollSubjectsRequest{
+				TenantInfo: req.TenantInfo,
+				CarrierIDs: []pulid.ID{created.ID},
+				Enroll:     true,
+			},
+		); enrollErr != nil {
 			s.l.Warn("failed to enroll imported carrier", zap.Error(enrollErr))
 		}
 	}
