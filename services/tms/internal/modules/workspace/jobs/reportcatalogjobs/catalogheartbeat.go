@@ -1,4 +1,4 @@
-package reportjobs
+package reportcatalogjobs
 
 import (
 	"context"

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -43,16 +44,6 @@ const (
 
 	alertSkipConditionUnmet = "condition_not_met"
 	alertSkipAlreadyFiring  = "already_alerting"
-
-	dataKeyRunID             = "runId"
-	dataKeyStatus            = "status"
-	dataKeyScheduleID        = "scheduleId"
-	dataKeyFormat            = "format"
-	dataKeyRowCount          = "rowCount"
-	dataKeyTruncated         = "truncated"
-	dataKeyReportName        = "reportName"
-	dataKeyByteSize          = "byteSize"
-	dataKeyArtifactExpiresAt = "artifactExpiresAt"
 )
 
 func (a *Activities) DeliverScheduledRunActivity(
@@ -303,7 +294,7 @@ func (a *Activities) recordEmailFailure(
 		return
 	}
 
-	failureWording, ok := a.renderNotification(
+	failureWording, ok := a.notices().Render(
 		ctx,
 		pagination.TenantInfo{
 			OrgID:  run.OrganizationID,
@@ -332,10 +323,10 @@ func (a *Activities) recordEmailFailure(
 		Title:          failureWording.Title,
 		Message:        failureWording.Message,
 		Data: map[string]any{
-			dataKeyRunID:      run.ID.String(),
-			dataKeyScheduleID: schedule.ID.String(),
-			dataKeyFormat:     string(run.Format),
-			dataKeyReportName: title,
+			reportnotify.DataKeyRunID:      run.ID.String(),
+			reportnotify.DataKeyScheduleID: schedule.ID.String(),
+			reportnotify.DataKeyFormat:     string(run.Format),
+			reportnotify.DataKeyReportName: title,
 		},
 		CorrelationID: &correlationID,
 		Source:        deliverySource,
@@ -351,17 +342,17 @@ func deliveryNotificationData(
 	title string,
 ) map[string]any {
 	data := map[string]any{
-		dataKeyRunID:      run.ID.String(),
-		dataKeyScheduleID: schedule.ID.String(),
-		dataKeyFormat:     string(run.Format),
-		dataKeyRowCount:   run.RowCount,
-		dataKeyTruncated:  run.Truncated,
-		dataKeyReportName: title,
-		dataKeyByteSize:   run.ByteSize,
-		dataKeyStatus:     string(run.Status),
+		reportnotify.DataKeyRunID:      run.ID.String(),
+		reportnotify.DataKeyScheduleID: schedule.ID.String(),
+		reportnotify.DataKeyFormat:     string(run.Format),
+		reportnotify.DataKeyRowCount:   run.RowCount,
+		reportnotify.DataKeyTruncated:  run.Truncated,
+		reportnotify.DataKeyReportName: title,
+		reportnotify.DataKeyByteSize:   run.ByteSize,
+		reportnotify.DataKeyStatus:     string(run.Status),
 	}
 	if run.ArtifactExpiresAt > 0 {
-		data[dataKeyArtifactExpiresAt] = run.ArtifactExpiresAt
+		data[reportnotify.DataKeyArtifactExpiresAt] = run.ArtifactExpiresAt
 	}
 	return data
 }
@@ -432,7 +423,7 @@ func (a *Activities) deliverRunNotifications(
 
 	// One render for the whole recipient list: it is the same run and the same
 	// wording, and rendering per user would resolve the template once per person.
-	wording, ok := a.renderNotification(
+	wording, ok := a.notices().Render(
 		ctx,
 		pagination.TenantInfo{
 			OrgID:  run.OrganizationID,
@@ -506,14 +497,14 @@ func (a *Activities) auditDelivery(
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		CurrentState: map[string]any{
-			"event":             "scheduled_delivery",
-			dataKeyScheduleID:   schedule.ID.String(),
-			dataKeyFormat:       string(run.Format),
-			"emailRecipients":   schedule.Delivery.EmailRecipients,
-			"emailedRecipients": result.EmailedRecipients,
-			"emailAttached":     result.EmailAttached,
-			"emailError":        result.EmailError,
-			"notifiedUsers":     result.NotifiedUsers,
+			"event":                        "scheduled_delivery",
+			reportnotify.DataKeyScheduleID: schedule.ID.String(),
+			reportnotify.DataKeyFormat:     string(run.Format),
+			"emailRecipients":              schedule.Delivery.EmailRecipients,
+			"emailedRecipients":            result.EmailedRecipients,
+			"emailAttached":                result.EmailAttached,
+			"emailError":                   result.EmailError,
+			"notifiedUsers":                result.NotifiedUsers,
 		},
 	}); err != nil {
 		a.l.Warn("failed to audit scheduled report delivery",

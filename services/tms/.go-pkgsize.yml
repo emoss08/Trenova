@@ -25,5 +25,4 @@ debt:
   services/tms/internal/modules/operations/domain/shipment: 6025
   services/tms/internal/modules/workforce/domain/worker: 14287
   services/tms/internal/modules/workspace/app/reporting: 3391
-  services/tms/internal/modules/workspace/jobs/reportjobs: 3282
   services/tms/internal/seeds/volume: 20065

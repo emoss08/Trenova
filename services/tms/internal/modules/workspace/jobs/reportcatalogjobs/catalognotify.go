@@ -1,4 +1,4 @@
-package reportjobs
+package reportcatalogjobs
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -105,7 +106,7 @@ func (a *Activities) notifyOwnerNeedsAttention(
 	}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	wording, ok := a.renderNotification(
+	wording, ok := a.notices().Render(
 		tenantCtx,
 		tenantInfo,
 		documenttemplate.KindNotificationReportNeedsAttention,
@@ -140,9 +141,9 @@ func (a *Activities) notifyOwnerNeedsAttention(
 		Source:         needsAttentionSource,
 		CorrelationID:  &correlation,
 		Data: map[string]any{
-			dataKeyReportName:    notice.FirstReport,
-			dataKeyReportCount:   notice.Count,
-			dataKeyDefinitionIDs: ids,
+			reportnotify.DataKeyReportName: notice.FirstReport,
+			dataKeyReportCount:             notice.Count,
+			dataKeyDefinitionIDs:           ids,
 		},
 	}); err != nil {
 		a.l.Warn("failed to tell a report owner their reports need attention",

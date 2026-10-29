@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -224,17 +225,17 @@ func (a *Activities) notifyScheduleOwner(
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 	payload := map[string]any{
-		dataKeyScheduleID: schedule.ID.String(),
+		reportnotify.DataKeyScheduleID: schedule.ID.String(),
 	}
 	if def, err := a.defRepo.GetByID(tenantCtx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: schedule.DefinitionID,
 	}); err == nil {
-		payload[dataKeyReportName] = def.Name
+		payload[reportnotify.DataKeyReportName] = def.Name
 		data.ReportName = def.Name
 	}
 
-	wording, ok := a.renderNotification(
+	wording, ok := a.notices().Render(
 		tenantCtx,
 		tenantInfo,
 		documenttemplate.KindNotificationReportScheduleSkipped,

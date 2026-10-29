@@ -20299,3 +20299,6 @@ github.com/emoss08/trenova/internal/seeds/fixtures.WorkerEmploymentEventSeed	git
 github.com/emoss08/trenova/internal/seeds/fixtures.WorkerSafetySeed	github.com/emoss08/trenova/internal/seeds/fixtures/workforcefixtures.WorkerSafetySeed
 github.com/emoss08/trenova/internal/seeds/fixtures.WorkerSeed	github.com/emoss08/trenova/internal/seeds/fixtures/workforcefixtures.WorkerSeed
 github.com/emoss08/trenova/internal/seeds/fixtures.WorkerTrainingSeed	github.com/emoss08/trenova/internal/seeds/fixtures/workforcefixtures.WorkerTrainingSeed
+github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.CatalogHeartbeatParams	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.CatalogHeartbeatParams
+github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.CheckCatalogResult	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.CheckCatalogResult
+github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.StartCatalogHeartbeat	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs.StartCatalogHeartbeat

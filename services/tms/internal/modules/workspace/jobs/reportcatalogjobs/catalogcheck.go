@@ -1,4 +1,4 @@
-package reportjobs
+package reportcatalogjobs
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -174,16 +175,16 @@ func (a *Activities) auditCatalogCheck(
 		OrganizationID: def.OrganizationID,
 		BusinessUnitID: def.BusinessUnitID,
 		PreviousState: map[string]any{
-			dataKeyStatus:       string(def.Status),
-			dataKeyCatalog:      def.CatalogVersion,
-			dataKeyDiagnostics:  def.Diagnostics,
-			dataKeyCatalogEvent: catalogCheckEvent,
+			reportnotify.DataKeyStatus: string(def.Status),
+			dataKeyCatalog:             def.CatalogVersion,
+			dataKeyDiagnostics:         def.Diagnostics,
+			dataKeyCatalogEvent:        catalogCheckEvent,
 		},
 		CurrentState: map[string]any{
-			dataKeyStatus:       string(status),
-			dataKeyCatalog:      version,
-			dataKeyDiagnostics:  diagnostics,
-			dataKeyCatalogEvent: catalogCheckEvent,
+			reportnotify.DataKeyStatus: string(status),
+			dataKeyCatalog:             version,
+			dataKeyDiagnostics:         diagnostics,
+			dataKeyCatalogEvent:        catalogCheckEvent,
 		},
 	}); err != nil {
 		a.l.Warn("failed to audit a report definition's catalog check",

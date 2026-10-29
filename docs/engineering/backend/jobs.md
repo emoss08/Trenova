@@ -66,4 +66,4 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   each row with the value it checked and selects `col < v` then `col > v`: two range scans on an
   index on the column, empty once the sweep has caught up. Its write is conditional on the
   row's `version` and on the stamp still being stale, so a person's save that lands meanwhile
-  wins (`reportjobs/catalogcheck.go`).
+  wins (`reportcatalogjobs/catalogcheck.go`).
