@@ -24,16 +24,13 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useCallback, useState, type ReactNode } from "react";
 import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
+import { checkDetail, checkTitle, issueOf, paymentTermLabel } from "@/lib/billing-queue-checks";
 import {
   HOLD_REASONS,
   barReason,
-  checkDetail,
-  checkTitle,
   holdReasonLabel,
   initials,
-  issueOf,
   itemStage,
-  paymentTermLabel,
   type ItemStage,
   stageLabel,
 } from "./billing-item-checks";
