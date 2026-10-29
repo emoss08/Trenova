@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,13 +26,16 @@ const (
 // no session: each is checked against its watch's secret before anything is
 // done, and a valid one only asks the watch to be checked now.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST(agentextension.WebWatchWebhookPrefix+"/:orgID/:buID/:watchID/", h.receiveWatchDelivery)
+	rg.POST(
+		extensionwebwatch.WebWatchWebhookPrefix+"/:orgID/:buID/:watchID/",
+		h.receiveWatchDelivery,
+	)
 }
 
 func (h *Handler) listWebWatches(c *gin.Context) {
 	req := &agentextensionports.ListWebWatchesRequest{TenantInfo: tenantOf(c)}
 	if raw := strings.TrimSpace(c.Query("status")); raw != "" {
-		status := agentextension.WebWatchStatus(raw)
+		status := extensionwebwatch.WebWatchStatus(raw)
 		if !status.IsValid() {
 			h.eh.HandleError(c, errortypes.NewValidationError("status", errortypes.ErrInvalid,
 				"status must be Active, Ended, Stopped or Failed"))
@@ -127,7 +130,7 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 		return
 	}
 	if h.waits != nil {
-		h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &agentextension.WebWatch{
+		h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &extensionwebwatch.WebWatch{
 			ID:     watch.ID,
 			Status: watch.Status,
 		})

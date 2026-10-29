@@ -1,4 +1,4 @@
-package agentextension
+package extensionportal
 
 import (
 	"encoding/base32"

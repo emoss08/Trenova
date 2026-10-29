@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -34,9 +34,9 @@ type PollResult struct {
 }
 
 type StopInput struct {
-	Payload *Payload                       `json:"payload"`
-	Status  agentextension.PortalRunStatus `json:"status"`
-	Reason  string                         `json:"reason"`
+	Payload *Payload                        `json:"payload"`
+	Status  extensionportal.PortalRunStatus `json:"status"`
+	Reason  string                          `json:"reason"`
 }
 
 type StartParams struct {

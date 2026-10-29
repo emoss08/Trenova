@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/shared/exa"
 	"github.com/emoss08/trenova/shared/restx"
@@ -19,13 +20,13 @@ const (
 
 var _ agentextensionports.WebWatchProvider = (*Connector)(nil)
 
-func vendorPeriod(cadence agentextension.WebWatchCadence) string {
+func vendorPeriod(cadence extensionwebwatch.WebWatchCadence) string {
 	switch cadence {
-	case agentextension.WebWatchCadenceSixHours:
+	case extensionwebwatch.WebWatchCadenceSixHours:
 		return "6h"
-	case agentextension.WebWatchCadenceDaily:
+	case extensionwebwatch.WebWatchCadenceDaily:
 		return "1d"
-	case agentextension.WebWatchCadenceWeekly:
+	case extensionwebwatch.WebWatchCadenceWeekly:
 		return "7d"
 	default:
 		return ""
@@ -56,7 +57,7 @@ func (c *Connector) CreateWatch(
 		Name: req.Name,
 		Search: exa.MonitorSearch{
 			Query:          req.Query,
-			NumResults:     agentextension.WebWatchResultsPerRun,
+			NumResults:     extensionwebwatch.WebWatchResultsPerRun,
 			IncludeDomains: req.IncludeDomains,
 			ExcludeDomains: req.ExcludeDomains,
 			Contents: &exa.MonitorContent{
@@ -163,17 +164,17 @@ func watchRunOf(run *exa.MonitorRun) agentextensionports.WebWatchRun {
 		out.SettledAt = run.CompletedAt.Unix()
 	}
 	if out.Phase == agentextensionports.WebWatchRunCompleted {
-		out.CostUSD = agentextension.ExaMonitorRunCostUSD
+		out.CostUSD = extensionwebwatch.ExaMonitorRunCostUSD
 	}
 	if run.Output == nil {
 		return out
 	}
 
 	out.Summary = run.Output.Summary()
-	out.Results = make([]agentextension.WebWatchResult, 0, len(run.Output.Results))
+	out.Results = make([]extensionwebwatch.WebWatchResult, 0, len(run.Output.Results))
 	for idx := range run.Output.Results {
 		result := &run.Output.Results[idx]
-		out.Results = append(out.Results, agentextension.WebWatchResult{
+		out.Results = append(out.Results, extensionwebwatch.WebWatchResult{
 			Title:         strings.TrimSpace(result.Title),
 			URL:           strings.TrimSpace(result.URL),
 			PublishedDate: strings.TrimSpace(result.PublishedDate),

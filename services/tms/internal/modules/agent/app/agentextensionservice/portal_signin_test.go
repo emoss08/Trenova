@@ -3,7 +3,7 @@ package agentextensionservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,7 +61,7 @@ func TestAnAuthenticatorKeyIsStoredEncryptedAndSentAsTheCodePlaceholder(t *testi
 
 	stored, err := f.sites.Get(t.Context(), f.tenant, site.ID)
 	require.NoError(t, err)
-	key := configspec.ReadString(stored.Credentials, agentextension.PortalCredentialAuthenticator)
+	key := configspec.ReadString(stored.Credentials, extensionportal.PortalCredentialAuthenticator)
 	assert.NotEmpty(t, key)
 	assert.NotContains(t, key, testAuthenticatorKey)
 
@@ -75,7 +75,7 @@ func TestAnAuthenticatorKeyIsStoredEncryptedAndSentAsTheCodePlaceholder(t *testi
 
 	require.Len(t, f.browser.started, 1)
 	sent := f.browser.started[0]
-	assert.Equal(t, testAuthenticatorKey, sent.Secrets[agentextension.PortalSecretAuthenticator],
+	assert.Equal(t, testAuthenticatorKey, sent.Secrets[extensionportal.PortalSecretAuthenticator],
 		"the key, normalized, is what Browser Use turns into a fresh code")
 	assert.Contains(t, sent.Instruction, "type portal_bu_2fa_code into the code box and submit it")
 	assert.NotContains(t, sent.Instruction, testAuthenticatorKey)
@@ -164,7 +164,7 @@ func TestAPortalThatAsksForACodeSaysWhatToChange(t *testing.T) {
 	assert.Contains(t, err.Error(), "add the portal's authenticator key")
 
 	run := f.runs.only(t)
-	assert.Equal(t, agentextension.PortalRunStatusFailed, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusFailed, run.Status)
 	assert.Contains(t, run.Failure, "authenticator key")
 	assert.Equal(t, []string{"session-1"}, f.browser.closed,
 		"a read no one can relay a code to closes its browser")
@@ -186,8 +186,8 @@ func TestTrenovaItselfCannotBeAPortalSite(t *testing.T) {
 		"a site on a parent domain covers the app's own host too")
 
 	f.enableBrowser(t)
-	stored := &agentextension.PortalSite{
-		ID:             pulid.MustNew(agentextension.PortalSiteIDPrefix),
+	stored := &extensionportal.PortalSite{
+		ID:             pulid.MustNew(extensionportal.PortalSiteIDPrefix),
 		OrganizationID: f.tenant.OrgID,
 		BusinessUnitID: f.tenant.BuID,
 		Name:           "Trenova App",

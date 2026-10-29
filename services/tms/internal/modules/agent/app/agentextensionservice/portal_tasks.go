@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -81,7 +82,7 @@ func (c *portalCall) metered(tenantInfo pagination.TenantInfo) meteredCall {
 	return meteredCall{tenant: tenantInfo, typ: c.typ, limit: c.settings.DailyRequestLimit}
 }
 
-func summaryOf(site *agentextension.PortalSite) agentextensionports.PortalSiteSummary {
+func summaryOf(site *extensionportal.PortalSite) agentextensionports.PortalSiteSummary {
 	return agentextensionports.PortalSiteSummary{
 		ID:           site.ID,
 		Name:         site.Name,
@@ -119,7 +120,7 @@ func (s *Service) site(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	acting bool,
-) (*agentextension.PortalSite, error) {
+) (*extensionportal.PortalSite, error) {
 	site, err := s.sites.Get(ctx, tenantInfo, id)
 	if errortypes.IsNotFoundError(err) {
 		return nil, &ToolError{Message: "There is no portal site with that id. " +
@@ -132,7 +133,7 @@ func (s *Service) site(
 		return nil, &ToolError{Message: site.Name + " is turned off for agents. " +
 			s.knownSites(ctx, tenantInfo)}
 	}
-	if s.appHost != "" && agentextension.HostAllowed(s.appHost, site.Domains) {
+	if s.appHost != "" && extensionportal.HostAllowed(s.appHost, site.Domains) {
 		return nil, &ToolError{Message: portalOnTrenovaMessage + " Use the tools for it instead, " +
 			"or tell the person what to do there."}
 	}
@@ -171,14 +172,14 @@ func (s *Service) knownSites(ctx context.Context, tenantInfo pagination.TenantIn
 	return b.String()
 }
 
-func (s *Service) signIn(site *agentextension.PortalSite) (map[string]string, error) {
+func (s *Service) signIn(site *extensionportal.PortalSite) (map[string]string, error) {
 	if !site.HasSignIn() {
 		return nil, nil //nolint:nilnil // a site without a sign-in sends no secrets
 	}
 
 	values, err := s.secrets.ReadAll(
 		site.Credentials,
-		agentextension.PortalCredentialFields(),
+		extensionportal.PortalCredentialFields(),
 		portalSiteScope(pagination.TenantInfo{
 			OrgID: site.OrganizationID,
 			BuID:  site.BusinessUnitID,
@@ -190,23 +191,23 @@ func (s *Service) signIn(site *agentextension.PortalSite) (map[string]string, er
 	}
 
 	secrets := map[string]string{
-		agentextension.PortalSecretUsername: values[agentextension.PortalCredentialUsername],
-		agentextension.PortalSecretPassword: values[agentextension.PortalCredentialPassword],
+		extensionportal.PortalSecretUsername: values[extensionportal.PortalCredentialUsername],
+		extensionportal.PortalSecretPassword: values[extensionportal.PortalCredentialPassword],
 	}
-	if key := values[agentextension.PortalCredentialAuthenticator]; key != "" {
-		secrets[agentextension.PortalSecretAuthenticator] = key
+	if key := values[extensionportal.PortalCredentialAuthenticator]; key != "" {
+		secrets[extensionportal.PortalSecretAuthenticator] = key
 	}
 
 	return secrets, nil
 }
 
 func taskText(
-	site *agentextension.PortalSite,
-	mode agentextension.PortalRunMode,
+	site *extensionportal.PortalSite,
+	mode extensionportal.PortalRunMode,
 	instruction string,
 	details map[string]string,
-) *agentextension.PortalTaskText {
-	return &agentextension.PortalTaskText{
+) *extensionportal.PortalTaskText {
+	return &extensionportal.PortalTaskText{
 		SiteName:    site.Name,
 		SitePurpose: site.Purpose,
 		Domains:     site.Domains,
@@ -220,19 +221,19 @@ func taskText(
 }
 
 func checkTask(instruction string, raw map[string]string) (map[string]string, error) {
-	if err := agentextension.CheckPortalInstruction(instruction); err != nil {
+	if err := extensionportal.CheckPortalInstruction(instruction); err != nil {
 		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
 	}
 
-	return agentextension.NormalizePortalDetails(raw)
+	return extensionportal.NormalizePortalDetails(raw)
 }
 
 type portalStart struct {
 	tenant pagination.TenantInfo
 	call   *portalCall
-	site   *agentextension.PortalSite
-	text   *agentextension.PortalTaskText
-	run    *agentextension.PortalRun
+	site   *extensionportal.PortalSite
+	text   *extensionportal.PortalTaskText
+	run    *extensionportal.PortalRun
 }
 
 // begin records the run and hands the task to the vendor. The run is written
@@ -264,8 +265,8 @@ func (s *Service) begin(ctx context.Context, start *portalStart) error {
 	})
 	if err != nil {
 		failure := s.providerError(start.call.failing(err, "start the portal task"))
-		s.finish(ctx, start.tenant, start.run, &agentextension.PortalRunOutcome{
-			Status:  agentextension.PortalRunStatusFailed,
+		s.finish(ctx, start.tenant, start.run, &extensionportal.PortalRunOutcome{
+			Status:  extensionportal.PortalRunStatusFailed,
 			Failure: failure.Error(),
 		})
 		return failure
@@ -288,15 +289,15 @@ func (s *Service) newRun(
 	start *portalStart,
 	owner agentextensionports.PortalTaskOwner,
 	details map[string]string,
-) *agentextension.PortalRun {
-	run := &agentextension.PortalRun{
-		ID:                pulid.MustNew(agentextension.PortalRunIDPrefix),
+) *extensionportal.PortalRun {
+	run := &extensionportal.PortalRun{
+		ID:                pulid.MustNew(extensionportal.PortalRunIDPrefix),
 		OrganizationID:    start.tenant.OrgID,
 		BusinessUnitID:    start.tenant.BuID,
 		SiteID:            start.site.ID,
 		ExtensionType:     start.call.typ,
 		Mode:              start.text.Mode,
-		Status:            agentextension.PortalRunStatusRunning,
+		Status:            extensionportal.PortalRunStatusRunning,
 		Instruction:       start.text.Task(),
 		Details:           details,
 		UsedSignIn:        start.site.HasSignIn(),
@@ -343,7 +344,7 @@ func (s *Service) ReadPortal(
 		tenant: req.TenantInfo,
 		call:   call,
 		site:   site,
-		text:   taskText(site, agentextension.PortalRunModeRead, req.Question, details),
+		text:   taskText(site, extensionportal.PortalRunModeRead, req.Question, details),
 	}
 	if _, err = s.reserve(ctx, call.metered(req.TenantInfo)); err != nil {
 		return nil, err
@@ -356,8 +357,8 @@ func (s *Service) ReadPortal(
 	deadline := time.Now().Add(ReadBudget)
 	state, timedOut, err := s.await(ctx, call, start.run.VendorTaskID, deadline)
 	if err != nil {
-		finished := s.finish(ctx, req.TenantInfo, start.run, &agentextension.PortalRunOutcome{
-			Status:  agentextension.PortalRunStatusFailed,
+		finished := s.finish(ctx, req.TenantInfo, start.run, &extensionportal.PortalRunOutcome{
+			Status:  extensionportal.PortalRunStatusFailed,
 			Failure: "Trenova lost track of the task while it ran.",
 		})
 		s.release(ctx, call, finished)
@@ -377,7 +378,7 @@ func (s *Service) ReadPortal(
 
 	finished := s.finish(ctx, req.TenantInfo, start.run, outcome)
 	s.release(ctx, call, finished)
-	if finished.Status != agentextension.PortalRunStatusSucceeded {
+	if finished.Status != extensionportal.PortalRunStatusSucceeded {
 		return nil, s.portalOutcomeError(finished, nil, call)
 	}
 
@@ -446,10 +447,10 @@ func (s *Service) stopQuietly(ctx context.Context, call *portalCall, taskID stri
 // pages, steps and cost, added to what the run held before a relayed code
 // started that task.
 func progressOf(
-	run *agentextension.PortalRun,
+	run *extensionportal.PortalRun,
 	state *agentextensionports.PortalTaskState,
-	site *agentextension.PortalSite,
-) *agentextension.PortalRunOutcome {
+	site *extensionportal.PortalSite,
+) *extensionportal.PortalRunOutcome {
 	visited := state.VisitedURLs
 	steps := state.Steps
 	cost := state.CostUSD
@@ -459,10 +460,10 @@ func progressOf(
 		cost = cost.Add(run.CostUSD)
 	}
 
-	return &agentextension.PortalRunOutcome{
+	return &extensionportal.PortalRunOutcome{
 		Answer:      state.Answer,
 		VisitedURLs: visited,
-		OffSiteURLs: agentextension.OffSite(visited, site.Domains),
+		OffSiteURLs: extensionportal.OffSite(visited, site.Domains),
 		Steps:       steps,
 		CostUSD:     cost,
 	}
@@ -473,11 +474,11 @@ func progressOf(
 // is Strayed whatever it says it did: what it found may have come from
 // anywhere.
 func outcomeOf(
-	run *agentextension.PortalRun,
+	run *extensionportal.PortalRun,
 	state *agentextensionports.PortalTaskState,
-	site *agentextension.PortalSite,
+	site *extensionportal.PortalSite,
 	timedOut bool,
-) (*agentextension.PortalRunOutcome, bool) {
+) (*extensionportal.PortalRunOutcome, bool) {
 	outcome := progressOf(run, state, site)
 	succeeded := state.Phase == agentextensionports.PortalTaskFinished &&
 		(state.Succeeded == nil || *state.Succeeded)
@@ -485,22 +486,22 @@ func outcomeOf(
 
 	switch {
 	case len(outcome.OffSiteURLs) > 0:
-		outcome.Status = agentextension.PortalRunStatusStrayed
+		outcome.Status = extensionportal.PortalRunStatusStrayed
 		outcome.Failure = portalStrayedMessage
 	case timedOut:
-		outcome.Status = agentextension.PortalRunStatusTimedOut
+		outcome.Status = extensionportal.PortalRunStatusTimedOut
 		outcome.Failure = portalTimedOutMessage
-	case agentextension.AsksForSignInCode(state.Answer, succeeded):
+	case extensionportal.AsksForSignInCode(state.Answer, succeeded):
 		asked = true
-		outcome.Status = agentextension.PortalRunStatusFailed
+		outcome.Status = extensionportal.PortalRunStatusFailed
 		outcome.Failure = signInCodeMessage(site, run)
 	case succeeded:
-		outcome.Status = agentextension.PortalRunStatusSucceeded
+		outcome.Status = extensionportal.PortalRunStatusSucceeded
 	case state.Phase == agentextensionports.PortalTaskStopped:
-		outcome.Status = agentextension.PortalRunStatusStopped
+		outcome.Status = extensionportal.PortalRunStatusStopped
 		outcome.Failure = "The vendor stopped the task before it finished."
 	default:
-		outcome.Status = agentextension.PortalRunStatusFailed
+		outcome.Status = extensionportal.PortalRunStatusFailed
 		outcome.Failure = state.Answer
 		if strings.TrimSpace(outcome.Failure) == "" {
 			outcome.Failure = "The browser could not finish the task and did not say why."
@@ -514,8 +515,8 @@ func outcomeOf(
 // browser for a sign-in code: add the authenticator key, check the one stored,
 // or use a browser profile that is already signed in. A run that already
 // spent its relayed codes says so instead.
-func signInCodeMessage(site *agentextension.PortalSite, run *agentextension.PortalRun) string {
-	if run.CodeAttempts >= agentextension.MaxPortalCodeAttempts {
+func signInCodeMessage(site *extensionportal.PortalSite, run *extensionportal.PortalRun) string {
+	if run.CodeAttempts >= extensionportal.MaxPortalCodeAttempts {
 		return site.Name + " still asked for a sign-in code after " +
 			strconv.Itoa(run.CodeAttempts) + " codes were entered, so the task was stopped. " +
 			"Check that the codes come from this portal's sign-in, then ask again."
@@ -538,9 +539,9 @@ func signInCodeMessage(site *agentextension.PortalSite, run *agentextension.Port
 func (s *Service) finish(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	run *agentextension.PortalRun,
-	outcome *agentextension.PortalRunOutcome,
-) *agentextension.PortalRun {
+	run *extensionportal.PortalRun,
+	outcome *extensionportal.PortalRunOutcome,
+) *extensionportal.PortalRun {
 	run.Finish(outcome, s.now())
 	updated, err := s.runs.Update(ctx, run)
 	if err != nil {
@@ -552,7 +553,7 @@ func (s *Service) finish(
 
 	s.settle(ctx, meteredCall{tenant: tenantInfo, typ: run.ExtensionType}, settledCall{
 		day:    timeutils.DayKeyUTC(run.StartedAt),
-		failed: run.Status != agentextension.PortalRunStatusSucceeded,
+		failed: run.Status != extensionportal.PortalRunStatusSucceeded,
 		cost:   run.CostUSD,
 	})
 
@@ -560,14 +561,14 @@ func (s *Service) finish(
 }
 
 func (s *Service) portalOutcomeError(
-	run *agentextension.PortalRun,
+	run *extensionportal.PortalRun,
 	cause error,
 	call *portalCall,
 ) error {
 	switch run.Status {
-	case agentextension.PortalRunStatusStrayed:
+	case extensionportal.PortalRunStatusStrayed:
 		return &ToolError{Message: portalStrayedMessage}
-	case agentextension.PortalRunStatusTimedOut:
+	case extensionportal.PortalRunStatusTimedOut:
 		return &ToolError{Message: portalTimedOutMessage}
 	}
 	if cause != nil {
@@ -575,7 +576,7 @@ func (s *Service) portalOutcomeError(
 	}
 
 	return &ToolError{Message: "The portal task did not succeed: " +
-		stringutils.Ellipsize(run.Failure, agentextension.MaxPortalFailureRunes) +
+		stringutils.Ellipsize(run.Failure, extensionportal.MaxPortalFailureRunes) +
 		" Tell the person, and do not try the same task again unchanged."}
 }
 
@@ -598,7 +599,7 @@ func (s *Service) PlanPortalAction(
 	if err != nil {
 		return nil, err
 	}
-	text := taskText(site, agentextension.PortalRunModeAct, req.Instruction, details)
+	text := taskText(site, extensionportal.PortalRunModeAct, req.Instruction, details)
 
 	return &agentextensionports.PortalActionPlan{
 		Site:        summaryOf(site),
@@ -621,7 +622,9 @@ func (s *Service) StartPortalAction(
 ) (*agentextensionports.PortalActionStarted, error) {
 	key := strings.TrimSpace(req.IdempotencyKey)
 	if key == "" {
-		return nil, errortypes.NewBusinessError("Acting on a portal needs the approval it runs from")
+		return nil, errortypes.NewBusinessError(
+			"Acting on a portal needs the approval it runs from",
+		)
 	}
 	if existing, err := s.runs.GetByIdempotencyKey(ctx, req.TenantInfo, key); err == nil {
 		return s.resumed(ctx, req.TenantInfo, existing)
@@ -646,7 +649,7 @@ func (s *Service) StartPortalAction(
 		tenant: req.TenantInfo,
 		call:   call,
 		site:   site,
-		text:   taskText(site, agentextension.PortalRunModeAct, req.Instruction, details),
+		text:   taskText(site, extensionportal.PortalRunModeAct, req.Instruction, details),
 	}
 	if _, err = s.reserve(ctx, call.metered(req.TenantInfo)); err != nil {
 		return nil, err
@@ -674,7 +677,7 @@ func (s *Service) StartPortalAction(
 func (s *Service) resumed(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	run *agentextension.PortalRun,
+	run *extensionportal.PortalRun,
 ) (*agentextensionports.PortalActionStarted, error) {
 	started := &agentextensionports.PortalActionStarted{
 		RunID:   run.ID,
@@ -684,14 +687,14 @@ func (s *Service) resumed(
 	if site, err := s.sites.Get(ctx, tenantInfo, run.SiteID); err == nil {
 		started.Site = summaryOf(site)
 	}
-	if run.Status == agentextension.PortalRunStatusRunning && run.VendorTaskID == "" {
-		run = s.finish(ctx, tenantInfo, run, &agentextension.PortalRunOutcome{
-			Status:  agentextension.PortalRunStatusFailed,
+	if run.Status == extensionportal.PortalRunStatusRunning && run.VendorTaskID == "" {
+		run = s.finish(ctx, tenantInfo, run, &extensionportal.PortalRunOutcome{
+			Status:  extensionportal.PortalRunStatusFailed,
 			Failure: "The vendor never took the task.",
 		})
 		started.Status = run.Status
 	}
-	if run.Status == agentextension.PortalRunStatusSucceeded {
+	if run.Status == extensionportal.PortalRunStatusSucceeded {
 		started.Answer = run.Answer
 	}
 
@@ -722,7 +725,7 @@ func (s *Service) PortalRun(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	runID pulid.ID,
-) (*agentextension.PortalRun, error) {
+) (*extensionportal.PortalRun, error) {
 	ctx = dbscope.WithValidTenant(ctx, tenantInfo.DBTenant())
 
 	return s.runs.Get(ctx, tenantInfo, runID)
@@ -748,8 +751,8 @@ func (s *Service) PollPortalRun(
 	}
 	if run.VendorTaskID == "" {
 		return &agentextensionports.PortalPoll{
-			Run: s.finish(ctx, tenantInfo, run, &agentextension.PortalRunOutcome{
-				Status:  agentextension.PortalRunStatusFailed,
+			Run: s.finish(ctx, tenantInfo, run, &extensionportal.PortalRunOutcome{
+				Status:  extensionportal.PortalRunStatusFailed,
 				Failure: "The vendor never took the task.",
 			}),
 		}, nil
@@ -759,10 +762,10 @@ func (s *Service) PollPortalRun(
 	if err != nil {
 		return nil, err
 	}
-	if run.Status == agentextension.PortalRunStatusAwaitingCode {
+	if run.Status == extensionportal.PortalRunStatusAwaitingCode {
 		if expires := run.CodeExpiresAt(); expires != nil && s.now() >= *expires {
 			finished := s.finish(ctx, tenantInfo, run, heldProgress(run,
-				agentextension.PortalRunStatusFailed, portalCodeExpiredMessage))
+				extensionportal.PortalRunStatusFailed, portalCodeExpiredMessage))
 			s.release(ctx, call, finished)
 			return &agentextensionports.PortalPoll{Run: finished}, nil
 		}
@@ -803,9 +806,9 @@ func (s *Service) StopPortalRun(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	runID pulid.ID,
-	status agentextension.PortalRunStatus,
+	status extensionportal.PortalRunStatus,
 	reason string,
-) (*agentextension.PortalRun, error) {
+) (*extensionportal.PortalRun, error) {
 	ctx = dbscope.WithValidTenant(ctx, tenantInfo.DBTenant())
 	run, err := s.runs.Get(ctx, tenantInfo, runID)
 	if err != nil {
@@ -815,7 +818,7 @@ func (s *Service) StopPortalRun(
 		return run, nil
 	}
 
-	if run.Status == agentextension.PortalRunStatusAwaitingCode {
+	if run.Status == extensionportal.PortalRunStatusAwaitingCode {
 		finished := s.finish(ctx, tenantInfo, run, heldProgress(run, status, reason))
 		if call, callErr := s.portalCallOf(ctx, tenantInfo, run.ExtensionType); callErr == nil {
 			s.release(ctx, call, finished)
@@ -823,7 +826,7 @@ func (s *Service) StopPortalRun(
 		return finished, nil
 	}
 
-	outcome := &agentextension.PortalRunOutcome{Status: status, Failure: reason}
+	outcome := &extensionportal.PortalRunOutcome{Status: status, Failure: reason}
 	if run.VendorTaskID == "" {
 		return s.finish(ctx, tenantInfo, run, outcome), nil
 	}

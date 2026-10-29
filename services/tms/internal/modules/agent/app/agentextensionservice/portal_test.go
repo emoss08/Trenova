@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,21 +27,21 @@ const (
 
 type memorySites struct {
 	mu    sync.Mutex
-	sites map[pulid.ID]*agentextension.PortalSite
+	sites map[pulid.ID]*extensionportal.PortalSite
 }
 
 func newMemorySites() *memorySites {
-	return &memorySites{sites: map[pulid.ID]*agentextension.PortalSite{}}
+	return &memorySites{sites: map[pulid.ID]*extensionportal.PortalSite{}}
 }
 
 func (m *memorySites) List(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*agentextension.PortalSite, error) {
+) ([]*extensionportal.PortalSite, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	out := make([]*agentextension.PortalSite, 0, len(m.sites))
+	out := make([]*extensionportal.PortalSite, 0, len(m.sites))
 	for _, site := range m.sites {
 		if site.OrganizationID == tenantInfo.OrgID && site.BusinessUnitID == tenantInfo.BuID {
 			copied := *site
@@ -56,7 +57,7 @@ func (m *memorySites) Get(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.PortalSite, error) {
+) (*extensionportal.PortalSite, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -71,8 +72,8 @@ func (m *memorySites) Get(
 
 func (m *memorySites) Create(
 	_ context.Context,
-	site *agentextension.PortalSite,
-) (*agentextension.PortalSite, error) {
+	site *extensionportal.PortalSite,
+) (*extensionportal.PortalSite, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -84,8 +85,8 @@ func (m *memorySites) Create(
 
 func (m *memorySites) Update(
 	_ context.Context,
-	site *agentextension.PortalSite,
-) (*agentextension.PortalSite, error) {
+	site *extensionportal.PortalSite,
+) (*extensionportal.PortalSite, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -107,17 +108,17 @@ func (m *memorySites) Delete(_ context.Context, _ pagination.TenantInfo, id puli
 
 type memoryRuns struct {
 	mu   sync.Mutex
-	runs map[pulid.ID]*agentextension.PortalRun
+	runs map[pulid.ID]*extensionportal.PortalRun
 }
 
 func newMemoryRuns() *memoryRuns {
-	return &memoryRuns{runs: map[pulid.ID]*agentextension.PortalRun{}}
+	return &memoryRuns{runs: map[pulid.ID]*extensionportal.PortalRun{}}
 }
 
 func (m *memoryRuns) Create(
 	_ context.Context,
-	run *agentextension.PortalRun,
-) (*agentextension.PortalRun, error) {
+	run *extensionportal.PortalRun,
+) (*extensionportal.PortalRun, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -138,7 +139,7 @@ func (m *memoryRuns) Get(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.PortalRun, error) {
+) (*extensionportal.PortalRun, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -155,7 +156,7 @@ func (m *memoryRuns) GetByIdempotencyKey(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	key string,
-) (*agentextension.PortalRun, error) {
+) (*extensionportal.PortalRun, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -171,8 +172,8 @@ func (m *memoryRuns) GetByIdempotencyKey(
 
 func (m *memoryRuns) Update(
 	_ context.Context,
-	run *agentextension.PortalRun,
-) (*agentextension.PortalRun, error) {
+	run *extensionportal.PortalRun,
+) (*extensionportal.PortalRun, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -186,11 +187,11 @@ func (m *memoryRuns) Update(
 func (m *memoryRuns) List(
 	_ context.Context,
 	req *agentextensionports.ListPortalRunsRequest,
-) ([]*agentextension.PortalRun, error) {
+) ([]*extensionportal.PortalRun, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	out := make([]*agentextension.PortalRun, 0, len(m.runs))
+	out := make([]*extensionportal.PortalRun, 0, len(m.runs))
 	for _, run := range m.runs {
 		if req.SiteID.IsNil() || run.SiteID == req.SiteID {
 			copied := *run
@@ -201,7 +202,7 @@ func (m *memoryRuns) List(
 	return out, nil
 }
 
-func (m *memoryRuns) only(t *testing.T) *agentextension.PortalRun {
+func (m *memoryRuns) only(t *testing.T) *extensionportal.PortalRun {
 	t.Helper()
 
 	m.mu.Lock()
@@ -269,7 +270,9 @@ func (f *fakeBrowser) TaskState(
 	defer f.mu.Unlock()
 
 	if f.state == nil {
-		return &agentextensionports.PortalTaskState{Phase: agentextensionports.PortalTaskRunning}, nil
+		return &agentextensionports.PortalTaskState{
+			Phase: agentextensionports.PortalTaskRunning,
+		}, nil
 	}
 	state := *f.state
 
@@ -299,7 +302,9 @@ func (f *fakeBrowser) Recording(
 	map[string]string,
 	string,
 ) (*agentextensionports.PortalRecording, error) {
-	return &agentextensionports.PortalRecording{ShareURL: "https://cloud.browser-use.com/share/x"}, nil
+	return &agentextensionports.PortalRecording{
+		ShareURL: "https://cloud.browser-use.com/share/x",
+	}, nil
 }
 
 func (f *fakeBrowser) LiveView(context.Context, map[string]string, string) (string, error) {
@@ -360,7 +365,7 @@ func TestCreatingASiteEncryptsItsSignInAndNeverReturnsIt(t *testing.T) {
 
 	stored, err := f.sites.Get(t.Context(), f.tenant, site.ID)
 	require.NoError(t, err)
-	password := configspec.ReadString(stored.Credentials, agentextension.PortalCredentialPassword)
+	password := configspec.ReadString(stored.Credentials, extensionportal.PortalCredentialPassword)
 	assert.NotEmpty(t, password)
 	assert.NotContains(t, password, "s3cret-pass")
 
@@ -424,14 +429,14 @@ func TestReadingAPortalSendsTheSiteConfinedTaskAndReturnsTheAnswer(t *testing.T)
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Open slots: 8:00 AM and 2:00 PM.", outcome.Answer)
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, outcome.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, outcome.Status)
 
 	require.Len(t, f.browser.started, 1)
 	sent := f.browser.started[0]
 	assert.Equal(t, []string{"portal.acme.com"}, sent.AllowedDomains)
 	assert.Equal(t, "https://portal.acme.com/login", sent.StartURL)
-	assert.Equal(t, "dispatch@trenova.test", sent.Secrets[agentextension.PortalSecretUsername])
-	assert.Equal(t, "s3cret-pass", sent.Secrets[agentextension.PortalSecretPassword])
+	assert.Equal(t, "dispatch@trenova.test", sent.Secrets[extensionportal.PortalSecretUsername])
+	assert.Equal(t, "s3cret-pass", sent.Secrets[extensionportal.PortalSecretPassword])
 	assert.Contains(t, sent.Instruction, "find out: Which dock appointments are open")
 	assert.Contains(t, sent.Instruction, "- PO number: 4512")
 	assert.Contains(t, sent.Instruction, "Only look things up.")
@@ -440,8 +445,8 @@ func TestReadingAPortalSendsTheSiteConfinedTaskAndReturnsTheAnswer(t *testing.T)
 	assert.Equal(t, testBrowserKey, sent.Settings[agentextension.ConfigKeyAPIKey])
 
 	run := f.runs.only(t)
-	assert.Equal(t, agentextension.PortalRunModeRead, run.Mode)
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, run.Status)
+	assert.Equal(t, extensionportal.PortalRunModeRead, run.Mode)
+	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, run.Status)
 	assert.Equal(t, "task-1", run.VendorTaskID)
 	assert.True(t, run.UsedSignIn)
 	assert.Equal(t, 1, f.usage.requests)
@@ -466,7 +471,7 @@ func TestAReadThatLeftTheSiteIsWithheld(t *testing.T) {
 	assert.NotContains(t, err.Error(), "rate sheet")
 
 	run := f.runs.only(t)
-	assert.Equal(t, agentextension.PortalRunStatusStrayed, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusStrayed, run.Status)
 	assert.Equal(t, []string{"https://attacker.example/steal"}, run.OffSiteURLs)
 }
 
@@ -479,7 +484,7 @@ func TestAReadOfAnUnknownSiteListsTheSitesThatExist(t *testing.T) {
 
 	_, err := f.svc.ReadPortal(t.Context(), &agentextensionports.PortalReadRequest{
 		TenantInfo: f.tenant,
-		SiteID:     pulid.MustNew(agentextension.PortalSiteIDPrefix),
+		SiteID:     pulid.MustNew(extensionportal.PortalSiteIDPrefix),
 		Question:   "Which dock appointments are open on October 20?",
 	})
 	require.True(t, IsToolError(err))
@@ -540,7 +545,7 @@ func TestStartingAnActionTwiceFromOneApprovalActsOnce(t *testing.T) {
 	first, err := f.svc.StartPortalAction(t.Context(), req)
 	require.NoError(t, err)
 	assert.False(t, first.Resumed)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, first.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, first.Status)
 
 	second, err := f.svc.StartPortalAction(t.Context(), req)
 	require.NoError(t, err)
@@ -566,14 +571,14 @@ func TestPollingAnActionRecordsHowItEnded(t *testing.T) {
 
 	running, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, running.Run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, running.Run.Status)
 	assert.Empty(t, f.browser.closed, "a running task keeps its browser")
 
 	f.browser.finishWith(finished("Booked, confirmation 77812.", "https://portal.acme.com/book"))
 	done, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
 	assert.False(t, done.CodeRequested)
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, done.Run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, done.Run.Status)
 	assert.Equal(t, "Booked, confirmation 77812.", done.Run.Answer)
 	require.NotNil(t, done.Run.FinishedAt)
 	assert.True(t, decimal.RequireFromString("0.04").Equal(done.Run.CostUSD))
@@ -596,17 +601,17 @@ func TestStoppingAnActionRecordsTheReasonOnce(t *testing.T) {
 	require.NoError(t, err)
 
 	stopped, err := f.svc.StopPortalRun(t.Context(), f.tenant, started.RunID,
-		agentextension.PortalRunStatusTimedOut, "Still running after 20 minutes.")
+		extensionportal.PortalRunStatusTimedOut, "Still running after 20 minutes.")
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusTimedOut, stopped.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusTimedOut, stopped.Status)
 	assert.Equal(t, "Still running after 20 minutes.", stopped.Failure)
 	assert.Equal(t, []string{"task-1"}, f.browser.stopped)
 	assert.Equal(t, []string{"session-1"}, f.browser.closed)
 
 	again, err := f.svc.StopPortalRun(t.Context(), f.tenant, started.RunID,
-		agentextension.PortalRunStatusFailed, "A second reason.")
+		extensionportal.PortalRunStatusFailed, "A second reason.")
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusTimedOut, again.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusTimedOut, again.Status)
 	assert.Len(t, f.browser.stopped, 1)
 }
 

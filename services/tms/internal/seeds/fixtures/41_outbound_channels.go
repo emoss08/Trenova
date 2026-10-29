@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
 )
@@ -53,7 +53,7 @@ func (s *OutboundChannelsSeed) Run(ctx context.Context, sr *seed.Run) error {
 		return fmt.Errorf("insert email profile: %w", err)
 	}
 
-	site := &agentextension.PortalSite{
+	site := &extensionportal.PortalSite{
 		OrganizationID: org.ID,
 		BusinessUnitID: org.BusinessUnitID,
 		Name:           SeedPortalSiteName,

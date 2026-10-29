@@ -1,11 +1,13 @@
 package agentextension
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/urlutils"
 )
 
 const (
@@ -125,7 +127,7 @@ func ParseDomainList(raw string, multiErr *errortypes.MultiError) []string {
 		if domain == "" {
 			continue
 		}
-		if !hostnamePattern.MatchString(domain) {
+		if !urlutils.IsHostPattern(domain) {
 			multiErr.Add(
 				"configuration."+ConfigKeyExcludedDomains,
 				errortypes.ErrInvalid,
@@ -150,4 +152,17 @@ func ParseDomainList(raw string, multiErr *errortypes.MultiError) []string {
 	}
 
 	return domains
+}
+
+func NormalizeHostnames(raw []string) []string {
+	out := make([]string, 0, len(raw))
+	for _, value := range raw {
+		host := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(value)), ".")
+		if host == "" || slices.Contains(out, host) {
+			continue
+		}
+		out = append(out, host)
+	}
+
+	return out
 }

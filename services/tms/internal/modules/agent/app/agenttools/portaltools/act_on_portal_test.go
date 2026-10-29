@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,7 +23,7 @@ import (
 
 type fakePortals struct {
 	planErr  error
-	status   agentextension.PortalRunStatus
+	status   extensionportal.PortalRunStatus
 	planned  []*agentextensionports.PortalActionRequest
 	started  []*agentextensionports.PortalActionRequest
 	tracked  []pulid.ID
@@ -36,10 +36,10 @@ type fakePortals struct {
 
 func newFakePortals() *fakePortals {
 	return &fakePortals{
-		status: agentextension.PortalRunStatusRunning,
-		runID:  pulid.MustNew(agentextension.PortalRunIDPrefix),
+		status: extensionportal.PortalRunStatusRunning,
+		runID:  pulid.MustNew(extensionportal.PortalRunIDPrefix),
 		site: agentextensionports.PortalSiteSummary{
-			ID:           pulid.MustNew(agentextension.PortalSiteIDPrefix),
+			ID:           pulid.MustNew(extensionportal.PortalSiteIDPrefix),
 			Name:         "Acme DC",
 			Domains:      []string{"portal.acme.com"},
 			AllowActions: true,
@@ -124,14 +124,14 @@ func (f *fakeWaits) RegisterPortalRunWait(
 func (f *fakeWaits) NotifyPortalRun(
 	context.Context,
 	pagination.TenantInfo,
-	*agentextension.PortalRun,
+	*extensionportal.PortalRun,
 ) {
 }
 
 func (f *fakeWaits) AnnouncePortalRun(
 	context.Context,
 	pagination.TenantInfo,
-	*agentextension.PortalRun,
+	*extensionportal.PortalRun,
 ) {
 }
 
@@ -267,7 +267,7 @@ func TestActOnPortalRetriedAfterTheTaskEndedReportsHowItEnded(t *testing.T) {
 	t.Parallel()
 
 	portals := newFakePortals()
-	portals.status = agentextension.PortalRunStatusSucceeded
+	portals.status = extensionportal.PortalRunStatusSucceeded
 	waits := &fakeWaits{}
 	tool := NewActOnPortalTool(portals, waits, nil).(*ActOnPortalTool)
 

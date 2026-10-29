@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -82,12 +83,12 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "Exactly what to do, in one plain sentence, such as " +
 				"\"Book the 8:00 AM dock appointment on October 20 for this PO\".",
-			toolschema.KeyMaxLength: agentextension.MaxPortalInstructionRunes,
+			toolschema.KeyMaxLength: extensionportal.MaxPortalInstructionRunes,
 		},
 		paramDetails: agenttoolschema.StringMap(
 			"The values the portal needs, by what the portal calls them, such as "+
 				"{\"PO number\": \"4512\", \"Carrier\": \"Ridgeline Freight\"}.",
-			agentextension.MaxPortalDetailValueRunes,
+			extensionportal.MaxPortalDetailValueRunes,
 		),
 	}, paramSiteID, paramInstruction)
 }
@@ -133,7 +134,7 @@ func (t *ActOnPortalTool) request(
 	if err != nil {
 		return nil, err
 	}
-	details, err := agentextension.PortalDetailsFrom(params.Params[paramDetails])
+	details, err := extensionportal.PortalDetailsFrom(params.Params[paramDetails])
 	if err != nil {
 		return nil, errortypes.NewValidationError(paramDetails, errortypes.ErrInvalid, err.Error())
 	}
@@ -304,11 +305,11 @@ func (t *ActOnPortalTool) registerWait(
 	return true
 }
 
-func finishedState(status agentextension.PortalRunStatus) string {
+func finishedState(status extensionportal.PortalRunStatus) string {
 	switch status {
-	case agentextension.PortalRunStatusSucceeded:
+	case extensionportal.PortalRunStatusSucceeded:
 		return "Finished. Read what the portal said under AI Control, Extensions."
-	case agentextension.PortalRunStatusStrayed:
+	case extensionportal.PortalRunStatusStrayed:
 		return "Stopped: the browser left the site's addresses, so what it found was withheld."
 	default:
 		return "Ended without succeeding (" + strings.ToLower(status.String()) + ")."

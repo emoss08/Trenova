@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,14 +15,23 @@ import (
 var ErrPortalRunExists = errors.New("a portal run with this idempotency key already exists")
 
 type PortalSiteRepository interface {
-	List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*agentextension.PortalSite, error)
+	List(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*extensionportal.PortalSite, error)
 	Get(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*agentextension.PortalSite, error)
-	Create(ctx context.Context, site *agentextension.PortalSite) (*agentextension.PortalSite, error)
-	Update(ctx context.Context, site *agentextension.PortalSite) (*agentextension.PortalSite, error)
+	) (*extensionportal.PortalSite, error)
+	Create(
+		ctx context.Context,
+		site *extensionportal.PortalSite,
+	) (*extensionportal.PortalSite, error)
+	Update(
+		ctx context.Context,
+		site *extensionportal.PortalSite,
+	) (*extensionportal.PortalSite, error)
 	Delete(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
 }
 
@@ -33,19 +43,19 @@ type ListPortalRunsRequest struct {
 }
 
 type PortalRunRepository interface {
-	Create(ctx context.Context, run *agentextension.PortalRun) (*agentextension.PortalRun, error)
+	Create(ctx context.Context, run *extensionportal.PortalRun) (*extensionportal.PortalRun, error)
 	Get(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*agentextension.PortalRun, error)
+	) (*extensionportal.PortalRun, error)
 	GetByIdempotencyKey(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		key string,
-	) (*agentextension.PortalRun, error)
-	Update(ctx context.Context, run *agentextension.PortalRun) (*agentextension.PortalRun, error)
-	List(ctx context.Context, req *ListPortalRunsRequest) ([]*agentextension.PortalRun, error)
+	) (*extensionportal.PortalRun, error)
+	Update(ctx context.Context, run *extensionportal.PortalRun) (*extensionportal.PortalRun, error)
+	List(ctx context.Context, req *ListPortalRunsRequest) ([]*extensionportal.PortalRun, error)
 }
 
 type PortalTaskRequest struct {
@@ -146,32 +156,32 @@ type SavePortalSiteRequest struct {
 }
 
 type PortalRunView struct {
-	ID              pulid.ID                       `json:"id"`
-	SiteID          pulid.ID                       `json:"siteId"`
-	SiteName        string                         `json:"siteName"`
-	ExtensionType   agentextension.Type            `json:"extensionType"`
-	Mode            agentextension.PortalRunMode   `json:"mode"`
-	Status          agentextension.PortalRunStatus `json:"status"`
-	Instruction     string                         `json:"instruction"`
-	Details         map[string]string              `json:"details"`
-	UsedSignIn      bool                           `json:"usedSignIn"`
-	Answer          string                         `json:"answer"`
-	VisitedURLs     []string                       `json:"visitedUrls"`
-	OffSiteURLs     []string                       `json:"offSiteUrls"`
-	Steps           int                            `json:"steps"`
-	CostUSD         decimal.Decimal                `json:"costUsd"`
-	Failure         string                         `json:"failure"`
-	AgentRunID      pulid.ID                       `json:"agentRunId"`
-	ThreadID        pulid.ID                       `json:"threadId"`
-	ProposalID      pulid.ID                       `json:"proposalId"`
-	RequestedByID   pulid.ID                       `json:"requestedById"`
-	HasRecording    bool                           `json:"hasRecording"`
-	CodePrompt      string                         `json:"codePrompt"`
-	CodeExpiresAt   *int64                         `json:"codeExpiresAt"`
-	CodeAttempts    int                            `json:"codeAttempts"`
-	StartedAt       int64                          `json:"startedAt"`
-	FinishedAt      *int64                         `json:"finishedAt"`
-	VendorSessionID string                         `json:"-"`
+	ID              pulid.ID                        `json:"id"`
+	SiteID          pulid.ID                        `json:"siteId"`
+	SiteName        string                          `json:"siteName"`
+	ExtensionType   agentextension.Type             `json:"extensionType"`
+	Mode            extensionportal.PortalRunMode   `json:"mode"`
+	Status          extensionportal.PortalRunStatus `json:"status"`
+	Instruction     string                          `json:"instruction"`
+	Details         map[string]string               `json:"details"`
+	UsedSignIn      bool                            `json:"usedSignIn"`
+	Answer          string                          `json:"answer"`
+	VisitedURLs     []string                        `json:"visitedUrls"`
+	OffSiteURLs     []string                        `json:"offSiteUrls"`
+	Steps           int                             `json:"steps"`
+	CostUSD         decimal.Decimal                 `json:"costUsd"`
+	Failure         string                          `json:"failure"`
+	AgentRunID      pulid.ID                        `json:"agentRunId"`
+	ThreadID        pulid.ID                        `json:"threadId"`
+	ProposalID      pulid.ID                        `json:"proposalId"`
+	RequestedByID   pulid.ID                        `json:"requestedById"`
+	HasRecording    bool                            `json:"hasRecording"`
+	CodePrompt      string                          `json:"codePrompt"`
+	CodeExpiresAt   *int64                          `json:"codeExpiresAt"`
+	CodeAttempts    int                             `json:"codeAttempts"`
+	StartedAt       int64                           `json:"startedAt"`
+	FinishedAt      *int64                          `json:"finishedAt"`
+	VendorSessionID string                          `json:"-"`
 }
 
 type PortalRunListResponse struct {
@@ -226,7 +236,7 @@ type PortalReadRequest struct {
 type PortalReadOutcome struct {
 	RunID       pulid.ID
 	Site        PortalSiteSummary
-	Status      agentextension.PortalRunStatus
+	Status      extensionportal.PortalRunStatus
 	Answer      string
 	VisitedURLs []string
 	Steps       int
@@ -259,14 +269,17 @@ type PortalActionPlan struct {
 type PortalActionStarted struct {
 	RunID   pulid.ID
 	Site    PortalSiteSummary
-	Status  agentextension.PortalRunStatus
+	Status  extensionportal.PortalRunStatus
 	Answer  string
 	WaitSet bool
 	Resumed bool
 }
 
 type PortalAutomator interface {
-	ListPortalSites(ctx context.Context, tenantInfo pagination.TenantInfo) ([]PortalSiteSummary, error)
+	ListPortalSites(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]PortalSiteSummary, error)
 	ReadPortal(ctx context.Context, req *PortalReadRequest) (*PortalReadOutcome, error)
 	PlanPortalAction(ctx context.Context, req *PortalActionRequest) (*PortalActionPlan, error)
 	StartPortalAction(ctx context.Context, req *PortalActionRequest) (*PortalActionStarted, error)
@@ -283,7 +296,7 @@ type PortalRunFinisher interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		runID pulid.ID,
-	) (*agentextension.PortalRun, error)
+	) (*extensionportal.PortalRun, error)
 	PollPortalRun(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -293,27 +306,31 @@ type PortalRunFinisher interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		runID pulid.ID,
-		status agentextension.PortalRunStatus,
+		status extensionportal.PortalRunStatus,
 		reason string,
-	) (*agentextension.PortalRun, error)
+	) (*extensionportal.PortalRun, error)
 }
 
 // PortalPoll is a run as one poll left it, and whether that poll is the one
 // that found the portal asking for a sign-in code.
 type PortalPoll struct {
-	Run           *agentextension.PortalRun
+	Run           *extensionportal.PortalRun
 	CodeRequested bool
 }
 
 type PortalRunWaits interface {
 	RegisterPortalRunWait(ctx context.Context, req *RegisterPortalRunWaitRequest) error
-	NotifyPortalRun(ctx context.Context, tenantInfo pagination.TenantInfo, run *agentextension.PortalRun)
+	NotifyPortalRun(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		run *extensionportal.PortalRun,
+	)
 	// AnnouncePortalRun tells the people whose work waits on a run that it
 	// changed without ending, so their screen shows what it now needs.
 	AnnouncePortalRun(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		run *agentextension.PortalRun,
+		run *extensionportal.PortalRun,
 	)
 }
 

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -120,12 +120,12 @@ func TestAReadStoppedForATextedCodeWaitsWithItsBrowserOpen(t *testing.T) {
 	f := newCodeFixture(t)
 	outcome := f.readAwaitingCode(t)
 
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, outcome.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, outcome.Status)
 	assert.Equal(t, textedCodePrompt, outcome.CodePrompt)
 	assert.Empty(t, outcome.Answer)
 
 	run := f.runs.only(t)
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, run.Status)
 	assert.Equal(t, textedCodePrompt, run.CodePrompt)
 	require.NotNil(t, run.CodeRequestedAt)
 	assert.Equal(t, testNow, *run.CodeRequestedAt)
@@ -148,7 +148,7 @@ func TestARelayedCodeContinuesTheTaskInTheSameBrowser(t *testing.T) {
 
 	view, err := f.enterCode(t, outcome.RunID, " 123-456 ")
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, view.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, view.Status)
 	assert.Equal(t, 1, view.CodeAttempts)
 	assert.Nil(t, view.CodeExpiresAt)
 
@@ -156,9 +156,9 @@ func TestARelayedCodeContinuesTheTaskInTheSameBrowser(t *testing.T) {
 	followUp := f.browser.started[1]
 	assert.Equal(t, "session-1", followUp.SessionID)
 	assert.Empty(t, followUp.StartURL)
-	assert.Equal(t, agentextension.ContinueWithCode(waiting.Instruction), followUp.Instruction)
-	assert.Equal(t, "123456", followUp.Secrets[agentextension.PortalSecretSignInCode])
-	assert.Equal(t, "s3cret-pass", followUp.Secrets[agentextension.PortalSecretPassword])
+	assert.Equal(t, extensionportal.ContinueWithCode(waiting.Instruction), followUp.Instruction)
+	assert.Equal(t, "123456", followUp.Secrets[extensionportal.PortalSecretSignInCode])
+	assert.Equal(t, "s3cret-pass", followUp.Secrets[extensionportal.PortalSecretPassword])
 	assert.Equal(t, []string{"portal.acme.com"}, followUp.AllowedDomains)
 	assert.NotContains(t, followUp.Instruction, "123456")
 
@@ -172,7 +172,7 @@ func TestARelayedCodeContinuesTheTaskInTheSameBrowser(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, poll.CodeRequested)
 	done := poll.Run
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, done.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, done.Status)
 	assert.Equal(t, "Open slots: 8:00 AM.", done.Answer)
 	assert.Equal(t, []string{
 		"https://portal.acme.com/login",
@@ -202,12 +202,12 @@ func TestAPollAnnouncesACodeRequestOnce(t *testing.T) {
 	first, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
 	assert.True(t, first.CodeRequested)
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, first.Run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, first.Run.Status)
 
 	second, err := f.svc.PollPortalRun(t.Context(), f.tenant, started.RunID)
 	require.NoError(t, err)
 	assert.False(t, second.CodeRequested)
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, second.Run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, second.Run.Status)
 	assert.Empty(t, f.browser.closed)
 }
 
@@ -216,7 +216,7 @@ func TestACodeNotEnteredInTimeClosesTheBrowser(t *testing.T) {
 
 	f := newCodeFixture(t)
 	outcome := f.readAwaitingCode(t)
-	f.svc.now = func() int64 { return testNow + agentextension.PortalCodeWaitSeconds }
+	f.svc.now = func() int64 { return testNow + extensionportal.PortalCodeWaitSeconds }
 
 	_, err := f.enterCode(t, outcome.RunID, "123456")
 	require.True(t, errortypes.IsBusinessError(err))
@@ -224,7 +224,7 @@ func TestACodeNotEnteredInTimeClosesTheBrowser(t *testing.T) {
 
 	poll, err := f.svc.PollPortalRun(t.Context(), f.tenant, outcome.RunID)
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusFailed, poll.Run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusFailed, poll.Run.Status)
 	assert.Equal(t, portalCodeExpiredMessage, poll.Run.Failure)
 	assert.Equal(t, 2, poll.Run.Steps, "what the task did before the code is kept")
 	assert.Equal(t, []string{"session-1"}, f.browser.closed)
@@ -258,7 +258,7 @@ func TestOnlyThePersonTheTaskWasForEntersItsCode(t *testing.T) {
 		Administers: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, view.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, view.Status)
 }
 
 func TestACodeThatIsNotLettersAndDigitsIsRefused(t *testing.T) {
@@ -274,7 +274,7 @@ func TestACodeThatIsNotLettersAndDigitsIsRefused(t *testing.T) {
 		assert.Equal(t, "code", fieldErr.Field, code)
 	}
 	assert.Len(t, f.browser.started, 1)
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, f.runs.only(t).Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, f.runs.only(t).Status)
 }
 
 func TestAPortalThatKeepsRefusingCodesStopsAfterThree(t *testing.T) {
@@ -283,19 +283,19 @@ func TestAPortalThatKeepsRefusingCodesStopsAfterThree(t *testing.T) {
 	f := newCodeFixture(t)
 	outcome := f.readAwaitingCode(t)
 
-	for attempt := 1; attempt <= agentextension.MaxPortalCodeAttempts; attempt++ {
+	for attempt := 1; attempt <= extensionportal.MaxPortalCodeAttempts; attempt++ {
 		_, err := f.enterCode(t, outcome.RunID, "123456")
 		require.NoError(t, err, "attempt %d", attempt)
 		f.browser.finishWith(askedForCode(
 			"SIGN-IN CODE NEEDED: the portal says the code is wrong."))
 		poll, err := f.svc.PollPortalRun(t.Context(), f.tenant, outcome.RunID)
 		require.NoError(t, err)
-		if attempt < agentextension.MaxPortalCodeAttempts {
+		if attempt < extensionportal.MaxPortalCodeAttempts {
 			assert.True(t, poll.CodeRequested, "attempt %d", attempt)
 			continue
 		}
 		assert.False(t, poll.CodeRequested)
-		assert.Equal(t, agentextension.PortalRunStatusFailed, poll.Run.Status)
+		assert.Equal(t, extensionportal.PortalRunStatusFailed, poll.Run.Status)
 		assert.Contains(t, poll.Run.Failure,
 			"Acme DC still asked for a sign-in code after 3 codes were entered")
 	}
@@ -313,7 +313,7 @@ func TestACodeTheVendorWouldNotTakeEndsTheRun(t *testing.T) {
 	require.Error(t, err)
 
 	run := f.runs.only(t)
-	assert.Equal(t, agentextension.PortalRunStatusFailed, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusFailed, run.Status)
 	assert.Equal(t, 2, run.Steps)
 	assert.Equal(t, []string{"session-1"}, f.browser.closed)
 }
@@ -331,13 +331,13 @@ func TestAPersonWhoSignedInThemselvesLetsTheTaskCarryOnWithoutACode(t *testing.T
 		SignedIn:   true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusRunning, view.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, view.Status)
 
 	require.Len(t, f.browser.started, 2)
 	followUp := f.browser.started[1]
 	assert.Equal(t, "session-1", followUp.SessionID)
-	assert.Equal(t, agentextension.ContinueAfterSignIn(waiting.Instruction), followUp.Instruction)
-	assert.NotContains(t, followUp.Secrets, agentextension.PortalSecretSignInCode)
+	assert.Equal(t, extensionportal.ContinueAfterSignIn(waiting.Instruction), followUp.Instruction)
+	assert.NotContains(t, followUp.Secrets, extensionportal.PortalSecretSignInCode)
 }
 
 func TestACodeAndASignInOfTheirOwnTogetherAreRefused(t *testing.T) {
@@ -391,7 +391,7 @@ func TestTheLiveBrowserIsOpenedOnlyForWhoTheTaskWasFor(t *testing.T) {
 		Administers: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, view.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, view.Status)
 }
 
 func TestAFinishedTaskHasNoLiveBrowser(t *testing.T) {

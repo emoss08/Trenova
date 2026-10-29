@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -94,7 +95,7 @@ func (t *listWebWatchesTool) Query(
 
 	req := &agentextensionports.ListWebWatchesRequest{
 		TenantInfo: params.Actor.TenantInfo(),
-		Status:     agentextension.WebWatchStatusActive,
+		Status:     extensionwebwatch.WebWatchStatusActive,
 		Limit:      webWatchListLimit,
 	}
 	if includeEnded, _ := params.Params["includeEnded"].(bool); includeEnded {

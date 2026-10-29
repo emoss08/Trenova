@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -41,7 +42,7 @@ const (
 )
 
 var (
-	cadences = agenttoolschema.Source("web_watch_cadences", agentextension.AllWebWatchCadences())
+	cadences = agenttoolschema.Source("web_watch_cadences", extensionwebwatch.AllWebWatchCadences())
 
 	ErrDelegatedWatch = errors.New(
 		"a task another agent handed you cannot set a web watch; tell that agent what to watch",
@@ -111,21 +112,21 @@ func (t *WatchWebTool) ParamSchema() map[string]any {
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "What the person wants to hear about, in their terms, " +
 				"such as \"FMCSA finalizing the broker transparency rule\".",
-			toolschema.KeyMaxLength: agentextension.MaxWebWatchPurposeRunes,
+			toolschema.KeyMaxLength: extensionwebwatch.MaxWebWatchPurposeRunes,
 		},
 		paramQuery: map[string]any{
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "The search to run each time, written as a description " +
 				"of the pages wanted, such as \"FMCSA final rule broker transparency 49 CFR " +
 				"371.3\". Never a Trenova record id.",
-			toolschema.KeyMaxLength: agentextension.MaxWebWatchQueryRunes,
+			toolschema.KeyMaxLength: extensionwebwatch.MaxWebWatchQueryRunes,
 		},
 		paramSites: map[string]any{
 			toolschema.KeyType: "array",
 			toolschema.KeyDescription: "Optional: search only these sites, such as " +
 				"[\"fmcsa.dot.gov\", \"federalregister.gov\"].",
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: "string"},
-			toolschema.KeyMaxItems: agentextension.MaxWebWatchDomains,
+			toolschema.KeyMaxItems: extensionwebwatch.MaxWebWatchDomains,
 		},
 		paramCadence: agenttoolschema.Enum(
 			"How often to look. Daily unless the person needs to hear sooner or less often.",
@@ -133,7 +134,7 @@ func (t *WatchWebTool) ParamSchema() map[string]any {
 		),
 		paramDays: toolparams.IntegerProperty(
 			"How many days to keep watching, from 1 to 90. Defaults to 30.",
-			agentextension.MinWebWatchDays, agentextension.MaxWebWatchDays,
+			extensionwebwatch.MinWebWatchDays, extensionwebwatch.MaxWebWatchDays,
 		),
 	}, paramPurpose, paramQuery)
 }
@@ -162,7 +163,7 @@ func (t *WatchWebTool) request(
 	if err != nil {
 		return nil, err
 	}
-	cadence := agentextension.WebWatchCadence(
+	cadence := extensionwebwatch.WebWatchCadence(
 		toolparams.OptionalString(params.Params, paramCadence),
 	)
 	if cadence != "" && !cadence.IsValid() {
@@ -286,7 +287,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	watch := &agentextension.WebWatch{
+	watch := &extensionwebwatch.WebWatch{
 		ID:             view.ID,
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
@@ -436,7 +437,7 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 		return nil, err
 	}
 	if t.waits != nil {
-		t.waits.EndWebWatchWaits(ctx, req.TenantInfo, &agentextension.WebWatch{
+		t.waits.EndWebWatchWaits(ctx, req.TenantInfo, &extensionwebwatch.WebWatch{
 			ID:     view.ID,
 			Status: view.Status,
 		})

@@ -1,9 +1,10 @@
-package agentextension
+package extensionwebwatch
 
 import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,23 +18,18 @@ const (
 	WebWatchIDPrefix        = "awwt_"
 	WebWatchFindingIDPrefix = "awwf_"
 
-	DefaultWebWatchDays        = 30
-	MinWebWatchDays            = 1
-	MaxWebWatchDays            = 90
-	MaxWebWatchQueryRunes      = MaxSearchQueryLength
-	MaxWebWatchPurposeRunes    = 300
-	MaxWebWatchDomains         = 20
-	MaxWebWatchFailureRunes    = 500
-	MaxWebWatchSummaryRunes    = 4000
-	MaxWebWatchExcerptRunes    = 600
-	MaxWebWatchTitleRunes      = 300
-	MaxWebWatchURLLength       = 2048
-	WebWatchResultsPerRun      = 10
-	DefaultMaxActiveWebWatches = 10
-	MinMaxActiveWebWatches     = 1
-	MaxMaxActiveWebWatches     = 100
-
-	ConfigKeyMaxActiveWatches = "maxActiveWatches"
+	DefaultWebWatchDays     = 30
+	MinWebWatchDays         = 1
+	MaxWebWatchDays         = 90
+	MaxWebWatchQueryRunes   = agentextension.MaxSearchQueryLength
+	MaxWebWatchPurposeRunes = 300
+	MaxWebWatchDomains      = 20
+	MaxWebWatchFailureRunes = 500
+	MaxWebWatchSummaryRunes = 4000
+	MaxWebWatchExcerptRunes = 600
+	MaxWebWatchTitleRunes   = 300
+	MaxWebWatchURLLength    = 2048
+	WebWatchResultsPerRun   = 10
 
 	// WebWatchSecretField holds the vendor's webhook secret, encrypted like
 	// any other extension secret.
@@ -136,39 +132,39 @@ func (s WebWatchStatus) IsValid() bool {
 type WebWatch struct {
 	keel.Table `keel:"agent_web_watches"`
 
-	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:awwt_"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	ExtensionType     Type            `json:"extensionType"     keel:"extension_type"`
-	VendorMonitorID   string          `json:"-"                 keel:"vendor_monitor_id"`
-	Query             string          `json:"query"             keel:"query"`
-	Purpose           string          `json:"purpose"           keel:"purpose"`
-	IncludeDomains    []string        `json:"includeDomains"    keel:"include_domains,jsonb"`
-	Cadence           WebWatchCadence `json:"cadence"           keel:"cadence"`
-	Status            WebWatchStatus  `json:"status"            keel:"status"`
-	Secrets           map[string]any  `json:"-"                 keel:"secrets,jsonb"`
-	EndsAt            int64           `json:"endsAt"            keel:"ends_at"`
-	LastCheckedAt     *int64          `json:"lastCheckedAt"     keel:"last_checked_at"`
-	LastRunAt         *int64          `json:"lastRunAt"         keel:"last_run_at"`
-	RunCount          int             `json:"runCount"          keel:"run_count"`
-	FindingCount      int             `json:"findingCount"      keel:"finding_count"`
-	CostUSD           decimal.Decimal `json:"costUsd"           keel:"cost_usd"`
-	Failure           string          `json:"failure"           keel:"failure"`
-	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	AgentRunID        pulid.ID        `json:"agentRunId"        keel:"agent_run_id,nullzero"`
-	ThreadID          pulid.ID        `json:"threadId"          keel:"thread_id,nullzero"`
-	RequestedByID     pulid.ID        `json:"requestedById"     keel:"requested_by_id,nullzero"`
-	StoppedByID       pulid.ID        `json:"stoppedById"       keel:"stopped_by_id,nullzero"`
-	FinishedAt        *int64          `json:"finishedAt"        keel:"finished_at"`
-	Version           int64           `json:"version"           keel:"version,version"`
-	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
-	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	ID                pulid.ID            `json:"id"                keel:"id,pk,autoid:awwt_"`
+	BusinessUnitID    pulid.ID            `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID            `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ExtensionType     agentextension.Type `json:"extensionType"     keel:"extension_type"`
+	VendorMonitorID   string              `json:"-"                 keel:"vendor_monitor_id"`
+	Query             string              `json:"query"             keel:"query"`
+	Purpose           string              `json:"purpose"           keel:"purpose"`
+	IncludeDomains    []string            `json:"includeDomains"    keel:"include_domains,jsonb"`
+	Cadence           WebWatchCadence     `json:"cadence"           keel:"cadence"`
+	Status            WebWatchStatus      `json:"status"            keel:"status"`
+	Secrets           map[string]any      `json:"-"                 keel:"secrets,jsonb"`
+	EndsAt            int64               `json:"endsAt"            keel:"ends_at"`
+	LastCheckedAt     *int64              `json:"lastCheckedAt"     keel:"last_checked_at"`
+	LastRunAt         *int64              `json:"lastRunAt"         keel:"last_run_at"`
+	RunCount          int                 `json:"runCount"          keel:"run_count"`
+	FindingCount      int                 `json:"findingCount"      keel:"finding_count"`
+	CostUSD           decimal.Decimal     `json:"costUsd"           keel:"cost_usd"`
+	Failure           string              `json:"failure"           keel:"failure"`
+	AgentDefinitionID pulid.ID            `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID            `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID            `json:"threadId"          keel:"thread_id,nullzero"`
+	RequestedByID     pulid.ID            `json:"requestedById"     keel:"requested_by_id,nullzero"`
+	StoppedByID       pulid.ID            `json:"stoppedById"       keel:"stopped_by_id,nullzero"`
+	FinishedAt        *int64              `json:"finishedAt"        keel:"finished_at"`
+	Version           int64               `json:"version"           keel:"version,version"`
+	CreatedAt         int64               `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64               `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (w *WebWatch) Normalize() {
 	w.Query = strings.TrimSpace(w.Query)
 	w.Purpose = strings.TrimSpace(w.Purpose)
-	w.IncludeDomains = NormalizeHostnames(w.IncludeDomains)
+	w.IncludeDomains = agentextension.NormalizeHostnames(w.IncludeDomains)
 }
 
 func (w *WebWatch) Validate(multiErr *errortypes.MultiError) {
@@ -193,7 +189,7 @@ func (w *WebWatch) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("sites", errortypes.ErrInvalid, "A watch can name at most 20 sites")
 	}
 	for _, domain := range w.IncludeDomains {
-		if strings.HasPrefix(domain, "*.") || !hostnamePattern.MatchString(domain) {
+		if strings.HasPrefix(domain, "*.") || !urlutils.IsHostPattern(domain) {
 			multiErr.Add("sites", errortypes.ErrInvalid,
 				"Sites must be hostnames such as fmcsa.dot.gov; {0} is not", domain)
 		}
@@ -338,13 +334,13 @@ func WebWatchWebhookPath(orgID, buID, watchID pulid.ID) string {
 }
 
 // MaxActiveWebWatches is how many watches a vendor's settings allow at once.
-func MaxActiveWebWatches(typ Type, values map[string]string) int {
-	if typ != TypeExa {
-		return DefaultMaxActiveWebWatches
+func MaxActiveWebWatches(typ agentextension.Type, values map[string]string) int {
+	if typ != agentextension.TypeExa {
+		return agentextension.DefaultMaxActiveWebWatches
 	}
-	settings, err := ParseExaSettings(values)
+	settings, err := agentextension.ParseExaSettings(values)
 	if err != nil {
-		return DefaultMaxActiveWebWatches
+		return agentextension.DefaultMaxActiveWebWatches
 	}
 
 	return settings.MaxActiveWatches

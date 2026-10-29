@@ -124,7 +124,7 @@ lets its wait run out an hour later, and the work hears the watch ended.
 
 | Piece | Location |
 |---|---|
-| Watch, finding, cadence, bounds | `internal/modules/agent/domain/agentextension/webwatch.go` |
+| Watch, finding, cadence, bounds | `internal/modules/agent/domain/extensionwebwatch/webwatch.go` |
 | Ports | `ports/agentextensionports/webwatch.go` |
 | Service | `app/agentextensionservice/web_watches.go` |
 | Repositories | `adapters/postgres/agentextensionrepository/webwatch.go` |

@@ -50,7 +50,7 @@ A portal that asks for a second factor at sign-in is handled one of three ways:
   code), encrypted beside the username and password. It is accepted as copied:
   grouped with spaces or dashes, in either case, or as an `otpauth://` link, and
   refused unless it is a base32 key of at least 80 bits
-  (`agentextension.NormalizeAuthenticatorKey`). It is sent as the vendor secret
+  (`extensionportal.NormalizeAuthenticatorKey`). It is sent as the vendor secret
   `portal_bu_2fa_code`: Browser Use generates a fresh code from any secret named
   with the `bu_2fa_code` suffix whenever the browser types it, so no code is
   stored or shown, and no model sees the key. A key needs a sign-in beside it;
@@ -66,8 +66,8 @@ A portal that asks for a second factor at sign-in is handled one of three ways:
 - **A code sent by text message or email.** The browser cannot read one, so the
   person relays it. Every task tells the browser to stop at a code it was not
   given and begin its answer with `SIGN-IN CODE NEEDED`
-  (`agentextension.PortalSignInCodeMarker`); a run that does, or that did not
-  succeed and talks about a sign-in code (`agentextension.AsksForSignInCode`),
+  (`extensionportal.PortalSignInCodeMarker`); a run that does, or that did not
+  succeed and talks about a sign-in code (`extensionportal.AsksForSignInCode`),
   waits for the code when it belongs to a conversation (see
   [Relayed codes](#relayed-codes)). A run with no conversation (a background run)
   ends `Failed` with a message that names the site and says what an
@@ -118,9 +118,9 @@ for someone who can update extensions. The box posts to
 run was asked for, or someone who can update agent extensions (anyone else is
 told there is no such run), and only while the run waits. The code is read as a
 person types it, spaces and dashes dropped, and refused unless it is 4 to 12
-letters and digits (`agentextension.NormalizeSignInCode`). `ProvidePortalCode`
+letters and digits (`extensionportal.NormalizeSignInCode`). `ProvidePortalCode`
 then starts a follow-up task in the same browser (`PortalTaskRequest.SessionID`)
-whose text is `agentextension.ContinueWithCode` over the original task, with the
+whose text is `extensionportal.ContinueWithCode` over the original task, with the
 code sent only as the vendor secret `portal_sign_in_code`: it is never written to
 the run, never reaches a model, and a detail named like it is refused. The run is
 `Running` again with the follow-up's task id, and what the follow-up does adds to
@@ -142,7 +142,7 @@ link the person follows. A finished run's browser is closed and has no live view
 
 Having signed in, the person posts `{ "signedIn": true }` to the sign-in code
 route instead of a code. `ProvidePortalCode` then starts the follow-up with
-`agentextension.ContinueAfterSignIn` over the original task, which carries on
+`extensionportal.ContinueAfterSignIn` over the original task, which carries on
 from the page the browser is on, and sends no code secret; a request with both a
 code and `signedIn` is refused. It counts as one of the run's three attempts, and
 a portal that asks again stops the run at a code once more.
@@ -169,7 +169,7 @@ written to steer an agent. The rules:
   hostnames as the vendor's navigation allow-list (Browser Use `allowedDomains`)
   and a system prompt extension telling the browser agent to stay on them.
   Afterwards every page the browser visited (each step's URL) is checked against
-  the same list (`agentextension.OffSite`); a task that strayed is recorded as
+  the same list (`extensionportal.OffSite`); a task that strayed is recorded as
   `Strayed`, its answer is withheld from the model, and the run lists the pages
   it reached. This is why the Browser Use connector uses API V2: V4 limits where
   a credential may be typed, not where the browser may go. The connector
@@ -278,7 +278,7 @@ every extension does.
 
 | Piece | Location |
 |---|---|
-| Capability, tools, sites, runs and the task text | `internal/modules/agent/domain/agentextension/` (`capability.go`, `portal.go`, `portaltask.go`, `portalsettings.go`, `browseruse.go`) |
+| Capability, tools, sites, runs and the task text | `internal/modules/agent/domain/agentextension/` (`capability.go`, `portalsettings.go`, `browseruse.go`) and `internal/modules/agent/domain/extensionportal/` (`portal.go`, `portaltask.go`) |
 | Stored sites and runs | `agent_portal_sites`, `agent_portal_runs` |
 | Site management, reads, starting and finishing actions | `internal/modules/agent/app/agentextensionservice/portal_sites.go`, `portal_tasks.go` |
 | The workflow that finishes an action | `internal/modules/agent/jobs/portaljobs/` |
@@ -287,6 +287,6 @@ every extension does.
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
 | Tools | `agentquerytoolservice/portal_tools.go` (`web_list_portal_sites`, `web_read_portal`), `agenttools/portaltools/` (`web_use_portal`) |
 | REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |
-| Relayed codes and signing in by hand | `agentextension/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
+| Relayed codes and signing in by hand | `extensionportal/portalsignin.go`, `agentextensionservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
 | What a person reads of a run | `client/apps/web/src/components/assistant/portal-run-result.tsx`, drawn by AI control and by the Desk's `portal_task` artifact (`routes/desk/_components/artifacts/kinds/portal/`, recorded by `assistantservice/portal_task_artifact.go`) |
 | AI control | `client/apps/web/src/routes/agent-control/_components/extensions/portal-*.tsx` |

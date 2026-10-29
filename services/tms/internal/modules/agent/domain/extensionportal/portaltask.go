@@ -1,4 +1,4 @@
-package agentextension
+package extensionportal
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/recordids"
 )
 
 const MinPortalInstructionRunes = 8
@@ -33,7 +34,7 @@ func CheckPortalInstruction(text string) error {
 		return ErrPortalInstructionTooShort
 	case length > MaxPortalInstructionRunes:
 		return ErrPortalInstructionTooLong
-	case recordIDPattern.MatchString(trimmed):
+	case recordids.Mentioned(trimmed):
 		return ErrPortalInstructionHasRecordID
 	default:
 		return nil
@@ -66,7 +67,7 @@ func NormalizePortalDetails(raw map[string]string) (map[string]string, error) {
 		case namesSecret(name):
 			multiErr.Add("details", errortypes.ErrInvalid,
 				"The sign-in is added by Trenova; do not send it as a detail")
-		case recordIDPattern.MatchString(value):
+		case recordids.Mentioned(value):
 			multiErr.Add("details", errortypes.ErrInvalid, ErrPortalInstructionHasRecordID.Error())
 		default:
 			details[name] = value
@@ -124,8 +125,10 @@ func (p *PortalTaskText) Task() string {
 		}
 	}
 	if p.UsesSignIn {
-		b.WriteString("If the portal asks you to sign in, use the username " + PortalSecretUsername +
-			" and the password " + PortalSecretPassword + ".\n")
+		b.WriteString(
+			"If the portal asks you to sign in, use the username " + PortalSecretUsername +
+				" and the password " + PortalSecretPassword + ".\n",
+		)
 	}
 	if p.UsesSignIn && p.UsesAuthenticator {
 		b.WriteString(authenticatorLine)

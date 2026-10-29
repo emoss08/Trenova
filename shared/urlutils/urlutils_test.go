@@ -68,3 +68,16 @@ func TestHostMatches(t *testing.T) {
 	}
 	assert.False(t, urlutils.HostMatches("anything.example", []string{"", "*."}))
 }
+
+func TestIsHostPattern(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, urlutils.IsHostPattern("example.com"))
+	assert.True(t, urlutils.IsHostPattern("portal.example.co.uk"))
+	assert.True(t, urlutils.IsHostPattern("*.example.com"))
+	assert.False(t, urlutils.IsHostPattern("Example.com"))
+	assert.False(t, urlutils.IsHostPattern("localhost"))
+	assert.False(t, urlutils.IsHostPattern("https://example.com"))
+	assert.False(t, urlutils.IsHostPattern("example.com/path"))
+	assert.False(t, urlutils.IsHostPattern(""))
+}

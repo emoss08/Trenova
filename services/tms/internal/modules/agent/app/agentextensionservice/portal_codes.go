@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,18 +20,18 @@ const portalCodeExpiredMessage = "No sign-in code was entered within 10 minutes,
 // relays says a run can wait for a person to relay the sign-in code the portal
 // sent them: it belongs to a conversation someone answers in, its browser is
 // still open, and it has codes left to try.
-func relays(run *agentextension.PortalRun) bool {
+func relays(run *extensionportal.PortalRun) bool {
 	return run.ThreadID.IsNotNil() && run.VendorSessionID != "" &&
-		run.CodeAttempts < agentextension.MaxPortalCodeAttempts
+		run.CodeAttempts < extensionportal.MaxPortalCodeAttempts
 }
 
 // awaitCode records a run as waiting on a sign-in code, its browser left open
 // on the portal's code prompt.
 func (s *Service) awaitCode(
 	ctx context.Context,
-	run *agentextension.PortalRun,
-	progress *agentextension.PortalRunOutcome,
-) (*agentextension.PortalRun, error) {
+	run *extensionportal.PortalRun,
+	progress *extensionportal.PortalRunOutcome,
+) (*extensionportal.PortalRun, error) {
 	version := run.Version
 	run.AwaitCode(progress, s.now())
 	updated, err := s.runs.Update(ctx, run)
@@ -48,11 +48,11 @@ func (s *Service) awaitCode(
 // heldProgress ends a run with what it did before it waited on a code: no task
 // is running in its browser to ask.
 func heldProgress(
-	run *agentextension.PortalRun,
-	status agentextension.PortalRunStatus,
+	run *extensionportal.PortalRun,
+	status extensionportal.PortalRunStatus,
 	failure string,
-) *agentextension.PortalRunOutcome {
-	return &agentextension.PortalRunOutcome{
+) *extensionportal.PortalRunOutcome {
+	return &extensionportal.PortalRunOutcome{
 		Status:      status,
 		Failure:     failure,
 		VisitedURLs: run.VisitedURLs,
@@ -65,7 +65,7 @@ func heldProgress(
 // release closes the browser a run ended in. A task's browser stays open after
 // the task so a relayed code can continue in it, so it is closed here once the
 // run has ended rather than when the vendor's task does.
-func (s *Service) release(ctx context.Context, call *portalCall, run *agentextension.PortalRun) {
+func (s *Service) release(ctx context.Context, call *portalCall, run *extensionportal.PortalRun) {
 	if run.VendorSessionID == "" || !run.Status.Finished() {
 		return
 	}
@@ -80,7 +80,7 @@ func (s *Service) release(ctx context.Context, call *portalCall, run *agentexten
 // mayReach says a person may enter a run's code, open its browser or follow it: the
 // person it was asked for, or someone who administers agents. Anyone else is told
 // there is no such run.
-func mayReach(administers bool, run *agentextension.PortalRun, userID pulid.ID) bool {
+func mayReach(administers bool, run *extensionportal.PortalRun, userID pulid.ID) bool {
 	if administers {
 		return true
 	}
@@ -91,9 +91,9 @@ func mayReach(administers bool, run *agentextension.PortalRun, userID pulid.ID) 
 type awaitingRead struct {
 	tenant  pagination.TenantInfo
 	call    *portalCall
-	site    *agentextension.PortalSite
-	run     *agentextension.PortalRun
-	outcome *agentextension.PortalRunOutcome
+	site    *extensionportal.PortalSite
+	run     *extensionportal.PortalRun
+	outcome *extensionportal.PortalRunOutcome
 }
 
 // readAwaitingCode keeps a read open on the portal's code prompt and follows
@@ -146,7 +146,7 @@ func (s *Service) ProvidePortalCode(
 	if !mayReach(req.Administers, run, req.TenantInfo.UserID) {
 		return nil, errortypes.NewNotFoundError("Portal run not found")
 	}
-	if run.Status != agentextension.PortalRunStatusAwaitingCode {
+	if run.Status != extensionportal.PortalRunStatusAwaitingCode {
 		return nil, errortypes.NewBusinessError(
 			"This portal task is not waiting for a sign-in code",
 		)
@@ -157,19 +157,19 @@ func (s *Service) ProvidePortalCode(
 		)
 	}
 
-	instruction := agentextension.ContinueAfterSignIn(run.Instruction)
+	instruction := extensionportal.ContinueAfterSignIn(run.Instruction)
 	code := ""
 	switch {
 	case req.SignedIn && strings.TrimSpace(req.Code) != "":
 		return nil, errortypes.NewValidationError("code", errortypes.ErrInvalid,
 			"Enter the code, or say you signed in yourself, not both")
 	case !req.SignedIn:
-		code, err = agentextension.NormalizeSignInCode(req.Code)
+		code, err = extensionportal.NormalizeSignInCode(req.Code)
 		if err != nil {
 			return nil, errortypes.NewValidationError("code", errortypes.ErrInvalid,
 				"A sign-in code is 4 to 12 letters or digits, as the portal sent it")
 		}
-		instruction = agentextension.ContinueWithCode(run.Instruction)
+		instruction = extensionportal.ContinueWithCode(run.Instruction)
 	}
 
 	call, err := s.portalCallOf(ctx, req.TenantInfo, run.ExtensionType)
@@ -188,7 +188,7 @@ func (s *Service) ProvidePortalCode(
 		secrets = make(map[string]string, 1)
 	}
 	if code != "" {
-		secrets[agentextension.PortalSecretSignInCode] = code
+		secrets[extensionportal.PortalSecretSignInCode] = code
 	}
 
 	text := taskText(site, run.Mode, "", run.Details)
@@ -207,7 +207,7 @@ func (s *Service) ProvidePortalCode(
 	if err != nil {
 		failure := s.providerError(call.failing(err, "continue the portal task"))
 		finished := s.finish(ctx, req.TenantInfo, run, heldProgress(run,
-			agentextension.PortalRunStatusFailed, failure.Error()))
+			extensionportal.PortalRunStatusFailed, failure.Error()))
 		s.release(ctx, call, finished)
 		return nil, asBusinessError(failure)
 	}
@@ -280,7 +280,7 @@ func (s *Service) PortalRunLive(
 func (s *Service) accessibleRun(
 	ctx context.Context,
 	req *agentextensionports.PortalRunAccessRequest,
-) (*agentextension.PortalRun, error) {
+) (*extensionportal.PortalRun, error) {
 	ctx = dbscope.WithValidTenant(ctx, req.TenantInfo.DBTenant())
 	run, err := s.runs.Get(ctx, req.TenantInfo, req.RunID)
 	if errortypes.IsNotFoundError(err) {

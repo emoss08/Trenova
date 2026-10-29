@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -110,7 +111,7 @@ func (s *Service) webWatchCallFor(extension *extensionSettings) (*webWatchCall, 
 	return &webWatchCall{
 		extensionSettings: extension,
 		excluded:          settings.ExcludedDomains,
-		allowed:           agentextension.MaxActiveWebWatches(extension.typ, extension.values),
+		allowed:           extensionwebwatch.MaxActiveWebWatches(extension.typ, extension.values),
 		provider:          provider,
 	}, nil
 }
@@ -139,18 +140,18 @@ func (s *Service) webhookBase() (string, error) {
 func (s *Service) draftWebWatch(
 	req *agentextensionports.WebWatchRequest,
 	call *webWatchCall,
-) (*agentextension.WebWatch, int, error) {
-	days, err := agentextension.WatchDays(req.Days)
+) (*extensionwebwatch.WebWatch, int, error) {
+	days, err := extensionwebwatch.WatchDays(req.Days)
 	if err != nil {
 		return nil, 0, err
 	}
 	cadence := req.Cadence
 	if cadence == "" {
-		cadence = agentextension.WebWatchCadenceDaily
+		cadence = extensionwebwatch.WebWatchCadenceDaily
 	}
 
-	watch := &agentextension.WebWatch{
-		ID:                pulid.MustNew(agentextension.WebWatchIDPrefix),
+	watch := &extensionwebwatch.WebWatch{
+		ID:                pulid.MustNew(extensionwebwatch.WebWatchIDPrefix),
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		ExtensionType:     call.typ,
@@ -158,7 +159,7 @@ func (s *Service) draftWebWatch(
 		Purpose:           req.Purpose,
 		IncludeDomains:    req.Sites,
 		Cadence:           cadence,
-		Status:            agentextension.WebWatchStatusActive,
+		Status:            extensionwebwatch.WebWatchStatusActive,
 		Secrets:           map[string]any{},
 		EndsAt:            s.now() + int64(days)*secondsPerDay,
 		AgentDefinitionID: req.Owner.DefinitionID,
@@ -224,7 +225,7 @@ func (s *Service) planWith(
 			"administrator can raise the limit under AI Control, Extensions."}
 	}
 
-	checks := agentextension.WebWatchChecks(watch.Cadence, days)
+	checks := extensionwebwatch.WebWatchChecks(watch.Cadence, days)
 
 	return &agentextensionports.WebWatchPlan{
 		Query:          watch.Query,
@@ -234,8 +235,8 @@ func (s *Service) planWith(
 		Days:           days,
 		EndsAt:         watch.EndsAt,
 		Vendor:         call.def.Vendor,
-		CostPerCheck:   agentextension.ExaMonitorRunCostUSD,
-		EstimatedCost:  agentextension.ExaMonitorRunCostUSD.Mul(decimal.NewFromInt(checks)),
+		CostPerCheck:   extensionwebwatch.ExaMonitorRunCostUSD,
+		EstimatedCost:  extensionwebwatch.ExaMonitorRunCostUSD.Mul(decimal.NewFromInt(checks)),
 		ActiveWatches:  active,
 		WatchesAllowed: call.allowed,
 	}, nil
@@ -280,21 +281,21 @@ func (s *Service) WatchWeb(
 		IncludeDomains: watch.IncludeDomains,
 		ExcludeDomains: excludedFor(call.excluded, watch.IncludeDomains),
 		Cadence:        watch.Cadence,
-		WebhookURL: base + agentextension.WebWatchWebhookPath(
+		WebhookURL: base + extensionwebwatch.WebWatchWebhookPath(
 			watch.OrganizationID, watch.BusinessUnitID, watch.ID,
 		),
 		Metadata: map[string]string{webWatchMetadataKey: watch.ID.String()},
 	})
 	if err != nil {
 		failure := s.providerError(call.failing(err, "set the web watch"))
-		s.endQuietly(ctx, watch, agentextension.WebWatchStatusFailed, failure.Error())
+		s.endQuietly(ctx, watch, extensionwebwatch.WebWatchStatusFailed, failure.Error())
 		return nil, failure
 	}
 
 	watch.VendorMonitorID = created.VendorID
 	watch.Secrets, err = s.secrets.Merge(
-		agentextension.WebWatchSecretFields(),
-		map[string]string{agentextension.WebWatchSecretField: created.Secret},
+		extensionwebwatch.WebWatchSecretFields(),
+		map[string]string{extensionwebwatch.WebWatchSecretField: created.Secret},
 		nil,
 		webWatchScope(req.TenantInfo, watch.ID),
 	)
@@ -314,7 +315,7 @@ func (s *Service) WatchWeb(
 		s.l.Error("a web watch the vendor took could not be kept",
 			zap.String("webWatch", watch.ID.String()), zap.Error(err))
 		s.removeMonitor(ctx, call, created.VendorID)
-		s.endQuietly(ctx, watch, agentextension.WebWatchStatusFailed,
+		s.endQuietly(ctx, watch, extensionwebwatch.WebWatchStatusFailed,
 			"Trenova could not keep track of the watch, so it was removed.")
 		return nil, errortypes.NewBusinessError("The web watch could not be set").WithInternal(err)
 	}
@@ -341,8 +342,8 @@ func vendorMonitorName(purpose string) string {
 
 func (s *Service) endQuietly(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
-	status agentextension.WebWatchStatus,
+	watch *extensionwebwatch.WebWatch,
+	status extensionwebwatch.WebWatchStatus,
 	failure string,
 ) {
 	watch.End(status, failure, s.now())
@@ -446,7 +447,7 @@ func (s *Service) StopWebWatch(
 		}
 	}
 
-	watch.End(agentextension.WebWatchStatusStopped, "", s.now())
+	watch.End(extensionwebwatch.WebWatchStatusStopped, "", s.now())
 	watch.StoppedByID = req.StoppedBy
 	updated, err := s.watches.Update(ctx, watch)
 	if err != nil {
@@ -497,7 +498,7 @@ func (s *Service) CheckWebWatch(
 		if err = call.provider.DeleteWatch(ctx, call.values, watch.VendorMonitorID); err != nil {
 			return nil, err
 		}
-		return s.closeWatch(ctx, tenantInfo, watch, agentextension.WebWatchStatusEnded, "")
+		return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusEnded, "")
 	}
 
 	state, err := call.provider.WatchState(ctx, call.values, watch.VendorMonitorID)
@@ -506,7 +507,7 @@ func (s *Service) CheckWebWatch(
 	}
 	if state.Disabled {
 		s.removeMonitor(ctx, call, watch.VendorMonitorID)
-		return s.closeWatch(ctx, tenantInfo, watch, agentextension.WebWatchStatusFailed,
+		return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusFailed,
 			call.def.Vendor+" turned the watch off after its requests kept failing. An "+
 				"administrator can check the API key under AI Control, Extensions.")
 	}
@@ -553,7 +554,7 @@ func (s *Service) CheckWebWatch(
 // the watch that counted them is saved.
 func (s *Service) recordRuns(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 	call *webWatchCall,
 	vendorRuns []agentextensionports.WebWatchRun,
 ) ([]settledCall, error) {
@@ -595,21 +596,21 @@ func (s *Service) recordRuns(
 
 func (s *Service) recordFinding(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 	run *agentextensionports.WebWatchRun,
 ) error {
-	results := agentextension.BoundedResults(run.Results)
+	results := extensionwebwatch.BoundedResults(run.Results)
 	if len(results) == 0 {
 		return nil
 	}
 
-	_, err := s.findings.Create(ctx, &agentextension.WebWatchFinding{
-		ID:             pulid.MustNew(agentextension.WebWatchFindingIDPrefix),
+	_, err := s.findings.Create(ctx, &extensionwebwatch.WebWatchFinding{
+		ID:             pulid.MustNew(extensionwebwatch.WebWatchFindingIDPrefix),
 		OrganizationID: watch.OrganizationID,
 		BusinessUnitID: watch.BusinessUnitID,
 		WatchID:        watch.ID,
 		VendorRunID:    run.ID,
-		Summary:        agentextension.BoundedSummary(run.Summary),
+		Summary:        extensionwebwatch.BoundedSummary(run.Summary),
 		Results:        results,
 		FoundAt:        run.SettledAt,
 	})
@@ -646,8 +647,8 @@ func runFailureMessage(vendor, reason string) string {
 func (s *Service) closeWatch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	watch *agentextension.WebWatch,
-	status agentextension.WebWatchStatus,
+	watch *extensionwebwatch.WebWatch,
+	status extensionwebwatch.WebWatchStatus,
 	failure string,
 ) (*agentextensionports.WebWatchCheck, error) {
 	watch.End(status, failure, s.now())
@@ -672,11 +673,11 @@ func (s *Service) closeWatch(
 func (s *Service) endUnreachable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 ) (*agentextensionports.WebWatchCheck, error) {
 	def, _ := definitionFor(watch.ExtensionType)
 
-	return s.closeWatch(ctx, tenantInfo, watch, agentextension.WebWatchStatusEnded,
+	return s.closeWatch(ctx, tenantInfo, watch, extensionwebwatch.WebWatchStatusEnded,
 		"The watch's time ran out, but its extension is no longer set up, so Trenova could "+
 			"not remove it from "+def.Vendor+". Delete it in the "+def.Vendor+" dashboard.")
 }
@@ -684,7 +685,7 @@ func (s *Service) endUnreachable(
 func (s *Service) MarkWebWatchDelivered(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	findings []*agentextension.WebWatchFinding,
+	findings []*extensionwebwatch.WebWatchFinding,
 ) error {
 	ids := make([]pulid.ID, 0, len(findings))
 	for _, finding := range findings {
@@ -718,7 +719,7 @@ func (s *Service) ReceiveWebWatchDelivery(
 
 	values, err := s.secrets.ReadAll(
 		watch.Secrets,
-		agentextension.WebWatchSecretFields(),
+		extensionwebwatch.WebWatchSecretFields(),
 		webWatchScope(req.TenantInfo, watch.ID),
 	)
 	if err != nil {
@@ -727,7 +728,7 @@ func (s *Service) ReceiveWebWatchDelivery(
 	}
 	if err = provider.VerifyDelivery(
 		&req.Delivery,
-		values[agentextension.WebWatchSecretField],
+		values[extensionwebwatch.WebWatchSecretField],
 	); err != nil {
 		return errortypes.NewAuthenticationError("The delivery's signature is not valid")
 	}
@@ -741,7 +742,10 @@ func (s *Service) ReceiveWebWatchDelivery(
 // maySteer is the person a watch was set for, the agent whose background work
 // set one for no person, or someone who administers agents; anyone else is
 // told there is no such watch.
-func maySteer(req *agentextensionports.StopWebWatchRequest, watch *agentextension.WebWatch) bool {
+func maySteer(
+	req *agentextensionports.StopWebWatchRequest,
+	watch *extensionwebwatch.WebWatch,
+) bool {
 	switch {
 	case req.Administers:
 		return true
@@ -752,7 +756,7 @@ func maySteer(req *agentextensionports.StopWebWatchRequest, watch *agentextensio
 	}
 }
 
-func webWatchView(watch *agentextension.WebWatch) agentextensionports.WebWatchView {
+func webWatchView(watch *extensionwebwatch.WebWatch) agentextensionports.WebWatchView {
 	return agentextensionports.WebWatchView{
 		ID:                watch.ID,
 		ExtensionType:     watch.ExtensionType,

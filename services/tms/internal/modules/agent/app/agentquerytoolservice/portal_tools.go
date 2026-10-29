@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -168,12 +169,12 @@ func (t *readPortalTool) ParamSchema() map[string]any {
 				toolschema.KeyType: "string",
 				toolschema.KeyDescription: "What to find out, in one plain sentence, such as " +
 					"\"Which dock appointment slots are open on October 20?\".",
-				toolschema.KeyMaxLength: agentextension.MaxPortalInstructionRunes,
+				toolschema.KeyMaxLength: extensionportal.MaxPortalInstructionRunes,
 			},
 			"details": agenttoolschema.StringMap(
 				"Optional: the values the portal needs to find it, by what the portal calls "+
 					"them, such as {\"PO number\": \"4512\", \"Warehouse\": \"Dallas DC\"}.",
-				agentextension.MaxPortalDetailValueRunes,
+				extensionportal.MaxPortalDetailValueRunes,
 			),
 		},
 		toolschema.KeyRequired:             []string{"siteId", "question"},
@@ -242,7 +243,7 @@ func (t *readPortalTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	details, err := agentextension.PortalDetailsFrom(params.Params["details"])
+	details, err := extensionportal.PortalDetailsFrom(params.Params["details"])
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +263,7 @@ func (t *readPortalTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	if outcome.Status == agentextension.PortalRunStatusAwaitingCode {
+	if outcome.Status == extensionportal.PortalRunStatusAwaitingCode {
 		return t.awaitingCode(ctx, owner, question, outcome)
 	}
 

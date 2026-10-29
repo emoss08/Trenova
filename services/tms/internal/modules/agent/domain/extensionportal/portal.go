@@ -1,4 +1,4 @@
-package agentextension
+package extensionportal
 
 import (
 	"net/url"
@@ -7,10 +7,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/urlutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 )
@@ -88,7 +90,7 @@ func (s *PortalSite) Normalize() {
 	s.Purpose = strings.TrimSpace(s.Purpose)
 	s.StartURL = strings.TrimSpace(s.StartURL)
 	s.BrowserProfileID = strings.TrimSpace(s.BrowserProfileID)
-	s.Domains = NormalizeHostnames(s.Domains)
+	s.Domains = agentextension.NormalizeHostnames(s.Domains)
 }
 
 func (s *PortalSite) Validate(multiErr *errortypes.MultiError) {
@@ -122,7 +124,7 @@ func (s *PortalSite) Validate(multiErr *errortypes.MultiError) {
 			"A site can have at most 10 addresses")
 	}
 	for idx, domain := range s.Domains {
-		if !hostnamePattern.MatchString(domain) {
+		if !urlutils.IsHostPattern(domain) {
 			multiErr.Add(
 				"domains",
 				errortypes.ErrInvalid,
@@ -156,19 +158,6 @@ func (s *PortalSite) checkStartURL() string {
 	}
 
 	return ""
-}
-
-func NormalizeHostnames(raw []string) []string {
-	out := make([]string, 0, len(raw))
-	for _, value := range raw {
-		host := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(value)), ".")
-		if host == "" || slices.Contains(out, host) {
-			continue
-		}
-		out = append(out, host)
-	}
-
-	return out
 }
 
 func HostAllowed(host string, domains []string) bool {
@@ -259,38 +248,38 @@ func (s PortalRunStatus) Finished() bool {
 type PortalRun struct {
 	keel.Table `keel:"agent_portal_runs"`
 
-	ID                pulid.ID          `json:"id"                keel:"id,pk,autoid:aprn_"`
-	BusinessUnitID    pulid.ID          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID          `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	SiteID            pulid.ID          `json:"siteId"            keel:"site_id"`
-	ExtensionType     Type              `json:"extensionType"     keel:"extension_type"`
-	Mode              PortalRunMode     `json:"mode"              keel:"mode"`
-	Status            PortalRunStatus   `json:"status"            keel:"status"`
-	Instruction       string            `json:"instruction"       keel:"instruction"`
-	Details           map[string]string `json:"details"           keel:"details,jsonb"`
-	UsedSignIn        bool              `json:"usedSignIn"        keel:"used_sign_in"`
-	VendorTaskID      string            `json:"vendorTaskId"      keel:"vendor_task_id"`
-	VendorSessionID   string            `json:"vendorSessionId"   keel:"vendor_session_id"`
-	Answer            string            `json:"answer"            keel:"answer"`
-	VisitedURLs       []string          `json:"visitedUrls"       keel:"visited_urls,jsonb"`
-	OffSiteURLs       []string          `json:"offSiteUrls"       keel:"off_site_urls,jsonb"`
-	Steps             int               `json:"steps"             keel:"steps"`
-	CostUSD           decimal.Decimal   `json:"costUsd"           keel:"cost_usd"`
-	Failure           string            `json:"failure"           keel:"failure"`
-	CodePrompt        string            `json:"codePrompt"        keel:"code_prompt"`
-	CodeRequestedAt   *int64            `json:"codeRequestedAt"   keel:"code_requested_at"`
-	CodeAttempts      int               `json:"codeAttempts"      keel:"code_attempts"`
-	IdempotencyKey    string            `json:"-"                 keel:"idempotency_key,nullzero"`
-	AgentDefinitionID pulid.ID          `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	AgentRunID        pulid.ID          `json:"agentRunId"        keel:"agent_run_id,nullzero"`
-	ThreadID          pulid.ID          `json:"threadId"          keel:"thread_id,nullzero"`
-	ProposalID        pulid.ID          `json:"proposalId"        keel:"proposal_id,nullzero"`
-	RequestedByID     pulid.ID          `json:"requestedById"     keel:"requested_by_id,nullzero"`
-	StartedAt         int64             `json:"startedAt"         keel:"started_at"`
-	FinishedAt        *int64            `json:"finishedAt"        keel:"finished_at"`
-	Version           int64             `json:"version"           keel:"version,version"`
-	CreatedAt         int64             `json:"createdAt"         keel:"created_at,autocreate"`
-	UpdatedAt         int64             `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	ID                pulid.ID            `json:"id"                keel:"id,pk,autoid:aprn_"`
+	BusinessUnitID    pulid.ID            `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID            `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	SiteID            pulid.ID            `json:"siteId"            keel:"site_id"`
+	ExtensionType     agentextension.Type `json:"extensionType"     keel:"extension_type"`
+	Mode              PortalRunMode       `json:"mode"              keel:"mode"`
+	Status            PortalRunStatus     `json:"status"            keel:"status"`
+	Instruction       string              `json:"instruction"       keel:"instruction"`
+	Details           map[string]string   `json:"details"           keel:"details,jsonb"`
+	UsedSignIn        bool                `json:"usedSignIn"        keel:"used_sign_in"`
+	VendorTaskID      string              `json:"vendorTaskId"      keel:"vendor_task_id"`
+	VendorSessionID   string              `json:"vendorSessionId"   keel:"vendor_session_id"`
+	Answer            string              `json:"answer"            keel:"answer"`
+	VisitedURLs       []string            `json:"visitedUrls"       keel:"visited_urls,jsonb"`
+	OffSiteURLs       []string            `json:"offSiteUrls"       keel:"off_site_urls,jsonb"`
+	Steps             int                 `json:"steps"             keel:"steps"`
+	CostUSD           decimal.Decimal     `json:"costUsd"           keel:"cost_usd"`
+	Failure           string              `json:"failure"           keel:"failure"`
+	CodePrompt        string              `json:"codePrompt"        keel:"code_prompt"`
+	CodeRequestedAt   *int64              `json:"codeRequestedAt"   keel:"code_requested_at"`
+	CodeAttempts      int                 `json:"codeAttempts"      keel:"code_attempts"`
+	IdempotencyKey    string              `json:"-"                 keel:"idempotency_key,nullzero"`
+	AgentDefinitionID pulid.ID            `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID            `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID            `json:"threadId"          keel:"thread_id,nullzero"`
+	ProposalID        pulid.ID            `json:"proposalId"        keel:"proposal_id,nullzero"`
+	RequestedByID     pulid.ID            `json:"requestedById"     keel:"requested_by_id,nullzero"`
+	StartedAt         int64               `json:"startedAt"         keel:"started_at"`
+	FinishedAt        *int64              `json:"finishedAt"        keel:"finished_at"`
+	Version           int64               `json:"version"           keel:"version,version"`
+	CreatedAt         int64               `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64               `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (r *PortalRun) Finish(outcome *PortalRunOutcome, at int64) {

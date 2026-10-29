@@ -962,6 +962,8 @@ modules:
       - conversation
       - conversationschedule
       - deskcase
+      - extensionportal
+      - extensionwebwatch
       - insight
       - shipmentbrief
       - shipmentimportchat

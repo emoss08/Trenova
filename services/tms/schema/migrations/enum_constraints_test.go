@@ -35,6 +35,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -286,19 +288,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_agent_portal_runs_mode",
-			values: stringsOf(agentextension.AllPortalRunModes()),
+			values: stringsOf(extensionportal.AllPortalRunModes()),
 		},
 		{
 			name:   "ck_agent_portal_runs_status",
-			values: stringsOf(agentextension.AllPortalRunStatuses()),
+			values: stringsOf(extensionportal.AllPortalRunStatuses()),
 		},
 		{
 			name:   "ck_agent_web_watches_cadence",
-			values: stringsOf(agentextension.AllWebWatchCadences()),
+			values: stringsOf(extensionwebwatch.AllWebWatchCadences()),
 		},
 		{
 			name:   "ck_agent_web_watches_status",
-			values: stringsOf(agentextension.AllWebWatchStatuses()),
+			values: stringsOf(extensionwebwatch.AllWebWatchStatuses()),
 		},
 		{
 			name:   "ck_agent_analysis_runs_status",

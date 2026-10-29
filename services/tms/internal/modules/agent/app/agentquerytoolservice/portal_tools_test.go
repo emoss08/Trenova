@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +63,7 @@ func (s *stubPortals) TrackPortalRun(
 func TestListPortalSitesSaysWhichSitesAreReadOnly(t *testing.T) {
 	t.Parallel()
 
-	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
+	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
 	portals := &stubPortals{sites: []agentextensionports.PortalSiteSummary{{
 		ID:        siteID,
 		Name:      "Acme DC",
@@ -103,12 +103,12 @@ func TestListPortalSitesWithNoneSetUpSaysWhoCanAddOne(t *testing.T) {
 func TestReadPortalAsksTheQuestionAndMarksTheAnswerAsOutsideText(t *testing.T) {
 	t.Parallel()
 
-	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
-	runID := pulid.MustNew(agentextension.PortalRunIDPrefix)
+	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
+	runID := pulid.MustNew(extensionportal.PortalRunIDPrefix)
 	portals := &stubPortals{outcome: &agentextensionports.PortalReadOutcome{
 		RunID:       runID,
 		Site:        agentextensionports.PortalSiteSummary{ID: siteID, Name: "Acme DC"},
-		Status:      agentextension.PortalRunStatusSucceeded,
+		Status:      extensionportal.PortalRunStatusSucceeded,
 		Answer:      "Open slots: 8:00 AM and 2:00 PM.",
 		VisitedURLs: []string{"https://portal.acme.com/appointments"},
 		RetrievedAt: 1_790_150_400,
@@ -156,14 +156,14 @@ func (s *stubPortalWaits) RegisterPortalRunWait(
 func (s *stubPortalWaits) NotifyPortalRun(
 	context.Context,
 	pagination.TenantInfo,
-	*agentextension.PortalRun,
+	*extensionportal.PortalRun,
 ) {
 }
 
 func (s *stubPortalWaits) AnnouncePortalRun(
 	context.Context,
 	pagination.TenantInfo,
-	*agentextension.PortalRun,
+	*extensionportal.PortalRun,
 ) {
 }
 
@@ -171,7 +171,7 @@ func awaitingCodePortals(siteID, runID pulid.ID) *stubPortals {
 	return &stubPortals{outcome: &agentextensionports.PortalReadOutcome{
 		RunID:       runID,
 		Site:        agentextensionports.PortalSiteSummary{ID: siteID, Name: "Acme DC"},
-		Status:      agentextension.PortalRunStatusAwaitingCode,
+		Status:      extensionportal.PortalRunStatusAwaitingCode,
 		VisitedURLs: []string{"https://portal.acme.com/login"},
 		CodePrompt:  "SIGN-IN CODE NEEDED: the portal texted a six-digit code to the phone on file.",
 		RetrievedAt: 1_790_150_400,
@@ -181,8 +181,8 @@ func awaitingCodePortals(siteID, runID pulid.ID) *stubPortals {
 func TestAReadStoppedForASignInCodeParksTheConversationOnIt(t *testing.T) {
 	t.Parallel()
 
-	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
-	runID := pulid.MustNew(agentextension.PortalRunIDPrefix)
+	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
+	runID := pulid.MustNew(extensionportal.PortalRunIDPrefix)
 	waits := &stubPortalWaits{}
 	params := testParams(map[string]any{
 		"siteId":   siteID.String(),
@@ -217,8 +217,8 @@ func TestAReadStoppedForASignInCodeParksTheConversationOnIt(t *testing.T) {
 func TestAReadStoppedForASignInCodeThatCannotWaitSaysSo(t *testing.T) {
 	t.Parallel()
 
-	siteID := pulid.MustNew(agentextension.PortalSiteIDPrefix)
-	runID := pulid.MustNew(agentextension.PortalRunIDPrefix)
+	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
+	runID := pulid.MustNew(extensionportal.PortalRunIDPrefix)
 	params := testParams(map[string]any{
 		"siteId":   siteID.String(),
 		"question": "Which slots are open on October 20?",

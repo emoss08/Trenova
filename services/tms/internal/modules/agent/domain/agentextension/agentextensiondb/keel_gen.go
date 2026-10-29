@@ -3,6 +3,8 @@
 package agentextensiondb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"context"
 	"unsafe"
 
@@ -358,12 +360,12 @@ func valueExtensionUsageDaily(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// portalRunsTable is the schema of agentextension.PortalRun.
+// portalRunsTable is the schema of extensionportal.PortalRun.
 var portalRunsTable = schema.Table{
 	Name:   "agent_portal_runs",
 	Quoted: `"agent_portal_runs"`,
 	Alias:  "apr",
-	Model:  "agentextension.PortalRun",
+	Model:  "extensionportal.PortalRun",
 	Label:  `Portal Run`,
 	Plural: `Portal Runs`,
 	Columns: []schema.Column{
@@ -413,16 +415,16 @@ var portalRunsTable = schema.Table{
 	IDPrefix:   "aprn_",
 	New:        newPortalRun,
 	NewN:       newNPortalRun,
-	Size:       unsafe.Sizeof(agentextension.PortalRun{}),
+	Size:       unsafe.Sizeof(extensionportal.PortalRun{}),
 	Ptr:        ptrPortalRun,
 	Value:      valuePortalRun,
 }
 
 var portalRunsRef = keel.Ref{Table: &portalRunsTable}
 
-// PortalRunsTable is the table of agentextension.PortalRun.
+// PortalRunsTable is the table of extensionportal.PortalRun.
 type PortalRunsTable struct {
-	keel.Handle[*agentextension.PortalRun]
+	keel.Handle[*extensionportal.PortalRun]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -459,7 +461,7 @@ type PortalRunsTable struct {
 
 // PortalRuns references the agent_portal_runs table.
 var PortalRuns = &PortalRunsTable{
-	Handle:            keel.Handle[*agentextension.PortalRun]{Ref: &portalRunsRef},
+	Handle:            keel.Handle[*extensionportal.PortalRun]{Ref: &portalRunsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 2}}},
@@ -497,7 +499,7 @@ var PortalRuns = &PortalRunsTable{
 // BuildPortalRuns builds the handle of agent_portal_runs for ref. Generated relation and alias methods call it.
 func BuildPortalRuns(r *keel.Ref) *PortalRunsTable {
 	return &PortalRunsTable{
-		Handle:            keel.Handle[*agentextension.PortalRun]{Ref: r},
+		Handle:            keel.Handle[*extensionportal.PortalRun]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -542,18 +544,18 @@ func (t *PortalRunsTable) As(alias string) *PortalRunsTable {
 }
 
 // Get returns the agent_portal_runs row with the given key, or keel.ErrNotFound.
-func (t *PortalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentextension.PortalRun, error) {
+func (t *PortalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionportal.PortalRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPortalRun() unsafe.Pointer { return unsafe.Pointer(new(agentextension.PortalRun)) }
+func newPortalRun() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalRun)) }
 
 func newNPortalRun(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentextension.PortalRun, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]extensionportal.PortalRun, n)))
 }
 
 func ptrPortalRun(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.PortalRun)(p)
+	r := (*extensionportal.PortalRun)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -624,7 +626,7 @@ func ptrPortalRun(p unsafe.Pointer, c int32) any {
 }
 
 func valuePortalRun(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.PortalRun)(p)
+	r := (*extensionportal.PortalRun)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -727,12 +729,12 @@ func valuePortalRun(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// portalSitesTable is the schema of agentextension.PortalSite.
+// portalSitesTable is the schema of extensionportal.PortalSite.
 var portalSitesTable = schema.Table{
 	Name:   "agent_portal_sites",
 	Quoted: `"agent_portal_sites"`,
 	Alias:  "aps",
-	Model:  "agentextension.PortalSite",
+	Model:  "extensionportal.PortalSite",
 	Label:  `Portal Site`,
 	Plural: `Portal Sites`,
 	Columns: []schema.Column{
@@ -765,16 +767,16 @@ var portalSitesTable = schema.Table{
 	IDPrefix:   "apst_",
 	New:        newPortalSite,
 	NewN:       newNPortalSite,
-	Size:       unsafe.Sizeof(agentextension.PortalSite{}),
+	Size:       unsafe.Sizeof(extensionportal.PortalSite{}),
 	Ptr:        ptrPortalSite,
 	Value:      valuePortalSite,
 }
 
 var portalSitesRef = keel.Ref{Table: &portalSitesTable}
 
-// PortalSitesTable is the table of agentextension.PortalSite.
+// PortalSitesTable is the table of extensionportal.PortalSite.
 type PortalSitesTable struct {
-	keel.Handle[*agentextension.PortalSite]
+	keel.Handle[*extensionportal.PortalSite]
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -794,7 +796,7 @@ type PortalSitesTable struct {
 
 // PortalSites references the agent_portal_sites table.
 var PortalSites = &PortalSitesTable{
-	Handle:           keel.Handle[*agentextension.PortalSite]{Ref: &portalSitesRef},
+	Handle:           keel.Handle[*extensionportal.PortalSite]{Ref: &portalSitesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 2}}},
@@ -815,7 +817,7 @@ var PortalSites = &PortalSitesTable{
 // BuildPortalSites builds the handle of agent_portal_sites for ref. Generated relation and alias methods call it.
 func BuildPortalSites(r *keel.Ref) *PortalSitesTable {
 	return &PortalSitesTable{
-		Handle:           keel.Handle[*agentextension.PortalSite]{Ref: r},
+		Handle:           keel.Handle[*extensionportal.PortalSite]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -843,18 +845,18 @@ func (t *PortalSitesTable) As(alias string) *PortalSitesTable {
 }
 
 // Get returns the agent_portal_sites row with the given key, or keel.ErrNotFound.
-func (t *PortalSitesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentextension.PortalSite, error) {
+func (t *PortalSitesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionportal.PortalSite, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPortalSite() unsafe.Pointer { return unsafe.Pointer(new(agentextension.PortalSite)) }
+func newPortalSite() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalSite)) }
 
 func newNPortalSite(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentextension.PortalSite, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]extensionportal.PortalSite, n)))
 }
 
 func ptrPortalSite(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.PortalSite)(p)
+	r := (*extensionportal.PortalSite)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -891,7 +893,7 @@ func ptrPortalSite(p unsafe.Pointer, c int32) any {
 }
 
 func valuePortalSite(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.PortalSite)(p)
+	r := (*extensionportal.PortalSite)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -936,12 +938,12 @@ func valuePortalSite(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// webWatchesTable is the schema of agentextension.WebWatch.
+// webWatchesTable is the schema of extensionwebwatch.WebWatch.
 var webWatchesTable = schema.Table{
 	Name:   "agent_web_watches",
 	Quoted: `"agent_web_watches"`,
 	Alias:  "aww",
-	Model:  "agentextension.WebWatch",
+	Model:  "extensionwebwatch.WebWatch",
 	Label:  `Web Watch`,
 	Plural: `Web Watches`,
 	Doc:    `WebWatch is a search the vendor runs on a schedule for an agent, which hands back only what earlier runs did not find. It belongs to the work that set it: the conversation it answers, or a background run's agent.`,
@@ -987,16 +989,16 @@ var webWatchesTable = schema.Table{
 	IDPrefix:   "awwt_",
 	New:        newWebWatch,
 	NewN:       newNWebWatch,
-	Size:       unsafe.Sizeof(agentextension.WebWatch{}),
+	Size:       unsafe.Sizeof(extensionwebwatch.WebWatch{}),
 	Ptr:        ptrWebWatch,
 	Value:      valueWebWatch,
 }
 
 var webWatchesRef = keel.Ref{Table: &webWatchesTable}
 
-// WebWatchesTable is the table of agentextension.WebWatch.
+// WebWatchesTable is the table of extensionwebwatch.WebWatch.
 type WebWatchesTable struct {
-	keel.Handle[*agentextension.WebWatch]
+	keel.Handle[*extensionwebwatch.WebWatch]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -1028,7 +1030,7 @@ type WebWatchesTable struct {
 
 // WebWatches references the agent_web_watches table.
 var WebWatches = &WebWatchesTable{
-	Handle:            keel.Handle[*agentextension.WebWatch]{Ref: &webWatchesRef},
+	Handle:            keel.Handle[*extensionwebwatch.WebWatch]{Ref: &webWatchesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 2}}},
@@ -1061,7 +1063,7 @@ var WebWatches = &WebWatchesTable{
 // BuildWebWatches builds the handle of agent_web_watches for ref. Generated relation and alias methods call it.
 func BuildWebWatches(r *keel.Ref) *WebWatchesTable {
 	return &WebWatchesTable{
-		Handle:            keel.Handle[*agentextension.WebWatch]{Ref: r},
+		Handle:            keel.Handle[*extensionwebwatch.WebWatch]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1101,18 +1103,18 @@ func (t *WebWatchesTable) As(alias string) *WebWatchesTable {
 }
 
 // Get returns the agent_web_watches row with the given key, or keel.ErrNotFound.
-func (t *WebWatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentextension.WebWatch, error) {
+func (t *WebWatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionwebwatch.WebWatch, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWebWatch() unsafe.Pointer { return unsafe.Pointer(new(agentextension.WebWatch)) }
+func newWebWatch() unsafe.Pointer { return unsafe.Pointer(new(extensionwebwatch.WebWatch)) }
 
 func newNWebWatch(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentextension.WebWatch, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]extensionwebwatch.WebWatch, n)))
 }
 
 func ptrWebWatch(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.WebWatch)(p)
+	r := (*extensionwebwatch.WebWatch)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1173,7 +1175,7 @@ func ptrWebWatch(p unsafe.Pointer, c int32) any {
 }
 
 func valueWebWatch(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.WebWatch)(p)
+	r := (*extensionwebwatch.WebWatch)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1263,12 +1265,12 @@ func valueWebWatch(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// webWatchFindingsTable is the schema of agentextension.WebWatchFinding.
+// webWatchFindingsTable is the schema of extensionwebwatch.WebWatchFinding.
 var webWatchFindingsTable = schema.Table{
 	Name:   "agent_web_watch_findings",
 	Quoted: `"agent_web_watch_findings"`,
 	Alias:  "awwf",
-	Model:  "agentextension.WebWatchFinding",
+	Model:  "extensionwebwatch.WebWatchFinding",
 	Label:  `Web Watch Finding`,
 	Plural: `Web Watch Findings`,
 	Doc:    `WebWatchFinding is one run that found something new: its summary and the pages it found, kept with the watch and handed to the work waiting on it.`,
@@ -1297,16 +1299,16 @@ var webWatchFindingsTable = schema.Table{
 	IDPrefix:   "awwf_",
 	New:        newWebWatchFinding,
 	NewN:       newNWebWatchFinding,
-	Size:       unsafe.Sizeof(agentextension.WebWatchFinding{}),
+	Size:       unsafe.Sizeof(extensionwebwatch.WebWatchFinding{}),
 	Ptr:        ptrWebWatchFinding,
 	Value:      valueWebWatchFinding,
 }
 
 var webWatchFindingsRef = keel.Ref{Table: &webWatchFindingsTable}
 
-// WebWatchFindingsTable is the table of agentextension.WebWatchFinding.
+// WebWatchFindingsTable is the table of extensionwebwatch.WebWatchFinding.
 type WebWatchFindingsTable struct {
-	keel.Handle[*agentextension.WebWatchFinding]
+	keel.Handle[*extensionwebwatch.WebWatchFinding]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1321,7 +1323,7 @@ type WebWatchFindingsTable struct {
 
 // WebWatchFindings references the agent_web_watch_findings table.
 var WebWatchFindings = &WebWatchFindingsTable{
-	Handle:         keel.Handle[*agentextension.WebWatchFinding]{Ref: &webWatchFindingsRef},
+	Handle:         keel.Handle[*extensionwebwatch.WebWatchFinding]{Ref: &webWatchFindingsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 2}}},
@@ -1337,7 +1339,7 @@ var WebWatchFindings = &WebWatchFindingsTable{
 // BuildWebWatchFindings builds the handle of agent_web_watch_findings for ref. Generated relation and alias methods call it.
 func BuildWebWatchFindings(r *keel.Ref) *WebWatchFindingsTable {
 	return &WebWatchFindingsTable{
-		Handle:         keel.Handle[*agentextension.WebWatchFinding]{Ref: r},
+		Handle:         keel.Handle[*extensionwebwatch.WebWatchFinding]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1360,18 +1362,18 @@ func (t *WebWatchFindingsTable) As(alias string) *WebWatchFindingsTable {
 }
 
 // Get returns the agent_web_watch_findings row with the given key, or keel.ErrNotFound.
-func (t *WebWatchFindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentextension.WebWatchFinding, error) {
+func (t *WebWatchFindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionwebwatch.WebWatchFinding, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newWebWatchFinding() unsafe.Pointer { return unsafe.Pointer(new(agentextension.WebWatchFinding)) }
+func newWebWatchFinding() unsafe.Pointer { return unsafe.Pointer(new(extensionwebwatch.WebWatchFinding)) }
 
 func newNWebWatchFinding(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentextension.WebWatchFinding, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]extensionwebwatch.WebWatchFinding, n)))
 }
 
 func ptrWebWatchFinding(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.WebWatchFinding)(p)
+	r := (*extensionwebwatch.WebWatchFinding)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1398,7 +1400,7 @@ func ptrWebWatchFinding(p unsafe.Pointer, c int32) any {
 }
 
 func valueWebWatchFinding(p unsafe.Pointer, c int32) any {
-	r := (*agentextension.WebWatchFinding)(p)
+	r := (*extensionwebwatch.WebWatchFinding)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1513,77 +1515,77 @@ func (c AvailabilityCol) NotIn(vs ...agentextension.Availability) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PortalRunModeCol is a column of agentextension.PortalRunMode values.
+// PortalRunModeCol is a column of extensionportal.PortalRunMode values.
 type PortalRunModeCol struct{ keel.StringCol }
 
-func (c PortalRunModeCol) Eq(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Eq(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PortalRunModeCol) Ne(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Ne(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PortalRunModeCol) Gt(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Gt(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PortalRunModeCol) Gte(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Gte(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PortalRunModeCol) Lt(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Lt(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PortalRunModeCol) Lte(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Lte(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PortalRunModeCol) IsDistinctFrom(v agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) IsDistinctFrom(v extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PortalRunModeCol) Between(lo, hi agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) Between(lo, hi extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PortalRunModeCol) To(v agentextension.PortalRunMode) keel.Assignment {
+func (c PortalRunModeCol) To(v extensionportal.PortalRunMode) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PortalRunModeCol) In(vs ...agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) In(vs ...extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PortalRunModeCol) NotIn(vs ...agentextension.PortalRunMode) keel.Pred {
+func (c PortalRunModeCol) NotIn(vs ...extensionportal.PortalRunMode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PortalRunStatusCol is a column of agentextension.PortalRunStatus values.
+// PortalRunStatusCol is a column of extensionportal.PortalRunStatus values.
 type PortalRunStatusCol struct{ keel.StringCol }
 
-func (c PortalRunStatusCol) Eq(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Eq(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PortalRunStatusCol) Ne(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Ne(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PortalRunStatusCol) Gt(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Gt(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PortalRunStatusCol) Gte(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Gte(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PortalRunStatusCol) Lt(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Lt(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PortalRunStatusCol) Lte(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Lte(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PortalRunStatusCol) IsDistinctFrom(v agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) IsDistinctFrom(v extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PortalRunStatusCol) Between(lo, hi agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) Between(lo, hi extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PortalRunStatusCol) To(v agentextension.PortalRunStatus) keel.Assignment {
+func (c PortalRunStatusCol) To(v extensionportal.PortalRunStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PortalRunStatusCol) In(vs ...agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) In(vs ...extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PortalRunStatusCol) NotIn(vs ...agentextension.PortalRunStatus) keel.Pred {
+func (c PortalRunStatusCol) NotIn(vs ...extensionportal.PortalRunStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -1608,76 +1610,76 @@ func (c TypeCol) NotIn(vs ...agentextension.Type) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// WebWatchCadenceCol is a column of agentextension.WebWatchCadence values.
+// WebWatchCadenceCol is a column of extensionwebwatch.WebWatchCadence values.
 type WebWatchCadenceCol struct{ keel.StringCol }
 
-func (c WebWatchCadenceCol) Eq(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Eq(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c WebWatchCadenceCol) Ne(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Ne(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c WebWatchCadenceCol) Gt(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Gt(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c WebWatchCadenceCol) Gte(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Gte(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c WebWatchCadenceCol) Lt(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Lt(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c WebWatchCadenceCol) Lte(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Lte(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c WebWatchCadenceCol) IsDistinctFrom(v agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) IsDistinctFrom(v extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c WebWatchCadenceCol) Between(lo, hi agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) Between(lo, hi extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c WebWatchCadenceCol) To(v agentextension.WebWatchCadence) keel.Assignment {
+func (c WebWatchCadenceCol) To(v extensionwebwatch.WebWatchCadence) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c WebWatchCadenceCol) In(vs ...agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) In(vs ...extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c WebWatchCadenceCol) NotIn(vs ...agentextension.WebWatchCadence) keel.Pred {
+func (c WebWatchCadenceCol) NotIn(vs ...extensionwebwatch.WebWatchCadence) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// WebWatchStatusCol is a column of agentextension.WebWatchStatus values.
+// WebWatchStatusCol is a column of extensionwebwatch.WebWatchStatus values.
 type WebWatchStatusCol struct{ keel.StringCol }
 
-func (c WebWatchStatusCol) Eq(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Eq(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c WebWatchStatusCol) Ne(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Ne(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c WebWatchStatusCol) Gt(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Gt(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c WebWatchStatusCol) Gte(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Gte(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c WebWatchStatusCol) Lt(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Lt(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c WebWatchStatusCol) Lte(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Lte(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c WebWatchStatusCol) IsDistinctFrom(v agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) IsDistinctFrom(v extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c WebWatchStatusCol) Between(lo, hi agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) Between(lo, hi extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c WebWatchStatusCol) To(v agentextension.WebWatchStatus) keel.Assignment {
+func (c WebWatchStatusCol) To(v extensionwebwatch.WebWatchStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c WebWatchStatusCol) In(vs ...agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) In(vs ...extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c WebWatchStatusCol) NotIn(vs ...agentextension.WebWatchStatus) keel.Pred {
+func (c WebWatchStatusCol) NotIn(vs ...extensionwebwatch.WebWatchStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

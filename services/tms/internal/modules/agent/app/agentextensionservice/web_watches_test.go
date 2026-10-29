@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -105,13 +106,13 @@ func (f *fakeWatcher) VerifyDelivery(
 
 type memoryWatches struct {
 	mu      sync.Mutex
-	watches map[pulid.ID]*agentextension.WebWatch
+	watches map[pulid.ID]*extensionwebwatch.WebWatch
 }
 
 func (m *memoryWatches) Create(
 	_ context.Context,
-	watch *agentextension.WebWatch,
-) (*agentextension.WebWatch, error) {
+	watch *extensionwebwatch.WebWatch,
+) (*extensionwebwatch.WebWatch, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -126,7 +127,7 @@ func (m *memoryWatches) Get(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.WebWatch, error) {
+) (*extensionwebwatch.WebWatch, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -141,8 +142,8 @@ func (m *memoryWatches) Get(
 
 func (m *memoryWatches) Update(
 	_ context.Context,
-	watch *agentextension.WebWatch,
-) (*agentextension.WebWatch, error) {
+	watch *extensionwebwatch.WebWatch,
+) (*extensionwebwatch.WebWatch, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -156,11 +157,11 @@ func (m *memoryWatches) Update(
 func (m *memoryWatches) List(
 	_ context.Context,
 	_ *agentextensionports.ListWebWatchesRequest,
-) ([]*agentextension.WebWatch, error) {
+) ([]*extensionwebwatch.WebWatch, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	out := make([]*agentextension.WebWatch, 0, len(m.watches))
+	out := make([]*extensionwebwatch.WebWatch, 0, len(m.watches))
 	for _, watch := range m.watches {
 		copied := *watch
 		out = append(out, &copied)
@@ -183,7 +184,7 @@ func (m *memoryWatches) CountActive(context.Context, pagination.TenantInfo) (int
 	return count, nil
 }
 
-func (m *memoryWatches) only(t *testing.T) *agentextension.WebWatch {
+func (m *memoryWatches) only(t *testing.T) *extensionwebwatch.WebWatch {
 	t.Helper()
 
 	m.mu.Lock()
@@ -200,13 +201,13 @@ func (m *memoryWatches) only(t *testing.T) *agentextension.WebWatch {
 
 type memoryFindings struct {
 	mu       sync.Mutex
-	findings []*agentextension.WebWatchFinding
+	findings []*extensionwebwatch.WebWatchFinding
 }
 
 func (m *memoryFindings) Create(
 	_ context.Context,
-	finding *agentextension.WebWatchFinding,
-) (*agentextension.WebWatchFinding, error) {
+	finding *extensionwebwatch.WebWatchFinding,
+) (*extensionwebwatch.WebWatchFinding, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -225,9 +226,9 @@ func (m *memoryFindings) ListByWatch(
 	_ pagination.TenantInfo,
 	watchID pulid.ID,
 	_ int,
-) ([]*agentextension.WebWatchFinding, error) {
+) ([]*extensionwebwatch.WebWatchFinding, error) {
 	return m.matching(
-		func(f *agentextension.WebWatchFinding) bool { return f.WatchID == watchID },
+		func(f *extensionwebwatch.WebWatchFinding) bool { return f.WatchID == watchID },
 	), nil
 }
 
@@ -235,8 +236,8 @@ func (m *memoryFindings) ListUndelivered(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	watchID pulid.ID,
-) ([]*agentextension.WebWatchFinding, error) {
-	return m.matching(func(f *agentextension.WebWatchFinding) bool {
+) ([]*extensionwebwatch.WebWatchFinding, error) {
+	return m.matching(func(f *extensionwebwatch.WebWatchFinding) bool {
 		return f.WatchID == watchID && f.DeliveredAt == nil
 	}), nil
 }
@@ -261,12 +262,12 @@ func (m *memoryFindings) MarkDelivered(
 }
 
 func (m *memoryFindings) matching(
-	keep func(*agentextension.WebWatchFinding) bool,
-) []*agentextension.WebWatchFinding {
+	keep func(*extensionwebwatch.WebWatchFinding) bool,
+) []*extensionwebwatch.WebWatchFinding {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	out := make([]*agentextension.WebWatchFinding, 0, len(m.findings))
+	out := make([]*extensionwebwatch.WebWatchFinding, 0, len(m.findings))
 	for _, finding := range m.findings {
 		if keep(finding) {
 			out = append(out, finding)
@@ -339,7 +340,7 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 	w := &watchFixture{
 		fixture:   f,
 		watcher:   &fakeWatcher{fakeWeb: f.web},
-		watches:   &memoryWatches{watches: make(map[pulid.ID]*agentextension.WebWatch)},
+		watches:   &memoryWatches{watches: make(map[pulid.ID]*extensionwebwatch.WebWatch)},
 		findings:  &memoryFindings{},
 		workflows: &watchWorkflows{},
 	}
@@ -372,7 +373,7 @@ func (w *watchFixture) request() *agentextensionports.WebWatchRequest {
 		Query:      "FMCSA final rule broker transparency 49 CFR 371.3",
 		Purpose:    "FMCSA finalizing the broker transparency rule",
 		Sites:      []string{"FMCSA.dot.gov", "federalregister.gov"},
-		Cadence:    agentextension.WebWatchCadenceWeekly,
+		Cadence:    extensionwebwatch.WebWatchCadenceWeekly,
 		Owner: agentextensionports.PortalTaskOwner{
 			Actor: &permissionports.RequestActor{
 				PrincipalType:  permissionports.PrincipalTypeUser,
@@ -396,9 +397,12 @@ func (w *watchFixture) set(t *testing.T) *agentextensionports.WebWatchView {
 }
 
 func completedRun(id string, createdAt int64, urls ...string) agentextensionports.WebWatchRun {
-	results := make([]agentextension.WebWatchResult, 0, len(urls))
+	results := make([]extensionwebwatch.WebWatchResult, 0, len(urls))
 	for _, target := range urls {
-		results = append(results, agentextension.WebWatchResult{Title: "Final rule", URL: target})
+		results = append(
+			results,
+			extensionwebwatch.WebWatchResult{Title: "Final rule", URL: target},
+		)
 	}
 
 	return agentextensionports.WebWatchRun{
@@ -408,7 +412,7 @@ func completedRun(id string, createdAt int64, urls ...string) agentextensionport
 		Results:   results,
 		CreatedAt: createdAt,
 		SettledAt: createdAt + 30,
-		CostUSD:   agentextension.ExaMonitorRunCostUSD,
+		CostUSD:   extensionwebwatch.ExaMonitorRunCostUSD,
 	}
 }
 
@@ -423,7 +427,7 @@ func TestPlanningAWatchSaysWhatItWillCostWithoutReachingTheVendor(t *testing.T) 
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"fmcsa.dot.gov", "federalregister.gov"}, plan.Sites)
-	assert.Equal(t, agentextension.WebWatchCadenceWeekly, plan.Cadence)
+	assert.Equal(t, extensionwebwatch.WebWatchCadenceWeekly, plan.Cadence)
 	assert.Equal(t, 28, plan.Days)
 	assert.Equal(t, testNow+28*24*60*60, plan.EndsAt)
 	assert.Equal(t, "Exa", plan.Vendor)
@@ -440,13 +444,13 @@ func TestSettingAWatchRecordsItThenFollowsIt(t *testing.T) {
 	w := newWatchFixture(t, testWebBase)
 	view := w.set(t)
 
-	assert.Equal(t, agentextension.WebWatchStatusActive, view.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusActive, view.Status)
 	require.Len(t, w.watcher.created, 1)
 	created := w.watcher.created[0]
 	assert.Equal(t, "Trenova: FMCSA finalizing the broker transparency rule", created.Name)
 	assert.Equal(t, []string{"fmcsa.dot.gov", "federalregister.gov"}, created.IncludeDomains)
 	assert.Empty(t, created.ExcludeDomains, "a watch that names its sites excludes none")
-	assert.Equal(t, testWebBase+"/api/v1"+agentextension.WebWatchWebhookPath(
+	assert.Equal(t, testWebBase+"/api/v1"+extensionwebwatch.WebWatchWebhookPath(
 		w.tenant.OrgID, w.tenant.BuID, view.ID), created.WebhookURL)
 	assert.Equal(t, view.ID.String(), created.Metadata["trenovaWebWatch"])
 
@@ -454,7 +458,7 @@ func TestSettingAWatchRecordsItThenFollowsIt(t *testing.T) {
 	assert.Equal(t, "mon_1", stored.VendorMonitorID)
 	assert.Equal(t, w.tenant.UserID, stored.RequestedByID)
 	assert.True(t, stored.HasSecret())
-	assert.NotContains(t, stored.Secrets[agentextension.WebWatchSecretField], testWatchSecret,
+	assert.NotContains(t, stored.Secrets[extensionwebwatch.WebWatchSecretField], testWatchSecret,
 		"the webhook secret is kept encrypted")
 	assert.Equal(t, []string{webwatchcontract.WorkflowIDFor(view.ID)}, w.workflows.started)
 }
@@ -501,7 +505,7 @@ func TestAWatchTheVendorRefusedEndsFailedAtOnce(t *testing.T) {
 	require.Error(t, err)
 
 	stored := w.watches.only(t)
-	assert.Equal(t, agentextension.WebWatchStatusFailed, stored.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusFailed, stored.Status)
 	assert.NotEmpty(t, stored.Failure)
 	assert.Empty(t, w.workflows.started)
 }
@@ -569,7 +573,7 @@ func TestAWatchWhoseTimeRanOutEndsWithItsMonitorRemoved(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, check.Ended)
-	assert.Equal(t, agentextension.WebWatchStatusEnded, check.Watch.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusEnded, check.Watch.Status)
 	assert.Equal(t, []string{"mon_1"}, w.watcher.deleted)
 }
 
@@ -584,7 +588,7 @@ func TestAWatchTheVendorTurnedOffFailsAndSaysWhy(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, check.Ended)
-	assert.Equal(t, agentextension.WebWatchStatusFailed, check.Watch.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusFailed, check.Watch.Status)
 	assert.Contains(t, check.Watch.Failure, "Exa turned the watch off")
 	assert.Equal(t, []string{"mon_1"}, w.watcher.deleted)
 }
@@ -600,7 +604,7 @@ func TestAFailedRunIsBilledAndExplained(t *testing.T) {
 		Failure:   "insufficient_credits",
 		CreatedAt: testNow + 100,
 		SettledAt: testNow + 110,
-		CostUSD:   agentextension.ExaMonitorRunCostUSD,
+		CostUSD:   extensionwebwatch.ExaMonitorRunCostUSD,
 	}}
 
 	check, err := w.svc.CheckWebWatch(t.Context(), w.tenant, view.ID)
@@ -632,7 +636,7 @@ func TestOnlyWhoAWatchWasSetForStopsIt(t *testing.T) {
 		StoppedBy:  w.tenant.UserID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.WebWatchStatusStopped, stopped.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusStopped, stopped.Status)
 	assert.Equal(t, w.tenant.UserID, stopped.StoppedByID)
 	assert.Equal(t, []string{"mon_1"}, w.watcher.deleted)
 	assert.Equal(t, []string{webwatchcontract.WorkflowIDFor(view.ID) + "/" +
@@ -644,7 +648,7 @@ func TestOnlyWhoAWatchWasSetForStopsIt(t *testing.T) {
 		Administers: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentextension.WebWatchStatusStopped, again.Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusStopped, again.Status)
 	assert.Len(t, w.watcher.deleted, 1, "a watch already stopped is not stopped twice")
 }
 
@@ -661,7 +665,7 @@ func TestAWatchStaysRunningWhenTheVendorCannotRemoveIt(t *testing.T) {
 		Administers: true,
 	})
 	require.Error(t, err)
-	assert.Equal(t, agentextension.WebWatchStatusActive, w.watches.only(t).Status,
+	assert.Equal(t, extensionwebwatch.WebWatchStatusActive, w.watches.only(t).Status,
 		"a watch the vendor still runs is not recorded as stopped")
 }
 

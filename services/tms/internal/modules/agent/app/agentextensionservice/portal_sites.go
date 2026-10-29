@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -30,7 +30,7 @@ func portalSiteScope(tenantInfo pagination.TenantInfo, siteID pulid.ID) secretco
 	}
 }
 
-func portalSiteView(site *agentextension.PortalSite) agentextensionports.PortalSiteView {
+func portalSiteView(site *extensionportal.PortalSite) agentextensionports.PortalSiteView {
 	return agentextensionports.PortalSiteView{
 		ID:               site.ID,
 		Name:             site.Name,
@@ -73,14 +73,14 @@ func (s *Service) CreateSite(
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list portal sites").WithInternal(err)
 	}
-	if len(existing) >= agentextension.MaxPortalSitesPerTenant {
+	if len(existing) >= extensionportal.MaxPortalSitesPerTenant {
 		return nil, errortypes.NewBusinessError(
 			"An organization can set up at most 100 portal sites. Remove one you no longer use first.",
 		)
 	}
 
-	site := &agentextension.PortalSite{
-		ID:             pulid.MustNew(agentextension.PortalSiteIDPrefix),
+	site := &extensionportal.PortalSite{
+		ID:             pulid.MustNew(extensionportal.PortalSiteIDPrefix),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		CreatedByID:    req.TenantInfo.UserID,
@@ -142,7 +142,7 @@ func (s *Service) UpdateSite(
 // applySiteRequest sets what the form sent on the site. A sign-in left blank
 // keeps the stored one; clearing it removes both parts.
 func (s *Service) applySiteRequest(
-	site *agentextension.PortalSite,
+	site *extensionportal.PortalSite,
 	req *agentextensionports.SavePortalSiteRequest,
 ) error {
 	site.Name = req.Name
@@ -164,15 +164,21 @@ func (s *Service) applySiteRequest(
 		multiErr.Add("password", errortypes.ErrRequired,
 			"A sign-in needs both a username and a password")
 	}
-	authenticator, keyErr := agentextension.NormalizeAuthenticatorKey(req.AuthenticatorKey)
+	authenticator, keyErr := extensionportal.NormalizeAuthenticatorKey(req.AuthenticatorKey)
 	if keyErr != nil {
-		multiErr.Add("authenticatorKey", errortypes.ErrInvalid,
-			"The authenticator key must be the setup key the portal showed for an authenticator app")
+		multiErr.Add(
+			"authenticatorKey",
+			errortypes.ErrInvalid,
+			"The authenticator key must be the setup key the portal showed for an authenticator app",
+		)
 	}
 	signsIn := !req.ClearSignIn && (site.HasSignIn() || (username != "" && password != ""))
 	if authenticator != "" && !signsIn {
-		multiErr.Add("authenticatorKey", errortypes.ErrInvalid,
-			"An authenticator key is used with the site's sign-in; add the username and password too")
+		multiErr.Add(
+			"authenticatorKey",
+			errortypes.ErrInvalid,
+			"An authenticator key is used with the site's sign-in; add the username and password too",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -184,11 +190,11 @@ func (s *Service) applySiteRequest(
 	}
 
 	merged, err := s.secrets.Merge(
-		agentextension.PortalCredentialFields(),
+		extensionportal.PortalCredentialFields(),
 		map[string]string{
-			agentextension.PortalCredentialUsername:      username,
-			agentextension.PortalCredentialPassword:      password,
-			agentextension.PortalCredentialAuthenticator: authenticator,
+			extensionportal.PortalCredentialUsername:      username,
+			extensionportal.PortalCredentialPassword:      password,
+			extensionportal.PortalCredentialAuthenticator: authenticator,
 		},
 		site.Credentials,
 		portalSiteScope(pagination.TenantInfo{
@@ -200,7 +206,7 @@ func (s *Service) applySiteRequest(
 		return err
 	}
 	if req.ClearAuthenticator && authenticator == "" {
-		delete(merged, agentextension.PortalCredentialAuthenticator)
+		delete(merged, extensionportal.PortalCredentialAuthenticator)
 	}
 	site.Credentials = merged
 
@@ -212,12 +218,15 @@ func (s *Service) applySiteRequest(
 // permissions; a browser signed in with a stored sign-in would act as
 // whoever that sign-in belongs to.
 func (s *Service) checkNotTrenova(
-	site *agentextension.PortalSite,
+	site *extensionportal.PortalSite,
 	multiErr *errortypes.MultiError,
 ) {
-	if s.appHost != "" && agentextension.HostAllowed(s.appHost, site.Domains) {
-		multiErr.Add("domains", errortypes.ErrInvalid,
-			"Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for.")
+	if s.appHost != "" && extensionportal.HostAllowed(s.appHost, site.Domains) {
+		multiErr.Add(
+			"domains",
+			errortypes.ErrInvalid,
+			"Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for.",
+		)
 	}
 }
 
@@ -277,7 +286,10 @@ func (s *Service) ListRuns(
 	return response, nil
 }
 
-func portalRunView(run *agentextension.PortalRun, siteName string) agentextensionports.PortalRunView {
+func portalRunView(
+	run *extensionportal.PortalRun,
+	siteName string,
+) agentextensionports.PortalRunView {
 	return agentextensionports.PortalRunView{
 		ID:              run.ID,
 		SiteID:          run.SiteID,
@@ -353,8 +365,8 @@ func (s *Service) RunRecording(
 
 type siteChange struct {
 	tenant    pagination.TenantInfo
-	before    *agentextension.PortalSite
-	after     *agentextension.PortalSite
+	before    *extensionportal.PortalSite
+	after     *extensionportal.PortalSite
 	operation permission.Operation
 	comment   string
 }
@@ -378,7 +390,7 @@ func (s *Service) logSiteChange(change *siteChange) {
 	}
 }
 
-func siteSnapshot(site *agentextension.PortalSite) map[string]any {
+func siteSnapshot(site *extensionportal.PortalSite) map[string]any {
 	if site == nil {
 		return nil
 	}

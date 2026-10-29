@@ -3,7 +3,7 @@ package webwatchjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"go.uber.org/fx"
@@ -49,7 +49,7 @@ func (a *Activities) CheckWebWatchActivity(
 			return nil, err
 		}
 	}
-	if check.Ended && check.Watch.Status != agentextension.WebWatchStatusEnded {
+	if check.Ended && check.Watch.Status != extensionwebwatch.WebWatchStatusEnded {
 		a.waits.EndWebWatchWaits(ctx, tenant, check.Watch)
 	}
 

@@ -1,10 +1,11 @@
-package agentextension_test
+package extensionportal_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,14 +16,14 @@ func TestHostAllowedCoversTheSiteAndItsSubdomainsOnly(t *testing.T) {
 	t.Parallel()
 
 	domains := []string{"portal.acme.com", "*.dockhub.io"}
-	assert.True(t, agentextension.HostAllowed("portal.acme.com", domains))
-	assert.True(t, agentextension.HostAllowed("login.portal.acme.com", domains))
-	assert.True(t, agentextension.HostAllowed("DockHub.io.", domains))
-	assert.True(t, agentextension.HostAllowed("eu.dockhub.io", domains))
-	assert.False(t, agentextension.HostAllowed("acme.com", domains))
-	assert.False(t, agentextension.HostAllowed("portal.acme.com.evil.net", domains))
-	assert.False(t, agentextension.HostAllowed("notdockhub.io", domains))
-	assert.False(t, agentextension.HostAllowed("", domains))
+	assert.True(t, extensionportal.HostAllowed("portal.acme.com", domains))
+	assert.True(t, extensionportal.HostAllowed("login.portal.acme.com", domains))
+	assert.True(t, extensionportal.HostAllowed("DockHub.io.", domains))
+	assert.True(t, extensionportal.HostAllowed("eu.dockhub.io", domains))
+	assert.False(t, extensionportal.HostAllowed("acme.com", domains))
+	assert.False(t, extensionportal.HostAllowed("portal.acme.com.evil.net", domains))
+	assert.False(t, extensionportal.HostAllowed("notdockhub.io", domains))
+	assert.False(t, extensionportal.HostAllowed("", domains))
 }
 
 func TestOffSiteListsEveryPageOutsideTheAddressesOnce(t *testing.T) {
@@ -39,12 +40,12 @@ func TestOffSiteListsEveryPageOutsideTheAddressesOnce(t *testing.T) {
 	}
 	assert.Equal(t,
 		[]string{"https://attacker.example/collect?po=4512", "javascript:alert(1)"},
-		agentextension.OffSite(visited, []string{"portal.acme.com"}),
+		extensionportal.OffSite(visited, []string{"portal.acme.com"}),
 	)
 }
 
-func validSite() *agentextension.PortalSite {
-	return &agentextension.PortalSite{
+func validSite() *extensionportal.PortalSite {
+	return &extensionportal.PortalSite{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           " Acme DC ",
@@ -111,50 +112,53 @@ func TestPortalSiteRefusesAnAddressThatIsNotAHostname(t *testing.T) {
 func TestCheckPortalInstructionRefusesTrenovaRecordIDs(t *testing.T) {
 	t.Parallel()
 
-	require.NoError(t, agentextension.CheckPortalInstruction(
+	require.NoError(t, extensionportal.CheckPortalInstruction(
 		"Find the open dock appointments on October 20 for PO 4512"))
 	require.ErrorIs(t,
-		agentextension.CheckPortalInstruction("Find shp_01J8ZK3M4N5P6Q7R8S9T0V1W2X on the portal"),
-		agentextension.ErrPortalInstructionHasRecordID,
+		extensionportal.CheckPortalInstruction("Find shp_01J8ZK3M4N5P6Q7R8S9T0V1W2X on the portal"),
+		extensionportal.ErrPortalInstructionHasRecordID,
 	)
-	require.ErrorIs(t, agentextension.CheckPortalInstruction("book"),
-		agentextension.ErrPortalInstructionTooShort)
-	require.ErrorIs(t,
-		agentextension.CheckPortalInstruction(strings.Repeat("a", agentextension.MaxPortalInstructionRunes+1)),
-		agentextension.ErrPortalInstructionTooLong,
+	require.ErrorIs(t, extensionportal.CheckPortalInstruction("book"),
+		extensionportal.ErrPortalInstructionTooShort)
+	require.ErrorIs(
+		t,
+		extensionportal.CheckPortalInstruction(
+			strings.Repeat("a", extensionportal.MaxPortalInstructionRunes+1),
+		),
+		extensionportal.ErrPortalInstructionTooLong,
 	)
 }
 
 func TestNormalizePortalDetailsKeepsTextAndRefusesWhatCannotBeSent(t *testing.T) {
 	t.Parallel()
 
-	details, err := agentextension.NormalizePortalDetails(map[string]string{
+	details, err := extensionportal.NormalizePortalDetails(map[string]string{
 		" PO number ": " 4512 ",
 		"Empty":       "  ",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"PO number": "4512"}, details)
 
-	_, err = agentextension.NormalizePortalDetails(map[string]string{"portal_password": "x"})
+	_, err = extensionportal.NormalizePortalDetails(map[string]string{"portal_password": "x"})
 	require.Error(t, err)
 
-	_, err = agentextension.NormalizePortalDetails(map[string]string{
+	_, err = extensionportal.NormalizePortalDetails(map[string]string{
 		"Shipment": "shp_01J8ZK3M4N5P6Q7R8S9T0V1W2X",
 	})
 	require.Error(t, err)
 
-	many := make(map[string]string, agentextension.MaxPortalDetails+1)
-	for idx := range agentextension.MaxPortalDetails + 1 {
+	many := make(map[string]string, extensionportal.MaxPortalDetails+1)
+	for idx := range extensionportal.MaxPortalDetails + 1 {
 		many[strings.Repeat("k", idx+1)] = "v"
 	}
-	_, err = agentextension.NormalizePortalDetails(many)
+	_, err = extensionportal.NormalizePortalDetails(many)
 	require.Error(t, err)
 }
 
 func TestPortalDetailsFromTakesOnlyText(t *testing.T) {
 	t.Parallel()
 
-	details, err := agentextension.PortalDetailsFrom(map[string]any{
+	details, err := extensionportal.PortalDetailsFrom(map[string]any{
 		"PO":      float64(4512),
 		"Carrier": "Ridgeline",
 		"Hazmat":  false,
@@ -164,12 +168,12 @@ func TestPortalDetailsFromTakesOnlyText(t *testing.T) {
 	assert.Equal(t, map[string]string{"PO": "4512", "Carrier": "Ridgeline", "Hazmat": "false"},
 		details)
 
-	_, err = agentextension.PortalDetailsFrom(map[string]any{"Nested": map[string]any{}})
+	_, err = extensionportal.PortalDetailsFrom(map[string]any{"Nested": map[string]any{}})
 	require.Error(t, err)
-	_, err = agentextension.PortalDetailsFrom("PO 4512")
+	_, err = extensionportal.PortalDetailsFrom("PO 4512")
 	require.Error(t, err)
 
-	none, err := agentextension.PortalDetailsFrom(nil)
+	none, err := extensionportal.PortalDetailsFrom(nil)
 	require.NoError(t, err)
 	assert.Nil(t, none)
 }
@@ -177,16 +181,17 @@ func TestPortalDetailsFromTakesOnlyText(t *testing.T) {
 func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 	t.Parallel()
 
-	read := &agentextension.PortalTaskText{
+	read := &extensionportal.PortalTaskText{
 		SiteName:    "Acme DC",
 		SitePurpose: "dock appointments",
 		Domains:     []string{"sso.acme.com", "portal.acme.com"},
-		Mode:        agentextension.PortalRunModeRead,
+		Mode:        extensionportal.PortalRunModeRead,
 		Instruction: "Which slots are open on October 20?",
 		Details:     map[string]string{"Warehouse": "Dallas", "PO number": "4512"},
 	}
 	task := read.Task()
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"On the Acme DC portal (dock appointments), find out: Which slots are open on October 20?\n"+
 			"Details to use:\n- PO number: 4512\n- Warehouse: Dallas\n"+
 			"If the portal asks for a sign-in code you were not given (one sent by text message "+
@@ -201,18 +206,18 @@ func TestPortalTaskTextSaysWhatTheBrowserMayDo(t *testing.T) {
 			"show it, say so.",
 		task,
 	)
-	assert.NotContains(t, task, agentextension.PortalSecretPassword)
+	assert.NotContains(t, task, extensionportal.PortalSecretPassword)
 	assert.Contains(t, read.Guidance(), "Stay on portal.acme.com, sso.acme.com;")
 
 	act := *read
-	act.Mode = agentextension.PortalRunModeAct
+	act.Mode = extensionportal.PortalRunModeAct
 	act.UsesSignIn = true
 	acting := act.Task()
 	assert.Contains(t, acting, ", do this: Which slots")
 	assert.Contains(t, acting, "use the username portal_username and the password portal_password")
 	assert.Contains(t, acting, "Do exactly this and nothing more.")
 	assert.NotContains(t, acting, "Only look things up")
-	assert.NotContains(t, acting, agentextension.PortalSecretAuthenticator,
+	assert.NotContains(t, acting, extensionportal.PortalSecretAuthenticator,
 		"a site without an authenticator key never names the placeholder")
 
 	act.UsesAuthenticator = true
@@ -268,27 +273,31 @@ func TestOnlyReadingAPortalReturnsOutsideContent(t *testing.T) {
 	spec, ok := agentextension.SpecFor(agentextension.TypeBrowserUse)
 	require.True(t, ok)
 	assert.Equal(t, agentextension.CapabilityPortalAutomation, spec.Capability)
-	assert.Equal(t, agentextension.DefaultPortalDailyTasks, spec.DailyLimit(nil, errortypes.NewMultiError()))
+	assert.Equal(
+		t,
+		agentextension.DefaultPortalDailyTasks,
+		spec.DailyLimit(nil, errortypes.NewMultiError()),
+	)
 }
 
 func TestPortalRunFinishRecordsTheOutcome(t *testing.T) {
 	t.Parallel()
 
-	run := &agentextension.PortalRun{Status: agentextension.PortalRunStatusRunning}
-	run.Finish(&agentextension.PortalRunOutcome{
-		Status:      agentextension.PortalRunStatusSucceeded,
-		Answer:      strings.Repeat("a", agentextension.MaxPortalAnswerRunes+10),
+	run := &extensionportal.PortalRun{Status: extensionportal.PortalRunStatusRunning}
+	run.Finish(&extensionportal.PortalRunOutcome{
+		Status:      extensionportal.PortalRunStatusSucceeded,
+		Answer:      strings.Repeat("a", extensionportal.MaxPortalAnswerRunes+10),
 		VisitedURLs: nil,
 		Steps:       7,
 	}, 1_790_000_000)
 
-	assert.Equal(t, agentextension.PortalRunStatusSucceeded, run.Status)
-	assert.Len(t, []rune(run.Answer), agentextension.MaxPortalAnswerRunes)
+	assert.Equal(t, extensionportal.PortalRunStatusSucceeded, run.Status)
+	assert.Len(t, []rune(run.Answer), extensionportal.MaxPortalAnswerRunes)
 	assert.Equal(t, []string{}, run.VisitedURLs)
 	assert.Equal(t, 7, run.Steps)
 	require.NotNil(t, run.FinishedAt)
 	assert.True(t, run.Status.Finished())
-	assert.False(t, agentextension.PortalRunStatusRunning.Finished())
+	assert.False(t, extensionportal.PortalRunStatusRunning.Finished())
 }
 
 func TestNormalizeAuthenticatorKeyReadsTheKeyAsAPersonCopiesIt(t *testing.T) {
@@ -305,31 +314,31 @@ func TestNormalizeAuthenticatorKeyReadsTheKeyAsAPersonCopiesIt(t *testing.T) {
 		{raw: "   ", want: ""},
 	}
 	for _, tt := range tests {
-		key, err := agentextension.NormalizeAuthenticatorKey(tt.raw)
+		key, err := extensionportal.NormalizeAuthenticatorKey(tt.raw)
 		require.NoError(t, err, tt.raw)
 		assert.Equal(t, tt.want, key, tt.raw)
 	}
 
 	for _, raw := range []string{"123456", "not base32 at all!", "JBSWY3DP", "otpauth://totp/x"} {
-		_, err := agentextension.NormalizeAuthenticatorKey(raw)
-		require.ErrorIs(t, err, agentextension.ErrAuthenticatorKeyInvalid, raw)
+		_, err := extensionportal.NormalizeAuthenticatorKey(raw)
+		require.ErrorIs(t, err, extensionportal.ErrAuthenticatorKeyInvalid, raw)
 	}
 }
 
 func TestAsksForSignInCodeTellsABlockedSignInFromAnAnswer(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, agentextension.AsksForSignInCode(
+	assert.True(t, extensionportal.AsksForSignInCode(
 		"SIGN-IN CODE NEEDED: the portal sent a code by text message.", true),
 		"the marker counts whatever the vendor says about success")
-	assert.True(t, agentextension.AsksForSignInCode(
+	assert.True(t, extensionportal.AsksForSignInCode(
 		"The portal is asking for a two-factor authentication (2FA) code.", false))
-	assert.True(t, agentextension.AsksForSignInCode(
+	assert.True(t, extensionportal.AsksForSignInCode(
 		"I need the 6-digit code from an authenticator app to continue.", false))
-	assert.False(t, agentextension.AsksForSignInCode(
+	assert.False(t, extensionportal.AsksForSignInCode(
 		"Two-factor authentication is turned on for this account.", true),
 		"a finished lookup that mentions two-factor settings was not blocked")
-	assert.False(t, agentextension.AsksForSignInCode("The slot was taken.", false))
+	assert.False(t, extensionportal.AsksForSignInCode("The slot was taken.", false))
 }
 
 func TestPortalDetailsRefuseEverySignInPlaceholder(t *testing.T) {
@@ -338,7 +347,7 @@ func TestPortalDetailsRefuseEverySignInPlaceholder(t *testing.T) {
 	for _, name := range []string{
 		"portal_bu_2fa_code", "my_bu_2fa_code", "Portal_Password", "portal_sign_in_code",
 	} {
-		_, err := agentextension.NormalizePortalDetails(map[string]string{name: "x"})
+		_, err := extensionportal.NormalizePortalDetails(map[string]string{name: "x"})
 		require.Error(t, err, name)
 	}
 }
@@ -346,12 +355,12 @@ func TestPortalDetailsRefuseEverySignInPlaceholder(t *testing.T) {
 func TestOnlyAStoredKeyIsAnAuthenticator(t *testing.T) {
 	t.Parallel()
 
-	site := &agentextension.PortalSite{Credentials: map[string]any{}}
+	site := &extensionportal.PortalSite{Credentials: map[string]any{}}
 	assert.False(t, site.HasAuthenticator())
-	site.Credentials[agentextension.PortalCredentialAuthenticator] = "enc:key"
+	site.Credentials[extensionportal.PortalCredentialAuthenticator] = "enc:key"
 	assert.True(t, site.HasAuthenticator())
 
-	var none *agentextension.PortalSite
+	var none *extensionportal.PortalSite
 	assert.False(t, none.HasAuthenticator())
 }
 
@@ -365,15 +374,15 @@ func TestNormalizeSignInCodeReadsACodeAsAPersonTypesIt(t *testing.T) {
 		{raw: "Ab12Cd", want: "Ab12Cd"},
 	}
 	for _, tt := range tests {
-		code, err := agentextension.NormalizeSignInCode(tt.raw)
+		code, err := extensionportal.NormalizeSignInCode(tt.raw)
 		require.NoError(t, err, tt.raw)
 		assert.Equal(t, tt.want, code, tt.raw)
 	}
 
 	refused := []string{"", "123", "1234567890123", "12!456", "12\n3456", "١٢٣٤٥٦"}
 	for _, raw := range refused {
-		_, err := agentextension.NormalizeSignInCode(raw)
-		require.ErrorIs(t, err, agentextension.ErrSignInCodeInvalid, raw)
+		_, err := extensionportal.NormalizeSignInCode(raw)
+		require.ErrorIs(t, err, extensionportal.ErrSignInCodeInvalid, raw)
 	}
 }
 
@@ -387,7 +396,7 @@ func TestContinueWithCodeEntersThePlaceholderAndCarriesOnWithTheTask(t *testing.
 		"done. Stay signed in: do not reload the sign-in page, sign out or open the portal in "+
 		"a new tab. If the portal says the code is wrong or has expired, stop there and begin "+
 		"your answer with SIGN-IN CODE NEEDED, then say what it said.\n\n"+task,
-		agentextension.ContinueWithCode(task))
+		extensionportal.ContinueWithCode(task))
 }
 
 func TestContinueAfterSignInCarriesOnWithoutSigningInAgain(t *testing.T) {
@@ -399,36 +408,36 @@ func TestContinueAfterSignInCarriesOnWithoutSigningInAgain(t *testing.T) {
 		"already done. Stay signed in: do not reload the sign-in page, sign out or open the "+
 		"portal in a new tab. If the portal asks for a sign-in code again, stop there and "+
 		"begin your answer with SIGN-IN CODE NEEDED, then say how it asked for the code.\n\n"+
-		task, agentextension.ContinueAfterSignIn(task))
+		task, extensionportal.ContinueAfterSignIn(task))
 }
 
 func TestAPortalRunWaitingOnACodeKeepsItsProgressUntilACodeContinuesIt(t *testing.T) {
 	t.Parallel()
 
-	run := &agentextension.PortalRun{Status: agentextension.PortalRunStatusRunning}
+	run := &extensionportal.PortalRun{Status: extensionportal.PortalRunStatusRunning}
 	assert.Nil(t, run.CodeExpiresAt())
 	assert.False(t, run.Continued())
 
-	run.AwaitCode(&agentextension.PortalRunOutcome{
+	run.AwaitCode(&extensionportal.PortalRunOutcome{
 		Answer:      "  SIGN-IN CODE NEEDED: " + strings.Repeat("a", 600),
 		VisitedURLs: []string{"https://portal.acme.com/login"},
 		Steps:       2,
 	}, 1_790_000_000)
 
-	assert.Equal(t, agentextension.PortalRunStatusAwaitingCode, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, run.Status)
 	assert.False(t, run.Status.Finished(), "a run waiting on a code has not ended")
-	assert.Len(t, []rune(run.CodePrompt), agentextension.MaxPortalCodePromptRunes)
+	assert.Len(t, []rune(run.CodePrompt), extensionportal.MaxPortalCodePromptRunes)
 	assert.True(t, strings.HasPrefix(run.CodePrompt, "SIGN-IN CODE NEEDED"))
 	assert.Equal(t, []string{"https://portal.acme.com/login"}, run.VisitedURLs)
 	assert.Equal(t, []string{}, run.OffSiteURLs)
 	assert.Equal(t, 2, run.Steps)
 	require.NotNil(t, run.CodeExpiresAt())
-	assert.Equal(t, int64(1_790_000_000+agentextension.PortalCodeWaitSeconds),
+	assert.Equal(t, int64(1_790_000_000+extensionportal.PortalCodeWaitSeconds),
 		*run.CodeExpiresAt())
 	assert.Nil(t, run.FinishedAt)
 
 	run.ContinuedWith("task-2")
-	assert.Equal(t, agentextension.PortalRunStatusRunning, run.Status)
+	assert.Equal(t, extensionportal.PortalRunStatusRunning, run.Status)
 	assert.Equal(t, "task-2", run.VendorTaskID)
 	assert.Equal(t, 1, run.CodeAttempts)
 	assert.True(t, run.Continued())
