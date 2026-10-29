@@ -6,6 +6,7 @@
   "Activate this agreement?": "¿Activar este acuerdo?",
   "Add at least one fee tier": "Agregue al menos un tramo de comisión",
   "Add the address the factor takes schedules at": "Agregue la dirección en la que la empresa de factoraje recibe las relaciones",
+  "Advance and fee rate together cannot be more than 100% of the invoice": "La tasa de anticipo y la de la comisión juntas no pueden superar el 100% de la factura",
   "Advance and reserve": "Anticipo y reserva",
   "Advance and reserve together cannot be more than 100%": "El anticipo y la reserva juntos no pueden superar el 100%",
   "Advance rate": "Tasa de anticipo",

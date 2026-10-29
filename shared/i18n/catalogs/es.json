@@ -1171,6 +1171,7 @@
   "Advance Rate (bp)": "Tasa de anticipo (pb)",
   "Advance Recovery": "Recuperación de anticipo",
   "Advance amount must be greater than zero": "El importe del anticipo debe ser mayor que cero",
+  "Advance and fee rate together cannot be more than 100% of the invoice": "La tasa de anticipo y la de la comisión juntas no pueden superar el 100% de la factura",
   "Advance and reserve together cannot be more than 100%": "El anticipo y la reserva juntos no pueden superar el 100%",
   "Advance at {0}": "Anticipo al {0}",
   "Advance has no outstanding balance to write off": "El anticipo no tiene saldo pendiente que cancelar",

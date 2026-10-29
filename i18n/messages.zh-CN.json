@@ -2371,6 +2371,7 @@
   "Advance Recoveries": "预支追回",
   "Advance Recovery": "预支追回",
   "Advance amount must be greater than zero": "预支金额必须大于零",
+  "Advance and fee rate together cannot be more than 100% of the invoice": "预付比例与手续费率合计不得超过发票金额的 100%",
   "Advance and reserve": "预付与保留金",
   "Advance and reserve together cannot be more than 100%": "预付与保留金合计不得超过 100%",
   "Advance at {0}": "预付比例 {0}",

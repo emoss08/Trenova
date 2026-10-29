@@ -27,14 +27,12 @@ func ExpectedFunding(faceMinor int64, agreement *Agreement, days int) Funding {
 	return out
 }
 
-func feeFor(faceMinor int64, agreement *Agreement, days int) (int, int64) {
-	var rateBP int
-	var fee int64
+func feeFor(faceMinor int64, agreement *Agreement, days int) (rateBP int, feeMinor int64) {
 	if tier := tierFor(agreement.FeeTiers, days); tier != nil {
 		rateBP = tier.RateBP
-		fee = basisPointsOf(faceMinor, tier.RateBP) + tier.FlatMinor
+		feeMinor = basisPointsOf(faceMinor, tier.RateBP) + tier.FlatMinor
 	}
-	return rateBP, min(max(fee, agreement.MinimumFeeMinor), faceMinor)
+	return rateBP, min(max(feeMinor, agreement.MinimumFeeMinor), faceMinor)
 }
 
 func advanceLeavingRoomForFee(faceMinor int64, advanceRateBP int, feeMinor int64) int64 {

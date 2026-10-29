@@ -22199,6 +22199,17 @@
       "go/other"
     ]
   },
+  "Advance and fee rate together cannot be more than 100% of the invoice": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/factoring-company"
+    ]
+  },
   "Advance and reserve": {
     "sites": 1,
     "scope": [
@@ -351749,11 +351760,12 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "go/other"
     ]
   },
