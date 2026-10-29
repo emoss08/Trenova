@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -77,7 +78,11 @@ func (r *repository) cancelShipmentComponents(
 		return err
 	}
 
-	return nil
+	if t == everyTenant {
+		return shipmentprojection.RefreshAcrossTenants(ctx, db, shipmentIDs...)
+	}
+
+	return shipmentprojection.Refresh(ctx, db, shipmentIDs...)
 }
 
 func (r *repository) uncancelShipmentComponents(
@@ -100,7 +105,11 @@ func (r *repository) uncancelShipmentComponents(
 		return err
 	}
 
-	return restoreStopStatuses(ctx, db, req.ShipmentID, req.StopStatuses)
+	if err := restoreStopStatuses(ctx, db, req.ShipmentID, req.StopStatuses); err != nil {
+		return err
+	}
+
+	return shipmentprojection.Refresh(ctx, db, req.ShipmentID)
 }
 
 func restoreMoveStatuses(

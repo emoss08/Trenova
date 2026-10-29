@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -2506,6 +2507,14 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 			return fmt.Errorf("insert %s: %w", step.table, err)
 		}
 		b.counts[step.table] += step.rows
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(batch.shipments))
+	for _, entity := range batch.shipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+	}
+	if err := shipmentprojection.Refresh(ctx, tx, shipmentIDs...); err != nil {
+		return err
 	}
 
 	tables := make([]string, 0, len(batch.stamps))

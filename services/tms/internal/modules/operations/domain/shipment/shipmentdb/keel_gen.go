@@ -1504,6 +1504,8 @@ var shipmentsTable = schema.Table{
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
+		{Name: "last_delivery_arrival_at", Quoted: `"last_delivery_arrival_at"`, Field: "LastDeliveryArrivalAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Last Delivery Arrival At`, Report: &reportDimEpochHidden},
+		{Name: "has_active_assignment", Quoted: `"has_active_assignment"`, Field: "HasActiveAssignment", Kind: schema.KindBool, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Has Active Assignment`, Report: &reportDimBoolHidden},
 	},
 	Relations: []schema.Relation{
 		{Name: "ShipmentType", Alias: "st", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Shipment Type`, JSON: `shipmentType`},
@@ -1616,6 +1618,8 @@ type ShipmentsTable struct {
 	Version                   keel.Int64Col
 	CreatedAt                 keel.Int64Col
 	UpdatedAt                 keel.Int64Col
+	LastDeliveryArrivalAt     keel.Int64Col
+	HasActiveAssignment       keel.BoolCol
 }
 
 // Shipments references the shipments table.
@@ -1683,6 +1687,8 @@ var Shipments = &ShipmentsTable{
 	Version:                   keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 59}},
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 60}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 61}},
+	LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: &shipmentsRef, Index: 62}},
+	HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: &shipmentsRef, Index: 63}},
 }
 
 // BuildShipments builds the handle of shipments for ref. Generated relation and alias methods call it.
@@ -1751,6 +1757,8 @@ func BuildShipments(r *keel.Ref) *ShipmentsTable {
 		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 59}},
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 60}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 61}},
+		LastDeliveryArrivalAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 62}},
+		HasActiveAssignment:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 63}},
 	}
 }
 
@@ -1991,6 +1999,10 @@ func ptrShipment(p unsafe.Pointer, c int32) any {
 		return &r.CreatedAt
 	case 61:
 		return &r.UpdatedAt
+	case 62:
+		return &r.LastDeliveryArrivalAt
+	case 63:
+		return &r.HasActiveAssignment
 	}
 	return nil
 }
@@ -2242,6 +2254,13 @@ func valueShipment(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	case 61:
 		return r.UpdatedAt
+	case 62:
+		if r.LastDeliveryArrivalAt == nil {
+			return nil
+		}
+		return *r.LastDeliveryArrivalAt
+	case 63:
+		return r.HasActiveAssignment
 	}
 	return nil
 }
@@ -4329,9 +4348,13 @@ var enumShipmentvocabTenderStatus = [...]schema.EnumValue{
 
 var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
 
+var reportDimBoolHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
 var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
 
 var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
 
 var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 

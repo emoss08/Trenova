@@ -136,11 +136,13 @@ type Shipment struct {
 	SourceDocumentID          string                              `json:"sourceDocumentId,omitempty"`
 	PreviousCustomerID        pulid.ID                            `json:"-"`
 
-	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
-	Rank         string `json:"-"         keel:"rank,computed"`
-	Version      int64  `json:"version"   keel:"version,version"`
-	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
-	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector          string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                  string `json:"-"         keel:"rank,computed"`
+	Version               int64  `json:"version"   keel:"version,version"`
+	CreatedAt             int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt             int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	LastDeliveryArrivalAt *int64 `json:"-"         keel:"last_delivery_arrival_at,readonly,noselect"`
+	HasActiveAssignment   bool   `json:"-"         keel:"has_active_assignment,readonly,noselect"`
 
 	BusinessUnit        *tenant.BusinessUnit             `json:"businessUnit,omitempty"`
 	Organization        *tenant.Organization             `json:"organization,omitempty"`

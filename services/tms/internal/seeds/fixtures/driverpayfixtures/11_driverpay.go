@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -1453,6 +1454,10 @@ func (s *DriverPaySeed) createPaidShipments(
 				revenue:    revenue,
 				eventDate:  moveEnd,
 			})
+		}
+
+		if err = shipmentprojection.RefreshAcrossTenants(ctx, db, shp.ID); err != nil {
+			return nil, fmt.Errorf("refresh shipment projections for %s: %w", def.pro, err)
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -110,16 +111,24 @@ func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipm
 		deleteIDs = append(deleteIDs, moveID)
 	}
 
-	if len(deleteIDs) == 0 {
+	if err = r.deleteMoves(ctx, entity.ID, deleteIDs); err != nil {
+		return err
+	}
+
+	return shipmentprojection.Refresh(ctx, r.db.Keel(ctx), entity.ID)
+}
+
+func (r *repository) deleteMoves(ctx context.Context, shipmentID pulid.ID, ids []pulid.ID) error {
+	if len(ids) == 0 {
 		return nil
 	}
 
-	if err = r.ensureMovesAreUnassigned(ctx, deleteIDs); err != nil {
+	if err := r.ensureMovesAreUnassigned(ctx, ids); err != nil {
 		return err
 	}
 
 	sm := shipmentdb.ShipmentMoves
-	if _, err = sm.Where(sm.ID.In(deleteIDs...), sm.ShipmentID.Eq(entity.ID)).
+	if _, err := sm.Where(sm.ID.In(ids...), sm.ShipmentID.Eq(shipmentID)).
 		Delete(ctx, r.db.Keel(ctx)); err != nil {
 		return fmt.Errorf("delete shipment moves: %w", err)
 	}
@@ -268,6 +277,10 @@ func (r *repository) UpdateStatus(
 			)
 		}
 
+		if err = shipmentprojection.Refresh(ctx, r.db.Keel(ctx), move.ShipmentID); err != nil {
+			return nil, err
+		}
+
 		return r.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
@@ -298,6 +311,14 @@ func (r *repository) UpdateStopActuals(
 			)
 		}
 
+		if err := shipmentprojection.RefreshMoves(
+			ctx,
+			r.db.Keel(ctx),
+			stop.ShipmentMoveID,
+		); err != nil {
+			return nil, err
+		}
+
 		return stop, nil
 	})
 }
@@ -319,6 +340,10 @@ func (r *repository) BulkUpdateStatus(
 		}
 		if n != int64(len(ids)) {
 			return nil, dberror.HandleNotFoundError(keel.ErrNotFound, "Shipment move")
+		}
+
+		if err = shipmentprojection.RefreshMoves(ctx, r.db.Keel(ctx), ids...); err != nil {
+			return nil, err
 		}
 
 		moves, err := r.movesWithDetails(ctx, ids)
@@ -367,6 +392,14 @@ func (r *repository) SplitMove(
 			}
 
 			if err = r.insertSplitMove(ctx, split.NewMove); err != nil {
+				return nil, err
+			}
+
+			if err = shipmentprojection.Refresh(
+				ctx,
+				r.db.Keel(ctx),
+				originalMove.ShipmentID,
+			); err != nil {
 				return nil, err
 			}
 
