@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -92,7 +93,7 @@ type stubProviders struct {
 	aiproviderports.AIProviderRepository
 	providers []*aiprovider.Provider
 	err       error
-	asked     aiprovider.Task
+	asked     aitask.Task
 }
 
 func (s *stubProviders) ListForTask(
@@ -177,7 +178,7 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, completer.saw)
-	assert.Equal(t, aiprovider.TaskAssistantChat, completer.saw.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, completer.saw.Task)
 	assert.Equal(t, aiusage.FeatureAgentDrafting, completer.saw.Attribution.Feature)
 	assert.Equal(t, tenantInfo.UserID, completer.saw.Attribution.UserID)
 	assert.NotEmpty(t, completer.saw.OutputSchema)
@@ -288,7 +289,7 @@ func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.
 
 	assert.Equal(t, "Help {{user.name}}. Look loads up first.", result.Instructions)
 	assert.True(t, result.Changed)
-	assert.Equal(t, aiprovider.TaskAssistantChat, completer.saw.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, completer.saw.Task)
 	assert.Equal(t, aiusage.FeatureAgentDrafting, completer.saw.Attribution.Feature)
 }
 
@@ -335,17 +336,17 @@ func TestAvailableWhenAnEnabledProviderTakesAssistantChat(t *testing.T) {
 	chat := &aiprovider.Provider{
 		Name:    "Chat",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}
 	disabled := &aiprovider.Provider{
 		Name:    "Off",
 		Enabled: false,
-		Tasks:   []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}
 	other := &aiprovider.Provider{
 		Name:    "Docs",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 
 	cases := []struct {
@@ -370,7 +371,7 @@ func TestAvailableWhenAnEnabledProviderTakesAssistantChat(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, available)
-			assert.Equal(t, aiprovider.TaskAssistantChat, providers.asked)
+			assert.Equal(t, aitask.TaskAssistantChat, providers.asked)
 		})
 	}
 }

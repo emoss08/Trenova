@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,7 +20,7 @@ type ListAIProviderRequest struct {
 
 // ListAIProvidersForTaskRequest resolves the ordered candidates for one task.
 type ListAIProvidersForTaskRequest struct {
-	Task       aiprovider.Task
+	Task       aitask.Task
 	TenantInfo pagination.TenantInfo
 }
 
@@ -27,7 +28,7 @@ type ListAIProvidersForTaskRequest struct {
 // searched by name and model, for a picker.
 type AIProviderSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
-	Task               aiprovider.Task
+	Task               aitask.Task
 }
 
 type DeleteAIProviderRequest struct {

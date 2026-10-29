@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -109,7 +110,7 @@ func liveCompletion(t *testing.T, key string) (llmports.CompletionService, strin
 		Model:          model,
 		APIKey:         sealed,
 		MaxTokens:      defaultLiveMaxToken,
-		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:          []aitask.Task{aitask.TaskAssistantChat},
 		Enabled:        true,
 	}
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -239,7 +239,7 @@ func (s *Service) RewriteDocument(
 
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: req.TenantInfo,
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		System:     rewriteSystem,
 		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 			{Title: "Document title", Trusted: true, Content: latest.Title},

@@ -27,18 +27,8 @@ var vendorHosts = []vendorHost{
 	{suffix: "huggingface.co", vendor: "huggingface"},
 }
 
-// platformVendors name who serves a call made through a platform.
-var platformVendors = map[Platform]string{
-	PlatformDirect:            "",
-	PlatformBedrock:           "bedrock",
-	PlatformVertexAI:          "vertex",
-	PlatformClaudeAWS:         "anthropic",
-	PlatformClaudeGoogleCloud: "anthropic",
-	PlatformFoundry:           "foundry",
-}
-
 func (p *Provider) Vendor() string {
-	if vendor := platformVendors[p.ResolvedPlatform()]; vendor != "" {
+	if vendor := p.ResolvedPlatform().Vendor(); vendor != "" {
 		return vendor
 	}
 

@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 )
 
 func (s *Service) RoutePreview(
 	ctx context.Context,
 	req *aiproviderports.AIProviderRoutePreviewRequest,
-) ([]aiprovider.TaskRoute, error) {
+) ([]airouting.TaskRoute, error) {
 	draft := &aiprovider.Provider{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
@@ -32,7 +33,7 @@ func (s *Service) RoutePreview(
 		return nil, err
 	}
 
-	return aiprovider.PreviewRoutes(enabled, draft), nil
+	return airouting.PreviewRoutes(enabled, draft), nil
 }
 
 func applyRoutingDraft(

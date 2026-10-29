@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -148,7 +150,7 @@ func (s *Service) ConfiguredModelKey(
 		return "", errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
-	usable, err := s.usableFor(ctx, aiprovider.TaskEmbedding, tenant)
+	usable, err := s.usableFor(ctx, aitask.TaskEmbedding, tenant)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +211,7 @@ func (s *Service) embeddingCandidates(
 	tenant pagination.TenantInfo,
 	pinned string,
 ) ([]*aiprovider.Provider, string, error) {
-	usable, err := s.usableFor(ctx, aiprovider.TaskEmbedding, tenant)
+	usable, err := s.usableFor(ctx, aitask.TaskEmbedding, tenant)
 	if err != nil {
 		return nil, "", err
 	}
@@ -284,7 +286,7 @@ func (s *Service) embedBatch(
 		}
 		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
-			task:        aiprovider.TaskEmbedding,
+			task:        aitask.TaskEmbedding,
 			surface:     surfaceFor(req.ResolvedSurface(), req.Attribution),
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
@@ -298,7 +300,10 @@ func (s *Service) embedBatch(
 
 		if attemptErr == nil {
 			s.touchKey(ctx, provider, req.TenantInfo)
-			served.cost = provider.InputCostFor(aiprovider.TokenUsage{Input: served.tokens})
+			served.cost = aipricing.InputCostFor(
+				provider,
+				aipricing.TokenUsage{Input: served.tokens},
+			)
 
 			return served, nil
 		}

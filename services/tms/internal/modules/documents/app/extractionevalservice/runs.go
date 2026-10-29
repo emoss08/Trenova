@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
@@ -152,7 +153,7 @@ func (s *Service) evaluatedProvider(
 	if err != nil {
 		return nil, err
 	}
-	if ok, reason := provider.CanServeTask(aiprovider.TaskDocumentExtraction); !ok {
+	if ok, reason := provider.CanServeTask(aitask.TaskDocumentExtraction); !ok {
 		return nil, errortypes.NewValidationError(
 			"providerId",
 			errortypes.ErrInvalid,

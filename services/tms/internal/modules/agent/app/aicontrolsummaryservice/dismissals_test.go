@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,17 +14,20 @@ import (
 )
 
 type dismissalStore struct {
-	kept []*aiprovider.FailureDismissal
+	kept []*aiproviderdismissal.FailureDismissal
 }
 
 func (d *dismissalStore) List(
 	context.Context,
 	*aiproviderports.ListFailureDismissalsRequest,
-) ([]*aiprovider.FailureDismissal, error) {
+) ([]*aiproviderdismissal.FailureDismissal, error) {
 	return d.kept, nil
 }
 
-func (d *dismissalStore) Upsert(_ context.Context, dismissal *aiprovider.FailureDismissal) error {
+func (d *dismissalStore) Upsert(
+	_ context.Context,
+	dismissal *aiproviderdismissal.FailureDismissal,
+) error {
 	d.kept = append(d.kept, dismissal)
 	return nil
 }
@@ -42,7 +45,7 @@ func TestADismissalHoldsOnlyUntilTheProviderFailsAgain(t *testing.T) {
 
 	quiet := pulid.MustNew("aiprv_")
 	again := pulid.MustNew("aiprv_")
-	store := &dismissalStore{kept: []*aiprovider.FailureDismissal{
+	store := &dismissalStore{kept: []*aiproviderdismissal.FailureDismissal{
 		{ProviderID: quiet, FailureAt: 100},
 		{ProviderID: again, FailureAt: 100},
 	}}

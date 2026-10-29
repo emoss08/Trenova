@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 )
 
 // Request is one completion, already rendered to text. Adapters do not see the
@@ -49,7 +51,7 @@ type Request struct {
 	// request. Empty keeps the provider's. A classifier that has to answer
 	// inside a few seconds asks for None, so a model that thinks unless told
 	// otherwise answers at once instead of spending its budget thinking.
-	Reasoning aiprovider.ReasoningEffort
+	Reasoning aireasoning.ReasoningEffort
 	Advisor   *AdvisorSpec
 }
 
@@ -96,7 +98,7 @@ type Response struct {
 	// missed against the call before this one. Nil when it was not asked, or
 	// found nothing to report.
 	CacheDiagnosis *CacheDiagnosis
-	Advisor        *aiprovider.AdvisorUsage
+	Advisor        *aipricing.AdvisorUsage
 }
 
 // Adapter speaks one wire protocol.
@@ -153,12 +155,12 @@ func (c *Call) think(delta string) {
 // provider. An unset effort is off: the column defaults to Off and most
 // providers never name it, so treating the empty string as anything else
 // would have a provider nobody configured to think counted as thinking.
-func (c *Call) reasoning() aiprovider.ReasoningEffort {
+func (c *Call) reasoning() aireasoning.ReasoningEffort {
 	if c.Request != nil && c.Request.Reasoning != "" {
 		return c.Request.Reasoning
 	}
 	if c.Provider == nil || c.Provider.ReasoningEffort == "" {
-		return aiprovider.ReasoningOff
+		return aireasoning.ReasoningOff
 	}
 
 	return c.Provider.ReasoningEffort

@@ -3,6 +3,7 @@
 package aicontrolexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"context"
 	"errors"
 
@@ -1218,7 +1219,7 @@ func marshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return res
 }
 
-func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Task) graphql.Marshaler {
+func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aitask.Task) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1226,8 +1227,8 @@ func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagen
 	return res
 }
 
-func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiprovider.Task) graphql.Marshaler {
-	return gqlexec.List[aiprovider.Task]{
+func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aitask.Task) graphql.Marshaler {
+	return gqlexec.List[aitask.Task]{
 		Elem:        marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask,
 		NonNull:     true,
 		NonNullElem: true,
@@ -1355,7 +1356,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.Task) graphql.Marshaler {
+func marshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aitask.Task) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

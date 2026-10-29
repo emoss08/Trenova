@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -68,21 +70,21 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Model:                "qwen2.5-14b-instruct",
 			AllowPrivateNetwork:  true,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
-			ReasoningEffort:      aiprovider.ReasoningOff,
+			ReasoningEffort:      aireasoning.ReasoningOff,
 			MaxTokens:            8192,
-			Tasks: []aiprovider.Task{
-				aiprovider.TaskScopeClassification,
-				aiprovider.TaskDocumentClassification,
-				aiprovider.TaskOperationalInsights,
-				aiprovider.TaskDailyBriefing,
-				aiprovider.TaskGeneral,
+			Tasks: []aitask.Task{
+				aitask.TaskScopeClassification,
+				aitask.TaskDocumentClassification,
+				aitask.TaskOperationalInsights,
+				aitask.TaskDailyBriefing,
+				aitask.TaskGeneral,
 			},
 			Priority: 10,
 			Enabled:  true,
 
-			ThinkingStyle: aiprovider.ThinkingStyleAuto,
+			ThinkingStyle: aireasoning.ThinkingStyleAuto,
 
-			Platform: aiprovider.PlatformDirect,
+			Platform: aiplatform.PlatformDirect,
 
 			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 
@@ -103,22 +105,22 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Model:                "meta-llama/Llama-3.3-70B-Instruct",
 			AllowPrivateNetwork:  true,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONMode,
-			ReasoningEffort:      aiprovider.ReasoningOff,
+			ReasoningEffort:      aireasoning.ReasoningOff,
 			MaxTokens:            16384,
-			Tasks: []aiprovider.Task{
-				aiprovider.TaskAssistantChat,
-				aiprovider.TaskDocumentExtraction,
-				aiprovider.TaskFormulaAssistant,
-				aiprovider.TaskOperationalInsights,
-				aiprovider.TaskGeneral,
+			Tasks: []aitask.Task{
+				aitask.TaskAssistantChat,
+				aitask.TaskDocumentExtraction,
+				aitask.TaskFormulaAssistant,
+				aitask.TaskOperationalInsights,
+				aitask.TaskGeneral,
 			},
 			Priority: 20,
 			Enabled:  true,
 			Scripts:  true,
 
-			ThinkingStyle: aiprovider.ThinkingStyleAuto,
+			ThinkingStyle: aireasoning.ThinkingStyleAuto,
 
-			Platform: aiprovider.PlatformDirect,
+			Platform: aiplatform.PlatformDirect,
 
 			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 
@@ -138,7 +140,7 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Kind:                 aiprovider.KindAnthropicMessages,
 			Model:                "claude-haiku-5-5",
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
-			ReasoningEffort:      aiprovider.ReasoningOff,
+			ReasoningEffort:      aireasoning.ReasoningOff,
 			MaxTokens:            16384,
 			Tasks:                hostedTasks(),
 			Priority:             5,
@@ -146,9 +148,9 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 			Enabled:              false,
 			Scripts:              true,
 
-			ThinkingStyle: aiprovider.ThinkingStyleAuto,
+			ThinkingStyle: aireasoning.ThinkingStyleAuto,
 
-			Platform: aiprovider.PlatformDirect,
+			Platform: aiplatform.PlatformDirect,
 
 			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 
@@ -165,10 +167,10 @@ func (s *AIProviderSeed) providers(orgID, buID pulid.ID) []*aiprovider.Provider 
 // the Messages API has no endpoint for. The Desk is tuned for this model, and a
 // task left to the local servers alone (the scope classifier, reading a
 // document) stops working on a machine that does not run them.
-func hostedTasks() []aiprovider.Task {
-	tasks := make([]aiprovider.Task, 0, len(aiprovider.AllTasks()))
-	for _, task := range aiprovider.AllTasks() {
-		if task != aiprovider.TaskEmbedding {
+func hostedTasks() []aitask.Task {
+	tasks := make([]aitask.Task, 0, len(aitask.AllTasks()))
+	for _, task := range aitask.AllTasks() {
+		if task != aitask.TaskEmbedding {
 			tasks = append(tasks, task)
 		}
 	}

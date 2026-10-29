@@ -6,8 +6,8 @@ import (
 	"math"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -235,7 +235,7 @@ func (s *Service) inputPrice(
 	modelKey string,
 ) (decimal.Decimal, bool, error) {
 	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskEmbedding,
+		Task:       aitask.TaskEmbedding,
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -243,7 +243,7 @@ func (s *Service) inputPrice(
 	}
 
 	for _, provider := range providers {
-		if ok, _ := provider.CanServeTask(aiprovider.TaskEmbedding); !ok {
+		if ok, _ := provider.CanServeTask(aitask.TaskEmbedding); !ok {
 			continue
 		}
 		if provider.EmbeddingModelKey() != modelKey || provider.InputCostPerMillion == nil {

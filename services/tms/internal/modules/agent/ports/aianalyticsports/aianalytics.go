@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -43,7 +43,7 @@ type Filter struct {
 	Since             int64
 	CompareBy         aianalytics.CompareBy
 	AgentDefinitionID pulid.ID
-	Task              aiprovider.Task
+	Task              aitask.Task
 }
 
 type DeploymentKey struct {
@@ -164,7 +164,7 @@ type ToolCellRow struct {
 
 type TaskCellRow struct {
 	DeploymentKey
-	Task      aiprovider.Task
+	Task      aitask.Task
 	Runs      int
 	Completed int
 }

@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -25,7 +27,7 @@ import (
 // usageAttempt is everything one attempt is known by once it has returned.
 type usageAttempt struct {
 	provider    *aiprovider.Provider
-	task        aiprovider.Task
+	task        aitask.Task
 	surface     aiusage.Surface
 	attribution aiusageports.AIUsageAttribution
 	tenant      pagination.TenantInfo
@@ -144,7 +146,7 @@ func usageRow(ctx context.Context, attempt *usageAttempt) *aiusage.AIUsageRecord
 
 func recordAdvisor(
 	row *aiusage.AIUsageRecord,
-	advisor *aiprovider.AdvisorUsage,
+	advisor *aipricing.AdvisorUsage,
 	kind aiprovider.Kind,
 ) {
 	if !advisor.Used() {

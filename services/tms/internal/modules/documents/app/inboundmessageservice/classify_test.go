@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -66,7 +66,7 @@ func TestClassify_ReadsAGoodReply(t *testing.T) {
 	assert.Equal(t, inboundmessage.ClassificationTender, got.Class)
 	assert.InDelta(t, 0.91, got.Confidence, 0.0001)
 	assert.True(t, got.Narrated)
-	assert.Equal(t, aiprovider.TaskInboundClassification, completion.got.Task)
+	assert.Equal(t, aitask.TaskInboundClassification, completion.got.Task)
 }
 
 /*

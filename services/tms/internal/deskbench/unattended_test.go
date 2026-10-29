@@ -8,8 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+=======
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
+>>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -150,7 +155,7 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 	definitionID, providerID := pulid.MustNew("agd_"), pulid.MustNew("aiprv_")
 	release := recorder.Pin(definitionID, ProviderPin{
 		ProviderID: providerID,
-		Effort:     aiprovider.ReasoningLow,
+		Effort:     aireasoning.ReasoningLow,
 	})
 
 	req := &llmports.ChatCompletionRequest{
@@ -159,7 +164,7 @@ func TestRecorderPin_HoldsARunToItsCell(t *testing.T) {
 	recorder.pin(req)
 	assert.Equal(t, providerID, req.PreferredProviderID)
 	assert.True(t, req.PinPreferred)
-	assert.Equal(t, aiprovider.ReasoningLow, req.Reasoning)
+	assert.Equal(t, aireasoning.ReasoningLow, req.Reasoning)
 	assert.Nil(t, req.Advisor)
 
 	release()
@@ -180,7 +185,7 @@ func TestRecorderPin_HandsTheCellsAdvisorToEveryCall(t *testing.T) {
 			ID: pulid.MustNew("aiprv_"), Kind: aiprovider.KindAnthropicMessages,
 			Model: "claude-haiku-5-5",
 		},
-		Effort:  aiprovider.ReasoningLow,
+		Effort:  aireasoning.ReasoningLow,
 		Advisor: llmports.DefaultAdvisor(""),
 	}
 	release := recorder.Pin(threadID, ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor})
@@ -192,7 +197,7 @@ func TestRecorderPin_HandsTheCellsAdvisorToEveryCall(t *testing.T) {
 	recorder.pin(first)
 	require.NotNil(t, first.Advisor)
 	assert.Equal(t, llmports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2}, *first.Advisor)
-	assert.Equal(t, aiprovider.ReasoningLow, first.Reasoning)
+	assert.Equal(t, aireasoning.ReasoningLow, first.Reasoning)
 
 	first.Advisor.MaxUses = 9
 	second := &llmports.ChatCompletionRequest{
@@ -277,7 +282,7 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 	listed := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	price := listed.price(t.Context(), tenant, &tokenCount{
 		provider: haiku.ID, model: "claude-haiku-5-5",
-		raw: aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 1_000_000, Output: 1_000_000},
+		raw: aipricing.TokenUsage{Input: 1_000_000, CacheRead: 1_000_000, Output: 1_000_000},
 	})
 	require.NotNil(t, price.cost)
 	assert.Equal(t, PriceSourceListPrice, price.source)
@@ -290,7 +295,7 @@ func TestPricer_PricesAnUnpricedProviderFromTheListThenTheReference(t *testing.T
 	referenced := newPricer(&fakeProviders{provider: luna}, fakeReference{})
 	price = referenced.price(t.Context(), tenant, &tokenCount{
 		provider: luna.ID, model: "gpt-6-luna",
-		raw: aiprovider.TokenUsage{Input: 1_000_000, CacheRead: 500_000, Output: 100_000},
+		raw: aipricing.TokenUsage{Input: 1_000_000, CacheRead: 500_000, Output: 100_000},
 	})
 	require.NotNil(t, price.cost)
 	assert.Equal(t, PriceSourceReference, price.source)
@@ -313,7 +318,7 @@ func TestPricer_PricesEachModelAProviderServedOnItsOwn(t *testing.T) {
 		), Kind: aiprovider.KindAnthropicMessages, Model: "claude-haiku-5-5",
 	}
 	pricer := newPricer(&fakeProviders{provider: gateway}, fakeReference{})
-	usage := aiprovider.TokenUsage{Input: 1_000, Output: 1_000}
+	usage := aipricing.TokenUsage{Input: 1_000, Output: 1_000}
 
 	haiku := pricer.price(t.Context(), tenant, &tokenCount{
 		provider: gateway.ID, model: "claude-haiku-5-5", raw: usage,
@@ -339,11 +344,11 @@ func TestPricer_PricesTheAdvisorsTokensAtTheAdvisorsRate(t *testing.T) {
 	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	tokens := tokenCount{
 		provider: haiku.ID, model: "claude-haiku-5-5",
-		raw: aiprovider.TokenUsage{Input: 10_000, Output: 10_000},
-		advisor: &aiprovider.AdvisorUsage{
+		raw: aipricing.TokenUsage{Input: 10_000, Output: 10_000},
+		advisor: &aipricing.AdvisorUsage{
 			Model:  "claude-opus-5-5",
 			Calls:  1,
-			Tokens: aiprovider.TokenUsage{Input: 1_000_000, Output: 100_000},
+			Tokens: aipricing.TokenUsage{Input: 1_000_000, Output: 100_000},
 		},
 	}
 
@@ -374,12 +379,12 @@ func TestPricer_PricesEachExecutorIterationOnItsOwnTier(t *testing.T) {
 	pricer := newPricer(&fakeProviders{provider: haiku}, fakeReference{})
 	price := pricer.price(t.Context(), tenant, &tokenCount{
 		provider: haiku.ID, model: "claude-haiku-5-5",
-		raw: aiprovider.TokenUsage{Input: 120_000, Output: 2_000},
-		advisor: &aiprovider.AdvisorUsage{
+		raw: aipricing.TokenUsage{Input: 120_000, Output: 2_000},
+		advisor: &aipricing.AdvisorUsage{
 			Model:  "claude-opus-5-5",
 			Calls:  1,
-			Tokens: aiprovider.TokenUsage{Input: 10_000, Output: 1_000},
-			Executor: []aiprovider.TokenUsage{
+			Tokens: aipricing.TokenUsage{Input: 10_000, Output: 1_000},
+			Executor: []aipricing.TokenUsage{
 				{Input: 60_000, Output: 1_000},
 				{Input: 60_000, Output: 1_000},
 			},
@@ -403,10 +408,10 @@ func TestUsageOf_CountsTheAdvisorApart(t *testing.T) {
 		InputTokens:     100,
 		OutputTokens:    20,
 		ProviderKind:    aiprovider.KindAnthropicMessages,
-		Advisor: &aiprovider.AdvisorUsage{
+		Advisor: &aipricing.AdvisorUsage{
 			Model:  "claude-opus-5-5",
 			Calls:  2,
-			Tokens: aiprovider.TokenUsage{Input: 300, CacheRead: 50, Output: 40},
+			Tokens: aipricing.TokenUsage{Input: 300, CacheRead: 50, Output: 40},
 		},
 	}}
 

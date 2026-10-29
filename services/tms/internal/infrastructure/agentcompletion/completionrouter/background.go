@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -209,7 +210,7 @@ func (s *Service) recordBackground(
 ) {
 	task := req.Task
 	if task == "" {
-		task = aiprovider.TaskGeneral
+		task = aitask.TaskGeneral
 	}
 
 	attempt := usageAttempt{

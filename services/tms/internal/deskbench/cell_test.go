@@ -3,7 +3,9 @@ package deskbench
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +17,7 @@ func TestSplitEffort(t *testing.T) {
 	name, effort, err := splitEffort("Haiku 5.5@low")
 	require.NoError(t, err)
 	assert.Equal(t, "Haiku 5.5", name)
-	assert.Equal(t, aiprovider.ReasoningLow, effort)
+	assert.Equal(t, aireasoning.ReasoningLow, effort)
 
 	name, effort, err = splitEffort("claude-opus-5-5")
 	require.NoError(t, err)
@@ -31,7 +33,7 @@ func TestCellLabel_NamesTheEffort(t *testing.T) {
 
 	provider := &aiprovider.Provider{Name: "Haiku 5.5", Model: "claude-haiku-5-5"}
 	assert.Equal(t, "Haiku 5.5 (claude-haiku-5-5) @medium",
-		Cell{Provider: provider, Effort: aiprovider.ReasoningMedium}.Label())
+		Cell{Provider: provider, Effort: aireasoning.ReasoningMedium}.Label())
 	assert.Equal(t, "default", Cell{}.Label())
 }
 
@@ -40,7 +42,7 @@ func TestCellLabel_NamesTheAdvisor(t *testing.T) {
 
 	provider := &aiprovider.Provider{Name: "Haiku 5.5", Model: "claude-haiku-5-5"}
 	assert.Equal(t, "Haiku 5.5 (claude-haiku-5-5) @low +advisor", Cell{
-		Provider: provider, Effort: aiprovider.ReasoningLow,
+		Provider: provider, Effort: aireasoning.ReasoningLow,
 		Advisor: llmports.DefaultAdvisor(""),
 	}.Label())
 	assert.Equal(t, "Haiku 5.5 (claude-haiku-5-5) +advisor=claude-sonnet-5-5", Cell{
@@ -54,13 +56,13 @@ func TestParseCellRef_ReadsTheAdvisorSuffix(t *testing.T) {
 	tests := []struct {
 		ref     string
 		name    string
-		effort  aiprovider.ReasoningEffort
+		effort  aireasoning.ReasoningEffort
 		advisor *llmports.AdvisorSpec
 	}{
 		{
 			ref:     "claude-haiku-5-5@low+advisor",
 			name:    "claude-haiku-5-5",
-			effort:  aiprovider.ReasoningLow,
+			effort:  aireasoning.ReasoningLow,
 			advisor: &llmports.AdvisorSpec{Model: "claude-opus-5-5", MaxUses: 2},
 		},
 		{
@@ -71,13 +73,13 @@ func TestParseCellRef_ReadsTheAdvisorSuffix(t *testing.T) {
 		{
 			ref:     " Haiku 5.5 @ medium + Advisor = claude-fable-5-1 ",
 			name:    "Haiku 5.5",
-			effort:  aiprovider.ReasoningMedium,
+			effort:  aireasoning.ReasoningMedium,
 			advisor: &llmports.AdvisorSpec{Model: "claude-fable-5-1", MaxUses: 2},
 		},
 		{
 			ref:    "claude-haiku-5-5@low",
 			name:   "claude-haiku-5-5",
-			effort: aiprovider.ReasoningLow,
+			effort: aireasoning.ReasoningLow,
 		},
 	}
 	for _, tc := range tests {
@@ -126,7 +128,7 @@ func TestCheckAdvisor_NeedsAPlatformThatServesIt(t *testing.T) {
 	t.Parallel()
 
 	advisor := llmports.DefaultAdvisor("")
-	for _, platform := range aiprovider.AllPlatforms() {
+	for _, platform := range aiplatform.AllPlatforms() {
 		provider := &aiprovider.Provider{
 			Kind:     aiprovider.KindAnthropicMessages,
 			Platform: platform,

@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -310,7 +310,7 @@ func TestNarrate_RoutesToTheInsightsTask(t *testing.T) {
 	})
 
 	require.NotNil(t, completion.lastReq)
-	assert.Equal(t, aiprovider.TaskOperationalInsights, completion.lastReq.Task)
+	assert.Equal(t, aitask.TaskOperationalInsights, completion.lastReq.Task)
 }
 
 // Subject names are customer-supplied text passing through a prompt. Marking the

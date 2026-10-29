@@ -5,7 +5,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -227,7 +231,7 @@ func (s *Service) Update(
 	if err = s.apply(&updated, req, actor); err != nil {
 		return nil, err
 	}
-	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
+	aiproviderkey.ForgetExpiredPreviousKey(updated, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	if keptKeyForNewEndpoint(existing, &updated, req) {
@@ -247,7 +251,7 @@ func (s *Service) Update(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if aiprovider.AdvisorSettingsChanged(existing, &updated) {
+	if aiproviderchange.AdvisorSettingsChanged(existing, &updated) {
 		updated.AdvisorRefusal = nil
 	}
 
@@ -366,7 +370,7 @@ func (s *Service) tidyKey(
 	if s.keys == nil {
 		return
 	}
-	if provider.NeedsKeyFingerprint() && apiKey != "" {
+	if aiproviderkey.NeedsKeyFingerprint(provider) && apiKey != "" {
 		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
 		if err := s.keys.RecordFingerprint(ctx, aiproviderports.RecordAIProviderKeyFingerprintRequest{
 			ID:         provider.ID,
@@ -407,7 +411,7 @@ func (s *Service) apply(
 	}
 	// A replaced key is kept as a fallback only for the place and identity it
 	// was entered for; kept across a move, it would be sent somewhere new.
-	sameEndpoint := aiprovider.SameCredentialTarget(before, provider)
+	sameEndpoint := aiproviderchange.SameCredentialTarget(before, provider)
 	provider.Model = strings.TrimSpace(req.Model)
 	if err := s.checkPrivateNetwork(req.AllowPrivateNetwork); err != nil {
 		return err
@@ -426,11 +430,11 @@ func (s *Service) apply(
 	}
 	provider.ReasoningEffort = req.ReasoningEffort
 	if provider.ReasoningEffort == "" {
-		provider.ReasoningEffort = aiprovider.ReasoningOff
+		provider.ReasoningEffort = aireasoning.ReasoningOff
 	}
 	provider.ThinkingStyle = req.ThinkingStyle
 	if provider.ThinkingStyle == "" {
-		provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
+		provider.ThinkingStyle = aireasoning.ThinkingStyleAuto
 	}
 	provider.AdvisorEnabled = req.AdvisorEnabled
 	provider.AdvisorModel = strings.TrimSpace(req.AdvisorModel)
@@ -462,7 +466,7 @@ func (s *Service) apply(
 	})
 }
 
-func clonePlatformSettings(settings *aiprovider.PlatformSettings) *aiprovider.PlatformSettings {
+func clonePlatformSettings(settings *aiplatform.PlatformSettings) *aiplatform.PlatformSettings {
 	if settings == nil {
 		return nil
 	}
@@ -526,16 +530,16 @@ func (s *Service) replaceKey(provider *aiprovider.Provider, change *keyChange) e
 	if err != nil {
 		return err
 	}
-	provider.ReplaceAPIKey(replacement)
+	aiproviderkey.ReplaceAPIKey(provider, replacement)
 
 	return nil
 }
 
 // keyReplacement encrypts a new credential. Only its ends are kept in the
 // clear, to tell two keys apart.
-func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, error) {
+func (s *Service) keyReplacement(change *keyChange) (aiproviderkey.KeyReplacement, error) {
 	incoming := strings.TrimSpace(change.incoming)
-	replacement := aiprovider.KeyReplacement{
+	replacement := aiproviderkey.KeyReplacement{
 		AddedByID:    change.actor.PersonUserID(),
 		Now:          timeutils.NowUnix(),
 		KeepPrevious: change.keepPrevious,
@@ -579,7 +583,7 @@ func keptKeyForNewEndpoint(
 		return false
 	}
 
-	return !aiprovider.SameCredentialTarget(existing, updated)
+	return !aiproviderchange.SameCredentialTarget(existing, updated)
 }
 
 func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {

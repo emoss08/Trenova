@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -59,7 +59,7 @@ type Recorder struct {
 
 type ProviderPin struct {
 	ProviderID pulid.ID
-	Effort     aiprovider.ReasoningEffort
+	Effort     aireasoning.ReasoningEffort
 	Advisor    *llmports.AdvisorSpec
 }
 

@@ -3,7 +3,7 @@ package assistantservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -29,7 +29,7 @@ func (s *Service) SelectableProviders(
 	tenant permissionports.RequestActor,
 ) ([]assistantports.AssistantProviderOption, error) {
 	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant.TenantInfo(),
 	})
 	if err != nil {
@@ -38,7 +38,7 @@ func (s *Service) SelectableProviders(
 
 	options := make([]assistantports.AssistantProviderOption, 0, len(providers))
 	for _, provider := range providers {
-		if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
+		if ok, _ := provider.CanServeTask(aitask.TaskAssistantChat); !ok {
 			continue
 		}
 

@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -49,7 +52,7 @@ type StructuredCompletionRequest struct {
 	TenantInfo pagination.TenantInfo
 	// Task selects which configured providers may serve this call. Leaving it
 	// empty routes to the general-purpose pool.
-	Task         aiprovider.Task
+	Task         aitask.Task
 	System       string
 	Context      DelimitedContext
 	OutputSchema map[string]any
@@ -69,7 +72,7 @@ type StructuredCompletionRequest struct {
 	// Reasoning overrides how hard the providers think for this call; empty
 	// keeps each provider's configured effort. A short-deadline caller asks
 	// for None.
-	Reasoning aiprovider.ReasoningEffort
+	Reasoning aireasoning.ReasoningEffort
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution aiusageports.AIUsageAttribution
 }
@@ -102,11 +105,11 @@ type ChatCompletionRequest struct {
 	SystemStable   int
 	Messages       []Message
 	Tools          []kernelports.ToolSpec
-	DeferredTools  []string                   `json:"deferredTools,omitempty"`
-	ToolChoiceNone bool                       `json:"toolChoiceNone,omitempty"`
-	Reask          string                     `json:"reask,omitempty"`
-	Reasoning      aiprovider.ReasoningEffort `json:"reasoning,omitempty"`
-	Advisor        *AdvisorSpec               `json:"advisor,omitempty"`
+	DeferredTools  []string                    `json:"deferredTools,omitempty"`
+	ToolChoiceNone bool                        `json:"toolChoiceNone,omitempty"`
+	Reask          string                      `json:"reask,omitempty"`
+	Reasoning      aireasoning.ReasoningEffort `json:"reasoning,omitempty"`
+	Advisor        *AdvisorSpec                `json:"advisor,omitempty"`
 	MaxTokens      int
 	// PreferredProviderID asks for one configured provider first. It is honoured
 	// only when that provider is enabled and serves the task; otherwise the usual
@@ -191,7 +194,7 @@ type ChatCompletionResult struct {
 	// FallbackFrom is the provider asked first when another one answered:
 	// the reader is told which model replied and which one didn't.
 	FallbackFrom *ChatProviderFailure
-	Advisor      *aiprovider.AdvisorUsage
+	Advisor      *aipricing.AdvisorUsage
 }
 
 const (
@@ -291,7 +294,7 @@ type BackgroundPollRequest struct {
 	TenantInfo  pagination.TenantInfo
 	ProviderID  pulid.ID
 	Handle      string
-	Task        aiprovider.Task
+	Task        aitask.Task
 	SubmittedAt int64
 	Attribution aiusageports.AIUsageAttribution
 }
@@ -317,7 +320,7 @@ type StructuredCompleter interface {
 }
 
 type ProviderAvailability interface {
-	CanServe(ctx context.Context, task aiprovider.Task, tenant pagination.TenantInfo) (bool, error)
+	CanServe(ctx context.Context, task aitask.Task, tenant pagination.TenantInfo) (bool, error)
 }
 
 // ScriptProviders reads the code-mode settings of the chat providers, which

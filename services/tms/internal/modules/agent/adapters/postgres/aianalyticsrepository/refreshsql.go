@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -272,10 +273,10 @@ func runOwners(req *unitRefresh) *keel.CTETable {
 			modelHint(o.Fingerprint).Coalesce(o.ModelIdentifier.NullIf("")),
 			keel.CaseString().
 				When(o.AgentType.Eq(agent.TypeBillingException),
-					keel.Text(string(aiprovider.TaskBillingDiagnosis))).
+					keel.Text(string(aitask.TaskBillingDiagnosis))).
 				When(o.AgentType.Eq(agent.TypeAssistantChat),
-					keel.Text(string(aiprovider.TaskAssistantChat))).
-				Else(keel.Text(string(aiprovider.TaskGeneral))),
+					keel.Text(string(aitask.TaskAssistantChat))).
+				Else(keel.Text(string(aitask.TaskGeneral))),
 			o.Status,
 			stoppedAtLimit(o.Fingerprint),
 			ownerStartedMs(o.StartedAt, o.CreatedAt),
@@ -304,7 +305,7 @@ func turnOwners(req *unitRefresh) *keel.CTETable {
 			o.RunID,
 			providerHint(o.Fingerprint),
 			modelHint(o.Fingerprint),
-			keel.Text(string(aiprovider.TaskAssistantChat)),
+			keel.Text(string(aitask.TaskAssistantChat)),
 			o.Status,
 			stoppedAtLimit(o.Fingerprint),
 			ownerStartedMs(o.StartedAt, o.CreatedAt),

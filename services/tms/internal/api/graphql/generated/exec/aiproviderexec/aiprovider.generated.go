@@ -3,6 +3,11 @@
 package aiproviderexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"context"
 	"errors"
 
@@ -647,7 +652,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return obj.Prefix, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -657,7 +662,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return obj.LastFour, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -667,7 +672,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return obj.AddedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -679,7 +684,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return gqlexec.Resolver[resolverAIProviderKeyInfo](ec, "AIProviderKeyInfo").AddedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -688,7 +693,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastUsedAt",
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return obj.LastUsedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -697,7 +702,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "previousKeyExpiresAt",
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.KeyInfo)
+					obj := o.(*aiproviderkey.KeyInfo)
 					return obj.PreviousKeyExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -786,7 +791,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.Auth, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderPlatformAuth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformAuth),
@@ -796,7 +801,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.Region, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -806,7 +811,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.ProjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -816,7 +821,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.WorkspaceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -826,7 +831,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.AccessKeyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -836,7 +841,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.Resource, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -846,7 +851,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.TenantID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -856,7 +861,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.PlatformSettings)
+					obj := o.(*aiplatform.PlatformSettings)
 					return obj.ClientID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -941,7 +946,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.RouteChoice)
+					obj := o.(*airouting.RouteChoice)
 					return gqlexec.Resolver[resolverAIRouteChoice](ec, "AIRouteChoice").ProviderID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -951,7 +956,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.RouteChoice)
+					obj := o.(*airouting.RouteChoice)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -961,7 +966,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.RouteChoice)
+					obj := o.(*airouting.RouteChoice)
 					return obj.Draft, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -973,7 +978,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.TaskRoute)
+					obj := o.(*airouting.TaskRoute)
 					return obj.Task, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask),
@@ -983,7 +988,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRouteChoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.TaskRoute)
+					obj := o.(*airouting.TaskRoute)
 					return obj.Before, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIRouteChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐRouteChoice),
@@ -993,7 +998,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRouteChoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.TaskRoute)
+					obj := o.(*airouting.TaskRoute)
 					return obj.After, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIRouteChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐRouteChoice),
@@ -1004,7 +1009,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*aiprovider.TaskRoute)
+					obj := o.(*airouting.TaskRoute)
 					return obj.Changed(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1046,7 +1051,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_routeAITask_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RouteAITask(ctx, fc.Args["task"].(aiprovider.Task), fc.Args["providerId"].(string))
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RouteAITask(ctx, fc.Args["task"].(aitask.Task), fc.Args["providerId"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProvider2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐProviderᚄ),
 			},
@@ -1145,21 +1150,21 @@ type resolverAIProvider interface {
 	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
-	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error)
 }
 
 type resolverAIProviderKeyInfo interface {
-	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
+	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
 }
 
 type resolverAIRouteChoice interface {
-	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+	ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error)
 }
 
 type resolverMutation interface {
 	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
-	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
+	RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 }
 
@@ -1167,7 +1172,7 @@ type resolverQuery interface {
 	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
-	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
+	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error)
 }
 
 var (
@@ -1219,7 +1224,7 @@ func field_Mutation_reorderAIProviders_args(ctx context.Context, ec *gqlexec.Exe
 func field_Mutation_routeAITask_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "task",
-		func(ctx context.Context, v any) (aiprovider.Task, error) {
+		func(ctx context.Context, v any) (aitask.Task, error) {
 			return unmarshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx, ec, v)
 		})
 	if err != nil {
@@ -1741,13 +1746,13 @@ func unmarshalNAIProviderRoutingDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, v any) (aiprovider.Task, error) {
+func unmarshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, v any) (aitask.Task, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := aiprovider.Task(tmp)
+	res := aitask.Task(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aiprovider.Task, error) {
+func unmarshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aitask.Task, error) {
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask)
 }
 
@@ -1789,21 +1794,21 @@ func unmarshalOAIEmbeddingInputStyle2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAIProviderPlatform2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatform(ctx context.Context, ec *gqlexec.Exec, v any) (*aiprovider.Platform, error) {
+func unmarshalOAIProviderPlatform2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatform(ctx context.Context, ec *gqlexec.Exec, v any) (*aiplatform.Platform, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := aiprovider.Platform(tmp)
+	res := aiplatform.Platform(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAIProviderPlatformAuth2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformAuth(ctx context.Context, ec *gqlexec.Exec, v any) (*aiprovider.PlatformAuth, error) {
+func unmarshalOAIProviderPlatformAuth2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformAuth(ctx context.Context, ec *gqlexec.Exec, v any) (*aiplatform.PlatformAuth, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := aiprovider.PlatformAuth(tmp)
+	res := aiplatform.PlatformAuth(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1824,7 +1829,7 @@ func unmarshalOAIStructuredOutputMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aiprovider.Task, error) {
+func unmarshalOAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]aitask.Task, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1959,7 +1964,7 @@ func marshalNAIProviderModelOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AIProviderModelOption", v)
 }
 
-func marshalNAIProviderPlatform2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatform(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Platform) graphql.Marshaler {
+func marshalNAIProviderPlatform2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatform(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiplatform.Platform) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1967,7 +1972,7 @@ func marshalNAIProviderPlatform2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
-func marshalNAIProviderPlatformAuth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformAuth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.PlatformAuth) graphql.Marshaler {
+func marshalNAIProviderPlatformAuth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformAuth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiplatform.PlatformAuth) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1975,7 +1980,7 @@ func marshalNAIProviderPlatformAuth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐReasoningEffort(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.ReasoningEffort) graphql.Marshaler {
+func marshalNAIReasoningEffort2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐReasoningEffort(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aireasoning.ReasoningEffort) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1991,7 +1996,7 @@ func marshalNAIStructuredOutputMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Task) graphql.Marshaler {
+func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aitask.Task) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1999,23 +2004,23 @@ func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagen
 	return res
 }
 
-func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiprovider.Task) graphql.Marshaler {
-	return gqlexec.List[aiprovider.Task]{
+func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aitask.Task) graphql.Marshaler {
+	return gqlexec.List[aitask.Task]{
 		Elem:        marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAITaskRoute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskRouteᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aiprovider.TaskRoute) graphql.Marshaler {
-	return gqlexec.List[*aiprovider.TaskRoute]{
+func marshalNAITaskRoute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskRouteᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*airouting.TaskRoute) graphql.Marshaler {
+	return gqlexec.List[*airouting.TaskRoute]{
 		Elem:        marshalNAITaskRoute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskRoute,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAITaskRoute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskRoute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.TaskRoute) graphql.Marshaler {
+func marshalNAITaskRoute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTaskRoute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *airouting.TaskRoute) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2023,7 +2028,7 @@ func marshalNAITaskRoute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "AITaskRoute", v)
 }
 
-func marshalNAIThinkingStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐThinkingStyle(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.ThinkingStyle) graphql.Marshaler {
+func marshalNAIThinkingStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐThinkingStyle(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aireasoning.ThinkingStyle) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2116,14 +2121,14 @@ func marshalOAIProviderAdvisorRefusal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "AIProviderAdvisorRefusal", v)
 }
 
-func marshalOAIProviderKeyInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐKeyInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.KeyInfo) graphql.Marshaler {
+func marshalOAIProviderKeyInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐKeyInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiproviderkey.KeyInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AIProviderKeyInfo", v)
 }
 
-func marshalOAIProviderPlatformSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.PlatformSettings) graphql.Marshaler {
+func marshalOAIProviderPlatformSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐPlatformSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiplatform.PlatformSettings) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2137,7 +2142,7 @@ func marshalOAIProviderTestOutcome2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AIProviderTestOutcome", v)
 }
 
-func marshalOAIRouteChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐRouteChoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.RouteChoice) graphql.Marshaler {
+func marshalOAIRouteChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐRouteChoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *airouting.RouteChoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

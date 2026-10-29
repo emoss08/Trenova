@@ -6,7 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -133,14 +136,14 @@ type saveProviderRequest struct {
 	APIKey                   *string                         `json:"apiKey"`
 	AllowPrivateNetwork      bool                            `json:"allowPrivateNetwork"`
 	StructuredOutputMode     aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
-	ReasoningEffort          aiprovider.ReasoningEffort      `json:"reasoningEffort"`
-	ThinkingStyle            aiprovider.ThinkingStyle        `json:"thinkingStyle"`
+	ReasoningEffort          aireasoning.ReasoningEffort     `json:"reasoningEffort"`
+	ThinkingStyle            aireasoning.ThinkingStyle       `json:"thinkingStyle"`
 	AdvisorEnabled           bool                            `json:"advisorEnabled"`
 	AdvisorModel             string                          `json:"advisorModel"`
 	Scripts                  bool                            `json:"scripts"`
 	ScriptWrites             bool                            `json:"scriptWrites"`
-	Platform                 aiprovider.Platform             `json:"platform"`
-	PlatformSettings         *aiprovider.PlatformSettings    `json:"platformSettings"`
+	Platform                 aiplatform.Platform             `json:"platform"`
+	PlatformSettings         *aiplatform.PlatformSettings    `json:"platformSettings"`
 	ExtraBody                map[string]any                  `json:"extraBody"`
 	InputCostPerMillion      *decimal.Decimal                `json:"inputCostPerMillion"`
 	OutputCostPerMillion     *decimal.Decimal                `json:"outputCostPerMillion"`
@@ -148,7 +151,7 @@ type saveProviderRequest struct {
 	CacheWriteCostPerMillion *decimal.Decimal                `json:"cacheWriteCostPerMillion"`
 	MaxTokens                int                             `json:"maxTokens"`
 	ContextWindow            *int                            `json:"contextWindow"`
-	Tasks                    []aiprovider.Task               `json:"tasks"`
+	Tasks                    []aitask.Task                   `json:"tasks"`
 	Priority                 int                             `json:"priority"`
 	EmbeddingDimensions      *int                            `json:"embeddingDimensions"`
 	EmbeddingInputStyle      aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`

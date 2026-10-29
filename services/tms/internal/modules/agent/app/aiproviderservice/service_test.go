@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -356,12 +357,12 @@ func TestApply_KeepsTheThinkingStyleTheAdministratorChose(t *testing.T) {
 	provider.Kind = aiprovider.KindAnthropicMessages
 	provider.Model = "acme-reasoner"
 	req := saveRequest(provider, "https://gateway.example.com", nil)
-	req.ThinkingStyle = aiprovider.ThinkingStyleEffort
+	req.ThinkingStyle = aireasoning.ThinkingStyleEffort
 
 	require.NoError(t, svc.apply(provider, req, nil))
-	assert.Equal(t, aiprovider.ThinkingStyleEffort, provider.ThinkingStyle)
+	assert.Equal(t, aireasoning.ThinkingStyleEffort, provider.ThinkingStyle)
 
 	req.ThinkingStyle = ""
 	require.NoError(t, svc.apply(provider, req, nil))
-	assert.Equal(t, aiprovider.ThinkingStyleAuto, provider.ThinkingStyle)
+	assert.Equal(t, aireasoning.ThinkingStyleAuto, provider.ThinkingStyle)
 }

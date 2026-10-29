@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,10 +37,10 @@ func TestRebindSealedKeyReplacesOnlyTheKeyItWasHanded(t *testing.T) {
 		Kind:                 aiprovider.KindOpenAIChat,
 		BaseURL:              "https://api.example.com/v1",
 		Model:                "gpt-test",
-		Tasks:                []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks:                []aitask.Task{aitask.TaskGeneral},
 		StructuredOutputMode: aiprovider.KindOpenAIChat.DefaultStructuredOutputMode(),
-		ReasoningEffort:      aiprovider.ReasoningOff,
-		ThinkingStyle:        aiprovider.ThinkingStyleAuto,
+		ReasoningEffort:      aireasoning.ReasoningOff,
+		ThinkingStyle:        aireasoning.ThinkingStyleAuto,
 		EmbeddingInputStyle:  aiprovider.EmbeddingInputStyleNone,
 		TimeoutSeconds:       aiprovider.DefaultTimeoutSeconds,
 		MaxTokens:            aiprovider.ClampMaxTokens(8192),

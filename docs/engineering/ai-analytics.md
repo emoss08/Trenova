@@ -42,7 +42,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Repository and SQL | `agent/adapters/postgres/aianalyticsrepository` (`refreshsql.go`, `readsql.go`) |
 | Cache | `infrastructure/redis/repositories/aianalyticscache.go` |
 | Refresh workflow | `agent/jobs/aianalyticsjobs` (schedule `ai-analytics-refresh`, `RefreshAIAnalyticsWorkflow`) |
-| Routing change | `aiprovider.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
+| Routing change | `airouting.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |
 | Web | `routes/agent-control/_components/analytics/`, query keys `queries.aiAnalytics` |
 | Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010210_ai_work_unit_advisor.tx` |
@@ -121,7 +121,7 @@ rebuilds the last 30 days from the sources.
   0, so the next refresh rebuilds the whole retention window (90 days, 14 days a cycle) from the
   usage rows and no unit keeps the old meaning. `cost_usd` is priced per call by the provider's prices, with
   cache reads and writes at their own rates (the entered price, else the model's list rate from
-  `aiprovider.ListPrice`, else the protocol's multiple) and Haiku 5.5's long-prompt rates above
+  `aipricing.ListPrice`, else the protocol's multiple) and Haiku 5.5's long-prompt rates above
   100,000 prompt tokens (per executor iteration when the call consulted the advisor). A call
   that consulted Anthropic's advisor carries the advisor's cost inside `cost_usd`, while its
   token columns are the executor's alone (the advisor's are in the usage row's `advisor_*`
@@ -130,7 +130,7 @@ rebuilds the last 30 days from the sources.
   later must take `advisor_cost_usd` out of the cost, or add the advisor's tokens, first.
   A call answered through a provider's batch API (an unattended suite's judge, see
   "Evaluations" in [agent-runtime.md](agent-runtime.md#evaluations)) is a usage row with
-  `batched` true and `cost_usd` already at the batch discount (`aiprovider.BatchDiscount`,
+  `batched` true and `cost_usd` already at the batch discount (`aipricing.BatchDiscount`,
   half of every token price, through `Provider.BatchCostForTask`); a per-token figure must
   read `batched` before comparing its rate with an unbatched row's. Its id is derived from the
   batch and the item (`pulid.Derived`) and it is written with `CreateOrSkip`, so reading the

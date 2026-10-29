@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -271,7 +272,8 @@ func (s *Service) withKeyFallback(
 	}
 
 	err = call(apiKey)
-	if err == nil || !keyRefused(err) || !provider.PreviousKeyUsable(timeutils.NowUnix()) {
+	if err == nil || !keyRefused(err) ||
+		!aiproviderkey.PreviousKeyUsable(provider, timeutils.NowUnix()) {
 		return err
 	}
 

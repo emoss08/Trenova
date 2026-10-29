@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -127,7 +129,7 @@ func claudeJudge() *aiprovider.Provider {
 		Model:                "claude-sonnet-5-5",
 		StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 		MaxTokens:            2048,
-		Tasks:                []aiprovider.Task{aiprovider.TaskEvaluationJudge},
+		Tasks:                []aitask.Task{aitask.TaskEvaluationJudge},
 		Enabled:              true,
 	}, "2", "10")
 }
@@ -141,7 +143,7 @@ func judgeItem(tenant pagination.TenantInfo, id, question string) llmports.Batch
 		CustomID: id,
 		Request: llmports.StructuredCompletionRequest{
 			TenantInfo: tenant,
-			Task:       aiprovider.TaskEvaluationJudge,
+			Task:       aitask.TaskEvaluationJudge,
 			System:     "You grade one answer.",
 			Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 				{Title: "Answer to grade", Content: question},
@@ -165,7 +167,7 @@ func TestSubmitBatch_SendsEveryRequestToTheClaudeAPIInOneBatch(t *testing.T) {
 
 	handle, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
-		Task:       aiprovider.TaskEvaluationJudge,
+		Task:       aitask.TaskEvaluationJudge,
 		Items: []llmports.BatchCompletionItem{
 			judgeItem(tenant, "aeval_1", "It was sent on Tuesday."),
 			judgeItem(tenant, "aeval_2", "Load 42 is late."),
@@ -198,9 +200,9 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 	first := judgeItem(tenant, "aeval_1", "It was sent on Tuesday.")
 	second := judgeItem(tenant, "aeval_2", "Load 42 is late.")
 
-	one := batchEstimate(provider, aiprovider.TaskEvaluationJudge, structuredRun(&first.Request))
+	one := batchEstimate(provider, aitask.TaskEvaluationJudge, structuredRun(&first.Request))
 	require.NotNil(t, one)
-	full := provider.CostForTask(aiprovider.TaskEvaluationJudge, aiprovider.TokenUsage{
+	full := aipricing.CostForTask(provider, aitask.TaskEvaluationJudge, aipricing.TokenUsage{
 		Input:  1,
 		Output: 600,
 	})
@@ -209,7 +211,7 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 
 	handle, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo:    tenant,
-		Task:          aiprovider.TaskEvaluationJudge,
+		Task:          aitask.TaskEvaluationJudge,
 		Items:         []llmports.BatchCompletionItem{first, second},
 		SpendLimitUSD: one,
 	})
@@ -220,7 +222,7 @@ func TestSubmitBatch_TakesOnlyWhatTheSpendLimitAffords(t *testing.T) {
 	nothing := decimal.Zero
 	_, err = svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo:    tenant,
-		Task:          aiprovider.TaskEvaluationJudge,
+		Task:          aitask.TaskEvaluationJudge,
 		Items:         []llmports.BatchCompletionItem{first},
 		SpendLimitUSD: &nothing,
 	})
@@ -232,13 +234,13 @@ func TestSubmitBatch_RefusesAProviderWithoutABatchAPI(t *testing.T) {
 	t.Parallel()
 
 	chat := openAIChatProvider("local", "http://127.0.0.1:1", 1)
-	chat.Tasks = []aiprovider.Task{aiprovider.TaskEvaluationJudge}
+	chat.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 	svc, api, _ := newBatchService(t, chat)
 	tenant := judgeTenant()
 
 	_, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
-		Task:       aiprovider.TaskEvaluationJudge,
+		Task:       aitask.TaskEvaluationJudge,
 		Items:      []llmports.BatchCompletionItem{judgeItem(tenant, "aeval_1", "Yes.")},
 	})
 	require.ErrorIs(t, err, llmports.ErrBatchUnsupported)
@@ -253,7 +255,7 @@ func TestSubmitBatch_RefusesARepeatedID(t *testing.T) {
 
 	_, err := svc.SubmitBatch(t.Context(), &llmports.BatchCompletionRequest{
 		TenantInfo: tenant,
-		Task:       aiprovider.TaskEvaluationJudge,
+		Task:       aitask.TaskEvaluationJudge,
 		Items: []llmports.BatchCompletionItem{
 			judgeItem(tenant, "aeval_1", "Yes."),
 			judgeItem(tenant, "aeval_1", "No."),
@@ -298,7 +300,7 @@ func TestBatchResults_RecordsEachRunItemOnceAtTheBatchRate(t *testing.T) {
 	}
 	req := &llmports.BatchResultsRequest{
 		TenantInfo:  tenant,
-		Task:        aiprovider.TaskEvaluationJudge,
+		Task:        aitask.TaskEvaluationJudge,
 		ProviderID:  provider.ID,
 		BatchID:     "msgbatch_7",
 		SubmittedAt: time.Date(2026, time.October, 27, 3, 0, 0, 0, time.UTC).Unix(),
@@ -317,7 +319,7 @@ func TestBatchResults_RecordsEachRunItemOnceAtTheBatchRate(t *testing.T) {
 	judged := results["aeval_1"]
 	require.True(t, judged.Succeeded())
 	assert.JSONEq(t, `{"score":1,"rationale":"Right."}`, judged.Result.Text)
-	full := provider.CostForTask(aiprovider.TaskEvaluationJudge, aiprovider.TokenUsage{
+	full := aipricing.CostForTask(provider, aitask.TaskEvaluationJudge, aipricing.TokenUsage{
 		Input:  1_000_000,
 		Output: 100_000,
 	})

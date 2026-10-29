@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +14,7 @@ import (
 
 func chatProvider(name, baseURL string, priority int) *aiprovider.Provider {
 	provider := openAIChatProvider(name, baseURL, priority)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskAssistantChat}
+	provider.Tasks = []aitask.Task{aitask.TaskAssistantChat}
 
 	return provider
 }

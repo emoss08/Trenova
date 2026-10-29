@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -125,7 +126,7 @@ type Usage struct {
 	// CacheMissedTokens its estimate of how much came after that point.
 	CacheMissReason   string
 	CacheMissedTokens int64
-	Advisor           *aiprovider.AdvisorUsage
+	Advisor           *aipricing.AdvisorUsage
 	AdvisorCostUSD    *decimal.Decimal
 }
 

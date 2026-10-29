@@ -4,7 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -174,8 +175,8 @@ func TestPlan_ALaterQuestionAsksWhetherItStartsANewChapter(t *testing.T) {
 	req := plan.Request
 	require.NotNil(t, req)
 	assert.Equal(t, "chapter_decision", req.SchemaName)
-	assert.Equal(t, aiprovider.TaskChapterTitling, req.Task)
-	assert.Equal(t, aiprovider.ReasoningOff, req.Reasoning)
+	assert.Equal(t, aitask.TaskChapterTitling, req.Task)
+	assert.Equal(t, aireasoning.ReasoningOff, req.Reasoning)
 	assert.Equal(t, f.tenant, req.TenantInfo)
 	assert.Equal(t, aiusage.FeatureConversationChapters, req.Attribution.Feature)
 	assert.Equal(t, agentruntimeports.RunStepOwnerAssistantTurn, req.Attribution.OwnerKind)

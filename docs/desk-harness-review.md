@@ -475,7 +475,7 @@ The cache is broken by:
 - The final tool-free answer (below).
 
 **Context.** The window comes from the provider's own setting, or else from a table keyed by
-model id (`aiprovider/contextwindow.go`). Conversations compact at 85% of the window, and
+model id (`aimodel/contextwindow.go`). Conversations compact at 85% of the window, and
 replay holds at most 120 messages. A tool result is capped at 12,000 characters, and a JSON
 result keeps its fields while its lists are cut (`RT/fence.go`).
 

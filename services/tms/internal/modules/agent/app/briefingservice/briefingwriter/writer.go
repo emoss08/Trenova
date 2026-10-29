@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,7 +88,7 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 
 	completion, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskDailyBriefing,
+		Task:         aitask.TaskDailyBriefing,
 		System:       systemPrompt,
 		Context:      buildContext(req),
 		OutputSchema: outputSchema(),

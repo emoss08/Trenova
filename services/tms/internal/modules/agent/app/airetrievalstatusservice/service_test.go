@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -1069,7 +1070,7 @@ func embeddingProvider(model string, price *decimal.Decimal, enabled bool) *aipr
 		Kind:                aiprovider.KindOpenAIChat,
 		BaseURL:             "https://api.voyageai.com/v1",
 		Model:               model,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		Enabled:             enabled,
 		EmbeddingDimensions: &dimensions,
 		InputCostPerMillion: price,

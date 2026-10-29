@@ -6,6 +6,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 )
@@ -103,15 +104,15 @@ func advisedTools(
 func anthropicAdvisorUsage(
 	iterations anthropic.BetaIterationsUsage,
 	spec *AdvisorSpec,
-) *aiprovider.AdvisorUsage {
-	usage := aiprovider.AdvisorUsage{}
+) *aipricing.AdvisorUsage {
+	usage := aipricing.AdvisorUsage{}
 	if spec != nil {
 		usage.Model = spec.Model
 	}
-	executor := make([]aiprovider.TokenUsage, 0, len(iterations))
+	executor := make([]aipricing.TokenUsage, 0, len(iterations))
 	for idx := range iterations {
 		iteration := &iterations[idx]
-		tokens := aiprovider.TokenUsage{
+		tokens := aipricing.TokenUsage{
 			Input:      int(iteration.InputTokens),
 			Output:     int(iteration.OutputTokens),
 			CacheRead:  int(iteration.CacheReadInputTokens),
@@ -141,7 +142,7 @@ func anthropicAdvisorUsage(
 	return &usage
 }
 
-func advisorModelOf(usage *aiprovider.AdvisorUsage, spec *AdvisorSpec) string {
+func advisorModelOf(usage *aipricing.AdvisorUsage, spec *AdvisorSpec) string {
 	if usage != nil && usage.Model != "" {
 		return usage.Model
 	}

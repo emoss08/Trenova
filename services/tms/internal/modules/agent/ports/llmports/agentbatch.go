@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ type BatchCompletionItem struct {
 
 type BatchCompletionRequest struct {
 	TenantInfo    pagination.TenantInfo
-	Task          aiprovider.Task
+	Task          aitask.Task
 	Items         []BatchCompletionItem
 	SpendLimitUSD *decimal.Decimal
 }
@@ -54,7 +54,7 @@ type BatchStatus struct {
 
 type BatchResultsRequest struct {
 	TenantInfo   pagination.TenantInfo
-	Task         aiprovider.Task
+	Task         aitask.Task
 	ProviderID   pulid.ID
 	BatchID      string
 	SubmittedAt  int64

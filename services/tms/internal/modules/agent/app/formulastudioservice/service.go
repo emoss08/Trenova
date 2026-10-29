@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const studioTask = aiprovider.TaskAssistantChat
+const studioTask = aitask.TaskAssistantChat
 
 var errNoProvider = errors.New("no completion service is wired")
 

@@ -3,7 +3,7 @@ package aiproviderports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -23,8 +23,8 @@ type AIProviderFailureDismissalRepository interface {
 	List(
 		ctx context.Context,
 		req *ListFailureDismissalsRequest,
-	) ([]*aiprovider.FailureDismissal, error)
+	) ([]*aiproviderdismissal.FailureDismissal, error)
 	// Upsert keeps one dismissal per person and provider, the latest.
-	Upsert(ctx context.Context, dismissal *aiprovider.FailureDismissal) error
+	Upsert(ctx context.Context, dismissal *aiproviderdismissal.FailureDismissal) error
 	Delete(ctx context.Context, req *DeleteFailureDismissalRequest) error
 }

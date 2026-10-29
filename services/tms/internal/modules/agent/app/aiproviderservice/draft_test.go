@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,7 +58,7 @@ func TestTestDraft_HandsTheWorkerOnlyCiphertext(t *testing.T) {
 			APIKey: &typed,
 		},
 		Model: "claude-sonnet-4-5",
-		Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tester.draft)
@@ -120,7 +121,7 @@ func TestTestDraft_RefusesADraftWithoutAModel(t *testing.T) {
 
 	_, err := svc.TestDraft(t.Context(), &aiproviderports.TestAIProviderDraftRequest{
 		Endpoint:       aiproviderports.AIProviderEndpoint{Kind: aiprovider.KindOpenAIChat},
-		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:          []aitask.Task{aitask.TaskAssistantChat},
 		TimeoutSeconds: &timeout,
 	})
 	require.Error(t, err)

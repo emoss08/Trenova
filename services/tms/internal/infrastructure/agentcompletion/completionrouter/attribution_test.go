@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -121,7 +121,7 @@ func TestSubmitBackground_AnInlineRunKeepsItsAttribution(t *testing.T) {
 
 	inline, _ := chatServer(t, http.StatusOK, `{"documentKind":"RateConfirmation"}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
 	svc.usage = usage
@@ -154,7 +154,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 	svc.usage = usage
 
 	req := pollRequest(provider)
-	req.Task = aiprovider.TaskDocumentExtraction
+	req.Task = aitask.TaskDocumentExtraction
 	req.SubmittedAt = time.Now().Add(-90 * time.Second).Unix()
 	req.Attribution = documentAttribution()
 
@@ -166,7 +166,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 	row := rows[0]
 	assert.True(t, row.Succeeded)
 	assert.Equal(t, aiusage.SurfaceBackground, row.Surface)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, row.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, row.Task)
 	assert.Equal(t, provider.ID, row.ProviderID)
 	assert.Equal(t, "gpt-test", row.Model)
 	assert.Equal(t, 120, row.InputTokens)
@@ -200,7 +200,7 @@ func TestPollBackground_RecordsATerminalFailureWithItsReason(t *testing.T) {
 	assert.False(t, rows[0].Succeeded)
 	assert.Equal(t, "provider_error", rows[0].ErrorClass)
 	assert.Contains(t, rows[0].ErrorMessage, "max_output_tokens")
-	assert.Equal(t, aiprovider.TaskGeneral, rows[0].Task, "an unnamed task prices as general")
+	assert.Equal(t, aitask.TaskGeneral, rows[0].Task, "an unnamed task prices as general")
 	assert.Zero(t, rows[0].LatencyMs, "no submission time means no latency to report")
 	assert.Equal(t, aiusage.FeatureDocumentIntelligenceExtract, rows[0].Feature)
 }

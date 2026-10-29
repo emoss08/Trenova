@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"go.uber.org/fx"
 )
@@ -32,24 +32,28 @@ func NewDismissalRepository(
 func (r *dismissalRepository) List(
 	ctx context.Context,
 	req *aiproviderports.ListFailureDismissalsRequest,
-) ([]*aiprovider.FailureDismissal, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.FailureDismissal, error) {
-		d := aiproviderdb.FailureDismissals
-		dismissals, err := d.Where(d.UserID.Eq(req.UserID)).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list provider failure dismissals: %w", err)
-		}
-		return dismissals, nil
-	})
+) ([]*aiproviderdismissal.FailureDismissal, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*aiproviderdismissal.FailureDismissal, error) {
+			d := aiproviderdb.FailureDismissals
+			dismissals, err := d.Where(d.UserID.Eq(req.UserID)).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list provider failure dismissals: %w", err)
+			}
+			return dismissals, nil
+		},
+	)
 }
 
 func (r *dismissalRepository) Upsert(
 	ctx context.Context,
-	dismissal *aiprovider.FailureDismissal,
+	dismissal *aiproviderdismissal.FailureDismissal,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		d := aiproviderdb.FailureDismissals
-		_, err := d.Upsert(ctx, r.db.Keel(ctx), []*aiprovider.FailureDismissal{dismissal},
+		_, err := d.Upsert(ctx, r.db.Keel(ctx), []*aiproviderdismissal.FailureDismissal{dismissal},
 			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.UserID, d.ProviderID).
 				Update(d.FailureAt).
 				Set(d.CreatedAt.ToExpr(d.CreatedAt.Excluded())),

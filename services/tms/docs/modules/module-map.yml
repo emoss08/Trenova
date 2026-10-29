@@ -890,8 +890,17 @@ modules:
       - aicontrolsummary
       - aicorrection
       - aifeedback
+      - aimodel
+      - aiplatform
+      - aipricing
       - aiprovider
+      - aiproviderchange
+      - aiproviderdismissal
+      - aiproviderkey
+      - aireasoning
       - airetrieval
+      - airouting
+      - aitask
       - aitraining
       - aituneup
       - aiusage

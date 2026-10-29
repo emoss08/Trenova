@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,7 +57,7 @@ func (s *Service) narrate(
 		s.l,
 		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
-			Task:         aiprovider.TaskOperationalInsights,
+			Task:         aitask.TaskOperationalInsights,
 			System:       systemPrompt,
 			Context:      promptContext(tab, facts, plain),
 			OutputSchema: outputSchema(),

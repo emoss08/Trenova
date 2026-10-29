@@ -2685,7 +2685,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.CapAction
   AIProviderKeyInfo:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.KeyInfo
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey.KeyInfo
     fields:
       addedBy:
         resolver: true
@@ -2700,34 +2700,34 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.StructuredOutputMode
   AIReasoningEffort:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ReasoningEffort
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning.ReasoningEffort
   AITask:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Task
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aitask.Task
   AIRouteChoice:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.RouteChoice
+      - github.com/emoss08/trenova/internal/modules/agent/domain/airouting.RouteChoice
     fields:
       providerId:
         resolver: true
   AITaskRoute:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.TaskRoute
+      - github.com/emoss08/trenova/internal/modules/agent/domain/airouting.TaskRoute
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.EmbeddingInputStyle
   AIThinkingStyle:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ThinkingStyle
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning.ThinkingStyle
   AIProviderPlatform:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Platform
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.Platform
   AIProviderPlatformAuth:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformAuth
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.PlatformAuth
   AIProviderPlatformSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformSettings
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.PlatformSettings
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.SourceType

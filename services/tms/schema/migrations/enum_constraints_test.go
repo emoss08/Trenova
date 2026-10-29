@@ -25,7 +25,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -113,7 +115,7 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_ai_providers_reasoning_effort",
-			values: stringsOf(aiprovider.AllReasoningEfforts()),
+			values: stringsOf(aireasoning.AllReasoningEfforts()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_structured_output_mode",
@@ -449,11 +451,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_ai_providers_thinking_style",
-			values: stringsOf(aiprovider.AllThinkingStyles()),
+			values: stringsOf(aireasoning.AllThinkingStyles()),
 		},
 		{
 			name:   "ck_ai_providers_platform",
-			values: stringsOf(aiprovider.AllPlatforms()),
+			values: stringsOf(aiplatform.AllPlatforms()),
 		},
 		{
 			name:   "ck_ai_providers_on_cap",

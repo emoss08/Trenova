@@ -5,6 +5,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func streamWithReasoning(
 func reasoningCall(
 	kind aiprovider.Kind,
 	url string,
-	effort aiprovider.ReasoningEffort,
+	effort aireasoning.ReasoningEffort,
 	req *Request,
 ) *Call {
 	call := callFor(kind, url, req)
@@ -82,7 +83,7 @@ func TestAnthropicAdapter_StreamsThinkingSeparatelyAndKeepsTheSignature(t *testi
 	))
 
 	resp, deltas, thoughts := streamWithReasoning(t, NewAnthropicAdapter(), reasoningCall(
-		aiprovider.KindAnthropicMessages, server.URL, aiprovider.ReasoningMedium,
+		aiprovider.KindAnthropicMessages, server.URL, aireasoning.ReasoningMedium,
 		&Request{System: "sys", Messages: UserMessage("When?"), MaxTokens: 1000},
 	))
 
@@ -120,7 +121,7 @@ func TestAnthropicAdapter_SendsNoThinkingWhenTheProviderIsOff(t *testing.T) {
 	))
 
 	call := reasoningCall(
-		aiprovider.KindAnthropicMessages, server.URL, aiprovider.ReasoningOff,
+		aiprovider.KindAnthropicMessages, server.URL, aireasoning.ReasoningOff,
 		&Request{Messages: UserMessage("hi")},
 	)
 	call.Request.MaxTokens = 1000
@@ -241,7 +242,7 @@ func TestOpenAIChatAdapter_ReadsReasoningContentAndSendsEffortOnlyWhenAsked(t *t
 	))
 
 	resp, deltas, thoughts := streamWithReasoning(t, NewOpenAIChatAdapter(), reasoningCall(
-		aiprovider.KindOpenAIChat, server.URL, aiprovider.ReasoningHigh,
+		aiprovider.KindOpenAIChat, server.URL, aireasoning.ReasoningHigh,
 		&Request{Messages: UserMessage("when?")},
 	))
 
@@ -266,7 +267,7 @@ func TestOpenAIChatAdapter_SendsNoEffortWhenOff(t *testing.T) {
 	_, _, _ = streamWithReasoning(t, NewOpenAIChatAdapter(), reasoningCall(
 		aiprovider.KindOpenAIChat,
 		server.URL,
-		aiprovider.ReasoningOff,
+		aireasoning.ReasoningOff,
 		&Request{Messages: UserMessage("hi")},
 	))
 
@@ -290,7 +291,7 @@ func TestOpenAIChatAdapter_SendsNoneExplicitly(t *testing.T) {
 	_, _, _ = streamWithReasoning(t, NewOpenAIChatAdapter(), reasoningCall(
 		aiprovider.KindOpenAIChat,
 		server.URL,
-		aiprovider.ReasoningNone,
+		aireasoning.ReasoningNone,
 		&Request{Messages: UserMessage("hi")},
 	))
 
@@ -340,7 +341,7 @@ func TestOpenAIResponsesAdapter_ReadsReasoningSummaryAndKeepsTheEncryptedChain(t
 	))
 
 	resp, _, thoughts := streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
-		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningLow,
+		aiprovider.KindOpenAIResponses, server.URL, aireasoning.ReasoningLow,
 		&Request{Messages: UserMessage("hold it"), Tools: lookupTool()},
 	))
 
@@ -430,7 +431,7 @@ func TestOpenAIResponsesAdapter_SendsNoneWithoutSummaryOrChain(t *testing.T) {
 	))
 
 	_, _, _ = streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
-		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningNone,
+		aiprovider.KindOpenAIResponses, server.URL, aireasoning.ReasoningNone,
 		&Request{Messages: UserMessage("hi")},
 	))
 
@@ -453,7 +454,7 @@ func TestOpenAIResponsesAdapter_SendsMinimalWithTheChain(t *testing.T) {
 	))
 
 	_, _, _ = streamWithReasoning(t, NewOpenAIResponsesAdapter(), reasoningCall(
-		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningMinimal,
+		aiprovider.KindOpenAIResponses, server.URL, aireasoning.ReasoningMinimal,
 		&Request{Messages: UserMessage("hi")},
 	))
 
@@ -506,8 +507,8 @@ func TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning(t *testing.T) {
 		},
 	))
 	_, _ = streamWith(t, NewOpenAIResponsesAdapter(), reasoningCall(
-		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningOff,
-		&Request{Messages: UserMessage("hi"), Reasoning: aiprovider.ReasoningNone},
+		aiprovider.KindOpenAIResponses, server.URL, aireasoning.ReasoningOff,
+		&Request{Messages: UserMessage("hi"), Reasoning: aireasoning.ReasoningNone},
 	))
 
 	reasoning, _ := (*captured)["reasoning"].(map[string]any)

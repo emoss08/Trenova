@@ -11,7 +11,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 )
 
 // Why a file went as its text rather than as itself.
@@ -120,12 +120,12 @@ type fileBlockSet struct {
 func fileBlocks(
 	ctx context.Context,
 	call *Call,
-	input *aiprovider.FileInput,
+	input *aimodel.FileInput,
 	file *MessageFile,
 	budget int64,
 ) (set fileBlockSet, fallback string) {
 	declared := input.Kind(file.ContentType)
-	if declared == aiprovider.FileKindNone {
+	if declared == aimodel.FileKindNone {
 		return fileBlockSet{}, FileFallbackType
 	}
 	if reason := fileOverLimit(input, declared, file.Size, file.PageCount, budget); reason != "" {
@@ -141,7 +141,7 @@ func fileBlocks(
 		contentType = file.ContentType
 	}
 	kind := input.Kind(contentType)
-	if kind == aiprovider.FileKindNone {
+	if kind == aimodel.FileKindNone {
 		return fileBlockSet{}, FileFallbackType
 	}
 	if content.Unreadable {
@@ -153,7 +153,7 @@ func fileBlocks(
 	}
 
 	data := base64.StdEncoding.EncodeToString(content.Data)
-	if kind == aiprovider.FileKindDocument {
+	if kind == aimodel.FileKindDocument {
 		return fileBlockSet{size: size, blocks: []anthropic.BetaContentBlockParamUnion{{
 			OfDocument: &anthropic.BetaRequestDocumentBlockParam{
 				Source: anthropic.BetaRequestDocumentBlockSourceUnionParam{
@@ -168,7 +168,7 @@ func fileBlocks(
 	// An image carries no title, so a line naming it goes first: with
 	// several attached, the model can tell which is which.
 	label := fileContext(file) + ", " + fileTitle(file) + ":"
-	mediaType := anthropic.BetaBase64ImageSourceMediaType(aiprovider.MediaType(contentType))
+	mediaType := anthropic.BetaBase64ImageSourceMediaType(aimodel.MediaType(contentType))
 
 	return fileBlockSet{size: size, blocks: []anthropic.BetaContentBlockParamUnion{
 		{OfText: &anthropic.BetaTextBlockParam{Text: label}},
@@ -183,8 +183,8 @@ func fileBlocks(
 // fileOverLimit says why a file of this size and length cannot go as itself,
 // or nothing when it can. A size or page count of zero is not known yet.
 func fileOverLimit(
-	input *aiprovider.FileInput,
-	kind aiprovider.FileKind,
+	input *aimodel.FileInput,
+	kind aimodel.FileKind,
 	size int64,
 	pages int,
 	budget int64,
@@ -192,9 +192,9 @@ func fileOverLimit(
 	switch {
 	case size > budget:
 		return FileFallbackTooLarge
-	case kind == aiprovider.FileKindImage && size > input.MaxImageBytes:
+	case kind == aimodel.FileKindImage && size > input.MaxImageBytes:
 		return FileFallbackTooLarge
-	case kind == aiprovider.FileKindDocument && pages > input.MaxPDFPages:
+	case kind == aimodel.FileKindDocument && pages > input.MaxPDFPages:
 		return FileFallbackTooManyPage
 	default:
 		return ""

@@ -3,8 +3,31 @@ package aiprovider
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/stretchr/testify/assert"
 )
+
+/*
+An operator serving a Qwen model with its context stretched to 128k, or a
+Llama with it cut to 16k to fit a GPU, knows the window better than the id
+does, and a window read off the id would compact the first conversation far
+too late or far too soon.
+*/
+func TestContextWindow_TheConfiguredWindowWinsOverTheModelID(t *testing.T) {
+	t.Parallel()
+
+	stretched := 131_072
+	provider := &Provider{Model: "qwen2.5-coder:32b", ContextWindowTokens: &stretched}
+	assert.Equal(t, 131_072, provider.ContextWindow())
+	assert.Equal(t, 131_072, provider.ConfiguredContextWindow())
+
+	provider.ContextWindowTokens = nil
+	assert.Equal(t, 32_768, provider.ContextWindow(), "left unset, the id is read")
+	assert.Zero(t, provider.ConfiguredContextWindow())
+
+	assert.Equal(t, 16_384, aimodel.WindowOr(16_384, "llama3.3:70b"))
+	assert.Equal(t, 128_000, aimodel.WindowOr(0, "llama3.3:70b"))
+}
 
 /*
 Only a Claude model behind the Anthropic protocol is sent files as themselves:
@@ -33,20 +56,4 @@ func TestFileInput_OnlyAClaudeModelReadsFilesItself(t *testing.T) {
 		assert.Equal(t, tc.reads, reads, "%s %s", tc.kind, tc.model)
 		assert.Equal(t, tc.pages, input.MaxPDFPages, "%s %s", tc.kind, tc.model)
 	}
-}
-
-func TestFileInput_SendsPDFsAsDocumentsAndFourImageFormatsAsImages(t *testing.T) {
-	t.Parallel()
-
-	var input FileInput
-	assert.Equal(t, FileKindDocument, input.Kind("application/pdf"))
-	assert.Equal(t, FileKindImage, input.Kind("Image/PNG; charset=binary"))
-	assert.Equal(t, FileKindImage, input.Kind("image/jpeg"))
-	assert.Equal(t, FileKindImage, input.Kind("image/gif"))
-	assert.Equal(t, FileKindImage, input.Kind("image/webp"))
-	assert.Equal(t, FileKindNone, input.Kind("image/tiff"))
-	assert.Equal(t, FileKindNone, input.Kind("image/heic"))
-	assert.Equal(t, FileKindNone, input.Kind("text/csv"))
-	assert.Equal(t, FileKindNone, input.Kind(""))
-	assert.Equal(t, "image/png", MediaType(" Image/PNG; charset=binary"))
 }

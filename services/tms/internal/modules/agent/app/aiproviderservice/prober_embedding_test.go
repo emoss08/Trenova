@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func embeddingOnlyProvider(baseURL string, dims int) *aiprovider.Provider {
 		BaseURL:             baseURL,
 		Model:               "voyage-3.5",
 		AllowPrivateNetwork: true,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
 		Enabled:             true,

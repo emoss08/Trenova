@@ -7,8 +7,13 @@ import (
 	"sync"
 	"testing"
 
+<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+=======
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+>>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -932,7 +937,7 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 	assert.Equal(t, factoringremittance.RemittanceStatusParsed, read.Remittance.Status)
 	assert.Equal(t, 2, read.Remittance.MatchedCount)
 	require.NotNil(t, completion.req)
-	assert.Equal(t, aiprovider.TaskRemittanceExtraction, completion.req.Task)
+	assert.Equal(t, aitask.TaskRemittanceExtraction, completion.req.Task)
 	assert.Equal(t, aiusage.FeatureFactoringRemittanceExtract, completion.req.Attribution.Feature)
 	assert.False(t, completion.req.Context.Sections[0].Trusted, "the report is outside content")
 }

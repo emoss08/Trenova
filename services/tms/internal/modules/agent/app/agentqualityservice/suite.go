@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -437,7 +437,7 @@ func judgeRequest(
 ) *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenant,
-		Task:         aiprovider.TaskEvaluationJudge,
+		Task:         aitask.TaskEvaluationJudge,
 		System:       judgeSystemPrompt,
 		Context:      judgeContext(evalCase, evaluation.Reply),
 		OutputSchema: judgeSchema(),

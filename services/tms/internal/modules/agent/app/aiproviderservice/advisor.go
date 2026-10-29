@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -23,8 +24,8 @@ func (c *advisorCheck) needed() bool {
 		return false
 	}
 
-	return c.before == nil || aiprovider.AdvisorSettingsChanged(c.before, c.after) ||
-		!aiprovider.SameCredentialTarget(c.before, c.after)
+	return c.before == nil || aiproviderchange.AdvisorSettingsChanged(c.before, c.after) ||
+		!aiproviderchange.SameCredentialTarget(c.before, c.after)
 }
 
 // confirmAdvisor refuses an advisor the provider's endpoint does not list.

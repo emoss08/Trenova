@@ -6,7 +6,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -21,7 +22,7 @@ import (
 )
 
 const (
-	draftingTask        = aiprovider.TaskAssistantChat
+	draftingTask        = aitask.TaskAssistantChat
 	maxDescriptionRunes = 1000
 	draftMaxTokens      = 4000
 	tightenMaxTokens    = 8000
@@ -66,7 +67,7 @@ func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInf
 		return false, err
 	}
 
-	return aiprovider.RouteFor(providers, draftingTask) != nil, nil
+	return airouting.RouteFor(providers, draftingTask) != nil, nil
 }
 
 func (s *Service) DraftFromDescription(

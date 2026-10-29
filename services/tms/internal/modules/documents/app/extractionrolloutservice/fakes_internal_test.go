@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
@@ -294,13 +295,13 @@ func newWorld() *world {
 		ID:      pulid.MustNew("aip_"),
 		Name:    "Fine-tuned Qwen",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	production := &aiprovider.Provider{
 		ID:      pulid.MustNew("aip_"),
 		Name:    "Frontier",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	w := &world{
 		rollouts:    &rolloutStore{},

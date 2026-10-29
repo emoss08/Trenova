@@ -47,7 +47,6 @@ debt:
   services/tms/internal/modules/agent/app/watchtowersources: 3873
   services/tms/internal/modules/agent/domain/agentextension: 2483
   services/tms/internal/modules/agent/domain/agentquality: 1614
-  services/tms/internal/modules/agent/domain/aiprovider: 3089
   services/tms/internal/modules/agent/domain/aitraining: 2666
   services/tms/internal/modules/agent/domain/board: 2502
   services/tms/internal/modules/agent/domain/conversation: 2167

@@ -13,7 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -84,7 +84,7 @@ func (s *Service) ExtractionAvailability(
 		return documentaiextractionports.ExtractionNoProviderAssigned, nil
 	}
 
-	servable, err := s.availability.CanServe(ctx, aiprovider.TaskDocumentExtraction, tenantInfo)
+	servable, err := s.availability.CanServe(ctx, aitask.TaskDocumentExtraction, tenantInfo)
 	if err != nil {
 		return "", err
 	}
@@ -110,7 +110,7 @@ func (s *Service) RouteDocument(
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
 		feature:    aiusage.FeatureDocumentIntelligenceRoute,
-		task:       aiprovider.TaskDocumentClassification,
+		task:       aitask.TaskDocumentClassification,
 		metric:     "route",
 		system:     routePrompt(req.Pages),
 		schemaName: schemaNameRoute,
@@ -225,7 +225,7 @@ func newExtractCall(req *documentaiextractionports.AIExtractRequest) *structured
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
 		feature:    aiusage.FeatureDocumentIntelligenceExtract,
-		task:       aiprovider.TaskDocumentExtraction,
+		task:       aitask.TaskDocumentExtraction,
 		metric:     "extract",
 		system:     extractPrompt(req.Pages),
 		schemaName: schemaNameExtract,
@@ -326,7 +326,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 		TenantInfo:  req.TenantInfo,
 		ProviderID:  req.ProviderID,
 		Handle:      req.ResponseID,
-		Task:        aiprovider.TaskDocumentExtraction,
+		Task:        aitask.TaskDocumentExtraction,
 		SubmittedAt: req.SubmittedAt,
 		Attribution: documentAttribution(
 			req.TenantInfo,

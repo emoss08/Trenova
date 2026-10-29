@@ -58,12 +58,13 @@ findings:
       Decided: each provider takes optional cache read and cache write prices per million. Unset,
       a cache read is 0.1x the input price on every protocol and a cache write 1.25x on Anthropic
       (1x elsewhere, where none is reported). Uncached input, reads and writes are priced apart
-      through one function (aiprovider.Provider.CostFor), with OpenAI's cached tokens subtracted
+      through one function (aipricing.CostFor), with OpenAI's cached tokens subtracted
       from its input count; usage rows, chat, structured, trace and embedding costs all use it.
       The provider form and detail sheet edit both prices.
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: OpenAI chat priced 13.9M cached tokens apart from 14.6M fresh. The local Anthropic provider has no prices set, so its calls stay uncosted until someone enters them"
     files:
       - services/tms/internal/modules/agent/domain/aiprovider/
+      - services/tms/internal/modules/agent/domain/aipricing/
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/
       - services/tms/internal/infrastructure/agentcompletion/modeladapter/
       - services/tms/internal/api/graphql/schema/aiprovider.graphqls

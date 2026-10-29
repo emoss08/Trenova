@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -53,7 +53,7 @@ func (s *RemittanceService) extractPdf(
 ) (*rateimport.Sheet, error) {
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: remittanceTenant(rem),
-		Task:       aiprovider.TaskRemittanceExtraction,
+		Task:       aitask.TaskRemittanceExtraction,
 		System:     remittanceSystemPrompt,
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{{

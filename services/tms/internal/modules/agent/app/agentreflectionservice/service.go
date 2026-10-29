@@ -8,10 +8,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+=======
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+>>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -318,7 +322,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.Reflec
 	version := p.definition.Version
 	plan.Request = &llmports.StructuredCompletionRequest{
 		TenantInfo:          plan.TenantInfo,
-		Task:                aiprovider.TaskAssistantChat,
+		Task:                aitask.TaskAssistantChat,
 		System:              systemPrompt(in),
 		Context:             contextSections(in),
 		OutputSchema:        outputSchema(in.HasPerson),

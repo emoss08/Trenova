@@ -3,7 +3,8 @@ package aiproviderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,11 +31,11 @@ func (r *InboundReadiness) ReadsInboundMail(
 ) (bool, error) {
 	providers, err := r.repo.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		TenantInfo: tenantInfo,
-		Task:       aiprovider.TaskInboundClassification,
+		Task:       aitask.TaskInboundClassification,
 	})
 	if err != nil {
 		return false, err
 	}
 
-	return aiprovider.RouteFor(providers, aiprovider.TaskInboundClassification) != nil, nil
+	return airouting.RouteFor(providers, aitask.TaskInboundClassification) != nil, nil
 }

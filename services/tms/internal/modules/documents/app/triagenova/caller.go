@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
@@ -52,7 +52,7 @@ func (c *Caller) Complete(
 		return nil, ErrUnavailable
 	}
 	if req.Task == "" {
-		req.Task = aiprovider.TaskInboundClassification
+		req.Task = aitask.TaskInboundClassification
 	}
 
 	result, err := completer.CompleteStructured(ctx, req)

@@ -9,7 +9,9 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/packages/param"
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -79,7 +81,7 @@ func anthropicParams(call *Call, attached *anthropicFiles) anthropic.BetaMessage
 
 func anthropicNotices(call *Call) bool {
 	platform := call.Provider.ResolvedPlatform()
-	if platform == aiprovider.PlatformFoundry || platform == aiprovider.PlatformBedrock {
+	if platform == aiplatform.PlatformFoundry || platform == aiplatform.PlatformBedrock {
 		return false
 	}
 
@@ -88,7 +90,7 @@ func anthropicNotices(call *Call) bool {
 
 func anthropicDefers(call *Call) bool {
 	return declaresLoadedTool(call.Request.Tools) &&
-		call.Provider.ResolvedPlatform() != aiprovider.PlatformFoundry
+		call.Provider.ResolvedPlatform() != aiplatform.PlatformFoundry
 }
 
 // applyThinking asks for thinking the way the configured model takes it.
@@ -182,16 +184,16 @@ func applyThinkingBudget(params *anthropic.BetaMessageNewParams, call *Call) {
 
 // anthropicEffort is the effort a reasoning level asks a current model for.
 // These models have no "minimal"; low is the least.
-func anthropicEffort(effort aiprovider.ReasoningEffort) anthropic.BetaOutputConfigEffort {
+func anthropicEffort(effort aireasoning.ReasoningEffort) anthropic.BetaOutputConfigEffort {
 	switch effort {
-	case aiprovider.ReasoningMedium:
+	case aireasoning.ReasoningMedium:
 		return anthropic.BetaOutputConfigEffortMedium
-	case aiprovider.ReasoningHigh:
+	case aireasoning.ReasoningHigh:
 		return anthropic.BetaOutputConfigEffortHigh
-	case aiprovider.ReasoningOff,
-		aiprovider.ReasoningNone,
-		aiprovider.ReasoningMinimal,
-		aiprovider.ReasoningLow:
+	case aireasoning.ReasoningOff,
+		aireasoning.ReasoningNone,
+		aireasoning.ReasoningMinimal,
+		aireasoning.ReasoningLow:
 		return anthropic.BetaOutputConfigEffortLow
 	default:
 		return anthropic.BetaOutputConfigEffortLow

@@ -20,6 +20,27 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"bytes"
 	"fmt"
 	"io"
@@ -65,7 +86,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -96,15 +116,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -134,24 +151,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -268,7 +270,7 @@ type AIAnalyticsInput struct {
 	// Only this agent's work.
 	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
 	// Only this task's work.
-	Task *aiprovider.Task `json:"task,omitempty"`
+	Task *aitask.Task `json:"task,omitempty"`
 	// The IANA timezone days are read in; UTC when absent.
 	Timezone *string `json:"timezone,omitempty"`
 }
@@ -428,7 +430,7 @@ type AIAnalyticsSuggestions struct {
 // where it goes now, which series does it best (with enough runs to say), and the
 // provider to route it to when that is clearly better.
 type AIAnalyticsTask struct {
-	Task             aiprovider.Task             `json:"task"`
+	Task             aitask.Task             `json:"task"`
 	Current          *AIAnalyticsProvider        `json:"current,omitempty"`
 	CurrentSeriesKey *string                     `json:"currentSeriesKey,omitempty"`
 	BestSeriesKey    *string                     `json:"bestSeriesKey,omitempty"`
@@ -581,7 +583,7 @@ type AIProviderDraftTestInput struct {
 	Endpoint             *AIProviderEndpointInput         `json:"endpoint"`
 	Model                string                           `json:"model"`
 	StructuredOutputMode *aiprovider.StructuredOutputMode `json:"structuredOutputMode,omitempty"`
-	Tasks                []aiprovider.Task                `json:"tasks"`
+	Tasks                []aitask.Task                `json:"tasks"`
 	EmbeddingDimensions  *int                             `json:"embeddingDimensions,omitempty"`
 	EmbeddingInputStyle  *aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle,omitempty"`
 	TimeoutSeconds       *int                             `json:"timeoutSeconds,omitempty"`
@@ -598,7 +600,7 @@ type AIProviderEndpointInput struct {
 	ProviderID *string         `json:"providerId,omitempty"`
 	Kind       aiprovider.Kind `json:"kind"`
 	// Where an Anthropic Messages endpoint reaches Claude. Omitted calls the base URL directly.
-	Platform            *aiprovider.Platform             `json:"platform,omitempty"`
+	Platform            *aiplatform.Platform             `json:"platform,omitempty"`
 	PlatformSettings    *AIProviderPlatformSettingsInput `json:"platformSettings,omitempty"`
 	BaseURL             string                           `json:"baseUrl"`
 	APIKey              *string                          `json:"apiKey,omitempty"`
@@ -625,7 +627,7 @@ type AIProviderPatchInput struct {
 	Enabled             graphql.Omittable[*bool]             `json:"enabled,omitempty"`
 	Trusted             graphql.Omittable[*bool]             `json:"trusted,omitempty"`
 	AllowPrivateNetwork graphql.Omittable[*bool]             `json:"allowPrivateNetwork,omitempty"`
-	Tasks               graphql.Omittable[[]aiprovider.Task] `json:"tasks,omitempty"`
+	Tasks               graphql.Omittable[[]aitask.Task] `json:"tasks,omitempty"`
 	// A new credential. It replaces the stored one and is never returned.
 	APIKey                   graphql.Omittable[*string] `json:"apiKey,omitempty"`
 	InputCostPerMillion      graphql.Omittable[*string] `json:"inputCostPerMillion,omitempty"`
@@ -635,7 +637,7 @@ type AIProviderPatchInput struct {
 }
 
 type AIProviderPlatformSettingsInput struct {
-	Auth        *aiprovider.PlatformAuth `json:"auth,omitempty"`
+	Auth        *aiplatform.PlatformAuth `json:"auth,omitempty"`
 	Region      *string                  `json:"region,omitempty"`
 	ProjectID   *string                  `json:"projectId,omitempty"`
 	WorkspaceID *string                  `json:"workspaceId,omitempty"`
@@ -651,7 +653,7 @@ type AIProviderRoutingDraftInput struct {
 	ID                  *string           `json:"id,omitempty"`
 	Name                string            `json:"name"`
 	Kind                aiprovider.Kind   `json:"kind"`
-	Tasks               []aiprovider.Task `json:"tasks"`
+	Tasks               []aitask.Task `json:"tasks"`
 	Priority            int               `json:"priority"`
 	EmbeddingDimensions *int              `json:"embeddingDimensions,omitempty"`
 	Trusted             bool              `json:"trusted"`
@@ -691,7 +693,7 @@ type AITuneUp struct {
 	// The provider moved behind.
 	OtherProvider  *aituneupports.AITuneUpProvider `json:"otherProvider,omitempty"`
 	ToolName       *string                         `json:"toolName,omitempty"`
-	Task           *aiprovider.Task                `json:"task,omitempty"`
+	Task           *aitask.Task                `json:"task,omitempty"`
 	Evidence       *aituneup.Evidence              `json:"evidence"`
 	Status         aituneup.Status                 `json:"status"`
 	DismissedUntil *int                            `json:"dismissedUntil,omitempty"`

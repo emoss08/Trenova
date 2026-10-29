@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,12 +108,12 @@ type tokenCount struct {
 	write     int
 	output    int
 	reasoning int
-	raw       aiprovider.TokenUsage
+	raw       aipricing.TokenUsage
 	kind      aiprovider.Kind
 	model     string
 	provider  pulid.ID
 	charged   *decimal.Decimal
-	advisor   *aiprovider.AdvisorUsage
+	advisor   *aipricing.AdvisorUsage
 }
 
 func callTokens(call *ModelCall) tokenCount {
@@ -120,7 +121,7 @@ func callTokens(call *ModelCall) tokenCount {
 	switch {
 	case call.ChatResult != nil:
 		result := call.ChatResult
-		count.raw = aiprovider.TokenUsage{
+		count.raw = aipricing.TokenUsage{
 			Input:      result.InputTokens,
 			Output:     result.OutputTokens,
 			CacheRead:  result.CacheReadTokens,
@@ -134,7 +135,7 @@ func callTokens(call *ModelCall) tokenCount {
 		count.advisor = result.Advisor
 	case call.StructuredResult != nil:
 		result := call.StructuredResult
-		count.raw = aiprovider.TokenUsage{
+		count.raw = aipricing.TokenUsage{
 			Input:      result.InputTokens,
 			Output:     result.OutputTokens,
 			CacheRead:  result.CacheReadTokens,
@@ -166,7 +167,7 @@ func usageOf(calls []*ModelCall, priceOf callPricing) (usage Usage, models []str
 		usage.ModelTime += call.Duration()
 
 		tokens := callTokens(call)
-		if tokens.model == "" && tokens.raw == (aiprovider.TokenUsage{}) {
+		if tokens.model == "" && tokens.raw == (aipricing.TokenUsage{}) {
 			continue
 		}
 		next := Usage{

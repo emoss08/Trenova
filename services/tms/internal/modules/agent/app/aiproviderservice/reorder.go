@@ -6,6 +6,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -149,7 +152,7 @@ func (s *Service) modify(
 		updated.Version = *req.version
 	}
 	req.edit(&updated)
-	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
+	aiproviderkey.ForgetExpiredPreviousKey(updated, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	updated.Validate(multiErr)
@@ -217,7 +220,7 @@ func (s *Service) RouteTask(
 	if err != nil {
 		return nil, err
 	}
-	plan, err := aiprovider.PlanRouteTo(current, req.Task, req.ProviderID)
+	plan, err := airouting.PlanRouteTo(current, req.Task, req.ProviderID)
 	if err != nil {
 		return nil, routeRefusal(err)
 	}
@@ -248,7 +251,7 @@ func (s *Service) RouteTask(
 				edit: func(p *aiprovider.Provider) {
 					p.Tasks = slices.DeleteFunc(
 						slices.Clone(p.Tasks),
-						func(task aiprovider.Task) bool {
+						func(task aitask.Task) bool {
 							return task == req.Task
 						},
 					)
@@ -282,16 +285,16 @@ func (s *Service) RouteTask(
 }
 
 func routeRefusal(err error) error {
-	var refusal *aiprovider.RouteRefusal
+	var refusal *airouting.RouteRefusal
 	switch {
 	case errors.As(err, &refusal):
 		return errortypes.NewValidationError(
 			"providerId", errortypes.ErrInvalid,
 			"This provider can't take the task: "+refusal.Reason,
 		)
-	case errors.Is(err, aiprovider.ErrRouteTargetMissing):
+	case errors.Is(err, airouting.ErrRouteTargetMissing):
 		return errortypes.NewNotFoundError("AI provider not found")
-	case errors.Is(err, aiprovider.ErrRouteUnchanged):
+	case errors.Is(err, airouting.ErrRouteUnchanged):
 		return errortypes.NewValidationError(
 			"providerId", errortypes.ErrInvalid,
 			"The task already goes to this provider",

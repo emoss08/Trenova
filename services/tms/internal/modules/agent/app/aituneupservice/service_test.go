@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -572,7 +573,7 @@ func TestApplyAssignTaskGivesTheProviderTheTask(t *testing.T) {
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
 	tuneUp.ProviderID = pulid.ID("aip_local")
-	tuneUp.Task = aiprovider.TaskEmbedding
+	tuneUp.Task = aitask.TaskEmbedding
 	f := newFixture(t, tuneUp)
 	f.providers.providers = []*aiprovider.Provider{{ID: "aip_local", Name: "Local", Enabled: true}}
 
@@ -581,7 +582,7 @@ func TestApplyAssignTaskGivesTheProviderTheTask(t *testing.T) {
 	}, actor)
 	require.NoError(t, err)
 	require.Len(t, f.provSvc.assigned, 1)
-	assert.Equal(t, aiprovider.TaskEmbedding, f.provSvc.assigned[0].Task)
+	assert.Equal(t, aitask.TaskEmbedding, f.provSvc.assigned[0].Task)
 }
 
 func TestApplyLeavesTheTuneUpOpenWhenTheChangeFails(t *testing.T) {
@@ -589,7 +590,7 @@ func TestApplyLeavesTheTuneUpOpenWhenTheChangeFails(t *testing.T) {
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
 	tuneUp.ProviderID = pulid.ID("aip_local")
-	tuneUp.Task = aiprovider.TaskEmbedding
+	tuneUp.Task = aitask.TaskEmbedding
 	f := newFixture(t, tuneUp)
 	f.provSvc.fail = errors.New("refused")
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +57,7 @@ func TestSelectableProviders_CarriesNoCredentials(t *testing.T) {
 		APIKey:  "sk-do-not-leak-this",
 		BaseURL: "https://openrouter.ai/api/v1",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}}}
 
 	options, err := (&Service{providers: repo}).
@@ -80,7 +81,7 @@ func TestSelectableProviders_AsksOnlyForThisTenantsChatProviders(t *testing.T) {
 	_, err := (&Service{providers: repo}).SelectableProviders(t.Context(), actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, aiprovider.TaskAssistantChat, repo.captured.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, repo.captured.Task)
 	assert.Equal(t, actor.OrganizationID, repo.captured.TenantInfo.OrgID)
 	assert.Equal(t, actor.BusinessUnitID, repo.captured.TenantInfo.BuID)
 }
@@ -92,11 +93,11 @@ func TestSelectableProviders_SkipsWhatCannotServeTheTask(t *testing.T) {
 	repo := &fakeProviderRepo{items: []*aiprovider.Provider{
 		{
 			ID: pulid.MustNew("aiprv_"), Name: "Disabled", Enabled: false,
-			Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat},
+			Tasks: []aitask.Task{aitask.TaskAssistantChat},
 		},
 		{
 			ID: pulid.MustNew("aiprv_"), Name: "Usable", Enabled: true,
-			Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat},
+			Tasks: []aitask.Task{aitask.TaskAssistantChat},
 		},
 	}}
 
@@ -121,7 +122,7 @@ func TestResolvePreference_DropsAChoiceThatIsNoLongerOffered(t *testing.T) {
 
 	offered := pulid.MustNew("aiprv_")
 	repo := &fakeProviderRepo{items: []*aiprovider.Provider{{
-		ID: offered, Enabled: true, Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat},
+		ID: offered, Enabled: true, Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	}}}
 	service := &Service{providers: repo}
 

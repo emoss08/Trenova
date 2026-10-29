@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/stretchr/testify/require"
 )
@@ -269,8 +271,8 @@ func wireSchema() map[string]any {
 type wireCase struct {
 	name    string
 	model   string
-	effort  aiprovider.ReasoningEffort
-	style   aiprovider.ThinkingStyle
+	effort  aireasoning.ReasoningEffort
+	style   aireasoning.ThinkingStyle
 	stream  bool
 	request Request
 }
@@ -306,137 +308,137 @@ func wireCases() []wireCase {
 		{
 			name:    "advisor_haiku_5_5_low_stream",
 			model:   "claude-haiku-5-5",
-			effort:  aiprovider.ReasoningLow,
+			effort:  aireasoning.ReasoningLow,
 			stream:  true,
 			request: advised,
 		},
 		{
 			name:    "agent_opus_5_5_off_stream",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_opus_5_5_high_stream",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningHigh,
+			effort:  aireasoning.ReasoningHigh,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_sonnet_5_5_none_stream",
 			model:   "claude-sonnet-5-5",
-			effort:  aiprovider.ReasoningNone,
+			effort:  aireasoning.ReasoningNone,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_fable_5_1_medium_stream",
 			model:   "claude-fable-5-1",
-			effort:  aiprovider.ReasoningMedium,
+			effort:  aireasoning.ReasoningMedium,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_opus_5_off_stream",
 			model:   "claude-opus-5",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_haiku_5_5_none_stream",
 			model:   "claude-haiku-5-5",
-			effort:  aiprovider.ReasoningNone,
+			effort:  aireasoning.ReasoningNone,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_opus_4_8_low_stream",
 			model:   "claude-opus-4-8",
-			effort:  aiprovider.ReasoningLow,
+			effort:  aireasoning.ReasoningLow,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_haiku_4_5_medium_stream",
 			model:   "claude-haiku-4-5",
-			effort:  aiprovider.ReasoningMedium,
+			effort:  aireasoning.ReasoningMedium,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_bedrock_sonnet_4_6_off_stream",
 			model:   "us.anthropic.claude-sonnet-4-6-v1:0",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_declared_effort_none_stream",
 			model:   "house-model",
-			effort:  aiprovider.ReasoningNone,
-			style:   aiprovider.ThinkingStyleEffort,
+			effort:  aireasoning.ReasoningNone,
+			style:   aireasoning.ThinkingStyleEffort,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_budget_style_high_stream",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningHigh,
-			style:   aiprovider.ThinkingStyleBudget,
+			effort:  aireasoning.ReasoningHigh,
+			style:   aireasoning.ThinkingStyleBudget,
 			stream:  true,
 			request: agent,
 		},
 		{
 			name:    "agent_opus_5_5_off_blocking",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			request: agent,
 		},
 		{
 			name:    "structured_opus_4_8_off_blocking",
 			model:   "claude-opus-4-8",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			request: structured,
 		},
 		{
 			name:    "structured_with_tools_blocking",
 			model:   "claude-opus-4-8",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			request: structuredWithTools,
 		},
 		{
 			name:    "structured_opus_5_5_none_blocking",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningNone,
+			effort:  aireasoning.ReasoningNone,
 			request: structured,
 		},
 		{
 			name:    "final_answer_haiku_5_5_medium_stream",
 			model:   "claude-haiku-5-5",
-			effort:  aiprovider.ReasoningMedium,
+			effort:  aireasoning.ReasoningMedium,
 			stream:  true,
 			request: finalAnswer,
 		},
 		{
 			name:    "final_answer_opus_5_5_off_stream",
 			model:   "claude-opus-5-5",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			stream:  true,
 			request: finalAnswer,
 		},
 		{
 			name:    "bare_unknown_model_blocking",
 			model:   "test-model",
-			effort:  aiprovider.ReasoningOff,
+			effort:  aireasoning.ReasoningOff,
 			request: bare,
 		},
 		{
 			name:    "deferred_haiku_5_5_medium_stream",
 			model:   "claude-haiku-5-5",
-			effort:  aiprovider.ReasoningMedium,
+			effort:  aireasoning.ReasoningMedium,
 			stream:  true,
 			request: deferred,
 		},
@@ -646,11 +648,11 @@ func TestAnthropicAdapter_OnFoundrySendsWhatIsLoaded(t *testing.T) {
 	call := reasoningCall(
 		aiprovider.KindAnthropicMessages,
 		server.URL,
-		aiprovider.ReasoningOff,
+		aireasoning.ReasoningOff,
 		&request,
 	)
 	call.Provider.Model = "claude-haiku-5-5"
-	call.Provider.Platform = aiprovider.PlatformFoundry
+	call.Provider.Platform = aiplatform.PlatformFoundry
 	call.APIKey = "sk-test"
 	_, _ = streamWith(t, NewAnthropicAdapter(), call)
 

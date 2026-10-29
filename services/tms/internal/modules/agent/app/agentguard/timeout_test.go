@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/require"
 )
@@ -89,7 +89,7 @@ type hedgeRecorder struct {
 	llmports.CompletionService
 
 	hedge     time.Duration
-	reasoning aiprovider.ReasoningEffort
+	reasoning aireasoning.ReasoningEffort
 }
 
 func (h *hedgeRecorder) CompleteStructured(
@@ -143,5 +143,5 @@ func TestEvaluate_TheClassifierAsksProvidersNotToReason(t *testing.T) {
 		agentguard.EvaluateRequest{Input: "how many shipments are in transit"},
 	)
 
-	require.Equal(t, aiprovider.ReasoningNone, stub.reasoning)
+	require.Equal(t, aireasoning.ReasoningNone, stub.reasoning)
 }

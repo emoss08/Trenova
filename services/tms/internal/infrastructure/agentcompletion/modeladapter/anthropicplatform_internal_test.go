@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -163,11 +164,15 @@ func testServiceAccountKey(t *testing.T) string {
 
 func platformCall(
 	baseURL string,
-	platform aiprovider.Platform,
-	settings aiprovider.PlatformSettings,
+	platform aiplatform.Platform,
+	settings aiplatform.PlatformSettings,
 	secret string,
 ) *Call {
-	call := callFor(aiprovider.KindAnthropicMessages, baseURL, &Request{Messages: UserMessage("hi")})
+	call := callFor(
+		aiprovider.KindAnthropicMessages,
+		baseURL,
+		&Request{Messages: UserMessage("hi")},
+	)
 	call.Provider.Model = "claude-opus-4-8"
 	call.Provider.Platform = platform
 	call.Provider.PlatformSettings = &settings
@@ -203,9 +208,14 @@ func TestPlatform_BedrockSignsWithTheAccessKeyAndNeverSendsTheSecret(t *testing.
 	t.Parallel()
 
 	server, seen := platformServer(t, false)
-	call := platformCall(server.URL+"/anthropic", aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: testAccessKeyID,
-	}, testSecretKey)
+	call := platformCall(
+		server.URL+"/anthropic",
+		aiplatform.PlatformBedrock,
+		aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: testAccessKeyID,
+		},
+		testSecretKey,
+	)
 
 	_, err := NewAnthropicAdapter().Complete(t.Context(), call)
 	require.NoError(t, err)
@@ -251,7 +261,12 @@ func assertValidSignature(
 	if req.query != "" {
 		target += "?" + req.query
 	}
-	resign, err := http.NewRequestWithContext(t.Context(), http.MethodPost, target, strings.NewReader(req.raw))
+	resign, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodPost,
+		target,
+		strings.NewReader(req.raw),
+	)
 	require.NoError(t, err)
 	for _, name := range strings.Split(signedHeaders, ";") {
 		if name == "host" {
@@ -279,8 +294,8 @@ func TestPlatform_BedrockSendsItsAPIKeyAsABearerToken(t *testing.T) {
 	t.Parallel()
 
 	server, seen := platformServer(t, true)
-	call := platformCall(server.URL, aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1",
+	call := platformCall(server.URL, aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1",
 	}, "bedrock-api-key-123")
 
 	_, deltas := streamWith(t, NewAnthropicAdapter(), call)
@@ -300,16 +315,21 @@ func TestPlatform_ClaudeOnAWSNamesTheWorkspace(t *testing.T) {
 
 	server, seen := platformServer(t, false)
 
-	keyed := platformCall(server.URL, aiprovider.PlatformClaudeAWS, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAPIKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC",
+	keyed := platformCall(server.URL, aiplatform.PlatformClaudeAWS, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthAPIKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC",
 	}, "sk-ant-aws")
 	_, err := NewAnthropicAdapter().Complete(t.Context(), keyed)
 	require.NoError(t, err)
 
-	signedCall := platformCall(server.URL, aiprovider.PlatformClaudeAWS, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAccessKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC",
-		AccessKeyID: testAccessKeyID,
-	}, testSecretKey)
+	signedCall := platformCall(
+		server.URL,
+		aiplatform.PlatformClaudeAWS,
+		aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthAccessKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC",
+			AccessKeyID: testAccessKeyID,
+		},
+		testSecretKey,
+	)
 	_, err = NewAnthropicAdapter().Complete(t.Context(), signedCall)
 	require.NoError(t, err)
 
@@ -342,17 +362,17 @@ func TestPlatform_VertexCallsThePublisherModelWithAGoogleToken(t *testing.T) {
 
 	adapter := NewAnthropicAdapter()
 	key := testServiceAccountKey(t)
-	settings := aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
+	settings := aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
 	}
 	routes := map[string]*url.URL{"oauth2.googleapis.com": tokens.url(t)}
 
-	call := platformCall(server.URL, aiprovider.PlatformVertexAI, settings, key)
+	call := platformCall(server.URL, aiplatform.PlatformVertexAI, settings, key)
 	call.Client = routedClient(routes)
 	_, err := adapter.Complete(t.Context(), call)
 	require.NoError(t, err)
 
-	streamed := platformCall(streamServer.URL, aiprovider.PlatformVertexAI, settings, key)
+	streamed := platformCall(streamServer.URL, aiplatform.PlatformVertexAI, settings, key)
 	streamed.Client = routedClient(routes)
 	streamed.Provider.Model = "claude-sonnet-4-6@20260101"
 	_, _ = streamWith(t, adapter, streamed)
@@ -360,9 +380,11 @@ func TestPlatform_VertexCallsThePublisherModelWithAGoogleToken(t *testing.T) {
 	requests := seen()
 	require.Len(t, requests, 1)
 	req := requests[0]
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"/v1/projects/freight-ops/locations/us-east5/publishers/anthropic/models/claude-opus-4-8:rawPredict",
-		req.path)
+		req.path,
+	)
 	assert.Equal(t, "beta=true", req.query)
 	assert.Equal(t, "vertex-2023-10-16", req.body["anthropic_version"])
 	assert.NotContains(t, req.body, "model")
@@ -371,14 +393,20 @@ func TestPlatform_VertexCallsThePublisherModelWithAGoogleToken(t *testing.T) {
 
 	streamRequests := streamSeen()
 	require.Len(t, streamRequests, 1)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"/v1/projects/freight-ops/locations/us-east5/publishers/anthropic/models/claude-sonnet-4-6@20260101:streamRawPredict",
-		streamRequests[0].path)
+		streamRequests[0].path,
+	)
 
 	assert.Equal(t, int32(1), tokens.requests.Load(), "the token is minted once and kept")
 	tokens.mu.Lock()
 	defer tokens.mu.Unlock()
-	assert.Equal(t, "urn:ietf:params:oauth:grant-type:jwt-bearer", tokens.forms[0].Get("grant_type"))
+	assert.Equal(
+		t,
+		"urn:ietf:params:oauth:grant-type:jwt-bearer",
+		tokens.forms[0].Get("grant_type"),
+	)
 }
 
 // A model name is a path segment, never a path: whatever it holds stays in
@@ -390,8 +418,8 @@ func TestPlatform_VertexKeepsTheModelInOneSegment(t *testing.T) {
 		`{"access_token":"ya29.vertex","token_type":"Bearer","expires_in":3600}`)
 	server, seen := platformServer(t, false)
 
-	call := platformCall(server.URL, aiprovider.PlatformVertexAI, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServiceAccount, Region: "global", ProjectID: "freight-ops",
+	call := platformCall(server.URL, aiplatform.PlatformVertexAI, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServiceAccount, Region: "global", ProjectID: "freight-ops",
 	}, testServiceAccountKey(t))
 	call.Client = routedClient(map[string]*url.URL{"oauth2.googleapis.com": tokens.url(t)})
 	call.Provider.Model = "../../evil?x=1"
@@ -401,9 +429,11 @@ func TestPlatform_VertexKeepsTheModelInOneSegment(t *testing.T) {
 
 	requests := seen()
 	require.Len(t, requests, 1)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"/v1/projects/freight-ops/locations/global/publishers/anthropic/models/..%2F..%2Fevil%3Fx=1:rawPredict",
-		requests[0].rawPath)
+		requests[0].rawPath,
+	)
 	assert.Equal(t, "beta=true", requests[0].query)
 }
 
@@ -416,9 +446,9 @@ func TestPlatform_ClaudeOnGoogleCloudCallsTheGatewayWithAGoogleToken(t *testing.
 
 	call := platformCall(
 		server.URL+"/v1alpha/projects/freight-ops/locations/global/workspaces/wrkspc_01ABC/invoke",
-		aiprovider.PlatformClaudeGoogleCloud,
-		aiprovider.PlatformSettings{
-			Auth: aiprovider.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "wrkspc_01ABC",
+		aiplatform.PlatformClaudeGoogleCloud,
+		aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "wrkspc_01ABC",
 		},
 		testServiceAccountKey(t),
 	)
@@ -440,20 +470,30 @@ func TestPlatform_FoundryTakesAKeyOrAnEntraIDToken(t *testing.T) {
 	t.Parallel()
 
 	server, seen := platformServer(t, false)
-	keyed := platformCall(server.URL+"/anthropic", aiprovider.PlatformFoundry, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAPIKey, Resource: "trenova-ai",
-	}, "foundry-key")
+	keyed := platformCall(
+		server.URL+"/anthropic",
+		aiplatform.PlatformFoundry,
+		aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthAPIKey, Resource: "trenova-ai",
+		},
+		"foundry-key",
+	)
 	_, err := NewAnthropicAdapter().Complete(t.Context(), keyed)
 	require.NoError(t, err)
 
 	tokens := newTokenServer(t, http.StatusOK,
 		`{"access_token":"entra-token","token_type":"Bearer","expires_in":3600}`)
-	entra := platformCall(server.URL+"/anthropic", aiprovider.PlatformFoundry, aiprovider.PlatformSettings{
-		Auth:     aiprovider.PlatformAuthEntraID,
-		Resource: "trenova-ai",
-		TenantID: "contoso.onmicrosoft.com",
-		ClientID: "11111111-2222-3333-4444-555555555555",
-	}, "client-secret")
+	entra := platformCall(
+		server.URL+"/anthropic",
+		aiplatform.PlatformFoundry,
+		aiplatform.PlatformSettings{
+			Auth:     aiplatform.PlatformAuthEntraID,
+			Resource: "trenova-ai",
+			TenantID: "contoso.onmicrosoft.com",
+			ClientID: "11111111-2222-3333-4444-555555555555",
+		},
+		"client-secret",
+	)
 	entra.Client = routedClient(map[string]*url.URL{"login.microsoftonline.com": tokens.url(t)})
 	_, err = NewAnthropicAdapter().Complete(t.Context(), entra)
 	require.NoError(t, err)
@@ -486,8 +526,8 @@ func TestPlatform_ARefusedCredentialIsARefusedKey(t *testing.T) {
 	tokens := newTokenServer(t, http.StatusBadRequest,
 		`{"error":"invalid_client","error_description":"AADSTS7000215: Invalid client secret"}`)
 	server, seen := platformServer(t, false)
-	call := platformCall(server.URL, aiprovider.PlatformFoundry, aiprovider.PlatformSettings{
-		Auth:     aiprovider.PlatformAuthEntraID,
+	call := platformCall(server.URL, aiplatform.PlatformFoundry, aiplatform.PlatformSettings{
+		Auth:     aiplatform.PlatformAuthEntraID,
 		Resource: "trenova-ai",
 		TenantID: "11111111-2222-3333-4444-555555555555",
 		ClientID: "11111111-2222-3333-4444-555555555555",
@@ -509,12 +549,12 @@ func TestPlatform_ServerCredentialsNeedTheServersConsent(t *testing.T) {
 	t.Parallel()
 
 	server, seen := platformServer(t, false)
-	for _, platform := range []aiprovider.Platform{
-		aiprovider.PlatformBedrock, aiprovider.PlatformClaudeAWS,
-		aiprovider.PlatformVertexAI, aiprovider.PlatformClaudeGoogleCloud,
+	for _, platform := range []aiplatform.Platform{
+		aiplatform.PlatformBedrock, aiplatform.PlatformClaudeAWS,
+		aiplatform.PlatformVertexAI, aiplatform.PlatformClaudeGoogleCloud,
 	} {
-		call := platformCall(server.URL, platform, aiprovider.PlatformSettings{
-			Auth: aiprovider.PlatformAuthServer, Region: "us-east-1", ProjectID: "freight-ops",
+		call := platformCall(server.URL, platform, aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthServer, Region: "us-east-1", ProjectID: "freight-ops",
 			WorkspaceID: "w",
 		}, "")
 
@@ -538,8 +578,8 @@ func TestPlatform_ServerAWSCredentialsSignWhenAllowed(t *testing.T) {
 	t.Setenv("AWS_EC2_METADATA_DISABLED", "true")
 
 	server, seen := platformServer(t, false)
-	call := platformCall(server.URL, aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServer, Region: "eu-west-1",
+	call := platformCall(server.URL, aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServer, Region: "eu-west-1",
 	}, "")
 	call.ServerCredentialsAllowed = true
 
@@ -564,8 +604,8 @@ func TestPlatform_AnAccessKeyIgnoresTheServersAWSEnvironment(t *testing.T) {
 	t.Setenv("AWS_REGION", "ap-south-1")
 
 	server, seen := platformServer(t, false)
-	call := platformCall(server.URL, aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: testAccessKeyID,
+	call := platformCall(server.URL, aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: testAccessKeyID,
 	}, testSecretKey)
 
 	_, err := NewAnthropicAdapter().Complete(t.Context(), call)
@@ -579,13 +619,17 @@ func TestPlatform_AnAccessKeyIgnoresTheServersAWSEnvironment(t *testing.T) {
 func TestPlatform_ListsModelsOnlyWhereThePlatformServesThem(t *testing.T) {
 	t.Parallel()
 
-	for _, platform := range []aiprovider.Platform{
-		aiprovider.PlatformBedrock, aiprovider.PlatformVertexAI, aiprovider.PlatformFoundry,
+	for _, platform := range []aiplatform.Platform{
+		aiplatform.PlatformBedrock, aiplatform.PlatformVertexAI, aiplatform.PlatformFoundry,
 	} {
 		_, err := ListModels(t.Context(), &ModelsCall{
 			Provider: &aiprovider.Provider{
 				Kind: aiprovider.KindAnthropicMessages, Platform: platform,
-				PlatformSettings: &aiprovider.PlatformSettings{Region: "us-east-1", ProjectID: "p", Resource: "r"},
+				PlatformSettings: &aiplatform.PlatformSettings{
+					Region:    "us-east-1",
+					ProjectID: "p",
+					Resource:  "r",
+				},
 			},
 			APIKey: "k",
 			Client: http.DefaultClient,
@@ -599,10 +643,10 @@ func TestPlatform_ListsModelsOnlyWhereThePlatformServesThem(t *testing.T) {
 	})
 	models, err := ListModels(t.Context(), &ModelsCall{
 		Provider: &aiprovider.Provider{
-			Kind: aiprovider.KindAnthropicMessages, Platform: aiprovider.PlatformClaudeAWS,
+			Kind: aiprovider.KindAnthropicMessages, Platform: aiplatform.PlatformClaudeAWS,
 			BaseURL: server.URL,
-			PlatformSettings: &aiprovider.PlatformSettings{
-				Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1", WorkspaceID: "wrkspc_01ABC",
+			PlatformSettings: &aiplatform.PlatformSettings{
+				Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1", WorkspaceID: "wrkspc_01ABC",
 			},
 		},
 		APIKey: "sk-ant-aws",
@@ -610,5 +654,10 @@ func TestPlatform_ListsModelsOnlyWhereThePlatformServesThem(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, models, 1)
-	assert.Equal(t, 1_000_000, models[0].ContextWindow, "the window the model reports is the one it has")
+	assert.Equal(
+		t,
+		1_000_000,
+		models[0].ContextWindow,
+		"the window the model reports is the one it has",
+	)
 }

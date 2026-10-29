@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -130,7 +131,10 @@ func (s *Service) patchEdits(
 		if err != nil {
 			return nil, err
 		}
-		edits = append(edits, func(p *aiprovider.Provider) { p.ReplaceAPIKey(replacement) })
+		edits = append(
+			edits,
+			func(p *aiprovider.Provider) { aiproviderkey.ReplaceAPIKey(p, replacement) },
+		)
 	}
 
 	if multiErr.HasErrors() {

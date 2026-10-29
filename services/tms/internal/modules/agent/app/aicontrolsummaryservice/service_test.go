@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -191,7 +192,7 @@ func chatProvider() *aiprovider.Provider {
 		ID:                  pulid.MustNew("aiprv_"),
 		Name:                "Primary",
 		Enabled:             true,
-		Tasks:               aiprovider.AllTasks(),
+		Tasks:               aitask.AllTasks(),
 		Trusted:             true,
 		Kind:                aiprovider.KindOpenAIChat,
 	}
@@ -332,7 +333,7 @@ func TestFactsCountEveryProviderTheWeekAndAKeyStillMissing(t *testing.T) {
 
 	on := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOpenAIChat, Enabled: true,
-		Tasks: []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks: []aitask.Task{aitask.TaskGeneral},
 	}
 	keyed := &aiprovider.Provider{
 		ID: pulid.MustNew(

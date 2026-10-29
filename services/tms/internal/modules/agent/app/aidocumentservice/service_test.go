@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -258,7 +258,7 @@ func TestRouteDocument_RoutesToTheClassificationTask(t *testing.T) {
 	_, err := service.RouteDocument(t.Context(), routeRequest())
 	require.NoError(t, err)
 
-	assert.Equal(t, aiprovider.TaskDocumentClassification, completion.sawRequest.Task)
+	assert.Equal(t, aitask.TaskDocumentClassification, completion.sawRequest.Task)
 }
 
 func TestExtractRateConfirmation_ConvertsAndClamps(t *testing.T) {
@@ -272,7 +272,7 @@ func TestExtractRateConfirmation_ConvertsAndClamps(t *testing.T) {
 	result, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
 	require.NoError(t, err)
 
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, completion.sawRequest.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, completion.sawRequest.Task)
 	assert.InDelta(t, 1.0, result.OverallConfidence, 0.001, "confidence is clamped to 1")
 	assert.Equal(t, "Ready", result.ReviewStatus)
 	require.Contains(t, result.Fields, "loadNumber")
@@ -431,7 +431,7 @@ func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *
 	require.NoError(t, err)
 
 	require.NotNil(t, completion.sawPoll)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, completion.sawPoll.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, completion.sawPoll.Task)
 	assert.Equal(t, request.SubmittedAt, completion.sawPoll.SubmittedAt)
 	assert.Equal(t,
 		documentAttributionFor(
@@ -703,7 +703,7 @@ func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluati
 
 	request := completion.sawRequest
 	require.NotNil(t, request)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, request.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, request.Task)
 	assert.Equal(t, providerID, request.PreferredProviderID)
 	assert.True(t, request.RequireProvider)
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, request.Attribution.Purpose)

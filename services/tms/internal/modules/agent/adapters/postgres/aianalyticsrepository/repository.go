@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
@@ -731,7 +731,7 @@ func (r *repository) TaskCells(
 		func(row *taskCellScan) aianalyticsports.TaskCellRow {
 			return aianalyticsports.TaskCellRow{
 				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
-				Task:          aiprovider.Task(row.Task),
+				Task:          aitask.Task(row.Task),
 				Runs:          row.Runs,
 				Completed:     row.Completed,
 			}

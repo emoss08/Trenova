@@ -11,7 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -165,7 +165,7 @@ func (s *Service) runModelBatch(
 ) ([]*accountingmapping.AccountingMapping, bool, error) {
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
-		Task:         aiprovider.TaskAccountingMapping,
+		Task:         aitask.TaskAccountingMapping,
 		System:       modelSystemPrompt,
 		Context:      batch.context(),
 		OutputSchema: modelSchema(),

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -172,7 +172,7 @@ func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolve
 	resolved := &resolvedTarget{
 		threadID:          source.Thread.ID,
 		agentDefinitionID: agentID,
-		task:              string(aiprovider.TaskAssistantChat),
+		task:              string(aitask.TaskAssistantChat),
 		model:             message.Model,
 		providerID:        message.ProviderID,
 		subject:           string(source.Thread.SubjectType),
@@ -301,7 +301,7 @@ func (s *Service) resolveBriefing(ctx context.Context, p resolveParams) (*resolv
 
 	resolved := &resolvedTarget{
 		runID:      entity.RunID,
-		task:       string(aiprovider.TaskDailyBriefing),
+		task:       string(aitask.TaskDailyBriefing),
 		model:      entity.ModelIdentifier,
 		providerID: entity.ProviderID,
 		subject:    entity.RoleKey.String(),
@@ -384,7 +384,7 @@ func (s *Service) resolveInsight(ctx context.Context, p resolveParams) (*resolve
 
 	return &resolvedTarget{
 		detectorKey: entity.DetectorKey,
-		task:        string(aiprovider.TaskOperationalInsights),
+		task:        string(aitask.TaskOperationalInsights),
 		model:       entity.ModelIdentifier,
 		providerID:  entity.ProviderID,
 		subject:     entity.DetectorKey,
@@ -481,7 +481,7 @@ func (s *Service) creditWatchtowerSource(
 			break
 		}
 		resolved.detectorKey = entity.DetectorKey
-		resolved.task = string(aiprovider.TaskOperationalInsights)
+		resolved.task = string(aitask.TaskOperationalInsights)
 		resolved.model = entity.ModelIdentifier
 		resolved.providerID = entity.ProviderID
 

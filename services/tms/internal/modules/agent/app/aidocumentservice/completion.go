@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -21,7 +21,7 @@ type structuredCall struct {
 	tenant     pagination.TenantInfo
 	documentID pulid.ID
 	feature    aiusage.Feature
-	task       aiprovider.Task
+	task       aitask.Task
 	metric     string
 	system     string
 	schemaName string

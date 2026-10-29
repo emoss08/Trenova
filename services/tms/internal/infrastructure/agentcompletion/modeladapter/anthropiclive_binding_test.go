@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,8 +56,8 @@ func liveBindingCall(t *testing.T, model string, request *Request) *Call {
 		Provider: &aiprovider.Provider{
 			Kind:            aiprovider.KindAnthropicMessages,
 			Model:           model,
-			Platform:        aiprovider.PlatformDirect,
-			ReasoningEffort: aiprovider.ReasoningMedium,
+			Platform:        aiplatform.PlatformDirect,
+			ReasoningEffort: aireasoning.ReasoningMedium,
 			BaseURL:         strings.TrimSpace(os.Getenv(liveBindingURLEnv)),
 		},
 		APIKey:  os.Getenv(liveBindingKeyEnv),

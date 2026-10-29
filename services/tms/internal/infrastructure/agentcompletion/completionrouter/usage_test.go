@@ -13,6 +13,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,7 +127,7 @@ func TestCompleteStructured_RecordsEveryAttempt(t *testing.T) {
 
 	assert.True(t, second.Succeeded)
 	assert.Equal(t, aiusage.SurfaceStructured, second.Surface)
-	assert.Equal(t, aiprovider.TaskGeneral, second.Task)
+	assert.Equal(t, aitask.TaskGeneral, second.Task)
 	assert.Equal(t, req.Attribution.UserID, second.UserID)
 	assert.Equal(t, 11, second.InputTokens)
 	assert.Equal(t, 7, second.OutputTokens)

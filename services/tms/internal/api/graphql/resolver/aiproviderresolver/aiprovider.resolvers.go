@@ -17,6 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -84,11 +87,11 @@ func (r *QueryResolver) AiProvider(ctx context.Context, id string) (*aiprovider.
 	})
 }
 
-func (r *AIRouteChoiceResolver) ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error) {
+func (r *AIRouteChoiceResolver) ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error) {
 	return gqlid.IDPtr(obj.ProviderID), nil
 }
 
-func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error) {
+func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -116,7 +119,7 @@ func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIPro
 		return nil, err
 	}
 
-	out := make([]*aiprovider.TaskRoute, len(routes))
+	out := make([]*airouting.TaskRoute, len(routes))
 	for idx := range routes {
 		out[idx] = &routes[idx]
 	}
@@ -140,8 +143,8 @@ func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.
 	return spend.String(), nil
 }
 
-func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error) {
-	return obj.KeyInfo(timeutils.NowUnix()), nil
+func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error) {
+	return aiproviderkey.Describe(obj, timeutils.NowUnix()), nil
 }
 
 func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error) {
@@ -234,11 +237,11 @@ func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIP
 	return modelOptionsToModel(models), nil
 }
 
-func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error) {
+func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error) {
 	return loaderfields.LoadUser(ctx, obj.AddedByID)
 }
 
-func (r *MutationResolver) RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error) {
+func (r *MutationResolver) RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
 	if err != nil {
 		return nil, err

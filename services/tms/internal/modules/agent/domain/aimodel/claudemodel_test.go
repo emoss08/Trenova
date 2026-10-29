@@ -1,4 +1,4 @@
-package aiprovider
+package aimodel
 
 import (
 	"testing"
@@ -17,7 +17,10 @@ func TestParseClaudeModel_ReadsEveryFormAnEndpointUses(t *testing.T) {
 		{"claude-sonnet-5", ClaudeModel{Family: ClaudeFamilySonnet, Version: 50}},
 		{"claude-haiku-4-5-20251001", ClaudeModel{Family: ClaudeFamilyHaiku, Version: 45}},
 		{"anthropic.claude-opus-5-5", ClaudeModel{Family: ClaudeFamilyOpus, Version: 55}},
-		{"us.anthropic.claude-sonnet-4-6-v1:0", ClaudeModel{Family: ClaudeFamilySonnet, Version: 46}},
+		{
+			"us.anthropic.claude-sonnet-4-6-v1:0",
+			ClaudeModel{Family: ClaudeFamilySonnet, Version: 46},
+		},
 		{"claude-opus-4-6@20260205", ClaudeModel{Family: ClaudeFamilyOpus, Version: 46}},
 		{"anthropic/claude-fable-5-1", ClaudeModel{Family: ClaudeFamilyFable, Version: 51}},
 		{"  Claude-Mythos-5-1  ", ClaudeModel{Family: ClaudeFamilyMythos, Version: 51}},

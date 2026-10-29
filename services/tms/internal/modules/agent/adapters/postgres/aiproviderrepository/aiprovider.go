@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -188,7 +189,7 @@ func (r *repository) SelectOptions(
 	)
 }
 
-func selectOptionsQuery(task aiprovider.Task) *keel.Query[*aiprovider.Provider] {
+func selectOptionsQuery(task aitask.Task) *keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 	q := p.Pick(p.ID, p.Name, p.Model, p.Kind, p.Enabled, p.Tasks, p.Priority, p.CreatedAt).
 		Where(p.Enabled.IsTrue())
@@ -199,7 +200,7 @@ func selectOptionsQuery(task aiprovider.Task) *keel.Query[*aiprovider.Provider] 
 	return q.Order(p.Priority.Asc(), p.Name.Asc(), p.ID.Asc())
 }
 
-func providersForTaskQuery(task aiprovider.Task) *keel.Query[*aiprovider.Provider] {
+func providersForTaskQuery(task aitask.Task) *keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 
 	return p.Where(p.Enabled.IsTrue(), p.Tasks.ContainsAll(string(task))).

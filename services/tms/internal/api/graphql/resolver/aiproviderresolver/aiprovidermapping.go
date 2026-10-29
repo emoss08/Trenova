@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -91,7 +92,7 @@ func endpointFromInput(
 	endpoint := aiproviderports.AIProviderEndpoint{
 		ProviderID:          providerID,
 		Kind:                input.Kind,
-		Platform:            aiprovider.PlatformDirect,
+		Platform:            aiplatform.PlatformDirect,
 		PlatformSettings:    platformSettingsFromInput(input.PlatformSettings),
 		BaseURL:             input.BaseURL,
 		APIKey:              input.APIKey,
@@ -106,12 +107,12 @@ func endpointFromInput(
 
 func platformSettingsFromInput(
 	input *gqlmodel.AIProviderPlatformSettingsInput,
-) *aiprovider.PlatformSettings {
+) *aiplatform.PlatformSettings {
 	if input == nil {
 		return nil
 	}
 
-	settings := &aiprovider.PlatformSettings{
+	settings := &aiplatform.PlatformSettings{
 		Region:      gqlscalar.StringValue(input.Region),
 		ProjectID:   gqlscalar.StringValue(input.ProjectID),
 		WorkspaceID: gqlscalar.StringValue(input.WorkspaceID),

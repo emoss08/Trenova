@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,13 +14,16 @@ import (
 func styledThinking(
 	t *testing.T,
 	model string,
-	style aiprovider.ThinkingStyle,
-	effort aiprovider.ReasoningEffort,
+	style aireasoning.ThinkingStyle,
+	effort aireasoning.ReasoningEffort,
 ) (map[string]any, map[string]any) {
 	t.Helper()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
 	call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL, effort,
@@ -43,13 +47,18 @@ the levels are asked for by effort however the id reads.
 func TestAnthropicAdapter_ThinksByEffortWhenTheOperatorSaysSo(t *testing.T) {
 	t.Parallel()
 
-	for level, effort := range map[aiprovider.ReasoningEffort]string{
-		aiprovider.ReasoningMinimal: "low",
-		aiprovider.ReasoningLow:     "low",
-		aiprovider.ReasoningMedium:  "medium",
-		aiprovider.ReasoningHigh:    "high",
+	for level, effort := range map[aireasoning.ReasoningEffort]string{
+		aireasoning.ReasoningMinimal: "low",
+		aireasoning.ReasoningLow:     "low",
+		aireasoning.ReasoningMedium:  "medium",
+		aireasoning.ReasoningHigh:    "high",
 	} {
-		thinking, output := styledThinking(t, "acme-reasoner", aiprovider.ThinkingStyleEffort, level)
+		thinking, output := styledThinking(
+			t,
+			"acme-reasoner",
+			aireasoning.ThinkingStyleEffort,
+			level,
+		)
 		require.NotNil(t, thinking, level)
 		assert.Equal(t, "adaptive", thinking["type"], level)
 		assert.Equal(t, "summarized", thinking["display"], level)
@@ -68,13 +77,23 @@ always thinks at its own default.
 func TestAnthropicAdapter_NoneOnADeclaredEffortModelAsksForTheLeast(t *testing.T) {
 	t.Parallel()
 
-	thinking, output := styledThinking(t, "acme-reasoner", aiprovider.ThinkingStyleEffort, aiprovider.ReasoningNone)
+	thinking, output := styledThinking(
+		t,
+		"acme-reasoner",
+		aireasoning.ThinkingStyleEffort,
+		aireasoning.ReasoningNone,
+	)
 	require.NotNil(t, thinking)
 	assert.Equal(t, "adaptive", thinking["type"])
 	require.NotNil(t, output)
 	assert.Equal(t, "low", output["effort"])
 
-	thinking, output = styledThinking(t, "acme-reasoner", aiprovider.ThinkingStyleEffort, aiprovider.ReasoningOff)
+	thinking, output = styledThinking(
+		t,
+		"acme-reasoner",
+		aireasoning.ThinkingStyleEffort,
+		aireasoning.ReasoningOff,
+	)
 	assert.Nil(t, thinking)
 	assert.Nil(t, output)
 }
@@ -84,10 +103,15 @@ func TestAnthropicAdapter_NoneOnADeclaredEffortModelAsksForTheLeast(t *testing.T
 func TestAnthropicAdapter_KeepsTheBudgetWhenTheOperatorSaysSo(t *testing.T) {
 	t.Parallel()
 
-	thinking, output := styledThinking(t, "claude-opus-5-5", aiprovider.ThinkingStyleBudget, aiprovider.ReasoningHigh)
+	thinking, output := styledThinking(
+		t,
+		"claude-opus-5-5",
+		aireasoning.ThinkingStyleBudget,
+		aireasoning.ReasoningHigh,
+	)
 	require.NotNil(t, thinking)
 	assert.Equal(t, "enabled", thinking["type"])
-	assert.InDelta(t, aiprovider.ReasoningHigh.ThinkingBudget(), thinking["budget_tokens"], 0)
+	assert.InDelta(t, aireasoning.ReasoningHigh.ThinkingBudget(), thinking["budget_tokens"], 0)
 	assert.NotContains(t, thinking, "block_binding")
 	if output != nil {
 		assert.NotContains(t, output, "effort")
@@ -98,12 +122,12 @@ func TestAnthropicAdapter_KeepsTheBudgetWhenTheOperatorSaysSo(t *testing.T) {
 func TestAnthropicAdapter_AutoReadsTheModelID(t *testing.T) {
 	t.Parallel()
 
-	for _, style := range []aiprovider.ThinkingStyle{aiprovider.ThinkingStyleAuto, ""} {
-		thinking, _ := styledThinking(t, "claude-opus-5-5", style, aiprovider.ReasoningHigh)
+	for _, style := range []aireasoning.ThinkingStyle{aireasoning.ThinkingStyleAuto, ""} {
+		thinking, _ := styledThinking(t, "claude-opus-5-5", style, aireasoning.ReasoningHigh)
 		require.NotNil(t, thinking, style)
 		assert.Equal(t, "adaptive", thinking["type"], style)
 
-		thinking, _ = styledThinking(t, "claude-haiku-4-5", style, aiprovider.ReasoningHigh)
+		thinking, _ = styledThinking(t, "claude-haiku-4-5", style, aireasoning.ReasoningHigh)
 		require.NotNil(t, thinking, style)
 		assert.Equal(t, "enabled", thinking["type"], style)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
@@ -79,7 +80,7 @@ func (s *Service) explainConflict(ctx context.Context, req *conflictRequest) err
 			Current:        current.Redacted(),
 			CurrentVersion: current.Version,
 			UpdatedAt:      current.UpdatedAt,
-			Rules:          aiprovider.ChangeRules,
+			Rules:          aiproviderchange.ChangeRules,
 			Cause:          req.cause,
 		},
 	)

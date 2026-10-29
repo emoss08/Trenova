@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +13,7 @@ import (
 
 func renderedExtractionRequest() *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
-		Task:   aiprovider.TaskDocumentExtraction,
+		Task:   aitask.TaskDocumentExtraction,
 		System: "Extract the fields.",
 		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 			{Title: "Filename", Content: "document.pdf"},
@@ -69,10 +71,10 @@ func TestCallForCarriesTheRequestsReasoningOverride(t *testing.T) {
 	provider := &aiprovider.Provider{StructuredOutputMode: aiprovider.StructuredOutputJSONSchema}
 
 	req := renderedExtractionRequest()
-	req.Reasoning = aiprovider.ReasoningNone
+	req.Reasoning = aireasoning.ReasoningNone
 	assert.Equal(
 		t,
-		aiprovider.ReasoningNone,
+		aireasoning.ReasoningNone,
 		s.callFor(provider, "", structuredRun(req)).Request.Reasoning,
 	)
 

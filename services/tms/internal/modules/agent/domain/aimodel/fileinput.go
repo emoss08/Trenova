@@ -1,4 +1,4 @@
-package aiprovider
+package aimodel
 
 import "strings"
 
@@ -34,32 +34,6 @@ type FileInput struct {
 	MaxTotalBytes int64
 }
 
-// FileInput reports whether the provider's model reads files itself, and the
-// bounds it reads them within. Only an Anthropic Messages provider serving a
-// model this can read as Claude does: the same protocol also fronts models
-// from other vendors, behind gateways and compatible endpoints, that refuse a
-// document block, and a model that refuses one fails the whole request.
-func (p *Provider) FileInput() (FileInput, bool) {
-	if p.Kind != KindAnthropicMessages {
-		return FileInput{}, false
-	}
-	claude, ok := ParseClaudeModel(p.Model)
-	if !ok {
-		return FileInput{}, false
-	}
-
-	pages := claudePDFPages
-	if claude.ContextWindow() >= claudeMillionWindow {
-		pages = claudeLongPDFPages
-	}
-
-	return FileInput{
-		MaxPDFPages:   pages,
-		MaxImageBytes: claudeImageBytes,
-		MaxTotalBytes: claudeFileBytes,
-	}, true
-}
-
 // Kind is how a file of the content type is sent: PDFs as documents, and the
 // four image formats Claude reads as images.
 func (FileInput) Kind(contentType string) FileKind {
@@ -70,6 +44,21 @@ func (FileInput) Kind(contentType string) FileKind {
 		return FileKindImage
 	default:
 		return FileKindNone
+	}
+}
+
+// FileInput is the bounds a Claude model reads files within: a model with a
+// million-token window reads longer PDFs.
+func (m ClaudeModel) FileInput() FileInput {
+	pages := claudePDFPages
+	if m.ContextWindow() >= claudeMillionWindow {
+		pages = claudeLongPDFPages
+	}
+
+	return FileInput{
+		MaxPDFPages:   pages,
+		MaxImageBytes: claudeImageBytes,
+		MaxTotalBytes: claudeFileBytes,
 	}
 }
 

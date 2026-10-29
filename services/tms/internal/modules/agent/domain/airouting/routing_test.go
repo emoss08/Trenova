@@ -1,14 +1,16 @@
-package aiprovider
+package airouting
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func routeOf(t *testing.T, routes []TaskRoute, task Task) TaskRoute {
+func routeOf(t *testing.T, routes []TaskRoute, task aitask.Task) TaskRoute {
 	t.Helper()
 	for _, route := range routes {
 		if route.Task == task {
@@ -22,38 +24,38 @@ func routeOf(t *testing.T, routes []TaskRoute, task Task) TaskRoute {
 func TestPreviewRoutesMovesTasksToABetterPlacedDraft(t *testing.T) {
 	t.Parallel()
 
-	primary := &Provider{
+	primary := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Primary", Enabled: true, Priority: 10, CreatedAt: 1,
-		Tasks: []Task{TaskAssistantChat, TaskDailyBriefing},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskDailyBriefing},
 	}
-	ledger := &Provider{
+	ledger := &aiprovider.Provider{
 		ID: pulid.MustNew(
 			"aiprv_",
 		), Name: "Ledger", Enabled: true, Trusted: true, Priority: 20, CreatedAt: 2,
-		Tasks: []Task{TaskBillingDiagnosis},
+		Tasks: []aitask.Task{aitask.TaskBillingDiagnosis},
 	}
-	draft := &Provider{
+	draft := &aiprovider.Provider{
 		Name:     "New one",
 		Enabled:  true,
 		Priority: 5,
-		Tasks:    []Task{TaskAssistantChat, TaskBillingDiagnosis},
+		Tasks:    []aitask.Task{aitask.TaskAssistantChat, aitask.TaskBillingDiagnosis},
 	}
 
-	routes := PreviewRoutes([]*Provider{primary, ledger}, draft)
+	routes := PreviewRoutes([]*aiprovider.Provider{primary, ledger}, draft)
 
-	chat := routeOf(t, routes, TaskAssistantChat)
+	chat := routeOf(t, routes, aitask.TaskAssistantChat)
 	assert.Equal(t, "Primary", chat.Before.Name)
 	assert.True(t, chat.After.Draft)
 	assert.True(t, chat.Changed())
 
-	briefing := routeOf(t, routes, TaskDailyBriefing)
+	briefing := routeOf(t, routes, aitask.TaskDailyBriefing)
 	assert.Equal(t, primary.ID, briefing.After.ProviderID)
 	assert.False(t, briefing.Changed())
 
-	mapping := routeOf(t, routes, TaskBillingDiagnosis)
+	mapping := routeOf(t, routes, aitask.TaskBillingDiagnosis)
 	assert.Equal(t, "Ledger", mapping.After.Name, "an untrusted provider cannot take a ledger task")
 
-	extraction := routeOf(t, routes, TaskDocumentExtraction)
+	extraction := routeOf(t, routes, aitask.TaskDocumentExtraction)
 	assert.Nil(t, extraction.Before)
 	assert.Nil(t, extraction.After)
 	assert.False(t, extraction.Changed())
@@ -62,16 +64,20 @@ func TestPreviewRoutesMovesTasksToABetterPlacedDraft(t *testing.T) {
 func TestPreviewRoutesOfADisabledEditDropsTheProvider(t *testing.T) {
 	t.Parallel()
 
-	only := &Provider{
+	only := &aiprovider.Provider{
 		ID:      pulid.MustNew("aiprv_"),
 		Name:    "Only",
 		Enabled: true,
-		Tasks:   []Task{TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}
 	edited := *only
 	edited.Enabled = false
 
-	chat := routeOf(t, PreviewRoutes([]*Provider{only}, &edited), TaskAssistantChat)
+	chat := routeOf(
+		t,
+		PreviewRoutes([]*aiprovider.Provider{only}, &edited),
+		aitask.TaskAssistantChat,
+	)
 
 	assert.Equal(t, "Only", chat.Before.Name)
 	assert.Nil(t, chat.After)
@@ -81,17 +87,26 @@ func TestPreviewRoutesOfADisabledEditDropsTheProvider(t *testing.T) {
 func TestPreviewRoutesPutsANewDraftAfterProvidersOfItsPriority(t *testing.T) {
 	t.Parallel()
 
-	existing := &Provider{
+	existing := &aiprovider.Provider{
 		ID:        pulid.MustNew("aiprv_"),
 		Name:      "Existing",
 		Enabled:   true,
 		Priority:  1,
 		CreatedAt: 99,
-		Tasks:     []Task{TaskAssistantChat},
+		Tasks:     []aitask.Task{aitask.TaskAssistantChat},
 	}
-	draft := &Provider{Name: "Draft", Enabled: true, Priority: 1, Tasks: []Task{TaskAssistantChat}}
+	draft := &aiprovider.Provider{
+		Name:     "Draft",
+		Enabled:  true,
+		Priority: 1,
+		Tasks:    []aitask.Task{aitask.TaskAssistantChat},
+	}
 
-	chat := routeOf(t, PreviewRoutes([]*Provider{existing}, draft), TaskAssistantChat)
+	chat := routeOf(
+		t,
+		PreviewRoutes([]*aiprovider.Provider{existing}, draft),
+		aitask.TaskAssistantChat,
+	)
 
 	assert.Equal(t, "Existing", chat.After.Name)
 }
@@ -99,63 +114,67 @@ func TestPreviewRoutesPutsANewDraftAfterProvidersOfItsPriority(t *testing.T) {
 func TestPlanRouteToTakesTheTaskFromProvidersAheadAndGivesItToTheTarget(t *testing.T) {
 	t.Parallel()
 
-	first := &Provider{
+	first := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Workstation vLLM", Enabled: true, Priority: 10,
-		Tasks: []Task{TaskAssistantChat, TaskFormulaAssistant},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskFormulaAssistant},
 	}
-	off := &Provider{
+	off := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Off", Enabled: false, Priority: 15,
-		Tasks: []Task{TaskAssistantChat},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	}
-	target := &Provider{
+	target := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "AWS Bedrock", Enabled: true, Priority: 20,
-		Tasks: []Task{TaskDailyBriefing},
+		Tasks: []aitask.Task{aitask.TaskDailyBriefing},
 	}
-	behind := &Provider{
+	behind := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Groq", Enabled: true, Priority: 30,
-		Tasks: []Task{TaskAssistantChat},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	}
 
-	plan, err := PlanRouteTo([]*Provider{first, off, target, behind}, TaskAssistantChat, target.ID)
+	plan, err := PlanRouteTo(
+		[]*aiprovider.Provider{first, off, target, behind},
+		aitask.TaskAssistantChat,
+		target.ID,
+	)
 	require.NoError(t, err)
 	assert.Same(t, target, plan.Target)
 	assert.True(t, plan.Assign)
-	assert.Equal(t, []*Provider{first}, plan.Unassign)
+	assert.Equal(t, []*aiprovider.Provider{first}, plan.Unassign)
 }
 
 func TestPlanRouteToRefusesWhatWouldBreakOrChangeNothing(t *testing.T) {
 	t.Parallel()
 
-	only := &Provider{
+	only := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Groq", Enabled: true, Priority: 10,
-		Tasks: []Task{TaskAssistantChat},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	}
-	untrusted := &Provider{
+	untrusted := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "vLLM", Enabled: true, Priority: 20,
-		Tasks: []Task{TaskAssistantChat, TaskDailyBriefing},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskDailyBriefing},
 	}
-	disabled := &Provider{
+	disabled := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Off", Enabled: false, Priority: 30,
-		Tasks: []Task{TaskDailyBriefing},
+		Tasks: []aitask.Task{aitask.TaskDailyBriefing},
 	}
-	ordered := []*Provider{only, untrusted, disabled}
+	ordered := []*aiprovider.Provider{only, untrusted, disabled}
 
-	_, err := PlanRouteTo(ordered, TaskBillingDiagnosis, untrusted.ID)
+	_, err := PlanRouteTo(ordered, aitask.TaskBillingDiagnosis, untrusted.ID)
 	var refusal *RouteRefusal
 	require.ErrorAs(t, err, &refusal)
 	assert.Contains(t, refusal.Reason, "trusted")
 
-	_, err = PlanRouteTo(ordered, TaskDailyBriefing, disabled.ID)
+	_, err = PlanRouteTo(ordered, aitask.TaskDailyBriefing, disabled.ID)
 	require.ErrorAs(t, err, &refusal)
 	assert.Equal(t, "provider is disabled", refusal.Reason)
 
-	_, err = PlanRouteTo(ordered, TaskAssistantChat, untrusted.ID)
+	_, err = PlanRouteTo(ordered, aitask.TaskAssistantChat, untrusted.ID)
 	require.ErrorAs(t, err, &refusal)
 	assert.Contains(t, refusal.Reason, "Groq takes no other task")
 
-	_, err = PlanRouteTo(ordered, TaskAssistantChat, only.ID)
+	_, err = PlanRouteTo(ordered, aitask.TaskAssistantChat, only.ID)
 	require.ErrorIs(t, err, ErrRouteUnchanged)
 
-	_, err = PlanRouteTo(ordered, TaskAssistantChat, pulid.MustNew("aiprv_"))
+	_, err = PlanRouteTo(ordered, aitask.TaskAssistantChat, pulid.MustNew("aiprv_"))
 	require.ErrorIs(t, err, ErrRouteTargetMissing)
 }

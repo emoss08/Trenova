@@ -9,6 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -90,7 +91,7 @@ func responsesProvider(t *testing.T, name, baseURL string, priority int) *aiprov
 		StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 		MaxTokens:            2048,
 		Priority:             priority,
-		Tasks:                []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:                []aitask.Task{aitask.TaskDocumentExtraction},
 		Enabled:              true,
 	}
 }
@@ -101,7 +102,7 @@ func extractionRequest() *llmports.StructuredCompletionRequest {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskDocumentExtraction,
+		Task:   aitask.TaskDocumentExtraction,
 		System: "Extract the rate confirmation.",
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{
@@ -137,7 +138,7 @@ func TestSubmitBackground_RunsInlineWhenNoProtocolCanDefer(t *testing.T) {
 
 	inline, calls := chatServer(t, http.StatusOK, `{"documentKind":"RateConfirmation"}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, provider)
 
@@ -163,7 +164,7 @@ func TestSubmitBackground_FallsBackToInlineWhenTheSubmitFails(t *testing.T) {
 
 	inline, inlineCalls := chatServer(t, http.StatusOK, `{"documentKind":"BillOfLading"}`)
 	fallback := openAIChatProvider("self-hosted", inline.URL, 20)
-	fallback.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	fallback.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, responsesProvider(t, "hosted", broken.URL, 10), fallback)
 

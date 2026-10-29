@@ -1,4 +1,4 @@
-package aiprovider_test
+package aitask_test
 
 import (
 	"go/ast"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +37,7 @@ const (
 	schemaFile      = "../../../../api/graphql/schema/aiprovider.graphqls"
 )
 
-// tasksNamedIn collects every aiprovider.TaskX selector mentioned in a Go file.
+// tasksNamedIn collects every aitask.TaskX selector mentioned in a Go file.
 func tasksNamedIn(t *testing.T, path string) map[string]struct{} {
 	t.Helper()
 
@@ -52,7 +52,7 @@ func tasksNamedIn(t *testing.T, path string) map[string]struct{} {
 			return true
 		}
 		ident, ok := selector.X.(*ast.Ident)
-		if !ok || ident.Name != "aiprovider" {
+		if !ok || ident.Name != "aitask" {
 			return true
 		}
 		if len(selector.Sel.Name) > 4 && selector.Sel.Name[:4] == "Task" {
@@ -67,7 +67,7 @@ func tasksNamedIn(t *testing.T, path string) map[string]struct{} {
 
 // goNameOf recovers the constant identifier for a task's wire value, so the
 // failure message names the thing a person would go and add.
-func goNameOf(task aiprovider.Task) string { return "Task" + string(task) }
+func goNameOf(task aitask.Task) string { return "Task" + string(task) }
 
 // Without a descriptor a task cannot be assigned to a provider in the admin UI,
 // so nothing serves it and every call fails at runtime.
@@ -75,7 +75,7 @@ func TestEveryTaskHasAProviderDescriptor(t *testing.T) {
 	t.Parallel()
 
 	declared := tasksNamedIn(t, descriptorsFile)
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		name := goNameOf(task)
 		assert.Containsf(t, declared, name,
 			"%s has no entry in taskDescriptors(); no provider can be assigned to it, "+
@@ -90,16 +90,16 @@ func TestEveryDeterministicTaskPinsItsTemperature(t *testing.T) {
 
 	// The tasks whose output is a label or a structure rather than prose. A
 	// creative temperature on any of these is a bug somebody cannot reproduce.
-	deterministic := []aiprovider.Task{
-		aiprovider.TaskScopeClassification,
-		aiprovider.TaskDocumentClassification,
-		aiprovider.TaskDocumentExtraction,
-		aiprovider.TaskQueryCompose,
-		aiprovider.TaskChapterTitling,
-		aiprovider.TaskInboundClassification,
-		aiprovider.TaskAccountingMapping,
-		aiprovider.TaskRemittanceExtraction,
-		aiprovider.TaskEvaluationJudge,
+	deterministic := []aitask.Task{
+		aitask.TaskScopeClassification,
+		aitask.TaskDocumentClassification,
+		aitask.TaskDocumentExtraction,
+		aitask.TaskQueryCompose,
+		aitask.TaskChapterTitling,
+		aitask.TaskInboundClassification,
+		aitask.TaskAccountingMapping,
+		aitask.TaskRemittanceExtraction,
+		aitask.TaskEvaluationJudge,
 	}
 
 	named := tasksNamedIn(t, samplingFile)
@@ -115,7 +115,7 @@ func TestEveryTaskIsNamedInSampling(t *testing.T) {
 	t.Parallel()
 
 	named := tasksNamedIn(t, samplingFile)
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		name := goNameOf(task)
 		assert.Containsf(t, named, name,
 			"%s is not named in SamplingForTask; give it a case, or an explicit "+
@@ -139,7 +139,7 @@ func TestEveryTaskIsInTheGraphQLEnum(t *testing.T) {
 		}
 	}
 
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		assert.Containsf(t, declared, string(task),
 			"%s is missing from the AITask GraphQL enum, so a provider serving it "+
 				"cannot be read over GraphQL", task)

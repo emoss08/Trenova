@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -125,7 +126,7 @@ func openAIChatProvider(name, baseURL string, priority int) *aiprovider.Provider
 		StructuredOutputMode: aiprovider.StructuredOutputPrompted,
 		MaxTokens:            2048,
 		Priority:             priority,
-		Tasks:                []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks:                []aitask.Task{aitask.TaskGeneral},
 		Enabled:              true,
 	}
 }
@@ -136,7 +137,7 @@ func generalRequest() *llmports.StructuredCompletionRequest {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskGeneral,
+		Task:   aitask.TaskGeneral,
 		System: "You are a test.",
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{
@@ -178,7 +179,7 @@ func TestCompleteStructured_SkipsProviderNotServingTask(t *testing.T) {
 
 	server, calls := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	provider := openAIChatProvider("extraction-only", server.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, provider)
 
@@ -288,11 +289,11 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 			`"evidence":[{"type":"doc","id":"d1"}]}]}`)
 
 	weak := openAIChatProvider("weak-local", garbage.URL, 10)
-	weak.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	weak.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	weak.Trusted = true
 
 	strong := openAIChatProvider("hosted", good.URL, 20)
-	strong.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	strong.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	strong.Trusted = true
 
 	svc := newTestService(t, weak, strong)
@@ -302,7 +303,7 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskBillingDiagnosis,
+		Task:   aitask.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{
@@ -335,7 +336,7 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 
 	server, calls := chatServer(t, http.StatusOK, `{"proposals":[],"exceptions":[]}`)
 	provider := openAIChatProvider("untrusted-local", server.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	provider.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	provider.Trusted = false
 
 	svc := newTestService(t, provider)
@@ -345,7 +346,7 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskBillingDiagnosis,
+		Task:   aitask.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
 	})
 	require.Error(t, err)
@@ -406,7 +407,7 @@ func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
 	server, calls := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	serving := openAIChatProvider("serving", server.URL, 10)
 	notServing := openAIChatProvider("not-serving", server.URL, 20)
-	notServing.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	notServing.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, serving, notServing)
 

@@ -1,10 +1,12 @@
-package aiprovider
+package airouting
 
 import (
 	"cmp"
 	"errors"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -19,7 +21,7 @@ type RouteChoice struct {
 // TaskRoute is where one task goes now and where it would go once a draft is
 // saved. A nil choice is a task no provider serves.
 type TaskRoute struct {
-	Task   Task
+	Task   aitask.Task
 	Before *RouteChoice
 	After  *RouteChoice
 }
@@ -39,7 +41,7 @@ func (r *TaskRoute) Changed() bool {
 // RouteFor is the provider the router tries first for a task: the first, by
 // priority and then age, that can serve it. Providers resting after repeated
 // failures are skipped at run time and are not known here.
-func RouteFor(providers []*Provider, task Task) *Provider {
+func RouteFor(providers []*aiprovider.Provider, task aitask.Task) *aiprovider.Provider {
 	for _, provider := range providers {
 		if ok, _ := provider.CanServeTask(task); ok {
 			return provider
@@ -52,8 +54,8 @@ func RouteFor(providers []*Provider, task Task) *Provider {
 // with the draft saved. Enabled is the organization's enabled providers in
 // routing order; the draft replaces the stored provider with its ID, or joins
 // as a new one, last among those of its priority.
-func PreviewRoutes(enabled []*Provider, draft *Provider) []TaskRoute {
-	after := make([]*Provider, 0, len(enabled)+1)
+func PreviewRoutes(enabled []*aiprovider.Provider, draft *aiprovider.Provider) []TaskRoute {
+	after := make([]*aiprovider.Provider, 0, len(enabled)+1)
 	for _, provider := range enabled {
 		if draft.ID.IsNotNil() && provider.ID == draft.ID {
 			continue
@@ -63,14 +65,14 @@ func PreviewRoutes(enabled []*Provider, draft *Provider) []TaskRoute {
 	if draft.Enabled {
 		after = append(after, draft)
 	}
-	slices.SortStableFunc(after, func(a, b *Provider) int {
+	slices.SortStableFunc(after, func(a, b *aiprovider.Provider) int {
 		if byPriority := cmp.Compare(a.Priority, b.Priority); byPriority != 0 {
 			return byPriority
 		}
 		return compareAge(a, b, draft)
 	})
 
-	tasks := AllTasks()
+	tasks := aitask.AllTasks()
 	routes := make([]TaskRoute, 0, len(tasks))
 	for _, task := range tasks {
 		routes = append(routes, TaskRoute{
@@ -84,7 +86,7 @@ func PreviewRoutes(enabled []*Provider, draft *Provider) []TaskRoute {
 
 // compareAge orders by when each was created; a draft not yet saved is the
 // newest.
-func compareAge(a, b, draft *Provider) int {
+func compareAge(a, b, draft *aiprovider.Provider) int {
 	newA := a == draft && a.ID.IsNil()
 	newB := b == draft && b.ID.IsNil()
 	switch {
@@ -97,7 +99,7 @@ func compareAge(a, b, draft *Provider) int {
 	}
 }
 
-func choiceOf(provider, draft *Provider) *RouteChoice {
+func choiceOf(provider, draft *aiprovider.Provider) *RouteChoice {
 	if provider == nil {
 		return nil
 	}
@@ -109,9 +111,9 @@ func choiceOf(provider, draft *Provider) *RouteChoice {
 }
 
 type TaskRoutePlan struct {
-	Target   *Provider
+	Target   *aiprovider.Provider
 	Assign   bool
-	Unassign []*Provider
+	Unassign []*aiprovider.Provider
 }
 
 var (
@@ -127,8 +129,12 @@ func (r *RouteRefusal) Error() string {
 	return r.Reason
 }
 
-func PlanRouteTo(ordered []*Provider, task Task, targetID pulid.ID) (*TaskRoutePlan, error) {
-	targetIndex := slices.IndexFunc(ordered, func(provider *Provider) bool {
+func PlanRouteTo(
+	ordered []*aiprovider.Provider,
+	task aitask.Task,
+	targetID pulid.ID,
+) (*TaskRoutePlan, error) {
+	targetIndex := slices.IndexFunc(ordered, func(provider *aiprovider.Provider) bool {
 		return provider.ID == targetID
 	})
 	if targetIndex < 0 {

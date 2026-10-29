@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -83,8 +85,8 @@ func (s *Service) RunTestDraft(
 	if provider.StructuredOutputMode == "" {
 		provider.StructuredOutputMode = provider.Kind.DefaultStructuredOutputMode()
 	}
-	provider.ReasoningEffort = aiprovider.ReasoningOff
-	provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
+	provider.ReasoningEffort = aireasoning.ReasoningOff
+	provider.ThinkingStyle = aireasoning.ThinkingStyleAuto
 	provider.EmbeddingDimensions = req.EmbeddingDimensions
 	provider.EmbeddingInputStyle = req.EmbeddingInputStyle
 	if provider.EmbeddingInputStyle == "" {
@@ -204,7 +206,7 @@ func (s *Service) sealedKey(
 	if err != nil {
 		return "", err
 	}
-	if !aiprovider.SameCredentialTarget(stored, draft) || !stored.HasStoredAPIKey() {
+	if !aiproviderchange.SameCredentialTarget(stored, draft) || !stored.HasStoredAPIKey() {
 		return "", nil
 	}
 

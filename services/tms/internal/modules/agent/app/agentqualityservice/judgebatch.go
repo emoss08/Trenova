@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -82,7 +82,7 @@ func (s *Service) SubmitJudgeBatch(
 	room := decision.Room
 	handle, err := s.batches.SubmitBatch(ctx, &llmports.BatchCompletionRequest{
 		TenantInfo:    req.TenantInfo,
-		Task:          aiprovider.TaskEvaluationJudge,
+		Task:          aitask.TaskEvaluationJudge,
 		Items:         items,
 		SpendLimitUSD: &room,
 	})
@@ -264,7 +264,7 @@ func (s *Service) CollectJudgeBatch(
 
 	results, err := s.batches.BatchResults(ctx, &llmports.BatchResultsRequest{
 		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskEvaluationJudge,
+		Task:         aitask.TaskEvaluationJudge,
 		ProviderID:   req.Batch.ProviderID,
 		BatchID:      req.Batch.BatchID,
 		SubmittedAt:  req.Batch.SubmittedAt,

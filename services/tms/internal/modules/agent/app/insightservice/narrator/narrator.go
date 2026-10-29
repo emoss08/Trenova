@@ -15,7 +15,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -109,7 +109,7 @@ func (s *Service) narrateBatch(
 ) {
 	completion, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskOperationalInsights,
+		Task:         aitask.TaskOperationalInsights,
 		System:       systemPrompt,
 		Context:      buildContext(batch, req.WindowDays),
 		OutputSchema: outputSchema(),

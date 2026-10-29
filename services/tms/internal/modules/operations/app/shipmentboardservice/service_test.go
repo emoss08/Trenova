@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -84,7 +85,7 @@ func (s *stubBasis) Prepare(
 
 type stubAI struct {
 	aiproviderports.AIProviderRepository
-	tasks map[aiprovider.Task]bool
+	tasks map[aitask.Task]bool
 }
 
 func (s *stubAI) ListForTask(
@@ -155,7 +156,7 @@ func TestCapabilities(t *testing.T) {
 
 	svc := NewWithDependencies(&Dependencies{
 		AIProviders: &stubAI{
-			tasks: map[aiprovider.Task]bool{aiprovider.TaskOperationalInsights: true},
+			tasks: map[aitask.Task]bool{aitask.TaskOperationalInsights: true},
 		},
 		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
 			BrokerageEnabled: true,

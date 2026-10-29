@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -201,7 +202,7 @@ func (s *Service) chatProvider(
 	}
 
 	candidates, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -210,7 +211,7 @@ func (s *Service) chatProvider(
 
 	usable := make([]*aiprovider.Provider, 0, len(candidates))
 	for _, candidate := range candidates {
-		if ok, _ := candidate.CanServeTask(aiprovider.TaskAssistantChat); ok {
+		if ok, _ := candidate.CanServeTask(aitask.TaskAssistantChat); ok {
 			usable = append(usable, candidate)
 		}
 	}

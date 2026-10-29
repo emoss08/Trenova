@@ -3,7 +3,7 @@ package extractionrolloutservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
@@ -99,7 +99,7 @@ func (s *Service) checkCandidate(
 	if !enabled {
 		return nil
 	}
-	if ok, reason := provider.CanServeTask(aiprovider.TaskDocumentExtraction); !ok {
+	if ok, reason := provider.CanServeTask(aitask.TaskDocumentExtraction); !ok {
 		return errortypes.NewValidationError(
 			"providerId",
 			errortypes.ErrInvalid,

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -56,7 +56,7 @@ type ContextRequest struct {
 func MeasureContext(req ContextRequest) conversation.ContextUsage {
 	usage := conversation.ContextUsage{
 		Instructions: req.Instructions,
-		Window:       aiprovider.WindowOr(req.Window, req.Model),
+		Window:       aimodel.WindowOr(req.Window, req.Model),
 		Model:        req.Model,
 		MeasuredAt:   req.Now,
 	}

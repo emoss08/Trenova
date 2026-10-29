@@ -3,7 +3,7 @@ package aiproviderrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,10 +17,10 @@ assistant turn and an extraction all depend on it.
 func TestListForTaskSendsTheTaskAsATextArray(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, providersForTaskQuery(aiprovider.TaskAssistantChat))
+	sql, args := keeltest.Render(t, providersForTaskQuery(aitask.TaskAssistantChat))
 
 	assert.Contains(t, sql, `."tasks" @> $`, sql)
-	assert.Contains(t, args, []string{string(aiprovider.TaskAssistantChat)})
+	assert.Contains(t, args, []string{string(aitask.TaskAssistantChat)})
 }
 
 // The GIN index on tasks only serves containment, so the predicate has to stay
@@ -28,7 +28,7 @@ func TestListForTaskSendsTheTaskAsATextArray(t *testing.T) {
 func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, providersForTaskQuery(aiprovider.TaskAssistantChat))
+	sql, _ := keeltest.Render(t, providersForTaskQuery(aitask.TaskAssistantChat))
 
 	assert.Contains(t, sql, "@>", sql)
 	assert.NotContains(t, sql, "ANY(", sql)
@@ -40,7 +40,7 @@ func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 func TestSelectOptionsFilterKeepsEnabledProvidersThatServeTheTask(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, selectOptionsQuery(aiprovider.TaskAssistantChat))
+	sql, _ := keeltest.Render(t, selectOptionsQuery(aitask.TaskAssistantChat))
 
 	assert.Contains(t, sql, `."enabled" IS TRUE`, sql)
 	assert.Contains(t, sql, `."tasks" @> $`, sql)

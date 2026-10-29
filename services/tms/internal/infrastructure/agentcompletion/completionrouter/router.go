@@ -17,7 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -170,7 +173,7 @@ func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.T
 
 type runRequest struct {
 	TenantInfo  pagination.TenantInfo
-	Task        aiprovider.Task
+	Task        aitask.Task
 	System      string
 	UserContent string
 	Schema      map[string]any
@@ -184,7 +187,7 @@ type runRequest struct {
 	// answered by then; zero tries them one after another.
 	HedgeAfter time.Duration
 	// Reasoning overrides each provider's configured effort for this call.
-	Reasoning   aiprovider.ReasoningEffort
+	Reasoning   aireasoning.ReasoningEffort
 	Attribution aiusageports.AIUsageAttribution
 }
 
@@ -204,22 +207,22 @@ type runOutcome struct {
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
 	CostUSD          *decimal.Decimal
-	Advisor          *aiprovider.AdvisorUsage
+	Advisor          *aipricing.AdvisorUsage
 	Batched          bool
 }
 
-func (o *runOutcome) cost(provider *aiprovider.Provider, task aiprovider.Task) *decimal.Decimal {
+func (o *runOutcome) cost(provider *aiprovider.Provider, task aitask.Task) *decimal.Decimal {
 	if o.Batched {
-		return provider.BatchCostForTask(task, o.tokenUsage())
+		return aipricing.BatchCostForTask(provider, task, o.tokenUsage())
 	}
 
-	return provider.AdvisedCostForTask(task, o.tokenUsage(), o.Advisor)
+	return aipricing.AdvisedCostForTask(provider, task, o.tokenUsage(), o.Advisor)
 }
 
 // tokenUsage is what the provider reported, in the shape a price is read
 // against, so every cost the router records is priced the same way.
-func (o *runOutcome) tokenUsage() aiprovider.TokenUsage {
-	return aiprovider.TokenUsage{
+func (o *runOutcome) tokenUsage() aipricing.TokenUsage {
+	return aipricing.TokenUsage{
 		Input:      o.InputTokens,
 		Output:     o.OutputTokens,
 		CacheRead:  o.CacheReadTokens,
@@ -257,7 +260,7 @@ func (s *Service) candidatesFor(
 func requiredProvider(
 	providers []*aiprovider.Provider,
 	required pulid.ID,
-	task aiprovider.Task,
+	task aitask.Task,
 ) ([]*aiprovider.Provider, error) {
 	for _, provider := range providers {
 		if provider.ID == required {
@@ -272,7 +275,7 @@ func requiredProvider(
 
 func (s *Service) usableFor(
 	ctx context.Context,
-	task aiprovider.Task,
+	task aitask.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
 	usable, err := s.servingTask(ctx, task, tenant, nil)
@@ -298,7 +301,7 @@ func (s *Service) usableFor(
 // already in it, in the repository's priority order.
 func (s *Service) servingTask(
 	ctx context.Context,
-	task aiprovider.Task,
+	task aitask.Task,
 	tenant pagination.TenantInfo,
 	usable []*aiprovider.Provider,
 ) ([]*aiprovider.Provider, error) {
@@ -466,7 +469,7 @@ func (s *Service) tryProvider(
 
 	s.touchKey(ctx, provider, req.TenantInfo)
 	outcome.LatencyMs = latency.Milliseconds()
-	outcome.CostUSD = provider.CostFor(outcome.tokenUsage())
+	outcome.CostUSD = aipricing.CostFor(provider, outcome.tokenUsage())
 
 	return outcome, nil
 }

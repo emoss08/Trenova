@@ -4,7 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +64,7 @@ func advisorStreamReply(content string) string {
 func advisorCall(t *testing.T, url string, req *Request) *Call {
 	t.Helper()
 
-	call := reasoningCall(aiprovider.KindAnthropicMessages, url, aiprovider.ReasoningLow, req)
+	call := reasoningCall(aiprovider.KindAnthropicMessages, url, aireasoning.ReasoningLow, req)
 	call.Provider.Model = "claude-haiku-5-5"
 	call.APIKey = "sk-test"
 
@@ -148,13 +151,13 @@ func TestAnthropicAdapter_ReadsAnAdvisedReplyWithoutShowingTheAdvice(t *testing.
 	assert.Equal(t, "get_shipment", resp.ToolCalls[0].Name)
 	assert.Equal(t, 900, resp.InputTokens, "the executor's own usage is unchanged")
 	assert.Equal(t, 120, resp.OutputTokens)
-	assert.Equal(t, &aiprovider.AdvisorUsage{
+	assert.Equal(t, &aipricing.AdvisorUsage{
 		Model: "claude-opus-5-5",
 		Calls: 1,
-		Tokens: aiprovider.TokenUsage{
+		Tokens: aipricing.TokenUsage{
 			Input: 2500, Output: 700, CacheRead: 1000, CacheWrite: 200,
 		},
-		Executor: []aiprovider.TokenUsage{
+		Executor: []aipricing.TokenUsage{
 			{Input: 500, Output: 40},
 			{Input: 400, Output: 80},
 		},
@@ -238,11 +241,11 @@ func TestAnthropicAdapter_StreamsEachAdvisorResultKind(t *testing.T) {
 			require.NotNil(t, result.Result)
 			assert.Equal(t, tc.want, *result.Result)
 			assert.Empty(t, resp.Reasoning.Text)
-			assert.Equal(t, &aiprovider.AdvisorUsage{
+			assert.Equal(t, &aipricing.AdvisorUsage{
 				Model:  "claude-opus-5-5",
 				Calls:  1,
-				Tokens: aiprovider.TokenUsage{Input: 1200, Output: 400},
-				Executor: []aiprovider.TokenUsage{
+				Tokens: aipricing.TokenUsage{Input: 1200, Output: 400},
+				Executor: []aipricing.TokenUsage{
 					{Input: 300, Output: 10},
 					{Input: 400, Output: 20},
 				},
@@ -548,7 +551,7 @@ func TestAdvisorFor_OnlyOnPlatformsThatServeIt(t *testing.T) {
 	advice := &ReasoningTrace{Blocks: []ProviderBlock{
 		{Type: "advisor_tool_result", Model: "claude-opus-5-5"},
 	}}
-	for _, platform := range aiprovider.AllPlatforms() {
+	for _, platform := range aiplatform.AllPlatforms() {
 		provider := &aiprovider.Provider{
 			Kind:     aiprovider.KindAnthropicMessages,
 			Platform: platform,

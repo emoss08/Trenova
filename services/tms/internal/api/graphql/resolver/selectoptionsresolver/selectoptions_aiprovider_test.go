@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -101,7 +102,7 @@ func TestSelectOptions_AIProviderListsAssistantChatProvidersForTheTenant(t *test
 	require.NoError(t, err)
 
 	require.NotNil(t, svc.selectReq)
-	assert.Equal(t, aiprovider.TaskAssistantChat, svc.selectReq.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, svc.selectReq.Task)
 	assert.Equal(t, "opus", svc.selectReq.SelectQueryRequest.Query)
 	assert.Equal(t, orgID, svc.selectReq.SelectQueryRequest.TenantInfo.OrgID)
 	assert.Equal(t, buID, svc.selectReq.SelectQueryRequest.TenantInfo.BuID)

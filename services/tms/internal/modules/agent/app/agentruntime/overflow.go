@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
@@ -53,7 +53,7 @@ func (t *Turn) window() int {
 		return 0
 	}
 
-	return aiprovider.WindowOr(t.result.ContextWindow, t.result.Model)
+	return aimodel.WindowOr(t.result.ContextWindow, t.result.Model)
 }
 
 // fitWindow shortens the request's older tool results, oldest first, while it

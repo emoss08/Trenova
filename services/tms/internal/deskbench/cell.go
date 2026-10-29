@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
@@ -19,7 +20,7 @@ const (
 
 type Cell struct {
 	Provider *aiprovider.Provider
-	Effort   aiprovider.ReasoningEffort
+	Effort   aireasoning.ReasoningEffort
 	Advisor  *llmports.AdvisorSpec
 }
 
@@ -49,7 +50,7 @@ func (c Cell) pin() ProviderPin {
 
 type cellRef struct {
 	name    string
-	effort  aiprovider.ReasoningEffort
+	effort  aireasoning.ReasoningEffort
 	advisor *llmports.AdvisorSpec
 }
 
@@ -88,7 +89,7 @@ func (r *cellRef) applySuffix(suffix string) error {
 	return nil
 }
 
-func splitEffort(ref string) (string, aiprovider.ReasoningEffort, error) {
+func splitEffort(ref string) (string, aireasoning.ReasoningEffort, error) {
 	at := strings.LastIndex(ref, effortSeparator)
 	if at < 0 {
 		return ref, "", nil
@@ -96,7 +97,7 @@ func splitEffort(ref string) (string, aiprovider.ReasoningEffort, error) {
 
 	name := strings.TrimSpace(ref[:at])
 	wanted := strings.TrimSpace(ref[at+1:])
-	for _, effort := range aiprovider.AllReasoningEfforts() {
+	for _, effort := range aireasoning.AllReasoningEfforts() {
 		if strings.EqualFold(string(effort), wanted) {
 			return name, effort, nil
 		}
@@ -107,7 +108,7 @@ func splitEffort(ref string) (string, aiprovider.ReasoningEffort, error) {
 }
 
 func effortNames() string {
-	efforts := aiprovider.AllReasoningEfforts()
+	efforts := aireasoning.AllReasoningEfforts()
 	names := make([]string, 0, len(efforts))
 	for _, effort := range efforts {
 		names = append(names, strings.ToLower(string(effort)))

@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -92,7 +93,7 @@ func embeddingProvider(
 		Kind:                kind,
 		BaseURL:             baseURL,
 		Model:               "embed-model",
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dimensions,
 		EmbeddingInputStyle: style,
 		Enabled:             true,

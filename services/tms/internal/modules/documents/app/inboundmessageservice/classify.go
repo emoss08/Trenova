@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -152,7 +152,7 @@ func (s *Service) classify(
 
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
-		Task:         aiprovider.TaskInboundClassification,
+		Task:         aitask.TaskInboundClassification,
 		System:       classifierSystemPrompt,
 		Context:      classifierContext(message, s.senderHints(ctx, message, tenantInfo)),
 		OutputSchema: classifierSchema(),

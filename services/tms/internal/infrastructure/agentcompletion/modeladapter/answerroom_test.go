@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestOpenAIChatAdapter_GivesAReasoningCallRoomToAnswer(t *testing.T) {
 	server, captured := streamServer(t, "text/event-stream", finishedChatStream())
 
 	resp, _ := streamWith(t, NewOpenAIChatAdapter(), reasoningCall(
-		aiprovider.KindOpenAIChat, server.URL, aiprovider.ReasoningLow,
+		aiprovider.KindOpenAIChat, server.URL, aireasoning.ReasoningLow,
 		&Request{Messages: UserMessage("transfer them")},
 	))
 
@@ -82,7 +83,7 @@ func TestOpenAIChatAdapter_KeepsAHigherConfiguredCeiling(t *testing.T) {
 	server, captured := streamServer(t, "text/event-stream", finishedChatStream())
 
 	call := reasoningCall(
-		aiprovider.KindOpenAIChat, server.URL, aiprovider.ReasoningHigh,
+		aiprovider.KindOpenAIChat, server.URL, aireasoning.ReasoningHigh,
 		&Request{Messages: UserMessage("go")},
 	)
 	call.Request.MaxTokens = 40000
@@ -122,7 +123,7 @@ func TestOpenAIResponsesAdapter_GivesAReasoningCallRoomToAnswer(t *testing.T) {
 	t.Parallel()
 
 	thinking := reasoningCall(
-		aiprovider.KindOpenAIResponses, "http://unused", aiprovider.ReasoningMedium,
+		aiprovider.KindOpenAIResponses, "http://unused", aireasoning.ReasoningMedium,
 		&Request{Messages: UserMessage("go")},
 	)
 	body := openAIResponsesAdapter{}.requestFor(thinking)
@@ -143,7 +144,7 @@ func TestAnthropicAdapter_ReportsTheCeilingItSent(t *testing.T) {
 	})
 
 	resp, err := NewAnthropicAdapter().Complete(t.Context(), reasoningCall(
-		aiprovider.KindAnthropicMessages, server.URL, aiprovider.ReasoningMedium,
+		aiprovider.KindAnthropicMessages, server.URL, aireasoning.ReasoningMedium,
 		&Request{Messages: UserMessage("go")},
 	))
 

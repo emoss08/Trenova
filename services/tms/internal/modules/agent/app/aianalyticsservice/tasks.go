@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,7 +35,7 @@ func (d taskDeployment) completion() float64 {
 }
 
 type taskTally struct {
-	task        aiprovider.Task
+	task        aitask.Task
 	runs        int
 	cells       map[string]*aianalyticsports.TaskCell
 	deployments []taskDeployment
@@ -41,8 +43,8 @@ type taskTally struct {
 
 func buildTasks(in *taskInput) []aianalyticsports.TaskRow {
 	groupOf := groupKeyOf(in.compareBy)
-	byTask := make(map[aiprovider.Task]*taskTally, 8)
-	order := make([]aiprovider.Task, 0, 8)
+	byTask := make(map[aitask.Task]*taskTally, 8)
+	order := make([]aitask.Task, 0, 8)
 	for _, row := range in.rows {
 		entry, ok := byTask[row.Task]
 		if !ok {
@@ -84,7 +86,7 @@ func buildTasks(in *taskInput) []aianalyticsports.TaskRow {
 		if best := bestCell(row.Cells); best != nil {
 			row.BestSeriesKey = best.SeriesKey
 		}
-		current := aiprovider.RouteFor(enabled, task)
+		current := airouting.RouteFor(enabled, task)
 		if current != nil {
 			ref := providers.ref(current.ID.String())
 			row.Current = &ref
@@ -158,7 +160,7 @@ func seriesKeyOf(provider *aiprovider.Provider, compareBy aianalytics.CompareBy)
 }
 
 type routeQuestion struct {
-	task        aiprovider.Task
+	task        aitask.Task
 	current     *aiprovider.Provider
 	deployments []taskDeployment
 	ordered     []*aiprovider.Provider
@@ -209,7 +211,7 @@ func suggestRoute(q *routeQuestion) *aianalyticsports.RouteSuggestion {
 		if gain < aianalytics.MinRouteGainPoints {
 			return nil
 		}
-		plan, err := aiprovider.PlanRouteTo(q.ordered, q.task, pulid.ID(candidate.key.ProviderID))
+		plan, err := airouting.PlanRouteTo(q.ordered, q.task, pulid.ID(candidate.key.ProviderID))
 		if err != nil {
 			continue
 		}

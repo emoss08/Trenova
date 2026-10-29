@@ -3,7 +3,10 @@ package aiprovider_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +16,7 @@ func chatProvider() *aiprovider.Provider {
 	return &aiprovider.Provider{
 		Kind:  aiprovider.KindAnthropicMessages,
 		Model: "claude-sonnet-5-5",
-		Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks: []aitask.Task{aitask.TaskAssistantChat},
 	}
 }
 
@@ -43,7 +46,7 @@ func TestAgentSettings_ShipOff(t *testing.T) {
 func TestAgentSettings_TheAdvisorNeedsAPlatformThatServesIt(t *testing.T) {
 	t.Parallel()
 
-	for _, platform := range aiprovider.AllPlatforms() {
+	for _, platform := range aiplatform.AllPlatforms() {
 		provider := chatProvider()
 		provider.Platform = platform
 		provider.AdvisorEnabled = true
@@ -90,16 +93,16 @@ func TestAgentSettings_ARefusalHoldsUntilTheAdvisorOrModelChanges(t *testing.T) 
 	other := *provider
 	other.AdvisorModel = "claude-fable-5-1"
 	assert.Equal(t, "claude-fable-5-1", other.ResolvedAdvisorModel())
-	assert.True(t, aiprovider.AdvisorSettingsChanged(provider, &other))
+	assert.True(t, aiproviderchange.AdvisorSettingsChanged(provider, &other))
 
 	moved := *provider
 	moved.Model = "claude-haiku-5-5"
 	assert.Equal(t, aiprovider.DefaultAdvisorModel, moved.ResolvedAdvisorModel())
-	assert.True(t, aiprovider.AdvisorSettingsChanged(provider, &moved))
+	assert.True(t, aiproviderchange.AdvisorSettingsChanged(provider, &moved))
 
 	renamed := *provider
 	renamed.Name = "Renamed"
-	assert.False(t, aiprovider.AdvisorSettingsChanged(provider, &renamed))
+	assert.False(t, aiproviderchange.AdvisorSettingsChanged(provider, &renamed))
 }
 
 func TestAgentSettings_ScriptWritesNeedScripts(t *testing.T) {
@@ -112,10 +115,14 @@ func TestAgentSettings_ScriptWritesNeedScripts(t *testing.T) {
 
 	provider.Scripts = true
 	assert.Empty(t, agentSettingErrors(provider))
-	assert.Equal(t, aiprovider.ScriptSettings{Scripts: true, Writes: true}, provider.ScriptSettings())
+	assert.Equal(
+		t,
+		aiprovider.ScriptSettings{Scripts: true, Writes: true},
+		provider.ScriptSettings(),
+	)
 
 	embedder := chatProvider()
-	embedder.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	embedder.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	embedder.Scripts = true
 	assert.Contains(t, agentSettingErrors(embedder), "scripts")
 }

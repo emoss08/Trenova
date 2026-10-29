@@ -6,25 +6,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -233,7 +231,7 @@ func ensureExceptionHoldReason(ctx context.Context, db *keel.DB, org *tenant.Org
 
 func routeInboundClassification(ctx context.Context, db *keel.DB, org *tenant.Organization) error {
 	p := aiproviderdb.Providers
-	task := string(aiprovider.TaskInboundClassification)
+	task := string(aitask.TaskInboundClassification)
 	if _, err := p.AllTenants().Where(
 		p.OrganizationID.Eq(org.ID),
 		p.BusinessUnitID.Eq(org.BusinessUnitID),

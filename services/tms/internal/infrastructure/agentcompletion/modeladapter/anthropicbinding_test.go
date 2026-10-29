@@ -9,13 +9,17 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // headerServer replies with a canned body and keeps the request's beta header
 // and decoded body.
-func headerServer(t *testing.T, contentType, reply string) (*httptest.Server, func() (string, map[string]any)) {
+func headerServer(
+	t *testing.T,
+	contentType, reply string,
+) (*httptest.Server, func() (string, map[string]any)) {
 	t.Helper()
 
 	var (
@@ -50,7 +54,9 @@ func toolLoopHistory() []Message {
 		{
 			Role:      RoleAssistant,
 			Reasoning: earlier,
-			ToolCalls: []ToolCall{{ID: "call_1", Name: "get_shipment", Arguments: map[string]any{}}},
+			ToolCalls: []ToolCall{
+				{ID: "call_1", Name: "get_shipment", Arguments: map[string]any{}},
+			},
 		},
 		{Role: RoleTool, ToolCallID: "call_1", Content: "{}"},
 		{Role: RoleAssistant, Content: "In Dallas.", Reasoning: earlier},
@@ -58,7 +64,9 @@ func toolLoopHistory() []Message {
 		{
 			Role:      RoleAssistant,
 			Reasoning: current,
-			ToolCalls: []ToolCall{{ID: "call_2", Name: "get_shipment", Arguments: map[string]any{}}},
+			ToolCalls: []ToolCall{
+				{ID: "call_2", Name: "get_shipment", Arguments: map[string]any{}},
+			},
 		},
 		{Role: RoleTool, ToolCallID: "call_2", Content: "{}"},
 	}
@@ -103,21 +111,24 @@ func TestAnthropicAdapter_AsksABindingModelToDropAMismatchedBlock(t *testing.T) 
 	t.Parallel()
 
 	reply := sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	)
 	for _, tc := range []struct {
 		model  string
-		effort aiprovider.ReasoningEffort
+		effort aireasoning.ReasoningEffort
 		bound  bool
 	}{
-		{"claude-opus-5-5", aiprovider.ReasoningOff, true},
-		{"claude-opus-5-5", aiprovider.ReasoningHigh, true},
-		{"claude-sonnet-5-5", aiprovider.ReasoningNone, true},
-		{"claude-fable-5-1", aiprovider.ReasoningOff, true},
-		{"claude-opus-4-8", aiprovider.ReasoningHigh, false},
-		{"claude-haiku-4-5", aiprovider.ReasoningHigh, false},
-		{"claude-mythos-5-1", aiprovider.ReasoningOff, false},
+		{"claude-opus-5-5", aireasoning.ReasoningOff, true},
+		{"claude-opus-5-5", aireasoning.ReasoningHigh, true},
+		{"claude-sonnet-5-5", aireasoning.ReasoningNone, true},
+		{"claude-fable-5-1", aireasoning.ReasoningOff, true},
+		{"claude-opus-4-8", aireasoning.ReasoningHigh, false},
+		{"claude-haiku-4-5", aireasoning.ReasoningHigh, false},
+		{"claude-mythos-5-1", aireasoning.ReasoningOff, false},
 	} {
 		server, sent := headerServer(t, "text/event-stream", reply)
 		call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL, tc.effort,
@@ -154,22 +165,34 @@ func TestAnthropicAdapter_CountsTheThinkingTheAPIDropped(t *testing.T) {
 		`{"type":"thinking_mismatch_allowed","path":"messages.5.content.0","reason":"prefix_binding_mismatch"}]`
 
 	stream, _ := headerServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1},` + transformations + `}}`},
-		[2]string{"content_block_start", `{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`},
-		[2]string{"content_block_delta", `{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1},` + transformations + `}}`,
+		},
+		[2]string{
+			"content_block_start",
+			`{"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`,
+		},
+		[2]string{
+			"content_block_delta",
+			`{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}`,
+		},
 		[2]string{"content_block_stop", `{"type":"content_block_stop","index":0}`},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
-	call := reasoningCall(aiprovider.KindAnthropicMessages, stream.URL, aiprovider.ReasoningOff,
+	call := reasoningCall(aiprovider.KindAnthropicMessages, stream.URL, aireasoning.ReasoningOff,
 		&Request{Messages: UserMessage("hi")})
 	call.Provider.Model = "claude-opus-5-5"
 	resp, _ := streamWith(t, NewAnthropicAdapter(), call)
 	require.NotNil(t, resp)
 	assert.Equal(t, 2, resp.ThinkingDropped)
 
-	blocking, _ := headerServer(t, "application/json",
-		`{"model":"m","stop_reason":"end_turn","content":[{"type":"text","text":"Hi"}],"usage":{"input_tokens":1,"output_tokens":1},`+transformations+`}`)
-	call = reasoningCall(aiprovider.KindAnthropicMessages, blocking.URL, aiprovider.ReasoningOff,
+	blocking, _ := headerServer(
+		t,
+		"application/json",
+		`{"model":"m","stop_reason":"end_turn","content":[{"type":"text","text":"Hi"}],"usage":{"input_tokens":1,"output_tokens":1},`+transformations+`}`,
+	)
+	call = reasoningCall(aiprovider.KindAnthropicMessages, blocking.URL, aireasoning.ReasoningOff,
 		&Request{Messages: UserMessage("hi")})
 	call.Provider.Model = "claude-opus-5-5"
 	complete, err := NewAnthropicAdapter().Complete(t.Context(), call)

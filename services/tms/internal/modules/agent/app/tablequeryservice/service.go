@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -143,7 +143,7 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 		ctx,
 		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
-			Task:         aiprovider.TaskQueryCompose,
+			Task:         aitask.TaskQueryCompose,
 			System:       systemPrompt,
 			Context:      buildContext(resource, prompt, req.Current),
 			OutputSchema: outputSchema(resource),

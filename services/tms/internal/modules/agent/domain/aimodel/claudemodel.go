@@ -1,4 +1,4 @@
-package aiprovider
+package aimodel
 
 import (
 	"regexp"

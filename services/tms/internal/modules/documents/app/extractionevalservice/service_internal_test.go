@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -93,7 +94,7 @@ func (w *world) seedProvider() *aiprovider.Provider {
 		Name:    "Tuned extractor",
 		Model:   "trenova-extract-8b",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	w.providers.providers[provider.ID] = provider
 	return provider
@@ -259,7 +260,7 @@ func TestStartRun_RefusesWhatCannotRun(t *testing.T) {
 	require.Error(t, err, "a disabled provider cannot be evaluated")
 
 	provider.Enabled = true
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskGeneral}
+	provider.Tasks = []aitask.Task{aitask.TaskGeneral}
 	_, err = w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,

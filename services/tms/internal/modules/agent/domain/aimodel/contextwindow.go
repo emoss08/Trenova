@@ -1,4 +1,4 @@
-package aiprovider
+package aimodel
 
 import (
 	"regexp"
@@ -62,22 +62,6 @@ func KnownContextWindow(model string) (int, bool) {
 	}
 
 	return 0, false
-}
-
-// ConfiguredContextWindow is the window the provider is configured with, or
-// zero when it is left to be read off the model id.
-func (p *Provider) ConfiguredContextWindow() int {
-	if p.ContextWindowTokens == nil || *p.ContextWindowTokens <= 0 {
-		return 0
-	}
-
-	return *p.ContextWindowTokens
-}
-
-// ContextWindow is the context window of the provider's model: the one it is
-// configured with, and otherwise the one its model id names.
-func (p *Provider) ContextWindow() int {
-	return WindowOr(p.ConfiguredContextWindow(), p.Model)
 }
 
 // WindowOr is configured when it is set, and otherwise the window of model.

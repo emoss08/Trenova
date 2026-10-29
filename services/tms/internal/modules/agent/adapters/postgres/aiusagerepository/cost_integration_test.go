@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -51,7 +52,7 @@ func TestCostByDefinition_LeavesEvaluationSpendOut(t *testing.T) {
 			BusinessUnitID:    row.BusinessUnitID,
 			ProviderKind:      aiprovider.KindOpenAIChat,
 			Model:             "test-model",
-			Task:              aiprovider.TaskAssistantChat,
+			Task:              aitask.TaskAssistantChat,
 			Surface:           surface,
 			AgentDefinitionID: row.ID,
 			RunID:             pulid.MustNew(runPrefix),

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,7 +38,7 @@ func advisedDraft() *aiprovider.Provider {
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Kind:           aiprovider.KindAnthropicMessages,
 		Model:          "claude-haiku-5-5",
-		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:          []aitask.Task{aitask.TaskAssistantChat},
 		AdvisorEnabled: true,
 	}
 }

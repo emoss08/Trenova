@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	stored := testProvider(t, svc)
 	stored.Enabled = true
-	stored.Tasks = []aiprovider.Task{aiprovider.TaskAssistantChat}
+	stored.Tasks = []aitask.Task{aitask.TaskAssistantChat}
 	dims := 1536
 	stored.EmbeddingDimensions = &dims
 	svc.repo = &routingRepo{
@@ -42,7 +43,7 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 			ID:      stored.ID,
 			Name:    stored.Name,
 			Kind:    stored.Kind,
-			Tasks:   []aiprovider.Task{aiprovider.TaskDailyBriefing},
+			Tasks:   []aitask.Task{aitask.TaskDailyBriefing},
 			Enabled: true,
 		},
 	})
@@ -50,10 +51,10 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	require.NoError(t, err)
 	for _, route := range routes {
 		switch route.Task {
-		case aiprovider.TaskAssistantChat:
+		case aitask.TaskAssistantChat:
 			require.NotNil(t, route.Before)
 			assert.Nil(t, route.After, "the edit takes chat away from the only provider")
-		case aiprovider.TaskDailyBriefing:
+		case aitask.TaskDailyBriefing:
 			assert.Nil(t, route.Before)
 			require.NotNil(t, route.After)
 			assert.True(t, route.After.Draft)
@@ -61,5 +62,5 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 		}
 	}
 	assert.NotEmpty(t, stored.APIKey, "the stored provider is not changed")
-	assert.Equal(t, []aiprovider.Task{aiprovider.TaskAssistantChat}, stored.Tasks)
+	assert.Equal(t, []aitask.Task{aitask.TaskAssistantChat}, stored.Tasks)
 }

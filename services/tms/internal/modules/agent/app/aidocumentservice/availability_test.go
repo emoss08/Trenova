@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -20,12 +20,12 @@ import (
 type providerAvailability struct {
 	servable bool
 	err      error
-	asked    []aiprovider.Task
+	asked    []aitask.Task
 }
 
 func (p *providerAvailability) CanServe(
 	_ context.Context,
-	task aiprovider.Task,
+	task aitask.Task,
 	_ pagination.TenantInfo,
 ) (bool, error) {
 	p.asked = append(p.asked, task)
@@ -117,7 +117,7 @@ func TestExtractionAvailabilityAsksForTheDocumentExtractionTask(t *testing.T) {
 	_, err := svc.ExtractionAvailability(t.Context(), plantest.Tenant())
 
 	require.NoError(t, err)
-	assert.Equal(t, []aiprovider.Task{aiprovider.TaskDocumentExtraction}, availability.asked)
+	assert.Equal(t, []aitask.Task{aitask.TaskDocumentExtraction}, availability.asked)
 }
 
 func TestExtractionAvailabilityReturnsTheRouterError(t *testing.T) {

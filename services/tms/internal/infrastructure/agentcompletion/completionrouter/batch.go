@@ -9,7 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -115,7 +117,7 @@ func batchRuns(req *llmports.BatchCompletionRequest) ([]*runRequest, error) {
 
 	task := req.Task
 	if task == "" {
-		task = aiprovider.TaskGeneral
+		task = aitask.TaskGeneral
 	}
 	seen := make(map[string]struct{}, len(req.Items))
 	runs := make([]*runRequest, 0, len(req.Items))
@@ -165,7 +167,7 @@ func affordable(
 
 func batchEstimate(
 	provider *aiprovider.Provider,
-	task aiprovider.Task,
+	task aitask.Task,
 	run *runRequest,
 ) *decimal.Decimal {
 	output := run.MaxTokens
@@ -173,7 +175,7 @@ func batchEstimate(
 		output = provider.ResolvedMaxTokens()
 	}
 
-	return provider.BatchCostForTask(task, aiprovider.TokenUsage{
+	return aipricing.BatchCostForTask(provider, task, aipricing.TokenUsage{
 		Input: llmtokens.EstimateAll([]string{
 			structuredSystem(run, provider.StructuredOutputMode),
 			run.UserContent,
@@ -312,7 +314,7 @@ func (s *Service) BatchResults(
 
 	task := req.Task
 	if task == "" {
-		task = aiprovider.TaskGeneral
+		task = aitask.TaskGeneral
 	}
 	reader := &batchReader{service: s, provider: provider, task: task, req: req}
 	limited := s.withDeadline(ctx, batchReadTimeout)
@@ -344,7 +346,7 @@ func (s *Service) BatchResults(
 type batchReader struct {
 	service  *Service
 	provider *aiprovider.Provider
-	task     aiprovider.Task
+	task     aitask.Task
 	req      *llmports.BatchResultsRequest
 	results  map[string]llmports.BatchItemResult
 	rows     []*aiusage.AIUsageRecord

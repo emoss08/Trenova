@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,7 +73,7 @@ func (p *pricer) price(
 		return callPrice{}
 	}
 	return callPrice{
-		cost:   priced.provider.AdvisedCostFor(tokens.raw, tokens.advisor),
+		cost:   aipricing.AdvisedCostFor(priced.provider, tokens.raw, tokens.advisor),
 		source: priced.source,
 	}
 }
@@ -119,7 +120,7 @@ func (p *pricer) resolve(
 	if model == "" {
 		model = stored.Model
 	}
-	if listed, ok := aiprovider.ListPriced(stored, model); ok {
+	if listed, ok := aipricing.ListPriced(stored, model); ok {
 		return pricedProvider{provider: listed, source: PriceSourceListPrice}
 	}
 	estimated := *stored

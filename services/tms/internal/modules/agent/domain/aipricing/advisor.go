@@ -1,6 +1,10 @@
-package aiprovider
+package aipricing
 
-import "github.com/shopspring/decimal"
+import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/shopspring/decimal"
+)
 
 type AdvisorUsage struct {
 	Model    string       `json:"model"`
@@ -13,16 +17,16 @@ func (u *AdvisorUsage) Used() bool {
 	return u != nil && (u.Calls > 0 || u.Tokens != TokenUsage{})
 }
 
-func (u *AdvisorUsage) Cost(kind Kind) *decimal.Decimal {
+func (u *AdvisorUsage) Cost(kind aiprovider.Kind) *decimal.Decimal {
 	if !u.Used() {
 		return nil
 	}
-	priced, ok := ListPriced(&Provider{Kind: kind}, u.Model)
+	priced, ok := ListPriced(&aiprovider.Provider{Kind: kind}, u.Model)
 	if !ok {
 		return nil
 	}
 
-	return priced.CostFor(u.Tokens)
+	return CostFor(priced, u.Tokens)
 }
 
 func (u *AdvisorUsage) splitsExecutor(summed TokenUsage) bool {
@@ -41,20 +45,25 @@ func (u *AdvisorUsage) splitsExecutor(summed TokenUsage) bool {
 	return total == summed
 }
 
-func (p *Provider) AdvisedCostForTask(
-	t Task,
+func AdvisedCostForTask(
+	p *aiprovider.Provider,
+	t aitask.Task,
 	usage TokenUsage,
 	advisor *AdvisorUsage,
 ) *decimal.Decimal {
 	if !t.Generates() {
-		return p.InputCostFor(usage)
+		return InputCostFor(p, usage)
 	}
 
-	return p.AdvisedCostFor(usage, advisor)
+	return AdvisedCostFor(p, usage, advisor)
 }
 
-func (p *Provider) AdvisedCostFor(usage TokenUsage, advisor *AdvisorUsage) *decimal.Decimal {
-	executor := p.executorCostFor(usage, advisor)
+func AdvisedCostFor(
+	p *aiprovider.Provider,
+	usage TokenUsage,
+	advisor *AdvisorUsage,
+) *decimal.Decimal {
+	executor := executorCostFor(p, usage, advisor)
 	if executor == nil || !advisor.Used() {
 		return executor
 	}
@@ -67,19 +76,23 @@ func (p *Provider) AdvisedCostFor(usage TokenUsage, advisor *AdvisorUsage) *deci
 	return &total
 }
 
-func (p *Provider) executorCostFor(usage TokenUsage, advisor *AdvisorUsage) *decimal.Decimal {
+func executorCostFor(
+	p *aiprovider.Provider,
+	usage TokenUsage,
+	advisor *AdvisorUsage,
+) *decimal.Decimal {
 	if !p.Priced() || !advisor.splitsExecutor(usage) {
-		return p.CostFor(usage)
+		return CostFor(p, usage)
 	}
 	total := decimal.Zero
 	for idx := range advisor.Executor {
-		total = total.Add(*p.CostFor(advisor.Executor[idx]))
+		total = total.Add(*CostFor(p, advisor.Executor[idx]))
 	}
 
 	return &total
 }
 
-func ListPriced(base *Provider, model string) (*Provider, bool) {
+func ListPriced(base *aiprovider.Provider, model string) (*aiprovider.Provider, bool) {
 	card, ok := ListPrice(base.Kind, model)
 	if !ok {
 		return nil, false

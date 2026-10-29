@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
@@ -225,7 +225,7 @@ func (s *Service) Prepare(
 
 	plan.Request = &llmports.StructuredCompletionRequest{
 		TenantInfo: req.Ref.Tenant(),
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		System:     systemPrompt(req.Ref.Subject),
 		Context: contextSections(&writerInput{
 			Subject:      req.Ref.Subject,

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,7 +28,7 @@ func (s *Service) VisibleFailures(
 		return nil, err
 	}
 
-	byProvider := make(map[string]*aiprovider.FailureDismissal, len(dismissals))
+	byProvider := make(map[string]*aiproviderdismissal.FailureDismissal, len(dismissals))
 	for _, dismissal := range dismissals {
 		byProvider[dismissal.ProviderID.String()] = dismissal
 	}
@@ -59,7 +59,7 @@ func (s *Service) DismissFailure(
 		return err
 	}
 
-	return s.dismissals.Upsert(ctx, &aiprovider.FailureDismissal{
+	return s.dismissals.Upsert(ctx, &aiproviderdismissal.FailureDismissal{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
 		UserID:         req.UserID,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -81,7 +82,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 			BusinessUnitID: tenant.BusinessUnitID,
 			ProviderKind:   aiprovider.KindOpenAIChat,
 			Model:          "test-model",
-			Task:           aiprovider.TaskGeneral,
+			Task:           aitask.TaskGeneral,
 			Surface:        c.surface,
 			Feature:        c.feature,
 			Succeeded:      true,
@@ -132,7 +133,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 		BusinessUnitID: tenant.BusinessUnitID,
 		ProviderKind:   aiprovider.KindOpenAIChat,
 		Model:          "test-model",
-		Task:           aiprovider.TaskGeneral,
+		Task:           aitask.TaskGeneral,
 		Surface:        aiusage.SurfaceChat,
 		Feature:        aiusage.Feature("Unknown"),
 		Succeeded:      true,
@@ -145,7 +146,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 		BusinessUnitID: tenant.BusinessUnitID,
 		ProviderKind:   aiprovider.KindOpenAIChat,
 		Model:          "test-model",
-		Task:           aiprovider.TaskGeneral,
+		Task:           aitask.TaskGeneral,
 		Surface:        aiusage.SurfaceChat,
 		SubjectType:    aiusage.SubjectTypeDocument,
 		Succeeded:      true,

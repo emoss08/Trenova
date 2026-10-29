@@ -2,7 +2,7 @@ package aianalytics
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -14,14 +14,14 @@ type WorkUnit struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Source            Source          `json:"source"            keel:"source"`
-	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	ProviderID        pulid.ID        `json:"providerId"        keel:"provider_id,nullzero"`
-	Model             string          `json:"model"             keel:"model"`
-	ModelKey          string          `json:"modelKey"          keel:"model_key"`
-	Task              aiprovider.Task `json:"task"              keel:"task"`
-	Outcome           Outcome         `json:"outcome"           keel:"outcome"`
-	DecisionRunID     pulid.ID        `json:"decisionRunId"     keel:"decision_run_id,nullzero"`
+	Source            Source      `json:"source"            keel:"source"`
+	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	ProviderID        pulid.ID    `json:"providerId"        keel:"provider_id,nullzero"`
+	Model             string      `json:"model"             keel:"model"`
+	ModelKey          string      `json:"modelKey"          keel:"model_key"`
+	Task              aitask.Task `json:"task"              keel:"task"`
+	Outcome           Outcome     `json:"outcome"           keel:"outcome"`
+	DecisionRunID     pulid.ID    `json:"decisionRunId"     keel:"decision_run_id,nullzero"`
 
 	StartedAtMs  int64  `json:"startedAtMs"  keel:"started_at_ms"`
 	FinishedAt   int64  `json:"finishedAt"   keel:"finished_at"`
@@ -56,34 +56,34 @@ type WorkUnit struct {
 type UnitTool struct {
 	keel.Table `keel:"ai_work_unit_tools"`
 
-	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	UnitID            string          `json:"unitId"            keel:"unit_id,pk"`
-	ToolName          string          `json:"toolName"          keel:"tool_name,pk"`
-	Cause             Cause           `json:"cause"             keel:"cause,pk"`
-	FinishedAt        int64           `json:"finishedAt"        keel:"finished_at"`
-	ModelKey          string          `json:"modelKey"          keel:"model_key"`
-	ProviderID        string          `json:"providerId"        keel:"provider_id"`
-	AgentDefinitionID string          `json:"agentDefinitionId" keel:"agent_definition_id"`
-	Task              aiprovider.Task `json:"task"              keel:"task"`
-	Calls             int             `json:"calls"             keel:"calls"`
+	OrganizationID    pulid.ID    `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	UnitID            string      `json:"unitId"            keel:"unit_id,pk"`
+	ToolName          string      `json:"toolName"          keel:"tool_name,pk"`
+	Cause             Cause       `json:"cause"             keel:"cause,pk"`
+	FinishedAt        int64       `json:"finishedAt"        keel:"finished_at"`
+	ModelKey          string      `json:"modelKey"          keel:"model_key"`
+	ProviderID        string      `json:"providerId"        keel:"provider_id"`
+	AgentDefinitionID string      `json:"agentDefinitionId" keel:"agent_definition_id"`
+	Task              aitask.Task `json:"task"              keel:"task"`
+	Calls             int         `json:"calls"             keel:"calls"`
 }
 
 type ProviderHour struct {
 	keel.Table `keel:"ai_provider_hourly_stats"`
 
-	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	Hour              int64           `json:"hour"              keel:"hour,pk"`
-	ProviderID        string          `json:"providerId"        keel:"provider_id,pk"`
-	Model             string          `json:"model"             keel:"model,pk"`
-	ModelKey          string          `json:"modelKey"          keel:"model_key"`
-	Task              aiprovider.Task `json:"task"              keel:"task,pk"`
-	AgentDefinitionID string          `json:"agentDefinitionId" keel:"agent_definition_id,pk"`
-	ErrorClass        ProviderError   `json:"errorClass"        keel:"error_class,pk"`
-	Calls             int             `json:"calls"             keel:"calls"`
-	FellToNext        int             `json:"fellToNext"        keel:"fell_to_next"`
-	FirstTokenHist    []int32         `json:"firstTokenHist"    keel:"first_token_hist"`
+	OrganizationID    pulid.ID      `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID      `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	Hour              int64         `json:"hour"              keel:"hour,pk"`
+	ProviderID        string        `json:"providerId"        keel:"provider_id,pk"`
+	Model             string        `json:"model"             keel:"model,pk"`
+	ModelKey          string        `json:"modelKey"          keel:"model_key"`
+	Task              aitask.Task   `json:"task"              keel:"task,pk"`
+	AgentDefinitionID string        `json:"agentDefinitionId" keel:"agent_definition_id,pk"`
+	ErrorClass        ProviderError `json:"errorClass"        keel:"error_class,pk"`
+	Calls             int           `json:"calls"             keel:"calls"`
+	FellToNext        int           `json:"fellToNext"        keel:"fell_to_next"`
+	FirstTokenHist    []int32       `json:"firstTokenHist"    keel:"first_token_hist"`
 }
 
 type RefreshState struct {

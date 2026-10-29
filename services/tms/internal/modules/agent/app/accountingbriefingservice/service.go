@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -260,7 +260,7 @@ func (s *Service) narrate(
 		s.l,
 		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
-			Task:         aiprovider.TaskDailyBriefing,
+			Task:         aitask.TaskDailyBriefing,
 			System:       systemPrompt,
 			Context:      buildContext(facts, plain),
 			OutputSchema: outputSchema(allowed),

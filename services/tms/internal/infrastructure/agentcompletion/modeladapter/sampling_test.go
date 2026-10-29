@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ import (
 func TestSamplingForTask_AlwaysNamesBothKnobs(t *testing.T) {
 	t.Parallel()
 
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		sampling := SamplingForTask(task)
 		if !task.Generates() {
 			assert.Nil(t, sampling.Temperature, "%s samples no tokens", task)
@@ -38,10 +39,10 @@ func TestSamplingForTask_AlwaysNamesBothKnobs(t *testing.T) {
 func TestSamplingForTask_IsColderForWorkWithOneRightAnswer(t *testing.T) {
 	t.Parallel()
 
-	classification := *SamplingForTask(aiprovider.TaskScopeClassification).Temperature
-	extraction := *SamplingForTask(aiprovider.TaskDocumentExtraction).Temperature
-	chat := *SamplingForTask(aiprovider.TaskAssistantChat).Temperature
-	prose := *SamplingForTask(aiprovider.TaskDailyBriefing).Temperature
+	classification := *SamplingForTask(aitask.TaskScopeClassification).Temperature
+	extraction := *SamplingForTask(aitask.TaskDocumentExtraction).Temperature
+	chat := *SamplingForTask(aitask.TaskAssistantChat).Temperature
+	prose := *SamplingForTask(aitask.TaskDailyBriefing).Temperature
 
 	assert.Zero(t, classification, "a yes-or-no should not move between two identical questions")
 	assert.Less(t, extraction, chat, "a copied value is not a judgement call")
@@ -54,7 +55,7 @@ func TestApplySampling_LetsTheProviderOverrideTheTaskDefault(t *testing.T) {
 	stated := 0.85
 	call := &Call{
 		Provider: &aiprovider.Provider{ExtraBody: map[string]any{"temperature": stated}},
-		Request:  &Request{Sampling: SamplingForTask(aiprovider.TaskAssistantChat)},
+		Request:  &Request{Sampling: SamplingForTask(aitask.TaskAssistantChat)},
 	}
 
 	body := chatRequest{}
@@ -71,7 +72,7 @@ func TestApplySampling_FillsWhatTheProviderDidNotState(t *testing.T) {
 
 	call := &Call{
 		Provider: &aiprovider.Provider{},
-		Request:  &Request{Sampling: SamplingForTask(aiprovider.TaskAssistantChat)},
+		Request:  &Request{Sampling: SamplingForTask(aitask.TaskAssistantChat)},
 	}
 
 	body := chatRequest{}
@@ -104,7 +105,7 @@ func TestReserveAnswerRoom_LeavesSomewhereToPutTheAnswer(t *testing.T) {
 	// budget goes on the chain of thought and the reply comes back empty —
 	// which reads as a broken endpoint rather than as a budget too small.
 	thinking := &Call{
-		Provider: &aiprovider.Provider{ReasoningEffort: aiprovider.ReasoningMedium},
+		Provider: &aiprovider.Provider{ReasoningEffort: aireasoning.ReasoningMedium},
 		Request:  &Request{},
 	}
 	floored := answerRoom(thinking, 1024)

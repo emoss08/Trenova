@@ -8,7 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -44,7 +44,7 @@ func (s *Service) summarize(
 
 	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: tenant,
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		System:     summarySystem,
 		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{{
 			Title:   "Conversation with " + source.Name,

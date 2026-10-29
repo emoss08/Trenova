@@ -3,6 +3,10 @@
 package aiproviderdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"context"
 	"unsafe"
 
@@ -13,12 +17,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// failureDismissalsTable is the schema of aiprovider.FailureDismissal.
+// failureDismissalsTable is the schema of aiproviderdismissal.FailureDismissal.
 var failureDismissalsTable = schema.Table{
 	Name:   "ai_provider_failure_dismissals",
 	Quoted: `"ai_provider_failure_dismissals"`,
 	Alias:  "apfd",
-	Model:  "aiprovider.FailureDismissal",
+	Model:  "aiproviderdismissal.FailureDismissal",
 	Label:  `Failure Dismissal`,
 	Plural: `Failure Dismissals`,
 	Doc:    `FailureDismissal is one person putting away the notice that a provider is failing. It holds only up to the failure they saw: a newer failure brings the notice back.`,
@@ -44,16 +48,16 @@ var failureDismissalsTable = schema.Table{
 	IDPrefix:   "aipfd_",
 	New:        newFailureDismissal,
 	NewN:       newNFailureDismissal,
-	Size:       unsafe.Sizeof(aiprovider.FailureDismissal{}),
+	Size:       unsafe.Sizeof(aiproviderdismissal.FailureDismissal{}),
 	Ptr:        ptrFailureDismissal,
 	Value:      valueFailureDismissal,
 }
 
 var failureDismissalsRef = keel.Ref{Table: &failureDismissalsTable}
 
-// FailureDismissalsTable is the table of aiprovider.FailureDismissal.
+// FailureDismissalsTable is the table of aiproviderdismissal.FailureDismissal.
 type FailureDismissalsTable struct {
-	keel.Handle[*aiprovider.FailureDismissal]
+	keel.Handle[*aiproviderdismissal.FailureDismissal]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -65,7 +69,7 @@ type FailureDismissalsTable struct {
 
 // FailureDismissals references the ai_provider_failure_dismissals table.
 var FailureDismissals = &FailureDismissalsTable{
-	Handle:         keel.Handle[*aiprovider.FailureDismissal]{Ref: &failureDismissalsRef},
+	Handle:         keel.Handle[*aiproviderdismissal.FailureDismissal]{Ref: &failureDismissalsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 2}}},
@@ -78,7 +82,7 @@ var FailureDismissals = &FailureDismissalsTable{
 // BuildFailureDismissals builds the handle of ai_provider_failure_dismissals for ref. Generated relation and alias methods call it.
 func BuildFailureDismissals(r *keel.Ref) *FailureDismissalsTable {
 	return &FailureDismissalsTable{
-		Handle:         keel.Handle[*aiprovider.FailureDismissal]{Ref: r},
+		Handle:         keel.Handle[*aiproviderdismissal.FailureDismissal]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -98,18 +102,18 @@ func (t *FailureDismissalsTable) As(alias string) *FailureDismissalsTable {
 }
 
 // Get returns the ai_provider_failure_dismissals row with the given key, or keel.ErrNotFound.
-func (t *FailureDismissalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiprovider.FailureDismissal, error) {
+func (t *FailureDismissalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiproviderdismissal.FailureDismissal, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newFailureDismissal() unsafe.Pointer { return unsafe.Pointer(new(aiprovider.FailureDismissal)) }
+func newFailureDismissal() unsafe.Pointer { return unsafe.Pointer(new(aiproviderdismissal.FailureDismissal)) }
 
 func newNFailureDismissal(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]aiprovider.FailureDismissal, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]aiproviderdismissal.FailureDismissal, n)))
 }
 
 func ptrFailureDismissal(p unsafe.Pointer, c int32) any {
-	r := (*aiprovider.FailureDismissal)(p)
+	r := (*aiproviderdismissal.FailureDismissal)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -130,7 +134,7 @@ func ptrFailureDismissal(p unsafe.Pointer, c int32) any {
 }
 
 func valueFailureDismissal(p unsafe.Pointer, c int32) any {
-	r := (*aiprovider.FailureDismissal)(p)
+	r := (*aiproviderdismissal.FailureDismissal)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -838,63 +842,63 @@ func (c KindCol) NotIn(vs ...aiprovider.Kind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PlatformCol is a column of aiprovider.Platform values.
+// PlatformCol is a column of aiplatform.Platform values.
 type PlatformCol struct{ keel.StringCol }
 
-func (c PlatformCol) Eq(v aiprovider.Platform) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PlatformCol) Ne(v aiprovider.Platform) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PlatformCol) Gt(v aiprovider.Platform) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PlatformCol) Gte(v aiprovider.Platform) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PlatformCol) Lt(v aiprovider.Platform) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PlatformCol) Lte(v aiprovider.Platform) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c PlatformCol) IsDistinctFrom(v aiprovider.Platform) keel.Pred {
+func (c PlatformCol) Eq(v aiplatform.Platform) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c PlatformCol) Ne(v aiplatform.Platform) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c PlatformCol) Gt(v aiplatform.Platform) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c PlatformCol) Gte(v aiplatform.Platform) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c PlatformCol) Lt(v aiplatform.Platform) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c PlatformCol) Lte(v aiplatform.Platform) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PlatformCol) IsDistinctFrom(v aiplatform.Platform) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PlatformCol) Between(lo, hi aiprovider.Platform) keel.Pred {
+func (c PlatformCol) Between(lo, hi aiplatform.Platform) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PlatformCol) To(v aiprovider.Platform) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c PlatformCol) In(vs ...aiprovider.Platform) keel.Pred {
+func (c PlatformCol) To(v aiplatform.Platform) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PlatformCol) In(vs ...aiplatform.Platform) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PlatformCol) NotIn(vs ...aiprovider.Platform) keel.Pred {
+func (c PlatformCol) NotIn(vs ...aiplatform.Platform) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ReasoningEffortCol is a column of aiprovider.ReasoningEffort values.
+// ReasoningEffortCol is a column of aireasoning.ReasoningEffort values.
 type ReasoningEffortCol struct{ keel.StringCol }
 
-func (c ReasoningEffortCol) Eq(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Eq(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ReasoningEffortCol) Ne(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Ne(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ReasoningEffortCol) Gt(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Gt(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ReasoningEffortCol) Gte(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Gte(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ReasoningEffortCol) Lt(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Lt(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ReasoningEffortCol) Lte(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Lte(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ReasoningEffortCol) IsDistinctFrom(v aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) IsDistinctFrom(v aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ReasoningEffortCol) Between(lo, hi aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) Between(lo, hi aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ReasoningEffortCol) To(v aiprovider.ReasoningEffort) keel.Assignment {
+func (c ReasoningEffortCol) To(v aireasoning.ReasoningEffort) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ReasoningEffortCol) In(vs ...aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) In(vs ...aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ReasoningEffortCol) NotIn(vs ...aiprovider.ReasoningEffort) keel.Pred {
+func (c ReasoningEffortCol) NotIn(vs ...aireasoning.ReasoningEffort) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -935,52 +939,52 @@ func (c StructuredOutputModeCol) NotIn(vs ...aiprovider.StructuredOutputMode) ke
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// TaskCol is a column of aiprovider.Task values.
+// TaskCol is a column of aitask.Task values.
 type TaskCol struct{ keel.StringCol }
 
-func (c TaskCol) Eq(v aiprovider.Task) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TaskCol) Ne(v aiprovider.Task) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TaskCol) Gt(v aiprovider.Task) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TaskCol) Gte(v aiprovider.Task) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TaskCol) Lt(v aiprovider.Task) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TaskCol) Lte(v aiprovider.Task) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TaskCol) IsDistinctFrom(v aiprovider.Task) keel.Pred {
+func (c TaskCol) Eq(v aitask.Task) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c TaskCol) Ne(v aitask.Task) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c TaskCol) Gt(v aitask.Task) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c TaskCol) Gte(v aitask.Task) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c TaskCol) Lt(v aitask.Task) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c TaskCol) Lte(v aitask.Task) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TaskCol) IsDistinctFrom(v aitask.Task) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c TaskCol) Between(lo, hi aiprovider.Task) keel.Pred {
+func (c TaskCol) Between(lo, hi aitask.Task) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c TaskCol) To(v aiprovider.Task) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TaskCol) In(vs ...aiprovider.Task) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c TaskCol) NotIn(vs ...aiprovider.Task) keel.Pred {
+func (c TaskCol) To(v aitask.Task) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c TaskCol) In(vs ...aitask.Task) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c TaskCol) NotIn(vs ...aitask.Task) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ThinkingStyleCol is a column of aiprovider.ThinkingStyle values.
+// ThinkingStyleCol is a column of aireasoning.ThinkingStyle values.
 type ThinkingStyleCol struct{ keel.StringCol }
 
-func (c ThinkingStyleCol) Eq(v aiprovider.ThinkingStyle) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ThinkingStyleCol) Ne(v aiprovider.ThinkingStyle) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ThinkingStyleCol) Gt(v aiprovider.ThinkingStyle) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ThinkingStyleCol) Gte(v aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) Eq(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c ThinkingStyleCol) Ne(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c ThinkingStyleCol) Gt(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c ThinkingStyleCol) Gte(v aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ThinkingStyleCol) Lt(v aiprovider.ThinkingStyle) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ThinkingStyleCol) Lte(v aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) Lt(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c ThinkingStyleCol) Lte(v aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ThinkingStyleCol) IsDistinctFrom(v aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) IsDistinctFrom(v aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ThinkingStyleCol) Between(lo, hi aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) Between(lo, hi aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ThinkingStyleCol) To(v aiprovider.ThinkingStyle) keel.Assignment {
+func (c ThinkingStyleCol) To(v aireasoning.ThinkingStyle) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ThinkingStyleCol) In(vs ...aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) In(vs ...aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ThinkingStyleCol) NotIn(vs ...aiprovider.ThinkingStyle) keel.Pred {
+func (c ThinkingStyleCol) NotIn(vs ...aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

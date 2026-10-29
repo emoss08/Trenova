@@ -3,6 +3,7 @@
 package aianalyticsexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"context"
 	"errors"
 
@@ -2211,12 +2212,12 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, v any) (*aiprovider.Task, error) {
+func unmarshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, v any) (*aitask.Task, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := aiprovider.Task(tmp)
+	res := aitask.Task(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2532,7 +2533,7 @@ func marshalNAIProviderErrorKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Task) graphql.Marshaler {
+func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aitask.Task) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -116,7 +117,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: vllm,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "meta-llama/Llama-3.3-70B-Instruct",
-			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
+			Task: aitask.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
 			Succeeded: false, ErrorClass: "provider_error", ErrorMessage: "401 Unauthorized",
 			LatencyMs: 300, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 25,
@@ -124,7 +125,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "llama-3.3-70b-versatile",
-			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
+			Task: aitask.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
 			Succeeded: true, LatencyMs: 2100, CostUSD: &cost, FirstTokenMs: &firstToken,
 			Failover: true, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 20,
@@ -132,13 +133,13 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "qwen2.5:14b",
-			Task: aiprovider.TaskDocumentClassification, Surface: aiusage.SurfaceStructured,
+			Task: aitask.TaskDocumentClassification, Surface: aiusage.SurfaceStructured,
 			Succeeded: true, LatencyMs: 400, CreatedAt: now - 5,
 		},
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "nomic-embed-text",
-			Task: aiprovider.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
+			Task: aitask.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
 			Succeeded: true, LatencyMs: 40, CreatedAt: now - 5,
 		},
 	}
@@ -321,7 +322,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindAnthropicMessages,
-			Model: "claude-haiku-5-5", Task: aiprovider.TaskDocumentClassification,
+			Model: "claude-haiku-5-5", Task: aitask.TaskDocumentClassification,
 			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
 			InputTokens: 120, CacheReadTokens: 900, CacheWriteTokens: 60, OutputTokens: 40,
 			CreatedAt: now - 5,
@@ -329,7 +330,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindOpenAIResponses,
-			Model: "gpt-6-luna", Task: aiprovider.TaskDocumentClassification,
+			Model: "gpt-6-luna", Task: aitask.TaskDocumentClassification,
 			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
 			InputTokens: 1000, CacheReadTokens: 800, OutputTokens: 40,
 			CreatedAt: now - 5,

@@ -3,7 +3,9 @@ package modeladapter
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,13 +31,13 @@ func noticeConversation() []Message {
 	}
 }
 
-func noticeBody(t *testing.T, model string, platform aiprovider.Platform) []any {
+func noticeBody(t *testing.T, model string, platform aiplatform.Platform) []any {
 	t.Helper()
 
 	server, captured := wireServer(t, "text/event-stream", wireStreamReply)
 	request := Request{Messages: noticeConversation(), Tools: wireTools()}
 	call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL,
-		aiprovider.ReasoningOff, &request)
+		aireasoning.ReasoningOff, &request)
 	call.Provider.Model = model
 	call.Provider.Platform = platform
 	call.APIKey = "sk-test"
@@ -59,7 +61,7 @@ func textsOf(message map[string]any) []string {
 func TestAnthropicAdapter_SendsNoticesAsOneSystemMessageAfterThePersonsWords(t *testing.T) {
 	t.Parallel()
 
-	messages := noticeBody(t, "claude-haiku-5-5", aiprovider.PlatformDirect)
+	messages := noticeBody(t, "claude-haiku-5-5", aiplatform.PlatformDirect)
 
 	require.Len(t, messages, 4)
 	results := messages[2].(map[string]any)
@@ -83,11 +85,11 @@ func TestAnthropicAdapter_SendsNoticesAsTextWhereSystemMessagesAreNotTaken(t *te
 
 	for _, tc := range []struct {
 		model    string
-		platform aiprovider.Platform
+		platform aiplatform.Platform
 	}{
-		{"claude-sonnet-5", aiprovider.PlatformDirect},
-		{"claude-haiku-4-5", aiprovider.PlatformDirect},
-		{"claude-haiku-5-5", aiprovider.PlatformFoundry},
+		{"claude-sonnet-5", aiplatform.PlatformDirect},
+		{"claude-haiku-4-5", aiplatform.PlatformDirect},
+		{"claude-haiku-5-5", aiplatform.PlatformFoundry},
 	} {
 		messages := noticeBody(t, tc.model, tc.platform)
 
@@ -98,13 +100,13 @@ func TestAnthropicAdapter_SendsNoticesAsTextWhereSystemMessagesAreNotTaken(t *te
 			textsOf(results), tc.model)
 	}
 
-	for platform, want := range map[aiprovider.Platform]bool{
-		aiprovider.PlatformDirect:            true,
-		aiprovider.PlatformVertexAI:          true,
-		aiprovider.PlatformClaudeAWS:         true,
-		aiprovider.PlatformClaudeGoogleCloud: true,
-		aiprovider.PlatformBedrock:           false,
-		aiprovider.PlatformFoundry:           false,
+	for platform, want := range map[aiplatform.Platform]bool{
+		aiplatform.PlatformDirect:            true,
+		aiplatform.PlatformVertexAI:          true,
+		aiplatform.PlatformClaudeAWS:         true,
+		aiplatform.PlatformClaudeGoogleCloud: true,
+		aiplatform.PlatformBedrock:           false,
+		aiplatform.PlatformFoundry:           false,
 	} {
 		call := &Call{Provider: &aiprovider.Provider{
 			Kind:     aiprovider.KindAnthropicMessages,

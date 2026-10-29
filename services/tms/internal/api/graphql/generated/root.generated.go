@@ -24,6 +24,35 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"sync"
 
@@ -186,10 +215,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -229,10 +254,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -273,7 +295,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -330,27 +351,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -723,15 +726,15 @@ type AIProviderResolver interface {
 	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
-	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error)
 }
 
 type AIProviderKeyInfoResolver interface {
-	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
+	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
 }
 
 type AIRouteChoiceResolver interface {
-	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+	ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error)
 }
 
 type AITuneUpEvidenceResolver interface {
@@ -2085,7 +2088,7 @@ type MutationResolver interface {
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
 	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
-	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
+	RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
@@ -2879,7 +2882,7 @@ type QueryResolver interface {
 	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
-	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
+	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error)
 	AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error)
 	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,7 +50,7 @@ func (r *Deps) resolveAIProviderSelectOptions(
 		ctx,
 		&aiproviderports.AIProviderSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
-			Task:               aiprovider.TaskAssistantChat,
+			Task:               aitask.TaskAssistantChat,
 		},
 	)
 	if err != nil {

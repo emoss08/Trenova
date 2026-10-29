@@ -4,7 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -80,10 +81,10 @@ type chapterAnswer struct {
 func baseRequest(turn *assistantports.ChapterTurnRequest) *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
 		TenantInfo: turn.TenantInfo,
-		Task:       aiprovider.TaskChapterTitling,
+		Task:       aitask.TaskChapterTitling,
 		MaxTokens:  titleMaxTokens,
 		HedgeAfter: hedgeAfter,
-		Reasoning:  aiprovider.ReasoningOff,
+		Reasoning:  aireasoning.ReasoningOff,
 		Attribution: aiusageports.AIUsageAttribution{
 			UserID:    turn.UserID,
 			ThreadID:  turn.ThreadID,

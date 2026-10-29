@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -61,7 +61,7 @@ func (s *Service) wordSuggestions(
 		s.l,
 		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
-			Task:         aiprovider.TaskOperationalInsights,
+			Task:         aitask.TaskOperationalInsights,
 			System:       wordingSystemPrompt,
 			Context:      wordingContext(items),
 			OutputSchema: wordingSchema(),

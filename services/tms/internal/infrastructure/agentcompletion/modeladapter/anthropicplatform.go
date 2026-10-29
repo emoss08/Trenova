@@ -18,7 +18,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/tidwall/gjson"
@@ -92,17 +92,17 @@ func (c *platformCredentials) platformOptions(
 	provider := call.Provider
 	platform := provider.ResolvedPlatform()
 	settings := provider.ResolvedSettings()
-	if platform == aiprovider.PlatformDirect {
+	if platform == aiplatform.PlatformDirect {
 		return apiKeyOptions(call.APIKey), nil
 	}
-	if settings.Auth == aiprovider.PlatformAuthServer && !call.ServerCredentialsAllowed {
+	if settings.Auth == aiplatform.PlatformAuthServer && !call.ServerCredentialsAllowed {
 		return nil, serverCredentialsRefused()
 	}
 
 	switch platform {
-	case aiprovider.PlatformBedrock:
+	case aiplatform.PlatformBedrock:
 		return c.awsOptions(ctx, call, bedrockSigningService, bearerKeyOption)
-	case aiprovider.PlatformClaudeAWS:
+	case aiplatform.PlatformClaudeAWS:
 		opts, err := c.awsOptions(ctx, call, claudeAWSSigningService, apiKeyOptions)
 		if err != nil {
 			return nil, err
@@ -110,7 +110,7 @@ func (c *platformCredentials) platformOptions(
 		workspace := option.WithHeader(workspaceHeader, settings.WorkspaceID)
 
 		return append([]option.RequestOption{workspace}, opts...), nil
-	case aiprovider.PlatformVertexAI:
+	case aiplatform.PlatformVertexAI:
 		source, err := c.googleTokens(ctx, call)
 		if err != nil {
 			return nil, err
@@ -119,20 +119,20 @@ func (c *platformCredentials) platformOptions(
 			vertexMiddleware(settings.Region, settings.ProjectID),
 			bearerMiddleware(source),
 		)}, nil
-	case aiprovider.PlatformClaudeGoogleCloud:
+	case aiplatform.PlatformClaudeGoogleCloud:
 		source, err := c.googleTokens(ctx, call)
 		if err != nil {
 			return nil, err
 		}
 		return []option.RequestOption{option.WithMiddleware(bearerMiddleware(source))}, nil
-	case aiprovider.PlatformFoundry:
-		if settings.Auth == aiprovider.PlatformAuthEntraID {
+	case aiplatform.PlatformFoundry:
+		if settings.Auth == aiplatform.PlatformAuthEntraID {
 			return []option.RequestOption{
 				option.WithMiddleware(bearerMiddleware(c.entraTokens(call))),
 			}, nil
 		}
 		return apiKeyOptions(call.APIKey), nil
-	case aiprovider.PlatformDirect:
+	case aiplatform.PlatformDirect:
 		return apiKeyOptions(call.APIKey), nil
 	default:
 		return nil, fmt.Errorf("no way to reach platform %q", platform)
@@ -165,14 +165,14 @@ func (c *platformCredentials) awsOptions(
 ) ([]option.RequestOption, error) {
 	settings := call.Provider.ResolvedSettings()
 	switch settings.Auth {
-	case aiprovider.PlatformAuthAPIKey:
+	case aiplatform.PlatformAuthAPIKey:
 		return keyOptions(call.APIKey), nil
-	case aiprovider.PlatformAuthAccessKey:
+	case aiplatform.PlatformAuthAccessKey:
 		provider := credentials.NewStaticCredentialsProvider(settings.AccessKeyID, call.APIKey, "")
 		return []option.RequestOption{
 			option.WithMiddleware(sigV4Middleware(provider, service, settings.Region)),
 		}, nil
-	case aiprovider.PlatformAuthServer:
+	case aiplatform.PlatformAuthServer:
 		provider, err := c.serverAWS(ctx, settings.Region)
 		if err != nil {
 			return nil, err
@@ -180,7 +180,7 @@ func (c *platformCredentials) awsOptions(
 		return []option.RequestOption{
 			option.WithMiddleware(sigV4Middleware(provider, service, settings.Region)),
 		}, nil
-	case aiprovider.PlatformAuthServiceAccount, aiprovider.PlatformAuthEntraID:
+	case aiplatform.PlatformAuthServiceAccount, aiplatform.PlatformAuthEntraID:
 		return nil, fmt.Errorf("an AWS platform does not sign in with %s", settings.Auth)
 	default:
 		return nil, fmt.Errorf("an AWS platform does not sign in with %s", settings.Auth)
@@ -224,7 +224,7 @@ func (c *platformCredentials) googleTokens(
 	call *Call,
 ) (oauth2.TokenSource, error) {
 	settings := call.Provider.ResolvedSettings()
-	if settings.Auth == aiprovider.PlatformAuthServer {
+	if settings.Auth == aiplatform.PlatformAuthServer {
 		key := credentialDigest("google-server")
 		if cached, ok := c.tokens.Get(key); ok {
 			return cached, nil

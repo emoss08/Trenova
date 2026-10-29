@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -527,7 +528,7 @@ func (s *Service) modelName(
 		return ""
 	}
 	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -537,7 +538,7 @@ func (s *Service) modelName(
 
 	var first *aiprovider.Provider
 	for _, provider := range providers {
-		if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
+		if ok, _ := provider.CanServeTask(aitask.TaskAssistantChat); !ok {
 			continue
 		}
 		if provider.ID == definition.PreferredProviderID {

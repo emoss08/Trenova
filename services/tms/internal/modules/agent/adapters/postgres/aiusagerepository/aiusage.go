@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -434,7 +434,7 @@ func (r *repository) ProviderTaskTotals(
 				row := &rows[i]
 				totals = append(totals, aiusageports.AIUsageProviderTaskTotals{
 					ProviderID: pulidFrom(row.ProviderID),
-					Task:       aiprovider.Task(row.Task),
+					Task:       aitask.Task(row.Task),
 					Calls:      row.Calls,
 					Failed:     row.Failed,
 					Rescued:    row.Rescued,

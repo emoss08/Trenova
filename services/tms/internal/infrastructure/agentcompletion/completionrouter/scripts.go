@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -13,7 +14,7 @@ import (
 )
 
 func (s *Service) ScriptsOffered(ctx context.Context, tenant pagination.TenantInfo) (bool, error) {
-	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, tenant)
+	usable, err := s.usableFor(ctx, aitask.TaskAssistantChat, tenant)
 	if err != nil {
 		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return false, nil
@@ -43,7 +44,7 @@ func (s *Service) ScriptSettings(
 	if err != nil {
 		return aiprovider.ScriptSettings{}, err
 	}
-	if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
+	if ok, _ := provider.CanServeTask(aitask.TaskAssistantChat); !ok {
 		return aiprovider.ScriptSettings{}, nil
 	}
 

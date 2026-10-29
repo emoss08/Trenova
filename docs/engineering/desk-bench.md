@@ -232,7 +232,7 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
   input the cache did not serve.
 - **Cost.** Priced per call at the provider's own prices, with cache reads and writes at their
   own rates and Haiku 5.5's long-prompt tier above 100K prompt tokens. A provider with no prices
-  is priced from the model's list price (`aiprovider.ListPrice`) or the price reference, and the
+  is priced from the model's list price (`aipricing.ListPrice`) or the price reference, and the
   figure is marked `~`.
 - **Work.** Model calls, tool calls, refused calls by verdict, guard re-asks by guard (the
   `reask` on each call), time to first token and time per task.

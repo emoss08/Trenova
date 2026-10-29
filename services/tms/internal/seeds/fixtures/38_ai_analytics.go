@@ -11,14 +11,25 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+=======
+>>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
+<<<<<<< HEAD
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+=======
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+>>>>>>> 9b8ebef2 (refactor: split domain/aiprovider into the provider and its vocabularies and use cases)
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,7 +63,7 @@ var AIAnalytics = Seeds.Add(seed.Seed{
 })
 
 type analyticsRoute struct {
-	task       aiprovider.Task
+	task       aitask.Task
 	runs       int
 	completion float64
 	agent      string
@@ -81,21 +92,21 @@ type analyticsDeployment struct {
 	helpful      float64
 }
 
-var analyticsSeedTools = map[aiprovider.Task][]string{
-	aiprovider.TaskAssistantChat: {
+var analyticsSeedTools = map[aitask.Task][]string{
+	aitask.TaskAssistantChat: {
 		"shipment_get", "search_drivers", "assign_driver", "get_hos_status", "update_load_status", "lookup_rate",
 	},
-	aiprovider.TaskBillingDiagnosis: {
+	aitask.TaskBillingDiagnosis: {
 		"release_billing_hold",
 		"lookup_rate",
 		"add_invoice_note",
 	},
-	aiprovider.TaskDocumentExtraction:     {"extract_document_fields"},
-	aiprovider.TaskDocumentClassification: {"extract_document_fields"},
-	aiprovider.TaskScopeClassification:    {"search_drivers"},
-	aiprovider.TaskOperationalInsights:    {"report_run"},
-	aiprovider.TaskDailyBriefing:          {"report_run"},
-	aiprovider.TaskFormulaAssistant:       {"lookup_rate"},
+	aitask.TaskDocumentExtraction:     {"extract_document_fields"},
+	aitask.TaskDocumentClassification: {"extract_document_fields"},
+	aitask.TaskScopeClassification:    {"search_drivers"},
+	aitask.TaskOperationalInsights:    {"report_run"},
+	aitask.TaskDailyBriefing:          {"report_run"},
+	aitask.TaskFormulaAssistant:       {"lookup_rate"},
 }
 
 var (
@@ -123,10 +134,10 @@ func analyticsDeployments() []analyticsDeployment {
 			provider: SeedAIProviderLocalName,
 			model:    "qwen2.5-14b-instruct",
 			routes: []analyticsRoute{
-				{aiprovider.TaskScopeClassification, 420, 0.93, ""},
-				{aiprovider.TaskDocumentClassification, 320, 0.89, ""},
-				{aiprovider.TaskOperationalInsights, 220, 0.74, ""},
-				{aiprovider.TaskDailyBriefing, 140, 0.81, ""},
+				{aitask.TaskScopeClassification, 420, 0.93, ""},
+				{aitask.TaskDocumentClassification, 320, 0.89, ""},
+				{aitask.TaskOperationalInsights, 220, 0.74, ""},
+				{aitask.TaskDailyBriefing, 140, 0.81, ""},
 			},
 			medianMs: 5700, firstTokenMs: 410, toolCalls: 1.4, toolFail: 0.09, modelShare: 0.78,
 			errorRate: 0.012,
@@ -140,9 +151,9 @@ func analyticsDeployments() []analyticsDeployment {
 			provider: SeedAIProviderServerName,
 			model:    "meta-llama/Llama-3.3-70B-Instruct",
 			routes: []analyticsRoute{
-				{aiprovider.TaskAssistantChat, 620, 0.72, SeedAgentDispatchName},
-				{aiprovider.TaskDocumentExtraction, 420, 0.70, ""},
-				{aiprovider.TaskFormulaAssistant, 300, 0.81, ""},
+				{aitask.TaskAssistantChat, 620, 0.72, SeedAgentDispatchName},
+				{aitask.TaskDocumentExtraction, 420, 0.70, ""},
+				{aitask.TaskFormulaAssistant, 300, 0.81, ""},
 			},
 			medianMs: 12000, firstTokenMs: 1420, toolCalls: 4, toolFail: 0.06, modelShare: 0.35,
 			errorRate: 0.06,
@@ -157,8 +168,8 @@ func analyticsDeployments() []analyticsDeployment {
 			provider: SeedAIProviderBackupName,
 			model:    "meta-llama/Llama-3.3-70B-Instruct",
 			routes: []analyticsRoute{
-				{aiprovider.TaskAssistantChat, 320, 0.88, SeedAgentDispatchName},
-				{aiprovider.TaskDocumentExtraction, 220, 0.86, ""},
+				{aitask.TaskAssistantChat, 320, 0.88, SeedAgentDispatchName},
+				{aitask.TaskDocumentExtraction, 220, 0.86, ""},
 			},
 			medianMs: 6000, firstTokenMs: 380, toolCalls: 4, toolFail: 0.045, modelShare: 0.35,
 			errorRate:   0.005,
@@ -169,8 +180,8 @@ func analyticsDeployments() []analyticsDeployment {
 			provider: SeedAIProviderHostedName,
 			model:    "claude-sonnet-5",
 			routes: []analyticsRoute{
-				{aiprovider.TaskBillingDiagnosis, 180, 0.95, SeedAgentBillingName},
-				{aiprovider.TaskAssistantChat, 300, 0.96, SeedAgentDispatchName},
+				{aitask.TaskBillingDiagnosis, 180, 0.95, SeedAgentBillingName},
+				{aitask.TaskAssistantChat, 300, 0.96, SeedAgentDispatchName},
 			},
 			medianMs: 13000, firstTokenMs: 690, toolCalls: 5, toolFail: 0.018, modelShare: 0.14,
 			errorRate:  0.004,
@@ -213,7 +224,7 @@ type hourKey struct {
 	hour     int64
 	provider string
 	model    string
-	task     aiprovider.Task
+	task     aitask.Task
 	agent    string
 	kind     aianalytics.ProviderError
 }
@@ -455,7 +466,7 @@ func buildAnalyticsSeed(refs *analyticsSeedRefs) *analyticsSeedData {
 							at:        finishedAt + 600,
 						})
 					}
-					if route.task == aiprovider.TaskAssistantChat &&
+					if route.task == aitask.TaskAssistantChat &&
 						random.Float64() < analyticsSeedRatingPc {
 						rating := aifeedback.RatingNegative
 						if random.Float64() < deployment.helpful {
@@ -550,18 +561,18 @@ func (s *AIAnalyticsSeed) ensureBackupProvider(
 		Model:                "meta-llama/Llama-3.3-70B-Instruct",
 		AllowPrivateNetwork:  true,
 		StructuredOutputMode: aiprovider.StructuredOutputJSONMode,
-		ReasoningEffort:      aiprovider.ReasoningOff,
+		ReasoningEffort:      aireasoning.ReasoningOff,
 		MaxTokens:            16384,
-		Tasks: []aiprovider.Task{
-			aiprovider.TaskAssistantChat,
-			aiprovider.TaskDocumentExtraction,
-			aiprovider.TaskGeneral,
+		Tasks: []aitask.Task{
+			aitask.TaskAssistantChat,
+			aitask.TaskDocumentExtraction,
+			aitask.TaskGeneral,
 		},
 		Priority:            30,
 		Enabled:             true,
 		Scripts:             true,
-		ThinkingStyle:       aiprovider.ThinkingStyleAuto,
-		Platform:            aiprovider.PlatformDirect,
+		ThinkingStyle:       aireasoning.ThinkingStyleAuto,
+		Platform:            aiplatform.PlatformDirect,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 		TimeoutSeconds:      60,
 		MaxConcurrent:       8,
@@ -646,7 +657,7 @@ func (s *AIAnalyticsSeed) write(
 			status = agent.RunStatusFailed
 		}
 		agentType := agent.TypeAssistantChat
-		if unit.Task == aiprovider.TaskBillingDiagnosis {
+		if unit.Task == aitask.TaskBillingDiagnosis {
 			agentType = agent.TypeBillingException
 		}
 		runs = append(runs, &agent.AgentRun{

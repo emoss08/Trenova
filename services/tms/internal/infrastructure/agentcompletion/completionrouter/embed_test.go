@@ -15,6 +15,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -153,7 +154,7 @@ func embeddingRouterProvider(
 		Model:               model,
 		AllowPrivateNetwork: true,
 		Priority:            priority,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 		Enabled:             true,
@@ -398,7 +399,7 @@ func TestEmbed_NeverRoutesToAProtocolWithoutEmbeddings(t *testing.T) {
 		Name:                "anthropic",
 		Kind:                aiprovider.KindAnthropicMessages,
 		Model:               "claude-opus-5",
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		Enabled:             true,
 	})
@@ -560,7 +561,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	rows := usage.recorded(t, 2)
 	require.Len(t, rows, 2)
 	for _, row := range rows {
-		assert.Equal(t, aiprovider.TaskEmbedding, row.Task)
+		assert.Equal(t, aitask.TaskEmbedding, row.Task)
 		assert.Equal(t, aiusage.SurfaceRetrieval, row.Surface)
 		assert.True(t, row.Succeeded)
 		assert.Zero(t, row.OutputTokens)

@@ -12,6 +12,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -43,9 +46,6 @@ const (
 	DefaultMaxConcurrent  = 8
 	MinMaxConcurrent      = 1
 	MaxMaxConcurrent      = 64
-	// RotationGrace is how long a replaced key is kept as a fallback when its
-	// replacement is saved with the old one kept.
-	RotationGrace = 24 * time.Hour
 )
 
 // maxMonthlyCap is the largest cap NUMERIC(12,2) holds.
@@ -71,7 +71,7 @@ type Provider struct {
 	BaseURL string `json:"baseUrl" keel:"base_url,nullzero"`
 	// Model is free text on purpose. Self-hosted deployments name models whatever
 	// they like ("llama3.3:70b", "qwen2.5-coder:32b"), so no closed set can hold.
-	Model string `json:"model" keel:"model"`
+	Model string `json:"model"   keel:"model"`
 
 	// APIKey holds the credential encrypted at rest. It is cleared before the
 	// entity leaves the service layer.
@@ -89,18 +89,18 @@ type Provider struct {
 	// operator knows it better than the model id does: a self-hosted model
 	// served with a shorter context than its family's, or an id nothing here
 	// can place. Nil reads the window off the model id.
-	ContextWindowTokens *int `json:"contextWindow" keel:"context_window"`
+	ContextWindowTokens *int `json:"contextWindow"        keel:"context_window"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
-	ReasoningEffort ReasoningEffort `json:"reasoningEffort" keel:"reasoning_effort,nullzero"`
+	ReasoningEffort aireasoning.ReasoningEffort `json:"reasoningEffort"      keel:"reasoning_effort,nullzero"`
 	// ThinkingStyle says how a Claude model behind an id the adapter cannot
 	// read takes thinking. Auto reads the id.
-	ThinkingStyle ThinkingStyle `json:"thinkingStyle" keel:"thinking_style,nullzero"`
+	ThinkingStyle aireasoning.ThinkingStyle `json:"thinkingStyle"        keel:"thinking_style,nullzero"`
 	// Platform is the service an Anthropic Messages provider reaches Claude
 	// through, and PlatformSettings what that service needs besides the
 	// credential. Every other kind is called directly.
-	Platform         Platform          `json:"platform"         keel:"platform,nullzero"`
-	PlatformSettings *PlatformSettings `json:"platformSettings" keel:"platform_settings,jsonb"`
+	Platform         aiplatform.Platform          `json:"platform"             keel:"platform,nullzero"`
+	PlatformSettings *aiplatform.PlatformSettings `json:"platformSettings"     keel:"platform_settings,jsonb"`
 
 	// AdvisorEnabled has every chat call routed to this provider declare
 	// Anthropic's advisor tool, so the model consults AdvisorModel (empty is
@@ -118,8 +118,8 @@ type Provider struct {
 	// ScriptWrites lets those scripts prepare writes, proposed as one batch for
 	// a person, and is off by default. Both need the person's code_mode
 	// permission.
-	Scripts      bool `json:"scripts"      keel:"code_mode_scripts"`
-	ScriptWrites bool `json:"scriptWrites" keel:"code_mode_writes"`
+	Scripts      bool `json:"scripts"        keel:"code_mode_scripts"`
+	ScriptWrites bool `json:"scriptWrites"   keel:"code_mode_writes"`
 
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
@@ -159,8 +159,8 @@ type Provider struct {
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
 	// second table.
-	Tasks    []Task `json:"tasks"    keel:"tasks,nullzero"`
-	Priority int    `json:"priority" keel:"priority"`
+	Tasks    []aitask.Task `json:"tasks"    keel:"tasks,nullzero"`
+	Priority int           `json:"priority" keel:"priority"`
 
 	EmbeddingDimensions *int                `json:"embeddingDimensions" keel:"embedding_dimensions"`
 	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" keel:"embedding_input_style"`
@@ -180,19 +180,19 @@ type Provider struct {
 	TimeoutSeconds int `json:"timeoutSeconds" keel:"timeout_seconds,nullzero"`
 	// MaxConcurrent is how many calls this provider takes at once across
 	// every server. Past it, work moves to the next provider.
-	MaxConcurrent int `json:"maxConcurrent" keel:"max_concurrent,nullzero"`
+	MaxConcurrent int `json:"maxConcurrent"  keel:"max_concurrent,nullzero"`
 	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
 	// month, over the calls that carried a price. Nil means no cap.
-	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" keel:"monthly_cap_usd"`
-	OnCap         CapAction        `json:"onCap"         keel:"on_cap,nullzero"`
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd"  keel:"monthly_cap_usd"`
+	OnCap         CapAction        `json:"onCap"          keel:"on_cap,nullzero"`
 
 	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
 	// the clear: enough to tell two keys apart, never enough to use one.
-	APIKeyPrefix     string   `json:"apiKeyPrefix"     keel:"api_key_prefix,nullzero"`
-	APIKeyLastFour   string   `json:"apiKeyLastFour"   keel:"api_key_last_four,nullzero"`
-	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    keel:"api_key_added_at"`
-	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  keel:"api_key_added_by_id,nullzero"`
-	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" keel:"api_key_last_used_at"`
+	APIKeyPrefix     string   `json:"apiKeyPrefix"      keel:"api_key_prefix,nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"    keel:"api_key_last_four,nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"     keel:"api_key_added_at"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"   keel:"api_key_added_by_id,nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt"  keel:"api_key_last_used_at"`
 	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
 	// kept until RotationExpiresAt so calls refused with the new key can
 	// still be served while the change reaches the vendor.
@@ -213,13 +213,13 @@ type Provider struct {
 
 func (p *Provider) BeforeCreate(_ context.Context) error {
 	if p.ReasoningEffort == "" {
-		p.ReasoningEffort = ReasoningOff
+		p.ReasoningEffort = aireasoning.ReasoningOff
 	}
 	if p.ThinkingStyle == "" {
-		p.ThinkingStyle = ThinkingStyleAuto
+		p.ThinkingStyle = aireasoning.ThinkingStyleAuto
 	}
 	if p.Platform == "" {
-		p.Platform = PlatformDirect
+		p.Platform = aiplatform.PlatformDirect
 	}
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone
@@ -270,110 +270,9 @@ func (p *Provider) Redacted() *Provider {
 	return &clone
 }
 
-// KeyInfo describes the stored credential without the secret. It is nil
-// when no key is stored.
-type KeyInfo struct {
-	Prefix               string
-	LastFour             string
-	AddedAt              int64
-	AddedByID            pulid.ID
-	LastUsedAt           *int64
-	PreviousKeyExpiresAt *int64
-}
-
-// KeyInfo is what may be said about the stored key. A key stored before its
-// ends were recorded reads as added when the provider was created.
-func (p *Provider) KeyInfo(now int64) *KeyInfo {
-	if !p.HasStoredAPIKey() && !p.HasAPIKey {
-		return nil
-	}
-
-	info := &KeyInfo{
-		Prefix:     p.APIKeyPrefix,
-		LastFour:   p.APIKeyLastFour,
-		AddedAt:    p.CreatedAt,
-		AddedByID:  p.APIKeyAddedByID,
-		LastUsedAt: p.APIKeyLastUsedAt,
-	}
-	if p.APIKeyAddedAt != nil {
-		info.AddedAt = *p.APIKeyAddedAt
-	}
-	if p.RotationExpiresAt != nil && *p.RotationExpiresAt > now {
-		expires := *p.RotationExpiresAt
-		info.PreviousKeyExpiresAt = &expires
-	}
-
-	return info
-}
-
-// NeedsKeyFingerprint reports a stored key whose ends were never recorded.
-func (p *Provider) NeedsKeyFingerprint() bool {
-	return p.HasStoredAPIKey() && p.APIKeyLastFour == "" && p.APIKeyPrefix == ""
-}
-
-// PreviousKeyUsable reports a replaced key still inside its grace period.
-func (p *Provider) PreviousKeyUsable(now int64) bool {
-	return strings.TrimSpace(p.PreviousAPIKey) != "" &&
-		p.RotationExpiresAt != nil && *p.RotationExpiresAt > now
-}
-
 // PreviousKeyExpired reports a rotation whose grace period has run out.
 func (p *Provider) PreviousKeyExpired(now int64) bool {
 	return p.RotationExpiresAt != nil && *p.RotationExpiresAt <= now
-}
-
-// ForgetExpiredPreviousKey drops a replaced key whose grace period is over,
-// and reports whether there was one.
-func (p *Provider) ForgetExpiredPreviousKey(now int64) bool {
-	if !p.PreviousKeyExpired(now) {
-		return false
-	}
-	p.PreviousAPIKey = ""
-	p.RotationExpiresAt = nil
-
-	return true
-}
-
-// KeyReplacement is a new credential for a provider. Encrypted is empty to
-// clear the stored key.
-type KeyReplacement struct {
-	Encrypted    string
-	Prefix       string
-	LastFour     string
-	AddedByID    pulid.ID
-	Now          int64
-	KeepPrevious bool
-}
-
-// ReplaceAPIKey stores a new credential. With KeepPrevious, a key it
-// replaces is kept as a fallback for RotationGrace; otherwise any replaced
-// key is dropped.
-func (p *Provider) ReplaceAPIKey(r KeyReplacement) {
-	if r.KeepPrevious && r.Encrypted != "" && p.HasStoredAPIKey() {
-		expires := r.Now + int64(RotationGrace/time.Second)
-		p.PreviousAPIKey = p.APIKey
-		p.RotationExpiresAt = &expires
-	} else {
-		p.PreviousAPIKey = ""
-		p.RotationExpiresAt = nil
-	}
-
-	p.APIKey = r.Encrypted
-	p.APIKeyLastUsedAt = nil
-	if r.Encrypted == "" {
-		p.APIKeyPrefix = ""
-		p.APIKeyLastFour = ""
-		p.APIKeyAddedAt = nil
-		p.APIKeyAddedByID = pulid.Nil
-
-		return
-	}
-
-	addedAt := r.Now
-	p.APIKeyPrefix = r.Prefix
-	p.APIKeyLastFour = r.LastFour
-	p.APIKeyAddedAt = &addedAt
-	p.APIKeyAddedByID = r.AddedByID
 }
 
 // ResolvedTimeout is how long one call to this provider may take.
@@ -473,7 +372,7 @@ const claudeAPIHost = "api.anthropic.com"
 // the same protocol do not.
 func (p *Provider) OnClaudeAPI() bool {
 	return p.Kind == KindAnthropicMessages &&
-		p.ResolvedPlatform() == PlatformDirect &&
+		p.ResolvedPlatform() == aiplatform.PlatformDirect &&
 		strings.EqualFold(p.Host(), claudeAPIHost)
 }
 
@@ -492,119 +391,6 @@ func nonNegativePrice(label string) validation.RuleFunc {
 func (p *Provider) Priced() bool {
 	return p.InputCostPerMillion != nil && p.OutputCostPerMillion != nil
 }
-
-// TokenUsage is what one call consumed, as its provider reported it. Whether
-// Input already counts the cached prompt tokens depends on the protocol
-// (Kind.CachesOutsideInput).
-type TokenUsage struct {
-	Input      int
-	Output     int
-	CacheRead  int
-	CacheWrite int
-}
-
-// CostFor prices a call. Nil without a price list: an unknown cost is not a
-// free one, and a sum that silently counted it as zero would understate spend
-// by exactly the providers nobody got round to pricing.
-//
-// Prompt tokens are priced in three parts: those read from the provider's
-// cache, those written to it, and the rest at the input price.
-func (p *Provider) CostFor(usage TokenUsage) *decimal.Decimal {
-	if !p.Priced() {
-		return nil
-	}
-	inputTier, outputTier := p.tierFor(usage)
-	cost := p.promptCost(usage).Mul(inputTier).
-		Add(perMillion(*p.OutputCostPerMillion, usage.Output).Mul(outputTier))
-
-	return &cost
-}
-
-// InputCostFor prices a call that returns no generated tokens, an embedding.
-func (p *Provider) InputCostFor(usage TokenUsage) *decimal.Decimal {
-	if p.InputCostPerMillion == nil {
-		return nil
-	}
-	cost := p.promptCost(usage)
-
-	return &cost
-}
-
-func (p *Provider) CostForTask(t Task, usage TokenUsage) *decimal.Decimal {
-	if !t.Generates() {
-		return p.InputCostFor(usage)
-	}
-
-	return p.CostFor(usage)
-}
-
-var BatchDiscount = decimal.RequireFromString("0.5")
-
-func (p *Provider) BatchCostForTask(t Task, usage TokenUsage) *decimal.Decimal {
-	cost := p.CostForTask(t, usage)
-	if cost == nil {
-		return nil
-	}
-	discounted := cost.Mul(BatchDiscount)
-
-	return &discounted
-}
-
-// CacheReadPrice is what a cached prompt token costs per million: the price
-// entered for it, or the protocol's usual share of the input price.
-func (p *Provider) CacheReadPrice() *decimal.Decimal {
-	if card, ok := p.listPrice(); ok {
-		return p.cachePrice(p.CacheReadCostPerMillion, card.CacheReadMultiple)
-	}
-
-	return p.cachePrice(p.CacheReadCostPerMillion, p.Kind.CacheReadMultiple())
-}
-
-// CacheWritePrice is what a prompt token written to the cache costs per
-// million: the price entered for it, or the protocol's usual multiple of the
-// input price.
-func (p *Provider) CacheWritePrice() *decimal.Decimal {
-	if card, ok := p.listPrice(); ok {
-		return p.cachePrice(p.CacheWriteCostPerMillion, card.CacheWriteMultiple)
-	}
-
-	return p.cachePrice(p.CacheWriteCostPerMillion, p.Kind.CacheWriteMultiple())
-}
-
-func (p *Provider) cachePrice(entered *decimal.Decimal, multiple decimal.Decimal) *decimal.Decimal {
-	if entered != nil {
-		return entered
-	}
-	if p.InputCostPerMillion == nil {
-		return nil
-	}
-	price := p.InputCostPerMillion.Mul(multiple)
-
-	return &price
-}
-
-func (p *Provider) promptCost(usage TokenUsage) decimal.Decimal {
-	read := max(usage.CacheRead, 0)
-	write := max(usage.CacheWrite, 0)
-	fresh := max(usage.Input, 0)
-	if !p.Kind.CachesOutsideInput() {
-		fresh = max(fresh-read-write, 0)
-	}
-
-	return perMillion(*p.InputCostPerMillion, fresh).
-		Add(perMillion(*p.CacheReadPrice(), read)).
-		Add(perMillion(*p.CacheWritePrice(), write))
-}
-
-func perMillion(price decimal.Decimal, tokens int) decimal.Decimal {
-	if tokens == 0 {
-		return decimal.Zero
-	}
-
-	return price.Mul(decimal.NewFromInt(int64(tokens))).Div(oneMillion)
-}
-
-var oneMillion = decimal.NewFromInt(1_000_000)
 
 func ClampMaxTokens(tokens int) int {
 	return min(max(tokens, minMaxTokens), maxMaxTokens)
@@ -625,7 +411,7 @@ func (p *Provider) NetworkPolicy() httpsafe.Policy {
 }
 
 // ServesTask reports whether this provider is a candidate for t.
-func (p *Provider) ServesTask(t Task) bool {
+func (p *Provider) ServesTask(t aitask.Task) bool {
 	for _, task := range p.Tasks {
 		if task == t {
 			return true
@@ -638,7 +424,7 @@ func (p *Provider) ServesTask(t Task) bool {
 // CanServeTask reports whether this provider may serve t right now, and why not
 // when it may not. A disabled provider, or an untrusted one asked for work that
 // reaches the ledger, is not a candidate.
-func (p *Provider) CanServeTask(t Task) (bool, string) {
+func (p *Provider) CanServeTask(t aitask.Task) (bool, string) {
 	switch {
 	case !p.Enabled:
 		return false, "provider is disabled"
@@ -646,9 +432,9 @@ func (p *Provider) CanServeTask(t Task) (bool, string) {
 		return false, "provider is not assigned to this task"
 	case t.WritesToLedger() && !p.Trusted:
 		return false, "provider is not marked trusted, and this task can change financial records"
-	case t == TaskEmbedding && !p.Kind.SupportsEmbedding():
+	case t == aitask.TaskEmbedding && !p.Kind.SupportsEmbedding():
 		return false, "provider protocol has no embedding endpoint"
-	case t == TaskEmbedding && !IsAllowedEmbeddingDimension(p.ResolvedEmbeddingDimensions()):
+	case t == aitask.TaskEmbedding && !IsAllowedEmbeddingDimension(p.ResolvedEmbeddingDimensions()):
 		return false, "provider has no supported embedding dimension configured"
 	default:
 		return true, ""
@@ -656,7 +442,7 @@ func (p *Provider) CanServeTask(t Task) (bool, string) {
 }
 
 func (p *Provider) ServesOnlyEmbedding() bool {
-	return len(p.Tasks) == 1 && p.Tasks[0] == TaskEmbedding
+	return len(p.Tasks) == 1 && p.Tasks[0] == aitask.TaskEmbedding
 }
 
 func (p *Provider) ResolvedEmbeddingDimensions() int {
@@ -735,14 +521,14 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.ReasoningEffort,
 			validation.Required.Error("Reasoning effort is required"),
-			domainvalidation.ValidEnum[ReasoningEffort]("Reasoning effort is invalid"),
+			domainvalidation.ValidEnum[aireasoning.ReasoningEffort]("Reasoning effort is invalid"),
 		),
 		validation.Field(&p.ThinkingStyle,
 			validation.Required.Error("Thinking style is required"),
-			domainvalidation.ValidEnum[ThinkingStyle]("Thinking style is invalid"),
+			domainvalidation.ValidEnum[aireasoning.ThinkingStyle]("Thinking style is invalid"),
 			validation.When(
 				p.Kind != KindAnthropicMessages,
-				validation.In(ThinkingStyleAuto).
+				validation.In(aireasoning.ThinkingStyleAuto).
 					Error("Thinking style applies only to Anthropic Messages providers"),
 			),
 		),
@@ -815,7 +601,7 @@ func (p *Provider) validateEmbedding(multiErr *errortypes.MultiError) {
 		)
 	}
 
-	embeddingAt := slices.Index(p.Tasks, TaskEmbedding)
+	embeddingAt := slices.Index(p.Tasks, aitask.TaskEmbedding)
 	if embeddingAt < 0 {
 		return
 	}
@@ -921,13 +707,13 @@ func (p *Provider) validateExtraBody(multiErr *errortypes.MultiError) {
 // the default.
 func (p *Provider) applyDefaults() {
 	if p.ReasoningEffort == "" {
-		p.ReasoningEffort = ReasoningOff
+		p.ReasoningEffort = aireasoning.ReasoningOff
 	}
 	if p.StructuredOutputMode == "" {
 		p.StructuredOutputMode = StructuredOutputPrompted
 	}
 	if p.ThinkingStyle == "" {
-		p.ThinkingStyle = ThinkingStyleAuto
+		p.ThinkingStyle = aireasoning.ThinkingStyleAuto
 	}
 	p.AdvisorModel = strings.TrimSpace(p.AdvisorModel)
 	p.NormalizePlatformSettings()
@@ -1024,7 +810,7 @@ func (p *Provider) validateEndpoint(multiErr *errortypes.MultiError) {
 	}
 
 	baseURL := p.ResolvedBaseURL()
-	if baseURL == "" && p.ResolvedPlatform() != PlatformDirect {
+	if baseURL == "" && p.ResolvedPlatform() != aiplatform.PlatformDirect {
 		return
 	}
 	if baseURL == "" {

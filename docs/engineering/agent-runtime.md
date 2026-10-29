@@ -235,13 +235,13 @@ hand-written JSON. Trenova keeps the transport around it
 
 ### Reaching Claude through a platform
 
-An Anthropic Messages provider names a `platform` (`aiprovider.Platform`, column
+An Anthropic Messages provider names a `platform` (`aiplatform.Platform`, column
 `ai_providers.platform`) and, for anything but `Direct`, a `platform_settings` JSONB
-object (`aiprovider.PlatformSettings`): the way it signs in (`auth`) and the region,
+object (`aiplatform.PlatformSettings`): the way it signs in (`auth`) and the region,
 project, workspace, resource, access key ID, tenant and client ID that platform and
 way of signing in take. Check constraints keep the platform to its enum, to the
 Anthropic kind, and keep settings off a direct provider. The domain
-(`aiprovider/platform.go`) normalizes and validates every setting against a strict
+(`aiplatform/platform.go`) normalizes and validates every setting against a strict
 pattern, because each ends up in a host name or URL path, and derives the base URL
 when none is given:
 
@@ -274,7 +274,7 @@ or call other addresses), loaded with its `token_uri` pinned to
   false). The service refuses to save it otherwise, and every call checks it again
   (`Call.ServerCredentialsAllowed`), so turning the setting off stops providers
   already saved with it. Such a provider stores no key; saving one clears any.
-- **A credential stays with its target.** `aiprovider.SameCredentialTarget` compares
+- **A credential stays with its target.** `aiproviderchange.SameCredentialTarget` compares
   kind, platform, resolved settings and the base URL's origin. An update that changes
   any of them without a new key is refused, and a draft test reuses the stored key
   only for the target it was entered for. A service account key is fingerprinted by
@@ -339,7 +339,7 @@ than any it names takes the newest known constraints.
   by default and the thinking panel would show nothing. Older models keep the token budget
   and its raised `max_tokens`; adaptive thinking raises `max_tokens` to
   `reasoningAnswerFloor`.
-- **Thinking style.** An Anthropic provider's thinking style (`aiprovider.ThinkingStyle`,
+- **Thinking style.** An Anthropic provider's thinking style (`aireasoning.ThinkingStyle`,
   "Thinking style" on the provider form) overrides the id for a model the adapter cannot
   read. Auto, the default, reads the id. Effort asks by effort whatever the id reads, and
   Budget asks with a token budget. Behind an alias the adapter cannot tell which effort
@@ -420,7 +420,7 @@ Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, whi
   which writes only while the provider still has the advisor on for the same model, and does
   not bump the version). It retries that call once without the advisor, and every later call to
   the provider goes out without it (`ResolvedAdvisorModel` is empty while `AdvisorRefused`)
-  until the advisor, the model or the platform changes (`aiprovider.AdvisorSettingsChanged`);
+  until the advisor, the model or the platform changes (`aiproviderchange.AdvisorSettingsChanged`);
   the service clears the refusal on such an update. AI Control shows the refusal in the
   provider editor (`AIProvider.advisorRefusal`). A bench cell's own advisor is not retried
   without it: the call fails, so a cell never runs quietly without what it asked for.
@@ -462,7 +462,7 @@ The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
   (`withoutAdvice`) and no beta is sent.
 - **Counts the advisor apart.** The executor's usage is unchanged; the advisor's own calls come
   as `advisor_message` entries in `usage.iterations` and become `Response.Advisor`
-  (`aiprovider.AdvisorUsage`: model, calls, tokens, and the executor's own `message`
+  (`aipricing.AdvisorUsage`: model, calls, tokens, and the executor's own `message`
   iterations as `Executor`). The router prices the call with
   `aiprovider.Provider.AdvisedCostForTask`: each executor iteration on its own price tier
   (Haiku 5.5's long-prompt rates apply to an iteration whose own prompt passes 100,000 tokens,
@@ -512,8 +512,8 @@ OpenAI and OpenAI-compatible providers read the text as before.
 
 Compaction and the run overflow guard work from the provider's context window: the one
 an operator configured (filled from the model list when an endpoint reports it), and
-otherwise the one its model id names (`aiprovider.ContextWindowFor`). A Claude id in any
-endpoint's form is read by `aiprovider.ParseClaudeModel`, which the adapter's thinking
+otherwise the one its model id names (`aimodel.ContextWindowFor`). A Claude id in any
+endpoint's form is read by `aimodel.ParseClaudeModel`, which the adapter's thinking
 rules use too: Opus and Sonnet from 4.6, Haiku from 5.5, and every Fable and Mythos get
 1,000,000 tokens; earlier Claude models, ids it cannot read, and a family it does not know
 get 200,000, since erring small only compacts sooner. A conversation compacts itself at
@@ -2377,7 +2377,7 @@ its chapter land in cannot race.
   started by hand (`POST …/chapters/`, which also names a quiet first chapter beside it), or the
   quiet first chapter once a second opens.
 
-The model is `aiprovider.TaskChapterTitling`, which borrows the Desk's own providers when none is
+The model is `aitask.TaskChapterTitling`, which borrows the Desk's own providers when none is
 routed, at temperature 0, with no reasoning setting sent (so a model that cannot reason, such as GPT-4.1 nano, is never refused), a 4-second hedge and 80 tokens, attributed to
 `aiusage.FeatureConversationChapters`. Its title is cleaned (`conversation.CleanChapterTitle`)
 and refused when it names a number the question, reply or recent turns do not hold

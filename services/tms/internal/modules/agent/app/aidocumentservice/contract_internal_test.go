@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestContractRequestIsTheProductionExtractionCall(t *testing.T) {
 	assert.Equal(t, production.Context, req.Context)
 	assert.Equal(t, production.OutputSchema, req.OutputSchema)
 	assert.Equal(t, schemaNameExtract, req.SchemaName)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, req.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, req.Task)
 	assert.Equal(t, extractPageLimit, Contract{}.PageLimit())
 	assert.NotContains(t, req.Context.Sections[1].Content, strings.Repeat("x", extractPageLimit+1))
 }

@@ -1,4 +1,4 @@
-package aiprovider
+package aiplatform
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
 // Platform is the service that serves a Claude model for an Anthropic Messages
@@ -175,55 +174,28 @@ var (
 	plainSecretPattern = regexp.MustCompile(`^[\x21-\x7e]+$`)
 )
 
-// ResolvedPlatform is the platform a provider is reached through. Only the
-// Anthropic protocol has more than one.
-func (p *Provider) ResolvedPlatform() Platform {
-	if p.Kind != KindAnthropicMessages || p.Platform == "" {
-		return PlatformDirect
-	}
-
-	return p.Platform
-}
-
-// ResolvedSettings are the platform settings with their defaults filled.
-func (p *Provider) ResolvedSettings() PlatformSettings {
+// ResolveSettings are the stored settings with the platform's defaults filled.
+func (p Platform) ResolveSettings(stored *PlatformSettings) PlatformSettings {
 	var settings PlatformSettings
-	if p.PlatformSettings != nil {
-		settings = *p.PlatformSettings
+	if stored != nil {
+		settings = *stored
 	}
-	platform := p.ResolvedPlatform()
 	if settings.Auth == "" {
-		settings.Auth = platform.DefaultAuth()
+		settings.Auth = p.DefaultAuth()
 	}
-	if platform == PlatformClaudeGoogleCloud && settings.Region == "" {
+	if p == PlatformClaudeGoogleCloud && settings.Region == "" {
 		settings.Region = googleCloudLocation
 	}
 
 	return settings
 }
 
-// UsesServerCredentials reports a provider that signs in with the server's own
-// cloud credentials.
-func (p *Provider) UsesServerCredentials() bool {
-	return p.ResolvedPlatform() != PlatformDirect &&
-		p.ResolvedSettings().Auth == PlatformAuthServer
-}
-
-// RequiresCredential reports whether a stored credential must be present.
-func (p *Provider) RequiresCredential() bool {
-	if p.ResolvedPlatform() == PlatformDirect {
-		return p.Kind.RequiresAPIKey()
-	}
-
-	return p.ResolvedSettings().Auth != PlatformAuthServer
-}
-
-// platformBaseURL is the address a platform serves the Messages API at, built
-// from settings already held to their shapes. Empty when a setting it needs is
-// missing, which validation reports by name.
-func (p *Provider) platformBaseURL() string {
-	settings := p.ResolvedSettings()
-	switch p.ResolvedPlatform() {
+// BaseURL is the address a platform serves the Messages API at, built from
+// settings already held to their shapes. Empty when a setting it needs is
+// missing, which validation reports by name, and for PlatformDirect, whose
+// address is the protocol's own.
+func (p Platform) BaseURL(settings PlatformSettings) string {
+	switch p {
 	case PlatformBedrock:
 		if !awsRegionPattern.MatchString(settings.Region) {
 			return ""
@@ -252,9 +224,9 @@ func (p *Provider) platformBaseURL() string {
 		}
 		return "https://" + settings.Resource + ".services.ai.azure.com/anthropic"
 	case PlatformDirect:
-		return p.Kind.DefaultBaseURL()
+		return ""
 	default:
-		return p.Kind.DefaultBaseURL()
+		return ""
 	}
 }
 
@@ -269,38 +241,6 @@ func vertexBaseURL(region string) string {
 	default:
 		return ""
 	}
-}
-
-// SameCredentialTarget reports whether two configurations send a stored
-// credential to the same place, as the same identity. A credential entered
-// for one is never carried to the other: kept across a change of platform,
-// region, project, workspace, tenant or address, it would be sent, decrypted,
-// somewhere it was never meant for.
-func SameCredentialTarget(a, b *Provider) bool {
-	if a.Kind != b.Kind || a.ResolvedPlatform() != b.ResolvedPlatform() {
-		return false
-	}
-	if a.ResolvedSettings() != b.ResolvedSettings() {
-		return false
-	}
-
-	return httpsafe.SameOrigin(a.ResolvedBaseURL(), b.ResolvedBaseURL())
-}
-
-// CredentialFingerprintSubject is the part of a credential whose ends are kept
-// to tell two apart. A service account key's text opens and closes the same
-// way for every key, so its key id stands for it.
-func (p *Provider) CredentialFingerprintSubject(secret string) string {
-	if p.ResolvedPlatform() == PlatformDirect ||
-		p.ResolvedSettings().Auth != PlatformAuthServiceAccount {
-		return secret
-	}
-	key, err := parseServiceAccountKey(secret)
-	if err != nil {
-		return secret
-	}
-
-	return key.PrivateKeyID
 }
 
 type serviceAccountKey struct {
@@ -321,18 +261,28 @@ func parseServiceAccountKey(secret string) (*serviceAccountKey, error) {
 	return &key, nil
 }
 
-// ValidateCredential checks a credential before it is stored. Google's loader
-// also accepts external account and impersonation configurations, which can
-// read files on the server or call any address they name, and a service account
-// key names its own token endpoint, so only a service account key that mints
-// its tokens at Google is taken.
-func (p *Provider) ValidateCredential(secret string, multiErr *errortypes.MultiError) {
-	secret = strings.TrimSpace(secret)
-	if secret == "" || p.ResolvedPlatform() == PlatformDirect {
-		return
+// FingerprintSubject is the part of a credential whose ends are kept to tell
+// two apart. A service account key's text opens and closes the same way for
+// every key, so its key id stands for it.
+func FingerprintSubject(auth PlatformAuth, secret string) string {
+	if auth != PlatformAuthServiceAccount {
+		return secret
+	}
+	key, err := parseServiceAccountKey(secret)
+	if err != nil {
+		return secret
 	}
 
-	switch p.ResolvedSettings().Auth {
+	return key.PrivateKeyID
+}
+
+// ValidateCredential checks a credential for a platform that signs in with
+// auth before it is stored. Google's loader also accepts external account and
+// impersonation configurations, which can read files on the server or call any
+// address they name, and a service account key names its own token endpoint,
+// so only a service account key that mints its tokens at Google is taken.
+func ValidateCredential(auth PlatformAuth, secret string, multiErr *errortypes.MultiError) {
+	switch auth {
 	case PlatformAuthServer:
 		multiErr.Add(
 			"apiKey",
@@ -402,44 +352,15 @@ func validateServiceAccountKey(secret string, multiErr *errortypes.MultiError) {
 	}
 }
 
-func (p *Provider) validatePlatform(multiErr *errortypes.MultiError) {
-	if p.Platform == "" {
-		p.Platform = PlatformDirect
-	}
-	if !p.Platform.IsValid() {
-		multiErr.Add("platform", errortypes.ErrInvalid, "Platform is invalid")
-		return
-	}
-	if p.Kind != KindAnthropicMessages {
-		if p.Platform != PlatformDirect {
-			multiErr.Add(
-				"platform",
-				errortypes.ErrInvalid,
-				"Only an Anthropic Messages provider is reached through a platform",
-			)
-		}
-		if p.PlatformSettings != nil {
-			multiErr.Add(
-				"platformSettings",
-				errortypes.ErrInvalid,
-				"Only an Anthropic Messages provider takes platform settings",
-			)
-		}
-		return
-	}
-	if p.Platform == PlatformDirect {
-		if p.PlatformSettings != nil {
-			multiErr.Add(
-				"platformSettings",
-				errortypes.ErrInvalid,
-				"A provider called directly takes no platform settings",
-			)
-		}
-		return
-	}
-
-	settings := p.ResolvedSettings()
-	if !settings.Auth.IsValid() || !slices.Contains(p.Platform.Auths(), settings.Auth) {
+// Validate checks the settings of a platform other than PlatformDirect: a
+// sign-in the platform takes, and each setting in the shape it gives it.
+// BaseURL is the address entered, which Foundry takes in place of a resource.
+func (s *PlatformSettings) Validate(
+	platform Platform,
+	baseURL string,
+	multiErr *errortypes.MultiError,
+) {
+	if !s.Auth.IsValid() || !slices.Contains(platform.Auths(), s.Auth) {
 		multiErr.Add(
 			"platformSettings.auth",
 			errortypes.ErrInvalid,
@@ -448,15 +369,17 @@ func (p *Provider) validatePlatform(multiErr *errortypes.MultiError) {
 		return
 	}
 
-	p.validatePlatformPlace(&settings, multiErr)
-	validatePlatformIdentity(&settings, multiErr)
+	validatePlatformPlace(platform, baseURL, s, multiErr)
+	validatePlatformIdentity(s, multiErr)
 }
 
-func (p *Provider) validatePlatformPlace(
+func validatePlatformPlace(
+	platform Platform,
+	baseURL string,
 	settings *PlatformSettings,
 	multiErr *errortypes.MultiError,
 ) {
-	switch p.Platform {
+	switch platform {
 	case PlatformBedrock, PlatformClaudeAWS:
 		requireShape(multiErr, "platformSettings.region", settings.Region, awsRegionPattern,
 			"Enter the AWS region, such as us-east-1")
@@ -471,38 +394,48 @@ func (p *Provider) validatePlatformPlace(
 		requireShape(multiErr, "platformSettings.projectId", settings.ProjectID, gcpProjectPattern,
 			"Enter the Google Cloud project ID")
 	case PlatformFoundry:
-		if settings.Resource == "" && strings.TrimSpace(p.BaseURL) == "" {
+		if settings.Resource == "" && strings.TrimSpace(baseURL) == "" {
 			multiErr.Add("platformSettings.resource", errortypes.ErrRequired,
 				"Enter the Foundry resource name, or the endpoint's address")
 		}
 		if settings.Resource != "" {
-			if strings.TrimSpace(p.BaseURL) != "" {
+			if strings.TrimSpace(baseURL) != "" {
 				multiErr.Add("platformSettings.resource", errortypes.ErrInvalid,
 					"Enter the resource name or the endpoint's address, not both")
 			}
-			requireShape(multiErr, "platformSettings.resource", settings.Resource, azureResourcePattern,
-				"A Foundry resource name is lowercase letters, digits and hyphens")
+			requireShape(
+				multiErr,
+				"platformSettings.resource",
+				settings.Resource,
+				azureResourcePattern,
+				"A Foundry resource name is lowercase letters, digits and hyphens",
+			)
 		}
 	case PlatformDirect:
 	}
 
-	if p.Platform == PlatformClaudeAWS || p.Platform == PlatformClaudeGoogleCloud {
-		requireShape(multiErr, "platformSettings.workspaceId", settings.WorkspaceID, workspacePattern,
-			"Enter the Anthropic workspace ID")
+	if platform == PlatformClaudeAWS || platform == PlatformClaudeGoogleCloud {
+		requireShape(
+			multiErr,
+			"platformSettings.workspaceId",
+			settings.WorkspaceID,
+			workspacePattern,
+			"Enter the Anthropic workspace ID",
+		)
 	} else if settings.WorkspaceID != "" {
 		multiErr.Add("platformSettings.workspaceId", errortypes.ErrInvalid,
 			"Only Claude Platform on AWS and on Google Cloud take a workspace")
 	}
-	if p.Platform != PlatformVertexAI && p.Platform != PlatformClaudeGoogleCloud &&
+	if platform != PlatformVertexAI && platform != PlatformClaudeGoogleCloud &&
 		settings.ProjectID != "" {
 		multiErr.Add("platformSettings.projectId", errortypes.ErrInvalid,
 			"Only a Google Cloud platform takes a project")
 	}
-	if p.Platform != PlatformFoundry && settings.Resource != "" {
+	if platform != PlatformFoundry && settings.Resource != "" {
 		multiErr.Add("platformSettings.resource", errortypes.ErrInvalid,
 			"Only Foundry takes a resource name")
 	}
-	if p.Platform == PlatformFoundry && settings.Region != "" {
+	if platform == PlatformFoundry && settings.Region != "" {
 		multiErr.Add("platformSettings.region", errortypes.ErrInvalid,
 			"Foundry takes a resource name, not a region")
 	}
@@ -510,8 +443,13 @@ func (p *Provider) validatePlatformPlace(
 
 func validatePlatformIdentity(settings *PlatformSettings, multiErr *errortypes.MultiError) {
 	if settings.Auth == PlatformAuthAccessKey {
-		requireShape(multiErr, "platformSettings.accessKeyId", settings.AccessKeyID, accessKeyIDPattern,
-			"Enter the access key ID, the one that begins with AKIA")
+		requireShape(
+			multiErr,
+			"platformSettings.accessKeyId",
+			settings.AccessKeyID,
+			accessKeyIDPattern,
+			"Enter the access key ID, the one that begins with AKIA",
+		)
 	} else if settings.AccessKeyID != "" {
 		multiErr.Add("platformSettings.accessKeyId", errortypes.ErrInvalid,
 			"Only an access key sign-in takes an access key ID")
@@ -550,37 +488,33 @@ func requireShape(
 	}
 }
 
-// NormalizePlatformSettings trims every setting and fills the sign-in a
-// platform takes by default, so what is stored is exactly what is used.
-func (p *Provider) NormalizePlatformSettings() {
-	if p.Platform == "" {
-		p.Platform = PlatformDirect
-	}
-	if p.PlatformSettings == nil {
-		return
-	}
-
-	settings := p.PlatformSettings
-	settings.Region = strings.ToLower(strings.TrimSpace(settings.Region))
-	settings.ProjectID = strings.ToLower(strings.TrimSpace(settings.ProjectID))
-	settings.WorkspaceID = strings.TrimSpace(settings.WorkspaceID)
-	settings.AccessKeyID = strings.ToUpper(strings.TrimSpace(settings.AccessKeyID))
-	settings.Resource = strings.ToLower(strings.TrimSpace(settings.Resource))
-	settings.TenantID = strings.ToLower(strings.TrimSpace(settings.TenantID))
-	settings.ClientID = strings.ToLower(strings.TrimSpace(settings.ClientID))
-	if settings.Auth == "" && p.Platform != PlatformDirect {
-		settings.Auth = p.Platform.DefaultAuth()
-	}
+// platformVendors name who serves a call made through a platform.
+var platformVendors = map[Platform]string{
+	PlatformDirect:            "",
+	PlatformBedrock:           "bedrock",
+	PlatformVertexAI:          "vertex",
+	PlatformClaudeAWS:         "anthropic",
+	PlatformClaudeGoogleCloud: "anthropic",
+	PlatformFoundry:           "foundry",
 }
 
-// ConnectionSnapshot copies where a provider sends its credential, taken
-// before an edit so the edit can be compared against it.
-func (p *Provider) ConnectionSnapshot() *Provider {
-	snapshot := &Provider{Kind: p.Kind, BaseURL: p.BaseURL, Platform: p.Platform}
-	if p.PlatformSettings != nil {
-		settings := *p.PlatformSettings
-		snapshot.PlatformSettings = &settings
-	}
+// Vendor is who serves a call made through the platform, empty for a
+// provider called directly.
+func (p Platform) Vendor() string {
+	return platformVendors[p]
+}
 
-	return snapshot
+// Normalize trims every setting and fills the sign-in the platform takes by
+// default, so what is stored is exactly what is used.
+func (s *PlatformSettings) Normalize(platform Platform) {
+	s.Region = strings.ToLower(strings.TrimSpace(s.Region))
+	s.ProjectID = strings.ToLower(strings.TrimSpace(s.ProjectID))
+	s.WorkspaceID = strings.TrimSpace(s.WorkspaceID)
+	s.AccessKeyID = strings.ToUpper(strings.TrimSpace(s.AccessKeyID))
+	s.Resource = strings.ToLower(strings.TrimSpace(s.Resource))
+	s.TenantID = strings.ToLower(strings.TrimSpace(s.TenantID))
+	s.ClientID = strings.ToLower(strings.TrimSpace(s.ClientID))
+	if s.Auth == "" && platform != PlatformDirect {
+		s.Auth = platform.DefaultAuth()
+	}
 }

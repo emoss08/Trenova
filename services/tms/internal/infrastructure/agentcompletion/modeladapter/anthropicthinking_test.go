@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,12 +13,15 @@ import (
 func sentThinking(
 	t *testing.T,
 	model string,
-	effort aiprovider.ReasoningEffort,
+	effort aireasoning.ReasoningEffort,
 ) (map[string]any, map[string]any) {
 	t.Helper()
 
 	server, captured := streamServer(t, "text/event-stream", sse(
-		[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`},
+		[2]string{
+			"message_start",
+			`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`,
+		},
 		[2]string{"message_stop", `{"type":"message_stop"}`},
 	))
 	call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL, effort,
@@ -40,11 +44,11 @@ with the summary shown, which those models leave out unless asked.
 func TestAnthropicAdapter_AsksCurrentModelsToThinkByEffort(t *testing.T) {
 	t.Parallel()
 
-	levels := map[aiprovider.ReasoningEffort]string{
-		aiprovider.ReasoningMinimal: "low",
-		aiprovider.ReasoningLow:     "low",
-		aiprovider.ReasoningMedium:  "medium",
-		aiprovider.ReasoningHigh:    "high",
+	levels := map[aireasoning.ReasoningEffort]string{
+		aireasoning.ReasoningMinimal: "low",
+		aireasoning.ReasoningLow:     "low",
+		aireasoning.ReasoningMedium:  "medium",
+		aireasoning.ReasoningHigh:    "high",
 	}
 	for _, model := range []string{"claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-1", "claude-opus-4-8", "claude-sonnet-4-6"} {
 		for level, effort := range levels {
@@ -66,13 +70,13 @@ func TestAnthropicAdapter_KeepsTheBudgetForOlderModels(t *testing.T) {
 	t.Parallel()
 
 	for _, model := range []string{"claude-haiku-4-5", "claude-sonnet-4-5", "my-gateway-alias"} {
-		thinking, output := sentThinking(t, model, aiprovider.ReasoningHigh)
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningHigh)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "enabled", thinking["type"], model)
 		assert.InDelta(t, 16384, thinking["budget_tokens"], 0, model)
 		assert.Nil(t, output, model)
 
-		none, _ := sentThinking(t, model, aiprovider.ReasoningNone)
+		none, _ := sentThinking(t, model, aireasoning.ReasoningNone)
 		assert.Nil(t, none, model)
 	}
 }
@@ -88,7 +92,7 @@ func TestAnthropicAdapter_SendsTheLeastThinkingEachModelAllowsForNone(t *testing
 	t.Parallel()
 
 	for _, model := range []string{"claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-1", "claude-fable-5"} {
-		thinking, output := sentThinking(t, model, aiprovider.ReasoningNone)
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningNone)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "adaptive", thinking["type"], model)
 		assert.Equal(t, "summarized", thinking["display"], model)
@@ -96,13 +100,13 @@ func TestAnthropicAdapter_SendsTheLeastThinkingEachModelAllowsForNone(t *testing
 		assert.Equal(t, "low", output["effort"], model)
 	}
 
-	thinking, output := sentThinking(t, "claude-opus-5", aiprovider.ReasoningNone)
+	thinking, output := sentThinking(t, "claude-opus-5", aireasoning.ReasoningNone)
 	require.NotNil(t, thinking)
 	assert.Equal(t, map[string]any{"type": "disabled"}, thinking)
 	assert.Nil(t, output)
 
 	for _, model := range []string{"claude-opus-4-8", "claude-sonnet-4-6"} {
-		thinking, output := sentThinking(t, model, aiprovider.ReasoningNone)
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningNone)
 		assert.Nil(t, thinking, model)
 		assert.Nil(t, output, model)
 	}
@@ -114,7 +118,7 @@ func TestAnthropicAdapter_SendsNoThinkingSettingForOff(t *testing.T) {
 	t.Parallel()
 
 	for _, model := range []string{"claude-opus-4-8", "claude-haiku-4-5", "claude-sonnet-4-6"} {
-		thinking, output := sentThinking(t, model, aiprovider.ReasoningOff)
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningOff)
 		assert.Nil(t, thinking, model)
 		assert.Nil(t, output, model)
 	}
@@ -134,7 +138,7 @@ func TestAnthropicAdapter_AsksForTheSummaryOfThinkingAModelDoesUnasked(t *testin
 		"claude-haiku-5-5", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5",
 		"claude-sonnet-5", "claude-fable-5-1",
 	} {
-		thinking, output := sentThinking(t, model, aiprovider.ReasoningOff)
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningOff)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "adaptive", thinking["type"], model)
 		assert.Equal(t, "summarized", thinking["display"], model)
@@ -152,27 +156,38 @@ the provider and only asks to see the thinking Haiku 5.5 does unasked.
 func TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55(t *testing.T) {
 	t.Parallel()
 
-	sent := func(override aiprovider.ReasoningEffort) map[string]any {
+	sent := func(override aireasoning.ReasoningEffort) map[string]any {
 		server, captured := streamServer(t, "text/event-stream", sse(
-			[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`},
+			[2]string{
+				"message_start",
+				`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`,
+			},
 			[2]string{"message_stop", `{"type":"message_stop"}`},
 		))
-		call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL, aiprovider.ReasoningOff,
-			&Request{Messages: UserMessage("hi"), Reasoning: override})
+		call := reasoningCall(
+			aiprovider.KindAnthropicMessages,
+			server.URL,
+			aireasoning.ReasoningOff,
+			&Request{Messages: UserMessage("hi"), Reasoning: override},
+		)
 		call.Provider.Model = "claude-haiku-5-5"
 		_, _ = streamWith(t, NewAnthropicAdapter(), call)
 
 		return *captured
 	}
 
-	off := sent(aiprovider.ReasoningNone)
+	off := sent(aireasoning.ReasoningNone)
 	thinking, _ := off["thinking"].(map[string]any)
 	require.NotNil(t, thinking)
 	assert.Equal(t, "disabled", thinking["type"])
 	assert.NotContains(t, off, "output_config", "disabled is accepted at the default effort")
 
 	followed := sent("")
-	assert.Equal(t, map[string]any{"type": "adaptive", "display": "summarized"}, followed["thinking"],
-		"no override follows the provider, which is Off")
+	assert.Equal(
+		t,
+		map[string]any{"type": "adaptive", "display": "summarized"},
+		followed["thinking"],
+		"no override follows the provider, which is Off",
+	)
 	assert.NotContains(t, followed, "output_config")
 }

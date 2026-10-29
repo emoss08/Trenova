@@ -12,6 +12,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -269,8 +271,8 @@ func failingProviders(
 
 func uncoveredTasks(enabled []*aiprovider.Provider) int {
 	uncovered := 0
-	for _, task := range aiprovider.AllTasks() {
-		if aiprovider.RouteFor(enabled, task) == nil {
+	for _, task := range aitask.AllTasks() {
+		if airouting.RouteFor(enabled, task) == nil {
 			uncovered++
 		}
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -62,7 +63,7 @@ func (s *Service) runChat(
 		return nil, err
 	}
 
-	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, req.TenantInfo)
+	usable, err := s.usableFor(ctx, aitask.TaskAssistantChat, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (s *Service) runChat(
 		outcome := chatOutcome(provider, result, streamed, attemptErr)
 		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
-			task:        aiprovider.TaskAssistantChat,
+			task:        aitask.TaskAssistantChat,
 			surface:     surfaceFor(aiusage.SurfaceChat, req.Attribution),
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
@@ -136,7 +137,7 @@ func (s *Service) runChat(
 			if first := firstOtherThan(failures, provider.ID); first != nil {
 				result.FallbackFrom = first
 			}
-			result.CostUSD = outcome.cost(provider, aiprovider.TaskAssistantChat)
+			result.CostUSD = outcome.cost(provider, aitask.TaskAssistantChat)
 
 			return result, nil
 		}
@@ -509,7 +510,7 @@ func (s *Service) attemptChat(
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.
-			Sampling: modeladapter.SamplingForTask(aiprovider.TaskAssistantChat),
+			Sampling: modeladapter.SamplingForTask(aitask.TaskAssistantChat),
 		},
 	}
 

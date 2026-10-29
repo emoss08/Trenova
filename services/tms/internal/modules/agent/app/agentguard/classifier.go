@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 )
 
@@ -131,14 +132,14 @@ func (s *Service) Classify(
 		ctx,
 		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
-			Task:         aiprovider.TaskScopeClassification,
+			Task:         aitask.TaskScopeClassification,
 			System:       classifierSystemPrompt,
 			Context:      llmports.DelimitedContext{Sections: sections},
 			OutputSchema: classifierSchema(),
 			SchemaName:   "scope_classification",
 			MaxTokens:    classifierMaxTokens,
 			HedgeAfter:   s.classifierHedge(),
-			Reasoning:    aiprovider.ReasoningNone,
+			Reasoning:    aireasoning.ReasoningNone,
 		},
 	)
 	if err != nil {

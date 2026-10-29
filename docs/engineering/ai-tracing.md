@@ -130,7 +130,7 @@ Input tokens on the span are the whole prompt, as the semantic conventions ask:
 Anthropic reports cached tokens beside `input_tokens`, so they are added
 (`aiprovider.Kind.CachesOutsideInput`); OpenAI counts them inside it. The usage
 row keeps the provider's own `input_tokens`, with the cache counts in their own
-columns. Cost is priced from all three by `aiprovider.Provider.CostFor`, the one
+columns. Cost is priced from all three by `aipricing.CostFor`, the one
 pricing function every cost path uses: fresh input at the input price, cache
 reads at `cache_read_cost_per_million` and writes at
 `cache_write_cost_per_million`. A cache price left empty takes the protocol's

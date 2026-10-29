@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -118,7 +119,7 @@ func (s *Session) Providers(ctx context.Context) ([]*aiprovider.Provider, error)
 	providers, err := s.bench.Providers.ListForTask(
 		s.Context(ctx),
 		aiproviderports.ListAIProvidersForTaskRequest{
-			Task:       aiprovider.TaskAssistantChat,
+			Task:       aitask.TaskAssistantChat,
 			TenantInfo: s.Tenant,
 		},
 	)

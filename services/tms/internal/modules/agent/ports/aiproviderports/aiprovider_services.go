@@ -3,7 +3,11 @@ package aiproviderports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
@@ -25,8 +29,8 @@ type SaveAIProviderRequest struct {
 	APIKey               *string
 	AllowPrivateNetwork  bool
 	StructuredOutputMode aiprovider.StructuredOutputMode
-	ReasoningEffort      aiprovider.ReasoningEffort
-	ThinkingStyle        aiprovider.ThinkingStyle
+	ReasoningEffort      aireasoning.ReasoningEffort
+	ThinkingStyle        aireasoning.ThinkingStyle
 	// AdvisorEnabled and AdvisorModel declare Anthropic's advisor on every
 	// chat call routed to the provider; Scripts and ScriptWrites let its
 	// model answer with code mode.
@@ -36,8 +40,8 @@ type SaveAIProviderRequest struct {
 	ScriptWrites   bool
 	// Platform and PlatformSettings say where an Anthropic Messages provider
 	// reaches Claude and how it signs in there.
-	Platform         aiprovider.Platform
-	PlatformSettings *aiprovider.PlatformSettings
+	Platform         aiplatform.Platform
+	PlatformSettings *aiplatform.PlatformSettings
 	// ExtraBody carries the vendor request fields this endpoint needs that
 	// the protocol does not define.
 	ExtraBody            map[string]any
@@ -50,7 +54,7 @@ type SaveAIProviderRequest struct {
 	MaxTokens                int
 	// ContextWindow is the model's window in tokens; nil reads it off Model.
 	ContextWindow       *int
-	Tasks               []aiprovider.Task
+	Tasks               []aitask.Task
 	Priority            int
 	EmbeddingDimensions *int
 	EmbeddingInputStyle aiprovider.EmbeddingInputStyle
@@ -79,7 +83,7 @@ type PatchAIProviderRequest struct {
 	Enabled                  optional.Value[*bool]
 	Trusted                  optional.Value[*bool]
 	AllowPrivateNetwork      optional.Value[*bool]
-	Tasks                    optional.Value[[]aiprovider.Task]
+	Tasks                    optional.Value[[]aitask.Task]
 	APIKey                   optional.Value[*string]
 	InputCostPerMillion      optional.Value[*decimal.Decimal]
 	OutputCostPerMillion     optional.Value[*decimal.Decimal]
@@ -93,8 +97,8 @@ type PatchAIProviderRequest struct {
 type AIProviderEndpoint struct {
 	ProviderID          pulid.ID
 	Kind                aiprovider.Kind
-	Platform            aiprovider.Platform
-	PlatformSettings    *aiprovider.PlatformSettings
+	Platform            aiplatform.Platform
+	PlatformSettings    *aiplatform.PlatformSettings
 	BaseURL             string
 	APIKey              *string
 	AllowPrivateNetwork bool
@@ -109,8 +113,8 @@ type ListAIProviderModelsRequest struct {
 // worker: its key encrypted, so the job's history never holds the secret.
 type SealedAIProviderEndpoint struct {
 	Kind                aiprovider.Kind              `json:"kind"`
-	Platform            aiprovider.Platform          `json:"platform,omitempty"`
-	PlatformSettings    *aiprovider.PlatformSettings `json:"platformSettings,omitempty"`
+	Platform            aiplatform.Platform          `json:"platform,omitempty"`
+	PlatformSettings    *aiplatform.PlatformSettings `json:"platformSettings,omitempty"`
 	BaseURL             string                       `json:"baseUrl"`
 	SealedAPIKey        string                       `json:"sealedApiKey"`
 	AllowPrivateNetwork bool                         `json:"allowPrivateNetwork"`
@@ -129,7 +133,7 @@ type ProbeAIProviderDraftRequest struct {
 	Endpoint             SealedAIProviderEndpoint        `json:"endpoint"`
 	Model                string                          `json:"model"`
 	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
-	Tasks                []aiprovider.Task               `json:"tasks"`
+	Tasks                []aitask.Task                   `json:"tasks"`
 	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
 	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
 	TimeoutSeconds       int                             `json:"timeoutSeconds"`
@@ -181,7 +185,7 @@ type TestAIProviderDraftRequest struct {
 	Endpoint             AIProviderEndpoint
 	Model                string
 	StructuredOutputMode aiprovider.StructuredOutputMode
-	Tasks                []aiprovider.Task
+	Tasks                []aitask.Task
 	EmbeddingDimensions  *int
 	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle
 	TimeoutSeconds       *int
@@ -262,7 +266,7 @@ type AIProviderRoutingDraft struct {
 	ID                  pulid.ID
 	Name                string
 	Kind                aiprovider.Kind
-	Tasks               []aiprovider.Task
+	Tasks               []aitask.Task
 	Priority            int
 	EmbeddingDimensions *int
 	Trusted             bool
@@ -282,13 +286,13 @@ type ReorderAIProvidersRequest struct {
 type AssignAIProviderTaskRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
-	Task       aiprovider.Task
+	Task       aitask.Task
 }
 
 type RouteAIProviderTaskRequest struct {
 	TenantInfo pagination.TenantInfo
 	ProviderID pulid.ID
-	Task       aiprovider.Task
+	Task       aitask.Task
 }
 
 type AIProviderService interface {
@@ -348,7 +352,7 @@ type AIProviderService interface {
 	RoutePreview(
 		ctx context.Context,
 		req *AIProviderRoutePreviewRequest,
-	) ([]aiprovider.TaskRoute, error)
+	) ([]airouting.TaskRoute, error)
 	// Test issues a live probe against a saved provider and records its outcome
 	// on the provider.
 	Test(
