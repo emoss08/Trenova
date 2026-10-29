@@ -3,6 +3,7 @@ package customertrackingrepository
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -22,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rankquery"
 	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -31,6 +34,11 @@ const (
 	shipmentResourceType = "shipment"
 	maxVisibleHolds      = 20
 	maxVisibleNotes      = 50
+	candidatesCTE        = "status_email_candidates"
+	rankedCandidatesCTE  = "ranked_status_email_candidates"
+	candidateID          = "id"
+	candidateUpdatedAt   = "updated_at"
+	openEnded            = int64(math.MaxInt64)
 )
 
 type factRepository struct {
@@ -92,33 +100,61 @@ func (r *factRepository) ListCandidateShipments(
 	}
 	limit = min(limit, maxCandidateLimit)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		sp := shipmentdb.Shipments
-		pc := customertrackingdb.Profiles
-		d := documentdb.Documents
-
-		recentPod := d.Where(podPredicates(d)...).
-			Where(d.ResourceID.EqCol(sp.ID), d.CreatedAt.Gte(req.Since))
-
-		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), sp.
-			Join(pc, pc.CustomerID.EqCol(sp.CustomerID)).
-			Pick(sp.ID).
-			Where(
-				pc.NotificationsEnabledAt.IsNotNull(),
-				sp.Status.Ne(shipmentvocab.StatusCanceled),
-				keel.Or(
-					sp.Status.In(movingStatuses()...),
-					sp.UpdatedAt.Gte(req.Since),
-					sp.ActualDeliveryDate.Gte(req.Since),
-					keel.Exists(recentPod),
-				),
-			).
-			Order(sp.UpdatedAt.Desc()).
-			Limit(limit))
+		ids, err := keel.Into[pulid.ID](
+			ctx,
+			r.db.Keel(ctx),
+			candidateShipmentsQuery(req.Since, limit),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list shipments that may owe status emails: %w", err)
 		}
 		return ids, nil
 	})
+}
+
+func candidateShipmentsQuery(since int64, limit int) *keel.Query[*keel.Row] {
+	sp := shipmentdb.Shipments
+	d := documentdb.Documents
+
+	recentPods := d.Pick(d.ResourceID).
+		Where(podPredicates(d)...).
+		Where(d.CreatedAt.Gte(since), d.CreatedAt.Lte(openEnded))
+
+	candidates := keel.CTE(
+		candidatesCTE,
+		[]string{candidateID, candidateUpdatedAt},
+		keel.Union(
+			notifyingShipments(sp.Status.In(movingStatuses()...)),
+			notifyingShipments(sp.UpdatedAt.Gte(since), sp.UpdatedAt.Lte(openEnded)),
+			notifyingShipments(
+				sp.ActualDeliveryDate.Gte(since),
+				sp.ActualDeliveryDate.Lte(openEnded),
+			),
+			notifyingShipments(sp.ID.InQuery(recentPods)),
+		),
+	)
+	id := candidates.Col(candidateID)
+
+	return rankquery.Top(candidates.Query().Pick(id), rankquery.Params{
+		Name:    rankedCandidatesCTE,
+		Columns: []string{candidateID},
+		With:    []*keel.CTETable{candidates},
+		Rank:    []keel.Order{candidates.Col(candidateUpdatedAt).Desc(), id.Desc()},
+		Limit:   limit,
+	})
+}
+
+func notifyingShipments(match ...keel.Pred) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	pc := customertrackingdb.Profiles
+
+	return sp.Join(pc, pc.CustomerID.EqCol(sp.CustomerID)).
+		Pick(sp.ID, sp.UpdatedAt).
+		Where(
+			pc.NotificationsEnabledAt.IsNotNull(),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
+		).
+		Where(match...)
 }
 
 func movingStatuses() []shipmentvocab.Status {
