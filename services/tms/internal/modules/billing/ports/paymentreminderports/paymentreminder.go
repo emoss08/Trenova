@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,7 +76,11 @@ type SendNowPreview struct {
 }
 
 type Service interface {
-	SendDue(ctx context.Context, control *tenant.BillingControl, now int64) (*SweepResult, error)
+	SendDue(
+		ctx context.Context,
+		control *billingcontrol.BillingControl,
+		now int64,
+	) (*SweepResult, error)
 	SendNow(
 		ctx context.Context,
 		req *SendNowRequest,

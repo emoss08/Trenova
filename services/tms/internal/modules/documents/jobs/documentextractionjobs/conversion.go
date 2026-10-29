@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -215,7 +215,7 @@ func (a *Activities) PlanDocumentExtractionActivity(
 func (a *Activities) planConversion(
 	ctx context.Context,
 	doc *document.Document,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	tenantInfo pagination.TenantInfo,
 ) (*PlanDocumentExtractionResult, error) {
 	availability, err := a.aiDocumentService.ExtractionAvailability(ctx, tenantInfo)
@@ -1080,7 +1080,7 @@ func (a *Activities) analyzeExtraction(
 	ctx context.Context,
 	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
 	doc *document.Document,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	extracted *ExtractionResult,
 ) (*ExtractionPipelineOutcome, error) {
 	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)

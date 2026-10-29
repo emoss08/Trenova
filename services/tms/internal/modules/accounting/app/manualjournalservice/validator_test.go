@@ -1,16 +1,16 @@
 package manualjournalservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,10 +56,10 @@ func TestValidateDraftUpsertDefaultsCurrencyAndAssignsPeriod(t *testing.T) {
 		}, nil)
 
 	v := &Validator{fiscalRepo: fiscalRepo, glAccountRepo: glRepo}
-	err := v.ValidateDraftUpsert(t.Context(), entity, &tenant.AccountingControl{
-		CurrencyMode:             tenant.CurrencyModeSingleCurrency,
+	err := v.ValidateDraftUpsert(t.Context(), entity, &accountingcontrol.AccountingControl{
+		CurrencyMode:             accountingcontrol.CurrencyModeSingleCurrency,
 		FunctionalCurrencyCode:   "USD",
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAdjustmentOnly,
+		ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly,
 	})
 
 	require.Nil(t, err)
@@ -102,8 +102,8 @@ func TestValidateDraftUpsertBlocksNonAdjustingPeriodWhenPolicyRequiresIt(t *test
 	}, nil)
 
 	v := &Validator{fiscalRepo: fiscalRepo, glAccountRepo: glRepo}
-	err := v.ValidateDraftUpsert(t.Context(), entity, &tenant.AccountingControl{
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAdjustmentOnly,
+	err := v.ValidateDraftUpsert(t.Context(), entity, &accountingcontrol.AccountingControl{
+		ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly,
 	})
 
 	require.NotNil(t, err)
@@ -122,7 +122,7 @@ func TestValidateSubmitRejectsUnbalancedRequest(t *testing.T) {
 			{DebitAmount: 100},
 			{CreditAmount: 50},
 		},
-	}, &tenant.AccountingControl{ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll})
+	}, &accountingcontrol.AccountingControl{ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll})
 
 	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "balanced")

@@ -6,34 +6,31 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
-	"github.com/emoss08/keel"
-	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -213,10 +210,13 @@ func (s *DriverPaySeed) loadRefs(
 		commodities:   make(map[string]pulid.ID),
 	}
 
-	locs, err := locationdb.Locations.AllTenants().Pick(locationdb.Locations.ID, locationdb.Locations.Code).Where(
-		locationdb.Locations.OrganizationID.Eq(orgID),
-		locationdb.Locations.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	locs, err := locationdb.Locations.AllTenants().
+		Pick(locationdb.Locations.ID, locationdb.Locations.Code).
+		Where(
+			locationdb.Locations.OrganizationID.Eq(orgID),
+			locationdb.Locations.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get locations: %w", err)
 	}
@@ -224,10 +224,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.locations[locs[i].Code] = locs[i].ID
 	}
 
-	custs, err := customerdb.Customers.AllTenants().Pick(customerdb.Customers.ID, customerdb.Customers.Code).Where(
-		customerdb.Customers.OrganizationID.Eq(orgID),
-		customerdb.Customers.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	custs, err := customerdb.Customers.AllTenants().
+		Pick(customerdb.Customers.ID, customerdb.Customers.Code).
+		Where(
+			customerdb.Customers.OrganizationID.Eq(orgID),
+			customerdb.Customers.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get customers: %w", err)
 	}
@@ -235,10 +238,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.customers[custs[i].Code] = custs[i].ID
 	}
 
-	svcTypes, err := servicetypedb.ServiceTypes.AllTenants().Pick(servicetypedb.ServiceTypes.ID, servicetypedb.ServiceTypes.Code).Where(
-		servicetypedb.ServiceTypes.OrganizationID.Eq(orgID),
-		servicetypedb.ServiceTypes.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	svcTypes, err := servicetypedb.ServiceTypes.AllTenants().
+		Pick(servicetypedb.ServiceTypes.ID, servicetypedb.ServiceTypes.Code).
+		Where(
+			servicetypedb.ServiceTypes.OrganizationID.Eq(orgID),
+			servicetypedb.ServiceTypes.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get service types: %w", err)
 	}
@@ -246,10 +252,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.serviceTypes[svcTypes[i].Code] = svcTypes[i].ID
 	}
 
-	shpTypes, err := shipmenttypedb.ShipmentTypes.AllTenants().Pick(shipmenttypedb.ShipmentTypes.ID, shipmenttypedb.ShipmentTypes.Code).Where(
-		shipmenttypedb.ShipmentTypes.OrganizationID.Eq(orgID),
-		shipmenttypedb.ShipmentTypes.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	shpTypes, err := shipmenttypedb.ShipmentTypes.AllTenants().
+		Pick(shipmenttypedb.ShipmentTypes.ID, shipmenttypedb.ShipmentTypes.Code).
+		Where(
+			shipmenttypedb.ShipmentTypes.OrganizationID.Eq(orgID),
+			shipmenttypedb.ShipmentTypes.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get shipment types: %w", err)
 	}
@@ -257,10 +266,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.shipmentTypes[shpTypes[i].Code] = shpTypes[i].ID
 	}
 
-	tractors, err := tractordb.Tractors.AllTenants().Pick(tractordb.Tractors.ID, tractordb.Tractors.Code).Where(
-		tractordb.Tractors.OrganizationID.Eq(orgID),
-		tractordb.Tractors.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	tractors, err := tractordb.Tractors.AllTenants().
+		Pick(tractordb.Tractors.ID, tractordb.Tractors.Code).
+		Where(
+			tractordb.Tractors.OrganizationID.Eq(orgID),
+			tractordb.Tractors.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get tractors: %w", err)
 	}
@@ -268,10 +280,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.tractors[tractors[i].Code] = tractors[i].ID
 	}
 
-	trailers, err := trailerdb.Trailers.AllTenants().Pick(trailerdb.Trailers.ID, trailerdb.Trailers.Code).Where(
-		trailerdb.Trailers.OrganizationID.Eq(orgID),
-		trailerdb.Trailers.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	trailers, err := trailerdb.Trailers.AllTenants().
+		Pick(trailerdb.Trailers.ID, trailerdb.Trailers.Code).
+		Where(
+			trailerdb.Trailers.OrganizationID.Eq(orgID),
+			trailerdb.Trailers.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get trailers: %w", err)
 	}
@@ -279,10 +294,13 @@ func (s *DriverPaySeed) loadRefs(
 		refs.trailers[trailers[i].Code] = trailers[i].ID
 	}
 
-	comms, err := commoditydb.Commodities.AllTenants().Pick(commoditydb.Commodities.ID, commoditydb.Commodities.Name).Where(
-		commoditydb.Commodities.OrganizationID.Eq(orgID),
-		commoditydb.Commodities.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	comms, err := commoditydb.Commodities.AllTenants().
+		Pick(commoditydb.Commodities.ID, commoditydb.Commodities.Name).
+		Where(
+			commoditydb.Commodities.OrganizationID.Eq(orgID),
+			commoditydb.Commodities.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get commodities: %w", err)
 	}
@@ -440,19 +458,25 @@ func (s *DriverPaySeed) ensureOwnerTractors(
 	refs *payRefs,
 	workers map[string]*worker.Worker,
 ) error {
-	equipType, err := equipmenttypedb.EquipmentTypes.AllTenants().Pick(equipmenttypedb.EquipmentTypes.ID).Where(
-		equipmenttypedb.EquipmentTypes.OrganizationID.Eq(refs.orgID),
-		equipmenttypedb.EquipmentTypes.BusinessUnitID.Eq(refs.buID),
-		equipmenttypedb.EquipmentTypes.Code.Eq("TRACTOR"),
-	).First(ctx, db)
+	equipType, err := equipmenttypedb.EquipmentTypes.AllTenants().
+		Pick(equipmenttypedb.EquipmentTypes.ID).
+		Where(
+			equipmenttypedb.EquipmentTypes.OrganizationID.Eq(refs.orgID),
+			equipmenttypedb.EquipmentTypes.BusinessUnitID.Eq(refs.buID),
+			equipmenttypedb.EquipmentTypes.Code.Eq("TRACTOR"),
+		).
+		First(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get tractor equipment type: %w", err)
 	}
 
-	manufacturer, err := equipmentmanufacturerdb.EquipmentManufacturers.AllTenants().Pick(equipmentmanufacturerdb.EquipmentManufacturers.ID).Where(
-		equipmentmanufacturerdb.EquipmentManufacturers.OrganizationID.Eq(refs.orgID),
-		equipmentmanufacturerdb.EquipmentManufacturers.BusinessUnitID.Eq(refs.buID),
-	).First(ctx, db)
+	manufacturer, err := equipmentmanufacturerdb.EquipmentManufacturers.AllTenants().
+		Pick(equipmentmanufacturerdb.EquipmentManufacturers.ID).
+		Where(
+			equipmentmanufacturerdb.EquipmentManufacturers.OrganizationID.Eq(refs.orgID),
+			equipmentmanufacturerdb.EquipmentManufacturers.BusinessUnitID.Eq(refs.buID),
+		).
+		First(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get equipment manufacturer: %w", err)
 	}
@@ -678,10 +702,13 @@ func (s *DriverPaySeed) ensurePayAssignments(
 		payWorkerEmily:  payProfileRegionalGuar,
 	}
 
-	profiles, err := driverpaydb.PayProfiles.AllTenants().Pick(driverpaydb.PayProfiles.ID, driverpaydb.PayProfiles.Name).Where(
-		driverpaydb.PayProfiles.OrganizationID.Eq(refs.orgID),
-		driverpaydb.PayProfiles.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	profiles, err := driverpaydb.PayProfiles.AllTenants().
+		Pick(driverpaydb.PayProfiles.ID, driverpaydb.PayProfiles.Name).
+		Where(
+			driverpaydb.PayProfiles.OrganizationID.Eq(refs.orgID),
+			driverpaydb.PayProfiles.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get pay profiles: %w", err)
 	}
@@ -690,11 +717,14 @@ func (s *DriverPaySeed) ensurePayAssignments(
 		profileIDs[profiles[i].Name] = profiles[i].ID
 	}
 
-	assigned, err := driverpaydb.WorkerPayAssignments.AllTenants().Pick(driverpaydb.WorkerPayAssignments.WorkerID).Where(
-		driverpaydb.WorkerPayAssignments.OrganizationID.Eq(refs.orgID),
-		driverpaydb.WorkerPayAssignments.BusinessUnitID.Eq(refs.buID),
-		driverpaydb.WorkerPayAssignments.EffectiveTo.IsNull(),
-	).All(ctx, db)
+	assigned, err := driverpaydb.WorkerPayAssignments.AllTenants().
+		Pick(driverpaydb.WorkerPayAssignments.WorkerID).
+		Where(
+			driverpaydb.WorkerPayAssignments.OrganizationID.Eq(refs.orgID),
+			driverpaydb.WorkerPayAssignments.BusinessUnitID.Eq(refs.buID),
+			driverpaydb.WorkerPayAssignments.EffectiveTo.IsNull(),
+		).
+		All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get existing pay assignments: %w", err)
 	}
@@ -859,10 +889,13 @@ func ensurePayCodes(
 		return nil, fmt.Errorf("insert system pay codes: %w", err)
 	}
 
-	existing, err := driverpaydb.PayCodes.AllTenants().Pick(driverpaydb.PayCodes.ID, driverpaydb.PayCodes.Direction, driverpaydb.PayCodes.Code).Where(
-		driverpaydb.PayCodes.OrganizationID.Eq(orgID),
-		driverpaydb.PayCodes.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	existing, err := driverpaydb.PayCodes.AllTenants().
+		Pick(driverpaydb.PayCodes.ID, driverpaydb.PayCodes.Direction, driverpaydb.PayCodes.Code).
+		Where(
+			driverpaydb.PayCodes.OrganizationID.Eq(orgID),
+			driverpaydb.PayCodes.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get pay codes: %w", err)
 	}
@@ -912,17 +945,127 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 	}
 
 	defs := []deductionDef{
-		{payWorkerMike, "TRKLEASE", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Kenworth T680 lease-purchase payment", 65000, 0, 585000, false},
-		{payWorkerMike, "INSUR", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Bobtail and physical damage insurance", 8600, 0, 77400, false},
-		{payWorkerMike, "ESCROW", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Maintenance escrow contribution", 10000, 0, 40000, true},
-		{payWorkerMike, "ELD", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyMonthly, "ELD subscription", 4500, 0, 13500, false},
-		{payWorkerCarlos, "TRKLEASE", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Peterbilt 579 lease-purchase payment", 72500, 5800000, 2175000, false},
-		{payWorkerCarlos, "INSUR", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Occupational accident insurance", 9200, 0, 276000, false},
-		{payWorkerCarlos, "ESCROW", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Maintenance escrow contribution", 15000, 0, 45000, true},
-		{payWorkerCarlos, "FUELCARD", driverpay.DeductionStatusPaused, driverpay.DeductionFrequencyEverySettlement, "Fuel card balance repayment", 31000, 0, 124000, false},
-		{payWorkerDavid, "TRLLEASE", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Dry van trailer rental", 24000, 0, 96000, false},
-		{payWorkerDavid, "INSUR", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Occupational accident insurance", 8800, 0, 35200, false},
-		{payWorkerDavid, "LOAN", driverpay.DeductionStatusActive, driverpay.DeductionFrequencyEverySettlement, "Company loan repayment — tire replacement", 20000, 480000, 140000, false},
+		{
+			payWorkerMike,
+			"TRKLEASE",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Kenworth T680 lease-purchase payment",
+			65000,
+			0,
+			585000,
+			false,
+		},
+		{
+			payWorkerMike,
+			"INSUR",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Bobtail and physical damage insurance",
+			8600,
+			0,
+			77400,
+			false,
+		},
+		{
+			payWorkerMike,
+			"ESCROW",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Maintenance escrow contribution",
+			10000,
+			0,
+			40000,
+			true,
+		},
+		{
+			payWorkerMike,
+			"ELD",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyMonthly,
+			"ELD subscription",
+			4500,
+			0,
+			13500,
+			false,
+		},
+		{
+			payWorkerCarlos,
+			"TRKLEASE",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Peterbilt 579 lease-purchase payment",
+			72500,
+			5800000,
+			2175000,
+			false,
+		},
+		{
+			payWorkerCarlos,
+			"INSUR",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Occupational accident insurance",
+			9200,
+			0,
+			276000,
+			false,
+		},
+		{
+			payWorkerCarlos,
+			"ESCROW",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Maintenance escrow contribution",
+			15000,
+			0,
+			45000,
+			true,
+		},
+		{
+			payWorkerCarlos,
+			"FUELCARD",
+			driverpay.DeductionStatusPaused,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Fuel card balance repayment",
+			31000,
+			0,
+			124000,
+			false,
+		},
+		{
+			payWorkerDavid,
+			"TRLLEASE",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Dry van trailer rental",
+			24000,
+			0,
+			96000,
+			false,
+		},
+		{
+			payWorkerDavid,
+			"INSUR",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Occupational accident insurance",
+			8800,
+			0,
+			35200,
+			false,
+		},
+		{
+			payWorkerDavid,
+			"LOAN",
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionFrequencyEverySettlement,
+			"Company loan repayment — tire replacement",
+			20000,
+			480000,
+			140000,
+			false,
+		},
 	}
 
 	deductions := make(map[string]*driverpay.RecurringDeduction, len(defs))
@@ -1090,7 +1233,13 @@ func (s *DriverPaySeed) createPaidShipments(
 			pro: "SEED-PAY-003", bol: "BOL-2026-0103", customer: "PEAK",
 			revenue: 2950, daysBeforeEnd: 5, pieces: 26, weight: 41000,
 			moves: []paidMoveDef{
-				{payWorkerMike, 925, []string{"WH-DAL", "CUST-DEN", "DC-CHI"}, "TRC-101", "TRL-003"},
+				{
+					payWorkerMike,
+					925,
+					[]string{"WH-DAL", "CUST-DEN", "DC-CHI"},
+					"TRC-101",
+					"TRL-003",
+				},
 			},
 		},
 		{
@@ -1119,7 +1268,13 @@ func (s *DriverPaySeed) createPaidShipments(
 			pro: "SEED-PAY-007", bol: "BOL-2026-0107", customer: "RNGE",
 			revenue: 3050, daysBeforeEnd: 3, pieces: 24, weight: 39000,
 			moves: []paidMoveDef{
-				{payWorkerEmily, 1016, []string{"CUST-DEN", "COLD-PHX", "TERM-LA"}, "TRC-003", "TRL-003"},
+				{
+					payWorkerEmily,
+					1016,
+					[]string{"CUST-DEN", "COLD-PHX", "TERM-LA"},
+					"TRC-003",
+					"TRL-003",
+				},
 			},
 		},
 		{
@@ -1363,11 +1518,11 @@ func (s *DriverPaySeed) resolvePeriod(
 				"get settlement control: %w", err,
 			)
 		}
-		control = &tenant.SettlementControl{
-			PayPeriodFrequency:            tenant.PayPeriodFrequencyWeekly,
+		control = &settlementcontrol.SettlementControl{
+			PayPeriodFrequency:            settlementcontrol.PayPeriodFrequencyWeekly,
 			PeriodEndDayOfWeek:            6,
 			PayDelayDays:                  5,
-			PayTrigger:                    tenant.PayTriggerShipmentDelivered,
+			PayTrigger:                    settlementcontrol.PayTriggerShipmentDelivered,
 			VarianceThresholdPct:          decimal.RequireFromString("25"),
 			VarianceLookbackWeeks:         8,
 			EscrowInterestFrequencyMonths: 3,
@@ -1406,11 +1561,14 @@ func (s *DriverPaySeed) loadWorkerProfiles(
 		profileIDs = append(profileIDs, assignments[i].PayProfileID)
 	}
 
-	profiles, err := driverpaydb.PayProfiles.AllTenants().Load(driverpaydb.PayProfiles.Components()).Where(
-		driverpaydb.PayProfiles.OrganizationID.Eq(refs.orgID),
-		driverpaydb.PayProfiles.BusinessUnitID.Eq(refs.buID),
-		driverpaydb.PayProfiles.ID.In(profileIDs...),
-	).All(ctx, db)
+	profiles, err := driverpaydb.PayProfiles.AllTenants().
+		Load(driverpaydb.PayProfiles.Components()).
+		Where(
+			driverpaydb.PayProfiles.OrganizationID.Eq(refs.orgID),
+			driverpaydb.PayProfiles.BusinessUnitID.Eq(refs.buID),
+			driverpaydb.PayProfiles.ID.In(profileIDs...),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get pay profiles with components: %w", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -14,12 +15,12 @@ import (
 )
 
 type ShipmentBillingReadinessPolicy struct {
-	ShipmentBillingRequirementEnforcement tenant.EnforcementLevel            `json:"shipmentBillingRequirementEnforcement"`
-	RateValidationEnforcement             tenant.EnforcementLevel            `json:"rateValidationEnforcement"`
-	BillingExceptionDisposition           tenant.BillingExceptionDisposition `json:"billingExceptionDisposition"`
-	NotifyOnBillingExceptions             bool                               `json:"notifyOnBillingExceptions"`
-	ReadyToBillAssignmentMode             tenant.ReadyToBillAssignmentMode   `json:"readyToBillAssignmentMode"`
-	BillingQueueTransferMode              tenant.BillingQueueTransferMode    `json:"billingQueueTransferMode"`
+	ShipmentBillingRequirementEnforcement tenant.EnforcementLevel                    `json:"shipmentBillingRequirementEnforcement"`
+	RateValidationEnforcement             tenant.EnforcementLevel                    `json:"rateValidationEnforcement"`
+	BillingExceptionDisposition           billingcontrol.BillingExceptionDisposition `json:"billingExceptionDisposition"`
+	NotifyOnBillingExceptions             bool                                       `json:"notifyOnBillingExceptions"`
+	ReadyToBillAssignmentMode             billingcontrol.ReadyToBillAssignmentMode   `json:"readyToBillAssignmentMode"`
+	BillingQueueTransferMode              billingcontrol.BillingQueueTransferMode    `json:"billingQueueTransferMode"`
 }
 
 type ShipmentBillingValidation struct {

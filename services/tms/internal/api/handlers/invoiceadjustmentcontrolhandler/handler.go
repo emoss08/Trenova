@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/invoiceadjustmentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +77,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity := new(tenant.InvoiceAdjustmentControl)
+	entity := new(invoiceadjustmentcontrol.InvoiceAdjustmentControl)
 	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return

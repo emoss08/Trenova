@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -255,7 +255,7 @@ func (a *Activities) persistIndexedContentAndAssociate(
 func (a *Activities) upsertShipmentDraftForProcess(
 	ctx context.Context,
 	doc *document.Document,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	classification *ClassificationResult,
 	intelligence *DocumentIntelligenceAnalysis,
 	enqueueAsyncAI bool,
@@ -625,7 +625,7 @@ func (a *Activities) associateDocumentType(
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
 	kind string,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 ) error {
 	if !control.EnableAutoDocumentTypeAssociate ||
 		doc.DocumentTypeID != nil ||
@@ -739,6 +739,6 @@ func (a *Activities) associateDocumentType(
 func (a *Activities) getDocumentControl(
 	ctx context.Context,
 	orgID, buID pulid.ID,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	return a.documentControlRepo.GetOrCreate(ctx, orgID, buID)
 }

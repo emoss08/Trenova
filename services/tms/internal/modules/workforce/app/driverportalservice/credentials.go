@@ -5,7 +5,7 @@ import (
 	"mime/multipart"
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -87,7 +87,7 @@ func (s *Service) UploadMyCredentialDocument(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowProfileDocumentUpload },
+		func(control *dashcontrol.DashControl) bool { return control.AllowProfileDocumentUpload },
 		"Your carrier collects qualification documents outside Dash — see your fleet manager.",
 	); err != nil {
 		return nil, err

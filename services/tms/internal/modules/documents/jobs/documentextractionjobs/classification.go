@@ -3,13 +3,13 @@ package documentextractionjobs
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func classifyDocumentWithControl(
 	name, text string,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	features *DocumentFeatureSet,
 	fingerprint *ProviderFingerprint,
 ) *ClassificationResult {

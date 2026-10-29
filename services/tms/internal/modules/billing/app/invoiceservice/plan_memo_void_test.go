@@ -1,21 +1,21 @@
 package invoiceservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -77,7 +77,11 @@ func TestPreviewVoidPostedPreviewsTheFullReversalWithoutSubmittingIt(t *testing.
 	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
-	preview, err := svc.PreviewVoid(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
+	preview, err := svc.PreviewVoid(
+		t.Context(),
+		f.request(invoice.VoidDispositionDoNotRebill),
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.True(t, preview.Posted)
@@ -125,7 +129,8 @@ func TestPreviewMemoBuildsTheMemoWithoutMintingANumberOrWriting(t *testing.T) {
 	}, nil).Once()
 	billing := tenantportsmock.NewMockBillingControlRepository(t)
 	billing.EXPECT().GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).Once()
+		Return(&billingcontrol.BillingControl{DefaultPaymentTerm: billingcontrol.PaymentTermNet30}, nil).
+		Once()
 
 	svc := &Service{
 		l:                zap.NewNop(),

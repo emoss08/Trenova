@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -52,7 +52,7 @@ func (s *Service) RequestMyPTO(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowPtoRequests },
+		func(control *dashcontrol.DashControl) bool { return control.AllowPtoRequests },
 		"Your carrier handles time-off requests outside Dash — talk to your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (s *Service) SubmitMyExpense(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowExpenseSubmission },
+		func(control *dashcontrol.DashControl) bool { return control.AllowExpenseSubmission },
 		"Your carrier handles expense reimbursements outside Dash — see your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -299,7 +299,7 @@ func (s *Service) RespondToMyAssignment(
 		return err
 	}
 	control, err := s.requireFeature(ctx, tenantInfo,
-		func(dc *tenant.DashControl) bool { return dc.RequireLoadAcknowledgment },
+		func(dc *dashcontrol.DashControl) bool { return dc.RequireLoadAcknowledgment },
 		"Your carrier doesn't use load acceptance in Dash.",
 	)
 	if err != nil {
@@ -368,7 +368,7 @@ func (s *Service) MyLoadPayEstimate(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool {
+		func(control *dashcontrol.DashControl) bool {
 			return control.ShowLoadPay && control.ShowPayEstimates
 		},
 		"Pay estimates aren't enabled for your carrier.",

@@ -5,6 +5,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -44,7 +45,7 @@ type ssoIdentity struct {
 }
 
 type ssoUserLookup struct {
-	Config      *tenant.SSOConfig
+	Config      *sso.SSOConfig
 	Identity    ssoIdentity
 	DisplayName string
 }
@@ -52,7 +53,7 @@ type ssoUserLookup struct {
 func identityFromOIDCClaims(
 	issuer string,
 	claims *oidcClaims,
-	provider tenant.SSOProvider,
+	provider sso.SSOProvider,
 ) ssoIdentity {
 	return ssoIdentity{
 		Issuer:       strings.TrimSpace(issuer),
@@ -97,7 +98,7 @@ func (s *Service) resolveSSOUser(ctx context.Context, req *ssoUserLookup) (*tena
 
 func (s *Service) userForLink(
 	ctx context.Context,
-	link *tenant.SSOIdentityLink,
+	link *sso.SSOIdentityLink,
 	displayName string,
 ) (*tenant.User, error) {
 	usr, err := s.ur.FindByIDForLogin(ctx, link.UserID)
@@ -158,7 +159,7 @@ func (s *Service) linkSSOIdentity(ctx context.Context, req *ssoUserLookup) (*ten
 	}
 
 	now := timeutils.NowUnix()
-	link := &tenant.SSOIdentityLink{
+	link := &sso.SSOIdentityLink{
 		OrganizationID: req.Config.OrganizationID,
 		BusinessUnitID: req.Config.BusinessUnitID,
 		SSOConfigID:    req.Config.ID,

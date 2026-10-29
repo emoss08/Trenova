@@ -3,6 +3,7 @@
 package driverportalexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -67,7 +68,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -77,7 +78,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -87,7 +88,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -97,7 +98,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.RequireLoadAcknowledgment, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -107,7 +108,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowLoadRefusals, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -117,7 +118,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowStopActions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -127,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowLoadDocumentUpload, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -137,7 +138,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowLoadComments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -147,7 +148,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.ShowLoadPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -157,7 +158,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.ShowPayEstimates, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -167,7 +168,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowExpenseSubmission, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -177,7 +178,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.RequireExpenseReceipt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -187,7 +188,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowSettlementDisputes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -197,7 +198,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowProfileDocumentUpload, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -207,7 +208,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowContactInfoEdit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -217,7 +218,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.AllowPtoRequests, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -227,7 +228,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.SendCredentialReminders, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -237,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.RequireContactChangeApproval, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -247,7 +248,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.DriverDigestCadence, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDriverDigestCadence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDriverDigestCadence),
@@ -257,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.DriverDigestWeekday, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -267,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.EnableDetentionAlerts, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -277,7 +278,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.DetentionAlertThresholdMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -287,7 +288,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -297,7 +298,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -307,7 +308,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.DashControl)
+					obj := o.(*dashcontrol.DashControl)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -3719,7 +3720,7 @@ type resolverMutation interface {
 	CancelMyExpense(ctx context.Context, id string) (*driverpay.Expense, error)
 	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*driverpay.Expense, error)
 	RespondToMyAssignment(ctx context.Context, input gqlmodel.RespondToMyAssignmentInput) (bool, error)
-	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*tenant.DashControl, error)
+	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*dashcontrol.DashControl, error)
 }
 
 type resolverMyPTOBalance interface {
@@ -3773,7 +3774,7 @@ type resolverQuery interface {
 	DriverExpenses(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverExpenseConnection, error)
 	DriverExpense(ctx context.Context, id string) (*driverpay.Expense, error)
 	PendingDriverExpenseCount(ctx context.Context) (int, error)
-	DashControl(ctx context.Context) (*tenant.DashControl, error)
+	DashControl(ctx context.Context) (*dashcontrol.DashControl, error)
 }
 
 var (
@@ -5444,12 +5445,12 @@ func unmarshalODisputeAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODriverDigestCadence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, v any) (*tenant.DriverDigestCadence, error) {
+func unmarshalODriverDigestCadence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, v any) (*dashcontrol.DriverDigestCadence, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := tenant.DriverDigestCadence(tmp)
+	res := dashcontrol.DriverDigestCadence(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5501,7 +5502,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNDashControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDashControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.DashControl) graphql.Marshaler {
+func marshalNDashControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDashControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *dashcontrol.DashControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5517,7 +5518,7 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 	return res
 }
 
-func marshalNDriverDigestCadence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.DriverDigestCadence) graphql.Marshaler {
+func marshalNDriverDigestCadence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v dashcontrol.DriverDigestCadence) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

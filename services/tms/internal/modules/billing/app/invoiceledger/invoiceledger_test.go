@@ -4,10 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
@@ -16,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -57,12 +56,12 @@ var (
 	revenueID = pulid.MustNew("gla_")
 )
 
-func accrualControl() *tenant.AccountingControl {
-	return &tenant.AccountingControl{
+func accrualControl() *accountingcontrol.AccountingControl {
+	return &accountingcontrol.AccountingControl{
 		OrganizationID:           orgID,
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
+		AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+		JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
 		DefaultARAccountID:       arID,
 		DefaultRevenueAccountID:  revenueID,
 	}
@@ -85,7 +84,7 @@ func memo(billType billingqueue.BillType, total int64) *invoice.Invoice {
 
 func poster(
 	t *testing.T,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	periods journalposting.PeriodReader,
 	journals journalentryports.JournalPostingRepository,
 	ledger *capturedLedger,
@@ -98,7 +97,11 @@ func poster(
 		Policy: accountingcontrolpolicyservice.New(
 			accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
 		),
-		Writer: journalposting.Writer{Periods: periods, Numbers: fixedNumbers{}, Journals: journals},
+		Writer: journalposting.Writer{
+			Periods:  periods,
+			Numbers:  fixedNumbers{},
+			Journals: journals,
+		},
 		Ledger: ledger,
 	}
 }
@@ -106,9 +109,21 @@ func poster(
 func TestSourceEventFollowsTheBillType(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, tenant.JournalSourceEventInvoicePosted, SourceEvent(billingqueue.BillTypeInvoice))
-	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted, SourceEvent(billingqueue.BillTypeCreditMemo))
-	assert.Equal(t, tenant.JournalSourceEventDebitMemoPosted, SourceEvent(billingqueue.BillTypeDebitMemo))
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventInvoicePosted,
+		SourceEvent(billingqueue.BillTypeInvoice),
+	)
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventCreditMemoPosted,
+		SourceEvent(billingqueue.BillTypeCreditMemo),
+	)
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventDebitMemoPosted,
+		SourceEvent(billingqueue.BillTypeDebitMemo),
+	)
 }
 
 func TestACreditMemoPostsRevenueAgainstARAndACreditLedgerLine(t *testing.T) {
@@ -134,7 +149,13 @@ func TestACreditMemoPostsRevenueAgainstARAndACreditLedgerLine(t *testing.T) {
 		Once()
 	ledger := &capturedLedger{}
 
-	result, err := poster(t, accrualControl(), periods, journals, ledger).Post(t.Context(), &Request{
+	result, err := poster(
+		t,
+		accrualControl(),
+		periods,
+		journals,
+		ledger,
+	).Post(t.Context(), &Request{
 		Invoice:          entity,
 		ActorID:          pulid.MustNew("usr_"),
 		AccountingDate:   entity.InvoiceDate,
@@ -189,7 +210,7 @@ func TestNothingIsPostedWhenRevenueIsNotRecognizedOnInvoicePost(t *testing.T) {
 	t.Parallel()
 
 	control := accrualControl()
-	control.AccountingBasis = tenant.AccountingBasisCash
+	control.AccountingBasis = accountingcontrol.AccountingBasisCash
 	ledger := &capturedLedger{}
 
 	_, err := poster(

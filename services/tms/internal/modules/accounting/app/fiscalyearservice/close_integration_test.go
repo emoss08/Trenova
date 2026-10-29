@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
@@ -34,9 +32,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -194,11 +193,14 @@ func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
 
 	// The closing entry goes into a year-end adjusting period, so December keeps
 	// showing December.
-	periods, err := f.periodRepo.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
-		FiscalYearID: f.closingYear.ID,
-		OrgID:        f.orgID,
-		BuID:         f.buID,
-	})
+	periods, err := f.periodRepo.ListByFiscalYearID(
+		ctx,
+		fiscalperiodports.ListByFiscalYearIDRequest{
+			FiscalYearID: f.closingYear.ID,
+			OrgID:        f.orgID,
+			BuID:         f.buID,
+		},
+	)
 	require.NoError(t, err)
 
 	var adjusting *fiscalperiod.FiscalPeriod
@@ -332,11 +334,14 @@ func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
 	}, f.userID)
 	require.NoError(t, err)
 
-	periods, err := f.periodRepo.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
-		FiscalYearID: f.closingYear.ID,
-		OrgID:        f.orgID,
-		BuID:         f.buID,
-	})
+	periods, err := f.periodRepo.ListByFiscalYearID(
+		ctx,
+		fiscalperiodports.ListByFiscalYearIDRequest{
+			FiscalYearID: f.closingYear.ID,
+			OrgID:        f.orgID,
+			BuID:         f.buID,
+		},
+	)
 	require.NoError(t, err)
 
 	adjusting := make([]*fiscalperiod.FiscalPeriod, 0, 1)
@@ -422,7 +427,7 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	ac := tenantdb.AccountingControls
 	_, err = ac.Where(keel.True()).Update(ctx, db,
 		ac.RequireReconciliationToClose.To(true),
-		ac.ReconciliationMode.To(tenant.ReconciliationModeBlockPosting),
+		ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeBlockPosting),
 	)
 	require.NoError(t, err)
 

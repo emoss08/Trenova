@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -36,8 +36,8 @@ type traceControls struct {
 func (traceControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	return &tenant.AgentControl{}, nil
+) (*agentcontrol.AgentControl, error) {
+	return &agentcontrol.AgentControl{}, nil
 }
 
 type traceRuns struct {

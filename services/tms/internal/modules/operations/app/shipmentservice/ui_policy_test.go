@@ -3,10 +3,9 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,7 @@ func TestServiceGetUIPolicy_MapsShipmentControl(t *testing.T) {
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AllowMoveRemovals:      false,
 			CheckForDuplicateBOLs:  true,
 			MaxShipmentWeightLimit: 80000,

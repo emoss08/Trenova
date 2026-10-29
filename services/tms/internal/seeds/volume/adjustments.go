@@ -7,26 +7,27 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -36,7 +37,7 @@ import (
 
 const (
 	adjAccountWriteOff     = "6940"
-	adjWriteOffEvent       = tenant.JournalSourceEventType("InvoiceWriteOffCreated")
+	adjWriteOffEvent       = accountingcontrol.JournalSourceEventType("InvoiceWriteOffCreated")
 	adjBatchInlineMax      = 25
 	adjReconciliationText  = "Adjustment executed against settled or finance-sensitive invoice state"
 	adjReconciliationAlert = "Execution will create a reconciliation exception for finance follow-up"
@@ -95,7 +96,7 @@ type adjFieldError struct {
 
 type adjSetup struct {
 	bil         *bilSetup
-	control     *tenant.InvoiceAdjustmentControl
+	control     *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 	writeOff    pulid.ID
 	canWriteOff bool
 }
@@ -328,8 +329,8 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 			setup.writeOff = id
 		}
 	}
-	journalsAllowed := accounting.JournalPostingMode != tenant.JournalPostingModeManual ||
-		accounting.ManualJournalEntryPolicy != tenant.ManualJournalEntryPolicyDisallow
+	journalsAllowed := accounting.JournalPostingMode != accountingcontrol.JournalPostingModeManual ||
+		accounting.ManualJournalEntryPolicy != accountingcontrol.ManualJournalEntryPolicyDisallow
 	setup.canWriteOff = setup.writeOff.IsNotNil() && bil.ar.IsNotNil() && journalsAllowed &&
 		len(bil.periods) > 0
 
@@ -401,7 +402,12 @@ func (g *generator) adjPlanOne(
 		return nil
 	}
 	submitAt := g.adjSubmitTime(rec.Invoice, outcome)
-	p := &adjPlan{req: req, outcome: outcome, submitAt: submitAt, submitBy: g.bilPick(g.refs.userIDs)}
+	p := &adjPlan{
+		req:      req,
+		outcome:  outcome,
+		submitAt: submitAt,
+		submitBy: g.bilPick(g.refs.userIDs),
+	}
 
 	if outcome == adjOutcomeDraft {
 		return p
@@ -431,7 +437,8 @@ func (g *generator) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan {
 		}
 		p.outcome = adjOutcomeExecuted
 	}
-	if p.outcome == adjOutcomeExecuted && p.req.kind == invoiceadjustment.KindWriteOff && !setup.canWriteOff {
+	if p.outcome == adjOutcomeExecuted && p.req.kind == invoiceadjustment.KindWriteOff &&
+		!setup.canWriteOff {
 		if !p.pv.approval {
 			return nil
 		}
@@ -573,7 +580,8 @@ func (g *generator) adjPartialCredit(inv *invoice.Invoice) map[pulid.ID]decimal.
 		}
 		credit[line.ID] = amount
 	case freight != nil:
-		credit[freight.ID] = freight.Amount.Mul(decimal.NewFromFloat(0.04 + g.fake.float()*0.16)).Round(2)
+		credit[freight.ID] = freight.Amount.Mul(decimal.NewFromFloat(0.04 + g.fake.float()*0.16)).
+			Round(2)
 	default:
 		line := inv.Lines[0]
 		credit[line.ID] = line.Amount.Abs().Mul(decimal.NewFromFloat(0.1)).Round(2)
@@ -603,25 +611,28 @@ func (g *generator) adjAccountingDate(
 		return at
 	}
 	control := setup.control
-	if control.AdjustmentAccountingDatePolicy == tenant.AdjustmentAccountingDateAlwaysNextOpen {
+	if control.AdjustmentAccountingDatePolicy == invoiceadjustmentcontrol.AdjustmentAccountingDateAlwaysNextOpen {
 		return next()
 	}
 	if g.adjOpenPeriod(setup, inv.InvoiceDate) != nil {
 		return inv.InvoiceDate
 	}
 	switch control.ClosedPeriodAdjustmentPolicy {
-	case tenant.ClosedPeriodAdjustmentPolicyDisallow:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyDisallow:
 		pv.errors = append(pv.errors, adjFieldError{
 			"accountingDate", "Closed-period adjustments are disallowed by policy",
 		})
-	case tenant.ClosedPeriodAdjustmentPolicyRequireReopen:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyRequireReopen:
 		pv.errors = append(pv.errors, adjFieldError{
 			"accountingDate",
 			"The accounting period must be reopened before this adjustment can be posted",
 		})
-	case tenant.ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
 		pv.approval = true
-		pv.warnings = append(pv.warnings, "Adjustment will post in the next open period and requires approval")
+		pv.warnings = append(
+			pv.warnings,
+			"Adjustment will post in the next open period and requires approval",
+		)
 	}
 	return next()
 }
@@ -643,27 +654,29 @@ func (g *generator) adjPreview(
 		fail("invoiceId", "Only posted invoices may be adjusted")
 	}
 	if req.kind == invoiceadjustment.KindFullReversal && inv.AppliedAmountMinor > 0 {
-		fail("invoiceId",
-			"Unapply the customer payments and credit memos on this invoice before reversing it in full")
+		fail(
+			"invoiceId",
+			"Unapply the customer payments and credit memos on this invoice before reversing it in full",
+		)
 	}
 	pv.accountingDate = g.adjAccountingDate(setup, inv, at, pv)
 
 	switch inv.SettlementStatus {
 	case invoice.SettlementStatusPaid:
 		switch control.PaidInvoiceAdjustmentPolicy {
-		case tenant.AdjustmentEligibilityDisallow:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			fail("invoiceId", "Paid invoices cannot be adjusted by policy")
-		case tenant.AdjustmentEligibilityAllowWithApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			pv.approval = true
-		case tenant.AdjustmentEligibilityAllowWithoutApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval:
 		}
 	case invoice.SettlementStatusPartiallyPaid:
 		switch control.PartiallyPaidInvoiceAdjustmentPolicy {
-		case tenant.AdjustmentEligibilityDisallow:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			fail("invoiceId", "Partially paid invoices cannot be adjusted by policy")
-		case tenant.AdjustmentEligibilityAllowWithApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			pv.approval = true
-		case tenant.AdjustmentEligibilityAllowWithoutApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval:
 		}
 	case invoice.SettlementStatusUnpaid:
 	}
@@ -671,7 +684,7 @@ func (g *generator) adjPreview(
 		pv.recon = true
 	}
 	if strings.TrimSpace(req.reason) == "" &&
-		control.AdjustmentReasonRequirement == tenant.RequirementPolicyRequired {
+		control.AdjustmentReasonRequirement == invoiceadjustmentcontrol.RequirementPolicyRequired {
 		fail("reason", "Adjustment reason is required by policy")
 	}
 
@@ -764,14 +777,14 @@ func (g *generator) adjPreview(
 			fail("creditTotalAmount", "Write-offs cannot create unapplied customer credit")
 		} else {
 			switch control.CustomerCreditBalancePolicy {
-			case tenant.CustomerCreditBalancePolicyDisallow:
+			case invoiceadjustmentcontrol.CustomerCreditBalancePolicyDisallow:
 				fail("creditTotalAmount", "Policy disallows customer credit balance outcomes")
-			case tenant.CustomerCreditBalancePolicyAllowUnappliedCredit:
+			case invoiceadjustmentcontrol.CustomerCreditBalancePolicyAllowUnappliedCredit:
 				switch control.OverCreditPolicy {
-				case tenant.OverCreditPolicyBlock:
+				case invoiceadjustmentcontrol.OverCreditPolicyBlock:
 					fail("creditTotalAmount",
 						"Adjustment would create unapplied customer credit because of payment state")
-				case tenant.OverCreditPolicyAllowWithApproval:
+				case invoiceadjustmentcontrol.OverCreditPolicyAllowWithApproval:
 					pv.approval = true
 				}
 			}
@@ -781,34 +794,34 @@ func (g *generator) adjPreview(
 	amount := pv.credit.Abs()
 	if req.kind == invoiceadjustment.KindWriteOff {
 		switch control.WriteOffApprovalPolicy {
-		case tenant.WriteOffApprovalPolicyDisallow:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyDisallow:
 			fail("kind", "Write-offs are disallowed by policy")
-		case tenant.WriteOffApprovalPolicyAlwaysRequireApproval:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyAlwaysRequireApproval:
 			pv.approval = true
-		case tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
 			if amount.GreaterThanOrEqual(control.WriteOffApprovalThreshold) {
 				pv.approval = true
 			}
 		}
 	} else {
 		switch control.StandardAdjustmentApprovalPolicy {
-		case tenant.ApprovalPolicyAlways:
+		case invoiceadjustmentcontrol.ApprovalPolicyAlways:
 			pv.approval = true
-		case tenant.ApprovalPolicyAmountThreshold:
+		case invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold:
 			if amount.GreaterThanOrEqual(control.StandardAdjustmentApprovalThreshold) {
 				pv.approval = true
 			}
-		case tenant.ApprovalPolicyNone:
+		case invoiceadjustmentcontrol.ApprovalPolicyNone:
 		}
 	}
 
 	if req.kind == invoiceadjustment.KindCreditRebill {
 		switch control.ReplacementInvoiceReviewPolicy {
-		case tenant.ReplacementInvoiceReviewPolicyAlwaysRequireReview:
+		case invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyAlwaysRequireReview:
 			pv.review = true
-		case tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange:
+		case invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange:
 			pv.review = !pv.rebill.Equal(pv.credit)
-		case tenant.ReplacementInvoiceReviewPolicyNoAdditionalReview:
+		case invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyNoAdditionalReview:
 		}
 	}
 
@@ -877,7 +890,8 @@ func (g *generator) adjPlanBatches(
 		candidates := byCustomer[customerID]
 		submitBy := g.bilPick(g.refs.userIDs)
 		submitted := now - g.fake.between64(2*bilDay, 150*bilDay)
-		if status == invoiceadjustment.BatchStatusRunning || status == invoiceadjustment.BatchStatusSubmitted {
+		if status == invoiceadjustment.BatchStatusRunning ||
+			status == invoiceadjustment.BatchStatusSubmitted {
 			submitted = now - g.fake.between64(5*bilMinute, 50*bilMinute)
 		}
 		key := "bulk-" + g.fake.letters(4) + "-" + g.fake.digits(8)
@@ -1005,7 +1019,10 @@ func (g *generator) adjPlanBatches(
 	return batches, plans
 }
 
-func (g *generator) adjFailItem(req *adjRequest, item *invoiceadjustment.InvoiceAdjustmentBatchItem) {
+func (g *generator) adjFailItem(
+	req *adjRequest,
+	item *invoiceadjustment.InvoiceAdjustmentBatchItem,
+) {
 	inv := req.inv
 	if inv.AppliedAmountMinor > 0 {
 		req.kind = invoiceadjustment.KindFullReversal
@@ -1077,14 +1094,14 @@ func (g *generator) adjNumber(ctx context.Context, plans []*adjPlan) error {
 			rebillPlans = append(rebillPlans, p)
 		}
 	}
-	memoNumbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeCreditMemo, memoSlots)
+	memoNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeCreditMemo, memoSlots)
 	if err != nil {
 		return err
 	}
 	for i, p := range memoPlans {
 		p.memoNumber = memoNumbers[i]
 	}
-	rebillNumbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeInvoice, rebillSlots)
+	rebillNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeInvoice, rebillSlots)
 	if err != nil {
 		return err
 	}
@@ -1094,7 +1111,11 @@ func (g *generator) adjNumber(ctx context.Context, plans []*adjPlan) error {
 	return nil
 }
 
-func (g *generator) adjGroup(rows *adjRows, inv *invoice.Invoice, at int64) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup {
+func (g *generator) adjGroup(
+	rows *adjRows,
+	inv *invoice.Invoice,
+	at int64,
+) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup {
 	if group, ok := rows.groups[inv.ID]; ok {
 		return group
 	}
@@ -1409,23 +1430,26 @@ func (g *generator) adjExecute(
 	}
 
 	if pv.recon {
-		rows.exceptions = append(rows.exceptions, &invoiceadjustment.InvoiceAdjustmentReconciliationException{
-			ID:                  idAt("irex_", at),
-			OrganizationID:      g.refs.orgID,
-			BusinessUnitID:      g.refs.buID,
-			AdjustmentID:        adj.ID,
-			InvoiceID:           source.ID,
-			CreditMemoInvoiceID: memo.ID,
-			Status:              invoiceadjustment.ExceptionStatusOpen,
-			Reason:              adjReconciliationText,
-			Amount:              pv.credit,
-			Metadata: map[string]any{
-				"settlementStatus": source.SettlementStatus,
-				"disputeStatus":    source.DisputeStatus,
+		rows.exceptions = append(
+			rows.exceptions,
+			&invoiceadjustment.InvoiceAdjustmentReconciliationException{
+				ID:                  idAt("irex_", at),
+				OrganizationID:      g.refs.orgID,
+				BusinessUnitID:      g.refs.buID,
+				AdjustmentID:        adj.ID,
+				InvoiceID:           source.ID,
+				CreditMemoInvoiceID: memo.ID,
+				Status:              invoiceadjustment.ExceptionStatusOpen,
+				Reason:              adjReconciliationText,
+				Amount:              pv.credit,
+				Metadata: map[string]any{
+					"settlementStatus": source.SettlementStatus,
+					"disputeStatus":    source.DisputeStatus,
+				},
+				CreatedAt: at,
+				UpdatedAt: at,
 			},
-			CreatedAt: at,
-			UpdatedAt: at,
-		})
+		)
 	}
 
 	rows.snapshots = append(rows.snapshots, &invoiceadjustment.InvoiceAdjustmentSnapshot{
@@ -1522,22 +1546,25 @@ func (g *generator) adjRebill(
 	rows.bil.items = append(rows.bil.items, item)
 
 	replacement := &invoice.Invoice{
-		ID:                        idAt("inv_", at),
-		OrganizationID:            g.refs.orgID,
-		BusinessUnitID:            g.refs.buID,
-		BillingQueueItemID:        item.ID,
-		Scope:                     invoice.ScopeAdjustment,
-		ShipmentID:                source.ShipmentID,
-		CustomerID:                source.CustomerID,
-		Detail:                    source.Detail,
-		SectionBy:                 source.SectionBy,
-		Number:                    item.Number,
-		BillType:                  billingqueue.BillTypeInvoice,
-		Status:                    invoice.StatusDraft,
-		PaymentTerm:               source.PaymentTerm,
-		CurrencyCode:              source.CurrencyCode,
-		InvoiceDate:               pv.accountingDate,
-		DueDate:                   invoice.DueDateFromPaymentTerm(pv.accountingDate, source.PaymentTerm),
+		ID:                 idAt("inv_", at),
+		OrganizationID:     g.refs.orgID,
+		BusinessUnitID:     g.refs.buID,
+		BillingQueueItemID: item.ID,
+		Scope:              invoice.ScopeAdjustment,
+		ShipmentID:         source.ShipmentID,
+		CustomerID:         source.CustomerID,
+		Detail:             source.Detail,
+		SectionBy:          source.SectionBy,
+		Number:             item.Number,
+		BillType:           billingqueue.BillTypeInvoice,
+		Status:             invoice.StatusDraft,
+		PaymentTerm:        source.PaymentTerm,
+		CurrencyCode:       source.CurrencyCode,
+		InvoiceDate:        pv.accountingDate,
+		DueDate: invoice.DueDateFromPaymentTerm(
+			pv.accountingDate,
+			source.PaymentTerm,
+		),
 		ShipmentProNumber:         source.ShipmentProNumber,
 		ShipmentBOL:               source.ShipmentBOL,
 		ServiceDate:               source.ServiceDate,
@@ -1598,7 +1625,7 @@ func (g *generator) adjPostCreditMemo(
 	if amount == 0 {
 		return pulid.Nil, nil
 	}
-	event := tenant.JournalSourceEventCreditMemoPosted
+	event := accountingcontrol.JournalSourceEventCreditMemoPosted
 	ledgerDate := memo.InvoiceDate
 	entryID := pulid.Nil
 
@@ -1808,10 +1835,16 @@ func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) er
 		current[i] = group.CurrentInvoiceID
 		group.CurrentInvoiceID = group.RootInvoiceID
 	}
-	err := bilInsert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle, rows.groupOrder,
+	err := bilInsert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle,
+		rows.groupOrder,
 		func(r *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) stamp {
 			return stamp{id: r.ID, created: r.CreatedAt, updated: r.CreatedAt}
-		}, false)
+		},
+		false,
+	)
 	for i, group := range rows.groupOrder {
 		group.CurrentInvoiceID = current[i]
 	}
@@ -1882,7 +1915,12 @@ func (g *generator) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRows) er
 	return nil
 }
 
-func (g *generator) adjUpdateGroupLinks(ctx context.Context, tx *keel.DB, rows *adjRows, onInvoices bool) error {
+func (g *generator) adjUpdateGroupLinks(
+	ctx context.Context,
+	tx *keel.DB,
+	rows *adjRows,
+	onInvoices bool,
+) error {
 	if len(rows.groupOrder) == 0 {
 		return nil
 	}
@@ -1994,7 +2032,14 @@ func (g *generator) adjApplyReversals(ctx context.Context, tx *keel.DB, rows *ad
 		orders = append(orders, r.rec.OrderID.String())
 	}
 	bq := billingqueuedb.BillingQueueItems
-	items := keel.Unnest("d", []string{"id", "actor", "at", "reason"}, itemIDs, actors, ats, reasons)
+	items := keel.Unnest(
+		"d",
+		[]string{"id", "actor", "at", "reason"},
+		itemIDs,
+		actors,
+		ats,
+		reasons,
+	)
 	if _, err := bq.With(items).Join(items, items.Col("id").EqCol(bq.ID)).Where(keel.True()).Update(
 		ctx,
 		tx,

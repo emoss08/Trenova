@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -227,7 +227,7 @@ func (s *service) identityProviderFromRequest(
 	entity.Validate(multiErr)
 	validateOIDCConfig(entity, multiErr)
 	if entity.Protocol == iam.IdentityProviderProtocolOIDC {
-		tenant.ValidateOIDCIssuerURL(multiErr, "oidcIssuerUrl", entity.OIDCIssuerURL, s.issuers)
+		sso.ValidateOIDCIssuerURL(multiErr, "oidcIssuerUrl", entity.OIDCIssuerURL, s.issuers)
 	}
 	if multiErr.HasErrors() {
 		return nil, multiErr

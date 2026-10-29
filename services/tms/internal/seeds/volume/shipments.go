@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -183,11 +183,11 @@ func (g *generator) seedShipments(ctx context.Context) error {
 	for i, p := range plans {
 		proSlots[i] = numberSlot{At: p.createdAt, LocationCode: p.moves[0][0].loc.Code}
 	}
-	pros, err := g.numbers.allocate(ctx, tenant.SequenceTypeProNumber, proSlots)
+	pros, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeProNumber, proSlots)
 	if err != nil {
 		return err
 	}
-	orderNumbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeOrder, proSlots)
+	orderNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeOrder, proSlots)
 	if err != nil {
 		return err
 	}

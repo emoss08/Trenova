@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -102,7 +102,7 @@ func (s *Service) AfterMoveStatusChange(
 		s.l.Error("failed to load settlement control for move pay accrual", zap.Error(err))
 		return nil
 	}
-	if control.PayTrigger != tenant.PayTriggerMoveCompleted {
+	if control.PayTrigger != settlementcontrol.PayTriggerMoveCompleted {
 		return nil
 	}
 

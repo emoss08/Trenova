@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -29,20 +29,20 @@ func TestGetByTenantSeedsEveryRequiredSequenceOnceThenReadsThem(t *testing.T) {
 
 	sc := tenantdb.SequenceConfigs
 	_, err := dbtx.Write(tctx, conn, func(ctx context.Context) (int64, error) {
-		return sc.Where(sc.SequenceType.In(tenant.RequiredSequenceTypes()...)).
+		return sc.Where(sc.SequenceType.In(sequenceconfig.RequiredSequenceTypes()...)).
 			Delete(ctx, conn.Keel(ctx))
 	})
 	require.NoError(t, err)
 
 	seeded, err := repo.GetByTenant(tctx, req)
 	require.NoError(t, err)
-	require.Len(t, seeded.Configs, len(tenant.RequiredSequenceTypes()))
+	require.Len(t, seeded.Configs, len(sequenceconfig.RequiredSequenceTypes()))
 	assert.Equal(t, data.Info().OrgID, seeded.OrganizationID)
 	assert.Equal(t, data.Info().BuID, seeded.BusinessUnitID)
 	for i := 1; i < len(seeded.Configs); i++ {
 		assert.LessOrEqual(t,
-			tenant.SequenceTypeSortOrder(seeded.Configs[i-1].SequenceType),
-			tenant.SequenceTypeSortOrder(seeded.Configs[i].SequenceType),
+			sequenceconfig.SequenceTypeSortOrder(seeded.Configs[i-1].SequenceType),
+			sequenceconfig.SequenceTypeSortOrder(seeded.Configs[i].SequenceType),
 			"configs are in the catalog's order")
 	}
 

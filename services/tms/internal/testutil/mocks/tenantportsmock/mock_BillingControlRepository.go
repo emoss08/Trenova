@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockBillingControlRepository) EXPECT() *MockBillingControlRepository_E
 }
 
 // GetByOrgID provides a mock function for the type MockBillingControlRepository
-func (_mock *MockBillingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.BillingControl, error) {
+func (_mock *MockBillingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*billingcontrol.BillingControl, error) {
 	ret := _mock.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByOrgID")
 	}
 
-	var r0 *tenant.BillingControl
+	var r0 *billingcontrol.BillingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*tenant.BillingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*billingcontrol.BillingControl, error)); ok {
 		return returnFunc(ctx, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *tenant.BillingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *billingcontrol.BillingControl); ok {
 		r0 = returnFunc(ctx, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.BillingControl)
+			r0 = ret.Get(0).(*billingcontrol.BillingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
@@ -97,37 +97,37 @@ func (_c *MockBillingControlRepository_GetByOrgID_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockBillingControlRepository_GetByOrgID_Call) Return(billingControl *tenant.BillingControl, err error) *MockBillingControlRepository_GetByOrgID_Call {
+func (_c *MockBillingControlRepository_GetByOrgID_Call) Return(billingControl *billingcontrol.BillingControl, err error) *MockBillingControlRepository_GetByOrgID_Call {
 	_c.Call.Return(billingControl, err)
 	return _c
 }
 
-func (_c *MockBillingControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*tenant.BillingControl, error)) *MockBillingControlRepository_GetByOrgID_Call {
+func (_c *MockBillingControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*billingcontrol.BillingControl, error)) *MockBillingControlRepository_GetByOrgID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockBillingControlRepository
-func (_mock *MockBillingControlRepository) Update(ctx context.Context, bc *tenant.BillingControl) (*tenant.BillingControl, error) {
+func (_mock *MockBillingControlRepository) Update(ctx context.Context, bc *billingcontrol.BillingControl) (*billingcontrol.BillingControl, error) {
 	ret := _mock.Called(ctx, bc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.BillingControl
+	var r0 *billingcontrol.BillingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.BillingControl) (*tenant.BillingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingcontrol.BillingControl) (*billingcontrol.BillingControl, error)); ok {
 		return returnFunc(ctx, bc)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.BillingControl) *tenant.BillingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingcontrol.BillingControl) *billingcontrol.BillingControl); ok {
 		r0 = returnFunc(ctx, bc)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.BillingControl)
+			r0 = ret.Get(0).(*billingcontrol.BillingControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.BillingControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingcontrol.BillingControl) error); ok {
 		r1 = returnFunc(ctx, bc)
 	} else {
 		r1 = ret.Error(1)
@@ -142,20 +142,20 @@ type MockBillingControlRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - bc *tenant.BillingControl
+//   - bc *billingcontrol.BillingControl
 func (_e *MockBillingControlRepository_Expecter) Update(ctx any, bc any) *MockBillingControlRepository_Update_Call {
 	return &MockBillingControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, bc)}
 }
 
-func (_c *MockBillingControlRepository_Update_Call) Run(run func(ctx context.Context, bc *tenant.BillingControl)) *MockBillingControlRepository_Update_Call {
+func (_c *MockBillingControlRepository_Update_Call) Run(run func(ctx context.Context, bc *billingcontrol.BillingControl)) *MockBillingControlRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.BillingControl
+		var arg1 *billingcontrol.BillingControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.BillingControl)
+			arg1 = args[1].(*billingcontrol.BillingControl)
 		}
 		run(
 			arg0,
@@ -165,34 +165,34 @@ func (_c *MockBillingControlRepository_Update_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockBillingControlRepository_Update_Call) Return(billingControl *tenant.BillingControl, err error) *MockBillingControlRepository_Update_Call {
+func (_c *MockBillingControlRepository_Update_Call) Return(billingControl *billingcontrol.BillingControl, err error) *MockBillingControlRepository_Update_Call {
 	_c.Call.Return(billingControl, err)
 	return _c
 }
 
-func (_c *MockBillingControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, bc *tenant.BillingControl) (*tenant.BillingControl, error)) *MockBillingControlRepository_Update_Call {
+func (_c *MockBillingControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, bc *billingcontrol.BillingControl) (*billingcontrol.BillingControl, error)) *MockBillingControlRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListAutomaticTransfer provides a mock function for the type MockBillingControlRepository
-func (_mock *MockBillingControlRepository) ListAutomaticTransfer(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (_mock *MockBillingControlRepository) ListAutomaticTransfer(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAutomaticTransfer")
 	}
 
-	var r0 []*tenant.BillingControl
+	var r0 []*billingcontrol.BillingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.BillingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*billingcontrol.BillingControl, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.BillingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*billingcontrol.BillingControl); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*tenant.BillingControl)
+			r0 = ret.Get(0).([]*billingcontrol.BillingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -227,34 +227,34 @@ func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) Return(value []*tenant.BillingControl, err error) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) Return(value []*billingcontrol.BillingControl, err error) *MockBillingControlRepository_ListAutomaticTransfer_Call {
 	_c.Call.Return(value, err)
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.BillingControl, error)) *MockBillingControlRepository_ListAutomaticTransfer_Call {
+func (_c *MockBillingControlRepository_ListAutomaticTransfer_Call) RunAndReturn(run func(ctx context.Context) ([]*billingcontrol.BillingControl, error)) *MockBillingControlRepository_ListAutomaticTransfer_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListPaymentReminders provides a mock function for the type MockBillingControlRepository
-func (_mock *MockBillingControlRepository) ListPaymentReminders(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (_mock *MockBillingControlRepository) ListPaymentReminders(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPaymentReminders")
 	}
 
-	var r0 []*tenant.BillingControl
+	var r0 []*billingcontrol.BillingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.BillingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*billingcontrol.BillingControl, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.BillingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*billingcontrol.BillingControl); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*tenant.BillingControl)
+			r0 = ret.Get(0).([]*billingcontrol.BillingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -289,34 +289,34 @@ func (_c *MockBillingControlRepository_ListPaymentReminders_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListPaymentReminders_Call) Return(value []*tenant.BillingControl, err error) *MockBillingControlRepository_ListPaymentReminders_Call {
+func (_c *MockBillingControlRepository_ListPaymentReminders_Call) Return(value []*billingcontrol.BillingControl, err error) *MockBillingControlRepository_ListPaymentReminders_Call {
 	_c.Call.Return(value, err)
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListPaymentReminders_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.BillingControl, error)) *MockBillingControlRepository_ListPaymentReminders_Call {
+func (_c *MockBillingControlRepository_ListPaymentReminders_Call) RunAndReturn(run func(ctx context.Context) ([]*billingcontrol.BillingControl, error)) *MockBillingControlRepository_ListPaymentReminders_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListMonthlyStatements provides a mock function for the type MockBillingControlRepository
-func (_mock *MockBillingControlRepository) ListMonthlyStatements(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (_mock *MockBillingControlRepository) ListMonthlyStatements(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListMonthlyStatements")
 	}
 
-	var r0 []*tenant.BillingControl
+	var r0 []*billingcontrol.BillingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.BillingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*billingcontrol.BillingControl, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.BillingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*billingcontrol.BillingControl); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*tenant.BillingControl)
+			r0 = ret.Get(0).([]*billingcontrol.BillingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -351,12 +351,12 @@ func (_c *MockBillingControlRepository_ListMonthlyStatements_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListMonthlyStatements_Call) Return(value []*tenant.BillingControl, err error) *MockBillingControlRepository_ListMonthlyStatements_Call {
+func (_c *MockBillingControlRepository_ListMonthlyStatements_Call) Return(value []*billingcontrol.BillingControl, err error) *MockBillingControlRepository_ListMonthlyStatements_Call {
 	_c.Call.Return(value, err)
 	return _c
 }
 
-func (_c *MockBillingControlRepository_ListMonthlyStatements_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.BillingControl, error)) *MockBillingControlRepository_ListMonthlyStatements_Call {
+func (_c *MockBillingControlRepository_ListMonthlyStatements_Call) RunAndReturn(run func(ctx context.Context) ([]*billingcontrol.BillingControl, error)) *MockBillingControlRepository_ListMonthlyStatements_Call {
 	_c.Call.Return(run)
 	return _c
 }

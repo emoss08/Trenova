@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -141,7 +142,10 @@ func (f *fixture) expectUsers(ids []pulid.ID, users ...*tenant.User) {
 		Return(users, nil)
 }
 
-func postedInvoiceEntry(t *testing.T, receivable, revenue *glaccount.GLAccount) *journalentry.JournalEntry {
+func postedInvoiceEntry(
+	t *testing.T,
+	receivable, revenue *glaccount.GLAccount,
+) *journalentry.JournalEntry {
 	t.Helper()
 	return &journalentry.JournalEntry{
 		ID:             pulid.MustNew("je_"),
@@ -300,8 +304,8 @@ func TestJournalEntryCardSaysWhereAnEntryWaitingOnApprovalWillPost(t *testing.T)
 	f.expectAccounts(expense)
 	f.controls.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{
-			ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
 		}, nil)
 	f.periods.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
@@ -345,11 +349,14 @@ func TestManualJournalCardSaysWhyItCannotPostWhenThePolicyRefusesItsClosedPeriod
 		Return(journal, nil)
 	f.controls.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{
-			ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
 		}, nil)
 	f.periods.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(september, nil)
-	f.expectUsers([]pulid.ID{journal.CreatedByID}, &tenant.User{ID: journal.CreatedByID, Name: "Dana Ruiz"})
+	f.expectUsers(
+		[]pulid.ID{journal.CreatedByID},
+		&tenant.User{ID: journal.CreatedByID, Name: "Dana Ruiz"},
+	)
 
 	card, err := f.service.GetManualJournalCard(t.Context(), &GetManualJournalCardRequest{
 		TenantInfo: tenantIn,
@@ -435,5 +442,9 @@ func TestPickReversalPrefersTheOneThatStandsOverANewerRefusal(t *testing.T) {
 	assert.Nil(t, PickReversal(entry, []*journalreversal.Reversal{reversing}))
 
 	reversal := &journalentry.JournalEntry{ID: entry.ID, IsReversal: true}
-	assert.Same(t, reversing, PickReversal(reversal, []*journalreversal.Reversal{pending, reversing}))
+	assert.Same(
+		t,
+		reversing,
+		PickReversal(reversal, []*journalreversal.Reversal{pending, reversing}),
+	)
 }

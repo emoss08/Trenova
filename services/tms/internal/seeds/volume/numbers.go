@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,7 +65,7 @@ func (s *sequenceStore) GetNextSequenceBatch(
 
 	sq := tenantdb.Sequences
 	current, err := keel.WriteValue(ctx, s.db, func(ctx context.Context) (int64, error) {
-		row := &tenant.Sequence{
+		row := &sequenceconfig.Sequence{
 			ID:              pulid.MustNew("seq_"),
 			SequenceType:    req.Type,
 			OrganizationID:  req.OrgID,
@@ -74,7 +74,7 @@ func (s *sequenceStore) GetNextSequenceBatch(
 			Month:           int16(req.Month), //nolint:gosec // a calendar month
 			CurrentSequence: int64(req.Count),
 		}
-		if _, err := sq.Upsert(ctx, s.db, []*tenant.Sequence{row}, keel.OnConflict(
+		if _, err := sq.Upsert(ctx, s.db, []*sequenceconfig.Sequence{row}, keel.OnConflict(
 			sq.SequenceType,
 			sq.OrganizationID,
 			sq.BusinessUnitID,
@@ -130,13 +130,13 @@ type formatProvider struct {
 
 func (p *formatProvider) GetFormat(
 	ctx context.Context,
-	sequenceType tenant.SequenceType,
+	sequenceType sequenceconfig.SequenceType,
 	_, _ pulid.ID,
-) (*tenant.SequenceFormat, error) {
+) (*sequenceconfig.SequenceFormat, error) {
 	sc := tenantdb.SequenceConfigs
 	cfg, err := sc.Where(sc.SequenceType.Eq(sequenceType)).First(ctx, p.db)
 	if errors.Is(err, keel.ErrNotFound) {
-		return tenant.DefaultSequenceFormat(sequenceType)
+		return sequenceconfig.DefaultSequenceFormat(sequenceType)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("find %s sequence config: %w", sequenceType, err)
@@ -170,7 +170,7 @@ type numberGroup struct {
 // the application would have issued it at that moment.
 func (n *numberer) allocate(
 	ctx context.Context,
-	typ tenant.SequenceType,
+	typ sequenceconfig.SequenceType,
 	slots []numberSlot,
 ) ([]string, error) {
 	if len(slots) == 0 {
@@ -239,7 +239,7 @@ func (n *numberer) allocate(
 	return out, nil
 }
 
-func formatParts(format *tenant.SequenceFormat) (byDay, byWeek, byLocation bool) {
+func formatParts(format *sequenceconfig.SequenceFormat) (byDay, byWeek, byLocation bool) {
 	if format.AllowCustomFormat && format.CustomFormat != "" {
 		return strings.Contains(format.CustomFormat, "{D}"),
 			strings.Contains(format.CustomFormat, "{W}"),

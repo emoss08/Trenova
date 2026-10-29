@@ -4,15 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -155,12 +154,12 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 
 	for _, tt := range []struct {
 		name        string
-		disposition tenant.UnratedShipmentDisposition
+		disposition billingcontrol.UnratedShipmentDisposition
 		refused     bool
 	}{
 		{name: "the default disposition", refused: true},
-		{name: "fall back to a template", disposition: tenant.UnratedShipmentDispositionFallbackFormulaTemplate, refused: true},
-		{name: "zero and flag", disposition: tenant.UnratedShipmentDispositionZeroAndFlag},
+		{name: "fall back to a template", disposition: billingcontrol.UnratedShipmentDispositionFallbackFormulaTemplate, refused: true},
+		{name: "zero and flag", disposition: billingcontrol.UnratedShipmentDispositionZeroAndFlag},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

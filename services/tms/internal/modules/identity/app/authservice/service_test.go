@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -92,10 +93,10 @@ func TestDecryptSSOSecretSupportsIAMSlugAAD(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	plaintext := decryptSSOSecret(enc, &tenant.SSOConfig{
+	plaintext := decryptSSOSecret(enc, &sso.SSOConfig{
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
-		Provider:         tenant.SSOProviderAzureAD,
+		Provider:         sso.SSOProviderAzureAD,
 		OIDCClientSecret: ciphertext,
 	})
 
@@ -483,13 +484,13 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		oidc: newTestOIDCProviders(providerServer),
 		l:    zap.NewNop(),
 	}
-	ssoConfig := &tenant.SSOConfig{
+	ssoConfig := &sso.SSOConfig{
 		ID:               providerID,
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
 		Name:             "Corporate SSO",
-		Provider:         tenant.SSOProviderOkta,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderOkta,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          true,
 		OIDCIssuerURL:    providerServer.URL,
 		OIDCClientID:     "client-id",
@@ -510,7 +511,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		mock.Anything,
 		mock.MatchedBy(func(state *tenantports.SSOLoginState) bool {
 			return state.ProviderID == providerID &&
-				state.Provider == tenant.SSOProviderOkta &&
+				state.Provider == sso.SSOProviderOkta &&
 				state.OrganizationID == orgID &&
 				state.BusinessUnitID == buID &&
 				state.OrganizationSlug == "acme" &&
@@ -542,16 +543,16 @@ func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
 	providerID := pulid.MustNew("sso_")
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	svc := &Service{ssoRepo: ssoRepo}
-	expectedConfig := &tenant.SSOConfig{
+	expectedConfig := &sso.SSOConfig{
 		ID:             providerID,
 		OrganizationID: orgID,
-		Provider:       tenant.SSOProviderOkta,
+		Provider:       sso.SSOProviderOkta,
 	}
 
 	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(expectedConfig, nil)
 
 	cfg, err := svc.resolveSSOConfigForCallback(ctx, &tenantports.SSOLoginState{
-		Provider:       tenant.SSOProviderAzureAD,
+		Provider:       sso.SSOProviderAzureAD,
 		ProviderID:     providerID,
 		OrganizationID: orgID,
 	})

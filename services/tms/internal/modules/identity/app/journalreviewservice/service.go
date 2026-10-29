@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -425,7 +425,7 @@ func (s *Service) Summary(
 		AwaitingApproval:     counts.AwaitingApproval,
 		ReadyToPost:          counts.ReadyToPost,
 		OldestAccountingDate: counts.OldestAccountingDate,
-		PostingMode:          tenant.JournalPostingModeAutomatic,
+		PostingMode:          accountingcontrol.JournalPostingModeAutomatic,
 	}
 
 	control, err := s.controls.GetByOrgID(ctx, tenantInfo.OrgID)

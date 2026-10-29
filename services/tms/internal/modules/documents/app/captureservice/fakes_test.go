@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -53,7 +54,7 @@ type world struct {
 	records     map[string]bool
 	docTypes    map[pulid.ID]*documenttype.DocumentType
 	objects     map[string][]byte
-	control     *tenant.DocumentControl
+	control     *documentcontrol.DocumentControl
 	denied      map[string]bool
 	ownScope    bool
 	inspections map[string]*pageReading
@@ -82,7 +83,7 @@ func newWorld() *world {
 		records:     map[string]bool{},
 		docTypes:    map[pulid.ID]*documenttype.DocumentType{},
 		objects:     map[string][]byte{},
-		control:     tenant.NewDefaultDocumentControl(orgID, buID),
+		control:     documentcontrol.NewDefaultDocumentControl(orgID, buID),
 		denied:      map[string]bool{},
 		inspections: map[string]*pageReading{},
 		sessions:    map[pulid.ID]*documentupload.DocumentUploadSession{},
@@ -1029,7 +1030,7 @@ type fakeControls struct {
 func (f *fakeControls) Get(
 	context.Context,
 	tenantports.GetDocumentControlRequest,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	return clone(f.w.control), nil
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -149,7 +149,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	svc := &service{
@@ -552,7 +552,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	dispatchControlRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
@@ -685,7 +685,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	svc := &service{
@@ -908,15 +908,19 @@ func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *tes
 	assert.Equal(
 		t,
 		shipmentstate.DisabledDelayThresholdMinutes,
-		shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          false,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}),
 	)
-	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
-		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: new(int16(30)),
-	}))
+	assert.Equal(
+		t,
+		int16(30),
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: new(int16(30)),
+		}),
+	)
 }
 
 type recordingTenderGuard struct {
@@ -1029,7 +1033,7 @@ func newAssignToMoveService(
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	return &service{

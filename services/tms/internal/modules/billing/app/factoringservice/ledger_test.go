@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,13 +66,13 @@ func newLedgerHarness(t *testing.T, treatment factoring.AccountingTreatment) *le
 			UserID:        pulid.MustNew("usr_"),
 		},
 	}
-	h.controls = &fakeControls{control: &tenant.AccountingControl{
+	h.controls = &fakeControls{control: &accountingcontrol.AccountingControl{
 		OrganizationID:            orgID,
 		BusinessUnitID:            buID,
 		DefaultARAccountID:        h.accounts.AR,
 		DefaultCashAccountID:      h.accounts.Cash,
-		JournalPostingMode:        tenant.JournalPostingModeAutomatic,
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		JournalPostingMode:        accountingcontrol.JournalPostingModeAutomatic,
+		ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
 	}}
 	h.periods = &fakePeriods{periods: []*fiscalperiod.FiscalPeriod{{
 		ID:           pulid.MustNew("fp_"),
@@ -253,7 +253,11 @@ func TestRecordFundingSale(t *testing.T) {
 	assert.Equal(t, factoring.SubmissionStatusFunded, result.Submission.Status)
 	require.Len(t, h.journals.postings, 1)
 	posting := h.journals.postings[0]
-	assert.Equal(t, tenant.JournalSourceEventFactoringFunded.String(), posting.SourceEventType)
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventFactoringFunded.String(),
+		posting.SourceEventType,
+	)
 	assert.Equal(t, "factoring-funded:"+h.first.ID.String(), posting.SourceIdempotencyKey)
 	assert.Equal(t, int64(100_000), posting.TotalDebit)
 	assert.True(t, posting.IsPosted)

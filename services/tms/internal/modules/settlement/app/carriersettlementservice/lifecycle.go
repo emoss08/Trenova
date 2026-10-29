@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -222,7 +222,7 @@ func (s *Service) MarkPaid(
 
 		if txErr = s.appendLedgerEntry(txCtx, entity, &ledgerEntryParams{
 			EntryType:       carriersettlement.LedgerEntryTypePayment,
-			SourceEvent:     tenant.JournalSourceEventCarrierSettlementPaid,
+			SourceEvent:     accountingcontrol.JournalSourceEventCarrierSettlementPaid,
 			JournalBatchID:  batchID,
 			AmountMinor:     -entity.NetPayableMinor,
 			TransactionDate: paidAt,

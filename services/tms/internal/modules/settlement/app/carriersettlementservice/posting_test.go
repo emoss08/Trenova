@@ -3,8 +3,9 @@ package carriersettlementservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -160,26 +161,35 @@ func TestResolvePostingAccounts(t *testing.T) {
 	t.Run("carrier control defaults win over accounting control", func(t *testing.T) {
 		carrierExpense := overrideAccountID
 		carrierPayable := pulid.ID("gla_carrier_ap")
-		resolved, err := ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{
-			DefaultPurchasedTransportationAccountID: &carrierExpense,
-			DefaultAPAccountID:                      &carrierPayable,
-		}, &tenant.AccountingControl{
-			DefaultPurchasedTransportationAccountID: expenseAccountID,
-			DefaultAPAccountID:                      payableAccountID,
-			DefaultCashAccountID:                    cashAccountID,
-		}, false)
+		resolved, err := ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{
+				DefaultPurchasedTransportationAccountID: &carrierExpense,
+				DefaultAPAccountID:                      &carrierPayable,
+			},
+			&accountingcontrol.AccountingControl{
+				DefaultPurchasedTransportationAccountID: expenseAccountID,
+				DefaultAPAccountID:                      payableAccountID,
+				DefaultCashAccountID:                    cashAccountID,
+			},
+			false,
+		)
 		require.NoError(t, err)
 		assert.Equal(t, carrierExpense, resolved.Expense)
 		assert.Equal(t, carrierPayable, resolved.Payable)
 	})
 
 	t.Run("falls back to accounting control", func(t *testing.T) {
-		resolved, err := ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{},
-			&tenant.AccountingControl{
+		resolved, err := ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			&accountingcontrol.AccountingControl{
 				DefaultPurchasedTransportationAccountID: expenseAccountID,
 				DefaultAPAccountID:                      payableAccountID,
 				DefaultCashAccountID:                    cashAccountID,
-			}, true)
+			},
+			true,
+		)
 		require.NoError(t, err)
 		assert.Equal(t, expenseAccountID, resolved.Expense)
 		assert.Equal(t, payableAccountID, resolved.Payable)
@@ -187,29 +197,47 @@ func TestResolvePostingAccounts(t *testing.T) {
 	})
 
 	t.Run("missing expense account errors", func(t *testing.T) {
-		_, err := ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{},
-			&tenant.AccountingControl{DefaultAPAccountID: payableAccountID}, false)
+		_, err := ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			&accountingcontrol.AccountingControl{DefaultAPAccountID: payableAccountID},
+			false,
+		)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "purchased transportation")
 	})
 
 	t.Run("missing AP account errors", func(t *testing.T) {
-		_, err := ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{},
-			&tenant.AccountingControl{
+		_, err := ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			&accountingcontrol.AccountingControl{
 				DefaultPurchasedTransportationAccountID: expenseAccountID,
-			}, false)
+			},
+			false,
+		)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "accounts payable")
 	})
 
 	t.Run("missing cash account errors only when required", func(t *testing.T) {
-		control := &tenant.AccountingControl{
+		control := &accountingcontrol.AccountingControl{
 			DefaultPurchasedTransportationAccountID: expenseAccountID,
 			DefaultAPAccountID:                      payableAccountID,
 		}
-		_, err := ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{}, control, false)
+		_, err := ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			control,
+			false,
+		)
 		require.NoError(t, err)
-		_, err = ResolvePostingAccounts(entity, &tenant.CarrierSettlementControl{}, control, true)
+		_, err = ResolvePostingAccounts(
+			entity,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			control,
+			true,
+		)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "cash account")
 	})
@@ -226,8 +254,12 @@ func TestResolvePostingAccounts(t *testing.T) {
 			},
 		}
 		mapped.SyncTotals()
-		_, err := ResolvePostingAccounts(mapped, &tenant.CarrierSettlementControl{},
-			&tenant.AccountingControl{DefaultAPAccountID: payableAccountID}, false)
+		_, err := ResolvePostingAccounts(
+			mapped,
+			&carriersettlementcontrol.CarrierSettlementControl{},
+			&accountingcontrol.AccountingControl{DefaultAPAccountID: payableAccountID},
+			false,
+		)
 		require.NoError(t, err)
 	})
 }

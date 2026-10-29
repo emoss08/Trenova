@@ -11,15 +11,15 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
-func testSSOConfig(issuer string) *tenant.SSOConfig {
-	return &tenant.SSOConfig{
+func testSSOConfig(issuer string) *sso.SSOConfig {
+	return &sso.SSOConfig{
 		ID:            pulid.MustNew("sso_"),
 		OIDCIssuerURL: issuer,
 		Version:       1,

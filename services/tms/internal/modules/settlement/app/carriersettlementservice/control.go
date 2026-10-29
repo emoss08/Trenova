@@ -3,8 +3,8 @@ package carriersettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -17,15 +17,15 @@ import (
 func (s *Service) GetControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.CarrierSettlementControl, error) {
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	return s.settlementControl.GetOrCreate(ctx, tenantInfo)
 }
 
 func (s *Service) UpdateControl(
 	ctx context.Context,
-	entity *tenant.CarrierSettlementControl,
+	entity *carriersettlementcontrol.CarrierSettlementControl,
 	actor *permissionports.RequestActor,
-) (*tenant.CarrierSettlementControl, error) {
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	if err := requireActor(actor, "Carrier settlement control update"); err != nil {
 		return nil, err
 	}

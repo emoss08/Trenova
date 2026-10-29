@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -202,7 +202,7 @@ func TestAssess_SimulationAndShadowPreviewEveryWrite(t *testing.T) {
 	clean, _ := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy:     policy,
 		Definition: simulated,
-		Control:    &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 5},
+		Control:    &agentcontrol.AgentControl{EarnedAutonomy: true, PromotionThreshold: 5},
 	})
 	assert.Equal(t, agent.AutonomySimulated, clean.Answer)
 	assert.Equal(t, agent.TierAutoExecute, clean.Tier)
@@ -211,7 +211,7 @@ func TestAssess_SimulationAndShadowPreviewEveryWrite(t *testing.T) {
 	paused, _ := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy:     policy,
 		Definition: chatAgent(agent.TierActWithApproval, nil),
-		Control: &tenant.AgentControl{
+		Control: &agentcontrol.AgentControl{
 			ShadowMode:         true,
 			EarnedAutonomy:     true,
 			PromotionThreshold: 5,
@@ -239,7 +239,7 @@ func TestAssess_AQueryIsNeverSimulated(t *testing.T) {
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy:     policy,
 		Definition: definition,
-		Control:    &tenant.AgentControl{ShadowMode: true},
+		Control:    &agentcontrol.AgentControl{ShadowMode: true},
 	})
 
 	assert.Equal(t, agent.AutonomyRunsOnItsOwn, clean.Answer)
@@ -259,7 +259,7 @@ func TestAssess_EarnedTiersAndTheStreakToTheNext(t *testing.T) {
 		Streak:     3,
 		EarnedTier: agent.TierActWithApproval,
 	}
-	control := &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 10}
+	control := &agentcontrol.AgentControl{EarnedAutonomy: true, PromotionThreshold: 10}
 
 	clean, tainted := assessBoth(t, agenttoolpolicy.AssessInput{
 		Policy:     actionPolicy(name, agent.EgressInternal),
@@ -289,7 +289,7 @@ func TestAssess_EarnedTiersAndTheStreakToTheNext(t *testing.T) {
 func TestAssess_NoStreakCanMoveWhatALimitHolds(t *testing.T) {
 	t.Parallel()
 
-	control := &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 10}
+	control := &agentcontrol.AgentControl{EarnedAutonomy: true, PromotionThreshold: 10}
 	name := "customer_send_email"
 
 	leaves, _ := assessBoth(t, agenttoolpolicy.AssessInput{
@@ -313,7 +313,7 @@ func TestAssess_NoStreakCanMoveWhatALimitHolds(t *testing.T) {
 		Definition: chatAgent(agent.TierAutoExecute, map[string]agent.AutonomyTier{
 			"dispatch_assign_move": agent.TierPropose,
 		}),
-		Control: &tenant.AgentControl{PromotionThreshold: 10},
+		Control: &agentcontrol.AgentControl{PromotionThreshold: 10},
 	})
 	assert.Nil(t, off.ApprovalsToNext, "nothing is earned while earned autonomy is off")
 	assert.False(t, off.Earned)

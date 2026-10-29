@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -173,13 +173,13 @@ func (f *fakeTurns) GetByID(
 type fakeControls struct {
 	tenantports.AgentControlRepository
 
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
 func (f *fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return f.control, nil
 }
 
@@ -209,7 +209,7 @@ type fixture struct {
 	chapters      *fakeChapters
 	conversations *fakeConversations
 	turns         *fakeTurns
-	control       *tenant.AgentControl
+	control       *agentcontrol.AgentControl
 	scheduler     *fakeScheduler
 	realtime      *fakeRealtime
 	tenant        pagination.TenantInfo
@@ -237,7 +237,7 @@ func newFixture(t *testing.T) *fixture {
 			byTurn: map[pulid.ID][]conversation.Message{},
 		},
 		turns:     &fakeTurns{turns: map[pulid.ID]*conversation.AssistantTurn{}},
-		control:   &tenant.AgentControl{},
+		control:   &agentcontrol.AgentControl{},
 		scheduler: &fakeScheduler{},
 		realtime:  &fakeRealtime{},
 		tenant:    info,

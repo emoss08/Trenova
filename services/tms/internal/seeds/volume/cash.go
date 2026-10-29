@@ -13,39 +13,40 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection/collectiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement/customerstatementdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
-
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +68,11 @@ const (
 	cashPayrollAccrual  = "accrued-payroll"
 )
 
-var cashBankSources = []string{"Chase BAI2 file", "Wells Fargo lockbox", "Bank of America CSV export"}
+var cashBankSources = []string{
+	"Chase BAI2 file",
+	"Wells Fargo lockbox",
+	"Bank of America CSV export",
+}
 
 type cashApplication struct {
 	at    int64
@@ -166,7 +171,7 @@ type cashFactoring struct {
 // cashSending is the organization's own setting for each feature that emails
 // customers, kept so the seed can put them back once their history is written.
 type cashSending struct {
-	lateCharges     tenant.LateChargeAssessmentMode
+	lateCharges     billingcontrol.LateChargeAssessmentMode
 	reminders       bool
 	statements      bool
 	lateChanged     bool
@@ -176,8 +181,8 @@ type cashSending struct {
 
 type cashState struct {
 	sending    cashSending
-	billing    *tenant.BillingControl
-	accounting *tenant.AccountingControl
+	billing    *billingcontrol.BillingControl
+	accounting *accountingcontrol.AccountingControl
 	setup      *bilSetup
 	loc        *time.Location
 	customers  map[pulid.ID]*customerRecord
@@ -533,13 +538,14 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 // pages would stay empty no matter how much receivable history exists. The
 // features that email customers are switched back by cashRestoreSending.
 func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error {
-	if st.accounting != nil && st.accounting.ReconciliationMode == tenant.ReconciliationModeDisabled {
+	if st.accounting != nil &&
+		st.accounting.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
 		ac := tenantdb.AccountingControls
 		if _, err := ac.Where(keel.True()).
-			Update(ctx, g.db, ac.ReconciliationMode.To(tenant.ReconciliationModeWarnOnly)); err != nil {
+			Update(ctx, g.db, ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeWarnOnly)); err != nil {
 			return fmt.Errorf("enable bank reconciliation: %w", err)
 		}
-		st.accounting.ReconciliationMode = tenant.ReconciliationModeWarnOnly
+		st.accounting.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
 		g.opts.Logf("  • enabled bank reconciliation (WarnOnly) so imported deposits are matched")
 	}
 	if st.billing == nil {
@@ -549,12 +555,13 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 	b := st.billing
 	bc := tenantdb.BillingControls
 	var sets []keel.Assignment
-	if b.LateChargeAssessmentMode == tenant.LateChargeAssessmentModeDisabled || b.LateChargeAssessmentMode == "" {
+	if b.LateChargeAssessmentMode == billingcontrol.LateChargeAssessmentModeDisabled ||
+		b.LateChargeAssessmentMode == "" {
 		st.sending.lateCharges, st.sending.lateChanged = b.LateChargeAssessmentMode, true
 		if st.sending.lateCharges == "" {
-			st.sending.lateCharges = tenant.LateChargeAssessmentModeDisabled
+			st.sending.lateCharges = billingcontrol.LateChargeAssessmentModeDisabled
 		}
-		b.LateChargeAssessmentMode = tenant.LateChargeAssessmentModeAutomatic
+		b.LateChargeAssessmentMode = billingcontrol.LateChargeAssessmentModeAutomatic
 		sets = append(sets, bc.LateChargeAssessmentMode.To(b.LateChargeAssessmentMode))
 		g.opts.Logf("  • set late charge assessment to Automatic")
 	}
@@ -562,9 +569,13 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		st.sending.reminders, st.sending.remindersChange = b.PaymentRemindersEnabled, true
 		b.PaymentRemindersEnabled = true
 		if len(b.PaymentReminderDays) == 0 {
-			b.PaymentReminderDays = slices.Clone(tenant.DefaultPaymentReminderDays)
+			b.PaymentReminderDays = slices.Clone(billingcontrol.DefaultPaymentReminderDays)
 		}
-		sets = append(sets, bc.PaymentRemindersEnabled.To(true), bc.PaymentReminderDays.To(b.PaymentReminderDays))
+		sets = append(
+			sets,
+			bc.PaymentRemindersEnabled.To(true),
+			bc.PaymentReminderDays.To(b.PaymentReminderDays),
+		)
 		g.opts.Logf("  • enabled payment reminders")
 	}
 	if !b.MonthlyStatementsEnabled || b.MonthlyStatementDay < 1 {
@@ -573,7 +584,11 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		if b.MonthlyStatementDay < 1 {
 			b.MonthlyStatementDay = 1
 		}
-		sets = append(sets, bc.MonthlyStatementsEnabled.To(true), bc.MonthlyStatementDay.To(b.MonthlyStatementDay))
+		sets = append(
+			sets,
+			bc.MonthlyStatementsEnabled.To(true),
+			bc.MonthlyStatementDay.To(b.MonthlyStatementDay),
+		)
 		g.opts.Logf("  • enabled monthly statements")
 	}
 	if len(sets) == 0 {
@@ -728,7 +743,7 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 	nowUnix := unix(g.now)
 	importer := g.refs.adminID
 	matchesLater := st.accounting != nil &&
-		st.accounting.ReconciliationMode != tenant.ReconciliationModeDisabled
+		st.accounting.ReconciliationMode != accountingcontrol.ReconciliationModeDisabled
 	rows := &cashBankRows{}
 	batches := make(map[string]*bankreceiptbatch.BankReceiptBatch)
 
@@ -756,7 +771,10 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		}
 		batches[key] = b
 		rows.batches = append(rows.batches, b)
-		rows.batchStamps = append(rows.batchStamps, stamp{id: b.ID, created: importAt, updated: importAt})
+		rows.batchStamps = append(
+			rows.batchStamps,
+			stamp{id: b.ID, created: importAt, updated: importAt},
+		)
 		return b
 	}
 
@@ -778,10 +796,16 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		case bankreceipt.StatusImported:
 		}
 		rows.receipts = append(rows.receipts, r)
-		rows.receiptStamps = append(rows.receiptStamps, stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt})
+		rows.receiptStamps = append(
+			rows.receiptStamps,
+			stamp{id: r.ID, created: r.CreatedAt, updated: r.UpdatedAt},
+		)
 		if item != nil {
 			rows.items = append(rows.items, item)
-			rows.itemStamps = append(rows.itemStamps, stamp{id: item.ID, created: item.CreatedAt, updated: item.UpdatedAt})
+			rows.itemStamps = append(
+				rows.itemStamps,
+				stamp{id: item.ID, created: item.CreatedAt, updated: item.UpdatedAt},
+			)
 		}
 	}
 
@@ -844,7 +868,9 @@ func (g *generator) cashBankReceipts(ctx context.Context, st *cashState) error {
 		if cus == nil || p.AmountMinor <= 0 {
 			continue
 		}
-		day := cashBusinessDay(cashLocalDay(p.PaymentDate, st.loc).AddDate(0, 0, g.cashDepositLag(p.PaymentMethod)))
+		day := cashBusinessDay(
+			cashLocalDay(p.PaymentDate, st.loc).AddDate(0, 0, g.cashDepositLag(p.PaymentMethod)),
+		)
 		b := batchFor(day)
 		if b == nil {
 			continue
@@ -1022,7 +1048,8 @@ type cashLateMemo struct {
 
 //nolint:gocognit,funlen // the nightly late charge run is replayed over the history in one pass
 func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
-	if st.billing == nil || st.billing.LateChargeAssessmentMode != tenant.LateChargeAssessmentModeAutomatic {
+	if st.billing == nil ||
+		st.billing.LateChargeAssessmentMode != billingcontrol.LateChargeAssessmentModeAutomatic {
 		return nil
 	}
 	nowUnix := unix(g.now)
@@ -1105,12 +1132,12 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 	for i, m := range memos {
 		slots[i] = numberSlot{At: m.asOf}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeDebitMemo, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeDebitMemo, slots)
 	if err != nil {
 		return err
 	}
 
-	autoPost := st.billing.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions
+	autoPost := st.billing.InvoicePostingMode == billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions
 	rows := &bilRows{balances: make(map[bilBalanceKey]*bilBalance)}
 	var assessments []*latecharge.LateChargeAssessment
 	var assessmentStamps []stamp
@@ -1165,11 +1192,13 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 			SendStatus:         invoice.SendStatusNotSent,
 			EDISendStatus:      invoice.EDISendStatusNotSent,
 			FactoringOverride:  invoice.FactoringOverrideDefault,
-			MemoReason:         "Late charges assessed as of " + time.Unix(m.asOf, 0).UTC().Format("2006-01-02"),
-			MemoKind:           invoice.MemoKindLateCharge,
-			Memo:               "Late charge run " + runKey,
-			CreatedAt:          m.asOf,
-			UpdatedAt:          m.asOf,
+			MemoReason: "Late charges assessed as of " + time.Unix(m.asOf, 0).
+				UTC().
+				Format("2006-01-02"),
+			MemoKind:  invoice.MemoKindLateCharge,
+			Memo:      "Late charge run " + runKey,
+			CreatedAt: m.asOf,
+			UpdatedAt: m.asOf,
 		}
 		bilBillTo(memo, m.customer)
 
@@ -1223,7 +1252,10 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 				UpdatedAt:             m.asOf,
 			}
 			assessments = append(assessments, a)
-			assessmentStamps = append(assessmentStamps, stamp{id: a.ID, created: m.asOf, updated: m.asOf})
+			assessmentStamps = append(
+				assessmentStamps,
+				stamp{id: a.ID, created: m.asOf, updated: m.asOf},
+			)
 		}
 		memo.TotalAmount = total
 		memo.SyncMinorAmounts()
@@ -1247,7 +1279,7 @@ func (g *generator) cashLateCharges(ctx context.Context, st *cashState) error {
 					return err
 				}
 				j := rows.journals[len(rows.journals)-1]
-				j.event = tenant.JournalSourceEventDebitMemoPosted
+				j.event = accountingcontrol.JournalSourceEventDebitMemoPosted
 				j.referenceType = j.event.String()
 				j.description = "Debit memo posted for " + memo.Number
 				entry := rows.ledger[len(rows.ledger)-1]
@@ -1311,7 +1343,7 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 	}
 	schedule := st.billing.PaymentReminderDays
 	if len(schedule) == 0 {
-		schedule = tenant.DefaultPaymentReminderDays
+		schedule = billingcontrol.DefaultPaymentReminderDays
 	}
 	nowUnix := unix(g.now)
 
@@ -1326,7 +1358,11 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 				continue
 			}
 			for i, days := range schedule {
-				sentAt := cashLocalDay(inv.due+int64(days)*cashDay, st.loc).Add(8 * time.Hour).Unix()
+				sentAt := cashLocalDay(
+					inv.due+int64(days)*cashDay,
+					st.loc,
+				).Add(8 * time.Hour).
+					Unix()
 				if sentAt > nowUnix {
 					break
 				}
@@ -1335,12 +1371,14 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 					break
 				}
 				rows = append(rows, &paymentreminder.Reminder{
-					ID:              idAt("ipr_", sentAt),
-					OrganizationID:  g.refs.orgID,
-					BusinessUnitID:  g.refs.buID,
-					InvoiceID:       inv.id,
-					CustomerID:      c.ID,
-					Step:            int16(i + 1), //nolint:gosec // bounded by MaxPaymentReminderSteps
+					ID:             idAt("ipr_", sentAt),
+					OrganizationID: g.refs.orgID,
+					BusinessUnitID: g.refs.buID,
+					InvoiceID:      inv.id,
+					CustomerID:     c.ID,
+					Step: int16(
+						i + 1,
+					), //nolint:gosec // bounded by MaxPaymentReminderSteps
 					DaysPastDue:     paymentreminder.DaysPastDue(inv.due, sentAt),
 					OpenAmountMinor: open,
 					CurrencyCode:    money.DefaultCurrencyCode,
@@ -1348,7 +1386,8 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 					SentAt:          sentAt,
 				})
 			}
-			if open := inv.openAt(nowUnix); open > 0 && inv.due < nowUnix-5*cashDay && g.fake.chance(0.1) {
+			if open := inv.openAt(nowUnix); open > 0 && inv.due < nowUnix-5*cashDay &&
+				g.fake.chance(0.1) {
 				sentAt := g.cashBetween(inv.due+5*cashDay, nowUnix-cashHour)
 				rows = append(rows, &paymentreminder.Reminder{
 					ID:              idAt("ipr_", sentAt),
@@ -1368,7 +1407,10 @@ func (g *generator) cashReminders(ctx context.Context, st *cashState) error {
 			}
 		}
 	}
-	rows = slices.DeleteFunc(rows, func(r *paymentreminder.Reminder) bool { return r.OpenAmountMinor <= 0 })
+	rows = slices.DeleteFunc(
+		rows,
+		func(r *paymentreminder.Reminder) bool { return r.OpenAmountMinor <= 0 },
+	)
 	if len(rows) == 0 {
 		return nil
 	}
@@ -1557,7 +1599,11 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 			if g.fake.chance(0.6) {
 				promisedAt := max(callAt+cashHour, paidAt-g.cashBetween(cashDay, 5*cashDay))
 				if promisedAt < paidAt {
-					promisedOn := cashLocalDay(paidAt, st.loc).AddDate(0, 0, g.fake.between(0, 2)).Unix()
+					promisedOn := cashLocalDay(
+						paidAt,
+						st.loc,
+					).AddDate(0, 0, g.fake.between(0, 2)).
+						Unix()
 					if owed := inv.openAt(paidAt - 1); owed > 0 {
 						promise(inv, promisedAt, owed, promisedOn)
 					}
@@ -1580,7 +1626,10 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 			assign(min(oldest+g.cashBetween(3*cashDay, 10*cashDay), nowUnix-2*cashHour))
 			for range g.fake.between(1, 4) {
 				inv := pick(g.fake, overdue)
-				at := g.cashBetween(max(inv.due+2*cashDay, acts[0].CreatedAt+cashMinute), nowUnix-cashHour)
+				at := g.cashBetween(
+					max(inv.due+2*cashDay, acts[0].CreatedAt+cashMinute),
+					nowUnix-cashHour,
+				)
 				contactNote(inv, at)
 			}
 			switch roll := g.fake.float(); {
@@ -1596,14 +1645,24 @@ func (g *generator) cashCollections(ctx context.Context, st *cashState) error {
 				at := g.cashBetween(max(promisedOn-10*cashDay, inv.due), promisedOn-cashHour)
 				if at > inv.due {
 					promise(inv, at, inv.openAt(nowUnix), promisedOn)
-					add(collection.ActivityNote, min(promisedOn+2*cashDay, nowUnix-cashMinute), collector,
-						"Promised payment on "+inv.number+" did not arrive; escalating to the AP manager.", inv.id)
+					add(
+						collection.ActivityNote,
+						min(promisedOn+2*cashDay, nowUnix-cashMinute),
+						collector,
+						"Promised payment on "+inv.number+" did not arrive; escalating to the AP manager.",
+						inv.id,
+					)
 				}
 			}
 			if nextFollowUp == nil {
 				nextFollowUp = ptr(today.AddDate(0, 0, g.fake.between(1, 10)).Unix())
-				a := add(collection.ActivityFollowUpScheduled, nowUnix-g.cashBetween(cashMinute, 6*cashHour),
-					collector, "Follow up on the past-due balance", pulid.Nil)
+				a := add(
+					collection.ActivityFollowUpScheduled,
+					nowUnix-g.cashBetween(cashMinute, 6*cashHour),
+					collector,
+					"Follow up on the past-due balance",
+					pulid.Nil,
+				)
 				a.FollowUpOn = nextFollowUp
 			}
 		}
@@ -1669,16 +1728,40 @@ type cashJournalTemplate struct {
 }
 
 var cashJournalTemplates = []cashJournalTemplate{
-	{key: "dep-tractors", description: "Monthly depreciation - tractors", debit: "6710", credit: "1610",
-		low: 38_000, high: 52_000},
-	{key: "dep-trailers", description: "Monthly depreciation - trailers", debit: "6710", credit: "1620",
-		low: 9_000, high: 14_000},
-	{key: "insurance", description: "Prepaid liability insurance amortization", debit: "5310", credit: "1210",
-		low: 21_000, high: 27_000},
+	{
+		key:         "dep-tractors",
+		description: "Monthly depreciation - tractors",
+		debit:       "6710",
+		credit:      "1610",
+		low:         38_000,
+		high:        52_000,
+	},
+	{
+		key:         "dep-trailers",
+		description: "Monthly depreciation - trailers",
+		debit:       "6710",
+		credit:      "1620",
+		low:         9_000,
+		high:        14_000,
+	},
+	{
+		key:         "insurance",
+		description: "Prepaid liability insurance amortization",
+		debit:       "5310",
+		credit:      "1210",
+		low:         21_000,
+		high:        27_000,
+	},
 	{key: cashPayrollAccrual, description: "Accrued office payroll at month end", debit: "6010",
 		credit: "2110", low: 31_000, high: 46_000},
-	{key: "bank-fees", description: "Bank service charges per statement", debit: "6820", credit: "1010",
-		low: 180, high: 640},
+	{
+		key:         "bank-fees",
+		description: "Bank service charges per statement",
+		debit:       "6820",
+		credit:      "1010",
+		low:         180,
+		high:        640,
+	},
 	{key: "bad-debt", description: "Allowance for doubtful accounts adjustment", debit: "6940",
 		credit: "1190", low: 2_500, high: 9_500, quarterly: true},
 }
@@ -1789,12 +1872,18 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			m := &cashManual{request: req, template: t}
 			m.lines = []*manualjournal.Line{
 				{
-					ID: idAt("mjrl_", created), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
+					ID: idAt(
+						"mjrl_",
+						created,
+					), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
 					ManualJournalRequestID: req.ID, LineNumber: 1, GLAccountID: accounts[t.debit],
 					Description: t.description, DebitAmount: amount, CreatedAt: created, UpdatedAt: created,
 				},
 				{
-					ID: idAt("mjrl_", created), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
+					ID: idAt(
+						"mjrl_",
+						created,
+					), OrganizationID: g.refs.orgID, BusinessUnitID: g.refs.buID,
 					ManualJournalRequestID: req.ID, LineNumber: 2, GLAccountID: accounts[t.credit],
 					Description: t.description, CreditAmount: amount, CreatedAt: created, UpdatedAt: created,
 				},
@@ -1822,7 +1911,10 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			case current:
 				approve(min(submittedAt+g.cashBetween(cashHour, cashDay), nowUnix-cashMinute))
 			case roll < 0.04:
-				rejectedAt := min(submittedAt+g.cashBetween(cashHour, 2*cashDay), nowUnix-cashMinute)
+				rejectedAt := min(
+					submittedAt+g.cashBetween(cashHour, 2*cashDay),
+					nowUnix-cashMinute,
+				)
 				req.Status = manualjournal.StatusRejected
 				req.RejectedAt = ptr(rejectedAt)
 				req.RejectedByID = approver
@@ -1836,9 +1928,15 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 				req.CancelReason = "Duplicate of another request"
 				req.UpdatedAt = cancelledAt
 			default:
-				approvedAt := min(submittedAt+g.cashBetween(cashHour, 2*cashDay), nowUnix-2*cashMinute)
+				approvedAt := min(
+					submittedAt+g.cashBetween(cashHour, 2*cashDay),
+					nowUnix-2*cashMinute,
+				)
 				approve(approvedAt)
-				m.postedAt = min(approvedAt+g.cashBetween(10*cashMinute, cashDay), nowUnix-cashMinute)
+				m.postedAt = min(
+					approvedAt+g.cashBetween(10*cashMinute, cashDay),
+					nowUnix-cashMinute,
+				)
 				journal, jErr := g.bilNewJournal(st.setup, date)
 				if jErr != nil {
 					return jErr
@@ -1847,7 +1945,7 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 				journal.description = req.Description
 				journal.sourceType = "ManualJournalRequest"
 				journal.sourceID = req.ID
-				journal.event = tenant.JournalSourceEventType("ManualJournalPosted")
+				journal.event = accountingcontrol.JournalSourceEventType("ManualJournalPosted")
 				journal.referenceType = "ManualJournalRequest"
 				journal.idempotency = "manual-journal-posted:" + req.ID.String()
 				journal.legs = []bilLeg{
@@ -1871,7 +1969,7 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 	for i, m := range manuals {
 		slots[i] = numberSlot{At: m.request.CreatedAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeManualJournalRequest, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeManualJournalRequest, slots)
 	if err != nil {
 		return err
 	}
@@ -1910,7 +2008,10 @@ func (g *generator) cashManualJournals(ctx context.Context, st *cashState) error
 			stamp{id: m.request.ID, created: m.request.CreatedAt, updated: m.request.UpdatedAt})
 		for _, l := range m.lines {
 			lines = append(lines, l)
-			lineStamps = append(lineStamps, stamp{id: l.ID, created: l.CreatedAt, updated: l.CreatedAt})
+			lineStamps = append(
+				lineStamps,
+				stamp{id: l.ID, created: l.CreatedAt, updated: l.CreatedAt},
+			)
 		}
 	}
 
@@ -1982,7 +2083,7 @@ func (g *generator) cashReversals(
 	posted *bilRows,
 ) (*cashReversalSet, []cashReversedEntry, error) {
 	set := &cashReversalSet{}
-	if st.accounting.JournalReversalPolicy == tenant.JournalReversalPolicyDisallow {
+	if st.accounting.JournalReversalPolicy == accountingcontrol.JournalReversalPolicyDisallow {
 		return set, nil, nil
 	}
 	nowUnix := unix(g.now)
@@ -2064,7 +2165,7 @@ func (g *generator) cashReversals(
 		journal.sourceType = "JournalEntry"
 		journal.sourceID = original.ID
 		journal.document = original.EntryNumber
-		journal.event = tenant.JournalSourceEventType("JournalReversalCreated")
+		journal.event = accountingcontrol.JournalSourceEventType("JournalReversalCreated")
 		journal.referenceType = "JournalReversal"
 		journal.idempotency = "journal-reversal:" + entity.ID.String()
 		journal.auto = true
@@ -2122,7 +2223,11 @@ func (g *generator) cashReversals(
 	return set, reversed, nil
 }
 
-func (g *generator) cashMarkReversed(ctx context.Context, tx *keel.DB, reversed []cashReversedEntry) error {
+func (g *generator) cashMarkReversed(
+	ctx context.Context,
+	tx *keel.DB,
+	reversed []cashReversedEntry,
+) error {
 	if len(reversed) == 0 {
 		return nil
 	}
@@ -2162,7 +2267,8 @@ func (g *generator) cashMarkReversed(ctx context.Context, tx *keel.DB, reversed 
 //
 //nolint:funlen // the queue state and the balance rollback must change together
 func (g *generator) cashJournalsToPost(ctx context.Context, st *cashState) error {
-	if st.accounting == nil || st.accounting.JournalPostingMode != tenant.JournalPostingModeManual {
+	if st.accounting == nil ||
+		st.accounting.JournalPostingMode != accountingcontrol.JournalPostingModeManual {
 		return nil
 	}
 	cutoff := unix(g.now) - cashPendingWindow

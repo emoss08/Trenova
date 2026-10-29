@@ -3,12 +3,11 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +30,7 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 			OrgID: orgID,
 			BuID:  buID,
 		},
-	}).Return(&tenant.ShipmentControl{
+	}).Return(&shipmentcontrol.ShipmentControl{
 		CheckForDuplicateBOLs: false,
 	}, nil).Once()
 
@@ -69,7 +68,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 			OrgID: orgID,
 			BuID:  buID,
 		},
-	}).Return(&tenant.ShipmentControl{
+	}).Return(&shipmentcontrol.ShipmentControl{
 		CheckForDuplicateBOLs: true,
 	}, nil).Once()
 	repo.EXPECT().
@@ -130,7 +129,7 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 
 	err := svc.checkDuplicateBOLsWithControl(
 		t.Context(),
-		&tenant.ShipmentControl{CheckForDuplicateBOLs: true},
+		&shipmentcontrol.ShipmentControl{CheckForDuplicateBOLs: true},
 		&shipmentports.DuplicateBOLCheckRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -158,7 +157,7 @@ func TestServiceCheckDuplicateBOLsWithControl_SkipsABlankBOL(t *testing.T) {
 
 		err := svc.checkDuplicateBOLsWithControl(
 			t.Context(),
-			&tenant.ShipmentControl{CheckForDuplicateBOLs: true},
+			&shipmentcontrol.ShipmentControl{CheckForDuplicateBOLs: true},
 			&shipmentports.DuplicateBOLCheckRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),

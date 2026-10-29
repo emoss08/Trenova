@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -49,8 +49,10 @@ func builderParams(scope invoice.Scope, legs ...*shipment.Shipment) *buildInvoic
 		},
 		Scope:    scope,
 		Customer: &customer.Customer{ID: pulid.MustNew("cus_"), Name: "Acme Foods"},
-		Control:  &tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30},
-		Legs:     legs,
+		Control: &billingcontrol.BillingControl{
+			DefaultPaymentTerm: billingcontrol.PaymentTermNet30,
+		},
+		Legs: legs,
 	}
 }
 

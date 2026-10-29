@@ -5,34 +5,31 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-
-	"github.com/emoss08/keel"
-	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -82,16 +79,96 @@ type seedCreditMemo struct {
 }
 
 var seedReceivables = []seedReceivable{
-	{number: "SEED-INV-0001", pro: "SEED-AR-001", customer: "ACME", from: "WH-DAL", to: "DC-CHI", ageDays: 12, freight: "2950.00"},
-	{number: "SEED-INV-0002", pro: "SEED-AR-002", customer: "ACME", from: "TERM-LA", to: "WH-DAL", ageDays: 40, freight: "2600.00"},
-	{number: "SEED-INV-0003", pro: "SEED-AR-003", customer: "ACME", from: "WH-DAL", to: "COLD-PHX", ageDays: 75, freight: "3800.00"},
-	{number: "SEED-INV-0004", pro: "SEED-AR-004", customer: "ACME", from: "TERM-LA", to: "DC-CHI", ageDays: 55, freight: "2400.00"},
-	{number: "SEED-INV-0005", pro: "SEED-AR-005", customer: "PEAK", from: "WH-DAL", to: "DC-CHI", ageDays: 20, freight: "1850.00"},
-	{number: "SEED-INV-0006", pro: "SEED-AR-006", customer: "PEAK", from: "CUST-DEN", to: "DC-CHI", ageDays: 95, freight: "2250.00"},
-	{number: "SEED-INV-0007", pro: "SEED-AR-007", customer: "PEAK", from: "WH-DAL", to: "CUST-DEN", ageDays: 130, freight: "1620.00"},
-	{number: "SEED-INV-0008", pro: "SEED-AR-008", customer: "FRSH", from: "COLD-PHX", to: "TERM-LA", ageDays: 8, freight: "3400.00"},
-	{number: "SEED-INV-0009", pro: "SEED-AR-009", customer: "FRSH", from: "COLD-PHX", to: "WH-DAL", ageDays: 50, freight: "2050.00"},
-	{number: "SEED-INV-0010", pro: "SEED-AR-010", customer: "FRSH", from: "TERM-LA", to: "COLD-PHX", ageDays: 160, freight: "900.00"},
+	{
+		number:   "SEED-INV-0001",
+		pro:      "SEED-AR-001",
+		customer: "ACME",
+		from:     "WH-DAL",
+		to:       "DC-CHI",
+		ageDays:  12,
+		freight:  "2950.00",
+	},
+	{
+		number:   "SEED-INV-0002",
+		pro:      "SEED-AR-002",
+		customer: "ACME",
+		from:     "TERM-LA",
+		to:       "WH-DAL",
+		ageDays:  40,
+		freight:  "2600.00",
+	},
+	{
+		number:   "SEED-INV-0003",
+		pro:      "SEED-AR-003",
+		customer: "ACME",
+		from:     "WH-DAL",
+		to:       "COLD-PHX",
+		ageDays:  75,
+		freight:  "3800.00",
+	},
+	{
+		number:   "SEED-INV-0004",
+		pro:      "SEED-AR-004",
+		customer: "ACME",
+		from:     "TERM-LA",
+		to:       "DC-CHI",
+		ageDays:  55,
+		freight:  "2400.00",
+	},
+	{
+		number:   "SEED-INV-0005",
+		pro:      "SEED-AR-005",
+		customer: "PEAK",
+		from:     "WH-DAL",
+		to:       "DC-CHI",
+		ageDays:  20,
+		freight:  "1850.00",
+	},
+	{
+		number:   "SEED-INV-0006",
+		pro:      "SEED-AR-006",
+		customer: "PEAK",
+		from:     "CUST-DEN",
+		to:       "DC-CHI",
+		ageDays:  95,
+		freight:  "2250.00",
+	},
+	{
+		number:   "SEED-INV-0007",
+		pro:      "SEED-AR-007",
+		customer: "PEAK",
+		from:     "WH-DAL",
+		to:       "CUST-DEN",
+		ageDays:  130,
+		freight:  "1620.00",
+	},
+	{
+		number:   "SEED-INV-0008",
+		pro:      "SEED-AR-008",
+		customer: "FRSH",
+		from:     "COLD-PHX",
+		to:       "TERM-LA",
+		ageDays:  8,
+		freight:  "3400.00",
+	},
+	{
+		number:   "SEED-INV-0009",
+		pro:      "SEED-AR-009",
+		customer: "FRSH",
+		from:     "COLD-PHX",
+		to:       "WH-DAL",
+		ageDays:  50,
+		freight:  "2050.00",
+	},
+	{
+		number:   "SEED-INV-0010",
+		pro:      "SEED-AR-010",
+		customer: "FRSH",
+		from:     "TERM-LA",
+		to:       "COLD-PHX",
+		ageDays:  160,
+		freight:  "900.00",
+	},
 }
 
 var seedReceipts = []seedReceipt{
@@ -352,11 +429,14 @@ func (s *ReceivablesSeed) loadLookups(
 	}
 	refs.shipmentType = shipmentType.ID
 
-	template, err := formulatemplatedb.FormulaTemplates.AllTenants().Pick(formulatemplatedb.FormulaTemplates.ID).Where(
-		formulatemplatedb.FormulaTemplates.OrganizationID.Eq(refs.orgID),
-		formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(refs.buID),
-		formulatemplatedb.FormulaTemplates.Name.Eq("Flat Rate"),
-	).First(ctx, db)
+	template, err := formulatemplatedb.FormulaTemplates.AllTenants().
+		Pick(formulatemplatedb.FormulaTemplates.ID).
+		Where(
+			formulatemplatedb.FormulaTemplates.OrganizationID.Eq(refs.orgID),
+			formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(refs.buID),
+			formulatemplatedb.FormulaTemplates.Name.Eq("Flat Rate"),
+		).
+		First(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get flat rate formula template: %w", err)
 	}
@@ -644,12 +724,12 @@ func (s *ReceivablesSeed) postInvoice(
 	entity *invoice.Invoice,
 	relatedInvoiceID pulid.ID,
 ) error {
-	event := tenant.JournalSourceEventInvoicePosted
+	event := accountingcontrol.JournalSourceEventInvoicePosted
 	debit, credit := refs.accounts[ledgerAccountTradeReceivable],
 		refs.accounts[ledgerAccountLinehaulRevenue]
 	ledgerAmount := entity.TotalAmountMinor
 	if entity.IsCreditMemo() {
-		event = tenant.JournalSourceEventCreditMemoPosted
+		event = accountingcontrol.JournalSourceEventCreditMemoPosted
 		debit, credit = credit, debit
 		ledgerAmount = -entity.CreditTotalMinor()
 	}
@@ -891,7 +971,7 @@ func (s *ReceivablesSeed) ensureReceipt(
 			CustomerID: cus.ID,
 		})
 	}
-	event := tenant.JournalSourceEventCustomerPaymentPosted.String()
+	event := accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()
 	journal, err := postSeedJournal(ctx, db, &seedJournalRequest{
 		orgID:          refs.orgID,
 		buID:           refs.buID,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -794,7 +794,7 @@ func (r *repository) BulkDuplicate(
 		}
 
 		proNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-			Type:             tenant.SequenceTypeProNumber,
+			Type:             sequenceconfig.SequenceTypeProNumber,
 			OrgID:            req.TenantInfo.OrgID,
 			BuID:             req.TenantInfo.BuID,
 			Count:            req.Count,
@@ -813,7 +813,7 @@ func (r *repository) BulkDuplicate(
 		)
 
 		orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-			Type:             tenant.SequenceTypeOrder,
+			Type:             sequenceconfig.SequenceTypeOrder,
 			OrgID:            req.TenantInfo.OrgID,
 			BuID:             req.TenantInfo.BuID,
 			Count:            len(graph.shipments),

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -79,8 +79,8 @@ type stubControlRepo struct {
 func (r stubControlRepo) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	return &tenant.AgentControl{ShadowMode: r.paused}, nil
+) (*agentcontrol.AgentControl, error) {
+	return &agentcontrol.AgentControl{ShadowMode: r.paused}, nil
 }
 
 type stubDefinitionRepo struct {

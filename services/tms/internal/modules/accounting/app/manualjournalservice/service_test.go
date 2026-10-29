@@ -4,11 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
@@ -16,11 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -100,11 +99,13 @@ func TestCreateDraftPersistsGeneratedNumber(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		CurrencyMode:             tenant.CurrencyModeSingleCurrency,
-		FunctionalCurrencyCode:   "USD",
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			CurrencyMode:             accountingcontrol.CurrencyModeSingleCurrency,
+			FunctionalCurrencyCode:   "USD",
+			ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
@@ -184,7 +185,7 @@ func TestUpdateDraftReplacesLines(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll}, nil)
+		Return(&accountingcontrol.AccountingControl{ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_200}).
@@ -237,9 +238,11 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	manualRepo := newManualJournalRepositoryFake(request)
 	journalRepo := newJournalPostingRepositoryFake()
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
@@ -295,9 +298,11 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 	manualRepo := newManualJournalRepositoryFake(request)
 	journalRepo := newJournalPostingRepositoryFake()
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
@@ -365,7 +370,7 @@ func TestPostBlocksNonApprovedRequest(t *testing.T) {
 			repo := tenantportsmock.NewMockAccountingControlRepository(t)
 			repo.EXPECT().
 				GetByOrgID(mock.Anything, orgID).
-				Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
+				Return(&accountingcontrol.AccountingControl{ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen}, nil)
 			return repo
 		}(),
 		generator:    testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
@@ -393,9 +398,11 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
@@ -439,10 +446,12 @@ func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
 	request.Status = manualjournal.StatusDraft
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
-		RequireManualJEApproval:  true,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll,
+			RequireManualJEApproval:  true,
+		}, nil)
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
@@ -476,10 +485,12 @@ func TestSubmitAutoApprovesWhenApprovalNotRequired(t *testing.T) {
 	request.ApprovedByID = pulid.Nil
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
-		RequireManualJEApproval:  false,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll,
+			RequireManualJEApproval:  false,
+		}, nil)
 
 	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
@@ -643,7 +654,7 @@ func TestPostAllowsLockedPeriod(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
+		Return(&accountingcontrol.AccountingControl{ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
@@ -684,7 +695,7 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen}, nil)
+		Return(&accountingcontrol.AccountingControl{ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).

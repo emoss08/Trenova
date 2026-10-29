@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -188,7 +188,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	repo.EXPECT().
 		Uncancel(mock.Anything, mock.MatchedBy(func(req *shipmentports.UncancelShipmentRequest) bool {
@@ -378,7 +378,7 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(original, nil).Once()
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
 	svc := &service{

@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -119,7 +119,7 @@ func (s *LedgerService) GetBalance(
 type ledgerScope struct {
 	before    *factoring.Submission
 	agreement *factoring.Agreement
-	control   *tenant.AccountingControl
+	control   *accountingcontrol.AccountingControl
 	accounts  factoring.PostingAccounts
 }
 

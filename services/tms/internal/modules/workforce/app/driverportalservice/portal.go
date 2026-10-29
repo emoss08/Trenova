@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -373,7 +373,7 @@ func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) er
 		return err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowStopActions },
+		func(control *dashcontrol.DashControl) bool { return control.AllowStopActions },
 		"Your carrier records arrivals and departures from dispatch — call in your status instead.",
 	); err != nil {
 		return err
@@ -410,7 +410,7 @@ func (s *Service) CreateMyLoadComment(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowLoadComments },
+		func(control *dashcontrol.DashControl) bool { return control.AllowLoadComments },
 		"Your carrier has turned off load messaging in Dash — call your dispatcher instead.",
 	); err != nil {
 		return nil, err

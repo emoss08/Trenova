@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -57,7 +56,7 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -92,7 +91,7 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -122,7 +121,7 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -150,7 +149,7 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -421,7 +420,7 @@ func TestRateAndAdoptContract_KeepsTheContractAccessorialsOnADeparture(t *testin
 	calculator := departingCalculator(t, agreement, perMileInputs(t, "$2.15/mi"))
 
 	rating, err := calculator.RateAndAdoptContract(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	)
 	require.NoError(t, err)
 	require.False(t, rating.Adopted, "a hand-priced base rate is a departure")
@@ -467,7 +466,7 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 	entity := ratedShipment(agreement.ID)
 
 	rating, err := calculator.RateAndAdoptContract(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	)
 	require.NoError(t, err)
 	require.False(t, rating.Adopted)

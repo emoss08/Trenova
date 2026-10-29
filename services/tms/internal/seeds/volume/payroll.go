@@ -9,14 +9,15 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -63,7 +64,7 @@ type payAccounts struct {
 }
 
 type paySetup struct {
-	control        *tenant.SettlementControl
+	control        *settlementcontrol.SettlementControl
 	allowDisputes  bool
 	requireReceipt bool
 	accounts       payAccounts
@@ -206,13 +207,13 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	case err != nil:
 		return nil, fmt.Errorf("load settlement control: %w", err)
 	case control == nil:
-		control = &tenant.SettlementControl{
-			PayPeriodFrequency:            tenant.PayPeriodFrequencyWeekly,
+		control = &settlementcontrol.SettlementControl{
+			PayPeriodFrequency:            settlementcontrol.PayPeriodFrequencyWeekly,
 			PeriodEndDayOfWeek:            6,
 			PayDelayDays:                  5,
 			VarianceThresholdPct:          decimal.NewFromInt(25),
 			VarianceLookbackWeeks:         8,
-			PayTrigger:                    tenant.PayTriggerShipmentDelivered,
+			PayTrigger:                    settlementcontrol.PayTriggerShipmentDelivered,
 			EscrowInterestFrequencyMonths: 3,
 		}
 	}
@@ -306,7 +307,15 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 		})
 	}
 	pc := driverpaydb.PayCodes
-	inserted, err := pc.CreateOrSkip(ctx, tx, rows, pc.OrganizationID, pc.BusinessUnitID, pc.Direction, pc.Code)
+	inserted, err := pc.CreateOrSkip(
+		ctx,
+		tx,
+		rows,
+		pc.OrganizationID,
+		pc.BusinessUnitID,
+		pc.Direction,
+		pc.Code,
+	)
 	if err != nil {
 		return fmt.Errorf("insert pay codes: %w", err)
 	}
@@ -363,11 +372,21 @@ func payProfileDefs() []*driverpay.PayProfile {
 		{MinMiles: 200, MaxMiles: 500, Rate: decimal.NewFromFloat(0.60)},
 		{MinMiles: 500, MaxMiles: 0, Rate: decimal.NewFromFloat(0.56)},
 	}
-	ownerRevenue := payComponent(driverpay.ComponentKindLinehaul, driverpay.CalcMethodPercentOfRevenue,
-		"75% of total revenue", 75, 0)
+	ownerRevenue := payComponent(
+		driverpay.ComponentKindLinehaul,
+		driverpay.CalcMethodPercentOfRevenue,
+		"75% of total revenue",
+		75,
+		0,
+	)
 	ownerRevenue.RevenueBasis = driverpay.RevenueBasisTotalRevenue
-	ownerLinehaul := payComponent(driverpay.ComponentKindLinehaul, driverpay.CalcMethodPercentOfRevenue,
-		"70% of linehaul revenue", 70, 0)
+	ownerLinehaul := payComponent(
+		driverpay.ComponentKindLinehaul,
+		driverpay.CalcMethodPercentOfRevenue,
+		"70% of linehaul revenue",
+		70,
+		0,
+	)
 	ownerLinehaul.RevenueBasis = driverpay.RevenueBasisLinehaul
 
 	return []*driverpay.PayProfile{
@@ -802,16 +821,49 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 			driverpay.EarningKindStandard, start)
 	}
 	if f.chance(0.15) {
-		g.payEarning(setup, w, "SAFETY", "Monthly safety bonus: clean inspections",
-			g.payMinor(100, 150), driverpay.EarningFrequencyMonthly, driverpay.EarningKindBonus, start)
+		g.payEarning(
+			setup,
+			w,
+			"SAFETY",
+			"Monthly safety bonus: clean inspections",
+			g.payMinor(
+				100,
+				150,
+			),
+			driverpay.EarningFrequencyMonthly,
+			driverpay.EarningKindBonus,
+			start,
+		)
 	}
 	if unix(g.now)-w.driver.HireDate > 3*365*payDay && f.chance(0.4) {
-		g.payEarning(setup, w, "LONGEVITY", "Longevity bonus: 3+ years of service",
-			g.payMinor(75, 125), driverpay.EarningFrequencyMonthly, driverpay.EarningKindBonus, start)
+		g.payEarning(
+			setup,
+			w,
+			"LONGEVITY",
+			"Longevity bonus: 3+ years of service",
+			g.payMinor(
+				75,
+				125,
+			),
+			driverpay.EarningFrequencyMonthly,
+			driverpay.EarningKindBonus,
+			start,
+		)
 	}
 	if f.chance(0.1) {
-		g.payEarning(setup, w, "STIPEND", "Cell phone and ELD data stipend",
-			g.payMinor(40, 60), driverpay.EarningFrequencyMonthly, driverpay.EarningKindStandard, start)
+		g.payEarning(
+			setup,
+			w,
+			"STIPEND",
+			"Cell phone and ELD data stipend",
+			g.payMinor(
+				40,
+				60,
+			),
+			driverpay.EarningFrequencyMonthly,
+			driverpay.EarningKindStandard,
+			start,
+		)
 	}
 
 	for _, d := range w.deductions {
@@ -892,7 +944,11 @@ func payToMinor(amount decimal.Decimal) int64 {
 	return amount.Mul(payMinorFactor).Round(0).IntPart()
 }
 
-func payBandedRate(base decimal.Decimal, bands []driverpay.MileageBand, miles decimal.Decimal) decimal.Decimal {
+func payBandedRate(
+	base decimal.Decimal,
+	bands []driverpay.MileageBand,
+	miles decimal.Decimal,
+) decimal.Decimal {
 	if len(bands) == 0 {
 		return base
 	}
@@ -915,7 +971,8 @@ type payMoveFacts struct {
 
 func payRevenueShare(facts *payMoveFacts) decimal.Decimal {
 	if facts.shipment.Miles > 0 && facts.move.Miles > 0 {
-		return decimal.NewFromFloat(facts.move.Miles).Div(decimal.NewFromFloat(facts.shipment.Miles))
+		return decimal.NewFromFloat(facts.move.Miles).
+			Div(decimal.NewFromFloat(facts.shipment.Miles))
 	}
 	if n := len(facts.shipment.Moves); n > 0 {
 		return decimal.NewFromInt(1).Div(decimal.NewFromInt(int64(n)))
@@ -997,12 +1054,16 @@ func payComputeMove(
 			continue
 		}
 		if comp.MinAmountMinor != nil {
-			if floor := decimal.NewFromInt(*comp.MinAmountMinor).Div(payMinorFactor); amount.LessThan(floor) {
+			if floor := decimal.NewFromInt(*comp.MinAmountMinor).Div(payMinorFactor); amount.LessThan(
+				floor,
+			) {
 				amount = floor
 			}
 		}
 		if comp.MaxAmountMinor != nil {
-			if ceiling := decimal.NewFromInt(*comp.MaxAmountMinor).Div(payMinorFactor); amount.GreaterThan(ceiling) {
+			if ceiling := decimal.NewFromInt(*comp.MaxAmountMinor).Div(payMinorFactor); amount.GreaterThan(
+				ceiling,
+			) {
 				amount = ceiling
 			}
 		}
@@ -1074,7 +1135,10 @@ func (g *generator) payAccrueEvents(setup *paySetup, workers map[pulid.ID]*payWo
 		}
 	}
 	for _, w := range workers {
-		sort.SliceStable(w.events, func(i, j int) bool { return w.events[i].EventDate < w.events[j].EventDate })
+		sort.SliceStable(
+			w.events,
+			func(i, j int) bool { return w.events[i].EventDate < w.events[j].EventDate },
+		)
 	}
 }
 
@@ -1183,7 +1247,13 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 				cities := r.Moves[len(r.Moves)-1].Cities
 				if len(cities) > 0 {
 					c := cities[len(cities)-1]
-					description = fmt.Sprintf("%s: %s, %s (PRO %s)", kind.description, c.Name, c.State, r.ProNumber)
+					description = fmt.Sprintf(
+						"%s: %s, %s (PRO %s)",
+						kind.description,
+						c.Name,
+						c.State,
+						r.ProNumber,
+					)
 				}
 			}
 			expense := &driverpay.Expense{
@@ -1217,14 +1287,15 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 
 // -- Periods --
 
-func payResolvePeriod(control *tenant.SettlementControl, now int64) payPeriod {
+func payResolvePeriod(control *settlementcontrol.SettlementControl, now int64) payPeriod {
 	at := time.Unix(now, 0).UTC()
 	endDay := time.Weekday(control.PeriodEndDayOfWeek)
 	daysBack := int(at.Weekday() - endDay)
 	if daysBack < 0 {
 		daysBack += 7
 	}
-	end := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, -daysBack+1)
+	end := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, time.UTC).
+		AddDate(0, 0, -daysBack+1)
 	return payPeriod{
 		start:   payStepBack(control.PayPeriodFrequency, end).Unix(),
 		end:     end.Unix(),
@@ -1232,18 +1303,18 @@ func payResolvePeriod(control *tenant.SettlementControl, now int64) payPeriod {
 	}
 }
 
-func payStepBack(frequency tenant.PayPeriodFrequency, end time.Time) time.Time {
+func payStepBack(frequency settlementcontrol.PayPeriodFrequency, end time.Time) time.Time {
 	switch frequency {
-	case tenant.PayPeriodFrequencyBiweekly:
+	case settlementcontrol.PayPeriodFrequencyBiweekly:
 		return end.AddDate(0, 0, -14)
-	case tenant.PayPeriodFrequencyMonthly:
+	case settlementcontrol.PayPeriodFrequencyMonthly:
 		return end.AddDate(0, -1, 0)
 	default:
 		return end.AddDate(0, 0, -7)
 	}
 }
 
-func (g *generator) payPeriods(control *tenant.SettlementControl) []payPeriod {
+func (g *generator) payPeriods(control *settlementcontrol.SettlementControl) []payPeriod {
 	current := payResolvePeriod(control, unix(g.now))
 	periods := []payPeriod{current}
 	floor := unix(g.start) - 30*payDay
@@ -1429,7 +1500,8 @@ func (g *generator) payBuildSettlement(
 		if code != nil && code.LineIsReimbursement() {
 			category = driversettlement.LineCategoryReimbursement
 		}
-		if category == driversettlement.LineCategoryEarning && code != nil && !code.CountsTowardGuarantee {
+		if category == driversettlement.LineCategoryEarning && code != nil &&
+			!code.CountsTowardGuarantee {
 			guaranteeExcluded += amount
 		}
 		lines = append(lines, &driversettlement.SettlementLine{
@@ -1469,7 +1541,8 @@ func (g *generator) payBuildSettlement(
 	}
 
 	for _, deduction := range w.deductions {
-		if deduction.Status != driverpay.DeductionStatusActive || deduction.StartDate > period.end ||
+		if deduction.Status != driverpay.DeductionStatusActive ||
+			deduction.StartDate > period.end ||
 			(deduction.EndDate != nil && *deduction.EndDate <= period.end) {
 			continue
 		}
@@ -1513,10 +1586,15 @@ func (g *generator) payBuildSettlement(
 	entity.Lines = lines
 	entity.SyncTotals()
 	if entity.CarryForwardOutMinor < 0 {
-		entity.AddException(driversettlement.ExceptionCodeNegativeNet,
+		entity.AddException(
+			driversettlement.ExceptionCodeNegativeNet,
 			driversettlement.ExceptionSeverityCritical,
-			"Deductions exceed earnings; "+money.FormatMinor(-entity.CarryForwardOutMinor, payCurrency)+
-				" carries forward")
+			"Deductions exceed earnings; "+money.FormatMinor(
+				-entity.CarryForwardOutMinor,
+				payCurrency,
+			)+
+				" carries forward",
+		)
 	}
 	g.payFlagVariance(setup, w, entity)
 
@@ -1579,7 +1657,11 @@ func (g *generator) payAdvanceLines(
 	return lines
 }
 
-func (g *generator) payFlagVariance(setup *paySetup, w *payWorker, entity *driversettlement.Settlement) {
+func (g *generator) payFlagVariance(
+	setup *paySetup,
+	w *payWorker,
+	entity *driversettlement.Settlement,
+) {
 	threshold := setup.control.VarianceThresholdPct
 	lookback := setup.control.VarianceLookbackWeeks
 	if threshold.IsZero() || lookback <= 0 || len(w.nets) < 2 {
@@ -1676,7 +1758,8 @@ func (g *generator) payPostable(setup *paySetup, e *driversettlement.Settlement)
 	}
 	for _, line := range e.Lines {
 		switch line.Category {
-		case driversettlement.LineCategoryAdvanceRecovery, driversettlement.LineCategoryCarryForward:
+		case driversettlement.LineCategoryAdvanceRecovery,
+			driversettlement.LineCategoryCarryForward:
 			if setup.accounts.advance.IsNil() {
 				return false
 			}
@@ -1734,7 +1817,13 @@ func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
 		}
 		e := plan.expense
 		reviewed := from + g.fake.between64(0, to-from)
-		line := g.payAddAdjustment(s, "Expense reimbursement: "+e.Description, e.AmountMinor, e.PayCodeID, reviewed)
+		line := g.payAddAdjustment(
+			s,
+			"Expense reimbursement: "+e.Description,
+			e.AmountMinor,
+			e.PayCodeID,
+			reviewed,
+		)
 		e.Status = driverpay.ExpenseStatusReimbursed
 		e.ReviewedByID = ptr(pick(g.fake, g.refs.userIDs))
 		e.ReviewedAt = ptr(reviewed)
@@ -1883,7 +1972,13 @@ func (g *generator) payResolveDisputes(w *payWorker, s *paySettlement) {
 			if d.Category == driversettlement.DisputeCategoryIncorrectDeduction {
 				amount = g.payMinor(18, 115)
 			}
-			line := g.payAddAdjustment(s, "Dispute correction: "+d.Description, amount, nil, resolved)
+			line := g.payAddAdjustment(
+				s,
+				"Dispute correction: "+d.Description,
+				amount,
+				nil,
+				resolved,
+			)
 			d.Status = driversettlement.DisputeStatusResolved
 			d.ResolutionNote = "Confirmed and corrected on the next settlement"
 			d.ResolutionLineID = ptr(line.ID)
@@ -1938,7 +2033,8 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 	for _, line := range e.Lines {
 		amount := -line.AmountMinor
 		switch line.Category {
-		case driversettlement.LineCategoryDeduction, driversettlement.LineCategoryEscrowContribution:
+		case driversettlement.LineCategoryDeduction,
+			driversettlement.LineCategoryEscrowContribution:
 			d := payDeductionByID(w, line.RecurringDeductionID)
 			if d == nil {
 				continue
@@ -1948,7 +2044,8 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 				d.Status = driverpay.DeductionStatusCompleted
 			}
 			d.UpdatedAt = at
-			if line.Category == driversettlement.LineCategoryEscrowContribution && w.escrow != nil &&
+			if line.Category == driversettlement.LineCategoryEscrowContribution &&
+				w.escrow != nil &&
 				line.EscrowAccountID != nil {
 				w.escrow.BalanceMinor += amount
 				w.escrow.UpdatedAt = at
@@ -1981,7 +2078,8 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 			for _, earning := range w.earnings {
 				if earning.ID == *line.RecurringEarningID {
 					earning.PaidToDateMinor += line.AmountMinor
-					if remaining := earning.RemainingCapMinor(); remaining != nil && *remaining == 0 {
+					if remaining := earning.RemainingCapMinor(); remaining != nil &&
+						*remaining == 0 {
 						earning.Status = driverpay.EarningStatusCompleted
 					}
 					earning.UpdatedAt = at
@@ -2025,7 +2123,7 @@ func (g *generator) payCollect(
 	for i, s := range settlements {
 		slots[i] = numberSlot{At: s.generatedAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeDriverSettlement, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeDriverSettlement, slots)
 	if err != nil {
 		return err
 	}
@@ -2169,7 +2267,7 @@ func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRow
 			journal.sourceType = "DriverSettlement"
 			journal.sourceID = e.ID
 			journal.document = e.SettlementNumber
-			journal.event = tenant.JournalSourceEventDriverSettlementPosted
+			journal.event = accountingcontrol.JournalSourceEventDriverSettlementPosted
 			journal.referenceType = journal.event.String()
 			journal.idempotency = "driver-settlement-posted:" + e.ID.String()
 			journal.auto = true
@@ -2190,7 +2288,7 @@ func (g *generator) payJournals(setup *paySetup, rows *payRows, journals *bilRow
 		payment.sourceType = "DriverSettlement"
 		payment.sourceID = e.ID
 		payment.document = e.SettlementNumber
-		payment.event = tenant.JournalSourceEventDriverSettlementPaid
+		payment.event = accountingcontrol.JournalSourceEventDriverSettlementPaid
 		payment.referenceType = payment.event.String()
 		payment.idempotency = "driver-settlement-paid:" + e.ID.String()
 		payment.auto = true
@@ -2309,23 +2407,64 @@ func payPostingLegs(e *driversettlement.Settlement, setup *paySetup) []bilLeg {
 
 // -- Write --
 
-func (g *generator) payWrite(ctx context.Context, tx *keel.DB, rows *payRows, journals *bilRows) error {
+func (g *generator) payWrite(
+	ctx context.Context,
+	tx *keel.DB,
+	rows *payRows,
+	journals *bilRows,
+) error {
 	steps := []struct {
 		table string
 		run   func() error
 	}{
-		{"worker_pay_assignments", func() error { return insertRows(ctx, tx, driverpaydb.WorkerPayAssignments.Handle, rows.assignments) }},
-		{"escrow_accounts", func() error { return insertRows(ctx, tx, driverpaydb.EscrowAccounts.Handle, rows.escrows) }},
-		{"recurring_deductions", func() error { return insertRows(ctx, tx, driverpaydb.RecurringDeductions.Handle, rows.deductions) }},
-		{"recurring_earnings", func() error { return insertRows(ctx, tx, driverpaydb.RecurringEarnings.Handle, rows.earnings) }},
-		{"pay_advances", func() error { return insertRows(ctx, tx, driverpaydb.PayAdvances.Handle, rows.advances) }},
-		{"driver_settlement_batches", func() error { return insertRows(ctx, tx, driversettlementdb.SettlementBatches.Handle, rows.batches) }},
-		{"driver_settlements", func() error { return insertRows(ctx, tx, driversettlementdb.Settlements.Handle, rows.settlements) }},
-		{"driver_settlement_lines", func() error { return insertRows(ctx, tx, driversettlementdb.SettlementLines.Handle, rows.lines) }},
-		{"driver_pay_events", func() error { return insertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) }},
-		{"escrow_transactions", func() error { return insertRows(ctx, tx, driverpaydb.EscrowTransactions.Handle, rows.escrowTxs) }},
-		{"driver_expenses", func() error { return insertRows(ctx, tx, driverpaydb.Expenses.Handle, rows.expenses) }},
-		{"settlement_disputes", func() error { return insertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) }},
+		{
+			"worker_pay_assignments",
+			func() error { return insertRows(ctx, tx, driverpaydb.WorkerPayAssignments.Handle, rows.assignments) },
+		},
+		{
+			"escrow_accounts",
+			func() error { return insertRows(ctx, tx, driverpaydb.EscrowAccounts.Handle, rows.escrows) },
+		},
+		{
+			"recurring_deductions",
+			func() error { return insertRows(ctx, tx, driverpaydb.RecurringDeductions.Handle, rows.deductions) },
+		},
+		{
+			"recurring_earnings",
+			func() error { return insertRows(ctx, tx, driverpaydb.RecurringEarnings.Handle, rows.earnings) },
+		},
+		{
+			"pay_advances",
+			func() error { return insertRows(ctx, tx, driverpaydb.PayAdvances.Handle, rows.advances) },
+		},
+		{
+			"driver_settlement_batches",
+			func() error { return insertRows(ctx, tx, driversettlementdb.SettlementBatches.Handle, rows.batches) },
+		},
+		{
+			"driver_settlements",
+			func() error { return insertRows(ctx, tx, driversettlementdb.Settlements.Handle, rows.settlements) },
+		},
+		{
+			"driver_settlement_lines",
+			func() error { return insertRows(ctx, tx, driversettlementdb.SettlementLines.Handle, rows.lines) },
+		},
+		{
+			"driver_pay_events",
+			func() error { return insertRows(ctx, tx, driversettlementdb.PayEvents.Handle, rows.events) },
+		},
+		{
+			"escrow_transactions",
+			func() error { return insertRows(ctx, tx, driverpaydb.EscrowTransactions.Handle, rows.escrowTxs) },
+		},
+		{
+			"driver_expenses",
+			func() error { return insertRows(ctx, tx, driverpaydb.Expenses.Handle, rows.expenses) },
+		},
+		{
+			"settlement_disputes",
+			func() error { return insertRows(ctx, tx, driversettlementdb.Disputes.Handle, rows.disputes) },
+		},
 	}
 	for _, step := range steps {
 		if err := step.run(); err != nil {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -133,7 +133,7 @@ func (s *LedgerService) planRelease(
 		scope:     scope,
 		item:      item,
 		movement:  movement,
-		event:     tenant.JournalSourceEventFactoringReserveReleased,
+		event:     accountingcontrol.JournalSourceEventFactoringReserveReleased,
 		key:       releaseKeyPrefix + item.ID.String(),
 		date:      req.OccurredOn,
 		dateField: "releasedOn",
@@ -173,7 +173,7 @@ func (s *LedgerService) planChargeback(
 		scope:    scope,
 		item:     item,
 		movement: movement,
-		event:    tenant.JournalSourceEventFactoringChargedBack,
+		event:    accountingcontrol.JournalSourceEventFactoringChargedBack,
 		key: chargebackKeyPrefix + item.ID.String() + ":" +
 			strconv.Itoa(history.chargebacks+1),
 		date:      req.OccurredOn,
@@ -224,7 +224,7 @@ func (s *LedgerService) planReversal(
 		scope:     scope,
 		item:      item,
 		movement:  movement,
-		event:     tenant.JournalSourceEventFactoringChargebackReversed,
+		event:     accountingcontrol.JournalSourceEventFactoringChargebackReversed,
 		key:       reversalKeyPrefix + history.open.ID.String(),
 		date:      req.OccurredOn,
 		dateField: "reversedOn",

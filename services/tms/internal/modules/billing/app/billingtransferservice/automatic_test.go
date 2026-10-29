@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
@@ -61,7 +61,7 @@ type automaticFixture struct {
 	shipments *shipmentserviceportsmock.MockShipmentService
 	workflows *kernelportsmock.MockWorkflowStarter
 	svc       *Service
-	control   *tenant.BillingControl
+	control   *billingcontrol.BillingControl
 	system    pulid.ID
 }
 
@@ -73,11 +73,11 @@ func newAutomaticFixture(t *testing.T) *automaticFixture {
 		shipments: shipmentserviceportsmock.NewMockShipmentService(t),
 		workflows: kernelportsmock.NewMockWorkflowStarter(t),
 		system:    pulid.MustNew("usr_"),
-		control: &tenant.BillingControl{
+		control: &billingcontrol.BillingControl{
 			OrganizationID:                pulid.MustNew("org_"),
 			BusinessUnitID:                pulid.MustNew("bu_"),
-			BillingQueueTransferMode:      tenant.BillingQueueTransferModeAutomaticWhenReady,
-			BillingQueueTransferSchedule:  tenant.TransferScheduleHourly,
+			BillingQueueTransferMode:      billingcontrol.BillingQueueTransferModeAutomaticWhenReady,
+			BillingQueueTransferSchedule:  billingcontrol.TransferScheduleHourly,
 			BillingQueueTransferBatchSize: 50,
 		},
 	}
@@ -149,7 +149,7 @@ func TestStartAutomaticLeavesARunningTransferAlone(t *testing.T) {
 	t.Parallel()
 
 	f := newAutomaticFixture(t)
-	f.control.BillingQueueTransferSchedule = tenant.TransferScheduleContinuous
+	f.control.BillingQueueTransferSchedule = billingcontrol.TransferScheduleContinuous
 	f.repo.active = &billingtransfer.BillingTransferRun{ID: pulid.MustNew("btr_")}
 
 	run, err := f.start(t, 10_000)
@@ -178,7 +178,7 @@ func TestStartAutomaticIgnoresManualOrganizations(t *testing.T) {
 	t.Parallel()
 
 	f := newAutomaticFixture(t)
-	f.control.BillingQueueTransferMode = tenant.BillingQueueTransferModeManualOnly
+	f.control.BillingQueueTransferMode = billingcontrol.BillingQueueTransferModeManualOnly
 
 	run, err := f.start(t, 10_000)
 
@@ -189,10 +189,10 @@ func TestStartAutomaticIgnoresManualOrganizations(t *testing.T) {
 func TestAutomaticBatchSize(t *testing.T) {
 	t.Parallel()
 
-	control := &tenant.BillingControl{BillingQueueTransferBatchSize: 200}
+	control := &billingcontrol.BillingControl{BillingQueueTransferBatchSize: 200}
 	assert.Equal(t, 200, AutomaticBatchSize(control))
 
-	control.InvoiceDraftCreationMode = tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
+	control.InvoiceDraftCreationMode = billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred
 	control.AutoInvoiceBatchSize = 40
 	assert.Equal(
 		t,
@@ -209,8 +209,8 @@ func TestAutomaticBatchSize(t *testing.T) {
 func TestAutomaticInterval(t *testing.T) {
 	t.Parallel()
 
-	assert.Zero(t, automaticInterval(tenant.TransferScheduleContinuous))
-	assert.Equal(t, int64(3600), automaticInterval(tenant.TransferScheduleHourly))
-	assert.Equal(t, int64(86_400), automaticInterval(tenant.TransferScheduleDaily))
-	assert.Equal(t, int64(604_800), automaticInterval(tenant.TransferScheduleWeekly))
+	assert.Zero(t, automaticInterval(billingcontrol.TransferScheduleContinuous))
+	assert.Equal(t, int64(3600), automaticInterval(billingcontrol.TransferScheduleHourly))
+	assert.Equal(t, int64(86_400), automaticInterval(billingcontrol.TransferScheduleDaily))
+	assert.Equal(t, int64(604_800), automaticInterval(billingcontrol.TransferScheduleWeekly))
 }

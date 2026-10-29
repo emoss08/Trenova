@@ -8,15 +8,6 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -24,14 +15,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,10 +84,10 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.ReconciliationMode = tenant.ReconciliationModeDisabled
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventInvoicePosted,
+	control.ReconciliationMode = accountingcontrol.ReconciliationModeDisabled
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventInvoicePosted,
 	}
 	control.DefaultARAccountID = lookupInvoiceGLAccount(
 		t,
@@ -245,7 +241,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		FROM journal_entries WHERE reference_id = $1 LIMIT 1`,
 		entity.ID.String(),
 	).Scan(&entry.ReferenceType, &entry.ReferenceID, &entry.TotalDebit, &entry.TotalCredit))
-	assert.Equal(t, tenant.JournalSourceEventInvoicePosted.String(), entry.ReferenceType)
+	assert.Equal(t, accountingcontrol.JournalSourceEventInvoicePosted.String(), entry.ReferenceType)
 	assert.Equal(t, entity.ID.String(), entry.ReferenceID)
 	assert.Equal(t, int64(10000), entry.TotalDebit)
 	assert.Equal(t, int64(10000), entry.TotalCredit)
@@ -258,7 +254,11 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		"SELECT source_event_type, status FROM journal_sources WHERE source_object_id = $1 LIMIT 1",
 		entity.ID.String(),
 	).Scan(&source.SourceEventType, &source.Status))
-	assert.Equal(t, tenant.JournalSourceEventInvoicePosted.String(), source.SourceEventType)
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventInvoicePosted.String(),
+		source.SourceEventType,
+	)
 	assert.Equal(t, "Posted", source.Status)
 
 	arAfter := balanceOf(control.DefaultARAccountID)
@@ -302,12 +302,12 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.AccountingBasis = tenant.AccountingBasisCash
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
-	control.ReconciliationMode = tenant.ReconciliationModeDisabled
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventCustomerPaymentPosted,
+	control.AccountingBasis = accountingcontrol.AccountingBasisCash
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnCashReceipt
+	control.ReconciliationMode = accountingcontrol.ReconciliationModeDisabled
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
 	}
 	control.DefaultARAccountID = lookupInvoiceGLAccount(
 		t,

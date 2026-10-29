@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -759,7 +759,7 @@ func parsePayEventIDs(rawIDs []string) ([]pulid.ID, error) {
 func settlementControlFromUpdateInput(
 	input *gqlmodel.UpdateSettlementControlInput,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.SettlementControl, error) {
+) (*settlementcontrol.SettlementControl, error) {
 	varianceThreshold, err := gqldecimal.DecimalFromString(
 		input.VarianceThresholdPct,
 		"varianceThresholdPct",
@@ -774,7 +774,7 @@ func settlementControlFromUpdateInput(
 	if err != nil {
 		return nil, err
 	}
-	return &tenant.SettlementControl{
+	return &settlementcontrol.SettlementControl{
 		OrganizationID:                tenantInfo.OrgID,
 		BusinessUnitID:                tenantInfo.BuID,
 		Version:                       int64(input.Version),

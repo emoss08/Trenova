@@ -3,6 +3,10 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"context"
 	"sync"
 
@@ -803,10 +807,10 @@ type AccountingSyncRecordResolver interface {
 }
 
 type AgentControlResolver interface {
-	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyDayAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyCurrency(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 }
 
 type AgentDecisionResolver interface {
@@ -2026,7 +2030,7 @@ type MutationResolver interface {
 	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
-	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -2128,7 +2132,7 @@ type MutationResolver interface {
 	RecalculateCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	AddCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.AddCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
 	RemoveCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
-	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error)
+	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*carriersettlementcontrol.CarrierSettlementControl, error)
 	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error)
 	CreateCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CreateCarrierInvoiceMatchInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
@@ -2204,7 +2208,7 @@ type MutationResolver interface {
 	CancelMyExpense(ctx context.Context, id string) (*driverpay.Expense, error)
 	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*driverpay.Expense, error)
 	RespondToMyAssignment(ctx context.Context, input gqlmodel.RespondToMyAssignmentInput) (bool, error)
-	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*tenant.DashControl, error)
+	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*dashcontrol.DashControl, error)
 	CreatePayProfile(ctx context.Context, input gqlmodel.CreatePayProfileInput) (*driverpay.PayProfile, error)
 	UpdatePayProfile(ctx context.Context, input gqlmodel.UpdatePayProfileInput) (*driverpay.PayProfile, error)
 	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*driverpay.WorkerPayAssignment, error)
@@ -2233,7 +2237,7 @@ type MutationResolver interface {
 	RecalculateDriverSettlement(ctx context.Context, input gqlmodel.DriverSettlementActionInput) (*driversettlement.Settlement, error)
 	AddDriverSettlementAdjustment(ctx context.Context, input gqlmodel.AddSettlementAdjustmentInput) (*driversettlement.Settlement, error)
 	RemoveDriverSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveSettlementAdjustmentInput) (*driversettlement.Settlement, error)
-	UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*tenant.SettlementControl, error)
+	UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*settlementcontrol.SettlementControl, error)
 	HoldDriverPayEvent(ctx context.Context, input gqlmodel.HoldPayEventInput) (*driversettlement.PayEvent, error)
 	ReleaseDriverPayEvent(ctx context.Context, payEventID string) (*driversettlement.PayEvent, error)
 	AttachPayEventsToSettlement(ctx context.Context, input gqlmodel.AttachPayEventsInput) (*driversettlement.Settlement, error)
@@ -2801,7 +2805,7 @@ type QueryResolver interface {
 	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
-	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
+	AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentOrganizationProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
@@ -2928,7 +2932,7 @@ type QueryResolver interface {
 	CarrierSettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementBatchConnection, error)
 	CarrierSettlementBatch(ctx context.Context, id string) (*carriersettlement.CarrierSettlementBatch, error)
 	CarrierCostEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierCostEventConnection, error)
-	CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error)
+	CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error)
 	CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error)
 	CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error)
@@ -3032,7 +3036,7 @@ type QueryResolver interface {
 	DriverExpenses(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverExpenseConnection, error)
 	DriverExpense(ctx context.Context, id string) (*driverpay.Expense, error)
 	PendingDriverExpenseCount(ctx context.Context) (int, error)
-	DashControl(ctx context.Context) (*tenant.DashControl, error)
+	DashControl(ctx context.Context) (*dashcontrol.DashControl, error)
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
 	WorkerPayAssignments(ctx context.Context, workerID string) ([]*driverpay.WorkerPayAssignment, error)
@@ -3057,7 +3061,7 @@ type QueryResolver interface {
 	UnsettledPayEvents(ctx context.Context, workerID string) ([]*driversettlement.PayEvent, error)
 	WorkerEarningsSummary(ctx context.Context, workerID string) (*driversettlementservice.WorkerEarningsSummary, error)
 	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error)
-	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
+	SettlementControl(ctx context.Context) (*settlementcontrol.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
 	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
@@ -3509,8 +3513,8 @@ type ServiceFailureStopResolver interface {
 }
 
 type SettlementControlResolver interface {
-	VarianceThresholdPct(ctx context.Context, obj *tenant.SettlementControl) (string, error)
-	DefaultEscrowInterestRate(ctx context.Context, obj *tenant.SettlementControl) (string, error)
+	VarianceThresholdPct(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
+	DefaultEscrowInterestRate(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
 }
 
 type SettlementExceptionResolver interface {

@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
@@ -27,10 +26,16 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-		sc.CheckForDuplicateBOLs = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+			sc.CheckForDuplicateBOLs = false
+		},
+	)
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
 	key := idempotency.NewHasher("test-secret").ScopedKey(idempotency.Scope{
 		OrganizationID: tenantInfo.OrgID,

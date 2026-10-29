@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
@@ -76,7 +77,7 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 	)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Maybe()
 	graph := testutil.CreateShipmentGraph(
 		t,

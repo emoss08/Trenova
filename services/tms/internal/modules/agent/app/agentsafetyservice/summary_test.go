@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 	restricted.AccessMode = agentdefinition.AccessRoles
 	svc := testService(
 		&fakeDefinitions{all: []*agentdefinition.Definition{open, restricted}},
-		&tenant.AgentControl{},
+		&agentcontrol.AgentControl{},
 	)
 
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{
@@ -52,7 +52,7 @@ func TestToolHoldersListsEachAgentOnceUnderEveryToolItHolds(t *testing.T) {
 	second := agentWith("Billing desk", "customer_send_email")
 	svc := testService(
 		&fakeDefinitions{all: []*agentdefinition.Definition{first, second}},
-		&tenant.AgentControl{},
+		&agentcontrol.AgentControl{},
 	)
 
 	holders, err := svc.ToolHolders(t.Context(), pagination.TenantInfo{
@@ -99,7 +99,7 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	desk := agentWith("Dispatch desk", "dispatch_assign_move", "customer_send_email")
 	svc := testService(
 		&fakeDefinitions{all: []*agentdefinition.Definition{desk}},
-		&tenant.AgentControl{},
+		&agentcontrol.AgentControl{},
 	)
 	svc.rules = &fakeRules{
 		rules: map[string]*agent.ToolRuleOverride{
@@ -144,7 +144,10 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	assert.Nil(t, views["shipment_get"].Override)
 
 	assessed := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
-		Subject: &agenttoolports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
+		Subject: &agenttoolports.AgentSafetySubject{
+			Agent:   desk,
+			Control: &agentcontrol.AgentControl{},
+		},
 	})
 	for _, tool := range assessed {
 		if tool.PolicyName == "dispatch_assign_move" {

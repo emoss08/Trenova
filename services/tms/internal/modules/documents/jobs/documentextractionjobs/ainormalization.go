@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/floatutils"
 )
@@ -421,7 +421,7 @@ func canApplyKindToResource(resourceType, kind string) bool {
 }
 
 func canGenerateShipmentDraft(
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	resourceType, kind string,
 ) bool {
 	return control != nil &&

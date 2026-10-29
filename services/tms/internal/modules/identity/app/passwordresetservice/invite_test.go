@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -93,11 +94,14 @@ func TestSendInviteMintsAnInviteLinkThatLivesForTheInviteTTL(t *testing.T) {
 	h := newInviteHarness(t, user)
 	before := timeutils.NowUnix()
 
-	require.NoError(t, h.svc.SendInvite(t.Context(), InviteRequest{User: user, Actor: inviteActor()}))
+	require.NoError(
+		t,
+		h.svc.SendInvite(t.Context(), InviteRequest{User: user, Actor: inviteActor()}),
+	)
 
 	require.Len(t, h.tokens.created, 1)
 	token := h.tokens.created[0]
-	assert.Equal(t, tenant.PasswordResetPurposeInvite, token.Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeInvite, token.Purpose)
 	assert.Equal(t, user.ID, token.UserID)
 	assert.Equal(t, user.CurrentOrganizationID, token.OrganizationID)
 	assert.GreaterOrEqual(t, token.ExpiresAt, before+int64((72*time.Hour).Seconds()))
@@ -113,7 +117,10 @@ func TestSendInviteRendersTheInviteTemplateWithASetupLink(t *testing.T) {
 	user.Username = "dwhitfield"
 	h := newInviteHarness(t, user)
 
-	require.NoError(t, h.svc.SendInvite(t.Context(), InviteRequest{User: user, Actor: inviteActor()}))
+	require.NoError(
+		t,
+		h.svc.SendInvite(t.Context(), InviteRequest{User: user, Actor: inviteActor()}),
+	)
 
 	require.Len(t, h.rendered, 1)
 	assert.Equal(t, 1, h.sent)
@@ -157,7 +164,7 @@ func TestRequestResetForUserResendsAnInviteToSomebodyWhoNeverSetUpTheirAccount(t
 	require.NoError(t, h.svc.RequestResetForUser(t.Context(), adminRequest(user.ID)))
 
 	require.Len(t, h.tokens.created, 1)
-	assert.Equal(t, tenant.PasswordResetPurposeInvite, h.tokens.created[0].Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeInvite, h.tokens.created[0].Purpose)
 	require.Len(t, h.rendered, 1)
 	assert.Equal(t, documenttemplate.KindAccountInviteEmail, h.rendered[0].Kind)
 }
@@ -171,7 +178,7 @@ func TestRequestResetForUserSendsAResetToSomebodyWhoHasSignedIn(t *testing.T) {
 	require.NoError(t, h.svc.RequestResetForUser(t.Context(), adminRequest(user.ID)))
 
 	require.Len(t, h.tokens.created, 1)
-	assert.Equal(t, tenant.PasswordResetPurposeReset, h.tokens.created[0].Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeReset, h.tokens.created[0].Purpose)
 	require.Len(t, h.rendered, 1)
 	assert.Equal(t, documenttemplate.KindPasswordResetEmail, h.rendered[0].Kind)
 }
@@ -185,7 +192,7 @@ func TestSelfServiceResetAlwaysMintsAResetLink(t *testing.T) {
 	require.NoError(t, h.svc.RequestReset(t.Context(), user.EmailAddress))
 
 	require.Len(t, h.tokens.created, 1)
-	assert.Equal(t, tenant.PasswordResetPurposeReset, h.tokens.created[0].Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeReset, h.tokens.created[0].Purpose)
 }
 
 func TestResetPasswordRedeemsAnInviteAndClearsTheForcedChange(t *testing.T) {
@@ -194,7 +201,7 @@ func TestResetPasswordRedeemsAnInviteAndClearsTheForcedChange(t *testing.T) {
 	user := activeUser()
 	user.MustChangePassword = true
 	token := redeemableToken(user)
-	token.Purpose = tenant.PasswordResetPurposeInvite
+	token.Purpose = passwordreset.PasswordResetPurposeInvite
 	users := &stubUserRepo{user: user}
 	tokens := &stubTokenRepo{redeemable: token, markUsedOK: true}
 	events := &recordingAuthEvents{}
@@ -218,7 +225,7 @@ func TestResetPasswordRecordsAResetForAResetLink(t *testing.T) {
 
 	user := activeUser()
 	token := redeemableToken(user)
-	token.Purpose = tenant.PasswordResetPurposeReset
+	token.Purpose = passwordreset.PasswordResetPurposeReset
 	events := &recordingAuthEvents{}
 	svc := newService(
 		t,
@@ -239,7 +246,7 @@ func TestLinkURLMarksAnInvite(t *testing.T) {
 
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
 
-	link, err := svc.linkURL("raw-token", tenant.PasswordResetPurposeInvite)
+	link, err := svc.linkURL("raw-token", passwordreset.PasswordResetPurposeInvite)
 
 	require.NoError(t, err)
 	assert.Equal(t, "https://app.example.com/auth/reset?purpose=invite&token=raw-token", link)

@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -92,7 +92,10 @@ func perMileRate(t *testing.T, rate string) tarifftypes.Inputs {
 	return inputs
 }
 
-func expectShipmentControl(t *testing.T, entity *shipment.Shipment) *tenantportsmock.MockShipmentControlRepository {
+func expectShipmentControl(
+	t *testing.T,
+	entity *shipment.Shipment,
+) *tenantportsmock.MockShipmentControlRepository {
 	t.Helper()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -103,7 +106,7 @@ func expectShipmentControl(t *testing.T, entity *shipment.Shipment) *tenantports
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	return controlRepo
 }
@@ -148,7 +151,12 @@ func TestServiceCalculateTotals_RatesThroughTheTariffAndAddsCharges(t *testing.T
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromInt(250).Equal(resp.FreightChargeAmount), "freight %s", resp.FreightChargeAmount)
+	assert.True(
+		t,
+		decimal.NewFromInt(250).Equal(resp.FreightChargeAmount),
+		"freight %s",
+		resp.FreightChargeAmount,
+	)
 	assert.True(t, decimal.NewFromInt(10).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(260).Equal(resp.TotalChargeAmount))
 }

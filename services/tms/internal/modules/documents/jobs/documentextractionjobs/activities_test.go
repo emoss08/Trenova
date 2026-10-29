@@ -6,14 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -21,9 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -170,7 +169,7 @@ func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 		Return(doc, nil)
 	controlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			OrganizationID:             orgID,
 			BusinessUnitID:             buID,
 			EnableDocumentIntelligence: false,
@@ -285,7 +284,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 
@@ -372,7 +371,7 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 
@@ -468,7 +467,7 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 
 	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
@@ -555,7 +554,7 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	contentWrites := make([]documentcontent.Content, 0, 1)
 
 	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)

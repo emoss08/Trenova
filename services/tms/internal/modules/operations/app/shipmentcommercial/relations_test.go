@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -186,7 +186,7 @@ func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
 			template := relationTemplate(tt.expression)
 			calculator, stack := fixture.calculator(t, template)
 			userID := pulid.MustNew("usr_")
-			control := &tenant.ShipmentControl{}
+			control := &shipmentcontrol.ShipmentControl{}
 			want := decimal.NewFromInt(75)
 
 			created := fixture.shipmentFromInput(template.TemplateID)
@@ -229,10 +229,10 @@ func TestRating_AnAlreadyLoadedShipmentIsNotLoadedAgain(t *testing.T) {
 	entity := fixture.shipmentFromInput(template.TemplateID)
 
 	require.NoError(t, calculator.Recalculate(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	))
 	require.NoError(t, calculator.Recalculate(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	))
 
 	assert.Len(t, fixture.store.Fetches("serviceType"), 1)

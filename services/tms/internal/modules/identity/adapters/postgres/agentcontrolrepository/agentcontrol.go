@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -40,29 +40,29 @@ func New(p Params) tenantports.AgentControlRepository {
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	newDefault := func() *tenant.AgentControl {
-		control := &tenant.AgentControl{
+) (*agentcontrol.AgentControl, error) {
+	newDefault := func() *agentcontrol.AgentControl {
+		control := &agentcontrol.AgentControl{
 			BusinessUnitID:     tenantInfo.BuID,
 			OrganizationID:     tenantInfo.OrgID,
 			ShadowMode:         true,
-			PromotionThreshold: tenant.DefaultPromotionThreshold,
+			PromotionThreshold: agentcontrol.DefaultPromotionThreshold,
 			BriefingEnabled:    true,
-			BriefingHourLocal:  tenant.DefaultBriefingHourLocal,
+			BriefingHourLocal:  agentcontrol.DefaultBriefingHourLocal,
 		}
 		control.ApplyAgentMoneyDefaults()
 
 		return control
 	}
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.AgentControl]{
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*agentcontrol.AgentControl]{
 		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
 			ac := tenantdb.AgentControls
 			if _, err := ac.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
-				[]*tenant.AgentControl{newDefault()},
+				[]*agentcontrol.AgentControl{newDefault()},
 				ac.OrganizationID,
 				ac.BusinessUnitID,
 			); err != nil {
@@ -78,17 +78,17 @@ func (r *repository) GetOrCreate(
 	})
 }
 
-func (r *repository) selectControl(ctx context.Context) (*tenant.AgentControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
+func (r *repository) selectControl(ctx context.Context) (*agentcontrol.AgentControl, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentcontrol.AgentControl, error) {
 		return tenantdb.AgentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.AgentControl,
-) (*tenant.AgentControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
+	entity *agentcontrol.AgentControl,
+) (*agentcontrol.AgentControl, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentcontrol.AgentControl, error) {
 		ac := tenantdb.AgentControls
 		if err := ac.Save(
 			ctx,

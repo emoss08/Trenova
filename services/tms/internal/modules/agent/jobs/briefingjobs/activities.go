@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -285,9 +285,9 @@ func (a *Activities) isDue(
 	return time.Unix(now, 0).In(location).Hour() == briefingHour(control), nil
 }
 
-func briefingHour(control *tenant.AgentControl) int {
+func briefingHour(control *agentcontrol.AgentControl) int {
 	if control.BriefingHourLocal < 0 || control.BriefingHourLocal > 23 {
-		return tenant.DefaultBriefingHourLocal
+		return agentcontrol.DefaultBriefingHourLocal
 	}
 
 	return control.BriefingHourLocal

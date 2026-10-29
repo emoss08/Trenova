@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -31,7 +31,10 @@ type GenerateBatchRequest struct {
 // PeriodBounds aliases the shared settlement period type.
 type PeriodBounds = settlementshared.PeriodBounds
 
-func ResolveCurrentPeriod(control *tenant.CarrierSettlementControl, now int64) PeriodBounds {
+func ResolveCurrentPeriod(
+	control *carriersettlementcontrol.CarrierSettlementControl,
+	now int64,
+) PeriodBounds {
 	return settlementshared.ResolvePeriod(
 		control.PayPeriodFrequency,
 		control.PeriodEndDayOfWeek,

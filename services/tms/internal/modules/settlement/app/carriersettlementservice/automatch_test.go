@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -64,8 +64,8 @@ func setupAutoMatchTest(t *testing.T) *autoMatchDeps {
 func autoMatchControl(
 	autoMatch, autoAccept bool,
 	toleranceMinor int64,
-) *tenant.CarrierSettlementControl {
-	return &tenant.CarrierSettlementControl{
+) *carriersettlementcontrol.CarrierSettlementControl {
+	return &carriersettlementcontrol.CarrierSettlementControl{
 		AutoMatchInboundInvoices:  autoMatch,
 		AutoAcceptWithinTolerance: autoAccept,
 		VarianceToleranceMinor:    toleranceMinor,

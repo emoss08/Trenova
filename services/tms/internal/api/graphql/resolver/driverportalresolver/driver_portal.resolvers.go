@@ -20,8 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -520,13 +520,13 @@ func (r *MutationResolver) RespondToMyAssignment(ctx context.Context, input gqlm
 	return true, nil
 }
 
-func (r *MutationResolver) UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*tenant.DashControl, error) {
+func (r *MutationResolver) UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*dashcontrol.DashControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDashControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
 	ti := resolvercore.TenantInfo(authCtx)
-	entity := &tenant.DashControl{
+	entity := &dashcontrol.DashControl{
 		OrganizationID:                 ti.OrgID,
 		BusinessUnitID:                 ti.BuID,
 		Version:                        int64(input.Version),
@@ -545,7 +545,7 @@ func (r *MutationResolver) UpdateDashControl(ctx context.Context, input gqlmodel
 		AllowPtoRequests:               input.AllowPTORequests,
 		SendCredentialReminders:        input.SendCredentialReminders,
 		RequireContactChangeApproval:   input.RequireContactChangeApproval,
-		DriverDigestCadence:            tenant.DigestImmediate,
+		DriverDigestCadence:            dashcontrol.DigestImmediate,
 		EnableDetentionAlerts:          input.EnableDetentionAlerts,
 		DetentionAlertThresholdMinutes: int16(input.DetentionAlertThresholdMinutes),
 	}
@@ -1088,7 +1088,7 @@ func (r *QueryResolver) PendingDriverExpenseCount(ctx context.Context) (int, err
 	return r.DriverSettlementService.CountPendingExpenses(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) DashControl(ctx context.Context) (*tenant.DashControl, error) {
+func (r *QueryResolver) DashControl(ctx context.Context) (*dashcontrol.DashControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDashControl, permission.OpRead)
 	if err != nil {
 		return nil, err

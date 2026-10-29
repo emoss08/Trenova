@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -414,8 +414,10 @@ type emptyRetention struct {
 	tenantports.DataRetentionRepository
 }
 
-func (emptyRetention) List(context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
-	return &pagination.ListResult[*tenant.DataRetention]{}, nil
+func (emptyRetention) List(
+	context.Context,
+) (*pagination.ListResult[*dataretention.DataRetention], error) {
+	return &pagination.ListResult[*dataretention.DataRetention]{}, nil
 }
 
 func pruneThrough(s *scenario, seq int64) aiauditports.PruneAIAuditEventsRequest {

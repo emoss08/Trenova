@@ -3,7 +3,7 @@ package shipmentstate
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
 
@@ -22,7 +22,7 @@ func ResolveDelayThresholdMinutes(delayThresholdMinutes int16) int16 {
 // shipment control: delay automation is disabled when the control is missing
 // or the AutoDelayShipments flag is off; otherwise the configured threshold
 // (or the default) applies.
-func ResolveControlDelayThreshold(control *tenant.ShipmentControl) int16 {
+func ResolveControlDelayThreshold(control *shipmentcontrol.ShipmentControl) int16 {
 	if control == nil || !control.AutoDelayShipments {
 		return DisabledDelayThresholdMinutes
 	}

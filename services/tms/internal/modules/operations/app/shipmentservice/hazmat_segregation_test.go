@@ -3,12 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
@@ -17,6 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,15 +39,17 @@ func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{CheckHazmatSegregation: false, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
+		Return(&shipmentcontrol.ShipmentControl{CheckHazmatSegregation: false, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
 
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
-			ControlRepo:    controlRepo,
-			CustomerRepo:   operationstest.NewCustomerRepository(t),
-			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
-			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
+			ControlRepo:   controlRepo,
+			CustomerRepo:  operationstest.NewCustomerRepository(t),
+			CommodityRepo: commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(
+				t,
+			),
+			ShipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		}).Build(),
 	}
 
@@ -421,7 +422,7 @@ func mockHazmatControlRepo(
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{CheckHazmatSegregation: true, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
+		Return(&shipmentcontrol.ShipmentControl{CheckHazmatSegregation: true, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
 
 	return repo
 }

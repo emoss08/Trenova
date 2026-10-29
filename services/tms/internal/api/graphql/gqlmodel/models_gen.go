@@ -3,6 +3,8 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"bytes"
 	"fmt"
 	"io"
@@ -11679,8 +11681,8 @@ type UpdateBenefitPlanInput struct {
 
 type UpdateCarrierSettlementControlInput struct {
 	Version                   int                       `json:"version"`
-	PayTrigger                tenant.PayTrigger         `json:"payTrigger"`
-	PayPeriodFrequency        tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PayTrigger                settlementcontrol.PayTrigger         `json:"payTrigger"`
+	PayPeriodFrequency        settlementcontrol.PayPeriodFrequency `json:"payPeriodFrequency"`
 	PeriodEndDayOfWeek        int                       `json:"periodEndDayOfWeek"`
 	PayDelayDays              int                       `json:"payDelayDays"`
 	AutoGenerateBatches       bool                      `json:"autoGenerateBatches"`
@@ -11744,7 +11746,7 @@ type UpdateDashControlInput struct {
 	AllowPTORequests               bool                        `json:"allowPtoRequests"`
 	SendCredentialReminders        bool                        `json:"sendCredentialReminders"`
 	RequireContactChangeApproval   bool                        `json:"requireContactChangeApproval"`
-	DriverDigestCadence            *tenant.DriverDigestCadence `json:"driverDigestCadence,omitempty"`
+	DriverDigestCadence            *dashcontrol.DriverDigestCadence `json:"driverDigestCadence,omitempty"`
 	DriverDigestWeekday            *int                        `json:"driverDigestWeekday,omitempty"`
 	EnableDetentionAlerts          bool                        `json:"enableDetentionAlerts"`
 	DetentionAlertThresholdMinutes int                         `json:"detentionAlertThresholdMinutes"`
@@ -12049,10 +12051,10 @@ type UpdateSafetyViolationInput struct {
 
 type UpdateSettlementControlInput struct {
 	Version                       int                       `json:"version"`
-	PayPeriodFrequency            tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PayPeriodFrequency            settlementcontrol.PayPeriodFrequency `json:"payPeriodFrequency"`
 	PeriodEndDayOfWeek            int                       `json:"periodEndDayOfWeek"`
 	PayDelayDays                  int                       `json:"payDelayDays"`
-	PayTrigger                    tenant.PayTrigger         `json:"payTrigger"`
+	PayTrigger                    settlementcontrol.PayTrigger         `json:"payTrigger"`
 	AutoGenerateBatches           bool                      `json:"autoGenerateBatches"`
 	AutoApproveClean              bool                      `json:"autoApproveClean"`
 	AutoAttachAccruals            bool                      `json:"autoAttachAccruals"`

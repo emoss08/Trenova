@@ -1,13 +1,12 @@
 package rateengine
 
 import (
-	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -30,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -441,7 +441,11 @@ func TestARefusalTheModuleWroteIsInTheReadersLanguage(t *testing.T) {
 	result, err := d.svc.RateShipment(ctx, rateRequest(testShipment()))
 
 	require.NoError(t, err)
-	assert.Equal(t, "La entrada rate no tiene valor ni valor predeterminado", result.Quote.Trace.Error)
+	assert.Equal(
+		t,
+		"La entrada rate no tiene valor ni valor predeterminado",
+		result.Quote.Trace.Error,
+	)
 }
 
 func TestTraceRecordsWinnerAndLosers(t *testing.T) {
@@ -536,7 +540,7 @@ func TestTheBillingFallbackTemplateRunsWithItsDefaultsOnly(t *testing.T) {
 	entity.TariffInputs = tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(999))}
 
 	req := rateRequest(entity)
-	req.BillingControl = &tenant.BillingControl{FallbackFormulaTemplateID: &fallback}
+	req.BillingControl = &billingcontrol.BillingControl{FallbackFormulaTemplateID: &fallback}
 
 	result, err := d.svc.RateShipment(t.Context(), req)
 

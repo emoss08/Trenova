@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/shopspring/decimal"
@@ -32,7 +32,7 @@ const (
 // PayPeriodSpec is the slice of the settlement control the per-pay-period
 // method needs: how long a period is and which weekday closes it.
 type PayPeriodSpec struct {
-	Frequency    tenant.PayPeriodFrequency
+	Frequency    settlementcontrol.PayPeriodFrequency
 	EndDayOfWeek int
 }
 
@@ -142,11 +142,11 @@ func payPeriodEnds(spec *PayPeriodSpec, from, horizon time.Time) []time.Time {
 			ends = append(ends, end)
 		}
 		switch spec.Frequency {
-		case tenant.PayPeriodFrequencyWeekly:
+		case settlementcontrol.PayPeriodFrequencyWeekly:
 			end = end.AddDate(0, 0, 7)
-		case tenant.PayPeriodFrequencyBiweekly:
+		case settlementcontrol.PayPeriodFrequencyBiweekly:
 			end = end.AddDate(0, 0, 14)
-		case tenant.PayPeriodFrequencyMonthly:
+		case settlementcontrol.PayPeriodFrequencyMonthly:
 			end = end.AddDate(0, 1, 0)
 		default:
 			end = end.AddDate(0, 0, 7)

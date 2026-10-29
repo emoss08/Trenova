@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -30,8 +32,8 @@ type OrganizationInputs struct {
 	Organization    *tenant.Organization
 	Activity        *agentprofileports.OrganizationActivity
 	DispatchControl *dispatchcontrol.DispatchControl
-	BillingControl  *tenant.BillingControl
-	ShipmentControl *tenant.ShipmentControl
+	BillingControl  *billingcontrol.BillingControl
+	ShipmentControl *shipmentcontrol.ShipmentControl
 	WindowDays      int
 }
 
@@ -364,7 +366,7 @@ func dispatchLine(dc *dispatchcontrol.DispatchControl) string {
 	return "Dispatch settings: " + strings.Join(parts, "; ") + "."
 }
 
-func billingLine(bc *tenant.BillingControl) string {
+func billingLine(bc *billingcontrol.BillingControl) string {
 	if bc == nil {
 		return ""
 	}
@@ -377,7 +379,7 @@ func billingLine(bc *tenant.BillingControl) string {
 	)
 }
 
-func shipmentControlLine(sc *tenant.ShipmentControl) string {
+func shipmentControlLine(sc *shipmentcontrol.ShipmentControl) string {
 	if sc == nil {
 		return ""
 	}

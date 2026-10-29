@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,14 +28,14 @@ func TestValidateUpdate_AllowsValidDetentionChargeReference(t *testing.T) {
 
 	v := &Validator{
 		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.ShipmentControl]().
+			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithReferenceChecker(&testReferenceChecker{valid: true}).
 			WithOptionalReferenceCheck(
 				"detentionChargeId",
 				"accessorial_charges",
 				"Detention charge does not exist in your organization",
-				func(sc *tenant.ShipmentControl) pulid.ID {
+				func(sc *shipmentcontrol.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
 						return ""
 					}
@@ -64,14 +64,14 @@ func TestValidateUpdate_RejectsUnknownDetentionChargeReference(t *testing.T) {
 
 	v := &Validator{
 		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.ShipmentControl]().
+			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithReferenceChecker(&testReferenceChecker{valid: false}).
 			WithOptionalReferenceCheck(
 				"detentionChargeId",
 				"accessorial_charges",
 				"Detention charge does not exist in your organization",
-				func(sc *tenant.ShipmentControl) pulid.ID {
+				func(sc *shipmentcontrol.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
 						return ""
 					}
@@ -97,8 +97,8 @@ func TestValidateUpdate_RejectsUnknownDetentionChargeReference(t *testing.T) {
 	assertErrorField(t, multiErr, "detentionChargeId")
 }
 
-func validShipmentControl() *tenant.ShipmentControl {
-	return &tenant.ShipmentControl{
+func validShipmentControl() *shipmentcontrol.ShipmentControl {
+	return &shipmentcontrol.ShipmentControl{
 		BusinessUnitID:              pulid.MustNew("bu_"),
 		OrganizationID:              pulid.MustNew("org_"),
 		MaxShipmentWeightLimit:      80000,

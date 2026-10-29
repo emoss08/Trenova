@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -131,7 +131,10 @@ type memoryStore interface {
 }
 
 type retentionReader interface {
-	Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)
+	Get(
+		ctx context.Context,
+		req tenantports.GetDataRetentionRequest,
+	) (*dataretention.DataRetention, error)
 }
 
 type permissionChecker interface {

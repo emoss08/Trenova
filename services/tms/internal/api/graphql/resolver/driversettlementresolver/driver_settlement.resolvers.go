@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -515,7 +516,7 @@ func (r *MutationResolver) RemoveDriverSettlementAdjustment(ctx context.Context,
 	)
 }
 
-func (r *MutationResolver) UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*tenant.SettlementControl, error) {
+func (r *MutationResolver) UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*settlementcontrol.SettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceSettlementControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -1064,7 +1065,7 @@ func (r *QueryResolver) WorkerYtdPaySummaries(ctx context.Context, year int, cla
 	)
 }
 
-func (r *QueryResolver) SettlementControl(ctx context.Context) (*tenant.SettlementControl, error) {
+func (r *QueryResolver) SettlementControl(ctx context.Context) (*settlementcontrol.SettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceSettlementControl, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1140,11 +1141,11 @@ func (r *QueryResolver) ExportSettlementBatchCSV(ctx context.Context, batchID st
 	return r.DriverSettlementService.ExportBatchPayrollCSV(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
-func (r *SettlementControlResolver) VarianceThresholdPct(ctx context.Context, obj *tenant.SettlementControl) (string, error) {
+func (r *SettlementControlResolver) VarianceThresholdPct(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error) {
 	return obj.VarianceThresholdPct.String(), nil
 }
 
-func (r *SettlementControlResolver) DefaultEscrowInterestRate(ctx context.Context, obj *tenant.SettlementControl) (string, error) {
+func (r *SettlementControlResolver) DefaultEscrowInterestRate(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error) {
 	return obj.DefaultEscrowInterestRate.String(), nil
 }
 

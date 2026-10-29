@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -76,7 +76,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	preview.AccountingDate = s.resolveAccountingDate(ctx, entity, control, preview)
 	s.validateSettlementPolicy(entity, control, preview)
 	if strings.TrimSpace(req.Reason) == "" &&
-		control.AdjustmentReasonRequirement == tenant.RequirementPolicyRequired {
+		control.AdjustmentReasonRequirement == invoiceadjustmentcontrol.RequirementPolicyRequired {
 		appendPreviewError(preview, "reason", "Adjustment reason is required by policy")
 	}
 	s.validateAttachments(ctx, req, preview)
@@ -339,7 +339,7 @@ func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
 func (s *Service) applyCreditBalancePolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
-	control *tenant.InvoiceAdjustmentControl,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 ) {
 	if !preview.WouldCreateUnappliedCredit {
 		return
@@ -354,21 +354,21 @@ func (s *Service) applyCreditBalancePolicy(
 	}
 
 	switch control.CustomerCreditBalancePolicy {
-	case tenant.CustomerCreditBalancePolicyDisallow:
+	case invoiceadjustmentcontrol.CustomerCreditBalancePolicyDisallow:
 		appendPreviewError(
 			preview,
 			"creditTotalAmount",
 			"Policy disallows customer credit balance outcomes",
 		)
-	case tenant.CustomerCreditBalancePolicyAllowUnappliedCredit:
+	case invoiceadjustmentcontrol.CustomerCreditBalancePolicyAllowUnappliedCredit:
 		switch control.OverCreditPolicy {
-		case tenant.OverCreditPolicyBlock:
+		case invoiceadjustmentcontrol.OverCreditPolicyBlock:
 			appendPreviewError(
 				preview,
 				"creditTotalAmount",
 				"Adjustment would create unapplied customer credit because of payment state",
 			)
-		case tenant.OverCreditPolicyAllowWithApproval:
+		case invoiceadjustmentcontrol.OverCreditPolicyAllowWithApproval:
 			preview.RequiresApproval = true
 		}
 	}
@@ -381,16 +381,16 @@ func (s *Service) applyCreditBalancePolicy(
 func (s *Service) applyApprovalPolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
-	control *tenant.InvoiceAdjustmentControl,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 ) {
 	amount := preview.CreditTotalAmount.Abs()
 	if preview.Kind == invoiceadjustment.KindWriteOff {
 		switch control.WriteOffApprovalPolicy {
-		case tenant.WriteOffApprovalPolicyDisallow:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyDisallow:
 			appendPreviewError(preview, "kind", "Write-offs are disallowed by policy")
-		case tenant.WriteOffApprovalPolicyAlwaysRequireApproval:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyAlwaysRequireApproval:
 			preview.RequiresApproval = true
-		case tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
+		case invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
 			if amount.GreaterThanOrEqual(control.WriteOffApprovalThreshold) {
 				preview.RequiresApproval = true
 			}
@@ -398,9 +398,9 @@ func (s *Service) applyApprovalPolicy(
 	} else {
 		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.StandardAdjustmentApprovalPolicy {
-		case tenant.ApprovalPolicyAlways:
+		case invoiceadjustmentcontrol.ApprovalPolicyAlways:
 			preview.RequiresApproval = true
-		case tenant.ApprovalPolicyAmountThreshold:
+		case invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold:
 			if amount.GreaterThanOrEqual(control.StandardAdjustmentApprovalThreshold) {
 				preview.RequiresApproval = true
 			}
@@ -414,16 +414,16 @@ func (s *Service) applyApprovalPolicy(
 
 func (s *Service) applyReplacementReviewPolicy(
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
-	control *tenant.InvoiceAdjustmentControl,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 ) {
 	if preview.Kind != invoiceadjustment.KindCreditRebill {
 		return
 	}
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch control.ReplacementInvoiceReviewPolicy {
-	case tenant.ReplacementInvoiceReviewPolicyAlwaysRequireReview:
+	case invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyAlwaysRequireReview:
 		preview.RequiresReplacementInvoiceReview = true
-	case tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange:
+	case invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange:
 		if preview.RebillStrategy == invoiceadjustment.RebillStrategyRerate {
 			preview.RequiresReplacementInvoiceReview = preview.RerateVariancePercent.GreaterThan(
 				control.RerateVarianceTolerancePercent,

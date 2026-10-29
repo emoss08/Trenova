@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -296,7 +297,7 @@ func (s *service) validateBillingReadinessForStatusChange(
 // It is scoped to a single call and never outlives it, so it cannot go stale
 // against a policy change the way a process-wide cache could.
 type billingReadinessCache struct {
-	billingControl      *tenant.BillingControl
+	billingControl      *billingcontrol.BillingControl
 	billingControlKnown bool
 }
 
@@ -307,7 +308,7 @@ func (s *service) billingControlFor(
 	ctx context.Context,
 	orgID pulid.ID,
 	cache *billingReadinessCache,
-) (*tenant.BillingControl, error) {
+) (*billingcontrol.BillingControl, error) {
 	if cache != nil && cache.billingControlKnown {
 		return cache.billingControl, nil
 	}
@@ -419,7 +420,7 @@ func (s *service) evaluateBillingReadinessCached(
 // itself. One shipment reads them for itself; a plan over many reads each
 // once for all of them, and both decide from the same function.
 type readinessSources struct {
-	control   *tenant.BillingControl
+	control   *billingcontrol.BillingControl
 	payers    map[pulid.ID]*customer.Customer
 	documents map[string][]*document.Document
 	failures  map[pulid.ID][]*servicefailure.ServiceFailure
@@ -689,11 +690,11 @@ func applyPayerReadiness(
 
 	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
 		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
-	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
+	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
 		entity.Status == shipment.StatusCompleted &&
 		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
-		readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+		readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 	readiness.ShouldAutoApproveBilling = autoApprove && len(readiness.Payers) > 0
 }
 
@@ -713,7 +714,7 @@ func hasValidationCode(
 func buildShipmentBillingReadiness(
 	entity *shipment.Shipment,
 	billingProfile *customer.CustomerBillingProfile,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 	docs []*document.Document,
 ) *shipmentbillingports.ShipmentBillingReadiness {
 	readiness := &shipmentbillingports.ShipmentBillingReadiness{
@@ -757,11 +758,11 @@ func buildShipmentBillingReadiness(
 		rateIssues := hasRateIssues(readiness)
 		readiness.CanMarkReadyToInvoice = entity.Status == shipment.StatusCompleted &&
 			canProceedManually(readiness.Policy, requirementIssues, rateIssues)
-		readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
+		readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
 			entity.Status == shipment.StatusCompleted &&
 			canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 		readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
-			readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+			readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 		// A customer with no billing profile has not opted into auto-approval.
 		return readiness
 	}
@@ -796,11 +797,11 @@ func buildShipmentBillingReadiness(
 
 	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
 		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
-	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
+	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible &&
 		entity.Status == shipment.StatusCompleted &&
 		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
-		readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+		readiness.Policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 	readiness.ShouldAutoApproveBilling = shouldAutoApproveBilling(
 		readiness.Policy,
 		billingProfile,
@@ -833,7 +834,7 @@ func shouldAutoApproveBilling(
 	requirementIssues bool,
 	rateIssues bool,
 ) bool {
-	return policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady &&
+	return policy.BillingQueueTransferMode == billingcontrol.BillingQueueTransferModeAutomaticWhenReady &&
 		billingProfile != nil &&
 		billingProfile.AutoApprove &&
 		!requirementIssues &&
@@ -848,7 +849,7 @@ func isBillingReadyStatus(status shipment.Status) bool {
 
 func resolveShipmentBillingRequirementEnforcement(
 	billingProfile *customer.CustomerBillingProfile,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 ) tenant.EnforcementLevel {
 	orgLevel := tenant.EnforcementLevelIgnore
 	if billingControl != nil {
@@ -865,32 +866,32 @@ func resolveShipmentBillingRequirementEnforcement(
 
 func resolveReadyToBillAssignmentMode(
 	billingProfile *customer.CustomerBillingProfile,
-	billingControl *tenant.BillingControl,
-) tenant.ReadyToBillAssignmentMode {
+	billingControl *billingcontrol.BillingControl,
+) billingcontrol.ReadyToBillAssignmentMode {
 	if billingControl == nil {
 		if billingProfile != nil && billingProfile.AutoMarkReadyToBill {
-			return tenant.ReadyToBillAssignmentModeAutomaticWhenEligible
+			return billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible
 		}
 
-		return tenant.ReadyToBillAssignmentModeManualOnly
+		return billingcontrol.ReadyToBillAssignmentModeManualOnly
 	}
 
 	orgMode := billingControl.ReadyToBillAssignmentMode
 
-	if orgMode != tenant.ReadyToBillAssignmentModeAutomaticWhenEligible {
-		return tenant.ReadyToBillAssignmentModeManualOnly
+	if orgMode != billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible {
+		return billingcontrol.ReadyToBillAssignmentModeManualOnly
 	}
 
 	if billingProfile == nil || billingProfile.AutoMarkReadyToBill {
-		return tenant.ReadyToBillAssignmentModeAutomaticWhenEligible
+		return billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible
 	}
 
-	return tenant.ReadyToBillAssignmentModeManualOnly
+	return billingcontrol.ReadyToBillAssignmentModeManualOnly
 }
 
 func resolveRateValidationEnforcement(
 	billingProfile *customer.CustomerBillingProfile,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 ) tenant.EnforcementLevel {
 	orgLevel := tenant.EnforcementLevelIgnore
 	if billingControl != nil {
@@ -906,17 +907,17 @@ func resolveRateValidationEnforcement(
 }
 
 func resolveBillingExceptionDisposition(
-	billingControl *tenant.BillingControl,
-) tenant.BillingExceptionDisposition {
+	billingControl *billingcontrol.BillingControl,
+) billingcontrol.BillingExceptionDisposition {
 	if billingControl == nil {
-		return tenant.BillingExceptionDispositionRouteToBillingReview
+		return billingcontrol.BillingExceptionDispositionRouteToBillingReview
 	}
 
 	return billingControl.BillingExceptionDisposition
 }
 
 func resolveNotifyOnBillingExceptions(
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 ) bool {
 	if billingControl == nil {
 		return false
@@ -927,27 +928,27 @@ func resolveNotifyOnBillingExceptions(
 
 func resolveBillingQueueTransferMode(
 	billingProfile *customer.CustomerBillingProfile,
-	billingControl *tenant.BillingControl,
-) tenant.BillingQueueTransferMode {
+	billingControl *billingcontrol.BillingControl,
+) billingcontrol.BillingQueueTransferMode {
 	if billingControl == nil {
 		if billingProfile != nil && billingProfile.AutoTransfer {
-			return tenant.BillingQueueTransferModeAutomaticWhenReady
+			return billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 		}
 
-		return tenant.BillingQueueTransferModeManualOnly
+		return billingcontrol.BillingQueueTransferModeManualOnly
 	}
 
 	orgMode := billingControl.BillingQueueTransferMode
 
-	if orgMode != tenant.BillingQueueTransferModeAutomaticWhenReady {
-		return tenant.BillingQueueTransferModeManualOnly
+	if orgMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady {
+		return billingcontrol.BillingQueueTransferModeManualOnly
 	}
 
 	if billingProfile == nil || billingProfile.AutoTransfer {
-		return tenant.BillingQueueTransferModeAutomaticWhenReady
+		return billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 	}
 
-	return tenant.BillingQueueTransferModeManualOnly
+	return billingcontrol.BillingQueueTransferModeManualOnly
 }
 
 func stricterEnforcementLevel(
@@ -1048,7 +1049,7 @@ func buildDocumentRequirements(
 
 func appendRateValidationFailure(
 	entity *shipment.Shipment,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) {
 	result := evaluateRateValidation(
@@ -1080,7 +1081,7 @@ func appendRateValidationFailure(
 // reason is actually needed, since it is what the invoice is explained with.
 func appendRateDepartureReasonFailure(
 	entity *shipment.Shipment,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) {
 	if billingControl == nil || !billingControl.RequireRateOverrideReason {
@@ -1104,7 +1105,7 @@ func appendRateDepartureReasonFailure(
 
 func evaluateRateValidation(
 	entity *shipment.Shipment,
-	billingControl *tenant.BillingControl,
+	billingControl *billingcontrol.BillingControl,
 	enforcement tenant.EnforcementLevel,
 ) *rateValidationResult {
 	if enforcement == tenant.EnforcementLevelIgnore {
@@ -1131,7 +1132,7 @@ func evaluateRateValidation(
 	}
 	if billingControl != nil &&
 		enforcement == tenant.EnforcementLevelRequireReview &&
-		billingControl.RateVarianceAutoResolutionMode == tenant.RateVarianceAutoResolutionModeBypassReviewWithinTolerance &&
+		billingControl.RateVarianceAutoResolutionMode == billingcontrol.RateVarianceAutoResolutionModeBypassReviewWithinTolerance &&
 		!variancePercent.GreaterThan(billingControl.RateVarianceTolerancePercent) {
 		return nil
 	}
@@ -1215,7 +1216,7 @@ func canProceedManually(
 		return false
 	}
 
-	if policy.BillingExceptionDisposition == tenant.BillingExceptionDispositionReturnToOperations {
+	if policy.BillingExceptionDisposition == billingcontrol.BillingExceptionDispositionReturnToOperations {
 		if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview &&
 			requirementIssues {
 			return false
@@ -1335,7 +1336,7 @@ func billingTransferPolicyViolation(
 		)
 	}
 
-	if readiness.Policy.BillingExceptionDisposition == tenant.BillingExceptionDispositionReturnToOperations &&
+	if readiness.Policy.BillingExceptionDisposition == billingcontrol.BillingExceptionDispositionReturnToOperations &&
 		(readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview ||
 			readiness.Policy.RateValidationEnforcement == tenant.EnforcementLevelRequireReview) &&
 		(hasShipmentRequirementIssues(readiness) || hasRateIssues(readiness)) {

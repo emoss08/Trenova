@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -102,7 +102,7 @@ func readinessAllowsAutoTransfer(
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 ) bool {
 	if readiness == nil ||
-		readiness.Policy.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady {
+		readiness.Policy.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady {
 		return false
 	}
 	if _, violation := billingTransferPolicyViolation(readiness); violation != nil {

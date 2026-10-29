@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -102,7 +102,7 @@ func (s *Service) AfterMoveStatusChange(
 			zap.Error(err))
 		return nil
 	}
-	if control.PayTrigger != tenant.PayTriggerMoveCompleted {
+	if control.PayTrigger != settlementcontrol.PayTriggerMoveCompleted {
 		return nil
 	}
 
@@ -357,11 +357,11 @@ func (s *Service) ReaccrueMove(
 }
 
 func payTriggerCrossed(
-	trigger tenant.PayTrigger,
+	trigger settlementcontrol.PayTrigger,
 	shipmentStatus shipment.Status,
 	moveStatus shipment.MoveStatus,
 ) bool {
-	if trigger == tenant.PayTriggerMoveCompleted &&
+	if trigger == settlementcontrol.PayTriggerMoveCompleted &&
 		moveStatus == shipment.MoveStatusCompleted {
 		return true
 	}

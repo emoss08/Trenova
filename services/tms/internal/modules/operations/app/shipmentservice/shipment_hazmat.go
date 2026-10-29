@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -28,7 +28,7 @@ type hazmatCommodityCandidate struct {
 
 func (s *service) evaluateHazmatSegregationRequest(
 	ctx context.Context,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	req *shipmentports.CheckHazmatSegregationRequest,
 ) ([]hazmatConflict, error) {
 	if !control.CheckHazmatSegregation {

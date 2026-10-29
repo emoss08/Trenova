@@ -29,8 +29,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -177,7 +178,7 @@ type invoiceDependencies struct {
 	Shipment       *shipment.Shipment
 	Order          *order.Order
 	Customer       *customer.Customer
-	BillingControl *tenant.BillingControl
+	BillingControl *billingcontrol.BillingControl
 	// Share is the payer's slice of the shipment's charges; Shipper is the
 	// ordering customer when it is not the payer.
 	Share       *chargeallocation.PayerShare
@@ -680,7 +681,7 @@ func (s *Service) notifyReconciliationWarning(
 		return
 	}
 
-	if control.ReconciliationMode != tenant.ReconciliationModeWarnOnly ||
+	if control.ReconciliationMode != accountingcontrol.ReconciliationModeWarnOnly ||
 		!control.NotifyOnReconciliationException {
 		return
 	}
@@ -1151,7 +1152,7 @@ type buildInvoiceParams struct {
 	Anchor       *billingqueue.BillingQueueItem
 	Scope        invoice.Scope
 	Customer     *customer.Customer
-	Control      *tenant.BillingControl
+	Control      *billingcontrol.BillingControl
 	Legs         []*shipment.Shipment
 	Order        *order.Order
 	OrderCharges []*order.OrderCharge
@@ -1447,7 +1448,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	item *billingqueue.BillingQueueItem,
 	shp *shipment.Shipment,
 	cus *customer.Customer,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 ) (*invoice.Invoice, error) {
 	if len(item.AdjustmentContext) == 0 {
 		return nil, errNothingToBill
@@ -1581,7 +1582,7 @@ func paymentTermFromCustomer(cus *customer.Customer) invoice.PaymentTerm {
 	return invoice.PaymentTerm(cus.BillingProfile.PaymentTerm)
 }
 
-func paymentTermFromBillingControl(control *tenant.BillingControl) invoice.PaymentTerm {
+func paymentTermFromBillingControl(control *billingcontrol.BillingControl) invoice.PaymentTerm {
 	if control == nil {
 		return ""
 	}
@@ -1591,7 +1592,7 @@ func paymentTermFromBillingControl(control *tenant.BillingControl) invoice.Payme
 
 func resolvePaymentTerm(
 	cus *customer.Customer,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 ) invoice.PaymentTerm {
 	if term := paymentTermFromCustomer(cus); term != "" {
 		return term

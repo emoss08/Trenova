@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -103,7 +103,7 @@ func (v *Validator) ValidateClose(
 	}
 
 	if !control.RequireReconciliationToClose ||
-		control.ReconciliationMode == tenant.ReconciliationModeDisabled {
+		control.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
 		return nil
 	}
 

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -217,7 +218,7 @@ func (r *MutationResolver) RemoveCarrierSettlementAdjustment(ctx context.Context
 	)
 }
 
-func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error) {
+func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlementControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -401,7 +402,7 @@ func (r *QueryResolver) CarrierCostEvents(ctx context.Context, input gqlmodel.Da
 	return carrierCostEventConnectionToModel(result)
 }
 
-func (r *QueryResolver) CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+func (r *QueryResolver) CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlementControl, permission.OpRead)
 	if err != nil {
 		return nil, err

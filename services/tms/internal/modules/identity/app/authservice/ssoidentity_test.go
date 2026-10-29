@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 )
 
 type fakeSSOLinks struct {
-	links      []*tenant.SSOIdentityLink
+	links      []*sso.SSOIdentityLink
 	createErr  error
 	logins     int
 	onCreating func()
@@ -25,7 +25,7 @@ type fakeSSOLinks struct {
 func (f *fakeSSOLinks) GetBySubject(
 	_ context.Context,
 	req tenantports.GetSSOIdentityLinkBySubjectRequest,
-) (*tenant.SSOIdentityLink, error) {
+) (*sso.SSOIdentityLink, error) {
 	for _, link := range f.links {
 		if link.SSOConfigID == req.SSOConfigID && link.Issuer == req.Issuer &&
 			link.Subject == req.Subject {
@@ -39,7 +39,7 @@ func (f *fakeSSOLinks) GetBySubject(
 func (f *fakeSSOLinks) GetByUser(
 	_ context.Context,
 	req tenantports.GetSSOIdentityLinkByUserRequest,
-) (*tenant.SSOIdentityLink, error) {
+) (*sso.SSOIdentityLink, error) {
 	for _, link := range f.links {
 		if link.SSOConfigID == req.SSOConfigID && link.Issuer == req.Issuer &&
 			link.UserID == req.UserID {
@@ -50,7 +50,7 @@ func (f *fakeSSOLinks) GetByUser(
 	return nil, errortypes.NewNotFoundError("SSO identity link not found")
 }
 
-func (f *fakeSSOLinks) Create(_ context.Context, link *tenant.SSOIdentityLink) error {
+func (f *fakeSSOLinks) Create(_ context.Context, link *sso.SSOIdentityLink) error {
 	if f.onCreating != nil {
 		f.onCreating()
 	}
@@ -62,15 +62,15 @@ func (f *fakeSSOLinks) Create(_ context.Context, link *tenant.SSOIdentityLink) e
 	return nil
 }
 
-func (f *fakeSSOLinks) RecordLogin(context.Context, *tenant.SSOIdentityLink, int64) error {
+func (f *fakeSSOLinks) RecordLogin(context.Context, *sso.SSOIdentityLink, int64) error {
 	f.logins++
 	return nil
 }
 
 const testIssuer = "https://idp.example.com"
 
-func ssoTestConfig(provider tenant.SSOProvider) *tenant.SSOConfig {
-	return &tenant.SSOConfig{
+func ssoTestConfig(provider sso.SSOProvider) *sso.SSOConfig {
+	return &sso.SSOConfig{
 		ID:             pulid.MustNew("sso_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -78,7 +78,7 @@ func ssoTestConfig(provider tenant.SSOProvider) *tenant.SSOConfig {
 	}
 }
 
-func lookup(cfg *tenant.SSOConfig, identity ssoIdentity) *ssoUserLookup {
+func lookup(cfg *sso.SSOConfig, identity ssoIdentity) *ssoUserLookup {
 	return &ssoUserLookup{Config: cfg, Identity: identity, DisplayName: "Okta"}
 }
 
@@ -88,7 +88,7 @@ func TestResolveSSOUser_FirstSignInLinksAVerifiedEmail(t *testing.T) {
 	links := &fakeSSOLinks{}
 	deps.svc.links = links
 	usr := newTestUser(t)
-	cfg := ssoTestConfig(tenant.SSOProviderOkta)
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
 
 	deps.userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(usr, nil)
 
@@ -110,7 +110,7 @@ func TestResolveSSOUser_RefusesAnUnverifiedEmailOnFirstSignIn(t *testing.T) {
 	links := &fakeSSOLinks{}
 	deps.svc.links = links
 
-	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(ssoTestConfig(tenant.SSOProviderOkta),
+	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(ssoTestConfig(sso.SSOProviderOkta),
 		ssoIdentity{Issuer: testIssuer, Subject: "okta|1", Email: "test@example.com"}))
 
 	require.Error(t, err)
@@ -123,8 +123,8 @@ func TestResolveSSOUser_LaterSignInsResolveBySubjectEvenIfTheEmailChanges(t *tes
 	t.Parallel()
 	deps := setupTest(t)
 	usr := newTestUser(t)
-	cfg := ssoTestConfig(tenant.SSOProviderOkta)
-	links := &fakeSSOLinks{links: []*tenant.SSOIdentityLink{{
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
+	links := &fakeSSOLinks{links: []*sso.SSOIdentityLink{{
 		ID: pulid.MustNew("ssoil_"), SSOConfigID: cfg.ID, Issuer: testIssuer,
 		Subject: "okta|1", UserID: usr.ID,
 	}}}
@@ -146,8 +146,8 @@ func TestResolveSSOUser_RefusesASecondIdentityClaimingAnAlreadyLinkedUser(t *tes
 	t.Parallel()
 	deps := setupTest(t)
 	usr := newTestUser(t)
-	cfg := ssoTestConfig(tenant.SSOProviderOkta)
-	links := &fakeSSOLinks{links: []*tenant.SSOIdentityLink{{
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
+	links := &fakeSSOLinks{links: []*sso.SSOIdentityLink{{
 		ID: pulid.MustNew("ssoil_"), SSOConfigID: cfg.ID, Issuer: testIssuer,
 		Subject: "okta|victim", UserID: usr.ID,
 	}}}
@@ -169,7 +169,7 @@ func TestResolveSSOUser_RefusesATokenWithoutASubject(t *testing.T) {
 	deps := setupTest(t)
 	deps.svc.links = &fakeSSOLinks{}
 
-	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(ssoTestConfig(tenant.SSOProviderOkta),
+	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(ssoTestConfig(sso.SSOProviderOkta),
 		ssoIdentity{Issuer: testIssuer, Email: "test@example.com", EmailTrusted: true}))
 
 	require.Error(t, err)
@@ -180,7 +180,7 @@ func TestResolveSSOUser_EnforcesAllowedDomains(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	deps.svc.links = &fakeSSOLinks{}
-	cfg := ssoTestConfig(tenant.SSOProviderOkta)
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
 	cfg.AllowedDomains = []string{"carrier.example"}
 
 	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(cfg, ssoIdentity{
@@ -194,12 +194,12 @@ func TestResolveSSOUser_ConcurrentLinkForAnotherUserIsRefused(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	usr := newTestUser(t)
-	cfg := ssoTestConfig(tenant.SSOProviderOkta)
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
 	links := &fakeSSOLinks{
 		createErr: &pgconn.PgError{Code: pgerrcode.UniqueViolation},
 	}
 	links.onCreating = func() {
-		links.links = append(links.links, &tenant.SSOIdentityLink{
+		links.links = append(links.links, &sso.SSOIdentityLink{
 			SSOConfigID: cfg.ID, Issuer: testIssuer, Subject: "okta|1",
 			UserID: pulid.MustNew("usr_"),
 		})
@@ -225,7 +225,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 		identity := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:           "okta|1",
 			PreferredUsername: "victim@example.com",
-		}, tenant.SSOProviderOkta)
+		}, sso.SSOProviderOkta)
 		assert.Empty(t, identity.Email)
 		assert.False(t, identity.EmailTrusted)
 
@@ -233,7 +233,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 			Subject:       "okta|1",
 			Email:         "Person@Example.com",
 			EmailVerified: oidcBool{set: true, value: true},
-		}, tenant.SSOProviderOkta)
+		}, sso.SSOProviderOkta)
 		assert.Equal(t, "person@example.com", identity.Email)
 		assert.True(t, identity.EmailTrusted)
 	})
@@ -245,7 +245,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 			Subject:           "aad|1",
 			PreferredUsername: "Person@Carrier.example",
 			UPN:               "person@carrier.example",
-		}, tenant.SSOProviderAzureAD)
+		}, sso.SSOProviderAzureAD)
 		assert.Empty(t, identity.Email)
 		assert.False(t, identity.EmailTrusted)
 	})
@@ -256,7 +256,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 		unverified := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject: "aad|1",
 			Email:   "Person@Carrier.example",
-		}, tenant.SSOProviderAzureAD)
+		}, sso.SSOProviderAzureAD)
 		assert.Equal(t, "person@carrier.example", unverified.Email)
 		assert.False(t, unverified.EmailTrusted)
 
@@ -264,14 +264,14 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 			Subject:                  "aad|1",
 			Email:                    "Person@Carrier.example",
 			EmailDomainOwnerVerified: oidcBool{set: true, value: true},
-		}, tenant.SSOProviderAzureAD)
+		}, sso.SSOProviderAzureAD)
 		assert.True(t, domainOwner.EmailTrusted)
 
 		verified := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:       "aad|1",
 			Email:         "Person@Carrier.example",
 			EmailVerified: oidcBool{set: true, value: true},
-		}, tenant.SSOProviderAzureAD)
+		}, sso.SSOProviderAzureAD)
 		assert.True(t, verified.EmailTrusted)
 	})
 
@@ -282,7 +282,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 			Subject:                  "okta|1",
 			Email:                    "person@carrier.example",
 			EmailDomainOwnerVerified: oidcBool{set: true, value: true},
-		}, tenant.SSOProviderOkta)
+		}, sso.SSOProviderOkta)
 		assert.False(t, identity.EmailTrusted)
 	})
 }

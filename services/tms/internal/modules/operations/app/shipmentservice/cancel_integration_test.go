@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -32,10 +31,16 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 		db,
 	)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-		sc.AutoDelayShipments = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+			sc.AutoDelayShipments = false
+		},
+	)
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
@@ -111,9 +116,15 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 		db,
 	)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+		},
+	)
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
@@ -149,9 +160,15 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 		db,
 	)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+		},
+	)
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
@@ -180,11 +197,14 @@ func mustGetExpandedShipment(
 ) *shipment.Shipment {
 	t.Helper()
 
-	entity, err := repo.GetByID(integrationTenantContext(t.Context(), tenantInfo), &shipmentports.GetShipmentByIDRequest{
-		ID:              id,
-		TenantInfo:      tenantInfo,
-		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
-	})
+	entity, err := repo.GetByID(
+		integrationTenantContext(t.Context(), tenantInfo),
+		&shipmentports.GetShipmentByIDRequest{
+			ID:              id,
+			TenantInfo:      tenantInfo,
+			ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
+		},
+	)
 	require.NoError(t, err)
 
 	return entity

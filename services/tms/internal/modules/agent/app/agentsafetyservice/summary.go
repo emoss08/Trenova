@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -146,7 +146,7 @@ func (s *Service) survey(
 
 type surveyAgentInput struct {
 	definition *agentdefinition.Definition
-	control    *tenant.AgentControl
+	control    *agentcontrol.AgentControl
 	trust      []*agent.ToolTrust
 	rules      map[string]*agent.ToolRuleOverride
 	out        *safetySurvey

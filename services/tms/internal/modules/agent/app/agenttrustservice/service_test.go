@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -130,13 +130,13 @@ func (f *fakeDefinitions) SetToolTier(
 
 type fakeControls struct {
 	tenantports.AgentControlRepository
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
 func (f fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return f.control, nil
 }
 
@@ -290,7 +290,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 		db:          h.db,
 		trust:       h.trust,
 		definitions: h.definitions,
-		controls: fakeControls{control: &tenant.AgentControl{
+		controls: fakeControls{control: &agentcontrol.AgentControl{
 			EarnedAutonomy:     opts.earned,
 			PromotionThreshold: opts.threshold,
 		}},

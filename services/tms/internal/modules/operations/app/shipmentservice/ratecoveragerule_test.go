@@ -3,19 +3,18 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/shopspring/decimal"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -141,14 +140,14 @@ func TestRateCoverageAdvisory(t *testing.T) {
 
 func billingControlWith(
 	t *testing.T,
-	disposition tenant.UnratedShipmentDisposition,
+	disposition billingcontrol.UnratedShipmentDisposition,
 ) *tenantportsmock.MockBillingControlRepository {
 	t.Helper()
 
 	repo := tenantportsmock.NewMockBillingControlRepository(t)
 	repo.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
-		Return(&tenant.BillingControl{UnratedShipmentDisposition: disposition}, nil).
+		Return(&billingcontrol.BillingControl{UnratedShipmentDisposition: disposition}, nil).
 		Maybe()
 
 	return repo
@@ -182,10 +181,10 @@ func unratedShipment() *shipment.Shipment {
 func TestRateCoverageRule_RefusesAnUnratedCreate(t *testing.T) {
 	t.Parallel()
 
-	for _, disposition := range []tenant.UnratedShipmentDisposition{
+	for _, disposition := range []billingcontrol.UnratedShipmentDisposition{
 		"",
-		tenant.UnratedShipmentDispositionFallbackFormulaTemplate,
-		tenant.UnratedShipmentDispositionBlock,
+		billingcontrol.UnratedShipmentDispositionFallbackFormulaTemplate,
+		billingcontrol.UnratedShipmentDispositionBlock,
 	} {
 		t.Run(string(disposition), func(t *testing.T) {
 			t.Parallel()
@@ -233,7 +232,7 @@ func TestRateCoverageRule_ZeroAndFlagKeepsTheShipmentAndFlagsIt(t *testing.T) {
 	t.Parallel()
 
 	v := rateCoverageValidator(
-		t, billingControlWith(t, tenant.UnratedShipmentDispositionZeroAndFlag),
+		t, billingControlWith(t, billingcontrol.UnratedShipmentDispositionZeroAndFlag),
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), unratedShipment())

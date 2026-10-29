@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -77,7 +77,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 
 	control, err := accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
-	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAllowAll
+	control.ManualJournalEntryPolicy = accountingcontrol.ManualJournalEntryPolicyAllowAll
 	control.RequireManualJEApproval = false
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)

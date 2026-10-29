@@ -5,20 +5,20 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -94,10 +94,10 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
-		Return(&tenant.BillingControl{
+		Return(&billingcontrol.BillingControl{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
-			ReadyToBillAssignmentMode:             tenant.ReadyToBillAssignmentModeAutomaticWhenEligible,
-			BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
+			ReadyToBillAssignmentMode:             billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible,
+			BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeAutomaticWhenReady,
 		}, nil).
 		Once()
 
@@ -131,12 +131,12 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 	)
 	assert.Equal(
 		t,
-		tenant.ReadyToBillAssignmentModeManualOnly,
+		billingcontrol.ReadyToBillAssignmentModeManualOnly,
 		readiness.Policy.ReadyToBillAssignmentMode,
 	)
 	assert.Equal(
 		t,
-		tenant.BillingQueueTransferModeManualOnly,
+		billingcontrol.BillingQueueTransferModeManualOnly,
 		readiness.Policy.BillingQueueTransferMode,
 	)
 	assert.False(t, readiness.CanMarkReadyToInvoice)
@@ -224,7 +224,7 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		tenant.ReadyToBillAssignmentModeAutomaticWhenEligible,
+		billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible,
 		readiness.Policy.ReadyToBillAssignmentMode,
 	)
 	assert.True(t, readiness.CanMarkReadyToInvoice)
@@ -272,7 +272,7 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
-		Return(&tenant.BillingControl{}, nil).
+		Return(&billingcontrol.BillingControl{}, nil).
 		Once()
 
 	documentRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -340,7 +340,7 @@ func TestBuildShipmentBillingReadiness_BlocksOnRateVarianceWhenConfigured(t *tes
 	readiness := buildShipmentBillingReadiness(
 		entity,
 		&customer.CustomerBillingProfile{ValidateCustomerRates: true},
-		&tenant.BillingControl{
+		&billingcontrol.BillingControl{
 			RateValidationEnforcement: tenant.EnforcementLevelBlock,
 		},
 		nil,
@@ -370,10 +370,10 @@ func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBi
 			AutoMarkReadyToBill:   false,
 			ValidateCustomerRates: true,
 		},
-		&tenant.BillingControl{
+		&billingcontrol.BillingControl{
 			RateValidationEnforcement:   tenant.EnforcementLevelRequireReview,
-			BillingExceptionDisposition: tenant.BillingExceptionDispositionRouteToBillingReview,
-			ReadyToBillAssignmentMode:   tenant.ReadyToBillAssignmentModeAutomaticWhenEligible,
+			BillingExceptionDisposition: billingcontrol.BillingExceptionDispositionRouteToBillingReview,
+			ReadyToBillAssignmentMode:   billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible,
 		},
 		nil,
 	)
@@ -405,9 +405,9 @@ func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressFor
 		&customer.CustomerBillingProfile{
 			DocumentTypes: []*documenttype.DocumentType{requiredType},
 		},
-		&tenant.BillingControl{
+		&billingcontrol.BillingControl{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelRequireReview,
-			BillingExceptionDisposition:           tenant.BillingExceptionDispositionReturnToOperations,
+			BillingExceptionDisposition:           billingcontrol.BillingExceptionDispositionReturnToOperations,
 		},
 		nil,
 	)
@@ -420,7 +420,11 @@ func TestBuildShipmentBillingReadiness_ReturnToOperationsBlocksManualProgressFor
 func TestBuildDocumentRequirements_CountsOnlyAcceptedDocuments(t *testing.T) {
 	t.Parallel()
 
-	pod := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
+	pod := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "POD",
+		Name: "Proof of Delivery",
+	}
 	bol := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "BOL", Name: "Bill of Lading"}
 	expiredAt := int64(1)
 	rejectedAt := int64(100)
@@ -477,13 +481,17 @@ func TestBuildShipmentBillingReadiness_RejectedPODBlocksReadyToInvoice(t *testin
 	entity.ID = pulid.MustNew("shp_")
 	entity.Status = shipment.StatusCompleted
 
-	pod := &documenttype.DocumentType{ID: pulid.MustNew("dt_"), Code: "POD", Name: "Proof of Delivery"}
+	pod := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "POD",
+		Name: "Proof of Delivery",
+	}
 	rejectedAt := int64(100)
 
 	readiness := buildShipmentBillingReadiness(
 		entity,
 		&customer.CustomerBillingProfile{DocumentTypes: []*documenttype.DocumentType{pod}},
-		&tenant.BillingControl{
+		&billingcontrol.BillingControl{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		},
 		[]*document.Document{{

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -550,7 +550,7 @@ func agreementFrom(rated *ratequoteports.RatedShipment) *rateagreement.RateAgree
 func (s *Service) billingControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) *tenant.BillingControl {
+) *billingcontrol.BillingControl {
 	if s.billingCtrlRepo == nil {
 		return nil
 	}

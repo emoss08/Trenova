@@ -3,7 +3,7 @@ package ratequoteports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -27,7 +27,7 @@ type RateShipmentRequest struct {
 	AsOf int64
 	// BillingControl carries the organization's decision about what to do when
 	// no agreement covers the lane.
-	BillingControl *tenant.BillingControl
+	BillingControl *billingcontrol.BillingControl
 	// SellTotal is only read on the buy side, for carrier agreements written as
 	// a share of what the customer pays.
 	SellTotal decimal.NullDecimal
@@ -121,7 +121,7 @@ type ShopRequest struct {
 	AsOf int64
 
 	// BillingControl decides what a lane no carrier contract covers does.
-	BillingControl *tenant.BillingControl
+	BillingControl *billingcontrol.BillingControl
 
 	// SellTotal is what the load is being sold for. It is what makes margin
 	// answerable, and carrier contracts written as a share of the sell price

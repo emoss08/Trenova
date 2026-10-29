@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -262,7 +262,7 @@ type retentionStore struct {
 func (retentionStore) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return nil, errortypes.NewNotFoundError("retention not found")
 }
 

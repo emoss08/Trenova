@@ -3,7 +3,7 @@ package shipmentmoveservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -63,7 +63,7 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
 	svc := &service{

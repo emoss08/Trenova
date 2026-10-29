@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -18,13 +18,13 @@ import (
 var ErrNoLedgerEntry = errors.New("no ledger entry for this invoice")
 
 type ControlReader interface {
-	GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.AccountingControl, error)
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*accountingcontrol.AccountingControl, error)
 }
 
 type Policy interface {
 	CanCreateInvoiceLedgerEntry(
-		control *tenant.AccountingControl,
-		event tenant.JournalSourceEventType,
+		control *accountingcontrol.AccountingControl,
+		event accountingcontrol.JournalSourceEventType,
 	) bool
 }
 
@@ -49,7 +49,7 @@ type Request struct {
 }
 
 type Plan struct {
-	Event        tenant.JournalSourceEventType
+	Event        accountingcontrol.JournalSourceEventType
 	Journal      *journalposting.Plan
 	LedgerAmount int64
 	LedgerDate   int64
@@ -57,24 +57,24 @@ type Plan struct {
 }
 
 type Result struct {
-	Event          tenant.JournalSourceEventType
+	Event          accountingcontrol.JournalSourceEventType
 	Journal        *journalposting.WriteResult
 	LedgerAmount   int64
 	LedgerRecorded bool
 }
 
-func SourceEvent(billType billingqueue.BillType) tenant.JournalSourceEventType {
+func SourceEvent(billType billingqueue.BillType) accountingcontrol.JournalSourceEventType {
 	switch billType { //nolint:exhaustive // every other bill type posts as an invoice
 	case billingqueue.BillTypeCreditMemo:
-		return tenant.JournalSourceEventCreditMemoPosted
+		return accountingcontrol.JournalSourceEventCreditMemoPosted
 	case billingqueue.BillTypeDebitMemo:
-		return tenant.JournalSourceEventDebitMemoPosted
+		return accountingcontrol.JournalSourceEventDebitMemoPosted
 	default:
-		return tenant.JournalSourceEventInvoicePosted
+		return accountingcontrol.JournalSourceEventInvoicePosted
 	}
 }
 
-func HasRequiredAccounts(control *tenant.AccountingControl) bool {
+func HasRequiredAccounts(control *accountingcontrol.AccountingControl) bool {
 	return control != nil && control.DefaultARAccountID.IsNotNil() &&
 		control.DefaultRevenueAccountID.IsNotNil()
 }
@@ -193,8 +193,8 @@ func (p *Poster) Post(ctx context.Context, req *Request) (*Result, error) {
 
 func journalRequest(
 	req *Request,
-	control *tenant.AccountingControl,
-	event tenant.JournalSourceEventType,
+	control *accountingcontrol.AccountingControl,
+	event accountingcontrol.JournalSourceEventType,
 	amount int64,
 ) *journalposting.WriteRequest {
 	entity := req.Invoice

@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -860,7 +860,7 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 func (a *Activities) updateShipmentDraftFromIntelligence(
 	ctx context.Context,
 	doc *document.Document,
-	control *tenant.DocumentControl,
+	control *documentcontrol.DocumentControl,
 	intelligence *DocumentIntelligenceAnalysis,
 ) error {
 	isUsable := canGenerateShipmentDraft(control, doc.ResourceType, doc.DetectedKind) &&

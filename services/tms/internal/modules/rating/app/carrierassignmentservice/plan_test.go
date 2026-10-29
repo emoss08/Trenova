@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
@@ -124,7 +124,7 @@ func (f *planFixture) expectShipmentRead() {
 		Once()
 	f.controls.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: f.tenantInfo}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 }
 

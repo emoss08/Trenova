@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -82,7 +82,7 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	require.NoError(t, err)
 	control.DefaultARAccountID = accounts.AR
 	control.DefaultCashAccountID = accounts.Cash
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
 	_, err = controls.Update(e.ctx, control)
 	require.NoError(t, err)
 	fiscaltest.OpenPeriod(t, e.ctx, fiscaltest.OpenPeriodParams{

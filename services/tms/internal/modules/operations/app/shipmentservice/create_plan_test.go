@@ -3,17 +3,17 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ import (
 func previewCreateService(
 	t *testing.T,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) (*service, *shipmentportsmock.MockShipmentRepository) {
 	t.Helper()
 
@@ -71,7 +71,7 @@ func TestPreviewCreate_PricesAndValidatesWithoutSaving(t *testing.T) {
 
 	entity := validShipmentForValidation()
 	entity.FormulaTemplateID = pulid.MustNew("fmt_")
-	svc, _ := previewCreateService(t, entity, &tenant.ShipmentControl{})
+	svc, _ := previewCreateService(t, entity, &shipmentcontrol.ShipmentControl{})
 
 	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
 	require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestPreviewCreate_RefusesADuplicateBOLTheWayCreateDoes(t *testing.T) {
 	entity := validShipmentForValidation()
 	entity.BOL = "BOL-DUP"
 	entity.FormulaTemplateID = pulid.MustNew("fmt_")
-	svc, repo := previewCreateService(t, entity, &tenant.ShipmentControl{
+	svc, repo := previewCreateService(t, entity, &shipmentcontrol.ShipmentControl{
 		CheckForDuplicateBOLs: true,
 	})
 	repo.EXPECT().
@@ -125,13 +125,13 @@ func TestPreviewCreate_RequiresAShipment(t *testing.T) {
 func unpricedCreateService(
 	t *testing.T,
 	entity *shipment.Shipment,
-	disposition tenant.UnratedShipmentDisposition,
+	disposition billingcontrol.UnratedShipmentDisposition,
 ) *service {
 	t.Helper()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
 	return &service{
@@ -168,7 +168,7 @@ func TestPreviewCreate_ZeroAndFlagNamesTheUnratedShipment(t *testing.T) {
 
 	entity := validShipmentForValidation()
 	entity.FormulaTemplateID = pulid.Nil
-	svc := unpricedCreateService(t, entity, tenant.UnratedShipmentDispositionZeroAndFlag)
+	svc := unpricedCreateService(t, entity, billingcontrol.UnratedShipmentDispositionZeroAndFlag)
 
 	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
 

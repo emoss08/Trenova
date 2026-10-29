@@ -3,6 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -12,7 +13,7 @@ import (
 func automaticReadiness() *shipmentbillingports.ShipmentBillingReadiness {
 	return &shipmentbillingports.ShipmentBillingReadiness{
 		Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
-			BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
+			BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeAutomaticWhenReady,
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		},
 	}
@@ -31,7 +32,7 @@ func TestReadinessAllowsAutoTransfer(t *testing.T) {
 	assert.False(t, readinessAllowsAutoTransfer(shipment.StatusInTransit, ready))
 
 	manual := automaticReadiness()
-	manual.Policy.BillingQueueTransferMode = tenant.BillingQueueTransferModeManualOnly
+	manual.Policy.BillingQueueTransferMode = billingcontrol.BillingQueueTransferModeManualOnly
 	assert.False(t, readinessAllowsAutoTransfer(shipment.StatusReadyToInvoice, manual),
 		"a payer who opted out of automatic transfer is left for a person")
 

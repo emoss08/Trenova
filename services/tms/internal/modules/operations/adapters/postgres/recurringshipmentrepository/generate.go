@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
@@ -674,7 +674,7 @@ func (r *repository) materializeOccurrence(
 	}
 
 	proNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-		Type:             tenant.SequenceTypeProNumber,
+		Type:             sequenceconfig.SequenceTypeProNumber,
 		OrgID:            series.OrganizationID,
 		BuID:             series.BusinessUnitID,
 		Count:            1,
@@ -686,7 +686,7 @@ func (r *repository) materializeOccurrence(
 	}
 
 	orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-		Type:             tenant.SequenceTypeOrder,
+		Type:             sequenceconfig.SequenceTypeOrder,
 		OrgID:            series.OrganizationID,
 		BuID:             series.BusinessUnitID,
 		Count:            1,

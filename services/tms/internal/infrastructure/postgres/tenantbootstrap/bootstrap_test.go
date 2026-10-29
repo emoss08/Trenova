@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -82,9 +83,9 @@ func TestDefaultSequenceTypesCoverRequiredSequences(t *testing.T) {
 
 	types := DefaultSequenceTypes()
 	assert.Len(t, types, 7)
-	assert.Contains(t, types, tenant.SequenceTypeProNumber)
+	assert.Contains(t, types, sequenceconfig.SequenceTypeProNumber)
 	types[0] = "mutated"
-	assert.Equal(t, tenant.SequenceTypeProNumber, DefaultSequenceTypes()[0])
+	assert.Equal(t, sequenceconfig.SequenceTypeProNumber, DefaultSequenceTypes()[0])
 }
 
 func TestSystemAgentDefinitionsAreDisabledAndShadowed(t *testing.T) {

@@ -3,15 +3,14 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -33,15 +32,17 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{MaxShipmentWeightLimit: 1000}, nil)
+		Return(&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 1000}, nil)
 
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
-			ControlRepo:    controlRepo,
-			CustomerRepo:   operationstest.NewCustomerRepository(t),
-			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
-			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
+			ControlRepo:   controlRepo,
+			CustomerRepo:  operationstest.NewCustomerRepository(t),
+			CommodityRepo: commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(
+				t,
+			),
+			ShipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		}).Build(),
 	}
 
@@ -75,7 +76,7 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AllowMoveRemovals: false,
 		}, nil)
 
@@ -87,11 +88,13 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
-			ControlRepo:    controlRepo,
-			CustomerRepo:   operationstest.NewCustomerRepository(t),
-			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
-			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:   shipmentRepo,
+			ControlRepo:   controlRepo,
+			CustomerRepo:  operationstest.NewCustomerRepository(t),
+			CommodityRepo: commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(
+				t,
+			),
+			ShipmentRepo: shipmentRepo,
 		}).Build(),
 	}
 

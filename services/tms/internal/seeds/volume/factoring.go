@@ -14,22 +14,22 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/factoringremit"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -454,7 +454,10 @@ func (g *generator) facFactors(
 		newCompanies = append(newCompanies, company)
 		newAgreements = append(newAgreements, agreement)
 		newTransports = append(newTransports, transport)
-		companyStamps = append(companyStamps, stamp{id: company.ID, created: created, updated: created})
+		companyStamps = append(
+			companyStamps,
+			stamp{id: company.ID, created: created, updated: created},
+		)
 		agreementStamps = append(agreementStamps, stamp{
 			id: agreement.ID, created: created + facDay, updated: effective,
 		})
@@ -576,7 +579,11 @@ func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) er
 			previous := st.factors[0]
 			factor = st.factors[1]
 			switchAt := start + int64(float64(span)*(0.35+g.fake.float()*0.2))
-			first := &facPeriod{factor: previous, from: start - g.fake.between64(60, 300)*facDay, to: switchAt}
+			first := &facPeriod{
+				factor: previous,
+				from:   start - g.fake.between64(60, 300)*facDay,
+				to:     switchAt,
+			}
 			second := &facPeriod{factor: factor, from: switchAt}
 			c.Factoring = []*facPeriod{first, second}
 
@@ -587,12 +594,18 @@ func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) er
 			old.ReleaseReason = "Release letter from " + previous.company.Name +
 				" received; the customer moved to " + factor.company.Name
 			noas = append(noas, old)
-			noaStamps = append(noaStamps, stamp{id: old.ID, created: old.CreatedAt, updated: released})
+			noaStamps = append(
+				noaStamps,
+				stamp{id: old.ID, created: old.CreatedAt, updated: released},
+			)
 			previous.noas[c.ID] = old
 
 			next := g.facNoa(factor, c, factoring.NoaStatusAcknowledged, switchAt, &docs)
 			noas = append(noas, next)
-			noaStamps = append(noaStamps, stamp{id: next.ID, created: next.CreatedAt, updated: next.UpdatedAt})
+			noaStamps = append(
+				noaStamps,
+				stamp{id: next.ID, created: next.CreatedAt, updated: next.UpdatedAt},
+			)
 			factor.noas[c.ID] = next
 		default:
 			from := start - g.fake.between64(30, 300)*facDay
@@ -616,7 +629,10 @@ func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) er
 				noa.UpdatedAt = *noa.ExpiryWarnedAt
 			}
 			noas = append(noas, noa)
-			noaStamps = append(noaStamps, stamp{id: noa.ID, created: noa.CreatedAt, updated: noa.UpdatedAt})
+			noaStamps = append(
+				noaStamps,
+				stamp{id: noa.ID, created: noa.CreatedAt, updated: noa.UpdatedAt},
+			)
 			factor.noas[c.ID] = noa
 		}
 
@@ -628,7 +644,10 @@ func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) er
 	if len(docs) > 0 {
 		docStamps := make([]stamp, 0, len(docs))
 		for _, d := range docs {
-			docStamps = append(docStamps, stamp{id: d.ID, created: d.CreatedAt, updated: d.CreatedAt})
+			docStamps = append(
+				docStamps,
+				stamp{id: d.ID, created: d.CreatedAt, updated: d.CreatedAt},
+			)
 		}
 		if err := insertRows(ctx, tx, documentdb.Documents.Handle, docs); err != nil {
 			return fmt.Errorf("insert signed notice documents: %w", err)
@@ -644,7 +663,12 @@ func (g *generator) facAssign(ctx context.Context, tx *keel.DB, st *facState) er
 		return err
 	}
 	cbp := customerdb.CustomerBillingProfiles
-	assigned := keel.Unnest("d", []string{"customer_id", "factoring_company_id"}, profileCustomers, profileFactors)
+	assigned := keel.Unnest(
+		"d",
+		[]string{"customer_id", "factoring_company_id"},
+		profileCustomers,
+		profileFactors,
+	)
 	if _, err := cbp.With(assigned).Join(assigned, assigned.Col("customer_id").EqCol(cbp.CustomerID)).
 		Where(keel.True()).
 		Update(ctx, tx,
@@ -1001,7 +1025,10 @@ func (g *generator) facSubmit(ctx context.Context, run *facRun) error {
 		case 1:
 			slot = facSlot(slot, fi.factor.agreement.SubmissionTime)
 		case 2:
-			slot = facSlot(facBusinessDays(slot, g.fake.between(1, 2)), fi.factor.agreement.SubmissionTime)
+			slot = facSlot(
+				facBusinessDays(slot, g.fake.between(1, 2)),
+				fi.factor.agreement.SubmissionTime,
+			)
 		}
 		noa := fi.factor.noas[fi.inv.CustomerID]
 		if slot+10*facMinute > now || (noa.ReleasedAt != nil && slot >= *noa.ReleasedAt) {
@@ -1086,7 +1113,7 @@ func (g *generator) facSubmit(ctx context.Context, run *facRun) error {
 	for i, fs := range run.subs {
 		slots[i] = numberSlot{At: fs.slot}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeFactoringSubmission, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeFactoringSubmission, slots)
 	if err != nil {
 		return err
 	}
@@ -1115,7 +1142,11 @@ func (g *generator) facNewSub(f *facFactor, slot int64, members []*facInvoice) *
 		UpdatedAt:          slot,
 	}
 	for i, fi := range members {
-		funding := factoring.ExpectedFunding(fi.face, f.agreement, factoring.DaysToRun(fi.inv.DueDate, slot))
+		funding := factoring.ExpectedFunding(
+			fi.face,
+			f.agreement,
+			factoring.DaysToRun(fi.inv.DueDate, slot),
+		)
 		item := &factoring.SubmissionItem{
 			ID:                   idAt("facsit_", slot),
 			OrganizationID:       g.refs.orgID,
@@ -1202,7 +1233,12 @@ func (g *generator) facDeliver(fs *facSub, now int64) int64 {
 }
 
 func (g *generator) facMessageID(f *facFactor) string {
-	return fmt.Sprintf("<%s.%s@mail.%s.example.com>", g.fake.digits(12), strings.ToLower(g.fake.letters(8)), f.slug)
+	return fmt.Sprintf(
+		"<%s.%s@mail.%s.example.com>",
+		g.fake.digits(12),
+		strings.ToLower(g.fake.letters(8)),
+		f.slug,
+	)
 }
 
 // facPlanEvents decides what the factor does with each schedule's invoices:
@@ -1276,18 +1312,34 @@ func (g *generator) facRemit(run *facRun) error {
 				continue
 			}
 			if it.decline != "" {
-				add(fs.factor, &facEvent{at: it.fundOn, kind: factoring.RemittanceLineRejection, item: it})
+				add(
+					fs.factor,
+					&facEvent{at: it.fundOn, kind: factoring.RemittanceLineRejection, item: it},
+				)
 				continue
 			}
-			add(fs.factor, &facEvent{at: it.fundOn, kind: factoring.RemittanceLineFunding, item: it})
+			add(
+				fs.factor,
+				&facEvent{at: it.fundOn, kind: factoring.RemittanceLineFunding, item: it},
+			)
 			if it.chargebackOn > 0 {
-				add(fs.factor, &facEvent{at: it.chargebackOn, kind: factoring.RemittanceLineChargeback, item: it})
+				add(
+					fs.factor,
+					&facEvent{
+						at:   it.chargebackOn,
+						kind: factoring.RemittanceLineChargeback,
+						item: it,
+					},
+				)
 			}
 			if it.reversalOn > 0 {
 				reversals = append(reversals, it)
 			}
 			if it.payOn > 0 {
-				add(fs.factor, &facEvent{at: it.payOn, kind: factoring.RemittanceLineReserveRelease, item: it})
+				add(
+					fs.factor,
+					&facEvent{at: it.payOn, kind: factoring.RemittanceLineReserveRelease, item: it},
+				)
 			}
 		}
 	}
@@ -1351,7 +1403,10 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 		return b.events[i].at < b.events[j].at
 	})
 	if g.fake.chance(0.4) {
-		b.events = append(b.events, &facEvent{at: b.week + 4*facDay, kind: factoring.RemittanceLineOther, cash: -2500})
+		b.events = append(
+			b.events,
+			&facEvent{at: b.week + 4*facDay, kind: factoring.RemittanceLineOther, cash: -2500},
+		)
 	}
 
 	weekEnd := b.week + 7*facDay - facDay
@@ -1372,7 +1427,12 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 		Location:    time.UTC,
 	}))
 	if len(parsed) != len(b.events) {
-		return fmt.Errorf("remittance %s parsed %d lines from %d rows", fileName, len(parsed), len(b.events))
+		return fmt.Errorf(
+			"remittance %s parsed %d lines from %d rows",
+			fileName,
+			len(parsed),
+			len(b.events),
+		)
 	}
 
 	rem := &factoring.Remittance{
@@ -1442,7 +1502,8 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 				return err
 			}
 			line.MarkApplied(entryID)
-			if ev.kind == factoring.RemittanceLineFunding || ev.kind == factoring.RemittanceLineRejection {
+			if ev.kind == factoring.RemittanceLineFunding ||
+				ev.kind == factoring.RemittanceLineRejection {
 				touched[ev.item.sub] = max(touched[ev.item.sub], ev.at)
 			}
 			if entryID.IsNotNil() {
@@ -1466,7 +1527,10 @@ func (g *generator) facApplyBucket(run *facRun, b *facBucket, received int64) er
 	run.remStamps = append(run.remStamps, stamp{id: rem.ID, created: received, updated: updated})
 	for _, line := range parsed {
 		run.lines = append(run.lines, line)
-		run.lineStamps = append(run.lineStamps, stamp{id: line.ID, created: received, updated: updated})
+		run.lineStamps = append(
+			run.lineStamps,
+			stamp{id: line.ID, created: received, updated: updated},
+		)
 	}
 	if !f.profiled {
 		f.profiled = true
@@ -1617,7 +1681,7 @@ func (g *generator) facBookLine(
 			return pulid.Nil, err
 		}
 		return g.facBook(run, &facBooking{
-			item: it, movement: movement, event: tenant.JournalSourceEventFactoringFunded,
+			item: it, movement: movement, event: accountingcontrol.JournalSourceEventFactoringFunded,
 			key: "factoring-funded:" + it.item.ID.String(), on: ev.at, at: at, actor: actor,
 			memo: "Factor remittance " + rem.FileName, remitLine: line.ID,
 		})
@@ -1639,7 +1703,7 @@ func (g *generator) facBookLine(
 		}
 		it.item.UpdatedAt = at
 		id, err := g.facBook(run, &facBooking{
-			item: it, movement: movement, event: tenant.JournalSourceEventFactoringChargedBack,
+			item: it, movement: movement, event: accountingcontrol.JournalSourceEventFactoringChargedBack,
 			key: "factoring-charged-back:" + it.item.ID.String() + ":1", on: ev.at, at: at,
 			actor: actor, memo: it.item.ChargebackReason, remitLine: line.ID,
 		})
@@ -1658,7 +1722,7 @@ func (g *generator) facBookLine(
 		}
 		it.item.UpdatedAt = at
 		return g.facBook(run, &facBooking{
-			item: it, movement: movement, event: tenant.JournalSourceEventFactoringReserveReleased,
+			item: it, movement: movement, event: accountingcontrol.JournalSourceEventFactoringReserveReleased,
 			key: "factoring-reserve-released:" + it.item.ID.String(), on: ev.at, at: at, actor: actor,
 			memo: "Released on the factor's remittance " + rem.FileName + ", " + row, remitLine: line.ID,
 		})
@@ -1678,7 +1742,7 @@ func (g *generator) facReverse(run *facRun, it *facItem, at int64) error {
 	}
 	it.item.UpdatedAt = at
 	_, err := g.facBook(run, &facBooking{
-		item: it, movement: movement, event: tenant.JournalSourceEventFactoringChargebackReversed,
+		item: it, movement: movement, event: accountingcontrol.JournalSourceEventFactoringChargebackReversed,
 		key: "factoring-chargeback-reversed:" + it.chargebackID.String(), on: at, at: at + 10*facMinute,
 		actor: g.bilPick(g.refs.userIDs), memo: "The customer paid the factor after the chargeback",
 		reverses: it.chargebackID,
@@ -1689,7 +1753,7 @@ func (g *generator) facReverse(run *facRun, it *facItem, at int64) error {
 type facBooking struct {
 	item      *facItem
 	movement  factoring.Movement
-	event     tenant.JournalSourceEventType
+	event     accountingcontrol.JournalSourceEventType
 	key       string
 	on        int64
 	at        int64
@@ -1898,7 +1962,8 @@ func (g *generator) facStates(run *facRun) {
 			if f.agreement.InForce(evaluated) {
 				in.Agreement = f.agreement
 			}
-			if noa := f.noas[inv.CustomerID]; noa != nil && noa.Status != factoring.NoaStatusReleased {
+			if noa := f.noas[inv.CustomerID]; noa != nil &&
+				noa.Status != factoring.NoaStatusReleased {
 				in.Noa = noa
 			}
 			in.OpenDispute = inv.DisputeStatus == invoice.DisputeStatusDisputed
@@ -1946,7 +2011,9 @@ func (g *generator) facStates(run *facRun) {
 				since = min(posted+facMinute, evaluated)
 			}
 			state.ReadySince = ptr(since)
-			state.ReadyAnnouncedAt = ptr(min(since+g.fake.between64(facMinute, 10*facMinute), evaluated))
+			state.ReadyAnnouncedAt = ptr(
+				min(since+g.fake.between64(facMinute, 10*facMinute), evaluated),
+			)
 		}
 		run.states = append(run.states, state)
 	}
@@ -2002,8 +2069,16 @@ func (g *generator) facOddRemittances(run *facRun, now int64) {
 		StagedAt:           ptr(failedAt + 3*facMinute),
 		CreatedByID:        uploader,
 	}
-	failedDoc := g.facDocument(factoring.RemittanceDocumentResourceType, failed.ID, failed.FileName,
-		"application/pdf", document.ProcessingProfileFactoringRemittance, failedAt, uploader, 812_000)
+	failedDoc := g.facDocument(
+		factoring.RemittanceDocumentResourceType,
+		failed.ID,
+		failed.FileName,
+		"application/pdf",
+		document.ProcessingProfileFactoringRemittance,
+		failedAt,
+		uploader,
+		812_000,
+	)
 	failed.DocumentID = failedDoc.ID
 
 	original := run.remittances[g.fake.intn(len(run.remittances))]
@@ -2054,10 +2129,16 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 	itemMarks := make([]stamp, 0)
 	for _, fs := range run.subs {
 		subs = append(subs, fs.sub)
-		subMarks = append(subMarks, stamp{id: fs.sub.ID, created: fs.slot, updated: fs.sub.UpdatedAt})
+		subMarks = append(
+			subMarks,
+			stamp{id: fs.sub.ID, created: fs.slot, updated: fs.sub.UpdatedAt},
+		)
 		for _, it := range fs.items {
 			items = append(items, it.item)
-			itemMarks = append(itemMarks, stamp{id: it.item.ID, created: fs.slot, updated: it.item.UpdatedAt})
+			itemMarks = append(
+				itemMarks,
+				stamp{id: it.item.ID, created: fs.slot, updated: it.item.UpdatedAt},
+			)
 		}
 	}
 	if err := insertRows(ctx, tx, factoringdb.Submissions.Handle, subs); err != nil {
@@ -2081,7 +2162,10 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 	}
 	profileMarks := make([]stamp, 0, len(run.profiles))
 	for _, p := range run.profiles {
-		profileMarks = append(profileMarks, stamp{id: p.ID, created: p.CreatedAt, updated: p.CreatedAt})
+		profileMarks = append(
+			profileMarks,
+			stamp{id: p.ID, created: p.CreatedAt, updated: p.CreatedAt},
+		)
 	}
 	if err := insertRows(ctx, tx, factoringdb.RemittanceProfiles.Handle, run.profiles); err != nil {
 		return fmt.Errorf("insert factoring remittance profiles: %w", err)
@@ -2228,10 +2312,20 @@ func (g *generator) facCount(run *facRun) {
 	g.report.add("Factoring payments collected directly", len(run.rows.payments))
 	g.report.add("Customer ledger entries", len(run.rows.ledger))
 	g.report.add("Journal entries", len(run.rows.entries))
-	g.opts.Logf("  • factoring items: %d funded, %d settled, %d charged back, %d declined (%d excluded)",
-		funded, settled, chargedBack, rejected, run.excluded)
-	g.opts.Logf("  • factoring readiness: %d ready, %d not ready, %d submitted, %d funded, %d excluded",
-		verdicts[factoring.VerdictReady], verdicts[factoring.VerdictNotReady],
-		verdicts[factoring.VerdictSubmitted], verdicts[factoring.VerdictFunded],
-		verdicts[factoring.VerdictExcluded])
+	g.opts.Logf(
+		"  • factoring items: %d funded, %d settled, %d charged back, %d declined (%d excluded)",
+		funded,
+		settled,
+		chargedBack,
+		rejected,
+		run.excluded,
+	)
+	g.opts.Logf(
+		"  • factoring readiness: %d ready, %d not ready, %d submitted, %d funded, %d excluded",
+		verdicts[factoring.VerdictReady],
+		verdicts[factoring.VerdictNotReady],
+		verdicts[factoring.VerdictSubmitted],
+		verdicts[factoring.VerdictFunded],
+		verdicts[factoring.VerdictExcluded],
+	)
 }

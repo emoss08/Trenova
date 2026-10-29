@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,11 +39,11 @@ type ListJournalReviewRequest struct {
 }
 
 type JournalReviewSummary struct {
-	AwaitingApproval     int                           `json:"awaitingApproval"`
-	ReadyToPost          int                           `json:"readyToPost"`
-	OldestAccountingDate *int64                        `json:"oldestAccountingDate"`
-	PostingMode          tenant.JournalPostingModeType `json:"postingMode"`
-	RequiresApproval     bool                          `json:"requiresApproval"`
+	AwaitingApproval     int                                      `json:"awaitingApproval"`
+	ReadyToPost          int                                      `json:"readyToPost"`
+	OldestAccountingDate *int64                                   `json:"oldestAccountingDate"`
+	PostingMode          accountingcontrol.JournalPostingModeType `json:"postingMode"`
+	RequiresApproval     bool                                     `json:"requiresApproval"`
 }
 
 type JournalReviewService interface {

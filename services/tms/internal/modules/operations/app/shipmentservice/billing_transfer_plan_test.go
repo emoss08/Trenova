@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -50,7 +51,7 @@ func newPlanFixture(t *testing.T) *planFixture {
 // documents.
 func (f *planFixture) expectSources(
 	shipments []*shipment.Shipment,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	docs []*document.Document,
 ) {
 	f.repo.EXPECT().
@@ -174,7 +175,7 @@ func TestPlanBillingTransfers_ReturnsAShipmentToOperationsWhenThePolicySaysSo(t 
 	missingPOD := f.newShipment("PRO-9", shipment.StatusReadyToInvoice)
 	control := manualBillingControl()
 	control.ShipmentBillingRequirementEnforcement = tenant.EnforcementLevelRequireReview
-	control.BillingExceptionDisposition = tenant.BillingExceptionDispositionReturnToOperations
+	control.BillingExceptionDisposition = billingcontrol.BillingExceptionDispositionReturnToOperations
 
 	f.expectSources([]*shipment.Shipment{missingPOD}, control, nil)
 

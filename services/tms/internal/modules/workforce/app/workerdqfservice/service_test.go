@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -162,34 +162,34 @@ func (f *fakeStanding) Standing(
 }
 
 type fakeRetention struct {
-	row *tenant.DataRetention
+	row *dataretention.DataRetention
 	err error
 }
 
 func (f *fakeRetention) List(
 	_ context.Context,
-) (*pagination.ListResult[*tenant.DataRetention], error) {
+) (*pagination.ListResult[*dataretention.DataRetention], error) {
 	return nil, nil
 }
 
 func (f *fakeRetention) Get(
 	_ context.Context,
 	_ tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return f.row, f.err
 }
 
 func (f *fakeRetention) Update(
 	_ context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	return entity, nil
 }
 
 func (f *fakeRetention) Upsert(
 	_ context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	return entity, nil
 }
 
@@ -318,7 +318,7 @@ func TestFile_RetentionUsesTheOrganisationSetting(t *testing.T) {
 		HireDate:        1_600_000_000,
 		TerminationDate: &terminated,
 	})
-	h.retention.row = &tenant.DataRetention{DriverQualificationRetentionPeriod: 1800}
+	h.retention.row = &dataretention.DataRetention{DriverQualificationRetentionPeriod: 1800}
 	h.settled(t)
 
 	file, err := h.svc.File(t.Context(), h.tenant, h.workerID)
@@ -430,7 +430,7 @@ func TestRecordFollowUp_OnlyWhileAwaitingAResponse(t *testing.T) {
 func TestRetentionCandidates_UsesTheConfiguredWindow(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
-	h.retention.row = &tenant.DataRetention{DriverQualificationRetentionPeriod: 1800}
+	h.retention.row = &dataretention.DataRetention{DriverQualificationRetentionPeriod: 1800}
 
 	_, err := h.svc.RetentionCandidates(t.Context(), h.tenant, 0)
 	require.NoError(t, err)

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -133,13 +133,13 @@ func (f *freshness) Clear(context.Context, pagination.TenantInfo) error { return
 
 type controlRepo struct {
 	tenantports.AgentControlRepository
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
 func (c *controlRepo) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return c.control, nil
 }
 
@@ -301,7 +301,7 @@ type fixture struct {
 	svc       *Service
 	repo      *tuneUpRepo
 	fresh     *freshness
-	control   *tenant.AgentControl
+	control   *agentcontrol.AgentControl
 	agents    *definitionRepo
 	providers *providerRepo
 	trust     *trust
@@ -317,7 +317,7 @@ func newFixture(t *testing.T, rows ...*aituneup.TuneUp) *fixture {
 	f := &fixture{
 		repo:      newTuneUpRepo(rows...),
 		fresh:     &freshness{fresh: true},
-		control:   &tenant.AgentControl{EarnedAutonomy: false, PromotionThreshold: 10},
+		control:   &agentcontrol.AgentControl{EarnedAutonomy: false, PromotionThreshold: 10},
 		agents:    &definitionRepo{},
 		providers: &providerRepo{},
 		trust:     &trust{},

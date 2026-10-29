@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
@@ -66,7 +67,7 @@ func (l *Location) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(l,
 		validation.Field(
 			&l.Code,
-			validation.Length(0, tenant.MaxLocationCodeLength).
+			validation.Length(0, sequenceconfig.MaxLocationCodeLength).
 				Error("Code must be 32 characters or less"),
 		),
 		validation.Field(&l.Timezone,

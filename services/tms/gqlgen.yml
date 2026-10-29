@@ -1369,7 +1369,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice.Headcount
   DriverDigestCadence:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DriverDigestCadence
+      - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DriverDigestCadence
   WorkerSafetyViolation:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyViolation
@@ -2119,7 +2119,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentOperationsSummary
   LateChargeAssessmentMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.LateChargeAssessmentMode
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.LateChargeAssessmentMode
   LateChargeLine:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports.LateChargeLine
@@ -3891,7 +3891,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanPreview
   AgentControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AgentControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol.AgentControl
   AccessorialCharge:
     model:
       - github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge.AccessorialCharge
@@ -5193,7 +5193,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.MovePayEstimate
   DashControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DashControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DashControl
   PortalFeatures:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalFeatures
@@ -5220,10 +5220,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.PayEventStatus
   PayPeriodFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.PayPeriodFrequency
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.PayPeriodFrequency
   SettlementPayTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.PayTrigger
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.PayTrigger
   PayMileageBand:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.MileageBand
@@ -5288,7 +5288,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.PayEvent
   SettlementControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.SettlementControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.SettlementControl
   WorkerEarningsSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkerEarningsSummary
@@ -5360,7 +5360,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.InvoiceMatch
   CarrierSettlementControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.CarrierSettlementControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol.CarrierSettlementControl
   CarrierSettlementPeriodBounds:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.PeriodBounds

@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type SequenceRequest struct {
-	Type  tenant.SequenceType
+	Type  sequenceconfig.SequenceType
 	OrgID pulid.ID
 	BuID  pulid.ID
 	Year  int
@@ -18,7 +18,7 @@ type SequenceRequest struct {
 }
 
 type LastGeneratedRequest struct {
-	Type  tenant.SequenceType
+	Type  sequenceconfig.SequenceType
 	OrgID pulid.ID
 	BuID  pulid.ID
 	Year  int
@@ -27,12 +27,12 @@ type LastGeneratedRequest struct {
 }
 
 type GenerateRequest struct {
-	Type             tenant.SequenceType
+	Type             sequenceconfig.SequenceType
 	OrgID            pulid.ID
 	BuID             pulid.ID
 	Count            int
 	Time             time.Time
-	Format           *tenant.SequenceFormat
+	Format           *sequenceconfig.SequenceFormat
 	LocationCode     string
 	BusinessUnitCode string
 }
@@ -46,9 +46,9 @@ type SequenceStore interface {
 type FormatProvider interface {
 	GetFormat(
 		ctx context.Context,
-		sequenceType tenant.SequenceType,
+		sequenceType sequenceconfig.SequenceType,
 		orgID, buID pulid.ID,
-	) (*tenant.SequenceFormat, error)
+	) (*sequenceconfig.SequenceFormat, error)
 }
 
 type Generator interface {

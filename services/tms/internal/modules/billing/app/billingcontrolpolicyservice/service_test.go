@@ -3,7 +3,7 @@ package billingcontrolpolicyservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,16 +18,16 @@ func TestCanAutoCreateInvoiceDraft(t *testing.T) {
 	assert.False(
 		t,
 		svc.CanAutoCreateInvoiceDraft(
-			&tenant.BillingControl{
-				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeManualOnly,
+			&billingcontrol.BillingControl{
+				InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeManualOnly,
 			},
 		),
 	)
 	assert.True(
 		t,
 		svc.CanAutoCreateInvoiceDraft(
-			&tenant.BillingControl{
-				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
+			&billingcontrol.BillingControl{
+				InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred,
 			},
 		),
 	)
@@ -37,9 +37,9 @@ func TestCanAutoPostInvoice(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{Logger: zap.NewNop()})
-	control := &tenant.BillingControl{
-		InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
-		InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+	control := &billingcontrol.BillingControl{
+		InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred,
+		InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
 	}
 
 	assert.True(t, svc.CanAutoPostInvoice(control, nil))
@@ -58,7 +58,7 @@ func TestCanAutoPostInvoice(t *testing.T) {
 		),
 	)
 
-	control.InvoicePostingMode = tenant.InvoicePostingModeManualReviewRequired
+	control.InvoicePostingMode = billingcontrol.InvoicePostingModeManualReviewRequired
 	assert.False(t, svc.CanAutoPostInvoice(control, nil))
 }
 
@@ -71,8 +71,8 @@ func TestValidateInvoicePosting(t *testing.T) {
 	require.Error(
 		t,
 		svc.ValidateInvoicePosting(
-			&tenant.BillingControl{
-				InvoicePostingMode: tenant.InvoicePostingModeManualReviewRequired,
+			&billingcontrol.BillingControl{
+				InvoicePostingMode: billingcontrol.InvoicePostingModeManualReviewRequired,
 			},
 			AutoPostInvoiceTrigger,
 		),
@@ -80,9 +80,9 @@ func TestValidateInvoicePosting(t *testing.T) {
 	require.Error(
 		t,
 		svc.ValidateInvoicePosting(
-			&tenant.BillingControl{
-				InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
-				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeManualOnly,
+			&billingcontrol.BillingControl{
+				InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+				InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeManualOnly,
 			},
 			AutoPostInvoiceTrigger,
 		),
@@ -90,9 +90,9 @@ func TestValidateInvoicePosting(t *testing.T) {
 	require.NoError(
 		t,
 		svc.ValidateInvoicePosting(
-			&tenant.BillingControl{
-				InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
-				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
+			&billingcontrol.BillingControl{
+				InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+				InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred,
 			},
 			AutoPostInvoiceTrigger,
 		),

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +13,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func automaticRun(status billingtransfer.RunStatus, transferred, notTransferred int) *billingtransfer.BillingTransferRun {
+func automaticRun(
+	status billingtransfer.RunStatus,
+	transferred, notTransferred int,
+) *billingtransfer.BillingTransferRun {
 	return &billingtransfer.BillingTransferRun{
 		ID:                  pulid.MustNew("btr_"),
 		OrganizationID:      pulid.MustNew("org_"),
@@ -41,11 +44,17 @@ func TestAutomaticWordingAlwaysReportsShipmentsLeftBehind(t *testing.T) {
 	assert.Contains(t, message, "8 of 10 ready shipments")
 	assert.Contains(t, message, "2 could not be moved")
 
-	eventType, _, _, _, ok = a.automaticWording(t.Context(), automaticRun(billingtransfer.RunStatusFailed, 3, 0))
+	eventType, _, _, _, ok = a.automaticWording(
+		t.Context(),
+		automaticRun(billingtransfer.RunStatusFailed, 3, 0),
+	)
 	assert.True(t, ok)
 	assert.Equal(t, eventRunFailed, eventType)
 
-	_, _, _, _, ok = a.automaticWording(t.Context(), automaticRun(billingtransfer.RunStatusCanceled, 3, 4))
+	_, _, _, _, ok = a.automaticWording(
+		t.Context(),
+		automaticRun(billingtransfer.RunStatusCanceled, 3, 4),
+	)
 	assert.False(t, ok, "whoever stopped it already knows")
 }
 
@@ -57,7 +66,7 @@ func TestAutomaticWordingReportsACleanRunOnlyWhenAsked(t *testing.T) {
 		controls := tenantportsmock.NewMockBillingControlRepository(t)
 		controls.EXPECT().
 			GetByOrgID(mock.Anything, run.OrganizationID).
-			Return(&tenant.BillingControl{NotifyOnAutoInvoiceCreation: notify}, nil).
+			Return(&billingcontrol.BillingControl{NotifyOnAutoInvoiceCreation: notify}, nil).
 			Once()
 		a := &Activities{l: zap.NewNop(), controls: controls}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -1611,28 +1612,28 @@ type fakeControls struct {
 	tenantports.AccountingControlRepository
 
 	mu      sync.Mutex
-	control *tenant.AccountingControl
+	control *accountingcontrol.AccountingControl
 }
 
 func newFakeControls() *fakeControls {
-	return &fakeControls{control: &tenant.AccountingControl{
+	return &fakeControls{control: &accountingcontrol.AccountingControl{
 		FunctionalCurrencyCode:    "USD",
-		ExchangeRateDatePolicy:    tenant.ExchangeRateDatePolicyDocumentDate,
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		ExchangeRateDatePolicy:    accountingcontrol.ExchangeRateDatePolicyDocumentDate,
+		ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
 	}}
 }
 
 func (f *fakeControls) GetByOrgID(
 	context.Context,
 	pulid.ID,
-) (*tenant.AccountingControl, error) {
+) (*accountingcontrol.AccountingControl, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	copied := *f.control
 	return &copied, nil
 }
 
-func (f *fakeControls) set(mutate func(*tenant.AccountingControl)) {
+func (f *fakeControls) set(mutate func(*accountingcontrol.AccountingControl)) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	mutate(f.control)

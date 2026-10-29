@@ -3,7 +3,7 @@ package carriersettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -11,7 +11,7 @@ import (
 )
 
 func ResolveBatchBounds(
-	control *tenant.CarrierSettlementControl,
+	control *carriersettlementcontrol.CarrierSettlementControl,
 	periodStart, periodEnd, now int64,
 ) (PeriodBounds, error) {
 	return settlementshared.ResolveRequestedPeriod(settlementshared.PeriodSchedule{

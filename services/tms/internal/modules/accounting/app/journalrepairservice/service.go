@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -77,7 +77,7 @@ func (s *Service) Repair(ctx context.Context, req *Request) (*Report, error) {
 	}
 
 	report := &Report{}
-	controls := make(map[pulid.ID]*tenant.AccountingControl)
+	controls := make(map[pulid.ID]*accountingcontrol.AccountingControl)
 	if err := s.repairCreditMemos(ctx, req, report); err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (s *Service) repairDriverPayments(
 	ctx context.Context,
 	req *Request,
 	report *Report,
-	controls map[pulid.ID]*tenant.AccountingControl,
+	controls map[pulid.ID]*accountingcontrol.AccountingControl,
 ) error {
 	after := pulid.Nil
 	for {
@@ -236,7 +236,7 @@ func (s *Service) repairDriverPayment(
 	ctx context.Context,
 	req *Request,
 	candidate *driversettlementports.DriverPaymentRepair,
-	controls map[pulid.ID]*tenant.AccountingControl,
+	controls map[pulid.ID]*accountingcontrol.AccountingControl,
 ) error {
 	settlement := candidate.Settlement
 	if candidate.JournalBatchID.IsNotNil() {
@@ -296,8 +296,8 @@ func (s *Service) stampPaidBatch(
 func (s *Service) control(
 	ctx context.Context,
 	orgID pulid.ID,
-	controls map[pulid.ID]*tenant.AccountingControl,
-) (*tenant.AccountingControl, error) {
+	controls map[pulid.ID]*accountingcontrol.AccountingControl,
+) (*accountingcontrol.AccountingControl, error) {
 	if control, ok := controls[orgID]; ok {
 		return control, nil
 	}

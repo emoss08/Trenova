@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
@@ -284,13 +285,13 @@ func (f *fakeFacts) ActiveUsers(
 }
 
 type fakeControls struct {
-	control tenant.AgentControl
+	control agentcontrol.AgentControl
 }
 
 func (f *fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	control := f.control
 
 	return &control, nil
@@ -298,8 +299,8 @@ func (f *fakeControls) GetOrCreate(
 
 func (f *fakeControls) Update(
 	_ context.Context,
-	entity *tenant.AgentControl,
-) (*tenant.AgentControl, error) {
+	entity *agentcontrol.AgentControl,
+) (*agentcontrol.AgentControl, error) {
 	return entity, nil
 }
 
@@ -410,7 +411,7 @@ func TestPrepare_WritesAPlanAttributedToTheProfileFeature(t *testing.T) {
 func TestPrepare_SkipsWhenLearningIsOffOrInShadowMode(t *testing.T) {
 	t.Parallel()
 
-	for _, control := range []tenant.AgentControl{{LearningOff: true}, {ShadowMode: true}} {
+	for _, control := range []agentcontrol.AgentControl{{LearningOff: true}, {ShadowMode: true}} {
 		h := newHarness(t)
 		h.controls.control = control
 

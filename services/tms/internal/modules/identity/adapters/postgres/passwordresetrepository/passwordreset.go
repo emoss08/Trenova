@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -39,7 +39,10 @@ func New(p Params) tenantports.PasswordResetTokenRepository {
 	}
 }
 
-func tokens(ctx context.Context, preds ...keel.Pred) *keel.Query[*tenant.PasswordResetToken] {
+func tokens(
+	ctx context.Context,
+	preds ...keel.Pred,
+) *keel.Query[*passwordreset.PasswordResetToken] {
 	prt := tenantdb.PasswordResetTokens
 	q := prt.Query()
 	if dbscope.IsSystem(ctx) {
@@ -54,7 +57,7 @@ func outstanding() keel.Pred {
 	return keel.And(prt.UsedAt.IsNull(), prt.InvalidatedAt.IsNull())
 }
 
-func (r *repository) Create(ctx context.Context, token *tenant.PasswordResetToken) error {
+func (r *repository) Create(ctx context.Context, token *passwordreset.PasswordResetToken) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return tokenErrors.Map(
 			tenantdb.PasswordResetTokens.Create(ctx, r.db.Keel(ctx), token),
@@ -67,23 +70,27 @@ func (r *repository) FindRedeemableByHash(
 	ctx context.Context,
 	tokenHash string,
 	now int64,
-) (*tenant.PasswordResetToken, error) {
+) (*passwordreset.PasswordResetToken, error) {
 	ctx = dbscope.WithSystem(ctx, resolveTokenScopeReason)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.PasswordResetToken, error) {
-		prt := tenantdb.PasswordResetTokens
-		token, err := tokens(
-			ctx,
-			prt.TokenHash.Eq(tokenHash),
-			outstanding(),
-			prt.ExpiresAt.Gt(now),
-		).
-			Load(prt.User()).
-			One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, tokenErrors.Map(err, "")
-		}
-		return token, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*passwordreset.PasswordResetToken, error) {
+			prt := tenantdb.PasswordResetTokens
+			token, err := tokens(
+				ctx,
+				prt.TokenHash.Eq(tokenHash),
+				outstanding(),
+				prt.ExpiresAt.Gt(now),
+			).
+				Load(prt.User()).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, tokenErrors.Map(err, "")
+			}
+			return token, nil
+		},
+	)
 }
 
 // MarkUsed puts the used_at guard in the UPDATE, not in a check before it: two
@@ -129,7 +136,7 @@ func (r *repository) CountSince(
 		n, err := tokens(
 			ctx,
 			prt.UserID.Eq(userID),
-			prt.Purpose.Eq(tenant.PasswordResetPurposeReset),
+			prt.Purpose.Eq(passwordreset.PasswordResetPurposeReset),
 			prt.CreatedAt.Gte(since),
 		).Count(ctx, r.db.Keel(ctx))
 		return int(n), err

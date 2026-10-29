@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
@@ -48,7 +48,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
 		}, nil)
@@ -146,7 +146,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
 		}, nil)
@@ -234,7 +234,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	ctx, svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{}, nil)
+		Return(&shipmentcontrol.ShipmentControl{}, nil)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,

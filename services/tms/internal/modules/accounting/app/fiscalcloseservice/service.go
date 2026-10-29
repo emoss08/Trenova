@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -152,7 +152,7 @@ func (s *Service) prepare(
 func (s *Service) loadAccountingControl(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
-) (*tenant.AccountingControl, error) {
+) (*accountingcontrol.AccountingControl, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, fy.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -171,7 +171,7 @@ func (s *Service) loadAccountingControl(
 func (s *Service) resolveRetainedEarnings(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) (retainedEarningsAccount, *fiscalclose.Blocker) {
 	if control == nil {
 		return retainedEarningsAccount{}, accountingBlocker(

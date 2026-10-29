@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -28,17 +28,43 @@ func TestRefuseSelfApproval(t *testing.T) {
 		refused          bool
 		readsControl     bool
 	}{
-		{name: "submitter approving with a separate approver required", approver: submitter, approvalRequired: true, separate: true, refused: true, readsControl: true},
-		{name: "submitter approving where one person may do both", approver: submitter, approvalRequired: true, separate: false, readsControl: true},
-		{name: "another person approving", approver: pulid.MustNew("usr_"), approvalRequired: true, separate: true},
-		{name: "submitter retrying one that never needed approval", approver: submitter, approvalRequired: false, separate: true},
+		{
+			name:             "submitter approving with a separate approver required",
+			approver:         submitter,
+			approvalRequired: true,
+			separate:         true,
+			refused:          true,
+			readsControl:     true,
+		},
+		{
+			name:             "submitter approving where one person may do both",
+			approver:         submitter,
+			approvalRequired: true,
+			separate:         false,
+			readsControl:     true,
+		},
+		{
+			name:             "another person approving",
+			approver:         pulid.MustNew("usr_"),
+			approvalRequired: true,
+			separate:         true,
+		},
+		{
+			name:             "submitter retrying one that never needed approval",
+			approver:         submitter,
+			approvalRequired: false,
+			separate:         true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+			tenantInfo := pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			}
 			adjustment := &invoiceadjustment.InvoiceAdjustment{
 				ID:               pulid.MustNew("iadj_"),
 				OrganizationID:   tenantInfo.OrgID,
@@ -53,7 +79,7 @@ func TestRefuseSelfApproval(t *testing.T) {
 			if tt.readsControl {
 				controls.EXPECT().
 					GetByOrgID(mock.Anything, tenantInfo.OrgID).
-					Return(&tenant.InvoiceAdjustmentControl{RequireSeparateApprover: tt.separate}, nil).
+					Return(&invoiceadjustmentcontrol.InvoiceAdjustmentControl{RequireSeparateApprover: tt.separate}, nil).
 					Once()
 			}
 			svc := &Service{repo: repo, adjustmentCtrlRepo: controls}

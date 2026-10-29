@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -19,7 +19,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*tenant.ShipmentControl]
+	validator validationframework.TenantedEntityValidator[*shipmentcontrol.ShipmentControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -27,14 +27,14 @@ func NewValidator(p ValidatorParams) *Validator {
 
 	return &Validator{
 		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.ShipmentControl]().
+			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
 			WithOptionalCustomReferenceCheck(
 				"detentionChargeId",
 				"Detention charge does not exist in your organization",
-				func(sc *tenant.ShipmentControl) pulid.ID {
+				func(sc *shipmentcontrol.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
 						return ""
 					}
@@ -49,7 +49,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
-	entity *tenant.ShipmentControl,
+	entity *shipmentcontrol.ShipmentControl,
 ) *errortypes.MultiError {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

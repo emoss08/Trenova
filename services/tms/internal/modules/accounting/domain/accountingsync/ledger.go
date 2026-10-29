@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -56,7 +56,7 @@ func (r *AccountingSyncRecord) IsOpeningBalances() bool {
 		strings.HasPrefix(r.ObjectID.String(), JournalOpeningPrefix)
 }
 
-func LedgerAccountRole(accountID pulid.ID, control *tenant.AccountingControl) string {
+func LedgerAccountRole(accountID pulid.ID, control *accountingcontrol.AccountingControl) string {
 	if control == nil || accountID.IsNil() {
 		return ""
 	}

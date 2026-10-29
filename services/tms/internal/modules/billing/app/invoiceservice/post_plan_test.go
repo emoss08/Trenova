@@ -2,13 +2,6 @@ package invoiceservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -17,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -25,6 +18,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -115,14 +115,16 @@ func newPostFixture(t *testing.T) *postFixture {
 		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copied := *f.invoice
 			return &copied, nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	f.shipments = shipmentportsmock.NewMockShipmentRepository(t)
 	f.shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(context.Context, *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			copied := *f.leg
 			return &copied, nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	f.queue = billingqueueportsmock.NewMockBillingQueueRepository(t)
 	f.queue.EXPECT().ListActiveInvoiceItemsByShipmentIDs(mock.Anything, mock.Anything).
@@ -137,24 +139,30 @@ func newPostFixture(t *testing.T) *postFixture {
 		}).Maybe()
 
 	f.accounting = tenantportsmock.NewMockAccountingControlRepository(t)
-	f.accounting.EXPECT().GetByOrgID(mock.Anything, f.tenant.OrgID).Return(&tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventInvoicePosted,
-		},
-		ReconciliationMode:      tenant.ReconciliationModeDisabled,
-		DefaultRevenueAccountID: f.revenueID,
-		DefaultARAccountID:      f.arID,
-	}, nil).Maybe()
+	f.accounting.EXPECT().
+		GetByOrgID(mock.Anything, f.tenant.OrgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+			JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
+			AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+				accountingcontrol.JournalSourceEventInvoicePosted,
+			},
+			ReconciliationMode:      accountingcontrol.ReconciliationModeDisabled,
+			DefaultRevenueAccountID: f.revenueID,
+			DefaultARAccountID:      f.arID,
+		}, nil).
+		Maybe()
 
 	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
-	periods.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(&fiscalperiod.FiscalPeriod{
-		ID:           f.periodID,
-		FiscalYearID: pulid.MustNew("fy_"),
-		Status:       fiscalperiod.StatusOpen,
-	}, nil).Maybe()
+	periods.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           f.periodID,
+			FiscalYearID: pulid.MustNew("fy_"),
+			Status:       fiscalperiod.StatusOpen,
+		}, nil).
+		Maybe()
 
 	f.journal = journalentryportsmock.NewMockJournalPostingRepository(t)
 	f.svc = &Service{
@@ -234,7 +242,8 @@ func TestPreviewPost_AgreesWithThePostItPlans(t *testing.T) {
 		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			booked = &params
 			return nil
-		}).Once()
+		}).
+		Once()
 	f.repo.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *invoice.Invoice) (*invoice.Invoice, error) {
 			return entity, nil
@@ -242,7 +251,8 @@ func TestPreviewPost_AgreesWithThePostItPlans(t *testing.T) {
 	f.shipments.EXPECT().UpdateDerivedState(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			return entity, nil
-		}).Once()
+		}).
+		Once()
 	f.queue.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,

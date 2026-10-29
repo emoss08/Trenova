@@ -37,8 +37,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -321,13 +322,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	)
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
-	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+	h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 		control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 	})
 
 	t.Run("full invoice credit only executes credit memo", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -371,9 +372,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("credit and rebill creates draft replacement invoice and lineage", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
-			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange
+			control.ReplacementInvoiceReviewPolicy = invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -476,9 +477,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("full reversal ignores partial line input and does not rebill", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
-			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyNoAdditionalReview
+			control.ReplacementInvoiceReviewPolicy = invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyNoAdditionalReview
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -564,8 +565,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("write-off uses write-off approval policy and creates journal entry", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.WriteOffApprovalPolicy = tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.WriteOffApprovalPolicy = invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold
 			control.WriteOffApprovalThreshold = decimal.NewFromInt(50)
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
@@ -649,8 +650,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("approve revalidates against current state", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAlways
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -671,8 +672,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusPendingApproval, pending.Status)
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 		_, executeErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
@@ -698,8 +699,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("reject marks pending approval adjustments rejected", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAlways
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -736,7 +737,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("idempotency and partial credits exhaust eligibility", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -786,8 +787,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Settled freight", 1, 100),
 		}, invoice.SettlementStatusPaid, decimal.NewFromInt(100))
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityDisallow
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.PaidInvoiceAdjustmentPolicy = invoiceadjustmentcontrol.AdjustmentEligibilityDisallow
 		})
 		blocked, blockedErr := h.service.Preview(
 			h.ctx,
@@ -803,8 +804,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, blockedErr)
 		assert.Contains(t, blocked.Errors, "invoiceId")
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityAllowWithApproval
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.PaidInvoiceAdjustmentPolicy = invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval
 		})
 		allowed, allowedErr := h.service.Preview(
 			h.ctx,
@@ -823,9 +824,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("reason policy is enforced and supporting documents are optional", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentReasonRequirement = tenant.RequirementPolicyRequired
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.AdjustmentReasonRequirement = invoiceadjustmentcontrol.RequirementPolicyRequired
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -855,8 +856,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("no adjustment kind requires supporting documents", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -938,7 +939,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	t.Run(
 		"bulk inline tracks partial success and large batches route to Temporal",
 		func(t *testing.T) {
-			h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+			h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 				control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 			})
 
@@ -1311,10 +1312,10 @@ func (h *integrationHarness) ensureAccountingDefaults(t *testing.T) {
 	control.DefaultARAccountID = h.lookupGLAccount(t, "1110")
 	control.DefaultWriteOffAccountID = h.lookupGLAccount(t, "6940")
 	control.DefaultRevenueAccountID = h.lookupGLAccount(t, "4000")
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAdjustmentOnly
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.ManualJournalEntryPolicy = accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly
 	control.RequireManualJEApproval = true
 	_, err = h.accountingRepo.Update(h.ctx, control)
 	require.NoError(t, err)
@@ -1404,7 +1405,7 @@ func (h *integrationHarness) lookupGLAccount(t *testing.T, code string) pulid.ID
 
 func (h *integrationHarness) setControls(
 	t *testing.T,
-	mutate func(*tenant.InvoiceAdjustmentControl),
+	mutate func(*invoiceadjustmentcontrol.InvoiceAdjustmentControl),
 ) {
 	t.Helper()
 

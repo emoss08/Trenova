@@ -4,7 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
@@ -394,8 +395,8 @@ func TestReaccrueMoveReplaceAfterDeliveryAccruesNewCarrier(t *testing.T) {
 		Return(replacement, nil)
 	deps.shipments.On("GetByID", mock.Anything, mock.Anything).Return(sp, nil)
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{
-			PayTrigger: tenant.PayTriggerShipmentDelivered,
+		Return(&carriersettlementcontrol.CarrierSettlementControl{
+			PayTrigger: settlementcontrol.PayTriggerShipmentDelivered,
 		}, nil)
 	deps.costEvents.On("GetByIdempotencyKey", mock.Anything, tenantInfo, mock.Anything).
 		Return(nil, errors.New("not found")).Times(len(inputs))
@@ -436,8 +437,8 @@ func TestReaccrueMoveBeforeTriggerOnlyVoidsStale(t *testing.T) {
 		Return(replacement, nil)
 	deps.shipments.On("GetByID", mock.Anything, mock.Anything).Return(sp, nil)
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{
-			PayTrigger: tenant.PayTriggerShipmentDelivered,
+		Return(&carriersettlementcontrol.CarrierSettlementControl{
+			PayTrigger: settlementcontrol.PayTriggerShipmentDelivered,
 		}, nil)
 	deps.costEvents.On("ListByMove", mock.Anything, tenantInfo, move.ID).
 		Return([]*carriersettlement.CostEvent{}, nil)

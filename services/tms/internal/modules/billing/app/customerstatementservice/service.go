@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -120,7 +121,7 @@ func New(p Params) *Service {
 type issuer struct {
 	tenant     pagination.TenantInfo
 	org        *tenant.Organization
-	control    *tenant.BillingControl
+	control    *billingcontrol.BillingControl
 	logo       template.URL
 	activityBy pulid.ID
 }
@@ -308,7 +309,7 @@ func (s *Service) prepareSend(
 // are reported back so someone can add a recipient.
 func (s *Service) SendMonthly(
 	ctx context.Context,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	now int64,
 ) (*customerstatementports.SweepResult, error) {
 	result := &customerstatementports.SweepResult{NoRecipients: []string{}}

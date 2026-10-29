@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -320,7 +320,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	userID := pulid.MustNew("usr_")
 	svc := &service{
@@ -412,7 +412,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -522,7 +522,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -636,7 +636,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -739,7 +739,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -878,7 +878,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -991,7 +991,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
@@ -1066,7 +1066,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	svc := &service{
 		l:            zap.NewNop(),

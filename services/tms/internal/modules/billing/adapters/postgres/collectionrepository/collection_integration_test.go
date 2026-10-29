@@ -7,13 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
@@ -24,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/factoringcompanyrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -73,10 +72,13 @@ func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing
 	assert.Equal(t, plain.TotalAmountMinor+withRecourse.TotalAmountMinor, row.TotalOpenMinor)
 	assert.Equal(t, 2, row.OpenInvoiceCount)
 
-	all, err := env.ledger.SumCustomerBalances(env.ctx, customerledgerports.SumCustomerBalancesRequest{
-		TenantInfo:  env.tenantInfo,
-		CustomerIDs: []pulid.ID{env.customerID},
-	})
+	all, err := env.ledger.SumCustomerBalances(
+		env.ctx,
+		customerledgerports.SumCustomerBalancesRequest{
+			TenantInfo:  env.tenantInfo,
+			CustomerIDs: []pulid.ID{env.customerID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(10000+20000+40000-5000), all[env.customerID])
 
@@ -214,7 +216,11 @@ func setupNonRecourseEnv(t *testing.T) *nonRecourseEnv {
 	shp := seeded.Shipment
 
 	states := usstatedb.UsStates
-	stateID, err := keel.IntoOne[pulid.ID](ctx, db, states.Pick(states.ID).Order(states.ID.Asc()).Limit(1))
+	stateID, err := keel.IntoOne[pulid.ID](
+		ctx,
+		db,
+		states.Pick(states.ID).Order(states.ID.Asc()).Limit(1),
+	)
 	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
@@ -324,7 +330,7 @@ func (e *nonRecourseEnv) postInvoice(
 		CustomerID:       e.customerID,
 		SourceObjectType: "Invoice",
 		SourceObjectID:   inv.ID.String(),
-		SourceEventType:  tenant.JournalSourceEventInvoicePosted.String(),
+		SourceEventType:  accountingcontrol.JournalSourceEventInvoicePosted.String(),
 		DocumentNumber:   inv.Number,
 		TransactionDate:  postedAt,
 		LineNumber:       1,
@@ -343,7 +349,7 @@ func (e *nonRecourseEnv) appendPayment(t *testing.T, inv *invoice.Invoice, amoun
 		CustomerID:       e.customerID,
 		SourceObjectType: "CustomerPayment",
 		SourceObjectID:   pulid.MustNew("cpay_").String(),
-		SourceEventType:  tenant.JournalSourceEventCustomerPaymentPosted.String(),
+		SourceEventType:  accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 		RelatedInvoiceID: inv.ID,
 		DocumentNumber:   "PAY-" + inv.Number,
 		TransactionDate:  time.Now().Unix(),

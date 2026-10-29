@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -186,13 +186,13 @@ func (s *stubWatchlist) ListReadyToBillCustomers(
 
 type stubControls struct {
 	tenantports.ShipmentControlRepository
-	control *tenant.ShipmentControl
+	control *shipmentcontrol.ShipmentControl
 }
 
 func (s stubControls) Get(
 	context.Context,
 	tenantports.GetShipmentControlRequest,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	return s.control, nil
 }
 
@@ -246,7 +246,7 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 			ActualArrival: now.Unix() - 2*3600,
 		}}},
 		QuickFilters: stubBasis{now: now},
-		Controls: stubControls{control: &tenant.ShipmentControl{
+		Controls: stubControls{control: &shipmentcontrol.ShipmentControl{
 			DetentionThreshold: ptr(int16(30)),
 			DetentionChargeID:  &chargeID,
 		}},
@@ -286,7 +286,7 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 		Board:        &stubBoard{},
 		Watchlist:    &stubWatchlist{},
 		QuickFilters: stubBasis{now: now},
-		Controls: stubControls{control: &tenant.ShipmentControl{
+		Controls: stubControls{control: &shipmentcontrol.ShipmentControl{
 			UseDetentionPolicyEngine: true,
 		}},
 		Accessorials: stubAccessorials{},

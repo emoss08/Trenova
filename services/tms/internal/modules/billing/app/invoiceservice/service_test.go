@@ -2,23 +2,12 @@ package invoiceservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"image"
 	"image/color"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -31,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -44,6 +35,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -115,7 +116,7 @@ func TestResolvePaymentTerm(t *testing.T) {
 	testCases := []struct {
 		name     string
 		customer *customer.Customer
-		control  *tenant.BillingControl
+		control  *billingcontrol.BillingControl
 		expected string
 	}{
 		{
@@ -125,8 +126,8 @@ func TestResolvePaymentTerm(t *testing.T) {
 					PaymentTerm: customer.PaymentTermNet15,
 				},
 			},
-			control: &tenant.BillingControl{
-				DefaultPaymentTerm: tenant.PaymentTermNet60,
+			control: &billingcontrol.BillingControl{
+				DefaultPaymentTerm: billingcontrol.PaymentTermNet60,
 			},
 			expected: "Net15",
 		},
@@ -135,8 +136,8 @@ func TestResolvePaymentTerm(t *testing.T) {
 			customer: &customer.Customer{
 				BillingProfile: &customer.CustomerBillingProfile{},
 			},
-			control: &tenant.BillingControl{
-				DefaultPaymentTerm: tenant.PaymentTermNet45,
+			control: &billingcontrol.BillingControl{
+				DefaultPaymentTerm: billingcontrol.PaymentTermNet45,
 			},
 			expected: "Net45",
 		},
@@ -197,8 +198,8 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 			BillingCurrency: "CAD",
 		},
 	}
-	control := &tenant.BillingControl{
-		DefaultPaymentTerm: tenant.PaymentTermNet45,
+	control := &billingcontrol.BillingControl{
+		DefaultPaymentTerm: billingcontrol.PaymentTermNet45,
 	}
 
 	svc := &Service{l: zap.NewNop()}
@@ -268,8 +269,10 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 		Anchor:   item,
 		Scope:    invoice.ScopeShipment,
 		Customer: cus,
-		Control:  &tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30},
-		Legs:     []*shipment.Shipment{shp},
+		Control: &billingcontrol.BillingControl{
+			DefaultPaymentTerm: billingcontrol.PaymentTermNet30,
+		},
+		Legs: []*shipment.Shipment{shp},
 	})
 
 	require.NotNil(t, entity)
@@ -375,7 +378,7 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).
+		Return(&billingcontrol.BillingControl{DefaultPaymentTerm: billingcontrol.PaymentTermNet30}, nil).
 		Twice()
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 
@@ -791,7 +794,7 @@ func TestBuildInvoicePDFDataUsesBillingControlTermsAndFooter(t *testing.T) {
 	t.Parallel()
 
 	data := buildInvoicePDFData(&invoice.Invoice{CurrencyCode: "USD"}, &invoiceDeliveryProfile{
-		BillingControl: &tenant.BillingControl{
+		BillingControl: &billingcontrol.BillingControl{
 			DefaultInvoiceTerms:  "\nFirst invoice term.\n\nSecond invoice term.\n",
 			DefaultInvoiceFooter: "  Thank you for your business.  ",
 		},
@@ -820,7 +823,7 @@ func TestBuildInvoicePDFDataUsesBillingControlInvoiceDisplayOptions(t *testing.T
 	require.Contains(t, defaulted.Terms, "Due Date: 2023-11-15")
 
 	shown := buildInvoicePDFData(entity, &invoiceDeliveryProfile{
-		BillingControl: &tenant.BillingControl{
+		BillingControl: &billingcontrol.BillingControl{
 			ShowDueDateOnInvoice:    true,
 			ShowBalanceDueOnInvoice: true,
 		},
@@ -830,7 +833,7 @@ func TestBuildInvoicePDFDataUsesBillingControlInvoiceDisplayOptions(t *testing.T
 	require.Contains(t, shown.Terms, "Due Date: 2023-11-15")
 
 	hidden := buildInvoicePDFData(entity, &invoiceDeliveryProfile{
-		BillingControl: &tenant.BillingControl{},
+		BillingControl: &billingcontrol.BillingControl{},
 	})
 	require.Empty(t, hidden.DueDate)
 	require.Empty(t, hidden.BalanceDue)
@@ -841,7 +844,7 @@ func TestResolveDeliveryProfileIncludesBillingControlWhenRequested(t *testing.T)
 	t.Parallel()
 
 	orgID := pulid.MustNew("org_")
-	control := &tenant.BillingControl{
+	control := &billingcontrol.BillingControl{
 		DefaultInvoiceTerms:  "Invoice terms",
 		DefaultInvoiceFooter: "Invoice footer",
 	}
@@ -1364,7 +1367,7 @@ func testInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 			DOTNumber:    "1234567",
 			ScacCode:     "TRNV",
 		},
-		BillingControl: &tenant.BillingControl{
+		BillingControl: &billingcontrol.BillingControl{
 			ShowDueDateOnInvoice:    true,
 			ShowBalanceDueOnInvoice: true,
 			DefaultInvoiceTerms: strings.Join([]string{
@@ -1487,10 +1490,12 @@ func TestShouldAutoPost(t *testing.T) {
 			t.Parallel()
 
 			billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
-			billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
-				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
-				InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
-			}, nil)
+			billingRepo.EXPECT().
+				GetByOrgID(t.Context(), orgID).
+				Return(&billingcontrol.BillingControl{
+					InvoiceDraftCreationMode: billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred,
+					InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+				}, nil)
 
 			svc := &Service{
 				l:           zap.NewNop(),
@@ -1509,8 +1514,8 @@ func TestShouldAutoPost(t *testing.T) {
 		t.Parallel()
 
 		billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
-		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
-			InvoicePostingMode: tenant.InvoicePostingModeManualReviewRequired,
+		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&billingcontrol.BillingControl{
+			InvoicePostingMode: billingcontrol.InvoicePostingModeManualReviewRequired,
 		}, nil)
 
 		svc := &Service{
@@ -1613,14 +1618,16 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 	}
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		AccountingBasis:           tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy:  tenant.RevenueRecognitionOnInvoicePost,
-		LockedPeriodPostingPolicy: tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
-		ReconciliationMode:        tenant.ReconciliationModeDisabled,
-		DefaultRevenueAccountID:   pulid.MustNew("gla_"),
-		DefaultARAccountID:        pulid.MustNew("gla_"),
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:           accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy:  accountingcontrol.RevenueRecognitionOnInvoicePost,
+			LockedPeriodPostingPolicy: accountingcontrol.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
+			ReconciliationMode:        accountingcontrol.ReconciliationModeDisabled,
+			DefaultRevenueAccountID:   pulid.MustNew("gla_"),
+			DefaultARAccountID:        pulid.MustNew("gla_"),
+		}, nil)
 
 	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
@@ -1658,11 +1665,13 @@ func TestValidatorValidatePostRequiresDefaultLedgerAccounts(t *testing.T) {
 		BillType:       billingqueue.BillTypeInvoice,
 	}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		ReconciliationMode:       tenant.ReconciliationModeDisabled,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+			ReconciliationMode:       accountingcontrol.ReconciliationModeDisabled,
+		}, nil)
 	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	validator := &Validator{
 		l:                zap.NewNop(),
@@ -1692,13 +1701,15 @@ func TestValidatorValidatePostRequiresFiscalPeriod(t *testing.T) {
 		BillType:       billingqueue.BillTypeInvoice,
 	}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		ReconciliationMode:       tenant.ReconciliationModeDisabled,
-		DefaultRevenueAccountID:  pulid.MustNew("gla_"),
-		DefaultARAccountID:       pulid.MustNew("gla_"),
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+			ReconciliationMode:       accountingcontrol.ReconciliationModeDisabled,
+			DefaultRevenueAccountID:  pulid.MustNew("gla_"),
+			DefaultARAccountID:       pulid.MustNew("gla_"),
+		}, nil)
 	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
@@ -1727,17 +1738,17 @@ func TestInvoicePostingSourceEvent(t *testing.T) {
 
 	assert.Equal(
 		t,
-		tenant.JournalSourceEventInvoicePosted,
+		accountingcontrol.JournalSourceEventInvoicePosted,
 		invoiceledger.SourceEvent(billingqueue.BillTypeInvoice),
 	)
 	assert.Equal(
 		t,
-		tenant.JournalSourceEventCreditMemoPosted,
+		accountingcontrol.JournalSourceEventCreditMemoPosted,
 		invoiceledger.SourceEvent(billingqueue.BillTypeCreditMemo),
 	)
 	assert.Equal(
 		t,
-		tenant.JournalSourceEventDebitMemoPosted,
+		accountingcontrol.JournalSourceEventDebitMemoPosted,
 		invoiceledger.SourceEvent(billingqueue.BillTypeDebitMemo),
 	)
 }
@@ -1749,8 +1760,8 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 	now := int64(1_700_000_000)
 
 	posted := journalposting.ResolveWorkflow(
-		&tenant.AccountingControl{
-			JournalPostingMode:      tenant.JournalPostingModeAutomatic,
+		&accountingcontrol.AccountingControl{
+			JournalPostingMode:      accountingcontrol.JournalPostingModeAutomatic,
 			RequireManualJEApproval: true,
 		},
 		userID,
@@ -1767,8 +1778,8 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 	require.NotNil(t, posted.ApprovedAt)
 
 	pending := journalposting.ResolveWorkflow(
-		&tenant.AccountingControl{
-			JournalPostingMode:      tenant.JournalPostingModeManual,
+		&accountingcontrol.AccountingControl{
+			JournalPostingMode:      accountingcontrol.JournalPostingModeManual,
 			RequireManualJEApproval: true,
 		},
 		userID,
@@ -1797,16 +1808,18 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 	arAccountID := pulid.MustNew("gla_")
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventCreditMemoPosted,
-		},
-		DefaultRevenueAccountID: revenueAccountID,
-		DefaultARAccountID:      arAccountID,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+			JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
+			AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+				accountingcontrol.JournalSourceEventCreditMemoPosted,
+			},
+			DefaultRevenueAccountID: revenueAccountID,
+			DefaultARAccountID:      arAccountID,
+		}, nil)
 
 	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
@@ -1849,7 +1862,11 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, lastParams)
-	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted.String(), lastParams.SourceEventType)
+	assert.Equal(
+		t,
+		accountingcontrol.JournalSourceEventCreditMemoPosted.String(),
+		lastParams.SourceEventType,
+	)
 	require.Len(t, lastParams.Lines, 2)
 	assert.Equal(t, revenueAccountID, lastParams.Lines[0].GLAccountID)
 	assert.Equal(t, int64(13500), lastParams.Lines[0].DebitAmount)
@@ -1867,21 +1884,25 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 	userID := pulid.MustNew("usr_")
 	now := int64(1_700_000_000)
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisCash,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnCashReceipt,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventCustomerPaymentPosted,
-		},
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:          accountingcontrol.AccountingBasisCash,
+			RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnCashReceipt,
+			JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
+			AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+				accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+			},
+		}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)},
+		validator: &Validator{
+			fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1907,19 +1928,23 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	now := int64(1_700_000_000)
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		JournalPostingMode: tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventCustomerPaymentPosted,
-		},
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic,
+			AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+				accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+			},
+		}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)},
+		validator: &Validator{
+			fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1959,7 +1984,7 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Date:           now,
-			Policy:         tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+			Policy:         accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
 			Subject:        "invoice",
 		},
 	)
@@ -2051,7 +2076,9 @@ func TestSendEligibilityErrors(t *testing.T) {
 
 	posted := &invoice.Invoice{Status: invoice.StatusPosted}
 	draft := &invoice.Invoice{Status: invoice.StatusDraft}
-	emailOn := &customer.Customer{BillingProfile: &customer.CustomerBillingProfile{EmailInvoiceEnabled: true}}
+	emailOn := &customer.Customer{
+		BillingProfile: &customer.CustomerBillingProfile{EmailInvoiceEnabled: true},
+	}
 	emailOff := &customer.Customer{BillingProfile: &customer.CustomerBillingProfile{}}
 
 	require.Empty(t, sendEligibilityErrors(posted, emailOn))
@@ -2065,7 +2092,11 @@ func TestSendEligibilityErrors(t *testing.T) {
 func TestBillingSenderEmailIsTheBillingProfileSender(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, "mailbox@trenova.app", billingSenderEmail(&email.Profile{SenderEmail: " mailbox@trenova.app "}))
+	require.Equal(
+		t,
+		"mailbox@trenova.app",
+		billingSenderEmail(&email.Profile{SenderEmail: " mailbox@trenova.app "}),
+	)
 	require.Empty(t, billingSenderEmail(nil))
 }
 

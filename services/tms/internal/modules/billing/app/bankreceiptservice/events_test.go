@@ -2,10 +2,6 @@ package bankreceiptservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -13,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,7 +87,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 		Once()
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly}, nil).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly}, nil).
 		Once()
 
 	events := &recordingEvents{}

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,11 +16,11 @@ import (
 func (s *Service) resolveAccountingDate(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	control *tenant.InvoiceAdjustmentControl,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) int64 {
 	originalDate := entity.InvoiceDate
-	if control.AdjustmentAccountingDatePolicy == tenant.AdjustmentAccountingDateAlwaysNextOpen {
+	if control.AdjustmentAccountingDatePolicy == invoiceadjustmentcontrol.AdjustmentAccountingDateAlwaysNextOpen {
 		nextOpen := s.resolveNextOpenPeriodDate(
 			ctx,
 			entity.OrganizationID,
@@ -44,19 +44,19 @@ func (s *Service) resolveAccountingDate(
 	}
 
 	switch control.ClosedPeriodAdjustmentPolicy {
-	case tenant.ClosedPeriodAdjustmentPolicyDisallow:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyDisallow:
 		appendPreviewError(
 			preview,
 			"accountingDate",
 			"Closed-period adjustments are disallowed by policy",
 		)
-	case tenant.ClosedPeriodAdjustmentPolicyRequireReopen:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyRequireReopen:
 		appendPreviewError(
 			preview,
 			"accountingDate",
 			"The accounting period must be reopened before this adjustment can be posted",
 		)
-	case tenant.ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
 		preview.RequiresApproval = true
 		preview.Warnings = append(
 			preview.Warnings,
@@ -95,7 +95,7 @@ func (s *Service) resolveNextOpenPeriodDate(
 
 func (s *Service) validateSettlementPolicy(
 	entity *invoice.Invoice,
-	control *tenant.InvoiceAdjustmentControl,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) {
 	//nolint:exhaustive // only actionable enum states require explicit handling here
@@ -103,21 +103,21 @@ func (s *Service) validateSettlementPolicy(
 	case invoice.SettlementStatusPaid:
 		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.PaidInvoiceAdjustmentPolicy {
-		case tenant.AdjustmentEligibilityDisallow:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(preview, "invoiceId", "Paid invoices cannot be adjusted by policy")
-		case tenant.AdjustmentEligibilityAllowWithApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			preview.RequiresApproval = true
 		}
 	case invoice.SettlementStatusPartiallyPaid:
 		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.PartiallyPaidInvoiceAdjustmentPolicy {
-		case tenant.AdjustmentEligibilityDisallow:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(
 				preview,
 				"invoiceId",
 				"Partially paid invoices cannot be adjusted by policy",
 			)
-		case tenant.AdjustmentEligibilityAllowWithApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			preview.RequiresApproval = true
 		}
 	}
@@ -125,13 +125,13 @@ func (s *Service) validateSettlementPolicy(
 	if entity.DisputeStatus == invoice.DisputeStatusDisputed {
 		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.DisputedInvoiceAdjustmentPolicy {
-		case tenant.AdjustmentEligibilityDisallow:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(
 				preview,
 				"invoiceId",
 				"Disputed invoices cannot be adjusted by policy",
 			)
-		case tenant.AdjustmentEligibilityAllowWithApproval:
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			preview.RequiresApproval = true
 		}
 	}

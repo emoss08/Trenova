@@ -3,17 +3,16 @@ package manualjournalservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,11 +33,13 @@ func TestPlanCreateDraftValidatesAndTotalsWithoutIssuingANumber(t *testing.T) {
 	periodID := pulid.MustNew("fp_")
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		CurrencyMode:             tenant.CurrencyModeSingleCurrency,
-		FunctionalCurrencyCode:   "USD",
-		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			CurrencyMode:             accountingcontrol.CurrencyModeSingleCurrency,
+			FunctionalCurrencyCode:   "USD",
+			ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
@@ -100,8 +101,8 @@ func TestPlanSubmitSaysWhetherSubmittingApprovesIt(t *testing.T) {
 
 			accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 			accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(
-				&tenant.AccountingControl{
-					ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
+				&accountingcontrol.AccountingControl{
+					ManualJournalEntryPolicy: accountingcontrol.ManualJournalEntryPolicyAllowAll,
 					RequireManualJEApproval:  requireApproval,
 				}, nil)
 			repo := newManualJournalRepositoryFake(request)
@@ -136,9 +137,11 @@ func TestPlanPostShowsTheEntryItWouldBookWithoutBookingIt(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{

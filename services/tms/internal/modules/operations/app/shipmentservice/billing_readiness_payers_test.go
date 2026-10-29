@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -51,11 +52,11 @@ func splitReadinessFixture(
 	return entity, resolution, amd
 }
 
-func autoTransferControl() *tenant.BillingControl {
-	return &tenant.BillingControl{
+func autoTransferControl() *billingcontrol.BillingControl {
+	return &billingcontrol.BillingControl{
 		ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
-		BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
-		ReadyToBillAssignmentMode:             tenant.ReadyToBillAssignmentModeAutomaticWhenEligible,
+		BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeAutomaticWhenReady,
+		ReadyToBillAssignmentMode:             billingcontrol.ReadyToBillAssignmentModeAutomaticWhenEligible,
 	}
 }
 

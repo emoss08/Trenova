@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -235,7 +235,7 @@ func (s *Service) roleTargets(
 	return targets, nil
 }
 
-func roleAccounts(control *tenant.AccountingControl) map[string]pulid.ID {
+func roleAccounts(control *accountingcontrol.AccountingControl) map[string]pulid.ID {
 	if control == nil {
 		return map[string]pulid.ID{}
 	}

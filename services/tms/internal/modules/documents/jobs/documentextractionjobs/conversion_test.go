@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -267,7 +267,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	userID := pulid.MustNew("usr_")
 	docID := pulid.MustNew("doc_")
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	control.EnableAutoDocumentTypeAssociate = false
 	controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)

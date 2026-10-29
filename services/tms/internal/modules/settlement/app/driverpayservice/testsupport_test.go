@@ -3,7 +3,7 @@ package driverpayservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -92,13 +92,13 @@ type fakeSettlementControlRepo struct {
 	getOrCreate func(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*tenant.SettlementControl, error)
+	) (*settlementcontrol.SettlementControl, error)
 }
 
 func (f *fakeSettlementControlRepo) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.SettlementControl, error) {
+) (*settlementcontrol.SettlementControl, error) {
 	return f.getOrCreate(ctx, tenantInfo)
 }
 

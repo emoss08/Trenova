@@ -3,6 +3,7 @@ package billingcontrolservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -14,8 +15,8 @@ func TestValidateUpdate_RejectsAutomaticPostingWithoutAutomaticDrafts(t *testing
 
 	v := NewTestValidator()
 	entity := validBillingControl()
-	entity.InvoicePostingMode = tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions
-	entity.InvoiceDraftCreationMode = tenant.InvoiceDraftCreationModeManualOnly
+	entity.InvoicePostingMode = billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions
+	entity.InvoiceDraftCreationMode = billingcontrol.InvoiceDraftCreationModeManualOnly
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -32,7 +33,7 @@ func TestValidateUpdate_RejectsAutomaticTransferWithoutScheduleAndBatch(t *testi
 
 	v := NewTestValidator()
 	entity := validBillingControl()
-	entity.BillingQueueTransferMode = tenant.BillingQueueTransferModeAutomaticWhenReady
+	entity.BillingQueueTransferMode = billingcontrol.BillingQueueTransferModeAutomaticWhenReady
 	entity.BillingQueueTransferSchedule = ""
 	entity.BillingQueueTransferBatchSize = 0
 
@@ -48,8 +49,8 @@ func TestValidateUpdate_AllowsAutomaticDraftAndPostingCombination(t *testing.T) 
 
 	v := NewTestValidator()
 	entity := validBillingControl()
-	entity.InvoiceDraftCreationMode = tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
-	entity.InvoicePostingMode = tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions
+	entity.InvoiceDraftCreationMode = billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred
+	entity.InvoicePostingMode = billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions
 	entity.AutoInvoiceBatchSize = 10
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -57,21 +58,21 @@ func TestValidateUpdate_AllowsAutomaticDraftAndPostingCombination(t *testing.T) 
 	require.Nil(t, multiErr)
 }
 
-func validBillingControl() *tenant.BillingControl {
-	return &tenant.BillingControl{
+func validBillingControl() *billingcontrol.BillingControl {
+	return &billingcontrol.BillingControl{
 		ID:                                    pulid.MustNew("bc_"),
 		OrganizationID:                        pulid.MustNew("org_"),
 		BusinessUnitID:                        pulid.MustNew("bu_"),
-		DefaultPaymentTerm:                    tenant.PaymentTermNet30,
-		ReadyToBillAssignmentMode:             tenant.ReadyToBillAssignmentModeManualOnly,
-		BillingQueueTransferMode:              tenant.BillingQueueTransferModeManualOnly,
-		InvoiceDraftCreationMode:              tenant.InvoiceDraftCreationModeManualOnly,
-		InvoicePostingMode:                    tenant.InvoicePostingModeManualReviewRequired,
+		DefaultPaymentTerm:                    billingcontrol.PaymentTermNet30,
+		ReadyToBillAssignmentMode:             billingcontrol.ReadyToBillAssignmentModeManualOnly,
+		BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeManualOnly,
+		InvoiceDraftCreationMode:              billingcontrol.InvoiceDraftCreationModeManualOnly,
+		InvoicePostingMode:                    billingcontrol.InvoicePostingModeManualReviewRequired,
 		ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		RateValidationEnforcement:             tenant.EnforcementLevelRequireReview,
-		BillingExceptionDisposition:           tenant.BillingExceptionDispositionRouteToBillingReview,
+		BillingExceptionDisposition:           billingcontrol.BillingExceptionDispositionRouteToBillingReview,
 		NotifyOnBillingExceptions:             true,
 		RateVarianceTolerancePercent:          decimal.RequireFromString("0.010000"),
-		RateVarianceAutoResolutionMode:        tenant.RateVarianceAutoResolutionModeDisabled,
+		RateVarianceAutoResolutionMode:        billingcontrol.RateVarianceAutoResolutionModeDisabled,
 	}
 }

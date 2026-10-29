@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -398,7 +398,7 @@ func TestCloseBlockedWhenPeriodCloseModeIsSystemScheduled(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, data.Organization.ID).
-		Return(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled, RequirePeriodCloseApproval: false}, nil)
+		Return(&accountingcontrol.AccountingControl{PeriodCloseMode: accountingcontrol.PeriodCloseModeSystemScheduled, RequirePeriodCloseApproval: false}, nil)
 
 	fy := mustCreateIntegrationFiscalYear(
 		t,
@@ -472,7 +472,7 @@ func TestCloseBlockedWhenPeriodCloseApprovalRequired(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, data.Organization.ID).
-		Return(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly, RequirePeriodCloseApproval: true}, nil)
+		Return(&accountingcontrol.AccountingControl{PeriodCloseMode: accountingcontrol.PeriodCloseModeManualOnly, RequirePeriodCloseApproval: true}, nil)
 
 	fy := mustCreateIntegrationFiscalYear(
 		t,

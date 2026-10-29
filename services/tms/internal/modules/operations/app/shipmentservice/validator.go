@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -333,7 +333,7 @@ func loadShipmentControlForValidation(
 	ctx context.Context,
 	controlRepo tenantports.ShipmentControlRepository,
 	entity *shipment.Shipment,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	return controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

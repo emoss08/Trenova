@@ -5,8 +5,6 @@ package invoiceadjustmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalrepairservice"
@@ -16,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -40,10 +39,10 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 	ctx = h.ctx
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
-	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-		control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+	h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+		control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 		control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
-		control.WriteOffApprovalPolicy = tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold
+		control.WriteOffApprovalPolicy = invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold
 		control.WriteOffApprovalThreshold = decimal.NewFromInt(10_000)
 	})
 
@@ -315,8 +314,8 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 	ctx = h.ctx
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
-	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-		control.WriteOffApprovalPolicy = tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold
+	h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+		control.WriteOffApprovalPolicy = invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold
 		control.WriteOffApprovalThreshold = decimal.NewFromInt(10_000)
 	})
 

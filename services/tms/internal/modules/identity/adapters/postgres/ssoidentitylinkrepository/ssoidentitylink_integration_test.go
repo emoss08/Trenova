@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -29,12 +29,12 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 		WithEmail("second@example.com").
 		Build(t, ctx, db)
 
-	cfg := &tenant.SSOConfig{
+	cfg := &sso.SSOConfig{
 		OrganizationID:   data.Organization.ID,
 		BusinessUnitID:   data.BusinessUnit.ID,
 		Name:             "Okta",
-		Provider:         tenant.SSOProviderOkta,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderOkta,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          true,
 		OIDCIssuerURL:    "https://idp.example.com",
 		OIDCClientID:     "client",
@@ -45,7 +45,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 	require.NoError(t, tenantdb.SSOConfigs.Create(ctx, db, cfg))
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	link := &tenant.SSOIdentityLink{
+	link := &sso.SSOIdentityLink{
 		OrganizationID: data.Organization.ID,
 		BusinessUnitID: data.BusinessUnit.ID,
 		SSOConfigID:    cfg.ID,

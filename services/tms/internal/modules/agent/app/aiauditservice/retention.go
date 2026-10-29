@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -81,9 +81,9 @@ func (r *Retention) PruneAll(ctx context.Context, heartbeat Heartbeat) (*PruneRe
 		tenantInfo := pagination.TenantInfo{OrgID: head.OrganizationID, BuID: head.BusinessUnitID}
 		days, ok := periods[tenantInfo]
 		if !ok || days <= 0 {
-			days = tenant.DefaultAIAuditRetentionDays
+			days = dataretention.DefaultAIAuditRetentionDays
 		}
-		days = max(days, tenant.MinAIAuditRetentionDays)
+		days = max(days, dataretention.MinAIAuditRetentionDays)
 
 		deleted, pruneErr := r.pruneTenant(ctx, tenantInfo, now-int64(days)*secondsPerDay)
 		if pruneErr != nil {

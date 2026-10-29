@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func withoutDuplicateDefaults(matches *carriersettlementportsmock.MockCarrierInvoiceMatchRepository) {
+func withoutDuplicateDefaults(
+	matches *carriersettlementportsmock.MockCarrierInvoiceMatchRepository,
+) {
 	kept := matches.ExpectedCalls[:0]
 	for _, call := range matches.ExpectedCalls {
 		if call.Method == "GetLiveByCarrierInvoiceNumber" || call.Method == "ListLiveByAssignment" {
@@ -44,7 +45,8 @@ func documentMatchRequest(
 		Return(nil, nil)
 	deps.assignments.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{VarianceToleranceMinor: 500}, nil).Maybe()
+		Return(&carriersettlementcontrol.CarrierSettlementControl{VarianceToleranceMinor: 500}, nil).
+		Maybe()
 
 	return &CreateMatchRequest{
 		TenantInfo:             tenantInfo,
@@ -83,7 +85,10 @@ func TestCreateMatch_FlagsASecondInvoiceOnTheSameLoad(t *testing.T) {
 	deps := setupMatchingTest(t)
 	withoutDuplicateDefaults(deps.matches)
 	req, assignmentID := documentMatchRequest(deps, "INV-9002")
-	earlier := &carriersettlement.InvoiceMatch{ID: pulid.MustNew("cim_"), CarrierAssignmentID: assignmentID}
+	earlier := &carriersettlement.InvoiceMatch{
+		ID:                  pulid.MustNew("cim_"),
+		CarrierAssignmentID: assignmentID,
+	}
 
 	deps.matches.On("GetLiveByCarrierInvoiceNumber", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.matches.On("ListLiveByAssignment", mock.Anything,
@@ -161,11 +166,23 @@ func TestAcceptMatch_RefusesAMatchRepeatingALiveOne(t *testing.T) {
 		InvoiceNumber:      "INV-7",
 		DuplicateOfMatchID: &originalID,
 	}
-	deps.matches.On("GetByID", mock.Anything,
-		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: repeat.ID, TenantInfo: tenantInfo}).
+	deps.matches.On(
+		"GetByID",
+		mock.Anything,
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         repeat.ID,
+			TenantInfo: tenantInfo,
+		},
+	).
 		Return(repeat, nil)
-	deps.matches.On("GetByID", mock.Anything,
-		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: originalID, TenantInfo: tenantInfo}).
+	deps.matches.On(
+		"GetByID",
+		mock.Anything,
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         originalID,
+			TenantInfo: tenantInfo,
+		},
+	).
 		Return(&carriersettlement.InvoiceMatch{
 			ID:     originalID,
 			Status: carriersettlement.InvoiceMatchStatusResolved,
@@ -182,7 +199,7 @@ func TestApprovalHold_RefusesASettlementWithUnmatchedLoads(t *testing.T) {
 	tenantInfo := accrualTenantInfo()
 	settlementID := pulid.MustNew("cs_")
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{HoldUntilInvoiceMatched: true}, nil)
+		Return(&carriersettlementcontrol.CarrierSettlementControl{HoldUntilInvoiceMatched: true}, nil)
 	deps.costEvents.On("CountAwaitingInvoiceMatch", mock.Anything, tenantInfo, settlementID).
 		Return(2, nil).Once()
 
@@ -197,13 +214,19 @@ func TestApprovalHold_IsOffByDefault(t *testing.T) {
 	deps := setupMatchingTest(t)
 	tenantInfo := accrualTenantInfo()
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{}, nil)
+		Return(&carriersettlementcontrol.CarrierSettlementControl{}, nil)
 
 	hold, err := deps.svc.approvalHoldGuard(t.Context(), tenantInfo, pulid.MustNew("cs_"))
 
 	require.NoError(t, err)
 	require.False(t, hold.refused())
-	deps.costEvents.AssertNotCalled(t, "CountAwaitingInvoiceMatch", mock.Anything, mock.Anything, mock.Anything)
+	deps.costEvents.AssertNotCalled(
+		t,
+		"CountAwaitingInvoiceMatch",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	)
 }
 
 func TestAutoMatch_LeavesAPossibleDuplicateForReview(t *testing.T) {
@@ -222,7 +245,9 @@ func TestAutoMatch_LeavesAPossibleDuplicateForReview(t *testing.T) {
 		Return([]*carriersettlement.InvoiceMatch{{ID: pulid.MustNew("cim_")}}, nil)
 	created := deps.expectMatchCreate()
 	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
-	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).Return(invoice, nil).Maybe()
+	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).
+		Return(invoice, nil).
+		Maybe()
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),

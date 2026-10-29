@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +44,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 	ctx context.Context,
 	entity *customerpayment.Payment,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
 	entity.Validate(me)
@@ -71,7 +71,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 				break
 			}
 		}
-		if control.CurrencyMode == tenant.CurrencyModeSingleCurrency &&
+		if control.CurrencyMode == accountingcontrol.CurrencyModeSingleCurrency &&
 			!strings.EqualFold(entity.CurrencyCode, control.FunctionalCurrencyCode) {
 			me.Add(
 				"currencyCode",
@@ -100,8 +100,8 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 				"Default write-off account is required for customer short-pay recognition",
 			)
 		}
-		if control.AccountingBasis == tenant.AccountingBasisCash ||
-			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == accountingcontrol.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
 			for idx, app := range entity.Applications {
 				if app != nil && app.ShortPayAmountMinor > 0 {
 					me.WithIndex("applications", idx).
@@ -206,7 +206,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 	accountingDate int64,
 	applications []*customerpayment.Application,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
@@ -264,7 +264,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 				"Default write-off account is required for customer short-pay recognition",
 			)
 		}
-		if control.AccountingBasis == tenant.AccountingBasisAccrual &&
+		if control.AccountingBasis == accountingcontrol.AccountingBasisAccrual &&
 			control.DefaultARAccountID.IsNil() {
 			me.Add(
 				"defaultArAccountId",
@@ -272,7 +272,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 				"Default AR account is required for accrual customer payment application",
 			)
 		}
-		if (control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt) &&
+		if (control.AccountingBasis == accountingcontrol.AccountingBasisCash || control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt) &&
 			control.DefaultRevenueAccountID.IsNil() {
 			me.Add(
 				"defaultRevenueAccountId",
@@ -280,8 +280,8 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 				"Default revenue account is required for cash-basis customer payment application",
 			)
 		}
-		if control.AccountingBasis == tenant.AccountingBasisCash ||
-			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == accountingcontrol.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
 			for idx, app := range applications {
 				if app != nil && app.ShortPayAmountMinor > 0 {
 					me.WithIndex("applications", idx).
@@ -381,7 +381,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	payment *customerpayment.Payment,
 	accountingDate int64,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
@@ -415,8 +415,8 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 			)
 		}
 		if payment.AppliedAmountMinor > 0 {
-			if control.AccountingBasis == tenant.AccountingBasisCash ||
-				control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+			if control.AccountingBasis == accountingcontrol.AccountingBasisCash ||
+				control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
 				requireAccountField(
 					me,
 					control.DefaultRevenueAccountID,

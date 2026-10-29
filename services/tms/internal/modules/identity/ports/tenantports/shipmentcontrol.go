@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -15,11 +15,11 @@ type ShipmentControlRepository interface {
 	Get(
 		ctx context.Context,
 		req GetShipmentControlRequest,
-	) (*tenant.ShipmentControl, error)
+	) (*shipmentcontrol.ShipmentControl, error)
 	Update(
 		ctx context.Context,
-		sc *tenant.ShipmentControl,
-	) (*tenant.ShipmentControl, error)
+		sc *shipmentcontrol.ShipmentControl,
+	) (*shipmentcontrol.ShipmentControl, error)
 	ListDetentionEngineTenants(
 		ctx context.Context,
 		limit int,

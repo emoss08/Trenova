@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,7 +31,7 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: new(int16(45)),
 		}, nil).
@@ -70,7 +70,7 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{AutoDelayShipments: false}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipments: false}, nil).
 		Once()
 
 	svc := &service{
@@ -101,7 +101,7 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: new(int16(15)),
 		}, nil).
@@ -157,12 +157,12 @@ func TestDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T)
 	assert.Equal(
 		t,
 		shipmentstate.DisabledDelayThresholdMinutes,
-		delayThresholdMinutes(&tenant.ShipmentControl{
+		delayThresholdMinutes(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          false,
 			AutoDelayShipmentsThreshold: new(int16(15)),
 		}),
 	)
-	assert.Equal(t, int16(15), delayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, int16(15), delayThresholdMinutes(&shipmentcontrol.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(15)),
 	}))

@@ -19,7 +19,7 @@ import (
 // attachmentResourceType is what the document pipeline is told these files
 // hang off. It is its own resource rather than "shipment" because at upload
 // time nobody knows which shipment it is — that is what reading it decides.
-// tenant.DocumentControl maps it onto "shipment" for the draft gate, so a
+// documentcontrol.DocumentControl maps it onto "shipment" for the draft gate, so a
 // tenant that allows shipment drafts allows them on forwarded tenders too.
 const attachmentResourceType = inboundmessage.AttachmentResourceType
 

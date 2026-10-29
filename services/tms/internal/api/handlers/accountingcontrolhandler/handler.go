@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -56,7 +56,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @ID getAccountingControl
 // @Tags Accounting Controls
 // @Produce json
-// @Success 200 {object} tenant.AccountingControl
+// @Success 200 {object} accountingcontrol.AccountingControl
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -81,8 +81,8 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Accounting Controls
 // @Accept json
 // @Produce json
-// @Param request body tenant.AccountingControl true "Accounting control payload"
-// @Success 200 {object} tenant.AccountingControl
+// @Param request body accountingcontrol.AccountingControl true "Accounting control payload"
+// @Success 200 {object} accountingcontrol.AccountingControl
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -92,7 +92,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity := new(tenant.AccountingControl)
+	entity := new(accountingcontrol.AccountingControl)
 	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return

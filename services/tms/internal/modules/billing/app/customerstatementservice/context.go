@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -142,14 +142,14 @@ func statementRemittance(from *issuer, p *prepared) string {
 	return remittanceInstructions(from.control)
 }
 
-func remittanceInstructions(control *tenant.BillingControl) string {
+func remittanceInstructions(control *billingcontrol.BillingControl) string {
 	if control == nil {
 		return ""
 	}
 	return strings.TrimSpace(control.DefaultInvoiceTerms)
 }
 
-func invoiceFooter(control *tenant.BillingControl) string {
+func invoiceFooter(control *billingcontrol.BillingControl) string {
 	if control == nil {
 		return ""
 	}

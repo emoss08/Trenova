@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -84,7 +84,7 @@ func createMatchWithVariance(
 		Return(nil, nil)
 	deps.assignments.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
-		Return(&tenant.CarrierSettlementControl{
+		Return(&carriersettlementcontrol.CarrierSettlementControl{
 			VarianceToleranceMinor: toleranceMinor,
 		}, nil)
 	var created *carriersettlement.InvoiceMatch

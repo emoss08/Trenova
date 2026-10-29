@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,14 +36,14 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateDraftUpsert(
 	ctx context.Context,
 	entity *manualjournal.Request,
-	accountingControl *tenant.AccountingControl,
+	accountingControl *accountingcontrol.AccountingControl,
 ) *errortypes.MultiError {
 	if accountingControl != nil {
 		if strings.TrimSpace(entity.CurrencyCode) == "" {
 			entity.CurrencyCode = accountingControl.FunctionalCurrencyCode
 		}
 
-		if accountingControl.CurrencyMode == tenant.CurrencyModeSingleCurrency &&
+		if accountingControl.CurrencyMode == accountingcontrol.CurrencyModeSingleCurrency &&
 			entity.CurrencyCode != accountingControl.FunctionalCurrencyCode {
 			multiErr := errortypes.NewMultiError()
 			multiErr.Add(
@@ -80,7 +80,7 @@ func (v *Validator) ValidateDraftUpsert(
 	entity.RequestedFiscalPeriodID = period.ID
 
 	if accountingControl != nil &&
-		accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyAdjustmentOnly &&
+		accountingControl.ManualJournalEntryPolicy == accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly &&
 		period.PeriodType != fiscalperiod.PeriodTypeAdjusting {
 		multiErr.Add(
 			"accountingDate",
@@ -141,14 +141,14 @@ func (v *Validator) ValidateDraftUpsert(
 
 func (v *Validator) ValidateSubmit(
 	entity *manualjournal.Request,
-	accountingControl *tenant.AccountingControl,
+	accountingControl *accountingcontrol.AccountingControl,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if !entity.Status.CanSubmit() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only draft manual journals can be submitted")
 	}
 	if accountingControl != nil &&
-		accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {
+		accountingControl.ManualJournalEntryPolicy == accountingcontrol.ManualJournalEntryPolicyDisallow {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,

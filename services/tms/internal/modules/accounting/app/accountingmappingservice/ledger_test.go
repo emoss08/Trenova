@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -159,7 +159,7 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 	h.svc.ledger = ledger
 	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
-		Return(&tenant.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
+		Return(&accountingcontrol.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
 	h.svc.accountingControls = controls
 	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType:      accountingsync.TargetGLAccount,

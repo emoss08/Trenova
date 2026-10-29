@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -57,8 +57,8 @@ func (g *Generator) Generate(
 		return "", err
 	}
 
-	format := &tenant.SequenceFormat{
-		Type:           tenant.SequenceTypeLocationCode,
+	format := &sequenceconfig.SequenceFormat{
+		Type:           sequenceconfig.SequenceTypeLocationCode,
 		Prefix:         prefix,
 		SequenceDigits: int(strategy.SequenceDigits),
 		UseSeparators:  strategy.Separator != "",
@@ -66,7 +66,7 @@ func (g *Generator) Generate(
 	}
 
 	code, err := g.sequenceGenerator.Generate(ctx, &seqgen.GenerateRequest{
-		Type:   tenant.SequenceTypeLocationCode,
+		Type:   sequenceconfig.SequenceTypeLocationCode,
 		OrgID:  req.OrganizationID,
 		BuID:   req.BusinessUnitID,
 		Time:   fixedLocationCodePeriod,
@@ -78,10 +78,10 @@ func (g *Generator) Generate(
 	if strings.TrimSpace(code) == "" {
 		return "", errors.New("generated location code cannot be empty")
 	}
-	if len([]rune(code)) > tenant.MaxLocationCodeLength {
+	if len([]rune(code)) > sequenceconfig.MaxLocationCodeLength {
 		return "", fmt.Errorf(
 			"generated location code cannot exceed %d characters",
-			tenant.MaxLocationCodeLength,
+			sequenceconfig.MaxLocationCodeLength,
 		)
 	}
 
@@ -90,9 +90,9 @@ func (g *Generator) Generate(
 
 func (g *Generator) BuildPrefix(
 	input tenantports.LocationCodeInput,
-	strategy *tenant.LocationCodeStrategy,
+	strategy *sequenceconfig.LocationCodeStrategy,
 ) (string, error) {
-	strategy = tenant.EffectiveLocationCodeStrategy(strategy)
+	strategy = sequenceconfig.EffectiveLocationCodeStrategy(strategy)
 	if err := strategy.Validate(); err != nil {
 		return "", err
 	}
@@ -129,7 +129,7 @@ func (g *Generator) BuildPrefix(
 func (g *Generator) resolveStrategy(
 	ctx context.Context,
 	req tenantports.LocationCodeGenerateRequest,
-) (*tenant.LocationCodeStrategy, error) {
+) (*sequenceconfig.LocationCodeStrategy, error) {
 	doc, err := g.sequenceConfigRepo.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
@@ -141,8 +141,8 @@ func (g *Generator) resolveStrategy(
 	}
 
 	for _, cfg := range doc.Configs {
-		if cfg != nil && cfg.SequenceType == tenant.SequenceTypeLocationCode {
-			strategy := tenant.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
+		if cfg != nil && cfg.SequenceType == sequenceconfig.SequenceTypeLocationCode {
+			strategy := sequenceconfig.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
 			if err = strategy.Validate(); err != nil {
 				return nil, fmt.Errorf("invalid location code strategy: %w", err)
 			}
@@ -151,30 +151,30 @@ func (g *Generator) resolveStrategy(
 		}
 	}
 
-	return tenant.DefaultLocationCodeStrategy(), nil
+	return sequenceconfig.DefaultLocationCodeStrategy(), nil
 }
 
 func componentValue(
 	input tenantports.LocationCodeInput,
-	component tenant.LocationCodeComponent,
+	component sequenceconfig.LocationCodeComponent,
 ) string {
 	switch component {
-	case tenant.LocationCodeComponentName:
+	case sequenceconfig.LocationCodeComponentName:
 		return input.Name
-	case tenant.LocationCodeComponentCity:
+	case sequenceconfig.LocationCodeComponentCity:
 		return input.City
-	case tenant.LocationCodeComponentState:
+	case sequenceconfig.LocationCodeComponentState:
 		return input.StateAbbreviation
-	case tenant.LocationCodeComponentPostalCode:
+	case sequenceconfig.LocationCodeComponentPostalCode:
 		return input.PostalCode
 	default:
 		return ""
 	}
 }
 
-func normalizedToken(value string, casing tenant.LocationCodeCasing) string {
+func normalizedToken(value string, casing sequenceconfig.LocationCodeCasing) string {
 	token := stringutils.NormalizeIdentifier(value)
-	if casing == tenant.LocationCodeCasingLower {
+	if casing == sequenceconfig.LocationCodeCasingLower {
 		return strings.ToLower(token)
 	}
 

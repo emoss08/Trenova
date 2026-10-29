@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -231,7 +231,7 @@ func TestRateAndAdoptContract_OneTariffCallPricesTheWholeBill(t *testing.T) {
 	rating, err := c.calculator.RateAndAdoptContract(
 		t.Context(),
 		entity,
-		&tenant.ShipmentControl{},
+		&shipmentcontrol.ShipmentControl{},
 		pulid.MustNew("usr_"),
 	)
 	require.NoError(t, err)
@@ -280,7 +280,7 @@ func TestRecalculate_ReratesWithOneTariffCallAndKeepsOneOwnerPerCode(t *testing.
 	c := newContractStack(t)
 	entity := c.shipment()
 	userID := pulid.MustNew("usr_")
-	control := &tenant.ShipmentControl{}
+	control := &shipmentcontrol.ShipmentControl{}
 
 	_, err := c.calculator.RateAndAdoptContract(t.Context(), entity, control, userID)
 	require.NoError(t, err)

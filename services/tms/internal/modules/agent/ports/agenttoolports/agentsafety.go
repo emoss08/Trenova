@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,7 +52,7 @@ func (s *AgentToolSafety) RowID() string {
 
 type AgentSafetySubject struct {
 	Agent   *agentdefinition.Definition
-	Control *tenant.AgentControl
+	Control *agentcontrol.AgentControl
 }
 
 type AgentReachWarning struct {

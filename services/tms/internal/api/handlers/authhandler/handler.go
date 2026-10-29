@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -68,8 +68,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("csrf", h.csrfToken)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
 	api.GET("providers/:orgSlug", h.listAuthProviders)
-	api.GET("microsoft/start/:slug", h.startSSOLogin(tenant.SSOProviderAzureAD))
-	api.GET("microsoft/callback", h.ssoCallback(tenant.SSOProviderAzureAD))
+	api.GET("microsoft/start/:slug", h.startSSOLogin(sso.SSOProviderAzureAD))
+	api.GET("microsoft/callback", h.ssoCallback(sso.SSOProviderAzureAD))
 	api.GET("sso/start/:providerId/:orgSlug", h.startSSOLoginGeneric)
 	api.GET("sso/callback/:provider", h.ssoCallbackGeneric)
 }
@@ -308,7 +308,7 @@ func (h *Handler) listAuthProviders(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, resp)
 }
 
-func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
+func (h *Handler) startSSOLogin(provider sso.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		redirectURL, err := h.service.StartSSOLogin(
 			c.Request.Context(),
@@ -375,7 +375,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 	c.Redirect(http.StatusFound, redirectURL)
 }
 
-func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
+func (h *Handler) ssoCallback(provider sso.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		state := strings.TrimSpace(c.Query("state"))
 
@@ -428,12 +428,12 @@ func (h *Handler) ssoCallbackGeneric(c *gin.Context) {
 	h.ssoCallback(provider)(c)
 }
 
-func parseSSOProvider(raw string) (tenant.SSOProvider, error) {
+func parseSSOProvider(raw string) (sso.SSOProvider, error) {
 	switch strings.ToLower(raw) {
 	case "microsoft", "azuread":
-		return tenant.SSOProviderAzureAD, nil
+		return sso.SSOProviderAzureAD, nil
 	case "okta":
-		return tenant.SSOProviderOkta, nil
+		return sso.SSOProviderOkta, nil
 	default:
 		return "", errortypes.NewValidationError(
 			"provider",

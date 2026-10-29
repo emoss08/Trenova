@@ -5,7 +5,7 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -43,7 +43,7 @@ func accessorialTierUnit(unit accessorialcharge.RateUnit) detention.TierRateUnit
 func (s *Service) detentionWatch(
 	ctx context.Context,
 	req *shipmentboardports.ShipmentWatchlistRequest,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) (shipmentboardports.ShipmentDetentionWatch, error) {
 	now := req.Basis.Now.Unix()
 
@@ -140,7 +140,7 @@ func (s *Service) engineAccruals(
 func (s *Service) dwellAccruals(
 	ctx context.Context,
 	req *shipmentboardports.ShipmentWatchlistRequest,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	now int64,
 ) ([]shipmentboardports.DetentionAccrual, []pulid.ID, error) {
 	rows, err := s.watchlist.ListDwellingStops(ctx, req)
@@ -178,7 +178,7 @@ func (s *Service) dwellAccruals(
 func (s *Service) defaultDetentionRate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) (decimal.Decimal, error) {
 	if control.DetentionChargeID == nil || control.DetentionChargeID.IsNil() {
 		return decimal.Zero, nil

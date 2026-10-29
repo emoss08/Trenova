@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aicorrectionretention"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,14 +16,14 @@ import (
 )
 
 type retentionReader struct {
-	settings *tenant.DataRetention
+	settings *dataretention.DataRetention
 	err      error
 }
 
 func (r retentionReader) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return r.settings, r.err
 }
 
@@ -54,7 +54,7 @@ func TestSweepPurgesInBatchesUntilAShortOne(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(23), total)
 	require.Len(t, befores, 3)
-	days := (&tenant.DataRetention{}).AICorrectionRetentionDays()
+	days := (&dataretention.DataRetention{}).AICorrectionRetentionDays()
 	assert.Equal(t, now-int64(days)*timeutils.SecondsPerDay, befores[0])
 }
 
@@ -62,7 +62,7 @@ func TestSweepUsesTheRequestTimeAndStopsOnError(t *testing.T) {
 	t.Parallel()
 
 	sweep := aicorrectionretention.Sweep{
-		Retention: retentionReader{settings: &tenant.DataRetention{}},
+		Retention: retentionReader{settings: &dataretention.DataRetention{}},
 		BatchSize: 5,
 		Now:       func() int64 { return 0 },
 	}

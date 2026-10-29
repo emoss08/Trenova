@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -116,8 +116,8 @@ func (s *Service) createWriteOffJournalEntry(
 				"Default AR account is required for write-offs",
 			)
 	}
-	if accountingControl.JournalPostingMode == tenant.JournalPostingModeManual &&
-		accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {
+	if accountingControl.JournalPostingMode == accountingcontrol.JournalPostingModeManual &&
+		accountingControl.ManualJournalEntryPolicy == accountingcontrol.ManualJournalEntryPolicyDisallow {
 		return pulid.Nil, errortypes.NewValidationError(
 			"manualJournalEntryPolicy",
 			errortypes.ErrInvalidOperation,
@@ -146,7 +146,7 @@ func (s *Service) createWriteOffJournalEntry(
 			ObjectType:     "InvoiceAdjustment",
 			ObjectID:       adjustment.ID,
 			DocumentNumber: sourceInvoice.Number,
-			Event:          tenant.JournalSourceEventType("InvoiceWriteOffCreated"),
+			Event:          accountingcontrol.JournalSourceEventType("InvoiceWriteOffCreated"),
 			IdempotencyKey: "invoice-writeoff:" + adjustment.ID.String(),
 		},
 		Reference: journalposting.Reference{Type: "InvoiceAdjustmentWriteOff"},

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -359,7 +359,7 @@ func (d *AIDiagnostics) ToMap() map[string]any {
 type EnrichmentPayload struct {
 	Payload        *documentintelligencecontract.ProcessDocumentIntelligencePayload
 	Document       *document.Document
-	Control        *tenant.DocumentControl
+	Control        *documentcontrol.DocumentControl
 	Extracted      *ExtractionResult
 	Features       *DocumentFeatureSet
 	Fingerprint    *ProviderFingerprint
@@ -406,7 +406,7 @@ type PageExtractionResult struct {
 type PersistIndexedContentPayload struct {
 	Document       *document.Document
 	TenantInfo     pagination.TenantInfo
-	Control        *tenant.DocumentControl
+	Control        *documentcontrol.DocumentControl
 	Content        *documentcontent.Content
 	Extracted      *ExtractionResult
 	Classification *ClassificationResult
@@ -471,7 +471,7 @@ type FinalizeIntelligenceParams struct {
 	Intelligence   *DocumentIntelligenceAnalysis
 	AIDiagnostics  *AIDiagnostics
 	Signature      *documentaiextractionports.AISignatureReading
-	Control        *tenant.DocumentControl
+	Control        *documentcontrol.DocumentControl
 	TenantInfo     pagination.TenantInfo
 	EnqueueAsyncAI bool
 	Timestamp      int64

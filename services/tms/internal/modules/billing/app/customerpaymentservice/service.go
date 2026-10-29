@@ -21,8 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -191,8 +191,8 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		sourceID := pulid.MustNew("jsrc_")
 		entryDescription := fmt.Sprintf("Customer payment %s", created.DocumentLabel())
 		appliedCreditAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash ||
-			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == accountingcontrol.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
 			appliedCreditAccountID = control.DefaultRevenueAccountID
 			entryDescription = fmt.Sprintf("Customer cash receipt %s", created.DocumentLabel())
 		}
@@ -295,7 +295,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			EntryType:            "Standard",
 			EntryStatus:          entryStatus,
 			ReferenceNumber:      entity.ReferenceNumber,
-			ReferenceType:        tenant.JournalSourceEventCustomerPaymentPosted.String(),
+			ReferenceType:        accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 			ReferenceID:          created.ID.String(),
 			EntryDescription:     entryDescription,
 			TotalDebit:           created.AmountMinor,
@@ -309,7 +309,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			SourceID:             sourceID,
 			SourceObjectType:     "CustomerPayment",
 			SourceObjectID:       created.ID.String(),
-			SourceEventType:      tenant.JournalSourceEventCustomerPaymentPosted.String(),
+			SourceEventType:      accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 			SourceStatus:         entryStatus,
 			SourceDocumentNumber: entity.ReferenceNumber,
 			SourceIdempotencyKey: "customer-payment-posted:" + created.ID.String(),
@@ -323,7 +323,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 				applicationLedgerEntries(&applicationLedgerParams{
 					payment:         created,
 					applications:    created.Applications,
-					appliedEvent:    tenant.JournalSourceEventCustomerPaymentPosted.String(),
+					appliedEvent:    accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 					transactionDate: created.AccountingDate,
 					actorID:         actor.UserID,
 				}),
@@ -584,7 +584,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 				EntryType:            "Reversal",
 				EntryStatus:          entryStatus,
 				ReferenceNumber:      payment.ReferenceNumber,
-				ReferenceType:        tenant.JournalSourceEventCustomerPaymentReversed.String(),
+				ReferenceType:        accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
 				ReferenceID:          payment.ID.String(),
 				EntryDescription:     journal.description,
 				TotalDebit:           journal.total,
@@ -600,7 +600,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 				SourceID:             pulid.MustNew("jsrc_"),
 				SourceObjectType:     "CustomerPayment",
 				SourceObjectID:       payment.ID.String(),
-				SourceEventType:      tenant.JournalSourceEventCustomerPaymentReversed.String(),
+				SourceEventType:      accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
 				SourceStatus:         entryStatus,
 				SourceDocumentNumber: payment.ReferenceNumber,
 				SourceIdempotencyKey: "customer-payment-reversed:" + payment.ID.String(),
@@ -695,7 +695,7 @@ func mapApplications(
 }
 
 func paymentPostingWorkflow( //nolint:gocritic // stable API shape
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	userID pulid.ID,
 	now int64,
 ) (string, string, *int64, pulid.ID, bool, bool, pulid.ID, *int64) {
@@ -831,7 +831,7 @@ func applicationLedgerEntries(
 	appendEntry := func(app *customerpayment.Application, event string, amount int64) {
 		amountMinor := -amount
 		if params.reversal {
-			event = tenant.JournalSourceEventCustomerPaymentReversed.String()
+			event = accountingcontrol.JournalSourceEventCustomerPaymentReversed.String()
 			amountMinor = amount
 		}
 		entries = append(entries, &customerledger.CustomerLedgerEntry{
@@ -860,7 +860,7 @@ func applicationLedgerEntries(
 		if app.ShortPayAmountMinor > 0 {
 			appendEntry(
 				app,
-				tenant.JournalSourceEventCustomerShortPayRecognized.String(),
+				accountingcontrol.JournalSourceEventCustomerShortPayRecognized.String(),
 				app.ShortPayAmountMinor,
 			)
 		}

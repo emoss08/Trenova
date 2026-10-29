@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -109,17 +109,17 @@ func TestSubledgerCheckIsBlankWhenTheAccountHasNoActivity(t *testing.T) {
 func TestReconciliationEnforcedFollowsTheAccountingControl(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, reconciliationEnforced(&tenant.AccountingControl{
+	assert.True(t, reconciliationEnforced(&accountingcontrol.AccountingControl{
 		RequireReconciliationToClose: true,
-		ReconciliationMode:           tenant.ReconciliationModeBlockPosting,
+		ReconciliationMode:           accountingcontrol.ReconciliationModeBlockPosting,
 	}))
-	assert.False(t, reconciliationEnforced(&tenant.AccountingControl{
+	assert.False(t, reconciliationEnforced(&accountingcontrol.AccountingControl{
 		RequireReconciliationToClose: true,
-		ReconciliationMode:           tenant.ReconciliationModeDisabled,
+		ReconciliationMode:           accountingcontrol.ReconciliationModeDisabled,
 	}), "a disabled reconciliation mode wins over the require flag")
-	assert.False(t, reconciliationEnforced(&tenant.AccountingControl{
+	assert.False(t, reconciliationEnforced(&accountingcontrol.AccountingControl{
 		RequireReconciliationToClose: false,
-		ReconciliationMode:           tenant.ReconciliationModeBlockPosting,
+		ReconciliationMode:           accountingcontrol.ReconciliationModeBlockPosting,
 	}))
 }
 

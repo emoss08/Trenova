@@ -1,16 +1,16 @@
 package carriersettlementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -77,13 +77,13 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 	svc := &Service{journalRepo: journals, fiscalPeriodRepo: periods, generator: numberingOnly{}}
 	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 	draft, err := svc.draftJournal(t.Context(), entity, actor.UserID, &createJournalPostingParams{
-		Control: &tenant.AccountingControl{},
+		Control: &accountingcontrol.AccountingControl{},
 		Legs: []PostingLeg{
 			{AccountID: payableAccountID, Debit: 100},
 			{AccountID: cashAccountID, Credit: 100},
 		},
 		Description:    "Payment of carrier settlement CS-1042",
-		SourceEvent:    tenant.JournalSourceEventCarrierSettlementPaid,
+		SourceEvent:    accountingcontrol.JournalSourceEventCarrierSettlementPaid,
 		IdempotencyKey: "carrier-settlement-paid:" + entity.ID.String(),
 		AccountingDate: paidAt,
 	})

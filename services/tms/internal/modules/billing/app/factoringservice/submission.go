@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -364,7 +364,7 @@ func (s *SubmissionService) Submit(
 	}
 
 	number, err := s.sequences.Generate(ctx, &seqgen.GenerateRequest{
-		Type:  tenant.SequenceTypeFactoringSubmission,
+		Type:  sequenceconfig.SequenceTypeFactoringSubmission,
 		OrgID: req.TenantInfo.OrgID,
 		BuID:  req.TenantInfo.BuID,
 	})

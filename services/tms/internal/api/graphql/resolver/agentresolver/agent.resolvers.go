@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -519,7 +520,7 @@ func (r *MutationResolver) ResolveAgentException(ctx context.Context, id string,
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error) {
+func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -880,7 +881,7 @@ func (r *QueryResolver) AgentException(ctx context.Context, id string) (*agent.A
 	})
 }
 
-func (r *QueryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl, error) {
+func (r *QueryResolver) AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -951,15 +952,15 @@ func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*g
 	}), nil
 }
 
-func (r *AgentControlResolver) AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+func (r *AgentControlResolver) AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error) {
 	return gqldecimal.MinorString(obj.AgentMoneyCallCeilingMinor), nil
 }
 
-func (r *AgentControlResolver) AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+func (r *AgentControlResolver) AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error) {
 	return gqldecimal.MinorString(obj.AgentMoneyRunAmountMinor), nil
 }
 
-func (r *AgentControlResolver) AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+func (r *AgentControlResolver) AgentMoneyDayAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error) {
 	return gqldecimal.MinorString(obj.AgentMoneyDayAmountMinor), nil
 }
 
@@ -967,7 +968,7 @@ func (r *AgentProposalResolver) ReviewRequired(ctx context.Context, obj *agent.A
 	return obj.ApprovalNeedsReview(), nil
 }
 
-func (r *AgentControlResolver) AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error) {
+func (r *AgentControlResolver) AgentMoneyCurrency(ctx context.Context, obj *agentcontrol.AgentControl) (string, error) {
 	books, err := r.AccountingControlRepo.GetByOrgID(ctx, obj.OrganizationID)
 	if err != nil {
 		return "", err

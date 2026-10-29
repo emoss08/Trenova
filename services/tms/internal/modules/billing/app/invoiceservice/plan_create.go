@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -66,7 +66,7 @@ type orderInvoicePlan struct {
 	order        *order.Order
 	buckets      []*orderPayerBucket
 	customers    []*customer.Customer
-	control      *tenant.BillingControl
+	control      *billingcontrol.BillingControl
 	defaultPayer pulid.ID
 }
 

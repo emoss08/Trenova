@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -115,7 +116,7 @@ func TestBillingControlSettingsSurviveIntoTheTemplateContext(t *testing.T) {
 
 	ctx, err := builder.BuildFrom(t.Context(), entity, &invoiceDeliveryProfile{
 		Organization: &tenant.Organization{Name: "Trenova"},
-		BillingControl: &tenant.BillingControl{
+		BillingControl: &billingcontrol.BillingControl{
 			DefaultInvoiceTerms:     "Net 30 from invoice date.",
 			DefaultInvoiceFooter:    "Thank you for your business.",
 			ShowDueDateOnInvoice:    true,
@@ -142,7 +143,7 @@ func TestBillingControlSuppressionSurvivesIntoTheTemplateContext(t *testing.T) {
 		&invoice.Invoice{CurrencyCode: "USD", DueDate: testDueDate()},
 		&invoiceDeliveryProfile{
 			Organization: &tenant.Organization{Name: "Trenova"},
-			BillingControl: &tenant.BillingControl{
+			BillingControl: &billingcontrol.BillingControl{
 				ShowDueDateOnInvoice:    false,
 				ShowBalanceDueOnInvoice: false,
 			},

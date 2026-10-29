@@ -8,15 +8,6 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/jackc/pgx/v5"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -25,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
@@ -36,10 +27,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -100,10 +96,10 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	// Accounting scaffolding so Post can create a journal posting.
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.ReconciliationMode = tenant.ReconciliationModeWarnOnly
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventInvoicePosted,
+	control.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventInvoicePosted,
 	}
 	control.DefaultARAccountID = lookupInvoiceGLAccount(
 		t,

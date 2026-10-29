@@ -16,7 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -57,7 +58,7 @@ type Service struct {
 }
 
 type booksReader interface {
-	GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.AccountingControl, error)
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*accountingcontrol.AccountingControl, error)
 }
 
 type moneyCounter interface {
@@ -68,7 +69,10 @@ type moneyCounter interface {
 }
 
 type controlReader interface {
-	GetOrCreate(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.AgentControl, error)
+	GetOrCreate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*agentcontrol.AgentControl, error)
 }
 
 type costReader interface {

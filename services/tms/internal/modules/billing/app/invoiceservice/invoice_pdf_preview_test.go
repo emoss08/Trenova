@@ -17,6 +17,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -120,7 +121,7 @@ func previewInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 			DOTNumber:    "1234567",
 			ScacCode:     "TRNV",
 		},
-		BillingControl: &tenant.BillingControl{
+		BillingControl: &billingcontrol.BillingControl{
 			ShowDueDateOnInvoice:    true,
 			ShowBalanceDueOnInvoice: true,
 			DefaultInvoiceTerms: strings.Join([]string{

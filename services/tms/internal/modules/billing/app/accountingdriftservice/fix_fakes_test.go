@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -295,8 +295,11 @@ type fakeControls struct {
 	cash       pulid.ID
 }
 
-func (f *fakeControls) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
-	return &tenant.AccountingControl{
+func (f *fakeControls) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
+	return &accountingcontrol.AccountingControl{
 		ReconciliationToleranceAmount: decimal.RequireFromString(f.tolerance),
 		FunctionalCurrencyCode:        f.functional,
 		DefaultCashAccountID:          f.cash,

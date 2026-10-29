@@ -14,9 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -370,7 +371,7 @@ func (s *Service) dispatchControl(
 func (s *Service) billingControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) *tenant.BillingControl {
+) *billingcontrol.BillingControl {
 	if s.billingControls == nil {
 		return nil
 	}
@@ -386,7 +387,7 @@ func (s *Service) billingControl(
 func (s *Service) shipmentControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) *tenant.ShipmentControl {
+) *shipmentcontrol.ShipmentControl {
 	if s.shipmentControls == nil {
 		return nil
 	}

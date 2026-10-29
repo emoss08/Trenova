@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -22,7 +22,7 @@ type AssessInput struct {
 	Policy     agenttoolports.ToolPolicy
 	Definition *agentdefinition.Definition
 	Trust      *agent.ToolTrust
-	Control    *tenant.AgentControl
+	Control    *agentcontrol.AgentControl
 	Tainted    bool
 }
 

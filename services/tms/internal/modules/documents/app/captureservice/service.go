@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -199,7 +200,7 @@ func New(p Params) *Service {
 func (s *Service) control(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	control, err := s.controls.Get(ctx, tenantports.GetDocumentControlRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -207,7 +208,7 @@ func (s *Service) control(
 		return control, nil
 	}
 	if errortypes.IsNotFoundError(err) {
-		return tenant.NewDefaultDocumentControl(tenantInfo.OrgID, tenantInfo.BuID), nil
+		return documentcontrol.NewDefaultDocumentControl(tenantInfo.OrgID, tenantInfo.BuID), nil
 	}
 
 	return nil, err
@@ -217,7 +218,7 @@ func (s *Service) control(
 func (s *Service) requireEnabled(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	control, err := s.control(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

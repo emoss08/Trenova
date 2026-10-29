@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,7 +57,7 @@ func (f *fakeLateCharges) PlanAssess(
 func lateChargePlan() *latechargeports.LateChargeAssessmentResult {
 	return &latechargeports.LateChargeAssessmentResult{
 		Preview:          true,
-		Mode:             tenant.LateChargeAssessmentModeAutomatic,
+		Mode:             billingcontrol.LateChargeAssessmentModeAutomatic,
 		AutoPost:         true,
 		TotalChargeMinor: 1500,
 		Customers: []*latechargeports.LateChargeCustomerResult{

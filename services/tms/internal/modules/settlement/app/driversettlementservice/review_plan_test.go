@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,8 +67,8 @@ type receiptControl struct {
 func (c *receiptControl) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.DashControl, error) {
-	return &tenant.DashControl{RequireExpenseReceipt: c.required}, nil
+) (*dashcontrol.DashControl, error) {
+	return &dashcontrol.DashControl{RequireExpenseReceipt: c.required}, nil
 }
 
 func reviewer() *permissionports.RequestActor {

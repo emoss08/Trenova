@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -132,7 +133,7 @@ const ssoLoginStateTTL = 10 * time.Minute
 
 type tenantSSOConfiguration struct {
 	organization *tenant.Organization
-	configs      []*tenant.SSOConfig
+	configs      []*sso.SSOConfig
 }
 
 type loginSessionContext struct {
@@ -373,7 +374,7 @@ func (s *Service) resolveSSOConfig(
 	ctx context.Context,
 	orgID pulid.ID,
 	req tenantports.StartSSOLoginRequest,
-) (*tenant.SSOConfig, error) {
+) (*sso.SSOConfig, error) {
 	if req.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, req.ProviderID)
 		if err != nil {
@@ -487,7 +488,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, errortypes.NewAuthenticationError("{0} login nonce mismatch", displayName)
 	}
 
-	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
+	if ssoConfig.Provider == sso.SSOProviderAzureAD {
 		expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
 		if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
 			attempt.fail(authErrorSSOTenant)
@@ -622,7 +623,7 @@ func (s *Service) enabledTenantSSOConfiguration(
 func (s *Service) resolveSSOConfigForCallback(
 	ctx context.Context,
 	loginState *tenantports.SSOLoginState,
-) (*tenant.SSOConfig, error) {
+) (*sso.SSOConfig, error) {
 	if loginState.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
 		if err != nil {
@@ -1149,7 +1150,7 @@ func (s *Service) enforcePasswordLoginPolicy(
 
 	ctx = organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, user.ID)
 
-	for _, p := range []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta} {
+	for _, p := range []sso.SSOProvider{sso.SSOProviderAzureAD, sso.SSOProviderOkta} {
 		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)
 		if err != nil {
 			if errortypes.IsNotFoundError(err) {
@@ -1182,11 +1183,11 @@ func (c oidcClaims) EmailAddress() string {
 	return strings.ToLower(strings.TrimSpace(c.Email))
 }
 
-func (c oidcClaims) EmailIsVerified(provider tenant.SSOProvider) bool {
+func (c oidcClaims) EmailIsVerified(provider sso.SSOProvider) bool {
 	if c.EmailVerified.IsTrue() {
 		return true
 	}
-	return provider == tenant.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
+	return provider == sso.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
 }
 
 var federatedMFAMethods = map[string]struct{}{
@@ -1203,14 +1204,14 @@ var federatedMFAMethods = map[string]struct{}{
 	"ngcmfa": {},
 }
 
-func assuranceFromOIDCClaims(cfg *tenant.SSOConfig, claims oidcClaims) (int, int64) {
+func assuranceFromOIDCClaims(cfg *sso.SSOConfig, claims oidcClaims) (int, int64) {
 	if federatedMFASatisfied(cfg, claims) {
 		return mfaAssuranceLevel, timeutils.NowUnix()
 	}
 	return 1, 0
 }
 
-func federatedMFASatisfied(cfg *tenant.SSOConfig, claims oidcClaims) bool {
+func federatedMFASatisfied(cfg *sso.SSOConfig, claims oidcClaims) bool {
 	if cfg == nil || !cfg.AllowFederatedMFA {
 		return false
 	}
@@ -1273,18 +1274,18 @@ func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
 	)
 }
 
-func ssoAuthEventProvider(p tenant.SSOProvider) string {
+func ssoAuthEventProvider(p sso.SSOProvider) string {
 	if p == "" {
 		return "sso"
 	}
 	return "sso." + string(p)
 }
 
-func providerDisplayName(p tenant.SSOProvider) string {
+func providerDisplayName(p sso.SSOProvider) string {
 	switch p {
-	case tenant.SSOProviderAzureAD:
+	case sso.SSOProviderAzureAD:
 		return "Microsoft"
-	case tenant.SSOProviderOkta:
+	case sso.SSOProviderOkta:
 		return "Okta"
 	default:
 		return string(p)
@@ -1309,7 +1310,7 @@ func randomURLToken(size int) string {
 	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
-func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) string {
+func decryptSSOSecret(enc *encryptionservice.Service, cfg *sso.SSOConfig) string {
 	if cfg == nil {
 		return ""
 	}
@@ -1343,7 +1344,7 @@ func ssoSecretAAD(tenantInfo pagination.TenantInfo, resourceID string) encryptio
 	}
 }
 
-func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {
+func ssoSecretAADResourceIDs(provider sso.SSOProvider) []string {
 	resourceID := string(provider)
 	normalized := strings.ToLower(strings.TrimSpace(resourceID))
 	if normalized == "" || normalized == resourceID {

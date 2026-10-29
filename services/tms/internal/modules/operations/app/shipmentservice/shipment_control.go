@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func delayThresholdMinutes(control *tenant.ShipmentControl) int16 {
+func delayThresholdMinutes(control *shipmentcontrol.ShipmentControl) int16 {
 	if control == nil || !control.AutoDelayShipments {
 		return shipmentstate.DisabledDelayThresholdMinutes
 	}
@@ -22,7 +22,7 @@ func delayThresholdMinutes(control *tenant.ShipmentControl) int16 {
 	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }
 
-func autoCancelThresholdDays(control *tenant.ShipmentControl) int16 {
+func autoCancelThresholdDays(control *shipmentcontrol.ShipmentControl) int16 {
 	if control.AutoCancelShipmentsThreshold == nil {
 		return shipmentstate.ResolveAutoCancelThresholdDays(0)
 	}
@@ -33,7 +33,7 @@ func autoCancelThresholdDays(control *tenant.ShipmentControl) int16 {
 func (s *service) getShipmentControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	return s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})

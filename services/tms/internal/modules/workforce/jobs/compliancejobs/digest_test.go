@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,18 +22,18 @@ func TestDigestDueToday(t *testing.T) {
 
 	t.Run("immediate never bundles", func(t *testing.T) {
 		t.Parallel()
-		control := &tenant.DashControl{
+		control := &dashcontrol.DashControl{
 			SendCredentialReminders: true,
-			DriverDigestCadence:     tenant.DigestImmediate,
+			DriverDigestCadence:     dashcontrol.DigestImmediate,
 		}
 		assert.False(t, digestDueToday(control, friday))
 	})
 
 	t.Run("daily fires every night", func(t *testing.T) {
 		t.Parallel()
-		control := &tenant.DashControl{
+		control := &dashcontrol.DashControl{
 			SendCredentialReminders: true,
-			DriverDigestCadence:     tenant.DigestDaily,
+			DriverDigestCadence:     dashcontrol.DigestDaily,
 		}
 		assert.True(t, digestDueToday(control, friday))
 		assert.True(t, digestDueToday(control, digestAt(2026, time.September, 5)))
@@ -42,9 +42,9 @@ func TestDigestDueToday(t *testing.T) {
 	// A weekly digest that fired every night would not be a weekly one.
 	t.Run("weekly fires only on its own day", func(t *testing.T) {
 		t.Parallel()
-		control := &tenant.DashControl{
+		control := &dashcontrol.DashControl{
 			SendCredentialReminders: true,
-			DriverDigestCadence:     tenant.DigestWeekly,
+			DriverDigestCadence:     dashcontrol.DigestWeekly,
 			DriverDigestWeekday:     int16(time.Friday),
 		}
 		assert.True(t, digestDueToday(control, friday))
@@ -55,9 +55,9 @@ func TestDigestDueToday(t *testing.T) {
 	// route around a switch somebody deliberately turned off.
 	t.Run("reminders switched off stops the digest", func(t *testing.T) {
 		t.Parallel()
-		control := &tenant.DashControl{
+		control := &dashcontrol.DashControl{
 			SendCredentialReminders: false,
-			DriverDigestCadence:     tenant.DigestDaily,
+			DriverDigestCadence:     dashcontrol.DigestDaily,
 		}
 		assert.False(t, digestDueToday(control, friday))
 	})
@@ -68,9 +68,9 @@ func TestDigestDueToday(t *testing.T) {
 func TestDigestHorizon(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, int64(7), digestHorizon(tenant.DigestDaily))
-	assert.Equal(t, int64(14), digestHorizon(tenant.DigestWeekly))
-	assert.Equal(t, int64(7), digestHorizon(tenant.DigestImmediate))
+	assert.Equal(t, int64(7), digestHorizon(dashcontrol.DigestDaily))
+	assert.Equal(t, int64(14), digestHorizon(dashcontrol.DigestWeekly))
+	assert.Equal(t, int64(7), digestHorizon(dashcontrol.DigestImmediate))
 }
 
 // The period key is what makes a retried activity idempotent and tomorrow's
@@ -81,17 +81,17 @@ func TestDigestPeriodKey(t *testing.T) {
 	monday := digestAt(2026, time.September, 7)
 	tuesday := digestAt(2026, time.September, 8)
 
-	assert.Equal(t, "2026-09-07", digestPeriodKey(tenant.DigestDaily, monday))
+	assert.Equal(t, "2026-09-07", digestPeriodKey(dashcontrol.DigestDaily, monday))
 	assert.NotEqual(t,
-		digestPeriodKey(tenant.DigestDaily, monday),
-		digestPeriodKey(tenant.DigestDaily, tuesday),
+		digestPeriodKey(dashcontrol.DigestDaily, monday),
+		digestPeriodKey(dashcontrol.DigestDaily, tuesday),
 	)
 
 	// Two days inside one ISO week resolve to the same key, so a retry the
 	// next morning does not send a second weekly notice.
 	assert.Equal(t,
-		digestPeriodKey(tenant.DigestWeekly, monday),
-		digestPeriodKey(tenant.DigestWeekly, tuesday),
+		digestPeriodKey(dashcontrol.DigestWeekly, monday),
+		digestPeriodKey(dashcontrol.DigestWeekly, tuesday),
 	)
 }
 
@@ -110,6 +110,6 @@ func TestDigestPriority(t *testing.T) {
 func TestDigestPeriodLabel(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "today", digestPeriodLabel(tenant.DigestDaily))
-	assert.Equal(t, "this week", digestPeriodLabel(tenant.DigestWeekly))
+	assert.Equal(t, "today", digestPeriodLabel(dashcontrol.DigestDaily))
+	assert.Equal(t, "this week", digestPeriodLabel(dashcontrol.DigestWeekly))
 }

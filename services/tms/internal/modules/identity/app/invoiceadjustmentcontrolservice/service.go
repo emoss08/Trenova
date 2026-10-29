@@ -3,8 +3,8 @@ package invoiceadjustmentcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -42,15 +42,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	req tenantports.GetInvoiceAdjustmentControlRequest,
-) (*tenant.InvoiceAdjustmentControl, error) {
+) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	return s.repo.GetByOrgID(ctx, req.TenantInfo.OrgID)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *tenant.InvoiceAdjustmentControl,
+	entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
 	userID pulid.ID,
-) (*tenant.InvoiceAdjustmentControl, error) {
+) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("orgID", entity.OrganizationID.String()),

@@ -3,7 +3,7 @@ package accountingcontrolpolicyservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -13,32 +13,41 @@ func TestCanCreateInvoiceLedgerEntry(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{Logger: zap.NewNop()})
-	control := &tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
+	control := &accountingcontrol.AccountingControl{
+		AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
 	}
 
-	assert.True(t, svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted))
 	assert.True(
 		t,
-		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCreditMemoPosted),
+		svc.CanCreateInvoiceLedgerEntry(control, accountingcontrol.JournalSourceEventInvoicePosted),
+	)
+	assert.True(
+		t,
+		svc.CanCreateInvoiceLedgerEntry(
+			control,
+			accountingcontrol.JournalSourceEventCreditMemoPosted,
+		),
 	)
 	assert.False(
 		t,
-		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventCustomerPaymentPosted),
+		svc.CanCreateInvoiceLedgerEntry(
+			control,
+			accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+		),
 	)
 
-	control.AccountingBasis = tenant.AccountingBasisCash
+	control.AccountingBasis = accountingcontrol.AccountingBasisCash
 	assert.False(
 		t,
-		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+		svc.CanCreateInvoiceLedgerEntry(control, accountingcontrol.JournalSourceEventInvoicePosted),
 	)
 
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnCashReceipt
 	assert.False(
 		t,
-		svc.CanCreateInvoiceLedgerEntry(control, tenant.JournalSourceEventInvoicePosted),
+		svc.CanCreateInvoiceLedgerEntry(control, accountingcontrol.JournalSourceEventInvoicePosted),
 	)
 }
 
@@ -46,28 +55,37 @@ func TestCanUseAutomaticSourcePosting(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{Logger: zap.NewNop()})
-	control := &tenant.AccountingControl{
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventInvoicePosted,
+	control := &accountingcontrol.AccountingControl{
+		AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+		JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
+		AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+			accountingcontrol.JournalSourceEventInvoicePosted,
 		},
 	}
 
 	assert.True(
 		t,
-		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+		svc.CanUseAutomaticSourcePosting(
+			control,
+			accountingcontrol.JournalSourceEventInvoicePosted,
+		),
 	)
 	assert.False(
 		t,
-		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventCreditMemoPosted),
+		svc.CanUseAutomaticSourcePosting(
+			control,
+			accountingcontrol.JournalSourceEventCreditMemoPosted,
+		),
 	)
 
-	control.JournalPostingMode = tenant.JournalPostingModeManual
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeManual
 	assert.False(
 		t,
-		svc.CanUseAutomaticSourcePosting(control, tenant.JournalSourceEventInvoicePosted),
+		svc.CanUseAutomaticSourcePosting(
+			control,
+			accountingcontrol.JournalSourceEventInvoicePosted,
+		),
 	)
 }
 
@@ -79,20 +97,24 @@ func TestValidateManualPeriodClose(t *testing.T) {
 	require.NoError(
 		t,
 		svc.ValidateManualPeriodClose(
-			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly},
+			&accountingcontrol.AccountingControl{
+				PeriodCloseMode: accountingcontrol.PeriodCloseModeManualOnly,
+			},
 		),
 	)
 	require.Error(
 		t,
 		svc.ValidateManualPeriodClose(
-			&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled},
+			&accountingcontrol.AccountingControl{
+				PeriodCloseMode: accountingcontrol.PeriodCloseModeSystemScheduled,
+			},
 		),
 	)
 	require.Error(
 		t,
 		svc.ValidateManualPeriodClose(
-			&tenant.AccountingControl{
-				PeriodCloseMode:            tenant.PeriodCloseModeManualOnly,
+			&accountingcontrol.AccountingControl{
+				PeriodCloseMode:            accountingcontrol.PeriodCloseModeManualOnly,
 				RequirePeriodCloseApproval: true,
 			},
 		),
@@ -106,17 +128,17 @@ func TestResolveFXQuoteDate(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		policy   tenant.ExchangeRateDatePolicy
+		policy   accountingcontrol.ExchangeRateDatePolicy
 		expected int64
 	}{
 		{
 			name:     "document date policy",
-			policy:   tenant.ExchangeRateDatePolicyDocumentDate,
+			policy:   accountingcontrol.ExchangeRateDatePolicyDocumentDate,
 			expected: 1_700_000_000,
 		},
 		{
 			name:     "accounting date policy",
-			policy:   tenant.ExchangeRateDatePolicyAccountingDate,
+			policy:   accountingcontrol.ExchangeRateDatePolicyAccountingDate,
 			expected: 1_700_086_400,
 		},
 	}

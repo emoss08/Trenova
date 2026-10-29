@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,21 +14,21 @@ import (
 )
 
 type stubSequenceConfigRepo struct {
-	doc *tenant.SequenceConfigDocument
+	doc *sequenceconfig.SequenceConfigDocument
 	err error
 }
 
 func (r stubSequenceConfigRepo) GetByTenant(
 	context.Context,
 	tenantports.GetSequenceConfigRequest,
-) (*tenant.SequenceConfigDocument, error) {
+) (*sequenceconfig.SequenceConfigDocument, error) {
 	return r.doc, r.err
 }
 
 func (r stubSequenceConfigRepo) UpdateByTenant(
 	context.Context,
-	*tenant.SequenceConfigDocument,
-) (*tenant.SequenceConfigDocument, error) {
+	*sequenceconfig.SequenceConfigDocument,
+) (*sequenceconfig.SequenceConfigDocument, error) {
 	return nil, nil
 }
 
@@ -71,7 +71,7 @@ func TestGeneratorGenerateBuildsReadablePrefix(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "ACM-DAL-TX-001", code)
 	require.NotNil(t, seq.req)
-	require.Equal(t, tenant.SequenceTypeLocationCode, seq.req.Type)
+	require.Equal(t, sequenceconfig.SequenceTypeLocationCode, seq.req.Type)
 	require.Equal(t, fixedLocationCodePeriod, seq.req.Time)
 	require.Equal(t, "ACM-DAL-TX", seq.req.Format.Prefix)
 	require.Equal(t, 3, seq.req.Format.SequenceDigits)
@@ -85,7 +85,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    tenantports.LocationCodeInput
-		strategy *tenant.LocationCodeStrategy
+		strategy *sequenceconfig.LocationCodeStrategy
 		want     string
 	}{
 		{
@@ -133,15 +133,15 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 				City:              "Dallas",
 				StateAbbreviation: "TX",
 			},
-			strategy: &tenant.LocationCodeStrategy{
-				Components: []tenant.LocationCodeComponent{
-					tenant.LocationCodeComponentName,
-					tenant.LocationCodeComponentCity,
+			strategy: &sequenceconfig.LocationCodeStrategy{
+				Components: []sequenceconfig.LocationCodeComponent{
+					sequenceconfig.LocationCodeComponentName,
+					sequenceconfig.LocationCodeComponentCity,
 				},
 				ComponentWidth: 2,
 				SequenceDigits: 2,
 				Separator:      "",
-				Casing:         tenant.LocationCodeCasingLower,
+				Casing:         sequenceconfig.LocationCodeCasingLower,
 				FallbackPrefix: "LOC",
 			},
 			want: "acda",
@@ -152,15 +152,15 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 				Name:       "Acme Warehouse",
 				PostalCode: "75201-1234",
 			},
-			strategy: &tenant.LocationCodeStrategy{
-				Components: []tenant.LocationCodeComponent{
-					tenant.LocationCodeComponentName,
-					tenant.LocationCodeComponentPostalCode,
+			strategy: &sequenceconfig.LocationCodeStrategy{
+				Components: []sequenceconfig.LocationCodeComponent{
+					sequenceconfig.LocationCodeComponentName,
+					sequenceconfig.LocationCodeComponentPostalCode,
 				},
 				ComponentWidth: 3,
 				SequenceDigits: 3,
 				Separator:      "_",
-				Casing:         tenant.LocationCodeCasingUpper,
+				Casing:         sequenceconfig.LocationCodeCasingUpper,
 				FallbackPrefix: "LOC",
 			},
 			want: "ACM_752",
@@ -189,10 +189,10 @@ func TestGeneratorGenerateUsesDefaultStrategyWhenConfigIsMissing(t *testing.T) {
 	}
 	generator := &Generator{
 		sequenceConfigRepo: stubSequenceConfigRepo{
-			doc: &tenant.SequenceConfigDocument{
+			doc: &sequenceconfig.SequenceConfigDocument{
 				OrganizationID: orgID,
 				BusinessUnitID: buID,
-				Configs:        []*tenant.SequenceConfig{},
+				Configs:        []*sequenceconfig.SequenceConfig{},
 			},
 		},
 		sequenceGenerator: seq,
@@ -216,17 +216,17 @@ func TestGeneratorGenerateUsesDefaultStrategyWhenConfigIsMissing(t *testing.T) {
 
 func sequenceConfigRepo(
 	orgID, buID pulid.ID,
-	strategy *tenant.LocationCodeStrategy,
+	strategy *sequenceconfig.LocationCodeStrategy,
 ) tenantports.SequenceConfigRepository {
 	return stubSequenceConfigRepo{
-		doc: &tenant.SequenceConfigDocument{
+		doc: &sequenceconfig.SequenceConfigDocument{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Configs: []*tenant.SequenceConfig{
+			Configs: []*sequenceconfig.SequenceConfig{
 				{
 					OrganizationID:       orgID,
 					BusinessUnitID:       buID,
-					SequenceType:         tenant.SequenceTypeLocationCode,
+					SequenceType:         sequenceconfig.SequenceTypeLocationCode,
 					Prefix:               "LOC",
 					SequenceDigits:       3,
 					LocationCodeStrategy: strategy,

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -118,7 +119,7 @@ func buildInvoicePDFData(
 	var cus *customer.Customer
 	var org *tenant.Organization
 	var shp *shipment.Shipment
-	var control *tenant.BillingControl
+	var control *billingcontrol.BillingControl
 	var summaries []*shipmentports.ShipmentSummary
 	if deliveryProfile != nil {
 		cus = deliveryProfile.Customer
@@ -358,7 +359,7 @@ func headerPDFRows(entity *invoice.Invoice, org *tenant.Organization) []invoiceP
 	return result
 }
 
-func invoicePDFTerms(entity *invoice.Invoice, control *tenant.BillingControl) []string {
+func invoicePDFTerms(entity *invoice.Invoice, control *billingcontrol.BillingControl) []string {
 	rows := []string{
 		labeledPDFLine("Payment Terms", string(entity.PaymentTerm)),
 	}
@@ -368,36 +369,36 @@ func invoicePDFTerms(entity *invoice.Invoice, control *tenant.BillingControl) []
 	return stringutils.FilterEmpty(rows)
 }
 
-func invoicePDFDueDate(entity *invoice.Invoice, control *tenant.BillingControl) string {
+func invoicePDFDueDate(entity *invoice.Invoice, control *billingcontrol.BillingControl) string {
 	if !invoicePDFShowDueDate(control) {
 		return ""
 	}
 	return unixDatePtr(entity.DueDate)
 }
 
-func invoicePDFBalanceDue(entity *invoice.Invoice, control *tenant.BillingControl) string {
+func invoicePDFBalanceDue(entity *invoice.Invoice, control *billingcontrol.BillingControl) string {
 	if !invoicePDFShowBalanceDue(control) {
 		return ""
 	}
 	return moneyString(entity.CurrencyCode, entity.OpenBalanceAmount().StringFixed(2))
 }
 
-func invoicePDFShowDueDate(control *tenant.BillingControl) bool {
+func invoicePDFShowDueDate(control *billingcontrol.BillingControl) bool {
 	return control == nil || control.ShowDueDateOnInvoice
 }
 
-func invoicePDFShowBalanceDue(control *tenant.BillingControl) bool {
+func invoicePDFShowBalanceDue(control *billingcontrol.BillingControl) bool {
 	return control == nil || control.ShowBalanceDueOnInvoice
 }
 
-func billingControlPDFInvoiceTerms(control *tenant.BillingControl) []string {
+func billingControlPDFInvoiceTerms(control *billingcontrol.BillingControl) []string {
 	if control == nil {
 		return []string{}
 	}
 	return stringutils.FilterEmpty(strings.Split(control.DefaultInvoiceTerms, "\n"))
 }
 
-func billingControlPDFInvoiceFooter(control *tenant.BillingControl) string {
+func billingControlPDFInvoiceFooter(control *billingcontrol.BillingControl) string {
 	if control == nil {
 		return ""
 	}

@@ -2,6 +2,7 @@ package invoiceservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -26,7 +27,7 @@ type invoiceDeliveryProfile struct {
 	// off to print a manifest instead of freight detail.
 	Shipments []*shipmentports.ShipmentSummary
 
-	BillingControl *tenant.BillingControl
+	BillingControl *billingcontrol.BillingControl
 
 	// Factor is the factoring company the invoice is remitted to, nil when
 	// it is not factored.

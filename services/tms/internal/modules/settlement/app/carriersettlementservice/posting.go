@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -141,7 +142,7 @@ func (s *Service) Post(
 
 		if txErr = s.appendLedgerEntry(txCtx, entity, &ledgerEntryParams{
 			EntryType:       carriersettlement.LedgerEntryTypeBill,
-			SourceEvent:     tenant.JournalSourceEventCarrierSettlementPosted,
+			SourceEvent:     accountingcontrol.JournalSourceEventCarrierSettlementPosted,
 			JournalBatchID:  batchID,
 			AmountMinor:     entity.NetPayableMinor,
 			TransactionDate: now,
@@ -188,7 +189,7 @@ func (s *Service) postVoidReversal(
 	}
 	return s.appendLedgerEntry(ctx, entity, &ledgerEntryParams{
 		EntryType:       carriersettlement.LedgerEntryTypeAdjustment,
-		SourceEvent:     tenant.JournalSourceEventCarrierSettlementVoided,
+		SourceEvent:     accountingcontrol.JournalSourceEventCarrierSettlementVoided,
 		JournalBatchID:  batchID,
 		AmountMinor:     -entity.NetPayableMinor,
 		TransactionDate: timeutils.NowUnix(),
@@ -219,7 +220,7 @@ func ReverseLegs(legs []PostingLeg) []PostingLeg {
 func (s *Service) resolvePostingAccounts(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	requireCash bool,
 ) (*ResolvedPostingAccounts, error) {
 	carrierControl, err := s.settlementControl.GetOrCreate(ctx, pagination.TenantInfo{
@@ -238,8 +239,8 @@ func (s *Service) resolvePostingAccounts(
 // field-level validation error.
 func ResolvePostingAccounts(
 	entity *carriersettlement.CarrierSettlement,
-	carrierControl *tenant.CarrierSettlementControl,
-	control *tenant.AccountingControl,
+	carrierControl *carriersettlementcontrol.CarrierSettlementControl,
+	control *accountingcontrol.AccountingControl,
 	requireCash bool,
 ) (*ResolvedPostingAccounts, error) {
 	resolved := &ResolvedPostingAccounts{}
@@ -380,11 +381,11 @@ func (s *Service) planSettlementJournal(
 	}
 
 	description := "Carrier settlement " + entity.SettlementNumber
-	sourceEvent := tenant.JournalSourceEventCarrierSettlementPosted
+	sourceEvent := accountingcontrol.JournalSourceEventCarrierSettlementPosted
 	idempotencyPrefix := "carrier-settlement-posted:"
 	if reversal {
 		description = "Void of carrier settlement " + entity.SettlementNumber
-		sourceEvent = tenant.JournalSourceEventCarrierSettlementVoided
+		sourceEvent = accountingcontrol.JournalSourceEventCarrierSettlementVoided
 		idempotencyPrefix = "carrier-settlement-voided:"
 	}
 
@@ -457,17 +458,17 @@ func (s *Service) planPaymentJournal(
 		Control:        control,
 		Legs:           legs,
 		Description:    "Payment of carrier settlement " + entity.SettlementNumber,
-		SourceEvent:    tenant.JournalSourceEventCarrierSettlementPaid,
+		SourceEvent:    accountingcontrol.JournalSourceEventCarrierSettlementPaid,
 		IdempotencyKey: "carrier-settlement-paid:" + entity.ID.String(),
 		AccountingDate: paidAt,
 	})
 }
 
 type createJournalPostingParams struct {
-	Control        *tenant.AccountingControl
+	Control        *accountingcontrol.AccountingControl
 	Legs           []PostingLeg
 	Description    string
-	SourceEvent    tenant.JournalSourceEventType
+	SourceEvent    accountingcontrol.JournalSourceEventType
 	IdempotencyKey string
 	AccountingDate int64
 }
@@ -547,7 +548,7 @@ func (s *Service) journalWriter() journalposting.Writer {
 
 type ledgerEntryParams struct {
 	EntryType       carriersettlement.LedgerEntryType
-	SourceEvent     tenant.JournalSourceEventType
+	SourceEvent     accountingcontrol.JournalSourceEventType
 	JournalBatchID  *pulid.ID
 	AmountMinor     int64
 	TransactionDate int64

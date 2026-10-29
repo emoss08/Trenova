@@ -4,12 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +25,7 @@ const (
 
 func newStamper(
 	t *testing.T,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) (*Stamper, *exchangerateportsmock.MockExchangeRateService) {
 	t.Helper()
 	controls := tenantportsmock.NewMockAccountingControlRepository(t)
@@ -42,13 +41,18 @@ func newStamper(
 		Logger:   zap.NewNop(),
 		Controls: controls,
 		Rates:    rates,
-		Policy:   accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()}),
+		Policy: accountingcontrolpolicyservice.New(
+			accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+		),
 	}), rates
 }
 
 func request(currency string) *Request {
 	return &Request{
-		TenantInfo:     pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		CurrencyCode:   currency,
 		DocumentDate:   documentDate,
 		AccountingDate: accountingDate,
@@ -58,9 +62,9 @@ func request(currency string) *Request {
 func TestStampRecordsTheCachedRateOnTheDayThePolicyNames(t *testing.T) {
 	t.Parallel()
 
-	stamper, rates := newStamper(t, &tenant.AccountingControl{
+	stamper, rates := newStamper(t, &accountingcontrol.AccountingControl{
 		FunctionalCurrencyCode: "USD",
-		ExchangeRateDatePolicy: tenant.ExchangeRateDatePolicyAccountingDate,
+		ExchangeRateDatePolicy: accountingcontrol.ExchangeRateDatePolicyAccountingDate,
 	})
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "CAD", "USD", time.Unix(1_775_952_000, 0).UTC()).
@@ -83,9 +87,9 @@ func TestStampRecordsTheCachedRateOnTheDayThePolicyNames(t *testing.T) {
 func TestStampUsesTheDocumentDateUnderThatPolicy(t *testing.T) {
 	t.Parallel()
 
-	stamper, rates := newStamper(t, &tenant.AccountingControl{
+	stamper, rates := newStamper(t, &accountingcontrol.AccountingControl{
 		FunctionalCurrencyCode: "USD",
-		ExchangeRateDatePolicy: tenant.ExchangeRateDatePolicyDocumentDate,
+		ExchangeRateDatePolicy: accountingcontrol.ExchangeRateDatePolicyDocumentDate,
 	})
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "EUR", "USD", time.Unix(1_775_779_200, 0).UTC()).
@@ -100,7 +104,7 @@ func TestStampUsesTheDocumentDateUnderThatPolicy(t *testing.T) {
 func TestStampIsNothingWhenTheDocumentIsInTheFunctionalCurrency(t *testing.T) {
 	t.Parallel()
 
-	stamper, _ := newStamper(t, &tenant.AccountingControl{FunctionalCurrencyCode: "USD"})
+	stamper, _ := newStamper(t, &accountingcontrol.AccountingControl{FunctionalCurrencyCode: "USD"})
 
 	stamp, err := stamper.Stamp(t.Context(), request("usd"))
 	require.NoError(t, err)
@@ -110,7 +114,10 @@ func TestStampIsNothingWhenTheDocumentIsInTheFunctionalCurrency(t *testing.T) {
 func TestStampIsNothingWhenNoRateIsCached(t *testing.T) {
 	t.Parallel()
 
-	stamper, rates := newStamper(t, &tenant.AccountingControl{FunctionalCurrencyCode: "USD"})
+	stamper, rates := newStamper(
+		t,
+		&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "USD"},
+	)
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "CAD", "USD", mock.Anything).
 		Return(nil, exchangerateports.ErrExchangeRateNotCached)
@@ -143,7 +150,10 @@ func TestStampIsNothingWithoutAccountingControlOrStamper(t *testing.T) {
 func TestStampReportsARateLookupFailure(t *testing.T) {
 	t.Parallel()
 
-	stamper, rates := newStamper(t, &tenant.AccountingControl{FunctionalCurrencyCode: "USD"})
+	stamper, rates := newStamper(
+		t,
+		&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "USD"},
+	)
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "CAD", "USD", mock.Anything).
 		Return(nil, errortypes.NewBusinessError("failed to retrieve cached exchange rate"))

@@ -2,7 +2,6 @@ package invoicerunservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
@@ -10,12 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -123,7 +123,7 @@ func (s *Service) Preview(
 	}
 
 	number, err := s.sequenceGenerator.Generate(ctx, &seqgen.GenerateRequest{
-		Type:  tenant.SequenceTypeInvoiceRun,
+		Type:  sequenceconfig.SequenceTypeInvoiceRun,
 		OrgID: req.TenantInfo.OrgID,
 		BuID:  req.TenantInfo.BuID,
 	})

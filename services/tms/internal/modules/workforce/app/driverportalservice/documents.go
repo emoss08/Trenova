@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -134,7 +134,7 @@ func (s *Service) UploadMyProfileDocument(
 		return nil, err
 	}
 	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowProfileDocumentUpload },
+		func(control *dashcontrol.DashControl) bool { return control.AllowProfileDocumentUpload },
 		"Your carrier collects qualification documents outside Dash — see your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -203,7 +203,7 @@ func (s *Service) UploadMyLoadDocument(
 		return nil, err
 	}
 	if _, err := s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowLoadDocumentUpload },
+		func(control *dashcontrol.DashControl) bool { return control.AllowLoadDocumentUpload },
 		"Your carrier collects paperwork outside Dash — turn in documents the way you do today.",
 	); err != nil {
 		return nil, err

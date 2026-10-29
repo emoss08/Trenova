@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -140,7 +140,7 @@ func (s *LedgerService) planFunding(
 			scope:     scope,
 			item:      item,
 			movement:  movement,
-			event:     tenant.JournalSourceEventFactoringFunded,
+			event:     accountingcontrol.JournalSourceEventFactoringFunded,
 			key:       fundingKeyPrefix + item.ID.String(),
 			date:      req.FundedOn,
 			dateField: "fundedOn",

@@ -3,7 +3,7 @@ package shipmentwatchlistservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
@@ -127,7 +127,7 @@ func (s *Service) Watchlist(
 
 type watchlistInputs struct {
 	basis     *shipmentports.ShipmentQuickFilterBasis
-	control   *tenant.ShipmentControl
+	control   *shipmentcontrol.ShipmentControl
 	windows   []pickupwindow.PickupWindowBounds
 	totals    []shipmentboardports.ShipmentQuickFilterTotal
 	rows      []*shipmentboardports.ShipmentDeliveryRow

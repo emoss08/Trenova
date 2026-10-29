@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,17 +16,17 @@ type DocumentControlRepository interface {
 	Get(
 		ctx context.Context,
 		req GetDocumentControlRequest,
-	) (*tenant.DocumentControl, error)
+	) (*documentcontrol.DocumentControl, error)
 	Create(
 		ctx context.Context,
-		entity *tenant.DocumentControl,
-	) (*tenant.DocumentControl, error)
+		entity *documentcontrol.DocumentControl,
+	) (*documentcontrol.DocumentControl, error)
 	Update(
 		ctx context.Context,
-		entity *tenant.DocumentControl,
-	) (*tenant.DocumentControl, error)
+		entity *documentcontrol.DocumentControl,
+	) (*documentcontrol.DocumentControl, error)
 	GetOrCreate(
 		ctx context.Context,
 		orgID, buID pulid.ID,
-	) (*tenant.DocumentControl, error)
+	) (*documentcontrol.DocumentControl, error)
 }

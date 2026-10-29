@@ -3,6 +3,7 @@
 package agentexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"context"
 	"errors"
 
@@ -176,7 +177,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -186,7 +187,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -196,7 +197,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -206,7 +207,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.ShadowMode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -216,7 +217,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.EarnedAutonomy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -226,7 +227,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.PromotionThreshold, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -236,7 +237,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AITrainingConsent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -245,7 +246,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "aiTrainingConsentChangedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AITrainingConsentChangedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -254,7 +255,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "aiTrainingConsentChangedById",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AITrainingConsentChangedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -264,7 +265,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.PersonMonthlyMessages, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -274,7 +275,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.LearningOff, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -284,7 +285,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AutoChaptersOff, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -296,7 +297,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyCallCeiling(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -306,7 +307,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AgentMoneyRunCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -318,7 +319,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyRunAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -328,7 +329,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.AgentMoneyDayCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -340,7 +341,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyDayAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -352,7 +353,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return gqlexec.Resolver[resolverAgentControl](ec, "AgentControl").AgentMoneyCurrency(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -362,7 +363,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -372,7 +373,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -382,7 +383,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.AgentControl)
+					obj := o.(*agentcontrol.AgentControl)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4244,10 +4245,10 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAgentControl interface {
-	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyDayAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyCurrency(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 }
 
 type resolverAgentDecision interface {
@@ -4314,7 +4315,7 @@ type resolverMutation interface {
 	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
-	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
 }
 
 type resolverQuery interface {
@@ -4332,7 +4333,7 @@ type resolverQuery interface {
 	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
-	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
+	AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 }
@@ -5513,7 +5514,7 @@ func marshalNAgentAutonomyTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAgentControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.AgentControl) graphql.Marshaler {
+func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAgentControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentcontrol.AgentControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

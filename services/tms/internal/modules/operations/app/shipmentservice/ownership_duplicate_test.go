@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -267,7 +268,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-	}).Return(&tenant.ShipmentControl{
+	}).Return(&shipmentcontrol.ShipmentControl{
 		CheckForDuplicateBOLs: true,
 	}, nil).Once()
 	repo.EXPECT().

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -34,7 +34,7 @@ type GenerateBatchRequest struct {
 // PeriodBounds aliases the shared settlement period type.
 type PeriodBounds = settlementshared.PeriodBounds
 
-func ResolveCurrentPeriod(control *tenant.SettlementControl, now int64) PeriodBounds {
+func ResolveCurrentPeriod(control *settlementcontrol.SettlementControl, now int64) PeriodBounds {
 	return settlementshared.ResolvePeriod(
 		control.PayPeriodFrequency,
 		control.PeriodEndDayOfWeek,
@@ -316,7 +316,7 @@ func (s *Service) PreviewForWorker(
 func (s *Service) buildSettlement(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 ) (*driversettlement.Settlement, []*driversettlement.PayEvent, error) {
 	events, err := s.payEventRepo.ListAccruedForWorker(
 		ctx,
@@ -419,7 +419,7 @@ func (s *Service) buildSettlement(
 func (s *Service) appendRecurringCycleLines(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 	settlement *driversettlement.Settlement,
 	profile *driverpay.PayProfile,
 	lines []*driversettlement.SettlementLine,
@@ -692,7 +692,7 @@ func (s *Service) monthlyRecurrenceApplies(
 func (s *Service) buildAdvanceLines(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 	gross int64,
 	existingLines []*driversettlement.SettlementLine,
 ) ([]*driversettlement.SettlementLine, error) {
@@ -759,7 +759,7 @@ func (s *Service) buildAdvanceLines(
 func (s *Service) flagVarianceException(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 	settlement *driversettlement.Settlement,
 ) error {
 	if control.VarianceThresholdPct.IsZero() {

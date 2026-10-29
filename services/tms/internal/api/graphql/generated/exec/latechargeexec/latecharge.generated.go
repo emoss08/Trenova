@@ -3,6 +3,7 @@
 package latechargeexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"context"
 	"errors"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -723,7 +723,7 @@ func marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "LateChargeAssessment", v)
 }
 
-func marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐLateChargeAssessmentMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.LateChargeAssessmentMode) graphql.Marshaler {
+func marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐLateChargeAssessmentMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingcontrol.LateChargeAssessmentMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

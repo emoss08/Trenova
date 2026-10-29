@@ -1,7 +1,7 @@
 package billingcontrolpolicyservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
@@ -22,12 +22,15 @@ func New(p Params) *Service {
 	return &Service{l: p.Logger.Named("service.billing-control-policy")}
 }
 
-func (s *Service) CanAutoCreateInvoiceDraft(control *tenant.BillingControl) bool {
+func (s *Service) CanAutoCreateInvoiceDraft(control *billingcontrol.BillingControl) bool {
 	return control != nil &&
-		control.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
+		control.InvoiceDraftCreationMode == billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred
 }
 
-func (s *Service) CanAutoPostInvoice(control *tenant.BillingControl, cus *customer.Customer) bool {
+func (s *Service) CanAutoPostInvoice(
+	control *billingcontrol.BillingControl,
+	cus *customer.Customer,
+) bool {
 	if control == nil {
 		return false
 	}
@@ -36,7 +39,7 @@ func (s *Service) CanAutoPostInvoice(control *tenant.BillingControl, cus *custom
 		return false
 	}
 
-	if control.InvoicePostingMode != tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
+	if control.InvoicePostingMode != billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
 		return false
 	}
 
@@ -47,7 +50,10 @@ func (s *Service) CanAutoPostInvoice(control *tenant.BillingControl, cus *custom
 	return cus.BillingProfile.AutoBill
 }
 
-func (s *Service) ValidateInvoicePosting(control *tenant.BillingControl, triggeredBy string) error {
+func (s *Service) ValidateInvoicePosting(
+	control *billingcontrol.BillingControl,
+	triggeredBy string,
+) error {
 	if triggeredBy != AutoPostInvoiceTrigger {
 		return nil
 	}
@@ -56,7 +62,7 @@ func (s *Service) ValidateInvoicePosting(control *tenant.BillingControl, trigger
 		return errortypes.NewBusinessError("Billing control is required for invoice auto-posting")
 	}
 
-	if control.InvoicePostingMode != tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
+	if control.InvoicePostingMode != billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
 		return errortypes.NewBusinessError("Invoice auto-posting is disabled by billing control")
 	}
 

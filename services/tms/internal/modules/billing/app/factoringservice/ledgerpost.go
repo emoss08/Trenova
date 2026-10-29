@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +26,7 @@ type movementInput struct {
 	scope     *ledgerScope
 	item      *factoring.SubmissionItem
 	movement  factoring.Movement
-	event     tenant.JournalSourceEventType
+	event     accountingcontrol.JournalSourceEventType
 	key       string
 	date      int64
 	dateField string

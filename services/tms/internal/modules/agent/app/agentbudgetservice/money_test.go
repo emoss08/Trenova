@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -38,27 +39,36 @@ func (f *fakeMoney) SumAutomaticMoney(
 
 type fixedBooks string
 
-func (b fixedBooks) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
-	return &tenant.AccountingControl{FunctionalCurrencyCode: string(b)}, nil
+func (b fixedBooks) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
+	return &accountingcontrol.AccountingControl{FunctionalCurrencyCode: string(b)}, nil
 }
 
 type unreadableBooks struct{}
 
-func (unreadableBooks) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
+func (unreadableBooks) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
 	return nil, errors.New("books unavailable")
 }
 
 type fakeControls struct {
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 	err     error
 }
 
-func (f fakeControls) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (f fakeControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentcontrol.AgentControl, error) {
 	return f.control, f.err
 }
 
-func moneyControl() *tenant.AgentControl {
-	control := &tenant.AgentControl{}
+func moneyControl() *agentcontrol.AgentControl {
+	control := &agentcontrol.AgentControl{}
 	control.ApplyAgentMoneyDefaults()
 
 	return control
@@ -84,11 +94,11 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 	require.NoError(t, err)
 
 	assert.Equal(t, agent.MoneyLimits{
-		CallCeilingMinor: tenant.DefaultAgentMoneyCallCeilingMinor,
-		RunCalls:         tenant.DefaultAgentMoneyRunCalls,
-		RunAmountMinor:   tenant.DefaultAgentMoneyRunAmountMinor,
-		DayCalls:         tenant.DefaultAgentMoneyDayCalls,
-		DayAmountMinor:   tenant.DefaultAgentMoneyDayAmountMinor,
+		CallCeilingMinor: agentcontrol.DefaultAgentMoneyCallCeilingMinor,
+		RunCalls:         agentcontrol.DefaultAgentMoneyRunCalls,
+		RunAmountMinor:   agentcontrol.DefaultAgentMoneyRunAmountMinor,
+		DayCalls:         agentcontrol.DefaultAgentMoneyDayCalls,
+		DayAmountMinor:   agentcontrol.DefaultAgentMoneyDayAmountMinor,
 	}, allowance.Limits)
 	assert.Equal(t, agent.MoneyUse{Calls: 3, AmountMinor: 25_000}, allowance.Run)
 	assert.Equal(t, agent.MoneyUse{Calls: 8, AmountMinor: 75_000}, allowance.Day)
@@ -183,7 +193,12 @@ func TestMoneyAllowance_FailsWhenTheDayOrTheCurrencyCannotBePlaced(t *testing.T)
 	_, err := noZone.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
-	require.ErrorIs(t, err, errNoTimezone, "a day drawn in UTC instead is not the organization's day")
+	require.ErrorIs(
+		t,
+		err,
+		errNoTimezone,
+		"a day drawn in UTC instead is not the organization's day",
+	)
 
 	badZone := newService(nil, nil, nil)
 	badZone.money = &fakeMoney{}

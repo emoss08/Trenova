@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -347,7 +347,7 @@ func (r *repository) ListLateChargeTenants(
 		records, err := keel.Into[tenantRecord](ctx, r.db.Keel(ctx), bc.
 			AllTenants().
 			Pick(bc.OrganizationID, bc.BusinessUnitID).
-			Where(bc.LateChargeAssessmentMode.Ne(tenant.LateChargeAssessmentModeDisabled)).
+			Where(bc.LateChargeAssessmentMode.Ne(billingcontrol.LateChargeAssessmentModeDisabled)).
 			Order(bc.OrganizationID.Asc()).
 			Limit(limit))
 		if err != nil {

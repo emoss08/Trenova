@@ -26,7 +26,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -150,7 +151,7 @@ type bilJournal struct {
 	sourceType    string
 	sourceID      pulid.ID
 	document      string
-	event         tenant.JournalSourceEventType
+	event         accountingcontrol.JournalSourceEventType
 	referenceType string
 	idempotency   string
 	auto          bool
@@ -294,8 +295,8 @@ func (g *generator) bilLoadSetup(ctx context.Context) (*bilSetup, error) {
 		return setup, nil
 	}
 
-	accrual := control.AccountingBasis != tenant.AccountingBasisCash
-	onInvoice := control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnInvoicePost
+	accrual := control.AccountingBasis != accountingcontrol.AccountingBasisCash
+	onInvoice := control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnInvoicePost
 	setup.postInvoices = accrual && onInvoice && setup.ar.IsNotNil() && setup.revenue.IsNotNil()
 	setup.applied = setup.ar
 	if !accrual || !onInvoice {
@@ -351,7 +352,7 @@ func (g *generator) bilEnsureFiscalYears(ctx context.Context) error {
 
 func (g *generator) bilConfigureAccounts(
 	ctx context.Context,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) error {
 	byCode, err := g.glAccountsByCode(
 		ctx,
@@ -433,7 +434,7 @@ func (g *generator) bilBuild(
 	for i, r := range chunk {
 		slots[i] = numberSlot{At: g.bilTransferAt(r)}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeInvoice, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeInvoice, slots)
 	if err != nil {
 		return nil, err
 	}
@@ -936,12 +937,12 @@ func (g *generator) bilPostInvoice(
 	related pulid.ID,
 	entity *billingqueue.BillingQueueItem,
 ) error {
-	event := tenant.JournalSourceEventInvoicePosted
+	event := accountingcontrol.JournalSourceEventInvoicePosted
 	debit, credit := setup.ar, setup.revenue
 	ledgerAmount := inv.TotalAmountMinor
 	amount := inv.TotalAmountMinor
 	if inv.IsCreditMemo() {
-		event = tenant.JournalSourceEventCreditMemoPosted
+		event = accountingcontrol.JournalSourceEventCreditMemoPosted
 		debit, credit = credit, debit
 		amount = inv.CreditTotalMinor()
 		ledgerAmount = -amount
@@ -1022,7 +1023,7 @@ func (g *generator) bilCreditMemos(
 	for i, at := range dates {
 		slots[i] = numberSlot{At: at}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeCreditMemo, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeCreditMemo, slots)
 	if err != nil {
 		return err
 	}
@@ -1339,8 +1340,8 @@ func (g *generator) bilPayment(
 	journal.sourceType = "CustomerPayment"
 	journal.sourceID = payment.ID
 	journal.document = payment.ReferenceNumber
-	journal.event = tenant.JournalSourceEventCustomerPaymentPosted
-	journal.referenceType = tenant.JournalSourceEventCustomerPaymentPosted.String()
+	journal.event = accountingcontrol.JournalSourceEventCustomerPaymentPosted
+	journal.referenceType = accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()
 	journal.idempotency = "customer-payment-posted:" + payment.ID.String()
 	journal.legs = append(journal.legs, bilLeg{
 		account: setup.cash, debit: payment.AmountMinor, customer: cus.ID,
@@ -1406,11 +1407,11 @@ func (g *generator) bilMaterialize(ctx context.Context, rows *bilRows) error {
 	for i, j := range rows.journals {
 		slots[i] = numberSlot{At: j.date}
 	}
-	batchNumbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeJournalBatch, slots)
+	batchNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeJournalBatch, slots)
 	if err != nil {
 		return err
 	}
-	entryNumbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeJournalEntry, slots)
+	entryNumbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeJournalEntry, slots)
 	if err != nil {
 		return err
 	}

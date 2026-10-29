@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,14 +41,14 @@ type Source struct {
 	ObjectType     string
 	ObjectID       pulid.ID
 	DocumentNumber string
-	Event          tenant.JournalSourceEventType
+	Event          accountingcontrol.JournalSourceEventType
 	IdempotencyKey string
 }
 
 type WriteRequest struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
-	Control        *tenant.AccountingControl
+	Control        *accountingcontrol.AccountingControl
 	ActorID        pulid.ID
 	AccountingDate int64
 	Now            int64
@@ -229,9 +229,11 @@ func buildLines(
 	return lines, totalDebit, totalCredit, nil
 }
 
-func closedPeriodPolicy(control *tenant.AccountingControl) tenant.ClosedPeriodPostingPolicy {
+func closedPeriodPolicy(
+	control *accountingcontrol.AccountingControl,
+) accountingcontrol.ClosedPeriodPostingPolicy {
 	if control == nil {
-		return tenant.ClosedPeriodPostingPolicyRequireReopen
+		return accountingcontrol.ClosedPeriodPostingPolicyRequireReopen
 	}
 	return control.ClosedPeriodPostingPolicy
 }

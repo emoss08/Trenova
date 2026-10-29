@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/trackingeventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -46,7 +46,7 @@ func newTrackingHarness(t *testing.T, bol string) (context.Context, *trackingHar
 	)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Maybe()
 	graph := testutil.CreateShipmentGraph(
 		t,

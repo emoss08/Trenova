@@ -17,8 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -113,8 +114,8 @@ type Service struct {
 type previewComputation struct {
 	invoice           *invoice.Invoice
 	correctionGroupID pulid.ID
-	control           *tenant.InvoiceAdjustmentControl
-	accountingControl *tenant.AccountingControl
+	control           *invoiceadjustmentcontrol.InvoiceAdjustmentControl
+	accountingControl *accountingcontrol.AccountingControl
 	preview           *invoiceadjustmentports.InvoiceAdjustmentPreview
 	lines             []*invoiceadjustment.InvoiceAdjustmentLine
 	creditLineItems   []*invoice.InvoiceLine

@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -364,11 +364,11 @@ func (s *Service) planSettlementJournal(
 	}
 
 	description := "Driver settlement " + entity.SettlementNumber
-	sourceEvent := tenant.JournalSourceEventDriverSettlementPosted
+	sourceEvent := accountingcontrol.JournalSourceEventDriverSettlementPosted
 	idempotencyPrefix := "driver-settlement-posted:"
 	if reversal {
 		description = "Void of driver settlement " + entity.SettlementNumber
-		sourceEvent = tenant.JournalSourceEventDriverSettlementVoided
+		sourceEvent = accountingcontrol.JournalSourceEventDriverSettlementVoided
 		idempotencyPrefix = "driver-settlement-voided:"
 	}
 
@@ -436,12 +436,12 @@ func (s *Service) writeSettlementJournal(
 
 type SettlementJournal struct {
 	Entity         *driversettlement.Settlement
-	Control        *tenant.AccountingControl
+	Control        *accountingcontrol.AccountingControl
 	ActorID        pulid.ID
 	AccountingDate int64
 	Now            int64
 	Description    string
-	Event          tenant.JournalSourceEventType
+	Event          accountingcontrol.JournalSourceEventType
 	IdempotencyKey string
 	Legs           []PostingLeg
 }
@@ -523,7 +523,7 @@ func BuildSettlementPaymentLegs(
 
 func PaymentJournal(
 	entity *driversettlement.Settlement,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	actorID pulid.ID,
 	paidAt, now int64,
 ) (*SettlementJournal, error) {
@@ -549,7 +549,7 @@ func PaymentJournal(
 		AccountingDate: paidAt,
 		Now:            now,
 		Description:    "Payment of driver settlement " + entity.SettlementNumber,
-		Event:          tenant.JournalSourceEventDriverSettlementPaid,
+		Event:          accountingcontrol.JournalSourceEventDriverSettlementPaid,
 		IdempotencyKey: PaymentIdempotencyKey(entity.ID),
 		Legs:           BuildSettlementPaymentLegs(entity, payable, control.DefaultCashAccountID),
 	}, nil
@@ -564,7 +564,7 @@ func paymentBooked(entity *driversettlement.Settlement) bool {
 
 func paymentPayableAccount(
 	entity *driversettlement.Settlement,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) (pulid.ID, error) {
 	if hasID(entity.PostedPayableAccountID) {
 		return *entity.PostedPayableAccountID, nil

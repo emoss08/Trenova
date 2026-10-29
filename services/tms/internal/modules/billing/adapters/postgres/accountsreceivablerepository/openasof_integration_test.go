@@ -6,24 +6,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
-
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -219,7 +216,7 @@ func TestOpenAsOfFollowsEverySettlementSource(t *testing.T) {
 		CustomerID:       shp.CustomerID,
 		SourceObjectType: customerledger.SourceFactoringItem,
 		SourceObjectID:   "fsi_asof_settlement",
-		SourceEventType:  tenant.JournalSourceEventFactoringFunded.String(),
+		SourceEventType:  accountingcontrol.JournalSourceEventFactoringFunded.String(),
 		RelatedInvoiceID: factored.ID,
 		DocumentNumber:   factored.Number,
 		TransactionDate:  before(4),

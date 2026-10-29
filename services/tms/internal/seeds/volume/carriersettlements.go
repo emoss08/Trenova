@@ -17,7 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -129,7 +132,7 @@ type csPeriod struct {
 }
 
 type csSetup struct {
-	control *tenant.CarrierSettlementControl
+	control *carriersettlementcontrol.CarrierSettlementControl
 	billing *bilSetup
 	expense pulid.ID
 	payable pulid.ID
@@ -238,11 +241,11 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 	case err != nil:
 		return nil, fmt.Errorf("load carrier settlement control: %w", err)
 	case control == nil:
-		control = &tenant.CarrierSettlementControl{
+		control = &carriersettlementcontrol.CarrierSettlementControl{
 			OrganizationID:     g.refs.orgID,
 			BusinessUnitID:     g.refs.buID,
-			PayTrigger:         tenant.PayTriggerShipmentDelivered,
-			PayPeriodFrequency: tenant.PayPeriodFrequencyWeekly,
+			PayTrigger:         settlementcontrol.PayTriggerShipmentDelivered,
+			PayPeriodFrequency: settlementcontrol.PayPeriodFrequencyWeekly,
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
@@ -262,7 +265,7 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 		return nil, err
 	}
 	if accounting == nil {
-		accounting = new(tenant.AccountingControl)
+		accounting = new(accountingcontrol.AccountingControl)
 	}
 
 	setup.expense = pulid.ConvertFromPtr(control.DefaultPurchasedTransportationAccountID)
@@ -853,24 +856,24 @@ func (g *generator) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*c
 }
 
 func csTrigger(
-	trigger tenant.PayTrigger,
+	trigger settlementcontrol.PayTrigger,
 	rec *shipmentRecord,
 	mv *moveRecord,
 ) (accruedAt, eventDate int64, ok bool) {
 	delivered := rec.DeliveredAt > 0 && (rec.Status == shipment.StatusCompleted ||
 		rec.Status == shipment.StatusReadyToInvoice || rec.Status == shipment.StatusInvoiced)
 	switch trigger {
-	case tenant.PayTriggerMoveCompleted:
+	case settlementcontrol.PayTriggerMoveCompleted:
 		if mv.Status == shipment.MoveStatusCompleted && mv.CompletedAt > 0 {
 			return mv.CompletedAt, mv.CompletedAt, true
 		}
 		return 0, 0, false
-	case tenant.PayTriggerPODReceived:
+	case settlementcontrol.PayTriggerPODReceived:
 		if !delivered || rec.Status == shipment.StatusCompleted {
 			return 0, 0, false
 		}
 		return max(rec.ReadyToBillAt, rec.DeliveredAt), rec.DeliveredAt, true
-	case tenant.PayTriggerShipmentInvoiced:
+	case settlementcontrol.PayTriggerShipmentInvoiced:
 		if !delivered || rec.Status != shipment.StatusInvoiced || rec.InvoiceDate == 0 {
 			return 0, 0, false
 		}
@@ -883,7 +886,10 @@ func csTrigger(
 	}
 }
 
-func (g *generator) csPeriods(control *tenant.CarrierSettlementControl, earliest int64) []csPeriod {
+func (g *generator) csPeriods(
+	control *carriersettlementcontrol.CarrierSettlementControl,
+	earliest int64,
+) []csPeriod {
 	now := g.now.UTC()
 	endDay := time.Weekday(control.PeriodEndDayOfWeek)
 	daysBack := int(now.Weekday() - endDay)
@@ -899,9 +905,9 @@ func (g *generator) csPeriods(control *tenant.CarrierSettlementControl, earliest
 			sign = -1
 		}
 		switch control.PayPeriodFrequency {
-		case tenant.PayPeriodFrequencyBiweekly:
+		case settlementcontrol.PayPeriodFrequencyBiweekly:
 			return t.AddDate(0, 0, 14*sign)
-		case tenant.PayPeriodFrequencyMonthly:
+		case settlementcontrol.PayPeriodFrequencyMonthly:
 			return t.AddDate(0, sign, 0)
 		default:
 			return t.AddDate(0, 0, 7*sign)
@@ -1273,7 +1279,7 @@ func (g *generator) csNumberAndPost(ctx context.Context, rows *csRows, setup *cs
 	for i, s := range rows.settlements {
 		slots[i] = numberSlot{At: s.createdAt}
 	}
-	numbers, err := g.numbers.allocate(ctx, tenant.SequenceTypeCarrierSettlement, slots)
+	numbers, err := g.numbers.allocate(ctx, sequenceconfig.SequenceTypeCarrierSettlement, slots)
 	if err != nil {
 		return err
 	}
@@ -1324,7 +1330,7 @@ func (g *generator) csPostJournal(rows *csRows, setup *csSetup, s *csSettlement)
 	if err != nil {
 		return err
 	}
-	event := tenant.JournalSourceEventCarrierSettlementPosted
+	event := accountingcontrol.JournalSourceEventCarrierSettlementPosted
 	journal.actorID = entity.PostedByID
 	journal.description = "Carrier settlement " + entity.SettlementNumber
 	journal.sourceType = csSourceType
@@ -1370,7 +1376,7 @@ func (g *generator) csPayJournal(
 		entity.PaymentReference = "CHK " + g.fake.digits(6)
 	}
 
-	event := tenant.JournalSourceEventCarrierSettlementPaid
+	event := accountingcontrol.JournalSourceEventCarrierSettlementPaid
 	journal.actorID = entity.PaidByID
 	journal.description = "Payment of carrier settlement " + entity.SettlementNumber
 	journal.sourceType = csSourceType
@@ -1397,7 +1403,7 @@ func (g *generator) csLedger(
 	rows *csRows,
 	entity *carriersettlement.CarrierSettlement,
 	entryType carriersettlement.LedgerEntryType,
-	event tenant.JournalSourceEventType,
+	event accountingcontrol.JournalSourceEventType,
 	batchID *pulid.ID,
 	amount, at int64,
 	actor pulid.ID,

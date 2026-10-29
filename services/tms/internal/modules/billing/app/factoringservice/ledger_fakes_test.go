@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -115,10 +115,13 @@ func (f *fakeProjection) balance(invoiceID pulid.ID) int64 {
 
 type fakeControls struct {
 	tenantports.AccountingControlRepository
-	control *tenant.AccountingControl
+	control *accountingcontrol.AccountingControl
 }
 
-func (f *fakeControls) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
+func (f *fakeControls) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
 	return f.control, nil
 }
 

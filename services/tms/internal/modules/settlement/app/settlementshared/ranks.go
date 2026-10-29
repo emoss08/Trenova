@@ -4,7 +4,7 @@
 package settlementshared
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 )
 
@@ -30,13 +30,13 @@ func ShipmentStatusRank(status shipment.Status) (rank int, ok bool) {
 
 // PayTriggerRank maps a settlement pay trigger to the shipment-status rank at
 // which accrual fires.
-func PayTriggerRank(trigger tenant.PayTrigger) int {
+func PayTriggerRank(trigger settlementcontrol.PayTrigger) int {
 	switch trigger {
-	case tenant.PayTriggerMoveCompleted, tenant.PayTriggerShipmentDelivered:
+	case settlementcontrol.PayTriggerMoveCompleted, settlementcontrol.PayTriggerShipmentDelivered:
 		return shipmentStatusRank[shipment.StatusCompleted]
-	case tenant.PayTriggerPODReceived:
+	case settlementcontrol.PayTriggerPODReceived:
 		return shipmentStatusRank[shipment.StatusReadyToInvoice]
-	case tenant.PayTriggerShipmentInvoiced:
+	case settlementcontrol.PayTriggerShipmentInvoiced:
 		return shipmentStatusRank[shipment.StatusInvoiced]
 	default:
 		return shipmentStatusRank[shipment.StatusCompleted]

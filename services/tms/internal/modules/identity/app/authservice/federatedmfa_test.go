@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/assert"
@@ -15,15 +15,15 @@ import (
 func TestFederatedMFAIsTrustedOnlyWhenAllowedAndAssertedExactly(t *testing.T) {
 	t.Parallel()
 
-	trusting := &tenant.SSOConfig{
+	trusting := &sso.SSOConfig{
 		AllowFederatedMFA: true,
 		FederatedMFAACRs:  []string{"http://schemas.openid.net/pape/policies/2007/06/multi-factor"},
 	}
-	refusing := &tenant.SSOConfig{AllowFederatedMFA: false}
+	refusing := &sso.SSOConfig{AllowFederatedMFA: false}
 
 	cases := []struct {
 		name   string
-		cfg    *tenant.SSOConfig
+		cfg    *sso.SSOConfig
 		claims oidcClaims
 		want   bool
 	}{
@@ -71,12 +71,18 @@ func TestSSOChallengeCarriesTheFederationIntoTheSession(t *testing.T) {
 	deps.svc.mfa = &fakeMFA{active: true, validCode: "123456"}
 	deps.svc.challenges = challenges
 
-	attempt := newAuthAttempt(ssoAuthEventProvider(tenant.SSOProviderOkta))
-	challenge, err := deps.svc.issueMFAChallenge(t.Context(), usr, nil, attempt, &iamports.MFAChallengeFederation{
-		AuthProvider:    string(tenant.SSOProviderOkta),
-		ExternalSubject: "okta|00u1",
-		FederationFAL:   2,
-	})
+	attempt := newAuthAttempt(ssoAuthEventProvider(sso.SSOProviderOkta))
+	challenge, err := deps.svc.issueMFAChallenge(
+		t.Context(),
+		usr,
+		nil,
+		attempt,
+		&iamports.MFAChallengeFederation{
+			AuthProvider:    string(sso.SSOProviderOkta),
+			ExternalSubject: "okta|00u1",
+			FederationFAL:   2,
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, challenge)
 	assert.True(t, challenge.MFARequired)
@@ -96,7 +102,7 @@ func TestSSOChallengeCarriesTheFederationIntoTheSession(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, created)
-	assert.Equal(t, string(tenant.SSOProviderOkta), created.AuthProvider)
+	assert.Equal(t, string(sso.SSOProviderOkta), created.AuthProvider)
 	assert.Equal(t, "okta|00u1", created.ExternalSubject)
 	assert.Equal(t, 2, created.FederationFAL)
 	assert.Equal(t, mfaAssuranceLevel, created.AuthenticatorAAL)

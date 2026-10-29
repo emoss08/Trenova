@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
@@ -90,7 +90,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			EnableDocumentIntelligence: true,
 		}, nil)
 
@@ -121,9 +121,11 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		DocumentControlRepo: documentControlRepo,
 		DocumentRepo:        documentRepo,
 		ContentRepo:         contentRepo,
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		SearchProjection:    searchProjection,
-		WorkflowStarter:     workflowStarter,
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		SearchProjection: searchProjection,
+		WorkflowStarter:  workflowStarter,
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)
@@ -147,7 +149,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			EnableDocumentIntelligence: false,
 		}, nil)
 
@@ -161,8 +163,10 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 		DocumentControlRepo: documentControlRepo,
 		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
 		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     workflowStarter,
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: workflowStarter,
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
@@ -190,8 +194,10 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
 		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
 		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
@@ -236,8 +242,10 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
 		DocumentRepo:        documentRepo,
 		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)

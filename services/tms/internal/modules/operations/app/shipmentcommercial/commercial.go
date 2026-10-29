@@ -5,7 +5,8 @@ import (
 	"context"
 	"math"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
@@ -96,7 +97,7 @@ type commercialTotals struct {
 func (c *Calculator) Recalculate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) error {
 	_, err := c.recalculate(
@@ -112,7 +113,7 @@ func (c *Calculator) Recalculate(
 func (c *Calculator) recalculate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (*commercialTotals, error) {
@@ -131,7 +132,7 @@ func (c *Calculator) recalculate(
 func (c *Calculator) CalculateTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) (*shipmentports.ShipmentTotalsResponse, error) {
 	totals, err := c.calculateCommercialTotals(
@@ -179,7 +180,7 @@ func findGeneratedFuelSurchargeCharge(entity *shipment.Shipment) *shipment.Addit
 func (c *Calculator) calculateCommercialTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (*commercialTotals, error) {
@@ -431,7 +432,7 @@ func traceStatements(trace *ratetypes.Trace) []byte {
 func (c *Calculator) billingControl(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) *tenant.BillingControl {
+) *billingcontrol.BillingControl {
 	if c.billingControlRepo == nil {
 		return nil
 	}
@@ -457,7 +458,7 @@ func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
 func (c *Calculator) syncDetentionCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	pass *ratingPass,
 ) error {
 	if entity == nil || control == nil {

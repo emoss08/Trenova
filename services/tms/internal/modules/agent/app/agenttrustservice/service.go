@@ -21,8 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -237,7 +237,7 @@ type tierChange struct {
 func (s *Service) promote(
 	ctx context.Context,
 	change tierChange,
-	control *tenant.AgentControl,
+	control *agentcontrol.AgentControl,
 ) error {
 	next, ok := change.current.Next()
 	if !ok || !change.definition.WithinCeiling(next) ||

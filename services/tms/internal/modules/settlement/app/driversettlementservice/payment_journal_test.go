@@ -4,14 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -19,6 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -85,10 +84,10 @@ func TestPaymentJournalIsWrittenOnThePaidDateAgainstThePostedPayable(t *testing.
 	const paidAt = int64(1_790_000_000)
 	entity := paidSettlement(1_250)
 	cash := pulid.MustNew("gla_")
-	control := &tenant.AccountingControl{
+	control := &accountingcontrol.AccountingControl{
 		OrganizationID:       entity.OrganizationID,
 		DefaultCashAccountID: cash,
-		JournalPostingMode:   tenant.JournalPostingModeAutomatic,
+		JournalPostingMode:   accountingcontrol.JournalPostingModeAutomatic,
 	}
 
 	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
@@ -150,7 +149,7 @@ func TestPaymentJournalNeedsACashAccount(t *testing.T) {
 	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
-		Return(&tenant.AccountingControl{}, nil).
+		Return(&accountingcontrol.AccountingControl{}, nil).
 		Once()
 	_, err := (&Service{accountingRepo: accounting}).
 		postPaymentJournal(t.Context(), entity, pulid.MustNew("usr_"), 1)
@@ -177,7 +176,7 @@ func TestASettlementPostedBeforeThePayableSnapshotPaysFromTheDefaultPayable(t *t
 	entity := paidSettlement(1_250)
 	entity.PostedPayableAccountID = nil
 	entity.PostedJournalBatchID = &postedBatch
-	control := &tenant.AccountingControl{
+	control := &accountingcontrol.AccountingControl{
 		DefaultSettlementsPayableAccountID: pulid.MustNew("gla_"),
 		DefaultCashAccountID:               pulid.MustNew("gla_"),
 	}
@@ -207,7 +206,12 @@ func TestASettlementPostedBeforeThePayableSnapshotPaysFromTheDefaultPayable(t *t
 func TestAZeroSettlementRecordsNoPaymentJournal(t *testing.T) {
 	t.Parallel()
 
-	batchID, err := (&Service{}).postPaymentJournal(t.Context(), paidSettlement(0), pulid.MustNew("usr_"), 1)
+	batchID, err := (&Service{}).postPaymentJournal(
+		t.Context(),
+		paidSettlement(0),
+		pulid.MustNew("usr_"),
+		1,
+	)
 	require.NoError(t, err)
 	assert.Nil(t, batchID)
 }
@@ -252,9 +256,9 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
-		Return(&tenant.AccountingControl{
+		Return(&accountingcontrol.AccountingControl{
 			DefaultCashAccountID: pulid.MustNew("gla_"),
-			JournalPostingMode:   tenant.JournalPostingModeAutomatic,
+			JournalPostingMode:   accountingcontrol.JournalPostingModeAutomatic,
 		}, nil).
 		Once()
 	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
@@ -315,9 +319,9 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
-		Return(&tenant.AccountingControl{
+		Return(&accountingcontrol.AccountingControl{
 			DefaultCashAccountID: pulid.MustNew("gla_"),
-			JournalPostingMode:   tenant.JournalPostingModeAutomatic,
+			JournalPostingMode:   accountingcontrol.JournalPostingModeAutomatic,
 		}, nil).
 		Once()
 	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
@@ -340,7 +344,11 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 		journalRepo:      journals,
 		generator:        journalNumbers{},
 		auditService:     silentAudit{},
-		stamper:          identitytest.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312")),
+		stamper: identitytest.NewFixedForTest(
+			t,
+			"USD",
+			decimal.RequireFromString("0.7312"),
+		),
 	}
 	paid, err := svc.MarkPaid(t.Context(), &carriersettlementports.MarkSettlementPaidRequest{
 		TenantInfo: pagination.TenantInfo{

@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -11,11 +11,11 @@ type SettlementControlRepository interface {
 	GetOrCreate(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*tenant.SettlementControl, error)
-	ListAutoGenerate(ctx context.Context) ([]*tenant.SettlementControl, error)
-	ListAll(ctx context.Context) ([]*tenant.SettlementControl, error)
+	) (*settlementcontrol.SettlementControl, error)
+	ListAutoGenerate(ctx context.Context) ([]*settlementcontrol.SettlementControl, error)
+	ListAll(ctx context.Context) ([]*settlementcontrol.SettlementControl, error)
 	Update(
 		ctx context.Context,
-		entity *tenant.SettlementControl,
-	) (*tenant.SettlementControl, error)
+		entity *settlementcontrol.SettlementControl,
+	) (*settlementcontrol.SettlementControl, error)
 }

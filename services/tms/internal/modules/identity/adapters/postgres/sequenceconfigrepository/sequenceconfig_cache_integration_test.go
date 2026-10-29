@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -25,7 +25,7 @@ func TestSequenceConfigReadsWriteOnlyOnceAndAreCachedUntilAnUpdate(t *testing.T)
 	tctx := data.Ctx(ctx)
 	req := tenantports.GetSequenceConfigRequest{TenantInfo: data.Info()}
 
-	var doc *tenant.SequenceConfigDocument
+	var doc *sequenceconfig.SequenceConfigDocument
 	read := func() error {
 		var readErr error
 		doc, readErr = repo.GetByTenant(tctx, req)
@@ -33,12 +33,12 @@ func TestSequenceConfigReadsWriteOnlyOnceAndAreCachedUntilAnUpdate(t *testing.T)
 	}
 
 	require.NoError(t, read())
-	require.Len(t, doc.Configs, len(tenant.RequiredSequenceTypes()),
+	require.Len(t, doc.Configs, len(sequenceconfig.RequiredSequenceTypes()),
 		"the first read writes any missing default")
 	require.NoError(t, read())
 
 	cachetest.RequireHit(t, cached, read)
-	require.Len(t, doc.Configs, len(tenant.RequiredSequenceTypes()))
+	require.Len(t, doc.Configs, len(sequenceconfig.RequiredSequenceTypes()))
 
 	doc.Configs[0].Prefix = "CACHED"
 	updated, err := repo.UpdateByTenant(tctx, doc)

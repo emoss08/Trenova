@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -138,7 +138,7 @@ func carrierCostEventConnectionToModel(
 func carrierSettlementControlFromInput(
 	input *gqlmodel.UpdateCarrierSettlementControlInput,
 	tenantInfo pagination.TenantInfo,
-) (*tenantdomain.CarrierSettlementControl, error) {
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	apAccountID, err := gqlid.OptionalPulid(input.DefaultApAccountID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -155,7 +155,7 @@ func carrierSettlementControlFromInput(
 			"Invalid purchased transportation account",
 		)
 	}
-	return &tenantdomain.CarrierSettlementControl{
+	return &carriersettlementcontrol.CarrierSettlementControl{
 		OrganizationID:            tenantInfo.OrgID,
 		BusinessUnitID:            tenantInfo.BuID,
 		Version:                   int64(input.Version),

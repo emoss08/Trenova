@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,8 +64,8 @@ func TestOpenEscrowAccount_DefaultsInterestRateFromSettlementControl(t *testing.
 		},
 	}
 	svc.settlementControl = &fakeSettlementControlRepo{
-		getOrCreate: func(context.Context, pagination.TenantInfo) (*tenant.SettlementControl, error) {
-			return &tenant.SettlementControl{
+		getOrCreate: func(context.Context, pagination.TenantInfo) (*settlementcontrol.SettlementControl, error) {
+			return &settlementcontrol.SettlementControl{
 				DefaultEscrowInterestRate: decimal.NewFromFloat(3.25),
 			}, nil
 		},

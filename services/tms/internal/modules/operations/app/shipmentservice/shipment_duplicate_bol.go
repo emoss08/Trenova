@@ -4,14 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (s *service) checkDuplicateBOLsWithControl(
 	ctx context.Context,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	req *shipmentports.DuplicateBOLCheckRequest,
 ) error {
 	if !control.CheckForDuplicateBOLs || strings.TrimSpace(req.BOL) == "" {

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -36,7 +36,7 @@ func New(p Params) tenantports.SSOIdentityLinkRepository {
 	}
 }
 
-func links(ctx context.Context, preds ...keel.Pred) *keel.Query[*tenant.SSOIdentityLink] {
+func links(ctx context.Context, preds ...keel.Pred) *keel.Query[*sso.SSOIdentityLink] {
 	q := tenantdb.SSOIdentityLinks.Query()
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
@@ -48,8 +48,8 @@ func links(ctx context.Context, preds ...keel.Pred) *keel.Query[*tenant.SSOIdent
 func (r *repository) GetBySubject(
 	ctx context.Context,
 	req tenantports.GetSSOIdentityLinkBySubjectRequest,
-) (*tenant.SSOIdentityLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
+) (*sso.SSOIdentityLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*sso.SSOIdentityLink, error) {
 		l := tenantdb.SSOIdentityLinks
 		entity, err := links(
 			ctx,
@@ -68,8 +68,8 @@ func (r *repository) GetBySubject(
 func (r *repository) GetByUser(
 	ctx context.Context,
 	req tenantports.GetSSOIdentityLinkByUserRequest,
-) (*tenant.SSOIdentityLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
+) (*sso.SSOIdentityLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*sso.SSOIdentityLink, error) {
 		l := tenantdb.SSOIdentityLinks
 		entity, err := links(
 			ctx,
@@ -85,7 +85,7 @@ func (r *repository) GetByUser(
 	})
 }
 
-func (r *repository) Create(ctx context.Context, link *tenant.SSOIdentityLink) error {
+func (r *repository) Create(ctx context.Context, link *sso.SSOIdentityLink) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := tenantdb.SSOIdentityLinks.Create(ctx, r.db.Keel(ctx), link); err != nil {
 			r.l.Error("failed to create sso identity link", zap.Error(err))
@@ -98,7 +98,7 @@ func (r *repository) Create(ctx context.Context, link *tenant.SSOIdentityLink) e
 
 func (r *repository) RecordLogin(
 	ctx context.Context,
-	link *tenant.SSOIdentityLink,
+	link *sso.SSOIdentityLink,
 	at int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {

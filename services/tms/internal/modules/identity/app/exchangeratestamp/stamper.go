@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +66,7 @@ func New(p Params) *Stamper {
 
 func QuoteDate(
 	policy *accountingcontrolpolicyservice.Service,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	documentDate, accountingDate int64,
 ) int64 {
 	if policy == nil || control == nil {
@@ -83,7 +83,10 @@ func QuoteDate(
 	return timeutils.DayStartUTC(date)
 }
 
-func Needed(control *tenant.AccountingControl, currencyCode string) (string, string, bool) {
+func Needed(
+	control *accountingcontrol.AccountingControl,
+	currencyCode string,
+) (string, string, bool) {
 	if control == nil {
 		return "", "", false
 	}
@@ -112,7 +115,13 @@ func (s *Stamper) Stamp(ctx context.Context, req *Request) (*Stamp, error) {
 	}
 
 	date := QuoteDate(s.policy, control, req.DocumentDate, req.AccountingDate)
-	result, err := s.rates.CachedRate(ctx, req.TenantInfo, code, functional, time.Unix(date, 0).UTC())
+	result, err := s.rates.CachedRate(
+		ctx,
+		req.TenantInfo,
+		code,
+		functional,
+		time.Unix(date, 0).UTC(),
+	)
 	if err != nil && !errors.Is(err, exchangerateports.ErrExchangeRateNotCached) {
 		return nil, err
 	}

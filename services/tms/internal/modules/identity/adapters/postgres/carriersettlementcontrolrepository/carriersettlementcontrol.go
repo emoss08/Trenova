@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -42,47 +43,53 @@ func New(p Params) tenantports.CarrierSettlementControlRepository {
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.CarrierSettlementControl, error) {
-	newDefault := func() *tenant.CarrierSettlementControl {
-		return &tenant.CarrierSettlementControl{
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
+	newDefault := func() *carriersettlementcontrol.CarrierSettlementControl {
+		return &carriersettlementcontrol.CarrierSettlementControl{
 			ID:                 pulid.MustNew("carstlc_"),
 			BusinessUnitID:     tenantInfo.BuID,
 			OrganizationID:     tenantInfo.OrgID,
-			PayTrigger:         tenant.PayTriggerShipmentDelivered,
-			PayPeriodFrequency: tenant.PayPeriodFrequencyWeekly,
+			PayTrigger:         settlementcontrol.PayTriggerShipmentDelivered,
+			PayPeriodFrequency: settlementcontrol.PayPeriodFrequencyWeekly,
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
 	}
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.CarrierSettlementControl]{
-		Find: r.selectControl,
-		Create: func(ctx context.Context) error {
-			cc := tenantdb.CarrierSettlementControls
-			if _, err := cc.CreateOrSkip(
-				ctx,
-				r.db.Keel(ctx),
-				[]*tenant.CarrierSettlementControl{newDefault()},
-				cc.OrganizationID,
-				cc.BusinessUnitID,
-			); err != nil {
-				return fmt.Errorf("create default carrier settlement control: %w", err)
-			}
+	return dbtx.GetOrCreate(
+		ctx,
+		r.db,
+		dbtx.GetOrCreateSpec[*carriersettlementcontrol.CarrierSettlementControl]{
+			Find: r.selectControl,
+			Create: func(ctx context.Context) error {
+				cc := tenantdb.CarrierSettlementControls
+				if _, err := cc.CreateOrSkip(
+					ctx,
+					r.db.Keel(ctx),
+					[]*carriersettlementcontrol.CarrierSettlementControl{newDefault()},
+					cc.OrganizationID,
+					cc.BusinessUnitID,
+				); err != nil {
+					return fmt.Errorf("create default carrier settlement control: %w", err)
+				}
 
-			return nil
+				return nil
+			},
+			Default: newDefault,
+			MapError: func(err error) error {
+				return carrierSettlementControlErrors.Map(err, tenantInfo.OrgID.String())
+			},
 		},
-		Default: newDefault,
-		MapError: func(err error) error {
-			return carrierSettlementControlErrors.Map(err, tenantInfo.OrgID.String())
-		},
-	})
+	)
 }
 
-func (r *repository) selectControl(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+func (r *repository) selectControl(
+	ctx context.Context,
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+		func(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 			return tenantdb.CarrierSettlementControls.Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
 		},
@@ -91,12 +98,12 @@ func (r *repository) selectControl(ctx context.Context) (*tenant.CarrierSettleme
 
 func (r *repository) ListAutoGenerate(
 	ctx context.Context,
-) ([]*tenant.CarrierSettlementControl, error) {
+) ([]*carriersettlementcontrol.CarrierSettlementControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate carrier settlements")
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
+		func(ctx context.Context) ([]*carriersettlementcontrol.CarrierSettlementControl, error) {
 			cc := tenantdb.CarrierSettlementControls
 			items, err := cc.AllTenants().
 				Where(cc.AutoGenerateBatches.IsTrue()).
@@ -111,12 +118,12 @@ func (r *repository) ListAutoGenerate(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.CarrierSettlementControl,
-) (*tenant.CarrierSettlementControl, error) {
+	entity *carriersettlementcontrol.CarrierSettlementControl,
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+		func(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 			cc := tenantdb.CarrierSettlementControls
 			if err := cc.Save(
 				ctx,

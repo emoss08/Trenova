@@ -3,6 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -13,7 +14,7 @@ func autoTransferPolicy(
 	requirement tenant.EnforcementLevel,
 ) shipmentbillingports.ShipmentBillingReadinessPolicy {
 	return shipmentbillingports.ShipmentBillingReadinessPolicy{
-		BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
+		BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeAutomaticWhenReady,
 		ShipmentBillingRequirementEnforcement: requirement,
 		RateValidationEnforcement:             requirement,
 	}
@@ -57,7 +58,7 @@ func TestManualTransferOrganizationsNeverAutoApprove(t *testing.T) {
 	t.Parallel()
 
 	manual := shipmentbillingports.ShipmentBillingReadinessPolicy{
-		BillingQueueTransferMode:              tenant.BillingQueueTransferModeManualOnly,
+		BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeManualOnly,
 		ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		RateValidationEnforcement:             tenant.EnforcementLevelBlock,
 	}

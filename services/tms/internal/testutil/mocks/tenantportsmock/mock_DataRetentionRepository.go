@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -41,23 +41,23 @@ func (_m *MockDataRetentionRepository) EXPECT() *MockDataRetentionRepository_Exp
 }
 
 // Get provides a mock function for the type MockDataRetentionRepository
-func (_mock *MockDataRetentionRepository) Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error) {
+func (_mock *MockDataRetentionRepository) Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*dataretention.DataRetention, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *tenant.DataRetention
+	var r0 *dataretention.DataRetention
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDataRetentionRequest) (*dataretention.DataRetention, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDataRetentionRequest) *tenant.DataRetention); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDataRetentionRequest) *dataretention.DataRetention); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DataRetention)
+			r0 = ret.Get(0).(*dataretention.DataRetention)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetDataRetentionRequest) error); ok {
@@ -98,34 +98,34 @@ func (_c *MockDataRetentionRepository_Get_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Get_Call) Return(dataRetention *tenant.DataRetention, err error) *MockDataRetentionRepository_Get_Call {
+func (_c *MockDataRetentionRepository_Get_Call) Return(dataRetention *dataretention.DataRetention, err error) *MockDataRetentionRepository_Get_Call {
 	_c.Call.Return(dataRetention, err)
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)) *MockDataRetentionRepository_Get_Call {
+func (_c *MockDataRetentionRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetDataRetentionRequest) (*dataretention.DataRetention, error)) *MockDataRetentionRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function for the type MockDataRetentionRepository
-func (_mock *MockDataRetentionRepository) List(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
+func (_mock *MockDataRetentionRepository) List(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*tenant.DataRetention]
+	var r0 *pagination.ListResult[*dataretention.DataRetention]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (*pagination.ListResult[*tenant.DataRetention], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*pagination.ListResult[*dataretention.DataRetention], error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) *pagination.ListResult[*tenant.DataRetention]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *pagination.ListResult[*dataretention.DataRetention]); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*tenant.DataRetention])
+			r0 = ret.Get(0).(*pagination.ListResult[*dataretention.DataRetention])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -160,37 +160,37 @@ func (_c *MockDataRetentionRepository_List_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_List_Call) Return(listResult *pagination.ListResult[*tenant.DataRetention], err error) *MockDataRetentionRepository_List_Call {
+func (_c *MockDataRetentionRepository_List_Call) Return(listResult *pagination.ListResult[*dataretention.DataRetention], err error) *MockDataRetentionRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_List_Call) RunAndReturn(run func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error)) *MockDataRetentionRepository_List_Call {
+func (_c *MockDataRetentionRepository_List_Call) RunAndReturn(run func(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error)) *MockDataRetentionRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockDataRetentionRepository
-func (_mock *MockDataRetentionRepository) Update(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error) {
+func (_mock *MockDataRetentionRepository) Update(ctx context.Context, entity *dataretention.DataRetention) (*dataretention.DataRetention, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.DataRetention
+	var r0 *dataretention.DataRetention
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) (*tenant.DataRetention, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dataretention.DataRetention) (*dataretention.DataRetention, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) *tenant.DataRetention); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dataretention.DataRetention) *dataretention.DataRetention); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DataRetention)
+			r0 = ret.Get(0).(*dataretention.DataRetention)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.DataRetention) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *dataretention.DataRetention) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -205,20 +205,20 @@ type MockDataRetentionRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *tenant.DataRetention
+//   - entity *dataretention.DataRetention
 func (_e *MockDataRetentionRepository_Expecter) Update(ctx any, entity any) *MockDataRetentionRepository_Update_Call {
 	return &MockDataRetentionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockDataRetentionRepository_Update_Call) Run(run func(ctx context.Context, entity *tenant.DataRetention)) *MockDataRetentionRepository_Update_Call {
+func (_c *MockDataRetentionRepository_Update_Call) Run(run func(ctx context.Context, entity *dataretention.DataRetention)) *MockDataRetentionRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.DataRetention
+		var arg1 *dataretention.DataRetention
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.DataRetention)
+			arg1 = args[1].(*dataretention.DataRetention)
 		}
 		run(
 			arg0,
@@ -228,37 +228,37 @@ func (_c *MockDataRetentionRepository_Update_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Update_Call) Return(dataRetention *tenant.DataRetention, err error) *MockDataRetentionRepository_Update_Call {
+func (_c *MockDataRetentionRepository_Update_Call) Return(dataRetention *dataretention.DataRetention, err error) *MockDataRetentionRepository_Update_Call {
 	_c.Call.Return(dataRetention, err)
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error)) *MockDataRetentionRepository_Update_Call {
+func (_c *MockDataRetentionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *dataretention.DataRetention) (*dataretention.DataRetention, error)) *MockDataRetentionRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Upsert provides a mock function for the type MockDataRetentionRepository
-func (_mock *MockDataRetentionRepository) Upsert(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error) {
+func (_mock *MockDataRetentionRepository) Upsert(ctx context.Context, entity *dataretention.DataRetention) (*dataretention.DataRetention, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Upsert")
 	}
 
-	var r0 *tenant.DataRetention
+	var r0 *dataretention.DataRetention
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) (*tenant.DataRetention, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dataretention.DataRetention) (*dataretention.DataRetention, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) *tenant.DataRetention); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dataretention.DataRetention) *dataretention.DataRetention); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DataRetention)
+			r0 = ret.Get(0).(*dataretention.DataRetention)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.DataRetention) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *dataretention.DataRetention) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -273,20 +273,20 @@ type MockDataRetentionRepository_Upsert_Call struct {
 
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *tenant.DataRetention
+//   - entity *dataretention.DataRetention
 func (_e *MockDataRetentionRepository_Expecter) Upsert(ctx any, entity any) *MockDataRetentionRepository_Upsert_Call {
 	return &MockDataRetentionRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 
-func (_c *MockDataRetentionRepository_Upsert_Call) Run(run func(ctx context.Context, entity *tenant.DataRetention)) *MockDataRetentionRepository_Upsert_Call {
+func (_c *MockDataRetentionRepository_Upsert_Call) Run(run func(ctx context.Context, entity *dataretention.DataRetention)) *MockDataRetentionRepository_Upsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.DataRetention
+		var arg1 *dataretention.DataRetention
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.DataRetention)
+			arg1 = args[1].(*dataretention.DataRetention)
 		}
 		run(
 			arg0,
@@ -296,12 +296,12 @@ func (_c *MockDataRetentionRepository_Upsert_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Upsert_Call) Return(dataRetention *tenant.DataRetention, err error) *MockDataRetentionRepository_Upsert_Call {
+func (_c *MockDataRetentionRepository_Upsert_Call) Return(dataRetention *dataretention.DataRetention, err error) *MockDataRetentionRepository_Upsert_Call {
 	_c.Call.Return(dataRetention, err)
 	return _c
 }
 
-func (_c *MockDataRetentionRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error)) *MockDataRetentionRepository_Upsert_Call {
+func (_c *MockDataRetentionRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, entity *dataretention.DataRetention) (*dataretention.DataRetention, error)) *MockDataRetentionRepository_Upsert_Call {
 	_c.Call.Return(run)
 	return _c
 }

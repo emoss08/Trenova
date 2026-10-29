@@ -2,10 +2,6 @@ package bankreceiptservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
@@ -13,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -154,7 +154,7 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: true}, nil).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: true}, nil).
 		Once()
 	svc := &Service{
 		db:             passthroughDB{},
@@ -215,7 +215,7 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
 		Once()
 	svc := &Service{
 		db:             passthroughDB{},
@@ -287,7 +287,7 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
 		Once()
 	svc := &Service{
 		db:             passthroughDB{},
@@ -401,11 +401,14 @@ func TestPaymentsOfReceiptAmount_AsksForPaymentsOfTheReceiptsAmountUpToTheLimit(
 		Return([]*customerpayment.Payment{payment}, nil).
 		Once()
 
-	found, err := svc.PaymentsOfReceiptAmount(t.Context(), &bankreceiptports.ReceiptAmountPaymentsRequest{
-		ReceiptID:  receipt.ID,
-		Limit:      11,
-		TenantInfo: tenant,
-	})
+	found, err := svc.PaymentsOfReceiptAmount(
+		t.Context(),
+		&bankreceiptports.ReceiptAmountPaymentsRequest{
+			ReceiptID:  receipt.ID,
+			Limit:      11,
+			TenantInfo: tenant,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []*customerpayment.Payment{payment}, found,
 		"every payment of the amount, whatever its reference, so the caller judges the references")

@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func (_m *MockLocationCodeGenerator) EXPECT() *MockLocationCodeGenerator_Expecte
 }
 
 // BuildPrefix provides a mock function for the type MockLocationCodeGenerator
-func (_mock *MockLocationCodeGenerator) BuildPrefix(input tenantports.LocationCodeInput, strategy *tenant.LocationCodeStrategy) (string, error) {
+func (_mock *MockLocationCodeGenerator) BuildPrefix(input tenantports.LocationCodeInput, strategy *sequenceconfig.LocationCodeStrategy) (string, error) {
 	ret := _mock.Called(input, strategy)
 
 	if len(ret) == 0 {
@@ -49,15 +49,15 @@ func (_mock *MockLocationCodeGenerator) BuildPrefix(input tenantports.LocationCo
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(tenantports.LocationCodeInput, *tenant.LocationCodeStrategy) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(tenantports.LocationCodeInput, *sequenceconfig.LocationCodeStrategy) (string, error)); ok {
 		return returnFunc(input, strategy)
 	}
-	if returnFunc, ok := ret.Get(0).(func(tenantports.LocationCodeInput, *tenant.LocationCodeStrategy) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(tenantports.LocationCodeInput, *sequenceconfig.LocationCodeStrategy) string); ok {
 		r0 = returnFunc(input, strategy)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(tenantports.LocationCodeInput, *tenant.LocationCodeStrategy) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(tenantports.LocationCodeInput, *sequenceconfig.LocationCodeStrategy) error); ok {
 		r1 = returnFunc(input, strategy)
 	} else {
 		r1 = ret.Error(1)
@@ -72,20 +72,20 @@ type MockLocationCodeGenerator_BuildPrefix_Call struct {
 
 // BuildPrefix is a helper method to define mock.On call
 //   - input services.LocationCodeInput
-//   - strategy *tenant.LocationCodeStrategy
+//   - strategy *sequenceconfig.LocationCodeStrategy
 func (_e *MockLocationCodeGenerator_Expecter) BuildPrefix(input any, strategy any) *MockLocationCodeGenerator_BuildPrefix_Call {
 	return &MockLocationCodeGenerator_BuildPrefix_Call{Call: _e.mock.On("BuildPrefix", input, strategy)}
 }
 
-func (_c *MockLocationCodeGenerator_BuildPrefix_Call) Run(run func(input tenantports.LocationCodeInput, strategy *tenant.LocationCodeStrategy)) *MockLocationCodeGenerator_BuildPrefix_Call {
+func (_c *MockLocationCodeGenerator_BuildPrefix_Call) Run(run func(input tenantports.LocationCodeInput, strategy *sequenceconfig.LocationCodeStrategy)) *MockLocationCodeGenerator_BuildPrefix_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 tenantports.LocationCodeInput
 		if args[0] != nil {
 			arg0 = args[0].(tenantports.LocationCodeInput)
 		}
-		var arg1 *tenant.LocationCodeStrategy
+		var arg1 *sequenceconfig.LocationCodeStrategy
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.LocationCodeStrategy)
+			arg1 = args[1].(*sequenceconfig.LocationCodeStrategy)
 		}
 		run(
 			arg0,
@@ -100,7 +100,7 @@ func (_c *MockLocationCodeGenerator_BuildPrefix_Call) Return(s string, err error
 	return _c
 }
 
-func (_c *MockLocationCodeGenerator_BuildPrefix_Call) RunAndReturn(run func(input tenantports.LocationCodeInput, strategy *tenant.LocationCodeStrategy) (string, error)) *MockLocationCodeGenerator_BuildPrefix_Call {
+func (_c *MockLocationCodeGenerator_BuildPrefix_Call) RunAndReturn(run func(input tenantports.LocationCodeInput, strategy *sequenceconfig.LocationCodeStrategy) (string, error)) *MockLocationCodeGenerator_BuildPrefix_Call {
 	_c.Call.Return(run)
 	return _c
 }

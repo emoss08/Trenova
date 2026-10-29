@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/shopspring/decimal"
@@ -38,7 +38,10 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 		HireDate:  utcDay(2026, time.January, 5),
 		Loc:       time.UTC,
 		AsOf:      utcDay(2026, time.March, 1),
-		PayPeriod: &PayPeriodSpec{Frequency: tenant.PayPeriodFrequencyBiweekly, EndDayOfWeek: 6},
+		PayPeriod: &PayPeriodSpec{
+			Frequency:    settlementcontrol.PayPeriodFrequencyBiweekly,
+			EndDayOfWeek: 6,
+		},
 	}
 
 	plan := Schedule(in)
@@ -78,7 +81,10 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 	assert.Empty(t, Schedule(in), "no settlement calendar, nothing to post")
 
 	weekly := in
-	weekly.PayPeriod = &PayPeriodSpec{Frequency: tenant.PayPeriodFrequencyWeekly, EndDayOfWeek: 5}
+	weekly.PayPeriod = &PayPeriodSpec{
+		Frequency:    settlementcontrol.PayPeriodFrequencyWeekly,
+		EndDayOfWeek: 5,
+	}
 	weekly.LastAccrualKey = ""
 	weeklyPlan := Schedule(weekly)
 	require.Greater(t, len(weeklyPlan), len(plan))

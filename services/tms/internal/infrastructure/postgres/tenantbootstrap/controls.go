@@ -8,7 +8,12 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
@@ -21,19 +26,19 @@ func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 
 	org, bu := scope.OrganizationID, scope.BusinessUnitID
 
-	accountingControl := tenant.NewDefaultAccountingControl(org, bu)
+	accountingControl := accountingcontrol.NewDefaultAccountingControl(org, bu)
 	accountingControl.ID = pulid.MustNew("ac_")
 	if err := tenantdb.AccountingControls.Create(ctx, db, accountingControl); err != nil {
 		return fmt.Errorf("create accounting control: %w", err)
 	}
 
-	billingControl := tenant.NewDefaultBillingControl(org, bu)
+	billingControl := billingcontrol.NewDefaultBillingControl(org, bu)
 	billingControl.ID = pulid.MustNew("bc_")
 	if err := tenantdb.BillingControls.Create(ctx, db, billingControl); err != nil {
 		return fmt.Errorf("create billing control: %w", err)
 	}
 
-	invoiceAdjustmentControl := tenant.NewDefaultInvoiceAdjustmentControl(org, bu)
+	invoiceAdjustmentControl := invoiceadjustmentcontrol.NewDefaultInvoiceAdjustmentControl(org, bu)
 	invoiceAdjustmentControl.ID = pulid.MustNew("iac_")
 	if err := tenantdb.InvoiceAdjustmentControls.Create(
 		ctx,
@@ -51,7 +56,7 @@ func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 		return fmt.Errorf("create dispatch control: %w", err)
 	}
 
-	shipmentControl := tenant.NewDefaultShipmentControl(org, bu)
+	shipmentControl := shipmentcontrol.NewDefaultShipmentControl(org, bu)
 	shipmentControl.ID = pulid.MustNew("sc_")
 	if err := tenantdb.ShipmentControls.Create(ctx, db, shipmentControl); err != nil {
 		return fmt.Errorf("create shipment control: %w", err)
@@ -61,7 +66,10 @@ func CreateControls(ctx context.Context, db *keel.DB, scope Scope) error {
 		return err
 	}
 
-	documentControl := tenant.NewDefaultDocumentControl(scope.OrganizationID, scope.BusinessUnitID)
+	documentControl := documentcontrol.NewDefaultDocumentControl(
+		scope.OrganizationID,
+		scope.BusinessUnitID,
+	)
 	if err := tenantdb.DocumentControls.Create(ctx, db, documentControl); err != nil {
 		return fmt.Errorf("create document control: %w", err)
 	}
@@ -116,18 +124,18 @@ func createCostingControl(ctx context.Context, db *keel.DB, scope Scope, now int
 	return nil
 }
 
-var defaultSequenceTypes = []tenant.SequenceType{
-	tenant.SequenceTypeProNumber,
-	tenant.SequenceTypeConsolidation,
-	tenant.SequenceTypeInvoice,
-	tenant.SequenceTypeWorkOrder,
-	tenant.SequenceTypeJournalBatch,
-	tenant.SequenceTypeJournalEntry,
-	tenant.SequenceTypeManualJournalRequest,
+var defaultSequenceTypes = []sequenceconfig.SequenceType{
+	sequenceconfig.SequenceTypeProNumber,
+	sequenceconfig.SequenceTypeConsolidation,
+	sequenceconfig.SequenceTypeInvoice,
+	sequenceconfig.SequenceTypeWorkOrder,
+	sequenceconfig.SequenceTypeJournalBatch,
+	sequenceconfig.SequenceTypeJournalEntry,
+	sequenceconfig.SequenceTypeManualJournalRequest,
 }
 
-func DefaultSequenceTypes() []tenant.SequenceType {
-	types := make([]tenant.SequenceType, len(defaultSequenceTypes))
+func DefaultSequenceTypes() []sequenceconfig.SequenceType {
+	types := make([]sequenceconfig.SequenceType, len(defaultSequenceTypes))
 	copy(types, defaultSequenceTypes)
 	return types
 }
@@ -136,9 +144,9 @@ func CreateSequences(ctx context.Context, db *keel.DB, scope Scope) error {
 	now := scope.now()
 	year, month := sequencePeriod(now)
 
-	sequences := make([]*tenant.Sequence, 0, len(defaultSequenceTypes))
+	sequences := make([]*sequenceconfig.Sequence, 0, len(defaultSequenceTypes))
 	for _, sequenceType := range defaultSequenceTypes {
-		sequences = append(sequences, &tenant.Sequence{
+		sequences = append(sequences, &sequenceconfig.Sequence{
 			ID:             pulid.MustNew("seq_"),
 			SequenceType:   sequenceType,
 			OrganizationID: scope.OrganizationID,

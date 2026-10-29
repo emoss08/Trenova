@@ -8,13 +8,6 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -25,17 +18,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerpaymentservice"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/shopspring/decimal"
@@ -68,29 +66,33 @@ func TestImportBatchPersistsMixedOutcomesAndSupportsReads(t *testing.T) {
 	createPostedCustomerPayment(t, env, "BANK-MATCH-1", 10000)
 
 	actor := testutil.NewSessionActor(env.user.ID, env.org.ID, env.org.BusinessUnitID)
-	result, err := env.batchService.Import(env.ctx, &bankreceiptbatchports.ImportBankReceiptBatchRequest{
-		Source:    "csv",
-		Reference: "BATCH-MIXED-1",
-		Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
-			{
-				ReceiptDate:     env.now.Unix(),
-				AmountMinor:     10000,
-				ReferenceNumber: "BANK-MATCH-1",
-				Memo:            "auto-match",
+	result, err := env.batchService.Import(
+		env.ctx,
+		&bankreceiptbatchports.ImportBankReceiptBatchRequest{
+			Source:    "csv",
+			Reference: "BATCH-MIXED-1",
+			Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
+				{
+					ReceiptDate:     env.now.Unix(),
+					AmountMinor:     10000,
+					ReferenceNumber: "BANK-MATCH-1",
+					Memo:            "auto-match",
+				},
+				{
+					ReceiptDate:     env.now.Add(time.Hour).Unix(),
+					AmountMinor:     5000,
+					ReferenceNumber: "NO-MATCH-1",
+					Memo:            "exception",
+				},
 			},
-			{
-				ReceiptDate:     env.now.Add(time.Hour).Unix(),
-				AmountMinor:     5000,
-				ReferenceNumber: "NO-MATCH-1",
-				Memo:            "exception",
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  env.org.ID,
+				BuID:   env.org.BusinessUnitID,
+				UserID: env.user.ID,
 			},
 		},
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  env.org.ID,
-			BuID:   env.org.BusinessUnitID,
-			UserID: env.user.ID,
-		},
-	}, actor)
+		actor,
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -149,30 +151,35 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 	createPostedCustomerPayment(t, env, "ROLLBACK-MATCH-1", 10000)
 
 	actor := testutil.NewSessionActor(env.user.ID, env.org.ID, env.org.BusinessUnitID)
-	result, err := env.batchService.Import(env.ctx, &bankreceiptbatchports.ImportBankReceiptBatchRequest{
-		Source:    "csv",
-		Reference: "BATCH-ROLLBACK-1",
-		Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
-			{
-				ReceiptDate:     env.now.Unix(),
-				AmountMinor:     10000,
-				ReferenceNumber: "ROLLBACK-MATCH-1",
-				Memo:            "should rollback",
+	result, err := env.batchService.Import(
+		env.ctx,
+		&bankreceiptbatchports.ImportBankReceiptBatchRequest{
+			Source:    "csv",
+			Reference: "BATCH-ROLLBACK-1",
+			Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
+				{
+					ReceiptDate:     env.now.Unix(),
+					AmountMinor:     10000,
+					ReferenceNumber: "ROLLBACK-MATCH-1",
+					Memo:            "should rollback",
+				},
+				nil,
 			},
-			nil,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  env.org.ID,
+				BuID:   env.org.BusinessUnitID,
+				UserID: env.user.ID,
+			},
 		},
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  env.org.ID,
-			BuID:   env.org.BusinessUnitID,
-			UserID: env.user.ID,
-		},
-	}, actor)
+		actor,
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
 
 	batches := bankreceiptbatchdb.BankReceiptBatches
-	batchCount, err := batches.Where(batches.Reference.Eq("BATCH-ROLLBACK-1")).Count(env.ctx, env.db)
+	batchCount, err := batches.Where(batches.Reference.Eq("BATCH-ROLLBACK-1")).
+		Count(env.ctx, env.db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), batchCount)
 
@@ -213,7 +220,7 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
-	control.ReconciliationMode = tenant.ReconciliationModeWarnOnly
+	control.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 

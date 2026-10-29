@@ -9,14 +9,14 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -419,7 +419,7 @@ func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t
 	svc := tenantportsmock.NewMockAuthService(t)
 	h, r := newTestHandler(svc)
 	loginState := &tenantports.SSOLoginState{
-		Provider:         tenant.SSOProviderOkta,
+		Provider:         sso.SSOProviderOkta,
 		OrganizationSlug: "acme",
 		ReturnTo:         "https://app.example.test/",
 	}
@@ -436,14 +436,21 @@ func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t
 		RedirectTo: loginState.ReturnTo,
 	}, nil)
 
-	r.GET("/sso/okta/callback", h.ssoCallback(tenant.SSOProviderOkta))
+	r.GET("/sso/okta/callback", h.ssoCallback(sso.SSOProviderOkta))
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sso/okta/callback?state=state-1&code=code-1", nil))
+	r.ServeHTTP(
+		w,
+		httptest.NewRequest(http.MethodGet, "/sso/okta/callback?state=state-1&code=code-1", nil),
+	)
 
 	assert.Equal(t, http.StatusFound, w.Code)
 	location, err := url.Parse(w.Header().Get("Location"))
 	require.NoError(t, err)
-	assert.Equal(t, "https://app.example.test/login/acme", location.Scheme+"://"+location.Host+location.Path)
+	assert.Equal(
+		t,
+		"https://app.example.test/login/acme",
+		location.Scheme+"://"+location.Host+location.Path,
+	)
 	assert.Empty(t, location.RawQuery)
 	fragment, err := url.ParseQuery(location.EscapedFragment())
 	require.NoError(t, err)

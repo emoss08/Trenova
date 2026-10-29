@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -21,10 +21,14 @@ func TestApplyCreditBalancePolicy(t *testing.T) {
 		SettlementStatus: invoice.SettlementStatusPaid,
 	}
 
-	svc.applyCreditBalancePolicy(preview, entity, &tenant.InvoiceAdjustmentControl{
-		CustomerCreditBalancePolicy: tenant.CustomerCreditBalancePolicyAllowUnappliedCredit,
-		OverCreditPolicy:            tenant.OverCreditPolicyAllowWithApproval,
-	})
+	svc.applyCreditBalancePolicy(
+		preview,
+		entity,
+		&invoiceadjustmentcontrol.InvoiceAdjustmentControl{
+			CustomerCreditBalancePolicy: invoiceadjustmentcontrol.CustomerCreditBalancePolicyAllowUnappliedCredit,
+			OverCreditPolicy:            invoiceadjustmentcontrol.OverCreditPolicyAllowWithApproval,
+		},
+	)
 
 	assert.True(t, preview.RequiresApproval)
 	assert.True(t, preview.RequiresReconciliationException)
@@ -41,10 +45,14 @@ func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
 		SettlementStatus: invoice.SettlementStatusUnpaid,
 	}
 
-	svc.applyCreditBalancePolicy(preview, entity, &tenant.InvoiceAdjustmentControl{
-		CustomerCreditBalancePolicy: tenant.CustomerCreditBalancePolicyDisallow,
-		OverCreditPolicy:            tenant.OverCreditPolicyBlock,
-	})
+	svc.applyCreditBalancePolicy(
+		preview,
+		entity,
+		&invoiceadjustmentcontrol.InvoiceAdjustmentControl{
+			CustomerCreditBalancePolicy: invoiceadjustmentcontrol.CustomerCreditBalancePolicyDisallow,
+			OverCreditPolicy:            invoiceadjustmentcontrol.OverCreditPolicyBlock,
+		},
+	)
 
 	assert.Contains(t, preview.Errors, "creditTotalAmount")
 }
@@ -58,8 +66,8 @@ func TestApplyReplacementReviewPolicy(t *testing.T) {
 		RerateVariancePercent: decimal.NewFromInt(12),
 	}
 
-	svc.applyReplacementReviewPolicy(preview, &tenant.InvoiceAdjustmentControl{
-		ReplacementInvoiceReviewPolicy: tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange,
+	svc.applyReplacementReviewPolicy(preview, &invoiceadjustmentcontrol.InvoiceAdjustmentControl{
+		ReplacementInvoiceReviewPolicy: invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange,
 		RerateVarianceTolerancePercent: decimal.NewFromInt(5),
 	})
 
@@ -75,9 +83,9 @@ func TestValidateSettlementPolicy(t *testing.T) {
 	svc.validateSettlementPolicy(&invoice.Invoice{
 		SettlementStatus: invoice.SettlementStatusPartiallyPaid,
 		DisputeStatus:    invoice.DisputeStatusDisputed,
-	}, &tenant.InvoiceAdjustmentControl{
-		PartiallyPaidInvoiceAdjustmentPolicy: tenant.AdjustmentEligibilityAllowWithApproval,
-		DisputedInvoiceAdjustmentPolicy:      tenant.AdjustmentEligibilityDisallow,
+	}, &invoiceadjustmentcontrol.InvoiceAdjustmentControl{
+		PartiallyPaidInvoiceAdjustmentPolicy: invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval,
+		DisputedInvoiceAdjustmentPolicy:      invoiceadjustmentcontrol.AdjustmentEligibilityDisallow,
 	}, preview)
 
 	assert.True(t, preview.RequiresApproval)

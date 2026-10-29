@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -552,7 +552,7 @@ func TestPurgeExpiredRuns_UsesTheCorrectionRetention(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	w.retention.settings = &tenant.DataRetention{AICorrectionRetentionPeriod: 90}
+	w.retention.settings = &dataretention.DataRetention{AICorrectionRetentionPeriod: 90}
 
 	purged, err := w.svc.PurgeExpiredRuns(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: testTenant(),

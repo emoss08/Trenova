@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
@@ -208,17 +208,21 @@ func (r *payablesRepository) driverSettlement(
 func (r *payablesRepository) accountingControl(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) (*tenant.AccountingControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.AccountingControl, error) {
-		control, err := tenantdb.AccountingControls.Query().First(ctx, r.db.Keel(ctx))
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // a tenant without an accounting control has no default accounts
+) (*accountingcontrol.AccountingControl, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
+			control, err := tenantdb.AccountingControls.Query().First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil //nolint:nilnil // a tenant without an accounting control has no default accounts
+				}
+				return nil, fmt.Errorf("load accounting control: %w", err)
 			}
-			return nil, fmt.Errorf("load accounting control: %w", err)
-		}
-		return control, nil
-	})
+			return control, nil
+		},
+	)
 }
 
 func (r *payablesRepository) journalLines(
@@ -272,7 +276,7 @@ func (r *payablesRepository) journalLines(
 func carrierBankAccount(
 	paid []accountingpayablesports.PayableJournalLine,
 	entity *carriersettlement.CarrierSettlement,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) pulid.ID {
 	payable := pulid.ConvertFromPtr(entity.PostedAPAccountID)
 	for idx := range paid {
@@ -287,7 +291,7 @@ func carrierBankAccount(
 }
 
 func defaultAccounts(
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) accountingpayablesports.PayableDefaultAccounts {
 	if control == nil {
 		return accountingpayablesports.PayableDefaultAccounts{}

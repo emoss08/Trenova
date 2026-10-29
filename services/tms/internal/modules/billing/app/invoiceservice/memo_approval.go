@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +22,10 @@ const memoRaisedByKey = "raisedById"
 // it, and where the organization requires a separate approver, whoever raised
 // it cannot post it.
 
-func memoNeedsApproval(control *tenant.InvoiceAdjustmentControl, entity *invoice.Invoice) bool {
+func memoNeedsApproval(
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	entity *invoice.Invoice,
+) bool {
 	if control == nil || entity == nil ||
 		entity.Scope != invoice.ScopeMemo ||
 		entity.BillType != billingqueue.BillTypeCreditMemo {
@@ -30,9 +33,9 @@ func memoNeedsApproval(control *tenant.InvoiceAdjustmentControl, entity *invoice
 	}
 
 	switch control.StandardAdjustmentApprovalPolicy { //nolint:exhaustive // None needs nothing
-	case tenant.ApprovalPolicyAlways:
+	case invoiceadjustmentcontrol.ApprovalPolicyAlways:
 		return true
-	case tenant.ApprovalPolicyAmountThreshold:
+	case invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold:
 		return entity.TotalAmount.Abs().
 			GreaterThanOrEqual(control.StandardAdjustmentApprovalThreshold)
 	default:
@@ -43,7 +46,7 @@ func memoNeedsApproval(control *tenant.InvoiceAdjustmentControl, entity *invoice
 func (s *Service) adjustmentApprovalControl(
 	ctx context.Context,
 	orgID pulid.ID,
-) (*tenant.InvoiceAdjustmentControl, error) {
+) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	if s.adjustmentCtrlRepo == nil {
 		return nil, nil //nolint:nilnil // adjustment controls are not wired in this process
 	}

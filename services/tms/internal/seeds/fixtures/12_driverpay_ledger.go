@@ -5,20 +5,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -222,10 +220,13 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		return fmt.Errorf("ensure pay codes: %w", err)
 	}
 
-	workers, err := workerdb.Workers.AllTenants().Pick(workerdb.Workers.ID, workerdb.Workers.Email).Where(
-		workerdb.Workers.OrganizationID.Eq(orgID),
-		workerdb.Workers.BusinessUnitID.Eq(buID),
-	).All(ctx, db)
+	workers, err := workerdb.Workers.AllTenants().
+		Pick(workerdb.Workers.ID, workerdb.Workers.Email).
+		Where(
+			workerdb.Workers.OrganizationID.Eq(orgID),
+			workerdb.Workers.BusinessUnitID.Eq(buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get workers: %w", err)
 	}
@@ -379,13 +380,17 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 	adminID pulid.ID,
 	accounts map[string]pulid.ID,
 ) error {
-	settlements, err := driversettlementdb.Settlements.AllTenants().Load(driversettlementdb.Settlements.Lines()).Where(
-		driversettlementdb.Settlements.OrganizationID.Eq(orgID),
-		driversettlementdb.Settlements.BusinessUnitID.Eq(buID),
-		driversettlementdb.Settlements.Status.In(driversettlement.StatusPosted,
-			driversettlement.StatusPaid),
-		driversettlementdb.Settlements.PostedJournalBatchID.IsNull(),
-	).Order(driversettlementdb.Settlements.SettlementNumber.Asc()).All(ctx, db)
+	settlements, err := driversettlementdb.Settlements.AllTenants().
+		Load(driversettlementdb.Settlements.Lines()).
+		Where(
+			driversettlementdb.Settlements.OrganizationID.Eq(orgID),
+			driversettlementdb.Settlements.BusinessUnitID.Eq(buID),
+			driversettlementdb.Settlements.Status.In(driversettlement.StatusPosted,
+				driversettlement.StatusPaid),
+			driversettlementdb.Settlements.PostedJournalBatchID.IsNull(),
+		).
+		Order(driversettlementdb.Settlements.SettlementNumber.Asc()).
+		All(ctx, db)
 	if err != nil {
 		return fmt.Errorf("get unposted settlements: %w", err)
 	}
@@ -436,7 +441,7 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 			sourceType:     "DriverSettlement",
 			sourceID:       settlement.ID.String(),
 			documentNumber: settlement.SettlementNumber,
-			event:          tenant.JournalSourceEventDriverSettlementPosted.String(),
+			event:          accountingcontrol.JournalSourceEventDriverSettlementPosted.String(),
 			idempotencyKey: "driver-settlement-posted:" + settlement.ID.String(),
 			legs:           journalLegs,
 		})

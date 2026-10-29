@@ -4,14 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -23,6 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,7 +92,7 @@ func validatorWithProfile(
 	t *testing.T,
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) *Validator {
 	t.Helper()
 
@@ -103,7 +103,7 @@ func validatorWithProfileAndEquipment(
 	t *testing.T,
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
 ) *Validator {
 	t.Helper()
@@ -121,10 +121,12 @@ func validatorWithProfileAndEquipment(
 
 	return &Validator{
 		validator: newValidatorBuilder(validatorDeps{
-			ControlRepo:       controlRepo,
-			CustomerRepo:      operationstest.NewCustomerRepository(t),
-			CommodityRepo:     commodityportsmock.NewMockCommodityRepository(t),
-			HazmatRuleRepo:    hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+			ControlRepo:   controlRepo,
+			CustomerRepo:  operationstest.NewCustomerRepository(t),
+			CommodityRepo: commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(
+				t,
+			),
 			ShipmentRepo:      shipmentportsmock.NewMockShipmentRepository(t),
 			EquipmentTypeRepo: equipmentTypeRepo,
 			ProfileService:    &stubModeProfileService{policy: policy},
@@ -143,7 +145,7 @@ func TestCapabilityPolicy_BlockEnforcementFailsValidation(t *testing.T) {
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelBlock, 80000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -166,7 +168,7 @@ func TestCapabilityPolicy_WarnEnforcementPassesWithAdvisory(t *testing.T) {
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelWarn, 80000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -191,7 +193,7 @@ func TestCapabilityPolicy_RequireReviewProducesReviewAdvisory(t *testing.T) {
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelRequireReview, 80000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -212,7 +214,7 @@ func TestCapabilityPolicy_IgnoreEnforcementSkipsRuleEntirely(t *testing.T) {
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelIgnore, 80000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -232,7 +234,7 @@ func TestCapabilityPolicy_ProfileParameterOverridesShipmentControlLimit(t *testi
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelBlock, 100000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -265,7 +267,7 @@ func TestCapabilityPolicy_TemperatureRuleRequiresRangeWhenCapabilityDeclared(t *
 		},
 	}
 
-	v := validatorWithProfile(t, entity, policy, &tenant.ShipmentControl{
+	v := validatorWithProfile(t, entity, policy, &shipmentcontrol.ShipmentControl{
 		MaxShipmentWeightLimit: 80000,
 	})
 
@@ -289,7 +291,7 @@ func TestCapabilityPolicy_NoProfileFallsBackToShipmentControl(t *testing.T) {
 	weight := int64(90000)
 	entity.Weight = &weight
 
-	v := validatorWithProfile(t, entity, nil, &tenant.ShipmentControl{
+	v := validatorWithProfile(t, entity, nil, &shipmentcontrol.ShipmentControl{
 		MaxShipmentWeightLimit: 80000,
 	})
 
@@ -371,7 +373,7 @@ func TestCapabilityPolicy_DimensionsRequiredBlocksLinesMissingDimensions(t *test
 		t,
 		entity,
 		dimensionalPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyDimensionsRequired),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -396,7 +398,7 @@ func TestCapabilityPolicy_DimensionsRequiredPassesWhenAllLinesDimensioned(t *tes
 		t,
 		entity,
 		dimensionalPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyDimensionsRequired),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -417,7 +419,7 @@ func TestCapabilityPolicy_DimensionsRequiredWarnRecordsAdvisory(t *testing.T) {
 		t,
 		entity,
 		dimensionalPolicy(tenant.EnforcementLevelWarn, modeprofile.RuleKeyDimensionsRequired),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -444,7 +446,7 @@ func TestCapabilityPolicy_DimensionsNotCheckedWithoutCapability(t *testing.T) {
 		t,
 		entity,
 		policyWithWeightRule(tenant.EnforcementLevelBlock, 80000),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -489,7 +491,7 @@ func TestCapabilityPolicy_DeckFitBlocksOverhangBeyondAllowance(t *testing.T) {
 			tenant.EnforcementLevelBlock,
 			modeprofile.RuleKeyEnvelopeExceedsEquipment,
 		),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 		equipmentRepoWithDeck(t, entity, 53),
 	)
 
@@ -516,7 +518,7 @@ func TestCapabilityPolicy_DeckFitAllowsOverhangWithinAllowance(t *testing.T) {
 			tenant.EnforcementLevelBlock,
 			modeprofile.RuleKeyEnvelopeExceedsEquipment,
 		),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 		equipmentRepoWithDeck(t, entity, 53),
 	)
 
@@ -539,7 +541,7 @@ func TestCapabilityPolicy_DeckFitSkippedWithoutEnvelope(t *testing.T) {
 			tenant.EnforcementLevelBlock,
 			modeprofile.RuleKeyEnvelopeExceedsEquipment,
 		),
-		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000},
 		equipmentRepoWithDeck(t, entity, 53),
 	)
 
@@ -660,15 +662,17 @@ func validatorWithPermits(
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000}, nil).
+		Return(&shipmentcontrol.ShipmentControl{MaxShipmentWeightLimit: 80000}, nil).
 		Maybe()
 
 	return &Validator{
 		validator: newValidatorBuilder(validatorDeps{
-			ControlRepo:    controlRepo,
-			CustomerRepo:   operationstest.NewCustomerRepository(t),
-			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
-			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+			ControlRepo:   controlRepo,
+			CustomerRepo:  operationstest.NewCustomerRepository(t),
+			CommodityRepo: commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(
+				t,
+			),
 			ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
 			ProfileService: &stubModeProfileService{policy: policy},
 			PermitService:  &stubPermitService{assessment: assessment},

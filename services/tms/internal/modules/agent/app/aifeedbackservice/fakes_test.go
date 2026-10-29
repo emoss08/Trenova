@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -241,12 +242,12 @@ func (f *fakeMemories) ListSuggestionContext(
 	return f.existing, nil
 }
 
-type fakeRetention struct{ row *tenant.DataRetention }
+type fakeRetention struct{ row *dataretention.DataRetention }
 
 func (f *fakeRetention) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	if f.row == nil {
 		return nil, errortypes.NewNotFoundError("Data Retention not found")
 	}

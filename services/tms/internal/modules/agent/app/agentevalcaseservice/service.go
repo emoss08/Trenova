@@ -18,9 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -118,7 +118,7 @@ type feedbackStore interface {
 }
 
 type retentionReader interface {
-	List(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error)
+	List(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error)
 }
 
 type Params struct {

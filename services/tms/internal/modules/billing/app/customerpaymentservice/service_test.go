@@ -4,12 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
@@ -18,11 +12,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -78,8 +77,8 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 		invoiceports.GetInvoiceByIDRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
-		&tenant.AccountingControl{
-			CurrencyMode:                  tenant.CurrencyModeSingleCurrency,
+		&accountingcontrol.AccountingControl{
+			CurrencyMode:                  accountingcontrol.CurrencyModeSingleCurrency,
 			FunctionalCurrencyCode:        "USD",
 			DefaultCashAccountID:          pulid.MustNew("gla_"),
 			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
@@ -150,7 +149,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisCash, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnCashReceipt, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultRevenueAccountID: pulid.MustNew("gla_")}, nil)
+		Return(&accountingcontrol.AccountingControl{AccountingBasis: accountingcontrol.AccountingBasisCash, RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnCashReceipt, JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultRevenueAccountID: pulid.MustNew("gla_")}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
@@ -201,7 +200,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	assert.Equal(t, int64(10000), lastPosting.Lines[1].CreditAmount)
 	assert.Equal(
 		t,
-		tenant.JournalSourceEventCustomerPaymentPosted.String(),
+		accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 		lastPosting.SourceEventType,
 	)
 	assert.Equal(t, invoice.SettlementStatusPaid, storedInvoice.SettlementStatus)
@@ -241,7 +240,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
+		Return(&accountingcontrol.AccountingControl{AccountingBasis: accountingcontrol.AccountingBasisAccrual, RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost, JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
@@ -369,7 +368,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
+		Return(&accountingcontrol.AccountingControl{AccountingBasis: accountingcontrol.AccountingBasisAccrual, RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost, JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic, DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 200}).
@@ -491,7 +490,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
+		Return(&accountingcontrol.AccountingControl{AccountingBasis: accountingcontrol.AccountingBasisAccrual, RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost, JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 300}).
@@ -534,7 +533,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 	assert.Equal(t, customerpayment.StatusReversed, reversed.Status)
 	assert.Equal(
 		t,
-		tenant.JournalSourceEventCustomerPaymentReversed.String(),
+		accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
 		lastPosting.SourceEventType,
 	)
 	require.Len(t, lastPosting.Lines, 3)
@@ -604,7 +603,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_"), DefaultWriteOffAccountID: pulid.MustNew("gla_")}, nil)
+		Return(&accountingcontrol.AccountingControl{AccountingBasis: accountingcontrol.AccountingBasisAccrual, RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost, JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_"), DefaultWriteOffAccountID: pulid.MustNew("gla_")}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).

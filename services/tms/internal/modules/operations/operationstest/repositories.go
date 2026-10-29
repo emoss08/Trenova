@@ -3,7 +3,7 @@ package operationstest
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -57,7 +57,7 @@ func NewControlRepository(t testing.TB) *tenantportsmock.MockShipmentControlRepo
 	repo := tenantportsmock.NewMockShipmentControlRepository(t)
 	repo.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AllowMoveRemovals:      true,
 			MaxShipmentWeightLimit: 1000000,
 		}, nil).

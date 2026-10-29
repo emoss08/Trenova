@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -410,13 +410,13 @@ func (f *providerStore) GetByID(
 
 type retentionStore struct {
 	tenantports.DataRetentionRepository
-	settings *tenant.DataRetention
+	settings *dataretention.DataRetention
 }
 
 func (f *retentionStore) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	if f.settings == nil {
 		return nil, errortypes.NewNotFoundError("data retention not found")
 	}

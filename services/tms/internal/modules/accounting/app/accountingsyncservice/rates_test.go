@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -66,8 +66,8 @@ func TestTheAccountingDatePolicyPicksThePostingDayForTheRate(t *testing.T) {
 
 	h := newHarness(t)
 	h.multicurrencyBooks()
-	h.controls.set(func(control *tenant.AccountingControl) {
-		control.ExchangeRateDatePolicy = tenant.ExchangeRateDatePolicyAccountingDate
+	h.controls.set(func(control *accountingcontrol.AccountingControl) {
+		control.ExchangeRateDatePolicy = accountingcontrol.ExchangeRateDatePolicyAccountingDate
 	})
 	h.rates.set("CAD", "USD", decimal.RequireFromString("0.7312"))
 	customerID, _ := h.mappedCustomer("Acme")

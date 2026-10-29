@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
@@ -248,7 +248,10 @@ func (s *Service) rate(
 // billingControl carries the organization's unrated-shipment decision into the
 // engine. Failing to read it is not worth failing the request over: the default
 // it falls back to is the behaviour that existed before rate agreements.
-func (s *Service) billingControl(ctx context.Context, orgID pulid.ID) *tenant.BillingControl {
+func (s *Service) billingControl(
+	ctx context.Context,
+	orgID pulid.ID,
+) *billingcontrol.BillingControl {
 	control, err := s.billingControlRepo.GetByOrgID(ctx, orgID)
 	if err != nil {
 		return nil

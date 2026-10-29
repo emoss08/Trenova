@@ -8,8 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -45,9 +44,15 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 		func(p *Params) { p.EventService = failingShipmentEventService{} },
 	)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+		},
+	)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-ROLLBACK-ON-FAILURE"
@@ -86,10 +91,16 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
 	ctx = integrationTenantContext(ctx, tenantInfo)
-	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
-		sc.CheckHazmatSegregation = false
-		sc.CheckForDuplicateBOLs = false
-	})
+	configureShipmentControl(
+		t,
+		ctx,
+		controlRepo,
+		tenantInfo,
+		func(sc *shipmentcontrol.ShipmentControl) {
+			sc.CheckHazmatSegregation = false
+			sc.CheckForDuplicateBOLs = false
+		},
+	)
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
 
 	first := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)

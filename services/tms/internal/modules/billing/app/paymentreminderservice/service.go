@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -117,7 +117,7 @@ type sender struct {
 // email are reported back so someone can add a recipient.
 func (s *Service) SendDue(
 	ctx context.Context,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	now int64,
 ) (*paymentreminderports.SweepResult, error) {
 	result := new(paymentreminderports.SweepResult)
@@ -469,7 +469,7 @@ func (s *Service) logActivity(
 func (s *Service) senderFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	actorID pulid.ID,
 ) (*sender, error) {
 	org, err := s.organizations.GetByID(

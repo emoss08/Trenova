@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,7 +62,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @ID getShipmentControl
 // @Tags Shipment Controls
 // @Produce json
-// @Success 200 {object} tenant.ShipmentControl
+// @Success 200 {object} shipmentcontrol.ShipmentControl
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -90,8 +90,8 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Shipment Controls
 // @Accept json
 // @Produce json
-// @Param request body tenant.ShipmentControl true "Shipment control payload"
-// @Success 200 {object} tenant.ShipmentControl
+// @Param request body shipmentcontrol.ShipmentControl true "Shipment control payload"
+// @Success 200 {object} shipmentcontrol.ShipmentControl
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -101,7 +101,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity := new(tenant.ShipmentControl)
+	entity := new(shipmentcontrol.ShipmentControl)
 	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return

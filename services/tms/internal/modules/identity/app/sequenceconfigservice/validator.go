@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -20,7 +20,7 @@ func NewValidator() *Validator {
 
 func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy workflow
 	_ context.Context,
-	doc *tenant.SequenceConfigDocument,
+	doc *sequenceconfig.SequenceConfigDocument,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if doc == nil {
@@ -35,7 +35,7 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 		multiErr.Add("businessUnitId", errortypes.ErrRequired, "Business unit ID is required")
 	}
 
-	requiredTypes := tenant.RequiredSequenceTypes()
+	requiredTypes := sequenceconfig.RequiredSequenceTypes()
 	if len(doc.Configs) != len(requiredTypes) {
 		multiErr.Add(
 			"configs",
@@ -44,8 +44,8 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 		)
 	}
 
-	requiredTypeSet := make(map[tenant.SequenceType]struct{}, len(requiredTypes))
-	seenTypes := make(map[tenant.SequenceType]bool, len(requiredTypes))
+	requiredTypeSet := make(map[sequenceconfig.SequenceType]struct{}, len(requiredTypes))
+	seenTypes := make(map[sequenceconfig.SequenceType]bool, len(requiredTypes))
 	for _, sequenceType := range requiredTypes {
 		requiredTypeSet[sequenceType] = struct{}{}
 		seenTypes[sequenceType] = false
@@ -124,8 +124,8 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 		if !cfg.AllowCustomFormat {
 			cfg.CustomFormat = ""
 		}
-		if cfg.SequenceType == tenant.SequenceTypeLocationCode {
-			cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(
+		if cfg.SequenceType == sequenceconfig.SequenceTypeLocationCode {
+			cfg.LocationCodeStrategy = sequenceconfig.EffectiveLocationCodeStrategy(
 				cfg.LocationCodeStrategy,
 			)
 			if err := cfg.LocationCodeStrategy.Validate(); err != nil {
@@ -141,9 +141,9 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 	}
 
 	sort.Slice(requiredTypes, func(i, j int) bool {
-		return tenant.SequenceTypeSortOrder(
+		return sequenceconfig.SequenceTypeSortOrder(
 			requiredTypes[i],
-		) < tenant.SequenceTypeSortOrder(
+		) < sequenceconfig.SequenceTypeSortOrder(
 			requiredTypes[j],
 		)
 	})

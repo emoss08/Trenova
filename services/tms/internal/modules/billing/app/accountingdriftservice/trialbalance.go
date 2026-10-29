@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/money"
@@ -196,7 +196,7 @@ func (s *Service) reconcileTrialBalance(
 func (s *Service) trialBalanceGate(
 	ctx context.Context,
 	sess *readSession,
-) (control *tenant.AccountingControl, currency string, skip bool, err error) {
+) (control *accountingcontrol.AccountingControl, currency string, skip bool, err error) {
 	control, err = s.controls.GetByOrgID(ctx, sess.tenant.OrgID)
 	if err != nil {
 		return nil, "", false, err
@@ -329,7 +329,7 @@ func sortTrialAccounts(accounts []*trialAccount) {
 func (s *Service) groupByProviderAccount(
 	ctx context.Context,
 	sess *readSession,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	accounts []*trialAccount,
 ) ([]*providerAccount, error) {
 	mappings, err := s.mappings.ListByConnection(

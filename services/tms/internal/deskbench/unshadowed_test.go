@@ -4,28 +4,28 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
 
 type storedControl struct {
-	control *tenant.AgentControl
-	updated *tenant.AgentControl
+	control *agentcontrol.AgentControl
+	updated *agentcontrol.AgentControl
 }
 
 func (s *storedControl) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return s.control, nil
 }
 
 func (s *storedControl) Update(
 	_ context.Context,
-	entity *tenant.AgentControl,
-) (*tenant.AgentControl, error) {
+	entity *agentcontrol.AgentControl,
+) (*agentcontrol.AgentControl, error) {
 	s.updated = entity
 	return entity, nil
 }
@@ -33,7 +33,7 @@ func (s *storedControl) Update(
 func TestUnshadowed_RunsLiveWhateverTheOrganizationsSwitch(t *testing.T) {
 	t.Parallel()
 
-	stored := &storedControl{control: &tenant.AgentControl{
+	stored := &storedControl{control: &agentcontrol.AgentControl{
 		OrganizationID:     pulid.MustNew("org_"),
 		BusinessUnitID:     pulid.MustNew("bu_"),
 		ShadowMode:         true,

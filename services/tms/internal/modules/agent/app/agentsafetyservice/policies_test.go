@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,7 +55,7 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 		policies:    newFakePolicies(policies...),
 		holder:      fakeHolder{},
 		definitions: defs,
-		controls:    &fakeControls{control: &tenant.AgentControl{}},
+		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       &fakeTrust{},
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
 	})
@@ -76,7 +76,7 @@ func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
 		),
 		holder:      fakeHolder{},
 		definitions: defs,
-		controls:    &fakeControls{control: &tenant.AgentControl{}},
+		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       trust,
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
 	})
@@ -191,7 +191,7 @@ spellings name the same class.
 func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	list := func(table memtable.Request) []string {
 		t.Helper()
 		table.IncludeTotalCount = true
@@ -249,7 +249,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	page := listRules(t, svc, memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("kind", "Action")},
@@ -264,7 +264,7 @@ func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 func TestListToolPoliciesSortsByClassAndTierThenName(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	byClass := listRules(t, svc, memtable.Request{
 		Sort: []domaintypes.SortField{{Field: "egress", Direction: dbtype.SortDirectionDesc}},
@@ -330,7 +330,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	for name, table := range map[string]memtable.Request{
 		"garbage cursor": {After: "%%%"},
@@ -372,7 +372,7 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 func TestListToolPoliciesPastTheLastRuleIsAnEmptyPage(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	page := listRules(t, svc, memtable.Request{
 		After: pagination.EncodeOffsetCursor(toolRuleCursorScope, 40),
 	})
@@ -450,7 +450,7 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 func TestListAgentToolsNamesBetweenOneAndTenAgents(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	_, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{})
 	require.Error(t, err)
@@ -521,7 +521,7 @@ func TestSummaryWithNoAgentsReadsNoControlOrTrust(t *testing.T) {
 func TestToolPolicyLooksUpOneRuleByName(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	view, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)

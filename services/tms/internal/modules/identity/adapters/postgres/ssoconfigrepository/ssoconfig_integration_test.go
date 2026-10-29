@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,12 +22,12 @@ func TestSavingOktaSettingsKeepsTheFederatedMFATrustAnAdministratorChose(t *test
 	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
-	okta := &tenant.SSOConfig{
+	okta := &sso.SSOConfig{
 		OrganizationID:   data.Organization.ID,
 		BusinessUnitID:   data.BusinessUnit.ID,
 		Name:             "Okta",
-		Provider:         tenant.SSOProviderOkta,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderOkta,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          true,
 		AttributeMap:     map[string]string{"email": "email"},
 		OIDCIssuerURL:    "https://trenova.okta.com",
@@ -52,7 +52,7 @@ func TestSavingOktaSettingsKeepsTheFederatedMFATrustAnAdministratorChose(t *test
 	_, err = repo.Save(ctx, okta)
 	require.NoError(t, err)
 
-	loaded, err := repo.GetEnabledByOrganizationID(ctx, data.Organization.ID, tenant.SSOProviderOkta)
+	loaded, err := repo.GetEnabledByOrganizationID(ctx, data.Organization.ID, sso.SSOProviderOkta)
 	require.NoError(t, err)
 	assert.Equal(t, "client-rotated", loaded.OIDCClientID)
 	assert.False(t, loaded.AllowFederatedMFA)

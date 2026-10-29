@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -124,7 +125,7 @@ func emit(
 
 func maxWeightFor(
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) (int64, modeprofile.ResolvedRule, bool) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyMaxShipmentWeight)
 	if !ok || !rule.Enabled {
@@ -172,7 +173,7 @@ func fallbackRule(key modeprofile.RuleKey) modeprofile.ResolvedRule {
 
 func moveRemovalRuleFor(
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) modeprofile.ResolvedRule {
 	if rule, ok := policy.Rule(modeprofile.RuleKeyMoveRemoval); ok {
 		return rule
@@ -236,7 +237,7 @@ func createCapabilityPolicyRule(
 func validateWeight(
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	multiErr *errortypes.MultiError,
 ) {
 	if entity.Weight == nil {
@@ -289,7 +290,7 @@ func validateMoveRemoval(
 	entity *shipment.Shipment,
 	valCtx *validationframework.TenantedValidationContext,
 	policy *modeprofile.ResolvedPolicy,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	shipmentRepo shipmentports.ShipmentRepository,
 	multiErr *errortypes.MultiError,
 ) error {

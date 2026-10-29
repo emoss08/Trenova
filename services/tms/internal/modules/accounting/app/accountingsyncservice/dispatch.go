@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +36,7 @@ type pushSession struct {
 	providerName      string
 	profile           accountingprovider.ProviderProfile
 	limits            accountingconnectorports.AccountingDocumentLimits
-	control           *tenant.AccountingControl
+	control           *accountingcontrol.AccountingControl
 	redatesToNextOpen bool
 }
 
@@ -123,7 +123,7 @@ func (s *Service) openSession(
 		profile:           accountingprovider.MustProfile(conn.IntegrationType),
 		limits:            writer.DocumentLimits(),
 		control:           control,
-		redatesToNextOpen: control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		redatesToNextOpen: control.ClosedPeriodPostingPolicy == accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
 	}, nil
 }
 
@@ -151,7 +151,7 @@ func (s *Service) redatesToNextOpen(
 	if err != nil {
 		return false, err
 	}
-	return control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen, nil
+	return control.ClosedPeriodPostingPolicy == accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen, nil
 }
 
 func (s *Service) Drain(

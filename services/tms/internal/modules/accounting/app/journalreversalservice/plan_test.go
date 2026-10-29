@@ -3,17 +3,16 @@ package journalreversalservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,10 +38,12 @@ func TestPlanCreateShowsTheReversalWithoutRequestingIt(t *testing.T) {
 		}).
 		Return(postedEntry(entryID, orgID, buID), nil)
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		JournalReversalPolicy:   tenant.JournalReversalPolicyNextOpenPeriod,
-		RequireManualJEApproval: false,
-	}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&accountingcontrol.AccountingControl{
+			JournalReversalPolicy:   accountingcontrol.JournalReversalPolicyNextOpenPeriod,
+			RequireManualJEApproval: false,
+		}, nil)
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
@@ -115,7 +116,7 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "CAD"}, nil)
+		Return(&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "CAD"}, nil)
 
 	svc := &Service{
 		journalEntryRepo:    entryRepo,

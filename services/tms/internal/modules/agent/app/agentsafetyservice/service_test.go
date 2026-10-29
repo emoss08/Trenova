@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -111,13 +111,13 @@ func (f *fakeDefinitions) ListByIDs(
 type fakeControls struct {
 	tenantports.AgentControlRepository
 
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
 func (f *fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return f.control, nil
 }
 
@@ -141,7 +141,7 @@ func policy(
 	}
 }
 
-func testService(defs *fakeDefinitions, control *tenant.AgentControl) *Service {
+func testService(defs *fakeDefinitions, control *agentcontrol.AgentControl) *Service {
 	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
 	personal.Scope = agent.ToolScopeSelf
 
@@ -173,7 +173,7 @@ func agentWith(name string, tools ...string) *agentdefinition.Definition {
 func TestPolicyViewsSayWhatEachToolNeeds(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	email, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)
@@ -199,11 +199,14 @@ know is left out rather than guessed at.
 func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	open := agentWith("Dispatcher", "shipment_get", "dispatch_assign_move", "customer_send_email")
 
 	answers := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
-		Subject: &agenttoolports.AgentSafetySubject{Agent: open, Control: &tenant.AgentControl{}},
+		Subject: &agenttoolports.AgentSafetySubject{
+			Agent:   open,
+			Control: &agentcontrol.AgentControl{},
+		},
 	})
 	require.Len(t, answers, 3)
 
@@ -224,7 +227,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	rehearsal := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
 		Subject: &agenttoolports.AgentSafetySubject{
 			Agent:   simulated,
-			Control: &tenant.AgentControl{},
+			Control: &agentcontrol.AgentControl{},
 		},
 	})
 	require.Len(t, rehearsal, 2)
@@ -238,7 +241,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 	earned := svc.Assess(t.Context(), &agenttoolports.AssessAgentSafetyRequest{
 		Subject: &agenttoolports.AgentSafetySubject{
 			Agent:   earner,
-			Control: &tenant.AgentControl{EarnedAutonomy: true, PromotionThreshold: 4},
+			Control: &agentcontrol.AgentControl{EarnedAutonomy: true, PromotionThreshold: 4},
 		},
 		Trust: []*agent.ToolTrust{{
 			AgentDefinitionID: earner.ID,
@@ -257,7 +260,7 @@ func TestAssessAnswersEachHeldToolCleanAndTainted(t *testing.T) {
 func TestReachWarnsAboutAnOpenAgentWithSensitiveToolsAndAnAgentNobodyCanUse(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	open := agentWith("Customer desk", "dispatch_assign_move", "customer_send_email")
 	warnings := svc.ReachWarnings(&agenttoolports.AgentReachRequest{
@@ -290,7 +293,7 @@ func TestListSubjectsReadsEveryAgentOrTheOnesNamed(t *testing.T) {
 		all = append(all, agentWith("Agent"))
 	}
 	defs := &fakeDefinitions{all: all}
-	control := &tenant.AgentControl{ShadowMode: true}
+	control := &agentcontrol.AgentControl{ShadowMode: true}
 	svc := testService(defs, control)
 
 	subjects, err := svc.ListSubjects(t.Context(), &agenttoolports.ListAgentSafetyRequest{})

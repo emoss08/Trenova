@@ -3,7 +3,7 @@ package shipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -76,7 +76,7 @@ func (c rateCoverage) acceptsUnrated(ctx context.Context, orgID pulid.ID) bool {
 		return false
 	}
 
-	return control.UnratedShipmentDisposition == tenant.UnratedShipmentDispositionZeroAndFlag
+	return control.UnratedShipmentDisposition == billingcontrol.UnratedShipmentDispositionZeroAndFlag
 }
 
 func (c rateCoverage) refuseUnpricing(

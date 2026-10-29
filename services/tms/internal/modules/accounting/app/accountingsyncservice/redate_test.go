@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -53,8 +53,8 @@ func TestRedateFollowsTrenovasClosedPeriodPolicy(t *testing.T) {
 	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
-	h.controls.set(func(control *tenant.AccountingControl) {
-		control.ClosedPeriodPostingPolicy = tenant.ClosedPeriodPostingPolicyRequireReopen
+	h.controls.set(func(control *accountingcontrol.AccountingControl) {
+		control.ClosedPeriodPostingPolicy = accountingcontrol.ClosedPeriodPostingPolicyRequireReopen
 	})
 	record := h.seedRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorClosedPeriod)
 
@@ -151,8 +151,8 @@ func TestAClosedPeriodResolutionOffersTheFirstOpenDayOnlyUnderThatPolicy(t *test
 	h.updateConnection(func(conn *accountingconnection.AccountingConnection) {
 		conn.ExternalBooksClosedThrough = &closed
 	})
-	h.controls.set(func(control *tenant.AccountingControl) {
-		control.ClosedPeriodPostingPolicy = tenant.ClosedPeriodPostingPolicyRequireReopen
+	h.controls.set(func(control *accountingcontrol.AccountingControl) {
+		control.ClosedPeriodPostingPolicy = accountingcontrol.ClosedPeriodPostingPolicyRequireReopen
 	})
 	customerID, _ := h.mappedCustomer("Acme")
 	h.confirm(freightTarget(), "qb-item-freight")

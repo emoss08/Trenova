@@ -193,7 +193,7 @@ var carriedMargins = map[string]string{
 // unprotectedRESTMarginNames are the JSON fields REST responses carry whose
 // names match marginName and that carry no margin, each with why.
 var unprotectedRESTMarginNames = map[string]string{
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant.BillingControl." +
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.BillingControl." +
 		"enforceMarginFloor": "a switch that turns the margin floor check on, not a figure",
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports." +
 		"GLIncomeStatement.grossProfitMinor": "a line of the income statement, the posted " +

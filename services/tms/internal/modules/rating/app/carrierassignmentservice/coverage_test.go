@@ -1,15 +1,15 @@
 package carrierassignmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -69,7 +69,7 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 			controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 			controlRepo.EXPECT().
 				Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-				Return(&tenant.ShipmentControl{}, nil).
+				Return(&shipmentcontrol.ShipmentControl{}, nil).
 				Once()
 
 			svc := &Service{

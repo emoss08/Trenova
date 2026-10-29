@@ -1,7 +1,7 @@
 package journalposting
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,8 +26,12 @@ func (w *Workflow) Posted() bool {
 	return w.PostedAt != nil
 }
 
-func ResolveWorkflow(control *tenant.AccountingControl, userID pulid.ID, now int64) Workflow {
-	if control == nil || control.JournalPostingMode != tenant.JournalPostingModeManual {
+func ResolveWorkflow(
+	control *accountingcontrol.AccountingControl,
+	userID pulid.ID,
+	now int64,
+) Workflow {
+	if control == nil || control.JournalPostingMode != accountingcontrol.JournalPostingModeManual {
 		return Workflow{
 			EntryStatus:  StatusPosted,
 			BatchStatus:  StatusPosted,

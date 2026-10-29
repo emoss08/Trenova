@@ -16,7 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -46,13 +49,13 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&tenant.BusinessUnit{},
 		&formulatemplate.FormulaTemplate{},
-		&tenant.DocumentControl{},
+		&documentcontrol.DocumentControl{},
 		&documenttemplate.DocumentTemplate{},
 		&documenttemplate.DocumentTemplateVersion{},
 		&documenttemplate.DocumentTemplateAssignment{},
 		&documenttemplate.GeneratedDocument{},
 		&dispatchcontrol.DispatchControl{},
-		&tenant.BillingControl{},
+		&billingcontrol.BillingControl{},
 		&invoice.Invoice{},
 		&invoice.InvoiceLine{},
 		&invoice.Attachment{},
@@ -69,7 +72,7 @@ func RegisterEntities() []any {
 		&permission.RoleHierarchyEdge{},
 		&permission.RoleConstraint{},
 		&permission.RoleConstraintRole{},
-		&tenant.ShipmentControl{},
+		&shipmentcontrol.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
 		&equipmentcontinuity.EquipmentContinuity{},

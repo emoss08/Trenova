@@ -3,6 +3,7 @@ package platformcatalogports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/provisioning"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -211,21 +212,21 @@ type TenantSyncResult struct {
 	ReceivedAt            int64  `json:"receivedAt"`
 }
 
-type TenantProvisioningCustomer = tenant.ProvisioningCustomer
+type TenantProvisioningCustomer = provisioning.ProvisioningCustomer
 
-type TenantProvisioningWorkspace = tenant.ProvisioningWorkspace
+type TenantProvisioningWorkspace = provisioning.ProvisioningWorkspace
 
-type TenantProvisioningAssignment = tenant.ProvisioningAssignment
+type TenantProvisioningAssignment = provisioning.ProvisioningAssignment
 
-type TenantProvisioningSubscription = tenant.ProvisioningSubscription
+type TenantProvisioningSubscription = provisioning.ProvisioningSubscription
 
-type TenantProvisioningEntitlement = tenant.ProvisioningEntitlement
+type TenantProvisioningEntitlement = provisioning.ProvisioningEntitlement
 
-type TenantProvisioningLimit = tenant.ProvisioningLimit
+type TenantProvisioningLimit = provisioning.ProvisioningLimit
 
-type TenantProvisioningRequest = tenant.ProvisioningRequest
+type TenantProvisioningRequest = provisioning.ProvisioningRequest
 
-type TenantProvisioningResult = tenant.ProvisioningResult
+type TenantProvisioningResult = provisioning.ProvisioningResult
 
 type TenantSyncDelta struct {
 	BusinessUnitIDs []pulid.ID

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -125,7 +126,7 @@ func (f *bulkTransferFixture) expectShipment(entity *shipment.Shipment) {
 func (f *bulkTransferFixture) expectReadiness(
 	entity *shipment.Shipment,
 	profile *customer.CustomerBillingProfile,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	docs []*document.Document,
 ) {
 	f.customerRepo.EXPECT().
@@ -187,13 +188,13 @@ func (f *bulkTransferFixture) expectQueued(
 	return item
 }
 
-func manualBillingControl() *tenant.BillingControl {
-	return &tenant.BillingControl{
+func manualBillingControl() *billingcontrol.BillingControl {
+	return &billingcontrol.BillingControl{
 		ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		RateValidationEnforcement:             tenant.EnforcementLevelIgnore,
-		BillingExceptionDisposition:           tenant.BillingExceptionDispositionRouteToBillingReview,
-		ReadyToBillAssignmentMode:             tenant.ReadyToBillAssignmentModeManualOnly,
-		BillingQueueTransferMode:              tenant.BillingQueueTransferModeManualOnly,
+		BillingExceptionDisposition:           billingcontrol.BillingExceptionDispositionRouteToBillingReview,
+		ReadyToBillAssignmentMode:             billingcontrol.ReadyToBillAssignmentModeManualOnly,
+		BillingQueueTransferMode:              billingcontrol.BillingQueueTransferModeManualOnly,
 	}
 }
 
@@ -563,7 +564,7 @@ func TestBillingTransferPolicyViolation(t *testing.T) {
 			readiness: &shipmentbillingports.ShipmentBillingReadiness{
 				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					RateValidationEnforcement:   tenant.EnforcementLevelRequireReview,
-					BillingExceptionDisposition: tenant.BillingExceptionDispositionReturnToOperations,
+					BillingExceptionDisposition: billingcontrol.BillingExceptionDispositionReturnToOperations,
 				},
 				ValidationFailures: rateFailure,
 			},
@@ -574,7 +575,7 @@ func TestBillingTransferPolicyViolation(t *testing.T) {
 			readiness: &shipmentbillingports.ShipmentBillingReadiness{
 				Policy: shipmentbillingports.ShipmentBillingReadinessPolicy{
 					RateValidationEnforcement:   tenant.EnforcementLevelRequireReview,
-					BillingExceptionDisposition: tenant.BillingExceptionDispositionRouteToBillingReview,
+					BillingExceptionDisposition: billingcontrol.BillingExceptionDispositionRouteToBillingReview,
 				},
 				ValidationFailures: rateFailure,
 			},

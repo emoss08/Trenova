@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -382,7 +382,7 @@ func TestBackfillsOnlyWhatTheModeSendsAndDaysOnlyWhenSummed(t *testing.T) {
 }
 
 func TestLedgerAccountRoleFollowsTheDefaultAccounts(t *testing.T) {
-	control := &tenant.AccountingControl{
+	control := &accountingcontrol.AccountingControl{
 		DefaultARAccountID:                      pulid.MustNew("gla_"),
 		DefaultRevenueAccountID:                 pulid.MustNew("gla_"),
 		DefaultCashAccountID:                    pulid.MustNew("gla_"),
@@ -424,7 +424,10 @@ func TestLedgerAccountRoleFollowsTheDefaultAccounts(t *testing.T) {
 	assert.Equal(t, accountingsync.AccountRolePurchasedTransportation,
 		accountingsync.LedgerAccountRole(control.DefaultPurchasedTransportationAccountID, control))
 	assert.Empty(t, accountingsync.LedgerAccountRole(pulid.MustNew("gla_"), control))
-	assert.Empty(t, accountingsync.LedgerAccountRole(pulid.Nil, &tenant.AccountingControl{}),
-		"an unset default does not match an unset account")
+	assert.Empty(
+		t,
+		accountingsync.LedgerAccountRole(pulid.Nil, &accountingcontrol.AccountingControl{}),
+		"an unset default does not match an unset account",
+	)
 	assert.Empty(t, accountingsync.LedgerAccountRole(control.DefaultARAccountID, nil))
 }

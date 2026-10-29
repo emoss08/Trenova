@@ -3,7 +3,7 @@ package shipmentcommercial
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -150,7 +150,7 @@ type ContractRating struct {
 func (c *Calculator) RateAndAdoptContract(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) (*ContractRating, error) {
 	rated, err := c.RateAgainstContract(ctx, entity, userID, false)
@@ -380,7 +380,7 @@ func (c *Calculator) AdoptAndRecordContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	rated *ratequoteports.RatedShipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) error {
 	if err := c.AdoptAndRecalculateContractRate(ctx, entity, rated, control, userID); err != nil {
@@ -394,7 +394,7 @@ func (c *Calculator) AdoptAndRecalculateContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	rated *ratequoteports.RatedShipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) error {
 	c.AdoptContractRate(ctx, entity, rated)

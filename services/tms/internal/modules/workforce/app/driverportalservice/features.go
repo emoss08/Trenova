@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/app/capabilityguard"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,7 +48,7 @@ type PortalFeatures struct {
 func (s *Service) dashControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DashControl, error) {
+) (*dashcontrol.DashControl, error) {
 	return s.dashControlRepo.GetOrCreate(ctx, tenantInfo)
 }
 
@@ -57,9 +57,9 @@ func (s *Service) dashControl(
 func (s *Service) requireFeature(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	enabled func(*tenant.DashControl) bool,
+	enabled func(*dashcontrol.DashControl) bool,
 	message string,
-) (*tenant.DashControl, error) {
+) (*dashcontrol.DashControl, error) {
 	control, err := s.dashControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

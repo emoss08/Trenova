@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,7 +31,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoCancelShipments:          true,
 			AutoCancelShipmentsThreshold: new(int16(21)),
 		}, nil).
@@ -73,7 +73,7 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{AutoCancelShipments: false}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoCancelShipments: false}, nil).
 		Once()
 
 	svc := &service{
@@ -103,7 +103,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoCancelShipments:          true,
 			AutoCancelShipmentsThreshold: new(int16(30)),
 		}, nil).

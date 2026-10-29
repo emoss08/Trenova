@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -391,12 +391,12 @@ type UpdateAgentControlRequest struct {
 }
 
 type AgentControlService interface {
-	Get(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.AgentControl, error)
+	Get(ctx context.Context, tenantInfo pagination.TenantInfo) (*agentcontrol.AgentControl, error)
 	Update(
 		ctx context.Context,
 		req *UpdateAgentControlRequest,
 		actor *permissionports.RequestActor,
-	) (*tenant.AgentControl, error)
+	) (*agentcontrol.AgentControl, error)
 }
 
 // BudgetRefusal says which cap a run or a write ran into. A zero value is

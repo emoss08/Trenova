@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
@@ -111,7 +111,7 @@ func (s *Service) UpdateMyContactInfo(
 		return nil, err
 	}
 	control, err := s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowContactInfoEdit },
+		func(control *dashcontrol.DashControl) bool { return control.AllowContactInfoEdit },
 		"Your carrier manages contact details in the office — ask them to update your record.",
 	)
 	if err != nil {

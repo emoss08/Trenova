@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +50,7 @@ func (h *harness) ledgerMode(granularity accountingconnection.LedgerGranularity)
 }
 
 func (h *harness) mapLedger(accts ledgerAccounts, customerID pulid.ID) ledgerMappings {
-	h.controls.set(func(control *tenant.AccountingControl) {
+	h.controls.set(func(control *accountingcontrol.AccountingControl) {
 		control.DefaultRevenueAccountID = accts.revenue
 		control.DefaultAPAccountID = accts.ap
 	})

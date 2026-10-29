@@ -3,7 +3,7 @@ package latechargeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,15 +46,15 @@ type LateChargeCustomerResult struct {
 }
 
 type LateChargeAssessmentResult struct {
-	AsOfDate         int64                           `json:"asOfDate"`
-	Preview          bool                            `json:"preview"`
-	Mode             tenant.LateChargeAssessmentMode `json:"mode"`
-	AutoPost         bool                            `json:"autoPost"`
-	Customers        []*LateChargeCustomerResult     `json:"customers"`
-	MemosCreated     int                             `json:"memosCreated"`
-	MemosPosted      int                             `json:"memosPosted"`
-	CustomersSkipped int                             `json:"customersSkipped"`
-	TotalChargeMinor int64                           `json:"totalChargeMinor"`
+	AsOfDate         int64                                   `json:"asOfDate"`
+	Preview          bool                                    `json:"preview"`
+	Mode             billingcontrol.LateChargeAssessmentMode `json:"mode"`
+	AutoPost         bool                                    `json:"autoPost"`
+	Customers        []*LateChargeCustomerResult             `json:"customers"`
+	MemosCreated     int                                     `json:"memosCreated"`
+	MemosPosted      int                                     `json:"memosPosted"`
+	CustomersSkipped int                                     `json:"customersSkipped"`
+	TotalChargeMinor int64                                   `json:"totalChargeMinor"`
 }
 
 type LateChargeService interface {

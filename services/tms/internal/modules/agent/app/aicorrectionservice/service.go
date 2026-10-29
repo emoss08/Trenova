@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -56,7 +56,10 @@ type extractionReader interface {
 }
 
 type retentionReader interface {
-	Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)
+	Get(
+		ctx context.Context,
+		req tenantports.GetDataRetentionRequest,
+	) (*dataretention.DataRetention, error)
 }
 
 type Params struct {

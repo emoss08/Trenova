@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -11,9 +11,9 @@ type DashControlRepository interface {
 	GetOrCreate(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*tenant.DashControl, error)
+	) (*dashcontrol.DashControl, error)
 	Update(
 		ctx context.Context,
-		entity *tenant.DashControl,
-	) (*tenant.DashControl, error)
+		entity *dashcontrol.DashControl,
+	) (*dashcontrol.DashControl, error)
 }

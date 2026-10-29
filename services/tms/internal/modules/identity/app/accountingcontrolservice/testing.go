@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,35 +45,35 @@ func (customChecksOnly) CheckReference(
 	return false, errors.New("accounting control references are checked through custom checks")
 }
 
-func validAccountingControl() *tenant.AccountingControl {
-	return &tenant.AccountingControl{
+func validAccountingControl() *accountingcontrol.AccountingControl {
+	return &accountingcontrol.AccountingControl{
 		ID:                       pulid.MustNew("ac_"),
 		BusinessUnitID:           pulid.MustNew("bu_"),
 		OrganizationID:           pulid.MustNew("org_"),
-		AccountingBasis:          tenant.AccountingBasisAccrual,
-		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
-		ExpenseRecognitionPolicy: tenant.ExpenseRecognitionOnVendorBillPost,
-		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{
-			tenant.JournalSourceEventInvoicePosted,
-			tenant.JournalSourceEventCreditMemoPosted,
-			tenant.JournalSourceEventDebitMemoPosted,
-			tenant.JournalSourceEventVendorBillPosted,
+		AccountingBasis:          accountingcontrol.AccountingBasisAccrual,
+		RevenueRecognitionPolicy: accountingcontrol.RevenueRecognitionOnInvoicePost,
+		ExpenseRecognitionPolicy: accountingcontrol.ExpenseRecognitionOnVendorBillPost,
+		JournalPostingMode:       accountingcontrol.JournalPostingModeAutomatic,
+		AutoPostSourceEvents: []accountingcontrol.JournalSourceEventType{
+			accountingcontrol.JournalSourceEventInvoicePosted,
+			accountingcontrol.JournalSourceEventCreditMemoPosted,
+			accountingcontrol.JournalSourceEventDebitMemoPosted,
+			accountingcontrol.JournalSourceEventVendorBillPosted,
 		},
-		ManualJournalEntryPolicy:         tenant.ManualJournalEntryPolicyAdjustmentOnly,
+		ManualJournalEntryPolicy:         accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly,
 		RequireManualJEApproval:          true,
-		JournalReversalPolicy:            tenant.JournalReversalPolicyNextOpenPeriod,
-		PeriodCloseMode:                  tenant.PeriodCloseModeManualOnly,
+		JournalReversalPolicy:            accountingcontrol.JournalReversalPolicyNextOpenPeriod,
+		PeriodCloseMode:                  accountingcontrol.PeriodCloseModeManualOnly,
 		RequirePeriodCloseApproval:       true,
-		LockedPeriodPostingPolicy:        tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
-		ClosedPeriodPostingPolicy:        tenant.ClosedPeriodPostingPolicyRequireReopen,
-		ReconciliationMode:               tenant.ReconciliationModeWarnOnly,
+		LockedPeriodPostingPolicy:        accountingcontrol.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
+		ClosedPeriodPostingPolicy:        accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		ReconciliationMode:               accountingcontrol.ReconciliationModeWarnOnly,
 		ReconciliationToleranceAmount:    decimal.RequireFromString("0.0050"),
 		NotifyOnReconciliationException:  true,
-		CurrencyMode:                     tenant.CurrencyModeSingleCurrency,
+		CurrencyMode:                     accountingcontrol.CurrencyModeSingleCurrency,
 		FunctionalCurrencyCode:           "USD",
-		ExchangeRateDatePolicy:           tenant.ExchangeRateDatePolicyDocumentDate,
-		ExchangeRateOverridePolicy:       tenant.ExchangeRateOverrideDisallow,
+		ExchangeRateDatePolicy:           accountingcontrol.ExchangeRateDatePolicyDocumentDate,
+		ExchangeRateOverridePolicy:       accountingcontrol.ExchangeRateOverrideDisallow,
 		DefaultRevenueAccountID:          pulid.MustNew("gla_"),
 		DefaultCashAccountID:             pulid.MustNew("gla_"),
 		DefaultUnappliedCashAccountID:    pulid.MustNew("gla_"),

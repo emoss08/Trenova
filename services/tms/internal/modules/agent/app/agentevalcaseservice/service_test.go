@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -200,13 +200,15 @@ func (f fakeConversations) ListMessages(
 	return f.messages, nil
 }
 
-type fakeRetention struct{ items []*tenant.DataRetention }
+type fakeRetention struct {
+	items []*dataretention.DataRetention
+}
 
 func (f fakeRetention) List(context.Context) (
-	*pagination.ListResult[*tenant.DataRetention],
+	*pagination.ListResult[*dataretention.DataRetention],
 	error,
 ) {
-	return &pagination.ListResult[*tenant.DataRetention]{Items: f.items}, nil
+	return &pagination.ListResult[*dataretention.DataRetention]{Items: f.items}, nil
 }
 
 type fakeFeedback struct {
@@ -729,16 +731,16 @@ func TestPurge_AppliesEachOrganizationsRetention(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld(t, nil)
-	keepForever := &tenant.DataRetention{
+	keepForever := &dataretention.DataRetention{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: w.tenant.BuID,
 	}
-	yearly := &tenant.DataRetention{
+	yearly := &dataretention.DataRetention{
 		OrganizationID:               w.tenant.OrgID,
 		BusinessUnitID:               w.tenant.BuID,
 		AgentEvalCaseRetentionPeriod: 365,
 	}
-	w.service.retention = fakeRetention{items: []*tenant.DataRetention{keepForever, yearly}}
+	w.service.retention = fakeRetention{items: []*dataretention.DataRetention{keepForever, yearly}}
 
 	_, err := w.service.Purge(t.Context(), agentports.PurgeEvalCasesRequest{Now: 1_700_000_000})
 	require.NoError(t, err)

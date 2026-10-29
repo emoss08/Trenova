@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -519,7 +519,7 @@ func (s *service) deriveShipmentState(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	control, err := s.controlRepo.Get(
 		ctx,
 		tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo},
