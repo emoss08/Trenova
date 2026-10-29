@@ -19,6 +19,11 @@ type GetFuelIndexByIDRequest struct {
 	TenantInfo  pagination.TenantInfo
 }
 
+type GetFuelIndexesByIDsRequest struct {
+	FuelIndexIDs []pulid.ID
+	TenantInfo   pagination.TenantInfo
+}
+
 type FuelIndexSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
 }
@@ -43,6 +48,11 @@ type FuelIndexRepository interface {
 		ctx context.Context,
 		req *GetFuelIndexByIDRequest,
 	) (*fuelsurcharge.FuelIndex, error)
+
+	GetByIDs(
+		ctx context.Context,
+		req *GetFuelIndexesByIDsRequest,
+	) ([]*fuelsurcharge.FuelIndex, error)
 
 	Create(
 		ctx context.Context,
@@ -152,6 +162,11 @@ type GetFuelSurchargeProgramByIDRequest struct {
 	IncludeCharge bool
 }
 
+type GetFuelSurchargeProgramsByIDsRequest struct {
+	ProgramIDs []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type FuelSurchargeProgramSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
 }
@@ -171,6 +186,11 @@ type FuelSurchargeProgramRepository interface {
 		ctx context.Context,
 		req *GetFuelSurchargeProgramByIDRequest,
 	) (*fuelsurcharge.FuelSurchargeProgram, error)
+
+	GetByIDs(
+		ctx context.Context,
+		req *GetFuelSurchargeProgramsByIDsRequest,
+	) ([]*fuelsurcharge.FuelSurchargeProgram, error)
 
 	Create(
 		ctx context.Context,

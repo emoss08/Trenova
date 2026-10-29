@@ -61,6 +61,13 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req *detentionports.GetDetentionPoliciesByIDsRequest,
+) ([]*detentionpolicy.DetentionPolicy, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *detentionports.DetentionPolicySelectOptionsRequest,

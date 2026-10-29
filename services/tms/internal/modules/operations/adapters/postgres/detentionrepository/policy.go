@@ -142,6 +142,32 @@ func (r *policyRepository) GetByID(
 // stop: the ones scoped to this customer or facility, plus every unscoped
 // policy. Narrowing further in SQL would hide the near-misses the resolution
 // explainer needs to show.
+func (r *policyRepository) GetByIDs(
+	ctx context.Context,
+	req *detentionports.GetDetentionPoliciesByIDsRequest,
+) ([]*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
+			if len(req.DetentionPolicyIDs) == 0 {
+				return []*detentionpolicy.DetentionPolicy{}, nil
+			}
+
+			p := detentionpolicydb.DetentionPolicies
+			entities, err := p.Where(p.ID.In(req.DetentionPolicyIDs...)).
+				Limit(len(req.DetentionPolicyIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get detention policies", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *policyRepository) GetResolutionCandidates(
 	ctx context.Context,
 	req *detentionports.GetResolutionCandidatesRequest,

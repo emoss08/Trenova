@@ -129,6 +129,28 @@ func (r *indexRepository) GetByID(
 	})
 }
 
+func (r *indexRepository) GetByIDs(
+	ctx context.Context,
+	req *fuelsurchargeports.GetFuelIndexesByIDsRequest,
+) ([]*fuelsurcharge.FuelIndex, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndex, error) {
+		if len(req.FuelIndexIDs) == 0 {
+			return []*fuelsurcharge.FuelIndex{}, nil
+		}
+
+		fi := fuelsurchargedb.FuelIndexes
+		entities, err := fi.Where(fi.ID.In(req.FuelIndexIDs...)).
+			Limit(len(req.FuelIndexIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get fuel indexes", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *indexRepository) Create(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelIndex,

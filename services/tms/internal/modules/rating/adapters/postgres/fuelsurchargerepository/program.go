@@ -185,6 +185,32 @@ func mapProgramError(err error, id string) error {
 	return dberror.MapRetryableTransactionError(programErrors.Map(err, id), programBusyMessage)
 }
 
+func (r *programRepository) GetByIDs(
+	ctx context.Context,
+	req *fuelsurchargeports.GetFuelSurchargeProgramsByIDsRequest,
+) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+			if len(req.ProgramIDs) == 0 {
+				return []*fuelsurcharge.FuelSurchargeProgram{}, nil
+			}
+
+			p := fuelsurchargedb.FuelSurchargePrograms
+			entities, err := p.Where(p.ID.In(req.ProgramIDs...)).
+				Limit(len(req.ProgramIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get fuel surcharge programs", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *programRepository) Create(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelSurchargeProgram,

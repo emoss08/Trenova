@@ -39,6 +39,11 @@ type GetRateAgreementByIDRequest struct {
 	AsOf int64 `json:"asOf"`
 }
 
+type GetRateAgreementsByIDsRequest struct {
+	TenantInfo       pagination.TenantInfo `json:"-"`
+	RateAgreementIDs []pulid.ID            `json:"rateAgreementIds"`
+}
+
 // ResolveRateRulesRequest fetches the rules that could price one lane.
 //
 // PartyIDs is a list rather than a single value so rate shopping can ask about
@@ -215,6 +220,10 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *GetRateAgreementByIDRequest,
 	) (*rateagreement.RateAgreement, error)
+	GetByIDs(
+		ctx context.Context,
+		req *GetRateAgreementsByIDsRequest,
+	) ([]*rateagreement.RateAgreement, error)
 	Create(
 		ctx context.Context,
 		entity *rateagreement.RateAgreement,

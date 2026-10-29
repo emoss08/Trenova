@@ -23,6 +23,11 @@ type GetAccessorialChargeByIDRequest struct {
 	TenantInfo *pagination.TenantInfo `json:"-"`
 }
 
+type GetAccessorialChargesByIDsRequest struct {
+	TenantInfo           pagination.TenantInfo `json:"-"`
+	AccessorialChargeIDs []pulid.ID            `json:"accessorialChargeIds"`
+}
+
 type AccessorialChargeRepository interface {
 	List(
 		ctx context.Context,
@@ -40,6 +45,10 @@ type AccessorialChargeRepository interface {
 		ctx context.Context,
 		req GetAccessorialChargeByIDRequest,
 	) (*accessorialcharge.AccessorialCharge, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetAccessorialChargesByIDsRequest,
+	) ([]*accessorialcharge.AccessorialCharge, error)
 	ListCatalog(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

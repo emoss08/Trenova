@@ -31,6 +31,11 @@ type GetDetentionPolicyByIDRequest struct {
 	IncludeTiers      bool
 }
 
+type GetDetentionPoliciesByIDsRequest struct {
+	TenantInfo         pagination.TenantInfo
+	DetentionPolicyIDs []pulid.ID
+}
+
 // GetResolutionCandidatesRequest loads every policy that could conceivably
 // govern a stop. Scope filtering happens in the resolver rather than in SQL so
 // that non-matching candidates can still be explained back to the user.
@@ -59,6 +64,11 @@ type DetentionPolicyRepository interface {
 		ctx context.Context,
 		req *GetDetentionPolicyByIDRequest,
 	) (*detentionpolicy.DetentionPolicy, error)
+
+	GetByIDs(
+		ctx context.Context,
+		req *GetDetentionPoliciesByIDsRequest,
+	) ([]*detentionpolicy.DetentionPolicy, error)
 
 	GetResolutionCandidates(
 		ctx context.Context,

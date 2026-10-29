@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -39,21 +40,23 @@ func (r *Sources) RateMatrix(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.RateMatrixService.GetByID(
-				ctx,
-				&ratematrixports.GetRateMatrixByIDRequest{
-					RateMatrixID: id,
-					TenantInfo:   req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, rateMatrixSelectOptionItem(entity))
+		entities, err := r.RateMatrixService.GetByIDs(
+			ctx,
+			&ratematrixports.GetRateMatricesByIDsRequest{
+				TenantInfo:    req.TenantInfo,
+				RateMatrixIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*ratematrix.RateMatrix).GetID,
+			rateMatrixSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -74,21 +77,23 @@ func (r *Sources) RateAgreement(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.RateAgreementService.GetByID(
-				ctx,
-				&rateagreementports.GetRateAgreementByIDRequest{
-					RateAgreementID: id,
-					TenantInfo:      req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, rateAgreementSelectOptionItem(entity))
+		entities, err := r.RateAgreementService.GetByIDs(
+			ctx,
+			&rateagreementports.GetRateAgreementsByIDsRequest{
+				TenantInfo:       req.TenantInfo,
+				RateAgreementIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*rateagreement.RateAgreement).GetID,
+			rateAgreementSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -109,21 +114,23 @@ func (r *Sources) AccessorialCharge(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.AccessorialChargeService.Get(
-				ctx,
-				accessorialchargeports.GetAccessorialChargeByIDRequest{
-					ID:         id,
-					TenantInfo: &req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, accessorialChargeSelectOptionItem(entity))
+		entities, err := r.AccessorialChargeService.GetByIDs(
+			ctx,
+			accessorialchargeports.GetAccessorialChargesByIDsRequest{
+				TenantInfo:           req.TenantInfo,
+				AccessorialChargeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*accessorialcharge.AccessorialCharge).GetID,
+			accessorialChargeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -147,21 +154,23 @@ func (r *Sources) DetentionPolicy(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.DetentionPolicyService.GetByID(
-				ctx,
-				&detentionports.GetDetentionPolicyByIDRequest{
-					DetentionPolicyID: id,
-					TenantInfo:        req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, detentionPolicySelectOptionItem(entity))
+		entities, err := r.DetentionPolicyService.GetByIDs(
+			ctx,
+			&detentionports.GetDetentionPoliciesByIDsRequest{
+				TenantInfo:         req.TenantInfo,
+				DetentionPolicyIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*detentionpolicy.DetentionPolicy).GetID,
+			detentionPolicySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -271,21 +280,23 @@ func (r *Sources) FormulaTemplate(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FormulaTemplateService.GetByID(
-				ctx,
-				formulatemplateports.GetFormulaTemplateByIDRequest{
-					TemplateID: id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, formulaTemplateSelectOptionItem(entity))
+		entities, err := r.FormulaTemplateService.GetByIDs(
+			ctx,
+			formulatemplateports.GetFormulaTemplatesByIDsRequest{
+				TenantInfo:  req.TenantInfo,
+				TemplateIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*formulatemplate.FormulaTemplate).GetID,
+			formulaTemplateSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -329,18 +340,23 @@ func (r *Sources) FuelIndex(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
-				FuelIndexID: id,
-				TenantInfo:  req.TenantInfo,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, fuelIndexSelectOptionItem(entity))
+		entities, err := r.FuelIndexRepo.GetByIDs(
+			ctx,
+			&fuelsurchargeports.GetFuelIndexesByIDsRequest{
+				FuelIndexIDs: req.IDs,
+				TenantInfo:   req.TenantInfo,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*fuelsurcharge.FuelIndex).GetID,
+			fuelIndexSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -366,21 +382,23 @@ func (r *Sources) FuelSurchargeProgram(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FuelSurchargeProgramRepo.GetByID(
-				ctx,
-				&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
-					ProgramID:  id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, fuelSurchargeProgramSelectOptionItem(entity))
+		entities, err := r.FuelSurchargeProgramRepo.GetByIDs(
+			ctx,
+			&fuelsurchargeports.GetFuelSurchargeProgramsByIDsRequest{
+				ProgramIDs: req.IDs,
+				TenantInfo: req.TenantInfo,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*fuelsurcharge.FuelSurchargeProgram).GetID,
+			fuelSurchargeProgramSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

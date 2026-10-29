@@ -614,6 +614,13 @@ func (s *Service) GetByID(
 	return template, nil
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req formulatemplateports.GetFormulaTemplatesByIDsRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) List(
 	ctx context.Context,
 	req *formulatemplateports.ListFormulaTemplatesRequest,

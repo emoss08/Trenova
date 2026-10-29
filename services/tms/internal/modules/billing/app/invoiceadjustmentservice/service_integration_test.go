@@ -192,6 +192,13 @@ func (fakeAccessorialRepo) GetByID(
 	return nil, nil
 }
 
+func (fakeAccessorialRepo) GetByIDs(
+	context.Context,
+	accessorialchargeports.GetAccessorialChargesByIDsRequest,
+) ([]*accessorialcharge.AccessorialCharge, error) {
+	return nil, nil
+}
+
 func (fakeAccessorialRepo) ListCatalog(
 	context.Context,
 	pagination.TenantInfo,
