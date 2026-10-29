@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -204,7 +204,7 @@ func (s *Service) projectStopVisit(
 
 	switch {
 	case record.StopOutcome.NeedsReview():
-		s.watchtower.Upsert(ctx, watchtowersources.DescribeTelematicsStopVisit(
+		s.watchtower.Upsert(ctx, watchtowershipment.DescribeTelematicsStopVisit(
 			&telematicsports.StopReview{Event: record, ShipmentID: shipmentID},
 		))
 	case record.StopOutcome == telematics.StopOutcomeRecorded:
@@ -212,7 +212,7 @@ func (s *Service) projectStopVisit(
 			ctx,
 			tenantInfo,
 			watchtower.SourceTelematicsStopVisit,
-			watchtowersources.TelematicsStopVisitSourceID(record),
+			watchtowershipment.TelematicsStopVisitSourceID(record),
 		)
 	}
 }

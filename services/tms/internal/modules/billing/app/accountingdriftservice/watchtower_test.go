@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -91,7 +91,7 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 
 	h.now = h.now.Add(25 * time.Hour)
 	finish()
-	sourceID := watchtowersources.AccountingDriftAttentionSourceID(
+	sourceID := watchtoweraccounting.AccountingDriftAttentionSourceID(
 		h.conn,
 		accountingdrift.DriftAmountMismatch,
 	)
@@ -99,7 +99,7 @@ func TestAFindingOlderThanADayReachesWatchtowerUntilItResolves(t *testing.T) {
 	item := board.open[sourceID]
 	assert.Equal(t, agent.SubjectAccountingDrift, item.SubjectType)
 	assert.Equal(t, agenttrigger.EventAccountingDriftDetected, item.EventKind)
-	assert.Equal(t, watchtowersources.AccountingDriftPath, item.Path)
+	assert.Equal(t, watchtoweraccounting.AccountingDriftPath, item.Path)
 	assert.Contains(t, item.Title, "1 document")
 
 	h.provider(accountingsync.SyncObjectInvoice, "101", "1250.00")

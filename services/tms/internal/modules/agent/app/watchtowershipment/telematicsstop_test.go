@@ -1,9 +1,9 @@
-package watchtowersources_test
+package watchtowershipment_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -45,7 +45,7 @@ func TestDescribeTelematicsStopVisits_OneItemPerStopVisit(t *testing.T) {
 	earlier := stopReview(moveID, stopID, 200, "earlier refusal")
 	other := stopReview(moveID, pulid.MustNew("stp_"), 100, "other stop")
 
-	items := watchtowersources.DescribeTelematicsStopVisits(
+	items := watchtowershipment.DescribeTelematicsStopVisits(
 		[]*telematicsports.StopReview{latest, earlier, nil, other},
 	)
 
@@ -71,9 +71,9 @@ func TestTelematicsStopVisitSourceID_FallsBackToTheLocation(t *testing.T) {
 		StopVisit:      shipment.VisitArrival,
 	}
 	assert.Equal(t, moveID.String()+":"+locationID.String()+":Arrival",
-		watchtowersources.TelematicsStopVisitSourceID(event))
+		watchtowershipment.TelematicsStopVisitSourceID(event))
 
 	event.LocationID = pulid.Nil
 	assert.Equal(t, moveID.String()+":unlocated:Arrival",
-		watchtowersources.TelematicsStopVisitSourceID(event))
+		watchtowershipment.TelematicsStopVisitSourceID(event))
 }

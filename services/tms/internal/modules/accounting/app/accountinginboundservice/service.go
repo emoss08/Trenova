@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -325,7 +325,7 @@ func (s *Service) refreshAttention(
 		&accountinginboundports.ListAccountingInboundAttentionRequest{
 			TenantInfo:     tenant,
 			ConnectionID:   conn.ID,
-			DetectedBefore: s.now().Add(-watchtowersources.AccountingInboundAfter).Unix(),
+			DetectedBefore: s.now().Add(-watchtoweraccounting.AccountingInboundAfter).Unix(),
 		},
 	)
 	if err != nil {
@@ -339,8 +339,8 @@ func (s *Service) refreshAttention(
 	for idx := range groups {
 		byReason[groups[idx].Reason] = &groups[idx]
 	}
-	for _, reason := range watchtowersources.AccountingInboundAttentionReasons() {
-		if item, open := watchtowersources.DescribeAccountingInboundAttention(
+	for _, reason := range watchtoweraccounting.AccountingInboundAttentionReasons() {
+		if item, open := watchtoweraccounting.DescribeAccountingInboundAttention(
 			conn,
 			byReason[reason],
 		); open {
@@ -351,7 +351,7 @@ func (s *Service) refreshAttention(
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
-			watchtowersources.AccountingInboundAttentionSourceID(conn, reason),
+			watchtoweraccounting.AccountingInboundAttentionSourceID(conn, reason),
 		)
 	}
 }

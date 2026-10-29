@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -275,14 +275,14 @@ func TestBlockedPushRefreshesTheWatchtowerAttention(t *testing.T) {
 	h.drain(t)
 
 	blockedKey := ""
-	for _, key := range watchtowersources.AccountingSyncAttentionKeys() {
-		if _, ok := h.watchtower.item(watchtowersources.AccountingSyncAttentionSourceID(h.conn, key)); ok {
+	for _, key := range watchtoweraccounting.AccountingSyncAttentionKeys() {
+		if _, ok := h.watchtower.item(watchtoweraccounting.AccountingSyncAttentionSourceID(h.conn, key)); ok {
 			blockedKey = key
 		}
 	}
 	require.NotEmpty(t, blockedKey, "the blocked group is projected into the watchtower")
 	item, _ := h.watchtower.item(
-		watchtowersources.AccountingSyncAttentionSourceID(h.conn, blockedKey),
+		watchtoweraccounting.AccountingSyncAttentionSourceID(h.conn, blockedKey),
 	)
 	assert.Equal(t, record.ID, item.SubjectID)
 }

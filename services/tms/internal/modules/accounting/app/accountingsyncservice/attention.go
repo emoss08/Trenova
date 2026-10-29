@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -42,9 +42,9 @@ func (s *Service) refreshAttention(
 		return
 	}
 
-	byKey := watchtowersources.GroupAccountingSyncAttention(groups)
-	for _, key := range watchtowersources.AccountingSyncAttentionKeys() {
-		if item, open := watchtowersources.DescribeAccountingSyncAttention(
+	byKey := watchtoweraccounting.GroupAccountingSyncAttention(groups)
+	for _, key := range watchtoweraccounting.AccountingSyncAttentionKeys() {
+		if item, open := watchtoweraccounting.DescribeAccountingSyncAttention(
 			conn,
 			key,
 			byKey[key],
@@ -56,7 +56,7 @@ func (s *Service) refreshAttention(
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
-			watchtowersources.AccountingSyncAttentionSourceID(conn, key),
+			watchtoweraccounting.AccountingSyncAttentionSourceID(conn, key),
 		)
 	}
 }
@@ -68,7 +68,7 @@ func (s *Service) refreshPaused(
 	if s.watchtower == nil {
 		return
 	}
-	if item, open := watchtowersources.DescribeAccountingSyncPaused(
+	if item, open := watchtoweraccounting.DescribeAccountingSyncPaused(
 		conn,
 		timeutils.NowUnix(),
 	); open {
@@ -79,7 +79,7 @@ func (s *Service) refreshPaused(
 		ctx,
 		tenantOf(conn),
 		watchtower.SourceAccountingSync,
-		watchtowersources.AccountingSyncPausedSourceID(conn),
+		watchtoweraccounting.AccountingSyncPausedSourceID(conn),
 	)
 }
 
@@ -91,7 +91,7 @@ func (s *Service) reportSafetyNet(
 	if s.watchtower == nil || found == 0 {
 		return
 	}
-	if item, open := watchtowersources.DescribeAccountingSafetyNet(
+	if item, open := watchtoweraccounting.DescribeAccountingSafetyNet(
 		conn,
 		found,
 		timeutils.NowUnix(),

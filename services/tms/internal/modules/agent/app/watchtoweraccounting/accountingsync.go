@@ -1,4 +1,4 @@
-package watchtowersources
+package watchtoweraccounting
 
 import (
 	"strconv"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -22,7 +23,6 @@ const (
 	accountingSafetyNetSuffix = ":safety-net"
 	AccountingSyncLedgerPath  = "/accounting/sync"
 	accountingPausedAfter     = int64(24 * 60 * 60)
-	maxSummaryLength          = 500
 )
 
 func AccountingSyncAttentionKeys() []string {
@@ -115,7 +115,7 @@ func DescribeAccountingSyncAttention(
 		SourceID:    AccountingSyncAttentionSourceID(conn, key),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectAccountingSyncRecord,
 		SubjectID:   top.SampleRecordID,
 		EventKind:   eventKind,
@@ -143,7 +143,7 @@ func DescribeAccountingSyncPaused(
 		SourceID:    AccountingSyncPausedSourceID(conn),
 		Severity:    watchtower.SeverityWarning,
 		Title:       "Sync to " + provider + " has been paused for over a day",
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectAccountingConnection,
 		SubjectID:   conn.ID,
 		EventKind:   agenttrigger.EventAccountingConnectionDegraded,

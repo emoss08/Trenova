@@ -1,10 +1,11 @@
-package watchtowersources
+package watchtowerfactoring
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -477,7 +478,7 @@ func TestFactoringSourceSnapshot(t *testing.T) {
 
 	assert.Equal(t, tenant, states.req.TenantInfo)
 	assert.Equal(t, factoringNow-factoringreadiness.ReadyUnsubmittedSeconds, states.req.ReadyBefore)
-	assert.Equal(t, snapshotLimit, states.req.Limit)
+	assert.Equal(t, watchtoweritem.SnapshotLimit, states.req.Limit)
 	assert.Equal(t, []pulid.ID{late.InvoiceID}, reader.labelReq.InvoiceIDs)
 	assert.Equal(t, factoringNow, reader.missingReq.At)
 	assert.Equal(t, factoringNow, reader.expiringReq.At)

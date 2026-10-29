@@ -1,8 +1,9 @@
-package watchtowersources
+package watchtowershipment
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -229,7 +230,7 @@ func shipmentPath(shipmentID pulid.ID) string {
 			return recordPath
 		}
 	}
-	return pathDispatchConsole
+	return watchtoweritem.PathDispatchConsole
 }
 
 func pastDueSeverity(overdueSeconds, grace int64) watchtower.Severity {
@@ -290,10 +291,10 @@ func DescribeMissedStop(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   stop.ShipmentID,
 		Path:        shipmentPath(stop.ShipmentID),
-		Record:      shipmentRecord(stop.ProNumber),
+		Record:      watchtoweritem.ShipmentRecord(stop.ProNumber),
 		Facts: []watchtower.Fact{
-			fact("Stop", missedStopPlace(stop)),
-			factAt("Window closed", stop.Cutoff),
+			watchtoweritem.Fact("Stop", missedStopPlace(stop)),
+			watchtoweritem.FactAt("Window closed", stop.Cutoff),
 		},
 		OccurredAt: stop.Cutoff + grace,
 		OwnerID:    stop.OwnerID,
@@ -323,10 +324,10 @@ func DescribeMissingPOD(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
 		Path:        shipmentPath(row.ShipmentID),
-		Record:      shipmentRecord(row.ProNumber),
+		Record:      watchtoweritem.ShipmentRecord(row.ProNumber),
 		Facts: []watchtower.Fact{
-			fact("Customer", row.CustomerName),
-			factAt("Delivered", row.DeliveredAt),
+			watchtoweritem.Fact("Customer", row.CustomerName),
+			watchtoweritem.FactAt("Delivered", row.DeliveredAt),
 		},
 		OccurredAt: row.DeliveredAt + grace,
 		OwnerID:    row.OwnerID,
@@ -348,9 +349,9 @@ func DescribeExhaustedTender(
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
 		Path:        shipmentPath(row.ShipmentID),
-		Record:      shipmentRecord(row.ProNumber),
+		Record:      watchtoweritem.ShipmentRecord(row.ProNumber),
 		Facts: []watchtower.Fact{
-			factAt("Exhausted", row.ExhaustedAt),
+			watchtoweritem.FactAt("Exhausted", row.ExhaustedAt),
 		},
 		OccurredAt: row.ExhaustedAt,
 		OwnerID:    row.OwnerID,

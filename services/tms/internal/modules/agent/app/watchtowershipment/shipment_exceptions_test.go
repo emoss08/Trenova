@@ -1,4 +1,4 @@
-package watchtowersources
+package watchtowershipment
 
 import (
 	"context"
@@ -102,9 +102,11 @@ func TestMissedPickupSource_AsksForPickupsPastTheGrace(t *testing.T) {
 
 	stop := missedStop(exceptionNow - 45*60)
 	reader := &fakeExceptionReader{stops: []*watchtowerports.MissedStop{stop}}
-	source := withClock(NewMissedPickupSource(exceptionParams(reader, &dispatchcontrol.DispatchControl{
-		ExceptionMissedStopGraceMinutes: 15,
-	})))
+	source := withClock(
+		NewMissedPickupSource(exceptionParams(reader, &dispatchcontrol.DispatchControl{
+			ExceptionMissedStopGraceMinutes: 15,
+		})),
+	)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	items, err := source.Snapshot(t.Context(), tenant)
@@ -165,9 +167,11 @@ func TestPodMissingSource_WaitsForTheGraceAndLooksBackNinetyDays(t *testing.T) {
 		DeliveredAt:  exceptionNow - 30*3600,
 	}
 	reader := &fakeExceptionReader{pods: []*watchtowerports.MissingPOD{row}}
-	source := withClock(NewPodMissingSource(exceptionParams(reader, &dispatchcontrol.DispatchControl{
-		ExceptionPODGraceHours: 24,
-	})))
+	source := withClock(
+		NewPodMissingSource(exceptionParams(reader, &dispatchcontrol.DispatchControl{
+			ExceptionPODGraceHours: 24,
+		})),
+	)
 
 	items, err := source.Snapshot(t.Context(), pagination.TenantInfo{OrgID: pulid.MustNew("org_")})
 	require.NoError(t, err)
@@ -277,7 +281,11 @@ func TestShipmentExceptionObserver_SkipsAKindItCannotRead(t *testing.T) {
 func TestShipmentExceptionKindsFor(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, ShipmentExceptionKinds(), ShipmentExceptionKindsFor(shipmentevent.TypeShipmentCanceled))
+	assert.Equal(
+		t,
+		ShipmentExceptionKinds(),
+		ShipmentExceptionKindsFor(shipmentevent.TypeShipmentCanceled),
+	)
 	assert.Equal(
 		t,
 		[]watchtower.SourceKind{watchtower.SourceTenderExhausted},

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,7 +88,7 @@ func TestSafetyNetQueuesPostedDocumentsThatMissedAnEnqueuePoint(t *testing.T) {
 		assert.Equal(t, syncStartDate, call.DatedFrom)
 		assert.Equal(t, h.conn.ID, call.ConnectionID)
 	}
-	item, ok := h.watchtower.item(watchtowersources.AccountingSafetyNetSourceID(h.conn))
+	item, ok := h.watchtower.item(watchtoweraccounting.AccountingSafetyNetSourceID(h.conn))
 	require.True(t, ok, "a safety-net find is a watchtower item")
 	assert.Contains(t, item.Title, "3 documents")
 	assert.Contains(t, h.dispatcher.kicked(), h.conn.ID)
@@ -170,7 +170,7 @@ func TestSafetyNetOnAPausedConnectionQueuesWithoutWaking(t *testing.T) {
 
 	assert.Equal(t, 1, result.Queued)
 	assert.Empty(t, h.dispatcher.kicked())
-	_, paused := h.watchtower.item(watchtowersources.AccountingSyncPausedSourceID(h.conn))
+	_, paused := h.watchtower.item(watchtoweraccounting.AccountingSyncPausedSourceID(h.conn))
 	assert.True(t, paused, "a connection paused longer than a day is a watchtower item")
 }
 

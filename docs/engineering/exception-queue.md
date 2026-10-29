@@ -8,7 +8,7 @@ tender exhausted, no check call and ETA at risk), the GraphQL operations, the ag
 the web queue. Read it before changing `watchtower` (`exception.go`), `watchtowerservice`
 (`exceptions.go`, `escalation.go`, `routing.go`, `projector_routing.go`,
 `projector_subject.go`), `watchtowerrepository`, `exceptionsourcerepository`,
-`watchtowersources/shipment_exceptions.go`, the exception settings on dispatch controls, or the
+`watchtowershipment/shipment_exceptions.go`, the exception settings on dispatch controls, or the
 exception tools.
 
 ## The shape of it
@@ -41,7 +41,7 @@ Shipment event ─▶ ShipmentExceptionObserver ─▶ ReconcileSubject for that
 | Routing on raise | `projector_routing.go` |
 | Per-shipment reconcile | `projector_subject.go` (`WatchtowerSubjectReconciler`) |
 | Escalation and wake | `escalation.go`, `ExceptionAttentionWorkflow` in `agent/jobs/watchtowerjobs` |
-| Automatic sources and observer | `agent/app/watchtowersources/shipment_exceptions.go`, `shipment_exception_observer.go` |
+| Automatic sources and observer | `agent/app/watchtowershipment/shipment_exceptions.go`, `shipment_exception_observer.go` |
 | GraphQL | `watchtower.graphqls`, resolvers in `resolver/watchtowerresolver` |
 | Agent tools | `agent/app/agenttools/exceptiontools/exception_tools.go` |
 | Web | Desk watchtower (`routes/desk/_components/watchtower`), dispatch controls "Exception queue" card |
@@ -184,7 +184,7 @@ An item at the cap stays overdue and is no longer picked up by the sweep.
 | `Factoring` | an acknowledged notice expires within `factoring.NoaExpiryWarningDays` (30) days; critical inside seven | `noa-expiring:<notice>` | the notice is renewed, released or expires (it then shows as missing) |
 
 The `Factoring` kind is read as invoices (`ResourceInvoice`, the same read the factoring queue
-takes). Its snapshot is `watchtowersources.FactoringSource`, reading
+takes). Its snapshot is `watchtowerfactoring.FactoringSource`, reading
 `InvoiceStateRepository.ListReadyUnsubmitted` and `factoringwatchtowerports.WatchtowerReader`
 (`factoringrepository/watchtower.go`). Every item turns on the clock, so
 `factoring-watchtower-sweep` reconciles it for every organization every fifteen minutes, on

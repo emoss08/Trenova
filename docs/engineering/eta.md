@@ -30,7 +30,7 @@ shipment-eta-sweep (5 min, per tenant) ─────────────�
 | Table | `operations/adapters/postgres/stopetarepository`, migration `20261231009190_stop_etas` |
 | Triggers | `operations/app/etatrigger` |
 | Workflows and sweep | `operations/jobs/etajobs` (`etacontract` holds the requester) |
-| Watchtower | `agent/app/watchtowersources/eta.go`, `DescribeEtaRisk` in `describe.go` |
+| Watchtower | `agent/app/watchtowershipment/eta.go`, `DescribeEtaRisk` in `shipment_describe.go` |
 | GraphQL | `Shipment.eta` (`ShipmentEta`, `StopEta`) in `shipment_board.graphqls` |
 | REST | `GET /api/v1/shipments/:shipmentID/eta/` |
 | Analytics | `etaSlip` in `analyticsservice/providers/shipmentprovider` |

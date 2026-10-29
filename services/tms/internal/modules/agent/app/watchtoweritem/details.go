@@ -1,4 +1,4 @@
-package watchtowersources
+package watchtoweritem
 
 import (
 	"strconv"
@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
-func resourceRecord(resource permission.Resource, label string) *watchtower.RecordRef {
+func ResourceRecord(resource permission.Resource, label string) *watchtower.RecordRef {
 	kind, ok := resource.Kind()
 	if !ok {
 		return nil
@@ -15,44 +15,44 @@ func resourceRecord(resource permission.Resource, label string) *watchtower.Reco
 	return &watchtower.RecordRef{Kind: kind, Label: label}
 }
 
-func kindRecord(kind permission.RecordKind, label string) *watchtower.RecordRef {
+func KindRecord(kind permission.RecordKind, label string) *watchtower.RecordRef {
 	return &watchtower.RecordRef{Kind: kind, Label: label}
 }
 
-func shipmentRecord(proNumber string) *watchtower.RecordRef {
-	return resourceRecord(permission.ResourceShipment, proNumber)
+func ShipmentRecord(proNumber string) *watchtower.RecordRef {
+	return ResourceRecord(permission.ResourceShipment, proNumber)
 }
 
-func fact(label, value string) watchtower.Fact {
+func Fact(label, value string) watchtower.Fact {
 	return watchtower.Fact{Label: label, Value: value}
 }
 
-func factAt(label string, at int64) watchtower.Fact {
+func FactAt(label string, at int64) watchtower.Fact {
 	return watchtower.Fact{Label: label, At: at}
 }
 
-func factAtPtr(label string, at *int64) watchtower.Fact {
+func FactAtPtr(label string, at *int64) watchtower.Fact {
 	if at == nil {
 		return watchtower.Fact{Label: label}
 	}
-	return factAt(label, *at)
+	return FactAt(label, *at)
 }
 
-func deadlineAt(at int64, label string) *watchtower.Deadline {
+func DeadlineAt(at int64, label string) *watchtower.Deadline {
 	if at <= 0 {
 		return nil
 	}
 	return &watchtower.Deadline{At: at, Label: label}
 }
 
-func deadlineAtPtr(at *int64, label string) *watchtower.Deadline {
+func DeadlineAtPtr(at *int64, label string) *watchtower.Deadline {
 	if at == nil {
 		return nil
 	}
-	return deadlineAt(*at, label)
+	return DeadlineAt(*at, label)
 }
 
-func minutesPhrase(minutes int64) string {
+func MinutesPhrase(minutes int64) string {
 	if minutes < 60 {
 		return strconv.FormatInt(minutes, 10) + "m"
 	}

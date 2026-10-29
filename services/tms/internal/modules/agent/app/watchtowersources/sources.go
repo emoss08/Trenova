@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -41,7 +42,6 @@ snapshot is a window. Past it, the reconcile resolves them: the tower is
 about what needs a person now.
 */
 const (
-	snapshotLimit = 200
 	// failedRunWindow and violationWindow are how long a fact stays on the
 	// tower.
 	failedRunWindow  = 72 * 60 * 60
@@ -90,7 +90,7 @@ func (s *InsightSource) Snapshot(
 	insights, err := s.repo.ListActive(ctx, insightports.ListActiveInsightsRequest{
 		TenantInfo:          tenant,
 		AllowedDetectorKeys: keys,
-		Limit:               snapshotLimit,
+		Limit:               watchtoweritem.SnapshotLimit,
 	})
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (s *FailedRunSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(agent.RunStatusFailed)),
 		{Field: "createdAt", Operator: dbtype.OpGreaterThan, Value: s.now() - failedRunWindow},
@@ -349,7 +349,7 @@ func (s *ExceptionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("resolutionState", string(agentexception.ResolutionStateOpen)),
 	}
@@ -389,7 +389,7 @@ func (s *ServiceFailureSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(servicefailure.StatusOpen)),
 	}
@@ -429,8 +429,8 @@ func (s *CarrierIntelSource) Snapshot(
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	result, err := s.repo.ListConnection(ctx, &carrierintelports.ListCarrierIntelEventsRequest{
-		Filter:   tenantQuery(tenant, snapshotLimit),
-		Cursor:   pagination.CursorInfo{Limit: snapshotLimit},
+		Filter:   tenantQuery(tenant, watchtoweritem.SnapshotLimit),
+		Cursor:   pagination.CursorInfo{Limit: watchtoweritem.SnapshotLimit},
 		OpenOnly: true,
 	})
 	if err != nil {
@@ -507,7 +507,7 @@ func (s *EDIQuarantineSource) Snapshot(
 		ctx,
 		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
 			TenantInfo: tenant,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	)
 	if err != nil {
@@ -543,7 +543,7 @@ func (s *BillingExceptionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(billingqueue.StatusException)),
 	}
@@ -620,7 +620,7 @@ func (s *InboundMessageSource) Snapshot(
 		ctx,
 		inboundmessageports.ListRecentInboundMessagesForReviewRequest{
 			TenantInfo: tenant,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	)
 	if err != nil {

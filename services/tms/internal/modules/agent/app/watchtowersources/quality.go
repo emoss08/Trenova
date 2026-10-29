@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -101,7 +102,7 @@ func (s *QualityRegressionSource) Snapshot(
 			agentqualitysuite.SuiteRunStatusCompleted,
 			agentqualitysuite.SuiteRunStatusBudgetStopped,
 		},
-		Limit: snapshotLimit,
+		Limit: watchtoweritem.SnapshotLimit,
 	})
 	if err != nil {
 		return nil, err

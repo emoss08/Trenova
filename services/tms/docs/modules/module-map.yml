@@ -1079,7 +1079,11 @@ modules:
       - tablequeryservice
       - toolpreview
       - toolsimulation
+      - watchtoweraccounting
+      - watchtowerfactoring
+      - watchtoweritem
       - watchtowerservice
+      - watchtowershipment
       - watchtowersources
     job:
       - agentflow

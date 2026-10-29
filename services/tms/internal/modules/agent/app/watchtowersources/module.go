@@ -1,6 +1,11 @@
 package watchtowersources
 
-import "go.uber.org/fx"
+import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerfactoring"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
+	"go.uber.org/fx"
+)
 
 // Module registers every source the watchtower reconciles against. A
 // deployment without one of these repositories simply has no source for
@@ -20,26 +25,26 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewDetentionSource),
 		asSource(NewInboundMessageSource),
 		asSource(NewQualityRegressionSource),
-		asSource(NewAccountingSyncSource),
-		asSource(NewTelematicsStopVisitSource),
-		asSource(NewNoCheckCallSource),
-		asSource(NewEtaAtRiskSource),
-		asSource(NewMissedPickupSource),
-		asSource(NewMissedDeliverySource),
-		asSource(NewPodMissingSource),
-		asSource(NewTenderExhaustedSource),
-		asSource(NewFactoringSource),
+		asSource(watchtoweraccounting.NewAccountingSyncSource),
+		asSource(watchtowershipment.NewTelematicsStopVisitSource),
+		asSource(watchtowershipment.NewNoCheckCallSource),
+		asSource(watchtowershipment.NewEtaAtRiskSource),
+		asSource(watchtowershipment.NewMissedPickupSource),
+		asSource(watchtowershipment.NewMissedDeliverySource),
+		asSource(watchtowershipment.NewPodMissingSource),
+		asSource(watchtowershipment.NewTenderExhaustedSource),
+		asSource(watchtowerfactoring.NewFactoringSource),
 	),
 	fx.Provide(fx.Annotate(
-		NewShipmentExceptionObserver,
+		watchtowershipment.NewShipmentExceptionObserver,
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	)),
 	fx.Provide(fx.Annotate(
-		NewNoCheckCallObserver,
+		watchtowershipment.NewNoCheckCallObserver,
 		fx.ResultTags(`group:"check_call_observers"`),
 	)),
 	fx.Provide(fx.Annotate(
-		NewEtaAtRiskObserver,
+		watchtowershipment.NewEtaAtRiskObserver,
 		fx.ResultTags(`group:"stop_eta_observers"`),
 	)),
 )

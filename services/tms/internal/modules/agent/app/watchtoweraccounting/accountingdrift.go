@@ -1,4 +1,4 @@
-package watchtowersources
+package watchtoweraccounting
 
 import (
 	"strconv"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -89,7 +90,7 @@ func DescribeAccountingDriftAttention(
 		SourceID:    AccountingDriftAttentionSourceID(conn, group.Kind),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectAccountingDrift,
 		SubjectID:   group.SampleID,
 		EventKind:   agenttrigger.EventAccountingDriftDetected,

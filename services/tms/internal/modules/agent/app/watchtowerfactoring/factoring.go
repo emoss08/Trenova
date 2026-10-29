@@ -1,10 +1,11 @@
-package watchtowersources
+package watchtowerfactoring
 
 import (
 	"context"
 	"strconv"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -96,7 +98,7 @@ func (s *FactoringSource) read(
 	snap.ready, err = s.states.ListReadyUnsubmitted(ctx, factoringports.ListReadyUnsubmittedRequest{
 		TenantInfo:  tenant,
 		ReadyBefore: now - factoringreadiness.ReadyUnsubmittedSeconds,
-		Limit:       snapshotLimit,
+		Limit:       watchtoweritem.SnapshotLimit,
 	})
 	if err != nil {
 		return nil, err
@@ -119,7 +121,7 @@ func (s *FactoringSource) read(
 		&factoringwatchtowerports.ListCustomersMissingNoaRequest{
 			TenantInfo: tenant,
 			At:         now,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	); err != nil {
 		return nil, err
@@ -130,14 +132,14 @@ func (s *FactoringSource) read(
 			TenantInfo: tenant,
 			At:         now,
 			Before:     now + FactoringNoaWarningSeconds(),
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	); err != nil {
 		return nil, err
 	}
 	if snap.failed, err = s.reader.ListFailedSubmissions(
 		ctx,
-		&factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: snapshotLimit},
+		&factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: tenant, Limit: watchtoweritem.SnapshotLimit},
 	); err != nil {
 		return nil, err
 	}
@@ -146,7 +148,7 @@ func (s *FactoringSource) read(
 		&factoringwatchtowerports.ListUnfundedSubmissionsRequest{
 			TenantInfo: tenant,
 			At:         now,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	); err != nil {
 		return nil, err
@@ -156,14 +158,14 @@ func (s *FactoringSource) read(
 		&factoringwatchtowerports.ListChargebacksDueRequest{
 			TenantInfo: tenant,
 			Before:     now + FactoringChargebackWarningSeconds(),
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	); err != nil {
 		return nil, err
 	}
 	if snap.remittances, err = s.remittances.ListOpen(
 		ctx,
-		&factoringremittanceports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: snapshotLimit},
+		&factoringremittanceports.ListOpenRemittancesRequest{TenantInfo: tenant, Limit: watchtoweritem.SnapshotLimit},
 	); err != nil {
 		return nil, err
 	}
@@ -250,7 +252,7 @@ func DescribeFactoringUnfunded(
 		SourceID:    FactoringUnfundedSourceID(row.SubmissionID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectFactoringSubmission,
 		SubjectID:   row.SubmissionID,
 		Path: factoringRecordPath(
@@ -292,7 +294,7 @@ func DescribeFactoringChargebackDue(
 		SourceID:    FactoringChargebackDueSourceID(row.ItemID),
 		Severity:    watchtower.SeverityCritical,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectInvoice,
 		SubjectID:   row.InvoiceID,
 		EventKind:   agenttrigger.EventFactoringChargebackDue,
@@ -346,7 +348,7 @@ func DescribeFactoringSendFailed(
 		SourceID:    FactoringSendFailedSourceID(row.SubmissionID),
 		Severity:    watchtower.SeverityCritical,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectFactoringSubmission,
 		SubjectID:   row.SubmissionID,
 		EventKind:   agenttrigger.EventFactoringSubmissionFailed,
@@ -403,7 +405,7 @@ func DescribeFactoringReadyUnsubmitted(
 		SourceID:    FactoringReadySourceID(state.InvoiceID),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectInvoice,
 		SubjectID:   state.InvoiceID,
 		EventKind:   agenttrigger.EventFactoringInvoiceReady,
@@ -445,14 +447,20 @@ func DescribeFactoringMissingNoa(
 		case factoring.NoaStatusDraft:
 			summary = "A notice to " + factorName + " is drafted but has not been sent. " +
 				"Send it to the customer for signature."
-			occurredAt = firstNonZero(typeutils.ValueOrZero(row.NoaCreatedAt), row.ProfileUpdatedAt)
+			occurredAt = intutils.FirstPositive(
+				typeutils.ValueOrZero(row.NoaCreatedAt),
+				row.ProfileUpdatedAt,
+			)
 		case factoring.NoaStatusSent:
 			summary = "The notice is waiting on the customer's signed copy"
 			if row.NoaSentAt != nil {
 				summary += "; it was sent on " + factoringDate(*row.NoaSentAt)
 			}
 			summary += ". Record the acknowledgement when it comes back."
-			occurredAt = firstNonZero(typeutils.ValueOrZero(row.NoaSentAt), row.ProfileUpdatedAt)
+			occurredAt = intutils.FirstPositive(
+				typeutils.ValueOrZero(row.NoaSentAt),
+				row.ProfileUpdatedAt,
+			)
 		case factoring.NoaStatusAcknowledged:
 			title = customerName + "'s notice of assignment for " + factorName + " has expired"
 			summary = "Release the expired notice and send a new one; until it is signed, " +
@@ -474,11 +482,11 @@ func DescribeFactoringMissingNoa(
 		SourceID:    FactoringMissingNoaSourceID(row.CustomerID, row.FactoringCompanyID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
 		Path:        factoringRecordPath("customer", row.CustomerID, pathFactoringCustomers),
-		OccurredAt:  firstNonZero(occurredAt, now),
+		OccurredAt:  intutils.FirstPositive(occurredAt, now),
 	}, true
 }
 
@@ -512,7 +520,7 @@ func DescribeFactoringNoaExpiring(
 		SourceID:    FactoringExpiringNoaSourceID(row.NoaID),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectFactoringNoa,
 		SubjectID:   row.NoaID,
 		EventKind:   agenttrigger.EventFactoringNoaExpiring,
@@ -590,7 +598,7 @@ func DescribeFactoringRemittanceExceptions(
 		SourceID:    FactoringRemittanceSourceID(row.RemittanceID),
 		Severity:    watchtower.SeverityWarning,
 		Title:       stringutils.TruncateRunes(title, maxFactoringTitleLength),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectFactoringRemittance,
 		SubjectID:   row.RemittanceID,
 		Path: factoringRecordPath(

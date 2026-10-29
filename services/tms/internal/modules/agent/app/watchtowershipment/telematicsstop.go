@@ -1,8 +1,9 @@
-package watchtowersources
+package watchtowershipment
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -34,7 +35,7 @@ func (s *TelematicsStopVisitSource) Snapshot(
 	reviews, err := s.repo.ListOpenStopReviews(ctx, &telematicsports.ListOpenStopReviewsRequest{
 		TenantInfo: tenant,
 		Since:      s.now() - stopVisitWindow,
-		Limit:      snapshotLimit,
+		Limit:      watchtoweritem.SnapshotLimit,
 	})
 	if err != nil {
 		return nil, err

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -743,7 +743,7 @@ func (s *Service) afterHealthChange(
 ) {
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 
-	if item, open := watchtowersources.DescribeAccountingConnectionHealth(conn); open {
+	if item, open := watchtoweraccounting.DescribeAccountingConnectionHealth(conn); open {
 		if s.watchtower != nil {
 			s.watchtower.Upsert(ctx, item)
 		}
@@ -759,19 +759,19 @@ func (s *Service) afterHealthChange(
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
-			watchtowersources.AccountingConnectionHealthSourceID(conn),
+			watchtoweraccounting.AccountingConnectionHealthSourceID(conn),
 		)
 	}
 
 	if s.watchtower != nil {
-		if item, open := watchtowersources.DescribeAccountingReconnect(conn, now); open {
+		if item, open := watchtoweraccounting.DescribeAccountingReconnect(conn, now); open {
 			s.watchtower.Upsert(ctx, item)
 		} else {
 			s.watchtower.Resolve(
 				ctx,
 				tenant,
 				watchtower.SourceAccountingSync,
-				watchtowersources.AccountingReconnectSourceID(conn),
+				watchtoweraccounting.AccountingReconnectSourceID(conn),
 			)
 		}
 	}
@@ -794,13 +794,13 @@ func (s *Service) resolveWatchtower(
 		ctx,
 		tenant,
 		watchtower.SourceAccountingSync,
-		watchtowersources.AccountingConnectionHealthSourceID(conn),
+		watchtoweraccounting.AccountingConnectionHealthSourceID(conn),
 	)
 	s.watchtower.Resolve(
 		ctx,
 		tenant,
 		watchtower.SourceAccountingSync,
-		watchtowersources.AccountingReconnectSourceID(conn),
+		watchtoweraccounting.AccountingReconnectSourceID(conn),
 	)
 }
 

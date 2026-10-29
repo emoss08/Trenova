@@ -33,7 +33,6 @@ debt:
   services/tms/internal/modules/agent/app/agentruntime: 18668
   services/tms/internal/modules/agent/app/aiauditservice: 5108
   services/tms/internal/modules/agent/app/assistantservice: 14610
-  services/tms/internal/modules/agent/app/watchtowersources: 3873
   services/tms/internal/modules/agent/ports/agentports: 10434
   services/tms/internal/modules/billing/app/invoiceservice: 9852
   services/tms/internal/modules/documents/app/captureservice: 5885

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -255,7 +255,7 @@ func (s *Service) refreshAttention(
 		&accountingdriftports.ListAccountingDriftAttentionRequest{
 			TenantInfo:     tenant,
 			ConnectionID:   conn.ID,
-			DetectedBefore: s.now().Add(-watchtowersources.AccountingDriftAfter).Unix(),
+			DetectedBefore: s.now().Add(-watchtoweraccounting.AccountingDriftAfter).Unix(),
 		},
 	)
 	if err != nil {
@@ -270,7 +270,7 @@ func (s *Service) refreshAttention(
 		byKind[groups[idx].Kind] = &groups[idx]
 	}
 	for _, kind := range accountingdrift.AllDriftKinds() {
-		if item, open := watchtowersources.DescribeAccountingDriftAttention(
+		if item, open := watchtoweraccounting.DescribeAccountingDriftAttention(
 			conn,
 			byKind[kind],
 		); open {
@@ -281,7 +281,7 @@ func (s *Service) refreshAttention(
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
-			watchtowersources.AccountingDriftAttentionSourceID(conn, kind),
+			watchtoweraccounting.AccountingDriftAttentionSourceID(conn, kind),
 		)
 	}
 }

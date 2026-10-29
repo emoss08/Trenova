@@ -1,4 +1,4 @@
-package watchtowersources
+package watchtoweraccounting
 
 import (
 	"strconv"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -79,7 +80,7 @@ func DescribeAccountingInboundAttention(
 		SourceID:    AccountingInboundAttentionSourceID(conn, group.Reason),
 		Severity:    severity,
 		Title:       stringutils.TruncateRunes(title, 200),
-		Summary:     stringutils.OneLine(summary, maxSummaryLength),
+		Summary:     stringutils.OneLine(summary, watchtoweritem.MaxSummaryLength),
 		SubjectType: agent.SubjectAccountingInbound,
 		SubjectID:   group.SampleID,
 		EventKind:   agenttrigger.EventAccountingPaymentProposed,
