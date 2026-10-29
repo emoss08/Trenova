@@ -226,6 +226,7 @@ was sampled, so the audit trail can always name it.
 | `agent_run_steps.trace_id`, `.span_id` | `runstepledger.Claim`, from the `execute_tool` span | when the call is claimed |
 | `agent_run_steps.agent_definition_id`, `.agent_definition_version`, `.delegate_call_id` | the same, from the turn's definition (a delegate's own) and delegation | same |
 | `agent_run_steps.outcome.reason`, `.verdict` | `runstepledger.Settle` | when the call settles |
+| a `Completion` step's `.trace_id`, `.span_id`, `.agent_definition_id`, `.agent_definition_version`, `.delegate_call_id` | `replystep.Ledger.Keep` through `runstepledger.Record`, from the model activity's context and the request's `AIUsageAttribution` | when the reply arrives |
 | `agent_proposals.id` | minted in the dispatch activity (`PendingAction.ProposalID`); the insert mints one for an action from an older history | when the proposal is filed |
 | `agent_proposals.trace_id`, `.span_id`, `.step_key` | `proposalrecorder`, from the action | same |
 | `agent_proposals.executed_at` | the recorder, from `PendingAction.ExecutedAt` (when an automatic write ran); the executor for an approved one | at filing; at execution |

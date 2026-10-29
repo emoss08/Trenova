@@ -24,6 +24,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
@@ -204,6 +205,7 @@ type ModelCallInput struct {
 	// Scope tags what is streamed when the reply is another agent's, on a
 	// task the run's own agent handed it.
 	Scope assistantstreamports.DelegateScope `json:"scope,omitzero"`
+	Step  *replystep.Call                    `json:"step,omitempty"`
 }
 
 // OpenDelegateInput asks for another agent's turn on a task the run's agent

@@ -21,7 +21,8 @@ and their policies), `askuser`, `delegation`, `replycheck` (grounding,
 placement and reply passes over a finished reply), `turnhistory`,
 `toolresult`, `argcheck`, `loopguard`, `worldwatch`, `proposalledger`,
 `toolsummary`, `turntaint`, `turnmemory`, `turnscripts`, `scriptbroker`,
-`toolcall` (`Result`, the durable `Call`/`Outcome`, `StepKey`),
+`toolcall` (`Result`, the durable `Call`/`Outcome`, `StepKey`), `replystep` (a
+model reply's step in the run step ledger: its key, recall and keeping),
 `usableagents`, `runtimecontext` (the `RuntimeContextBuilder`) and
 `agentmatch` (the `AgentRecommender`). Code that reads the turn takes a narrow
 interface the `Turn` satisfies (`replycheck.Turn`, `runtimetools.Turn`,
@@ -101,6 +102,24 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   reply to the run's Workflow Stream when somebody is reading, and heartbeats
   on a ten-second timer, so a model thinking silently is not mistaken for a
   lost worker.
+- **Each model reply is a step in the run's ledger** (`replystep`). The workflow
+  numbers the turn's model calls (a delegate's turn counts its own, under its
+  `StepScope`) and sends the owner, scope and number on `ModelCallInput.Step`; a
+  run with no step owner (a dry run, an evaluation) sends none and keeps
+  nothing. The activity keys the call `completion:` plus a SHA-256 over the
+  owner, the number, the scope and a digest of the request in canonical JSON
+  (`replystep.Key`), so one key is one call asking one question: a reset that
+  reaches the same call with a different question asks the model. Before
+  asking, the activity reads the key (`RunStepLedger.Find`, one row by the
+  unique index); a `Completed` step holding a reply is returned as the
+  activity's result, its text streamed to the reader in one piece, and the
+  model is not called. Otherwise it asks and files the reply with `Record`, kind
+  `Completion`, holding the completion and its usage (`RunStepOutcome.Reply`). A
+  failed call and a looped reply are never filed. A reply whose encoding passes
+  the ledger's 64 KB bound is filed without it, so the model turn still shows on
+  the ledger and a replay asks again. `Record` skips a key already on record, so
+  two attempts racing keep the first reply. A ledger that cannot be read or
+  written costs only the replay: the model is asked and the reply returns.
 - **Each tool call is an activity** named for the tool: the worker's dynamic
   activity, so the Temporal UI and the SDK's metrics show each tool as itself.
   A tool that fails after its retries is reported to the model as a failed
@@ -3135,6 +3154,11 @@ agents that answer named as holding what the agent could not call ride the same 
 `FindToolsResult.HandOff` into the message's `hand_off_agents`; a history without them
 replays with none, which only leaves the Desk's hand-off menu in its usual order. See "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md).
+
+Recording model replies took no gate: the call's number is counted on the
+workflow's effects in workflow code, `ModelCallInput.Step` is optional data on
+the activity input, and the read and the write happen inside the model activity,
+so no command changed.
 
 Tracing and provenance took no gate. No span is started in workflow code; the
 root is emitted by the activity that files the run or turn. What rides through

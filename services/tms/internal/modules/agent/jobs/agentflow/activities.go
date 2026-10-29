@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -82,6 +83,7 @@ type Activities struct {
 	l         *zap.Logger
 	runtime   *agentruntime.Service
 	steps     agentruntimeports.RunStepLedger
+	replies   *replystep.Ledger
 	observer  ToolObserver
 	delegates DelegateOpener
 	metrics   *aimetrics.Assistant
@@ -94,6 +96,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		l:         p.Logger.Named("agentflow"),
 		runtime:   p.Runtime,
 		steps:     p.Steps,
+		replies:   replystep.NewLedger(p.Steps, p.Logger),
 		observer:  p.Observer,
 		delegates: p.Delegates,
 		metrics:   metrics.AssistantFrom(p.Metrics),
@@ -172,6 +175,19 @@ func (a *Activities) ModelCallActivity(
 		emit = func(event kernelports.StreamEvent) { publish(event, first.flush(event)) }
 	}
 
+	lookup := &replystep.Lookup{
+		Call:    in.Step,
+		Request: in.Request,
+		Key:     replystep.Key(in.Step, in.Request),
+	}
+	if kept, ok := a.replies.Recall(ctx, lookup); ok {
+		if kept.Completion.Text != "" {
+			emit(modelstream.DeltaEvent(kept.Completion.Text))
+		}
+
+		return &kept, nil
+	}
+
 	stopBeating := modelcall.Heartbeat(ctx)
 	defer stopBeating()
 
@@ -183,6 +199,11 @@ func (a *Activities) ModelCallActivity(
 	if err != nil {
 		return nil, modelcall.Classify(err)
 	}
+	a.replies.Keep(ctx, &replystep.Kept{
+		Lookup:  lookup,
+		Attempt: int(info.Attempt),
+		Reply:   &reply,
+	})
 
 	return &reply, nil
 }

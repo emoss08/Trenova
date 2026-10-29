@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
@@ -72,8 +73,9 @@ type workflowEffects struct {
 	events  *workflowstreams.WorkflowTopicHandle
 	// steers is where the person's words reach the turn while it works. Nil
 	// for another agent's turn on a task, which nobody steers.
-	steers  workflow.ReceiveChannel
-	outcome Outcome
+	steers      workflow.ReceiveChannel
+	outcome     Outcome
+	completions int
 }
 
 func (fx *workflowEffects) Now() int64 { return workflow.Now(fx.ctx).Unix() }
@@ -148,14 +150,29 @@ func (fx *workflowEffects) Complete(
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.modelOptions())
 
+	fx.completions++
+
 	var reply modelstream.Reply
 	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{
 		Request: req,
 		Stream:  fx.events != nil,
 		Scope:   fx.run.Scope(),
+		Step:    fx.replyStep(),
 	}).Get(ctx, &reply)
 
 	return reply, err
+}
+
+func (fx *workflowEffects) replyStep() *replystep.Call {
+	if fx.run.StepOwner.ID.IsNil() {
+		return nil
+	}
+
+	return &replystep.Call{
+		Owner:   fx.run.StepOwner,
+		Scope:   fx.run.request().StepScope(),
+		Ordinal: fx.completions,
+	}
 }
 
 func (fx *workflowEffects) Dispatch(
