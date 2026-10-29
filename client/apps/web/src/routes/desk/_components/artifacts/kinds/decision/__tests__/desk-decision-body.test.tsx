@@ -37,18 +37,27 @@ vi.mock("@/lib/graphql/agent-decisions", () => ({
 
 vi.mock("@/lib/queries/assistant", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/queries/assistant")>();
+  const { proposals, plans } = original.assistant;
+  // The factory's keys and scopes stay, so a decision written into the cache by
+  // scope lands on the lists the card reads; only what the lists hold is faked.
   return {
     ...original,
     assistant: {
       ...original.assistant,
-      proposals: (threadId: string) => ({
-        queryKey: ["assistant-proposals", threadId],
-        queryFn: async () => ({ results: listed }),
-      }),
-      plans: (threadId: string) => ({
-        queryKey: ["assistant-plans", threadId],
-        queryFn: async () => ({ results: listedPlans }),
-      }),
+      proposals: Object.assign(
+        (threadId: string) => ({
+          ...proposals(threadId),
+          queryFn: async () => ({ results: listed }),
+        }),
+        { _def: proposals._def },
+      ),
+      plans: Object.assign(
+        (threadId: string) => ({
+          ...plans(threadId),
+          queryFn: async () => ({ results: listedPlans }),
+        }),
+        { _def: plans._def },
+      ),
     },
   };
 });

@@ -528,11 +528,18 @@ describe("QualityTab", () => {
     table.openRow = answer as unknown as Record<string, unknown>;
     renderTab("ratings");
 
-    await screen.findByRole("region", { name: "Worst-Rated Answer table" });
-    expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
     const sheet = await screen.findByRole("complementary", {
       name: "What is the total on invoice 12?",
     });
+    // The sheet is modal, so the table it opens over is out of the accessibility tree.
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Worst-Rated Answer table" })).toBeNull(),
+    );
+    expect(
+      screen.getByRole("region", { name: "Worst-Rated Answer table", hidden: true }),
+    ).toBeTruthy();
+    expect(lastTable().name).toBe("Worst-Rated Answer");
+    expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
     expect(within(sheet).getByText("Wrong invoice total.")).toBeTruthy();
     expect(within(sheet).getByText("“It is $12.”")).toBeTruthy();
     expect(within(sheet).queryByRole("link", { name: "Open the conversation" })).toBeNull();

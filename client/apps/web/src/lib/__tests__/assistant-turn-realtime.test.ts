@@ -60,10 +60,11 @@ describe("isOtherUsersTurnEvent", () => {
 });
 
 describe("assistant_turns invalidation", () => {
-  it("refreshes the live replies and the conversation list together", () => {
+  it("refreshes the live replies, the conversation list and the chapters together", () => {
     expect(RESOURCE_QUERY_KEY_MAP[ASSISTANT_TURNS_RESOURCE]).toEqual([
       ["assistant", "activeTurns"],
       ["assistant", "threads"],
+      ["assistant", "chapters"],
     ]);
   });
 });
