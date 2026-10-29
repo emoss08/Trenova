@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -70,7 +71,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		key      string
 		resource permission.Resource
 	}{
-		{&shipmenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
+		{&shipmentcommenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
 		// The document, not the shipment: attaching changes the document's
 		// lineage, so that is the record whose version the proposal pins.
 		{&documenttools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},

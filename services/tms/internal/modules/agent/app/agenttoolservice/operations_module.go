@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recurringshipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shifttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentopstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -82,32 +84,32 @@ func operationsToolProviders() []any {
 func provideUncancelShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewUncancelShipmentTool(shipments)
+	return shipmentopstools.NewUncancelShipmentTool(shipments)
 }
 
 func provideTransferShipmentOwnershipTool(
 	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewTransferShipmentOwnershipTool(shipments)
+	return shipmentopstools.NewTransferShipmentOwnershipTool(shipments)
 }
 
 func provideRerateShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewRerateShipmentTool(shipments)
+	return shipmentopstools.NewRerateShipmentTool(shipments)
 }
 
 func provideRecalculateShipmentDistanceTool(
 	shipments shipmentserviceports.ShipmentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewRecalculateShipmentDistanceTool(shipments)
+	return shipmentopstools.NewRecalculateShipmentDistanceTool(shipments)
 }
 
 func provideDuplicateShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
 	locations locationports.LocationRepository,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{
+	return shipmentopstools.NewDuplicateShipmentTool(shipmentopstools.DuplicateShipmentDeps{
 		Shipments: shipments,
 		Sources:   shipments,
 		Locations: locations,
@@ -127,33 +129,33 @@ func provideSplitMoveTool(moves shipmentmoveports.ShipmentMoveService) agenttool
 func providePinShipmentCommentTool(
 	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewPinShipmentCommentTool(comments)
+	return shipmentcommenttools.NewPinShipmentCommentTool(comments)
 }
 
 func provideUnpinShipmentCommentTool(
 	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewUnpinShipmentCommentTool(comments)
+	return shipmentcommenttools.NewUnpinShipmentCommentTool(comments)
 }
 
 func provideResolveShipmentCommentTool(
 	comments shipmentcommentports.ShipmentCommentService,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewResolveShipmentCommentTool(comments)
+	return shipmentcommenttools.NewResolveShipmentCommentTool(comments)
 }
 
 func provideEditShipmentCommentTool(
 	comments shipmentcommentports.ShipmentCommentService,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewEditShipmentCommentTool(comments, permissions)
+	return shipmentcommenttools.NewEditShipmentCommentTool(comments, permissions)
 }
 
 func provideDeleteShipmentCommentTool(
 	comments shipmentcommentports.ShipmentCommentService,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewDeleteShipmentCommentTool(comments, permissions)
+	return shipmentcommenttools.NewDeleteShipmentCommentTool(comments, permissions)
 }
 
 func provideUpdateServiceFailureTool(

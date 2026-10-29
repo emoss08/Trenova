@@ -6,14 +6,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,79 +24,6 @@ type liveTenderReader interface {
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
 	) ([]*tender.Tender, error)
-}
-
-func (t *AddShipmentCommentTool) Preview(
-	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agentpreview.ToolPreview, error) {
-	entity, err := t.comment(&params)
-	if err != nil {
-		return nil, err
-	}
-
-	created, err := toolpreview.Create(
-		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
-		entity,
-		toolpreview.Only(
-			changepreview.PreviewFieldShipmentID,
-			"comment",
-			"type",
-			"visibility",
-			"priority",
-		),
-		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.PreviewFieldShipmentID: permission.ResourceShipment,
-		}),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	shared := toolpreview.Send(
-		toolpreview.Record{
-			Resource: permission.ResourceShipment,
-			ID:       entity.ShipmentID,
-			Label:    commentAudience(entity.Visibility),
-		},
-		&agentpreview.MessagePreview{
-			Channel:    agentpreview.MessageChannelComment,
-			To:         []string{commentAudience(entity.Visibility)},
-			Body:       entity.Comment,
-			Visibility: string(entity.Visibility),
-		},
-	)
-
-	preview := toolpreview.Build(
-		fmt.Sprintf("Would leave a %s note on the shipment, read by %s.",
-			strings.ToLower(string(entity.Priority)),
-			strings.ToLower(commentAudience(entity.Visibility))),
-		created,
-		shared,
-	)
-	if entity.Visibility == shipment.CommentVisibilityCustomer ||
-		entity.Visibility == shipment.CommentVisibilityDriver {
-		outboundpreview.WarnSensitiveContent(preview, entity.Comment)
-	}
-
-	return preview, nil
-}
-
-func commentAudience(visibility shipment.CommentVisibility) string {
-	switch visibility {
-	case shipment.CommentVisibilityCustomer:
-		return "The customer"
-	case shipment.CommentVisibilityDriver:
-		return "The driver"
-	case shipment.CommentVisibilityAccounting:
-		return "Accounting"
-	case shipment.CommentVisibilityOperations:
-		return "Operations"
-	case shipment.CommentVisibilityInternal:
-		return "Internal staff"
-	default:
-		return "Internal staff"
-	}
 }
 
 func (t *CancelShipmentTool) Preview(

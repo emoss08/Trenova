@@ -34,6 +34,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/reporttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/scheduletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentedittools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/triagequeuetools"
@@ -136,7 +138,7 @@ func ToolProviders() []any {
 		carriertools.NewWaitUntilTool,
 		carriertools.NewCancelWaitTool,
 		scheduletools.NewCreateScheduleTool,
-		shipmenttools.NewAddShipmentCommentTool,
+		shipmentcommenttools.NewAddShipmentCommentTool,
 		shipmenttools.NewPlaceShipmentHoldTool,
 		shipmenttools.NewReleaseShipmentHoldTool,
 		shipmenttools.NewShareCustomerTrackingLinkTool,
@@ -362,14 +364,14 @@ func provideRescheduleStopTool(
 	shipments shipmentserviceports.ShipmentService,
 	partners *ediservice.Service,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewRescheduleStopTool(shipments, partners)
+	return shipmentedittools.NewRescheduleStopTool(shipments, partners)
 }
 
 func provideAddShipmentChargeTool(
 	shipments shipmentserviceports.ShipmentService,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentTool {
-	return shipmenttools.NewAddShipmentChargeTool(shipments, accessorials)
+	return shipmentedittools.NewAddShipmentChargeTool(shipments, accessorials)
 }
 
 func provideCancelShipmentTool(

@@ -22,7 +22,7 @@ const (
 	toolRevokeCustomerTrackingLink = "shipment_revoke_tracking_link"
 	paramRecipientEmail            = "recipientEmail"
 	paramTrackingLinkID            = "linkId"
-	toolShipmentList               = "shipment_list"
+	ToolShipmentList               = "shipment_list"
 )
 
 type customerTrackingLinker interface {
@@ -73,7 +73,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 	return toolspec.NewReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:   toolShareCustomerTrackingLink,
-			Recipe: []string{toolShipmentList, toolShareCustomerTrackingLink},
+			Recipe: []string{ToolShipmentList, toolShareCustomerTrackingLink},
 			Description: "Share a link to a shipment's tracking page with the customer, and email it " +
 				"when given an address. The page shows only what the customer's tracking settings " +
 				"allow and needs no sign-in. Use the address the customer asked you to send it to; " +
@@ -208,7 +208,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 	return toolspec.NewReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:   toolRevokeCustomerTrackingLink,
-			Recipe: []string{toolShipmentList, toolRevokeCustomerTrackingLink},
+			Recipe: []string{ToolShipmentList, toolRevokeCustomerTrackingLink},
 			Description: "Stop every live customer tracking link on a shipment from working. Use " +
 				"it when a link reached the wrong person or the customer asks for access to end; " +
 				"share a new link afterwards if someone should keep following the load.",

@@ -1,4 +1,4 @@
-package shipmenttools
+package shipmentopstools
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -89,10 +90,6 @@ type shipmentOperator interface {
 	) (*shipmentserviceports.ShipmentDuplicatePreview, error)
 }
 
-func targetShipment(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
-}
-
 func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_uncancel",
@@ -113,7 +110,7 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentToo
 			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty("The canceled shipment"),
 		},
 		Required: []string{toolparams.ParamShipmentID},
-		Target:   targetShipment,
+		Target:   shipmenttools.TargetShipment,
 	}, toolspec.ReceivablePlan[*shipmentports.UncancelShipmentRequest, *shipmentserviceports.ShipmentChangePreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*shipmentports.UncancelShipmentRequest, error) {
 			shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
@@ -180,7 +177,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agenttoolports
 			),
 		},
 		Required: []string{toolparams.ParamShipmentID, toolparams.ParamOwnerID},
-		Target:   targetShipment,
+		Target:   shipmenttools.TargetShipment,
 	}, toolspec.ReceivablePlan[*ownershipRequest, *shipmentserviceports.ShipmentChangePreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*ownershipRequest, error) {
 			shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
@@ -247,7 +244,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool 
 			),
 		},
 		Required: []string{toolparams.ParamShipmentID},
-		Target:   targetShipment,
+		Target:   shipmenttools.TargetShipment,
 	}, toolspec.ReceivablePlan[*shipmentserviceports.AutoRateShipmentRequest, *reratePlan]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
@@ -335,7 +332,7 @@ func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agenttoolpor
 			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty("The shipment"),
 		},
 		Required: []string{toolparams.ParamShipmentID},
-		Target:   targetShipment,
+		Target:   shipmenttools.TargetShipment,
 	}, toolspec.ReceivablePlan[*distanceRequest, *shipmentdistanceports.ShipmentDistancePreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*distanceRequest, error) {
 			shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
@@ -427,7 +424,7 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agenttoolports.AgentTo
 			),
 		},
 		Required: []string{toolparams.ParamShipmentID},
-		Target:   targetShipment,
+		Target:   shipmenttools.TargetShipment,
 	}, toolspec.ReceivablePlan[*shipmentports.BulkDuplicateShipmentRequest, *shipmentserviceports.ShipmentDuplicatePreview]{
 		Request: duplicateRequest,
 		Settle: func(

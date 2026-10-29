@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/qualificationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -46,7 +47,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	}
 
 	assert.Equal(t, agent.TierAutoExecute,
-		agenttoolpolicy.Promotable((&shipmenttools.AddShipmentCommentTool{}).Policy()),
+		agenttoolpolicy.Promotable((&shipmentcommenttools.AddShipmentCommentTool{}).Policy()),
 		"an internal note has no ceiling of its own")
 }
 
@@ -55,7 +56,7 @@ func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 	t.Parallel()
 
-	policy := (&shipmenttools.AddShipmentCommentTool{}).Policy()
+	policy := (&shipmentcommenttools.AddShipmentCommentTool{}).Policy()
 	cases := map[string]struct {
 		class agent.EgressClass
 		limit agent.AutonomyTier

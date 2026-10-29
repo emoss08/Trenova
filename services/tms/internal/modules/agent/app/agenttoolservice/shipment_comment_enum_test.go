@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +20,7 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -32,7 +32,7 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 		"an absent visibility is Internal")
 
 	comments = &fakeCommentService{}
-	tool = shipmenttools.NewAddShipmentCommentTool(comments)
+	tool = shipmentcommenttools.NewAddShipmentCommentTool(comments)
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Update.",

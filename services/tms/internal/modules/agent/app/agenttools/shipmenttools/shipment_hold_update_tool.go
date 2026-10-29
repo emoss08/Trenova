@@ -231,7 +231,7 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 			),
 		},
 		Required: []string{toolparams.ParamShipmentID, ParamHoldID},
-		Target:   targetShipment,
+		Target:   TargetShipment,
 	}, toolspec.ReceivablePlan[*holdPatch, *holdUpdatePlan]{
 		Request: readHoldPatch,
 		Plan: func(

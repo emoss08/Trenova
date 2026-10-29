@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentopstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -225,7 +226,7 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewUncancelShipmentTool(shipments)
+	tool := shipmentopstools.NewUncancelShipmentTool(shipments)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
 	)
@@ -260,7 +261,7 @@ func TestUncancelShipment_AShipmentThatIsNotCanceledIsAWouldFail(t *testing.T) {
 	shipments := &fakeShipmentOperator{
 		refusal: errortypes.NewBusinessError("shipment is not canceled"),
 	}
-	tool := shipmenttools.NewUncancelShipmentTool(shipments)
+	tool := shipmentopstools.NewUncancelShipmentTool(shipments)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamShipmentID: pulid.MustNew("shp_").String()},
 	)
@@ -277,7 +278,7 @@ func TestTransferShipmentOwnership_NamesTheNewOwner(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewTransferShipmentOwnershipTool(shipments)
+	tool := shipmentopstools.NewTransferShipmentOwnershipTool(shipments)
 	owner := pulid.MustNew("usr_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamShipmentID: shipments.shipment().ID.String(),
@@ -309,7 +310,7 @@ func TestRerateShipment_ShowsTheMoneyAndIsAMoneyWrite(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewRerateShipmentTool(shipments)
+	tool := shipmentopstools.NewRerateShipmentTool(shipments)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
 	)
@@ -334,7 +335,7 @@ func TestRerateShipment_NoContractChangesNothing(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{unpriced: true}
-	tool := shipmenttools.NewRerateShipmentTool(shipments)
+	tool := shipmentopstools.NewRerateShipmentTool(shipments)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
 	)
@@ -353,7 +354,7 @@ func TestRecalculateShipmentDistance_ShowsEachMoveThatChanges(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewRecalculateShipmentDistanceTool(shipments)
+	tool := shipmentopstools.NewRecalculateShipmentDistanceTool(shipments)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
 	)
@@ -378,13 +379,13 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewDuplicateShipmentTool(
-		shipmenttools.DuplicateShipmentDeps{Shipments: shipments},
+	tool := shipmentopstools.NewDuplicateShipmentTool(
+		shipmentopstools.DuplicateShipmentDeps{Shipments: shipments},
 	)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamShipmentID:       shipments.shipment().ID.String(),
-		shipmenttools.ParamCopyCount:     float64(2),
-		shipmenttools.ParamFirstPickupAt: "2030-03-17T12:46:40",
+		toolparams.ParamShipmentID:          shipments.shipment().ID.String(),
+		shipmentopstools.ParamCopyCount:     float64(2),
+		shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40",
 	})
 	params.Timezone = "America/Chicago"
 
@@ -418,17 +419,17 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 	t.Parallel()
 
-	tool := shipmenttools.NewDuplicateShipmentTool(
-		shipmenttools.DuplicateShipmentDeps{Shipments: &fakeShipmentOperator{}},
+	tool := shipmentopstools.NewDuplicateShipmentTool(
+		shipmentopstools.DuplicateShipmentDeps{Shipments: &fakeShipmentOperator{}},
 	)
 	id := pulid.MustNew("shp_").String()
 	for name, raw := range map[string]map[string]any{
-		"too many copies":     {toolparams.ParamShipmentID: id, shipmenttools.ParamCopyCount: float64(21)},
-		"unix seconds":        {toolparams.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: float64(1_900_000_000)},
-		"unix seconds text":   {toolparams.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "1900000000"},
-		"a utc offset":        {toolparams.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "2030-03-17T12:46:40Z"},
-		"a date without time": {toolparams.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "2030-03-17"},
-		"no shipment":         {shipmenttools.ParamCopyCount: float64(1)},
+		"too many copies":     {toolparams.ParamShipmentID: id, shipmentopstools.ParamCopyCount: float64(21)},
+		"unix seconds":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: float64(1_900_000_000)},
+		"unix seconds text":   {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "1900000000"},
+		"a utc offset":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40Z"},
+		"a date without time": {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17"},
+		"no shipment":         {shipmentopstools.ParamCopyCount: float64(1)},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -464,7 +465,7 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 			{LocationID: pickup, Sequence: 0},
 		},
 	}}}}
-	tool := shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{
+	tool := shipmentopstools.NewDuplicateShipmentTool(shipmentopstools.DuplicateShipmentDeps{
 		Shipments: shipments,
 		Sources:   sources,
 		Locations: agenttoolstest.FakeLocationZones{Zones: map[pulid.ID]string{
@@ -473,8 +474,8 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 		}},
 	})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamShipmentID:       shipments.shipment().ID.String(),
-		shipmenttools.ParamFirstPickupAt: "2030-03-17T10:46:40",
+		toolparams.ParamShipmentID:          shipments.shipment().ID.String(),
+		shipmentopstools.ParamFirstPickupAt: "2030-03-17T10:46:40",
 	})
 	params.Timezone = "America/Chicago"
 

@@ -1,4 +1,4 @@
-package shipmenttools
+package shipmentcommenttools
 
 import (
 	"context"

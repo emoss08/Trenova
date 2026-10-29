@@ -138,7 +138,7 @@ findings:
       against mutation updateShipment beside update_shipment, Unbound in toolcontract with its
       reason; update_shipment now points to it. To verify in a run.
     files:
-      - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_edit_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/shipmentedittools/shipment_edit_tools.go
       - services/tms/internal/api/writecoverage/writecoverage.yml
     fixedIn: .deskbench/runs/20261009-203702-run
 
@@ -420,7 +420,7 @@ findings:
       add_shipment_charge already existed with no holder; Billing exceptions now holds it (DB-019).
     fixedIn: "uncommitted; verified by the new lumper-charge-on-a-load case (both models: one $175 lumper proposed, approved and on SEED-SHP-008)"
     files:
-      - services/tms/internal/modules/agent/app/agenttools/shipmenttools/shipment_edit_tools.go
+      - services/tms/internal/modules/agent/app/agenttools/shipmentedittools/shipment_edit_tools.go
       - services/tms/internal/modules/agent/domain/agentpreset/tools.go
       - services/tms/deskbench/scenarios/billing.yaml
   - id: DB-018

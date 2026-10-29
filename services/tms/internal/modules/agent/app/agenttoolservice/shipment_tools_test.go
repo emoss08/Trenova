@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -97,7 +98,7 @@ func TestAddShipmentComment_MarksItselfAsAIWritten(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -116,7 +117,7 @@ func TestAddShipmentComment_DefaultsToInternalVisibility(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -130,7 +131,7 @@ func TestAddShipmentComment_CarriesTheAuthorAndTenant(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -147,7 +148,7 @@ func TestAddShipmentComment_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -326,7 +327,7 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 		resource  permission.Resource
 		operation permission.Operation
 	}{
-		{shipmenttools.NewAddShipmentCommentTool(nil), permission.ResourceShipmentComment, permission.OpCreate},
+		{shipmentcommenttools.NewAddShipmentCommentTool(nil), permission.ResourceShipmentComment, permission.OpCreate},
 		{shipmenttools.NewPlaceShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpCreate},
 		{shipmenttools.NewReleaseShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpUpdate},
 		{shipmenttools.NewCancelShipmentTool(nil, nil, nil), permission.ResourceShipment, permission.OpCancel},
@@ -351,7 +352,7 @@ func TestAddShipmentComment_KeepsTypeAndVisibilityConsistent(t *testing.T) {
 		shipment.CommentVisibilityInternal: shipment.CommentTypeInternal,
 	} {
 		comments := &fakeCommentService{}
-		tool := shipmenttools.NewAddShipmentCommentTool(comments)
+		tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 		require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 			"shipmentId": pulid.MustNew("shp_").String(),
