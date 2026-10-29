@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -213,12 +215,16 @@ func stateScope(
 
 func searchStates(term string) keel.Pred {
 	st := factoringreadinessdb.InvoiceStates
-	cus := st.Customer()
+	inv := invoicedb.Invoices
+	cus := customerdb.Customers
+	fc := factoringcompanydb.FactoringCompanies
 	return keel.Or(
-		st.Invoice().Number.ContainsFold(term),
-		cus.Name.ContainsFold(term),
-		cus.Code.ContainsFold(term),
-		st.FactoringCompany().Name.ContainsFold(term),
+		st.InvoiceID.InQuery(inv.Pick(inv.ID).Where(inv.Number.ContainsFold(term))),
+		st.CustomerID.InQuery(cus.Pick(cus.ID).Where(keel.Or(
+			cus.Name.ContainsFold(term),
+			cus.Code.ContainsFold(term),
+		))),
+		st.FactoringCompanyID.InQuery(fc.Pick(fc.ID).Where(fc.Name.ContainsFold(term))),
 	)
 }
 

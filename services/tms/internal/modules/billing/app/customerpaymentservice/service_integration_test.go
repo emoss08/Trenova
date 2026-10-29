@@ -200,16 +200,13 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	assert.Equal(t, int64(1), applicationCount)
 
 	je := journalentrydb.JournalEntries
-	entry, err := je.Pick(je.ReferenceType, je.TotalDebit, je.TotalCredit).
-		Where(je.ReferenceID.Eq(payment.ID.String())).
-		Order(je.ID.Asc()).
-		First(ctx, db)
-	require.NoError(t, err)
-	assert.Equal(
-		t,
-		accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
-		entry.ReferenceType,
-	)
+	entry, err := je.Pick(je.TotalDebit, je.TotalCredit).
+		Where(
+			je.ReferenceType.Eq(accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()),
+			je.ReferenceID.Eq(payment.ID.String()),
+		).
+		One(ctx, db)
+	require.NoError(t, err, "posting the payment journals it once")
 	assert.Equal(t, int64(10000), entry.TotalDebit)
 	assert.Equal(t, int64(10000), entry.TotalCredit)
 
@@ -372,7 +369,10 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	je := journalentrydb.JournalEntries
 	jel := journalentrydb.JournalEntryLines
 	lineCount, err := jel.Where(jel.JournalEntryID.InQuery(
-		je.Pick(je.ID).Where(je.ReferenceID.Eq(payment.ID.String())).Limit(1),
+		je.Pick(je.ID).Where(
+			je.ReferenceType.Eq(accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()),
+			je.ReferenceID.Eq(payment.ID.String()),
+		).Limit(1),
 	)).Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), lineCount)

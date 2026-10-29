@@ -58,7 +58,10 @@ func (r *repository) ListOverdueInvoices(
 		func(ctx context.Context) ([]*paymentreminderports.OverdueInvoice, error) {
 			inv := invoicedb.Invoices
 			ipr := paymentreminderdb.Reminders.As("ipr")
-			lastStep := keel.Scalar(ipr.Pick(ipr.Step.Max()).Where(ipr.InvoiceID.EqCol(inv.ID)))
+			lastStep := keel.Scalar(ipr.Pick(ipr.Step.Max()).Where(
+				ipr.InvoiceID.EqCol(inv.ID),
+				keel.Int32Of(ipr.Step).GtExpr(keel.ConstInt32(paymentreminder.ManualStep)),
+			))
 
 			records, err := keel.Into[overdueRecord](ctx, r.db.Keel(ctx), inv.
 				Pick(
