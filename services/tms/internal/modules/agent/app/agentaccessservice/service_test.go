@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -84,7 +85,7 @@ func (f *fakeDefinitions) SetAccessMode(
 
 type fakeGrants struct {
 	permissionports.RoleAgentGrantRepository
-	roles        map[pulid.ID]*permission.Role
+	roles        map[pulid.ID]*rbac.Role
 	agentRoles   map[pulid.ID][]pulid.ID
 	agentReplace []permissionports.ReplaceAgentGrantsRequest
 	roleReplace  []permissionports.ReplaceRoleGrantsRequest
@@ -94,9 +95,9 @@ type fakeGrants struct {
 func (f *fakeGrants) ListGrantableRoles(
 	_ context.Context,
 	req permissionports.ListGrantableRolesRequest,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	if len(req.RoleIDs) == 0 {
-		out := make([]*permission.Role, 0, len(f.roles))
+		out := make([]*rbac.Role, 0, len(f.roles))
 		for _, role := range f.roles {
 			out = append(out, role)
 		}
@@ -104,7 +105,7 @@ func (f *fakeGrants) ListGrantableRoles(
 		return out, nil
 	}
 
-	out := make([]*permission.Role, 0, len(req.RoleIDs))
+	out := make([]*rbac.Role, 0, len(req.RoleIDs))
 	for _, id := range req.RoleIDs {
 		if role, ok := f.roles[id]; ok {
 			out = append(out, role)
@@ -201,8 +202,8 @@ type fixture struct {
 	tenant      pagination.TenantInfo
 	agent       *agentdefinition.Definition
 	system      *agentdefinition.Definition
-	roleA       *permission.Role
-	roleB       *permission.Role
+	roleA       *rbac.Role
+	roleB       *rbac.Role
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -224,12 +225,12 @@ func newFixture(t *testing.T) *fixture {
 		BusinessUnitID: tenant.BuID,
 		AccessMode:     agentdefinition.AccessEveryone,
 	}
-	roleA := &permission.Role{
+	roleA := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		Name:           "Payroll",
 		OrganizationID: tenant.OrgID,
 	}
-	roleB := &permission.Role{
+	roleB := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		Name:           "Finance",
 		OrganizationID: tenant.OrgID,
@@ -242,7 +243,7 @@ func newFixture(t *testing.T) *fixture {
 			system.ID:  system,
 		}},
 		grants: &fakeGrants{
-			roles:      map[pulid.ID]*permission.Role{roleA.ID: roleA, roleB.ID: roleB},
+			roles:      map[pulid.ID]*rbac.Role{roleA.ID: roleA, roleB.ID: roleB},
 			agentRoles: map[pulid.ID][]pulid.ID{},
 			roleAgents: map[pulid.ID][]pulid.ID{},
 		},
@@ -301,7 +302,7 @@ func TestSetAgentAccess_RestrictsGrantsAndInvalidatesTheChangedRoles(t *testing.
 
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, access.Agent.AccessMode)
-	assert.Equal(t, []*permission.Role{f.roleA}, access.Roles)
+	assert.Equal(t, []*rbac.Role{f.roleA}, access.Roles)
 	assert.Equal(t, 1, f.db.transactions, "the mode and the grants change together")
 	require.Len(t, f.definitions.modeSets, 1)
 	assert.Equal(t, agentdefinition.AccessRoles, f.definitions.modeSets[0].Mode)

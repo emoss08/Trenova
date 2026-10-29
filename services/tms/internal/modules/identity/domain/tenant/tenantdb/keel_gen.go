@@ -4,11 +4,11 @@ package tenantdb
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"unsafe"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -1020,7 +1020,7 @@ func attachUser(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Memberships = append(r.Memberships, (*tenant.OrganizationMembership)(child))
 	case 2:
-		r.Assignments = append(r.Assignments, (*permission.UserRoleAssignment)(child))
+		r.Assignments = append(r.Assignments, (*rbac.UserRoleAssignment)(child))
 	}
 }
 

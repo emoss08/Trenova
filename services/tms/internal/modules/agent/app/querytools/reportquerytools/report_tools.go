@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -711,7 +712,7 @@ func (t *getReportRunTool) ParamSchema() map[string]any {
 			"runId": agenttoolschema.OfKinds(map[string]any{
 				"type":        "string",
 				"description": "The run id returned by report_run.",
-			}, permission.KindReportRun),
+			}, recordkind.ReportRun),
 		},
 		"required":             []string{"runId"},
 		"additionalProperties": false,

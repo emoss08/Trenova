@@ -6,8 +6,8 @@ package permissionportsmock
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
@@ -229,23 +229,23 @@ func (_c *MockRBACRepository_CountRolePermissions_Call) RunAndReturn(run func(ct
 }
 
 // GetAuthorizedRoles provides a mock function for the type MockRBACRepository
-func (_mock *MockRBACRepository) GetAuthorizedRoles(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.Role, error) {
+func (_mock *MockRBACRepository) GetAuthorizedRoles(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.Role, error) {
 	ret := _mock.Called(ctx, userID, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAuthorizedRoles")
 	}
 
-	var r0 []*permission.Role
+	var r0 []*rbac.Role
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*permission.Role, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*rbac.Role, error)); ok {
 		return returnFunc(ctx, userID, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*permission.Role); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*rbac.Role); ok {
 		r0 = returnFunc(ctx, userID, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.Role)
+			r0 = ret.Get(0).([]*rbac.Role)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
@@ -292,12 +292,12 @@ func (_c *MockRBACRepository_GetAuthorizedRoles_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockRBACRepository_GetAuthorizedRoles_Call) Return(roles []*permission.Role, err error) *MockRBACRepository_GetAuthorizedRoles_Call {
+func (_c *MockRBACRepository_GetAuthorizedRoles_Call) Return(roles []*rbac.Role, err error) *MockRBACRepository_GetAuthorizedRoles_Call {
 	_c.Call.Return(roles, err)
 	return _c
 }
 
-func (_c *MockRBACRepository_GetAuthorizedRoles_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.Role, error)) *MockRBACRepository_GetAuthorizedRoles_Call {
+func (_c *MockRBACRepository_GetAuthorizedRoles_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.Role, error)) *MockRBACRepository_GetAuthorizedRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -371,23 +371,23 @@ func (_c *MockRBACRepository_GetRoleClosure_Call) RunAndReturn(run func(ctx cont
 }
 
 // GetRoleConstraint provides a mock function for the type MockRBACRepository
-func (_mock *MockRBACRepository) GetRoleConstraint(ctx context.Context, orgID pulid.ID, constraintID pulid.ID) (*permission.RoleConstraint, error) {
+func (_mock *MockRBACRepository) GetRoleConstraint(ctx context.Context, orgID pulid.ID, constraintID pulid.ID) (*rbac.RoleConstraint, error) {
 	ret := _mock.Called(ctx, orgID, constraintID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRoleConstraint")
 	}
 
-	var r0 *permission.RoleConstraint
+	var r0 *rbac.RoleConstraint
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*permission.RoleConstraint, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*rbac.RoleConstraint, error)); ok {
 		return returnFunc(ctx, orgID, constraintID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *permission.RoleConstraint); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *rbac.RoleConstraint); ok {
 		r0 = returnFunc(ctx, orgID, constraintID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*permission.RoleConstraint)
+			r0 = ret.Get(0).(*rbac.RoleConstraint)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
@@ -434,34 +434,34 @@ func (_c *MockRBACRepository_GetRoleConstraint_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockRBACRepository_GetRoleConstraint_Call) Return(roleConstraint *permission.RoleConstraint, err error) *MockRBACRepository_GetRoleConstraint_Call {
+func (_c *MockRBACRepository_GetRoleConstraint_Call) Return(roleConstraint *rbac.RoleConstraint, err error) *MockRBACRepository_GetRoleConstraint_Call {
 	_c.Call.Return(roleConstraint, err)
 	return _c
 }
 
-func (_c *MockRBACRepository_GetRoleConstraint_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, constraintID pulid.ID) (*permission.RoleConstraint, error)) *MockRBACRepository_GetRoleConstraint_Call {
+func (_c *MockRBACRepository_GetRoleConstraint_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, constraintID pulid.ID) (*rbac.RoleConstraint, error)) *MockRBACRepository_GetRoleConstraint_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListRoleConstraints provides a mock function for the type MockRBACRepository
-func (_mock *MockRBACRepository) ListRoleConstraints(ctx context.Context, req permissionports.ListRoleConstraintsRequest) ([]*permission.RoleConstraint, error) {
+func (_mock *MockRBACRepository) ListRoleConstraints(ctx context.Context, req permissionports.ListRoleConstraintsRequest) ([]*rbac.RoleConstraint, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRoleConstraints")
 	}
 
-	var r0 []*permission.RoleConstraint
+	var r0 []*rbac.RoleConstraint
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.ListRoleConstraintsRequest) ([]*permission.RoleConstraint, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.ListRoleConstraintsRequest) ([]*rbac.RoleConstraint, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.ListRoleConstraintsRequest) []*permission.RoleConstraint); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.ListRoleConstraintsRequest) []*rbac.RoleConstraint); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.RoleConstraint)
+			r0 = ret.Get(0).([]*rbac.RoleConstraint)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.ListRoleConstraintsRequest) error); ok {
@@ -502,34 +502,34 @@ func (_c *MockRBACRepository_ListRoleConstraints_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockRBACRepository_ListRoleConstraints_Call) Return(roleConstraints []*permission.RoleConstraint, err error) *MockRBACRepository_ListRoleConstraints_Call {
+func (_c *MockRBACRepository_ListRoleConstraints_Call) Return(roleConstraints []*rbac.RoleConstraint, err error) *MockRBACRepository_ListRoleConstraints_Call {
 	_c.Call.Return(roleConstraints, err)
 	return _c
 }
 
-func (_c *MockRBACRepository_ListRoleConstraints_Call) RunAndReturn(run func(ctx context.Context, req permissionports.ListRoleConstraintsRequest) ([]*permission.RoleConstraint, error)) *MockRBACRepository_ListRoleConstraints_Call {
+func (_c *MockRBACRepository_ListRoleConstraints_Call) RunAndReturn(run func(ctx context.Context, req permissionports.ListRoleConstraintsRequest) ([]*rbac.RoleConstraint, error)) *MockRBACRepository_ListRoleConstraints_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListRoleHierarchyEdges provides a mock function for the type MockRBACRepository
-func (_mock *MockRBACRepository) ListRoleHierarchyEdges(ctx context.Context, orgID pulid.ID) ([]*permission.RoleHierarchyEdge, error) {
+func (_mock *MockRBACRepository) ListRoleHierarchyEdges(ctx context.Context, orgID pulid.ID) ([]*rbac.RoleHierarchyEdge, error) {
 	ret := _mock.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRoleHierarchyEdges")
 	}
 
-	var r0 []*permission.RoleHierarchyEdge
+	var r0 []*rbac.RoleHierarchyEdge
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*permission.RoleHierarchyEdge, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*rbac.RoleHierarchyEdge, error)); ok {
 		return returnFunc(ctx, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*permission.RoleHierarchyEdge); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*rbac.RoleHierarchyEdge); ok {
 		r0 = returnFunc(ctx, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.RoleHierarchyEdge)
+			r0 = ret.Get(0).([]*rbac.RoleHierarchyEdge)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
@@ -570,12 +570,12 @@ func (_c *MockRBACRepository_ListRoleHierarchyEdges_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockRBACRepository_ListRoleHierarchyEdges_Call) Return(roleHierarchyEdges []*permission.RoleHierarchyEdge, err error) *MockRBACRepository_ListRoleHierarchyEdges_Call {
+func (_c *MockRBACRepository_ListRoleHierarchyEdges_Call) Return(roleHierarchyEdges []*rbac.RoleHierarchyEdge, err error) *MockRBACRepository_ListRoleHierarchyEdges_Call {
 	_c.Call.Return(roleHierarchyEdges, err)
 	return _c
 }
 
-func (_c *MockRBACRepository_ListRoleHierarchyEdges_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) ([]*permission.RoleHierarchyEdge, error)) *MockRBACRepository_ListRoleHierarchyEdges_Call {
+func (_c *MockRBACRepository_ListRoleHierarchyEdges_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) ([]*rbac.RoleHierarchyEdge, error)) *MockRBACRepository_ListRoleHierarchyEdges_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -125,7 +126,7 @@ func (t *ApplyAccountingInboundChangeTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramInboundChangeID: agenttoolschema.KindID(
 			inboundChangeParamHelp,
-			permission.KindAccountingInboundChange,
+			recordkind.AccountingInboundChange,
 		),
 	}, paramInboundChangeID)
 }
@@ -244,7 +245,7 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramInboundChangeID: agenttoolschema.KindID(
 			inboundChangeParamHelp,
-			permission.KindAccountingInboundChange,
+			recordkind.AccountingInboundChange,
 		),
 		paramInboundNote: jsonschemautils.Text(
 			"Why it stays out of Trenova, in one sentence a bookkeeper would accept.",

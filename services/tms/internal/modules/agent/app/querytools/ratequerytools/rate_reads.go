@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -74,7 +75,7 @@ func ReadSpecs() []readspec.List {
 			Summary:      fuelIndexPricesSummary,
 			Resource:     permission.ResourceFuelSurchargeProgram,
 			References: map[string]readspec.Reference{querytool.ParamFuelIndexID: {
-				Kinds:  []permission.RecordKind{permission.KindFuelIndex},
+				Kinds:  []recordkind.Kind{recordkind.FuelIndex},
 				What:   "The fuel index",
 				Source: toolRateListFuelSurcharge,
 			}},

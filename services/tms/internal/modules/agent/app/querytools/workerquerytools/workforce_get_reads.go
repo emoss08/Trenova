@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -95,7 +96,7 @@ func DOTRandomDrawGetSpec() readspec.Get {
 		Entity:      "random testing round",
 		SearchTerms: []string{"who was selected", "selected drivers", "draw results"},
 		Resource:    permission.ResourceDOTRandomPool,
-		Kinds:       []permission.RecordKind{permission.KindDOTRandomDraw},
+		Kinds:       []recordkind.Kind{recordkind.DOTRandomDraw},
 		Summary:     dotDrawGetSummary,
 		ParamName:   paramDrawID,
 		IDSource:    "from worker_list_dot_random_draws. Never guess one",

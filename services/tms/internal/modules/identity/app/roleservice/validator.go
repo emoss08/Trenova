@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
@@ -19,12 +19,12 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator tenantedvalidation.EntityValidator[*permission.Role]
+	validator tenantedvalidation.EntityValidator[*rbac.Role]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: tenantedvalidation.NewBuilder[*permission.Role]().
+		validator: tenantedvalidation.NewBuilder[*rbac.Role]().
 			WithModelName("Role").
 			WithUniquenessChecker(
 				keelcheck.NewChecker(p.DB, permissiondb.RolesSchema()),
@@ -33,7 +33,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"name",
 				"name",
 				"Role with this name already exists in your organization",
-				func(e *permission.Role) any { return e.Name },
+				func(e *rbac.Role) any { return e.Name },
 			).
 			Build(),
 	}
@@ -41,14 +41,14 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
-	entity *permission.Role,
+	entity *rbac.Role,
 ) *errortypes.MultiError {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
-	entity *permission.Role,
+	entity *rbac.Role,
 ) *errortypes.MultiError {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

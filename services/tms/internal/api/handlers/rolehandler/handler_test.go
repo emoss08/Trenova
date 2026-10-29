@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -75,8 +75,8 @@ func TestRoleHandler_List_Success(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*permission.Role]{
-		Items: []*permission.Role{
+	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*rbac.Role]{
+		Items: []*rbac.Role{
 			{
 				ID:             roleID,
 				OrganizationID: testutil.TestOrgID,
@@ -111,9 +111,9 @@ func TestRoleHandler_List_WithPagination(t *testing.T) {
 
 	const requestedLimit = 10
 
-	items := make([]*permission.Role, 0, requestedLimit+1)
+	items := make([]*rbac.Role, 0, requestedLimit+1)
 	for i := range requestedLimit + 1 {
-		items = append(items, &permission.Role{
+		items = append(items, &rbac.Role{
 			ID:             pulid.MustNew("rol_"),
 			OrganizationID: testutil.TestOrgID,
 			BusinessUnitID: testutil.TestBuID,
@@ -125,7 +125,7 @@ func TestRoleHandler_List_WithPagination(t *testing.T) {
 	repo := permissionportsmock.NewMockRoleRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(func(req *permissionports.ListRolesRequest) bool {
 		return req.Filter.Pagination.Limit == requestedLimit+1
-	})).Return(&pagination.ListResult[*permission.Role]{
+	})).Return(&pagination.ListResult[*rbac.Role]{
 		Items:      items,
 		Total:      25,
 		TotalExact: true,
@@ -193,7 +193,7 @@ func TestRoleHandler_Get_Success(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Admin",
@@ -327,7 +327,7 @@ func TestRoleHandler_Update_Success(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -399,7 +399,7 @@ func TestRoleHandler_Update_ServiceError(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -531,7 +531,7 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -607,7 +607,7 @@ func TestRoleHandler_AddPermission_ServiceError(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -639,7 +639,7 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -742,7 +742,7 @@ func TestRoleHandler_UpdatePermission_ServiceError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -774,7 +774,7 @@ func TestRoleHandler_DeletePermission_Success(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -836,7 +836,7 @@ func TestRoleHandler_DeletePermission_ServiceError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -863,7 +863,7 @@ func TestRoleHandler_AssignRole_Success(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	userID := pulid.MustNew("usr_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -872,7 +872,7 @@ func TestRoleHandler_AssignRole_Success(t *testing.T) {
 
 	deps := setupRoleHandler(t, repo)
 	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -900,7 +900,7 @@ func TestRoleHandler_AssignRole_WithExpiry(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	expiresAt := int64(1700000000)
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -909,7 +909,7 @@ func TestRoleHandler_AssignRole_WithExpiry(t *testing.T) {
 
 	deps := setupRoleHandler(t, repo)
 	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -976,7 +976,7 @@ func TestRoleHandler_AssignRole_ServiceError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	userID := pulid.MustNew("usr_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
-	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	repo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: testutil.TestOrgID,
 		Name:           "Editor",
@@ -986,7 +986,7 @@ func TestRoleHandler_AssignRole_ServiceError(t *testing.T) {
 
 	deps := setupRoleHandler(t, repo)
 	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1008,7 +1008,7 @@ func TestRoleHandler_UnassignRole_Success(t *testing.T) {
 	assignmentID := pulid.MustNew("ura_")
 	repo := permissionportsmock.NewMockRoleRepository(t)
 	repo.On("DeleteAssignment", mock.Anything, mock.Anything).
-		Return(&permission.UserRoleAssignment{UserID: pulid.MustNew("usr_")}, nil)
+		Return(&rbac.UserRoleAssignment{UserID: pulid.MustNew("usr_")}, nil)
 
 	deps := setupRoleHandler(t, repo)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -267,7 +268,7 @@ func TestMentionKindsAreKindsOfRecordGuardedByTheirResource(t *testing.T) {
 		)
 	}
 	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
-		return candidate.kind == permission.KindBillingQueueItem
+		return candidate.kind == recordkind.BillingQueueItem
 	})
 	require.GreaterOrEqual(t, idx, 0)
 	assert.Equal(t, permission.ResourceBillingQueue, mentionKinds[idx].kind.Resource())

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
@@ -107,7 +108,7 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 		paramPayEventID: agenttoolschema.KindID(
 			"The pay event, from "+payEventSources+
 				" or the lines settlement_get_driver lists. Never guess one.",
-			permission.KindPayEvent,
+			recordkind.PayEvent,
 		),
 	}
 	required := []string{paramPayEventID}
@@ -378,7 +379,7 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 	if t.detach {
 		properties[paramPayEventID] = agenttoolschema.KindID(
 			"The pay event on it, from the lines settlement_get_driver lists.",
-			permission.KindPayEvent,
+			recordkind.PayEvent,
 		)
 		required = []string{settlementpreview.ParamSettlementID, paramPayEventID}
 	} else {
@@ -389,7 +390,7 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 			toolschema.KeyDescription: "The driver's accrued pay events to add, from " +
 				payEventSources + " with status Accrued.",
-		}, permission.KindPayEvent)
+		}, recordkind.PayEvent)
 		required = []string{settlementpreview.ParamSettlementID, ParamPayEventIDs}
 	}
 

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -165,7 +166,7 @@ func leaveCaseIDProperty() map[string]any {
 func leaveDayIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The day of leave", "worker_list_leave_cases"),
-		permission.KindLeaveDay,
+		recordkind.LeaveDay,
 	)
 }
 

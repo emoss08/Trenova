@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,7 +68,7 @@ func exceptionViewOf(item *watchtower.Item) *exceptionView {
 
 func exceptionItemProperty() map[string]any {
 	return agenttoolschema.OfKinds(toolparams.StringProperty("The exception, from "+
-		"exception_list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem)
+		"exception_list_watchtower_items. Never guess one.", 0), recordkind.WatchtowerItem)
 }
 
 func exceptionNoteProperty(what string) map[string]any {

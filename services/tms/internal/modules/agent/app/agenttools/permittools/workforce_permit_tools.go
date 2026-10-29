@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
@@ -66,7 +67,7 @@ func permitFactProperties() map[string]any {
 	return map[string]any{
 		paramStateID: agenttoolschema.KindID("The state that issued it, as the stateId of the "+
 			"requirement it satisfies in shipment_list_permits. Never guess one.",
-			permission.KindUSState),
+			recordkind.USState),
 		paramPermitNumber: toolparams.StringProperty(
 			"The permit number exactly as the state printed it.",
 			maxPermitNumber,

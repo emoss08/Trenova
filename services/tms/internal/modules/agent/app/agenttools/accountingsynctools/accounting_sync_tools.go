@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -246,7 +247,7 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 				),
 				jsonschemautils.String(0),
 				maxSyncRetryIDs,
-			), permission.KindAccountingSyncRecord),
+			), recordkind.AccountingSyncRecord),
 		)),
 		paramSyncErrorCategories: jsonschemautils.DescribedArray(
 			"Retry every retryable record that last failed for one of these reasons.",
@@ -501,7 +502,7 @@ func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 		paramSyncRecordID: agenttoolschema.KindID(
 			"The sync record's id, from accounting_list_sync_records or "+
 				"accounting_get_sync_record.",
-			permission.KindAccountingSyncRecord,
+			recordkind.AccountingSyncRecord,
 		),
 		paramSyncReason: jsonschemautils.Text(
 			"Why the document stays out of the books, in one sentence a bookkeeper " +
@@ -621,7 +622,7 @@ func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 		paramSyncRecordID: agenttoolschema.KindID(
 			"The sync record's id, from accounting_list_sync_records or "+
 				"accounting_get_sync_record. It must be held for a closed period.",
-			permission.KindAccountingSyncRecord,
+			recordkind.AccountingSyncRecord,
 		),
 	}, paramSyncRecordID)
 }

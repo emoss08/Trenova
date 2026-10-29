@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -140,7 +140,7 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	usr := newTestUser(t)
 	roleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{
 				ID:          roleID,
 				Name:        "Dispatcher",
@@ -289,7 +289,7 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{
 				ID:          roleID,
 				Name:        "Billing Manager",
@@ -336,7 +336,7 @@ func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
 	authorizedRoleID := pulid.MustNew("rol_")
 	unauthorizedRoleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{ID: authorizedRoleID, Name: "Dispatcher"},
 		},
 	}

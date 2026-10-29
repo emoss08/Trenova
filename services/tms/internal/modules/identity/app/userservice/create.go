@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -167,7 +168,7 @@ func (s *Service) assignRoles(
 		if err := s.roles.AssignRole(ctx, roleservice.AssignRoleRequest{
 			ActorID:        tenantInfo.UserID,
 			OrganizationID: tenantInfo.OrgID,
-			Assignment: &permission.UserRoleAssignment{
+			Assignment: &rbac.UserRoleAssignment{
 				UserID: userID,
 				RoleID: roleID,
 			},

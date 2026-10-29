@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -51,7 +52,7 @@ func (t *Tool) ParamSchema() map[string]any {
 		property = agenttoolschema.RecordIDText(t.Spec.KeyResource, t.Spec.IDDescription())
 	} else if len(t.Spec.Kinds) > 0 {
 		property = agenttoolschema.KindID(t.Spec.IDDescription(), t.Spec.Kinds...)
-	} else if _, typed := t.Spec.Resource.IDPrefix(); typed {
+	} else if _, typed := recordkind.ResourcePrefix(t.Spec.Resource); typed {
 		property = agenttoolschema.RecordIDText(t.Spec.Resource, t.Spec.IDDescription())
 	}
 

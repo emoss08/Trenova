@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -294,7 +295,7 @@ func (f *integrationFixture) addUser(t *testing.T, username string) pulid.ID {
 		Build(t, f.ctx, f.db).ID
 }
 
-func (f *integrationFixture) addRole(t *testing.T, role *permission.Role) *permission.Role {
+func (f *integrationFixture) addRole(t *testing.T, role *rbac.Role) *rbac.Role {
 	t.Helper()
 
 	if role.MaxSensitivity == "" {
@@ -332,7 +333,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 		notifier:   &permchangetest.Recorder{},
 		permEngine: permEngine,
 		validator: &Validator{
-			validator: tenantedvalidation.NewBuilder[*permission.Role]().
+			validator: tenantedvalidation.NewBuilder[*rbac.Role]().
 				WithModelName("Role").
 				Build(),
 		},
@@ -352,7 +353,7 @@ func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
 	f := setupIntegrationService(t)
 
 	roleID := pulid.MustNew("rol_")
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:            roleID,
 		Name:          "Self Referencing",
 		ParentRoleIDs: []pulid.ID{roleID},
@@ -379,11 +380,11 @@ func seedActorRole(
 ) pulid.ID {
 	t.Helper()
 
-	actorRole := f.addRole(t, &permission.Role{Name: "Actor Role", MaxSensitivity: sensitivity})
+	actorRole := f.addRole(t, &rbac.Role{Name: "Actor Role", MaxSensitivity: sensitivity})
 
-	grants := make([]*permission.ResourcePermission, 0, len(resources))
+	grants := make([]*rbac.ResourcePermission, 0, len(resources))
 	for _, resource := range resources {
-		grants = append(grants, &permission.ResourcePermission{
+		grants = append(grants, &rbac.ResourcePermission{
 			RoleID:   actorRole.ID,
 			Resource: resource,
 			Operations: []permission.Operation{
@@ -401,7 +402,7 @@ func seedActorRole(
 
 	require.NoError(
 		t,
-		permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &permission.UserRoleAssignment{
+		permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &rbac.UserRoleAssignment{
 			UserID:         f.actorID(),
 			OrganizationID: f.orgID(),
 			RoleID:         actorRole.ID,
@@ -415,14 +416,14 @@ func seedActorRole(
 func TestIntegration_UpdateRole_Success(t *testing.T) {
 	f := setupIntegrationService(t)
 
-	existing := f.addRole(t, &permission.Role{Name: "Original"})
+	existing := f.addRole(t, &rbac.Role{Name: "Original"})
 	seedActorRole(t, f, permission.SensitivityRestricted)
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             existing.ID,
 		Name:           "Updated Role",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions:    []*permission.ResourcePermission{},
+		Permissions:    []*rbac.ResourcePermission{},
 	}
 
 	err := f.svc.UpdateRole(f.ctx, UpdateRoleRequest{
@@ -443,12 +444,12 @@ func TestIntegration_UpdateRole_Success(t *testing.T) {
 func TestIntegration_UpdateRole_SystemRole_Fails(t *testing.T) {
 	f := setupIntegrationService(t)
 
-	existing := f.addRole(t, &permission.Role{Name: "System Role", IsSystem: true})
+	existing := f.addRole(t, &rbac.Role{Name: "System Role", IsSystem: true})
 
 	err := f.svc.UpdateRole(f.ctx, UpdateRoleRequest{
 		ActorID:        f.actorID(),
 		OrganizationID: f.orgID(),
-		Role:           &permission.Role{ID: existing.ID, Name: "Updated"},
+		Role:           &rbac.Role{ID: existing.ID, Name: "Updated"},
 	})
 
 	require.Error(t, err)
@@ -460,9 +461,9 @@ func TestIntegration_AssignRole_Success(t *testing.T) {
 
 	targetUserID := f.addUser(t, "target")
 	seedActorRole(t, f, permission.SensitivityInternal)
-	role := f.addRole(t, &permission.Role{Name: "Test Role"})
+	role := f.addRole(t, &rbac.Role{Name: "Test Role"})
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID: targetUserID,
 		RoleID: role.ID,
 	}
@@ -498,10 +499,10 @@ func TestIntegration_InitializeOrganizationRoles(t *testing.T) {
 func TestIntegration_CreateResourcePermission_Success(t *testing.T) {
 	f := setupIntegrationService(t)
 
-	role := f.addRole(t, &permission.Role{Name: "Test Role"})
+	role := f.addRole(t, &rbac.Role{Name: "Test Role"})
 	seedActorRole(t, f, permission.SensitivityRestricted, "shipment")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     role.ID,
 		Resource:   "shipment",
 		Operations: []permission.Operation{permission.OpRead},

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -169,11 +170,11 @@ func captureBatchesListSpec() readspec.List {
 }
 
 // captureTargetKinds are the records a capture may be filed onto.
-func captureTargetKinds() []permission.RecordKind {
+func captureTargetKinds() []recordkind.Kind {
 	resources := capture.FileableResources()
-	kinds := make([]permission.RecordKind, 0, len(resources))
+	kinds := make([]recordkind.Kind, 0, len(resources))
 	for _, resource := range resources {
-		kinds = append(kinds, permission.RecordKind(resource))
+		kinds = append(kinds, recordkind.Kind(resource))
 	}
 
 	return kinds

@@ -2,6 +2,7 @@ package rolehandler
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -21,11 +22,11 @@ type UpsertHierarchyEdgeRequest struct {
 }
 
 type SaveConstraintRequest struct {
-	ID          pulid.ID                      `json:"id,omitempty"`
-	Name        string                        `json:"name"                  binding:"required"`
-	Description string                        `json:"description,omitempty"`
-	Type        permission.RoleConstraintType `json:"type"                  binding:"required"`
-	MaxRoles    int                           `json:"maxRoles"              binding:"required"`
-	Enabled     *bool                         `json:"enabled,omitempty"`
-	RoleIDs     []pulid.ID                    `json:"roleIds"               binding:"required"`
+	ID          pulid.ID                `json:"id,omitempty"`
+	Name        string                  `json:"name"                  binding:"required"`
+	Description string                  `json:"description,omitempty"`
+	Type        rbac.RoleConstraintType `json:"type"                  binding:"required"`
+	MaxRoles    int                     `json:"maxRoles"              binding:"required"`
+	Enabled     *bool                   `json:"enabled,omitempty"`
+	RoleIDs     []pulid.ID              `json:"roleIds"               binding:"required"`
 }

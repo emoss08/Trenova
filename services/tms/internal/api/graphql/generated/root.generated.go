@@ -3,15 +3,6 @@
 package generated
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
-	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
-	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"context"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
@@ -31,6 +22,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -40,13 +34,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
@@ -70,6 +69,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
@@ -327,7 +328,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -877,7 +877,7 @@ type AgentDefinitionResolver interface {
 	MonthlyBudgetUsd(ctx context.Context, obj *agentdefinition.Definition) (*string, error)
 	ToolDailyLimits(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
-	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error)
+	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*rbac.Role, error)
 	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error)
 	PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
@@ -2095,7 +2095,7 @@ type MutationResolver interface {
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
-	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
+	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*rbac.Role, error)
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error)
 	DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error)
 	TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error)
@@ -3332,7 +3332,7 @@ type QueryResolver interface {
 	ReportDashboards(ctx context.Context) ([]*gqlmodel.ReportDashboard, error)
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
-	Role(ctx context.Context, id string) (*permission.Role, error)
+	Role(ctx context.Context, id string) (*rbac.Role, error)
 	RoutingGuides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoutingGuideConnection, error)
 	RoutingGuide(ctx context.Context, id string) (*tender.RoutingGuide, error)
 	MatchRoutingGuide(ctx context.Context, input gqlmodel.MatchRoutingGuideInput) (*tender.RoutingGuide, error)
@@ -3534,9 +3534,9 @@ type RiskDecisionResolver interface {
 }
 
 type RoleResolver interface {
-	CoreResponsibility(ctx context.Context, obj *permission.Role) (*string, error)
-	MaxSensitivity(ctx context.Context, obj *permission.Role) (string, error)
-	Agents(ctx context.Context, obj *permission.Role) ([]*agentdefinition.Definition, error)
+	CoreResponsibility(ctx context.Context, obj *rbac.Role) (*string, error)
+	MaxSensitivity(ctx context.Context, obj *rbac.Role) (string, error)
+	Agents(ctx context.Context, obj *rbac.Role) ([]*agentdefinition.Definition, error)
 }
 
 type RoutingGuideEntryResolver interface {

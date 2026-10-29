@@ -4,6 +4,8 @@ package permissiondb
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -13,12 +15,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// resourcePermissionsTable is the schema of permission.ResourcePermission.
+// resourcePermissionsTable is the schema of rbac.ResourcePermission.
 var resourcePermissionsTable = schema.Table{
 	Name:   "resource_permissions",
 	Quoted: `"resource_permissions"`,
 	Alias:  "rp",
-	Model:  "permission.ResourcePermission",
+	Model:  "rbac.ResourcePermission",
 	Label:  `Resource Permission`,
 	Plural: `Resource Permissions`,
 	Columns: []schema.Column{
@@ -43,7 +45,7 @@ var resourcePermissionsTable = schema.Table{
 	IDPrefix:     "rp_",
 	New:          newResourcePermission,
 	NewN:         newNResourcePermission,
-	Size:         unsafe.Sizeof(permission.ResourcePermission{}),
+	Size:         unsafe.Sizeof(rbac.ResourcePermission{}),
 	Ptr:          ptrResourcePermission,
 	Value:        valueResourcePermission,
 	BeforeCreate: beforeCreateResourcePermission,
@@ -52,9 +54,9 @@ var resourcePermissionsTable = schema.Table{
 
 var resourcePermissionsRef = keel.Ref{Table: &resourcePermissionsTable}
 
-// ResourcePermissionsTable is the table of permission.ResourcePermission.
+// ResourcePermissionsTable is the table of rbac.ResourcePermission.
 type ResourcePermissionsTable struct {
-	keel.Handle[*permission.ResourcePermission]
+	keel.Handle[*rbac.ResourcePermission]
 	ID         keelkinds.PulidIDCol
 	RoleID     keelkinds.PulidIDCol
 	Resource   keel.StringCol
@@ -66,7 +68,7 @@ type ResourcePermissionsTable struct {
 
 // ResourcePermissions references the resource_permissions table.
 var ResourcePermissions = &ResourcePermissionsTable{
-	Handle:     keel.Handle[*permission.ResourcePermission]{Ref: &resourcePermissionsRef},
+	Handle:     keel.Handle[*rbac.ResourcePermission]{Ref: &resourcePermissionsRef},
 	ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 0}}},
 	RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 1}}},
 	Resource:   keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 2}},
@@ -79,7 +81,7 @@ var ResourcePermissions = &ResourcePermissionsTable{
 // BuildResourcePermissions builds the handle of resource_permissions for ref. Generated relation and alias methods call it.
 func BuildResourcePermissions(r *keel.Ref) *ResourcePermissionsTable {
 	return &ResourcePermissionsTable{
-		Handle:     keel.Handle[*permission.ResourcePermission]{Ref: r},
+		Handle:     keel.Handle[*rbac.ResourcePermission]{Ref: r},
 		ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Resource:   keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -99,20 +101,20 @@ func (t *ResourcePermissionsTable) As(alias string) *ResourcePermissionsTable {
 }
 
 // Get returns the resource_permissions row with the given key, or keel.ErrNotFound.
-func (t *ResourcePermissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.ResourcePermission, error) {
+func (t *ResourcePermissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.ResourcePermission, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newResourcePermission() unsafe.Pointer {
-	return unsafe.Pointer(new(permission.ResourcePermission))
+	return unsafe.Pointer(new(rbac.ResourcePermission))
 }
 
 func newNResourcePermission(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.ResourcePermission, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.ResourcePermission, n)))
 }
 
 func ptrResourcePermission(p unsafe.Pointer, c int32) any {
-	r := (*permission.ResourcePermission)(p)
+	r := (*rbac.ResourcePermission)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -133,7 +135,7 @@ func ptrResourcePermission(p unsafe.Pointer, c int32) any {
 }
 
 func valueResourcePermission(p unsafe.Pointer, c int32) any {
-	r := (*permission.ResourcePermission)(p)
+	r := (*rbac.ResourcePermission)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -157,19 +159,19 @@ func valueResourcePermission(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateResourcePermission(ctx context.Context, p unsafe.Pointer) error {
-	return (*permission.ResourcePermission)(p).BeforeCreate(ctx)
+	return (*rbac.ResourcePermission)(p).BeforeCreate(ctx)
 }
 
 func beforeUpdateResourcePermission(ctx context.Context, p unsafe.Pointer) error {
-	return (*permission.ResourcePermission)(p).BeforeUpdate(ctx)
+	return (*rbac.ResourcePermission)(p).BeforeUpdate(ctx)
 }
 
-// rolesTable is the schema of permission.Role.
+// rolesTable is the schema of rbac.Role.
 var rolesTable = schema.Table{
 	Name:   "roles",
 	Quoted: `"roles"`,
 	Alias:  "r",
-	Model:  "permission.Role",
+	Model:  "rbac.Role",
 	Label:  `Role`,
 	Plural: `Roles`,
 	Columns: []schema.Column{
@@ -202,7 +204,7 @@ var rolesTable = schema.Table{
 	IDPrefix:     "rol_",
 	New:          newRole,
 	NewN:         newNRole,
-	Size:         unsafe.Sizeof(permission.Role{}),
+	Size:         unsafe.Sizeof(rbac.Role{}),
 	Ptr:          ptrRole,
 	Value:        valueRole,
 	Attach:       attachRole,
@@ -211,9 +213,9 @@ var rolesTable = schema.Table{
 
 var rolesRef = keel.Ref{Table: &rolesTable}
 
-// RolesTable is the table of permission.Role.
+// RolesTable is the table of rbac.Role.
 type RolesTable struct {
-	keel.Handle[*permission.Role]
+	keel.Handle[*rbac.Role]
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -230,7 +232,7 @@ type RolesTable struct {
 
 // Roles references the roles table.
 var Roles = &RolesTable{
-	Handle:             keel.Handle[*permission.Role]{Ref: &rolesRef},
+	Handle:             keel.Handle[*rbac.Role]{Ref: &rolesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 2}}},
@@ -248,7 +250,7 @@ var Roles = &RolesTable{
 // BuildRoles builds the handle of roles for ref. Generated relation and alias methods call it.
 func BuildRoles(r *keel.Ref) *RolesTable {
 	return &RolesTable{
-		Handle:             keel.Handle[*permission.Role]{Ref: r},
+		Handle:             keel.Handle[*rbac.Role]{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -276,18 +278,18 @@ func (t *RolesTable) Permissions() *ResourcePermissionsTable {
 }
 
 // Get returns the roles row with the given key, or keel.ErrNotFound.
-func (t *RolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.Role, error) {
+func (t *RolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.Role, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRole() unsafe.Pointer { return unsafe.Pointer(new(permission.Role)) }
+func newRole() unsafe.Pointer { return unsafe.Pointer(new(rbac.Role)) }
 
 func newNRole(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.Role, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.Role, n)))
 }
 
 func ptrRole(p unsafe.Pointer, c int32) any {
-	r := (*permission.Role)(p)
+	r := (*rbac.Role)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -318,7 +320,7 @@ func ptrRole(p unsafe.Pointer, c int32) any {
 }
 
 func valueRole(p unsafe.Pointer, c int32) any {
-	r := (*permission.Role)(p)
+	r := (*rbac.Role)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -361,23 +363,23 @@ func valueRole(p unsafe.Pointer, c int32) any {
 }
 
 func attachRole(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*permission.Role)(p)
+	r := (*rbac.Role)(p)
 	switch rel {
 	case 0:
-		r.Permissions = append(r.Permissions, (*permission.ResourcePermission)(child))
+		r.Permissions = append(r.Permissions, (*rbac.ResourcePermission)(child))
 	}
 }
 
 func beforeCreateRole(ctx context.Context, p unsafe.Pointer) error {
-	return (*permission.Role)(p).BeforeCreate(ctx)
+	return (*rbac.Role)(p).BeforeCreate(ctx)
 }
 
-// roleAgentGrantsTable is the schema of permission.RoleAgentGrant.
+// roleAgentGrantsTable is the schema of rbac.RoleAgentGrant.
 var roleAgentGrantsTable = schema.Table{
 	Name:   "role_agent_grants",
 	Quoted: `"role_agent_grants"`,
 	Alias:  "rag",
-	Model:  "permission.RoleAgentGrant",
+	Model:  "rbac.RoleAgentGrant",
 	Label:  `Role Agent Grant`,
 	Plural: `Role Agent Grants`,
 	Doc:    `RoleAgentGrant lets everyone holding a role, directly or through a role that inherits it, use an agent whose access is restricted to roles.`,
@@ -403,7 +405,7 @@ var roleAgentGrantsTable = schema.Table{
 	IDPrefix:     "rag_",
 	New:          newRoleAgentGrant,
 	NewN:         newNRoleAgentGrant,
-	Size:         unsafe.Sizeof(permission.RoleAgentGrant{}),
+	Size:         unsafe.Sizeof(rbac.RoleAgentGrant{}),
 	Ptr:          ptrRoleAgentGrant,
 	Value:        valueRoleAgentGrant,
 	BeforeCreate: beforeCreateRoleAgentGrant,
@@ -411,9 +413,9 @@ var roleAgentGrantsTable = schema.Table{
 
 var roleAgentGrantsRef = keel.Ref{Table: &roleAgentGrantsTable}
 
-// RoleAgentGrantsTable is the table of permission.RoleAgentGrant.
+// RoleAgentGrantsTable is the table of rbac.RoleAgentGrant.
 type RoleAgentGrantsTable struct {
-	keel.Handle[*permission.RoleAgentGrant]
+	keel.Handle[*rbac.RoleAgentGrant]
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -425,7 +427,7 @@ type RoleAgentGrantsTable struct {
 
 // RoleAgentGrants references the role_agent_grants table.
 var RoleAgentGrants = &RoleAgentGrantsTable{
-	Handle:            keel.Handle[*permission.RoleAgentGrant]{Ref: &roleAgentGrantsRef},
+	Handle:            keel.Handle[*rbac.RoleAgentGrant]{Ref: &roleAgentGrantsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 2}}},
@@ -438,7 +440,7 @@ var RoleAgentGrants = &RoleAgentGrantsTable{
 // BuildRoleAgentGrants builds the handle of role_agent_grants for ref. Generated relation and alias methods call it.
 func BuildRoleAgentGrants(r *keel.Ref) *RoleAgentGrantsTable {
 	return &RoleAgentGrantsTable{
-		Handle:            keel.Handle[*permission.RoleAgentGrant]{Ref: r},
+		Handle:            keel.Handle[*rbac.RoleAgentGrant]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -458,18 +460,18 @@ func (t *RoleAgentGrantsTable) As(alias string) *RoleAgentGrantsTable {
 }
 
 // Get returns the role_agent_grants row with the given key, or keel.ErrNotFound.
-func (t *RoleAgentGrantsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.RoleAgentGrant, error) {
+func (t *RoleAgentGrantsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleAgentGrant, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRoleAgentGrant() unsafe.Pointer { return unsafe.Pointer(new(permission.RoleAgentGrant)) }
+func newRoleAgentGrant() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleAgentGrant)) }
 
 func newNRoleAgentGrant(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.RoleAgentGrant, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.RoleAgentGrant, n)))
 }
 
 func ptrRoleAgentGrant(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleAgentGrant)(p)
+	r := (*rbac.RoleAgentGrant)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -490,7 +492,7 @@ func ptrRoleAgentGrant(p unsafe.Pointer, c int32) any {
 }
 
 func valueRoleAgentGrant(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleAgentGrant)(p)
+	r := (*rbac.RoleAgentGrant)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -514,15 +516,15 @@ func valueRoleAgentGrant(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateRoleAgentGrant(ctx context.Context, p unsafe.Pointer) error {
-	return (*permission.RoleAgentGrant)(p).BeforeCreate(ctx)
+	return (*rbac.RoleAgentGrant)(p).BeforeCreate(ctx)
 }
 
-// roleConstraintsTable is the schema of permission.RoleConstraint.
+// roleConstraintsTable is the schema of rbac.RoleConstraint.
 var roleConstraintsTable = schema.Table{
 	Name:   "role_constraints",
 	Quoted: `"role_constraints"`,
 	Alias:  "rc",
-	Model:  "permission.RoleConstraint",
+	Model:  "rbac.RoleConstraint",
 	Label:  `Role Constraint`,
 	Plural: `Role Constraints`,
 	Columns: []schema.Column{
@@ -554,7 +556,7 @@ var roleConstraintsTable = schema.Table{
 	IDPrefix:   "rco_",
 	New:        newRoleConstraint,
 	NewN:       newNRoleConstraint,
-	Size:       unsafe.Sizeof(permission.RoleConstraint{}),
+	Size:       unsafe.Sizeof(rbac.RoleConstraint{}),
 	Ptr:        ptrRoleConstraint,
 	Value:      valueRoleConstraint,
 	Attach:     attachRoleConstraint,
@@ -562,9 +564,9 @@ var roleConstraintsTable = schema.Table{
 
 var roleConstraintsRef = keel.Ref{Table: &roleConstraintsTable}
 
-// RoleConstraintsTable is the table of permission.RoleConstraint.
+// RoleConstraintsTable is the table of rbac.RoleConstraint.
 type RoleConstraintsTable struct {
-	keel.Handle[*permission.RoleConstraint]
+	keel.Handle[*rbac.RoleConstraint]
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -580,7 +582,7 @@ type RoleConstraintsTable struct {
 
 // RoleConstraints references the role_constraints table.
 var RoleConstraints = &RoleConstraintsTable{
-	Handle:         keel.Handle[*permission.RoleConstraint]{Ref: &roleConstraintsRef},
+	Handle:         keel.Handle[*rbac.RoleConstraint]{Ref: &roleConstraintsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 2}}},
@@ -597,7 +599,7 @@ var RoleConstraints = &RoleConstraintsTable{
 // BuildRoleConstraints builds the handle of role_constraints for ref. Generated relation and alias methods call it.
 func BuildRoleConstraints(r *keel.Ref) *RoleConstraintsTable {
 	return &RoleConstraintsTable{
-		Handle:         keel.Handle[*permission.RoleConstraint]{Ref: r},
+		Handle:         keel.Handle[*rbac.RoleConstraint]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -624,18 +626,18 @@ func (t *RoleConstraintsTable) As(alias string) *RoleConstraintsTable {
 func (t *RoleConstraintsTable) Roles() *RolesTable { return keel.Path(t.Ref, 0, BuildRoles) }
 
 // Get returns the role_constraints row with the given key, or keel.ErrNotFound.
-func (t *RoleConstraintsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.RoleConstraint, error) {
+func (t *RoleConstraintsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleConstraint, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRoleConstraint() unsafe.Pointer { return unsafe.Pointer(new(permission.RoleConstraint)) }
+func newRoleConstraint() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleConstraint)) }
 
 func newNRoleConstraint(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.RoleConstraint, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.RoleConstraint, n)))
 }
 
 func ptrRoleConstraint(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleConstraint)(p)
+	r := (*rbac.RoleConstraint)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -664,7 +666,7 @@ func ptrRoleConstraint(p unsafe.Pointer, c int32) any {
 }
 
 func valueRoleConstraint(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleConstraint)(p)
+	r := (*rbac.RoleConstraint)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -699,19 +701,19 @@ func valueRoleConstraint(p unsafe.Pointer, c int32) any {
 }
 
 func attachRoleConstraint(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*permission.RoleConstraint)(p)
+	r := (*rbac.RoleConstraint)(p)
 	switch rel {
 	case 0:
-		r.Roles = append(r.Roles, (*permission.Role)(child))
+		r.Roles = append(r.Roles, (*rbac.Role)(child))
 	}
 }
 
-// roleConstraintRolesTable is the schema of permission.RoleConstraintRole.
+// roleConstraintRolesTable is the schema of rbac.RoleConstraintRole.
 var roleConstraintRolesTable = schema.Table{
 	Name:   "role_constraint_roles",
 	Quoted: `"role_constraint_roles"`,
 	Alias:  "rcr",
-	Model:  "permission.RoleConstraintRole",
+	Model:  "rbac.RoleConstraintRole",
 	Label:  `Role Constraint Role`,
 	Plural: `Role Constraint Roles`,
 	Columns: []schema.Column{
@@ -739,7 +741,7 @@ var roleConstraintRolesTable = schema.Table{
 	IDPrefix:   "rcr_",
 	New:        newRoleConstraintRole,
 	NewN:       newNRoleConstraintRole,
-	Size:       unsafe.Sizeof(permission.RoleConstraintRole{}),
+	Size:       unsafe.Sizeof(rbac.RoleConstraintRole{}),
 	Ptr:        ptrRoleConstraintRole,
 	Value:      valueRoleConstraintRole,
 	Attach:     attachRoleConstraintRole,
@@ -747,9 +749,9 @@ var roleConstraintRolesTable = schema.Table{
 
 var roleConstraintRolesRef = keel.Ref{Table: &roleConstraintRolesTable}
 
-// RoleConstraintRolesTable is the table of permission.RoleConstraintRole.
+// RoleConstraintRolesTable is the table of rbac.RoleConstraintRole.
 type RoleConstraintRolesTable struct {
-	keel.Handle[*permission.RoleConstraintRole]
+	keel.Handle[*rbac.RoleConstraintRole]
 	ID               keelkinds.PulidIDCol
 	RoleConstraintID keelkinds.PulidIDCol
 	RoleID           keelkinds.PulidIDCol
@@ -760,7 +762,7 @@ type RoleConstraintRolesTable struct {
 
 // RoleConstraintRoles references the role_constraint_roles table.
 var RoleConstraintRoles = &RoleConstraintRolesTable{
-	Handle:           keel.Handle[*permission.RoleConstraintRole]{Ref: &roleConstraintRolesRef},
+	Handle:           keel.Handle[*rbac.RoleConstraintRole]{Ref: &roleConstraintRolesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 0}}},
 	RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 1}}},
 	RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 2}}},
@@ -772,7 +774,7 @@ var RoleConstraintRoles = &RoleConstraintRolesTable{
 // BuildRoleConstraintRoles builds the handle of role_constraint_roles for ref. Generated relation and alias methods call it.
 func BuildRoleConstraintRoles(r *keel.Ref) *RoleConstraintRolesTable {
 	return &RoleConstraintRolesTable{
-		Handle:           keel.Handle[*permission.RoleConstraintRole]{Ref: r},
+		Handle:           keel.Handle[*rbac.RoleConstraintRole]{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -799,20 +801,20 @@ func (t *RoleConstraintRolesTable) RoleConstraint() *RoleConstraintsTable {
 func (t *RoleConstraintRolesTable) Role() *RolesTable { return keel.Path(t.Ref, 1, BuildRoles) }
 
 // Get returns the role_constraint_roles row with the given key, or keel.ErrNotFound.
-func (t *RoleConstraintRolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.RoleConstraintRole, error) {
+func (t *RoleConstraintRolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleConstraintRole, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newRoleConstraintRole() unsafe.Pointer {
-	return unsafe.Pointer(new(permission.RoleConstraintRole))
+	return unsafe.Pointer(new(rbac.RoleConstraintRole))
 }
 
 func newNRoleConstraintRole(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.RoleConstraintRole, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.RoleConstraintRole, n)))
 }
 
 func ptrRoleConstraintRole(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleConstraintRole)(p)
+	r := (*rbac.RoleConstraintRole)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -831,7 +833,7 @@ func ptrRoleConstraintRole(p unsafe.Pointer, c int32) any {
 }
 
 func valueRoleConstraintRole(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleConstraintRole)(p)
+	r := (*rbac.RoleConstraintRole)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -850,21 +852,21 @@ func valueRoleConstraintRole(p unsafe.Pointer, c int32) any {
 }
 
 func attachRoleConstraintRole(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*permission.RoleConstraintRole)(p)
+	r := (*rbac.RoleConstraintRole)(p)
 	switch rel {
 	case 0:
-		r.RoleConstraint = (*permission.RoleConstraint)(child)
+		r.RoleConstraint = (*rbac.RoleConstraint)(child)
 	case 1:
-		r.Role = (*permission.Role)(child)
+		r.Role = (*rbac.Role)(child)
 	}
 }
 
-// roleHierarchyEdgesTable is the schema of permission.RoleHierarchyEdge.
+// roleHierarchyEdgesTable is the schema of rbac.RoleHierarchyEdge.
 var roleHierarchyEdgesTable = schema.Table{
 	Name:   "role_hierarchy_edges",
 	Quoted: `"role_hierarchy_edges"`,
 	Alias:  "rhe",
-	Model:  "permission.RoleHierarchyEdge",
+	Model:  "rbac.RoleHierarchyEdge",
 	Label:  `Role Hierarchy Edge`,
 	Plural: `Role Hierarchy Edges`,
 	Columns: []schema.Column{
@@ -894,7 +896,7 @@ var roleHierarchyEdgesTable = schema.Table{
 	IDPrefix:   "rhe_",
 	New:        newRoleHierarchyEdge,
 	NewN:       newNRoleHierarchyEdge,
-	Size:       unsafe.Sizeof(permission.RoleHierarchyEdge{}),
+	Size:       unsafe.Sizeof(rbac.RoleHierarchyEdge{}),
 	Ptr:        ptrRoleHierarchyEdge,
 	Value:      valueRoleHierarchyEdge,
 	Attach:     attachRoleHierarchyEdge,
@@ -902,9 +904,9 @@ var roleHierarchyEdgesTable = schema.Table{
 
 var roleHierarchyEdgesRef = keel.Ref{Table: &roleHierarchyEdgesTable}
 
-// RoleHierarchyEdgesTable is the table of permission.RoleHierarchyEdge.
+// RoleHierarchyEdgesTable is the table of rbac.RoleHierarchyEdge.
 type RoleHierarchyEdgesTable struct {
-	keel.Handle[*permission.RoleHierarchyEdge]
+	keel.Handle[*rbac.RoleHierarchyEdge]
 	ID             keelkinds.PulidIDCol
 	SeniorRoleID   keelkinds.PulidIDCol
 	JuniorRoleID   keelkinds.PulidIDCol
@@ -917,7 +919,7 @@ type RoleHierarchyEdgesTable struct {
 
 // RoleHierarchyEdges references the role_hierarchy_edges table.
 var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
-	Handle:         keel.Handle[*permission.RoleHierarchyEdge]{Ref: &roleHierarchyEdgesRef},
+	Handle:         keel.Handle[*rbac.RoleHierarchyEdge]{Ref: &roleHierarchyEdgesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 0}}},
 	SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 1}}},
 	JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 2}}},
@@ -931,7 +933,7 @@ var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
 // BuildRoleHierarchyEdges builds the handle of role_hierarchy_edges for ref. Generated relation and alias methods call it.
 func BuildRoleHierarchyEdges(r *keel.Ref) *RoleHierarchyEdgesTable {
 	return &RoleHierarchyEdgesTable{
-		Handle:         keel.Handle[*permission.RoleHierarchyEdge]{Ref: r},
+		Handle:         keel.Handle[*rbac.RoleHierarchyEdge]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -958,18 +960,18 @@ func (t *RoleHierarchyEdgesTable) SeniorRole() *RolesTable { return keel.Path(t.
 func (t *RoleHierarchyEdgesTable) JuniorRole() *RolesTable { return keel.Path(t.Ref, 1, BuildRoles) }
 
 // Get returns the role_hierarchy_edges row with the given key, or keel.ErrNotFound.
-func (t *RoleHierarchyEdgesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.RoleHierarchyEdge, error) {
+func (t *RoleHierarchyEdgesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleHierarchyEdge, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRoleHierarchyEdge() unsafe.Pointer { return unsafe.Pointer(new(permission.RoleHierarchyEdge)) }
+func newRoleHierarchyEdge() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleHierarchyEdge)) }
 
 func newNRoleHierarchyEdge(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.RoleHierarchyEdge, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.RoleHierarchyEdge, n)))
 }
 
 func ptrRoleHierarchyEdge(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleHierarchyEdge)(p)
+	r := (*rbac.RoleHierarchyEdge)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -992,7 +994,7 @@ func ptrRoleHierarchyEdge(p unsafe.Pointer, c int32) any {
 }
 
 func valueRoleHierarchyEdge(p unsafe.Pointer, c int32) any {
-	r := (*permission.RoleHierarchyEdge)(p)
+	r := (*rbac.RoleHierarchyEdge)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1018,21 +1020,21 @@ func valueRoleHierarchyEdge(p unsafe.Pointer, c int32) any {
 }
 
 func attachRoleHierarchyEdge(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*permission.RoleHierarchyEdge)(p)
+	r := (*rbac.RoleHierarchyEdge)(p)
 	switch rel {
 	case 0:
-		r.SeniorRole = (*permission.Role)(child)
+		r.SeniorRole = (*rbac.Role)(child)
 	case 1:
-		r.JuniorRole = (*permission.Role)(child)
+		r.JuniorRole = (*rbac.Role)(child)
 	}
 }
 
-// userRoleAssignmentsTable is the schema of permission.UserRoleAssignment.
+// userRoleAssignmentsTable is the schema of rbac.UserRoleAssignment.
 var userRoleAssignmentsTable = schema.Table{
 	Name:   "user_role_assignments",
 	Quoted: `"user_role_assignments"`,
 	Alias:  "ura",
-	Model:  "permission.UserRoleAssignment",
+	Model:  "rbac.UserRoleAssignment",
 	Label:  `User Role Assignment`,
 	Plural: `User Role Assignments`,
 	Columns: []schema.Column{
@@ -1060,7 +1062,7 @@ var userRoleAssignmentsTable = schema.Table{
 	IDPrefix:     "ura_",
 	New:          newUserRoleAssignment,
 	NewN:         newNUserRoleAssignment,
-	Size:         unsafe.Sizeof(permission.UserRoleAssignment{}),
+	Size:         unsafe.Sizeof(rbac.UserRoleAssignment{}),
 	Ptr:          ptrUserRoleAssignment,
 	Value:        valueUserRoleAssignment,
 	Attach:       attachUserRoleAssignment,
@@ -1069,9 +1071,9 @@ var userRoleAssignmentsTable = schema.Table{
 
 var userRoleAssignmentsRef = keel.Ref{Table: &userRoleAssignmentsTable}
 
-// UserRoleAssignmentsTable is the table of permission.UserRoleAssignment.
+// UserRoleAssignmentsTable is the table of rbac.UserRoleAssignment.
 type UserRoleAssignmentsTable struct {
-	keel.Handle[*permission.UserRoleAssignment]
+	keel.Handle[*rbac.UserRoleAssignment]
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1083,7 +1085,7 @@ type UserRoleAssignmentsTable struct {
 
 // UserRoleAssignments references the user_role_assignments table.
 var UserRoleAssignments = &UserRoleAssignmentsTable{
-	Handle:         keel.Handle[*permission.UserRoleAssignment]{Ref: &userRoleAssignmentsRef},
+	Handle:         keel.Handle[*rbac.UserRoleAssignment]{Ref: &userRoleAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
@@ -1096,7 +1098,7 @@ var UserRoleAssignments = &UserRoleAssignmentsTable{
 // BuildUserRoleAssignments builds the handle of user_role_assignments for ref. Generated relation and alias methods call it.
 func BuildUserRoleAssignments(r *keel.Ref) *UserRoleAssignmentsTable {
 	return &UserRoleAssignmentsTable{
-		Handle:         keel.Handle[*permission.UserRoleAssignment]{Ref: r},
+		Handle:         keel.Handle[*rbac.UserRoleAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1119,20 +1121,20 @@ func (t *UserRoleAssignmentsTable) As(alias string) *UserRoleAssignmentsTable {
 func (t *UserRoleAssignmentsTable) Role() *RolesTable { return keel.Path(t.Ref, 0, BuildRoles) }
 
 // Get returns the user_role_assignments row with the given key, or keel.ErrNotFound.
-func (t *UserRoleAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permission.UserRoleAssignment, error) {
+func (t *UserRoleAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.UserRoleAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newUserRoleAssignment() unsafe.Pointer {
-	return unsafe.Pointer(new(permission.UserRoleAssignment))
+	return unsafe.Pointer(new(rbac.UserRoleAssignment))
 }
 
 func newNUserRoleAssignment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]permission.UserRoleAssignment, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]rbac.UserRoleAssignment, n)))
 }
 
 func ptrUserRoleAssignment(p unsafe.Pointer, c int32) any {
-	r := (*permission.UserRoleAssignment)(p)
+	r := (*rbac.UserRoleAssignment)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1153,7 +1155,7 @@ func ptrUserRoleAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func valueUserRoleAssignment(p unsafe.Pointer, c int32) any {
-	r := (*permission.UserRoleAssignment)(p)
+	r := (*rbac.UserRoleAssignment)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1180,15 +1182,15 @@ func valueUserRoleAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func attachUserRoleAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*permission.UserRoleAssignment)(p)
+	r := (*rbac.UserRoleAssignment)(p)
 	switch rel {
 	case 0:
-		r.Role = (*permission.Role)(child)
+		r.Role = (*rbac.Role)(child)
 	}
 }
 
 func beforeCreateUserRoleAssignment(ctx context.Context, p unsafe.Pointer) error {
-	return (*permission.UserRoleAssignment)(p).BeforeCreate(ctx)
+	return (*rbac.UserRoleAssignment)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -1231,40 +1233,40 @@ var enumRoleConstraintType = [...]schema.EnumValue{
 	{Value: `dsd`, Label: `DSD`},
 }
 
-// CoreResponsibilityCol is a column of permission.CoreResponsibility values.
+// CoreResponsibilityCol is a column of rbac.CoreResponsibility values.
 type CoreResponsibilityCol struct{ keel.StringCol }
 
-func (c CoreResponsibilityCol) Eq(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Eq(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c CoreResponsibilityCol) Ne(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Ne(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c CoreResponsibilityCol) Gt(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Gt(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c CoreResponsibilityCol) Gte(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Gte(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c CoreResponsibilityCol) Lt(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Lt(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c CoreResponsibilityCol) Lte(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Lte(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c CoreResponsibilityCol) IsDistinctFrom(v permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) IsDistinctFrom(v rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CoreResponsibilityCol) Between(lo, hi permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) Between(lo, hi rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CoreResponsibilityCol) To(v permission.CoreResponsibility) keel.Assignment {
+func (c CoreResponsibilityCol) To(v rbac.CoreResponsibility) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c CoreResponsibilityCol) In(vs ...permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) In(vs ...rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c CoreResponsibilityCol) NotIn(vs ...permission.CoreResponsibility) keel.Pred {
+func (c CoreResponsibilityCol) NotIn(vs ...rbac.CoreResponsibility) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -1351,26 +1353,26 @@ func (c OperationCol) NotIn(vs ...permission.Operation) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RecordKindCol is a column of permission.RecordKind values.
+// RecordKindCol is a column of recordkind.RecordKind values.
 type RecordKindCol struct{ keel.StringCol }
 
-func (c RecordKindCol) Eq(v permission.RecordKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RecordKindCol) Ne(v permission.RecordKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RecordKindCol) Gt(v permission.RecordKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RecordKindCol) Gte(v permission.RecordKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RecordKindCol) Lt(v permission.RecordKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RecordKindCol) Lte(v permission.RecordKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c RecordKindCol) IsDistinctFrom(v permission.RecordKind) keel.Pred {
+func (c RecordKindCol) Eq(v recordkind.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c RecordKindCol) Ne(v recordkind.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c RecordKindCol) Gt(v recordkind.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c RecordKindCol) Gte(v recordkind.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c RecordKindCol) Lt(v recordkind.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c RecordKindCol) Lte(v recordkind.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RecordKindCol) IsDistinctFrom(v recordkind.Kind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RecordKindCol) Between(lo, hi permission.RecordKind) keel.Pred {
+func (c RecordKindCol) Between(lo, hi recordkind.Kind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RecordKindCol) To(v permission.RecordKind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c RecordKindCol) In(vs ...permission.RecordKind) keel.Pred {
+func (c RecordKindCol) To(v recordkind.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RecordKindCol) In(vs ...recordkind.Kind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RecordKindCol) NotIn(vs ...permission.RecordKind) keel.Pred {
+func (c RecordKindCol) NotIn(vs ...recordkind.Kind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -1397,39 +1399,39 @@ func (c ResourceCol) NotIn(vs ...permission.Resource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// RoleConstraintTypeCol is a column of permission.RoleConstraintType values.
+// RoleConstraintTypeCol is a column of rbac.RoleConstraintType values.
 type RoleConstraintTypeCol struct{ keel.StringCol }
 
-func (c RoleConstraintTypeCol) Eq(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Eq(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c RoleConstraintTypeCol) Ne(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Ne(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c RoleConstraintTypeCol) Gt(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Gt(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c RoleConstraintTypeCol) Gte(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Gte(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c RoleConstraintTypeCol) Lt(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Lt(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c RoleConstraintTypeCol) Lte(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Lte(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c RoleConstraintTypeCol) IsDistinctFrom(v permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) IsDistinctFrom(v rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c RoleConstraintTypeCol) Between(lo, hi permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) Between(lo, hi rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c RoleConstraintTypeCol) To(v permission.RoleConstraintType) keel.Assignment {
+func (c RoleConstraintTypeCol) To(v rbac.RoleConstraintType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c RoleConstraintTypeCol) In(vs ...permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) In(vs ...rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c RoleConstraintTypeCol) NotIn(vs ...permission.RoleConstraintType) keel.Pred {
+func (c RoleConstraintTypeCol) NotIn(vs ...rbac.RoleConstraintType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

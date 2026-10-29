@@ -1,11 +1,13 @@
-package permission
+package protectedfield
 
 import (
 	"maps"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
-// ProtectedPath is where a protected field sits in a record's JSON, for the
+// Path is where a protected field sits in a record's JSON, for the
 // places that hold a record as JSON rather than as its Go type: an audit
 // entry's states and changes. The entity's WithholdFields is the rule for a
 // record in a response; these paths are the same rule for its stored JSON.
@@ -16,10 +18,10 @@ import (
 // is rooted at (a credential's number, a rate quote's cost). When lists the
 // values the object holding the field must carry for it to be protected (a
 // detention trace's driver pay step).
-type ProtectedPath struct {
+type Path struct {
 	Path     string
-	Group    FieldGroup
-	Resource Resource
+	Group    Group
+	Resource permission.Resource
 	When     map[string]any
 }
 
@@ -30,37 +32,37 @@ const (
 
 var driverPayStep = map[string]any{traceStepKindField: "DriverPay"}
 
-var protectedPaths = [...]ProtectedPath{
-	{Path: "profile.dob", Group: FieldGroupPersonal},
-	{Path: "profile.licenseNumber", Group: FieldGroupPersonal},
-	{Path: "profile.twicCardNumber", Group: FieldGroupPersonal},
-	{Path: "profile.lastDrugTest", Group: FieldGroupPersonal},
-	{Path: "evidenceCredential.number", Group: FieldGroupPersonal},
-	{Path: credentialNumber, Group: FieldGroupPersonal, Resource: ResourceWorkerCredential},
+var protectedPaths = [...]Path{
+	{Path: "profile.dob", Group: Personal},
+	{Path: "profile.licenseNumber", Group: Personal},
+	{Path: "profile.twicCardNumber", Group: Personal},
+	{Path: "profile.lastDrugTest", Group: Personal},
+	{Path: "evidenceCredential.number", Group: Personal},
+	{Path: credentialNumber, Group: Personal, Resource: permission.ResourceWorkerCredential},
 
-	{Path: "marginFloorPercent", Group: FieldGroupMargins},
-	{Path: "maxPayPercentOfSell", Group: FieldGroupMargins},
-	{Path: "targetMarginPercent", Group: FieldGroupMargins},
-	{Path: "tenderCounterMarginFloorPercent", Group: FieldGroupMargins},
-	{Path: "counterMargin", Group: FieldGroupMargins},
-	{Path: "counterMarginPercent", Group: FieldGroupMargins},
-	{Path: "marginAmount", Group: FieldGroupMargins},
-	{Path: "marginPercent", Group: FieldGroupMargins},
-	{Path: "netMargin", Group: FieldGroupMargins},
-	{Path: "driverPayAmount", Group: FieldGroupMargins},
-	{Path: "proposedNetMargin", Group: FieldGroupMargins},
-	{Path: "proposedDriverPay", Group: FieldGroupMargins},
-	{Path: "negativeMarginStops", Group: FieldGroupMargins},
-	{Path: "sellTotal", Group: FieldGroupMargins},
-	{Path: "trace.totals.cost", Group: FieldGroupMargins},
-	{Path: "trace.totals.margin", Group: FieldGroupMargins},
-	{Path: "trace.totals.marginPercent", Group: FieldGroupMargins},
-	{Path: "calculationTrace.steps[].amount", Group: FieldGroupMargins, When: driverPayStep},
-	{Path: "costAmount", Group: FieldGroupMargins, Resource: ResourceRateQuote},
+	{Path: "marginFloorPercent", Group: Margins},
+	{Path: "maxPayPercentOfSell", Group: Margins},
+	{Path: "targetMarginPercent", Group: Margins},
+	{Path: "tenderCounterMarginFloorPercent", Group: Margins},
+	{Path: "counterMargin", Group: Margins},
+	{Path: "counterMarginPercent", Group: Margins},
+	{Path: "marginAmount", Group: Margins},
+	{Path: "marginPercent", Group: Margins},
+	{Path: "netMargin", Group: Margins},
+	{Path: "driverPayAmount", Group: Margins},
+	{Path: "proposedNetMargin", Group: Margins},
+	{Path: "proposedDriverPay", Group: Margins},
+	{Path: "negativeMarginStops", Group: Margins},
+	{Path: "sellTotal", Group: Margins},
+	{Path: "trace.totals.cost", Group: Margins},
+	{Path: "trace.totals.margin", Group: Margins},
+	{Path: "trace.totals.marginPercent", Group: Margins},
+	{Path: "calculationTrace.steps[].amount", Group: Margins, When: driverPayStep},
+	{Path: "costAmount", Group: Margins, Resource: permission.ResourceRateQuote},
 }
 
-// ProtectedPaths lists every declared protected path.
-func ProtectedPaths() []ProtectedPath {
+// Paths lists every declared protected path.
+func Paths() []Path {
 	return protectedPaths[:]
 }
 
@@ -81,7 +83,7 @@ func pathSteps(path string) []string {
 
 // matches reports whether a field reached by steps, held by holder, of a
 // record of resource is this protected path.
-func (p *ProtectedPath) matches(resource Resource, steps []string, holder map[string]any) bool {
+func (p *Path) matches(resource permission.Resource, steps []string, holder map[string]any) bool {
 	want := pathSteps(p.Path)
 	if p.Resource != "" {
 		if p.Resource != resource || len(steps) != len(want) {
@@ -104,9 +106,9 @@ func (p *ProtectedPath) matches(resource Resource, steps []string, holder map[st
 	return true
 }
 
-// ProtectedGroupAt is the group that protects the field reached by steps in a
+// GroupAt is the group that protects the field reached by steps in a
 // record of resource, held by holder, if any does.
-func ProtectedGroupAt(resource Resource, steps []string, holder map[string]any) (FieldGroup, bool) {
+func GroupAt(resource permission.Resource, steps []string, holder map[string]any) (Group, bool) {
 	for i := range protectedPaths {
 		if protectedPaths[i].matches(resource, steps, holder) {
 			return protectedPaths[i].Group, true
@@ -115,13 +117,13 @@ func ProtectedGroupAt(resource Resource, steps []string, holder map[string]any) 
 	return "", false
 }
 
-// WithholdProtectedJSON returns a record's JSON with every protected field a
+// WithholdJSON returns a record's JSON with every protected field a
 // reader without its group may not see answered null. The value is copied
 // before anything is withheld; one with nothing to withhold is returned as is.
-func WithholdProtectedJSON(
-	resource Resource,
+func WithholdJSON(
+	resource permission.Resource,
 	value map[string]any,
-	visible FieldGroupSet,
+	visible GroupSet,
 ) map[string]any {
 	if value == nil || visible.HasAll() {
 		return value
@@ -130,13 +132,13 @@ func WithholdProtectedJSON(
 	return out
 }
 
-// WithholdProtectedValue is WithholdProtectedJSON for a value found at steps
+// WithholdValue is WithholdJSON for a value found at steps
 // inside a record, such as one side of an audit change.
-func WithholdProtectedValue(
-	resource Resource,
+func WithholdValue(
+	resource permission.Resource,
 	steps []string,
 	value any,
-	visible FieldGroupSet,
+	visible GroupSet,
 ) any {
 	if visible.HasAll() {
 		return value
@@ -144,13 +146,13 @@ func WithholdProtectedValue(
 	return withholdValue(resource, steps, value, visible)
 }
 
-func withholdValue(resource Resource, steps []string, value any, visible FieldGroupSet) any {
+func withholdValue(resource permission.Resource, steps []string, value any, visible GroupSet) any {
 	switch typed := value.(type) {
 	case map[string]any:
 		out := maps.Clone(typed)
 		for key, field := range typed {
 			at := append(append(make([]string, 0, len(steps)+1), steps...), key)
-			if group, ok := ProtectedGroupAt(resource, at, typed); ok && !visible.Has(group) {
+			if group, ok := GroupAt(resource, at, typed); ok && !visible.Has(group) {
 				out[key] = nil
 				continue
 			}

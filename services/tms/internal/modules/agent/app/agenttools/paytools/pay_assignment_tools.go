@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
@@ -77,7 +78,7 @@ func (t *AssignPayProfileTool) ParamSchema() map[string]any {
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		ParamPayProfileID: agenttoolschema.KindID(
 			"The pay profile, from "+payProfileSourcesTool+". Never guess one.",
-			permission.KindPayProfile,
+			recordkind.PayProfile,
 		),
 		toolparams.ParamEffectiveFrom: agenttoolschema.Date(
 			"The first day pay is computed under it.",
@@ -339,7 +340,7 @@ func (t *EndPayAssignmentTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		ParamAssignmentID: agenttoolschema.KindID(
 			"The assignment, from "+assignmentSourcesTool+". Never guess one.",
-			permission.KindPayAssignment,
+			recordkind.PayAssignment,
 		),
 		ParamEndDate: agenttoolschema.Date("The day it stops applying."),
 	}, ParamAssignmentID, ParamEndDate)

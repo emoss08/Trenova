@@ -4,6 +4,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -382,7 +383,7 @@ func TestRouteRegistry_ComputeAccess(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser): permission.ClientOpRead,
+			string(permission.ResourceUser): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -395,7 +396,7 @@ func TestRouteRegistry_ComputeAccess(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser): permission.ClientOpRead | permission.ClientOpCreate,
+			string(permission.ResourceUser): operationbits.Read | operationbits.Create,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -408,8 +409,8 @@ func TestRouteRegistry_ComputeAccess(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser):    permission.ClientOpRead | permission.ClientOpCreate,
-			string(permission.ResourceInvoice): permission.ClientOpRead,
+			string(permission.ResourceUser):    operationbits.Read | operationbits.Create,
+			string(permission.ResourceInvoice): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -452,7 +453,7 @@ func TestRouteRegistry_ComputeAccess_WithOrCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceReport): permission.ClientOpRead,
+			string(permission.ResourceReport): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -463,7 +464,7 @@ func TestRouteRegistry_ComputeAccess_WithOrCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceDashboard): permission.ClientOpRead,
+			string(permission.ResourceDashboard): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -474,7 +475,7 @@ func TestRouteRegistry_ComputeAccess_WithOrCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser): permission.ClientOpRead,
+			string(permission.ResourceUser): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -500,8 +501,8 @@ func TestRouteRegistry_ComputeAccess_WithAndCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser): permission.ClientOpRead,
-			string(permission.ResourceRole): permission.ClientOpRead,
+			string(permission.ResourceUser): operationbits.Read,
+			string(permission.ResourceRole): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -512,7 +513,7 @@ func TestRouteRegistry_ComputeAccess_WithAndCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceUser): permission.ClientOpRead,
+			string(permission.ResourceUser): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -523,7 +524,7 @@ func TestRouteRegistry_ComputeAccess_WithAndCombinator(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceRole): permission.ClientOpRead,
+			string(permission.ResourceRole): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -556,7 +557,7 @@ func TestRouteRegistry_ComputeAccess_PatternAndPrefixRoutes(t *testing.T) {
 		t.Parallel()
 
 		permissions := map[string]uint32{
-			string(permission.ResourceCommodity): permission.ClientOpRead,
+			string(permission.ResourceCommodity): operationbits.Read,
 		}
 
 		access := rr.ComputeAccess(permissions)
@@ -844,7 +845,7 @@ func TestRouteRegistry_ConcurrentAccess(t *testing.T) {
 			_, _ = rr.Get("/admin/users")
 			_ = rr.GetByCategory("Administration")
 			_ = rr.ComputeAccess(map[string]uint32{
-				string(permission.ResourceUser): permission.ClientOpRead,
+				string(permission.ResourceUser): operationbits.Read,
 			})
 		})
 	}

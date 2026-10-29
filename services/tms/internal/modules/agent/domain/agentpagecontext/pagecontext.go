@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -83,7 +83,7 @@ type PageKPI struct {
 // closed set a client cannot widen, except the conversation a question is
 // typed into, which is the place it is asked and never its subject.
 func IsKnownPageEntityType(kind string) bool {
-	return kind != string(permission.KindAssistantThread) && permission.RecordKind(kind).Known()
+	return kind != string(recordkind.AssistantThread) && recordkind.Kind(kind).Known()
 }
 
 var pageResources = permissioncatalog.NewRegistry()

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -157,7 +158,7 @@ func TestCreateLocation_IsProposedForApprovalAndStaysInternal(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
 	assert.Equal(t, agenttooltrust.ToolEffectChange, policy.Effect)
 	assert.True(t, policy.Idempotent)
-	assert.True(t, permission.IsAgentAllowed(permission.ResourceLocation, permission.OpCreate))
+	assert.True(t, agentceiling.Allows(permission.ResourceLocation, permission.OpCreate))
 }
 
 func TestCreateLocation_CreatesTheLocationInTheCallersTenant(t *testing.T) {

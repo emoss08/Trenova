@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/homelayoutportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/homelayoutportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 
 	repo := homelayoutportsmock.NewMockHomeLayoutRepository(t)
-	rbac := permissionportsmock.NewMockRBACRepository(t)
+	rbacRepo := permissionportsmock.NewMockRBACRepository(t)
 	roles := permissionportsmock.NewMockRoleRepository(t)
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 
@@ -42,12 +42,12 @@ func newHarness(t *testing.T) *harness {
 		svc: New(Params{
 			Logger:           zap.NewNop(),
 			Repo:             repo,
-			RBACRepo:         rbac,
+			RBACRepo:         rbacRepo,
 			RoleRepo:         roles,
 			PermissionEngine: engine,
 		}),
 		repo:   repo,
-		rbac:   rbac,
+		rbac:   rbacRepo,
 		roles:  roles,
 		engine: engine,
 	}
@@ -87,8 +87,8 @@ func allowBatch(engine *permissionportsmock.MockPermissionEngine, denied ...perm
 		})
 }
 
-func role(responsibility permission.CoreResponsibility) *permission.Role {
-	return &permission.Role{ID: pulid.MustNew("rol_"), CoreResponsibility: responsibility}
+func role(responsibility rbac.CoreResponsibility) *rbac.Role {
+	return &rbac.Role{ID: pulid.MustNew("rol_"), CoreResponsibility: responsibility}
 }
 
 func preset(name string, opts ...func(*homelayout.Preset)) *homelayout.Preset {
@@ -122,7 +122,7 @@ func TestResolve_FallsBackToBuiltInForCoreResponsibility(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role(permission.CoreResponsibilityBilling)}, nil)
+		Return([]*rbac.Role{role(rbac.CoreResponsibilityBilling)}, nil)
 	h.repo.EXPECT().ListPresets(mock.Anything, mock.Anything).Return(nil, nil)
 	allowBatch(h.engine)
 
@@ -141,7 +141,7 @@ func TestResolve_PrefersRolePresetOverOrgDefault(t *testing.T) {
 
 	h := newHarness(t)
 	req := testRequest()
-	dispatcher := role(permission.CoreResponsibilityOperations)
+	dispatcher := role(rbac.CoreResponsibilityOperations)
 
 	assigned := preset("Dispatch Home", func(p *homelayout.Preset) {
 		p.RoleIDs = []pulid.ID{dispatcher.ID}
@@ -151,7 +151,7 @@ func TestResolve_PrefersRolePresetOverOrgDefault(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{dispatcher}, nil)
+		Return([]*rbac.Role{dispatcher}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{fallback, assigned}, nil)
@@ -174,13 +174,13 @@ func TestResolve_MatchesPresetByCoreResponsibility(t *testing.T) {
 	req := testRequest()
 
 	assigned := preset("Finance Home", func(p *homelayout.Preset) {
-		p.CoreResponsibility = permission.CoreResponsibilityFinance
+		p.CoreResponsibility = rbac.CoreResponsibilityFinance
 	})
 
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role(permission.CoreResponsibilityFinance)}, nil)
+		Return([]*rbac.Role{role(rbac.CoreResponsibilityFinance)}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -203,7 +203,7 @@ func TestResolve_UsesOrgDefaultWhenNoRoleMatches(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role("")}, nil)
+		Return([]*rbac.Role{role("")}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{fallback}, nil)
@@ -221,7 +221,7 @@ func TestResolve_UserLayoutWinsOverAssignedPreset(t *testing.T) {
 
 	h := newHarness(t)
 	req := testRequest()
-	dispatcher := role(permission.CoreResponsibilityOperations)
+	dispatcher := role(rbac.CoreResponsibilityOperations)
 	assigned := preset("Dispatch Home", func(p *homelayout.Preset) {
 		p.RoleIDs = []pulid.ID{dispatcher.ID}
 	})
@@ -239,7 +239,7 @@ func TestResolve_UserLayoutWinsOverAssignedPreset(t *testing.T) {
 	}, true, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{dispatcher}, nil)
+		Return([]*rbac.Role{dispatcher}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -263,7 +263,7 @@ func TestResolve_LockedPresetOverridesUserLayout(t *testing.T) {
 
 	h := newHarness(t)
 	req := testRequest()
-	dispatcher := role(permission.CoreResponsibilityOperations)
+	dispatcher := role(rbac.CoreResponsibilityOperations)
 	assigned := preset("Dispatch Home", func(p *homelayout.Preset) {
 		p.RoleIDs = []pulid.ID{dispatcher.ID}
 		p.Locked = true
@@ -282,7 +282,7 @@ func TestResolve_LockedPresetOverridesUserLayout(t *testing.T) {
 	}, true, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{dispatcher}, nil)
+		Return([]*rbac.Role{dispatcher}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -304,7 +304,7 @@ func TestUpdate_RefusedWhileLocked(t *testing.T) {
 
 	h := newHarness(t)
 	req := testRequest()
-	dispatcher := role(permission.CoreResponsibilityOperations)
+	dispatcher := role(rbac.CoreResponsibilityOperations)
 	assigned := preset("Dispatch Home", func(p *homelayout.Preset) {
 		p.RoleIDs = []pulid.ID{dispatcher.ID}
 		p.Locked = true
@@ -312,7 +312,7 @@ func TestUpdate_RefusedWhileLocked(t *testing.T) {
 
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{dispatcher}, nil)
+		Return([]*rbac.Role{dispatcher}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -353,7 +353,7 @@ func TestResolve_DropsWidgetsTheViewerCannotRead(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role("")}, nil)
+		Return([]*rbac.Role{role("")}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -390,7 +390,7 @@ func TestResolve_DropsMetricsTheViewerCannotRead(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role("")}, nil)
+		Return([]*rbac.Role{role("")}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -426,7 +426,7 @@ func TestResolve_DropsMetricWidgetLeftWithNothing(t *testing.T) {
 	h.repo.EXPECT().GetPreference(mock.Anything, mock.Anything).Return(nil, false, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role("")}, nil)
+		Return([]*rbac.Role{role("")}, nil)
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{assigned}, nil)
@@ -461,7 +461,7 @@ func TestResolve_DeletedPresetLeavesCustomLayoutIntact(t *testing.T) {
 	}, true, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role(permission.CoreResponsibilityOperations)}, nil)
+		Return([]*rbac.Role{role(rbac.CoreResponsibilityOperations)}, nil)
 	h.repo.EXPECT().ListPresets(mock.Anything, mock.Anything).Return(nil, nil)
 	allowBatch(h.engine)
 
@@ -496,7 +496,7 @@ func TestResolve_DropsRetiredWidgetKeys(t *testing.T) {
 	}, true, nil)
 	h.rbac.EXPECT().
 		GetAuthorizedRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return([]*permission.Role{role("")}, nil)
+		Return([]*rbac.Role{role("")}, nil)
 	h.repo.EXPECT().ListPresets(mock.Anything, mock.Anything).Return(nil, nil)
 	allowBatch(h.engine)
 

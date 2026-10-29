@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -27,9 +28,9 @@ func CreateAdminRole(
 	ctx context.Context,
 	db *keel.DB,
 	params AdminRoleParams,
-) (*permission.Role, error) {
+) (*rbac.Role, error) {
 	now := params.Scope.NowUnix()
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		BusinessUnitID: params.Scope.BusinessUnitID,
 		OrganizationID: params.Scope.OrganizationID,
@@ -68,7 +69,7 @@ type RoleAssignmentParams struct {
 }
 
 func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) error {
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		ID:             pulid.MustNew("ura_"),
 		UserID:         params.UserID,
 		OrganizationID: params.OrganizationID,

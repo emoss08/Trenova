@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -56,7 +57,7 @@ func (t *CorrectChargeCodeTool) ParamSchema() map[string]any {
 				"The billing queue item whose charges are corrected, from "+
 					"billing_list_queue_items, billing_get_queue_item, this run's subject or "+
 					"the record on the page. Never guess one.",
-				permission.KindBillingQueueItem,
+				recordkind.BillingQueueItem,
 			),
 			"additionalCharges": map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
@@ -86,7 +87,7 @@ func chargeLineSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			chargeLineID: agenttoolschema.KindID("The existing charge this line keeps or "+
 				"corrects, from the item's charges; leave it out for a charge that is new.",
-				permission.KindAdditionalCharge),
+				recordkind.AdditionalCharge),
 			chargeLineAccessorial: agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
 				"The accessorial, from masterdata_list_accessorial_charges.",

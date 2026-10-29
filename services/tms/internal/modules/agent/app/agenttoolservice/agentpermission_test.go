@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -96,7 +97,7 @@ func TestEveryToolADeskRunsOnIsOneAnAgentMayCall(t *testing.T) {
 				templates, name,
 			)
 
-			require.Truef(t, permission.IsAgentAllowed(needed.resource, needed.operation),
+			require.Truef(t, agentceiling.Allows(needed.resource, needed.operation),
 				"%s needs %s on %s and no agent may hold it, yet %v run on it",
 				name, needed.operation, needed.resource, templates,
 			)
@@ -168,7 +169,7 @@ func TestTheAllowListGrantsNothingNoToolClaims(t *testing.T) {
 	}
 
 	unclaimed := make([]string, 0)
-	for resource, ops := range permission.AgentAllowedPermissions() {
+	for resource, ops := range agentceiling.Permissions() {
 		for _, operation := range ops {
 			if _, ok := needed[resource][operation]; ok {
 				continue

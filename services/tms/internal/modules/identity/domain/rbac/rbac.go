@@ -1,4 +1,4 @@
-package permission
+package rbac
 
 import (
 	"github.com/emoss08/keel"

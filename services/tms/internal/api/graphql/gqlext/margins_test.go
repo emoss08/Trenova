@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,7 +69,7 @@ func TestEveryMarginFieldIsProtectedByTheMarginsGroup(t *testing.T) {
 				continue
 			}
 			if group, ok := protected.Group(name, field.Name); ok &&
-				group == permission.FieldGroupMargins {
+				group == protectedfield.Margins {
 				continue
 			}
 			if _, ok := covered[name]; ok {
@@ -159,7 +160,7 @@ func typesReachedOnlyThroughMargins(
 			for _, r := range reaches {
 				group, ok := protected.Group(r.object, r.field)
 				_, carrierCovered := covered[r.object]
-				if (!ok || group != permission.FieldGroupMargins) && !carrierCovered {
+				if (!ok || group != protectedfield.Margins) && !carrierCovered {
 					all = false
 					break
 				}

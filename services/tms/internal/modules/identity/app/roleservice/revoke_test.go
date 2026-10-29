@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,9 +28,19 @@ func TestRevokeOrganizationRoles_DeletesInThatOrganizationsScopeAndAudits(t *tes
 	deps := setupTestService(t)
 	actorID, userID := pulid.MustNew("usr_"), pulid.MustNew("usr_")
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	deleted := []*permission.UserRoleAssignment{
-		{ID: pulid.MustNew("ura_"), UserID: userID, OrganizationID: orgID, RoleID: pulid.MustNew("rol_")},
-		{ID: pulid.MustNew("ura_"), UserID: userID, OrganizationID: orgID, RoleID: pulid.MustNew("rol_")},
+	deleted := []*rbac.UserRoleAssignment{
+		{
+			ID:             pulid.MustNew("ura_"),
+			UserID:         userID,
+			OrganizationID: orgID,
+			RoleID:         pulid.MustNew("rol_"),
+		},
+		{
+			ID:             pulid.MustNew("ura_"),
+			UserID:         userID,
+			OrganizationID: orgID,
+			RoleID:         pulid.MustNew("rol_"),
+		},
 	}
 
 	deps.roleRepo.On("DeleteUserAssignments", scopedTo(orgID, buID), userID, orgID).
@@ -78,7 +89,7 @@ func TestRevokeOrganizationRoles_TellsTheUser(t *testing.T) {
 	deps := setupTestService(t)
 	userID, orgID, buID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
 	deps.roleRepo.On("DeleteUserAssignments", mock.Anything, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil).Once()
+		Return([]*rbac.UserRoleAssignment{}, nil).Once()
 
 	require.NoError(t, deps.svc.RevokeOrganizationRoles(t.Context(), RevokeOrganizationRolesRequest{
 		UserID:         userID,

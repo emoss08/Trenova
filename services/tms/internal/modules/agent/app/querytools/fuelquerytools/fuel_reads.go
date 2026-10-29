@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
@@ -64,7 +65,7 @@ var (
 	}
 	jurisdictionReference = readspec.Reference{
 		Resource: permission.ResourceFuelPurchase,
-		Kinds:    []permission.RecordKind{permission.KindIFTAJurisdiction},
+		Kinds:    []recordkind.Kind{recordkind.IFTAJurisdiction},
 		What:     "The state or province",
 		Source:   toolListIFTAJurisdictions,
 	}

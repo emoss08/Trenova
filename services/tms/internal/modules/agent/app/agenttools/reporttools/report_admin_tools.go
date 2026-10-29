@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
@@ -137,7 +138,7 @@ func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentToo
 		Rationale: "Stops a report the person asked for from running; nothing is changed or " +
 			"sent, and running the report again gives the same rows.",
 		Properties: map[string]any{
-			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, permission.KindReportRun),
+			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, recordkind.ReportRun),
 		},
 		Required: []string{paramReportRunID},
 		Target:   reportTarget(paramReportRunID),
@@ -549,7 +550,7 @@ func NewUpdateReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 			"outside the organization.",
 		Properties: map[string]any{
 			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
-				permission.KindReportSchedule),
+				recordkind.ReportSchedule),
 			paramDefinitionID: agenttoolschema.RecordIDText(
 				permission.ResourceReport,
 				"The saved report it runs, from report_list. "+
@@ -659,7 +660,7 @@ func NewDeleteReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 			"the schedule back but setting it up again, so a person always decides.",
 		Properties: map[string]any{
 			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
-				permission.KindReportSchedule),
+				recordkind.ReportSchedule),
 		},
 		Required:    []string{paramReportScheduleID},
 		Target:      reportTarget(paramReportScheduleID),

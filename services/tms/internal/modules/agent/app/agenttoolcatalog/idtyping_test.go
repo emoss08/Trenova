@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/require"
 )
@@ -167,7 +167,7 @@ func kindMarkProblems(tool, at string, property map[string]any) []string {
 
 	problems := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
-		if !permission.RecordKind(kind).Known() {
+		if !recordkind.Kind(kind).Known() {
 			problems = append(problems, fmt.Sprintf(
 				"%s.%s: marked as taking a %s id, which has no prefix in permission's tables",
 				tool, at, kind))

@@ -3,6 +3,7 @@ package qualificationtools
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -103,5 +104,5 @@ func TestRequestMissingDocs_IsGatedOnCustomerCommunication(t *testing.T) {
 	tool := &RequestMissingDocsTool{}
 	assert.Equal(t, permission.ResourceCustomerCommunication, tool.Policy().Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
-	assert.True(t, permission.IsAgentAllowed(tool.Policy().Resource, tool.Policy().Operation))
+	assert.True(t, agentceiling.Allows(tool.Policy().Resource, tool.Policy().Operation))
 }

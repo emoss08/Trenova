@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -166,7 +167,7 @@ func verificationIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The previous employer's verification",
 			"worker_list_employment_verifications"),
-		permission.KindEmploymentVerification,
+		recordkind.EmploymentVerification,
 	)
 }
 

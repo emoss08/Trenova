@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -107,7 +108,7 @@ type changeReviewKind struct {
 	description string
 	rationale   string
 	idGuidance  string
-	changeKind  permission.RecordKind
+	changeKind  recordkind.Kind
 	plan        func(context.Context, *changeReviewCall) (*changeReviewPlan, error)
 	run         func(context.Context, *changeReviewCall) error
 	recipe      []string
@@ -269,7 +270,7 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.
 		rationale: "Changes a load this organization committed to on another " +
 			"organization's word, and that organization sees the outcome.",
 		idGuidance: "The tender change, from edi_list_tender_changes. Never guess one.",
-		changeKind: permission.KindEDITenderChange,
+		changeKind: recordkind.EDITenderChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTenderChange(
 				ctx,
@@ -318,7 +319,7 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agenttoolpo
 		rationale: "Changes a shipment on another organization's report, and that " +
 			"organization sees the outcome on its own shipment.",
 		idGuidance: "The transfer change, from edi_list_transfer_changes. Never guess one.",
-		changeKind: permission.KindEDITransferChange,
+		changeKind: recordkind.EDITransferChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTransferChange(
 				ctx,

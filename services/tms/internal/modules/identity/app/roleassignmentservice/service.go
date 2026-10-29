@@ -3,7 +3,7 @@ package roleassignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -32,13 +32,13 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *permissionports.ListRoleAssignmentsRequest,
-) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+) (*pagination.ListResult[*rbac.UserRoleAssignment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
 	req permissionports.GetRoleAssignmentByIDRequest,
-) (*permission.UserRoleAssignment, error) {
+) (*rbac.UserRoleAssignment, error) {
 	return s.repo.GetByID(ctx, req)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,8 +44,8 @@ type roleReader interface {
 	GetUserRoleAssignments(
 		ctx context.Context,
 		userID, orgID pulid.ID,
-	) ([]*permission.UserRoleAssignment, error)
-	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
+	) ([]*rbac.UserRoleAssignment, error)
+	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error)
 }
 
 func rolesOrNil(roles permissionports.RoleRepository) roleReader {
@@ -60,7 +61,7 @@ func (s *Service) heldRoles(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	if s.roles == nil || userID.IsNil() {
 		return nil, nil
 	}
@@ -70,14 +71,14 @@ func (s *Service) heldRoles(
 		return nil, err
 	}
 
-	roles := make([]*permission.Role, 0, len(assignments))
+	roles := make([]*rbac.Role, 0, len(assignments))
 	for _, assignment := range assignments {
 		if assignment == nil || assignment.IsExpired() || assignment.Role == nil {
 			continue
 		}
 		roles = append(roles, assignment.Role)
 	}
-	slices.SortFunc(roles, func(a, b *permission.Role) int {
+	slices.SortFunc(roles, func(a, b *rbac.Role) int {
 		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 

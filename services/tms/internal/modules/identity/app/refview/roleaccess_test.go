@@ -6,21 +6,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/stretchr/testify/assert"
 )
 
 func role(
 	max permission.FieldSensitivity,
-	grants ...*permission.ResourcePermission,
-) *permission.Role {
-	return &permission.Role{MaxSensitivity: max, Permissions: grants}
+	grants ...*rbac.ResourcePermission,
+) *rbac.Role {
+	return &rbac.Role{MaxSensitivity: max, Permissions: grants}
 }
 
 func grant(
 	resource permission.Resource,
 	ops ...permission.Operation,
-) *permission.ResourcePermission {
-	return &permission.ResourcePermission{Resource: resource.String(), Operations: ops}
+) *rbac.ResourcePermission {
+	return &rbac.ResourcePermission{Resource: resource.String(), Operations: ops}
 }
 
 func TestRoleAccess_ReadsWhatItsGrantsImply(t *testing.T) {

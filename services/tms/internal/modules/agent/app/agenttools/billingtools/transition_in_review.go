@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -53,7 +54,7 @@ func (t *TransitionToInReviewTool) ParamSchema() map[string]any {
 				"The billing queue item to move into review: this "+
 					"run's subject, the record on the page, or one billing_list_queue_items "+
 					"found. Never guess one.",
-				permission.KindBillingQueueItem,
+				recordkind.BillingQueueItem,
 			),
 			paramBillerID: billerProperty(),
 		},

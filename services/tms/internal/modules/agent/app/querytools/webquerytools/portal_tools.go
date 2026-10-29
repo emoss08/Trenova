@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -164,7 +165,7 @@ func (t *readPortalTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			"siteId": agenttoolschema.KindID(
 				"The portal site to read, from web_list_portal_sites.",
-				permission.KindPortalSite,
+				recordkind.PortalSite,
 			),
 			"question": map[string]any{
 				toolschema.KeyType: "string",

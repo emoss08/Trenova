@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -65,7 +65,7 @@ type RoleAgentGrantRepository interface {
 	ListRolesByAgents(
 		ctx context.Context,
 		req ListGrantsByAgentsRequest,
-	) (map[pulid.ID][]*permission.Role, error)
+	) (map[pulid.ID][]*rbac.Role, error)
 	ListAgentsByRoles(
 		ctx context.Context,
 		req ListGrantsByRolesRequest,
@@ -73,7 +73,7 @@ type RoleAgentGrantRepository interface {
 	ListGrantableRoles(
 		ctx context.Context,
 		req ListGrantableRolesRequest,
-	) ([]*permission.Role, error)
+	) ([]*rbac.Role, error)
 	ReplaceForAgent(ctx context.Context, req ReplaceAgentGrantsRequest) (GrantChange, error)
 	ReplaceForRole(ctx context.Context, req ReplaceRoleGrantsRequest) (GrantChange, error)
 }

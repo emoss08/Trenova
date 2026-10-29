@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -218,16 +219,16 @@ func (a *RequestActor) PersonUserID() pulid.ID {
 }
 
 type FieldAccess interface {
-	Visible(ctx context.Context, actor *RequestActor) permission.FieldGroupSet
+	Visible(ctx context.Context, actor *RequestActor) protectedfield.GroupSet
 }
 
 func VisibleFieldGroups(
 	ctx context.Context,
 	access FieldAccess,
 	actor *RequestActor,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	if access == nil {
-		return permission.AllFieldGroups()
+		return protectedfield.AllGroups()
 	}
 	return access.Visible(ctx, actor)
 }

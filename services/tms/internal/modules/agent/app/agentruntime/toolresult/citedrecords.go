@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/productguide"
 )
 
@@ -88,7 +89,7 @@ func (c *citedRecordCollector) consider(record map[string]any) {
 	if separator <= 0 {
 		return
 	}
-	resource, ok := permission.ResourceOfIDPrefix(id[:separator+1])
+	resource, ok := recordkind.ResourceOfIDPrefix(id[:separator+1])
 	if !ok {
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestNewWorkingRecord_KnowsTheKindByItsPrefix(t *testing.T) {
 		pulid.MustNew("shp_").String(), "SEED-DET-001", conversation.WorkingSourceRead, 10,
 	)
 	require.True(t, ok)
-	assert.Equal(t, permission.RecordKind(permission.ResourceShipment), record.Kind)
+	assert.Equal(t, recordkind.Kind(permission.ResourceShipment), record.Kind)
 	assert.Equal(t, "SEED-DET-001", record.Label)
 
 	_, ok = conversationworkingset.NewWorkingRecord(

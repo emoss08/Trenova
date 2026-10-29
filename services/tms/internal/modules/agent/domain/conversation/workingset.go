@@ -2,7 +2,7 @@ package conversation
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 )
 
 type WorkingSource string
@@ -16,11 +16,11 @@ const (
 )
 
 type WorkingRecord struct {
-	Kind      permission.RecordKind `json:"kind"`
-	ID        string                `json:"id"`
-	Label     string                `json:"label,omitempty"`
-	Source    WorkingSource         `json:"source"`
-	TouchedAt int64                 `json:"touchedAt"`
+	Kind      recordkind.Kind `json:"kind"`
+	ID        string          `json:"id"`
+	Label     string          `json:"label,omitempty"`
+	Source    WorkingSource   `json:"source"`
+	TouchedAt int64           `json:"touchedAt"`
 }
 
 func (r WorkingRecord) Ref() agentpagecontext.EntityRef {

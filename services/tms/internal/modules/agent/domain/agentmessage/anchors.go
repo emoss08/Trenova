@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/textfence"
@@ -50,7 +50,7 @@ func DescribeAnchors(anchors []agentturn.RuntimeAnchor, now int64, timezone stri
 
 func writeAnchor(b *strings.Builder, anchor *agentturn.RuntimeAnchor, now int64) {
 	b.WriteString("- ")
-	b.WriteString(textcase.CapitalizeFirst(permission.RecordKind(anchor.Kind).Noun()))
+	b.WriteString(textcase.CapitalizeFirst(recordkind.Kind(anchor.Kind).Noun()))
 	if label := stringutils.OneLine(anchor.Label, maxAnchorValueLen); label != "" {
 		b.WriteString(" ")
 		b.WriteString(textfence.FenceText(label, anchorsCloseTag))

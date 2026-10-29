@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,15 +14,15 @@ func TestGrantsOf_UnitesRolesWithTheirImpliedOperations(t *testing.T) {
 
 	registry := permissioncatalog.NewRegistry()
 	grants := permissioncatalog.GrantsOf(
-		&permission.Role{
+		&rbac.Role{
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{Resource: "customer", Operations: []permission.Operation{permission.OpUpdate}},
 			},
 		},
-		&permission.Role{
+		&rbac.Role{
 			MaxSensitivity: permission.SensitivityConfidential,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{Resource: "worker", Operations: []permission.Operation{permission.OpRead}},
 			},
 		},
@@ -59,7 +60,7 @@ func TestRoleGrants_AParentsGrantReachesItsChildren(t *testing.T) {
 	}
 
 	grants := permissioncatalog.GrantsOf(
-		&permission.Role{Permissions: []*permission.ResourcePermission{
+		&rbac.Role{Permissions: []*rbac.ResourcePermission{
 			{Resource: parent, Operations: []permission.Operation{permission.OpRead}},
 		}},
 	)
@@ -72,7 +73,7 @@ func TestRoleGrants_AWorkerGrantReachesNoKindGrantedOnItsOwn(t *testing.T) {
 	registry := permissioncatalog.NewRegistry()
 	worker := permission.ResourceWorker.String()
 	grants := permissioncatalog.GrantsOf(
-		&permission.Role{Permissions: []*permission.ResourcePermission{
+		&rbac.Role{Permissions: []*rbac.ResourcePermission{
 			{Resource: worker, Operations: registry.GetOperationsForResource(worker)},
 		}},
 	)

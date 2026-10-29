@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -642,13 +642,13 @@ func TestCreate(t *testing.T) {
 	})
 }
 
-type fixedFieldAccess permission.FieldGroupSet
+type fixedFieldAccess protectedfield.GroupSet
 
 func (f fixedFieldAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
-	return permission.FieldGroupSet(f)
+) protectedfield.GroupSet {
+	return protectedfield.GroupSet(f)
 }
 
 func TestUpdate(t *testing.T) {
@@ -696,7 +696,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("takes personal details from an editor with the group", func(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
-		deps.svc.fields = fixedFieldAccess(permission.AllFieldGroups())
+		deps.svc.fields = fixedFieldAccess(protectedfield.AllGroups())
 		userID := pulid.MustNew("usr_")
 		entity := newTestWorker()
 		entity.Profile.LicenseNumber = "DL999999"

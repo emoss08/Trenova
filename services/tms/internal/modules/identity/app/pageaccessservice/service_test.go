@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -240,20 +241,20 @@ func TestPreview_ARoleWithoutTheScreensReadIsBlocked(t *testing.T) {
 func TestPreview_ASavedRoleIncludesTheRolesItInherits(t *testing.T) {
 	t.Parallel()
 
-	parent := &permission.Role{
+	parent := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: tenant.OrgID,
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			{Resource: "customer", Operations: []permission.Operation{permission.OpRead}},
 		},
 	}
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: tenant.OrgID,
 		MaxSensitivity: permission.SensitivityPublic,
 		ParentRoleIDs:  []pulid.ID{parent.ID},
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			{Resource: "shipment", Operations: []permission.Operation{permission.OpRead}},
 		},
 	}
@@ -263,7 +264,7 @@ func TestPreview_ASavedRoleIncludesTheRolesItInherits(t *testing.T) {
 		Return(role, nil)
 	roles.EXPECT().
 		GetRolesWithInheritance(mock.Anything, []pulid.ID{parent.ID}).
-		Return([]*permission.Role{parent}, nil)
+		Return([]*rbac.Role{parent}, nil)
 
 	svc := newService(t, &engine{}, roles)
 	access, err := svc.Preview(t.Context(), &pageaccessservice.PreviewRequest{
@@ -282,11 +283,11 @@ func TestPreview_ASavedRoleIncludesTheRolesItInherits(t *testing.T) {
 func TestPreview_RefusesARoleInheritingFromAnotherOrganization(t *testing.T) {
 	t.Parallel()
 
-	parent := &permission.Role{ID: pulid.MustNew("rol_"), OrganizationID: pulid.MustNew("org_")}
+	parent := &rbac.Role{ID: pulid.MustNew("rol_"), OrganizationID: pulid.MustNew("org_")}
 	roles := permissionportsmock.NewMockRoleRepository(t)
 	roles.EXPECT().
 		GetRolesWithInheritance(mock.Anything, []pulid.ID{parent.ID}).
-		Return([]*permission.Role{parent}, nil)
+		Return([]*rbac.Role{parent}, nil)
 
 	svc := newService(t, &engine{}, roles)
 	_, err := svc.Preview(t.Context(), &pageaccessservice.PreviewRequest{

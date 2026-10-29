@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -396,7 +397,7 @@ func NewUnapplyCreditMemoTool(payments receivablesKeeper) agenttoolports.AgentTo
 		Properties: map[string]any{
 			ParamCreditMemoApplicationID: agenttoolschema.KindID(
 				"The application, from receivable_list_credit_memo_applications. Never guess one.",
-				permission.KindCreditMemoApplication),
+				recordkind.CreditMemoApplication),
 			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is taken back.",
 				maxReceivableReasonChars,

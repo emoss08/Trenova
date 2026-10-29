@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -308,19 +309,19 @@ func captureFilingProperties() map[string]any {
 							"The "+changepreview.ScannedDocument,
 							captureSources,
 						),
-						permission.KindScannedDocument,
+						recordkind.ScannedDocument,
 					),
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
 					paramCaptureTargetID: agenttoolschema.KindID("The record it goes on, by id "+
 						"from shipment_list, worker_list, equipment_list_tractors, equipment_list_trailers, "+
 						"customer_list or carrier_list.",
-						permission.RecordKind(permission.ResourceShipment),
-						permission.RecordKind(permission.ResourceWorker),
-						permission.RecordKind(permission.ResourceTractor),
-						permission.RecordKind(permission.ResourceTrailer),
-						permission.RecordKind(permission.ResourceCustomer),
-						permission.RecordKind(permission.ResourceCarrier),
+						recordkind.Kind(permission.ResourceShipment),
+						recordkind.Kind(permission.ResourceWorker),
+						recordkind.Kind(permission.ResourceTractor),
+						recordkind.Kind(permission.ResourceTrailer),
+						recordkind.Kind(permission.ResourceCustomer),
+						recordkind.Kind(permission.ResourceCarrier),
 					),
 					paramCaptureDocType: agenttoolschema.RecordIDText(
 						permission.ResourceDocumentType,
@@ -408,7 +409,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 		Properties: map[string]any{
 			paramCaptureItemIDOne: agenttoolschema.KindID(
 				agenttoolschema.IDDescription("The "+changepreview.ScannedDocument, captureSources),
-				permission.KindScannedDocument,
+				recordkind.ScannedDocument,
 			),
 		},
 		Required:    []string{paramCaptureItemIDOne},

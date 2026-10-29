@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,14 +15,14 @@ import (
 func fullGrants(
 	registry *permissioncatalog.Registry,
 	roleID pulid.ID,
-) []*permission.ResourcePermission {
-	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+) []*rbac.ResourcePermission {
+	held := make([]*rbac.ResourcePermission, 0, len(registry.All()))
 	for _, def := range registry.All() {
 		ops := make([]permission.Operation, 0, len(def.Operations))
 		for _, op := range def.Operations {
 			ops = append(ops, op.Operation)
 		}
-		held = append(held, &permission.ResourcePermission{
+		held = append(held, &rbac.ResourcePermission{
 			ID:         pulid.MustNew("rp_"),
 			RoleID:     roleID,
 			Resource:   def.Resource,
@@ -50,7 +51,7 @@ func TestPlanAdminGrants_AddsAResourceTheRoleNeverHad(t *testing.T) {
 	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := fullGrants(registry, roleID)
-	var dropped *permission.ResourcePermission
+	var dropped *rbac.ResourcePermission
 	held, dropped = held[1:], held[0]
 
 	plan := planAdminGrants(registry, roleID, held, 100)
@@ -73,7 +74,7 @@ func TestPlanAdminGrants_ExtendsAResourceMissingAnOperation(t *testing.T) {
 	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := fullGrants(registry, roleID)
-	var target *permission.ResourcePermission
+	var target *rbac.ResourcePermission
 	for _, rp := range held {
 		if len(rp.Operations) > 1 {
 			target = rp
@@ -114,7 +115,7 @@ func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *test
 
 	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
-	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	held := make([]*rbac.ResourcePermission, 0, len(registry.All()))
 	for _, rp := range fullGrants(registry, roleID) {
 		if rp.Resource != permission.ResourceWorkerLeave.String() {
 			held = append(held, rp)
@@ -157,7 +158,7 @@ func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t
 		permission.ResourceTimesheet,
 		permission.ResourceProfileChangeRequest,
 	}
-	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	held := make([]*rbac.ResourcePermission, 0, len(registry.All()))
 	for _, rp := range fullGrants(registry, roleID) {
 		if !slices.Contains(own, permission.Resource(rp.Resource)) {
 			held = append(held, rp)
@@ -184,7 +185,7 @@ func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOpe
 	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	portal := permission.ResourceDriverPortal.String()
-	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	held := make([]*rbac.ResourcePermission, 0, len(registry.All()))
 	for _, rp := range fullGrants(registry, roleID) {
 		if rp.Resource != portal {
 			held = append(held, rp)
@@ -205,7 +206,7 @@ func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOpe
 		permission.OpCancel,
 	}, plan.add[0].Operations, "inviting and revoking are the portal's own operations")
 
-	previous := &permission.ResourcePermission{
+	previous := &rbac.ResourcePermission{
 		ID:       pulid.MustNew("rp_"),
 		RoleID:   roleID,
 		Resource: portal,

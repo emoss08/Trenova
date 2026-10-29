@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -76,7 +77,7 @@ func carrierIntelEventsListSpec() readspec.List {
 
 func capacityPostingsListSpec() readspec.List {
 	state := readspec.Reference{
-		Kinds: []permission.RecordKind{permission.KindUSState},
+		Kinds: []recordkind.Kind{recordkind.USState},
 		What:  "The state's id",
 		Source: "an originStateId or destinationStateId on a row of this tool, or a " +
 			"location's stateId from location_get",

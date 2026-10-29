@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -248,18 +248,18 @@ func (r *deskRepo) SavePreference(
 
 // fakeRoles holds the person's roles and what each inherits.
 type fakeRoles struct {
-	held    []*permission.Role
-	parents map[pulid.ID][]*permission.Role
+	held    []*rbac.Role
+	parents map[pulid.ID][]*rbac.Role
 }
 
 func (f *fakeRoles) GetUserRoleAssignments(
 	context.Context,
 	pulid.ID,
 	pulid.ID,
-) ([]*permission.UserRoleAssignment, error) {
-	out := make([]*permission.UserRoleAssignment, 0, len(f.held))
+) ([]*rbac.UserRoleAssignment, error) {
+	out := make([]*rbac.UserRoleAssignment, 0, len(f.held))
 	for _, role := range f.held {
-		out = append(out, &permission.UserRoleAssignment{RoleID: role.ID, Role: role})
+		out = append(out, &rbac.UserRoleAssignment{RoleID: role.ID, Role: role})
 	}
 
 	return out, nil
@@ -268,10 +268,10 @@ func (f *fakeRoles) GetUserRoleAssignments(
 func (f *fakeRoles) GetRolesWithInheritance(
 	_ context.Context,
 	ids []pulid.ID,
-) ([]*permission.Role, error) {
-	out := make([]*permission.Role, 0, len(ids))
+) ([]*rbac.Role, error) {
+	out := make([]*rbac.Role, 0, len(ids))
 	for _, id := range ids {
-		out = append(out, &permission.Role{ID: id})
+		out = append(out, &rbac.Role{ID: id})
 		out = append(out, f.parents[id]...)
 	}
 
@@ -282,21 +282,21 @@ type deskWorld struct {
 	svc      *Service
 	repo     *deskRepo
 	avery    pulid.ID
-	billing  *permission.Role
-	dispatch *permission.Role
+	billing  *rbac.Role
+	dispatch *rbac.Role
 }
 
 func newDeskWorld() *deskWorld {
 	repo := newDeskRepo()
-	billing := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Billing"}
-	dispatch := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch"}
+	billing := &rbac.Role{ID: pulid.MustNew("rol_"), Name: "Billing"}
+	dispatch := &rbac.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch"}
 
 	return &deskWorld{
 		svc: &Service{
 			l:     zap.NewNop(),
 			repo:  repo,
 			runs:  &fakeRuns{},
-			roles: &fakeRoles{held: []*permission.Role{billing}},
+			roles: &fakeRoles{held: []*rbac.Role{billing}},
 		},
 		repo:     repo,
 		avery:    pulid.MustNew("usr_"),
@@ -886,10 +886,10 @@ func TestReader_ReadsTheRolesAPersonInherits(t *testing.T) {
 	t.Parallel()
 
 	w := newDeskWorld()
-	manager := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Billing manager"}
+	manager := &rbac.Role{ID: pulid.MustNew("rol_"), Name: "Billing manager"}
 	w.svc.roles = &fakeRoles{
-		held:    []*permission.Role{manager},
-		parents: map[pulid.ID][]*permission.Role{manager.ID: {w.billing}},
+		held:    []*rbac.Role{manager},
+		parents: map[pulid.ID][]*rbac.Role{manager.ID: {w.billing}},
 	}
 
 	reader, err := w.svc.Reader(t.Context(), w.actor(false).Actor.TenantInfo(), w.avery)

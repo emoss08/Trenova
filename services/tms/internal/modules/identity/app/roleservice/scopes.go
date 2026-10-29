@@ -5,14 +5,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func unenforcedScopes(
 	policy scopePolicy,
 	registry *permissioncatalog.Registry,
-	permissions []*permission.ResourcePermission,
-	existing []*permission.ResourcePermission,
+	permissions []*rbac.ResourcePermission,
+	existing []*rbac.ResourcePermission,
 	field func(index int) string,
 ) *errortypes.MultiError {
 	kept := make(map[string]permission.DataScope, len(existing))

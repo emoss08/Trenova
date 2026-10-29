@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -67,7 +68,7 @@ func (a Access) ceiling(
 func (a Access) Groups(
 	ctx context.Context,
 	params *agenttoolports.QueryToolParams,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	held := fieldsensitivity.VisibleGroups(
 		ctx,
 		func(ctx context.Context, resource permission.Resource) (bool, error) {

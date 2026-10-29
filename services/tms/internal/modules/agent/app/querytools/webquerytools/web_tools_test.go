@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -197,6 +198,6 @@ func TestWebToolsAreGatedOnWebResearch(t *testing.T) {
 		assert.Equal(t, permission.ResourceWebResearch, policy.Resource, tool.Name())
 		assert.Equal(t, agenttooltrust.ExternalReadAlways, policy.ReadsExternal, tool.Name())
 		assert.Equal(t, agent.TaintSourceWeb, policy.Source, tool.Name())
-		assert.True(t, permission.IsAgentAllowed(policy.Resource, permission.OpRead), tool.Name())
+		assert.True(t, agentceiling.Allows(policy.Resource, permission.OpRead), tool.Name())
 	}
 }

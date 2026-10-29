@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -24,7 +24,7 @@ func NewWorkingRecord(
 	if !found || prefix == "" {
 		return conversation.WorkingRecord{}, false
 	}
-	kind, known := permission.RecordKindOfIDPrefix(prefix + "_")
+	kind, known := recordkind.OfIDPrefix(prefix + "_")
 	if !known {
 		return conversation.WorkingRecord{}, false
 	}

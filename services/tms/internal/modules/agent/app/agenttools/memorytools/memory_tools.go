@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,10 +94,10 @@ func (t *RememberTool) ParamSchema() map[string]any {
 				"The record the memory is about: this run's subject, the page, or "+
 					"an id from customer_list, location_list, worker_list or carrier_list. "+
 					"Never guessed.",
-				permission.RecordKind(permission.ResourceCustomer),
-				permission.RecordKind(permission.ResourceLocation),
-				permission.RecordKind(permission.ResourceWorker),
-				permission.RecordKind(permission.ResourceCarrier),
+				recordkind.Kind(permission.ResourceCustomer),
+				recordkind.Kind(permission.ResourceLocation),
+				recordkind.Kind(permission.ResourceWorker),
+				recordkind.Kind(permission.ResourceCarrier),
 			),
 			"expiresOn": agenttoolschema.Date(
 				"The last day the memory applies, such as for a temporary arrangement. Omit " +

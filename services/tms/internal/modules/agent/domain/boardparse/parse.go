@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -579,7 +580,7 @@ func resourceOf(id pulid.ID) (permission.Resource, bool) {
 	if cut < 0 {
 		return "", false
 	}
-	resource, known := permission.ResourceOfIDPrefix(text[:cut+1])
+	resource, known := recordkind.ResourceOfIDPrefix(text[:cut+1])
 	if !known || !board.Supports(resource) {
 		return "", false
 	}

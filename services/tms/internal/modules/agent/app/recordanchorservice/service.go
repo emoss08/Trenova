@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
@@ -89,7 +90,7 @@ type Service struct {
 	logger      *zap.Logger
 	orgs        orgzone.OrganizationReader
 	permissions permissionports.PermissionEngine
-	readers     map[permission.RecordKind]kindReader
+	readers     map[recordkind.Kind]kindReader
 	now         func() int64
 }
 
@@ -120,27 +121,27 @@ func NewWithDependencies(d *Dependencies) *Service {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
-	readers := make(map[permission.RecordKind]kindReader, 6)
+	readers := make(map[recordkind.Kind]kindReader, 6)
 	if d.Tracking != nil {
-		readers[permission.RecordKind(permission.ResourceShipment)] = shipmentReader(d.Tracking)
+		readers[recordkind.Kind(permission.ResourceShipment)] = shipmentReader(d.Tracking)
 	}
 	if d.Invoices != nil {
-		readers[permission.RecordKind(permission.ResourceInvoice)] = invoiceReader(d.Invoices)
+		readers[recordkind.Kind(permission.ResourceInvoice)] = invoiceReader(d.Invoices)
 	}
 	if d.Tractors != nil {
-		readers[permission.RecordKind(permission.ResourceTractor)] = tractorReader(
+		readers[recordkind.Kind(permission.ResourceTractor)] = tractorReader(
 			d.Tractors,
 			d.Telematics,
 		)
 	}
 	if d.Trailers != nil {
-		readers[permission.RecordKind(permission.ResourceTrailer)] = trailerReader(d.Trailers)
+		readers[recordkind.Kind(permission.ResourceTrailer)] = trailerReader(d.Trailers)
 	}
 	if d.Telematics != nil {
-		readers[permission.RecordKind(permission.ResourceWorker)] = workerReader(d.Telematics)
+		readers[recordkind.Kind(permission.ResourceWorker)] = workerReader(d.Telematics)
 	}
 	if d.Detentions != nil {
-		readers[permission.KindDetentionOccurrence] = detentionReader(d.Detentions, d.Pricer)
+		readers[recordkind.DetentionOccurrence] = detentionReader(d.Detentions, d.Pricer)
 	}
 
 	return &Service{
@@ -153,7 +154,7 @@ func NewWithDependencies(d *Dependencies) *Service {
 }
 
 type kindBatch struct {
-	kind   permission.RecordKind
+	kind   recordkind.Kind
 	ids    []pulid.ID
 	labels map[pulid.ID]string
 }
@@ -304,19 +305,19 @@ func (s *Service) plan(
 	return anchors, batches
 }
 
-func kindOf(id string) (permission.RecordKind, bool) {
+func kindOf(id string) (recordkind.Kind, bool) {
 	prefix, _, found := strings.Cut(id, "_")
 	if !found || prefix == "" {
 		return "", false
 	}
 
-	return permission.RecordKindOfIDPrefix(prefix + "_")
+	return recordkind.OfIDPrefix(prefix + "_")
 }
 
 func (s *Service) mayRead(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-	kind permission.RecordKind,
+	kind recordkind.Kind,
 ) (bool, error) {
 	return subjectaccess.MayReadResource(ctx, s.permissions, actor, kind.Resource())
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,7 +164,7 @@ func TestRaiseException_SubjectIDTakesEverySubjectKind(t *testing.T) {
 
 	require.Len(t, subjectKinds, len(agent.AllSubjectTypes()))
 	for _, subject := range agent.AllSubjectTypes() {
-		kind, ok := permission.RecordKindOfIDPrefix(subject.IDPrefix())
+		kind, ok := recordkind.OfIDPrefix(subject.IDPrefix())
 		require.Truef(t, ok, "%s ids (%s) have no kind", subject, subject.IDPrefix())
 		assert.Contains(t, subjectKinds, kind)
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -182,7 +182,7 @@ func userID(entity *tenant.User) pulid.ID {
 	return entity.ID
 }
 
-func roleSelectOptionItem(entity *permission.Role) selectoption.Item {
+func roleSelectOptionItem(entity *rbac.Role) selectoption.Item {
 	return selectoption.ItemFor(
 		roleSelectOption(entity),
 		entity.CreatedAt,
@@ -190,7 +190,7 @@ func roleSelectOptionItem(entity *permission.Role) selectoption.Item {
 	)
 }
 
-func roleSelectOption(entity *permission.Role) *gqlmodel.SelectOption {
+func roleSelectOption(entity *rbac.Role) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
@@ -198,7 +198,7 @@ func roleSelectOption(entity *permission.Role) *gqlmodel.SelectOption {
 	}
 }
 
-func roleID(entity *permission.Role) pulid.ID {
+func roleID(entity *rbac.Role) pulid.ID {
 	return entity.ID
 }
 

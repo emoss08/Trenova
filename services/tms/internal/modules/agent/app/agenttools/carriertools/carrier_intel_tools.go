@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
@@ -728,7 +729,7 @@ func NewApplyCarrierIntelSuggestionsTool(
 				"The insurance policies to correct, by the policy "+
 					"id on the page you are on.",
 				maxSuggestionPolicies,
-				permission.KindInsurancePolicy,
+				recordkind.InsurancePolicy,
 			)),
 		},
 		Required: []string{toolparams.ParamCarrierID},
@@ -997,7 +998,7 @@ func NewVerifyCarrierEquipmentTool(intel carrierEquipmentVerifier) agenttoolport
 		Properties: map[string]any{
 			paramCarrierAssignmentID: agenttoolschema.KindID("The carrier assignment, from "+
 				"rate_list_confirmations or shipment_get. Never guess one.",
-				permission.KindCarrierAssignment),
+				recordkind.CarrierAssignment),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN: toolparams.StringProperty(
 				"The vehicle identification number.",

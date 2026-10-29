@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,11 +30,11 @@ import (
 // subject's prefix has no kind in permission's table the list is empty and
 // the parameter is left unmarked, for the catalog contract test to name,
 // rather than refusing every real id of that subject.
-var subjectKinds = func() []permission.RecordKind {
+var subjectKinds = func() []recordkind.Kind {
 	subjects := agent.AllSubjectTypes()
-	kinds := make([]permission.RecordKind, 0, len(subjects))
+	kinds := make([]recordkind.Kind, 0, len(subjects))
 	for _, subject := range subjects {
-		kind, ok := permission.RecordKindOfIDPrefix(subject.IDPrefix())
+		kind, ok := recordkind.OfIDPrefix(subject.IDPrefix())
 		if !ok {
 			return nil
 		}

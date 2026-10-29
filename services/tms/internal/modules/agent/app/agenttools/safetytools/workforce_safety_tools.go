@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
@@ -1280,7 +1281,7 @@ func (e *violationEdit) request(
 func violationIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The violation", "worker_list_safety_events"),
-		permission.KindSafetyViolation,
+		recordkind.SafetyViolation,
 	)
 }
 

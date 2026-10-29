@@ -3,6 +3,7 @@ package permissioncatalog
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -335,12 +336,12 @@ func TestOperationsToBitmask(t *testing.T) {
 		{
 			name:     "read only",
 			ops:      []permission.Operation{permission.OpRead},
-			expected: permission.ClientOpRead,
+			expected: operationbits.Read,
 		},
 		{
 			name:     "read and create",
 			ops:      []permission.Operation{permission.OpRead, permission.OpCreate},
-			expected: permission.ClientOpRead | permission.ClientOpCreate,
+			expected: operationbits.Read | operationbits.Create,
 		},
 		{
 			name: "all standard operations",
@@ -351,7 +352,7 @@ func TestOperationsToBitmask(t *testing.T) {
 				permission.OpExport,
 				permission.OpImport,
 			},
-			expected: permission.ClientOpRead | permission.ClientOpCreate | permission.ClientOpUpdate | permission.ClientOpExport | permission.ClientOpImport,
+			expected: operationbits.Read | operationbits.Create | operationbits.Update | operationbits.Export | operationbits.Import,
 		},
 		{
 			name: "extended operations",
@@ -360,19 +361,19 @@ func TestOperationsToBitmask(t *testing.T) {
 				permission.OpReject,
 				permission.OpAssign,
 			},
-			expected: permission.ClientOpApprove | permission.ClientOpReject | permission.ClientOpAssign,
+			expected: operationbits.Approve | operationbits.Reject | operationbits.Assign,
 		},
 		{
 			name:     "unknown operation is ignored",
 			ops:      []permission.Operation{permission.OpRead, permission.Operation("unknown")},
-			expected: permission.ClientOpRead,
+			expected: operationbits.Read,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := permission.OperationsToBitmask(tt.ops)
+			result := operationbits.Mask(tt.ops)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

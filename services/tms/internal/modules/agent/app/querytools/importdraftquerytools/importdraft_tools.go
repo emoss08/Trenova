@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -369,9 +370,9 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 			"recordId": agenttoolschema.KindID(
 				"The record's id, from customer_list, masterdata_list_service_types or "+
 					"masterdata_list_shipment_types to match the field.",
-				permission.RecordKind(permission.ResourceCustomer),
-				permission.RecordKind(permission.ResourceServiceType),
-				permission.RecordKind(permission.ResourceShipmentType),
+				recordkind.Kind(permission.ResourceCustomer),
+				recordkind.Kind(permission.ResourceServiceType),
+				recordkind.Kind(permission.ResourceShipmentType),
 			),
 		},
 		"required":             []string{"field", "recordId"},

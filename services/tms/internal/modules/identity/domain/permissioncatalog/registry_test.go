@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -812,5 +813,5 @@ func TestRegistry_WorkingDetentionIsApartFromItsPolicies(t *testing.T) {
 		permission.OpDelete,
 	)
 
-	assert.Equal(t, permission.ResourceDetention, permission.KindDetentionOccurrence.Resource())
+	assert.Equal(t, permission.ResourceDetention, recordkind.DetentionOccurrence.Resource())
 }

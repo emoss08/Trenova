@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -152,7 +153,7 @@ func (t *RetryEDIMessageDeliveryTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIMessageIDs: agenttoolschema.OfKinds(ediRecordSubset("The outbound messages "+
 			"to send again, by id from edi_list_messages filtered to Failed or DeadLettered. "+
-			"Never guess one."), permission.KindEDIMessage),
+			"Never guess one."), recordkind.EDIMessage),
 	}, paramEDIMessageIDs)
 }
 
@@ -237,7 +238,7 @@ func (t *ReplayEDIMessageTool) Description() string {
 func (t *ReplayEDIMessageTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIMessageID: agenttoolschema.KindID("The delivered outbound message, from "+
-			"edi_list_messages filtered to Sent. Never guess one.", permission.KindEDIMessage),
+			"edi_list_messages filtered to Sent. Never guess one.", recordkind.EDIMessage),
 	}, paramEDIMessageID)
 }
 
@@ -335,7 +336,7 @@ func (t *ReprocessEDIInboundFilesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIInboundFileIDs: agenttoolschema.OfKinds(ediRecordSubset("The inbound files "+
 			"to process again, by id from edi_list_inbound_files or edi_get_inbound_file. "+
-			"Never guess one."), permission.KindEDIInboundFile),
+			"Never guess one."), recordkind.EDIInboundFile),
 	}, paramEDIInboundFileIDs)
 }
 

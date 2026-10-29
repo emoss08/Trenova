@@ -3,7 +3,7 @@ package dispatchcontrol
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +23,7 @@ func TestAnUpdateWithoutTheMarginsGroupKeepsTheStoredCounterFloor(t *testing.T) 
 	changed := &DispatchControl{
 		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(decimal.NewFromInt(4)),
 	}
-	changed.KeepFields(stored, permission.AllFieldGroups())
+	changed.KeepFields(stored, protectedfield.AllGroups())
 	assert.True(t, decimal.NewFromInt(4).Equal(changed.TenderCounterMarginFloorPercent.Decimal),
 		"a writer with the margins group sets the floor")
 }

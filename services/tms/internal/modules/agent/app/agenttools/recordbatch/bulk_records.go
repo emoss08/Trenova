@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -44,16 +45,16 @@ type singleRecordTool interface {
 }
 
 type RecordBatch struct {
-	Param       string                  `json:"-"`
-	SingleParam string                  `json:"-"`
-	Resource    permission.Resource     `json:"-"`
-	Kinds       []permission.RecordKind `json:"-"`
-	Noun        string                  `json:"-"`
-	Nouns       string                  `json:"-"`
-	Verb        string                  `json:"-"`
-	Past        string                  `json:"-"`
-	Shared      []string                `json:"-"`
-	Single      singleRecordTool        `json:"-"`
+	Param       string              `json:"-"`
+	SingleParam string              `json:"-"`
+	Resource    permission.Resource `json:"-"`
+	Kinds       []recordkind.Kind   `json:"-"`
+	Noun        string              `json:"-"`
+	Nouns       string              `json:"-"`
+	Verb        string              `json:"-"`
+	Past        string              `json:"-"`
+	Shared      []string            `json:"-"`
+	Single      singleRecordTool    `json:"-"`
 	// needsPerson is the refusal a run from anything but a person's approval
 	// gets; nil when the single tool may run on its own, so the twin may too.
 	NeedsPerson error        `json:"-"`
@@ -83,7 +84,7 @@ func (b *RecordBatch) property(description string) map[string]any {
 	}
 	if len(b.Kinds) > 0 {
 		agenttoolschema.OfKinds(property, b.Kinds...)
-	} else if _, typed := b.Resource.IDPrefix(); typed {
+	} else if _, typed := recordkind.ResourcePrefix(b.Resource); typed {
 		agenttoolschema.OfResource(property, b.Resource)
 	}
 

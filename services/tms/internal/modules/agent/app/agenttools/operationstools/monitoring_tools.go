@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
@@ -431,7 +432,7 @@ func (t *SendDetentionNoticeTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id from detention_list_occurrences.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 		},
 		"required":             []string{"occurrenceId"},
@@ -515,7 +516,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id from detention_list_occurrences.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 			changepreview.FieldReason: agenttoolschema.Enum(
 				"The coded reason for the waiver.",

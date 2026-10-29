@@ -3177,7 +3177,7 @@ findings:
       - services/tms/internal/modules/agent/app/agentruntime/replycheck/artifactref.go
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/domain/assistantartifact/naming.go
-      - services/tms/internal/modules/identity/domain/permission/recordid.go
+      - services/tms/internal/modules/identity/domain/recordkind/recordid.go
       - shared/inflect/noun.go
       - client/apps/web/src/components/desk-chat/conversation/desk-turns.tsx
       - client/apps/web/src/lib/artifact-ref.ts

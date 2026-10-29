@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
@@ -288,7 +289,7 @@ func laneProperty(forRevision bool) map[string]any {
 	if forRevision {
 		properties[paramRuleID] = agenttoolschema.KindID("A lane already on the agreement, from "+
 			"rate_get_agreement, to keep and change; leave it out for a new lane.",
-			permission.KindRateAgreementLane)
+			recordkind.RateAgreementLane)
 		description = "Every lane of the revised agreement, replacing its lanes: a lane " +
 			"with ruleId keeps that lane and changes only what it gives, a lane without one " +
 			"is new, and a lane left out is dropped. Leave it out to keep the lanes."
@@ -1532,7 +1533,7 @@ func NewAmendRateAgreementRulesTool(
 				"The first day the new lanes price shipments.",
 			),
 			paramSupersededRuleIDs: agenttoolschema.KindIDs("The lanes this closes out, by ruleId "+
-				"from rate_get_agreement.", maxAgreementLanes, permission.KindRateAgreementLane),
+				"from rate_get_agreement.", maxAgreementLanes, recordkind.RateAgreementLane),
 			paramLanes: laneProperty(false),
 		},
 		Required: []string{paramRateAgreementID, toolparams.ParamEffectiveFrom},

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -166,7 +167,7 @@ func (r *Deps) AgentSafetyReach(
 	})
 	reach := &gqlmodel.AgentReach{
 		AccessMode: obj.Agent.EffectiveAccessMode(),
-		Roles:      []*permission.Role{},
+		Roles:      []*rbac.Role{},
 		Warnings:   make([]*agenttoolports.AgentReachWarning, 0, len(warnings)),
 	}
 	for idx := range warnings {

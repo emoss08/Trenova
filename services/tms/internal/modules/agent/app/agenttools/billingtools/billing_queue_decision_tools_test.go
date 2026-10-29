@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -491,7 +492,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 		assert.Equal(t, agent.TierAutoExecute, policy.MaxTier, tool.Name())
 		assert.Equal(t, permission.OpUpdate, policy.Operation, tool.Name())
 		require.NotNil(t, policy.TaintHold, tool.Name())
-		assert.True(t, permission.IsAgentAllowed(policy.Resource, policy.Operation), tool.Name())
+		assert.True(t, agentceiling.Allows(policy.Resource, policy.Operation), tool.Name())
 	}
 
 	assert.Equal(t, permission.OpAssign, NewAssignBillerTool(queue).Policy().Operation)

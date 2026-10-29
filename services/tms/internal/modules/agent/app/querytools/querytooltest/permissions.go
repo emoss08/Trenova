@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -89,7 +90,7 @@ func (f *FakePermissions) Check(
 	case req.PrincipalType == permissionports.PrincipalTypeAgent:
 		// The engine answers an agent principal from the platform allow-list
 		// before any role applies; the fake answers the same way.
-		allowed = permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
+		allowed = agentceiling.Allows(permission.Resource(req.Resource), req.Operation)
 	case f.Readable != nil:
 		detail, ok := f.Readable[req.Resource]
 		allowed = ok && slices.Contains(detail.Operations, req.Operation)

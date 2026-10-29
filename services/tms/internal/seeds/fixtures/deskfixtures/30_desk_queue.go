@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -113,12 +114,12 @@ func (r *deskSeedRefs) workerAt(index int, fallback string) (string, queueSeedSu
 }
 
 func shipmentRef(pro string) *watchtower.RecordRef {
-	kind, _ := permission.ResourceShipment.Kind()
+	kind, _ := recordkind.OfResource(permission.ResourceShipment)
 	return &watchtower.RecordRef{Kind: kind, Label: pro}
 }
 
 func recordRef(resource permission.Resource, label string) *watchtower.RecordRef {
-	kind, ok := resource.Kind()
+	kind, ok := recordkind.OfResource(resource)
 	if !ok {
 		return &watchtower.RecordRef{Label: label}
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -79,16 +80,16 @@ func forTenant[T any](
 func (r *repository) List(
 	ctx context.Context,
 	req *permissionports.ListRolesRequest,
-) (*pagination.ListResult[*permission.Role], error) {
+) (*pagination.ListResult[*rbac.Role], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
+		func(ctx context.Context) (*pagination.ListResult[*rbac.Role], error) {
 			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
 				permissiondb.Roles.Query(),
-				&listquery.Request[permission.Role]{Filter: req.Filter},
+				&listquery.Request[rbac.Role]{Filter: req.Filter},
 			)
 			if err != nil {
 				r.l.Error("failed to list roles", zap.Error(err))
@@ -103,16 +104,16 @@ func (r *repository) List(
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *permissionports.ListRoleConnectionRequest,
-) (*pagination.CursorListResult[*permission.Role], error) {
+) (*pagination.CursorListResult[*rbac.Role], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*permission.Role], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*rbac.Role], error) {
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				permissiondb.Roles.Query(),
-				&listquery.Request[permission.Role]{
+				&listquery.Request[rbac.Role]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				},
@@ -130,11 +131,11 @@ func (r *repository) ListConnection(
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*permission.Role], error) {
+) (*pagination.ListResult[*rbac.Role], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
+		func(ctx context.Context) (*pagination.ListResult[*rbac.Role], error) {
 			ro := permissiondb.Roles
 			return listquery.SelectOptions(
 				ctx,
@@ -152,8 +153,8 @@ func (r *repository) SelectOptions(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req permissionports.GetRoleByIDRequest,
-) (*permission.Role, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.Role, error) {
+) (*rbac.Role, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rbac.Role, error) {
 		ro := permissiondb.Roles
 		role, err := forTenant(
 			ctx,
@@ -176,7 +177,7 @@ func (r *repository) GetByID(
 	})
 }
 
-func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*permission.Role] {
+func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*rbac.Role] {
 	ro := permissiondb.Roles
 	parent := ro.As(parentRoleAlias)
 	closure := keel.RecursiveCTE(
@@ -203,10 +204,10 @@ func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*
 func (r *repository) GetRolesWithInheritance(
 	ctx context.Context,
 	roleIDs []pulid.ID,
-) ([]*permission.Role, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.Role, error) {
 		if len(roleIDs) == 0 {
-			return []*permission.Role{}, nil
+			return []*rbac.Role{}, nil
 		}
 
 		roles, err := rolesWithInheritance(ctx, roleIDs).
@@ -260,11 +261,11 @@ func (r *repository) GetUsersWithRole(
 func (r *repository) GetUserRoleAssignments(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) ([]*permission.UserRoleAssignment, error) {
+) ([]*rbac.UserRoleAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
+		func(ctx context.Context) ([]*rbac.UserRoleAssignment, error) {
 			ura := permissiondb.UserRoleAssignments
 			assignments, err := forTenant(
 				ctx,
@@ -290,7 +291,7 @@ func (r *repository) GetUserRoleAssignments(
 	)
 }
 
-func (r *repository) Create(ctx context.Context, role *permission.Role) error {
+func (r *repository) Create(ctx context.Context, role *rbac.Role) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
 		if err := permissiondb.Roles.Create(ctx, db, role); err != nil {
@@ -318,7 +319,7 @@ func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 	})
 }
 
-func (r *repository) Update(ctx context.Context, role *permission.Role) error {
+func (r *repository) Update(ctx context.Context, role *rbac.Role) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		ro := permissiondb.Roles
 		if err := ro.Save(
@@ -395,7 +396,7 @@ func (r *repository) Delete(ctx context.Context, req permissionports.DeleteRoleR
 func (r *repository) replaceResourcePermissions(
 	ctx context.Context,
 	roleID pulid.ID,
-	permissions []*permission.ResourcePermission,
+	permissions []*rbac.ResourcePermission,
 ) error {
 	db := r.db.Keel(ctx)
 	rp := permissiondb.ResourcePermissions
@@ -417,7 +418,7 @@ func (r *repository) replaceResourcePermissions(
 
 func (r *repository) CreateAssignment(
 	ctx context.Context,
-	assignment *permission.UserRoleAssignment,
+	assignment *rbac.UserRoleAssignment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
@@ -435,7 +436,7 @@ func (r *repository) CreateAssignment(
 			inserted, createErr := ura.CreateOrSkip(
 				ctx,
 				db,
-				[]*permission.UserRoleAssignment{assignment},
+				[]*rbac.UserRoleAssignment{assignment},
 				ura.UserID,
 				ura.RoleID,
 				ura.OrganizationID,
@@ -488,8 +489,8 @@ func alreadyAssigned() error {
 func (r *repository) DeleteAssignment(
 	ctx context.Context,
 	req permissionports.DeleteRoleAssignmentRequest,
-) (*permission.UserRoleAssignment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
+) (*rbac.UserRoleAssignment, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rbac.UserRoleAssignment, error) {
 		db := r.db.Keel(ctx)
 		ura := permissiondb.UserRoleAssignments
 		assignment, err := forTenant(
@@ -522,11 +523,11 @@ func (r *repository) DeleteAssignment(
 func (r *repository) DeleteUserAssignments(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) ([]*permission.UserRoleAssignment, error) {
+) ([]*rbac.UserRoleAssignment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*permission.UserRoleAssignment, error) {
+		func(ctx context.Context) ([]*rbac.UserRoleAssignment, error) {
 			db := r.db.Keel(ctx)
 			ura := permissiondb.UserRoleAssignments
 			assignments, err := forTenant(
@@ -539,7 +540,7 @@ func (r *repository) DeleteUserAssignments(
 				return nil, err
 			}
 			if len(assignments) == 0 {
-				return []*permission.UserRoleAssignment{}, nil
+				return []*rbac.UserRoleAssignment{}, nil
 			}
 
 			ids := make([]pulid.ID, len(assignments))
@@ -589,7 +590,7 @@ func (r *repository) ListOrphanedAssignments(
 	)
 }
 
-func orphanedAssignmentsQuery(now int64, limit int) *keel.Query[*permission.UserRoleAssignment] {
+func orphanedAssignmentsQuery(now int64, limit int) *keel.Query[*rbac.UserRoleAssignment] {
 	ura := permissiondb.UserRoleAssignments
 	o := tenantdb.Organizations
 	u := tenantdb.Users
@@ -615,7 +616,7 @@ func orphanedAssignmentsQuery(now int64, limit int) *keel.Query[*permission.User
 
 func (r *repository) CreateResourcePermission(
 	ctx context.Context,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := permissiondb.ResourcePermissions.Create(ctx, r.db.Keel(ctx), rp); err != nil {
@@ -634,7 +635,7 @@ func (r *repository) CreateResourcePermission(
 
 func (r *repository) UpdateResourcePermission(
 	ctx context.Context,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := permissiondb.ResourcePermissions
@@ -709,11 +710,11 @@ func (r *repository) DeleteResourcePermission(
 func (r *repository) GetResourcePermissionsByRoleID(
 	ctx context.Context,
 	roleID pulid.ID,
-) ([]*permission.ResourcePermission, error) {
+) ([]*rbac.ResourcePermission, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*permission.ResourcePermission, error) {
+		func(ctx context.Context) ([]*rbac.ResourcePermission, error) {
 			p := permissiondb.ResourcePermissions
 			permissions, err := p.Where(p.RoleID.Eq(roleID)).All(ctx, r.db.Keel(ctx))
 			if err != nil {

@@ -3,6 +3,7 @@ package permissioncatalog_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func TestIsAgentAllowedCoversWhatTheRegisteredToolsNeed(t *testing.T) {
 		{permission.ResourceEDI, permission.OpUpdate},
 	}
 	for _, entry := range allowed {
-		assert.True(t, permission.IsAgentAllowed(entry.resource, entry.operation),
+		assert.True(t, agentceiling.Allows(entry.resource, entry.operation),
 			"%s %s should be allowed for an agent", entry.resource, entry.operation)
 	}
 }
@@ -64,7 +65,7 @@ func TestIsAgentAllowedNeverGrantsApprovalOrDeletion(t *testing.T) {
 		{permission.ResourceEDI, permission.OpDelete},
 	}
 	for _, entry := range denied {
-		assert.False(t, permission.IsAgentAllowed(entry.resource, entry.operation),
+		assert.False(t, agentceiling.Allows(entry.resource, entry.operation),
 			"%s %s must stay closed to an agent", entry.resource, entry.operation)
 	}
 }

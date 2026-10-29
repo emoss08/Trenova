@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
@@ -446,7 +447,7 @@ func DescribeQuarantinedFile(
 		SubjectID:   entity.ID,
 		EventKind:   agenttrigger.EventEDIFileQuarantined,
 		Path:        panelPath(pathEDIInbound, entity.ID.String()),
-		Record:      watchtoweritem.KindRecord(permission.KindEDIInboundFile, entity.FileName),
+		Record:      watchtoweritem.KindRecord(recordkind.EDIInboundFile, entity.FileName),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Reason", entity.FailureReason),
 			watchtoweritem.FactAt(

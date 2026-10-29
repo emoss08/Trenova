@@ -3,6 +3,7 @@ package permissioncatalog_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestAIAuditTrail_IsNeverAnAgentsToHold(t *testing.T) {
 	t.Parallel()
 
 	for _, op := range []permission.Operation{permission.OpRead, permission.OpExport} {
-		assert.False(t, permission.IsAgentAllowed(permission.ResourceAIAuditTrail, op),
+		assert.False(t, agentceiling.Allows(permission.ResourceAIAuditTrail, op),
 			"an agent must not read or export the record of what agents did")
 	}
 }

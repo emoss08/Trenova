@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -178,7 +179,7 @@ func adjustmentLinesProperty() map[string]any {
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
 				paramInvoiceLineID: agenttoolschema.KindID(
-					"The line's id, from invoice_get's lines.", permission.KindInvoiceLine),
+					"The line's id, from invoice_get's lines.", recordkind.InvoiceLine),
 				paramCreditAmount: toolparams.StringProperty(
 					"How much of the line to credit, as a decimal.", 0),
 				paramCreditQuantity: toolparams.StringProperty(
@@ -207,7 +208,7 @@ func supportingDocumentsProperty() map[string]any {
 
 func adjustmentIDProperty(status string) map[string]any {
 	return agenttoolschema.KindID(agenttoolschema.IDDescription("The "+status+" adjustment",
-		"invoice_list_adjustments or invoice_get_adjustment"), permission.KindInvoiceAdjustment)
+		"invoice_list_adjustments or invoice_get_adjustment"), recordkind.InvoiceAdjustment)
 }
 
 func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal, error) {

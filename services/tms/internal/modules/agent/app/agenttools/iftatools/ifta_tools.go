@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
@@ -333,7 +334,7 @@ func NewRecomputeIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTo
 		Properties: map[string]any{
 			paramIFTAReturnID: agenttoolschema.KindID(
 				iftaReturnSupplier,
-				permission.KindIFTAReturn,
+				recordkind.IFTAReturn,
 			),
 		},
 		Required: []string{paramIFTAReturnID},
@@ -399,7 +400,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 			"it files nothing, but a person decides to reopen a filing.",
 		Properties: map[string]any{
 			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier+" It must be Filed.",
-				permission.KindIFTAReturn),
+				recordkind.IFTAReturn),
 			toolparams.ParamReason: toolparams.StringProperty(
 				"What was wrong with the filed return, at least ten "+
 					"characters, as the auditor will read it.",
@@ -483,7 +484,7 @@ func NewDeleteIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool 
 			"generating it again recomputes the same figures.",
 		Properties: map[string]any{
 			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier+" It must be a Draft.",
-				permission.KindIFTAReturn),
+				recordkind.IFTAReturn),
 		},
 		Required: []string{paramIFTAReturnID},
 		Target:   targetIFTAReturn,
@@ -541,7 +542,7 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 		toolparams.ParamJurisdictionID: agenttoolschema.KindID(
 			"The state or province the miles were "+
 				"driven in, from fuel_list_ifta_jurisdictions."+keep,
-			permission.KindIFTAJurisdiction,
+			recordkind.IFTAJurisdiction,
 		),
 		paramTraveledAt: agenttoolschema.DateTime("When the miles were driven; it decides the " +
 			"quarter they count in." + keep),
@@ -562,7 +563,7 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 	}
 	if forCorrection {
 		properties[paramIFTAMileageEntryID] = agenttoolschema.KindID(iftaMileageSupplier,
-			permission.KindIFTAMileageEntry)
+			recordkind.IFTAMileageEntry)
 	}
 
 	return properties
@@ -930,7 +931,7 @@ func NewDeleteIFTAMileageEntryTool(entries IftaMileageKeeper) agenttoolports.Age
 			"back but entering them again, so a person always decides.",
 		Properties: map[string]any{
 			paramIFTAMileageEntryID: agenttoolschema.KindID(iftaMileageSupplier,
-				permission.KindIFTAMileageEntry),
+				recordkind.IFTAMileageEntry),
 		},
 		Required: []string{paramIFTAMileageEntryID},
 		Target:   targetIFTAMileage,

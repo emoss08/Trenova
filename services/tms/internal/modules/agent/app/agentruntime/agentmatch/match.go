@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -250,7 +251,7 @@ func matchContextResources(kinds []string) (map[permission.Resource]struct{}, er
 	resources := make(map[permission.Resource]struct{}, len(kinds))
 	for _, kind := range kinds {
 		if agentpagecontext.IsKnownPageEntityType(kind) {
-			resources[permission.RecordKind(kind).Resource()] = struct{}{}
+			resources[recordkind.Kind(kind).Resource()] = struct{}{}
 			continue
 		}
 		if agentpagecontext.IsKnownPageResource(kind) {

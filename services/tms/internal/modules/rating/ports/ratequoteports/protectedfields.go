@@ -1,7 +1,7 @@
 package ratequoteports
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 )
@@ -9,8 +9,8 @@ import (
 // AuthorizeShopStrategy refuses to rank by margin for a caller without the
 // margins field group: the order alone would tell them which carrier leaves
 // the most.
-func AuthorizeShopStrategy(strategy ShopStrategy, visible permission.FieldGroupSet) error {
-	if strategy != ShopStrategyBestMargin || visible.Has(permission.FieldGroupMargins) {
+func AuthorizeShopStrategy(strategy ShopStrategy, visible protectedfield.GroupSet) error {
+	if strategy != ShopStrategyBestMargin || visible.Has(protectedfield.Margins) {
 		return nil
 	}
 
@@ -21,8 +21,8 @@ func AuthorizeShopStrategy(strategy ShopStrategy, visible permission.FieldGroupS
 
 // WithholdFields clears the margin an option leaves, and its note when the
 // note is the margin verdict's explanation, which states the margin.
-func (o *ShopOption) WithholdFields(visible permission.FieldGroupSet) {
-	if o == nil || visible.Has(permission.FieldGroupMargins) {
+func (o *ShopOption) WithholdFields(visible protectedfield.GroupSet) {
+	if o == nil || visible.Has(protectedfield.Margins) {
 		return
 	}
 	if o.Margin != nil && o.Note == o.Margin.Explanation {
@@ -33,8 +33,8 @@ func (o *ShopOption) WithholdFields(visible permission.FieldGroupSet) {
 
 // WithholdFields clears the sell total the options were measured against:
 // beside each option's cost it gives that option's margin away.
-func (r *ShopResult) WithholdFields(visible permission.FieldGroupSet) {
-	if r == nil || visible.Has(permission.FieldGroupMargins) {
+func (r *ShopResult) WithholdFields(visible protectedfield.GroupSet) {
+	if r == nil || visible.Has(protectedfield.Margins) {
 		return
 	}
 	r.SellTotal = decimal.NullDecimal{}

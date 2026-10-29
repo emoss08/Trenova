@@ -1,9 +1,10 @@
-package permission
+package rbac
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,25 +27,25 @@ const (
 type Role struct {
 	keel.Table `keel:"roles"`
 
-	ID                 pulid.ID           `json:"id"                 keel:"id,pk,autoid:rol_"`
-	BusinessUnitID     pulid.ID           `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID           `json:"organizationId"     keel:"organization_id,pk,tenant"`
-	Name               string             `json:"name"               keel:"name"`
-	Description        string             `json:"description"        keel:"description,nullzero"`
-	CoreResponsibility CoreResponsibility `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
-	ParentRoleIDs      []pulid.ID         `json:"parentRoleIds"      keel:"parent_role_ids"`
-	MaxSensitivity     FieldSensitivity   `json:"maxSensitivity"     keel:"max_sensitivity"`
-	IsSystem           bool               `json:"isSystem"           keel:"is_system"`
-	CreatedBy          pulid.ID           `json:"createdBy"          keel:"created_by,nullzero"`
-	CreatedAt          int64              `json:"createdAt"          keel:"created_at,autocreate"`
-	UpdatedAt          int64              `json:"updatedAt"          keel:"updated_at,autoupdate"`
+	ID                 pulid.ID                    `json:"id"                 keel:"id,pk,autoid:rol_"`
+	BusinessUnitID     pulid.ID                    `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                    `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	Name               string                      `json:"name"               keel:"name"`
+	Description        string                      `json:"description"        keel:"description,nullzero"`
+	CoreResponsibility CoreResponsibility          `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
+	ParentRoleIDs      []pulid.ID                  `json:"parentRoleIds"      keel:"parent_role_ids"`
+	MaxSensitivity     permission.FieldSensitivity `json:"maxSensitivity"     keel:"max_sensitivity"`
+	IsSystem           bool                        `json:"isSystem"           keel:"is_system"`
+	CreatedBy          pulid.ID                    `json:"createdBy"          keel:"created_by,nullzero"`
+	CreatedAt          int64                       `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                       `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Permissions []*ResourcePermission `json:"permissions,omitempty" keel:"many:role_id"`
 }
 
 func (r *Role) BeforeCreate(ctx context.Context) error {
 	if r.MaxSensitivity == "" {
-		r.MaxSensitivity = SensitivityInternal
+		r.MaxSensitivity = permission.SensitivityInternal
 	}
 
 	return nil

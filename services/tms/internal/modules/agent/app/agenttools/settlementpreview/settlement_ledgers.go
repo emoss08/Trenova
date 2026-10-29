@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ var DriverPaymentMethods = agenttoolschema.Source(
 func DriverSettlementLedger() SettlementLedger[driversettlement.Settlement] {
 	return SettlementLedger[driversettlement.Settlement]{
 		Resource: permission.ResourceDriverSettlement,
-		Kind:     permission.RecordKind(permission.ResourceDriverSettlement),
+		Kind:     recordkind.Kind(permission.ResourceDriverSettlement),
 		Artifact: DriverSettlementEntity,
 		Noun:     NounDriverSettlement,
 		Sources:  DriverSettlementReads,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -27,7 +28,7 @@ const (
 // this table (client/packages/graphql/scripts/generate-record-kinds.mjs), so
 // it stays a list of plain literals.
 type mentionKind struct {
-	kind permission.RecordKind
+	kind recordkind.Kind
 	// under is the tab the kind is filed under when it is not its own.
 	under string
 	// askedFor keeps a kind out of the search across every kind: it is

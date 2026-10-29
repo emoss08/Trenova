@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/accountingseed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -46,7 +46,7 @@ type BootstrapResult struct {
 	Organization *tenant.Organization
 	Owner        *tenant.User
 	Membership   *tenant.OrganizationMembership
-	AdminRole    *permission.Role
+	AdminRole    *rbac.Role
 }
 
 func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*BootstrapResult, error) {

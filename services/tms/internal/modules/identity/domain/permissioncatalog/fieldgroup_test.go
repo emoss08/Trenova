@@ -4,33 +4,34 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFieldGroupSetHoldsOnlyWhatWasAdded(t *testing.T) {
 	t.Parallel()
 
-	var set permission.FieldGroupSet
-	assert.False(t, set.Has(permission.FieldGroupPersonal))
+	var set protectedfield.GroupSet
+	assert.False(t, set.Has(protectedfield.Personal))
 	assert.False(t, set.HasAll())
 
-	set = set.With(permission.FieldGroupMargins)
-	assert.True(t, set.Has(permission.FieldGroupMargins))
-	assert.False(t, set.Has(permission.FieldGroupPersonal))
+	set = set.With(protectedfield.Margins)
+	assert.True(t, set.Has(protectedfield.Margins))
+	assert.False(t, set.Has(protectedfield.Personal))
 	assert.False(t, set.HasAll())
 
-	set = set.With(permission.FieldGroupPersonal)
+	set = set.With(protectedfield.Personal)
 	assert.True(t, set.HasAll())
-	assert.Equal(t, permission.AllFieldGroups(), set)
+	assert.Equal(t, protectedfield.AllGroups(), set)
 }
 
 func TestUnknownFieldGroupIsNeverHeld(t *testing.T) {
 	t.Parallel()
 
-	unknown := permission.FieldGroup("Pay")
+	unknown := protectedfield.Group("Pay")
 	assert.False(t, unknown.IsValid())
-	assert.False(t, permission.AllFieldGroups().Has(unknown))
-	assert.Equal(t, permission.AllFieldGroups(), permission.AllFieldGroups().With(unknown))
+	assert.False(t, protectedfield.AllGroups().Has(unknown))
+	assert.Equal(t, protectedfield.AllGroups(), protectedfield.AllGroups().With(unknown))
 	assert.Empty(t, unknown.Resource())
 }
 
@@ -38,7 +39,7 @@ func TestEveryFieldGroupIsGuardedByARegisteredReadPermission(t *testing.T) {
 	t.Parallel()
 
 	registry := NewRegistry()
-	for _, group := range permission.FieldGroups() {
+	for _, group := range protectedfield.Groups() {
 		assert.True(t, group.IsValid())
 		assert.Truef(t, registry.Declares(group.Resource().String(), permission.OpRead),
 			"field group %s names %q, which the registry does not declare with read",

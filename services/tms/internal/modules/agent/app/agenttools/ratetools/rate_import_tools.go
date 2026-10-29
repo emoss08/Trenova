@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -101,7 +102,7 @@ func NewCommitRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool 
 		Properties: map[string]any{
 			paramRateImportID: agenttoolschema.KindID(
 				rateImportSupplier,
-				permission.KindRateImport,
+				recordkind.RateImport,
 			),
 		},
 		Required:    []string{paramRateImportID},
@@ -176,7 +177,7 @@ func NewDiscardRateImportTool(imports RateImportKeeper) agenttoolports.AgentTool
 		Properties: map[string]any{
 			paramRateImportID: agenttoolschema.KindID(
 				rateImportSupplier,
-				permission.KindRateImport,
+				recordkind.RateImport,
 			),
 		},
 		Required: []string{paramRateImportID},

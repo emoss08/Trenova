@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,9 +21,9 @@ import (
 )
 
 type roleTenantFixture struct {
-	role       *permission.Role
-	permission *permission.ResourcePermission
-	assignment *permission.UserRoleAssignment
+	role       *rbac.Role
+	permission *rbac.ResourcePermission
+	assignment *rbac.UserRoleAssignment
 }
 
 func seedRoleTenantFixture(
@@ -35,13 +35,13 @@ func seedRoleTenantFixture(
 	t.Helper()
 
 	ctx = tenant.Ctx(ctx)
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Dispatcher " + tenant.Organization.ID.String(),
 		MaxSensitivity: permission.SensitivityInternal,
 	}
 	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     role.ID,
 		Resource:   permission.ResourceShipment.String(),
 		Operations: []permission.Operation{permission.OpRead},
@@ -49,7 +49,7 @@ func seedRoleTenantFixture(
 	}
 	require.NoError(t, permissiondb.ResourcePermissions.Create(ctx, db, rp))
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID:         tenant.User.ID,
 		OrganizationID: tenant.Organization.ID,
 		RoleID:         role.ID,
@@ -82,7 +82,9 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsNotFoundError(err))
 
-		count, err := ura.AllTenants().Where(ura.ID.Eq(fixtureB.assignment.ID)).Count(systemCtx(ctx), db)
+		count, err := ura.AllTenants().
+			Where(ura.ID.Eq(fixtureB.assignment.ID)).
+			Count(systemCtx(ctx), db)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 	})
@@ -101,7 +103,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	})
 
 	t.Run("a permission cannot be rewritten through another tenant's role", func(t *testing.T) {
-		err := repo.UpdateResourcePermission(ctx, &permission.ResourcePermission{
+		err := repo.UpdateResourcePermission(ctx, &rbac.ResourcePermission{
 			ID:         fixtureB.permission.ID,
 			RoleID:     fixtureA.role.ID,
 			Resource:   permission.ResourceShipment.String(),

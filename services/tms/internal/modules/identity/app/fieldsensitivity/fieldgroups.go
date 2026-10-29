@@ -4,17 +4,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 type GroupCheck func(ctx context.Context, resource permission.Resource) (bool, error)
 
-func VisibleGroups(ctx context.Context, check GroupCheck) permission.FieldGroupSet {
-	var visible permission.FieldGroupSet
+func VisibleGroups(ctx context.Context, check GroupCheck) protectedfield.GroupSet {
+	var visible protectedfield.GroupSet
 	if check == nil {
 		return visible
 	}
-	for _, group := range permission.FieldGroups() {
+	for _, group := range protectedfield.Groups() {
 		allowed, err := check(ctx, group.Resource())
 		if err == nil && allowed {
 			visible = visible.With(group)
@@ -36,14 +37,14 @@ const AgentGroupTier = permission.SensitivityRestricted
 // reaches AgentGroupTier.
 func AgentVisibleGroups(
 	ctx context.Context,
-	held permission.FieldGroupSet,
+	held protectedfield.GroupSet,
 	ceiling func(ctx context.Context, resource permission.Resource) permission.FieldSensitivity,
-) permission.FieldGroupSet {
-	var visible permission.FieldGroupSet
+) protectedfield.GroupSet {
+	var visible protectedfield.GroupSet
 	if ceiling == nil {
 		return visible
 	}
-	for _, group := range permission.FieldGroups() {
+	for _, group := range protectedfield.Groups() {
 		if held.Has(group) && ceiling(ctx, group.Resource()).CanAccess(AgentGroupTier) {
 			visible = visible.With(group)
 		}
@@ -62,19 +63,22 @@ func NewFieldAccess(engine permissionports.PermissionEngine) *FieldAccess {
 func (a *FieldAccess) Visible(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	if actor == nil || actor.PrincipalType == permissionports.PrincipalTypeSystem {
-		return permission.AllFieldGroups()
+		return protectedfield.AllGroups()
 	}
 	if a == nil || a.engine == nil {
 		return 0
 	}
 
-	return VisibleGroups(ctx, func(ctx context.Context, resource permission.Resource) (bool, error) {
-		result, err := a.engine.Check(ctx, actor.PermissionCheck(resource, permission.OpRead))
-		if err != nil || result == nil {
-			return false, err
-		}
-		return result.Allowed, nil
-	})
+	return VisibleGroups(
+		ctx,
+		func(ctx context.Context, resource permission.Resource) (bool, error) {
+			result, err := a.engine.Check(ctx, actor.PermissionCheck(resource, permission.OpRead))
+			if err != nil || result == nil {
+				return false, err
+			}
+			return result.Allowed, nil
+		},
+	)
 }

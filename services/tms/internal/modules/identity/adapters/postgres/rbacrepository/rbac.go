@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -62,8 +62,8 @@ type rolePermissionCount struct {
 func (r *repository) ListRoleHierarchyEdges(
 	ctx context.Context,
 	orgID pulid.ID,
-) ([]*permission.RoleHierarchyEdge, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleHierarchyEdge, error) {
+) ([]*rbac.RoleHierarchyEdge, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.RoleHierarchyEdge, error) {
 		rhe := permissiondb.RoleHierarchyEdges
 		return forTenant(ctx, rhe.Query(), rhe.OrganizationID.Eq(orgID)).
 			Load(rhe.SeniorRole(), rhe.JuniorRole()).
@@ -93,7 +93,7 @@ func (r *repository) UpsertRoleHierarchyEdge(
 		if _, err = rhe.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
-			[]*permission.RoleHierarchyEdge{{
+			[]*rbac.RoleHierarchyEdge{{
 				SeniorRoleID:   req.SeniorRoleID,
 				JuniorRoleID:   req.JuniorRoleID,
 				OrganizationID: req.OrganizationID,
@@ -181,8 +181,8 @@ func (r *repository) GetRoleClosure(ctx context.Context, roleIDs []pulid.ID) ([]
 func (r *repository) GetAuthorizedRoles(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) ([]*permission.Role, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.Role, error) {
 		ro := permissiondb.Roles
 		ura := permissiondb.UserRoleAssignments
 		return forTenant(
@@ -255,8 +255,8 @@ func (r *repository) CountRolePermissions(
 func (r *repository) ListRoleConstraints(
 	ctx context.Context,
 	req permissionports.ListRoleConstraintsRequest,
-) ([]*permission.RoleConstraint, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleConstraint, error) {
+) ([]*rbac.RoleConstraint, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.RoleConstraint, error) {
 		rc := permissiondb.RoleConstraints
 		return withConstraintRoles(forTenant(
 			ctx,
@@ -272,8 +272,8 @@ func (r *repository) ListRoleConstraints(
 func (r *repository) GetRoleConstraint(
 	ctx context.Context,
 	orgID, constraintID pulid.ID,
-) (*permission.RoleConstraint, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.RoleConstraint, error) {
+) (*rbac.RoleConstraint, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rbac.RoleConstraint, error) {
 		rc := permissiondb.RoleConstraints
 		constraint, err := withConstraintRoles(forTenant(
 			ctx,
@@ -333,9 +333,9 @@ func (r *repository) SaveRoleConstraint(
 			return nil
 		}
 
-		members := make([]*permission.RoleConstraintRole, 0, len(req.RoleIDs))
+		members := make([]*rbac.RoleConstraintRole, 0, len(req.RoleIDs))
 		for _, roleID := range req.RoleIDs {
-			members = append(members, &permission.RoleConstraintRole{
+			members = append(members, &rbac.RoleConstraintRole{
 				RoleConstraintID: constraint.ID,
 				RoleID:           roleID,
 				OrganizationID:   constraint.OrganizationID,
@@ -380,7 +380,7 @@ func (r *repository) ValidateStaticSeparationOfDuty(
 	} else {
 		assigned = append(assigned, roleIDs...)
 	}
-	return r.validateConstraints(ctx, orgID, permission.RoleConstraintTypeSSD, assigned)
+	return r.validateConstraints(ctx, orgID, rbac.RoleConstraintTypeSSD, assigned)
 }
 
 func (r *repository) ValidateDynamicSeparationOfDuty(
@@ -388,7 +388,7 @@ func (r *repository) ValidateDynamicSeparationOfDuty(
 	orgID pulid.ID,
 	roleIDs []pulid.ID,
 ) ([]permissionports.ConstraintViolation, error) {
-	return r.validateConstraints(ctx, orgID, permission.RoleConstraintTypeDSD, roleIDs)
+	return r.validateConstraints(ctx, orgID, rbac.RoleConstraintTypeDSD, roleIDs)
 }
 
 func (r *repository) RunPreflight(
@@ -473,8 +473,8 @@ func (r *repository) syncParentRoleIDs(ctx context.Context, seniorRoleID pulid.I
 }
 
 func withConstraintRoles(
-	q *keel.Query[*permission.RoleConstraint],
-) *keel.Query[*permission.RoleConstraint] {
+	q *keel.Query[*rbac.RoleConstraint],
+) *keel.Query[*rbac.RoleConstraint] {
 	roles := permissiondb.RoleConstraints.Roles()
 	return q.Load(roles.Pick(
 		roles.ID,
@@ -490,7 +490,7 @@ func withConstraintRoles(
 func (r *repository) validateConstraints(
 	ctx context.Context,
 	orgID pulid.ID,
-	constraintType permission.RoleConstraintType,
+	constraintType rbac.RoleConstraintType,
 	roleIDs []pulid.ID,
 ) ([]permissionports.ConstraintViolation, error) {
 	closure, err := r.GetRoleClosure(ctx, roleIDs)

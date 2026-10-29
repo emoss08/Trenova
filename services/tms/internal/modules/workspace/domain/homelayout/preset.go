@@ -2,7 +2,7 @@ package homelayout
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -20,21 +20,21 @@ var (
 type Preset struct {
 	keel.Table `keel:"home_layout_presets"`
 
-	ID                 pulid.ID                      `json:"id"                 keel:"id,pk,autoid:hlp_"`
-	BusinessUnitID     pulid.ID                      `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
-	OrganizationID     pulid.ID                      `json:"organizationId"     keel:"organization_id,pk,tenant"`
-	Name               string                        `json:"name"               keel:"name"`
-	Description        string                        `json:"description"        keel:"description,nullzero"`
-	Layout             *Layout                       `json:"layout"             keel:"layout,jsonb"`
-	RoleIDs            []pulid.ID                    `json:"roleIds"            keel:"role_ids,nullzero"`
-	CoreResponsibility permission.CoreResponsibility `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
-	IsOrgDefault       bool                          `json:"isOrgDefault"       keel:"is_org_default"`
-	Locked             bool                          `json:"locked"             keel:"locked"`
-	Priority           int                           `json:"priority"           keel:"priority"`
-	CreatedBy          pulid.ID                      `json:"createdBy"          keel:"created_by,nullzero"`
-	Version            int64                         `json:"version"            keel:"version,version"`
-	CreatedAt          int64                         `json:"createdAt"          keel:"created_at,autocreate"`
-	UpdatedAt          int64                         `json:"updatedAt"          keel:"updated_at,autoupdate"`
+	ID                 pulid.ID                `json:"id"                 keel:"id,pk,autoid:hlp_"`
+	BusinessUnitID     pulid.ID                `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID                `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	Name               string                  `json:"name"               keel:"name"`
+	Description        string                  `json:"description"        keel:"description,nullzero"`
+	Layout             *Layout                 `json:"layout"             keel:"layout,jsonb"`
+	RoleIDs            []pulid.ID              `json:"roleIds"            keel:"role_ids,nullzero"`
+	CoreResponsibility rbac.CoreResponsibility `json:"coreResponsibility" keel:"core_responsibility,nullzero"`
+	IsOrgDefault       bool                    `json:"isOrgDefault"       keel:"is_org_default"`
+	Locked             bool                    `json:"locked"             keel:"locked"`
+	Priority           int                     `json:"priority"           keel:"priority"`
+	CreatedBy          pulid.ID                `json:"createdBy"          keel:"created_by,nullzero"`
+	Version            int64                   `json:"version"            keel:"version,version"`
+	CreatedAt          int64                   `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                   `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	Organization *tenant.Organization `json:"organization,omitempty"`
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
@@ -59,10 +59,10 @@ func (p *Preset) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.CoreResponsibility,
 			validation.In(
-				permission.CoreResponsibilityBilling,
-				permission.CoreResponsibilityOperations,
-				permission.CoreResponsibilityFinance,
-				permission.CoreResponsibilityLeadership,
+				rbac.CoreResponsibilityBilling,
+				rbac.CoreResponsibilityOperations,
+				rbac.CoreResponsibilityFinance,
+				rbac.CoreResponsibilityLeadership,
 			).Error("Unknown core responsibility"),
 		),
 		validation.Field(&p.Layout, validation.Required.Error("Layout is required")),
@@ -75,7 +75,7 @@ func (p *Preset) Validate(multiErr *errortypes.MultiError) {
 
 // AppliesToRole reports whether this preset was assigned to the given role,
 // either directly or through the role's core responsibility.
-func (p *Preset) AppliesToRole(roleID pulid.ID, responsibility permission.CoreResponsibility) bool {
+func (p *Preset) AppliesToRole(roleID pulid.ID, responsibility rbac.CoreResponsibility) bool {
 	for _, assigned := range p.RoleIDs {
 		if assigned == roleID {
 			return true

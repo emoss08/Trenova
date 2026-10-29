@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
@@ -109,8 +110,8 @@ func catalogResolver(t *testing.T, engine permissionports.PermissionEngine) *rep
 
 type allGroups struct{}
 
-func (allGroups) Visible(context.Context, *permissionports.RequestActor) permission.FieldGroupSet {
-	return permission.AllFieldGroups()
+func (allGroups) Visible(context.Context, *permissionports.RequestActor) protectedfield.GroupSet {
+	return protectedfield.AllGroups()
 }
 
 /*

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 )
 
 func TestRegisterEntitiesIncludesRBACModels(t *testing.T) {
@@ -16,12 +16,12 @@ func TestRegisterEntitiesIncludesRBACModels(t *testing.T) {
 	}
 
 	required := []any{
-		&permission.Role{},
-		&permission.ResourcePermission{},
-		&permission.UserRoleAssignment{},
-		&permission.RoleHierarchyEdge{},
-		&permission.RoleConstraint{},
-		&permission.RoleConstraintRole{},
+		&rbac.Role{},
+		&rbac.ResourcePermission{},
+		&rbac.UserRoleAssignment{},
+		&rbac.RoleHierarchyEdge{},
+		&rbac.RoleConstraint{},
+		&rbac.RoleConstraintRole{},
 	}
 	for _, entity := range required {
 		if _, ok := registered[reflect.TypeOf(entity)]; !ok {

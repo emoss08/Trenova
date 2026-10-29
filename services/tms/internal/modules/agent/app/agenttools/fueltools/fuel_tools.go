@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -191,7 +192,7 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			"The state or province the fuel was "+
 				"bought in, from fuel_list_ifta_jurisdictions; it decides which line of the return the "+
 				"tax-paid gallons credit."+keep,
-			permission.KindIFTAJurisdiction,
+			recordkind.IFTAJurisdiction,
 		),
 		paramPurchasedAt: agenttoolschema.LocalDateTime("When it was bought, in the " +
 			"organization's time zone: the receipt's date and time, or noon that day when " +

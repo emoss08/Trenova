@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,10 +89,10 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				"Optional: the record's id, from customer_list, "+
 					"location_list, worker_list or carrier_list to match subjectType, "+
 					"or the page you are on. Give it with subjectType.",
-				permission.RecordKind(permission.ResourceCustomer),
-				permission.RecordKind(permission.ResourceLocation),
-				permission.RecordKind(permission.ResourceWorker),
-				permission.RecordKind(permission.ResourceCarrier),
+				recordkind.Kind(permission.ResourceCustomer),
+				recordkind.Kind(permission.ResourceLocation),
+				recordkind.Kind(permission.ResourceWorker),
+				recordkind.Kind(permission.ResourceCarrier),
 			),
 			"toolName": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,

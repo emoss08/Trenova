@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,19 +19,23 @@ func TestUpdateRoleRecordsBeforeAndAfter(t *testing.T) {
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
 	actorID, orgID, buID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
-	existing := &permission.Role{
+	existing := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		Name:           "Dispatch",
 		BusinessUnitID: buID,
 		OrganizationID: orgID,
 	}
-	updated := &permission.Role{ID: existing.ID, Name: "Dispatch lead", MaxSensitivity: permission.SensitivityInternal}
+	updated := &rbac.Role{
+		ID:             existing.ID,
+		Name:           "Dispatch lead",
+		MaxSensitivity: permission.SensitivityInternal,
+	}
 
 	deps.roleRepo.On("GetByID", mock.Anything, permissionports.GetRoleByIDRequest{
 		ID:         existing.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(existing, nil)
-	deps.roleRepo.On("Update", mock.Anything, mock.MatchedBy(func(role *permission.Role) bool {
+	deps.roleRepo.On("Update", mock.Anything, mock.MatchedBy(func(role *rbac.Role) bool {
 		return role.ID == existing.ID && role.Name == "Dispatch lead"
 	})).Return(nil)
 
@@ -59,12 +64,16 @@ func TestAssignAndUnassignRoleRecordTheUser(t *testing.T) {
 	actorID, orgID := pulid.MustNew("usr_"), pulid.MustNew("org_")
 	target := pulid.MustNew("usr_")
 	roleID := pulid.MustNew("rol_")
-	assignment := &permission.UserRoleAssignment{ID: pulid.MustNew("ura_"), UserID: target, RoleID: roleID}
+	assignment := &rbac.UserRoleAssignment{
+		ID:     pulid.MustNew("ura_"),
+		UserID: target,
+		RoleID: roleID,
+	}
 
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(&permission.Role{ID: roleID}, nil)
+		Return(&rbac.Role{ID: roleID}, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", mock.Anything, target, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", mock.Anything, assignment).Return(nil)
 	deps.roleRepo.On("DeleteAssignment", mock.Anything, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   assignment.ID,
@@ -101,14 +110,14 @@ func TestUpdateResourcePermissionRecordsThePreviousGrant(t *testing.T) {
 	deps.expectFullEffectivePermissions()
 	actorID, orgID := pulid.MustNew("usr_"), pulid.MustNew("org_")
 	roleID, permID := pulid.MustNew("rol_"), pulid.MustNew("rp_")
-	previous := &permission.ResourcePermission{
+	previous := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "shipment",
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  permission.DataScopeOrganization,
 	}
-	updated := &permission.ResourcePermission{
+	updated := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "shipment",
@@ -116,9 +125,9 @@ func TestUpdateResourcePermissionRecordsThePreviousGrant(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{
 		ID:          roleID,
-		Permissions: []*permission.ResourcePermission{previous},
+		Permissions: []*rbac.ResourcePermission{previous},
 	}, nil)
 	deps.roleRepo.On("UpdateResourcePermission", mock.Anything, updated).Return(nil)
 
@@ -138,7 +147,7 @@ func TestRefusedRoleChangesAreNotRecorded(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(&permission.Role{ID: roleID, IsSystem: true}, nil)
+		Return(&rbac.Role{ID: roleID, IsSystem: true}, nil)
 
 	err := deps.svc.DeleteResourcePermission(
 		t.Context(),

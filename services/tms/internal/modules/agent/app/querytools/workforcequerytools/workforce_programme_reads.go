@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -84,7 +85,7 @@ func ProgrammeReadSpecs() []readspec.List {
 				Resource: permission.ResourceDOTRandomPool,
 				What:     "The random testing pool",
 				Source:   "the pools this list returns or the page you are on",
-				Kinds:    []permission.RecordKind{permission.KindDOTRandomPool},
+				Kinds:    []recordkind.Kind{recordkind.DOTRandomPool},
 			}},
 			Notes: map[string]string{paramPoolID: noteEveryPool},
 			Alongside: []readspec.Alongside{{

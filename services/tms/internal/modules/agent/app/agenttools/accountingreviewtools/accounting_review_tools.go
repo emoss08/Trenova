@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -119,7 +120,7 @@ func mappingProposalsProperty() map[string]any {
 			toolschema.KeyProperties: map[string]any{
 				accountingtools.ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
 					"accounting_list_mapping_gaps or accounting_get_mapping.",
-					permission.KindAccountingMapping),
+					recordkind.AccountingMapping),
 				ParamExternalID: toolparams.StringProperty("The proposed record's externalId, as "+
 					"accounting_list_mapping_gaps shows it under mappedTo.", 0),
 			},
@@ -246,7 +247,7 @@ func NewRejectAccountingMappingProposalTool(
 		Properties: map[string]any{
 			accountingtools.ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
 				"accounting_list_mapping_gaps or accounting_get_mapping. Never guess one.",
-				permission.KindAccountingMapping),
+				recordkind.AccountingMapping),
 		},
 		Required: []string{accountingtools.ParamMappingID},
 	}), toolspec.ReceivablePlan[*accountingmappingports.AccountingMappingActionRequest, *accountingmappingports.AccountingMappingChange]{
@@ -374,7 +375,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 					"Up to %d sync records awaiting approval, from "+
 						"accounting_list_sync_records or accounting_get_sync_record.",
 					maxSyncReleaseIDs,
-				), maxSyncReleaseIDs, permission.KindAccountingSyncRecord),
+				), maxSyncReleaseIDs, recordkind.AccountingSyncRecord),
 			),
 		},
 		Required: []string{

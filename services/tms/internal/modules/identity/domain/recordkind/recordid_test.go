@@ -1,4 +1,4 @@
-package permission_test
+package recordkind_test
 
 import (
 	"context"
@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
@@ -291,7 +292,7 @@ var minters = map[permission.Resource]minter{
 func TestRecordIDPrefixes_MatchWhatTheDomainMints(t *testing.T) {
 	t.Parallel()
 
-	table := permission.RecordIDPrefixes()
+	table := recordkind.ResourcePrefixes()
 	require.NotEmpty(t, table)
 
 	for resource, prefix := range table {
@@ -308,114 +309,107 @@ func TestRecordIDPrefixes_MatchWhatTheDomainMints(t *testing.T) {
 func TestResourceOfIDPrefix_ReadsTheTableBackwards(t *testing.T) {
 	t.Parallel()
 
-	for resource, prefix := range permission.RecordIDPrefixes() {
-		got, ok := permission.ResourceOfIDPrefix(prefix)
+	for resource, prefix := range recordkind.ResourcePrefixes() {
+		got, ok := recordkind.ResourceOfIDPrefix(prefix)
 		require.Truef(t, ok, "prefix %s", prefix)
 		assert.Equal(t, resource, got, "two resources share prefix %s", prefix)
 
-		declared, has := resource.IDPrefix()
+		declared, has := recordkind.ResourcePrefix(resource)
 		assert.True(t, has)
 		assert.Equal(t, prefix, declared)
 	}
 
-	_, ok := permission.ResourceOfIDPrefix("nope_")
+	_, ok := recordkind.ResourceOfIDPrefix("nope_")
 	assert.False(t, ok)
 }
 
-func TestResource_Noun(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "worker credential", permission.ResourceWorkerCredential.Noun())
-	assert.Equal(t, "shipment", permission.ResourceShipment.Noun())
-}
-
-var kindMinters = map[permission.RecordKind]minter{
-	permission.KindEmploymentVerification: prefixed(
+var kindMinters = map[recordkind.Kind]minter{
+	recordkind.EmploymentVerification: prefixed(
 		employmentdb.WorkerEmploymentVerificationsSchema(),
 	),
-	permission.KindClearinghouseQuery: prefixed(
+	recordkind.ClearinghouseQuery: prefixed(
 		dotclearinghousedb.WorkerClearinghouseQueriesSchema(),
 	),
-	permission.KindDOTRandomPool:      prefixed(dotrandomdb.DOTRandomPoolsSchema()),
-	permission.KindDOTRandomDraw:      prefixed(dotrandomdb.DOTRandomDrawsSchema()),
-	permission.KindDOTRandomSelection: prefixed(dotrandomdb.DOTRandomDrawEntriesSchema()),
-	permission.KindAIAuditEvent:       prefixed(aiauditdb.AIAuditEventsSchema()),
-	permission.KindAIAuditExport:      prefixed(aiauditdb.AIAuditExportsSchema()),
-	permission.KindAssistantThread:    prefixed(conversationdb.ThreadsSchema()),
-	permission.KindWait:               prefixed(agentwaitdb.WaitsSchema()),
-	permission.KindPortalSite:         prefixed(extensionportaldb.PortalSitesSchema()),
-	permission.KindPortalRun:          prefixed(extensionportaldb.PortalRunsSchema()),
-	permission.KindAnalysisRun:        prefixed(analysisdb.RunsSchema()),
-	permission.KindWebWatch:           prefixed(extensionwebwatchdb.WebWatchesSchema()),
-	permission.KindWatchtowerItem:     prefixed(watchtowerdb.ItemsSchema()),
-	permission.KindAccountingConnection: prefixed(
+	recordkind.DOTRandomPool:      prefixed(dotrandomdb.DOTRandomPoolsSchema()),
+	recordkind.DOTRandomDraw:      prefixed(dotrandomdb.DOTRandomDrawsSchema()),
+	recordkind.DOTRandomSelection: prefixed(dotrandomdb.DOTRandomDrawEntriesSchema()),
+	recordkind.AIAuditEvent:       prefixed(aiauditdb.AIAuditEventsSchema()),
+	recordkind.AIAuditExport:      prefixed(aiauditdb.AIAuditExportsSchema()),
+	recordkind.AssistantThread:    prefixed(conversationdb.ThreadsSchema()),
+	recordkind.Wait:               prefixed(agentwaitdb.WaitsSchema()),
+	recordkind.PortalSite:         prefixed(extensionportaldb.PortalSitesSchema()),
+	recordkind.PortalRun:          prefixed(extensionportaldb.PortalRunsSchema()),
+	recordkind.AnalysisRun:        prefixed(analysisdb.RunsSchema()),
+	recordkind.WebWatch:           prefixed(extensionwebwatchdb.WebWatchesSchema()),
+	recordkind.WatchtowerItem:     prefixed(watchtowerdb.ItemsSchema()),
+	recordkind.AccountingConnection: prefixed(
 		accountingconnectiondb.AccountingConnectionsSchema(),
 	),
-	permission.KindAccountingMapping: prefixed(accountingmappingdb.AccountingMappingsSchema()),
-	permission.KindAccountingSyncRecord: prefixed(
+	recordkind.AccountingMapping: prefixed(accountingmappingdb.AccountingMappingsSchema()),
+	recordkind.AccountingSyncRecord: prefixed(
 		accountingsyncdb.AccountingSyncRecordsSchema(),
 	),
-	permission.KindAccountingInboundChange: prefixed(
+	recordkind.AccountingInboundChange: prefixed(
 		accountinginbounddb.AccountingInboundChangesSchema(),
 	),
-	permission.KindAccountingDriftFinding: prefixed(
+	recordkind.AccountingDriftFinding: prefixed(
 		accountingdriftdb.AccountingDriftFindingsSchema(),
 	),
-	permission.KindCarrierIntelligenceEvent: prefixed(
+	recordkind.CarrierIntelligenceEvent: prefixed(
 		carrierinteleventdb.CarrierIntelEventsSchema(),
 	),
-	permission.KindInsurancePolicy:   prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
-	permission.KindCarrierAssignment: prefixed(shipmentdb.CarrierAssignmentsSchema()),
-	permission.KindAdditionalCharge:  prefixed(shipmentdb.AdditionalChargesSchema()),
-	permission.KindBillingTransferRun: prefixed(
+	recordkind.InsurancePolicy:   prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
+	recordkind.CarrierAssignment: prefixed(shipmentdb.CarrierAssignmentsSchema()),
+	recordkind.AdditionalCharge:  prefixed(shipmentdb.AdditionalChargesSchema()),
+	recordkind.BillingTransferRun: prefixed(
 		billingtransferdb.BillingTransferRunsSchema(),
 	),
-	permission.KindDetentionOccurrence: prefixed(detentiondb.DetentionOccurrencesSchema()),
-	permission.KindTenderOffer:         prefixed(tenderdb.TenderOffersSchema()),
-	permission.KindOrderCharge:         prefixed(orderdb.OrderChargesSchema()),
-	permission.KindBillingQueueItem:    prefixed(billingqueuedb.BillingQueueItemsSchema()),
-	permission.KindInvoiceLine:         prefixed(invoicedb.InvoiceLinesSchema()),
-	permission.KindInvoiceAdjustment: prefixed(
+	recordkind.DetentionOccurrence: prefixed(detentiondb.DetentionOccurrencesSchema()),
+	recordkind.TenderOffer:         prefixed(tenderdb.TenderOffersSchema()),
+	recordkind.OrderCharge:         prefixed(orderdb.OrderChargesSchema()),
+	recordkind.BillingQueueItem:    prefixed(billingqueuedb.BillingQueueItemsSchema()),
+	recordkind.InvoiceLine:         prefixed(invoicedb.InvoiceLinesSchema()),
+	recordkind.InvoiceAdjustment: prefixed(
 		invoiceadjustmentdb.InvoiceAdjustmentsSchema(),
 	),
-	permission.KindInvoiceRunGroup: prefixed(invoicerundb.InvoiceRunGroupsSchema()),
-	permission.KindInvoiceRunItem:  prefixed(invoicerundb.InvoiceRunGroupItemsSchema()),
-	permission.KindCreditMemoApplication: prefixed(
+	recordkind.InvoiceRunGroup: prefixed(invoicerundb.InvoiceRunGroupsSchema()),
+	recordkind.InvoiceRunItem:  prefixed(invoicerundb.InvoiceRunGroupItemsSchema()),
+	recordkind.CreditMemoApplication: prefixed(
 		customerpaymentdb.CreditMemoApplicationsSchema(),
 	),
-	permission.KindRateAgreementLane: prefixed(rateagreementdb.RateAgreementRulesSchema()),
-	permission.KindRateImport:        prefixed(rateimportdb.RateImportBatchesSchema()),
-	permission.KindFuelIndex:         prefixed(fuelsurchargedb.FuelIndexesSchema()),
-	permission.KindFuelIndexPrice:    prefixed(fuelsurchargedb.FuelIndexPricesSchema()),
-	permission.KindReportRun:         prefixed(reportdb.ReportRunsSchema()),
-	permission.KindReportSchedule:    prefixed(reportdb.ReportSchedulesSchema()),
-	permission.KindEDIPartner:        prefixed(edidb.EDIPartnersSchema()),
-	permission.KindEDIInboundFile:    prefixed(ediinboundfiledb.EDIInboundFilesSchema()),
-	permission.KindEDITransfer:       prefixed(editransferdb.EDITransfersSchema()),
-	permission.KindEDIMessage:        prefixed(edimessagedb.EDIMessagesSchema()),
-	permission.KindEDIShipmentLink:   prefixed(edisyncdb.ShipmentLinksSchema()),
-	permission.KindEDITenderChange:   prefixed(editenderchangedb.TenderChangesSchema()),
-	permission.KindEDITransferChange: prefixed(edisyncdb.TransferChangesSchema()),
-	permission.KindEDICarrierInvoice: prefixed(edicarrierinvoicedb.CarrierInvoicesSchema()),
-	permission.KindScannedDocument:   prefixed(capturedb.CaptureItemsSchema()),
-	permission.KindIFTAJurisdiction:  prefixed(iftadb.JurisdictionsSchema()),
-	permission.KindIFTAReturn:        prefixed(iftadb.ReturnsSchema()),
-	permission.KindIFTAMileageEntry:  prefixed(iftadb.JurisdictionMileageEntriesSchema()),
-	permission.KindUSState:           prefixed(usstatedb.UsStatesSchema()),
-	permission.KindPayEvent:          prefixed(driversettlementdb.PayEventsSchema()),
-	permission.KindPayProfile:        prefixed(driverpaydb.PayProfilesSchema()),
-	permission.KindPayAssignment:     prefixed(payassignmentdb.WorkerPayAssignmentsSchema()),
-	permission.KindPayrollExport:     prefixed(timesheetdb.PayrollExportsSchema()),
-	permission.KindShiftAssignment: prefixed(
+	recordkind.RateAgreementLane: prefixed(rateagreementdb.RateAgreementRulesSchema()),
+	recordkind.RateImport:        prefixed(rateimportdb.RateImportBatchesSchema()),
+	recordkind.FuelIndex:         prefixed(fuelsurchargedb.FuelIndexesSchema()),
+	recordkind.FuelIndexPrice:    prefixed(fuelsurchargedb.FuelIndexPricesSchema()),
+	recordkind.ReportRun:         prefixed(reportdb.ReportRunsSchema()),
+	recordkind.ReportSchedule:    prefixed(reportdb.ReportSchedulesSchema()),
+	recordkind.EDIPartner:        prefixed(edidb.EDIPartnersSchema()),
+	recordkind.EDIInboundFile:    prefixed(ediinboundfiledb.EDIInboundFilesSchema()),
+	recordkind.EDITransfer:       prefixed(editransferdb.EDITransfersSchema()),
+	recordkind.EDIMessage:        prefixed(edimessagedb.EDIMessagesSchema()),
+	recordkind.EDIShipmentLink:   prefixed(edisyncdb.ShipmentLinksSchema()),
+	recordkind.EDITenderChange:   prefixed(editenderchangedb.TenderChangesSchema()),
+	recordkind.EDITransferChange: prefixed(edisyncdb.TransferChangesSchema()),
+	recordkind.EDICarrierInvoice: prefixed(edicarrierinvoicedb.CarrierInvoicesSchema()),
+	recordkind.ScannedDocument:   prefixed(capturedb.CaptureItemsSchema()),
+	recordkind.IFTAJurisdiction:  prefixed(iftadb.JurisdictionsSchema()),
+	recordkind.IFTAReturn:        prefixed(iftadb.ReturnsSchema()),
+	recordkind.IFTAMileageEntry:  prefixed(iftadb.JurisdictionMileageEntriesSchema()),
+	recordkind.USState:           prefixed(usstatedb.UsStatesSchema()),
+	recordkind.PayEvent:          prefixed(driversettlementdb.PayEventsSchema()),
+	recordkind.PayProfile:        prefixed(driverpaydb.PayProfilesSchema()),
+	recordkind.PayAssignment:     prefixed(payassignmentdb.WorkerPayAssignmentsSchema()),
+	recordkind.PayrollExport:     prefixed(timesheetdb.PayrollExportsSchema()),
+	recordkind.ShiftAssignment: prefixed(
 		workerscheduledb.WorkerShiftAssignmentsSchema(),
 	),
-	permission.KindChecklistItem: prefixed(
+	recordkind.ChecklistItem: prefixed(
 		workerchecklistdb.WorkerChecklistItemsSchema(),
 	),
-	permission.KindSafetyViolation: prefixed(
+	recordkind.SafetyViolation: prefixed(
 		fleetsafetydb.WorkerSafetyViolationsSchema(),
 	),
-	permission.KindLeaveDay: prefixed(workerleavedb.WorkerLeaveEntriesSchema()),
+	recordkind.LeaveDay: prefixed(workerleavedb.WorkerLeaveEntriesSchema()),
 }
 
 // A declared kind's prefix is held to the domain's as a resource's is: a
@@ -423,7 +417,7 @@ var kindMinters = map[permission.RecordKind]minter{
 func TestRecordKindPrefixes_MatchWhatTheDomainMints(t *testing.T) {
 	t.Parallel()
 
-	table := permission.RecordKindPrefixes()
+	table := recordkind.Prefixes()
 	require.NotEmpty(t, table)
 
 	for kind, prefix := range table {
@@ -442,18 +436,18 @@ func TestRecordKindPrefixes_MatchWhatTheDomainMints(t *testing.T) {
 func TestRecordKindOfIDPrefix_ReadsBothTables(t *testing.T) {
 	t.Parallel()
 
-	owners := make(map[string]permission.RecordKind)
-	for resource, prefix := range permission.RecordIDPrefixes() {
-		kind, ok := resource.Kind()
+	owners := make(map[string]recordkind.Kind)
+	for resource, prefix := range recordkind.ResourcePrefixes() {
+		kind, ok := recordkind.OfResource(resource)
 		require.True(t, ok, resource)
 		owners[prefix] = kind
 	}
-	for kind, prefix := range permission.RecordKindPrefixes() {
+	for kind, prefix := range recordkind.Prefixes() {
 		other, taken := owners[prefix]
 		assert.Falsef(t, taken, "%s and %s share prefix %s", kind, other, prefix)
 		owners[prefix] = kind
 
-		_, resourceToo := permission.Resource(kind).IDPrefix()
+		_, resourceToo := recordkind.ResourcePrefix(permission.Resource(kind))
 		assert.Falsef(t, resourceToo, "%s is declared as a kind and registered as a resource", kind)
 		assert.True(t, kind.Known())
 		assert.NotEmpty(t, kind.Noun())
@@ -461,7 +455,7 @@ func TestRecordKindOfIDPrefix_ReadsBothTables(t *testing.T) {
 	}
 
 	for prefix, kind := range owners {
-		got, ok := permission.RecordKindOfIDPrefix(prefix)
+		got, ok := recordkind.OfIDPrefix(prefix)
 		require.Truef(t, ok, "prefix %s", prefix)
 		assert.Equal(t, kind, got)
 		declared, has := got.IDPrefix()
@@ -469,22 +463,22 @@ func TestRecordKindOfIDPrefix_ReadsBothTables(t *testing.T) {
 		assert.Equal(t, prefix, declared)
 	}
 
-	_, ok := permission.RecordKindOfIDPrefix("nope_")
+	_, ok := recordkind.OfIDPrefix("nope_")
 	assert.False(t, ok)
-	assert.False(t, permission.RecordKind("nope").Known())
+	assert.False(t, recordkind.Kind("nope").Known())
 }
 
 func TestRecordKind_NounAndResource(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "clearinghouse query", permission.KindClearinghouseQuery.Noun())
-	assert.Equal(t, permission.ResourceQualification, permission.KindClearinghouseQuery.Resource())
+	assert.Equal(t, "clearinghouse query", recordkind.ClearinghouseQuery.Noun())
+	assert.Equal(t, permission.ResourceQualification, recordkind.ClearinghouseQuery.Resource())
 
-	shipment, ok := permission.ResourceShipment.Kind()
+	shipment, ok := recordkind.OfResource(permission.ResourceShipment)
 	require.True(t, ok)
 	assert.Equal(t, "shipment", shipment.Noun())
 	assert.Equal(t, permission.ResourceShipment, shipment.Resource())
 
-	_, ok = permission.ResourceQualification.Kind()
+	_, ok = recordkind.OfResource(permission.ResourceQualification)
 	assert.False(t, ok, "a resource covering several kinds is none of them")
 }

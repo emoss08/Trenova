@@ -2,7 +2,7 @@ package iam
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ type SCIMGroupRoleMapping struct {
 	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Role *permission.Role `json:"role,omitempty" keel:"belongs:role_id"`
+	Role *rbac.Role `json:"role,omitempty" keel:"belongs:role_id"`
 }
 
 func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {

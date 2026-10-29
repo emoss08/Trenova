@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2"
@@ -281,7 +282,7 @@ func rootReads(schema *ast.Schema) []rootRead {
 			continue
 		}
 		resource := permission.Resource(textcase.ConvertCamelToSnake(node))
-		kind, known := resource.Kind()
+		kind, known := recordkind.OfResource(resource)
 		if !known {
 			continue
 		}

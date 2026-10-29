@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -582,7 +583,7 @@ func (denyAll) reads(context.Context, permission.Resource) bool { return false }
 
 func (denyAll) visible(context.Context, permission.Resource, string) bool { return false }
 
-func (denyAll) groups() permission.FieldGroupSet { return 0 }
+func (denyAll) groups() protectedfield.GroupSet { return 0 }
 
 func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
 	t.Parallel()

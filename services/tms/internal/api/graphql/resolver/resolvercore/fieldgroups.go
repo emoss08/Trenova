@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
@@ -18,7 +19,7 @@ func VisibleFieldGroups(
 	ctx context.Context,
 	engine permissionports.PermissionEngine,
 	authCtx *authctx.AuthContext,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	if authCtx == nil || engine == nil {
 		return 0
 	}
@@ -38,6 +39,6 @@ func VisibleFieldGroups(
 func (r *Core) VisibleFieldGroups(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	return VisibleFieldGroups(ctx, r.PermissionEngine, authCtx)
 }

@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/stretchr/testify/assert"
 )
 
-func onlyGroup(group permission.FieldGroup) permission.FieldGroupSet {
-	return permission.FieldGroupSet(0).With(group)
+func onlyGroup(group protectedfield.Group) protectedfield.GroupSet {
+	return protectedfield.GroupSet(0).With(group)
 }
 
 func TestWithholdProtectedJSONAnswersAProtectedFieldNullWithoutItsGroup(t *testing.T) {
@@ -19,10 +20,10 @@ func TestWithholdProtectedJSONAnswersAProtectedFieldNullWithoutItsGroup(t *testi
 		"profile":   map[string]any{"dob": 315532800, "licenseNumber": "D123", "endorsement": "H"},
 	}
 
-	withheld := permission.WithholdProtectedJSON(
+	withheld := protectedfield.WithholdJSON(
 		permission.ResourceWorker,
 		worker,
-		onlyGroup(permission.FieldGroupMargins),
+		onlyGroup(protectedfield.Margins),
 	)
 	assert.Equal(t, map[string]any{
 		"firstName": "Rosa",
@@ -34,10 +35,10 @@ func TestWithholdProtectedJSONAnswersAProtectedFieldNullWithoutItsGroup(t *testi
 	assert.Equal(
 		t,
 		worker,
-		permission.WithholdProtectedJSON(
+		protectedfield.WithholdJSON(
 			permission.ResourceWorker,
 			worker,
-			permission.AllFieldGroups(),
+			protectedfield.AllGroups(),
 		),
 	)
 }
@@ -53,10 +54,10 @@ func TestWithholdProtectedJSONFindsAProtectedFieldAtAnyDepthAndInLists(t *testin
 		},
 	}
 
-	withheld := permission.WithholdProtectedJSON(
+	withheld := protectedfield.WithholdJSON(
 		permission.ResourceTender,
 		tender,
-		onlyGroup(permission.FieldGroupPersonal),
+		onlyGroup(protectedfield.Personal),
 	)
 	offers := withheld["offers"].([]any)
 	assert.Nil(t, offers[0].(map[string]any)["counterMargin"])
@@ -80,7 +81,7 @@ func TestWithholdProtectedJSONWithholdsOnlyTheDriverPayStepOfATrace(t *testing.T
 		}},
 	}
 
-	withheld := permission.WithholdProtectedJSON(permission.ResourceDetention, occurrence, 0)
+	withheld := protectedfield.WithholdJSON(permission.ResourceDetention, occurrence, 0)
 	steps := withheld["calculationTrace"].(map[string]any)["steps"].([]any)
 	assert.Nil(t, steps[0].(map[string]any)["amount"])
 	assert.Equal(t, "225", steps[1].(map[string]any)["amount"])
@@ -94,27 +95,27 @@ func TestARootedProtectedPathHoldsOnlyAtTheRootOfItsResource(t *testing.T) {
 	credential := map[string]any{"number": "CDL-1", "status": "Active"}
 	assert.Nil(
 		t,
-		permission.WithholdProtectedJSON(permission.ResourceWorkerCredential, credential, 0)["number"],
+		protectedfield.WithholdJSON(permission.ResourceWorkerCredential, credential, 0)["number"],
 	)
 
 	invoice := map[string]any{"number": "INV-1"}
 	assert.Equal(
 		t,
 		"INV-1",
-		permission.WithholdProtectedJSON(permission.ResourceInvoice, invoice, 0)["number"],
+		protectedfield.WithholdJSON(permission.ResourceInvoice, invoice, 0)["number"],
 		"a credential's number is protected, not every number",
 	)
 
 	quote := map[string]any{"costAmount": "800", "totalAmount": "1000"}
 	assert.Nil(
 		t,
-		permission.WithholdProtectedJSON(permission.ResourceRateQuote, quote, 0)["costAmount"],
+		protectedfield.WithholdJSON(permission.ResourceRateQuote, quote, 0)["costAmount"],
 	)
 	safety := map[string]any{"costAmount": "120"}
 	assert.Equal(
 		t,
 		"120",
-		permission.WithholdProtectedJSON(permission.ResourceWorker, safety, 0)["costAmount"],
+		protectedfield.WithholdJSON(permission.ResourceWorker, safety, 0)["costAmount"],
 	)
 }
 
@@ -122,7 +123,7 @@ func TestEveryProtectedPathNamesAKnownGroupAndResource(t *testing.T) {
 	t.Parallel()
 
 	registry := NewRegistry()
-	for _, path := range permission.ProtectedPaths() {
+	for _, path := range protectedfield.Paths() {
 		assert.Truef(t, path.Group.IsValid(), "%s names no known group", path.Path)
 		if path.Resource != "" {
 			assert.Truef(t, registry.HasResource(path.Resource.String()),

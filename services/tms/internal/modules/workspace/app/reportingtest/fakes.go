@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -196,12 +197,12 @@ func (c *PermissionReader) GetResourcePermissionsBatch(
 }
 
 type FieldGroups struct {
-	Groups permission.FieldGroupSet
+	Groups protectedfield.GroupSet
 }
 
 func (g FieldGroups) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	return g.Groups
 }

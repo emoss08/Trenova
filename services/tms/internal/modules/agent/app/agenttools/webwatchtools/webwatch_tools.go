@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -66,7 +67,7 @@ func watchPolicy(name, rationale string) agenttoolports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		Artifact:      string(permission.KindWebWatch),
+		Artifact:      string(recordkind.WebWatch),
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		Rationale:     rationale,
@@ -319,7 +320,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
 		Record: &agentrecord.RecordRef{
-			EntityType: string(permission.KindWebWatch),
+			EntityType: string(recordkind.WebWatch),
 			ID:         view.ID.String(),
 		},
 		State: fmt.Sprintf("Watching %s until %s. What it finds comes back to this work as it "+
@@ -354,7 +355,7 @@ func (t *StopWebWatchTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramWatchID: agenttoolschema.KindID(
 			"The web watch to stop, from web_list_watches.",
-			permission.KindWebWatch,
+			recordkind.WebWatch,
 		),
 	}, paramWatchID)
 }
@@ -449,7 +450,7 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
 		Record: &agentrecord.RecordRef{
-			EntityType: string(permission.KindWebWatch),
+			EntityType: string(recordkind.WebWatch),
 			ID:         view.ID.String(),
 		},
 		State: "The watch is " + view.Status.String() + ".",

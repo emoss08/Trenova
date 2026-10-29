@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
@@ -258,7 +259,7 @@ func (t *RecordTenderResponseTool) ParamSchema() map[string]any {
 		fieldOfferID: agenttoolschema.KindID(
 			"The offer the carrier answered, from dispatch_list_tenders. For BackedOut, the "+
 				"offer the carrier had accepted.",
-			permission.KindTenderOffer,
+			recordkind.TenderOffer,
 		),
 		fieldAction: agenttoolschema.Enum("The carrier's answer.", tenderAnswers),
 		fieldDeclineReason: jsonschemautils.Text(fmt.Sprintf(

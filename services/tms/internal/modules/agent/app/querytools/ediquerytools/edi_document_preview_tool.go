@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -116,12 +117,12 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 		querytool.ParamPartnerID: agenttoolschema.KindID(
 			"The trading partner it would go to, by id from "+
 				"edi_list_partners or edi_get_partner.",
-			permission.KindEDIPartner,
+			recordkind.EDIPartner,
 		),
 		querytool.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"For a 204 or 214: the shipment, from shipment_list or shipment_get."),
 		paramEDITransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
-			"edi_list_transfers.", permission.KindEDITransfer),
+			"edi_list_transfers.", recordkind.EDITransfer),
 		paramTenderResponse: querytool.EnumParam("For a 990 on a tender not yet answered: preview "+
 			"accepting or declining it.", tenderResponses),
 		paramDeclineReason: querytool.StringParam(fmt.Sprintf(

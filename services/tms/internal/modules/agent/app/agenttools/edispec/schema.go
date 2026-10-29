@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -120,7 +121,7 @@ func ParamSchema(withDigest bool) map[string]any {
 				"agent_read_attachment."),
 		ParamPartnerID: agenttoolschema.KindID("The partner to update when the person names one, "+
 			"from edi_list_partners. Leave it out and the draft matches one by code, ISA ID or "+
-			"AS2 ID, or plans a new partner.", permission.KindEDIPartner),
+			"AS2 ID, or plans a new partner.", recordkind.EDIPartner),
 		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"The customer this partner's documents are for, by id from customer_list, only when "+
 				"the person names which customer. Leave it out otherwise, and never pass a name "+

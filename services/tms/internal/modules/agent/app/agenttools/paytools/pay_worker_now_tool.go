@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -66,7 +67,7 @@ func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 		toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 		toolschema.KeyDescription: "The accrued pay events to pay, from " + payEventSources +
 			". Leave it out to pay everything the driver has accrued and not held.",
-	}, permission.KindPayEvent))
+	}, recordkind.PayEvent))
 	properties[ParamApplyRecurring] = map[string]any{
 		toolschema.KeyType: toolschema.TypeBoolean,
 		toolschema.KeyDescription: "true to also take recurring deductions, escrow and " +

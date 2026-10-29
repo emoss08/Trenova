@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,7 +76,7 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 			toolparams.ParamItemID: agenttoolschema.KindID(
 				"The billing queue item, from billing_list_queue_items "+
 					"or billing_get_queue_item. Never guess one.",
-				permission.KindBillingQueueItem,
+				recordkind.BillingQueueItem,
 			),
 			paramChargeKind: agenttoolschema.Enum(
 				"Which charge: the freight, or one accessorial.",
@@ -83,7 +84,7 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 			),
 			paramAdditionalChargeID: agenttoolschema.KindID("The accessorial charge, from the "+
 				"shipment's charges billing_get_queue_item lists. Needed for Accessorial.",
-				permission.KindAdditionalCharge),
+				recordkind.AdditionalCharge),
 			allocationparams.ParamAllocations: allocationparams.AllocationsProperty(
 				"The payers and their shares.",
 			),
@@ -310,7 +311,7 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 			resultRunID: agenttoolschema.KindID(
 				"The billing transfer run, from billing_transfer's "+
 					"result. Never guess one.",
-				permission.KindBillingTransferRun,
+				recordkind.BillingTransferRun,
 			),
 			paramRunAction: agenttoolschema.Enum(
 				"Stop a running transfer, or Retry a finished one.",

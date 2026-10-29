@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -161,7 +162,7 @@ func TestApproveDetention_IsAMoneyWriteCappedAtPropose(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 	assert.False(t, policy.Reversible)
-	assert.True(t, permission.IsAgentAllowed(policy.Resource, policy.Operation))
+	assert.True(t, agentceiling.Allows(policy.Resource, policy.Operation))
 }
 
 func TestApproveDetention_RequiresTheEvidence(t *testing.T) {

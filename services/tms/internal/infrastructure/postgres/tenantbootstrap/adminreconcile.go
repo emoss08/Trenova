@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -21,8 +22,8 @@ type AdminReconcileResult struct {
 }
 
 type adminGrantPlan struct {
-	add    []*permission.ResourcePermission
-	extend []*permission.ResourcePermission
+	add    []*rbac.ResourcePermission
+	extend []*rbac.ResourcePermission
 }
 
 func ReconcileAdminRole(
@@ -62,7 +63,7 @@ func ReconcileAdminRole(
 		return result, fmt.Errorf("list administrator grants: %w", err)
 	}
 
-	byRole := make(map[pulid.ID][]*permission.ResourcePermission, len(roleIDs))
+	byRole := make(map[pulid.ID][]*rbac.ResourcePermission, len(roleIDs))
 	for _, held := range existing {
 		byRole[held.RoleID] = append(byRole[held.RoleID], held)
 	}
@@ -88,10 +89,10 @@ func ReconcileAdminRole(
 func planAdminGrants(
 	registry *permissioncatalog.Registry,
 	roleID pulid.ID,
-	held []*permission.ResourcePermission,
+	held []*rbac.ResourcePermission,
 	now int64,
 ) adminGrantPlan {
-	byResource := make(map[string]*permission.ResourcePermission, len(held))
+	byResource := make(map[string]*rbac.ResourcePermission, len(held))
 	for _, rp := range held {
 		byResource[rp.Resource] = rp
 	}
@@ -116,7 +117,7 @@ func planAdminGrants(
 
 		rp, ok := byResource[def.Resource]
 		if !ok {
-			plan.add = append(plan.add, &permission.ResourcePermission{
+			plan.add = append(plan.add, &rbac.ResourcePermission{
 				ID:         pulid.MustNew("rp_"),
 				RoleID:     roleID,
 				Resource:   def.Resource,

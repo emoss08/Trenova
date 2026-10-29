@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -15,13 +16,13 @@ import (
 func (r *Core) AgentDefinitionAccessRoles(
 	ctx context.Context,
 	obj *agentdefinition.Definition,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !r.HasPermission(ctx, authCtx, permission.ResourceRole, permission.OpRead) {
-		return []*permission.Role{}, nil
+		return []*rbac.Role{}, nil
 	}
 
 	if !loadercore.Available(ctx) {
@@ -35,7 +36,7 @@ func (r *Core) AgentDefinitionAccessRoles(
 // loader. A reader who may not read agents is shown none.
 func (r *Core) RoleAgents(
 	ctx context.Context,
-	obj *permission.Role,
+	obj *rbac.Role,
 ) ([]*agentdefinition.Definition, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {

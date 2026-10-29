@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/triagefixtures"
@@ -37,7 +37,7 @@ var seedTeammateSpecs = []seedTeammateSpec{
 type seedTeammateParams struct {
 	org   *tenant.Organization
 	admin *tenant.User
-	role  *permission.Role
+	role  *rbac.Role
 	spec  seedTeammateSpec
 }
 
@@ -73,7 +73,7 @@ func administratorRole(
 	ctx context.Context,
 	db *keel.DB,
 	org *tenant.Organization,
-) (*permission.Role, error) {
+) (*rbac.Role, error) {
 	r := permissiondb.Roles
 	role, err := r.AllTenants().Where(
 		r.OrganizationID.Eq(org.ID),

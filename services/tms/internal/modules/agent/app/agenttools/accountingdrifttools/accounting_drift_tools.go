@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -125,7 +126,7 @@ func (t *ResolveAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramDriftFindingID: agenttoolschema.KindID(
 			driftFindingHelp,
-			permission.KindAccountingDriftFinding,
+			recordkind.AccountingDriftFinding,
 		),
 		paramDriftDirection: agenttoolschema.Enum(
 			"Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
@@ -259,7 +260,7 @@ func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramDriftFindingID: agenttoolschema.KindID(
 			driftFindingHelp,
-			permission.KindAccountingDriftFinding,
+			recordkind.AccountingDriftFinding,
 		),
 		paramDriftNote: jsonschemautils.Text(
 			"Why both sides stay as they are, in one sentence a bookkeeper would accept.",

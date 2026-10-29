@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -124,7 +125,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 			"minutesBefore": map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,
@@ -341,7 +342,7 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			paramWaitID: agenttoolschema.KindID(
 				"The wait to cancel, as agent_create_wait returned it (awt_…).",
-				permission.KindWait,
+				recordkind.Wait,
 			),
 		},
 		toolschema.KeyRequired:             []string{paramWaitID},

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -85,8 +86,9 @@ func TestCheckFallsBackToRolesWhenTheSourceDeclines(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).Return(nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
+		Return(nil)
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  permissionports.PrincipalTypeUser,

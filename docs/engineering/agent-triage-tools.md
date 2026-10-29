@@ -58,7 +58,7 @@ and refuses.
 
 The bulk tools take at most 50 message ids and never a folder. The assign tools are gated
 on the assign operation, which is what lets them give a message to someone other than the
-caller, and the fixed agent table (`permission.IsAgentAllowed`) grants it on inbound
+caller, and the fixed agent table (`agentceiling.Allows`) grants it on inbound
 messages for them; the owner comes from `inbox_list_triage_assignees`, which also names the
 on-call person.
 `inbox_wake_inbound_message` reads how the message is parked and calls `Wake` or `StopWaiting`.

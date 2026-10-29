@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -70,7 +71,7 @@ func (t *BillingQueueDecisionTool) ParamSchema() map[string]any {
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The billing queue item, from billing_list_queue_items, " +
 				"billing_get_queue_item or this run's subject. Never guess one.",
-		}, permission.KindBillingQueueItem),
+		}, recordkind.BillingQueueItem),
 	}
 	for name, property := range t.decision.properties {
 		properties[name] = property
@@ -527,7 +528,7 @@ func (t *AssignBillerTool) ParamSchema() map[string]any {
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The billing queue item, from " +
 					"billing_list_queue_items or billing_get_queue_item.",
-			}, permission.KindBillingQueueItem),
+			}, recordkind.BillingQueueItem),
 			paramBillerID: billerProperty(),
 		},
 		toolschema.KeyRequired:             []string{billingqueuepreview.ParamBillingQueueItemID},

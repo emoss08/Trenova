@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -94,7 +95,7 @@ func (t *EscalateDetentionTool) ParamSchema() map[string]any {
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id, from detention_list_occurrences or "+
 					"detention_get_occurrence.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 			toolparams.ParamReason: map[string]any{
 				"type": "string",
@@ -253,7 +254,7 @@ func (t *ApproveDetentionTool) ParamSchema() map[string]any {
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id, from detention_list_occurrences or "+
 					"detention_get_occurrence.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 			"evidence": map[string]any{
 				"type": "string",
@@ -812,7 +813,7 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 			"eventId": agenttoolschema.KindID(
 				"The finding id, from carrier_list_intelligence_events, carrier_get_intelligence_event "+
 					"or this run's subject. Never guess one.",
-				permission.KindCarrierIntelligenceEvent,
+				recordkind.CarrierIntelligenceEvent,
 			),
 			toolparams.ParamNote: map[string]any{
 				"type":        "string",

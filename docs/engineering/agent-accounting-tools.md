@@ -189,7 +189,7 @@ outrun the preview's time budget, and a statement dated today is digested by day
 | Receivables assistant | in chat, for the person working receivables | `receivable_record_collection_activity`, `receivable_assign_collector`, `receivable_schedule_follow_up`, `receivable_send_payment_reminder`, `receivable_send_statement`, beside the worklist and statement reads |
 | Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `factoring_get_reserve_balance`, `factoring_record_funding`, `factoring_release_reserve`, `factoring_list_remittances`, `factoring_get_remittance`, `factoring_resolve_remittance_line`, `factoring_rematch_remittance`, `factoring_apply_remittance` |
 
-The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
+The agent permission ceiling (`agentceiling/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and
 releasing sync use grants the books keeper already had.
 

@@ -2,6 +2,7 @@ package agenttoolschema
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -41,7 +42,7 @@ func RecordIDText(resource permission.Resource, description string) map[string]a
 // a line of an invoice. The runtime refuses an id whose prefix is none of the
 // kinds' before the tool reads it, as RecordID does for a resource's. The
 // description names where the id comes from, as RecordIDText's does.
-func KindID(description string, kinds ...permission.RecordKind) map[string]any {
+func KindID(description string, kinds ...recordkind.Kind) map[string]any {
 	property := IDText(description)
 	property[toolschema.KeyRecordKinds] = kindNames(kinds)
 
@@ -50,7 +51,7 @@ func KindID(description string, kinds ...permission.RecordKind) map[string]any {
 
 // KindIDs is a list of ids each of which is of one of the kinds named, as
 // KindID marks one.
-func KindIDs(description string, maxItems int, kinds ...permission.RecordKind) map[string]any {
+func KindIDs(description string, maxItems int, kinds ...recordkind.Kind) map[string]any {
 	property := IDList(description, maxItems)
 	items, _ := property[toolschema.KeyItems].(map[string]any)
 	items[toolschema.KeyRecordKinds] = kindNames(kinds)
@@ -70,7 +71,7 @@ func OfResource(property map[string]any, resource permission.Resource) map[strin
 
 // OfKinds is OfResource for a property whose ids are of the kinds named, as
 // KindID and KindIDs mark theirs.
-func OfKinds(property map[string]any, kinds ...permission.RecordKind) map[string]any {
+func OfKinds(property map[string]any, kinds ...recordkind.Kind) map[string]any {
 	markedTarget(property)[toolschema.KeyRecordKinds] = kindNames(kinds)
 
 	return property
@@ -91,7 +92,7 @@ func markedTarget(property map[string]any) map[string]any {
 	return items
 }
 
-func kindNames(kinds []permission.RecordKind) []string {
+func kindNames(kinds []recordkind.Kind) []string {
 	names := make([]string, 0, len(kinds))
 	for _, kind := range kinds {
 		names = append(names, string(kind))

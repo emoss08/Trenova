@@ -68,7 +68,7 @@ models:
       - github.com/emoss08/trenova/shared/pulid.ID
   ProtectedFieldGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.FieldGroup
+      - github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield.Group
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -3902,7 +3902,7 @@ models:
         resolver: true
   Role:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.Role
+      - github.com/emoss08/trenova/internal/modules/identity/domain/rbac.Role
     fields:
       coreResponsibility:
         resolver: true

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/textcase"
@@ -36,9 +37,9 @@ const (
 	withheldExtension       = "withheldByAccess"
 )
 
-type ProtectedFieldMap map[string]map[string]permission.FieldGroup
+type ProtectedFieldMap map[string]map[string]protectedfield.Group
 
-func (m ProtectedFieldMap) Group(object, field string) (permission.FieldGroup, bool) {
+func (m ProtectedFieldMap) Group(object, field string) (protectedfield.Group, bool) {
 	fields, ok := m[object]
 	if !ok {
 		return "", false
@@ -78,7 +79,7 @@ func ProtectedFields(schema *ast.Schema) (ProtectedFieldMap, error) {
 					"@%s on %s.%s names no group", protectedDirective, name, field.Name,
 				)
 			}
-			group := permission.FieldGroup(argument.Value.Raw)
+			group := protectedfield.Group(argument.Value.Raw)
 			if !group.IsValid() {
 				return nil, fmt.Errorf(
 					"@%s on %s.%s names unknown group %q",
@@ -86,7 +87,7 @@ func ProtectedFields(schema *ast.Schema) (ProtectedFieldMap, error) {
 				)
 			}
 			if fields[name] == nil {
-				fields[name] = make(map[string]permission.FieldGroup, 2)
+				fields[name] = make(map[string]protectedfield.Group, 2)
 			}
 			fields[name][field.Name] = group
 		}
@@ -235,7 +236,7 @@ type fieldVisibilityKey struct{}
 // the paths a person's read withheld.
 type fieldVisibility struct {
 	once    sync.Once
-	visible permission.FieldGroupSet
+	visible protectedfield.GroupSet
 
 	accessOnce sync.Once
 	access     *refview.PersonAccess
@@ -524,7 +525,7 @@ func (e *FieldGuardExtension) newPersonAccess(ctx context.Context) *refview.Pers
 	)
 }
 
-func (e *FieldGuardExtension) visible(ctx context.Context) permission.FieldGroupSet {
+func (e *FieldGuardExtension) visible(ctx context.Context) protectedfield.GroupSet {
 	holder, ok := ctx.Value(fieldVisibilityKey{}).(*fieldVisibility)
 	if !ok {
 		return e.resolveVisible(ctx)
@@ -535,7 +536,7 @@ func (e *FieldGuardExtension) visible(ctx context.Context) permission.FieldGroup
 	return holder.visible
 }
 
-func (e *FieldGuardExtension) resolveVisible(ctx context.Context) permission.FieldGroupSet {
+func (e *FieldGuardExtension) resolveVisible(ctx context.Context) protectedfield.GroupSet {
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok {
 		return 0

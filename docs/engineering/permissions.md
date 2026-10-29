@@ -460,7 +460,7 @@ through the guarded paths.
 The audit trail withholds the same fields when an entry is read, not when it is written, so a
 reader who holds the group (an administrator reviewing a change) still sees the whole diff.
 An audit entry stores its record as JSON, so the fields are declared as JSON paths in
-`permission.ProtectedPaths` (`protectedpaths.go`): a path matches at any depth unless it is
+`protectedfield.Paths` (`protectedpaths.go`): a path matches at any depth unless it is
 rooted at a resource (`WorkerCredential.number`, `RateQuote.costAmount`), `[]` steps into a
 list, and a `When` condition limits it to the object holding it (only the driver pay step of a
 calculation trace). `audit.Entry.WithholdFields` applies them to `previousState`,
@@ -513,9 +513,9 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
 | Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
 | Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
-| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `permission.ProtectedPaths`, applied by `reportaccess.Resolver.Protection` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protectedfield.Paths`, applied by `reportaccess.Resolver.Protection` |
 | Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
-| Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
+| Audit trail | every field above in an entry's previous and current state and its changes | `protectedfield.Paths`, `audit.Entry.WithholdFields` at read time |
 
 An agent is held to its person's group and to its own data access. A protected field of a
 record is Confidential and never reaches an agent; a computed figure (a capacity match's
@@ -534,7 +534,7 @@ In a conversation an agent acts as the person: every tool call is checked agains
 person's grants. When an agent runs on its own (a schedule, an event, a loop) its principal
 is `PrincipalTypeAgent` with the agent definition's id, and a check passes only where:
 
-1. the fixed agent ceiling allows it (`permission.IsAgentAllowed`), which no organization
+1. the fixed agent ceiling allows it (`agentceiling.Allows`), which no organization
    can widen;
 2. the role the organization chose for the agent, if any, grants it, through the role's
    parents too (`agent_definitions.unattended_role_id`, read through

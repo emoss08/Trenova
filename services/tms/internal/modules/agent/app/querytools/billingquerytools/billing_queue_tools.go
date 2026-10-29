@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
@@ -314,7 +315,7 @@ func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
 			paramBillingQueueItemIDs: agenttoolschema.KindIDs("The items' ids, from "+
 				"billing_list_queue_items, this run's subject, "+querytool.OnThePage+" or the "+
 				"proposals that named them.", maxBatchBillingQueueItems,
-				permission.KindBillingQueueItem),
+				recordkind.BillingQueueItem),
 		},
 		toolschema.KeyRequired:             []string{paramBillingQueueItemIDs},
 		toolschema.KeyAdditionalProperties: false,

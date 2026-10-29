@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -76,7 +77,7 @@ type orderChargeKeeper interface {
 func chargeIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The order charge", "the charges order_get lists"),
-		permission.KindOrderCharge,
+		recordkind.OrderCharge,
 	)
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 )
 
 // maxDepth bounds the walk. Nothing a handler returns nests this deep; a value
@@ -24,7 +25,7 @@ var anyType = reflect.TypeFor[any]()
 type decider interface {
 	reads(ctx context.Context, kind permission.Resource) bool
 	visible(ctx context.Context, kind permission.Resource, field string) bool
-	groups() permission.FieldGroupSet
+	groups() protectedfield.GroupSet
 }
 
 // record is the record a value belongs to and how it was reached.
@@ -288,14 +289,14 @@ func (w *walker) withhold(v reflect.Value) (reflect.Value, bool) {
 		return v, false
 	}
 	if v.CanAddr() {
-		if withholder, ok := v.Addr().Interface().(permission.FieldWithholder); ok {
+		if withholder, ok := v.Addr().Interface().(protectedfield.Withholder); ok {
 			withholder.WithholdFields(groups)
 		}
 		return v, false
 	}
 	cp := reflect.New(v.Type())
 	cp.Elem().Set(v)
-	if withholder, ok := cp.Interface().(permission.FieldWithholder); ok {
+	if withholder, ok := cp.Interface().(protectedfield.Withholder); ok {
 		withholder.WithholdFields(groups)
 	}
 

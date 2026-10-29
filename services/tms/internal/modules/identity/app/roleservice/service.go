@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -75,13 +76,13 @@ type CreateRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
-	Role           *permission.Role
+	Role           *rbac.Role
 }
 
 type UpdateRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
-	Role           *permission.Role
+	Role           *rbac.Role
 }
 
 type DeleteRoleRequest struct {
@@ -93,7 +94,7 @@ type DeleteRoleRequest struct {
 type AssignRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
-	Assignment     *permission.UserRoleAssignment
+	Assignment     *rbac.UserRoleAssignment
 }
 
 type UnassignRoleRequest struct {
@@ -122,7 +123,7 @@ type SaveConstraintRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
-	Constraint     *permission.RoleConstraint
+	Constraint     *rbac.RoleConstraint
 	RoleIDs        []pulid.ID
 }
 
@@ -362,13 +363,13 @@ func (s *Service) requireUnassign(ctx context.Context, tenant pagination.TenantI
 	return nil
 }
 
-func editableRoleUpdate(existing, requested *permission.Role) *permission.Role {
+func editableRoleUpdate(existing, requested *rbac.Role) *rbac.Role {
 	maxSensitivity := requested.MaxSensitivity
 	if maxSensitivity == "" {
 		maxSensitivity = existing.MaxSensitivity
 	}
 
-	return &permission.Role{
+	return &rbac.Role{
 		ID:                 existing.ID,
 		BusinessUnitID:     existing.BusinessUnitID,
 		OrganizationID:     existing.OrganizationID,
@@ -386,13 +387,13 @@ func editableRoleUpdate(existing, requested *permission.Role) *permission.Role {
 }
 
 func compactPermissions(
-	permissions []*permission.ResourcePermission,
-) []*permission.ResourcePermission {
+	permissions []*rbac.ResourcePermission,
+) []*rbac.ResourcePermission {
 	if permissions == nil {
 		return nil
 	}
 
-	compacted := make([]*permission.ResourcePermission, 0, len(permissions))
+	compacted := make([]*rbac.ResourcePermission, 0, len(permissions))
 	for _, rp := range permissions {
 		if rp != nil {
 			compacted = append(compacted, rp)
@@ -405,28 +406,28 @@ func compactPermissions(
 func (s *Service) ListRoles(
 	ctx context.Context,
 	req *permissionports.ListRolesRequest,
-) (*pagination.ListResult[*permission.Role], error) {
+) (*pagination.ListResult[*rbac.Role], error) {
 	return s.roleRepo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *permissionports.ListRoleConnectionRequest,
-) (*pagination.CursorListResult[*permission.Role], error) {
+) (*pagination.CursorListResult[*rbac.Role], error) {
 	return s.roleRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) SelectRoleOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*permission.Role], error) {
+) (*pagination.ListResult[*rbac.Role], error) {
 	return s.roleRepo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetRoleByID(
 	ctx context.Context,
 	req permissionports.GetRoleByIDRequest,
-) (*permission.Role, error) {
+) (*rbac.Role, error) {
 	return s.roleRepo.GetByID(ctx, req)
 }
 
@@ -440,7 +441,7 @@ func (s *Service) GetImpactedUsers(
 func (s *Service) GetUserRoleAssignments(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) ([]*permission.UserRoleAssignment, error) {
+) ([]*rbac.UserRoleAssignment, error) {
 	return s.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 }
 
@@ -498,7 +499,7 @@ func (s *Service) validateAssignmentPrivileges(
 	ctx context.Context,
 	req *AssignRoleRequest,
 	log *zap.Logger,
-) (*permission.Role, error) {
+) (*rbac.Role, error) {
 	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: req.Assignment.RoleID,
 		TenantInfo: pagination.TenantInfo{
@@ -513,7 +514,7 @@ func (s *Service) validateAssignmentPrivileges(
 	return role, s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
 		actorID: req.ActorID,
 		orgID:   req.OrganizationID,
-		role: &permission.Role{
+		role: &rbac.Role{
 			MaxSensitivity: role.MaxSensitivity,
 			Permissions:    role.Permissions,
 		},
@@ -564,7 +565,7 @@ func (s *Service) validateStaticSeparationOfDutyForAssignment(
 func (s *Service) ListRoleHierarchyEdges(
 	ctx context.Context,
 	orgID pulid.ID,
-) ([]*permission.RoleHierarchyEdge, error) {
+) ([]*rbac.RoleHierarchyEdge, error) {
 	return s.rbacRepo.ListRoleHierarchyEdges(ctx, orgID)
 }
 
@@ -644,7 +645,7 @@ func (s *Service) validateHierarchyEdge(
 	return s.validateNoEscalationWithInheritance(ctx, &escalationCheck{
 		actorID: req.ActorID,
 		orgID:   req.OrganizationID,
-		role: &permission.Role{
+		role: &rbac.Role{
 			MaxSensitivity: junior.MaxSensitivity,
 			Permissions:    junior.Permissions,
 		},
@@ -684,7 +685,7 @@ func (s *Service) DeleteRoleHierarchyEdge(
 func (s *Service) ListRoleConstraints(
 	ctx context.Context,
 	req permissionports.ListRoleConstraintsRequest,
-) ([]*permission.RoleConstraint, error) {
+) ([]*rbac.RoleConstraint, error) {
 	return s.rbacRepo.ListRoleConstraints(ctx, req)
 }
 
@@ -860,7 +861,7 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 type escalationCheck struct {
 	actorID   pulid.ID
 	orgID     pulid.ID
-	role      *permission.Role
+	role      *rbac.Role
 	parentIDs []pulid.ID
 }
 
@@ -877,10 +878,10 @@ func (s *Service) validateNoEscalationWithInheritance(
 		return err
 	}
 
-	combined := &permission.Role{
+	combined := &rbac.Role{
 		MaxSensitivity: check.role.MaxSensitivity,
 		Permissions: make(
-			[]*permission.ResourcePermission,
+			[]*rbac.ResourcePermission,
 			0,
 			len(check.role.Permissions)+len(inherited),
 		),
@@ -954,7 +955,7 @@ func (s *Service) RevokeOrganizationRoles(
 func (s *Service) validateNoEscalation(
 	ctx context.Context,
 	actorID, orgID pulid.ID,
-	targetRole *permission.Role,
+	targetRole *rbac.Role,
 ) error {
 	actorPerms, err := s.permEngine.GetEffectivePermissions(ctx, actorID, orgID)
 	if err != nil {
@@ -1002,7 +1003,7 @@ func (s *Service) validateNoEscalation(
 func (s *Service) recordRefusedGrant(
 	ctx context.Context,
 	actorID, orgID pulid.ID,
-	targetRole *permission.Role,
+	targetRole *rbac.Role,
 	metadata map[string]any,
 ) {
 	s.recordChange(ctx, &roleChange{
@@ -1071,7 +1072,7 @@ func (s *Service) validateNoCircularInheritance(
 func (s *Service) CreateResourcePermission(
 	ctx context.Context,
 	actorID, orgID pulid.ID,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) error {
 	log := s.l.With(
 		zap.String("operation", "CreateResourcePermission"),
@@ -1096,15 +1097,15 @@ func (s *Service) CreateResourcePermission(
 	if scopeErr := unenforcedScopes(
 		s.scopes,
 		s.registry,
-		[]*permission.ResourcePermission{rp},
+		[]*rbac.ResourcePermission{rp},
 		role.Permissions,
 		singleField,
 	); scopeErr != nil {
 		return scopeErr
 	}
 
-	tempRole := &permission.Role{
-		Permissions: []*permission.ResourcePermission{rp},
+	tempRole := &rbac.Role{
+		Permissions: []*rbac.ResourcePermission{rp},
 	}
 	if validateErr := s.validateNoEscalation(ctx, actorID, orgID, tempRole); validateErr != nil {
 		return validateErr
@@ -1138,7 +1139,7 @@ func (s *Service) CreateResourcePermission(
 func (s *Service) UpdateResourcePermission(
 	ctx context.Context,
 	actorID, orgID pulid.ID,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) error {
 	log := s.l.With(
 		zap.String("operation", "UpdateResourcePermission"),
@@ -1164,15 +1165,15 @@ func (s *Service) UpdateResourcePermission(
 	if scopeErr := unenforcedScopes(
 		s.scopes,
 		s.registry,
-		[]*permission.ResourcePermission{rp},
+		[]*rbac.ResourcePermission{rp},
 		role.Permissions,
 		singleField,
 	); scopeErr != nil {
 		return scopeErr
 	}
 
-	tempRole := &permission.Role{
-		Permissions: []*permission.ResourcePermission{rp},
+	tempRole := &rbac.Role{
+		Permissions: []*rbac.ResourcePermission{rp},
 	}
 	if validateErr := s.validateNoEscalation(ctx, actorID, orgID, tempRole); validateErr != nil {
 		return validateErr
@@ -1268,7 +1269,7 @@ func (s *Service) InitializeOrganizationRoles(
 		zap.String("orgID", orgID.String()),
 	)
 
-	adminRole := &permission.Role{
+	adminRole := &rbac.Role{
 		OrganizationID: orgID,
 		Name:           "Organization Administrator",
 		Description:    "Full access to all resources within the organization",
@@ -1283,7 +1284,7 @@ func (s *Service) InitializeOrganizationRoles(
 		return err
 	}
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID:         creatorID,
 		OrganizationID: orgID,
 		RoleID:         adminRole.ID,
@@ -1309,16 +1310,16 @@ func (s *Service) InitializeOrganizationRoles(
 	return nil
 }
 
-func (s *Service) allResourcePermissions() []*permission.ResourcePermission {
+func (s *Service) allResourcePermissions() []*rbac.ResourcePermission {
 	definitions := s.registry.All()
-	permissions := make([]*permission.ResourcePermission, 0, len(definitions))
+	permissions := make([]*rbac.ResourcePermission, 0, len(definitions))
 	for _, def := range definitions {
 		operations := make([]permission.Operation, len(def.Operations))
 		for i, op := range def.Operations {
 			operations[i] = op.Operation
 		}
 
-		permissions = append(permissions, &permission.ResourcePermission{
+		permissions = append(permissions, &rbac.ResourcePermission{
 			Resource:   def.Resource,
 			Operations: operations,
 			DataScope:  permission.DataScopeAll,
@@ -1328,7 +1329,7 @@ func (s *Service) allResourcePermissions() []*permission.ResourcePermission {
 }
 
 func (s *Service) requireActivationForDSD(ctx context.Context, req *SaveConstraintRequest) error {
-	if req.Constraint.Type != permission.RoleConstraintTypeDSD || s.activation == nil {
+	if req.Constraint.Type != rbac.RoleConstraintTypeDSD || s.activation == nil {
 		return nil
 	}
 	required, err := s.activation.RoleActivationRequired(ctx, pagination.TenantInfo{

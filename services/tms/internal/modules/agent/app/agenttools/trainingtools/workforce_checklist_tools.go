@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -344,7 +345,7 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 		paramChecklistItemID: agenttoolschema.KindID(
 			"The item, from worker_list_checklists. Never guess "+
 				"one.",
-			permission.KindChecklistItem,
+			recordkind.ChecklistItem,
 		),
 		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),

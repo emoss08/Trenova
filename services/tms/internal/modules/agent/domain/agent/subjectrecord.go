@@ -3,7 +3,7 @@ package agent
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -12,7 +12,7 @@ import (
 // registry names it; its prefix and its noun are read from there. The client
 // is generated from this table (client/packages/graphql/scripts/
 // generate-record-kinds.mjs), so it stays a map of plain literals.
-var subjectRecordKinds = map[SubjectType]permission.RecordKind{
+var subjectRecordKinds = map[SubjectType]recordkind.Kind{
 	SubjectBillingQueueItem:     "billing_queue_item",
 	SubjectShipmentMove:         "shipment_move",
 	SubjectAssistantThread:      "assistant_thread",
@@ -53,7 +53,7 @@ var subjectsByPrefix = func() map[string]SubjectType {
 }()
 
 // RecordKind is the kind of record this subject is.
-func (s SubjectType) RecordKind() (permission.RecordKind, bool) {
+func (s SubjectType) RecordKind() (recordkind.Kind, bool) {
 	kind, ok := subjectRecordKinds[s]
 
 	return kind, ok

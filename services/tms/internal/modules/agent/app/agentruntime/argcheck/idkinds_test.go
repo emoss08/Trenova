@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
@@ -17,10 +17,10 @@ func kindedIDSchema() map[string]any {
 		"properties": map[string]any{
 			"recordId": agenttoolschema.KindID(
 				"The qualification record, from list_worker_qualifications. Never guess one.",
-				permission.KindEmploymentVerification, permission.KindClearinghouseQuery,
+				recordkind.EmploymentVerification, recordkind.ClearinghouseQuery,
 			),
 			"drawIds": agenttoolschema.KindIDs(
-				"The rounds, from worker_list_dot_random_draws.", 5, permission.KindDOTRandomDraw,
+				"The rounds, from worker_list_dot_random_draws.", 5, recordkind.DOTRandomDraw,
 			),
 		},
 	}
@@ -97,7 +97,7 @@ func TestMarkedKinds_ReadsADecodedList(t *testing.T) {
 		toolschema.KeyRecordKinds: []any{"employment_verification", "clearinghouse_query"},
 	})
 
-	assert.Equal(t, []permission.RecordKind{
-		permission.KindEmploymentVerification, permission.KindClearinghouseQuery,
+	assert.Equal(t, []recordkind.Kind{
+		recordkind.EmploymentVerification, recordkind.ClearinghouseQuery,
 	}, kinds)
 }

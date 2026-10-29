@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
 )
 
-func responsibilities() []permission.CoreResponsibility {
-	return []permission.CoreResponsibility{
-		permission.CoreResponsibilityOperations,
-		permission.CoreResponsibilityBilling,
-		permission.CoreResponsibilityFinance,
-		permission.CoreResponsibilityLeadership,
+func responsibilities() []rbac.CoreResponsibility {
+	return []rbac.CoreResponsibility{
+		rbac.CoreResponsibilityOperations,
+		rbac.CoreResponsibilityBilling,
+		rbac.CoreResponsibilityFinance,
+		rbac.CoreResponsibilityLeadership,
 		"",
 	}
 }

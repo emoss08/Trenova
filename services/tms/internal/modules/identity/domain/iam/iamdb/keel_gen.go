@@ -4,12 +4,12 @@ package iamdb
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"unsafe"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -2122,7 +2122,7 @@ func attachSCIMGroupRoleMapping(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	r := (*iam.SCIMGroupRoleMapping)(p)
 	switch rel {
 	case 0:
-		r.Role = (*permission.Role)(child)
+		r.Role = (*rbac.Role)(child)
 	}
 }
 

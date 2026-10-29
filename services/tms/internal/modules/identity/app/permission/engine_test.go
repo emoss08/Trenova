@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -90,15 +91,15 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Driver Manager",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -140,15 +141,15 @@ func TestCheck_NoPermission(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Reader",
 			MaxSensitivity: permission.SensitivityPublic,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -363,7 +364,7 @@ func TestCheck_NoRoles(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
@@ -393,7 +394,7 @@ func TestCheckBatch(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil).Once()
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil).
+		Return([]*rbac.UserRoleAssignment{}, nil).
 		Once()
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil).
@@ -430,15 +431,15 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	}, nil)
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Dispatcher",
 			MaxSensitivity: permission.SensitivityRestricted,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -472,7 +473,7 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 	eng.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{
 				ID:          roleID,
 				Name:        "Dispatcher",
@@ -486,7 +487,7 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 	}, nil)
 	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.MatchedBy(func(perms *permissionports.CachedPermissions) bool {
@@ -522,7 +523,7 @@ func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *
 	}, nil)
 	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
@@ -566,16 +567,16 @@ func TestGetEffectivePermissions(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Manager",
 			IsSystem:       true,
 			MaxSensitivity: permission.SensitivityRestricted,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:       pulid.MustNew("rp_"),
 					RoleID:   roleID,
@@ -617,7 +618,7 @@ func TestSimulatePermissions(t *testing.T) {
 	newRoleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				ID:             pulid.MustNew("ura_"),
 				RoleID:         existingRoleID,
@@ -626,12 +627,12 @@ func TestSimulatePermissions(t *testing.T) {
 			},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{existingRoleID, newRoleID}).
-		Return([]*permission.Role{
+		Return([]*rbac.Role{
 			{
 				ID:             existingRoleID,
 				Name:           "Viewer",
 				MaxSensitivity: permission.SensitivityInternal,
-				Permissions: []*permission.ResourcePermission{
+				Permissions: []*rbac.ResourcePermission{
 					{
 						ID:         pulid.MustNew("rp_"),
 						RoleID:     existingRoleID,
@@ -645,7 +646,7 @@ func TestSimulatePermissions(t *testing.T) {
 				ID:             newRoleID,
 				Name:           "Editor",
 				MaxSensitivity: permission.SensitivityRestricted,
-				Permissions: []*permission.ResourcePermission{
+				Permissions: []*rbac.ResourcePermission{
 					{
 						ID:         pulid.MustNew("rp_"),
 						RoleID:     newRoleID,
@@ -702,7 +703,7 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 			{
 				ID:             pulid.MustNew("ura_"),
@@ -712,12 +713,12 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 				ExpiresAt:      &expiredTime,
 			},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Active Role",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions:    []*permission.ResourcePermission{},
+			Permissions:    []*rbac.ResourcePermission{},
 		},
 	}, nil)
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
@@ -748,17 +749,17 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: role1ID, UserID: userID, OrganizationID: orgID},
 			{ID: pulid.MustNew("ura_"), RoleID: role2ID, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{role1ID, role2ID}).
-		Return([]*permission.Role{
+		Return([]*rbac.Role{
 			{
 				ID:             role1ID,
 				Name:           "Reader",
 				MaxSensitivity: permission.SensitivityInternal,
-				Permissions: []*permission.ResourcePermission{
+				Permissions: []*rbac.ResourcePermission{
 					{
 						ID:         pulid.MustNew("rp_"),
 						RoleID:     role1ID,
@@ -772,7 +773,7 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 				ID:             role2ID,
 				Name:           "Editor",
 				MaxSensitivity: permission.SensitivityRestricted,
-				Permissions: []*permission.ResourcePermission{
+				Permissions: []*rbac.ResourcePermission{
 					{
 						ID:         pulid.MustNew("rp_"),
 						RoleID:     role2ID,
@@ -886,7 +887,7 @@ func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).
@@ -911,15 +912,15 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Viewer",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -956,15 +957,15 @@ func TestGetResourcePermissionsBatch_ReadsThePermissionsOnce(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil).Once()
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil).Once()
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Viewer",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -1004,15 +1005,15 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Viewer",
 			MaxSensitivity: permission.SensitivityPublic,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -1065,7 +1066,7 @@ func TestGetEffectivePermissions_GetRolesError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).
@@ -1089,7 +1090,7 @@ func TestSimulatePermissions_WithRemoval(t *testing.T) {
 	removeRoleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				ID:             pulid.MustNew("ura_"),
 				RoleID:         existingRoleID,
@@ -1104,12 +1105,12 @@ func TestSimulatePermissions_WithRemoval(t *testing.T) {
 			},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{existingRoleID}).
-		Return([]*permission.Role{
+		Return([]*rbac.Role{
 			{
 				ID:             existingRoleID,
 				Name:           "Viewer",
 				MaxSensitivity: permission.SensitivityInternal,
-				Permissions: []*permission.ResourcePermission{
+				Permissions: []*rbac.ResourcePermission{
 					{
 						ID:         pulid.MustNew("rp_"),
 						RoleID:     existingRoleID,
@@ -1166,7 +1167,7 @@ func TestSimulatePermissions_GetRolesError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).
@@ -1214,7 +1215,7 @@ func TestGetEffectivePermissions_ExpiredAssignmentsSkipped(t *testing.T) {
 	expiredTime := timeutils.NowUnix() - 3600
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				ID:             pulid.MustNew("ura_"),
 				RoleID:         activeRoleID,
@@ -1229,12 +1230,12 @@ func TestGetEffectivePermissions_ExpiredAssignmentsSkipped(t *testing.T) {
 				ExpiresAt:      &expiredTime,
 			},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeRoleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeRoleID}).Return([]*rbac.Role{
 		{
 			ID:             activeRoleID,
 			Name:           "Active",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions:    []*permission.ResourcePermission{},
+			Permissions:    []*rbac.ResourcePermission{},
 		},
 	}, nil)
 
@@ -1335,7 +1336,7 @@ func TestCheck_WithRoleActivationCachesActiveSubset(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil).Once()
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				ID:             pulid.MustNew("ura_"),
 				RoleID:         activeRoleID,
@@ -1349,12 +1350,12 @@ func TestCheck_WithRoleActivationCachesActiveSubset(t *testing.T) {
 				OrganizationID: orgID,
 			},
 		}, nil).Once()
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeRoleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeRoleID}).Return([]*rbac.Role{
 		{
 			ID:             activeRoleID,
 			Name:           "Dispatcher",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     activeRoleID,
@@ -1764,15 +1765,15 @@ func TestCheck_AllowsWhatAGrantImpliesAtEvaluation(t *testing.T) {
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Billing approver",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,
@@ -1815,15 +1816,15 @@ func TestGetEffectivePermissions_ReportsImpliedOperations(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
 		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			Name:           "Memory keeper",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{
 					ID:         pulid.MustNew("rp_"),
 					RoleID:     roleID,

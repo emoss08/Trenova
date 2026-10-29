@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pageaccess"
@@ -221,7 +222,7 @@ func (s *Service) grants(
 		)
 	}
 
-	var role *permission.Role
+	var role *rbac.Role
 	if draft != nil {
 		built, err := s.draftRole(draft)
 		if err != nil {
@@ -239,7 +240,7 @@ func (s *Service) grants(
 		role = saved
 	}
 
-	roles := []*permission.Role{role}
+	roles := []*rbac.Role{role}
 	if len(role.ParentRoleIDs) > 0 {
 		inherited, err := s.roles.GetRolesWithInheritance(ctx, role.ParentRoleIDs)
 		if err != nil {
@@ -271,15 +272,15 @@ func foreignParentError() error {
 	)
 }
 
-func (s *Service) draftRole(draft *RoleDraft) (*permission.Role, error) {
+func (s *Service) draftRole(draft *RoleDraft) (*rbac.Role, error) {
 	multiErr := errortypes.NewMultiError()
 	if !draft.MaxSensitivity.IsValid() {
 		multiErr.Add("maxSensitivity", errortypes.ErrInvalid, "Choose a valid sensitivity")
 	}
-	role := &permission.Role{
+	role := &rbac.Role{
 		MaxSensitivity: draft.MaxSensitivity,
 		ParentRoleIDs:  draft.ParentRoleIDs,
-		Permissions:    make([]*permission.ResourcePermission, 0, len(draft.Permissions)),
+		Permissions:    make([]*rbac.ResourcePermission, 0, len(draft.Permissions)),
 	}
 	for _, grant := range draft.Permissions {
 		if _, ok := s.registry.Get(grant.Resource); !ok {
@@ -296,7 +297,7 @@ func (s *Service) draftRole(draft *RoleDraft) (*permission.Role, error) {
 					"A permission names an operation its resource does not have")
 			}
 		}
-		role.Permissions = append(role.Permissions, &permission.ResourcePermission{
+		role.Permissions = append(role.Permissions, &rbac.ResourcePermission{
 			Resource:   grant.Resource,
 			Operations: grant.Operations,
 		})

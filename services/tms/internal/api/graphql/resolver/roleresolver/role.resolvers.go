@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,7 +43,7 @@ func (r *QueryResolver) Roles(ctx context.Context, input gqlmodel.DataTableConne
 	return roleConnectionToModel(result)
 }
 
-func (r *QueryResolver) Role(ctx context.Context, id string) (*permission.Role, error) {
+func (r *QueryResolver) Role(ctx context.Context, id string) (*rbac.Role, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func (r *QueryResolver) Role(ctx context.Context, id string) (*permission.Role, 
 	})
 }
 
-func (r *RoleResolver) CoreResponsibility(ctx context.Context, obj *permission.Role) (*string, error) {
+func (r *RoleResolver) CoreResponsibility(ctx context.Context, obj *rbac.Role) (*string, error) {
 	if obj.CoreResponsibility == "" {
 		return nil, nil
 	}
@@ -68,10 +69,10 @@ func (r *RoleResolver) CoreResponsibility(ctx context.Context, obj *permission.R
 	return &value, nil
 }
 
-func (r *RoleResolver) MaxSensitivity(ctx context.Context, obj *permission.Role) (string, error) {
+func (r *RoleResolver) MaxSensitivity(ctx context.Context, obj *rbac.Role) (string, error) {
 	return obj.MaxSensitivity.String(), nil
 }
 
-func (r *RoleResolver) Agents(ctx context.Context, obj *permission.Role) ([]*agentdefinition.Definition, error) {
+func (r *RoleResolver) Agents(ctx context.Context, obj *rbac.Role) ([]*agentdefinition.Definition, error) {
 	return r.RoleAgents(ctx, obj)
 }

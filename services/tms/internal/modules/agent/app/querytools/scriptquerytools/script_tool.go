@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -250,7 +251,7 @@ func datasetsSchema() map[string]any {
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyDescription: "A finished report run you ran for this person, " +
 						"from report_run.",
-				}, permission.KindReportRun),
+				}, recordkind.ReportRun),
 				paramDatasetDocument: agenttoolschema.RecordIDText(
 					permission.ResourceDocument,
 					"A CSV, XLSX or text file the person attached to this conversation, "+

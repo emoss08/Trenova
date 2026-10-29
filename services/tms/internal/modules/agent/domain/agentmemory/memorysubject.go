@@ -3,7 +3,7 @@ package agentmemory
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/textcase"
 )
@@ -103,7 +103,7 @@ func MemoryRecordKindOfID(id pulid.ID) (MemoryRecordKind, bool) {
 	if !pulid.LooksLike(id.String()) {
 		return "", false
 	}
-	kind, ok := permission.RecordKindOfIDPrefix(id.Prefix())
+	kind, ok := recordkind.OfIDPrefix(id.Prefix())
 	if !ok {
 		return "", false
 	}

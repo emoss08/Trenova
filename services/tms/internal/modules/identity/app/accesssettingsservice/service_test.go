@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
@@ -43,13 +43,13 @@ func (r *memoryRepo) Save(_ context.Context, s *iam.AccessSettings) (*iam.Access
 
 type constraints struct {
 	permissionports.RBACRepository
-	dynamic []*permission.RoleConstraint
+	dynamic []*rbac.RoleConstraint
 }
 
 func (c *constraints) ListRoleConstraints(
 	context.Context,
 	permissionports.ListRoleConstraintsRequest,
-) ([]*permission.RoleConstraint, error) {
+) ([]*rbac.RoleConstraint, error) {
 	return c.dynamic, nil
 }
 
@@ -147,7 +147,7 @@ func TestUpdate_KeepsActivationWhileDynamicSeparationNeedsIt(t *testing.T) {
 		BusinessUnitID:        f.tenant.BuID,
 		RequireRoleActivation: true,
 	}
-	f.rbac.dynamic = []*permission.RoleConstraint{{Type: permission.RoleConstraintTypeDSD}}
+	f.rbac.dynamic = []*rbac.RoleConstraint{{Type: rbac.RoleConstraintTypeDSD}}
 
 	_, err := f.svc.Update(t.Context(), &iamports.UpdateAccessSettingsRequest{
 		TenantInfo:            f.tenant,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformbundles"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/workforcebundles"
 )
 
@@ -39,8 +40,8 @@ func BundleByID(id string) (permissionspec.Bundle, bool) {
 
 func (r *Registry) TemplateGrants(
 	template permissionspec.JobTemplate,
-) []*permission.ResourcePermission {
-	byResource := make(map[string]*permission.ResourcePermission)
+) []*rbac.ResourcePermission {
+	byResource := make(map[string]*rbac.ResourcePermission)
 	order := make([]string, 0, 32)
 	add := func(resource string, ops []permission.Operation, scope permission.DataScope) {
 		if scope == "" {
@@ -48,7 +49,7 @@ func (r *Registry) TemplateGrants(
 		}
 		existing, ok := byResource[resource]
 		if !ok {
-			byResource[resource] = &permission.ResourcePermission{
+			byResource[resource] = &rbac.ResourcePermission{
 				Resource:   resource,
 				Operations: permission.Normalize(ops),
 				DataScope:  scope,
@@ -87,7 +88,7 @@ func (r *Registry) TemplateGrants(
 	}
 
 	slices.Sort(order)
-	grants := make([]*permission.ResourcePermission, 0, len(order))
+	grants := make([]*rbac.ResourcePermission, 0, len(order))
 	for _, resource := range order {
 		grants = append(grants, byResource[resource])
 	}

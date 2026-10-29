@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -118,7 +119,7 @@ type RoleSummary struct {
 	PermissionCount int      `json:"permissionCount"`
 }
 
-func NewRoleSummary(role *permission.Role) RoleSummary {
+func NewRoleSummary(role *rbac.Role) RoleSummary {
 	return RoleSummary{
 		ID:          role.ID,
 		Name:        role.Name,

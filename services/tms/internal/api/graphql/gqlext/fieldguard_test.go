@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -35,10 +36,10 @@ func loadProtectedFields(t *testing.T) ProtectedFieldMap {
 func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 	t.Parallel()
 
-	margins := func(fields ...string) map[string]permission.FieldGroup {
-		out := make(map[string]permission.FieldGroup, len(fields))
+	margins := func(fields ...string) map[string]protectedfield.Group {
+		out := make(map[string]protectedfield.Group, len(fields))
 		for _, field := range fields {
-			out[field] = permission.FieldGroupMargins
+			out[field] = protectedfield.Margins
 		}
 		return out
 	}
@@ -46,13 +47,13 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 
 	assert.Equal(t, ProtectedFieldMap{
 		"WorkerProfile": {
-			"dob":            permission.FieldGroupPersonal,
-			"licenseNumber":  permission.FieldGroupPersonal,
-			"twicCardNumber": permission.FieldGroupPersonal,
-			"lastDrugTest":   permission.FieldGroupPersonal,
+			"dob":            protectedfield.Personal,
+			"licenseNumber":  protectedfield.Personal,
+			"twicCardNumber": protectedfield.Personal,
+			"lastDrugTest":   protectedfield.Personal,
 		},
 		"WorkerCredential": {
-			"number": permission.FieldGroupPersonal,
+			"number": protectedfield.Personal,
 		},
 		"RateAgreement":       margins("marginFloorPercent", "maxPayPercentOfSell"),
 		"CostingControl":      margins("targetMarginPercent"),
@@ -133,7 +134,7 @@ func TestEveryProtectedFieldIsWithheldByItsEntity(t *testing.T) {
 		}
 
 		visible := entry.entity()
-		visible.WithholdFields(permission.AllFieldGroups())
+		visible.WithholdFields(protectedfield.AllGroups())
 		withheld := entry.entity()
 		withheld.WithholdFields(0)
 
@@ -227,8 +228,8 @@ type Agreement {
 	require.NoError(t, err)
 	assert.Equal(t, ProtectedFieldMap{
 		"Agreement": {
-			"floor": permission.FieldGroupMargins,
-			"owner": permission.FieldGroupPersonal,
+			"floor": protectedfield.Margins,
+			"owner": protectedfield.Personal,
 		},
 	}, fields)
 }
@@ -373,7 +374,7 @@ func TestFieldGuardAsksOncePerOperation(t *testing.T) {
 	}
 	wg.Wait()
 
-	assert.Equal(t, int32(len(permission.FieldGroups())), engine.calls.Load())
+	assert.Equal(t, int32(len(protectedfield.Groups())), engine.calls.Load())
 }
 
 func TestFieldGuardWithholdsFromAnUnauthenticatedRequest(t *testing.T) {

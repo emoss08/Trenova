@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -116,7 +117,7 @@ func (t *EdiTransferDecisionTool) SearchTerms() []string { return t.decision.sea
 func (t *EdiTransferDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
 		paramEDITransferID: agenttoolschema.KindID(ediTransferIDGuidance,
-			permission.KindEDITransfer),
+			recordkind.EDITransfer),
 	}
 	required := []string{paramEDITransferID}
 	if t.decision.needsReason {

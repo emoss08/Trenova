@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -236,7 +237,7 @@ func recordMarkProblems(tool, at string, property map[string]any) []string {
 
 	problems := make([]string, 0, len(marks))
 	for _, resource := range marks {
-		if _, known := permission.Resource(resource).IDPrefix(); !known {
+		if _, known := recordkind.ResourcePrefix(permission.Resource(resource)); !known {
 			problems = append(problems, fmt.Sprintf(
 				"%s.%s: marked as a %s id, which has no prefix in permission's table",
 				tool, at, resource))

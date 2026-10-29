@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ func TestEveryRecordLinkIsAKindTheServerKnows(t *testing.T) {
 	t.Parallel()
 
 	for _, entity := range productguide.Default.RecordEntities() {
-		assert.True(t, permission.RecordKind(entity).Known(), entity)
+		assert.True(t, recordkind.Kind(entity).Known(), entity)
 	}
 }
 
@@ -45,7 +45,7 @@ func TestEveryMemoryRecordKindIsAKindOfRecord(t *testing.T) {
 	t.Parallel()
 
 	for _, kind := range agentmemory.AllMemoryRecordKinds() {
-		recordKind := permission.RecordKind(kind)
+		recordKind := recordkind.Kind(kind)
 		if !assert.True(t, recordKind.Known(), kind) {
 			continue
 		}

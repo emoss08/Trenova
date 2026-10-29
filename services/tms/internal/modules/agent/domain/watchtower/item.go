@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,11 +68,11 @@ type Item struct {
 	DueLabel  string    `json:"dueLabel"  keel:"due_label,nullzero"`
 	DueSource DueSource `json:"dueSource" keel:"due_source,nullzero"`
 
-	RecordKind  permission.RecordKind `json:"recordKind"  keel:"record_kind,nullzero"`
-	RecordLabel string                `json:"recordLabel" keel:"record_label,nullzero"`
-	Facts       []Fact                `json:"facts"       keel:"facts,jsonb"`
-	Impact      []string              `json:"impact"      keel:"impact,jsonb"`
-	Trail       []TrailEvent          `json:"trail"       keel:"trail,jsonb"`
+	RecordKind  recordkind.Kind `json:"recordKind"  keel:"record_kind,nullzero"`
+	RecordLabel string          `json:"recordLabel" keel:"record_label,nullzero"`
+	Facts       []Fact          `json:"facts"       keel:"facts,jsonb"`
+	Impact      []string        `json:"impact"      keel:"impact,jsonb"`
+	Trail       []TrailEvent    `json:"trail"       keel:"trail,jsonb"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
 	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
@@ -153,7 +153,7 @@ func (i *Item) SameDeadline(other *Item) bool {
 			(i.DueAt != nil && other.DueAt != nil && *i.DueAt == *other.DueAt))
 }
 
-func (i *Item) ResolvedRecordKind() permission.RecordKind {
+func (i *Item) ResolvedRecordKind() recordkind.Kind {
 	if i.RecordKind != "" {
 		return i.RecordKind
 	}

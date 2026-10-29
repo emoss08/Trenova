@@ -7,16 +7,17 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func effectiveGrant(
 	reg *Registry,
-	grants []*permission.ResourcePermission,
+	grants []*rbac.ResourcePermission,
 	kind permission.Resource,
 ) string {
-	idx := slices.IndexFunc(grants, func(rp *permission.ResourcePermission) bool {
+	idx := slices.IndexFunc(grants, func(rp *rbac.ResourcePermission) bool {
 		return rp.Resource == kind.String()
 	})
 	if idx < 0 {

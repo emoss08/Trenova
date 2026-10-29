@@ -3,7 +3,7 @@ package assistantartifact
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
@@ -38,7 +38,7 @@ func NormalizeTitle(title string) string {
 }
 
 func RecordNoun(entity string) string {
-	return permission.RecordKind(entity).Noun()
+	return recordkind.Kind(entity).Noun()
 }
 
 func RecordTitle(entity, label string) string {

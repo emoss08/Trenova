@@ -1,22 +1,22 @@
 package homelayout
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 )
 
 // BuiltInLayout is the home screen a user sees before anyone has authored
 // anything for them. Choosing by core responsibility means a new dispatcher and
 // a new controller each land somewhere useful on their first login without an
 // administrator having done any setup.
-func BuiltInLayout(responsibility permission.CoreResponsibility) *Layout {
+func BuiltInLayout(responsibility rbac.CoreResponsibility) *Layout {
 	switch responsibility {
-	case permission.CoreResponsibilityOperations:
+	case rbac.CoreResponsibilityOperations:
 		return operationsLayout()
-	case permission.CoreResponsibilityBilling:
+	case rbac.CoreResponsibilityBilling:
 		return billingLayout()
-	case permission.CoreResponsibilityFinance:
+	case rbac.CoreResponsibilityFinance:
 		return financeLayout()
-	case permission.CoreResponsibilityLeadership:
+	case rbac.CoreResponsibilityLeadership:
 		return leadershipLayout()
 	default:
 		return fallbackLayout()
@@ -25,15 +25,15 @@ func BuiltInLayout(responsibility permission.CoreResponsibility) *Layout {
 
 // BuiltInLayoutName labels the shipped layout so the UI can say what the user
 // is looking at, and what "reset" would return them to.
-func BuiltInLayoutName(responsibility permission.CoreResponsibility) string {
+func BuiltInLayoutName(responsibility rbac.CoreResponsibility) string {
 	switch responsibility {
-	case permission.CoreResponsibilityOperations:
+	case rbac.CoreResponsibilityOperations:
 		return "Operations Home"
-	case permission.CoreResponsibilityBilling:
+	case rbac.CoreResponsibilityBilling:
 		return "Billing Home"
-	case permission.CoreResponsibilityFinance:
+	case rbac.CoreResponsibilityFinance:
 		return "Finance Home"
-	case permission.CoreResponsibilityLeadership:
+	case rbac.CoreResponsibilityLeadership:
 		return "Leadership Home"
 	default:
 		return "Trenova Home"

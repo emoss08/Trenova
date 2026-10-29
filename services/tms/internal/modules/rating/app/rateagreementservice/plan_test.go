@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -57,7 +56,11 @@ func TestPlanReview_ShowsEachMoveWithoutSavingIt(t *testing.T) {
 			agreement := draftAgreement(tc.from)
 			svc, repo := serviceFor(t, agreement)
 
-			change, err := svc.PlanReview(t.Context(), tc.review, reviewRequest(agreement, "Checked"))
+			change, err := svc.PlanReview(
+				t.Context(),
+				tc.review,
+				reviewRequest(agreement, "Checked"),
+			)
 			require.NoError(t, err)
 			assert.Equal(t, tc.from, change.Before.Status)
 			assert.Equal(t, tc.to, change.After.Status)
@@ -196,7 +199,10 @@ func TestPlanDuplicate_CopiesAsADraftAndSavesNothing(t *testing.T) {
 	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
 
 	plan, err := svc.PlanDuplicate(t.Context(), &DuplicateRateAgreementRequest{
-		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: stored.OrganizationID,
+			BuID:  stored.BusinessUnitID,
+		},
 		RateAgreementID: stored.ID,
 		Code:            "ACME-2027",
 	})
@@ -221,7 +227,10 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 	successor := laneRule("2.40")
 	successor.ID = pulid.Nil
 	plan, err := svc.PlanAmendRules(t.Context(), &rateagreementports.AmendRateAgreementRulesRequest{
-		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: stored.OrganizationID,
+			BuID:  stored.BusinessUnitID,
+		},
 		RateAgreementID: stored.ID,
 		EffectiveFrom:   1_000,
 		SupersededIDs:   []pulid.ID{current.ID},
@@ -234,7 +243,10 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 	repo.AssertNotCalled(t, "AmendRules", mock.Anything, mock.Anything)
 
 	_, err = svc.PlanAmendRules(t.Context(), &rateagreementports.AmendRateAgreementRulesRequest{
-		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: stored.OrganizationID,
+			BuID:  stored.BusinessUnitID,
+		},
 		RateAgreementID: stored.ID,
 		EffectiveFrom:   1_000,
 	})
@@ -268,13 +280,13 @@ func carrierAgreement() *rateagreement.RateAgreement {
 	return agreement
 }
 
-type fixedFieldAccess permission.FieldGroupSet
+type fixedFieldAccess protectedfield.GroupSet
 
 func (f fixedFieldAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
-	return permission.FieldGroupSet(f)
+) protectedfield.GroupSet {
+	return protectedfield.GroupSet(f)
 }
 
 func TestPlanUpdate_KeepsStoredMarginsForAnEditorWithoutTheGroup(t *testing.T) {
@@ -314,7 +326,7 @@ func TestPlanUpdate_TakesMarginsFromAnEditorWithTheGroup(t *testing.T) {
 		Logger:    zap.NewNop(),
 		Repo:      repo,
 		Validator: testValidator(),
-		Fields:    fixedFieldAccess(permission.AllFieldGroups()),
+		Fields:    fixedFieldAccess(protectedfield.AllGroups()),
 	})
 
 	edited := *stored

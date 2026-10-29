@@ -3,6 +3,7 @@ package settlementpreview
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +27,7 @@ var CarrierPaymentMethods = agenttoolschema.Source(
 func CarrierSettlementLedger() SettlementLedger[carriersettlement.CarrierSettlement] {
 	return SettlementLedger[carriersettlement.CarrierSettlement]{
 		Resource:  permission.ResourceCarrierSettlement,
-		Kind:      permission.RecordKind(permission.ResourceCarrierSettlement),
+		Kind:      recordkind.Kind(permission.ResourceCarrierSettlement),
 		Artifact:  carrierSettlementEntity,
 		Noun:      NounCarrierSettlement,
 		Sources:   carrierSettlementRead,

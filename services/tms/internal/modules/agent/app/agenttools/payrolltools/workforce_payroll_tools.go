@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -202,7 +203,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 		paramPayrollExportID: agenttoolschema.KindID(
 			"The payroll run, from settlement_list_payroll_exports. "+
 				"Never guess one.",
-			permission.KindPayrollExport,
+			recordkind.PayrollExport,
 		),
 		changepreview.FieldReason: toolparams.StringProperty(
 			"Why the run is voided, kept on it.",

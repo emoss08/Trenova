@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,7 +82,7 @@ func TestAnApprovedPortalActionIsAPortalTaskNamedForItsSite(t *testing.T) {
 	artifact := PortalActionArtifact("decision:apr_01", &agentrecord.ToolExecutionResult{
 		Action: "started",
 		Name:   "Acme dock portal",
-		Record: &agentrecord.RecordRef{EntityType: string(permission.KindPortalRun), ID: "aprn_02"},
+		Record: &agentrecord.RecordRef{EntityType: string(recordkind.PortalRun), ID: "aprn_02"},
 	})
 
 	require.NotNil(t, artifact)

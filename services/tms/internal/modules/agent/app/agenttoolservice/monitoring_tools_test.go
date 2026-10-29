@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -457,7 +458,7 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 		assert.Equal(t, permission.OpCreate, entry.tool.Policy().Operation, entry.tool.Name())
 		assert.True(
 			t,
-			permission.IsAgentAllowed(
+			agentceiling.Allows(
 				entry.tool.Policy().Resource,
 				entry.tool.Policy().Operation,
 			),

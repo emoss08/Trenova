@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -77,7 +78,7 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSiteID: agenttoolschema.KindID(
 			"The portal site to act on, from web_list_portal_sites. It must allow actions.",
-			permission.KindPortalSite,
+			recordkind.PortalSite,
 		),
 		paramInstruction: map[string]any{
 			toolschema.KeyType: "string",
@@ -104,7 +105,7 @@ func (t *ActOnPortalTool) Policy() agenttoolports.ToolPolicy {
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
 		Effect:        agenttooltrust.ToolEffectChange,
-		Artifact:      string(permission.KindPortalRun),
+		Artifact:      string(recordkind.PortalRun),
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Acts on a third-party portal in the organization's name, which another " +
 			"company then relies on; what it books or submits is undone, if at all, on that " +
@@ -252,7 +253,7 @@ func (t *ActOnPortalTool) ExecuteWithResult(
 		Name:   started.Site.Name,
 		IDs:    map[string]string{resultRunID: started.RunID.String()},
 		Record: &agentrecord.RecordRef{
-			EntityType: string(permission.KindPortalRun),
+			EntityType: string(recordkind.PortalRun),
 			ID:         started.RunID.String(),
 		},
 	}

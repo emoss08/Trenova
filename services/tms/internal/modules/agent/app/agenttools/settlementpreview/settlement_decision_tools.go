@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -51,7 +52,7 @@ type SettlementLineFacts struct {
 
 type SettlementLedger[E any] struct {
 	Resource  permission.Resource                                                                  `json:"-"`
-	Kind      permission.RecordKind                                                                `json:"-"`
+	Kind      recordkind.Kind                                                                      `json:"-"`
 	Artifact  string                                                                               `json:"-"`
 	Noun      string                                                                               `json:"-"`
 	Sources   string                                                                               `json:"-"`

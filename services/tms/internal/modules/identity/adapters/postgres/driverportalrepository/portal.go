@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -293,7 +294,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 			return nil, fmt.Errorf("create portal user membership: %w", err)
 		}
 
-		if err = permissiondb.UserRoleAssignments.Create(ctx, db, &permission.UserRoleAssignment{
+		if err = permissiondb.UserRoleAssignments.Create(ctx, db, &rbac.UserRoleAssignment{
 			ID:             pulid.MustNew("ura_"),
 			UserID:         req.User.ID,
 			OrganizationID: invitation.OrganizationID,
@@ -398,7 +399,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 	ctx context.Context,
 	invitation *portalinvitation.PortalInvitation,
 	req *portalaccessports.ActivatePortalAccessRequest,
-) (*permission.Role, error) {
+) (*rbac.Role, error) {
 	ro := permissiondb.Roles
 	db := r.db.Keel(ctx)
 	role, err := ro.Where(ro.Name.Eq(req.RoleName), ro.IsSystem.IsTrue()).First(ctx, db)
@@ -409,7 +410,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 		return nil, fmt.Errorf("find driver role: %w", err)
 	}
 
-	role = &permission.Role{
+	role = &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		BusinessUnitID: invitation.BusinessUnitID,
 		OrganizationID: invitation.OrganizationID,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,45 +22,48 @@ func TestCountRolePermissions_FollowsInheritedRolesAndCountsEachOperation(t *tes
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
-	create := func(role *permission.Role) {
+	create := func(role *rbac.Role) {
 		t.Helper()
 		require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
 		for _, p := range role.Permissions {
 			p.RoleID = role.ID
 		}
 		if len(role.Permissions) > 0 {
-			require.NoError(t, permissiondb.ResourcePermissions.CreateMany(ctx, db, role.Permissions))
+			require.NoError(
+				t,
+				permissiondb.ResourcePermissions.CreateMany(ctx, db, role.Permissions),
+			)
 		}
 	}
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 
-	grant := func(resource string, ops ...permission.Operation) *permission.ResourcePermission {
-		return &permission.ResourcePermission{
+	grant := func(resource string, ops ...permission.Operation) *rbac.ResourcePermission {
+		return &rbac.ResourcePermission{
 			Resource:   resource,
 			Operations: ops,
 			DataScope:  permission.DataScopeOrganization,
 		}
 	}
-	parent := &permission.Role{
+	parent := &rbac.Role{
 		Name:           "Dispatch lead",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			grant("shipment", permission.OpRead, permission.OpUpdate),
 			grant("driver", permission.OpRead),
 		},
 	}
 	create(parent)
-	child := &permission.Role{
+	child := &rbac.Role{
 		Name:           "Dispatcher",
 		ParentRoleIDs:  []pulid.ID{parent.ID},
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			grant("worker", permission.OpRead),
 			grant("shipment", permission.OpRead),
 		},
 	}
 	create(child)
-	empty := &permission.Role{Name: "Observer", MaxSensitivity: permission.SensitivityInternal}
+	empty := &rbac.Role{Name: "Observer", MaxSensitivity: permission.SensitivityInternal}
 	create(empty)
 
 	counts, err := repo.CountRolePermissions(ctx, []pulid.ID{child.ID, parent.ID, empty.ID})

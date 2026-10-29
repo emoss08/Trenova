@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
@@ -274,7 +275,7 @@ func newScheduleDOTTestTool(tests DrugAlcoholKeeper) agenttoolports.AgentTool {
 		paramDrawEntryID: agenttoolschema.KindID(
 			"For a random test: the selection it answers, from "+
 				"worker_get_dot_random_draw.",
-			permission.KindDOTRandomSelection,
+			recordkind.DOTRandomSelection,
 		),
 		paramIsDOT: toolparams.BooleanProperty(
 			"Whether it is a DOT-regulated test. Defaults to true; " +
@@ -437,7 +438,7 @@ func newRunDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentTool {
 		paramPoolID: agenttoolschema.KindID(
 			"The pool, from worker_list_dot_random_draws. Leave it out to draw "+
 				"from the organization's default pool.",
-			permission.KindDOTRandomPool,
+			recordkind.DOTRandomPool,
 		),
 		paramDrawDay: agenttoolschema.Date(
 			"A day inside the period to draw for, for a period that was " +
@@ -504,7 +505,7 @@ type drawDecision struct {
 func drawIDProperty() map[string]any {
 	return agenttoolschema.KindID(
 		agenttoolschema.IDDescription("The round", "worker_list_dot_random_draws"),
-		permission.KindDOTRandomDraw,
+		recordkind.DOTRandomDraw,
 	)
 }
 
@@ -651,7 +652,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 	), map[string]any{
 		paramDrawEntryID: agenttoolschema.KindID(
 			"The selection, from worker_get_dot_random_draw. Never guess one.",
-			permission.KindDOTRandomSelection,
+			recordkind.DOTRandomSelection,
 		),
 		paramSelectionMove: agenttoolschema.Enum("Notified, Excused or Missed.",
 			randomSelectionMoves),

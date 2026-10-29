@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -396,7 +397,7 @@ func (t *CreateCarrierInvoiceMatchTool) Description() string {
 func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
-			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
+			ediInvoiceSourcesTool+". Never guess one.", recordkind.EDICarrierInvoice),
 		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
 			"The shipment it bills, from shipment_list, when the "+
@@ -579,7 +580,7 @@ func (t *LinkEDICarrierInvoiceTool) Description() string {
 func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
-			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
+			ediInvoiceSourcesTool+". Never guess one.", recordkind.EDICarrierInvoice),
 		toolparams.ParamCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier it came from, from carrier_list or "+

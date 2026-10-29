@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -102,7 +103,7 @@ func (t *SendEDILoadTenderTool) ParamSchema() map[string]any {
 			"The shipment to tender, from shipment_list or shipment_get. Never guess one."),
 		paramEDIPartnerID: agenttoolschema.KindID("The internal EDI partner that stands for "+
 			"the receiving organization, "+ediPartnerIDGuidance+" Leave it out to use the "+
-			"customer's.", permission.KindEDIPartner),
+			"customer's.", recordkind.EDIPartner),
 	}, changepreview.FieldShipmentID)
 }
 
@@ -195,7 +196,7 @@ func (t *SendEDIStatusUpdateTool) Description() string {
 func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIPartnerID: agenttoolschema.KindID("The trading partner to send it to, "+
-			ediPartnerIDGuidance, permission.KindEDIPartner),
+			ediPartnerIDGuidance, recordkind.EDIPartner),
 		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Report this shipment's current status. The shipment, from shipment_list or "+
 				"shipment_get."),

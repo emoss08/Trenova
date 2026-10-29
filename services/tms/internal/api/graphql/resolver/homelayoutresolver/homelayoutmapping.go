@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -224,11 +224,11 @@ func homePresetRoleIDs(roleIDs []string) []pulid.ID {
 	return parsed
 }
 
-func homeCoreResponsibility(value *string) permission.CoreResponsibility {
+func homeCoreResponsibility(value *string) rbac.CoreResponsibility {
 	if value == nil {
 		return ""
 	}
-	return permission.CoreResponsibility(*value)
+	return rbac.CoreResponsibility(*value)
 }
 
 func homeOptionalString(value string) *string {

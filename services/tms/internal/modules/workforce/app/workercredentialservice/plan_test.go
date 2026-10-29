@@ -3,7 +3,7 @@ package workercredentialservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/stretchr/testify/assert"
@@ -90,7 +90,7 @@ func TestUpdateKeepsTheStoredNumberForAnEditorWithoutPersonalDetails(t *testing.
 }
 
 func TestUpdateTakesTheNumberFromAnEditorWithPersonalDetails(t *testing.T) {
-	h := newHarnessSeeing(t, fixedFieldAccess(permission.AllFieldGroups()))
+	h := newHarnessSeeing(t, fixedFieldAccess(protectedfield.AllGroups()))
 	h.workerRepo.EXPECT().
 		UpdateProfileComplianceStatus(mock.Anything, mock.Anything).
 		Return(nil).

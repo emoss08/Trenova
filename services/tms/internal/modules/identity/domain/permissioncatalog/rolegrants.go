@@ -2,6 +2,7 @@ package permissioncatalog
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 )
 
 // RoleGrants is what a set of roles grants together, as the permission
@@ -16,7 +17,7 @@ type RoleGrants struct {
 
 // GrantsOf is the union of the roles' grants. Pass a role and every role it
 // inherits from.
-func GrantsOf(roles ...*permission.Role) RoleGrants {
+func GrantsOf(roles ...*rbac.Role) RoleGrants {
 	grants := RoleGrants{
 		operations:     make(map[string]permission.OperationSet),
 		MaxSensitivity: permission.SensitivityPublic,

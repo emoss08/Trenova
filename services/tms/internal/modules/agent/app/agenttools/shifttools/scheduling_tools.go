@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
@@ -381,7 +382,7 @@ func NewEndWorkerShiftAssignmentTool(
 			paramShiftAssignmentID: agenttoolschema.KindID(
 				"The assignment, from worker_get_schedule. "+
 					"Never guess one.",
-				permission.KindShiftAssignment,
+				recordkind.ShiftAssignment,
 			),
 			changepreview.FieldEffectiveTo: agenttoolschema.Date(
 				"The last day the worker works the pattern.",

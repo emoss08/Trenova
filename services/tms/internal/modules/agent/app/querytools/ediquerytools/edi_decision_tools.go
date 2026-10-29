@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -289,7 +290,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 		),
 		paramShipmentLinkID: agenttoolschema.KindID("Only changes on one linked load, by the "+
 			"shipmentLinkId from edi_list_tender_changes or a row of this tool.",
-			permission.KindEDIShipmentLink),
+			recordkind.EDIShipmentLink),
 	}, listtool.DefaultLimit, listtool.MaxLimit))
 }
 

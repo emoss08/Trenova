@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -72,12 +72,12 @@ func RegisterEntities() []any {
 		&invoicerun.InvoiceRun{},
 		&invoicerun.InvoiceRunGroup{},
 		&invoicerun.InvoiceRunGroupItem{},
-		&permission.Role{},
-		&permission.ResourcePermission{},
-		&permission.UserRoleAssignment{},
-		&permission.RoleHierarchyEdge{},
-		&permission.RoleConstraint{},
-		&permission.RoleConstraintRole{},
+		&rbac.Role{},
+		&rbac.ResourcePermission{},
+		&rbac.UserRoleAssignment{},
+		&rbac.RoleHierarchyEdge{},
+		&rbac.RoleConstraint{},
+		&rbac.RoleConstraintRole{},
 		&shipmentcontrol.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},

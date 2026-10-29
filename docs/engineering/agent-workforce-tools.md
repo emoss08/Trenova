@@ -222,7 +222,7 @@ template. Each moves pay, which the workforce coordinator never touches, and the
 clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
 agent it builds in AI control, as it adds the pay setup tools. A template test
 (`withheldFromEveryTemplate`) keeps all twelve off every template. No template is unattended,
-so the agent permission ceiling (`permission/agent.go`) is unchanged.
+so the agent permission ceiling (`agentceiling/agent.go`) is unchanged.
 
 ## Known limits
 

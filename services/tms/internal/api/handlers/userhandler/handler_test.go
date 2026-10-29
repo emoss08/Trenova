@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -372,7 +373,7 @@ func TestUserHandler_GetRoleAssignments_Success(t *testing.T) {
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	roleRepo.ExpectedCalls = nil
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				ID:     pulid.MustNew("ura_"),
 				UserID: userID,

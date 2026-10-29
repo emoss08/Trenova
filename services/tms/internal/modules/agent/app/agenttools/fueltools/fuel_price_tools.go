@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -130,7 +131,7 @@ func fuelIndexPriceFrom(
 
 func fuelPriceProperties(
 	idKey, idDescription string,
-	kind permission.RecordKind,
+	kind recordkind.Kind,
 ) map[string]any {
 	return map[string]any{
 		idKey: agenttoolschema.KindID(idDescription, kind),
@@ -153,7 +154,7 @@ func NewRecordFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Age
 			"surcharge that follows the index prices from it, so a person always decides. " +
 			"EIA indexes are fetched on their own and take no manual price.",
 		Properties: fuelPriceProperties(paramFuelIndexID, fuelIndexSupplier,
-			permission.KindFuelIndex),
+			recordkind.FuelIndex),
 		Required: []string{paramFuelIndexID, paramPriceDate, paramPrice},
 		SearchTerms: []string{
 			"fuel price", "diesel price", "index", "surcharge", "rack", "doe",
@@ -211,7 +212,7 @@ func NewCorrectFuelIndexPriceTool(prices FuelIndexPriceKeeper) agenttoolports.Ag
 			"corrected. Every surcharge that follows the index prices from it, so a person " +
 			"always decides.",
 		Properties: fuelPriceProperties(paramFuelIndexPriceID, fuelPriceSupplier,
-			permission.KindFuelIndexPrice),
+			recordkind.FuelIndexPrice),
 		Required: []string{paramFuelIndexPriceID, paramPriceDate, paramPrice},
 	}), toolspec.ReceivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurchargeservice.PriceChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {

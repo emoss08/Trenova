@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -78,7 +79,7 @@ func queueItemProperty() map[string]any {
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "The billing queue item, from billing_list_queue_items, " +
 			"billing_get_queue_item or this run's subject. Never guess one.",
-	}, permission.KindBillingQueueItem)
+	}, recordkind.BillingQueueItem)
 }
 
 func issueProperty() map[string]any {

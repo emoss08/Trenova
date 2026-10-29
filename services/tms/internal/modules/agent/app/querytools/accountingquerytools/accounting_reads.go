@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -73,16 +74,16 @@ const (
 // carriers and workers sent as the accounts they post to, and the journal
 // entries posted one by one. A journal summary is keyed by its day, not by a
 // record id, so it is not among them.
-var syncDocumentKinds = []permission.RecordKind{
-	permission.RecordKind(permission.ResourceInvoice),
-	permission.RecordKind(permission.ResourceCustomerPayment),
-	permission.KindCreditMemoApplication,
-	permission.RecordKind(permission.ResourceCarrierSettlement),
-	permission.RecordKind(permission.ResourceDriverSettlement),
-	permission.RecordKind(permission.ResourceCustomer),
-	permission.RecordKind(permission.ResourceCarrier),
-	permission.RecordKind(permission.ResourceWorker),
-	permission.RecordKind(permission.ResourceJournalEntry),
+var syncDocumentKinds = []recordkind.Kind{
+	recordkind.Kind(permission.ResourceInvoice),
+	recordkind.Kind(permission.ResourceCustomerPayment),
+	recordkind.CreditMemoApplication,
+	recordkind.Kind(permission.ResourceCarrierSettlement),
+	recordkind.Kind(permission.ResourceDriverSettlement),
+	recordkind.Kind(permission.ResourceCustomer),
+	recordkind.Kind(permission.ResourceCarrier),
+	recordkind.Kind(permission.ResourceWorker),
+	recordkind.Kind(permission.ResourceJournalEntry),
 }
 
 // accountingSystemName is what every accounting read and write calls the
@@ -281,7 +282,7 @@ func GetSpecs() []readspec.Get {
 				"retrying or skipping it. It never returns what was sent or any credential.",
 			SearchTerms: []string{"attempts", "tries", "sync error"},
 			Resource:    permission.ResourceAccountingSync,
-			Kinds:       []permission.RecordKind{permission.KindAccountingSyncRecord},
+			Kinds:       []recordkind.Kind{recordkind.AccountingSyncRecord},
 			ParamName:   paramSyncRecordID,
 			IDSource:    "from accounting_list_sync_records or the run's subject",
 			Shape: func(record map[string]any, withheld map[string]struct{}, clk filtercatalog.Clock) {
@@ -308,7 +309,7 @@ func GetSpecs() []readspec.Get {
 				"account", "post", "posts", "revenue", "mapped", "item", "vendor",
 			},
 			Resource:  permission.ResourceAccountingIntegration,
-			Kinds:     []permission.RecordKind{permission.KindAccountingMapping},
+			Kinds:     []recordkind.Kind{recordkind.AccountingMapping},
 			ParamName: paramMappingID,
 			IDSource:  "from accounting_list_mapping_gaps",
 			Names: map[string]string{
@@ -321,10 +322,10 @@ func GetSpecs() []readspec.Get {
 					"\"Freight\", \"Net30\", \"ACH\".",
 			},
 			References: map[string]readspec.Reference{argMappingRecordID: {
-				Kinds: []permission.RecordKind{
-					permission.RecordKind(permission.ResourceCustomer),
-					permission.RecordKind(permission.ResourceCarrier),
-					permission.RecordKind(permission.ResourceAccessorialCharge),
+				Kinds: []recordkind.Kind{
+					recordkind.Kind(permission.ResourceCustomer),
+					recordkind.Kind(permission.ResourceCarrier),
+					recordkind.Kind(permission.ResourceAccessorialCharge),
 				},
 				What:   "The Trenova customer, carrier or accessorial charge id",
 				Source: "customer_list, carrier_list or masterdata_list_accessorial_charges",

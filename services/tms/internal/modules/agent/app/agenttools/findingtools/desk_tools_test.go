@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -196,7 +197,7 @@ func TestPlaceWorkerDispatchHold_IsItsOwnPermission(t *testing.T) {
 	require.Equal(t, permission.ResourceWorkerDispatchHold, tool.Policy().Resource)
 	require.Equal(t, permission.OpCreate, tool.Policy().Operation)
 	require.True(t, tool.Policy().Reversible)
-	require.False(t, permission.IsAgentAllowed(permission.ResourceWorker, permission.OpUpdate),
+	require.False(t, agentceiling.Allows(permission.ResourceWorker, permission.OpUpdate),
 		"editing a worker record stays closed to an agent")
 
 	params := agenttoolstest.DeskParams(map[string]any{

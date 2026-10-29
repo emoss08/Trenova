@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -73,7 +74,7 @@ func (r *AgentDefinitionResolver) Delegates(ctx context.Context, obj *agentdefin
 	return agentDefinitionDelegates(ctx, obj)
 }
 
-func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error) {
+func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*rbac.Role, error) {
 	return r.AgentDefinitionAccessRoles(ctx, obj)
 }
 
@@ -130,7 +131,7 @@ func (r *MutationResolver) SetAgentAccess(ctx context.Context, agentID string, i
 	return access.Agent, nil
 }
 
-func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error) {
+func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*rbac.Role, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpUpdate)
 	if err != nil {
 		return nil, err

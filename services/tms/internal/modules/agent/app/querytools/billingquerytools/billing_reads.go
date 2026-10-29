@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -153,7 +154,7 @@ func InvoiceAdjustmentGetSpec() readspec.Get {
 		Name:      toolInvoiceGetAdjustment,
 		Entity:    "invoice adjustment",
 		Resource:  permission.ResourceInvoice,
-		Kinds:     []permission.RecordKind{permission.KindInvoiceAdjustment},
+		Kinds:     []recordkind.Kind{recordkind.InvoiceAdjustment},
 		Summary:   invoiceAdjustmentGetSummary,
 		ParamName: querytool.ParamAdjustmentID,
 		IDSource:  "from invoice_list_adjustments",

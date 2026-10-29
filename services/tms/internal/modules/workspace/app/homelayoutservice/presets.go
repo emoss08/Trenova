@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
@@ -34,7 +34,7 @@ type SavePresetRequest struct {
 	Description        string
 	Layout             *homelayout.Layout
 	RoleIDs            []pulid.ID
-	CoreResponsibility permission.CoreResponsibility
+	CoreResponsibility rbac.CoreResponsibility
 	IsOrgDefault       bool
 	Locked             bool
 	Priority           int
@@ -329,7 +329,7 @@ func (s *Service) previewSource(
 		return nil, "", SourceBuiltIn, err
 	}
 
-	assigned, source := pickPreset(presets, []*permission.Role{role})
+	assigned, source := pickPreset(presets, []*rbac.Role{role})
 	if assigned != nil {
 		return assigned.Layout, assigned.Name, source, nil
 	}

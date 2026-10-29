@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -263,13 +263,13 @@ func (h *harness) actor() *permissionports.RequestActor {
 	}
 }
 
-type fixedFieldAccess permission.FieldGroupSet
+type fixedFieldAccess protectedfield.GroupSet
 
 func (f fixedFieldAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
-	return permission.FieldGroupSet(f)
+) protectedfield.GroupSet {
+	return protectedfield.GroupSet(f)
 }
 
 func newHarness(t *testing.T) *harness {

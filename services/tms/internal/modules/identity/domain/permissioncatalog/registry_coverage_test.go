@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -97,7 +97,7 @@ func TestRegistry_ParentResourcesAreRegistered(t *testing.T) {
 func TestRegistry_OperationsHaveClientBits(t *testing.T) {
 	for _, def := range NewRegistry().All() {
 		for _, op := range def.Operations {
-			_, ok := permission.OperationToBit[op.Operation]
+			_, ok := operationbits.ByOperation[op.Operation]
 			assert.True(
 				t,
 				ok,

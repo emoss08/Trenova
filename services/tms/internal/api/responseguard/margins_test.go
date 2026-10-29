@@ -12,6 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -35,7 +36,7 @@ var marginName = regexp.MustCompile(`(?i)margin|profit`)
 // caller without the margins group. A path reaches into a struct the type
 // carries (trace.totals.margin) where that struct is withheld by its carrier.
 type restMargin struct {
-	build func() permission.FieldWithholder
+	build func() protectedfield.Withholder
 	paths []string
 }
 
@@ -48,7 +49,7 @@ var detentionPay = []string{"driverPayAmount", "netMargin"}
 func restMargins() []restMargin {
 	return []restMargin{
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &detention.DetentionOccurrence{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
@@ -57,7 +58,7 @@ func restMargins() []restMargin {
 			paths: detentionPay,
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &detentionports.CustomerDetentionStat{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
@@ -66,7 +67,7 @@ func restMargins() []restMargin {
 			paths: detentionPay,
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &detentionports.FacilityDetentionStat{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
@@ -75,7 +76,7 @@ func restMargins() []restMargin {
 			paths: detentionPay,
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &detentionsimulation.PreviewResult{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
@@ -84,7 +85,7 @@ func restMargins() []restMargin {
 			paths: detentionPay,
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &detentionsimulation.BacktestBucket{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
@@ -93,7 +94,7 @@ func restMargins() []restMargin {
 			paths: detentionPay,
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				stops := 2
 				return &detentionsimulation.BacktestResult{
 					ProposedDriverPay:   margin("75"),
@@ -104,7 +105,7 @@ func restMargins() []restMargin {
 			paths: []string{"proposedDriverPay", "proposedNetMargin", "negativeMarginStops"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &dispatchcontrol.DispatchControl{
 					TenderCounterMarginFloorPercent: margin("10"),
 				}
@@ -112,19 +113,19 @@ func restMargins() []restMargin {
 			paths: []string{"tenderCounterMarginFloorPercent"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &costingcontrol.CostingControl{TargetMarginPercent: margin("15")}
 			},
 			paths: []string{"targetMarginPercent"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &tender.TenderOffer{CounterMargin: margin("8.5")}
 			},
 			paths: []string{"counterMargin"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &rateagreement.RateAgreement{
 					MarginFloorPercent:  margin("12"),
 					MaxPayPercentOfSell: margin("85"),
@@ -133,7 +134,7 @@ func restMargins() []restMargin {
 			paths: []string{"marginFloorPercent", "maxPayPercentOfSell"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &rateagreement.RateAgreementVersion{
 					MarginFloorPercent:  margin("12"),
 					MaxPayPercentOfSell: margin("85"),
@@ -142,7 +143,7 @@ func restMargins() []restMargin {
 			paths: []string{"marginFloorPercent", "maxPayPercentOfSell"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &ratequote.RateQuote{
 					CostAmount:    margin("800"),
 					MarginAmount:  margin("200"),
@@ -161,7 +162,7 @@ func restMargins() []restMargin {
 			},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &ratequoteports.ShopOption{
 					Margin: &ratetypes.MarginVerdict{
 						Amount:      decimal.NewFromInt(200),
@@ -175,7 +176,7 @@ func restMargins() []restMargin {
 			paths: []string{"margin", "note"},
 		},
 		{
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &ratequoteports.ShopResult{SellTotal: margin("1000")}
 			},
 			paths: []string{"sellTotal"},
@@ -303,7 +304,7 @@ func TestEveryMarginFieldARESTResponseCarriesIsWithheld(t *testing.T) {
 	require.Empty(t, missing,
 		"\nthese REST fields are named for a margin but nothing withholds them: give the "+
 			"type WithholdFields clearing the field for a caller without "+
-			"permission.FieldGroupMargins and add it to restMargins, or list it in "+
+			"protectedfield.Margins and add it to restMargins, or list it in "+
 			"unprotectedRESTMarginNames with why it carries no margin:\n"+
 			strings.Join(missing, "\n"))
 
@@ -321,10 +322,10 @@ func TestEveryRESTMarginIsClearedWithoutTheMarginsGroupAndKeptWithIt(t *testing.
 		key := typeKey(entry.build())
 
 		kept := entry.build()
-		kept.WithholdFields(permission.AllFieldGroups())
+		kept.WithholdFields(protectedfield.AllGroups())
 		cleared := entry.build()
-		cleared.WithholdFields(permission.AllFieldGroups() &^
-			(permission.FieldGroupSet(0).With(permission.FieldGroupMargins)))
+		cleared.WithholdFields(protectedfield.AllGroups() &^
+			(protectedfield.GroupSet(0).With(protectedfield.Margins)))
 
 		keptJSON := encode(t, kept)
 		clearedJSON := encode(t, cleared)

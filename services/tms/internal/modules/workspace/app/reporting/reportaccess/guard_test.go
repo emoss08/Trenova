@@ -14,12 +14,12 @@ import (
 )
 
 var accessPrimitives = map[string]bool{
-	"CanAccess":        true,
-	"Decide":           true,
-	"Person":           true,
-	"InReferenceView":  true,
-	"ProtectedGroupAt": true,
-	"Visible":          true,
+	"CanAccess":       true,
+	"Decide":          true,
+	"Person":          true,
+	"InReferenceView": true,
+	"GroupAt":         true,
+	"Visible":         true,
 }
 
 type reportSurface struct {

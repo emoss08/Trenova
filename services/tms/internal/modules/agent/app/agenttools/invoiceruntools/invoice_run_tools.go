@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -218,7 +219,7 @@ func buildRunRequest(
 
 func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
-		"invoice_get_run lists under each group.", permission.KindInvoiceRunItem)
+		"invoice_get_run lists under each group.", recordkind.InvoiceRunItem)
 
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "invoice_adjust_run",
@@ -264,7 +265,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 				},
 			},
 			paramInclude: agenttoolschema.KindIDs("Excluded shipments to put back, by the item "+
-				"id invoice_get_run lists.", maxRunEdits, permission.KindInvoiceRunItem),
+				"id invoice_get_run lists.", maxRunEdits, recordkind.InvoiceRunItem),
 			paramMoves: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Shipments to move to another invoice of the same customer.",
@@ -275,7 +276,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 						toolparams.ParamItemID: itemProperty,
 						paramTargetGroupID: agenttoolschema.KindID(
 							"The invoice it moves to, by the group id invoice_get_run lists.",
-							permission.KindInvoiceRunGroup),
+							recordkind.InvoiceRunGroup),
 					},
 					toolschema.KeyRequired: []string{
 						toolparams.ParamItemID,
@@ -549,7 +550,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 					toolschema.KeyProperties: map[string]any{
 						paramBillingQueueItems: agenttoolschema.KindID(
 							"The shipment's billing queue item, from invoice_list_open_statements.",
-							permission.KindBillingQueueItem),
+							recordkind.BillingQueueItem),
 						toolparams.ParamReason: toolparams.StringProperty(
 							"Why it is held back.",
 							maxRunReasonChars,

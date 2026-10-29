@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -845,10 +846,10 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 	assert.True(t, newRetryAccountingSyncTool(operator).Policy().Idempotent)
 	assert.True(
 		t,
-		permission.IsAgentAllowed(permission.ResourceAccountingSync, permission.OpUpdate),
+		agentceiling.Allows(permission.ResourceAccountingSync, permission.OpUpdate),
 	)
 	assert.False(t,
-		permission.IsAgentAllowed(permission.ResourceAccountingIntegration, permission.OpManage),
+		agentceiling.Allows(permission.ResourceAccountingIntegration, permission.OpManage),
 		"backfilling stays with a person who manages the integration",
 	)
 }

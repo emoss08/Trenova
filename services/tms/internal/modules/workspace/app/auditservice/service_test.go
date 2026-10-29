@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -672,7 +673,7 @@ func TestList_NormalizesNumericOperationFilter(t *testing.T) {
 				{
 					Field:    "operation",
 					Operator: dbtype.OpEqual,
-					Value:    int64(permission.ClientOpRead),
+					Value:    int64(operationbits.Read),
 				},
 			},
 		},
@@ -715,8 +716,8 @@ func TestList_NormalizesNumericOperationFilterGroupValues(t *testing.T) {
 							Field:    "operation",
 							Operator: dbtype.OpIn,
 							Value: []int64{
-								int64(permission.ClientOpRead),
-								int64(permission.ClientOpUpdate),
+								int64(operationbits.Read),
+								int64(operationbits.Update),
 							},
 						},
 					},

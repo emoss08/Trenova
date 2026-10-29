@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -265,7 +266,7 @@ func NewApproveBillingQueueItemsTool(
 			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
 			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
 			Noun:        billingqueuepreview.NounBillingQueueItem,
 			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        changepreview.VerbApprove,

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/inflect"
@@ -123,23 +123,23 @@ type argumentProblem struct {
 // prefix it must carry, when it is marked with a resource or with kinds, and
 // the description naming where its ids come from.
 type idCheck struct {
-	kinds       []permission.RecordKind
+	kinds       []recordkind.Kind
 	description string
 }
 
 // markedKinds is the kinds of record a property's mark names: the one kind of
 // the resource it is marked with, or the kinds it lists.
-func markedKinds(property map[string]any) []permission.RecordKind {
+func markedKinds(property map[string]any) []recordkind.Kind {
 	if resource := toolschema.RecordOf(property); resource != "" {
-		return []permission.RecordKind{permission.RecordKind(resource)}
+		return []recordkind.Kind{recordkind.Kind(resource)}
 	}
 	names := toolschema.RecordKinds(property)
 	if len(names) == 0 {
 		return nil
 	}
-	kinds := make([]permission.RecordKind, 0, len(names))
+	kinds := make([]recordkind.Kind, 0, len(names))
 	for _, name := range names {
-		kinds = append(kinds, permission.RecordKind(name))
+		kinds = append(kinds, recordkind.Kind(name))
 	}
 
 	return kinds
@@ -297,7 +297,7 @@ func wrongKindProblem(path string, id pulid.ID, check idCheck) (argumentProblem,
 	got := id.Prefix()
 	nouns := make([]string, 0, len(check.kinds))
 	prefixes := make([]string, 0, len(check.kinds))
-	checked := make([]permission.RecordKind, 0, len(check.kinds))
+	checked := make([]recordkind.Kind, 0, len(check.kinds))
 	for _, kind := range check.kinds {
 		prefix, known := kind.IDPrefix()
 		if !known {
@@ -319,7 +319,7 @@ func wrongKindProblem(path string, id pulid.ID, check idCheck) (argumentProblem,
 	if source := idSource(check.description); source != "" {
 		from = ", from " + source
 	}
-	if actual, found := permission.RecordKindOfIDPrefix(got); found {
+	if actual, found := recordkind.OfIDPrefix(got); found {
 		return argumentProblem{Path: path, Message: fmt.Sprintf(
 			"%q is %s id; this parameter takes %s id%s.",
 			id, inflect.WithArticle(actual.Noun()), takes, from,

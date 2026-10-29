@@ -5,17 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 )
 
 func ResourceRecord(resource permission.Resource, label string) *watchtower.RecordRef {
-	kind, ok := resource.Kind()
+	kind, ok := recordkind.OfResource(resource)
 	if !ok {
 		return nil
 	}
 	return &watchtower.RecordRef{Kind: kind, Label: label}
 }
 
-func KindRecord(kind permission.RecordKind, label string) *watchtower.RecordRef {
+func KindRecord(kind recordkind.Kind, label string) *watchtower.RecordRef {
 	return &watchtower.RecordRef{Kind: kind, Label: label}
 }
 

@@ -3,6 +3,7 @@ package partyquerytools
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 )
 
 func CarrierIntelEventGetSpec() readspec.Get {
@@ -13,7 +14,7 @@ func CarrierIntelEventGetSpec() readspec.Get {
 			"carrier risk alert", "authority change", "insurance lapse", "safety rating change",
 		},
 		Resource: permission.ResourceCarrierIntelligence,
-		Kinds:    []permission.RecordKind{permission.KindCarrierIntelligenceEvent},
+		Kinds:    []recordkind.Kind{recordkind.CarrierIntelligenceEvent},
 		Summary: "Retrieve one carrier intelligence event by id: what changed on the " +
 			"carrier's authority, insurance or safety record, and its severity. It also " +
 			"gives the prior and current values and whether anyone has acknowledged or " +

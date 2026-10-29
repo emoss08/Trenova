@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,9 +66,9 @@ type grantsByAgent struct {
 func (g *grantsByAgent) ListRolesByAgents(
 	_ context.Context,
 	req permissionports.ListGrantsByAgentsRequest,
-) (map[pulid.ID][]*permission.Role, error) {
+) (map[pulid.ID][]*rbac.Role, error) {
 	g.reads++
-	out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
+	out := make(map[pulid.ID][]*rbac.Role, len(req.AgentIDs))
 	for _, agentID := range req.AgentIDs {
 		for _, roleID := range g.agentRoles[agentID] {
 			out[agentID] = append(out[agentID], g.roles[roleID])

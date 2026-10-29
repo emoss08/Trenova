@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
@@ -216,7 +217,7 @@ func NewResolveInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agent
 			paramResolutionAdjustmentID: agenttoolschema.KindID(
 				"The executed adjustment that credited or wrote off the amount, from "+
 					"invoice_list_adjustments. Required for CreditIssued and WrittenOff.",
-				permission.KindInvoiceAdjustment),
+				recordkind.InvoiceAdjustment),
 			paramResolutionNotes: toolparams.StringProperty(
 				"What was agreed with the customer.", maxDisputeNoteChars),
 		},

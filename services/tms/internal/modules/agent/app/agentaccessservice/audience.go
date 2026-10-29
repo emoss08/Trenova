@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -123,7 +124,7 @@ func (s *Service) audience(
 		return nil, err
 	}
 
-	var granted []*permission.Role
+	var granted []*rbac.Role
 	if withGrants {
 		byAgent, grantErr := s.grants.ListRolesByAgents(
 			ctx,
@@ -220,9 +221,9 @@ func requiredGrants(held []HeldTool) []permissionports.RequiredGrant {
 }
 
 func audienceRoles(
-	roles []*permission.Role,
+	roles []*rbac.Role,
 	coverage []permissionports.RoleCoverage,
-	granted []*permission.Role,
+	granted []*rbac.Role,
 ) []agentdefinitionports.AgentAudienceRole {
 	byRole := make(map[pulid.ID]permissionports.RoleCoverage, len(coverage))
 	for _, entry := range coverage {

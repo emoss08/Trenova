@@ -1599,7 +1599,7 @@ subject, what the person mentioned or had open, what the agent read with a
 failed read and another agent's delegated steps add nothing) and what its
 executed writes changed. `FinishTurn` adds them through `keepWorkingSet`; the
 subject always sorts first, and the kind is read off the id's prefix
-(`permission.RecordKindOfIDPrefix`), so an id of no known kind is never kept.
+(`recordkind.OfIDPrefix`), so an id of no known kind is never kept.
 
 Every turn reads them again while it is prepared, beside the subject
 (`checkTurn` → `anchorRecords` → `recordanchorports.RecordAnchorReader`,
@@ -1917,7 +1917,7 @@ or a clearinghouse query), a record kept inside another's (an invoice line, a
 leave day), or a parameter that takes any of several kinds (a case's
 `subjectId`) is built with `agenttoolschema.KindID`/`KindIDs`, or marked in
 place with `OfKinds` (`OfResource` for a resource), and carries the kinds as
-`x-recordKinds`; each kind's prefix is declared in `permission.RecordKind`,
+`x-recordKinds`; each kind's prefix is declared in `recordkind.Kind`,
 held to the domain's mint by the same test, and a value of none of them is
 refused naming every kind it may be. A parameter with neither mark still has
 to hold something shaped like a record id when its description names where
@@ -2606,7 +2606,7 @@ A run nobody is in has two identities, kept apart on purpose.
 
 - **Authorization is the agent's.** The actor `runRequest` builds is
   `PrincipalTypeAgent`, so the permission engine judges every call against the
-  fixed agent table (`permission.IsAgentAllowed`). An organization may also name the
+  fixed agent table (`agentceiling.Allows`). An organization may also name the
   role the agent runs as (`agent_definitions.unattended_role_id`,
   `setAgentUnattendedRole`); a call then passes only where both the table and that
   role (with its parents) allow it, and the organization's access policies apply to

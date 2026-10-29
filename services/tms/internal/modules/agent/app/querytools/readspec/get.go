@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +36,7 @@ type Get struct {
 	// scope narrows the policy to the caller's own records (the person's own
 	// home page).
 	Scope     agenttooltrust.ToolScope
-	Kinds     []permission.RecordKind
+	Kinds     []recordkind.Kind
 	ParamName string
 	IDSource  string
 	Reads     agenttooltrust.ExternalRead

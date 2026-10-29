@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ type agentGrantLister interface {
 	ListRolesByAgents(
 		ctx context.Context,
 		req permissionports.ListGrantsByAgentsRequest,
-	) (map[pulid.ID][]*permission.Role, error)
+	) (map[pulid.ID][]*rbac.Role, error)
 	ListAgentsByRoles(
 		ctx context.Context,
 		req permissionports.ListGrantsByRolesRequest,
@@ -44,15 +44,15 @@ func NewAccessRolesByAgentIDLoaderFactory(
 
 func newAccessRolesByAgentIDLoader(f *AccessRolesByAgentIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*permission.Role] {
+) *dataloadgen.Loader[string, []*rbac.Role] {
 	return loadercore.NewLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *AccessRolesByAgentIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) loadercore.BatchFetchFunc[[]*permission.Role] {
+) loadercore.BatchFetchFunc[[]*rbac.Role] {
 	return loadercore.BatchGroupFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*permission.Role, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*rbac.Role, error) {
 			return f.grants.ListRolesByAgents(ctx, permissionports.ListGrantsByAgentsRequest{
 				TenantInfo: tenantInfo,
 				AgentIDs:   ids,
@@ -98,7 +98,7 @@ var (
 	agentsByRoleIDKey       = loadercore.NewKey(newAgentsByRoleIDLoader)
 )
 
-func AccessRolesByAgentID(ctx context.Context, key string) ([]*permission.Role, error) {
+func AccessRolesByAgentID(ctx context.Context, key string) ([]*rbac.Role, error) {
 	return loadercore.Load(ctx, accessRolesByAgentIDKey, key)
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 )
 
 const bulkAssignBillersDescription = "Assign the biller who reviews billing queue items, one " +
@@ -63,7 +64,7 @@ func NewAssignBillersTool(
 			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
 			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
 			Noun:        billingqueuepreview.NounBillingQueueItem,
 			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbAssignBiller,
@@ -164,7 +165,7 @@ func NewTransitionItemsToInReviewTool(
 			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
 			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
 			Noun:        billingqueuepreview.NounBillingQueueItem,
 			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbMoveIntoReview,

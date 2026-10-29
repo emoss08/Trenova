@@ -2,21 +2,22 @@ package testutil
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type RoleBuilder struct {
-	role *permission.Role
+	role *rbac.Role
 }
 
 func NewRoleBuilder() *RoleBuilder {
 	return &RoleBuilder{
-		role: &permission.Role{
+		role: &rbac.Role{
 			Name:           "Test Role",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions:    []*permission.ResourcePermission{},
+			Permissions:    []*rbac.ResourcePermission{},
 			CreatedAt:      timeutils.NowUnix(),
 			UpdatedAt:      timeutils.NowUnix(),
 		},
@@ -59,7 +60,7 @@ func (b *RoleBuilder) WithParentRoleIDs(ids ...pulid.ID) *RoleBuilder {
 }
 
 func (b *RoleBuilder) WithPermission(resource string, ops ...permission.Operation) *RoleBuilder {
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         pulid.MustNew("rp_"),
 		Resource:   resource,
 		Operations: ops,
@@ -71,22 +72,22 @@ func (b *RoleBuilder) WithPermission(resource string, ops ...permission.Operatio
 	return b
 }
 
-func (b *RoleBuilder) WithPermissions(perms ...*permission.ResourcePermission) *RoleBuilder {
+func (b *RoleBuilder) WithPermissions(perms ...*rbac.ResourcePermission) *RoleBuilder {
 	b.role.Permissions = append(b.role.Permissions, perms...)
 	return b
 }
 
-func (b *RoleBuilder) Build() *permission.Role {
+func (b *RoleBuilder) Build() *rbac.Role {
 	return b.role
 }
 
 type ResourcePermissionBuilder struct {
-	rp *permission.ResourcePermission
+	rp *rbac.ResourcePermission
 }
 
 func NewResourcePermissionBuilder() *ResourcePermissionBuilder {
 	return &ResourcePermissionBuilder{
-		rp: &permission.ResourcePermission{
+		rp: &rbac.ResourcePermission{
 			ID:         pulid.MustNew("rp_"),
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpRead},
@@ -126,17 +127,17 @@ func (b *ResourcePermissionBuilder) WithDataScope(
 	return b
 }
 
-func (b *ResourcePermissionBuilder) Build() *permission.ResourcePermission {
+func (b *ResourcePermissionBuilder) Build() *rbac.ResourcePermission {
 	return b.rp
 }
 
 type UserRoleAssignmentBuilder struct {
-	assignment *permission.UserRoleAssignment
+	assignment *rbac.UserRoleAssignment
 }
 
 func NewUserRoleAssignmentBuilder() *UserRoleAssignmentBuilder {
 	return &UserRoleAssignmentBuilder{
-		assignment: &permission.UserRoleAssignment{
+		assignment: &rbac.UserRoleAssignment{
 			ID:         pulid.MustNew("ura_"),
 			AssignedAt: timeutils.NowUnix(),
 		},
@@ -168,7 +169,7 @@ func (b *UserRoleAssignmentBuilder) WithExpiresAt(expiresAt int64) *UserRoleAssi
 	return b
 }
 
-func (b *UserRoleAssignmentBuilder) Build() *permission.UserRoleAssignment {
+func (b *UserRoleAssignmentBuilder) Build() *rbac.UserRoleAssignment {
 	return b.assignment
 }
 

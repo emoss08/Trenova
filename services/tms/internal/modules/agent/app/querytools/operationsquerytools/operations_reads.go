@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -277,7 +278,7 @@ func DetentionOccurrenceGetSpec() readspec.Get {
 		Entity:    "detention occurrence",
 		Summary:   detentionOccurrenceGetSummary,
 		Resource:  permission.ResourceDetention,
-		Kinds:     []permission.RecordKind{permission.KindDetentionOccurrence},
+		Kinds:     []recordkind.Kind{recordkind.DetentionOccurrence},
 		ParamName: "occurrenceId",
 		IDSource:  "from detention_list_occurrences, the page you are on, or this run's subject",
 	}

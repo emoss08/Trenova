@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
@@ -24,7 +25,7 @@ import (
 
 func newStubValidator() *Validator {
 	return &Validator{
-		validator: tenantedvalidation.NewBuilder[*permission.Role]().
+		validator: tenantedvalidation.NewBuilder[*rbac.Role]().
 			WithModelName("Role").
 			Build(),
 	}
@@ -108,10 +109,10 @@ func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Elevated Role",
 		MaxSensitivity: permission.SensitivityConfidential,
-		Permissions:    []*permission.ResourcePermission{},
+		Permissions:    []*rbac.ResourcePermission{},
 	}
 
 	deps.permEngine.ExpectedCalls = nil
@@ -144,7 +145,7 @@ func TestUpdateRole_SystemRole_Fails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:   roleID,
 		Name: "Updated Role",
 	}
@@ -152,7 +153,7 @@ func TestUpdateRole_SystemRole_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: true,
 	}, nil)
@@ -179,22 +180,22 @@ func TestUpdateRole_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             roleID,
 		Name:           "Updated Role",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions:    []*permission.ResourcePermission{},
+		Permissions:    []*rbac.ResourcePermission{},
 	}
 
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: orgID,
 		IsSystem:       false,
 	}, nil)
-	deps.roleRepo.On("Update", ctx, mock.MatchedBy(func(updated *permission.Role) bool {
+	deps.roleRepo.On("Update", ctx, mock.MatchedBy(func(updated *rbac.Role) bool {
 		return updated.ID == roleID && updated.Name == "Updated Role" &&
 			updated.OrganizationID == orgID
 	})).Return(nil)
@@ -217,7 +218,7 @@ func TestListRoles(t *testing.T) {
 	ctx := t.Context()
 	orgID := pulid.MustNew("org_")
 
-	expectedRoles := []*permission.Role{
+	expectedRoles := []*rbac.Role{
 		{ID: pulid.MustNew("rol_"), Name: "Role 1"},
 		{ID: pulid.MustNew("rol_"), Name: "Role 2"},
 	}
@@ -229,7 +230,7 @@ func TestListRoles(t *testing.T) {
 		},
 	}
 
-	deps.roleRepo.On("List", ctx, req).Return(&pagination.ListResult[*permission.Role]{
+	deps.roleRepo.On("List", ctx, req).Return(&pagination.ListResult[*rbac.Role]{
 		Items:      expectedRoles,
 		Total:      2,
 		TotalExact: true,
@@ -254,7 +255,7 @@ func TestAssignRole_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID: targetUserID,
 		RoleID: roleID,
 	}
@@ -262,12 +263,12 @@ func TestAssignRole_Success(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:          roleID,
-		Permissions: []*permission.ResourcePermission{},
+		Permissions: []*rbac.ResourcePermission{},
 	}, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
 
 	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
@@ -295,7 +296,7 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID: targetUserID,
 		RoleID: roleID,
 	}
@@ -303,12 +304,12 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:          roleID,
-		Permissions: []*permission.ResourcePermission{},
+		Permissions: []*rbac.ResourcePermission{},
 	}, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{
 				UserID: targetUserID,
 				RoleID: roleID,
@@ -339,7 +340,7 @@ func TestUnassignRole_Success(t *testing.T) {
 	deps.roleRepo.On("DeleteAssignment", ctx, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   assignmentID,
 		OrganizationID: orgID,
-	}).Return(&permission.UserRoleAssignment{
+	}).Return(&rbac.UserRoleAssignment{
 		ID:             assignmentID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -386,13 +387,13 @@ func TestInitializeOrganizationRoles(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	creatorID := pulid.MustNew("usr_")
 
-	deps.roleRepo.On("Create", ctx, mock.MatchedBy(func(role *permission.Role) bool {
+	deps.roleRepo.On("Create", ctx, mock.MatchedBy(func(role *rbac.Role) bool {
 		return role.OrganizationID == orgID &&
 			role.Name == "Organization Administrator" &&
 			role.IsSystem &&
 			role.CreatedBy == creatorID
 	})).Return(nil)
-	deps.roleRepo.On("CreateAssignment", ctx, mock.MatchedBy(func(a *permission.UserRoleAssignment) bool {
+	deps.roleRepo.On("CreateAssignment", ctx, mock.MatchedBy(func(a *rbac.UserRoleAssignment) bool {
 		return a.UserID == creatorID &&
 			a.OrganizationID == orgID &&
 			a.AssignedBy == creatorID
@@ -416,7 +417,7 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     roleID,
 		Resource:   "shipment",
 		Operations: []permission.Operation{permission.OpRead},
@@ -426,7 +427,7 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -448,7 +449,7 @@ func TestCreateResourcePermission_SystemRole_Fails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:   roleID,
 		Resource: "shipment",
 	}
@@ -456,7 +457,7 @@ func TestCreateResourcePermission_SystemRole_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: true,
 	}, nil)
@@ -481,7 +482,7 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -512,7 +513,7 @@ func TestCircularInheritance_DirectSelfReference(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:            roleID,
 		Name:          "Self Referencing Role",
 		ParentRoleIDs: []pulid.ID{roleID},
@@ -537,10 +538,10 @@ func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Role with forbidden resource",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			{
 				Resource:   "billing",
 				Operations: []permission.Operation{permission.OpRead},
@@ -583,10 +584,10 @@ func TestValidateNoEscalation_OperationNotAllowed(t *testing.T) {
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Role with forbidden operation",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			{
 				Resource:   "shipment",
 				Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
@@ -629,10 +630,10 @@ func TestValidateNoEscalation_DataScopeNotAllowed(t *testing.T) {
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Role with forbidden data scope",
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions: []*permission.ResourcePermission{
+		Permissions: []*rbac.ResourcePermission{
 			{
 				Resource:   "shipment",
 				Operations: []permission.Operation{permission.OpRead},
@@ -675,7 +676,7 @@ func TestGetRoleByID(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	orgID := pulid.MustNew("org_")
 
-	expectedRole := &permission.Role{
+	expectedRole := &rbac.Role{
 		ID:   roleID,
 		Name: "Test Role",
 	}
@@ -732,7 +733,7 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "shipment",
@@ -743,7 +744,7 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -766,7 +767,7 @@ func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:       permID,
 		RoleID:   roleID,
 		Resource: "shipment",
@@ -775,7 +776,7 @@ func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: true,
 	}, nil)
@@ -798,7 +799,7 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "billing",
@@ -809,7 +810,7 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -846,24 +847,24 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 	roleB := pulid.MustNew("rol_")
 	roleC := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:            roleC,
 		Name:          "Role C",
 		ParentRoleIDs: []pulid.ID{roleB},
-		Permissions:   []*permission.ResourcePermission{},
+		Permissions:   []*rbac.ResourcePermission{},
 	}
 
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleB
 	})).
-		Return(&permission.Role{
+		Return(&rbac.Role{
 			ID:            roleB,
 			ParentRoleIDs: []pulid.ID{roleA},
 		}, nil)
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleA
 	})).
-		Return(&permission.Role{
+		Return(&rbac.Role{
 			ID:            roleA,
 			ParentRoleIDs: []pulid.ID{roleC},
 		}, nil)
@@ -888,11 +889,11 @@ func TestCircularInheritance_NoParents(t *testing.T) {
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Role without parents",
 		ParentRoleIDs:  []pulid.ID{},
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions:    []*permission.ResourcePermission{},
+		Permissions:    []*rbac.ResourcePermission{},
 	}
 
 	deps.roleRepo.On("Create", ctx, role).Return(nil)
@@ -918,22 +919,22 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	parentRoleID := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Child Role",
 		ParentRoleIDs:  []pulid.ID{parentRoleID},
 		MaxSensitivity: permission.SensitivityInternal,
-		Permissions:    []*permission.ResourcePermission{},
+		Permissions:    []*rbac.ResourcePermission{},
 	}
 
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == parentRoleID
 	})).
-		Return(&permission.Role{
+		Return(&rbac.Role{
 			ID:            parentRoleID,
 			ParentRoleIDs: []pulid.ID{},
 		}, nil)
 	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{parentRoleID}).
-		Return([]*permission.Role{{
+		Return([]*rbac.Role{{
 			ID:             parentRoleID,
 			OrganizationID: orgID,
 			MaxSensitivity: permission.SensitivityInternal,
@@ -988,7 +989,7 @@ func TestDeleteResourcePermission_SystemRole_Fails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: true,
 	}, nil)
@@ -1050,7 +1051,7 @@ func TestUpdateRole_GetByIDError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:   roleID,
 		Name: "Updated Role",
 	}
@@ -1080,7 +1081,7 @@ func TestAssignRole_GetRoleError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID: pulid.MustNew("usr_"),
 		RoleID: roleID,
 	}
@@ -1110,7 +1111,7 @@ func TestCreateResourcePermission_GetRoleError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:   roleID,
 		Resource: "shipment",
 	}
@@ -1136,7 +1137,7 @@ func TestUpdateResourcePermission_GetRoleError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:       pulid.MustNew("rp_"),
 		RoleID:   roleID,
 		Resource: "shipment",
@@ -1215,7 +1216,7 @@ func TestGetUserRoleAssignments_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	expected := []*permission.UserRoleAssignment{
+	expected := []*rbac.UserRoleAssignment{
 		{
 			UserID:         userID,
 			RoleID:         roleID,
@@ -1264,7 +1265,7 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     roleID,
 		Resource:   "shipment",
 		Operations: []permission.Operation{permission.OpRead},
@@ -1274,7 +1275,7 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -1298,7 +1299,7 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     roleID,
 		Resource:   "shipment",
 		Operations: []permission.Operation{permission.OpRead},
@@ -1308,7 +1309,7 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -1332,7 +1333,7 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "shipment",
@@ -1343,7 +1344,7 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -1368,7 +1369,7 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   "shipment",
@@ -1379,7 +1380,7 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -1404,7 +1405,7 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
@@ -1441,19 +1442,19 @@ func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{ID: roleID}, nil)
+	}).Return(&rbac.Role{ID: roleID}, nil)
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         otherRoleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{ID: otherRoleID}, nil)
+	}).Return(&rbac.Role{ID: otherRoleID}, nil)
 
 	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
 		ActorID:        actorID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Constraint: &permission.RoleConstraint{
+		Constraint: &rbac.RoleConstraint{
 			Name:     "Dispatch separation",
-			Type:     permission.RoleConstraintTypeSSD,
+			Type:     rbac.RoleConstraintTypeSSD,
 			MaxRoles: 1,
 		},
 		RoleIDs: []pulid.ID{roleID, otherRoleID},
@@ -1474,9 +1475,9 @@ func TestSaveRoleConstraint_DuplicateRoleIDsFail(t *testing.T) {
 
 	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
 		OrganizationID: orgID,
-		Constraint: &permission.RoleConstraint{
+		Constraint: &rbac.RoleConstraint{
 			Name:     "Dispatch separation",
-			Type:     permission.RoleConstraintTypeSSD,
+			Type:     rbac.RoleConstraintTypeSSD,
 			MaxRoles: 1,
 		},
 		RoleIDs: []pulid.ID{roleID, roleID},
@@ -1499,7 +1500,7 @@ func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{ID: roleID}, nil)
+	}).Return(&rbac.Role{ID: roleID}, nil)
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         otherRoleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
@@ -1507,9 +1508,9 @@ func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
 
 	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
 		OrganizationID: orgID,
-		Constraint: &permission.RoleConstraint{
+		Constraint: &rbac.RoleConstraint{
 			Name:     "Dispatch separation",
-			Type:     permission.RoleConstraintTypeSSD,
+			Type:     rbac.RoleConstraintTypeSSD,
 			MaxRoles: 1,
 		},
 		RoleIDs: []pulid.ID{roleID, otherRoleID},

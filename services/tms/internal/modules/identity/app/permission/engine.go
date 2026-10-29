@@ -15,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -745,7 +747,7 @@ func (*engine) lightResourceBitmasks(perms *permissionports.CachedPermissions) m
 	for resource, rp := range perms.Resources {
 		var bitmask uint32
 		for _, op := range rp.Operations {
-			bitmask |= permission.OperationToBit[permission.Operation(op)]
+			bitmask |= operationbits.ByOperation[permission.Operation(op)]
 		}
 		permissions[resource] = bitmask
 	}
@@ -1210,7 +1212,7 @@ func (e *engine) computePermissions(
 }
 
 func activePermissionRoleIDs(
-	assignments []*permission.UserRoleAssignment,
+	assignments []*rbac.UserRoleAssignment,
 	roleActivation authctx.SessionRoleActivation,
 	hasRoleActivation bool,
 ) []pulid.ID {
@@ -1245,7 +1247,7 @@ func activePermissionRoleIDs(
 }
 
 func applyRoleSensitivity(
-	role *permission.Role,
+	role *rbac.Role,
 	maxSensitivity *permission.FieldSensitivity,
 ) {
 	if role.MaxSensitivity.Level() > maxSensitivity.Level() {
@@ -1255,7 +1257,7 @@ func applyRoleSensitivity(
 
 func (e *engine) mergeRolePermissionsIntoCache(
 	resources map[string]*permissionports.CachedResourcePermission,
-	rolePermissions []*permission.ResourcePermission,
+	rolePermissions []*rbac.ResourcePermission,
 ) {
 	for _, rp := range rolePermissions {
 		e.mergeResourcePermissionIntoCache(resources, rp)
@@ -1283,7 +1285,7 @@ func (e *engine) mergeAPIKeyPermissionIntoCache(
 
 func (e *engine) mergeResourcePermissionIntoCache(
 	resources map[string]*permissionports.CachedResourcePermission,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) {
 	existing, ok := resources[rp.Resource]
 	if !ok {
@@ -1326,7 +1328,7 @@ func (e *engine) mergeOpStrings(existing []string, incoming []permission.Operati
 
 func (e *engine) buildEffectivePermissions(
 	userID, orgID pulid.ID,
-	roles []*permission.Role,
+	roles []*rbac.Role,
 ) *permissionports.EffectivePermissions {
 	maxSensitivity := permission.SensitivityPublic
 	resources := make(map[string]permissionports.EffectiveResourcePermission)

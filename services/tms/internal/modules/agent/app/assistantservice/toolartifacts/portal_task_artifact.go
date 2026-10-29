@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -65,7 +65,7 @@ func PortalActionArtifact(
 	callID string,
 	executed *agentrecord.ToolExecutionResult,
 ) *assistantartifact.Artifact {
-	if executed.Record == nil || executed.Record.EntityType != string(permission.KindPortalRun) {
+	if executed.Record == nil || executed.Record.EntityType != string(recordkind.PortalRun) {
 		return nil
 	}
 

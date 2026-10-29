@@ -326,7 +326,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 // @Tags Users
 // @Produce json
 // @Param userID path string true "User ID"
-// @Success 200 {array} permission.UserRoleAssignment
+// @Success 200 {array} rbac.UserRoleAssignment
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -157,7 +158,7 @@ func TestWatchingTheWebRunsOnItsOwnAndIsHeldAfterOutsideContent(t *testing.T) {
 	assert.Equal(t, permission.ResourceWebResearch, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
 	assert.True(t, policy.CarriesTaint)
-	assert.Equal(t, string(permission.KindWebWatch), policy.Artifact)
+	assert.Equal(t, string(recordkind.WebWatch), policy.Artifact)
 }
 
 func TestTheWatchPreviewSaysWhatItSearchesHowOftenAndWhatItCosts(t *testing.T) {
@@ -222,7 +223,7 @@ func TestSettingAWatchParksTheConversationOnIt(t *testing.T) {
 	assert.Equal(t, "set", result.Action)
 	assert.Equal(t, watcher.watchID.String(), result.IDs["webWatchId"])
 	assert.Equal(t, &agentrecord.RecordRef{
-		EntityType: string(permission.KindWebWatch),
+		EntityType: string(recordkind.WebWatch),
 		ID:         watcher.watchID.String(),
 	}, result.Record)
 	assert.Equal(t, "Watching once a week until Oct 23, 2026. What it finds comes back to "+

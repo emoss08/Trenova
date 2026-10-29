@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -74,7 +75,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 			paramWatchtowerItemID: agenttoolschema.OfKinds(
 				toolparams.StringProperty("The item, from "+
 					"exception_list_watchtower_items. Never guess one.", 0),
-				permission.KindWatchtowerItem,
+				recordkind.WatchtowerItem,
 			),
 		},
 		Required:    []string{paramWatchtowerItemID},

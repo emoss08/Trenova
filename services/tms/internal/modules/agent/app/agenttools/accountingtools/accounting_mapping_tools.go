@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -92,7 +93,7 @@ func mappingTargetProperties() map[string]any {
 		ParamMappingID: agenttoolschema.KindID(
 			"The mapping's id from accounting_list_mapping_gaps or "+
 				"accounting_get_mapping. Never guess one.",
-			permission.KindAccountingMapping,
+			recordkind.AccountingMapping,
 		),
 		paramTargetType: agenttoolschema.Enum(
 			"The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -101,11 +102,11 @@ func mappingTargetProperties() map[string]any {
 		paramRecordID: agenttoolschema.KindID(
 			"The Trenova customer, carrier or accessorial charge id, from "+
 				"customer_list, carrier_list or masterdata_list_accessorial_charges.",
-			permission.RecordKind(permission.ResourceCustomer),
-			permission.RecordKind(permission.ResourceCarrier),
-			permission.RecordKind(permission.ResourceAccessorialCharge),
-			permission.RecordKind(permission.ResourceWorker),
-			permission.RecordKind(permission.ResourceGeneralLedgerAccount),
+			recordkind.Kind(permission.ResourceCustomer),
+			recordkind.Kind(permission.ResourceCarrier),
+			recordkind.Kind(permission.ResourceAccessorialCharge),
+			recordkind.Kind(permission.ResourceWorker),
+			recordkind.Kind(permission.ResourceGeneralLedgerAccount),
 		),
 		paramMappingKey: jsonschemautils.Text(
 			"The setting's key from accounting_list_mapping_gaps, for the " +

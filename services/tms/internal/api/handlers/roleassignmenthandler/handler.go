@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,7 +54,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
 // @Param expandRoles query bool false "Expand role details"
-// @Success 200 {object} pagination.Response[[]permission.UserRoleAssignment]
+// @Success 200 {object} pagination.Response[[]rbac.UserRoleAssignment]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -68,7 +68,7 @@ func (h *Handler) list(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+		func() (*pagination.ListResult[*rbac.UserRoleAssignment], error) {
 			return h.service.List(c.Request.Context(), &permissionports.ListRoleAssignmentsRequest{
 				Filter:      req,
 				ExpandRoles: helpers.QueryBool(c, "expandRoles", false),
@@ -84,7 +84,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Produce json
 // @Param roleAssignmentID path string true "Role assignment ID"
 // @Param expandRoles query bool false "Expand role details"
-// @Success 200 {object} permission.UserRoleAssignment
+// @Success 200 {object} rbac.UserRoleAssignment
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail

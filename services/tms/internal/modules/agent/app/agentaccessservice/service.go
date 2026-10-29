@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -215,7 +216,7 @@ type accessChange struct {
 // accessWrite is what setting who may use an agent changed.
 type accessWrite struct {
 	definition   *agentdefinition.Definition
-	roles        []*permission.Role
+	roles        []*rbac.Role
 	roleIDs      []pulid.ID
 	previousMode agentdefinition.AccessMode
 	change       permissionports.GrantChange
@@ -342,7 +343,7 @@ func (s *Service) SetRoleAgents(
 	}
 
 	var (
-		role   *permission.Role
+		role   *rbac.Role
 		agents []*agentdefinition.Definition
 		change permissionports.GrantChange
 	)
@@ -494,9 +495,9 @@ func (s *Service) tenantRoles(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	roleIDs []pulid.ID,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	if len(roleIDs) == 0 {
-		return []*permission.Role{}, nil
+		return []*rbac.Role{}, nil
 	}
 
 	roles, err := s.grants.ListGrantableRoles(ctx, permissionports.ListGrantableRolesRequest{
@@ -676,7 +677,7 @@ func (s *Service) logRoleGrant(entry roleGrantAudit, roleID pulid.ID, granted bo
 }
 
 func (s *Service) logRoleAudit(
-	role *permission.Role,
+	role *rbac.Role,
 	change permissionports.GrantChange,
 	agentIDs []pulid.ID,
 	actor *permissionports.RequestActor,
@@ -702,7 +703,7 @@ func (s *Service) logRoleAudit(
 
 func (s *Service) logAgentGrantAudits(
 	tenant pagination.TenantInfo,
-	role *permission.Role,
+	role *rbac.Role,
 	change permissionports.GrantChange,
 	actor *permissionports.RequestActor,
 ) {

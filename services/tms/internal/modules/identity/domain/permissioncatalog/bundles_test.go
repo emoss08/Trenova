@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,7 +60,7 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 		permissionspec.JobTemplate{Bundles: []string{"hr.team", "hr.workers"}},
 	)
 
-	idx := slices.IndexFunc(grants, func(rp *permission.ResourcePermission) bool {
+	idx := slices.IndexFunc(grants, func(rp *rbac.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorker.String()
 	})
 	require.GreaterOrEqual(t, idx, 0)
@@ -79,15 +80,15 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 	)
 
 	teamOnly := reg.TemplateGrants(permissionspec.JobTemplate{Bundles: []string{"hr.team"}})
-	idx = slices.IndexFunc(teamOnly, func(rp *permission.ResourcePermission) bool {
+	idx = slices.IndexFunc(teamOnly, func(rp *rbac.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorker.String()
 	})
 	require.GreaterOrEqual(t, idx, 0)
 	assert.Equal(t, permission.DataScopeTeam, teamOnly[idx].DataScope)
 }
 
-func leaveOperations(grants []*permission.ResourcePermission) []permission.Operation {
-	idx := slices.IndexFunc(grants, func(rp *permission.ResourcePermission) bool {
+func leaveOperations(grants []*rbac.ResourcePermission) []permission.Operation {
+	idx := slices.IndexFunc(grants, func(rp *rbac.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorkerLeave.String()
 	})
 	if idx < 0 {

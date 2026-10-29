@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -253,7 +254,7 @@ func (rr *RouteRegistry) hasPermission(
 	if !ok {
 		return false
 	}
-	return (bitmask & permission.OperationToBit[op]) != 0
+	return (bitmask & operationbits.ByOperation[op]) != 0
 }
 
 func (rr *RouteRegistry) registerAll() {

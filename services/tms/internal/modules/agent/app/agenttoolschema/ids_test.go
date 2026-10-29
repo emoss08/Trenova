@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,7 +63,7 @@ func TestKindID_MarksEveryKindAndIsStrippedForTheModel(t *testing.T) {
 
 	property := agenttoolschema.KindID(
 		"The qualification record, from list_worker_qualifications. Never guess one.",
-		permission.KindEmploymentVerification, permission.KindClearinghouseQuery,
+		recordkind.EmploymentVerification, recordkind.ClearinghouseQuery,
 	)
 
 	assert.Equal(t, toolschema.TypeString, property[toolschema.KeyType])
@@ -77,7 +78,7 @@ func TestKindIDs_MarksEachItem(t *testing.T) {
 	t.Parallel()
 
 	property := agenttoolschema.KindIDs("The rounds, from worker_list_dot_random_draws.", 5,
-		permission.KindDOTRandomDraw)
+		recordkind.DOTRandomDraw)
 
 	items := property[toolschema.KeyItems].(map[string]any)
 	assert.Equal(t, []string{"dot_random_draw"}, toolschema.RecordKinds(items))
@@ -100,7 +101,7 @@ func TestOfResource_MarksAPropertyBuiltElsewhereWithoutChangingIt(t *testing.T) 
 		toolschema.KeyType:        toolschema.TypeArray,
 		toolschema.KeyDescription: "The rounds, from worker_list_dot_random_draws.",
 		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
-	}, permission.KindDOTRandomDraw)
+	}, recordkind.DOTRandomDraw)
 	items := list[toolschema.KeyItems].(map[string]any)
 	assert.Equal(t, []string{"dot_random_draw"}, toolschema.RecordKinds(items))
 	assert.NotContains(t, list, toolschema.KeyMinItems)

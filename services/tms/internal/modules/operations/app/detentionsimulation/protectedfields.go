@@ -1,12 +1,12 @@
 package detentionsimulation
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/shopspring/decimal"
 )
 
-func (r *PreviewResult) WithholdFields(visible permission.FieldGroupSet) {
-	if r == nil || visible.Has(permission.FieldGroupMargins) {
+func (r *PreviewResult) WithholdFields(visible protectedfield.GroupSet) {
+	if r == nil || visible.Has(protectedfield.Margins) {
 		return
 	}
 	r.DriverPayAmount = decimal.NullDecimal{}
@@ -14,16 +14,16 @@ func (r *PreviewResult) WithholdFields(visible permission.FieldGroupSet) {
 	r.Trace.WithholdFields(visible)
 }
 
-func (b *BacktestBucket) WithholdFields(visible permission.FieldGroupSet) {
-	if b == nil || visible.Has(permission.FieldGroupMargins) {
+func (b *BacktestBucket) WithholdFields(visible protectedfield.GroupSet) {
+	if b == nil || visible.Has(protectedfield.Margins) {
 		return
 	}
 	b.DriverPayAmount = decimal.NullDecimal{}
 	b.NetMargin = decimal.NullDecimal{}
 }
 
-func (r *BacktestResult) WithholdFields(visible permission.FieldGroupSet) {
-	if r == nil || visible.Has(permission.FieldGroupMargins) {
+func (r *BacktestResult) WithholdFields(visible protectedfield.GroupSet) {
+	if r == nil || visible.Has(protectedfield.Margins) {
 		return
 	}
 	r.ProposedDriverPay = decimal.NullDecimal{}
