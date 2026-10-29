@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
@@ -1419,7 +1420,7 @@ func (s *DetentionSeed) createOccurrences(
 			Timestamp:      *stop.ActualArrival,
 		}
 
-		resolution := detentionservice.ResolvePolicy(p.candidates, match)
+		resolution := detentionengine.ResolvePolicy(p.candidates, match)
 		if !resolution.Found() {
 			continue
 		}
@@ -1441,7 +1442,7 @@ func (s *DetentionSeed) createOccurrences(
 			CapturedAt:      p.now,
 		})
 
-		input := detentionservice.ComputeInput{
+		input := detentionengine.ComputeInput{
 			Snapshot:         snapshot,
 			StopType:         stop.Type,
 			ScheduleType:     stop.ScheduleType,
@@ -1458,13 +1459,13 @@ func (s *DetentionSeed) createOccurrences(
 
 		// The notice is placed relative to free-time expiry, which the engine
 		// itself derives, so the first pass exists only to learn that instant.
-		computed := detentionservice.Compute(input)
+		computed := detentionengine.Compute(input)
 		var noticeSentAt *int64
 		if stopDef.notice != nil && computed.Applicable {
 			sentAt := computed.FreeTimeExpiresAt + stopDef.notice.offsetFromExpiry*detentionMinute
 			noticeSentAt = &sentAt
 			input.NoticeSentAt = noticeSentAt
-			computed = detentionservice.Compute(input)
+			computed = detentionengine.Compute(input)
 		}
 
 		if !computed.Applicable {
@@ -1513,7 +1514,7 @@ func buildDetentionOccurrence(
 	stop *shipment.Stop,
 	policy *detentionpolicy.DetentionPolicy,
 	snapshot detentionpolicy.PolicySnapshot,
-	computed detentionservice.ComputeResult,
+	computed detentionengine.ComputeResult,
 ) *detention.DetentionOccurrence {
 	policyID := policy.ID
 
@@ -1944,14 +1945,17 @@ func (s *DetentionSeed) createNotice(
 		facility = p.location.Name
 	}
 
-	content, err := detentionservice.RenderBuiltInNotice(ctx, &detentionservice.BuildNoticeParams{
-		Occurrence:    p.occurrence,
-		Kind:          def.kind,
-		FacilityName:  facility,
-		ShipmentRef:   p.shipment.ProNumber,
-		ArrivalSource: p.stopDef.arrivalSource,
-		Location:      p.refs.timezone,
-	})
+	content, err := detentionnoticerender.RenderBuiltInNotice(
+		ctx,
+		&detentionnoticerender.BuildNoticeParams{
+			Occurrence:    p.occurrence,
+			Kind:          def.kind,
+			FacilityName:  facility,
+			ShipmentRef:   p.shipment.ProNumber,
+			ArrivalSource: p.stopDef.arrivalSource,
+			Location:      p.refs.timezone,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("render detention notice: %w", err)
 	}

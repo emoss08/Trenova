@@ -17,7 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +100,7 @@ func (r *MutationResolver) DetentionBacktest(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
-	req := detentionservice.BacktestRequest{
+	req := detentionsimulation.BacktestRequest{
 		Policy:                 policy,
 		From:                   int64(input.From),
 		To:                     int64(input.To),
@@ -128,7 +130,7 @@ func (r *MutationResolver) WaiveDetentionOccurrence(ctx context.Context, input g
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Waive(ctx, detentionservice.WaiveParams{
+	occurrence, err := r.DetentionService.Waive(ctx, detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Reason:       input.Reason,
@@ -153,7 +155,7 @@ func (r *MutationResolver) ApproveDetentionOccurrence(ctx context.Context, occur
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Approve(ctx, detentionservice.ApproveParams{
+	occurrence, err := r.DetentionService.Approve(ctx, detentionreview.ApproveParams{
 		OccurrenceID: id,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
@@ -176,7 +178,7 @@ func (r *MutationResolver) DisputeDetentionOccurrence(ctx context.Context, input
 		return nil, err
 	}
 
-	occurrence, err := r.DetentionService.Dispute(ctx, detentionservice.DisputeParams{
+	occurrence, err := r.DetentionService.Dispute(ctx, detentionreview.DisputeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Note:         input.Note,
@@ -202,7 +204,7 @@ func (r *MutationResolver) SendDetentionNotice(ctx context.Context, occurrenceID
 
 	occurrence, err := r.DetentionService.SendOccurrenceNotice(
 		ctx,
-		detentionservice.SendOccurrenceNoticeParams{
+		detentionnoticeservice.SendOccurrenceNoticeParams{
 			OccurrenceID: id,
 			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			UserID:       authCtx.UserID,

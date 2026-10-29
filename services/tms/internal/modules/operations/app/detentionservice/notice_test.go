@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
@@ -34,9 +34,9 @@ func noticeOccurrence() *detention.DetentionOccurrence {
 func TestBuildNotice_WarningCitesGoverningTerms(t *testing.T) {
 	t.Parallel()
 
-	content, err := detentionservice.RenderBuiltInNotice(
+	content, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence:    noticeOccurrence(),
 			Kind:          detentionnotice.NoticeKindWarning,
 			FacilityName:  "Memphis DC",
@@ -66,9 +66,9 @@ func TestBuildNotice_FinalIncludesTheSettledNumbers(t *testing.T) {
 	occ := noticeOccurrence()
 	occ.DepartedAt = ptr(baseTime + 5*hour)
 
-	content, err := detentionservice.RenderBuiltInNotice(
+	content, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence:   occ,
 			Kind:         detentionnotice.NoticeKindFinal,
 			FacilityName: "Memphis DC",
@@ -112,9 +112,9 @@ func TestBuildNotice_TieredRatesAreQuotedInFull(t *testing.T) {
 	}
 	occ.PolicySnapshot = &snap
 
-	content, err := detentionservice.RenderBuiltInNotice(
+	content, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence: occ,
 			Kind:       detentionnotice.NoticeKindStarted,
 			Location:   time.UTC,
@@ -133,9 +133,9 @@ func TestBuildNotice_FallsBackWhenContextIsMissing(t *testing.T) {
 
 	occ := noticeOccurrence()
 
-	content, err := detentionservice.RenderBuiltInNotice(
+	content, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence: occ,
 			Kind:       detentionnotice.NoticeKindUpdate,
 		},
@@ -159,9 +159,9 @@ func TestBuildNotice_KindsProduceDistinctOpenings(t *testing.T) {
 	seen := map[string]bool{}
 
 	for _, kind := range kinds {
-		content, err := detentionservice.RenderBuiltInNotice(
+		content, err := detentionnoticerender.RenderBuiltInNotice(
 			t.Context(),
-			&detentionservice.BuildNoticeParams{
+			&detentionnoticerender.BuildNoticeParams{
 				Occurrence:   noticeOccurrence(),
 				Kind:         kind,
 				FacilityName: "Memphis DC",
@@ -183,18 +183,18 @@ func TestBuildNotice_RespectsTimezone(t *testing.T) {
 	loc, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 
-	central, err := detentionservice.RenderBuiltInNotice(
+	central, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence: noticeOccurrence(),
 			Kind:       detentionnotice.NoticeKindWarning,
 			Location:   loc,
 		},
 	)
 	require.NoError(t, err)
-	utc, err := detentionservice.RenderBuiltInNotice(
+	utc, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence: noticeOccurrence(),
 			Kind:       detentionnotice.NoticeKindWarning,
 			Location:   time.UTC,

@@ -20,7 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -380,20 +381,20 @@ func (t *EmailCustomerTool) record(
 type detentionActor interface {
 	SendOccurrenceNotice(
 		ctx context.Context,
-		params detentionservice.SendOccurrenceNoticeParams,
+		params detentionnoticeservice.SendOccurrenceNoticeParams,
 	) (*detention.DetentionOccurrence, error)
 	Waive(
 		ctx context.Context,
-		params detentionservice.WaiveParams,
+		params detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewOccurrenceNotice(
 		ctx context.Context,
-		params *detentionservice.SendOccurrenceNoticeParams,
-	) (*detentionservice.NoticePreview, error)
+		params *detentionnoticeservice.SendOccurrenceNoticeParams,
+	) (*detentionnoticeservice.NoticePreview, error)
 	PreviewWaive(
 		ctx context.Context,
-		params *detentionservice.WaiveParams,
-	) (*detentionservice.OccurrenceChange, error)
+		params *detentionreview.WaiveParams,
+	) (*detentionreview.OccurrenceChange, error)
 	detentionpreview.DetentionDisputer
 }
 
@@ -470,17 +471,17 @@ func (t *SendDetentionNoticeTool) Execute(
 
 func (t *SendDetentionNoticeTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (detentionservice.SendOccurrenceNoticeParams, error) {
+) (detentionnoticeservice.SendOccurrenceNoticeParams, error) {
 	if err := toolguard.GuardExecute(t, *params); err != nil {
-		return detentionservice.SendOccurrenceNoticeParams{}, err
+		return detentionnoticeservice.SendOccurrenceNoticeParams{}, err
 	}
 
 	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
-		return detentionservice.SendOccurrenceNoticeParams{}, err
+		return detentionnoticeservice.SendOccurrenceNoticeParams{}, err
 	}
 
-	return detentionservice.SendOccurrenceNoticeParams{
+	return detentionnoticeservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   toolparams.TenantFrom(*params),
 		UserID:       params.Actor.UserID,
@@ -570,31 +571,31 @@ func (t *WaiveDetentionTool) Execute(
 
 func (t *WaiveDetentionTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (detentionservice.WaiveParams, error) {
+) (detentionreview.WaiveParams, error) {
 	if err := toolguard.GuardExecute(t, *params); err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 
 	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 	rawReason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 	reason, err := detention.WaiverReasonFromString(rawReason)
 	if err != nil {
-		return detentionservice.WaiveParams{}, fmt.Errorf(
+		return detentionreview.WaiveParams{}, fmt.Errorf(
 			"parameter \"reason\" is not a waiver reason: %w", err,
 		)
 	}
 	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 
-	return detentionservice.WaiveParams{
+	return detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   toolparams.TenantFrom(*params),
 		Reason:       reason,

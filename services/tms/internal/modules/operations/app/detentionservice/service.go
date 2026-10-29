@@ -2,22 +2,23 @@ package detentionservice
 
 import (
 	"context"
-	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -26,17 +27,71 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+func (s *Service) assemble() {
+	s.effects = detentioneffects.New(detentioneffects.Deps{
+		Logger:        s.l,
+		EvidenceRepo:  s.evidenceRepo,
+		Organizations: s.organizations,
+		AuditService:  s.auditService,
+		Realtime:      s.realtime,
+		Now:           s.now,
+	})
+	s.syncer = detentionsync.New(detentionsync.Deps{
+		Logger:            s.l,
+		PolicyRepo:        s.policyRepo,
+		OccurrenceRepo:    s.occurrenceRepo,
+		EvidenceRepo:      s.evidenceRepo,
+		AccessorialRepo:   s.accessorialRepo,
+		AgreementRepo:     s.agreementRepo,
+		PayAssignmentRepo: s.payAssignmentRepo,
+		PayProfileRepo:    s.payProfileRepo,
+		CommentRepo:       s.commentRepo,
+		Watchtower:        s.watchtower,
+		Publisher:         s.publisher,
+		Now:               s.now,
+		Effects:           s.effects,
+	})
+	s.simulator = detentionsimulation.New(detentionsimulation.Deps{
+		AccessorialRepo: s.accessorialRepo,
+		AnalyticsRepo:   s.analyticsRepo,
+		Now:             s.now,
+		Effects:         s.effects,
+	})
+	s.notices = detentionnoticeservice.New(detentionnoticeservice.Deps{
+		Logger:           s.l,
+		PolicyRepo:       s.policyRepo,
+		OccurrenceRepo:   s.occurrenceRepo,
+		NoticeRepo:       s.noticeRepo,
+		CustomerRepo:     s.customerRepo,
+		DocumentTypeRepo: s.documentTypeRepo,
+		EmailService:     s.emailService,
+		UploadService:    s.uploadService,
+		WorkflowStarter:  s.workflowStarter,
+		Templates:        s.templates,
+		ContextBuilder:   s.contextBuilder,
+		Publisher:        s.publisher,
+		Senders:          s.senders,
+		DocumentStore:    s.documentStore,
+		Documents:        s.documents,
+		Now:              s.now,
+		Effects:          s.effects,
+	})
+	s.review = detentionreview.New(detentionreview.Deps{
+		OccurrenceRepo: s.occurrenceRepo,
+		Now:            s.now,
+		Effects:        s.effects,
+	})
+}
 
 type Params struct {
 	fx.In
@@ -59,7 +114,7 @@ type Params struct {
 	UploadService     documentuploadports.DocumentUploadService
 	WorkflowStarter   kernelports.WorkflowStarter
 	Templates         documenttemplateports.DocumentTemplateResolver
-	ContextBuilder    *ContextBuilder
+	ContextBuilder    *detentionnoticerender.ContextBuilder
 	AuditService      auditports.AuditService
 	// Watchtower puts a running detention clock on the feed and takes it
 	// off once the occurrence closes.
@@ -95,7 +150,7 @@ type Service struct {
 	uploadService     documentuploadports.DocumentUploadService
 	workflowStarter   kernelports.WorkflowStarter
 	templates         documenttemplateports.DocumentTemplateResolver
-	contextBuilder    *ContextBuilder
+	contextBuilder    *detentionnoticerender.ContextBuilder
 	auditService      auditports.AuditService
 	watchtower        watchtowerports.WatchtowerProjector
 	publisher         agentports.AgentEventPublisher
@@ -104,12 +159,17 @@ type Service struct {
 	documentStore     documentports.DocumentStore
 	documents         documentports.DocumentRepository
 	now               func() int64
+	effects           *detentioneffects.Effects
+	syncer            *detentionsync.Service
+	simulator         *detentionsimulation.Service
+	notices           *detentionnoticeservice.Service
+	review            *detentionreview.Service
 }
 
 var _ detentionports.DetentionNoticeService = (*Service)(nil)
 
 func New(p Params) *Service {
-	return &Service{
+	s := &Service{
 		l:                 p.Logger.Named("service.detention"),
 		policyRepo:        p.PolicyRepo,
 		occurrenceRepo:    p.OccurrenceRepo,
@@ -138,510 +198,231 @@ func New(p Params) *Service {
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
+	s.assemble()
+	return s
 }
 
-// SyncShipmentResult reports what the recalculation did, so callers can decide
-// whether shipment charges need rebuilding.
-type SyncShipmentResult struct {
-	Occurrences []*detention.DetentionOccurrence
-	Skipped     int
-	TotalAmount decimal.Decimal
-}
-
-// SyncShipment recomputes every stop's detention for a shipment.
-//
-// Frozen occurrences are never rewritten: once a charge has been billed,
-// waived, or disputed the customer has seen a number, and silently changing it
-// is how carriers lose credibility in a dispute.
 func (s *Service) SyncShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*SyncShipmentResult, error) {
-	if entity == nil {
-		return &SyncShipmentResult{TotalAmount: decimal.Zero}, nil
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-
-	location, err := s.tenantLocation(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	log := s.l.With(
-		zap.String("operation", "SyncShipment"),
-		zap.String("shipmentId", entity.ID.String()),
-	)
-
-	result := &SyncShipmentResult{
-		Occurrences: make([]*detention.DetentionOccurrence, 0, 4),
-		TotalAmount: decimal.Zero,
-	}
-
-	commodityIDs := shipmentCommodityIDs(entity)
-	dayAccrued := map[string]decimal.Decimal{}
-	shipmentAccrued := decimal.Zero
-	now := s.now()
-
-	// The contract's own accessorial prices, read once for the whole shipment.
-	prices := s.resolveContractPrices(ctx, entity, tenantInfo, now)
-
-	for _, move := range entity.Moves {
-		if move == nil {
-			continue
-		}
-
-		payRate := s.resolveDriverPayRate(ctx, tenantInfo, move, now)
-
-		for _, stop := range move.Stops {
-			if !stopIsBillable(stop) {
-				continue
-			}
-
-			existing, err := s.occurrenceRepo.GetByStop(
-				ctx,
-				&detentionports.GetOccurrenceByStopRequest{
-					StopID:     stop.ID,
-					TenantInfo: tenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			if existing != nil && existing.IsFrozen() {
-				result.Skipped++
-				result.Occurrences = append(result.Occurrences, existing)
-				shipmentAccrued = shipmentAccrued.Add(existing.BillableAmount)
-				result.TotalAmount = result.TotalAmount.Add(existing.BillableAmount)
-				continue
-			}
-
-			occurrence, err := s.computeStop(ctx, computeStopParams{
-				shipment:        entity,
-				move:            move,
-				stop:            stop,
-				existing:        existing,
-				tenantInfo:      tenantInfo,
-				commodityIDs:    commodityIDs,
-				location:        location,
-				payRate:         payRate,
-				dayAccrued:      dayAccrued,
-				shipmentAccrued: shipmentAccrued,
-				prices:          prices,
-				now:             now,
-			})
-			if err != nil {
-				log.Error("failed to compute detention for stop",
-					zap.String("stopId", stop.ID.String()), zap.Error(err))
-				return nil, err
-			}
-
-			if occurrence == nil {
-				continue
-			}
-
-			result.Occurrences = append(result.Occurrences, occurrence)
-			shipmentAccrued = shipmentAccrued.Add(occurrence.BillableAmount)
-			result.TotalAmount = result.TotalAmount.Add(occurrence.BillableAmount)
-		}
-	}
-
-	return result, nil
+) (*detentionsync.SyncShipmentResult, error) {
+	return s.syncer.SyncShipment(ctx, entity)
 }
 
-type computeStopParams struct {
-	shipment        *shipment.Shipment
-	move            *shipment.ShipmentMove
-	stop            *shipment.Stop
-	existing        *detention.DetentionOccurrence
-	tenantInfo      pagination.TenantInfo
-	commodityIDs    []pulid.ID
-	location        *time.Location
-	payRate         decimal.NullDecimal
-	dayAccrued      map[string]decimal.Decimal
-	shipmentAccrued decimal.Decimal
-	// prices is what the shipment's own contract charges, when a contract
-	// priced it. Nil means the organization defaults apply.
-	prices *contractPrices
-	now    int64
-}
-
-func (s *Service) computeStop(
+func (s *Service) Backtest(
 	ctx context.Context,
-	p computeStopParams,
-) (*detention.DetentionOccurrence, error) {
-	matchInput := detentionpolicy.MatchInput{
-		CustomerID:     p.shipment.CustomerID,
-		LocationID:     p.stop.LocationID,
-		ShipmentTypeID: p.shipment.ShipmentTypeID,
-		ServiceTypeID:  p.shipment.ServiceTypeID,
-		CommodityIDs:   p.commodityIDs,
-		StopType:       p.stop.Type,
-		ScheduleType:   p.stop.ScheduleType,
-		Timestamp:      *p.stop.ActualArrival,
-	}
-
-	candidates, err := s.policyRepo.GetResolutionCandidates(
-		ctx,
-		&detentionports.GetResolutionCandidatesRequest{
-			TenantInfo: p.tenantInfo,
-			CustomerID: p.shipment.CustomerID,
-			LocationID: p.stop.LocationID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	resolution := ResolvePolicy(candidates, matchInput)
-	if !resolution.Found() {
-		return nil, nil
-	}
-
-	policy := resolution.Policy
-
-	accessorial, err := s.accessorialRepo.GetByID(
-		ctx,
-		accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID:         policy.AccessorialChargeID,
-			TenantInfo: &p.tenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// The contract's price wins over the organization default, which is what
-	// makes the rate confirmation and the invoice agree on detention.
-	flatRate := accessorial.Amount
-	rateUnit := accessorial.RateUnit
-
-	if contractRate, contractUnit, priced := p.prices.priceFor(accessorial); priced {
-		flatRate = contractRate
-		rateUnit = contractUnit
-	}
-
-	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
-		Policy:          policy,
-		StopType:        string(p.stop.Type),
-		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
-		AccessorialCode: accessorial.Code,
-		FlatRate:        flatRate,
-		FlatRateUnit:    tierUnitFromAccessorial(rateUnit),
-		CapturedAt:      p.now,
-	})
-
-	var noticeSentAt *int64
-	if p.existing != nil {
-		noticeSentAt = p.existing.NoticeSentAt
-	}
-
-	computed := Compute(ComputeInput{
-		Snapshot:         snapshot,
-		StopType:         p.stop.Type,
-		ScheduleType:     p.stop.ScheduleType,
-		ArrivedAt:        p.stop.ActualArrival,
-		DepartedAt:       p.stop.ActualDeparture,
-		AppointmentStart: appointmentStart(p.stop),
-		AppointmentEnd:   p.stop.ScheduledWindowEnd,
-		NoticeSentAt:     noticeSentAt,
-		Now:              p.now,
-		Location:         p.location,
-		DriverPayRate:    p.payRate,
-		DayAccrued:       p.dayAccrued,
-		ShipmentAccrued:  p.shipmentAccrued,
-	})
-
-	if !computed.Applicable {
-		return nil, nil
-	}
-
-	for day, amount := range computed.DayAllocation {
-		p.dayAccrued[day] = p.dayAccrued[day].Add(amount)
-	}
-
-	occurrence := buildOccurrence(p, policy, snapshot, computed)
-
-	saved, err := s.occurrenceRepo.Upsert(ctx, occurrence)
-	if err != nil {
-		return nil, err
-	}
-
-	s.recordRecalculation(ctx, saved, p.existing)
-	s.publishBillingHoldChange(ctx, p.existing, saved, pulid.Nil)
-	s.recordChargeComment(ctx, chargeCommentParams{
-		occurrence: saved,
-		previous:   p.existing,
-		stop:       p.stop,
-	})
-	s.projectToWatchtower(ctx, saved, p)
-
-	return saved, nil
+	req detentionsimulation.BacktestRequest,
+	tenantInfo pagination.TenantInfo,
+) (*detentionsimulation.BacktestResult, error) {
+	return s.simulator.Backtest(ctx, req, tenantInfo)
 }
 
-func buildOccurrence(
-	p computeStopParams,
+func (s *Service) FacilityProfiles(
+	ctx context.Context,
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.FacilityDetentionStat, error) {
+	return s.simulator.FacilityProfiles(ctx, req)
+}
+
+func (s *Service) CustomerProfiles(
+	ctx context.Context,
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.CustomerDetentionStat, error) {
+	return s.simulator.CustomerProfiles(ctx, req)
+}
+
+func (s *Service) WaiverLeakage(
+	ctx context.Context,
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.WaiverLeakageStat, error) {
+	return s.simulator.WaiverLeakage(ctx, req)
+}
+
+func (s *Service) PreviewPolicy(
+	ctx context.Context,
 	policy *detentionpolicy.DetentionPolicy,
-	snapshot detentionpolicy.PolicySnapshot,
-	computed ComputeResult,
-) *detention.DetentionOccurrence {
-	policyID := policy.ID
-
-	occurrence := &detention.DetentionOccurrence{
-		OrganizationID:     p.tenantInfo.OrgID,
-		BusinessUnitID:     p.tenantInfo.BuID,
-		ShipmentID:         p.shipment.ID,
-		ShipmentMoveID:     p.move.ID,
-		StopID:             p.stop.ID,
-		CustomerID:         p.shipment.CustomerID,
-		LocationID:         p.stop.LocationID,
-		DetentionPolicyID:  &policyID,
-		PolicySnapshot:     &snapshot,
-		CalculationTrace:   computed.Trace,
-		StopType:           p.stop.Type,
-		ScheduleType:       p.stop.ScheduleType,
-		AppointmentStart:   appointmentStart(p.stop),
-		AppointmentEnd:     p.stop.ScheduledWindowEnd,
-		ArrivedAt:          p.stop.ActualArrival,
-		DepartedAt:         p.stop.ActualDeparture,
-		ClockStartAt:       computed.ClockStartAt,
-		ClockStopAt:        computed.ClockStopAt,
-		FreeTimeExpiresAt:  computed.FreeTimeExpiresAt,
-		NoticeDueAt:        computed.NoticeDueAt,
-		NoticeDeadlineAt:   computed.NoticeDeadlineAt,
-		IsOpen:             computed.IsOpen,
-		ArrivedLate:        computed.ArrivedLate,
-		LateByMinutes:      computed.LateByMinutes,
-		FreeMinutesGranted: computed.FreeMinutesGranted,
-		RawDwellMinutes:    computed.RawDwellMinutes,
-		BillableMinutes:    computed.BillableMinutes,
-		RoundedMinutes:     computed.RoundedMinutes,
-		BillableUnits:      computed.BillableUnits,
-		GrossAmount:        computed.GrossAmount,
-		BillableAmount:     computed.BillableAmount,
-		DriverPayMinutes:   computed.DriverPayMinutes,
-		DriverPayAmount:    decimal.NewNullDecimal(computed.DriverPayAmount),
-		NetMargin:          decimal.NewNullDecimal(computed.NetMargin),
-		CapApplied:         computed.CapApplied,
-		ConvertedToLayover: computed.ConvertedToLayover,
-		Currency:           snapshot.Currency,
-		Status:             computed.Status,
-		NotificationStatus: computed.NotificationStatus,
-		SuppressedByGate:   computed.SuppressedByGate,
-		RequiresApproval:   computed.RequiresApproval,
-	}
-
-	if p.existing != nil {
-		occurrence.ID = p.existing.ID
-		occurrence.NoticeSentAt = p.existing.NoticeSentAt
-		occurrence.ApprovedByID = p.existing.ApprovedByID
-		occurrence.ApprovedAt = p.existing.ApprovedAt
-		occurrence.EvidenceHead = p.existing.EvidenceHead
-		occurrence.AdditionalChargeID = p.existing.AdditionalChargeID
-		occurrence.CollectabilityScore = p.existing.CollectabilityScore
-
-		if p.existing.Status == detention.OccurrenceStatusApproved &&
-			computed.Status == detention.OccurrenceStatusPending &&
-			!computed.RequiresApproval {
-			occurrence.Status = detention.OccurrenceStatusApproved
-		}
-	}
-
-	return occurrence
+	scenario detentionsimulation.PreviewScenario,
+	tenantInfo pagination.TenantInfo,
+) (*detentionsimulation.PreviewResult, error) {
+	return s.simulator.PreviewPolicy(ctx, policy, scenario, tenantInfo)
 }
 
-// recordRecalculation appends an evidence link whenever a stored amount moves,
-// so the reason a number changed is never lost.
-func (s *Service) recordRecalculation(
+func (s *Service) BuildNotice(
 	ctx context.Context,
-	saved *detention.DetentionOccurrence,
-	existing *detention.DetentionOccurrence,
-) {
-	if s.evidenceRepo == nil || saved == nil {
-		return
-	}
-
-	if existing != nil && existing.BillableAmount.Equal(saved.BillableAmount) &&
-		existing.Status == saved.Status {
-		return
-	}
-
-	summary := "Detention recalculated to " + saved.BillableAmount.StringFixed(2) +
-		" " + saved.Currency + " (" + string(saved.Status) + ")"
-
-	entry := &detentionevidence.DetentionEvidence{
-		OrganizationID:        saved.OrganizationID,
-		BusinessUnitID:        saved.BusinessUnitID,
-		DetentionOccurrenceID: saved.ID,
-		Kind:                  detentionevidence.EvidenceKindRecalculated,
-		Source:                detentionevidence.EvidenceSourceSystem,
-		Summary:               summary,
-		ObservedAt:            s.now(),
-		RecordedAt:            s.now(),
-	}
-
-	if _, err := s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
-		Entry: entry,
-	}); err != nil {
-		s.l.Warn("failed to append detention recalculation evidence",
-			zap.String("occurrenceId", saved.ID.String()), zap.Error(err))
-	}
+	p *detentionnoticerender.BuildNoticeParams,
+) (detentionnoticerender.NoticeContent, error) {
+	return s.notices.BuildNotice(ctx, p)
 }
 
-// resolveDriverPayRate finds the detention rate the assigned driver is paid, so
-// the AR and AP sides of the same dwell can be compared on one record.
-func (s *Service) resolveDriverPayRate(
+func (s *Service) ScheduleNotice(
+	ctx context.Context,
+	p detentionnoticeservice.ScheduleNoticeParams,
+) (*detentionnoticeservice.ScheduledNotice, error) {
+	return s.notices.ScheduleNotice(ctx, p)
+}
+
+func (s *Service) SendNotice(
+	ctx context.Context,
+	p *detentionnoticeservice.SendNoticeParams,
+) (*detentionnotice.DetentionNotice, error) {
+	return s.notices.SendNotice(ctx, p)
+}
+
+func (s *Service) SendOccurrenceNotice(
+	ctx context.Context,
+	p detentionnoticeservice.SendOccurrenceNoticeParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.notices.SendOccurrenceNotice(ctx, p)
+}
+
+func (s *Service) SweepNoticesDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	move *shipment.ShipmentMove,
-	asOf int64,
-) decimal.NullDecimal {
-	if s.payAssignmentRepo == nil || s.payProfileRepo == nil {
-		return decimal.NullDecimal{}
-	}
-
-	if move.Assignment == nil || move.Assignment.PrimaryWorkerID == nil ||
-		move.Assignment.PrimaryWorkerID.IsNil() {
-		return decimal.NullDecimal{}
-	}
-
-	assignment, err := s.payAssignmentRepo.GetEffectiveForWorker(
-		ctx,
-		driverpayports.GetWorkerPayAssignmentRequest{
-			TenantInfo: tenantInfo,
-			WorkerID:   *move.Assignment.PrimaryWorkerID,
-			AsOf:       asOf,
-		},
-	)
-	if err != nil || assignment == nil {
-		return decimal.NullDecimal{}
-	}
-
-	profile, err := s.payProfileRepo.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         assignment.PayProfileID,
-	})
-	if err != nil || profile == nil {
-		return decimal.NullDecimal{}
-	}
-
-	for _, comp := range profile.Components {
-		if comp == nil || !comp.IsActive {
-			continue
-		}
-		if comp.Kind == driverpay.ComponentKindDetention {
-			return decimal.NewNullDecimal(comp.Rate)
-		}
-	}
-
-	return decimal.NullDecimal{}
+) (*detentionports.NoticeSweepResult, error) {
+	return s.notices.SweepNoticesDue(ctx, tenantInfo)
 }
 
-func stopIsBillable(stop *shipment.Stop) bool {
-	if stop == nil || stop.Status == shipment.StopStatusCanceled {
-		return false
-	}
-
-	if stop.ActualArrival == nil || *stop.ActualArrival <= 0 {
-		return false
-	}
-
-	if stop.CountDetentionOverride != nil && !*stop.CountDetentionOverride {
-		return false
-	}
-
-	return true
+func (s *Service) RecordNoticeDelivery(
+	ctx context.Context,
+	notice *detentionnotice.DetentionNotice,
+	status detentionnotice.NoticeDeliveryStatus,
+	reason string,
+) (*detentionnotice.DetentionNotice, error) {
+	return s.notices.RecordNoticeDelivery(ctx, notice, status, reason)
 }
 
-func appointmentStart(stop *shipment.Stop) *int64 {
-	if stop.ScheduledWindowStart <= 0 {
-		return nil
-	}
-	start := stop.ScheduledWindowStart
-	return &start
+func (s *Service) AttachNoticePDFDocument(
+	ctx context.Context,
+	p *detentionports.AttachNoticePDFDocumentParams,
+) error {
+	return s.notices.AttachNoticePDFDocument(ctx, p)
 }
 
-func shipmentCommodityIDs(entity *shipment.Shipment) []pulid.ID {
-	ids := make([]pulid.ID, 0, len(entity.Commodities))
-	for _, commodity := range entity.Commodities {
-		if commodity == nil || commodity.CommodityID.IsNil() {
-			continue
-		}
-		ids = append(ids, commodity.CommodityID)
-	}
-	return ids
+func (s *Service) PreviewOccurrenceNotice(
+	ctx context.Context,
+	p *detentionnoticeservice.SendOccurrenceNoticeParams,
+) (*detentionnoticeservice.NoticePreview, error) {
+	return s.notices.PreviewOccurrenceNotice(ctx, p)
 }
 
-// tenantLocation resolves the organization's timezone so calendar-day caps
-// break at the carrier's local midnight rather than UTC's.
-func (s *Service) tenantLocation(
+func (s *Service) DisputeRecord(
+	ctx context.Context,
+	p *detentionnoticeservice.DisputeRecordParams,
+) (*detentionnoticeservice.DisputeRecord, error) {
+	return s.notices.DisputeRecord(ctx, p)
+}
+
+func (s *Service) GetOccurrenceDetail(
+	ctx context.Context,
+	req *detentionports.GetDetentionOccurrenceByIDRequest,
+) (*detentionreview.OccurrenceDetail, error) {
+	return s.review.GetOccurrenceDetail(ctx, req)
+}
+
+func (s *Service) ListOccurrences(
+	ctx context.Context,
+	req *detentionports.ListDetentionOccurrencesRequest,
+) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
+	return s.review.ListOccurrences(ctx, req)
+}
+
+func (s *Service) ListByShipment(
+	ctx context.Context,
+	req *detentionports.GetOccurrencesByShipmentRequest,
+) ([]*detention.DetentionOccurrence, error) {
+	return s.review.ListByShipment(ctx, req)
+}
+
+func (s *Service) ListDesk(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*time.Location, error) {
-	return orgzone.Location(ctx, s.organizations, tenantInfo)
+) ([]*detentionreview.DeskEntry, error) {
+	return s.review.ListDesk(ctx, tenantInfo)
 }
 
-// projectToWatchtower puts a running detention clock on the feed and takes
-// it off once the occurrence closes. The names come from what the
-// recalculation already loaded, so the live item reads the same as the one
-// the nightly snapshot would write without a second round of queries.
-func (s *Service) projectToWatchtower(
+func (s *Service) PriceOpenClock(
 	ctx context.Context,
-	saved *detention.DetentionOccurrence,
-	p computeStopParams,
-) {
-	if s.watchtower == nil || saved == nil {
-		return
-	}
-
-	if !saved.IsOpen {
-		s.watchtower.Resolve(
-			ctx,
-			p.tenantInfo,
-			watchtower.SourceDetentionOccurrence,
-			saved.ID.String(),
-		)
-
-		return
-	}
-
-	described := *saved
-	if described.ShipmentProNumber == "" && p.shipment != nil {
-		described.ShipmentProNumber = p.shipment.ProNumber
-	}
-	if described.CustomerName == "" && p.shipment != nil && p.shipment.Customer != nil {
-		described.CustomerName = p.shipment.Customer.Name
-	}
-	if described.LocationName == "" && p.stop != nil && p.stop.Location != nil {
-		described.LocationName = p.stop.Location.Name
-	}
-
-	s.watchtower.Upsert(ctx, watchtowersources.DescribeDetentionOccurrence(&described))
+	tenantInfo pagination.TenantInfo,
+	occurrence *detention.DetentionOccurrence,
+) (*detentionreview.ClockPrice, error) {
+	return s.review.PriceOpenClock(ctx, tenantInfo, occurrence)
 }
 
-// publishOccurrenceOpened wakes the detention desk the moment a clock
-// starts, and only then. Recalculation runs on every stop update, so an
-// occurrence that was already running is not news; the event fires on the
-// transition into open, not on every pass over one that already is.
-func (s *Service) publishOccurrenceOpened(
+func (s *Service) ListAwaitingApproval(
 	ctx context.Context,
-	saved *detention.DetentionOccurrence,
-	p computeStopParams,
-) {
-	if saved == nil || !saved.IsOpen {
-		return
-	}
-	if p.existing != nil && p.existing.IsOpen {
-		return
-	}
+	tenantInfo pagination.TenantInfo,
+) ([]*detentionreview.DeskEntry, error) {
+	return s.review.ListAwaitingApproval(ctx, tenantInfo)
+}
 
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-		Kind:       agenttrigger.EventDetentionOccurrenceOpened,
-		SubjectID:  saved.ID,
-		TenantInfo: p.tenantInfo,
-	})
+func (s *Service) ListDeskEntries(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	filter *detentionreview.DeskFilter,
+) ([]*detentionreview.DeskEntry, error) {
+	return s.review.ListDeskEntries(ctx, tenantInfo, filter)
+}
+
+func (s *Service) Waive(
+	ctx context.Context,
+	p detentionreview.WaiveParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.review.Waive(ctx, p)
+}
+
+func (s *Service) WaiveUninvoiced(
+	ctx context.Context,
+	p *detentionreview.WaiveParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.review.WaiveUninvoiced(ctx, p)
+}
+
+func (s *Service) Approve(
+	ctx context.Context,
+	p detentionreview.ApproveParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.review.Approve(ctx, p)
+}
+
+func (s *Service) Dispute(
+	ctx context.Context,
+	p detentionreview.DisputeParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.review.Dispute(ctx, p)
+}
+
+func (s *Service) Escalate(
+	ctx context.Context,
+	p detentionreview.EscalateParams,
+) (*detention.DetentionOccurrence, error) {
+	return s.review.Escalate(ctx, p)
+}
+
+func (s *Service) BuildDisputePacket(
+	ctx context.Context,
+	occurrenceID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*detentionreview.DisputePacket, error) {
+	return s.review.BuildDisputePacket(ctx, occurrenceID, tenantInfo)
+}
+
+func (s *Service) PreviewApprove(
+	ctx context.Context,
+	p *detentionreview.ApproveParams,
+) (*detentionreview.OccurrenceChange, error) {
+	return s.review.PreviewApprove(ctx, p)
+}
+
+func (s *Service) PreviewWaive(
+	ctx context.Context,
+	p *detentionreview.WaiveParams,
+) (*detentionreview.OccurrenceChange, error) {
+	return s.review.PreviewWaive(ctx, p)
+}
+
+func (s *Service) PreviewDispute(
+	ctx context.Context,
+	p *detentionreview.DisputeParams,
+) (*detentionreview.OccurrenceChange, error) {
+	return s.review.PreviewDispute(ctx, p)
 }

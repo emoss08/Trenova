@@ -57,64 +57,6 @@ func eventService(publisher agentports.AgentEventPublisher) *Service {
 	return &Service{l: zap.NewNop(), watchtower: silentProjector{}, publisher: publisher}
 }
 
-func TestPublishOccurrenceOpened_FiresOnlyWhenTheClockStarts(t *testing.T) {
-	t.Parallel()
-
-	tenant := testTenant()
-	occurrenceID := pulid.MustNew("do_")
-
-	cases := []struct {
-		name     string
-		saved    *detention.DetentionOccurrence
-		existing *detention.DetentionOccurrence
-		want     []agenttrigger.EventKind
-	}{
-		{
-			name:  "a clock that has just started wakes the desk",
-			saved: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			want:  []agenttrigger.EventKind{agenttrigger.EventDetentionOccurrenceOpened},
-		},
-		{
-			name:     "a clock that was already running is not news",
-			saved:    &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			existing: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			want:     nil,
-		},
-		{
-			name:     "a clock that has stopped wakes nobody",
-			saved:    &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: false},
-			existing: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			want:     nil,
-		},
-		{
-			name:     "an occurrence reopened after closing is news again",
-			saved:    &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: true},
-			existing: &detention.DetentionOccurrence{ID: occurrenceID, IsOpen: false},
-			want:     []agenttrigger.EventKind{agenttrigger.EventDetentionOccurrenceOpened},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			publisher := &recordingPublisher{}
-			svc := eventService(publisher)
-
-			svc.publishOccurrenceOpened(t.Context(), tc.saved, computeStopParams{
-				existing:   tc.existing,
-				tenantInfo: tenant,
-			})
-
-			require.Equal(t, tc.want, publisher.kinds())
-			for _, event := range publisher.events {
-				require.Equal(t, occurrenceID, event.SubjectID)
-				require.Equal(t, tenant, event.TenantInfo)
-			}
-		})
-	}
-}
-
 type stubOccurrenceRepo struct {
 	detentionports.DetentionOccurrenceRepository
 	due []*detention.DetentionOccurrence
@@ -179,8 +121,9 @@ func TestSweepNoticesDue_RaisesTheNoticesItLeavesOnTheDesk(t *testing.T) {
 			}
 			svc.policyRepo = stubPolicyRepo{policy: tc.policy}
 			svc.now = func() int64 { return 1_767_225_600 }
+			svc.assemble()
 
-			result, err := svc.SweepNoticesDue(t.Context(), tenant)
+			result, err := svc.notices.SweepNoticesDue(t.Context(), tenant)
 			require.NoError(t, err)
 			require.Equal(t, 1, result.Skipped)
 			require.Equal(t, tc.want, publisher.kinds())

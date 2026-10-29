@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerstatustrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -275,13 +276,13 @@ func SharedOptions() fx.Option {
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,
 			func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },
-			detentionservice.NewContextBuilder,
+			detentionnoticerender.NewContextBuilder,
 			fx.Annotate(
-				func(b *detentionservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
+				func(b *detentionnoticerender.ContextBuilder) documenttemplateports.ContextBuilder { return b },
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 			fx.Annotate(
-				detentionservice.NewPDFContextBuilder,
+				detentionnoticerender.NewPDFContextBuilder,
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 		),

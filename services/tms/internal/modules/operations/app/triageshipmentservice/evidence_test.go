@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,14 +16,14 @@ import (
 )
 
 type fakeRecorder struct {
-	record *detentionservice.DisputeRecord
-	asked  []*detentionservice.DisputeRecordParams
+	record *detentionnoticeservice.DisputeRecord
+	asked  []*detentionnoticeservice.DisputeRecordParams
 }
 
 func (f *fakeRecorder) DisputeRecord(
 	_ context.Context,
-	p *detentionservice.DisputeRecordParams,
-) (*detentionservice.DisputeRecord, error) {
+	p *detentionnoticeservice.DisputeRecordParams,
+) (*detentionnoticeservice.DisputeRecord, error) {
 	f.asked = append(f.asked, p)
 
 	return f.record, nil
@@ -41,22 +41,27 @@ func TestDetentionEvidenceAsksForTheDisputedOccurrencesRecord(t *testing.T) {
 		BillableAmount: decimal.RequireFromString("1200"),
 	}
 	documentID := pulid.MustNew("doc_")
-	recorder := &fakeRecorder{record: &detentionservice.DisputeRecord{
+	recorder := &fakeRecorder{record: &detentionnoticeservice.DisputeRecord{
 		DocumentID: documentID,
 		FileName:   "detention-record-SEED-DET-008.pdf",
 		Rendered:   true,
 	}}
 	service := &Service{
-		l:           zap.NewNop(),
-		occurrences: &fakeOccurrences{occurrences: []*detention.DetentionOccurrence{small, disputed}},
-		records:     recorder,
+		l: zap.NewNop(),
+		occurrences: &fakeOccurrences{
+			occurrences: []*detention.DetentionOccurrence{small, disputed},
+		},
+		records: recorder,
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	evidence, err := service.DetentionEvidence(t.Context(), &inboundmessageports.TriageDetentionEvidenceRequest{
-		TenantInfo: tenantInfo,
-		ShipmentID: pulid.MustNew("shp_"),
-	})
+	evidence, err := service.DetentionEvidence(
+		t.Context(),
+		&inboundmessageports.TriageDetentionEvidenceRequest{
+			TenantInfo: tenantInfo,
+			ShipmentID: pulid.MustNew("shp_"),
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, evidence)
@@ -77,9 +82,12 @@ func TestDetentionEvidenceWithoutAnOccurrenceIsNothing(t *testing.T) {
 		records:     recorder,
 	}
 
-	evidence, err := service.DetentionEvidence(t.Context(), &inboundmessageports.TriageDetentionEvidenceRequest{
-		ShipmentID: pulid.MustNew("shp_"),
-	})
+	evidence, err := service.DetentionEvidence(
+		t.Context(),
+		&inboundmessageports.TriageDetentionEvidenceRequest{
+			ShipmentID: pulid.MustNew("shp_"),
+		},
+	)
 
 	require.NoError(t, err)
 	assert.Nil(t, evidence)

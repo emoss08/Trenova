@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
@@ -22,14 +22,14 @@ import (
 
 type stubApprover struct {
 	occurrence *detention.DetentionOccurrence
-	approved   *detentionservice.ApproveParams
-	previewed  *detentionservice.ApproveParams
+	approved   *detentionreview.ApproveParams
+	previewed  *detentionreview.ApproveParams
 }
 
 func (s *stubApprover) PreviewApprove(
 	_ context.Context,
-	p *detentionservice.ApproveParams,
-) (*detentionservice.OccurrenceChange, error) {
+	p *detentionreview.ApproveParams,
+) (*detentionreview.OccurrenceChange, error) {
 	s.previewed = p
 	before := *s.occurrence
 	after := before
@@ -37,12 +37,12 @@ func (s *stubApprover) PreviewApprove(
 		return nil, err
 	}
 
-	return &detentionservice.OccurrenceChange{Before: &before, After: &after}, nil
+	return &detentionreview.OccurrenceChange{Before: &before, After: &after}, nil
 }
 
 func (s *stubApprover) Approve(
 	_ context.Context,
-	p detentionservice.ApproveParams,
+	p detentionreview.ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
 	s.approved = &p
 
@@ -52,8 +52,8 @@ func (s *stubApprover) Approve(
 func (s *stubApprover) GetOccurrenceDetail(
 	context.Context,
 	*detentionports.GetDetentionOccurrenceByIDRequest,
-) (*detentionservice.OccurrenceDetail, error) {
-	return &detentionservice.OccurrenceDetail{
+) (*detentionreview.OccurrenceDetail, error) {
+	return &detentionreview.OccurrenceDetail{
 		Occurrence: s.occurrence,
 		Evidence:   []*detentionevidence.DetentionEvidence{{}, {}},
 		Collectability: detentioncollectability.CollectabilityAssessment{

@@ -205,6 +205,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/querytools/shipmentquerytools/shipment_search_parties.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
       - services/tms/internal/modules/agent/app/querytools/shipmentreadquerytools/shipment_tools.go
       - services/tms/internal/modules/operations/domain/shipment/shipment.go
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-154357-run (5 gpt-6-luna cases flipped to pass; search_shipments calls 107 -> 44)
@@ -237,6 +238,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/querytools/shipmentquerytools/shipment_route.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
     fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-010
@@ -604,7 +606,7 @@ findings:
       shipmentId and proNumber, and an urgency that matches nothing names the urgencies the same
       loads are at. To verify in a run.
     files:
-      - services/tms/internal/modules/operations/app/detentionservice/workflow.go
+      - services/tms/internal/modules/operations/app/detentionreview/workflow.go
       - services/tms/internal/modules/agent/app/querytools/dispatchquerytools/monitoring_tools.go
       - services/tms/internal/modules/agent/app/querytools/homequerytools/desk_get_tools.go
     fixedIn: .deskbench/runs/20261009-175153-run
@@ -649,6 +651,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/app/querytools/shipmentquerytools/shipment_search_parties.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
     fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-028
@@ -1568,6 +1571,7 @@ findings:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/driverpay_tools.go
       - services/tms/internal/modules/agent/app/querytools/shipmentquerytools/shipment_search_parties.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
 
   - id: DB-067
     title: gpt-6-luna searched for tools until it ran out, and for a formula field that does not exist
@@ -1837,6 +1841,7 @@ findings:
     fixedIn: uncommitted; verified with a probe that fails without the condition and passes with it
     files:
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
 
   - id: DB-080
     title: gpt-6-luna filled every optional parameter, narrowing lists to nothing
@@ -2526,6 +2531,7 @@ findings:
     files:
       - services/tms/internal/modules/operations/ports/shipmentports/shipment.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
       - services/tms/internal/modules/agent/app/querytools/shipmentreadquerytools/shipment_tools.go
       - services/tms/internal/modules/agent/app/querytools/shipmentreadquerytools/shipment_tools_test.go
 
@@ -2709,6 +2715,7 @@ findings:
     files:
       - services/tms/internal/modules/operations/ports/shipmentports/shipment.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/helpers.go
+      - services/tms/internal/modules/operations/adapters/postgres/shipmentpredicate/predicates.go
       - services/tms/internal/modules/agent/app/querytools/shipmentquerytools/shipment_search_parties.go
       - services/tms/internal/modules/agent/app/querytools/shipmentreadquerytools/shipment_tools.go
       - services/tms/deskbench/scenarios/operations.yaml

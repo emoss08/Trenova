@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
@@ -81,14 +81,14 @@ func (f *fakeOccurrences) GetByShipment(
 }
 
 type fakeDecider struct {
-	waived     []detentionservice.WaiveParams
-	uninvoiced []detentionservice.WaiveParams
-	disputed   []detentionservice.DisputeParams
+	waived     []detentionreview.WaiveParams
+	uninvoiced []detentionreview.WaiveParams
+	disputed   []detentionreview.DisputeParams
 }
 
 func (f *fakeDecider) WaiveUninvoiced(
 	_ context.Context,
-	p *detentionservice.WaiveParams,
+	p *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
 	f.uninvoiced = append(f.uninvoiced, *p)
 
@@ -102,7 +102,7 @@ func (f *fakeDecider) WaiveUninvoiced(
 
 func (f *fakeDecider) Waive(
 	_ context.Context,
-	p detentionservice.WaiveParams,
+	p detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
 	f.waived = append(f.waived, p)
 
@@ -116,7 +116,7 @@ func (f *fakeDecider) Waive(
 
 func (f *fakeDecider) Dispute(
 	_ context.Context,
-	p detentionservice.DisputeParams,
+	p detentionreview.DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
 	f.disputed = append(f.disputed, p)
 

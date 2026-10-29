@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 )
 
 func (s *Service) DetentionEvidence(
@@ -19,7 +19,7 @@ func (s *Service) DetentionEvidence(
 		return nil, nil //nolint:nilnil // the shipment has no detention to show
 	}
 
-	record, err := s.records.DisputeRecord(ctx, &detentionservice.DisputeRecordParams{
+	record, err := s.records.DisputeRecord(ctx, &detentionnoticeservice.DisputeRecordParams{
 		TenantInfo: req.TenantInfo,
 		Occurrence: occurrence,
 	})

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -144,9 +144,9 @@ func TestDetentionOccurrenceSignoffs_RefuseAnIDThatIsNotOne(t *testing.T) {
 func TestDetentionOccurrenceDetailToModel_PricesARunningClockAsOfNow(t *testing.T) {
 	t.Parallel()
 
-	detail := detentionOccurrenceDetailToModel(&detentionservice.OccurrenceDetail{
+	detail := detentionOccurrenceDetailToModel(&detentionreview.OccurrenceDetail{
 		Occurrence: &detention.DetentionOccurrence{ID: pulid.MustNew("dto_"), IsOpen: true},
-		CurrentlyBillable: &detentionservice.ClockPrice{
+		CurrentlyBillable: &detentionreview.ClockPrice{
 			BillableMinutes: 45,
 			BillableAmount:  decimal.RequireFromString("56.25"),
 			AsOf:            1_791_849_600,
@@ -164,7 +164,7 @@ func TestDetentionOccurrenceDetailToModel_PricesARunningClockAsOfNow(t *testing.
 func TestDetentionOccurrenceDetailToModel_HasNoLivePriceOnceTheClockStops(t *testing.T) {
 	t.Parallel()
 
-	detail := detentionOccurrenceDetailToModel(&detentionservice.OccurrenceDetail{
+	detail := detentionOccurrenceDetailToModel(&detentionreview.OccurrenceDetail{
 		Occurrence: &detention.DetentionOccurrence{ID: pulid.MustNew("dto_")},
 	})
 

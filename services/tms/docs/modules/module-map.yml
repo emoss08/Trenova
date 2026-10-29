@@ -584,8 +584,15 @@ modules:
       - assignmentservice
       - capabilityguard
       - customerupdateservice
+      - detentioneffects
+      - detentionengine
+      - detentionnoticerender
+      - detentionnoticeservice
       - detentionpolicyservice
+      - detentionreview
       - detentionservice
+      - detentionsimulation
+      - detentionsync
       - dispatchcandidateservice
       - dispatchconsoleservice
       - dispatchcontrolservice

@@ -12,7 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -76,7 +76,7 @@ func restMargins() []restMargin {
 		},
 		{
 			build: func() permission.FieldWithholder {
-				return &detentionservice.PreviewResult{
+				return &detentionsimulation.PreviewResult{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
 				}
@@ -85,7 +85,7 @@ func restMargins() []restMargin {
 		},
 		{
 			build: func() permission.FieldWithholder {
-				return &detentionservice.BacktestBucket{
+				return &detentionsimulation.BacktestBucket{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
 				}
@@ -95,7 +95,7 @@ func restMargins() []restMargin {
 		{
 			build: func() permission.FieldWithholder {
 				stops := 2
-				return &detentionservice.BacktestResult{
+				return &detentionsimulation.BacktestResult{
 					ProposedDriverPay:   margin("75"),
 					ProposedNetMargin:   margin("150"),
 					NegativeMarginStops: &stops,

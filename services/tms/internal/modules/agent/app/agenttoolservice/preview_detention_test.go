@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
@@ -51,7 +53,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 		after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10),
 	)
 
-	det := &agenttoolstest.FakeDetention{Change: &detentionservice.OccurrenceChange{
+	det := &agenttoolstest.FakeDetention{Change: &detentionreview.OccurrenceChange{
 		Before:   before,
 		After:    &after,
 		Shipment: []*detention.DetentionOccurrence{before, sibling},
@@ -100,12 +102,12 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	after.NoticeSentAt = &sentAt
 	versionID := pulid.MustNew("dtv_")
 
-	det := &agenttoolstest.FakeDetention{Notice: &detentionservice.NoticePreview{
+	det := &agenttoolstest.FakeDetention{Notice: &detentionnoticeservice.NoticePreview{
 		Before:     before,
 		After:      &after,
 		Kind:       detentionnotice.NoticeKindStarted,
 		Recipients: []string{"ap@acme.test"},
-		Content: detentionservice.NoticeContent{
+		Content: detentionnoticerender.NoticeContent{
 			Subject:   "Detention charges started",
 			Text:      "Detention began at 09:00.",
 			VersionID: &versionID,

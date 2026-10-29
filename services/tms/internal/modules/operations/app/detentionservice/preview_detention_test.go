@@ -8,7 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -106,12 +110,14 @@ func (previewOrganizations) GetByID(
 }
 
 func previewService(repo *previewOccurrenceRepo) *Service {
-	return &Service{
+	svc := &Service{
 		l:              zap.NewNop(),
 		occurrenceRepo: repo,
 		organizations:  previewOrganizations{},
 		now:            func() int64 { return 1_767_230_000 },
 	}
+	svc.assemble()
+	return svc
 }
 
 func tenantOfOccurrence(occ *detention.DetentionOccurrence) pagination.TenantInfo {
@@ -124,7 +130,7 @@ func TestPreviewWaive_IsWhatWaiveSaves(t *testing.T) {
 	stored := pendingCharge()
 	repo := &previewOccurrenceRepo{stored: stored, readOnly: true}
 	svc := previewService(repo)
-	params := WaiveParams{
+	params := detentionreview.WaiveParams{
 		OccurrenceID: stored.ID,
 		TenantInfo:   tenantOfOccurrence(&stored),
 		Reason:       detention.WaiverReasonWeather,
@@ -132,12 +138,12 @@ func TestPreviewWaive_IsWhatWaiveSaves(t *testing.T) {
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	preview, err := svc.PreviewWaive(t.Context(), &params)
+	preview, err := svc.review.PreviewWaive(t.Context(), &params)
 	require.NoError(t, err)
 	require.Empty(t, repo.saved, "a preview must not save")
 
 	repo.readOnly = false
-	saved, err := svc.Waive(t.Context(), params)
+	saved, err := svc.review.Waive(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Equal(t, saved, preview.After)
@@ -154,18 +160,18 @@ func TestPreviewApprove_IsWhatApproveSaves(t *testing.T) {
 	stored := pendingCharge()
 	repo := &previewOccurrenceRepo{stored: stored, readOnly: true}
 	svc := previewService(repo)
-	params := ApproveParams{
+	params := detentionreview.ApproveParams{
 		OccurrenceID: stored.ID,
 		TenantInfo:   tenantOfOccurrence(&stored),
 		UserID:       pulid.MustNew("usr_"),
 		Note:         "ELD times hold up",
 	}
 
-	preview, err := svc.PreviewApprove(t.Context(), &params)
+	preview, err := svc.review.PreviewApprove(t.Context(), &params)
 	require.NoError(t, err)
 
 	repo.readOnly = false
-	saved, err := svc.Approve(t.Context(), params)
+	saved, err := svc.review.Approve(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Equal(t, saved, preview.After)
@@ -179,10 +185,13 @@ func TestPreviewApprove_RefusesWhatApproveRefuses(t *testing.T) {
 	stored := pendingCharge()
 	stored.Status = detention.OccurrenceStatusWaived
 	svc := previewService(&previewOccurrenceRepo{stored: stored, readOnly: true})
-	params := ApproveParams{OccurrenceID: stored.ID, TenantInfo: tenantOfOccurrence(&stored)}
+	params := detentionreview.ApproveParams{
+		OccurrenceID: stored.ID,
+		TenantInfo:   tenantOfOccurrence(&stored),
+	}
 
-	_, previewErr := svc.PreviewApprove(t.Context(), &params)
-	_, executeErr := svc.Approve(t.Context(), params)
+	_, previewErr := svc.review.PreviewApprove(t.Context(), &params)
+	_, executeErr := svc.review.Approve(t.Context(), params)
 
 	require.Error(t, previewErr)
 	require.Error(t, executeErr)
@@ -257,28 +266,29 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 
 	svc := previewService(repo)
 	svc.customerRepo = &noticeCustomers{recipients: "ap@acme.test, ops@acme.test"}
-	svc.noticeRepo = &stubNoticeRepo{}
+	svc.noticeRepo = &previewNoticeRepo{}
 	svc.policyRepo = stubPolicyRepo{
 		policy: &detentionpolicy.DetentionPolicy{ID: policyID, AttachNoticePDF: true},
 	}
 	svc.templates = resolver
-	svc.contextBuilder = &ContextBuilder{}
+	svc.contextBuilder = &detentionnoticerender.ContextBuilder{}
 	svc.emailService = mailer
 	svc.senders = noticeSenders{}
+	svc.assemble()
 
-	params := SendOccurrenceNoticeParams{
+	params := detentionnoticeservice.SendOccurrenceNoticeParams{
 		OccurrenceID: stored.ID,
 		TenantInfo:   tenantOfOccurrence(&stored),
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	preview, err := svc.PreviewOccurrenceNotice(t.Context(), &params)
+	preview, err := svc.notices.PreviewOccurrenceNotice(t.Context(), &params)
 	require.NoError(t, err)
 	require.Empty(t, mailer.sent, "a preview must not send")
 	require.Empty(t, repo.saved, "a preview must not save")
 
 	repo.readOnly = false
-	updated, err := svc.SendOccurrenceNotice(t.Context(), params)
+	updated, err := svc.notices.SendOccurrenceNotice(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, mailer.sent, 1)
 
@@ -302,7 +312,7 @@ func TestWaiveUninvoiced_ReleasesAStaleBilledCharge(t *testing.T) {
 	stored.RequiresApproval = false
 	repo := &previewOccurrenceRepo{stored: stored}
 	svc := previewService(repo)
-	params := WaiveParams{
+	params := detentionreview.WaiveParams{
 		OccurrenceID: stored.ID,
 		TenantInfo:   tenantOfOccurrence(&stored),
 		Reason:       detention.WaiverReasonOther,
@@ -310,16 +320,58 @@ func TestWaiveUninvoiced_ReleasesAStaleBilledCharge(t *testing.T) {
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	_, err := svc.Waive(t.Context(), params)
+	_, err := svc.review.Waive(t.Context(), params)
 	require.Error(t, err, "a billed charge is never waived without asking billing")
 
-	saved, err := svc.WaiveUninvoiced(t.Context(), &params)
+	saved, err := svc.review.WaiveUninvoiced(t.Context(), &params)
 	require.NoError(t, err)
 	assert.Equal(t, detention.OccurrenceStatusWaived, saved.Status)
 	assert.True(t, saved.WaivedAmount.Equal(decimal.NewFromInt(425)))
 	require.NotNil(t, saved.WaivedByID)
 	assert.Equal(t, params.UserID, *saved.WaivedByID)
 
-	_, err = svc.WaiveUninvoiced(t.Context(), &WaiveParams{OccurrenceID: stored.ID})
+	_, err = svc.review.WaiveUninvoiced(
+		t.Context(),
+		&detentionreview.WaiveParams{OccurrenceID: stored.ID},
+	)
 	require.Error(t, err, "a coded reason is still required")
+}
+
+// previewNoticeRepo files nothing: the preview tests only need the send path
+// to find somewhere to put the notice.
+type previewNoticeRepo struct{}
+
+func (previewNoticeRepo) Create(
+	_ context.Context,
+	entity *detentionnotice.DetentionNotice,
+) (*detentionnotice.DetentionNotice, error) {
+	return entity, nil
+}
+
+func (previewNoticeRepo) AttachPDFDocument(
+	context.Context,
+	*detentionports.AttachNoticePDFDocumentRequest,
+) error {
+	return nil
+}
+
+func (previewNoticeRepo) Update(
+	_ context.Context,
+	entity *detentionnotice.DetentionNotice,
+) (*detentionnotice.DetentionNotice, error) {
+	return entity, nil
+}
+
+func (previewNoticeRepo) List(
+	context.Context,
+	*detentionports.ListDetentionNoticesRequest,
+) ([]*detentionnotice.DetentionNotice, error) {
+	return nil, nil
+}
+
+func (previewNoticeRepo) ListQueued(
+	context.Context,
+	*detentionports.ListNoticesDueRequest,
+) ([]*detentionnotice.DetentionNotice, error) {
+	return nil, nil
 }

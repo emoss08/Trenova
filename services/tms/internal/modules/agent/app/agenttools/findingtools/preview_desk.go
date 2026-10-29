@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -67,7 +67,7 @@ func (t *EscalateDetentionTool) Preview(
 	evidence, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceDetention,
 		Label:    "Detention evidence",
-	}, detentionservice.EscalationEvidence(occurrence, reason, now),
+	}, detentionreview.EscalationEvidence(occurrence, reason, now),
 		toolpreview.Only(detentionEvidenceFields...),
 	)
 	if err != nil {

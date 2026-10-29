@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
@@ -36,7 +37,7 @@ type detentionDesk interface {
 	ListDesk(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*detentionservice.DeskEntry, error)
+	) ([]*detentionreview.DeskEntry, error)
 }
 
 type Params struct {

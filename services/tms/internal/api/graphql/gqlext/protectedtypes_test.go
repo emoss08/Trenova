@@ -3,7 +3,7 @@ package gqlext
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -107,7 +107,7 @@ func protectedTypes() map[string]protectedType {
 		},
 		"DetentionPreviewResult": {
 			entity: func() permission.FieldWithholder {
-				return &detentionservice.PreviewResult{
+				return &detentionsimulation.PreviewResult{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
 				}
@@ -115,7 +115,7 @@ func protectedTypes() map[string]protectedType {
 		},
 		"DetentionBacktestBucket": {
 			entity: func() permission.FieldWithholder {
-				return &detentionservice.BacktestBucket{
+				return &detentionsimulation.BacktestBucket{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
 				}
@@ -124,7 +124,7 @@ func protectedTypes() map[string]protectedType {
 		"DetentionBacktestResult": {
 			entity: func() permission.FieldWithholder {
 				stops := 2
-				return &detentionservice.BacktestResult{
+				return &detentionsimulation.BacktestResult{
 					ProposedDriverPay:   amount("75"),
 					ProposedNetMargin:   amount("150"),
 					NegativeMarginStops: &stops,

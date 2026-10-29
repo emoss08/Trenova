@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
@@ -602,7 +603,7 @@ func detentionCollectabilityToModel(
 }
 
 func detentionDeskEntryToModel(
-	entry *detentionservice.DeskEntry,
+	entry *detentionreview.DeskEntry,
 ) *gqlmodel.DetentionDeskEntry {
 	if entry == nil {
 		return nil
@@ -626,7 +627,7 @@ func detentionDeskEntryToModel(
 }
 
 func detentionOccurrenceDetailToModel(
-	detail *detentionservice.OccurrenceDetail,
+	detail *detentionreview.OccurrenceDetail,
 ) *gqlmodel.DetentionOccurrenceDetail {
 	if detail == nil {
 		return nil
@@ -642,7 +643,7 @@ func detentionOccurrenceDetailToModel(
 	}
 }
 
-func detentionClockPriceToModel(price *detentionservice.ClockPrice) *gqlmodel.DetentionClockPrice {
+func detentionClockPriceToModel(price *detentionreview.ClockPrice) *gqlmodel.DetentionClockPrice {
 	if price == nil {
 		return nil
 	}
@@ -655,7 +656,7 @@ func detentionClockPriceToModel(price *detentionservice.ClockPrice) *gqlmodel.De
 }
 
 func detentionDisputePacketToModel(
-	packet *detentionservice.DisputePacket,
+	packet *detentionreview.DisputePacket,
 ) *gqlmodel.DetentionDisputePacket {
 	if packet == nil {
 		return nil
@@ -734,7 +735,7 @@ func detentionWaiverStatToModel(
 }
 
 func detentionBacktestBucketToModel(
-	bucket detentionservice.BacktestBucket,
+	bucket detentionsimulation.BacktestBucket,
 ) *gqlmodel.DetentionBacktestBucket {
 	return &gqlmodel.DetentionBacktestBucket{
 		Key:             bucket.Key,
@@ -750,7 +751,7 @@ func detentionBacktestBucketToModel(
 }
 
 func detentionBacktestResultToModel(
-	result *detentionservice.BacktestResult,
+	result *detentionsimulation.BacktestResult,
 ) *gqlmodel.DetentionBacktestResult {
 	if result == nil {
 		return nil
@@ -787,7 +788,7 @@ func detentionBacktestResultToModel(
 }
 
 func detentionPreviewResultToModel(
-	result *detentionservice.PreviewResult,
+	result *detentionsimulation.PreviewResult,
 ) *gqlmodel.DetentionPreviewResult {
 	if result == nil {
 		return nil
@@ -815,8 +816,8 @@ func detentionPreviewResultToModel(
 
 func detentionPreviewScenarioFromInput(
 	input *gqlmodel.DetentionPreviewScenarioInput,
-) detentionservice.PreviewScenario {
-	return detentionservice.PreviewScenario{
+) detentionsimulation.PreviewScenario {
+	return detentionsimulation.PreviewScenario{
 		ArrivedAt:        int64(input.ArrivedAt),
 		DepartedAt:       intPtrToInt64Ptr(input.DepartedAt),
 		AppointmentStart: intPtrToInt64Ptr(input.AppointmentStart),
@@ -905,12 +906,12 @@ func detentionDeskFilter(
 	urgency *gqlmodel.DetentionDeskUrgency,
 	shipmentID *string,
 	proNumber *string,
-) (*detentionservice.DeskFilter, error) {
+) (*detentionreview.DeskFilter, error) {
 	shipmentFilter, err := gqlid.ParseOptionalIDField("shipmentId", shipmentID)
 	if err != nil {
 		return nil, err
 	}
-	filter := &detentionservice.DeskFilter{
+	filter := &detentionreview.DeskFilter{
 		IncludeAwaitingApproval: gqlscalar.BoolValue(includeAwaitingApproval),
 		ShipmentID:              shipmentFilter,
 		ProNumber:               gqlscalar.DerefString(proNumber),

@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -73,23 +75,23 @@ type occurrenceReader interface {
 type detentionDecider interface {
 	Waive(
 		ctx context.Context,
-		p detentionservice.WaiveParams,
+		p detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	WaiveUninvoiced(
 		ctx context.Context,
-		p *detentionservice.WaiveParams,
+		p *detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	Dispute(
 		ctx context.Context,
-		p detentionservice.DisputeParams,
+		p detentionreview.DisputeParams,
 	) (*detention.DetentionOccurrence, error)
 }
 
 type disputeRecorder interface {
 	DisputeRecord(
 		ctx context.Context,
-		p *detentionservice.DisputeRecordParams,
-	) (*detentionservice.DisputeRecord, error)
+		p *detentionnoticeservice.DisputeRecordParams,
+	) (*detentionnoticeservice.DisputeRecord, error)
 }
 
 type Params struct {

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -18,7 +18,7 @@ import (
 // on either side.
 func DetentionDecisionPreview(
 	summary string,
-	change *detentionservice.OccurrenceChange,
+	change *detentionreview.OccurrenceChange,
 	volatile ...string,
 ) (*agentpreview.ToolPreview, error) {
 	occurrence, err := toolpreview.Changed(
@@ -47,7 +47,7 @@ func DetentionDecisionPreview(
 
 // shipmentDetentionMoney is the shipment's detention charge, occurrence by
 // occurrence, with the decided one as it stands and as it would stand.
-func shipmentDetentionMoney(change *detentionservice.OccurrenceChange) *agentpreview.MoneyPreview {
+func shipmentDetentionMoney(change *detentionreview.OccurrenceChange) *agentpreview.MoneyPreview {
 	occurrences := change.Shipment
 	if !containsOccurrence(occurrences, change.Before.ID) {
 		occurrences = append([]*detention.DetentionOccurrence{change.Before}, occurrences...)

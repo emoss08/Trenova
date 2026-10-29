@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,9 +20,9 @@ import (
 func TestNoticeHTMLEscapesOperatorEnteredNames(t *testing.T) {
 	t.Parallel()
 
-	content, err := detentionservice.RenderBuiltInNotice(
+	content, err := detentionnoticerender.RenderBuiltInNotice(
 		t.Context(),
-		&detentionservice.BuildNoticeParams{
+		&detentionnoticerender.BuildNoticeParams{
 			Occurrence:   noticeOccurrence(),
 			Kind:         detentionnotice.NoticeKindFinal,
 			FacilityName: `Memphis <script>alert(1)</script> DC`,
@@ -60,7 +61,7 @@ func TestLegacyNoticeWithoutASnapshotIsEscapedOnSend(t *testing.T) {
 		Body: "Detention at Memphis <script>alert(1)</script> DC",
 	}
 
-	html := detentionservice.NoticeHTMLForTest(legacy)
+	html := detentionnoticeservice.NoticeHTMLForTest(legacy)
 
 	assert.NotContains(t, html, "<script>")
 	assert.Contains(t, html, "&lt;script&gt;")

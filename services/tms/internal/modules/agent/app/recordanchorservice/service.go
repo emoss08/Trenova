@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -41,7 +42,7 @@ type clockPricer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		occurrence *detention.DetentionOccurrence,
-	) (*detentionservice.ClockPrice, error)
+	) (*detentionreview.ClockPrice, error)
 }
 
 type Params struct {

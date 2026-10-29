@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -57,12 +57,12 @@ var carrierFindingResolutions = agenttoolschema.Source(
 type detentionEscalator interface {
 	Escalate(
 		ctx context.Context,
-		params detentionservice.EscalateParams,
+		params detentionreview.EscalateParams,
 	) (*detention.DetentionOccurrence, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
 		req *detentionports.GetDetentionOccurrenceByIDRequest,
-	) (*detentionservice.OccurrenceDetail, error)
+	) (*detentionreview.OccurrenceDetail, error)
 }
 
 type EscalateDetentionTool struct {
@@ -188,7 +188,7 @@ func (t *EscalateDetentionTool) Execute(
 		return err
 	}
 
-	_, err = t.detention.Escalate(ctx, detentionservice.EscalateParams{
+	_, err = t.detention.Escalate(ctx, detentionreview.EscalateParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   toolparams.TenantFrom(params),
 		Reason:       reason,
@@ -205,16 +205,16 @@ func (t *EscalateDetentionTool) Target(params map[string]any) (agenttoolports.To
 type detentionApprover interface {
 	Approve(
 		ctx context.Context,
-		params detentionservice.ApproveParams,
+		params detentionreview.ApproveParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewApprove(
 		ctx context.Context,
-		params *detentionservice.ApproveParams,
-	) (*detentionservice.OccurrenceChange, error)
+		params *detentionreview.ApproveParams,
+	) (*detentionreview.OccurrenceChange, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
 		req *detentionports.GetDetentionOccurrenceByIDRequest,
-	) (*detentionservice.OccurrenceDetail, error)
+	) (*detentionreview.OccurrenceDetail, error)
 }
 
 type ApproveDetentionTool struct {
@@ -307,7 +307,7 @@ func (t *ApproveDetentionTool) pending(
 	ctx context.Context,
 	occurrenceID pulid.ID,
 	params agenttoolports.ToolExecuteParams,
-) (*detentionservice.OccurrenceDetail, error) {
+) (*detentionreview.OccurrenceDetail, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
@@ -349,18 +349,18 @@ func (t *ApproveDetentionTool) Validate(
 func (t *ApproveDetentionTool) request(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams,
-) (detentionservice.ApproveParams, *detentionservice.OccurrenceDetail, error) {
+) (detentionreview.ApproveParams, *detentionreview.OccurrenceDetail, error) {
 	occurrenceID, evidence, err := t.arguments(params)
 	if err != nil {
-		return detentionservice.ApproveParams{}, nil, err
+		return detentionreview.ApproveParams{}, nil, err
 	}
 
 	detail, err := t.pending(ctx, occurrenceID, params)
 	if err != nil {
-		return detentionservice.ApproveParams{}, nil, err
+		return detentionreview.ApproveParams{}, nil, err
 	}
 
-	return detentionservice.ApproveParams{
+	return detentionreview.ApproveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   toolparams.TenantFrom(params),
 		UserID:       params.Actor.UserID,

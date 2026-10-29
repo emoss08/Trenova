@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
@@ -224,12 +224,12 @@ func (stubMoves) ListBoardMoves(
 	return out, nil
 }
 
-type stubDesk struct{ entries []*detentionservice.DeskEntry }
+type stubDesk struct{ entries []*detentionreview.DeskEntry }
 
 func (s stubDesk) ListDesk(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
+) ([]*detentionreview.DeskEntry, error) {
 	return s.entries, nil
 }
 
@@ -292,7 +292,7 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 		}},
 		Accessorials: stubAccessorials{},
 		Moves:        stubMoves{},
-		Detention: stubDesk{entries: []*detentionservice.DeskEntry{
+		Detention: stubDesk{entries: []*detentionreview.DeskEntry{
 			{Occurrence: &detention.DetentionOccurrence{
 				ID:                occurrenceID,
 				FreeTimeExpiresAt: now.Unix() - 3600,

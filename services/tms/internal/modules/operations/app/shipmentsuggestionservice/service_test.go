@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
@@ -93,12 +93,12 @@ func (f *comments) ListByShipmentID(
 	}, nil
 }
 
-type desk struct{ entries []*detentionservice.DeskEntry }
+type desk struct{ entries []*detentionreview.DeskEntry }
 
 func (f *desk) ListDesk(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
+) ([]*detentionreview.DeskEntry, error) {
 	return f.entries, nil
 }
 
@@ -463,7 +463,7 @@ func TestDetention_OffersToApprovePendingOccurrencesOnly(t *testing.T) {
 		ID:     pulid.MustNew("dto_"),
 		Status: detention.OccurrenceStatusAccruing,
 	}
-	h.desk.entries = []*detentionservice.DeskEntry{{Occurrence: accruing}, {Occurrence: pending}}
+	h.desk.entries = []*detentionreview.DeskEntry{{Occurrence: accruing}, {Occurrence: pending}}
 
 	items := h.queue(t).Items
 	require.Len(t, items, 1)

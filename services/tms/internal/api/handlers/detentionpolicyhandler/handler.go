@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -331,8 +332,8 @@ func (h *Handler) getOption(c *gin.Context) {
 }
 
 type previewRequest struct {
-	Policy   *detentionpolicy.DetentionPolicy `json:"policy"   binding:"required"`
-	Scenario detentionservice.PreviewScenario `json:"scenario" binding:"required"`
+	Policy   *detentionpolicy.DetentionPolicy    `json:"policy"   binding:"required"`
+	Scenario detentionsimulation.PreviewScenario `json:"scenario" binding:"required"`
 }
 
 // @Summary Preview what a detention policy would charge for a scenario
@@ -341,7 +342,7 @@ type previewRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body previewRequest true "Policy and scenario"
-// @Success 200 {object} detentionservice.PreviewResult
+// @Success 200 {object} detentionsimulation.PreviewResult
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail

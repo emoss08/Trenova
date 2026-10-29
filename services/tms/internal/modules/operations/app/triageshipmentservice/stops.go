@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
@@ -146,7 +146,7 @@ func (s *Service) SettleDetention(
 	case inboundmessage.StopsDecisionWaive:
 		return s.waive(ctx, req, occurrence)
 	case inboundmessage.StopsDecisionStandBy:
-		settled, disputeErr := s.detention.Dispute(ctx, detentionservice.DisputeParams{
+		settled, disputeErr := s.detention.Dispute(ctx, detentionreview.DisputeParams{
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   req.TenantInfo,
 			Note:         req.Note,
@@ -167,7 +167,7 @@ func (s *Service) waive(
 	req *inboundmessageports.SettleTriageDetentionRequest,
 	occurrence *detention.DetentionOccurrence,
 ) (*inboundmessageports.SettledTriageDetention, error) {
-	params := detentionservice.WaiveParams{
+	params := detentionreview.WaiveParams{
 		OccurrenceID: occurrence.ID,
 		TenantInfo:   req.TenantInfo,
 		Reason:       detention.WaiverReasonOther,

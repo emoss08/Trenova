@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 )
 
 const ParamOccurrenceID = "occurrenceId"
@@ -55,8 +55,8 @@ func NewDisputeDetentionTool(
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(params, ParamOccurrenceID, permission.ResourceDetention)
 		},
-	}, toolspec.ReceivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
-		Request: func(params *agenttoolports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
+	}, toolspec.ReceivablePlan[*detentionreview.DisputeParams, *detentionreview.OccurrenceChange]{
+		Request: func(params *agenttoolports.ToolExecuteParams) (*detentionreview.DisputeParams, error) {
 			occurrenceID, err := toolparams.RequirePulid(params.Params, ParamOccurrenceID)
 			if err != nil {
 				return nil, err
@@ -70,7 +70,7 @@ func NewDisputeDetentionTool(
 				return nil, err
 			}
 
-			return &detentionservice.DisputeParams{
+			return &detentionreview.DisputeParams{
 				OccurrenceID: occurrenceID,
 				TenantInfo:   toolparams.TenantFrom(*params),
 				Note:         note,
@@ -79,17 +79,17 @@ func NewDisputeDetentionTool(
 		},
 		Plan: func(
 			ctx context.Context,
-			req *detentionservice.DisputeParams,
+			req *detentionreview.DisputeParams,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*detentionservice.OccurrenceChange, error) {
+		) (*detentionreview.OccurrenceChange, error) {
 			return detentions.PreviewDispute(ctx, req)
 		},
-		Refused: func(*detentionservice.DisputeParams) string {
+		Refused: func(*detentionreview.DisputeParams) string {
 			return "Would mark the detention charge disputed."
 		},
 		Render: func(
-			req *detentionservice.DisputeParams,
-			change *detentionservice.OccurrenceChange,
+			req *detentionreview.DisputeParams,
+			change *detentionreview.OccurrenceChange,
 		) (*agentpreview.ToolPreview, error) {
 			summary := fmt.Sprintf(
 				"Would mark the %s %s detention charge %s disputed and hold it from billing: %s",
@@ -103,7 +103,7 @@ func NewDisputeDetentionTool(
 		},
 		Run: func(
 			ctx context.Context,
-			req *detentionservice.DisputeParams,
+			req *detentionreview.DisputeParams,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			saved, err := detentions.Dispute(ctx, *req)

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
@@ -25,13 +25,13 @@ import (
 
 type stubEscalator struct {
 	occurrence *detention.DetentionOccurrence
-	escalated  *detentionservice.EscalateParams
+	escalated  *detentionreview.EscalateParams
 	guard      agenttoolstest.WriteGuard
 }
 
 func (s *stubEscalator) Escalate(
 	_ context.Context,
-	p detentionservice.EscalateParams,
+	p detentionreview.EscalateParams,
 ) (*detention.DetentionOccurrence, error) {
 	if err := s.guard.Write(); err != nil {
 		return nil, err
@@ -47,10 +47,10 @@ func (s *stubEscalator) Escalate(
 func (s *stubEscalator) GetOccurrenceDetail(
 	context.Context,
 	*detentionports.GetDetentionOccurrenceByIDRequest,
-) (*detentionservice.OccurrenceDetail, error) {
+) (*detentionreview.OccurrenceDetail, error) {
 	copied := *s.occurrence
 
-	return &detentionservice.OccurrenceDetail{Occurrence: &copied}, nil
+	return &detentionreview.OccurrenceDetail{Occurrence: &copied}, nil
 }
 
 // Escalating leaves the money alone. Waiving, approving and disputing are a
