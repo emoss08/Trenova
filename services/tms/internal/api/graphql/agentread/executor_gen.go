@@ -299,8 +299,12 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService          *accessorialchargeservice.Service
-	AccountingConnectionService       accountingconnectionports.AccountingConnectionService
+	AccountingApps                    accountingconnectionports.AccountingAppService
+	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
+	AccountingCertificates            accountingconnectionports.AccountingCertificateService
+	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingDriftService            accountingdriftports.AccountingDriftService
+	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
 	AccountingInboundService          accountinginboundports.AccountingInboundService
 	AccountingMappingService          accountingmappingports.AccountingMappingService
 	AccountingSyncService             accountingsyncports.AccountingSyncService
@@ -1292,12 +1296,16 @@ func NewSchema(p ResolverParams) Schema {
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
 	accountingsyncDeps := &accountingsyncresolver.Deps{
-		Core:                     core,
-		AccountingConnections:    p.AccountingConnectionService,
-		AccountingMappingService: p.AccountingMappingService,
-		AccountingSync:           p.AccountingSyncService,
-		AccountingInbound:        p.AccountingInboundService,
-		AccountingDrift:          p.AccountingDriftService,
+		Core:                       core,
+		AccountingConnectionStatus: p.AccountingConnectionStatus,
+		AccountingAuthorization:    p.AccountingAuthorization,
+		AccountingCertificates:     p.AccountingCertificates,
+		AccountingHealth:           p.AccountingHealth,
+		AccountingApps:             p.AccountingApps,
+		AccountingMappingService:   p.AccountingMappingService,
+		AccountingSync:             p.AccountingSyncService,
+		AccountingInbound:          p.AccountingInboundService,
+		AccountingDrift:            p.AccountingDriftService,
 	}
 	briefingDeps := &briefingresolver.Deps{
 		Core:            core,

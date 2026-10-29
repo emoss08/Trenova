@@ -338,7 +338,11 @@ type Params struct {
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
 	DetentionService                  *detentionservice.Service
-	AccountingConnectionService       accountingconnectionports.AccountingConnectionService
+	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
+	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
+	AccountingCertificates            accountingconnectionports.AccountingCertificateService
+	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
+	AccountingApps                    accountingconnectionports.AccountingAppService
 	AccountingMappingService          accountingmappingports.AccountingMappingService
 	AccountingSyncService             accountingsyncports.AccountingSyncService
 	AccountingInboundService          accountinginboundports.AccountingInboundService
@@ -607,7 +611,11 @@ type Services struct {
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
 	DetentionService                  *detentionservice.Service
-	AccountingConnections             accountingconnectionports.AccountingConnectionService
+	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
+	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
+	AccountingCertificates            accountingconnectionports.AccountingCertificateService
+	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
+	AccountingApps                    accountingconnectionports.AccountingAppService
 	AccountingMappingService          accountingmappingports.AccountingMappingService
 	AccountingSync                    accountingsyncports.AccountingSyncService
 	AccountingInbound                 accountinginboundports.AccountingInboundService
@@ -882,7 +890,11 @@ func newServices(p *Params) *Services {
 		FuelSurchargeService:              p.FuelSurchargeService,
 		CostingService:                    p.CostingService,
 		DetentionService:                  p.DetentionService,
-		AccountingConnections:             p.AccountingConnectionService,
+		AccountingConnectionStatus:        p.AccountingConnectionStatus,
+		AccountingAuthorization:           p.AccountingAuthorization,
+		AccountingCertificates:            p.AccountingCertificates,
+		AccountingHealth:                  p.AccountingHealth,
+		AccountingApps:                    p.AccountingApps,
 		AccountingMappingService:          p.AccountingMappingService,
 		AccountingSync:                    p.AccountingSyncService,
 		AccountingInbound:                 p.AccountingInboundService,

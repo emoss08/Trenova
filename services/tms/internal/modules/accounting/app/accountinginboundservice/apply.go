@@ -538,7 +538,7 @@ func (s *Service) linkTarget(
 	target := &linkTarget{
 		urlOf: func(accountingconnectorports.AccountingDocumentLink) string { return "" },
 	}
-	session, err := s.connService.Session(ctx, tenantOf(conn), conn.ID)
+	session, err := s.sessions.Session(ctx, tenantOf(conn), conn.ID)
 	if err != nil {
 		s.l.Debug("linking without provider links: the connection cannot be used", zap.Error(err))
 		return target

@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"context"

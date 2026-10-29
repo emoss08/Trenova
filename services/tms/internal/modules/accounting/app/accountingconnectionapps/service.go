@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -320,14 +321,16 @@ func (s *Service) publishAppInvalidation(
 	}
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
 	Apps        accountingconnectionports.AccountingAppCredentialRepository
 	Connections accountingconnectionports.AccountingConnectionRepository
 	Encryption  *encryptionservice.Service
 	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService
+	Realtime    realtimeports.RealtimeService `optional:"true"`
 	Kit         *accountingconnectionkit.Kit
 	Status      *accountingconnectionstatus.Service
 }
@@ -345,16 +348,18 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:           d.Logger,
-		db:          d.DB,
-		apps:        d.Apps,
-		connections: d.Connections,
-		encryption:  d.Encryption,
-		audit:       d.Audit,
-		realtime:    d.Realtime,
-		kit:         d.Kit,
-		status:      d.Status,
+		l:           p.Logger.Named("service.accounting-connection"),
+		db:          p.DB,
+		apps:        p.Apps,
+		connections: p.Connections,
+		encryption:  p.Encryption,
+		audit:       p.Audit,
+		realtime:    p.Realtime,
+		kit:         p.Kit,
+		status:      p.Status,
 	}
 }
+
+var _ accountingconnectionports.AccountingAppService = (*Service)(nil)

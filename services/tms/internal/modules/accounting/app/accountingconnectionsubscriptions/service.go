@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -243,9 +244,11 @@ func (s *Service) Summary(
 	return summary, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger        *zap.Logger
-	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
 	Encryption    *encryptionservice.Service
 	Kit           *accountingconnectionkit.Kit
 	Health        *accountingconnectionhealth.Service
@@ -259,12 +262,14 @@ type Service struct {
 	health        *accountingconnectionhealth.Service
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:             d.Logger,
-		subscriptions: d.Subscriptions,
-		encryption:    d.Encryption,
-		kit:           d.Kit,
-		health:        d.Health,
+		l:             p.Logger.Named("service.accounting-connection"),
+		subscriptions: p.Subscriptions,
+		encryption:    p.Encryption,
+		kit:           p.Kit,
+		health:        p.Health,
 	}
 }
+
+var _ accountingconnectionports.AccountingWebhookSubscriptionSyncer = (*Service)(nil)

@@ -49,36 +49,36 @@ var permissionResource = permission.ResourceAccountingSync.String()
 type Params struct {
 	fx.In
 
-	Logger            *zap.Logger
-	DB                kernelports.Transactor
-	Connections       accountingconnectionports.AccountingConnectionRepository
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Records           accountingsyncports.AccountingSyncRecordRepository
-	Changes           accountinginboundports.AccountingInboundChangeRepository
-	References        accountingmappingports.AccountingReferenceObjectRepository
-	Mappings          accountingmappingports.AccountingMappingRepository
-	Invoices          invoiceports.InvoiceRepository
-	Payables          accountingpayablesports.AccountingPayablesSource
-	FiscalPeriods     fiscalperiodports.FiscalPeriodRepository
-	Organizations     tenantports.OrganizationRepository
-	Users             tenantports.UserRepository
-	CustomerPayments  customerpaymentports.CustomerPaymentService
-	CarrierPayer      carriersettlementports.CarrierSettlementPayer
-	DriverPayer       carriersettlementports.DriverSettlementPayer
-	AuditService      auditports.AuditService
-	Permissions       permissionports.PermissionEngine
-	Refresher         accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
-	Drift             accountingdriftports.AccountingDriftRechecker          `optional:"true"`
-	Publisher         agenteventports.AgentEventPublisher                    `optional:"true"`
-	Watchtower        watchtowerports.WatchtowerProjector                    `optional:"true"`
-	Realtime          realtimeports.RealtimeService                          `optional:"true"`
+	Logger           *zap.Logger
+	DB               kernelports.Transactor
+	Connections      accountingconnectionports.AccountingConnectionRepository
+	Sessions         accountingconnectionports.AccountingSessionProvider
+	Records          accountingsyncports.AccountingSyncRecordRepository
+	Changes          accountinginboundports.AccountingInboundChangeRepository
+	References       accountingmappingports.AccountingReferenceObjectRepository
+	Mappings         accountingmappingports.AccountingMappingRepository
+	Invoices         invoiceports.InvoiceRepository
+	Payables         accountingpayablesports.AccountingPayablesSource
+	FiscalPeriods    fiscalperiodports.FiscalPeriodRepository
+	Organizations    tenantports.OrganizationRepository
+	Users            tenantports.UserRepository
+	CustomerPayments customerpaymentports.CustomerPaymentService
+	CarrierPayer     carriersettlementports.CarrierSettlementPayer
+	DriverPayer      carriersettlementports.DriverSettlementPayer
+	AuditService     auditports.AuditService
+	Permissions      permissionports.PermissionEngine
+	Refresher        accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
+	Drift            accountingdriftports.AccountingDriftRechecker          `optional:"true"`
+	Publisher        agenteventports.AgentEventPublisher                    `optional:"true"`
+	Watchtower       watchtowerports.WatchtowerProjector                    `optional:"true"`
+	Realtime         realtimeports.RealtimeService                          `optional:"true"`
 }
 
 type Service struct {
 	l                *zap.Logger
 	db               kernelports.Transactor
 	connections      accountingconnectionports.AccountingConnectionRepository
-	connService      accountingconnectionports.AccountingConnectionService
+	sessions         accountingconnectionports.AccountingSessionProvider
 	records          accountingsyncports.AccountingSyncRecordRepository
 	changes          accountinginboundports.AccountingInboundChangeRepository
 	references       accountingmappingports.AccountingReferenceObjectRepository
@@ -109,7 +109,7 @@ func New(p Params) *Service {
 		l:                p.Logger.Named("service.accounting-inbound"),
 		db:               p.DB,
 		connections:      p.Connections,
-		connService:      p.ConnectionService,
+		sessions:         p.Sessions,
 		records:          p.Records,
 		changes:          p.Changes,
 		references:       p.References,

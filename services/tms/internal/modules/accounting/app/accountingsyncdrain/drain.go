@@ -32,7 +32,7 @@ func (s *Service) openSession(
 	conn *accountingconnection.AccountingConnection,
 ) (*accountingsyncpush.Session, error) {
 	tenantInfo := accountingsynceffects.TenantOf(conn)
-	session, err := s.connService.Session(ctx, tenantInfo, conn.ID)
+	session, err := s.sessions.Session(ctx, tenantInfo, conn.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (s *Service) pushRecord(
 		}
 		outcome = record.MarkFailed(classified, now)
 		if classified.Category == accountingsync.SyncErrorAuth {
-			s.connService.ReportCallFailure(ctx, sess.Tenant, sess.Conn.ID, pushErr)
+			s.sessions.ReportCallFailure(ctx, sess.Tenant, sess.Conn.ID, pushErr)
 		}
 	}
 
@@ -278,40 +278,40 @@ func (s *Service) pushOne(
 }
 
 type Deps struct {
-	Logger            *zap.Logger
-	Records           accountingsyncports.AccountingSyncRecordRepository
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Controls          tenantports.AccountingControlRepository
-	Effects           *accountingsynceffects.Effects
-	Parties           *accountingsyncparty.Pusher
-	Sales             *accountingsyncsales.Pusher
-	Payables          *accountingsyncpayables.Pusher
-	Ledger            *accountingsyncledger.Pusher
+	Logger   *zap.Logger
+	Records  accountingsyncports.AccountingSyncRecordRepository
+	Sessions accountingconnectionports.AccountingSessionProvider
+	Controls tenantports.AccountingControlRepository
+	Effects  *accountingsynceffects.Effects
+	Parties  *accountingsyncparty.Pusher
+	Sales    *accountingsyncsales.Pusher
+	Payables *accountingsyncpayables.Pusher
+	Ledger   *accountingsyncledger.Pusher
 }
 
 type Service struct {
-	l           *zap.Logger
-	records     accountingsyncports.AccountingSyncRecordRepository
-	connService accountingconnectionports.AccountingConnectionService
-	controls    tenantports.AccountingControlRepository
-	effects     *accountingsynceffects.Effects
-	parties     *accountingsyncparty.Pusher
-	sales       *accountingsyncsales.Pusher
-	payables    *accountingsyncpayables.Pusher
-	ledger      *accountingsyncledger.Pusher
+	l        *zap.Logger
+	records  accountingsyncports.AccountingSyncRecordRepository
+	sessions accountingconnectionports.AccountingSessionProvider
+	controls tenantports.AccountingControlRepository
+	effects  *accountingsynceffects.Effects
+	parties  *accountingsyncparty.Pusher
+	sales    *accountingsyncsales.Pusher
+	payables *accountingsyncpayables.Pusher
+	ledger   *accountingsyncledger.Pusher
 }
 
 //nolint:gocritic // dependency injection
 func New(d Deps) *Service {
 	return &Service{
-		l:           d.Logger,
-		records:     d.Records,
-		connService: d.ConnectionService,
-		controls:    d.Controls,
-		effects:     d.Effects,
-		parties:     d.Parties,
-		sales:       d.Sales,
-		payables:    d.Payables,
-		ledger:      d.Ledger,
+		l:        d.Logger,
+		records:  d.Records,
+		sessions: d.Sessions,
+		controls: d.Controls,
+		effects:  d.Effects,
+		parties:  d.Parties,
+		sales:    d.Sales,
+		payables: d.Payables,
+		ledger:   d.Ledger,
 	}
 }

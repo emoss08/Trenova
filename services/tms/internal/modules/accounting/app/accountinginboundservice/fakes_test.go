@@ -144,7 +144,7 @@ func (f *fakeConnector) ClassifyDocumentError(err error) *accountingsync.SyncErr
 }
 
 type fakeConnService struct {
-	accountingconnectionports.AccountingConnectionService
+	accountingconnectionports.AccountingSessionProvider
 	connections *fakeConnections
 	connector   *fakeConnector
 	failSession bool

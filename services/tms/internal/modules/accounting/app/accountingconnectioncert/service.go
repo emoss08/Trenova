@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -347,13 +348,15 @@ func (s *Service) storeRenewedCertificate(
 	return out, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger        *zap.Logger
 	DB            kernelports.Transactor
 	Connections   accountingconnectionports.AccountingConnectionRepository
-	Certificates  accountingconnectionports.AccountingPendingCertificateRepository
+	Certificates  accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
 	Encryption    *encryptionservice.Service
-	Organizations tenantports.OrganizationRepository
+	Organizations tenantports.OrganizationRepository `optional:"true"`
 	Kit           *accountingconnectionkit.Kit
 	Auth          *accountingconnectionauth.Service
 }
@@ -370,15 +373,17 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:             d.Logger,
-		db:            d.DB,
-		connections:   d.Connections,
-		certificates:  d.Certificates,
-		encryption:    d.Encryption,
-		organizations: d.Organizations,
-		kit:           d.Kit,
-		auth:          d.Auth,
+		l:             p.Logger.Named("service.accounting-connection"),
+		db:            p.DB,
+		connections:   p.Connections,
+		certificates:  p.Certificates,
+		encryption:    p.Encryption,
+		organizations: p.Organizations,
+		kit:           p.Kit,
+		auth:          p.Auth,
 	}
 }
+
+var _ accountingconnectionports.AccountingCertificateService = (*Service)(nil)

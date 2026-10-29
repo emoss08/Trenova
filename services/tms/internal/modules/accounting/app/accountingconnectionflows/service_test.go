@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"errors"
@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -30,7 +29,7 @@ import (
 const testRealm = "9341452431742015"
 
 type harness struct {
-	svc          *Service
+	svc          services
 	kit          *accountingconnectionkit.Kit
 	connections  *fakeConnections
 	apps         *fakeApps
@@ -68,23 +67,21 @@ func newHarness(t *testing.T) *harness {
 		tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		userID: pulid.MustNew("usr_"),
 	}
-	h.svc = New(Params{
-		Logger:       zap.NewNop(),
-		DB:           dbtest.NopConnection{},
+	h.svc = wire(&wiring{
 		Connections:  h.connections,
 		Apps:         h.apps,
 		States:       h.states,
 		Integrations: h.integrations,
 		Connectors:   fakeRegistry{connector: h.connector},
 		Encryption:   h.encryption,
-		AuditService: h.audit,
+		Audit:        h.audit,
 		Watchtower:   h.watchtower,
 		Publisher:    h.events,
 		Refresher:    h.refresher,
 		Poller:       h.poller,
 		Certificates: h.certificates,
 	})
-	h.kit = accountingconnectionkit.New(accountingconnectionkit.Deps{
+	h.kit = accountingconnectionkit.New(accountingconnectionkit.Params{
 		Logger:      zap.NewNop(),
 		Connections: h.connections,
 		Apps:        h.apps,
@@ -95,7 +92,7 @@ func newHarness(t *testing.T) *harness {
 
 func (h *harness) start(t *testing.T) string {
 	t.Helper()
-	started, err := h.svc.StartAuthorization(
+	started, err := h.svc.auth.StartAuthorization(
 		t.Context(),
 		&accountingconnectionports.StartAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -117,7 +114,7 @@ func (h *harness) complete(
 	state string,
 ) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
-	completion, err := h.svc.CompleteAuthorization(
+	completion, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -174,7 +171,7 @@ func TestStartAuthorizationRefusesWhenTheAppIsNotConfigured(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.available = false
-	_, err := h.svc.StartAuthorization(
+	_, err := h.svc.auth.StartAuthorization(
 		t.Context(),
 		&accountingconnectionports.StartAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -206,7 +203,7 @@ func TestStartAuthorizationRejectsNonAccountingTypes(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.StartAuthorization(
+	_, err := h.svc.auth.StartAuthorization(
 		t.Context(),
 		&accountingconnectionports.StartAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -294,7 +291,7 @@ func TestCompleteAuthorizationRefusesAnotherUsersState(t *testing.T) {
 
 	h := newHarness(t)
 	state := h.start(t)
-	_, err := h.svc.CompleteAuthorization(
+	_, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -316,7 +313,7 @@ func TestCompleteAuthorizationRefusesAnotherTenantsState(t *testing.T) {
 
 	h := newHarness(t)
 	state := h.start(t)
-	_, err := h.svc.CompleteAuthorization(
+	_, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo: pagination.TenantInfo{
@@ -339,7 +336,7 @@ func TestCompleteAuthorizationValidatesInput(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.CompleteAuthorization(
+	_, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -423,7 +420,7 @@ func TestConnectingADifferentCompanyRequiresDisconnectingFirst(t *testing.T) {
 	h := newHarness(t)
 	h.connect(t)
 
-	_, err := h.svc.CompleteAuthorization(
+	_, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -444,7 +441,7 @@ func TestDisconnectWipesTokensRevokesAndIsIdempotent(t *testing.T) {
 	h := newHarness(t)
 	conn := h.connect(t)
 
-	disconnected, err := h.svc.Disconnect(
+	disconnected, err := h.svc.auth.Disconnect(
 		t.Context(),
 		&accountingconnectionports.DisconnectAccountingRequest{
 			TenantInfo:      h.tenant,
@@ -462,11 +459,14 @@ func TestDisconnectWipesTokensRevokesAndIsIdempotent(t *testing.T) {
 	require.True(t, ok)
 	assert.True(t, health.resolved)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err = h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, h.connector.revoked, 1)
 }
@@ -478,7 +478,7 @@ func TestCheckHealthUsesTheStoredTokenWhileItIsFresh(t *testing.T) {
 	conn := h.connect(t)
 	h.connector.facts.CompanyName = "Acme Freight Renamed"
 
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Empty(t, h.connector.refreshedWith)
 	assert.Equal(t, []string{"access-1", "access-1"}, h.connector.factsCalls)
@@ -493,7 +493,7 @@ func TestCheckHealthRefreshesAnExpiringToken(t *testing.T) {
 	conn := h.connect(t)
 	h.expireAccessToken(conn)
 
-	_, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	_, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"refresh-1"}, h.connector.refreshedWith)
 	stored := h.connections.tokens[conn.ID]
@@ -520,7 +520,7 @@ func TestCheckHealthMarksARevokedAuthorization(t *testing.T) {
 	h.connector.refreshErrs = []error{errProvider}
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
 
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, accountingconnection.ConnectionStatusRevoked, checked.Status)
 	assert.Empty(t, h.connections.tokens[conn.ID].refresh)
@@ -548,7 +548,7 @@ func TestTransientFailuresDegradeFailAndRecover(t *testing.T) {
 
 	statuses := make([]accountingconnection.ConnectionStatus, 0, 4)
 	for range 4 {
-		checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+		checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 		require.NoError(t, err)
 		statuses = append(statuses, checked.Status)
 	}
@@ -572,13 +572,13 @@ func TestCheckDueChecksEveryDueConnection(t *testing.T) {
 	conn := h.connect(t)
 	h.markDue(conn)
 
-	sweep, err := h.svc.CheckDue(t.Context(), 10)
+	sweep, err := h.svc.health.CheckDue(t.Context(), 10)
 	require.NoError(t, err)
 	assert.Equal(t, 1, sweep.Listed)
 	assert.Equal(t, 1, sweep.Checked)
 	assert.Zero(t, sweep.Failed)
 
-	sweep, err = h.svc.CheckDue(t.Context(), 10)
+	sweep, err = h.svc.health.CheckDue(t.Context(), 10)
 	require.NoError(t, err)
 	assert.Zero(t, sweep.Listed, "a connection just checked is not due again")
 }
@@ -591,7 +591,7 @@ func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {
 	h.connector.webhookRealms = []string{testRealm, "unknown"}
 	h.connector.webhookErr = errProvider
 
-	err := h.svc.ReceiveWebhook(
+	err := h.svc.webhooks.ReceiveWebhook(
 		t.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -606,7 +606,7 @@ func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {
 	h.connector.webhookErr = nil
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -630,7 +630,7 @@ func TestAVerifiedWebhookWakesTheChangeReaderOfASyncingConnection(t *testing.T) 
 		Body:            []byte("[]"),
 	}
 
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	require.NoError(t, h.svc.webhooks.ReceiveWebhook(t.Context(), webhook))
 	assert.Empty(t, h.poller.calls(), "a connection still being set up reads no changes")
 
 	row := h.connections.rows[conn.ID]
@@ -639,11 +639,11 @@ func TestAVerifiedWebhookWakesTheChangeReaderOfASyncingConnection(t *testing.T) 
 	row.SyncStartDate = &start
 	row.SyncEnabledAt = &enabled
 
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	require.NoError(t, h.svc.webhooks.ReceiveWebhook(t.Context(), webhook))
 	assert.Equal(t, []pulid.ID{conn.ID}, h.poller.calls())
 
 	h.connector.webhookErr = errProvider
-	require.Error(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	require.Error(t, h.svc.webhooks.ReceiveWebhook(t.Context(), webhook))
 	assert.Len(t, h.poller.calls(), 1, "an unverified webhook wakes nothing")
 }
 
@@ -651,14 +651,14 @@ func TestStatusReportsAvailabilityAndConnection(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	status, err := h.svc.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	status, err := h.svc.status.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	assert.True(t, status.Available)
 	assert.Nil(t, status.Connection)
 	assert.Equal(t, "QuickBooks Online", status.ProviderName)
 
 	conn := h.connect(t)
-	status, err = h.svc.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	status, err = h.svc.status.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	require.NotNil(t, status.Connection)
 	assert.Equal(t, conn.ID, status.Connection.ID)
@@ -672,7 +672,7 @@ func TestSessionHandsOutAFreshTokenForAConnectedCompany(t *testing.T) {
 	conn := h.connect(t)
 	h.expireAccessToken(conn)
 
-	session, err := h.svc.Session(t.Context(), h.tenant, conn.ID)
+	session, err := h.svc.health.Session(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "access-2", session.AccessToken, "an expiring token is refreshed first")
 	assert.Equal(t, conn.ID, session.Connection.ID)
@@ -685,14 +685,17 @@ func TestSessionRefusesADisconnectedCompany(t *testing.T) {
 
 	h := newHarness(t)
 	conn := h.connect(t)
-	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err := h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 
-	_, err = h.svc.Session(t.Context(), h.tenant, conn.ID)
+	_, err = h.svc.health.Session(t.Context(), h.tenant, conn.ID)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
@@ -706,7 +709,7 @@ func TestSessionRecordsARevokedAuthorizationAndRefuses(t *testing.T) {
 	h.connector.refreshErrs = []error{errProvider}
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
 
-	_, err := h.svc.Session(t.Context(), h.tenant, conn.ID)
+	_, err := h.svc.health.Session(t.Context(), h.tenant, conn.ID)
 	require.Error(t, err)
 	assert.Equal(
 		t,
@@ -728,7 +731,7 @@ func TestReportCallFailureRevokesOnlyForAuthorizationFailures(t *testing.T) {
 	assert.Equal(
 		t,
 		accountingsync.ErrorCategoryTransient,
-		h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, transient),
+		h.svc.health.ReportCallFailure(t.Context(), h.tenant, conn.ID, transient),
 	)
 	assert.Equal(
 		t,
@@ -741,7 +744,7 @@ func TestReportCallFailureRevokesOnlyForAuthorizationFailures(t *testing.T) {
 	assert.Equal(
 		t,
 		accountingsync.ErrorCategoryRevoked,
-		h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, errProvider),
+		h.svc.health.ReportCallFailure(t.Context(), h.tenant, conn.ID, errProvider),
 	)
 	assert.Equal(
 		t,

@@ -55,7 +55,7 @@ func (s *Service) openRead(
 	conn *accountingconnection.AccountingConnection,
 ) (*readSession, error) {
 	tenant := tenantOf(conn)
-	session, err := s.connService.Session(ctx, tenant, conn.ID)
+	session, err := s.sessions.Session(ctx, tenant, conn.ID)
 	if err != nil {
 		return nil, err
 	}

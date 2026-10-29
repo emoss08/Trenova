@@ -181,7 +181,7 @@ func newHarness(t *testing.T) *harness {
 		Connections:        h.connections,
 		References:         h.references,
 		Mappings:           h.mappings,
-		ConnectionService:  h.connService,
+		Sessions:           h.connService,
 		AccountingControls: controls,
 		GLAccounts:         glaccountportsmock.NewMockGLAccountRepository(t),
 		Customers:          customers,

@@ -242,9 +242,7 @@ func (f *fakeAccountingMappings) SearchReference(
 	}}, nil
 }
 
-type fakeAccountingConnections struct {
-	accountingconnectionports.AccountingConnectionService
-}
+type fakeAccountingConnections struct{}
 
 func (fakeAccountingConnections) Status(
 	_ context.Context,
@@ -284,10 +282,10 @@ func accountingReaderWith(t *testing.T, drift *fakeAccountingDrift,
 	return agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
-			AccountingDriftService:      drift,
-			AccountingSyncService:       ledger,
-			AccountingMappingService:    mappings,
-			AccountingConnectionService: fakeAccountingConnections{},
+			AccountingDriftService:     drift,
+			AccountingSyncService:      ledger,
+			AccountingMappingService:   mappings,
+			AccountingConnectionStatus: fakeAccountingConnections{},
 		},
 	})
 }

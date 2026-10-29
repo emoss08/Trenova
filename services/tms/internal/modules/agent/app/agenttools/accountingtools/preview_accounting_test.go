@@ -23,7 +23,7 @@ func TestCheckAccountingConnection_PreviewMatchesWhatASuccessSaves(t *testing.T)
 	status.Connection.LastErrorMessage = "timeout"
 	before := *status.Connection
 	checker := &fakeAccountingChecker{status: status}
-	tool := newCheckAccountingConnectionTool(checker).(*CheckAccountingConnectionTool)
+	tool := newCheckAccountingConnectionTool(checker, checker).(*CheckAccountingConnectionTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -54,7 +54,7 @@ func TestCheckAccountingConnection_PreviewWarnsWhenNotConnected(t *testing.T) {
 	checker := &fakeAccountingChecker{
 		status: connectedStatus(accountingconnection.ConnectionStatusRevoked),
 	}
-	tool := newCheckAccountingConnectionTool(checker).(*CheckAccountingConnectionTool)
+	tool := newCheckAccountingConnectionTool(checker, checker).(*CheckAccountingConnectionTool)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

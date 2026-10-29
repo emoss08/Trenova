@@ -19,19 +19,19 @@ const maxWebhookBodyBytes = 1 << 20
 type Params struct {
 	fx.In
 
-	Service      accountingconnectionports.AccountingConnectionService
+	Webhooks     accountingconnectionports.AccountingWebhookReceiver
 	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service    accountingconnectionports.AccountingConnectionService
+	webhooks   accountingconnectionports.AccountingWebhookReceiver
 	connectors accountingconnectorports.AccountingConnectorRegistry
 	eh         *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
-	return &Handler{service: p.Service, connectors: p.Connectors, eh: p.ErrorHandler}
+	return &Handler{webhooks: p.Webhooks, connectors: p.Connectors, eh: p.ErrorHandler}
 }
 
 func WebhookPath(provider string) string {
@@ -117,7 +117,7 @@ func (h *Handler) receive(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebhook(
+	err = h.webhooks.ReceiveWebhook(
 		c.Request.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: typ,

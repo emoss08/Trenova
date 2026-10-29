@@ -833,9 +833,9 @@ modules:
       - accountingconnectionapps
       - accountingconnectionauth
       - accountingconnectioncert
+      - accountingconnectionflows
       - accountingconnectionhealth
       - accountingconnectionkit
-      - accountingconnectionservice
       - accountingconnectionstatus
       - accountingconnectionsubscriptions
       - accountingconnectionwebhook

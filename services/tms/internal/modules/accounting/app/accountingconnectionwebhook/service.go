@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -38,13 +39,15 @@ func subscriptionIDs(
 	return ids
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger        *zap.Logger
 	Apps          accountingconnectionports.AccountingAppCredentialRepository
 	Connections   accountingconnectionports.AccountingConnectionRepository
-	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
 	Encryption    *encryptionservice.Service
-	Poller        accountinginboundports.AccountingChangePoller
+	Poller        accountinginboundports.AccountingChangePoller `optional:"true"`
 	Kit           *accountingconnectionkit.Kit
 }
 
@@ -59,15 +62,15 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:             d.Logger,
-		apps:          d.Apps,
-		connections:   d.Connections,
-		subscriptions: d.Subscriptions,
-		encryption:    d.Encryption,
-		poller:        d.Poller,
-		kit:           d.Kit,
+		l:             p.Logger.Named("service.accounting-connection"),
+		apps:          p.Apps,
+		connections:   p.Connections,
+		subscriptions: p.Subscriptions,
+		encryption:    p.Encryption,
+		poller:        p.Poller,
+		kit:           p.Kit,
 	}
 }
 
@@ -422,3 +425,5 @@ func (s *Service) clientStateMatches(
 	}
 	return accountingconnection.ClientStatesMatch(held, received)
 }
+
+var _ accountingconnectionports.AccountingWebhookReceiver = (*Service)(nil)

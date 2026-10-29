@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -730,12 +731,14 @@ func (s *Service) Disconnect(
 	return conn, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
 	Connections  accountingconnectionports.AccountingConnectionRepository
 	States       accountingconnectionports.AccountingOAuthStateRepository
-	Certificates accountingconnectionports.AccountingPendingCertificateRepository
+	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
 	Encryption   *encryptionservice.Service
 	Kit          *accountingconnectionkit.Kit
 	Subs         *accountingconnectionsubscriptions.Service
@@ -753,15 +756,17 @@ type Service struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:            d.Logger,
-		db:           d.DB,
-		connections:  d.Connections,
-		states:       d.States,
-		certificates: d.Certificates,
-		encryption:   d.Encryption,
-		kit:          d.Kit,
-		subs:         d.Subs,
+		l:            p.Logger.Named("service.accounting-connection"),
+		db:           p.DB,
+		connections:  p.Connections,
+		states:       p.States,
+		certificates: p.Certificates,
+		encryption:   p.Encryption,
+		kit:          p.Kit,
+		subs:         p.Subs,
 	}
 }
+
+var _ accountingconnectionports.AccountingAuthorizationService = (*Service)(nil)

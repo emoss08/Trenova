@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
 	Connections  accountingconnectionports.AccountingConnectionRepository
@@ -23,12 +26,12 @@ type Deps struct {
 	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	Encryption   *encryptionservice.Service
 	Audit        auditports.AuditService
-	Realtime     realtimeports.RealtimeService
-	Watchtower   watchtowerports.WatchtowerProjector
-	Publisher    agenteventports.AgentEventPublisher
-	Refresher    accountingconnectionports.AccountingReferenceRefresher
-	Plans        platformplanports.PlanService
-	Certificates accountingconnectionports.AccountingPendingCertificateRepository
+	Realtime     realtimeports.RealtimeService                                    `optional:"true"`
+	Watchtower   watchtowerports.WatchtowerProjector                              `optional:"true"`
+	Publisher    agenteventports.AgentEventPublisher                              `optional:"true"`
+	Refresher    accountingconnectionports.AccountingReferenceRefresher           `optional:"true"`
+	Plans        platformplanports.PlanService                                    `optional:"true"`
+	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
 }
 
 type Kit struct {
@@ -49,21 +52,21 @@ type Kit struct {
 }
 
 //nolint:gocritic // dependency injection
-func New(d Deps) *Kit {
+func New(p Params) *Kit {
 	return &Kit{
-		l:            d.Logger,
-		db:           d.DB,
-		connections:  d.Connections,
-		apps:         d.Apps,
-		integrations: d.Integrations,
-		connectors:   d.Connectors,
-		encryption:   d.Encryption,
-		audit:        d.Audit,
-		realtime:     d.Realtime,
-		watchtower:   d.Watchtower,
-		publisher:    d.Publisher,
-		refresher:    d.Refresher,
-		plans:        d.Plans,
-		certificates: d.Certificates,
+		l:            p.Logger.Named("service.accounting-connection"),
+		db:           p.DB,
+		connections:  p.Connections,
+		apps:         p.Apps,
+		integrations: p.Integrations,
+		connectors:   p.Connectors,
+		encryption:   p.Encryption,
+		audit:        p.Audit,
+		realtime:     p.Realtime,
+		watchtower:   p.Watchtower,
+		publisher:    p.Publisher,
+		refresher:    p.Refresher,
+		plans:        p.Plans,
+		certificates: p.Certificates,
 	}
 }

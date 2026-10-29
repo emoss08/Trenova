@@ -47,36 +47,36 @@ var permissionResource = permission.ResourceAccountingSync.String()
 type Params struct {
 	fx.In
 
-	Logger            *zap.Logger
-	DB                kernelports.Transactor
-	Connections       accountingconnectionports.AccountingConnectionRepository
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Records           accountingsyncports.AccountingSyncRecordRepository
-	Findings          accountingdriftports.AccountingDriftFindingRepository
-	Source            accountingdriftports.AccountingDriftSource
-	Ledger            journalentryports.AccountingLedgerSource
-	Mappings          accountingmappingports.AccountingMappingRepository
-	References        accountingmappingports.AccountingReferenceObjectRepository
-	Organizations     tenantports.OrganizationRepository
-	InvoiceRepo       invoiceports.InvoiceRepository
-	Controls          tenantports.AccountingControlRepository
-	Memos             invoiceports.InvoiceMemoService
-	Voids             invoiceports.InvoiceVoidService
-	Payments          customerpaymentports.CustomerPaymentService
-	Permissions       permissionports.PermissionEngine
-	AuditService      auditports.AuditService
-	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Checker           accountingdriftports.AccountingDriftChecker  `optional:"true"`
-	Publisher         agenteventports.AgentEventPublisher          `optional:"true"`
-	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime          realtimeports.RealtimeService                `optional:"true"`
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Sessions      accountingconnectionports.AccountingSessionProvider
+	Records       accountingsyncports.AccountingSyncRecordRepository
+	Findings      accountingdriftports.AccountingDriftFindingRepository
+	Source        accountingdriftports.AccountingDriftSource
+	Ledger        journalentryports.AccountingLedgerSource
+	Mappings      accountingmappingports.AccountingMappingRepository
+	References    accountingmappingports.AccountingReferenceObjectRepository
+	Organizations tenantports.OrganizationRepository
+	InvoiceRepo   invoiceports.InvoiceRepository
+	Controls      tenantports.AccountingControlRepository
+	Memos         invoiceports.InvoiceMemoService
+	Voids         invoiceports.InvoiceVoidService
+	Payments      customerpaymentports.CustomerPaymentService
+	Permissions   permissionports.PermissionEngine
+	AuditService  auditports.AuditService
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Checker       accountingdriftports.AccountingDriftChecker  `optional:"true"`
+	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime      realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	db            kernelports.Transactor
 	connections   accountingconnectionports.AccountingConnectionRepository
-	connService   accountingconnectionports.AccountingConnectionService
+	sessions      accountingconnectionports.AccountingSessionProvider
 	records       accountingsyncports.AccountingSyncRecordRepository
 	findings      accountingdriftports.AccountingDriftFindingRepository
 	source        accountingdriftports.AccountingDriftSource
@@ -111,7 +111,7 @@ func New(p Params) *Service {
 		l:             p.Logger.Named("service.accounting-drift"),
 		db:            p.DB,
 		connections:   p.Connections,
-		connService:   p.ConnectionService,
+		sessions:      p.Sessions,
 		records:       p.Records,
 		findings:      p.Findings,
 		source:        p.Source,
@@ -165,7 +165,7 @@ func (s *Service) openRead(
 	conn *accountingconnection.AccountingConnection,
 ) (*readSession, error) {
 	tenant := tenantOf(conn)
-	session, err := s.connService.Session(ctx, tenant, conn.ID)
+	session, err := s.sessions.Session(ctx, tenant, conn.ID)
 	if err != nil {
 		return nil, err
 	}

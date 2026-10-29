@@ -45,29 +45,29 @@ import (
 type Params struct {
 	fx.In
 
-	Logger            *zap.Logger
-	DB                kernelports.Transactor
-	Connections       accountingconnectionports.AccountingConnectionRepository
-	Records           accountingsyncports.AccountingSyncRecordRepository
-	Backfills         accountingsyncports.AccountingBackfillRepository
-	MappingService    accountingmappingports.AccountingMappingService
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Invoices          invoiceports.InvoiceRepository
-	Adjustments       invoiceadjustmentports.InvoiceAdjustmentRepository
-	Payments          customerpaymentports.CustomerPaymentRepository
-	Organizations     tenantports.OrganizationRepository
-	Controls          tenantports.AccountingControlRepository
-	Payables          accountingpayablesports.AccountingPayablesSource
-	Ledger            journalentryports.AccountingLedgerSource
-	References        accountingmappingports.AccountingReferenceObjectRepository
-	Rates             exchangerateports.ExchangeRateService
-	Policy            *accountingcontrolpolicyservice.Service
-	AuditService      auditports.AuditService
-	Enqueuer          *accountingsyncenqueue.Enqueuer
-	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Publisher         agenteventports.AgentEventPublisher          `optional:"true"`
-	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime          realtimeports.RealtimeService                `optional:"true"`
+	Logger         *zap.Logger
+	DB             kernelports.Transactor
+	Connections    accountingconnectionports.AccountingConnectionRepository
+	Records        accountingsyncports.AccountingSyncRecordRepository
+	Backfills      accountingsyncports.AccountingBackfillRepository
+	MappingService accountingmappingports.AccountingMappingService
+	Sessions       accountingconnectionports.AccountingSessionProvider
+	Invoices       invoiceports.InvoiceRepository
+	Adjustments    invoiceadjustmentports.InvoiceAdjustmentRepository
+	Payments       customerpaymentports.CustomerPaymentRepository
+	Organizations  tenantports.OrganizationRepository
+	Controls       tenantports.AccountingControlRepository
+	Payables       accountingpayablesports.AccountingPayablesSource
+	Ledger         journalentryports.AccountingLedgerSource
+	References     accountingmappingports.AccountingReferenceObjectRepository
+	Rates          exchangerateports.ExchangeRateService
+	Policy         *accountingcontrolpolicyservice.Service
+	AuditService   auditports.AuditService
+	Enqueuer       *accountingsyncenqueue.Enqueuer
+	Dispatcher     accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Publisher      agenteventports.AgentEventPublisher          `optional:"true"`
+	Watchtower     watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime       realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Service struct {
@@ -113,11 +113,11 @@ func New(p Params) *Service {
 	})
 	return &Service{
 		drain: accountingsyncdrain.New(accountingsyncdrain.Deps{
-			Logger:            l,
-			Records:           p.Records,
-			ConnectionService: p.ConnectionService,
-			Controls:          p.Controls,
-			Effects:           effects,
+			Logger:   l,
+			Records:  p.Records,
+			Sessions: p.Sessions,
+			Controls: p.Controls,
+			Effects:  effects,
 			Parties: accountingsyncparty.New(
 				accountingsyncparty.Deps{Kit: kit, MappingService: p.MappingService},
 			),

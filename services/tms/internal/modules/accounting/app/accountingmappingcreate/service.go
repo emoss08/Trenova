@@ -49,7 +49,7 @@ func (s *Service) CreateReferenceRecord(
 		)
 	}
 
-	session, err := s.connectionService.Session(ctx, req.TenantInfo, row.ConnectionID)
+	session, err := s.sessions.Session(ctx, req.TenantInfo, row.ConnectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *Service) CreateReferenceRecord(
 		if creator.IsDuplicateName(err) {
 			return nil, s.duplicateNameError(ctx, req.TenantInfo, row, name, err)
 		}
-		s.connectionService.ReportCallFailure(ctx, req.TenantInfo, row.ConnectionID, err)
+		s.sessions.ReportCallFailure(ctx, req.TenantInfo, row.ConnectionID, err)
 		return nil, errortypes.NewBusinessError(
 			"{0} did not create the record: {1}",
 			accountingprovider.ProviderName(session.Connection.IntegrationType),
@@ -422,43 +422,43 @@ func (s *Service) duplicateNameError(
 }
 
 type Deps struct {
-	Logger            *zap.Logger
-	References        accountingmappingports.AccountingReferenceObjectRepository
-	Mappings          accountingmappingports.AccountingMappingRepository
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Accessorials      accessorialchargeports.AccessorialChargeRepository
-	Customers         customerports.CustomerRepository
-	Carriers          carrierports.CarrierRepository
-	Kit               *accountingmappingkit.Kit
-	Catalog           *accountingmappingtargets.Catalog
-	Reads             *accountingmappingreads.Service
+	Logger       *zap.Logger
+	References   accountingmappingports.AccountingReferenceObjectRepository
+	Mappings     accountingmappingports.AccountingMappingRepository
+	Sessions     accountingconnectionports.AccountingSessionProvider
+	Accessorials accessorialchargeports.AccessorialChargeRepository
+	Customers    customerports.CustomerRepository
+	Carriers     carrierports.CarrierRepository
+	Kit          *accountingmappingkit.Kit
+	Catalog      *accountingmappingtargets.Catalog
+	Reads        *accountingmappingreads.Service
 }
 
 type Service struct {
-	l                 *zap.Logger
-	references        accountingmappingports.AccountingReferenceObjectRepository
-	mappings          accountingmappingports.AccountingMappingRepository
-	connectionService accountingconnectionports.AccountingConnectionService
-	accessorials      accessorialchargeports.AccessorialChargeRepository
-	customers         customerports.CustomerRepository
-	carriers          carrierports.CarrierRepository
-	kit               *accountingmappingkit.Kit
-	catalog           *accountingmappingtargets.Catalog
-	reads             *accountingmappingreads.Service
+	l            *zap.Logger
+	references   accountingmappingports.AccountingReferenceObjectRepository
+	mappings     accountingmappingports.AccountingMappingRepository
+	sessions     accountingconnectionports.AccountingSessionProvider
+	accessorials accessorialchargeports.AccessorialChargeRepository
+	customers    customerports.CustomerRepository
+	carriers     carrierports.CarrierRepository
+	kit          *accountingmappingkit.Kit
+	catalog      *accountingmappingtargets.Catalog
+	reads        *accountingmappingreads.Service
 }
 
 //nolint:gocritic // dependency injection
 func New(d Deps) *Service {
 	return &Service{
-		l:                 d.Logger,
-		references:        d.References,
-		mappings:          d.Mappings,
-		connectionService: d.ConnectionService,
-		accessorials:      d.Accessorials,
-		customers:         d.Customers,
-		carriers:          d.Carriers,
-		kit:               d.Kit,
-		catalog:           d.Catalog,
-		reads:             d.Reads,
+		l:            d.Logger,
+		references:   d.References,
+		mappings:     d.Mappings,
+		sessions:     d.Sessions,
+		accessorials: d.Accessorials,
+		customers:    d.Customers,
+		carriers:     d.Carriers,
+		kit:          d.Kit,
+		catalog:      d.Catalog,
+		reads:        d.Reads,
 	}
 }

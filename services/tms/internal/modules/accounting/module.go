@@ -18,7 +18,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalreversalrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/manualjournalrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionapps"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionauth"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectioncert"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionhealth"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionstatus"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionsubscriptions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionwebhook"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountinginboundservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
@@ -45,10 +52,43 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			accountingconnectionservice.New,
-			func(s *accountingconnectionservice.Service) accountingconnectionports.AccountingConnectionService {
-				return s
-			},
+			accountingconnectionkit.New,
+			fx.Annotate(
+				accountingconnectionhealth.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingHealthChecker)),
+				fx.As(new(accountingconnectionports.AccountingSessionProvider)),
+			),
+			fx.Annotate(
+				accountingconnectionsubscriptions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingWebhookSubscriptionSyncer)),
+			),
+			fx.Annotate(
+				accountingconnectionstatus.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingConnectionStatusReader)),
+			),
+			fx.Annotate(
+				accountingconnectionapps.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingAppService)),
+			),
+			fx.Annotate(
+				accountingconnectionauth.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingAuthorizationService)),
+			),
+			fx.Annotate(
+				accountingconnectioncert.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingCertificateService)),
+			),
+			fx.Annotate(
+				accountingconnectionwebhook.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingWebhookReceiver)),
+			),
 			accountingmappingservice.New,
 			func(s *accountingmappingservice.Service) accountingmappingports.AccountingMappingService { return s },
 			accountinginboundservice.New,

@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"testing"
@@ -28,7 +28,7 @@ func (h *harness) saveApp(
 	req.TenantInfo = h.tenant
 	req.UserID = h.userID
 	req.IntegrationType = integration.TypeQuickBooksOnline
-	return h.svc.SaveApp(t.Context(), &req)
+	return h.svc.apps.SaveApp(t.Context(), &req)
 }
 
 func (h *harness) saveTenantApp(t *testing.T) *accountingconnectionports.AccountingSyncStatus {
@@ -45,7 +45,7 @@ func (h *harness) saveTenantApp(t *testing.T) *accountingconnectionports.Account
 
 func (h *harness) removeApp(t *testing.T) (*accountingconnectionports.AccountingSyncStatus, error) {
 	t.Helper()
-	return h.svc.RemoveApp(t.Context(), &accountingconnectionports.RemoveAccountingAppRequest{
+	return h.svc.apps.RemoveApp(t.Context(), &accountingconnectionports.RemoveAccountingAppRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -57,7 +57,7 @@ func TestStatusWithoutAnyAppIsUnavailable(t *testing.T) {
 
 	h := newHarness(t)
 	h.connector.available = false
-	status, err := h.svc.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
+	status, err := h.svc.status.Status(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)
 	assert.False(t, status.Available)
 	require.NotNil(t, status.App)
@@ -318,11 +318,14 @@ func TestRemoveAppIsRefusedWhileConnectedThroughIt(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Len(t, h.apps.rows, 1)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-	})
+	_, err = h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		},
+	)
 	require.NoError(t, err)
 
 	status, err := h.removeApp(t)
@@ -361,12 +364,12 @@ func TestConnectionFailsWhenItsAppDisappears(t *testing.T) {
 	conn := h.connect(t)
 	h.connector.available = false
 
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, checked.LastErrorCategory)
 	assert.Contains(t, checked.LastErrorMessage, "reconnect")
 
-	_, err = h.svc.Session(t.Context(), h.tenant, conn.ID)
+	_, err = h.svc.health.Session(t.Context(), h.tenant, conn.ID)
 	require.Error(t, err)
 }
 
@@ -378,7 +381,7 @@ func TestReceiveWebhookVerifiesWithTheConnectionsOwnApp(t *testing.T) {
 	conn := h.connect(t)
 	h.connector.webhookRealms = []string{testRealm}
 
-	err := h.svc.ReceiveWebhook(
+	err := h.svc.webhooks.ReceiveWebhook(
 		t.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -392,7 +395,7 @@ func TestReceiveWebhookVerifiesWithTheConnectionsOwnApp(t *testing.T) {
 
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -411,7 +414,7 @@ func TestReceiveWebhookForUnknownCompaniesIsIgnored(t *testing.T) {
 	h.connector.webhookRealms = []string{"nobody"}
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,

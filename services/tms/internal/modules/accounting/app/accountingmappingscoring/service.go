@@ -126,7 +126,7 @@ func (s *Service) PullReference(
 	if !kind.IsValid() {
 		return nil, fmt.Errorf("unknown reference kind %q", kind)
 	}
-	session, err := s.connectionService.Session(ctx, tenantInfo, connectionID)
+	session, err := s.sessions.Session(ctx, tenantInfo, connectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (s *Service) PullReference(
 			},
 		)
 		if listErr != nil {
-			s.connectionService.ReportCallFailure(ctx, tenantInfo, connectionID, listErr)
+			s.sessions.ReportCallFailure(ctx, tenantInfo, connectionID, listErr)
 			return nil, listErr
 		}
 		if err = s.references.Upsert(
@@ -362,37 +362,37 @@ func (s *Service) MarkRefreshFinished(
 }
 
 type Deps struct {
-	Logger            *zap.Logger
-	Connections       accountingconnectionports.AccountingConnectionRepository
-	References        accountingmappingports.AccountingReferenceObjectRepository
-	Mappings          accountingmappingports.AccountingMappingRepository
-	ConnectionService accountingconnectionports.AccountingConnectionService
-	Completion        llmports.CompletionService
-	Kit               *accountingmappingkit.Kit
-	Catalog           *accountingmappingtargets.Catalog
+	Logger      *zap.Logger
+	Connections accountingconnectionports.AccountingConnectionRepository
+	References  accountingmappingports.AccountingReferenceObjectRepository
+	Mappings    accountingmappingports.AccountingMappingRepository
+	Sessions    accountingconnectionports.AccountingSessionProvider
+	Completion  llmports.CompletionService
+	Kit         *accountingmappingkit.Kit
+	Catalog     *accountingmappingtargets.Catalog
 }
 
 type Service struct {
-	l                 *zap.Logger
-	connections       accountingconnectionports.AccountingConnectionRepository
-	references        accountingmappingports.AccountingReferenceObjectRepository
-	mappings          accountingmappingports.AccountingMappingRepository
-	connectionService accountingconnectionports.AccountingConnectionService
-	completion        llmports.CompletionService
-	kit               *accountingmappingkit.Kit
-	catalog           *accountingmappingtargets.Catalog
+	l           *zap.Logger
+	connections accountingconnectionports.AccountingConnectionRepository
+	references  accountingmappingports.AccountingReferenceObjectRepository
+	mappings    accountingmappingports.AccountingMappingRepository
+	sessions    accountingconnectionports.AccountingSessionProvider
+	completion  llmports.CompletionService
+	kit         *accountingmappingkit.Kit
+	catalog     *accountingmappingtargets.Catalog
 }
 
 //nolint:gocritic // dependency injection
 func New(d Deps) *Service {
 	return &Service{
-		l:                 d.Logger,
-		connections:       d.Connections,
-		references:        d.References,
-		mappings:          d.Mappings,
-		connectionService: d.ConnectionService,
-		completion:        d.Completion,
-		kit:               d.Kit,
-		catalog:           d.Catalog,
+		l:           d.Logger,
+		connections: d.Connections,
+		references:  d.References,
+		mappings:    d.Mappings,
+		sessions:    d.Sessions,
+		completion:  d.Completion,
+		kit:         d.Kit,
+		catalog:     d.Catalog,
 	}
 }

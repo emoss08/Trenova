@@ -17,7 +17,7 @@ import (
 )
 
 type recordingService struct {
-	accountingconnectionports.AccountingConnectionService
+	accountingconnectionports.AccountingWebhookReceiver
 	received *accountingconnectionports.ReceiveAccountingWebhookRequest
 	err      error
 }
@@ -75,7 +75,7 @@ func serveMethod(
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	New(Params{Service: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
+	New(Params{Webhooks: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
 
 	req := httptest.NewRequestWithContext(
 		t.Context(),
@@ -161,7 +161,7 @@ func serve(
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	New(Params{Service: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
+	New(Params{Webhooks: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
 
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, bytes.NewReader(body))
 	req.Header.Set("intuit-signature", "c2lnbmF0dXJl")

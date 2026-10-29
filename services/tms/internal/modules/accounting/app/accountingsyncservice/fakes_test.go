@@ -1021,7 +1021,7 @@ type reportedFailure struct {
 }
 
 type fakeConnService struct {
-	accountingconnectionports.AccountingConnectionService
+	accountingconnectionports.AccountingSessionProvider
 
 	mu          sync.Mutex
 	connections *fakeConnections

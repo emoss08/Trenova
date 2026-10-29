@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"testing"
@@ -30,7 +30,7 @@ func (h *harness) prepareCertificate(
 	t *testing.T,
 ) *accountingconnectionports.AccountingPreparedCertificate {
 	t.Helper()
-	prepared, err := h.svc.PrepareCertificate(
+	prepared, err := h.svc.certs.PrepareCertificate(
 		t.Context(),
 		&accountingconnectionports.PrepareAccountingCertificateRequest{
 			TenantInfo:      h.tenant,
@@ -47,7 +47,7 @@ func (h *harness) connectWithCertificate(
 	accountID, certificateID string,
 ) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	t.Helper()
-	return h.svc.ConnectWithCertificate(
+	return h.svc.certs.ConnectWithCertificate(
 		t.Context(),
 		&accountingconnectionports.ConnectAccountingWithCertificateRequest{
 			TenantInfo:      h.tenant,
@@ -74,7 +74,7 @@ func (h *harness) renewCertificate(
 	certificateID string,
 ) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.RenewCertificate(
+	return h.svc.certs.RenewCertificate(
 		t.Context(),
 		&accountingconnectionports.RenewAccountingCertificateRequest{
 			TenantInfo:    h.tenant,
@@ -89,7 +89,7 @@ func TestPrepareCertificateIsRefusedForAProviderWithoutCertificates(t *testing.T
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.svc.PrepareCertificate(
+	_, err := h.svc.certs.PrepareCertificate(
 		t.Context(),
 		&accountingconnectionports.PrepareAccountingCertificateRequest{
 			TenantInfo:      h.tenant,
@@ -261,7 +261,7 @@ func TestConnectWithCertificateOffersTheSubsidiariesAndKeepsTheKeyOutOfTheChoice
 	}
 	h.states.mu.Unlock()
 
-	conn, err := h.svc.ChooseCompany(
+	conn, err := h.svc.auth.ChooseCompany(
 		t.Context(),
 		&accountingconnectionports.ChooseAccountingCompanyRequest{
 			TenantInfo:      h.tenant,
@@ -295,7 +295,7 @@ func TestCertificateConnectionTakesATokenPerAssertionAndNeverRefreshes(t *testin
 	}
 	h.expireAccessToken(conn)
 
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, accountingconnection.ConnectionStatusConnected, checked.Status)
 	assert.Empty(t, h.connector.refreshedWith)
@@ -319,7 +319,7 @@ func TestCertificateConnectionReusesAFreshAccessToken(t *testing.T) {
 	h := newCertificateHarness(t)
 	conn := h.certificateConnection(t)
 
-	_, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	_, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Len(t, h.connector.clientCredentials().assertions, 1)
 }
@@ -333,7 +333,7 @@ func TestCertificateConnectionGoesRevokedWhenTheCertificateIsRefused(t *testing.
 	h.connector.clientCredentials().assertionErrs = []error{errProvider}
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
 
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, accountingconnection.ConnectionStatusRevoked, checked.Status)
 	stored := h.connections.tokens[conn.ID]
@@ -378,7 +378,7 @@ func TestRenewCertificateRestoresARevokedConnection(t *testing.T) {
 	h.expireAccessToken(conn)
 	h.connector.clientCredentials().assertionErrs = []error{errProvider}
 	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
-	checked, err := h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	checked, err := h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	require.Equal(t, accountingconnection.ConnectionStatusRevoked, checked.Status)
 
@@ -432,11 +432,14 @@ func TestSigningInAfterACertificateConnectionDropsTheCertificate(t *testing.T) {
 
 	h := newCertificateHarness(t)
 	conn := h.certificateConnection(t)
-	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	_, err := h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, h.connections.tokens[conn.ID].clientKey)
 	assert.Empty(

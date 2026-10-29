@@ -98,22 +98,22 @@ func newHarness(t *testing.T) *harness {
 	h.audit = &fakeAudit{}
 	h.kicks = &fakeDispatcher{}
 	h.svc = New(Params{
-		Logger:            zap.NewNop(),
-		DB:                dbtest.NopConnection{},
-		Connections:       h.conns,
-		ConnectionService: h.connSvc,
-		Records:           h.records,
-		Findings:          h.findings,
-		Source:            h.source,
-		InvoiceRepo:       h.invRepo,
-		Controls:          h.controls,
-		Memos:             h.invoices,
-		Voids:             h.invoices,
-		Payments:          h.payments,
-		Permissions:       h.perms,
-		AuditService:      h.audit,
-		Dispatcher:        h.kicks,
-		Publisher:         h.events,
+		Logger:       zap.NewNop(),
+		DB:           dbtest.NopConnection{},
+		Connections:  h.conns,
+		Sessions:     h.connSvc,
+		Records:      h.records,
+		Findings:     h.findings,
+		Source:       h.source,
+		InvoiceRepo:  h.invRepo,
+		Controls:     h.controls,
+		Memos:        h.invoices,
+		Voids:        h.invoices,
+		Payments:     h.payments,
+		Permissions:  h.perms,
+		AuditService: h.audit,
+		Dispatcher:   h.kicks,
+		Publisher:    h.events,
 	})
 	h.svc.now = func() time.Time { return h.now }
 	return h

@@ -154,12 +154,15 @@ type AccountingHealthSweep struct {
 	Failed  int
 }
 
-type AccountingConnectionService interface {
+type AccountingConnectionStatusReader interface {
 	Status(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		typ integration.Type,
 	) (*AccountingSyncStatus, error)
+}
+
+type AccountingAuthorizationService interface {
 	StartAuthorization(
 		ctx context.Context,
 		req *StartAccountingAuthorizationRequest,
@@ -172,6 +175,13 @@ type AccountingConnectionService interface {
 		ctx context.Context,
 		req *ChooseAccountingCompanyRequest,
 	) (*accountingconnection.AccountingConnection, error)
+	Disconnect(
+		ctx context.Context,
+		req *DisconnectAccountingRequest,
+	) (*accountingconnection.AccountingConnection, error)
+}
+
+type AccountingCertificateService interface {
 	PrepareCertificate(
 		ctx context.Context,
 		req *PrepareAccountingCertificateRequest,
@@ -184,23 +194,18 @@ type AccountingConnectionService interface {
 		ctx context.Context,
 		req *RenewAccountingCertificateRequest,
 	) (*accountingconnection.AccountingConnection, error)
-	Disconnect(
-		ctx context.Context,
-		req *DisconnectAccountingRequest,
-	) (*accountingconnection.AccountingConnection, error)
+}
+
+type AccountingHealthChecker interface {
 	CheckHealth(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
 	) (*accountingconnection.AccountingConnection, error)
 	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
-	SyncWebhookSubscriptions(
-		ctx context.Context,
-		req *SyncAccountingWebhookSubscriptionsRequest,
-	) (*AccountingSubscriptionSweep, error)
-	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
-	SaveApp(ctx context.Context, req *SaveAccountingAppRequest) (*AccountingSyncStatus, error)
-	RemoveApp(ctx context.Context, req *RemoveAccountingAppRequest) (*AccountingSyncStatus, error)
+}
+
+type AccountingSessionProvider interface {
 	Session(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -212,6 +217,22 @@ type AccountingConnectionService interface {
 		connectionID pulid.ID,
 		cause error,
 	) accountingsync.ErrorCategory
+}
+
+type AccountingWebhookSubscriptionSyncer interface {
+	SyncWebhookSubscriptions(
+		ctx context.Context,
+		req *SyncAccountingWebhookSubscriptionsRequest,
+	) (*AccountingSubscriptionSweep, error)
+}
+
+type AccountingWebhookReceiver interface {
+	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
+}
+
+type AccountingAppService interface {
+	SaveApp(ctx context.Context, req *SaveAccountingAppRequest) (*AccountingSyncStatus, error)
+	RemoveApp(ctx context.Context, req *RemoveAccountingAppRequest) (*AccountingSyncStatus, error)
 }
 
 type AccountingSession struct {

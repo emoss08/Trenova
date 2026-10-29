@@ -504,7 +504,7 @@ func (f *fakeConnector) SanitizeName(_ accountingprovider.ReferenceKind, name st
 }
 
 type fakeConnectionService struct {
-	accountingconnectionports.AccountingConnectionService
+	accountingconnectionports.AccountingSessionProvider
 	session    *accountingconnectionports.AccountingSession
 	sessionErr error
 	failures   []error

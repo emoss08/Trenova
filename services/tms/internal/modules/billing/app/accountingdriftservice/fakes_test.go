@@ -151,7 +151,7 @@ func (r readerConnector) ClassifyDocumentError(err error) *accountingsync.SyncEr
 }
 
 type fakeConnService struct {
-	accountingconnectionports.AccountingConnectionService
+	accountingconnectionports.AccountingSessionProvider
 	connections *fakeConnections
 	reader      *fakeReader
 	failSession bool

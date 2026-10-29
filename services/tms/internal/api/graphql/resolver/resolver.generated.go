@@ -458,12 +458,16 @@ func FromServices(s *Services) *Resolver {
 		AccessorialChargeService: s.AccessorialChargeService,
 	}
 	accountingsyncDeps := &accountingsyncresolver.Deps{
-		Core:                     s.Core,
-		AccountingConnections:    s.AccountingConnections,
-		AccountingMappingService: s.AccountingMappingService,
-		AccountingSync:           s.AccountingSync,
-		AccountingInbound:        s.AccountingInbound,
-		AccountingDrift:          s.AccountingDrift,
+		Core:                       s.Core,
+		AccountingConnectionStatus: s.AccountingConnectionStatus,
+		AccountingAuthorization:    s.AccountingAuthorization,
+		AccountingCertificates:     s.AccountingCertificates,
+		AccountingHealth:           s.AccountingHealth,
+		AccountingApps:             s.AccountingApps,
+		AccountingMappingService:   s.AccountingMappingService,
+		AccountingSync:             s.AccountingSync,
+		AccountingInbound:          s.AccountingInbound,
+		AccountingDrift:            s.AccountingDrift,
 	}
 	accountsreceivableDeps := &accountsreceivableresolver.Deps{
 		Core:                      s.Core,

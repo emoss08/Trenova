@@ -308,7 +308,7 @@ func (r *MutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.SaveApp(ctx, &accountingconnectionports.SaveAccountingAppRequest{
+	return r.AccountingApps.SaveApp(ctx, &accountingconnectionports.SaveAccountingAppRequest{
 		TenantInfo:                resolvercore.TenantInfo(authCtx),
 		UserID:                    authCtx.UserID,
 		IntegrationType:           input.IntegrationType,
@@ -329,7 +329,7 @@ func (r *MutationResolver) RemoveAccountingApp(ctx context.Context, integrationT
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.RemoveApp(ctx, &accountingconnectionports.RemoveAccountingAppRequest{
+	return r.AccountingApps.RemoveApp(ctx, &accountingconnectionports.RemoveAccountingAppRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -345,7 +345,7 @@ func (r *MutationResolver) StartAccountingAuthorization(ctx context.Context, int
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.StartAuthorization(ctx, &accountingconnectionports.StartAccountingAuthorizationRequest{
+	return r.AccountingAuthorization.StartAuthorization(ctx, &accountingconnectionports.StartAccountingAuthorizationRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -361,7 +361,7 @@ func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, in
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.CompleteAuthorization(ctx, &accountingconnectionports.CompleteAccountingAuthorizationRequest{
+	return r.AccountingAuthorization.CompleteAuthorization(ctx, &accountingconnectionports.CompleteAccountingAuthorizationRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -380,7 +380,7 @@ func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gq
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.ChooseCompany(ctx, &accountingconnectionports.ChooseAccountingCompanyRequest{
+	return r.AccountingAuthorization.ChooseCompany(ctx, &accountingconnectionports.ChooseAccountingCompanyRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -398,7 +398,7 @@ func (r *MutationResolver) DisconnectAccountingSystem(ctx context.Context, integ
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.Disconnect(ctx, &accountingconnectionports.DisconnectAccountingRequest{
+	return r.AccountingAuthorization.Disconnect(ctx, &accountingconnectionports.DisconnectAccountingRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -412,7 +412,7 @@ func (r *MutationResolver) CheckAccountingConnection(ctx context.Context, integr
 	}
 
 	tenant := resolvercore.TenantInfo(authCtx)
-	status, err := r.AccountingConnections.Status(ctx, tenant, integrationType)
+	status, err := r.AccountingConnectionStatus.Status(ctx, tenant, integrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (r *MutationResolver) CheckAccountingConnection(ctx context.Context, integr
 		return nil, errortypes.NewNotFoundError("{0} has not been connected yet", status.ProviderName)
 	}
 
-	return r.AccountingConnections.CheckHealth(ctx, tenant, status.Connection.ID)
+	return r.AccountingHealth.CheckHealth(ctx, tenant, status.Connection.ID)
 }
 
 func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingmapping.AccountingMapping, error) {
@@ -814,7 +814,7 @@ func (r *QueryResolver) AccountingSyncStatus(ctx context.Context, integrationTyp
 		return nil, err
 	}
 
-	return r.AccountingConnections.Status(ctx, resolvercore.TenantInfo(authCtx), integrationType)
+	return r.AccountingConnectionStatus.Status(ctx, resolvercore.TenantInfo(authCtx), integrationType)
 }
 
 func (r *QueryResolver) AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingmappingports.AccountingMappingSummary, error) {
@@ -1143,7 +1143,7 @@ func (r *MutationResolver) PrepareAccountingCertificate(ctx context.Context, inp
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.PrepareCertificate(ctx, &accountingconnectionports.PrepareAccountingCertificateRequest{
+	return r.AccountingCertificates.PrepareCertificate(ctx, &accountingconnectionports.PrepareAccountingCertificateRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -1159,7 +1159,7 @@ func (r *MutationResolver) ConnectAccountingWithCertificate(ctx context.Context,
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.ConnectWithCertificate(ctx, &accountingconnectionports.ConnectAccountingWithCertificateRequest{
+	return r.AccountingCertificates.ConnectWithCertificate(ctx, &accountingconnectionports.ConnectAccountingWithCertificateRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -1181,7 +1181,7 @@ func (r *MutationResolver) RenewAccountingCertificate(ctx context.Context, input
 		return nil, err
 	}
 
-	return r.AccountingConnections.RenewCertificate(ctx, &accountingconnectionports.RenewAccountingCertificateRequest{
+	return r.AccountingCertificates.RenewCertificate(ctx, &accountingconnectionports.RenewAccountingCertificateRequest{
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		UserID:        authCtx.UserID,
 		ConnectionID:  connectionID,

@@ -59,7 +59,7 @@ func (a *Activities) KeepAccountingWebhookSubscriptionsActivity(
 	result := &SubscriptionSweepResult{}
 	var after pulid.ID
 	for page := range subscriptionMaxPages {
-		sweep, err := a.connections.SyncWebhookSubscriptions(
+		sweep, err := a.subs.SyncWebhookSubscriptions(
 			ctx,
 			&accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest{
 				AfterID: after,

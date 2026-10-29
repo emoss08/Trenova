@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -242,7 +243,9 @@ func (s *Service) CheckDue(
 	return sweep, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger      *zap.Logger
 	DB          kernelports.Transactor
 	Connections accountingconnectionports.AccountingConnectionRepository
@@ -256,6 +259,15 @@ type Service struct {
 	kit         *accountingconnectionkit.Kit
 }
 
-func New(d Deps) *Service {
-	return &Service{l: d.Logger, db: d.DB, connections: d.Connections, kit: d.Kit}
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-connection"),
+		db:          p.DB,
+		connections: p.Connections,
+		kit:         p.Kit,
+	}
 }
+
+var _ accountingconnectionports.AccountingHealthChecker = (*Service)(nil)
+
+var _ accountingconnectionports.AccountingSessionProvider = (*Service)(nil)

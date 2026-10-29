@@ -28,7 +28,7 @@ type Params struct {
 	Connections        accountingconnectionports.AccountingConnectionRepository
 	References         accountingmappingports.AccountingReferenceObjectRepository
 	Mappings           accountingmappingports.AccountingMappingRepository
-	ConnectionService  accountingconnectionports.AccountingConnectionService
+	Sessions           accountingconnectionports.AccountingSessionProvider
 	AccountingControls tenantports.AccountingControlRepository
 	GLAccounts         glaccountports.GLAccountRepository
 	Customers          customerports.CustomerRepository

@@ -23,7 +23,8 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Connections           accountingconnectionports.AccountingConnectionService
+	Health                accountingconnectionports.AccountingHealthChecker
+	Subscriptions         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	ConnectionsRepository accountingconnectionports.AccountingConnectionRepository
 	Mappings              accountingmappingports.AccountingMappingService
 	Sync                  accountingsyncports.AccountingSyncService
@@ -37,7 +38,8 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	connections  accountingconnectionports.AccountingConnectionService
+	health       accountingconnectionports.AccountingHealthChecker
+	subs         accountingconnectionports.AccountingWebhookSubscriptionSyncer
 	connRepo     accountingconnectionports.AccountingConnectionRepository
 	mappings     accountingmappingports.AccountingMappingService
 	sync         accountingsyncports.AccountingSyncService
@@ -52,7 +54,8 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		connections:  p.Connections,
+		health:       p.Health,
+		subs:         p.Subscriptions,
 		connRepo:     p.ConnectionsRepository,
 		mappings:     p.Mappings,
 		sync:         p.Sync,
@@ -71,7 +74,7 @@ func (a *Activities) CheckAccountingConnectionsActivity(
 ) (*HealthSweepResult, error) {
 	result := &HealthSweepResult{}
 	for page := range healthMaxPages {
-		sweep, err := a.connections.CheckDue(ctx, healthPageSize)
+		sweep, err := a.health.CheckDue(ctx, healthPageSize)
 		if err != nil {
 			return result, err
 		}

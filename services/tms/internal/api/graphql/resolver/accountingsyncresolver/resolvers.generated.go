@@ -13,11 +13,15 @@ import (
 
 type Deps struct {
 	*resolvercore.Core
-	AccountingConnections    accountingconnectionports.AccountingConnectionService
-	AccountingMappingService accountingmappingports.AccountingMappingService
-	AccountingSync           accountingsyncports.AccountingSyncService
-	AccountingInbound        accountinginboundports.AccountingInboundService
-	AccountingDrift          accountingdriftports.AccountingDriftService
+	AccountingConnectionStatus accountingconnectionports.AccountingConnectionStatusReader
+	AccountingAuthorization    accountingconnectionports.AccountingAuthorizationService
+	AccountingCertificates     accountingconnectionports.AccountingCertificateService
+	AccountingHealth           accountingconnectionports.AccountingHealthChecker
+	AccountingApps             accountingconnectionports.AccountingAppService
+	AccountingMappingService   accountingmappingports.AccountingMappingService
+	AccountingSync             accountingsyncports.AccountingSyncService
+	AccountingInbound          accountinginboundports.AccountingInboundService
+	AccountingDrift            accountingdriftports.AccountingDriftService
 }
 
 type AccountingAppCredentialResolver struct{ *Deps }

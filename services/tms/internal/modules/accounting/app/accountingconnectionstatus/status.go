@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"go.uber.org/fx"
 )
 
 func (s *Service) Status(
@@ -63,7 +64,9 @@ func (s *Service) Status(
 	return status, nil
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Connections accountingconnectionports.AccountingConnectionRepository
 	Kit         *accountingconnectionkit.Kit
 	Subs        *accountingconnectionsubscriptions.Service
@@ -75,6 +78,8 @@ type Service struct {
 	subs        *accountingconnectionsubscriptions.Service
 }
 
-func New(d Deps) *Service {
-	return &Service{connections: d.Connections, kit: d.Kit, subs: d.Subs}
+func New(p Params) *Service {
+	return &Service{connections: p.Connections, kit: p.Kit, subs: p.Subs}
 }
+
+var _ accountingconnectionports.AccountingConnectionStatusReader = (*Service)(nil)

@@ -48,6 +48,13 @@ func (f *fakeAccountingChecker) CheckHealth(
 	return f.status.Connection, nil
 }
 
+func (f *fakeAccountingChecker) CheckDue(
+	context.Context,
+	int,
+) (*accountingconnectionports.AccountingHealthSweep, error) {
+	return &accountingconnectionports.AccountingHealthSweep{}, nil
+}
+
 func connectedStatus(
 	status accountingconnection.ConnectionStatus,
 ) *accountingconnectionports.AccountingSyncStatus {
@@ -70,7 +77,7 @@ func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 	checker := &fakeAccountingChecker{
 		status: connectedStatus(accountingconnection.ConnectionStatusDegraded),
 	}
-	tool := newCheckAccountingConnectionTool(checker)
+	tool := newCheckAccountingConnectionTool(checker, checker)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -87,7 +94,7 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 		{IntegrationType: integration.TypeQuickBooksOnline, ProviderName: "QuickBooks Online"},
 	} {
 		checker := &fakeAccountingChecker{status: status}
-		tool := newCheckAccountingConnectionTool(checker)
+		tool := newCheckAccountingConnectionTool(checker, checker)
 		params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
 		err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
@@ -101,7 +108,10 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 func TestCheckAccountingConnection_PolicyStaysInside(t *testing.T) {
 	t.Parallel()
 
-	policy := newCheckAccountingConnectionTool(&fakeAccountingChecker{}).Policy()
+	policy := newCheckAccountingConnectionTool(
+		&fakeAccountingChecker{},
+		&fakeAccountingChecker{},
+	).Policy()
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
 	assert.Equal(t, agent.TierAutoExecute, policy.DefaultTier)
 	assert.False(t, policy.Reversible)
@@ -111,9 +121,10 @@ func TestCheckAccountingConnection_PolicyStaysInside(t *testing.T) {
 func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {
 	t.Parallel()
 
-	tool := newCheckAccountingConnectionTool(&fakeAccountingChecker{
+	checker := &fakeAccountingChecker{
 		status: connectedStatus(accountingconnection.ConnectionStatusConnected),
-	})
+	}
+	tool := newCheckAccountingConnectionTool(checker, checker)
 	require.Error(
 		t,
 		tool.Execute(

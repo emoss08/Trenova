@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"strings"
@@ -26,7 +26,7 @@ func (h *harness) completeWithChoice(
 ) *accountingconnectionports.AccountingAuthorizationCompletion {
 	t.Helper()
 	h.connector.companies = twoCompanies
-	completion, err := h.svc.CompleteAuthorization(
+	completion, err := h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -46,7 +46,7 @@ func (h *harness) choose(
 	token, companyID string,
 ) (*accountingconnection.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.ChooseCompany(
+	return h.svc.auth.ChooseCompany(
 		t.Context(),
 		&accountingconnectionports.ChooseAccountingCompanyRequest{
 			TenantInfo:      h.tenant,
@@ -139,7 +139,7 @@ func TestOnlyThePersonWhoSignedInCanChoose(t *testing.T) {
 	h := newHarness(t)
 	completion := h.completeWithChoice(t)
 
-	_, err := h.svc.ChooseCompany(
+	_, err := h.svc.auth.ChooseCompany(
 		t.Context(),
 		&accountingconnectionports.ChooseAccountingCompanyRequest{
 			TenantInfo:      h.tenant,
@@ -214,7 +214,7 @@ func TestConnectingASecondAccountingSystemIsRefused(t *testing.T) {
 	}
 	h.connections.rows[other.ID] = other
 
-	_, err := h.svc.StartAuthorization(
+	_, err := h.svc.auth.StartAuthorization(
 		t.Context(),
 		&accountingconnectionports.StartAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -238,7 +238,7 @@ func TestAWebhookNamingATenantAppIsCheckedAgainstThatApp(t *testing.T) {
 	h.connector.webhookRealms = []string{testRealm}
 	appID := status.App.TenantApp.ID.String()
 
-	err := h.svc.ReceiveWebhook(
+	err := h.svc.webhooks.ReceiveWebhook(
 		t.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -253,7 +253,7 @@ func TestAWebhookNamingATenantAppIsCheckedAgainstThatApp(t *testing.T) {
 
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -271,7 +271,7 @@ func TestAWebhookNamingAnUnknownAppIsRefused(t *testing.T) {
 
 	h := newHarness(t)
 	for _, appID := range []string{"acctapp_01J00000000000000000000000", "not-an-id", "acctc_01J00000000000000000000000"} {
-		err := h.svc.ReceiveWebhook(
+		err := h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -294,7 +294,7 @@ func TestAVerifiedWebhookNamingNoCompanyIsAccepted(t *testing.T) {
 
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -306,7 +306,7 @@ func TestAVerifiedWebhookNamingNoCompanyIsAccepted(t *testing.T) {
 	)
 	require.NoError(
 		t,
-		h.svc.ReceiveWebhook(
+		h.svc.webhooks.ReceiveWebhook(
 			t.Context(),
 			&accountingconnectionports.ReceiveAccountingWebhookRequest{
 				IntegrationType: integration.TypeQuickBooksOnline,
@@ -316,7 +316,7 @@ func TestAVerifiedWebhookNamingNoCompanyIsAccepted(t *testing.T) {
 		),
 	)
 
-	err := h.svc.ReceiveWebhook(
+	err := h.svc.webhooks.ReceiveWebhook(
 		t.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,

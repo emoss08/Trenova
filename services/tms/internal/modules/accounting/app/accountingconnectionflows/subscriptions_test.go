@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"context"
@@ -16,14 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 const bcRealm = "00000000000000000000000000000001_00000000000000000000000000000002_Production"
@@ -302,16 +300,14 @@ func newBCHarness(t *testing.T) *bcHarness {
 		rows: map[pulid.ID]*accountingconnection.AccountingWebhookSubscription{},
 		conn: h.connections,
 	}
-	h.svc = New(Params{
-		Logger:        zap.NewNop(),
-		DB:            dbtest.NopConnection{},
+	h.svc = wire(&wiring{
 		Connections:   h.connections,
 		Apps:          h.apps,
 		States:        h.states,
 		Integrations:  h.integrations,
 		Connectors:    fakeRegistry{connector: h.connector, bc: bc},
 		Encryption:    h.encryption,
-		AuditService:  h.audit,
+		Audit:         h.audit,
 		Watchtower:    h.watchtower,
 		Publisher:     h.events,
 		Refresher:     h.refresher,
@@ -359,7 +355,7 @@ func (h *bcHarness) seedConnection(t *testing.T) *accountingconnection.Accountin
 
 func (h *bcHarness) sweep(t *testing.T) *accountingconnectionports.AccountingSubscriptionSweep {
 	t.Helper()
-	sweep, err := h.svc.SyncWebhookSubscriptions(
+	sweep, err := h.svc.subs.SyncWebhookSubscriptions(
 		t.Context(),
 		&accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest{Limit: 10},
 	)
@@ -371,7 +367,7 @@ func (h *bcHarness) notify(t *testing.T, appID string, body any) error {
 	t.Helper()
 	raw, err := sonic.Marshal(body)
 	require.NoError(t, err)
-	return h.svc.ReceiveWebhook(
+	return h.svc.webhooks.ReceiveWebhook(
 		t.Context(),
 		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeBusinessCentral,
@@ -479,7 +475,7 @@ func TestWithoutAPublicAddressNothingSubscribes(t *testing.T) {
 			row.LastError,
 		)
 	}
-	status, err := h.svc.Status(t.Context(), h.tenant, integration.TypeBusinessCentral)
+	status, err := h.svc.status.Status(t.Context(), h.tenant, integration.TypeBusinessCentral)
 	require.NoError(t, err)
 	require.NotNil(t, status.WebhookSubscriptions)
 	assert.False(t, status.WebhookSubscriptions.Configured)
@@ -590,11 +586,14 @@ func TestDisconnectingReleasesTheSubscriptions(t *testing.T) {
 	h := newBCHarness(t)
 	h.sweep(t)
 
-	_, err := h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeBusinessCentral,
-	})
+	_, err := h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeBusinessCentral,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, h.subs.all())
 	assert.Len(t, h.bc.sub.unsubscribed, 2)

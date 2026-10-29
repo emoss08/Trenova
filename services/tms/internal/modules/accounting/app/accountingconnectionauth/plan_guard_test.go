@@ -1,8 +1,9 @@
-package accountingconnectionservice
+package accountingconnectionauth
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -17,7 +18,10 @@ func TestAccountingConnectionsRefuseWhenThePlanRestrictsIntegrations(t *testing.
 
 	svc := New(Params{
 		Logger: zap.NewNop(),
-		Plans:  plantest.Restricting(t, platformplan.CapabilityIntegrations),
+		Kit: accountingconnectionkit.New(accountingconnectionkit.Params{
+			Logger: zap.NewNop(),
+			Plans:  plantest.Restricting(t, platformplan.CapabilityIntegrations),
+		}),
 	})
 	tenant := plantest.Tenant()
 

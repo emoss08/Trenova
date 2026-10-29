@@ -1,4 +1,4 @@
-package accountingconnectionservice
+package accountingconnectionflows
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ func newPKCEHarness(t *testing.T) *harness {
 
 func (h *harness) startAs(t *testing.T, typ integration.Type) string {
 	t.Helper()
-	_, err := h.svc.StartAuthorization(
+	_, err := h.svc.auth.StartAuthorization(
 		t.Context(),
 		&accountingconnectionports.StartAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -44,7 +44,7 @@ func (h *harness) completeAs(
 	state, realm string,
 ) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
 	t.Helper()
-	return h.svc.CompleteAuthorization(
+	return h.svc.auth.CompleteAuthorization(
 		t.Context(),
 		&accountingconnectionports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
@@ -200,7 +200,7 @@ func TestRefreshWithoutARefreshTokenKeepsTheStoredOneAndItsExpiry(t *testing.T) 
 			}
 			h.expireAccessToken(conn)
 
-			_, err = h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+			_, err = h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 			require.NoError(t, err)
 			after := h.connections.tokens[conn.ID]
 			assert.Equal(
@@ -232,15 +232,18 @@ func TestRefreshAndRevokeNameTheConnectionsRealm(t *testing.T) {
 	conn := completion.Connection
 	h.expireAccessToken(conn)
 
-	_, err = h.svc.CheckHealth(t.Context(), h.tenant, conn.ID)
+	_, err = h.svc.health.CheckHealth(t.Context(), h.tenant, conn.ID)
 	require.NoError(t, err)
 	assert.Equal(t, []string{netSuiteRealm}, h.connector.refreshRealms)
 
-	_, err = h.svc.Disconnect(t.Context(), &accountingconnectionports.DisconnectAccountingRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeNetSuite,
-	})
+	_, err = h.svc.auth.Disconnect(
+		t.Context(),
+		&accountingconnectionports.DisconnectAccountingRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeNetSuite,
+		},
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, h.connector.revokeRealms)
 	assert.Equal(t, netSuiteRealm, h.connector.revokeRealms[len(h.connector.revokeRealms)-1])

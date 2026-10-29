@@ -15,38 +15,26 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type accountingConnectionChecker interface {
-	Status(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		typ integration.Type,
-	) (*accountingconnectionports.AccountingSyncStatus, error)
-	CheckHealth(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		connectionID pulid.ID,
-	) (*accountingconnection.AccountingConnection, error)
-}
-
 type CheckAccountingConnectionTool struct {
-	accounting accountingConnectionChecker
+	status accountingconnectionports.AccountingConnectionStatusReader
+	health accountingconnectionports.AccountingHealthChecker
 }
 
 func newCheckAccountingConnectionTool(
-	accounting accountingConnectionChecker,
+	status accountingconnectionports.AccountingConnectionStatusReader,
+	health accountingconnectionports.AccountingHealthChecker,
 ) agenttoolports.AgentTool {
-	return &CheckAccountingConnectionTool{accounting: accounting}
+	return &CheckAccountingConnectionTool{status: status, health: health}
 }
 
 func ProvideCheckAccountingConnectionTool(
-	accounting accountingconnectionports.AccountingConnectionService,
+	status accountingconnectionports.AccountingConnectionStatusReader,
+	health accountingconnectionports.AccountingHealthChecker,
 ) agenttoolports.AgentTool {
-	return newCheckAccountingConnectionTool(accounting)
+	return newCheckAccountingConnectionTool(status, health)
 }
 
 func (t *CheckAccountingConnectionTool) Name() string { return "accounting_check_connection" }
@@ -108,7 +96,7 @@ func (t *CheckAccountingConnectionTool) Execute(
 		return err
 	}
 
-	_, err = t.accounting.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
+	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
 	return err
 }
 
@@ -129,7 +117,7 @@ func (t *CheckAccountingConnectionTool) connection(
 		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
-	status, err := t.accounting.Status(ctx, toolparams.TenantFrom(*params), typ)
+	status, err := t.status.Status(ctx, toolparams.TenantFrom(*params), typ)
 	if err != nil {
 		return nil, err
 	}
