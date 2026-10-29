@@ -112,9 +112,10 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
+          # Pass or fail was reported by the step above; this only reads the numbers.
           go test -v -run 'AgainstFloors' ./internal/modules/agent/app/agentevalgate/ \
-            > "$RUNNER_TEMP/selection.log"
-          go test -v ./internal/modules/agent/app/agentredteam/ > "$RUNNER_TEMP/redteam.log"
+            > "$RUNNER_TEMP/selection.log" || true
+          go test -v ./internal/modules/agent/app/agentredteam/ > "$RUNNER_TEMP/redteam.log" || true
           {
             echo "## Tool selection, development and held-out"
             echo
