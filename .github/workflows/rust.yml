@@ -84,23 +84,6 @@ defaults:
     working-directory: services
 
 jobs:
-  toolchain:
-    name: Toolchain pins agree
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: services and desktop/capture pin the same channel
-        run: |
-          set -euo pipefail
-          channel() { sed -nE 's/^channel *= *"([^"]+)".*/\1/p' "$1"; }
-          services="$(channel rust-toolchain.toml)"
-          desktop="$(channel ../desktop/capture/rust-toolchain.toml)"
-          echo "services: $services, desktop/capture: $desktop"
-          if [ -z "$services" ] || [ "$services" != "$desktop" ]; then
-            echo "::error::services/rust-toolchain.toml ($services) and desktop/capture/rust-toolchain.toml ($desktop) must pin the same channel"
-            exit 1
-          fi
-
   check:
     name: Format, lint, test
     runs-on: ubuntu-24.04
@@ -127,28 +110,48 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      # Neither needs the toolchain above, so they run even when a step above failed.
+      - name: services and desktop/capture pin the same channel
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          channel() { sed -nE 's/^channel *= *"([^"]+)".*/\1/p' "$1"; }
+          services="$(channel rust-toolchain.toml)"
+          desktop="$(channel ../desktop/capture/rust-toolchain.toml)"
+          echo "services: $services, desktop/capture: $desktop"
+          if [ -z "$services" ] || [ "$services" != "$desktop" ]; then
+            echo "::error::services/rust-toolchain.toml ($services) and desktop/capture/rust-toolchain.toml ($desktop) must pin the same channel"
+            exit 1
+          fi
+      - name: cargo-deny
+        if: ${{ !cancelled() }}
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: services/Cargo.toml
+          command: check
+          arguments: --all-features
 
-  wasm-rules:
-    name: Rules WebAssembly module
+  wasm:
+    name: WebAssembly modules
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.96"
-          targets: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown, wasm32-wasip1
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: services
-          key: wasm-rules
+          key: wasm
       # The pinned binaryen release the build downloads and verifies; keyed on the shared
       # script, which holds the version and checksums.
       - uses: actions/cache@v4
         with:
           path: services/target/binaryen
           key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
-      - name: Clippy for wasm32-unknown-unknown
+      - name: Rules clippy for wasm32-unknown-unknown
         run: cargo clippy -p trenova-rules --target wasm32-unknown-unknown --locked -- -D warnings
       - name: The committed rules.wasm copies match a fresh build
         working-directory: .
@@ -157,26 +160,7 @@ jobs:
             echo "::error::Run 'task rust:wasm-rules' and commit services/tms/pkg/rules and client/packages/shared/src/rules."
             exit 1
           fi
-
-  wasm-scripts:
-    name: Scripts WebAssembly module
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.96"
-          targets: wasm32-wasip1
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: services
-          key: wasm-scripts
-      - uses: actions/cache@v4
-        with:
-          path: services/target/binaryen
-          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
-      - name: Clippy for wasm32-wasip1
+      - name: Scripts clippy for wasm32-wasip1
         run: cargo clippy -p trenova-scripts --target wasm32-wasip1 --locked -- -D warnings
       - name: The committed scripts.wasm matches a fresh build
         working-directory: .
@@ -185,26 +169,7 @@ jobs:
             echo "::error::Run 'task rust:wasm-scripts' and commit services/tms/pkg/scriptvm."
             exit 1
           fi
-
-  wasm-edi:
-    name: EDI WebAssembly module
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.96"
-          targets: wasm32-unknown-unknown
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: services
-          key: wasm-edi
-      - uses: actions/cache@v4
-        with:
-          path: services/target/binaryen
-          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
-      - name: Clippy for wasm32-unknown-unknown
+      - name: EDI clippy for wasm32-unknown-unknown
         run: cargo clippy -p trenova-edi --target wasm32-unknown-unknown --locked -- -D warnings
       - name: The committed edi.wasm matches a fresh build
         working-directory: .
@@ -213,17 +178,6 @@ jobs:
             echo "::error::Run 'task rust:wasm-edi' and commit services/tms/pkg/x12."
             exit 1
           fi
-
-  deny:
-    name: cargo-deny
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: EmbarkStudios/cargo-deny-action@v2
-        with:
-          manifest-path: services/Cargo.toml
-          command: check
-          arguments: --all-features
 
   contracts:
     name: Contracts (buf lint, breaking, generated Go)

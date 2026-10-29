@@ -342,6 +342,7 @@ jobs:
           fetch-depth: 2
 
       - name: Set up Go
+        id: setup-go
         uses: ./.github/actions/setup-go
         with:
           cache-key: lint
@@ -385,13 +386,6 @@ jobs:
           # for the analysis. 40 covers a cold run with margin.
           args: --timeout=40m --new-from-rev=${{ steps.lint-base.outputs.value }}
 
-      - name: Save Go build output
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/go-build
-          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
-
       - name: Save golangci-lint analysis cache
         if: always()
         uses: actions/cache/save@v4
@@ -399,29 +393,22 @@ jobs:
           path: ~/.cache/golangci-lint
           key: golangci-lint-${{ runner.os }}-${{ github.sha }}
 
+      # The steps below run even when golangci-lint failed, so one run reports
+      # every failing check.
       - name: Run go-arch-lint
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: go run ./scripts/archlint
 
       - name: Run pkgsizelint
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: go run ./scripts/pkgsizelint
 
-  codegen-checks:
-    name: Codegen Checks
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-        with:
-          cache-key: codegen
-
+      # Generated code is up to date: each step regenerates one artifact and
+      # fails when the result differs from what is committed.
       - name: GraphQL server generated code
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: |
           set -euo pipefail
@@ -444,7 +431,7 @@ jobs:
           fi
 
       - name: GraphQL schema breaking changes
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && github.event_name == 'pull_request' }}
         working-directory: ./services/tms
         env:
           BASE_REF: ${{ github.base_ref }}
@@ -468,8 +455,8 @@ jobs:
           fi
           exit 1
 
-
       - name: Schema version stamp
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: |
           set -euo pipefail
@@ -481,7 +468,7 @@ jobs:
           fi
 
       - name: Migrations against the base branch
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && github.event_name == 'pull_request' }}
         working-directory: ./services/tms
         env:
           BASE_REF: ${{ github.base_ref }}
@@ -502,6 +489,7 @@ jobs:
           fi
 
       - name: GraphQL projections
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: |
           set -euo pipefail
@@ -513,6 +501,7 @@ jobs:
           fi
 
       - name: keel tables
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: |
           set -euo pipefail
@@ -522,6 +511,7 @@ jobs:
           fi
 
       - name: AI tool safety document
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms
         run: |
           set -euo pipefail
@@ -532,6 +522,7 @@ jobs:
           fi
 
       - name: Agent write coverage
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
         working-directory: ./services/tms/internal/api/writecoverage
         run: |
           set -euo pipefail
@@ -543,6 +534,14 @@ jobs:
             echo "::error::Agent write coverage needs attention - fix services/tms/internal/api/writecoverage/writecoverage.yml as the messages above say, run 'go generate ./internal/api/writecoverage/...' in services/tms and commit"
             exit 1
           fi
+
+      # Last, so the cache holds what golangci-lint and the generators compiled.
+      - name: Save Go build output
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/go-build
+          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
 
   race-detection:
     name: Race Detection
