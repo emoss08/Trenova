@@ -18,7 +18,7 @@ func TestNewSensitiveDataManager(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	require.NotNil(t, sdm)
@@ -30,7 +30,7 @@ func TestRegisterSensitiveFields(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	fields := []auditports.SensitiveField{
@@ -52,7 +52,7 @@ func TestApplyMaskStrategy_Strict(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -67,7 +67,7 @@ func TestApplyMaskStrategy_Default(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetMaskStrategy(MaskStrategyDefault)
 
@@ -83,7 +83,7 @@ func TestApplyMaskStrategy_Partial(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetMaskStrategy(MaskStrategyPartial)
 
@@ -98,7 +98,7 @@ func TestSanitizeEntry_WithRegisteredFields(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetAutoDetect(false)
 
@@ -127,7 +127,7 @@ func TestSanitizeEntry_NilEntry(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	err := sdm.SanitizeEntry(nil)
@@ -138,7 +138,7 @@ func TestContainsSensitivePattern_SSN(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.containsSensitivePattern("123-45-6789"))
@@ -148,7 +148,7 @@ func TestContainsSensitivePattern_Email(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.containsSensitivePattern("test@example.com"))
@@ -158,7 +158,7 @@ func TestContainsSensitivePattern_CreditCard(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.containsSensitivePattern("4111111111111111"))
@@ -168,7 +168,7 @@ func TestIsSensitiveFieldName_Password(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.isSensitiveFieldName("password"))
@@ -178,7 +178,7 @@ func TestIsSensitiveFieldName_ApiKey(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.isSensitiveFieldName("api_key"))
@@ -188,7 +188,7 @@ func TestIsSensitiveFieldName_Regular(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.False(t, sdm.isSensitiveFieldName("name"))
@@ -198,7 +198,7 @@ func TestSanitizeUserObject_Strict(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
@@ -221,7 +221,7 @@ func TestSanitizeUserObject_Partial(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 	sdm.SetMaskStrategy(MaskStrategyPartial)
 
@@ -239,7 +239,7 @@ func TestApplyHashStrategy(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	result := sdm.applyHashStrategy("some-value")
@@ -252,7 +252,7 @@ func TestApplyEncryptStrategy(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	result := sdm.applyEncryptStrategy("some-value")
@@ -265,7 +265,7 @@ func TestSetAutoDetect(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.True(t, sdm.autoDetect.Load())
@@ -281,7 +281,7 @@ func TestSetMaskStrategy(t *testing.T) {
 	t.Parallel()
 
 	sdm := NewSensitiveDataManager(
-		securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
+		&securityconfig.EncryptionConfig{Key: "test-encryption-key-for-testing"},
 	)
 
 	assert.Equal(t, int32(MaskStrategyDefault), sdm.strategy.Load())

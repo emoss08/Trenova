@@ -25,7 +25,6 @@ type Service struct {
 	engine        reportports.ReportEngine
 }
 
-//nolint:gocritic // fx.In parameter structs must be passed by value
 func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.reportdashboard"),

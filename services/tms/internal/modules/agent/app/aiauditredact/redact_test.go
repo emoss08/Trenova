@@ -21,7 +21,7 @@ func testRedactor() *Redactor {
 	return New(
 		permissioncatalog.NewRegistry(),
 		aiaudittest.TestPolicies(),
-		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
+		auditservice.NewSensitiveDataManager(&securityconfig.EncryptionConfig{}),
 	)
 }
 
@@ -156,7 +156,7 @@ func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
 			Kind:     agenttooltrust.ToolKindAction,
 			Resource: permission.ResourceTableChangeAlert,
 		}},
-		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
+		auditservice.NewSensitiveDataManager(&securityconfig.EncryptionConfig{}),
 	)
 	redacted, err := redactor.Arguments("report_create_table_change_alert", map[string]any{
 		"name":           "Big invoices",

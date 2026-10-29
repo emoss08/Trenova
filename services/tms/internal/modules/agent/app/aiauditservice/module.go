@@ -73,7 +73,7 @@ func aiAuditMetrics(registry *metrics.Registry) *aimetrics.AIAudit {
 func New(p Params) Components {
 	keyring := aiauditkeyring.New(&p.AIAuditConfig.Chain, p.Logger)
 	registryMetrics := aiAuditMetrics(p.Metrics)
-	masker := auditservice.NewSensitiveDataManager(p.SecurityConfig.Encryption)
+	masker := auditservice.NewSensitiveDataManager(&p.SecurityConfig.Encryption)
 	redactor := aiauditredact.New(p.Registry, p.Policies, masker)
 
 	projector := aiauditprojector.New(&aiauditprojector.Params{

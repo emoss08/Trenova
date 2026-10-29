@@ -157,7 +157,7 @@ func newTestService(
 		bufferRepo: bufferRepo,
 		realtime:   realtime,
 		logger:     logger.Named("service.audit"),
-		sdm:        NewSensitiveDataManager(cfg.Security.Encryption),
+		sdm:        NewSensitiveDataManager(&cfg.Security.Encryption),
 		metrics:    metricsRegistry,
 	}
 	srv.configureSensitiveDataManager("test")

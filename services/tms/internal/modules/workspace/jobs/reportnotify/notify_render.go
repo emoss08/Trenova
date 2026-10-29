@@ -17,6 +17,18 @@ type Wording struct {
 	Message string
 }
 
+type Renderer struct {
+	templates documenttemplateports.DocumentTemplateResolver
+	l         *zap.Logger
+}
+
+func NewRenderer(
+	templates documenttemplateports.DocumentTemplateResolver,
+	l *zap.Logger,
+) *Renderer {
+	return &Renderer{templates: templates, l: l}
+}
+
 // Render renders one report notification through the organization's
 // template.
 //
@@ -51,16 +63,4 @@ func (a *Renderer) Render(
 	}
 
 	return Wording{Title: rendered.Subject, Message: rendered.Text}, true
-}
-
-type Renderer struct {
-	templates documenttemplateports.DocumentTemplateResolver
-	l         *zap.Logger
-}
-
-func NewRenderer(
-	templates documenttemplateports.DocumentTemplateResolver,
-	l *zap.Logger,
-) *Renderer {
-	return &Renderer{templates: templates, l: l}
 }

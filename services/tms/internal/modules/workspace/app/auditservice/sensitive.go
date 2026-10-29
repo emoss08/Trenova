@@ -97,7 +97,7 @@ var sensitiveFieldPatterns = []string{
 	`(?i)configuration\.apiKey`,
 }
 
-func NewSensitiveDataManager(cfg securityconfig.EncryptionConfig) *SensitiveDataManager {
+func NewSensitiveDataManager(cfg *securityconfig.EncryptionConfig) *SensitiveDataManager {
 	sdm := &SensitiveDataManager{
 		fields:                make(map[permission.Resource]map[string]SensitiveFieldConfig),
 		patternCache:          make(map[string]*regexp.Regexp),
@@ -108,7 +108,7 @@ func NewSensitiveDataManager(cfg securityconfig.EncryptionConfig) *SensitiveData
 
 	sdm.precompileFieldPatterns()
 
-	if cfg.Key != "" {
+	if cfg != nil && cfg.Key != "" {
 		hash := sha256.Sum256([]byte(cfg.Key))
 		sdm.encryptionKey = hash[:]
 	}

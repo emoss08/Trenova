@@ -90,7 +90,7 @@ func New(p Params) auditports.AuditService {
 		bufferRepo: p.AuditBufferRepository,
 		realtime:   p.Realtime,
 		logger:     logger,
-		sdm:        NewSensitiveDataManager(p.SecurityConfig.Encryption),
+		sdm:        NewSensitiveDataManager(&p.SecurityConfig.Encryption),
 		metrics:    p.Metrics,
 		agents:     newAgentCredits(definitions, logger),
 	}

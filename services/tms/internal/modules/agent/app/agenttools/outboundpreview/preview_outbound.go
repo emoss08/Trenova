@@ -20,7 +20,7 @@ type sensitiveTextScanner interface {
 // outboundScanner reads text a write would send outside the organization.
 // Detection needs no key; the masking the audit log applies is not used.
 var outboundScanner sensitiveTextScanner = auditservice.NewSensitiveDataManager(
-	securityconfig.EncryptionConfig{},
+	&securityconfig.EncryptionConfig{},
 )
 
 func WarnSensitiveContent(preview *agentpreview.ToolPreview, texts ...string) {

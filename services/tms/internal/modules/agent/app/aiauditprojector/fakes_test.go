@@ -17,6 +17,6 @@ func testRedactor() *aiauditredact.Redactor {
 	return aiauditredact.New(
 		permissioncatalog.NewRegistry(),
 		aiaudittest.TestPolicies(),
-		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
+		auditservice.NewSensitiveDataManager(&securityconfig.EncryptionConfig{}),
 	)
 }
