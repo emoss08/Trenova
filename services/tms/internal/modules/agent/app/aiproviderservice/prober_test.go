@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,10 +123,10 @@ func TestEmptyReplyAdvice_NamesTheReasoningBudgetRatherThanTheEndpoint(t *testin
 func TestModelOption_CarriesWhenTheModelWasCreated(t *testing.T) {
 	t.Parallel()
 
-	dated := modelOption(&modeladapter.ModelInfo{ID: "claude-opus-4-1", CreatedAt: 1754352000})
+	dated := modelOption(&modelcatalog.ModelInfo{ID: "claude-opus-4-1", CreatedAt: 1754352000})
 	require.NotNil(t, dated.CreatedAt)
 	assert.Equal(t, int64(1754352000), *dated.CreatedAt)
 
-	undated := modelOption(&modeladapter.ModelInfo{ID: "local"})
+	undated := modelOption(&modelcatalog.ModelInfo{ID: "local"})
 	assert.Nil(t, undated.CreatedAt)
 }

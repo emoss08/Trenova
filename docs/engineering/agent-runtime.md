@@ -232,7 +232,7 @@ The Anthropic adapter builds and reads every request with the official Go SDK
 (`github.com/anthropics/anthropic-sdk-go`), on its beta Messages surface, so the
 request types cover every block, tool and beta the API has and a new one needs no
 hand-written JSON. Trenova keeps the transport around it
-(`modeladapter/anthropicclient.go`):
+(`anthropicadapter/anthropicclient.go`):
 
 - **Nothing from the environment.** The SDK's default client reads `ANTHROPIC_*`
   credentials, base URL, a saved profile and custom headers from the process. On a
@@ -275,7 +275,7 @@ when none is given:
 | `ClaudePlatformGoogleCloud` | `https://claude.googleapis.com/v1alpha/projects/{p}/locations/{loc}/workspaces/{w}/invoke` | a service account key, or the server's Google identity |
 | `Foundry` | `https://{resource}.services.ai.azure.com/anthropic` | an API key, or an Entra ID app registration's client secret |
 
-The adapter (`modeladapter/anthropicplatform.go`) signs requests in Trenova's own
+The adapter (`anthropicadapter/anthropicplatform.go`) signs requests in Trenova's own
 code, not with the SDK's platform packages, because those read credentials from the
 process environment. Each way of signing in is an SDK middleware registered last, so
 it runs innermost and signs the request exactly as it is sent; Vertex AI's middleware
@@ -323,7 +323,7 @@ asks.
 The API keeps a short-lived fingerprint only of a call that asked, so every call
 sends `diagnostics`: `previous_message_id` null when there is nothing to name, else
 the id of the last reply this provider gave in the conversation
-(`modeladapter.previousReply`). That id travels on the assistant message
+(`anthropicadapter.previousReply`). That id travels on the assistant message
 (`llmports.Message.ReplyID`/`ReplyProvider`, from
 `ChatCompletionResult.ProviderMessageID`) and is saved in
 `assistant_messages.provider_message_id`, so a turn's first call names the last call
@@ -347,7 +347,7 @@ Diagnostics never fail a call.
 
 Claude models differ in how they are asked to think, and the Anthropic adapter reads which
 kind it is talking to from the configured model id (`anthropicTraits` in
-`modeladapter/anthropicmodels.go`). The id may be the Claude API's plain one, Bedrock's
+`anthropicadapter/anthropicmodels.go`). The id may be the Claude API's plain one, Bedrock's
 `anthropic.`-prefixed one (with an inference profile's region in front, and its `-v1:0`
 version), Vertex's `@date` one, or a dated snapshot. An id it cannot read, such as a
 gateway's alias, keeps the budget behaviour every model took before, and a version newer
@@ -398,7 +398,7 @@ than any it names takes the newest known constraints.
   Off on those models already sends an adaptive thinking object for the binding to ride on.
   Haiku 5.5 runs the same check but is not sent the binding until there is evidence it
   refuses the edit. `TestLiveAnthropic_HaikuThinkingBindingOnAMidTurnToolChange`
-  (`modeladapter/anthropiclive_binding_test.go`) is the evidence and then the guard: with
+  (`anthropicadapter/anthropiclive_binding_test.go`) is the evidence and then the guard: with
   `TRENOVA_LIVE_ANTHROPIC_BINDING=1` and `ANTHROPIC_API_KEY` set it mints a thinking block
   with a tool call, then replays it honestly, with a tool added exactly as the adapter sends
   it today, and with the same edit under `prefix_mismatch_behavior` `"error"` (which opts any
@@ -449,7 +449,7 @@ Control → Providers, off by default: `advisorEnabled`, and `advisorModel`, whi
   `ai_work_units` rollup carries the advisor's calls, tokens and cost, and `agentAnalytics`
   series and totals carry `advisor` ([ai-analytics.md](ai-analytics.md)).
 
-The Anthropic adapter (`modeladapter/anthropicadvisor.go`):
+The Anthropic adapter (`anthropicadapter/anthropicadvisor.go`):
 
 - **Only where it is served.** The advisor is declared only on the Claude API and Claude Platform
   on AWS (`Platform.ServesAdvisor`); Bedrock, Vertex AI and Foundry refuse a request that
@@ -505,7 +505,7 @@ files are carried; an earlier message's are named in the replay and read with
 `agent_read_attachment`, and a delegate's task carries none. Bytes never cross a
 durable boundary.
 
-The Anthropic adapter reads them at call time (`modeladapter/anthropicfiles.go`)
+The Anthropic adapter reads them at call time (`anthropicadapter/anthropicfiles.go`)
 through `Call.Files`, which the router binds to the request's tenant from
 `assistantports.MessageFileReader` (`messagefileservice`, over the documents module's
 `conversationfileservice`, which decrypts through `storedobject` and finds only a
@@ -543,7 +543,7 @@ can grow to about 850,000 tokens first. An organization that would rather pay fo
 context per call configures a smaller window on the provider; it always wins over the id.
 
 OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
-The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
+The chat adapter lifts it (`openaiadapter.liftInlineToolCalls`): a whole GLM call
 (`<tool_call>name<arg_key>k</arg_key><arg_value>v</arg_value>…</tool_call>`, each value
 read as the tool's schema types it) or Hermes/Qwen call (`<tool_call>{"name":…,
 "arguments":…}</tool_call>`) becomes a tool call with a synthesized id, and goes through the
@@ -2459,7 +2459,7 @@ a turn is declared once, when it opens, and everything a call sends before the
 conversation is the same from the first call of the turn to the last.
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
-  included, is encoded with sorted keys (`modeladapter.requestJSON`, and the
+  included, is encoded with sorted keys (`modeladapter.RequestJSON`, and the
   SDK's encoder for Anthropic); a map in Go's random order made every request
   different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
 - **One tool array per turn.** `newToolSet` opens the set (the core tools, the

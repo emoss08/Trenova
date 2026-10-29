@@ -6,7 +6,6 @@ package modeladapter
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -145,7 +144,7 @@ type Call struct {
 type FileSource func(ctx context.Context, documentID string) (*MessageFileContent, error)
 
 // think hands a piece of thinking to the reasoning sink, if there is one.
-func (c *Call) think(delta string) {
+func (c *Call) Think(delta string) {
 	if c.Reasoning != nil && delta != "" {
 		c.Reasoning(delta)
 	}
@@ -155,7 +154,7 @@ func (c *Call) think(delta string) {
 // provider. An unset effort is off: the column defaults to Off and most
 // providers never name it, so treating the empty string as anything else
 // would have a provider nobody configured to think counted as thinking.
-func (c *Call) reasoning() aireasoning.ReasoningEffort {
+func (c *Call) ReasoningEffort() aireasoning.ReasoningEffort {
 	if c.Request != nil && c.Request.Reasoning != "" {
 		return c.Request.Reasoning
 	}
@@ -178,7 +177,7 @@ func (c *Call) reasoning() aireasoning.ReasoningEffort {
 const defaultStreamIdle = 5 * time.Minute
 
 // streamHTTPClient is the client a streaming call should use.
-func (c *Call) streamHTTPClient() *http.Client {
+func (c *Call) StreamHTTPClient() *http.Client {
 	if c.StreamClient != nil {
 		return c.StreamClient
 	}
@@ -187,48 +186,12 @@ func (c *Call) streamHTTPClient() *http.Client {
 }
 
 // streamIdleTimeout is the silence this call tolerates.
-func (c *Call) streamIdleTimeout() time.Duration {
+func (c *Call) StreamIdleTimeout() time.Duration {
 	if c.StreamIdle > 0 {
 		return c.StreamIdle
 	}
 
 	return defaultStreamIdle
-}
-
-// Registry resolves an adapter for a provider's protocol.
-type Registry struct {
-	byKind    map[aiprovider.Kind]Adapter
-	embedders map[aiprovider.Kind]Embedder
-}
-
-// NewRegistry builds the registry over every protocol this system speaks.
-func NewRegistry() *Registry {
-	adapters := []Adapter{
-		NewAnthropicAdapter(),
-		NewOpenAIResponsesAdapter(),
-		NewOpenAIChatAdapter(),
-	}
-
-	byKind := make(map[aiprovider.Kind]Adapter, len(adapters))
-	embedders := make(map[aiprovider.Kind]Embedder, len(adapters))
-	for _, adapter := range adapters {
-		byKind[adapter.Kind()] = adapter
-		if embedder, ok := adapter.(Embedder); ok && adapter.Kind().SupportsEmbedding() {
-			embedders[adapter.Kind()] = embedder
-		}
-	}
-
-	return &Registry{byKind: byKind, embedders: embedders}
-}
-
-// Get returns the adapter for kind.
-func (r *Registry) Get(kind aiprovider.Kind) (Adapter, error) {
-	adapter, ok := r.byKind[kind]
-	if !ok {
-		return nil, fmt.Errorf("no adapter for provider kind %q", kind)
-	}
-
-	return adapter, nil
 }
 
 // BackgroundState is where a submitted run has got to.
@@ -268,14 +231,4 @@ type BackgroundOutcome struct {
 type BackgroundRunner interface {
 	Submit(ctx context.Context, call *Call) (*BackgroundHandle, error)
 	Poll(ctx context.Context, call *Call, id string) (*BackgroundOutcome, error)
-}
-
-const toolChoiceNone = "none"
-
-func toolChoiceWire(req *Request) string {
-	if req.ToolChoiceNone && len(req.Tools) > 0 {
-		return toolChoiceNone
-	}
-
-	return ""
 }

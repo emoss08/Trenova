@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -77,7 +77,7 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 		ai:         &aiconfig.Config{MaxRetries: 1},
 		repo:       &fakeRepo{providers: providers},
 		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
-		adapters:   modeladapter.NewRegistry(),
+		adapters:   adapterregistry.NewRegistry(),
 		clients:    make(map[bool]*http.Client, 2),
 	}
 }

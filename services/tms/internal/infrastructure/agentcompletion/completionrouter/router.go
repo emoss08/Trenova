@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
@@ -73,7 +74,7 @@ type Service struct {
 	ai         *aiconfig.Config
 	repo       aiproviderports.AIProviderRepository
 	encryption *encryptionservice.Service
-	adapters   *modeladapter.Registry
+	adapters   *adapterregistry.Registry
 	usage      aiusageports.AIUsageRepository
 	quota      platformplanports.QuotaGuard
 	genAI      *aimetrics.GenAI
@@ -117,7 +118,7 @@ func newService(p Params) *Service {
 		usage:         p.Usage,
 		quota:         quotaservice.OrUnlimited(p.Quota),
 		genAI:         p.Metrics.GenAI(),
-		adapters:      modeladapter.NewRegistry(),
+		adapters:      adapterregistry.NewRegistry(),
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
 		limits:        newProviderLimits(&p),
 		files:         p.Files,

@@ -2,14 +2,10 @@ package modeladapter
 
 import (
 	"context"
-	"fmt"
-	"math"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 const (
@@ -37,16 +33,16 @@ type Embedder interface {
 	Embed(ctx context.Context, call *EmbedCall) (*EmbedResponse, error)
 }
 
-func (c *EmbedCall) dimensions() int {
+func (c *EmbedCall) Dimensions() int {
 	return c.Provider.ResolvedEmbeddingDimensions()
 }
 
-func (c *EmbedCall) inputStyle() aiprovider.EmbeddingInputStyle {
+func (c *EmbedCall) InputStyle() aiprovider.EmbeddingInputStyle {
 	return c.Provider.ResolvedEmbeddingInputStyle()
 }
 
-func (c *EmbedCall) wireInputs() []string {
-	if c.inputStyle() != aiprovider.EmbeddingInputStyleNomicPrefix {
+func (c *EmbedCall) WireInputs() []string {
+	if c.InputStyle() != aiprovider.EmbeddingInputStyleNomicPrefix {
 		return c.Inputs
 	}
 
@@ -63,7 +59,7 @@ func (c *EmbedCall) wireInputs() []string {
 	return prefixed
 }
 
-func (c *EmbedCall) voyageInputType() string {
+func (c *EmbedCall) VoyageInputType() string {
 	if c.Purpose == aiusageports.EmbeddingPurposeQuery {
 		return voyageQueryType
 	}
@@ -71,7 +67,7 @@ func (c *EmbedCall) voyageInputType() string {
 	return voyageDocumentType
 }
 
-func (c *EmbedCall) extraBodyNames(key string) bool {
+func (c *EmbedCall) ExtraBodyNames(key string) bool {
 	if c.Provider == nil || c.Provider.ExtraBody == nil {
 		return false
 	}
@@ -79,65 +75,4 @@ func (c *EmbedCall) extraBodyNames(key string) bool {
 	_, ok := c.Provider.ExtraBody[key]
 
 	return ok
-}
-
-func checkVectorCount(call *EmbedCall, got int) error {
-	if got == len(call.Inputs) {
-		return nil
-	}
-
-	return errortypes.NewBusinessError(
-		"Embedding provider {0} returned {1} vectors for {2} texts",
-		call.Provider.Name,
-		got,
-		len(call.Inputs),
-	).WithInternal(aiusageports.ErrEmbeddingResponseInvalid)
-}
-
-func checkEmbeddings(call *EmbedCall, vectors [][]float32) error {
-	if err := checkVectorCount(call, len(vectors)); err != nil {
-		return err
-	}
-
-	want := call.dimensions()
-	for idx, vector := range vectors {
-		if len(vector) != want {
-			return errortypes.NewBusinessError(
-				"Embedding provider {0} returned {1} dimensions, but it is configured for {2}. Set the dimension the model actually returns, or choose a model that supports {2}",
-				call.Provider.Name,
-				len(vector),
-				want,
-			).WithInternal(aiusageports.ErrEmbeddingDimensionMismatch)
-		}
-		if err := checkFinite(vector); err != nil {
-			return errortypes.NewBusinessError(
-				"Embedding provider {0} returned an unusable response",
-				call.Provider.Name,
-			).WithInternal(fmt.Errorf("vector %d: %w: %w", idx, err, aiusageports.ErrEmbeddingResponseInvalid))
-		}
-	}
-
-	return nil
-}
-
-func checkFinite(vector []float32) error {
-	for pos, value := range vector {
-		f := float64(value)
-		if math.IsNaN(f) || math.IsInf(f, 0) {
-			return fmt.Errorf("component %d is not a finite number", pos)
-		}
-	}
-
-	return nil
-}
-
-func (r *Registry) Embedder(kind aiprovider.Kind) (Embedder, error) {
-	embedder, ok := r.embedders[kind]
-	if !ok {
-		return nil, errortypes.NewBusinessError(
-			"The {0} protocol has no embedding endpoint", string(kind),
-		).WithInternal(llmports.ErrNoProviderConfigured)
-	}
-
-	return embedder, nil
 }

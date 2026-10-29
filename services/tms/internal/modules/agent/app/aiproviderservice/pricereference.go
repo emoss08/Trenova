@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -121,7 +121,7 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 		return index
 	}
 
-	models, err := modeladapter.ListReferencePrices(ctx, r.client, openRouterCatalogURL)
+	models, err := modelcatalog.ListReferencePrices(ctx, r.client, openRouterCatalogURL)
 	if err != nil {
 		r.l.Warn("could not read the model price reference", zap.Error(err))
 		r.remember(nil, priceCatalogRetryGap)

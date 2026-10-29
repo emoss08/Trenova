@@ -11,7 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -35,7 +37,7 @@ import (
 type Prober struct {
 	logger   *zap.Logger
 	cfg      *aiconfig.Config
-	adapters *modeladapter.Registry
+	adapters *adapterregistry.Registry
 	prices   aiproviderports.ModelPriceReference
 
 	clientsMu sync.Mutex
@@ -54,7 +56,7 @@ func NewProber(p ProberParams) *Prober {
 	return &Prober{
 		logger:   p.Logger.Named("service.aiprovider.prober"),
 		cfg:      p.AIConfig,
-		adapters: modeladapter.NewRegistry(),
+		adapters: adapterregistry.NewRegistry(),
 		prices:   p.Prices,
 		clients:  make(map[bool]*http.Client, 2),
 	}
@@ -439,7 +441,7 @@ func (p *Prober) ListModels(
 	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetProbeTimeout())
 	defer cancel()
 
-	models, err := modeladapter.ListModels(ctx, &modeladapter.ModelsCall{
+	models, err := modelcatalog.ListModels(ctx, &modelcatalog.ModelsCall{
 		Provider:                 provider,
 		APIKey:                   apiKey,
 		Client:                   p.clientFor(provider),
@@ -494,7 +496,7 @@ func (p *Prober) estimateMissingPrices(
 	}
 }
 
-func modelOption(model *modeladapter.ModelInfo) aiproviderports.AIProviderModelOption {
+func modelOption(model *modelcatalog.ModelInfo) aiproviderports.AIProviderModelOption {
 	option := aiproviderports.AIProviderModelOption{
 		ID:                   model.ID,
 		DisplayName:          stringutils.FirstNonEmptyTrimmed(model.DisplayName, model.ID),
@@ -528,7 +530,7 @@ func modelListMessage(err error) string {
 	if isTimeout(err) {
 		return "The endpoint did not list its models in time"
 	}
-	if errors.Is(err, modeladapter.ErrModelsNotListed) {
+	if errors.Is(err, modelcatalog.ErrModelsNotListed) {
 		return "This endpoint does not list its models; type the model ID instead"
 	}
 

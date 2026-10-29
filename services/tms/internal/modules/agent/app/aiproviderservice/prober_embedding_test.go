@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -47,7 +47,7 @@ func newTestProber() *Prober {
 	return &Prober{
 		logger:   zap.NewNop(),
 		cfg:      &aiconfig.Config{},
-		adapters: modeladapter.NewRegistry(),
+		adapters: adapterregistry.NewRegistry(),
 		clients:  make(map[bool]*http.Client, 2),
 	}
 }

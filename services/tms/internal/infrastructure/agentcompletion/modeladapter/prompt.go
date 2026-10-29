@@ -60,7 +60,7 @@ func WithSchemaInstruction(
 		return system
 	}
 
-	encoded, err := requestJSON.MarshalIndent(schema, "", "  ")
+	encoded, err := RequestJSON.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return system
 	}
