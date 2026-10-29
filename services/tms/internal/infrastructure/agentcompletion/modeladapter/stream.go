@@ -129,8 +129,8 @@ func StreamError(errType, message string) error {
 // tool does not: given no filters it lists, and the model reports the first
 // page as the answer to the question it actually asked. The failure is
 // returned so the runtime can refuse the call and say why.
-func DecodeArguments(raw string) (map[string]any, string) {
-	args := map[string]any{}
+func DecodeArguments(raw string) (args map[string]any, failure string) {
+	args = map[string]any{}
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
 		return args, ""

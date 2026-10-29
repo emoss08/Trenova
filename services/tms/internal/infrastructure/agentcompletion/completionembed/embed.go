@@ -301,7 +301,7 @@ func (s *Embedder) embedBatch(
 		s.SettleAttempt(attemptCtx, span, &completionengine.UsageAttempt{
 			Provider:    provider,
 			Task:        aitask.TaskEmbedding,
-			Surface:     completionengine.SurfaceFor(req.ResolvedSurface(), req.Attribution),
+			Surface:     completionengine.SurfaceFor(req.ResolvedSurface(), &req.Attribution),
 			Attribution: req.Attribution,
 			Tenant:      req.TenantInfo,
 			Latency:     latency,

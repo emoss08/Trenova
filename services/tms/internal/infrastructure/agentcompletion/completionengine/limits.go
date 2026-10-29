@@ -130,7 +130,7 @@ func (s *Engine) ClaimSlot(
 
 	stop := make(chan struct{})
 	var once sync.Once
-	go s.holdSlot(provider.ID, token, ttl, stop)
+	go s.holdSlot(context.WithoutCancel(ctx), provider.ID, token, ttl, stop)
 
 	return func() {
 		once.Do(func() {
@@ -206,6 +206,7 @@ func (s *Engine) awaitSlot(
 }
 
 func (s *Engine) holdSlot(
+	ctx context.Context,
 	providerID pulid.ID,
 	token string,
 	ttl time.Duration,
@@ -219,7 +220,7 @@ func (s *Engine) holdSlot(
 		case <-stop:
 			return
 		case <-ticker.C:
-			refreshCtx, cancel := context.WithTimeout(context.Background(), slotStoreTimeout)
+			refreshCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
 			_, err := s.Limits.slots.Refresh(refreshCtx, llmports.ProviderSlotRequest{
 				ProviderID: providerID,
 				Token:      token,

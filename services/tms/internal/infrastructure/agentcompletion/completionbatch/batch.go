@@ -401,14 +401,12 @@ func (r *batchReader) read(ctx context.Context, item *modeladapter.BatchItem) {
 	if r.service.Usage == nil || item.NotRun {
 		return
 	}
+	attribution := r.req.Attributions[item.CustomID]
 	row := completionengine.UsageRow(ctx, &completionengine.UsageAttempt{
-		Provider: r.Provider,
-		Task:     r.Task,
-		Surface: completionengine.SurfaceFor(
-			aiusage.SurfaceBackground,
-			r.req.Attributions[item.CustomID],
-		),
-		Attribution: r.req.Attributions[item.CustomID],
+		Provider:    r.Provider,
+		Task:        r.Task,
+		Surface:     completionengine.SurfaceFor(aiusage.SurfaceBackground, &attribution),
+		Attribution: attribution,
 		Tenant:      r.req.TenantInfo,
 		Latency:     completionengine.BackgroundLatency(r.req.SubmittedAt, time.Now()),
 		Operation:   aitrace.OperationChat,

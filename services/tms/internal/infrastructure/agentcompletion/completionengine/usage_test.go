@@ -16,8 +16,8 @@ func TestSurfaceFor(t *testing.T) {
 	byRun := aiusageports.AIUsageAttribution{RunID: pulid.MustNew("aeval_")}
 	byPurpose := aiusageports.AIUsageAttribution{Purpose: aiusageports.AIUsagePurposeEvaluation}
 
-	assert.Equal(t, aiusage.SurfaceChat, SurfaceFor(aiusage.SurfaceChat, live))
-	assert.Equal(t, aiusage.SurfaceStructured, SurfaceFor(aiusage.SurfaceStructured, live))
-	assert.Equal(t, aiusage.SurfaceEvaluation, SurfaceFor(aiusage.SurfaceChat, byRun))
-	assert.Equal(t, aiusage.SurfaceEvaluation, SurfaceFor(aiusage.SurfaceStructured, byPurpose))
+	assert.Equal(t, aiusage.SurfaceChat, SurfaceFor(aiusage.SurfaceChat, &live))
+	assert.Equal(t, aiusage.SurfaceStructured, SurfaceFor(aiusage.SurfaceStructured, &live))
+	assert.Equal(t, aiusage.SurfaceEvaluation, SurfaceFor(aiusage.SurfaceChat, &byRun))
+	assert.Equal(t, aiusage.SurfaceEvaluation, SurfaceFor(aiusage.SurfaceStructured, &byPurpose))
 }

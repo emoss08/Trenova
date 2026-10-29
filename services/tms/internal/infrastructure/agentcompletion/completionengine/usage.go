@@ -47,7 +47,7 @@ type UsageAttempt struct {
 
 func SurfaceFor(
 	surface aiusage.Surface,
-	attribution aiusageports.AIUsageAttribution,
+	attribution *aiusageports.AIUsageAttribution,
 ) aiusage.Surface {
 	if attribution.Evaluates() {
 		return aiusage.SurfaceEvaluation

@@ -221,7 +221,7 @@ func (s *Background) recordBackground(
 	attempt := completionengine.UsageAttempt{
 		Provider:    provider,
 		Task:        task,
-		Surface:     completionengine.SurfaceFor(aiusage.SurfaceBackground, req.Attribution),
+		Surface:     completionengine.SurfaceFor(aiusage.SurfaceBackground, &req.Attribution),
 		Attribution: req.Attribution,
 		Tenant:      req.TenantInfo,
 		Latency:     completionengine.BackgroundLatency(req.SubmittedAt, time.Now()),

@@ -640,20 +640,16 @@ func replayThinking(trace *modeladapter.ReasoningTrace) []anthropic.BetaContentB
 	return blocks
 }
 
-// toAnthropicMessages replays thinking only for the current turn's tool loop,
-// the assistant messages after the last user one. A thinking block is bound
-// to the conversation before it, and that conversation changes between turns:
-// the system prompt carries the turn's page, memories and date, and older tool
-// results are shortened. Replaying an earlier turn's block after such an edit
-// is a 400 on the models that check, while dropping a leading run of blocks
-// is an edit every model accepts, and most ignore earlier turns' thinking
-// anyway. A tool result needs its own turn's thinking before it, which stays.
-func toAnthropicMessages(messages []modeladapter.Message) []anthropic.BetaMessageParam {
-	return anthropicConversation(messages, nil, false)
-}
-
 // anthropicConversation is the conversation as the API takes it, with the
-// blocks that carry each user message's files ahead of its text.
+// blocks that carry each user message's files ahead of its text. It replays
+// thinking only for the current turn's tool loop, the assistant messages after
+// the last user one. A thinking block is bound to the conversation before it,
+// and that conversation changes between turns: the system prompt carries the
+// turn's page, memories and date, and older tool results are shortened.
+// Replaying an earlier turn's block after such an edit is a 400 on the models
+// that check, while dropping a leading run of blocks is an edit every model
+// accepts, and most ignore earlier turns' thinking anyway. A tool result needs
+// its own turn's thinking before it, which stays.
 func anthropicConversation(
 	messages []modeladapter.Message,
 	files map[int][]anthropic.BetaContentBlockParamUnion,
@@ -869,9 +865,11 @@ func toAnthropicTools(tools []modeladapter.ToolSpec) []anthropic.BetaToolUnionPa
 	return out
 }
 
-func splitAnthropicContent(blocks []anthropicBlock) (string, []modeladapter.ToolCall) {
+func splitAnthropicContent(
+	blocks []anthropicBlock,
+) (text string, toolCalls []modeladapter.ToolCall) {
 	var written strings.Builder
-	toolCalls := make([]modeladapter.ToolCall, 0, len(blocks))
+	toolCalls = make([]modeladapter.ToolCall, 0, len(blocks))
 
 	for idx := range blocks {
 		block := &blocks[idx]
@@ -887,7 +885,7 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []modeladapter.Tool
 			})
 		}
 	}
-	text := written.String()
+	text = written.String()
 	if strings.TrimSpace(text) == "" {
 		text = ""
 	}

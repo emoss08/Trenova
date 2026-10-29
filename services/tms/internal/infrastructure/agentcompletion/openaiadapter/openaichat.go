@@ -547,16 +547,18 @@ func chatResponseFormatFor(call *modeladapter.Call) *chatResponseFormat {
 
 // firstChatResult picks the first usable choice: its text, its tool calls,
 // whether it was refused, and whether it was cut off by the output limit.
-func firstChatResult(resp *chatResponse) (string, []modeladapter.ToolCall, bool, bool) {
+func firstChatResult(
+	resp *chatResponse,
+) (text string, toolCalls []modeladapter.ToolCall, refused, truncated bool) {
 	for idx := range resp.Choices {
 		choice := &resp.Choices[idx]
 		if choice.FinishReason == "content_filter" {
 			return "", nil, true, false
 		}
 
-		toolCalls := fromChatToolCalls(choice.Message.ToolCalls)
-		if len(toolCalls) > 0 || strings.TrimSpace(choice.Message.Content) != "" {
-			return choice.Message.Content, toolCalls, false, choice.FinishReason == "length"
+		calls := fromChatToolCalls(choice.Message.ToolCalls)
+		if len(calls) > 0 || strings.TrimSpace(choice.Message.Content) != "" {
+			return choice.Message.Content, calls, false, choice.FinishReason == "length"
 		}
 	}
 

@@ -3,10 +3,15 @@ package anthropicadapter
 import (
 	"testing"
 
+	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func toAnthropicMessages(messages []modeladapter.Message) []anthropic.BetaMessageParam {
+	return anthropicConversation(messages, nil, false)
+}
 
 func TestToAnthropicMessages_ReplaysAnArgumentFreeCallWithItsInput(t *testing.T) {
 	t.Parallel()

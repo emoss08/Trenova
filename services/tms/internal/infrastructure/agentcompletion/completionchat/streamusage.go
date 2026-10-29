@@ -15,7 +15,7 @@ import (
 // arrived.
 func streamedOutcome(
 	provider *aiprovider.Provider,
-	streamed chatStream,
+	streamed *chatStream,
 	cause error,
 ) *completionengine.RunOutcome {
 	if streamed.text == "" && streamed.reasoningRunes == 0 {

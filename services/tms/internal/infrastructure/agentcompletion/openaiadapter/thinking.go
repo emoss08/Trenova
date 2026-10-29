@@ -32,14 +32,14 @@ var thinkTags = [][2]string{
 // away answers.
 func SplitInlineThinking(text string) (reply, thinking string) {
 	for _, tag := range thinkTags {
-		open, close := tag[0], tag[1]
-		start := indexFold(text, open)
+		opening, closing := tag[0], tag[1]
+		start := indexFold(text, opening)
 		if start < 0 {
 			continue
 		}
 
-		rest := text[start+len(open):]
-		end := indexFold(rest, close)
+		rest := text[start+len(opening):]
+		end := indexFold(rest, closing)
 		if end < 0 {
 			// An unterminated block means the model was cut off mid-thought
 			// and never reached an answer. Everything after the tag is
@@ -48,7 +48,7 @@ func SplitInlineThinking(text string) (reply, thinking string) {
 		}
 
 		thinking = strings.TrimSpace(rest[:end])
-		reply = strings.TrimSpace(text[:start] + rest[end+len(close):])
+		reply = strings.TrimSpace(text[:start] + rest[end+len(closing):])
 
 		return reply, thinking
 	}
@@ -64,7 +64,7 @@ func SplitInlineThinking(text string) (reply, thinking string) {
 func mergeInlineThinking(
 	text string,
 	trace *modeladapter.ReasoningTrace,
-) (string, *modeladapter.ReasoningTrace) {
+) (answer string, kept *modeladapter.ReasoningTrace) {
 	reply, thinking := SplitInlineThinking(text)
 	if thinking == "" {
 		return dedupeTrace(text, trace)
@@ -93,7 +93,7 @@ func mergeInlineThinking(
 func dedupeTrace(
 	text string,
 	trace *modeladapter.ReasoningTrace,
-) (string, *modeladapter.ReasoningTrace) {
+) (answer string, kept *modeladapter.ReasoningTrace) {
 	if trace == nil || strings.TrimSpace(text) == "" {
 		return text, trace
 	}

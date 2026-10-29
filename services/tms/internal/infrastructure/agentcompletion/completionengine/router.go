@@ -103,7 +103,7 @@ type Engine struct {
 	StreamClients map[bool]*http.Client
 }
 
-func NewEngine(p Params) *Engine {
+func NewEngine(p *Params) *Engine {
 	logger := p.Logger.Named("service.completion-router")
 
 	return &Engine{
@@ -116,7 +116,7 @@ func NewEngine(p Params) *Engine {
 		GenAI:         p.Metrics.GenAI(),
 		Adapters:      adapterregistry.NewRegistry(),
 		Health:        NewProviderHealth(nil).Share(p.Breakers, logger),
-		Limits:        NewProviderLimits(&p),
+		Limits:        NewProviderLimits(p),
 		Files:         p.Files,
 		Advisors:      p.Advisors,
 		Pause:         pauseFor,
@@ -419,7 +419,7 @@ func (s *Engine) tryProvider(
 	s.SettleAttempt(attemptCtx, span, &UsageAttempt{
 		Provider:    provider,
 		Task:        req.Task,
-		Surface:     SurfaceFor(aiusage.SurfaceStructured, req.Attribution),
+		Surface:     SurfaceFor(aiusage.SurfaceStructured, &req.Attribution),
 		Attribution: req.Attribution,
 		Tenant:      req.TenantInfo,
 		Latency:     latency,
@@ -702,13 +702,13 @@ func (s *Engine) ResolveAPIKey(provider *aiprovider.Provider) (string, error) {
 // just spends the next request on the same limit.
 func RetryDelay(attempt int) time.Duration {
 	const (
-		base = 500 * time.Millisecond
-		cap  = 5 * time.Second
+		base     = 500 * time.Millisecond
+		maxDelay = 5 * time.Second
 	)
 
 	delay := base << attempt
-	if delay > cap || delay <= 0 {
-		return cap
+	if delay > maxDelay || delay <= 0 {
+		return maxDelay
 	}
 
 	return delay

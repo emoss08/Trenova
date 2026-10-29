@@ -20,11 +20,13 @@ type Service struct {
 	*completionbackground.Background
 }
 
-func New(p completionengine.Params) llmports.CompletionService {
-	return newService(p)
+func New(
+	p completionengine.Params, //nolint:gocritic // fx params are passed by value
+) llmports.CompletionService {
+	return newService(&p)
 }
 
-func newService(p completionengine.Params) *Service {
+func newService(p *completionengine.Params) *Service {
 	return compose(completionengine.NewEngine(p))
 }
 
