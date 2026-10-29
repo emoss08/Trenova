@@ -15,6 +15,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	OrganizationService tenantports.OrganizationService
+	UserService         *userservice.Service
+	RoleService         *roleservice.Service
+}
+
 func (r *Sources) Organization(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -178,10 +184,6 @@ func userSelectOption(entity *tenant.User) *gqlmodel.SelectOption {
 	}
 }
 
-func userID(entity *tenant.User) pulid.ID {
-	return entity.ID
-}
-
 func roleSelectOptionItem(entity *rbac.Role) selectoption.Item {
 	return selectoption.ItemFor(
 		roleSelectOption(entity),
@@ -196,14 +198,4 @@ func roleSelectOption(entity *rbac.Role) *gqlmodel.SelectOption {
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Description),
 	}
-}
-
-func roleID(entity *rbac.Role) pulid.ID {
-	return entity.ID
-}
-
-type Sources struct {
-	OrganizationService tenantports.OrganizationService
-	UserService         *userservice.Service
-	RoleService         *roleservice.Service
 }

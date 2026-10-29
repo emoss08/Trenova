@@ -14,6 +14,11 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	*resolvercore.Core
+	AiProviderService aiproviderports.AIProviderService
+}
+
 func (r *Sources) AIProvider(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -81,9 +86,4 @@ func aiProviderSelectOptionItem(entity *aiprovider.Provider) selectoption.Item {
 		entity.CreatedAt,
 		entity.ID,
 	)
-}
-
-type Sources struct {
-	*resolvercore.Core
-	AiProviderService aiproviderports.AIProviderService
 }

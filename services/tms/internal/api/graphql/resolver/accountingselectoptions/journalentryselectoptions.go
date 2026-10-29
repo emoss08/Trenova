@@ -19,9 +19,9 @@ func journalEntrySelectOption(entity *journalentry.JournalEntry) *gqlmodel.Selec
 		ID:    entity.ID.String(),
 		Label: entity.EntryNumber,
 		Meta: map[string]any{
-			"entryType":      string(entity.EntryType),
-			"status":         string(entity.Status),
-			"accountingDate": entity.AccountingDate,
+			"entryType":                string(entity.EntryType),
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"accountingDate":           entity.AccountingDate,
 		},
 	}
 }

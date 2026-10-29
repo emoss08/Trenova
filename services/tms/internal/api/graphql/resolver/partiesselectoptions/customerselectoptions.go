@@ -21,8 +21,8 @@ func customerSelectOption(entity *customer.Customer) *gqlmodel.SelectOption {
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code":   entity.Code,
-			"status": string(entity.Status),
+			selectoption.MetaKeyCode:   entity.Code,
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
 	}
 }

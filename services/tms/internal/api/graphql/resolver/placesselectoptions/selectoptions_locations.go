@@ -24,6 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	UsStateService          *usstateservice.Service
+	LocationService         *locationservice.Service
+	RateZoneService         *ratezoneservice.Service
+	LocationCategoryService *locationcategoryservice.Service
+	DistanceProfileService  *distanceprofileservice.Service
+}
+
 func (r *Sources) USState(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -177,7 +185,7 @@ func locationSelectOption(entity *location.Location) *gqlmodel.SelectOption {
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code": entity.Code,
+			selectoption.MetaKeyCode: entity.Code,
 		},
 	}
 }
@@ -196,8 +204,8 @@ func rateZoneSelectOption(entity *ratezone.RateZone) *gqlmodel.SelectOption {
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code":   entity.Code,
-			"status": string(entity.Status),
+			selectoption.MetaKeyCode:   entity.Code,
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
 	}
 }
@@ -309,12 +317,4 @@ func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {
 			"countryIso3":  entity.CountryIso3,
 		},
 	}
-}
-
-type Sources struct {
-	UsStateService          *usstateservice.Service
-	LocationService         *locationservice.Service
-	RateZoneService         *ratezoneservice.Service
-	LocationCategoryService *locationcategoryservice.Service
-	DistanceProfileService  *distanceprofileservice.Service
 }

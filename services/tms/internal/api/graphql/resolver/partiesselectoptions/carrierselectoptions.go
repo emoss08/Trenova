@@ -12,6 +12,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	CarrierRepo          carrierports.CarrierRepository
+	CustomerRepo         customerports.CustomerRepository
+	FactoringCompanyRepo factoringcompanyports.FactoringCompanyRepository
+}
+
 func (r *Sources) Carrier(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -63,9 +69,9 @@ func carrierSelectOption(entity *carrier.Carrier) *gqlmodel.SelectOption {
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code":   entity.Code,
-			"status": string(entity.Status),
-			"scac":   entity.SCAC,
+			selectoption.MetaKeyCode:   entity.Code,
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"scac":                     entity.SCAC,
 		},
 	}
 }
@@ -145,10 +151,4 @@ func (r *Sources) FactoringCompany(
 		req.SelectQuery.Pagination,
 		factoringCompanySelectOptionItem,
 	)
-}
-
-type Sources struct {
-	CarrierRepo          carrierports.CarrierRepository
-	CustomerRepo         customerports.CustomerRepository
-	FactoringCompanyRepo factoringcompanyports.FactoringCompanyRepository
 }

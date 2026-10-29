@@ -22,6 +22,13 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+type Sources struct {
+	CaptureProfileService *captureprofiles.Service
+	CaptureDeviceService  *capturedevices.Service
+	DocumentTypeService   *documenttypeservice.Service
+	EmailService          *emailservice.Service
+}
+
 func (r *Sources) DocumentType(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -114,9 +121,9 @@ func documentTypeSelectOption(entity *documenttype.DocumentType) *gqlmodel.Selec
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Name),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"color": entity.Color,
-			"name":  entity.Name,
+			selectoption.MetaKeyCode: entity.Code,
+			"color":                  entity.Color,
+			"name":                   entity.Name,
 		},
 	}
 }
@@ -199,11 +206,4 @@ func (r *Sources) CaptureProfile(
 	}
 
 	return pageSelectOptionItems(items, req)
-}
-
-type Sources struct {
-	CaptureProfileService *captureprofiles.Service
-	CaptureDeviceService  *capturedevices.Service
-	DocumentTypeService   *documenttypeservice.Service
-	EmailService          *emailservice.Service
 }

@@ -28,6 +28,16 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	ShipmentTypeService         *shipmenttypeservice.Service
+	ServiceTypeService          *servicetypeservice.Service
+	CommodityService            *commodityservice.Service
+	HazardousMaterialService    *hazardousmaterialservice.Service
+	OrderService                *orderservice.Service
+	ShipmentReader              shipmentserviceports.ShipmentReader
+	ServiceFailureReasonCodeSvc servicefailureports.ServiceFailureReasonCodeService
+}
+
 func (r *Sources) ShipmentType(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -233,8 +243,8 @@ func orderSelectOption(entity *order.Order) *gqlmodel.SelectOption {
 		Label:       entity.OrderNumber,
 		Description: stringutils.Ptr(entity.PONumber),
 		Meta: map[string]any{
-			"status":      string(entity.Status),
-			"orderNumber": entity.OrderNumber,
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"orderNumber":              entity.OrderNumber,
 		},
 	}
 }
@@ -305,8 +315,8 @@ func shipmentTypeSelectOption(entity *shipmenttype.ShipmentType) *gqlmodel.Selec
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Description),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"color": entity.Color,
+			selectoption.MetaKeyCode: entity.Code,
+			"color":                  entity.Color,
 		},
 	}
 }
@@ -325,8 +335,8 @@ func serviceTypeSelectOption(entity *servicetype.ServiceType) *gqlmodel.SelectOp
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Description),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"color": entity.Color,
+			selectoption.MetaKeyCode: entity.Code,
+			"color":                  entity.Color,
 		},
 	}
 }
@@ -384,22 +394,14 @@ func shipmentSelectOption(entity *shipment.Shipment) *gqlmodel.SelectOption {
 		Label:       entity.ProNumber,
 		Description: stringutils.Ptr(entity.BOL),
 		Meta: map[string]any{
-			"status":    string(entity.Status),
-			"proNumber": entity.ProNumber,
-			"bol":       entity.BOL,
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"proNumber":                entity.ProNumber,
+			"bol":                      entity.BOL,
 		},
 	}
 }
 
 func shipmentID(entity *shipment.Shipment) pulid.ID {
-	return entity.ID
-}
-
-func shipmentTypeID(entity *shipmenttype.ShipmentType) pulid.ID {
-	return entity.ID
-}
-
-func serviceTypeID(entity *servicetype.ServiceType) pulid.ID {
 	return entity.ID
 }
 
@@ -441,14 +443,4 @@ func (r *Sources) ServiceFailureReasonCode(
 		req.SelectQuery.Pagination,
 		serviceFailureReasonCodeSelectOptionItem,
 	)
-}
-
-type Sources struct {
-	ShipmentTypeService         *shipmenttypeservice.Service
-	ServiceTypeService          *servicetypeservice.Service
-	CommodityService            *commodityservice.Service
-	HazardousMaterialService    *hazardousmaterialservice.Service
-	OrderService                *orderservice.Service
-	ShipmentReader              shipmentserviceports.ShipmentReader
-	ServiceFailureReasonCodeSvc servicefailureports.ServiceFailureReasonCodeService
 }

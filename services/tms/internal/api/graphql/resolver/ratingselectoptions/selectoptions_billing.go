@@ -24,6 +24,16 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	RateMatrixService        *ratematrixservice.Service
+	RateAgreementService     *rateagreementservice.Service
+	AccessorialChargeService *accessorialchargeservice.Service
+	DetentionPolicyService   *detentionpolicyservice.Service
+	FormulaTemplateService   *formulatemplateservice.Service
+	FuelIndexRepo            fuelsurchargeports.FuelIndexRepository
+	FuelSurchargeProgramRepo fuelsurchargeports.FuelSurchargeProgramRepository
+}
+
 func (r *Sources) RateMatrix(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -186,7 +196,7 @@ func rateMatrixSelectOption(entity *ratematrix.RateMatrix) *gqlmodel.SelectOptio
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code": entity.Code,
+			selectoption.MetaKeyCode: entity.Code,
 		},
 	}
 }
@@ -205,7 +215,7 @@ func rateAgreementSelectOption(entity *rateagreement.RateAgreement) *gqlmodel.Se
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code": entity.Code,
+			selectoption.MetaKeyCode: entity.Code,
 		},
 	}
 }
@@ -228,9 +238,9 @@ func accessorialChargeSelectOption(
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Description),
 		Meta: map[string]any{
-			"code":   entity.Code,
-			"method": string(entity.Method),
-			"amount": entity.Amount.String(),
+			selectoption.MetaKeyCode: entity.Code,
+			"method":                 string(entity.Method),
+			"amount":                 entity.Amount.String(),
 		},
 	}
 }
@@ -251,7 +261,7 @@ func detentionPolicySelectOption(entity *detentionpolicy.DetentionPolicy) *gqlmo
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
-			"code": entity.Code,
+			selectoption.MetaKeyCode: entity.Code,
 		},
 	}
 }
@@ -389,14 +399,4 @@ func (r *Sources) FuelSurchargeProgram(
 		req.SelectQuery.Pagination,
 		fuelSurchargeProgramSelectOptionItem,
 	)
-}
-
-type Sources struct {
-	RateMatrixService        *ratematrixservice.Service
-	RateAgreementService     *rateagreementservice.Service
-	AccessorialChargeService *accessorialchargeservice.Service
-	DetentionPolicyService   *detentionpolicyservice.Service
-	FormulaTemplateService   *formulatemplateservice.Service
-	FuelIndexRepo            fuelsurchargeports.FuelIndexRepository
-	FuelSurchargeProgramRepo fuelsurchargeports.FuelSurchargeProgramRepository
 }

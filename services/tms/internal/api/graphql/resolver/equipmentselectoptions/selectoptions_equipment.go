@@ -24,6 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	EquipmentTypeService         *equipmenttypeservice.Service
+	EquipmentManufacturerService *equipmentmanufacturerservice.Service
+	TrailerService               *trailerservice.Service
+	TractorService               *tractorservice.Service
+	FleetCodeService             *fleetcodeservice.Service
+}
+
 func (r *Sources) EquipmentType(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -306,8 +314,8 @@ func fleetCodeSelectOption(entity *fleetcode.FleetCode) *gqlmodel.SelectOption {
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Description),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"color": entity.Color,
+			selectoption.MetaKeyCode: entity.Code,
+			"color":                  entity.Color,
 		},
 	}
 }
@@ -341,12 +349,4 @@ func equipmentTypeClassesFilter(filters map[string]any) []string {
 	default:
 		return nil
 	}
-}
-
-type Sources struct {
-	EquipmentTypeService         *equipmenttypeservice.Service
-	EquipmentManufacturerService *equipmentmanufacturerservice.Service
-	TrailerService               *trailerservice.Service
-	TractorService               *tractorservice.Service
-	FleetCodeService             *fleetcodeservice.Service
 }

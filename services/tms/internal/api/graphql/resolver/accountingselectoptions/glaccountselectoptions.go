@@ -17,6 +17,14 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	FiscalYearRepo      fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
+	GlAccountRepo       glaccountports.GLAccountRepository
+	JournalEntryService *journalentryservice.Service
+	AccountTypeService  *accounttypeservice.Service
+}
+
 func (r *Sources) GLAccount(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -126,9 +134,9 @@ func accountTypeSelectOption(entity *accounttype.AccountType) *gqlmodel.SelectOp
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Name),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"color": entity.Color,
-			"name":  entity.Name,
+			selectoption.MetaKeyCode: entity.Code,
+			"color":                  entity.Color,
+			"name":                   entity.Name,
 		},
 	}
 }
@@ -251,12 +259,4 @@ func (r *Sources) JournalEntry(
 		req.SelectQuery.Pagination,
 		journalEntrySelectOptionItem,
 	)
-}
-
-type Sources struct {
-	FiscalYearRepo      fiscalyearports.FiscalYearRepository
-	FiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
-	GlAccountRepo       glaccountports.GLAccountRepository
-	JournalEntryService *journalentryservice.Service
-	AccountTypeService  *accounttypeservice.Service
 }

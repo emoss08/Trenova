@@ -49,8 +49,8 @@ func fuelSurchargeProgramSelectOption(
 		Label:       entity.Code,
 		Description: &description,
 		Meta: map[string]any{
-			"method": string(entity.Method),
-			"status": string(entity.Status),
+			"method":                   string(entity.Method),
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
 	}
 }

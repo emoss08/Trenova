@@ -17,6 +17,11 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	EdiSetupService    *edisetup.Service
+	EdiTransferService *editransferservice.Service
+}
+
 func (r *Sources) EDICommunicationProfile(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -324,8 +329,8 @@ func ediCommunicationProfileSelectOption(
 		Label:       entity.Name,
 		Description: stringutils.Ptr(string(entity.Method)),
 		Meta: map[string]any{
-			"method": string(entity.Method),
-			"status": string(entity.Status),
+			"method":                   string(entity.Method),
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
 	}
 }
@@ -348,10 +353,10 @@ func ediDocumentTypeSelectOption(entity *edidocument.EDIDocumentType) *gqlmodel.
 			string(entity.TransactionSet) + " / " + string(entity.Direction),
 		),
 		Meta: map[string]any{
-			"code":           entity.Code,
-			"transactionSet": string(entity.TransactionSet),
-			"direction":      string(entity.Direction),
-			"defaultVersion": entity.DefaultVersion,
+			selectoption.MetaKeyCode: entity.Code,
+			"transactionSet":         string(entity.TransactionSet),
+			"direction":              string(entity.Direction),
+			"defaultVersion":         entity.DefaultVersion,
 		},
 	}
 }
@@ -372,10 +377,10 @@ func ediTransactionSetSelectOption(entity *edidocument.EDITransactionSet) *gqlmo
 		Label:       string(entity.Code) + " - " + entity.Name,
 		Description: stringutils.Ptr(entity.Description),
 		Meta: map[string]any{
-			"code":           string(entity.Code),
-			"standard":       string(entity.Standard),
-			"defaultVersion": entity.DefaultVersion,
-			"status":         string(entity.Status),
+			selectoption.MetaKeyCode:   string(entity.Code),
+			"standard":                 string(entity.Standard),
+			"defaultVersion":           entity.DefaultVersion,
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
 	}
 }
@@ -410,8 +415,8 @@ func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
 		Label:       entity.Code + " - " + entity.Name,
 		Description: stringutils.Ptr(string(entity.Kind)),
 		Meta: map[string]any{
-			"code": entity.Code,
-			"kind": string(entity.Kind),
+			selectoption.MetaKeyCode: entity.Code,
+			"kind":                   string(entity.Kind),
 		},
 	}
 }
@@ -438,9 +443,9 @@ func ediTransferSelectOption(
 	}
 
 	meta := map[string]any{
-		"status":        string(entity.Status),
-		"bol":           entity.TenderPayload.BOL,
-		"customerLabel": entity.TenderPayload.CustomerLabel,
+		selectoption.MetaKeyStatus: string(entity.Status),
+		"bol":                      entity.TenderPayload.BOL,
+		"customerLabel":            entity.TenderPayload.CustomerLabel,
 	}
 	if partner := entity.Counterparty(orgID); partner != nil {
 		meta["partner"] = partner.Name
@@ -491,14 +496,14 @@ func ediConnectionSelectOption(entity *edi.EDIConnection) *gqlmodel.SelectOption
 		Label:       label,
 		Description: stringutils.Ptr(description),
 		Meta: map[string]any{
-			"method":                 string(entity.Method),
-			"status":                 string(entity.Status),
-			"sourceOrganizationId":   entity.SourceOrganizationID.String(),
-			"targetOrganizationId":   entity.TargetOrganizationID.String(),
-			"sourceOrganizationName": source,
-			"targetOrganizationName": target,
-			"sourcePartnerId":        selectoption.OptionalIDMeta(entity.SourcePartnerID),
-			"targetPartnerId":        selectoption.OptionalIDMeta(entity.TargetPartnerID),
+			"method":                   string(entity.Method),
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"sourceOrganizationId":     entity.SourceOrganizationID.String(),
+			"targetOrganizationId":     entity.TargetOrganizationID.String(),
+			"sourceOrganizationName":   source,
+			"targetOrganizationName":   target,
+			"sourcePartnerId":          selectoption.OptionalIDMeta(entity.SourcePartnerID),
+			"targetPartnerId":          selectoption.OptionalIDMeta(entity.TargetPartnerID),
 		},
 	}
 }
@@ -509,9 +514,4 @@ func ediConnectionID(entity *edi.EDIConnection) pulid.ID {
 
 func ediTransferID(entity *editransfer.EDITransfer) pulid.ID {
 	return entity.ID
-}
-
-type Sources struct {
-	EdiSetupService    *edisetup.Service
-	EdiTransferService *editransferservice.Service
 }

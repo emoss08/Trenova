@@ -18,6 +18,12 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	FuelPurchaseService *fuelpurchaseservice.Service
+	IftaService         *iftaservice.Service
+	DriverPayService    *driverpayservice.Service
+}
+
 func (r *Sources) PayCode(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -65,12 +71,12 @@ func payCodeSelectOptionItem(entity *paycode.PayCode) selectoption.Item {
 			Label:       entity.Code,
 			Description: stringutils.Ptr(entity.Name),
 			Meta: map[string]any{
-				"code":                  entity.Code,
-				"name":                  entity.Name,
-				"direction":             string(entity.Direction),
-				"taxable":               entity.Taxable,
-				"countsTowardGuarantee": entity.CountsTowardGuarantee,
-				"defaultAmountMinor":    int64PtrValue(entity.DefaultAmountMinor),
+				selectoption.MetaKeyCode: entity.Code,
+				"name":                   entity.Name,
+				"direction":              string(entity.Direction),
+				"taxable":                entity.Taxable,
+				"countsTowardGuarantee":  entity.CountsTowardGuarantee,
+				"defaultAmountMinor":     int64PtrValue(entity.DefaultAmountMinor),
 			},
 		},
 		entity.CreatedAt,
@@ -261,10 +267,4 @@ func (r *Sources) IFTAFuelType(
 	}
 
 	return selectoption.Connection(items, len(matches), offset)
-}
-
-type Sources struct {
-	FuelPurchaseService *fuelpurchaseservice.Service
-	IftaService         *iftaservice.Service
-	DriverPayService    *driverpayservice.Service
 }

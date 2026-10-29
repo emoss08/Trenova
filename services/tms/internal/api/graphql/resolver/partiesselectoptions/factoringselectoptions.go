@@ -6,11 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 )
 
-const (
-	metaKeyCode   = "code"
-	metaKeyStatus = "status"
-)
-
 func factoringCompanySelectOptionItem(
 	entity *factoringcompany.FactoringCompany,
 ) selectoption.Item {
@@ -24,8 +19,8 @@ func factoringCompanySelectOptionItem(
 			Label:       entity.Name,
 			Description: &description,
 			Meta: map[string]any{
-				metaKeyCode:   entity.Code,
-				metaKeyStatus: string(entity.Status),
+				selectoption.MetaKeyCode:   entity.Code,
+				selectoption.MetaKeyStatus: string(entity.Status),
 			},
 		},
 		entity.CreatedAt,

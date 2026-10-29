@@ -9,6 +9,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const (
+	MetaKeyCode   = "code"
+	MetaKeyStatus = "status"
+)
+
 type Request struct {
 	TenantInfo  pagination.TenantInfo
 	SelectQuery *pagination.SelectQueryRequest

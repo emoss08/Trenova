@@ -24,11 +24,11 @@ func fiscalYearSelectOption(entity *fiscalyear.FiscalYear) *gqlmodel.SelectOptio
 		Label:       entity.Name,
 		Description: stringutils.Ptr(strconv.Itoa(entity.Year)),
 		Meta: map[string]any{
-			"year":      entity.Year,
-			"status":    string(entity.Status),
-			"isCurrent": entity.IsCurrent,
-			"startDate": entity.StartDate,
-			"endDate":   entity.EndDate,
+			"year":                     entity.Year,
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"isCurrent":                entity.IsCurrent,
+			"startDate":                entity.StartDate,
+			"endDate":                  entity.EndDate,
 		},
 	}
 }
@@ -51,13 +51,13 @@ func fiscalPeriodSelectOption(entity *fiscalperiod.FiscalPeriod) *gqlmodel.Selec
 		ID:    entity.ID.String(),
 		Label: label,
 		Meta: map[string]any{
-			"fiscalYearId": entity.FiscalYearID.String(),
-			"periodNumber": entity.PeriodNumber,
-			"periodType":   string(entity.PeriodType),
-			"status":       string(entity.Status),
-			"isAdjusting":  entity.IsAdjusting,
-			"startDate":    entity.StartDate,
-			"endDate":      entity.EndDate,
+			"fiscalYearId":             entity.FiscalYearID.String(),
+			"periodNumber":             entity.PeriodNumber,
+			"periodType":               string(entity.PeriodType),
+			selectoption.MetaKeyStatus: string(entity.Status),
+			"isAdjusting":              entity.IsAdjusting,
+			"startDate":                entity.StartDate,
+			"endDate":                  entity.EndDate,
 		},
 	}
 }

@@ -25,8 +25,8 @@ func serviceFailureReasonCodeSelectOption(
 		Label:       entity.Code,
 		Description: stringutils.Ptr(entity.Label),
 		Meta: map[string]any{
-			"code":  entity.Code,
-			"label": entity.Label,
+			selectoption.MetaKeyCode: entity.Code,
+			"label":                  entity.Label,
 		},
 	}
 }

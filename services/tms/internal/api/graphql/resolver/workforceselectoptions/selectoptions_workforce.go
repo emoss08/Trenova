@@ -34,6 +34,18 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+type Sources struct {
+	WorkerService            *workerservice.Service
+	SchedulingService        *schedulingservice.Service
+	SelfServiceService       *selfserviceservice.Service
+	OrgStructureService      *orgstructureservice.Service
+	WorkerCredentialService  *workercredentialservice.Service
+	WorkerTrainingService    *workertrainingservice.Service
+	PerformanceReviewService *performancereviewservice.Service
+	PtoPolicyService         *ptopolicyservice.Service
+	BenefitsService          *benefitsservice.Service
+}
+
 func (r *Sources) WorkerCredentialType(
 	ctx context.Context,
 	req *selectoption.Request,
@@ -83,13 +95,13 @@ func workerCredentialTypeSelectOptionItem(
 			Label:       entity.Name,
 			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
-				"code":             entity.Code,
-				"category":         string(entity.Category),
-				"isRequired":       entity.IsRequired,
-				"requiresNumber":   entity.RequiresNumber,
-				"requiresDocument": entity.RequiresDocument,
-				"profileField":     string(entity.ProfileField),
-				"validityMonths":   int32Value(entity.ValidityMonths),
+				selectoption.MetaKeyCode: entity.Code,
+				"category":               string(entity.Category),
+				"isRequired":             entity.IsRequired,
+				"requiresNumber":         entity.RequiresNumber,
+				"requiresDocument":       entity.RequiresDocument,
+				"profileField":           string(entity.ProfileField),
+				"validityMonths":         int32Value(entity.ValidityMonths),
 			},
 		},
 		entity.CreatedAt,
@@ -141,7 +153,7 @@ func trainingCourseSelectOptionItem(
 	entity *workertraining.TrainingCourse,
 ) selectoption.Item {
 	meta := map[string]any{
-		"code":                   entity.Code,
+		selectoption.MetaKeyCode: entity.Code,
 		"category":               string(entity.Category),
 		"delivery":               string(entity.Delivery),
 		"durationMinutes":        entity.DurationMinutes,
@@ -212,10 +224,10 @@ func performanceReviewTemplateSelectOptionItem(
 			Label:       entity.Name,
 			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
-				"code":          entity.Code,
-				"isDefault":     entity.IsDefault,
-				"itemCount":     len(entity.Items),
-				"cadenceMonths": int32Value(entity.CadenceMonths),
+				selectoption.MetaKeyCode: entity.Code,
+				"isDefault":              entity.IsDefault,
+				"itemCount":              len(entity.Items),
+				"cadenceMonths":          int32Value(entity.CadenceMonths),
 			},
 		},
 		entity.CreatedAt,
@@ -266,11 +278,11 @@ func ptoPolicySelectOptionItem(entity *pto.PTOPolicy) selectoption.Item {
 			Label:       entity.Name,
 			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
-				"code":             entity.Code,
-				"isDefault":        entity.IsDefault,
-				"yearBasis":        string(entity.YearBasis),
-				"requiresApproval": entity.RequiresApproval,
-				"ptoTypes":         ptoPolicyTrackedTypes(entity),
+				selectoption.MetaKeyCode: entity.Code,
+				"isDefault":              entity.IsDefault,
+				"yearBasis":              string(entity.YearBasis),
+				"requiresApproval":       entity.RequiresApproval,
+				"ptoTypes":               ptoPolicyTrackedTypes(entity),
 			},
 		},
 		entity.CreatedAt,
@@ -320,14 +332,14 @@ func benefitPlanSelectOptionItem(entity *paybenefit.BenefitPlan) selectoption.It
 			Label:       entity.Name,
 			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
-				"code":              entity.Code,
-				"planType":          string(entity.PlanType),
-				"planYear":          entity.PlanYear,
-				"carrier":           entity.Carrier,
-				"employeeCostMinor": entity.EmployeeCostMinor,
-				"employerCostMinor": entity.EmployerCostMinor,
-				"currencyCode":      entity.CurrencyCode,
-				"waitingPeriodDays": entity.WaitingPeriodDays,
+				selectoption.MetaKeyCode: entity.Code,
+				"planType":               string(entity.PlanType),
+				"planYear":               entity.PlanYear,
+				"carrier":                entity.Carrier,
+				"employeeCostMinor":      entity.EmployeeCostMinor,
+				"employerCostMinor":      entity.EmployerCostMinor,
+				"currencyCode":           entity.CurrencyCode,
+				"waitingPeriodDays":      entity.WaitingPeriodDays,
 			},
 		},
 		entity.CreatedAt,
@@ -554,16 +566,4 @@ func (r *Sources) JobPosition(
 	}
 
 	return selectoption.Connection(items, len(items), 0)
-}
-
-type Sources struct {
-	WorkerService            *workerservice.Service
-	SchedulingService        *schedulingservice.Service
-	SelfServiceService       *selfserviceservice.Service
-	OrgStructureService      *orgstructureservice.Service
-	WorkerCredentialService  *workercredentialservice.Service
-	WorkerTrainingService    *workertrainingservice.Service
-	PerformanceReviewService *performancereviewservice.Service
-	PtoPolicyService         *ptopolicyservice.Service
-	BenefitsService          *benefitsservice.Service
 }
