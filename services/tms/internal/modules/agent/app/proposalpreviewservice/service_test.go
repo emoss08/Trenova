@@ -577,7 +577,7 @@ func TestBaseline_PinsAndKeepsWhatTheWriteWouldDo(t *testing.T) {
 	result := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: proposalID,
 		Tool:       f.tool,
-		Params: agenttoolports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -601,7 +601,7 @@ func TestBaseline_PinsAndKeepsWhatTheWriteWouldDo(t *testing.T) {
 	evaluation := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agenttoolports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -620,7 +620,7 @@ func TestBaseline_NeverFailsTheProposal(t *testing.T) {
 	result := f.svc.Baseline(t.Context(), &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agenttoolports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),
@@ -644,7 +644,7 @@ func baselineRequest(f *fixture) *agentruntimeports.ProposalBaselineRequest {
 	return &agentruntimeports.ProposalBaselineRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Tool:       f.tool,
-		Params: agenttoolports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: f.org,
 			BusinessUnitID: f.bu,
 			Params:         f.cancelParams(),

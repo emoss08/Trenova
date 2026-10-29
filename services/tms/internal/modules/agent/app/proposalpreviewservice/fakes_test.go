@@ -100,7 +100,7 @@ func (t *baseTool) Policy() agenttoolports.ToolPolicy {
 	}
 }
 
-func (t *baseTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
+func (t *baseTool) Execute(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return fmt.Errorf("%s must never run in a preview", t.name)
 }
 
@@ -137,9 +137,9 @@ type previewingTool struct {
 
 func (t *previewingTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	t.asked = append(t.asked, params)
+	t.asked = append(t.asked, *params)
 	if t.block {
 		<-ctx.Done()
 
@@ -198,7 +198,7 @@ type validatingTool struct {
 	err error
 }
 
-func (t *validatingTool) Validate(context.Context, agenttoolports.ToolExecuteParams) error {
+func (t *validatingTool) Validate(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return t.err
 }
 

@@ -76,7 +76,7 @@ func (f *fakePlanner) CreatePlanned(
 	return f.answer(req)
 }
 
-func scheduleParams(args map[string]any) agenttoolports.ToolExecuteParams {
+func scheduleParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	person := pulid.MustNew("usr_")
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -86,7 +86,7 @@ func scheduleParams(args map[string]any) agenttoolports.ToolExecuteParams {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	return agenttoolports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,

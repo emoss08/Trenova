@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func DeskParams(params map[string]any) agenttoolports.ToolExecuteParams {
+func DeskParams(params map[string]any) *agenttoolports.ToolExecuteParams {
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 
-	return agenttoolports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{

@@ -167,11 +167,12 @@ func draftArgs(documentID pulid.ID) map[string]any {
 }
 
 func onThread(
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	thread pulid.ID,
-) agenttoolports.ToolExecuteParams {
-	params.ThreadID = thread
-	return params
+) *agenttoolports.ToolExecuteParams {
+	threaded := *params
+	threaded.ThreadID = thread
+	return &threaded
 }
 
 func TestApplyConnectionDraft_PreviewsEveryRecordItWouldWrite(t *testing.T) {

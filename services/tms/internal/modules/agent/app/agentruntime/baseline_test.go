@@ -221,7 +221,7 @@ type countingPreviewTool struct {
 
 func (t *countingPreviewTool) Preview(
 	context.Context,
-	agenttoolports.ToolExecuteParams,
+	*agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	t.previews++
 

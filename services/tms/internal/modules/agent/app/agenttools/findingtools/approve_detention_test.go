@@ -74,7 +74,7 @@ func heldOccurrence(status detention.OccurrenceStatus) *detention.DetentionOccur
 	}
 }
 
-func approveParams(occurrenceID pulid.ID) agenttoolports.ToolExecuteParams {
+func approveParams(occurrenceID pulid.ID) *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.DeskParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"evidence": " Arrival 08:02 and departure 12:40 on the ELD; notice sent 09:55, " +

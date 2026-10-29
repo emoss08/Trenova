@@ -22,7 +22,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 
 	condition := &agenttoolports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			return agent.TierPropose
 		},
 	}

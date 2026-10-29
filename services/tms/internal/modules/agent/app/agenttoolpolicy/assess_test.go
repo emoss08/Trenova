@@ -71,7 +71,7 @@ func TestAssess_BoundedMoneyRunsOnItsOwnWithinBoundsUntilTheRunIsTainted(t *test
 	policy := actionPolicy("receivable_post_customer_payment", agent.EgressMoney)
 	policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within bounds.",
-		Bounds: func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+		Bounds: func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 			return agenttoolports.WithinMoneyBound(1, "USD")
 		},
 	}
@@ -149,7 +149,7 @@ func TestAssess_AClassifiedToolWithTheExemptionIsConditionalInChat(t *testing.T)
 	policy := actionPolicy("report_create", agent.EgressPersonal, agent.EgressInternal)
 	policy.DefaultTier = agent.TierPropose
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	policy.Classify = func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
@@ -176,7 +176,7 @@ func TestAssess_AConditionMakesAnAutomaticToolConditional(t *testing.T) {
 	policy := actionPolicy("inbox_mark_inbound_message", agent.EgressInternal)
 	policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			panic("a representative call never reads a record")
 		},
 	}

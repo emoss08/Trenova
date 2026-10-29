@@ -175,7 +175,7 @@ func TestSettlementDecisions_MoneyAndFinalOnesAreAPersonsDecision(t *testing.T) 
 	assert.Equal(
 		t,
 		agent.EgressMoney,
-		driverPost.Classify(agenttoolports.ToolExecuteParams{}).Egress,
+		driverPost.Classify(&agenttoolports.ToolExecuteParams{}).Egress,
 	)
 	assert.Equal(t, permission.ResourceCarrierSettlement,
 		agenttoolstest.BuildTool(t, provideVoidCarrierSettlementTool).Policy().Resource)

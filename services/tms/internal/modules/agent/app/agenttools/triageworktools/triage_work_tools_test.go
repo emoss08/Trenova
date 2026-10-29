@@ -24,7 +24,7 @@ import (
 func previewOf(
 	t *testing.T,
 	tool agenttoolports.AgentTool,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) *agentpreview.ToolPreview {
 	t.Helper()
 

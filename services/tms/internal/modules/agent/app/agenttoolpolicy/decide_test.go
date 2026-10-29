@@ -43,8 +43,8 @@ func definition(
 func call(
 	actor *permissionports.RequestActor,
 	args map[string]any,
-) agenttoolports.ToolExecuteParams {
-	return agenttoolports.ToolExecuteParams{Actor: actor, Params: args}
+) *agenttoolports.ToolExecuteParams {
+	return &agenttoolports.ToolExecuteParams{Actor: actor, Params: args}
 }
 
 func withCondition(
@@ -54,7 +54,7 @@ func withCondition(
 	description := policy.Condition.Description
 	policy.Condition = &agenttoolports.TierCondition{
 		Description: description,
-		Limit: func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			return limit
 		},
 	}

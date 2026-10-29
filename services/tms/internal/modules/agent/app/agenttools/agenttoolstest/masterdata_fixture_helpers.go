@@ -14,7 +14,7 @@ func TexasState() *FakeStates {
 	}}
 }
 
-func IdempotentParams(params map[string]any) agenttoolports.ToolExecuteParams {
+func IdempotentParams(params map[string]any) *agenttoolports.ToolExecuteParams {
 	execute := ExecuteParams(params)
 	execute.IdempotencyKey = pulid.MustNew("idem_").String()
 

@@ -124,10 +124,10 @@ type stubActionToolAlias = agenttest.StubActionTool
 
 func (t *validatingActionTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	t.checked++
-	t.lastSeen = params
+	t.lastSeen = *params
 
 	return t.invalid
 }

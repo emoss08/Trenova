@@ -53,12 +53,12 @@ func (t *schemaTool) Policy() agenttoolports.ToolPolicy {
 		Rationale:     "A schema stub.",
 	}
 }
-func (t *schemaTool) Execute(_ context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *schemaTool) Execute(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil
 }
-func (t *schemaTool) Validate(context.Context, agenttoolports.ToolExecuteParams) error {
+func (t *schemaTool) Validate(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return t.validateErr
 }
 

@@ -44,7 +44,7 @@ func (subsetProposalTool) ParamSchema() map[string]any {
 
 func (subsetProposalTool) Policy() agenttoolports.ToolPolicy { return agenttoolports.ToolPolicy{} }
 
-func (subsetProposalTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
+func (subsetProposalTool) Execute(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 

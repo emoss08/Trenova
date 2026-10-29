@@ -66,7 +66,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 
 	cases := []struct {
 		name   string
-		params agenttoolports.ToolExecuteParams
+		params *agenttoolports.ToolExecuteParams
 		want   agent.AutonomyTier
 	}{
 		{
@@ -91,7 +91,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "an agent principal, not a person",
-			params: func() agenttoolports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
@@ -101,7 +101,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "a person with no user",
-			params: func() agenttoolports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor.UserID = pulid.Nil
 
@@ -111,7 +111,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "no actor",
-			params: func() agenttoolports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor = nil
 

@@ -72,7 +72,7 @@ func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 		"Driver":     {class: agent.EgressDriverVisible, limit: agent.TierActWithApproval},
 	}
 	for visibility, want := range cases {
-		params := agenttoolports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
+		params := &agenttoolports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
 		call := policy.Classified(params)
 		assert.Equal(t, want.class, call.Egress, visibility)
 		assert.Equal(t, want.limit, agenttoolstest.CallLimit(call), visibility)

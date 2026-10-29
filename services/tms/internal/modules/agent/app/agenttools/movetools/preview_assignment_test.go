@@ -109,7 +109,7 @@ func uncoveredShipment() *shipment.Shipment {
 
 func assignParams(
 	entity *shipment.Shipment,
-) (agenttoolports.ToolExecuteParams, pulid.ID, pulid.ID) {
+) (*agenttoolports.ToolExecuteParams, pulid.ID, pulid.ID) {
 	workerID := pulid.MustNew("wrk_")
 	tractorID := pulid.MustNew("trc_")
 

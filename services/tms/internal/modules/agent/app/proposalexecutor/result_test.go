@@ -23,7 +23,7 @@ type reportingTool struct {
 
 func (t *reportingTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
 	if err := t.Execute(ctx, params); err != nil {
 		return nil, err

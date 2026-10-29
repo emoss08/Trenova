@@ -25,7 +25,7 @@ type resolvingTool struct {
 
 func (r *resolvingTool) ResolveSelection(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	r.asked = append(r.asked, params.Params)
 	if r.err != nil {
@@ -142,7 +142,7 @@ type pinningTool struct {
 
 func (p *pinningTool) ResolveProposalSelection(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	p.asked = append(p.asked, params.Params)
 	if p.err != nil {

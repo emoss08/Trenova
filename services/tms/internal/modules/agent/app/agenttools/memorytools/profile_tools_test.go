@@ -110,7 +110,7 @@ func TestGuideProfile_PreviewSaysWhatItWouldAdd(t *testing.T) {
 
 	tool := NewGuideProfileTool(&fakeProfileGuide{})
 	previewer, ok := tool.(interface {
-		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
+		Preview(context.Context, *agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
 	})
 	require.True(t, ok)
 
@@ -129,7 +129,7 @@ func TestGuideProfile_PreviewSaysWhenItWouldBeOffered(t *testing.T) {
 
 	tool := NewGuideProfileTool(&fakeProfileGuide{offers: true})
 	previewer, ok := tool.(interface {
-		Preview(context.Context, agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
+		Preview(context.Context, *agenttoolports.ToolExecuteParams) (*agentpreview.ToolPreview, error)
 	})
 	require.True(t, ok)
 

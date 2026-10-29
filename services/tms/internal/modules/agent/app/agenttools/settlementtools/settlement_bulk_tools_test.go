@@ -187,7 +187,7 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 	assert.Equal(
 		t,
 		agent.EgressMoney,
-		driverPost.Classify(agenttoolports.ToolExecuteParams{}).Egress,
+		driverPost.Classify(&agenttoolports.ToolExecuteParams{}).Egress,
 	)
 }
 

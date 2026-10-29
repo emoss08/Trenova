@@ -147,7 +147,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	}, pickup, delivery
 }
 
-func evaluateParams(entity *shipment.Shipment) agenttoolports.ToolExecuteParams {
+func evaluateParams(entity *shipment.Shipment) *agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{"shipmentId": entity.ID.String()})
 }
 

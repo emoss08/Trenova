@@ -141,7 +141,7 @@ func watchArgs() map[string]any {
 	}
 }
 
-func personParams(args map[string]any) agenttoolports.ToolExecuteParams {
+func personParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.DeskParams(args)
 	params.ThreadID = pulid.MustNew("athr_")
 

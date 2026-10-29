@@ -5,9 +5,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func Approved(params agenttoolports.ToolExecuteParams) agenttoolports.ToolExecuteParams {
-	params.ProposalID = pulid.MustNew("ap_")
-	params.IdempotencyKey = params.ProposalID.String()
+func Approved(params *agenttoolports.ToolExecuteParams) *agenttoolports.ToolExecuteParams {
+	approved := *params
+	approved.ProposalID = pulid.MustNew("ap_")
+	approved.IdempotencyKey = approved.ProposalID.String()
 
-	return params
+	return &approved
 }

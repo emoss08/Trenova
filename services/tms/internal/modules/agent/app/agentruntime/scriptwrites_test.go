@@ -47,7 +47,7 @@ func (t preparableTool) Target(params map[string]any) (agenttoolports.ToolTarget
 
 func (t preparableTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	raw, _ := params.Params["shipmentId"].(string)
 

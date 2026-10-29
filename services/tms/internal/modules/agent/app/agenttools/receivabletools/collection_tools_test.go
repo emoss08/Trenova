@@ -185,7 +185,7 @@ func previewOf(
 	t *testing.T,
 	guard *agenttoolstest.WriteGuard,
 	tool agenttoolports.AgentTool,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) *agentpreview.ToolPreview {
 	t.Helper()
 

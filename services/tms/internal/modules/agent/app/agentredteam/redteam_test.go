@@ -118,7 +118,7 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 			Tools:      []string{policy.Name},
 			Unattended: true,
 		}, MainAgentID, Tenant{OrganizationID: OrganizationID, BusinessUnitID: BusinessUnitID})
-		params := agenttoolports.ToolExecuteParams{
+		params := &agenttoolports.ToolExecuteParams{
 			OrganizationID: OrganizationID,
 			BusinessUnitID: BusinessUnitID,
 			Actor:          actor,

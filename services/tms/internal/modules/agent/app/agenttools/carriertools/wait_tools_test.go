@@ -37,7 +37,7 @@ func (r *recordedWaits) Cancel(
 	return &agentwait.Wait{ID: req.ID}, nil
 }
 
-func waitParams(args map[string]any) agenttoolports.ToolExecuteParams {
+func waitParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
@@ -46,7 +46,7 @@ func waitParams(args map[string]any) agenttoolports.ToolExecuteParams {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	return agenttoolports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,

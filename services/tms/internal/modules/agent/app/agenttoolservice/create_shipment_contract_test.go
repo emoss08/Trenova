@@ -112,13 +112,13 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
-	entity, err := tool.Draft(t.Context(), &params)
+	entity, err := tool.Draft(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, template, entity.FormulaTemplateID)
 	assert.True(t, ratedInputs(t, "$2.10/mi").Equal(entity.TariffInputs))
 
 	named := createShipmentParams()
-	_, err = tool.Draft(t.Context(), &named)
+	_, err = tool.Draft(t.Context(), named)
 	require.NoError(t, err)
 	assert.Equal(t, 1, contracts.calls, "a rating the call names is never second-guessed")
 
@@ -126,7 +126,7 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 	quoted := priced.Params["shipment"].(map[string]any)
 	delete(quoted, "formulaTemplateId")
 	quoted["freightChargeAmount"] = "1500.00"
-	entity, err = tool.Draft(t.Context(), &priced)
+	entity, err = tool.Draft(t.Context(), priced)
 	require.NoError(t, err)
 	assert.Equal(t, 1, contracts.calls, "a price the call gives is never second-guessed")
 	assert.True(t, entity.FormulaTemplateID.IsNil())
@@ -152,7 +152,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 	params := createShipmentParams()
 	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
 
-	_, err := tool.Draft(t.Context(), &params)
+	_, err := tool.Draft(t.Context(), params)
 	var refusal *errortypes.Error
 	require.ErrorAs(t, err, &refusal)
 	assert.Equal(t, "formulaTemplateId", refusal.Field)

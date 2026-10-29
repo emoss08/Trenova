@@ -291,7 +291,7 @@ func (t *StubActionTool) Policy() agenttoolports.ToolPolicy {
 		vouches, rereads := t.MoneyVouches, t.MoneyRereads
 		policy.Condition = &agenttoolports.TierCondition{
 			Description: "A stub money write within its bounds.",
-			Bounds: func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+			Bounds: func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 				bound := agenttoolports.WithinMoneyBound(amount, currency)
 				for _, reread := range rereads {
 					bound = bound.Rereading(reread.Source, reread.Ref)
@@ -308,10 +308,10 @@ func (t *StubActionTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *StubActionTool) Execute(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	t.Calls++
-	t.LastParams = params
+	t.LastParams = *params
 
 	return t.Err
 }

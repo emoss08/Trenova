@@ -27,7 +27,7 @@ func (t *privateActionTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal}
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	policy.Classify = func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		if t.private {
 			return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 		}

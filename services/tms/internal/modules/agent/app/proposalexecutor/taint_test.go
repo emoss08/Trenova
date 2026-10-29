@@ -29,7 +29,7 @@ func (t *egressTool) Policy() agenttoolports.ToolPolicy {
 	return policy
 }
 
-func (t *egressTool) Execute(ctx context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *egressTool) Execute(ctx context.Context, params *agenttoolports.ToolExecuteParams) error {
 	return t.recordingTool.Execute(ctx, params)
 }
 

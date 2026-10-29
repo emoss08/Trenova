@@ -52,17 +52,17 @@ func validQuery() Spec {
 
 func boundedAt(
 	amountMinor int64,
-) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
-	return func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+) func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		return agenttoolports.WithinMoneyBound(amountMinor, "USD")
 	}
 }
 
-func holdToPropose(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+func holdToPropose(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func classifyAsInternal(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+func classifyAsInternal(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 	return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 }
 

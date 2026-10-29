@@ -1118,8 +1118,8 @@ func (t *limitedActionTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Condition = &agenttoolports.TierCondition{
 		Description: "The stub's own record decides.",
-		Limit: func(_ context.Context, params agenttoolports.ToolExecuteParams) agent.AutonomyTier {
-			t.asked = params
+		Limit: func(_ context.Context, params *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+			t.asked = *params
 
 			return t.limit
 		},

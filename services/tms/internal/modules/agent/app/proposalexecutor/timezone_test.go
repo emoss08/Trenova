@@ -30,7 +30,7 @@ type zoneTool struct {
 	validatedIn string
 }
 
-func (t *zoneTool) Validate(_ context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *zoneTool) Validate(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.validatedIn = params.Timezone
 
 	return nil

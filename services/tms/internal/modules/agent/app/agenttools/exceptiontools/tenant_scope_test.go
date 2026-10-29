@@ -48,7 +48,7 @@ func (approveOnlyTool) Policy() agenttoolports.ToolPolicy {
 	}
 }
 
-func (approveOnlyTool) Execute(_ context.Context, _ agenttoolports.ToolExecuteParams) error {
+func (approveOnlyTool) Execute(_ context.Context, _ *agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 
@@ -79,7 +79,7 @@ func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	actorOrg := pulid.MustNew("org_")
 	actorBu := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), &agenttoolports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Actor: &permissionports.RequestActor{
@@ -134,7 +134,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 		})).
 		Return(&shipment.Assignment{}, nil)
 
-	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),
@@ -156,7 +156,7 @@ func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	assignments := assignmentportsmock.NewMockAssignmentService(t)
 	tool := movetools.NewAssignMoveTool(assignments, nil)
 
-	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), &agenttoolports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Actor:          agenttoolstest.AgentActorFor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
@@ -181,7 +181,7 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	runID := pulid.MustNew("arun_")
 	subjectID := pulid.MustNew("bqi_")
 
-	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),
@@ -216,7 +216,7 @@ func TestRaiseException_RefusesWithoutARun(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),

@@ -30,11 +30,11 @@ func (f *fakeSubjectRepository) Exists(
 	return f.exists, f.err
 }
 
-func raiseExceptionParams(subjectType string, subjectID pulid.ID) agenttoolports.ToolExecuteParams {
+func raiseExceptionParams(subjectType string, subjectID pulid.ID) *agenttoolports.ToolExecuteParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return agenttoolports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agenttoolstest.AgentActorFor(orgID, buID),

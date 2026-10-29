@@ -181,7 +181,7 @@ type snapshotPreviewTool struct {
 
 func (t *snapshotPreviewTool) Preview(
 	ctx context.Context,
-	_ agenttoolports.ToolExecuteParams,
+	_ *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	t.readOnly = kernelports.IsReadOnly(ctx)
 

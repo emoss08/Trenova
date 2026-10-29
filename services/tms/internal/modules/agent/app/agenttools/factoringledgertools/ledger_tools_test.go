@@ -186,7 +186,7 @@ func (f *fakeLedger) RecordChargeback(
 	return &factoringledgerports.ReserveMovementResult{Submission: f.sub}, nil
 }
 
-func fundingParams(f *fakeLedger, items ...any) agenttoolports.ToolExecuteParams {
+func fundingParams(f *fakeLedger, items ...any) *agenttoolports.ToolExecuteParams {
 	return agenttoolstest.PersonCallParams(map[string]any{
 		paramSubmissionID:         f.sub.ID.String(),
 		factoringkit.ParamVersion: float64(f.sub.Version),

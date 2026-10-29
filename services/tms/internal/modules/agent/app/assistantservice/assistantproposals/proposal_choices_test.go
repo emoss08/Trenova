@@ -39,7 +39,7 @@ func (subsetTool) ParamSchema() map[string]any {
 	}
 }
 func (subsetTool) Policy() agenttoolports.ToolPolicy { return agenttoolports.ToolPolicy{} }
-func (subsetTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
+func (subsetTool) Execute(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return nil
 }
 

@@ -265,7 +265,7 @@ func TestAssignWorkerShift_ATeamGrantReachesOnlyTheTeam(t *testing.T) {
 		teams,
 	)
 	tool := NewAssignWorkerShiftTool(schedules, scope)
-	paramsFor := func(workerID pulid.ID) agenttoolports.ToolExecuteParams {
+	paramsFor := func(workerID pulid.ID) *agenttoolports.ToolExecuteParams {
 		return agenttoolstest.ExecuteParams(map[string]any{
 			toolparams.ParamWorkerID:         workerID.String(),
 			paramShiftTemplateID:             pulid.MustNew("shft_").String(),

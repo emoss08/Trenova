@@ -51,9 +51,9 @@ func (t *recordingTool) Policy() agenttoolports.ToolPolicy {
 	}
 }
 
-func (t *recordingTool) Execute(_ context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *recordingTool) Execute(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.calls++
-	t.lastParams = params
+	t.lastParams = *params
 
 	return t.err
 }

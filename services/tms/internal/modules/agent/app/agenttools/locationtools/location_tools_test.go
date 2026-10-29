@@ -122,7 +122,7 @@ func newLocationFixture() *locationFixture {
 	return fixture
 }
 
-func (f *locationFixture) params(overrides map[string]any) agenttoolports.ToolExecuteParams {
+func (f *locationFixture) params(overrides map[string]any) *agenttoolports.ToolExecuteParams {
 	values := map[string]any{
 		"name":               "Reno Cold Storage",
 		"addressLine1":       "1200 Commerce Way",

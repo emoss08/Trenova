@@ -113,7 +113,7 @@ func homeFixture(t *testing.T) (*fakeHomeLayouts, homeEditor) {
 
 // homeParams is a call as the runtime hands it over: the person's own, with the
 // owner the runtime recorded.
-func homeParams(args map[string]any) agenttoolports.ToolExecuteParams {
+func homeParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.ExecuteParams(args)
 	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	params.Params[agenttoolports.SelfScopeOwnerParam] = params.Actor.UserID.String()

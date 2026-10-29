@@ -141,7 +141,7 @@ func issueParams(
 	item *billingqueue.BillingQueueItem,
 	issue *billingqueue.Issue,
 	option string,
-) agenttoolports.ToolExecuteParams {
+) *agenttoolports.ToolExecuteParams {
 	values := map[string]any{
 		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
 		paramIssueID: issue.ID.String(),

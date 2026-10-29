@@ -186,7 +186,7 @@ func boundedMoneyPolicy() agenttoolports.ToolPolicy {
 	policy := trustPolicy(agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney)
 	policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within bounds.",
-		Bounds: func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+		Bounds: func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 			return agenttoolports.WithinMoneyBound(1, "USD")
 		},
 	}

@@ -199,7 +199,7 @@ func TestLogCheckCall_PreviewOfAnUpdateMatchesWhatIsSaved(t *testing.T) {
 	assert.True(t, agenttoolstest.FieldByPath(t, change, "reportedAt").Volatile)
 	assert.Contains(t, preview.Summary, "running late")
 
-	request, err := tool.request(t.Context(), &params)
+	request, err := tool.request(t.Context(), params)
 	require.NoError(t, err)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireCreateParity(t, change,

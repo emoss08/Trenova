@@ -312,7 +312,7 @@ func (f *FakeDetention) PreviewWaive(
 	return f.Change, nil
 }
 
-func ApprovedParams(params map[string]any) agenttoolports.ToolExecuteParams {
+func ApprovedParams(params map[string]any) *agenttoolports.ToolExecuteParams {
 	execute := ExecuteParams(params)
 	execute.ProposalID = pulid.MustNew("agp_")
 

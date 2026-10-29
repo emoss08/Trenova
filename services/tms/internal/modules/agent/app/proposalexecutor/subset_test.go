@@ -53,7 +53,7 @@ func (t *subsetTool) Policy() agenttoolports.ToolPolicy {
 		Rationale:     "A subset stub.",
 	}
 }
-func (t *subsetTool) Execute(_ context.Context, params agenttoolports.ToolExecuteParams) error {
+func (t *subsetTool) Execute(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil

@@ -36,7 +36,7 @@ func ReviewedItem(status billingqueue.Status) *billingqueue.BillingQueueItem {
 	}
 }
 
-func AgentParamsFor(params map[string]any) agenttoolports.ToolExecuteParams {
+func AgentParamsFor(params map[string]any) *agenttoolports.ToolExecuteParams {
 	out := ExecuteParams(params)
 	out.Actor = AgentActorFor(out.OrganizationID, out.BusinessUnitID)
 

@@ -51,9 +51,10 @@ func pinnedIDs(t *testing.T, params map[string]any) []string {
 	return ids
 }
 
-func approvedFrom(params agenttoolports.ToolExecuteParams) agenttoolports.ToolExecuteParams {
-	params.ProposalID = pulid.MustNew("ap_")
-	return params
+func approvedFrom(params *agenttoolports.ToolExecuteParams) *agenttoolports.ToolExecuteParams {
+	approved := *params
+	approved.ProposalID = pulid.MustNew("ap_")
+	return &approved
 }
 
 func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *testing.T) {

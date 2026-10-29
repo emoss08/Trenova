@@ -213,6 +213,7 @@ func TestOpenTurn_AReachedWriteIsDecidedUnderItsHoldersCeiling(t *testing.T) {
 
 	decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
 		Policy:        (&agenttest.StubActionTool{ToolName: "invoice_post", Tier: agent.TierAutoExecute}).Policy(),
+		Params:        &agenttoolports.ToolExecuteParams{},
 		Definition:    dispatch,
 		HolderCeiling: call.Beyond,
 	})

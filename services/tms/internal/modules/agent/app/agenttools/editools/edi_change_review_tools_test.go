@@ -206,14 +206,14 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 		paramEDIReviewDecision: reviewApply,
 	}
 	params.Params = args
-	proposing := params
+	proposing := *params
 	proposing.ProposalID = pulid.Nil
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		changes.guard,
 		func() (*agentpreview.ToolPreview, error) {
-			return tool.Preview(t.Context(), proposing)
+			return tool.Preview(t.Context(), &proposing)
 		},
 	)
 	status := agenttoolstest.PreviewChange(t, preview, 0)
@@ -226,8 +226,8 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 	assert.EqualValues(t, 20000, weight.Before)
 	assert.EqualValues(t, 42000, weight.After)
 
-	require.NoError(t, tool.Validate(t.Context(), proposing))
-	require.ErrorIs(t, tool.Execute(t.Context(), proposing), ErrEDIDecisionNeedsAPerson)
+	require.NoError(t, tool.Validate(t.Context(), &proposing))
+	require.ErrorIs(t, tool.Execute(t.Context(), &proposing), ErrEDIDecisionNeedsAPerson)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, changes.applied)
 	assert.Equal(t, changes.change.ID, changes.applied.ChangeID)
@@ -257,18 +257,18 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 			mutate(change)
 			fake := &fakeTenderChanges{change: change, guard: &agenttoolstest.WriteGuard{}}
 			tool := NewReviewEDITenderChangeTool(fake).(*EdiChangeReviewTool)
-			call := params
+			call := *params
 			call.Params = map[string]any{
 				paramEDIChangeID:       change.ID.String(),
 				paramEDIReviewDecision: reviewReject,
 			}
 
-			require.Error(t, tool.Validate(t.Context(), call))
+			require.Error(t, tool.Validate(t.Context(), &call))
 			preview := agenttoolstest.PreviewWithoutWrites(
 				t,
 				fake.guard,
 				func() (*agentpreview.ToolPreview, error) {
-					return tool.Preview(t.Context(), call)
+					return tool.Preview(t.Context(), &call)
 				},
 			)
 			agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
@@ -335,9 +335,9 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	)
 	require.Len(t, rejectPreview.Changes, 1, "a rejection leaves the shipment alone")
 
-	approved := rejected
+	approved := *rejected
 	approved.ProposalID = pulid.MustNew("agp_")
-	require.NoError(t, tool.Execute(t.Context(), approved))
+	require.NoError(t, tool.Execute(t.Context(), &approved))
 	require.NotNil(t, changes.refused)
 	assert.Equal(t, "The partner's 214 contradicts the driver's arrival", changes.refused.Reason)
 }

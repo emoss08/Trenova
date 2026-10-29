@@ -17,7 +17,7 @@ import (
 )
 
 func moneyPolicy(
-	bounds func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound,
+	bounds func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound,
 ) agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:          "receivable_post_customer_payment",
@@ -46,7 +46,7 @@ const functional = "USD"
 
 func boundAt(
 	amountMinor int64,
-) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+) func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 	return boundIn(amountMinor, functional)
 }
 
@@ -54,8 +54,8 @@ func boundIn(
 	amountMinor int64,
 	currency string,
 	reread ...agentrecord.RecordRef,
-) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
-	return func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+) func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		bound := agenttoolports.WithinMoneyBound(amountMinor, currency)
 		for _, ref := range reread {
 			bound = bound.Rereading(agent.TaintSourceBankReceipt, ref)
@@ -67,8 +67,8 @@ func boundIn(
 
 func outside(
 	held string,
-) func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
-	return func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+) func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		return agenttoolports.OutsideMoneyBound(held)
 	}
 }
@@ -283,7 +283,7 @@ func TestDecide_MoneyRunsOnItsOwnOnlyWithinBounds(t *testing.T) {
 func TestDecide_MoneyBoundsAreNotReadForACallAlreadyHeld(t *testing.T) {
 	t.Parallel()
 
-	unread := func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	unread := func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		t.Error("bounds were read for a call that could not run on its own")
 		return agenttoolports.MoneyBound{}
 	}
@@ -318,7 +318,7 @@ func TestDecide_ABoundedMoneyCallHeldByItsOwnLimitRecordsNoAmount(t *testing.T) 
 	t.Parallel()
 
 	policy := moneyPolicy(boundAt(10))
-	policy.Condition.Limit = func(context.Context, agenttoolports.ToolExecuteParams) agent.AutonomyTier {
+	policy.Condition.Limit = func(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 		return agent.TierPropose
 	}
 
@@ -370,7 +370,7 @@ func receiptAndWebRead() *agent.RunTaint {
 }
 
 func vouchingPolicy(
-	bounds func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound,
+	bounds func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound,
 ) agenttoolports.ToolPolicy {
 	policy := moneyPolicy(bounds)
 	policy.Condition.Vouches = []agent.TaintSource{agent.TaintSourceBankReceipt}
@@ -493,7 +493,7 @@ func TestDecide_ABoundThatRereadsTheReceiptVouchesForHavingReadIt(t *testing.T) 
 func TestDecide_ABoundIsNotReadWhenTheRunHoldsContentItCannotVouchFor(t *testing.T) {
 	t.Parallel()
 
-	unread := func(context.Context, agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	unread := func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
 		t.Error("bounds were read for a call held by content they cannot re-read")
 		return agenttoolports.MoneyBound{}
 	}

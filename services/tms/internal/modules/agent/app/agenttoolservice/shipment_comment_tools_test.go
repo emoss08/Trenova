@@ -198,7 +198,7 @@ func (f *fakeCommentModerator) PreviewDelete(
 func commentParams(
 	comments *fakeCommentModerator,
 	extra map[string]any,
-) agenttoolports.ToolExecuteParams {
+) *agenttoolports.ToolExecuteParams {
 	raw := map[string]any{
 		toolparams.ParamShipmentID:          comments.comment().ShipmentID.String(),
 		shipmentcommenttools.ParamCommentID: comments.comment().ID.String(),

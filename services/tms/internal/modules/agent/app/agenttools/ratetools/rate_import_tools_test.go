@@ -108,9 +108,9 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 	require.ErrorIs(t, commit.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Nil(t, imports.committed)
 
-	approved := params
+	approved := *params
 	approved.ProposalID = pulid.MustNew("ap_")
-	require.NoError(t, commit.Execute(t.Context(), approved))
+	require.NoError(t, commit.Execute(t.Context(), &approved))
 	assert.Equal(t, imports.batch.ID, imports.committed.RateImportBatchID)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, commit.Policy().Egress)
 

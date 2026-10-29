@@ -21,8 +21,8 @@ func escalationPolicies() map[string]agenttoolports.ToolPolicy {
 	}
 }
 
-func unattendedCall() agenttoolports.ToolExecuteParams {
-	return agenttoolports.ToolExecuteParams{
+func unattendedCall() *agenttoolports.ToolExecuteParams {
+	return &agenttoolports.ToolExecuteParams{
 		Actor: &permissionports.RequestActor{
 			PrincipalType: permissionports.PrincipalTypeAgent,
 			PrincipalID:   pulid.MustNew("agdef_"),

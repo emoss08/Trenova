@@ -10,7 +10,7 @@ import (
 
 func BoundsOf(t *testing.T, tool agenttoolports.AgentTool) func(
 	context.Context,
-	agenttoolports.ToolExecuteParams,
+	*agenttoolports.ToolExecuteParams,
 ) agenttoolports.MoneyBound {
 	t.Helper()
 

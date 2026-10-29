@@ -79,7 +79,7 @@ func (f *pricingShipments) Create(
 	return entity, nil
 }
 
-func createShipmentParams() agenttoolports.ToolExecuteParams {
+func createShipmentParams() *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipment": shipmentPayload(
 			pulid.MustNew("cust_"),

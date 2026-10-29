@@ -472,9 +472,9 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	)
 	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 
-	approved := params
+	approved := *params
 	approved.ProposalID = pulid.MustNew("ap_")
-	require.NoError(t, approve.Execute(t.Context(), approved))
+	require.NoError(t, approve.Execute(t.Context(), &approved))
 	assert.Equal(t, []rateagreementservice.Review{rateagreementservice.ReviewApprove},
 		agreements.reviewed)
 

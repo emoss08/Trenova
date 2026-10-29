@@ -38,7 +38,7 @@ func (t plainTool) Policy() agenttoolports.ToolPolicy {
 	}
 }
 
-func (t plainTool) Execute(context.Context, agenttoolports.ToolExecuteParams) error {
+func (t plainTool) Execute(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return errors.New("must not run in simulation")
 }
 
@@ -51,7 +51,7 @@ type previewingTool struct {
 
 func (t previewingTool) Preview(
 	ctx context.Context,
-	_ agenttoolports.ToolExecuteParams,
+	_ *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	if t.readOnly != nil {
 		*t.readOnly = kernelports.IsReadOnly(ctx)

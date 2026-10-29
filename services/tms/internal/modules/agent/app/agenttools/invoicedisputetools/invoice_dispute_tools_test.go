@@ -133,7 +133,7 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 	}
 }
 
-func openDisputeParams(invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
+func openDisputeParams(invoiceID pulid.ID) *agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamInvoiceID: invoiceID.String(),
 		paramDisputeReasonCode:    string(invoicedispute.DisputeReasonAccessorialDisputed),

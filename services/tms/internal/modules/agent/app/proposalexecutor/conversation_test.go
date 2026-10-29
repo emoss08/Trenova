@@ -37,7 +37,7 @@ type conversationTool struct {
 
 func (t *conversationTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	t.validatedFor = params.ThreadID
 

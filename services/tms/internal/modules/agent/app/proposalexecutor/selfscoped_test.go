@@ -76,7 +76,7 @@ func (t *ownedSchemaTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ownedSchemaTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	t.validated = params.Params
 

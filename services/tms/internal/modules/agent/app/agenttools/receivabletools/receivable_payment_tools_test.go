@@ -172,7 +172,7 @@ func applyChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 	}
 }
 
-func applyPaymentParams(paymentID, invoiceID pulid.ID) agenttoolports.ToolExecuteParams {
+func applyPaymentParams(paymentID, invoiceID pulid.ID) *agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		ParamCustomerPaymentID:         paymentID.String(),
 		toolparams.ParamAccountingDate: "2026-09-20",
