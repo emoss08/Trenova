@@ -86,7 +86,7 @@ func (t *LinkInboundMessageTool) Preview(
 		MessageRecord(message),
 		message,
 		func(linked *inboundmessage.InboundMessage) error {
-			inboundqueue.ApplyLink(linked, &req)
+			inboundqueue.ApplyLink(linked, req)
 
 			return nil
 		},
@@ -125,7 +125,7 @@ func (t *MarkInboundMessageTool) Preview(
 		MessageRecord(message),
 		message,
 		func(settled *inboundmessage.InboundMessage) error {
-			return inboundqueue.ApplyReview(settled, &review, now)
+			return inboundqueue.ApplyReview(settled, review, now)
 		},
 		toolpreview.Only(inboundReviewFields...),
 		toolpreview.Volatile("reviewedAt"),

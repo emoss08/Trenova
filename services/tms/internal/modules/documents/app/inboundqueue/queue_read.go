@@ -47,9 +47,9 @@ type LinkRequest struct {
 // back into a queue nothing is going to pick it up from.
 func (s *Service) Review(
 	ctx context.Context,
-	req ReviewRequest,
+	req *ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if _, err := reviewNote(&req); err != nil {
+	if _, err := reviewNote(req); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (s *Service) Review(
 	}
 
 	before := queueStateOf(message)
-	if err = ApplyReview(message, &req, timeutils.NowUnix()); err != nil {
+	if err = ApplyReview(message, req, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
 	message.DueAt = 0
@@ -92,7 +92,7 @@ func (s *Service) Review(
 // whole point of storing the reason is that somebody can check it.
 func (s *Service) Link(
 	ctx context.Context,
-	req LinkRequest,
+	req *LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := s.CheckLink(ctx, req); err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (s *Service) Link(
 		return nil, err
 	}
 
-	ApplyLink(message, &req)
+	ApplyLink(message, req)
 
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *Service) Link(
 // CheckLink says whether a link would be accepted, without making it. A desk
 // asks before proposing, so a link to a record that is not there is refused
 // while the call can still be fixed rather than after a person approved it.
-func (s *Service) CheckLink(ctx context.Context, req LinkRequest) error {
+func (s *Service) CheckLink(ctx context.Context, req *LinkRequest) error {
 	reason := strings.TrimSpace(req.Reason)
 	if reason == "" {
 		return errortypes.NewValidationError("reason", errortypes.ErrRequired,
@@ -152,7 +152,7 @@ func (s *Service) CheckLink(ctx context.Context, req LinkRequest) error {
 // about — so this is the only thing standing between a link and an id from
 // another tenant, or one that was never real. A link that cannot be checked is
 // refused rather than stored on trust.
-func (s *Service) verifyLinkTargets(ctx context.Context, req LinkRequest) error {
+func (s *Service) verifyLinkTargets(ctx context.Context, req *LinkRequest) error {
 	checks := []struct {
 		field  string
 		id     pulid.ID

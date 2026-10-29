@@ -57,17 +57,15 @@ func (r *inboundMessageRepository) GetByID(
 	return r.desk.GetByID(ctx, req)
 }
 
-//nolint:gocritic // the inbound tools' message desk port takes the request by value
-func (d *inboundDesk) CheckLink(_ context.Context, req inboundqueue.LinkRequest) error {
+func (d *inboundDesk) CheckLink(_ context.Context, req *inboundqueue.LinkRequest) error {
 	d.rec.read(ReadInboundBox, "CheckLink", req.TenantInfo)
 
 	return nil
 }
 
-//nolint:gocritic // the inbound tools' message desk port takes the request by value
 func (d *inboundDesk) Link(
 	ctx context.Context,
-	req inboundqueue.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
@@ -75,10 +73,9 @@ func (d *inboundDesk) Link(
 	})
 }
 
-//nolint:gocritic // the inbound tools' message desk port takes the request by value
 func (d *inboundDesk) Review(
 	ctx context.Context,
-	req inboundqueue.ReviewRequest,
+	req *inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,

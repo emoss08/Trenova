@@ -83,7 +83,7 @@ func (s *Service) ReceiveWebhook(
 		BusinessUnitID: mailbox.BusinessUnitID,
 	})
 
-	if err = s.verify(ctx, mailbox, req); err != nil {
+	if err = s.verify(mailbox, req); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +140,6 @@ func (s *Service) resolveMailbox(
 }
 
 func (s *Service) verify(
-	ctx context.Context,
 	mailbox *inboundmessage.Mailbox,
 	req *ReceiveWebhookRequest,
 ) error {

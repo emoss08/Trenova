@@ -33,13 +33,13 @@ func (d *savingInboundDesk) GetByID(
 	return &copied, nil
 }
 
-func (d *savingInboundDesk) CheckLink(context.Context, inboundqueue.LinkRequest) error {
+func (d *savingInboundDesk) CheckLink(context.Context, *inboundqueue.LinkRequest) error {
 	return d.linkErr
 }
 
 func (d *savingInboundDesk) Link(
 	_ context.Context,
-	req inboundqueue.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := d.guard.Write(); err != nil {
 		return nil, err
@@ -47,19 +47,19 @@ func (d *savingInboundDesk) Link(
 	if d.linkErr != nil {
 		return nil, d.linkErr
 	}
-	inboundqueue.ApplyLink(d.message, &req)
+	inboundqueue.ApplyLink(d.message, req)
 
 	return d.message, nil
 }
 
 func (d *savingInboundDesk) Review(
 	_ context.Context,
-	req inboundqueue.ReviewRequest,
+	req *inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := d.guard.Write(); err != nil {
 		return nil, err
 	}
-	if err := inboundqueue.ApplyReview(d.message, &req, timeutils.NowUnix()); err != nil {
+	if err := inboundqueue.ApplyReview(d.message, req, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
 

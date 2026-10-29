@@ -71,14 +71,14 @@ type MessageReader interface {
 
 type inboundMessageDesk interface {
 	MessageReader
-	CheckLink(ctx context.Context, req inboundqueue.LinkRequest) error
+	CheckLink(ctx context.Context, req *inboundqueue.LinkRequest) error
 	Link(
 		ctx context.Context,
-		req inboundqueue.LinkRequest,
+		req *inboundqueue.LinkRequest,
 	) (*inboundmessage.InboundMessage, error)
 	Review(
 		ctx context.Context,
-		req inboundqueue.ReviewRequest,
+		req *inboundqueue.ReviewRequest,
 	) (*inboundmessage.InboundMessage, error)
 }
 
@@ -213,13 +213,13 @@ func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.T
 
 func (t *LinkInboundMessageTool) request(
 	params agenttoolports.ToolExecuteParams,
-) (inboundqueue.LinkRequest, error) {
+) (*inboundqueue.LinkRequest, error) {
 	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
-		return inboundqueue.LinkRequest{}, err
+		return nil, err
 	}
 
-	req := inboundqueue.LinkRequest{
+	req := &inboundqueue.LinkRequest{
 		MessageID:  messageID,
 		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
@@ -234,7 +234,7 @@ func (t *LinkInboundMessageTool) request(
 			continue
 		}
 		if *target, err = toolparams.RequirePulid(params.Params, key); err != nil {
-			return inboundqueue.LinkRequest{}, err
+			return nil, err
 		}
 	}
 
@@ -418,8 +418,8 @@ func reviewRequest(
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
-) inboundqueue.ReviewRequest {
-	return inboundqueue.ReviewRequest{
+) *inboundqueue.ReviewRequest {
+	return &inboundqueue.ReviewRequest{
 		MessageID:  message.ID,
 		TenantInfo: toolparams.TenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
@@ -627,7 +627,7 @@ func (t *ReplyToInboundMessageTool) Execute(
 		return err
 	}
 
-	if _, err = t.inbox.Review(ctx, inboundqueue.ReviewRequest{
+	if _, err = t.inbox.Review(ctx, &inboundqueue.ReviewRequest{
 		MessageID:  composed.reply.message.ID,
 		TenantInfo: composed.send.TenantInfo,
 		ReviewerID: params.Actor.UserID,

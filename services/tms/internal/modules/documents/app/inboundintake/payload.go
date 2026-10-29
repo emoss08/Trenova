@@ -68,7 +68,7 @@ func boundedText(body string) string {
 	// *and* a lead byte whose continuations were cut off — the second is the
 	// one that is easy to miss, and it leaves the column holding text no reader
 	// can decode.
-	for len(cut) > 0 {
+	for cut != "" {
 		if r, size := utf8.DecodeLastRuneInString(cut); r != utf8.RuneError || size > 1 {
 			break
 		}

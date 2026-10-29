@@ -43,25 +43,25 @@ func (f *fakeInboundDesk) GetByID(
 
 func (f *fakeInboundDesk) CheckLink(
 	_ context.Context,
-	req inboundqueue.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) error {
-	f.checked = &req
+	f.checked = req
 	return f.linkErr
 }
 
 func (f *fakeInboundDesk) Link(
 	_ context.Context,
-	req inboundqueue.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	f.linked = &req
+	f.linked = req
 	return f.message, f.linkErr
 }
 
 func (f *fakeInboundDesk) Review(
 	_ context.Context,
-	req inboundqueue.ReviewRequest,
+	req *inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	f.reviewed = &req
+	f.reviewed = req
 	return f.message, nil
 }
 

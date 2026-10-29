@@ -170,7 +170,7 @@ func (r *MutationResolver) ReviewInboundMessage(ctx context.Context, id string, 
 		return nil, err
 	}
 
-	req := inboundqueue.ReviewRequest{
+	req := &inboundqueue.ReviewRequest{
 		MessageID:  messageID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ReviewerID: actorutil.FromAuthContext(authCtx).UserID,
@@ -196,7 +196,7 @@ func (r *MutationResolver) LinkInboundMessage(ctx context.Context, id string, in
 		return nil, err
 	}
 
-	req := inboundqueue.LinkRequest{
+	req := &inboundqueue.LinkRequest{
 		MessageID:  messageID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ReviewerID: actorutil.FromAuthContext(authCtx).UserID,

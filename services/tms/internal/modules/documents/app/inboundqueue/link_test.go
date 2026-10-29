@@ -71,7 +71,7 @@ func TestLink_StoresRecordsThatExistWithTheReason(t *testing.T) {
 	req.ShipmentID = shipmentID
 	req.CustomerID = customerID
 
-	_, err := linker(repo, shipmentID, customerID).queue().Link(t.Context(), req)
+	_, err := linker(repo, shipmentID, customerID).queue().Link(t.Context(), &req)
 	require.NoError(t, err)
 
 	require.NotNil(t, repo.updated)
@@ -105,7 +105,7 @@ func TestLink_RefusesARecordTheTenantDoesNotHave(t *testing.T) {
 			req := linkRequest()
 			tc.set(&req, pulid.MustNew("xyz_"))
 
-			_, err := linker(repo).queue().Link(t.Context(), req)
+			_, err := linker(repo).queue().Link(t.Context(), &req)
 
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
@@ -123,7 +123,7 @@ func TestLink_RefusesRatherThanTrustsWhenItCannotCheck(t *testing.T) {
 	req := linkRequest()
 	req.ShipmentID = pulid.MustNew("shp_")
 
-	_, err := svc.queue().Link(t.Context(), req)
+	_, err := svc.queue().Link(t.Context(), &req)
 
 	require.Error(t, err)
 	assert.Nil(t, repo.updated)

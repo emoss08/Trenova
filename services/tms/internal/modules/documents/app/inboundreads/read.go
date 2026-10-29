@@ -169,7 +169,7 @@ func foldReview(counts *Counts, row *inboundmessageports.InboundMessageCount) {
 	}
 }
 
-func waitingCount(row inboundmessageports.InboundMessageCount) int {
+func waitingCount(row *inboundmessageports.InboundMessageCount) int {
 	if (row.Status == inboundmessage.StatusInReview ||
 		row.Status == inboundmessage.StatusQuarantined) && row.Parked == "" {
 		return row.Count
@@ -196,7 +196,7 @@ func countByClassification(rows []inboundmessageports.InboundMessageCount) []Cla
 			continue
 		}
 		counts[idx].Total += row.Count
-		counts[idx].Waiting += waitingCount(row)
+		counts[idx].Waiting += waitingCount(&row)
 	}
 
 	return counts
@@ -215,7 +215,7 @@ func countByMailbox(rows []inboundmessageports.InboundMessageCount) []MailboxCou
 			counts = append(counts, MailboxCount{MailboxID: row.MailboxID})
 		}
 		counts[idx].Total += row.Count
-		counts[idx].Waiting += waitingCount(row)
+		counts[idx].Waiting += waitingCount(&row)
 	}
 
 	slices.SortFunc(counts, func(a, b MailboxCount) int {

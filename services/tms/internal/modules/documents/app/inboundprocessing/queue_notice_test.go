@@ -21,7 +21,7 @@ func TestReview_MovesAnOpenInbox(t *testing.T) {
 	}
 	svc, notifier, realtime := noticed(repo, "")
 
-	_, err := svc.queue().Review(t.Context(), inboundqueue.ReviewRequest{
+	_, err := svc.queue().Review(t.Context(), &inboundqueue.ReviewRequest{
 		MessageID: repo.Message.ID,
 		Status:    inboundmessage.StatusActioned,
 	})
