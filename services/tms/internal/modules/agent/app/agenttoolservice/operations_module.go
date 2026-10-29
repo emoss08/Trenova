@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -51,7 +50,7 @@ func operationsToolProviders() []any {
 		provideUpdateServiceFailureTool,
 		provideReviewServiceFailureTool,
 		provideVoidServiceFailureTool,
-		provideDisputeDetentionTool,
+		receivabletools.ProvideDisputeDetentionTool,
 		provideCreateOrderTool,
 		provideUpdateOrderTool,
 		provideAttachOrderShipmentsTool,
@@ -178,10 +177,6 @@ func provideVoidServiceFailureTool(
 	failures servicefailureports.ServiceFailureService,
 ) agenttoolports.AgentTool {
 	return servicetools.NewVoidServiceFailureTool(failures)
-}
-
-func provideDisputeDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
-	return receivabletools.NewDisputeDetentionTool(detentions)
 }
 
 func provideCreateOrderTool(orders *orderservice.Service) agenttoolports.AgentTool {

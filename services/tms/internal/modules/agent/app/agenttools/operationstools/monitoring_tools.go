@@ -407,6 +407,12 @@ func NewSendDetentionNoticeTool(detentions detentionNoticeSender) agenttoolports
 	return &SendDetentionNoticeTool{detention: detentions}
 }
 
+func ProvideSendDetentionNoticeTool(
+	detentions *detentionnoticeservice.Service,
+) agenttoolports.AgentTool {
+	return NewSendDetentionNoticeTool(detentions)
+}
+
 func (t *SendDetentionNoticeTool) Name() string { return "detention_send_notice" }
 
 func (t *SendDetentionNoticeTool) Prerequisites() []string {
@@ -495,6 +501,10 @@ type WaiveDetentionTool struct {
 
 func NewWaiveDetentionTool(detentions detentionWaiver) agenttoolports.AgentTool {
 	return &WaiveDetentionTool{detention: detentions}
+}
+
+func ProvideWaiveDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
+	return NewWaiveDetentionTool(detentions)
 }
 
 func (t *WaiveDetentionTool) Name() string { return "detention_waive" }

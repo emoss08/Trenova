@@ -74,6 +74,10 @@ func NewEscalateDetentionTool(escalator detentionEscalator) agenttoolports.Agent
 	return &EscalateDetentionTool{detention: escalator}
 }
 
+func ProvideEscalateDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
+	return NewEscalateDetentionTool(detentions)
+}
+
 func (t *EscalateDetentionTool) Name() string { return "detention_escalate" }
 
 func (t *EscalateDetentionTool) Recipe() []string {
@@ -224,6 +228,10 @@ type ApproveDetentionTool struct {
 
 func NewApproveDetentionTool(approver detentionApprover) agenttoolports.AgentTool {
 	return &ApproveDetentionTool{detention: approver}
+}
+
+func ProvideApproveDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
+	return NewApproveDetentionTool(detentions)
 }
 
 func (t *ApproveDetentionTool) Name() string { return "detention_approve" }

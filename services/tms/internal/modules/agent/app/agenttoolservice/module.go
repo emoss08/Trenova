@@ -81,8 +81,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
@@ -201,8 +199,8 @@ func ToolProviders() []any {
 		triageworktools.NewSettleDetentionDisputeTool,
 		triageworktools.NewResolveInboundConflictTool,
 		triageworktools.NewReopenInboundConflictTool,
-		provideSendDetentionNoticeTool,
-		provideWaiveDetentionTool,
+		operationstools.ProvideSendDetentionNoticeTool,
+		operationstools.ProvideWaiveDetentionTool,
 		provideCreateShipmentTool,
 		provideUpdateShipmentTool,
 		provideRescheduleStopTool,
@@ -243,8 +241,8 @@ func ToolProviders() []any {
 		provideMatchBankReceiptTool,
 		providePostCustomerPaymentTool,
 		provideResolveBankReceiptWorkItemTool,
-		provideEscalateDetentionTool,
-		provideApproveDetentionTool,
+		findingtools.ProvideEscalateDetentionTool,
+		findingtools.ProvideApproveDetentionTool,
 		provideRequestCredentialRenewalTool,
 		providePlaceWorkerDispatchHoldTool,
 		provideAcknowledgeCarrierIntelEventTool,
@@ -323,16 +321,6 @@ func provideResolveServiceFailureTool(
 
 func provideNotifyDriverTool(drivers *drivernotificationservice.Service) agenttoolports.AgentTool {
 	return operationstools.NewNotifyDriverTool(drivers)
-}
-
-func provideSendDetentionNoticeTool(
-	detention *detentionnoticeservice.Service,
-) agenttoolports.AgentTool {
-	return operationstools.NewSendDetentionNoticeTool(detention)
-}
-
-func provideWaiveDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
-	return operationstools.NewWaiveDetentionTool(detention)
 }
 
 type intakeToolParams struct {
@@ -431,10 +419,6 @@ func provideResolveBankReceiptWorkItemTool(
 	return bankreceipttools.NewResolveBankReceiptWorkItemTool(items)
 }
 
-func provideEscalateDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
-	return findingtools.NewEscalateDetentionTool(detention)
-}
-
 func provideTransferToBillingTool(
 	shipments shipmentserviceports.ShipmentService,
 	runs *billingtransferservice.Service,
@@ -497,10 +481,6 @@ func provideApproveBillingQueueItemsTool(
 	invoices *invoicecreationservice.Service,
 ) agenttoolports.AgentTool {
 	return invoicetools.NewApproveBillingQueueItemsTool(billing, invoices)
-}
-
-func provideApproveDetentionTool(detention *detentionreview.Service) agenttoolports.AgentTool {
-	return findingtools.NewApproveDetentionTool(detention)
 }
 
 func provideRequestCredentialRenewalTool(

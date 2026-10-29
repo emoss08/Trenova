@@ -124,3 +124,7 @@ func NewDisputeDetentionTool(
 		},
 	})
 }
+
+func ProvideDisputeDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
+	return NewDisputeDetentionTool(detentions)
+}
