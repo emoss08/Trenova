@@ -36,7 +36,7 @@ func (t *TransitionToInReviewTool) Preview(
 		move.plan(params.Actor, timeutils.NowUnix()),
 		toolpreview.Only(inReviewFields...),
 		toolpreview.Volatile(inReviewVolatileFields...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
 		return nil, err

@@ -1,7 +1,7 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingissuetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
@@ -33,19 +33,19 @@ func provideReleaseBillingQueueItemTool(
 	billing billingqueueports.BillingQueueService,
 	review billingqueueports.BillingQueueReviewService,
 ) agenttoolports.AgentTool {
-	return billingtools.NewReleaseBillingQueueItemTool(billing, review)
+	return billingissuetools.NewReleaseBillingQueueItemTool(billing, review)
 }
 
 func provideResolveBillingQueueIssueTool(
 	review billingqueueports.BillingQueueReviewService,
 ) agenttoolports.AgentTool {
-	return billingtools.NewResolveBillingQueueIssueTool(review)
+	return billingissuetools.NewResolveBillingQueueIssueTool(review)
 }
 
 func provideUndoBillingQueueIssueTool(
 	review billingqueueports.BillingQueueReviewService,
 ) agenttoolports.AgentTool {
-	return billingtools.NewUndoBillingQueueIssueTool(review)
+	return billingissuetools.NewUndoBillingQueueIssueTool(review)
 }
 
 func provideLogCollectionActivityTool(

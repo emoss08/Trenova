@@ -1,10 +1,11 @@
-package billingtools
+package billingtransfertools
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/allocationparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -56,7 +57,7 @@ type chargeReassigner interface {
 func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "billing_reassign_charge",
-		Artifact: billingQueueRecordEntity,
+		Artifact: billingqueuepreview.BillingQueueRecordEntity,
 		Description: "Move who pays one charge on a shipment in billing review: its freight " +
 			"or one accessorial, whole to another payer or split among several. A payer " +
 			"who gains a share gets a queue item and one left with nothing has theirs " +
@@ -125,7 +126,10 @@ func NewReassignBillingChargeTool(billing chargeReassigner) agenttoolports.Agent
 				Action: "charge reassigned",
 				Kind:   "billing queue item",
 				IDs:    map[string]string{toolparams.ParamItemID: req.ItemID.String()},
-				Record: changepreview.RecordOf(billingQueueRecordEntity, req.ItemID),
+				Record: changepreview.RecordOf(
+					billingqueuepreview.BillingQueueRecordEntity,
+					req.ItemID,
+				),
 			}
 			if result != nil {
 				out.Name = fmt.Sprintf(
@@ -289,7 +293,7 @@ type transferRunCall struct {
 func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "billing_manage_transfer_run",
-		Artifact: billingQueueRecordEntity,
+		Artifact: billingqueuepreview.BillingQueueRecordEntity,
 		Description: "Stop a background transfer to billing that is still running, or " +
 			"Retry the shipments a finished one could not transfer. Take the run id from " +
 			"billing_transfer's result. Only the person who started a transfer can stop " +

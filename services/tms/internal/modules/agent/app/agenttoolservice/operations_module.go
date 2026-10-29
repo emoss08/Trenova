@@ -1,7 +1,7 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ordertools"
@@ -334,11 +334,11 @@ func provideVerifyCarrierEquipmentTool(
 func provideReassignBillingChargeTool(
 	billing billingqueueports.BillingQueueService,
 ) agenttoolports.AgentTool {
-	return billingtools.NewReassignBillingChargeTool(billing)
+	return billingtransfertools.NewReassignBillingChargeTool(billing)
 }
 
 func provideManageBillingTransferRunTool(
 	runs *billingtransferservice.Service,
 ) agenttoolports.AgentTool {
-	return billingtools.NewManageBillingTransferRunTool(runs)
+	return billingtransfertools.NewManageBillingTransferRunTool(runs)
 }

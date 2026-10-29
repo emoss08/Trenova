@@ -1,4 +1,4 @@
-package billingtools
+package billingissuetools
 
 import (
 	"context"
@@ -31,7 +31,6 @@ const (
 	toolReleaseBillingQueueItem  = "billing_release_queue_item"
 	toolResolveBillingQueueIssue = "billing_resolve_issue"
 	toolUndoBillingQueueIssue    = "billing_undo_issue"
-	toolGetBillingQueueItem      = "billing_get_queue_item"
 	toolListBillingQueueItems    = "billing_list_queue_items"
 	paramIssueID                 = "issueId"
 	paramOptionKey               = "optionKey"
@@ -115,7 +114,7 @@ func newReleaseBillingQueueItemTool(
 			Name: toolReleaseBillingQueueItem,
 			Recipe: []string{
 				toolListBillingQueueItems,
-				toolGetBillingQueueItem,
+				billingqueuepreview.ToolGetBillingQueueItem,
 				toolReleaseBillingQueueItem,
 			},
 			Description: "Take a billing queue item off hold and back to the status the hold " +
@@ -134,7 +133,7 @@ func newReleaseBillingQueueItemTool(
 			Rationale: "Moves an item back into the review queue inside Trenova; it creates no " +
 				"money and billing_hold_queue_item puts it back on hold.",
 			Target:   queueTarget,
-			Artifact: billingQueueRecordEntity,
+			Artifact: billingqueuepreview.BillingQueueRecordEntity,
 			Properties: map[string]any{
 				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
 			},
@@ -178,10 +177,10 @@ func newReleaseBillingQueueItemTool(
 					toolpreview.Only(
 						changepreview.FieldStatus,
 						"holdReasonCode",
-						fieldReviewStartedAt,
+						billingqueuepreview.FieldReviewStartedAt,
 					),
-					toolpreview.Volatile(decisionVolatile...),
-					toolpreview.WithRefs(decisionRefs),
+					toolpreview.Volatile(billingqueuepreview.DecisionVolatile...),
+					toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 				)
 				if err != nil {
 					return nil, err
@@ -256,8 +255,11 @@ func queueItemResult(
 		Kind:   "billing queue item",
 		Name:   item.Number,
 		IDs:    map[string]string{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
-		Record: &agentrecord.RecordRef{EntityType: billingQueueRecordEntity, ID: item.ID.String()},
-		State:  string(item.Status),
+		Record: &agentrecord.RecordRef{
+			EntityType: billingqueuepreview.BillingQueueRecordEntity,
+			ID:         item.ID.String(),
+		},
+		State: string(item.Status),
 	}
 }
 
@@ -389,9 +391,12 @@ func NewResolveBillingQueueIssueTool(
 func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:          toolResolveBillingQueueIssue,
-			Recipe:        []string{toolGetBillingQueueItem, toolResolveBillingQueueIssue},
-			Prerequisites: []string{toolGetBillingQueueItem},
+			Name: toolResolveBillingQueueIssue,
+			Recipe: []string{
+				billingqueuepreview.ToolGetBillingQueueItem,
+				toolResolveBillingQueueIssue,
+			},
+			Prerequisites: []string{billingqueuepreview.ToolGetBillingQueueItem},
 			Description: "Propose settling one of a billing queue item's flagged checks with " +
 				"one of the choices that check offers. A choice bills a charge as it stands, " +
 				"takes it off, reprices it, bills without the paperwork, or asks the driver for " +
@@ -413,7 +418,7 @@ func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentT
 				"the driver for paperwork, so only a person settles it; billing_undo_issue " +
 				"takes it back.",
 			Target:   queueTarget,
-			Artifact: billingQueueRecordEntity,
+			Artifact: billingqueuepreview.BillingQueueRecordEntity,
 			Properties: map[string]any{
 				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
 				paramIssueID: issueProperty(),
@@ -570,9 +575,12 @@ func NewUndoBillingQueueIssueTool(
 func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:          toolUndoBillingQueueIssue,
-			Recipe:        []string{toolGetBillingQueueItem, toolUndoBillingQueueIssue},
-			Prerequisites: []string{toolGetBillingQueueItem},
+			Name: toolUndoBillingQueueIssue,
+			Recipe: []string{
+				billingqueuepreview.ToolGetBillingQueueItem,
+				toolUndoBillingQueueIssue,
+			},
+			Prerequisites: []string{billingqueuepreview.ToolGetBillingQueueItem},
 			Description: "Propose taking back how one of a billing queue item's checks was " +
 				"settled. The check is open again and any charge the settlement removed or " +
 				"repriced is put back as it was. billing_get_queue_item lists each check's " +
@@ -589,7 +597,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 			Rationale: "Puts back a charge a settlement removed or repriced, which changes what " +
 				"the customer is billed, so only a person decides.",
 			Target:   queueTarget,
-			Artifact: billingQueueRecordEntity,
+			Artifact: billingqueuepreview.BillingQueueRecordEntity,
 			Properties: map[string]any{
 				billingqueuepreview.ParamBillingQueueItemID: queueItemProperty(),
 				paramIssueID: issueProperty(),

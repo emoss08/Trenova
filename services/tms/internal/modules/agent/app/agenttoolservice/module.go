@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/bankreceipttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
@@ -423,7 +424,7 @@ func provideTransferToBillingTool(
 	shipments shipmentserviceports.ShipmentService,
 	runs *billingtransferservice.Service,
 ) agenttoolports.AgentTool {
-	return billingtools.NewTransferToBillingTool(shipments, runs)
+	return billingtransfertools.NewTransferToBillingTool(shipments, runs)
 }
 
 func provideSendBackToOpsTool(

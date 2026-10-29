@@ -1,4 +1,4 @@
-package billingtools
+package billingtransfertools
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -32,10 +33,6 @@ const paramAllTransferable = "allTransferable"
 const paramMarkCompletedReady = "markCompletedReadyToInvoice"
 
 const resultRunID = "billingTransferRunId"
-
-// billingQueueRecordEntity is the record-link registry's name for a
-// billing queue item, which a transfer makes one of per payer.
-const billingQueueRecordEntity = "billing_queue_item"
 
 const maxResultFailures = 3
 
@@ -166,7 +163,7 @@ func (t *TransferToBillingTool) Policy() agenttoolports.ToolPolicy {
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
 		Effect:        agenttooltrust.ToolEffectChange,
-		Artifact:      billingQueueRecordEntity,
+		Artifact:      billingqueuepreview.BillingQueueRecordEntity,
 		Reversible:    true,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Hands delivered shipments to the billing queue inside Trenova, by the " +

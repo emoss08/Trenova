@@ -1,4 +1,4 @@
-package billingtools
+package billingtransfertools
 
 import (
 	"testing"

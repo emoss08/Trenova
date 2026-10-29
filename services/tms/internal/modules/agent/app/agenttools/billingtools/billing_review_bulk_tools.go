@@ -81,7 +81,7 @@ func (t *AssignBillersTool) Name() string { return toolAssignBiller }
 func (t *AssignBillersTool) Recipe() []string {
 	return []string{
 		"billing_list_queue_items",
-		toolGetBillingQueueItem,
+		billingqueuepreview.ToolGetBillingQueueItem,
 		toolAssignBiller,
 	}
 }

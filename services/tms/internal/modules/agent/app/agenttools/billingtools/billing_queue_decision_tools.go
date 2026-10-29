@@ -30,10 +30,6 @@ const paramBillerID = "billerId"
 
 const maxCancelReasonChars = 100
 
-const fieldReviewCompletedAt = "reviewCompletedAt"
-
-const fieldReviewStartedAt = "reviewStartedAt"
-
 // queueDecision is one decision a biller makes on a queue item. The tools
 // differ in the status they move the item to, what they ask for and who may
 // make them; the loading, planning, checking and writing are shared.

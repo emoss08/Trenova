@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
@@ -117,7 +118,7 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireUpdateParity(t, change, &before, item,
 		toolpreview.Only(inReviewFields...), toolpreview.Volatile(inReviewVolatileFields...),
-		toolpreview.WithRefs(decisionRefs))
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs))
 }
 
 // An unattended run is an agent principal, and moving an item into review is

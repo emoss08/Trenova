@@ -32,18 +32,11 @@ var decisionFields = map[billingqueue.Status][]string{
 	billingqueue.StatusApproved: {
 		changepreview.FieldStatus,
 		"reviewNotes",
-		fieldReviewCompletedAt,
+		billingqueuepreview.FieldReviewCompletedAt,
 	},
 	billingqueue.StatusCanceled: {
 		changepreview.FieldStatus, changepreview.FieldCancelReason, changepreview.FieldCanceledByID, "canceledAt",
 	},
-}
-
-var decisionVolatile = []string{fieldReviewCompletedAt, "canceledAt", fieldReviewStartedAt}
-
-var decisionRefs = map[string]permission.Resource{
-	changepreview.FieldCanceledByID: permission.ResourceUser,
-	"assignedBillerId":              permission.ResourceUser,
 }
 
 // planned is the item as the decision leaves it, by the plan Validate and
@@ -74,8 +67,8 @@ func (t *BillingQueueDecisionTool) planned(
 			return approvalBlock(after, req.NewStatus)
 		},
 		toolpreview.Only(decisionFields[t.decision.status]...),
-		toolpreview.Volatile(decisionVolatile...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.Volatile(billingqueuepreview.DecisionVolatile...),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
 		return changepreview.PlannedChange{}, nil, err
@@ -169,9 +162,13 @@ func (t *AssignBillerTool) Preview(
 		func(after *billingqueue.BillingQueueItem) error {
 			return billingqueueservice.PlanAssignBiller(after, req.BillerID, now)
 		},
-		toolpreview.Only("assignedBillerId", changepreview.FieldStatus, fieldReviewStartedAt),
-		toolpreview.Volatile(decisionVolatile...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.Only(
+			"assignedBillerId",
+			changepreview.FieldStatus,
+			billingqueuepreview.FieldReviewStartedAt,
+		),
+		toolpreview.Volatile(billingqueuepreview.DecisionVolatile...),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
 		return nil, err
