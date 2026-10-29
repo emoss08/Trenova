@@ -57,7 +57,7 @@ var mentionKinds = []mentionKind{
 
 func (s *Service) SearchMentions(
 	ctx context.Context,
-	actor permissionports.RequestActor,
+	actor *permissionports.RequestActor,
 	req assistantports.MentionSearchRequest,
 ) ([]assistantports.MentionCandidate, error) {
 	tab := strings.TrimSpace(req.Kind)
@@ -77,7 +77,7 @@ func (s *Service) SearchMentions(
 		limit = mentionLimitAllKinds
 	}
 
-	return s.searchKinds(ctx, &actor, &mentionSearch{
+	return s.searchKinds(ctx, actor, &mentionSearch{
 		query:  req.Query,
 		wanted: wanted,
 		limit:  limit,
@@ -89,7 +89,7 @@ func (s *Service) SearchMentions(
 // follows without counting the rest.
 func (s *Service) SearchMentionPage(
 	ctx context.Context,
-	actor permissionports.RequestActor,
+	actor *permissionports.RequestActor,
 	req assistantports.MentionPageRequest,
 ) (*assistantports.MentionPage, error) {
 	kind := strings.TrimSpace(req.Kind)
@@ -108,7 +108,7 @@ func (s *Service) SearchMentionPage(
 	}
 	limit = min(limit, mentionPageMax)
 
-	rows, err := s.searchKinds(ctx, &actor, &mentionSearch{
+	rows, err := s.searchKinds(ctx, actor, &mentionSearch{
 		query:  req.Query,
 		wanted: mentionKinds[idx : idx+1],
 		limit:  limit + 1,

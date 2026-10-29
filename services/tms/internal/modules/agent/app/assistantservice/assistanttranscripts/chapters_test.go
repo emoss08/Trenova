@@ -102,7 +102,7 @@ func TestTranscript_HeadsEachChapterFromTheConversationsChapters(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: input.Thread.ID},
+		&conversationports.GetThreadRequest{ID: input.Thread.ID},
 	)
 	require.NoError(t, err)
 

@@ -43,7 +43,7 @@ func TestTranscript_RendersADecisionNoteAsADecision(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 
@@ -74,7 +74,7 @@ func TestTranscript_NamesAnEmptyDecisionNote(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 
@@ -106,7 +106,7 @@ func TestTranscript_ListsWhatAnExecutedProposalMade(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 

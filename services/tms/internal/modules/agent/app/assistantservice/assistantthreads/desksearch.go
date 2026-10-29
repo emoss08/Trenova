@@ -32,7 +32,7 @@ var deskSearchKinds = []string{"chat", "chap", "msg", "art", "dec"}
 // With nothing typed it lists recent conversations and artifacts.
 func (s *Service) SearchDesk(
 	ctx context.Context,
-	actor permissionports.RequestActor,
+	actor *permissionports.RequestActor,
 	req assistantports.DeskSearchRequest,
 ) ([]assistantports.DeskSearchResult, error) {
 	kind := strings.TrimSpace(req.Kind)

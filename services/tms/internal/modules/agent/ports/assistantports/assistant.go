@@ -207,29 +207,32 @@ type AssistantService interface {
 		ctx context.Context,
 		req *conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
-	MarkThreadRead(ctx context.Context, req conversationports.GetThreadRequest) error
+	MarkThreadRead(ctx context.Context, req *conversationports.GetThreadRequest) error
 	SearchMentions(
 		ctx context.Context,
-		actor permissionports.RequestActor,
+		actor *permissionports.RequestActor,
 		req MentionSearchRequest,
 	) ([]MentionCandidate, error)
 	SearchMentionPage(
 		ctx context.Context,
-		actor permissionports.RequestActor,
+		actor *permissionports.RequestActor,
 		req MentionPageRequest,
 	) (*MentionPage, error)
 	SearchDesk(
 		ctx context.Context,
-		actor permissionports.RequestActor,
+		actor *permissionports.RequestActor,
 		req DeskSearchRequest,
 	) ([]DeskSearchResult, error)
-	ThreadBudget(ctx context.Context, req conversationports.GetThreadRequest) (*ThreadBudget, error)
+	ThreadBudget(
+		ctx context.Context,
+		req *conversationports.GetThreadRequest,
+	) (*ThreadBudget, error)
 	CommandAvailability(
 		ctx context.Context,
 		req *CommandAvailabilityRequest,
 		actor *permissionports.RequestActor,
 	) (*CommandAvailability, error)
-	RequestMore(ctx context.Context, req RequestMoreRequest) (*RequestMoreResult, error)
+	RequestMore(ctx context.Context, req *RequestMoreRequest) (*RequestMoreResult, error)
 	UpdateThread(
 		ctx context.Context,
 		req *UpdateThreadRequest,
@@ -239,11 +242,11 @@ type AssistantService interface {
 	// projected so no credential leaves the provider record.
 	SelectableProviders(
 		ctx context.Context,
-		actor permissionports.RequestActor,
+		actor *permissionports.RequestActor,
 	) ([]AssistantProviderOption, error)
 	ListMessages(
 		ctx context.Context,
-		req ListThreadMessagesRequest,
+		req *ListThreadMessagesRequest,
 	) (*ThreadMessagesPage, error)
 	DeleteThread(ctx context.Context, req *conversationports.GetThreadRequest) error
 	// StartAsk opens the hidden thread a quick question is answered on. The
@@ -355,7 +358,7 @@ type AssistantTranscriptService interface {
 	// read away from the panel and hand to someone else.
 	Transcript(
 		ctx context.Context,
-		req conversationports.GetThreadRequest,
+		req *conversationports.GetThreadRequest,
 	) (*kernelports.TranscriptFile, error)
 }
 

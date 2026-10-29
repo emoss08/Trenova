@@ -293,17 +293,36 @@ func writeTranscriptMessage(
 	agentName string,
 	trimmed bool,
 ) {
+	if writeTranscriptNote(b, m) {
+		return
+	}
+
+	switch m.Role {
+	case conversation.RoleUser:
+		writeUserMessage(b, m, trimmed)
+	case conversation.RoleAssistant:
+		writeAssistantMessage(b, m, agentName, trimmed)
+	case conversation.RoleTool:
+		writeToolMessage(b, m, trimmed)
+	default:
+		fmt.Fprintf(b, "## %s · %s\n\n", m.Role, transcriptTime(m.CreatedAt))
+		writeTrimmed(b, trimmed)
+		writeText(b, m.Content)
+	}
+}
+
+func writeTranscriptNote(b *strings.Builder, m *conversation.Message) bool {
 	if m.Role == conversation.RoleUser && m.Kind == conversation.MessageKindDecisionNote {
 		writeTranscriptDecision(b, m)
 
-		return
+		return true
 	}
 	if m.Compacted() {
 		fmt.Fprintf(b, "## Conversation compacted · %s\n\n", transcriptTime(m.CreatedAt))
 		fmt.Fprintf(b, "_%d earlier messages summarized_\n\n", m.Compaction.Summarized)
 		writeText(b, m.Content)
 
-		return
+		return true
 	}
 	// The brief that opens a handed-off conversation is the application's
 	// words to the agent, not the person's, so it reads as a note.
@@ -312,7 +331,7 @@ func writeTranscriptMessage(
 			transcriptTime(m.CreatedAt))
 		writeText(b, m.Handoff.Summary)
 
-		return
+		return true
 	}
 
 	// A schedule an agent proposed is the request the person approved, worded
@@ -322,7 +341,7 @@ func writeTranscriptMessage(
 			m.ProposalID, transcriptTime(m.CreatedAt))
 		writeText(b, m.Content)
 
-		return
+		return true
 	}
 
 	if m.Kind == conversation.MessageKindWorldChange {
@@ -330,68 +349,74 @@ func writeTranscriptMessage(
 			transcriptTime(m.CreatedAt))
 		writeText(b, m.Content)
 
-		return
+		return true
 	}
 
-	switch m.Role {
-	case conversation.RoleUser:
-		heading := "You"
-		if m.Kind == conversation.MessageKindSteer {
-			heading = "You, while it worked"
+	return false
+}
+
+func writeUserMessage(b *strings.Builder, m *conversation.Message, trimmed bool) {
+	heading := "You"
+	if m.Kind == conversation.MessageKindSteer {
+		heading = "You, while it worked"
+	}
+	fmt.Fprintf(b, "## %s · %s\n\n", heading, transcriptTime(m.CreatedAt))
+	if m.PageContext != nil && (m.PageContext.Title != "" || m.PageContext.Path != "") {
+		fmt.Fprintf(b, "_On %s_\n\n", describePage(m.PageContext.Title, m.PageContext.Path))
+	}
+	writeRefusal(b, m, "Not answered")
+	writeTrimmed(b, trimmed)
+	writeText(b, m.Content)
+}
+
+func writeAssistantMessage(
+	b *strings.Builder,
+	m *conversation.Message,
+	agentName string,
+	trimmed bool,
+) {
+	fmt.Fprintf(b, "## %s · %s", agentName, transcriptTime(m.CreatedAt))
+	for _, part := range assistantMeta(m) {
+		b.WriteString(" · ")
+		b.WriteString(part)
+	}
+	b.WriteString("\n\n")
+	writeRefusal(b, m, "Reply withheld")
+	writeTrimmed(b, trimmed)
+	if m.Reasoning.Readable() {
+		b.WriteString("<details>\n<summary>Reasoning</summary>\n\n")
+		writeQuoted(b, m.Reasoning.Text)
+		b.WriteString("\n</details>\n\n")
+	}
+	// A transcript cannot open an artifact, so a link to one keeps its words.
+	writeText(b, replycheck.StripArtifactLinks(m.Content))
+	for _, call := range m.ToolCalls {
+		fmt.Fprintf(b, "**Called `%s`**\n\n", call.Name)
+		if !trimmed || call.Arguments != nil {
+			writeJSON(b, call.Arguments)
 		}
-		fmt.Fprintf(b, "## %s · %s\n\n", heading, transcriptTime(m.CreatedAt))
-		if m.PageContext != nil && (m.PageContext.Title != "" || m.PageContext.Path != "") {
-			fmt.Fprintf(b, "_On %s_\n\n", describePage(m.PageContext.Title, m.PageContext.Path))
-		}
-		writeRefusal(b, m, "Not answered")
-		writeTrimmed(b, trimmed)
-		writeText(b, m.Content)
-	case conversation.RoleAssistant:
-		fmt.Fprintf(b, "## %s · %s", agentName, transcriptTime(m.CreatedAt))
-		for _, part := range assistantMeta(m) {
-			b.WriteString(" · ")
-			b.WriteString(part)
-		}
-		b.WriteString("\n\n")
-		writeRefusal(b, m, "Reply withheld")
-		writeTrimmed(b, trimmed)
-		if m.Reasoning.Readable() {
-			b.WriteString("<details>\n<summary>Reasoning</summary>\n\n")
-			writeQuoted(b, m.Reasoning.Text)
-			b.WriteString("\n</details>\n\n")
-		}
-		// A transcript cannot open an artifact, so a link to one keeps its words.
-		writeText(b, replycheck.StripArtifactLinks(m.Content))
-		for _, call := range m.ToolCalls {
-			fmt.Fprintf(b, "**Called `%s`**\n\n", call.Name)
-			if !trimmed || call.Arguments != nil {
-				writeJSON(b, call.Arguments)
-			}
-		}
-	case conversation.RoleTool:
-		name := m.ToolName
-		toolName, payload, fenced := toolresult.Unfence(m.Content)
-		if fenced && name == "" {
-			name = toolName
-		}
-		if name == "" {
-			name = "tool"
-		}
-		fmt.Fprintf(b, "### Result from `%s`", name)
-		if m.ToolFailed {
-			b.WriteString(" · ")
-			b.WriteString(failedToolLabel(m.ToolVerdict))
-		}
-		b.WriteString("\n\n")
-		writeTrimmed(b, trimmed)
-		if fenced {
-			writeResult(b, payload)
-		} else {
-			writeText(b, m.Content)
-		}
-	default:
-		fmt.Fprintf(b, "## %s · %s\n\n", m.Role, transcriptTime(m.CreatedAt))
-		writeTrimmed(b, trimmed)
+	}
+}
+
+func writeToolMessage(b *strings.Builder, m *conversation.Message, trimmed bool) {
+	name := m.ToolName
+	toolName, payload, fenced := toolresult.Unfence(m.Content)
+	if fenced && name == "" {
+		name = toolName
+	}
+	if name == "" {
+		name = "tool"
+	}
+	fmt.Fprintf(b, "### Result from `%s`", name)
+	if m.ToolFailed {
+		b.WriteString(" · ")
+		b.WriteString(failedToolLabel(m.ToolVerdict))
+	}
+	b.WriteString("\n\n")
+	writeTrimmed(b, trimmed)
+	if fenced {
+		writeResult(b, payload)
+	} else {
 		writeText(b, m.Content)
 	}
 }

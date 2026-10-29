@@ -184,7 +184,8 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 	}
 
 	for idx, threadID := range doomed {
-		if err := s.bench.Assistant.DeleteThread(ctx, s.threadRequest(threadID)); err != nil {
+		req := s.threadRequest(threadID)
+		if err := s.bench.Assistant.DeleteThread(ctx, &req); err != nil {
 			return idx, fmt.Errorf("delete conversation %s: %w", threadID, err)
 		}
 	}

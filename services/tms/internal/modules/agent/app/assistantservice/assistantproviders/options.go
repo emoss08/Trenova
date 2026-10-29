@@ -30,7 +30,7 @@ so this endpoint decides what is offered, never what is permitted.
 */
 func (s *Options) SelectableProviders(
 	ctx context.Context,
-	tenant permissionports.RequestActor,
+	tenant *permissionports.RequestActor,
 ) ([]assistantports.AssistantProviderOption, error) {
 	providers, err := s.Providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aitask.TaskAssistantChat,
@@ -71,7 +71,7 @@ func (s *Options) SelectableProviders(
 func (s *Options) ResolvePreference(
 	ctx context.Context,
 	chosen pulid.ID,
-	tenant permissionports.RequestActor,
+	tenant *permissionports.RequestActor,
 ) pulid.ID {
 	if chosen.IsNil() {
 		return pulid.Nil

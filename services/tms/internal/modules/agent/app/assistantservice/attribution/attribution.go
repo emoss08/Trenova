@@ -7,7 +7,7 @@ import (
 
 // proposer is the agent behind a proposal or a plan.
 type proposer struct {
-	Id   pulid.ID
+	ID   pulid.ID
 	Name string
 }
 

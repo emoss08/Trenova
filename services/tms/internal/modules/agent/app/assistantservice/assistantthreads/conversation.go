@@ -198,7 +198,7 @@ func (s *Service) markAttention(
 
 func (s *Service) MarkThreadRead(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) error {
 	return s.conversations.MarkThreadRead(ctx, &conversationports.MarkThreadReadRequest{
 		ThreadID:   req.ID,
@@ -246,7 +246,7 @@ func (s *Service) markCases(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req assistantports.ListThreadMessagesRequest,
+	req *assistantports.ListThreadMessagesRequest,
 ) (*assistantports.ThreadMessagesPage, error) {
 	// Reading the thread first is the authorization check: it is scoped by user,
 	// so a thread belonging to someone else is not found rather than returned.

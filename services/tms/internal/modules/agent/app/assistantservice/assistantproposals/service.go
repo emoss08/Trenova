@@ -202,7 +202,7 @@ func (s *Service) ListThreadProposals(
 			out.DecisionNote = decision.Note
 		}
 		if by, ok := proposers[proposal.RunID]; ok {
-			out.AgentID, out.AgentName = by.Id, by.Name
+			out.AgentID, out.AgentName = by.ID, by.Name
 		}
 		proposals = append(proposals, out)
 	}
@@ -333,7 +333,7 @@ func (s *Service) ListThreadPlans(
 		out.RunMode = agentplan.PlanRunModeOf(planSteps)
 		out.DecidedByName = names[out.DecidedByUserID]
 		if by, ok := proposers[plan.RunID]; ok {
-			out.AgentID, out.AgentName = by.Id, by.Name
+			out.AgentID, out.AgentName = by.ID, by.Name
 		}
 		plans = append(plans, out)
 	}

@@ -467,7 +467,7 @@ func (r *Recorder) author() string {
 		return ""
 	}
 
-	return r.reads.Attribution.AgentName(r.ctx, conversationports.GetThreadRequest{
+	return r.reads.Attribution.AgentName(r.ctx, &conversationports.GetThreadRequest{
 		ID:         r.thread.ID,
 		TenantInfo: r.tenant,
 	}, r.agentThread())

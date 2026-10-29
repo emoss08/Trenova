@@ -437,7 +437,7 @@ func (h *Handler) threadBudget(c *gin.Context) {
 		return
 	}
 
-	budget, err := h.service.ThreadBudget(c.Request.Context(), req)
+	budget, err := h.service.ThreadBudget(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -462,7 +462,7 @@ func (h *Handler) requestMore(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.RequestMore(c.Request.Context(), assistantports.RequestMoreRequest{
+	result, err := h.service.RequestMore(c.Request.Context(), &assistantports.RequestMoreRequest{
 		Thread: req,
 		Kind:   body.Kind,
 	})
@@ -481,7 +481,7 @@ func (h *Handler) markThreadRead(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.MarkThreadRead(c.Request.Context(), req); err != nil {
+	if err = h.service.MarkThreadRead(c.Request.Context(), &req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -670,7 +670,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 
 	page, err := h.service.ListMessages(
 		c.Request.Context(),
-		assistantports.ListThreadMessagesRequest{
+		&assistantports.ListThreadMessagesRequest{
 			Thread:         req,
 			Limit:          query.Limit,
 			BeforeSequence: query.Before,
@@ -694,7 +694,7 @@ func (h *Handler) downloadTranscript(c *gin.Context) {
 		return
 	}
 
-	transcript, err := h.transcripts.Transcript(c.Request.Context(), req)
+	transcript, err := h.transcripts.Transcript(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -784,7 +784,7 @@ type searchMentionsQuery struct {
 }
 
 func (h *Handler) searchMentions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
+	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
 
 	var query searchMentionsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -795,7 +795,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 	if query.Limit > 0 {
 		page, err := h.service.SearchMentionPage(
 			c.Request.Context(),
-			requestActorFromAuthContext(authCtx),
+			&actor,
 			assistantports.MentionPageRequest{
 				Query:  query.Query,
 				Kind:   query.Kind,
@@ -813,7 +813,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 
 	results, err := h.service.SearchMentions(
 		c.Request.Context(),
-		requestActorFromAuthContext(authCtx),
+		&actor,
 		assistantports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
 	)
 	if err != nil {
@@ -830,7 +830,7 @@ type searchDeskQuery struct {
 }
 
 func (h *Handler) searchDesk(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
+	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
 
 	var query searchDeskQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -840,7 +840,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 
 	results, err := h.service.SearchDesk(
 		c.Request.Context(),
-		requestActorFromAuthContext(authCtx),
+		&actor,
 		assistantports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
 	)
 	if err != nil {
@@ -881,7 +881,7 @@ func (h *Handler) listProviders(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	actor := requestActorFromAuthContext(authCtx)
 
-	options, err := h.service.SelectableProviders(c.Request.Context(), actor)
+	options, err := h.service.SelectableProviders(c.Request.Context(), &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

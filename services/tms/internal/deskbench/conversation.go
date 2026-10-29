@@ -277,10 +277,8 @@ func (c *Conversation) Close(
 		return turns, nil
 	}
 
-	err := bench.Assistant.DeleteThread(
-		c.session.Context(ctx),
-		c.session.threadRequest(c.Thread.ID),
-	)
+	req := c.session.threadRequest(c.Thread.ID)
+	err := bench.Assistant.DeleteThread(c.session.Context(ctx), &req)
 	if err != nil {
 		return turns, fmt.Errorf("delete the bench conversation: %w", err)
 	}

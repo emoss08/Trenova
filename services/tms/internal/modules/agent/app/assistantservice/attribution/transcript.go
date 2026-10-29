@@ -13,7 +13,7 @@ import (
 // been deleted leaves the conversation readable under a plain name.
 func (s *Attributor) AgentName(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	thread *conversation.Thread,
 ) string {
 	if s.Definitions == nil || thread.AgentDefinitionID.IsNil() {

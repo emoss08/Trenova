@@ -313,7 +313,7 @@ func (s *Service) keepProviderChoice(
 		return
 	}
 
-	chosen := s.providerChoice().ResolvePreference(ctx, req.PreferredProviderID, *actor)
+	chosen := s.providerChoice().ResolvePreference(ctx, req.PreferredProviderID, actor)
 	if chosen == thread.PreferredProviderID {
 		return
 	}

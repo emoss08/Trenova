@@ -46,7 +46,7 @@ const (
 // person about the same agent goes out once a day.
 func (s *Service) RequestMore(
 	ctx context.Context,
-	req assistantports.RequestMoreRequest,
+	req *assistantports.RequestMoreRequest,
 ) (*assistantports.RequestMoreResult, error) {
 	if s.notifier == nil {
 		return nil, errortypes.NewBusinessError("Requests cannot be sent from here yet")

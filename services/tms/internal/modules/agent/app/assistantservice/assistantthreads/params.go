@@ -81,7 +81,7 @@ func New(p Params) *Service {
 
 func (s *Service) SelectableProviders(
 	ctx context.Context,
-	actor permissionports.RequestActor,
+	actor *permissionports.RequestActor,
 ) ([]assistantports.AssistantProviderOption, error) {
 	return s.providerChoice().SelectableProviders(ctx, actor)
 }

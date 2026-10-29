@@ -14,6 +14,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type Attributor struct {
+	Logger      *zap.Logger
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Runs        agentruntimeports.AgentRunRepository
+	Users       tenantports.UserRepository
+}
+
 // AgentNames reads the names of the agents with the given ids, in one query.
 // A name that cannot be read is left out: the record still stands under its
 // id, and a thread is not refused over a label.
@@ -117,7 +124,7 @@ func (s *Attributor) ProposersOf(
 			continue
 		}
 		proposers[run.ID] = proposer{
-			Id:   run.AgentDefinitionID,
+			ID:   run.AgentDefinitionID,
 			Name: names[run.AgentDefinitionID],
 		}
 	}
@@ -186,11 +193,4 @@ func (s *Attributor) PersonName(
 	}
 
 	return user.Name
-}
-
-type Attributor struct {
-	Logger      *zap.Logger
-	Definitions agentdefinitionports.AgentDefinitionRepository
-	Runs        agentruntimeports.AgentRunRepository
-	Users       tenantports.UserRepository
 }

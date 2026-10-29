@@ -23,6 +23,16 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	logger        *zap.Logger
+	conversations conversationports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	proposals     proposalstores.ProposalStore
+	runs          agentruntimeports.AgentRunRepository
+	users         tenantports.UserRepository
+	chapters      assistantchapterports.ChapterRepository
+}
+
 func (s *Service) RunTranscript(
 	ctx context.Context,
 	req agentruntimeports.GetAgentRunByIDRequest,
@@ -100,16 +110,6 @@ func (s *Service) runTranscriptOf(
 	return nil, nil //nolint:nilnil // a run that kept no transcript reads as one with no messages
 }
 
-type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	proposals     proposalstores.ProposalStore
-	runs          agentruntimeports.AgentRunRepository
-	users         tenantports.UserRepository
-	chapters      assistantchapterports.ChapterRepository
-}
-
 func (s *Service) attribution() *attribution.Attributor {
 	return &attribution.Attributor{
 		Logger:      s.logger,
@@ -125,9 +125,9 @@ func (s *Service) chapterList() *chaptertitles.Index {
 
 func (s *Service) Transcript(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*kernelports.TranscriptFile, error) {
-	thread, err := s.conversations.GetThread(ctx, &req)
+	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (s *Service) Transcript(
 // run out, and hands it back oldest first.
 func (s *Service) allMessages(
 	ctx context.Context,
-	req conversationports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) ([]conversation.Message, error) {
 	pages := make([][]conversation.Message, 0, 1)
 	total := 0

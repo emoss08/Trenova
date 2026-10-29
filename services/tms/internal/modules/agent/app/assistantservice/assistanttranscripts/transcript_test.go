@@ -146,7 +146,7 @@ func TestTranscript_RendersTheWholeConversationInOrder(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 
@@ -202,7 +202,7 @@ func TestTranscript_NamesAnUntitledThreadAndAMissingAgent(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: thread.ID},
+		&conversationports.GetThreadRequest{ID: thread.ID},
 	)
 	require.NoError(t, err)
 
@@ -279,7 +279,7 @@ func TestTranscript_ReadsEveryPageOfALongThread(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		conversationports.GetThreadRequest{ID: conversations.thread.ID},
+		&conversationports.GetThreadRequest{ID: conversations.thread.ID},
 	)
 	require.NoError(t, err)
 
