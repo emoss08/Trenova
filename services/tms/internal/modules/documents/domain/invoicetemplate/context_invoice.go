@@ -317,7 +317,7 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 		Kind:           documenttemplate.KindInvoicePDF,
 		DisplayName:    "Customer Invoice",
 		Description:    "The invoice document sent to a customer and attached to the delivery email.",
-		Category:       "Billing",
+		Category:       templatecatalog.BillingCategory,
 		Channels:       []documenttemplate.Channel{documenttemplate.ChannelPDF},
 		Paged:          true,
 		CustomerScoped: true,
@@ -551,7 +551,7 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 		Kind:        documenttemplate.KindInvoiceEmail,
 		DisplayName: "Invoice Delivery Email",
 		Description: "The message a customer receives with their invoice attached.",
-		Category:    "Billing",
+		Category:    templatecatalog.BillingCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,
@@ -655,7 +655,7 @@ func RegisterInvoiceShareKinds(r *templatecatalog.Registry) {
 		Kind:        documenttemplate.KindInvoiceShareEmail,
 		DisplayName: "Invoice Shared With a Teammate",
 		Description: "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.",
-		Category:    "Billing",
+		Category:    templatecatalog.BillingCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,

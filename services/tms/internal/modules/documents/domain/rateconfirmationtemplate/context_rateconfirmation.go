@@ -2,6 +2,7 @@ package rateconfirmationtemplate
 
 import (
 	"html/template"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
@@ -153,6 +154,16 @@ func RegisterRateConfirmationKinds(r *templatecatalog.Registry) {
 }
 
 func rateConfirmationVariables() []templatecatalog.VariableDefinition {
+	return slices.Concat(
+		rateConfirmationPartyVariables(),
+		rateConfirmationEquipmentVariables(),
+		rateConfirmationRoutingVariables(),
+		rateConfirmationRateVariables(),
+		rateConfirmationFooterVariables(),
+	)
+}
+
+func rateConfirmationPartyVariables() []templatecatalog.VariableDefinition {
 	return []templatecatalog.VariableDefinition{
 		templatecatalog.CompanyNameVariable(),
 		{
@@ -190,6 +201,11 @@ func rateConfirmationVariables() []templatecatalog.VariableDefinition {
 			Type:        templatecatalog.VariableString,
 			Description: "Which revision of the agreement this is. A renegotiated rate voids the prior revision, and the label is how a carrier tells the two apart.",
 		},
+	}
+}
+
+func rateConfirmationEquipmentVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "ExternalDriverName",
 			Type:        templatecatalog.VariableString,
@@ -210,6 +226,11 @@ func rateConfirmationVariables() []templatecatalog.VariableDefinition {
 			Type:        templatecatalog.VariableString,
 			Description: "The carrier's trailer unit, when known.",
 		},
+	}
+}
+
+func rateConfirmationRoutingVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "Stops",
 			Type:        templatecatalog.VariableCollection,
@@ -243,6 +264,11 @@ func rateConfirmationVariables() []templatecatalog.VariableDefinition {
 				},
 			},
 		},
+	}
+}
+
+func rateConfirmationRateVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "RateMethodLabel",
 			Type:        templatecatalog.VariableString,
@@ -296,6 +322,11 @@ func rateConfirmationVariables() []templatecatalog.VariableDefinition {
 			Type:        templatecatalog.VariableString,
 			Description: "When the carrier is paid, in words.",
 		},
+	}
+}
+
+func rateConfirmationFooterVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
 		{
 			Path:        "SignURL",
 			Type:        templatecatalog.VariableString,

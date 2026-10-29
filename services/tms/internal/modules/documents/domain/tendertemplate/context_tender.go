@@ -37,7 +37,6 @@ type TenderOfferEmailContext struct {
 	ExpiresInHours int
 }
 
-//nolint:gosec // G101: a rendering fixture of fake values, not a credential
 func newTenderOfferEmailSampleContext() any {
 	return TenderOfferEmailContext{
 		CarrierName:        "Redline Freight LLC",

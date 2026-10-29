@@ -1,6 +1,8 @@
 package notificationtemplate
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 )
@@ -239,14 +241,24 @@ func recipientVariables() []templatecatalog.VariableDefinition {
 // directions for every kind: copies would have to be corrected in ten places
 // whenever a field is added, and the test would only tell you about the first one.
 func driverNotificationVariables() []templatecatalog.VariableDefinition {
-	return append(
+	return slices.Concat(
 		recipientVariables(),
-		templatecatalog.VariableDefinition{
+		driverRequestVariables(),
+		driverComplianceVariables(),
+		driverWorkforceVariables(),
+		driverAlertVariables(),
+		driverDigestVariables(),
+	)
+}
+
+func driverRequestVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
+		{
 			Path:        "Approved",
 			Type:        templatecatalog.VariableBool,
 			Description: "Whether the request was approved. Branch on this or a denial will read as an approval.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        reasonPath,
 			Type:        templatecatalog.VariableString,
 			Description: "The reviewer's note. Usually present on a denial and absent on an approval.",
@@ -255,97 +267,117 @@ func driverNotificationVariables() []templatecatalog.VariableDefinition {
 			false,
 			"The load this is about, when it is about a load.",
 		),
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "StopCount",
 			Type:        templatecatalog.VariableInt,
 			Description: "How many stops the load has, so a driver can size the day before opening it.",
 		},
-		templatecatalog.VariableDefinition{
+	}
+}
+
+func driverComplianceVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
+		{
 			Path:        "PolicyTitle",
 			Type:        templatecatalog.VariableString,
 			Description: "The policy or handbook a driver is being asked to read and sign.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "PolicyVersion",
 			Type:        templatecatalog.VariableString,
 			Description: "Which version of it, so a driver who signed an earlier one knows this is new.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "CredentialName",
 			Type:        templatecatalog.VariableString,
 			Description: "The licence or certificate this is about — a CDL, a medical card.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "ExpiresInDays",
 			Type:        templatecatalog.VariableInt,
 			Description: "Days until it lapses. Zero or negative means it already has.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        templatecatalog.ExpiresAtPath,
 			Type:        templatecatalog.VariableDate,
 			Description: "The expiry date, in the organization's timezone.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "CourseName",
 			Type:        templatecatalog.VariableString,
 			Description: "The training course this is about.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "DueInDays",
 			Type:        templatecatalog.VariableInt,
 			Description: "Days until the course is due, or until the certification lapses. Zero is today; negative is already past.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "DueAt",
 			Type:        templatecatalog.VariableDate,
 			Description: "The due or expiry date.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "Renewal",
 			Type:        templatecatalog.VariableBool,
 			Description: "True when a completed certification is lapsing and needs renewing, false for a course not yet taken.",
 		},
-		templatecatalog.VariableDefinition{
+	}
+}
+
+func driverWorkforceVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
+		{
 			Path:        "ReviewTitle",
 			Type:        templatecatalog.VariableString,
 			Description: "The performance review waiting for the driver's sign-off.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "ReviewerName",
 			Type:        templatecatalog.VariableString,
 			Description: "Who wrote the review.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "RecognitionTitle",
 			Type:        templatecatalog.VariableString,
 			Description: "The headline of the praise being shared.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "RecognitionMessage",
 			Type:        templatecatalog.VariableString,
 			Description: "The note that goes with it, when there is one.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "DisciplineLevel",
 			Type:        templatecatalog.VariableString,
 			Description: "The rung of the ladder that was issued: Coaching, VerbalWarning, WrittenWarning, FinalWarning, Suspension, Termination.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "DisciplineReason",
 			Type:        templatecatalog.VariableString,
 			Description: "Why the action was taken.",
 		},
-		templatecatalog.VariableDefinition{
+	}
+}
+
+func driverAlertVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
+		{
 			Path:        "AlertTitle",
 			Type:        templatecatalog.VariableString,
 			Description: "The headline an hours-of-service rule produced. Wrap it rather than replacing it: the rule knows what it measured.",
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "AlertMessage",
 			Type:        templatecatalog.VariableString,
 			Description: "The detail behind the alert, including the time remaining.",
 		},
-		templatecatalog.VariableDefinition{
+	}
+}
+
+func driverDigestVariables() []templatecatalog.VariableDefinition {
+	return []templatecatalog.VariableDefinition{
+		{
 			Path:        "Digest",
 			Type:        templatecatalog.VariableCollection,
 			Description: "Everything the driver owes, bundled into one notice. Range over it; empty on every kind but the digest.",
@@ -377,12 +409,12 @@ func driverNotificationVariables() []templatecatalog.VariableDefinition {
 				},
 			},
 		},
-		templatecatalog.VariableDefinition{
+		{
 			Path:        "DigestPeriod",
 			Type:        templatecatalog.VariableString,
 			Description: "Which round-up this is — \"today\" or \"this week\" — so the wording can say so without guessing.",
 		},
-	)
+	}
 }
 
 // settlementNotificationVariables is the settlement family's shared catalog.

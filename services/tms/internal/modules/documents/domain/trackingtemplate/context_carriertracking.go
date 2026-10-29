@@ -25,7 +25,6 @@ type CarrierTrackingLinkEmailContext struct {
 
 const carrierNamePath = "CarrierName"
 
-//nolint:gosec // G101: a rendering fixture of fake values, not a credential
 func newCarrierTrackingLinkEmailSampleContext() any {
 	return CarrierTrackingLinkEmailContext{
 		CarrierName:        "Redline Freight LLC",

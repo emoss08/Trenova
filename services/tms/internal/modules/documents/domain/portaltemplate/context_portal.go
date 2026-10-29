@@ -239,12 +239,19 @@ func RegisterPortalKinds(r *templatecatalog.Registry) {
 }
 
 func RegisterAgentKinds(r *templatecatalog.Registry) {
-	_ = r.Register(&templatecatalog.KindDefinition{
+	_ = r.Register(agentCustomerUpdateKind())
+	_ = r.Register(agentInboundReplyKind())
+	_ = r.Register(agentProposalReminderKind())
+	_ = r.Register(agentRequestMissingDocsKind())
+}
+
+func agentCustomerUpdateKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindAgentCustomerUpdateEmail,
 		DisplayName: "Customer Update",
 		Description: "Wraps a status update an agent composed for a customer — a delay, a " +
 			"revised arrival, a delivery confirmation — in your own letterhead and signature.",
-		Category: "Agent",
+		Category: agentCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,
@@ -254,13 +261,13 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 		SampleFactory:  newAgentEmailSampleContext,
 		Variables: []templatecatalog.VariableDefinition{
 			{
-				Path:        "AgentSubject",
+				Path:        agentSubjectPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The subject the agent composed. Required on the subject channel.",
 			},
 			{
-				Path:        "AgentBody",
+				Path:        agentBodyPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The update the agent composed. Required: this is the substance of the message.",
@@ -269,20 +276,23 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 			templatecatalog.CustomerNameVariable(false, "Who the update is for."),
 			templatecatalog.ProNumberVariable(false, "The shipment the update is about."),
 			{
-				Path:        "RequestedDocuments",
+				Path:        requestedDocumentsPath,
 				Type:        templatecatalog.VariableStringList,
 				Description: "Optional points to list under the update, such as documents still needed. Usually empty.",
 			},
 			templatecatalog.LogoVariable(),
 		},
-	})
-	_ = r.Register(&templatecatalog.KindDefinition{
+	}
+}
+
+func agentInboundReplyKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindAgentInboundReplyEmail,
 		DisplayName: "Inbox Reply",
 		Description: "Wraps an answer an agent composed to a message that arrived on one of " +
 			"your monitored addresses — a status question, a missing detail — in your own " +
 			"letterhead, sent back to whoever wrote in the same thread.",
-		Category: "Agent",
+		Category: agentCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,
@@ -292,13 +302,13 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 		SampleFactory:  newAgentInboundReplySampleContext,
 		Variables: []templatecatalog.VariableDefinition{
 			{
-				Path:        "AgentSubject",
+				Path:        agentSubjectPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The reply's subject, the original's with Re: in front. Required on the subject channel: a changed subject starts a new thread in the sender's mail.",
 			},
 			{
-				Path:        "AgentBody",
+				Path:        agentBodyPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The answer the agent composed. Required: this is the substance of the message.",
@@ -313,19 +323,22 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 				"The shipment the message is about, when it was matched to one.",
 			),
 			{
-				Path:        "RequestedDocuments",
+				Path:        requestedDocumentsPath,
 				Type:        templatecatalog.VariableStringList,
 				Description: "Optional points to list under the answer. The inbox reply leaves it empty; it is there for a template shared with the other agent emails.",
 			},
 			templatecatalog.LogoVariable(),
 		},
-	})
-	_ = r.Register(&templatecatalog.KindDefinition{
+	}
+}
+
+func agentProposalReminderKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindAgentProposalReminderEmail,
 		DisplayName: "Proposal Reminder",
 		Description: "Reminds the people who can decide an agent's proposals that some have been " +
 			"waiting for hours, and takes them to the list to decide.",
-		Category: "Agent",
+		Category: agentCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,
@@ -333,13 +346,16 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 		},
 		SampleFactory: newAgentProposalReminderSampleContext,
 		Variables:     agentProposalReminderVariables(),
-	})
-	_ = r.Register(&templatecatalog.KindDefinition{
+	}
+}
+
+func agentRequestMissingDocsKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindAgentRequestMissingDocsEmail,
 		DisplayName: "Missing Documents Request",
 		Description: "Wraps an agent-composed request in your own letterhead and signature, " +
 			"so prose written automatically still goes out looking like your organization.",
-		Category: "Agent",
+		Category: agentCategory,
 		Channels: []documenttemplate.Channel{
 			documenttemplate.ChannelSubject,
 			documenttemplate.ChannelEmailHTML,
@@ -349,13 +365,13 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 		SampleFactory:  newAgentEmailSampleContext,
 		Variables: []templatecatalog.VariableDefinition{
 			{
-				Path:        "AgentSubject",
+				Path:        agentSubjectPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The subject the agent composed. Required on the subject channel: replacing it entirely defeats the point of letting the agent describe what it needs.",
 			},
 			{
-				Path:        "AgentBody",
+				Path:        agentBodyPath,
 				Type:        templatecatalog.VariableString,
 				Required:    true,
 				Description: "The request the agent composed. Required: this is the substance of the message.",
@@ -364,11 +380,18 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 			templatecatalog.CustomerNameVariable(false, "Who is being asked for the documents."),
 			templatecatalog.ProNumberVariable(false, "The shipment the documents belong to."),
 			{
-				Path:        "RequestedDocuments",
+				Path:        requestedDocumentsPath,
 				Type:        templatecatalog.VariableStringList,
 				Description: "What is being asked for, as a list, so it can be rendered as bullets instead of buried in a paragraph.",
 			},
 			templatecatalog.LogoVariable(),
 		},
-	})
+	}
 }
+
+const (
+	agentCategory          = "Agent"
+	agentSubjectPath       = "AgentSubject"
+	agentBodyPath          = "AgentBody"
+	requestedDocumentsPath = "RequestedDocuments"
+)

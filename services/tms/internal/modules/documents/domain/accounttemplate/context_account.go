@@ -77,7 +77,12 @@ func newPasswordResetSampleContext() any {
 }
 
 func RegisterAccountKinds(r *templatecatalog.Registry) {
-	_ = r.Register(&templatecatalog.KindDefinition{
+	_ = r.Register(passwordResetKind())
+	_ = r.Register(accountInviteKind())
+}
+
+func passwordResetKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindPasswordResetEmail,
 		DisplayName: "Password Reset",
 		Description: "Carries the single-use link that lets somebody who has lost their " +
@@ -121,9 +126,11 @@ func RegisterAccountKinds(r *templatecatalog.Registry) {
 				Description: "The exact moment the link stops working.",
 			},
 		},
-	})
+	}
+}
 
-	_ = r.Register(&templatecatalog.KindDefinition{
+func accountInviteKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
 		Kind:        documenttemplate.KindAccountInviteEmail,
 		DisplayName: "Account Invitation",
 		Description: "Carries the single-use link a new user follows to choose their first " +
@@ -187,7 +194,7 @@ func RegisterAccountKinds(r *templatecatalog.Registry) {
 				Description: "The exact moment the link stops working.",
 			},
 		},
-	})
+	}
 }
 
 const (
