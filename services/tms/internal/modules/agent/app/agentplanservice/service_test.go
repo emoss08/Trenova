@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -435,7 +435,7 @@ func TestPlanHolds_HoldsAPlanByAStepAnotherRunRaisedAsDecideRefusesIt(t *testing
 		[]*agentplan.AgentPlan{h.plans.plan},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, map[pulid.ID]*assistantports.ProposalHold{
+	assert.Equal(t, map[pulid.ID]*assistantproposalports.ProposalHold{
 		planID: {Reason: string(agentshadow.CauseDefinition), AgentName: "Shipment Desk"},
 	}, holds)
 

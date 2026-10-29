@@ -26,7 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -64,7 +64,7 @@ type Params struct {
 	Advisors aiproviderports.AIProviderAdvisorRecorder `optional:"true"`
 	// Files reads the files a person attached, for a model that reads files
 	// itself. Optional: without it every file is read as its text.
-	Files assistantports.MessageFileReader `optional:"true"`
+	Files conversationports.MessageFileReader `optional:"true"`
 }
 
 type Service struct {
@@ -85,7 +85,7 @@ type Service struct {
 	// timeout.
 	limits *providerLimits
 	// files reads attached files for a model that reads files itself.
-	files assistantports.MessageFileReader
+	files conversationports.MessageFileReader
 	// advisors records the API's refusal of a provider's advisor.
 	advisors aiproviderports.AIProviderAdvisorRecorder
 	// pause waits out a backoff. It is a field so tests can count the waits

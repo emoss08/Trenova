@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -46,9 +46,9 @@ var errPreviewNotSaved = errortypes.NewBusinessError(
 //nolint:gocritic // AssistantService methods take the thread request by value
 func (s *Service) RunArtifactReport(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -155,11 +155,11 @@ func (s *Service) rerunOf(
 
 func (s *Service) appendRunVersion(
 	ctx context.Context,
-	req *assistantports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	latest *assistantartifact.Artifact,
 	run *report.ReportRun,
 	name string,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	result := map[string]any{
 		"runId":          run.ID.String(),
 		"reportKey":      run.CannedKey,

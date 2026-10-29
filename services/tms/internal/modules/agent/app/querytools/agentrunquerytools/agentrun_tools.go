@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -664,11 +664,11 @@ func agentRunEventViewFrom(event *agentrunevent.AgentRunEvent) agentRunEventView
 func eventText(kind string, payload map[string]any) string {
 	keys := []string{"message", "reason", "summary", "task", "content"}
 	switch kind {
-	case assistantports.AssistantEventToolStarted:
+	case assistantstreamports.AssistantEventToolStarted:
 		return ""
-	case assistantports.AssistantEventToolFinished:
+	case assistantstreamports.AssistantEventToolFinished:
 		keys = []string{"summary"}
-	case assistantports.AssistantEventRunTainted:
+	case assistantstreamports.AssistantEventRunTainted:
 		if mark, ok := payload["mark"].(map[string]any); ok {
 			source, _ := mark["source"].(string)
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -12,16 +12,16 @@ import (
 )
 
 type recordingFileReader struct {
-	seen []*assistantports.ReadMessageFileRequest
+	seen []*conversationports.ReadMessageFileRequest
 }
 
 func (r *recordingFileReader) ReadMessageFile(
 	_ context.Context,
-	req *assistantports.ReadMessageFileRequest,
-) (*assistantports.MessageFileContent, error) {
+	req *conversationports.ReadMessageFileRequest,
+) (*conversationports.MessageFileContent, error) {
 	r.seen = append(r.seen, req)
 
-	return &assistantports.MessageFileContent{
+	return &conversationports.MessageFileContent{
 		Data:        []byte("%PDF"),
 		ContentType: "application/pdf",
 	}, nil

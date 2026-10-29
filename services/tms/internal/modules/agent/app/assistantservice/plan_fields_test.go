@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,7 +117,7 @@ func TestListThreadPlans_SaysHowEachPlanRunsAndWhoDecidedItWithWhat(t *testing.T
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: fx.thread.ID},
+		conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
@@ -155,7 +155,7 @@ func TestListThreadPlans_ADeciderWhoCannotBeReadLeavesTheNameEmpty(t *testing.T)
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: fx.thread.ID},
+		conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	require.Len(t, listed, 2)
@@ -170,7 +170,7 @@ func TestListThreadPlans_ADeciderOutsideTheOrganizationIsNotNamed(t *testing.T) 
 
 	listed, err := fx.svc.ListThreadPlans(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: fx.thread.ID},
+		conversationports.GetThreadRequest{ID: fx.thread.ID},
 	)
 	require.NoError(t, err)
 	assert.Empty(t, listed[0].DecidedByName)

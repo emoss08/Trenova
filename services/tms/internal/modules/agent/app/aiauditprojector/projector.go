@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -507,7 +507,7 @@ func collectNeeds(need *needs, rows *tenantRows) {
 	}
 	for _, event := range rows.events {
 		need.owner(event.OwnerKind, event.OwnerID)
-		if event.Kind == assistantports.AssistantEventToolFinished && event.CallID != "" {
+		if event.Kind == assistantstreamports.AssistantEventToolFinished && event.CallID != "" {
 			need.calls = append(need.calls, aiauditports.OwnerCall{
 				OwnerID: event.OwnerID,
 				CallID:  event.CallID,

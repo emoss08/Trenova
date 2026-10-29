@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -58,12 +59,12 @@ func (n *notices) Create(
 type conversations struct {
 	thread *conversation.Thread
 	err    error
-	read   assistantports.GetThreadRequest
+	read   conversationports.GetThreadRequest
 }
 
 func (c *conversations) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	c.read = req
 	if c.err != nil {
@@ -343,7 +344,7 @@ func TestTurnCanceller_SaysWhenNoExecutionCarriesTheTurn(t *testing.T) {
 
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
-	require.ErrorIs(t, err, assistantports.ErrNoTurnExecution)
+	require.ErrorIs(t, err, assistantturnports.ErrNoTurnExecution)
 	assert.Equal(t, "assistant-turn:atrn_1", workflows.cancelled)
 }
 
@@ -356,7 +357,7 @@ func TestTurnCanceller_PassesOnAnyOtherFailure(t *testing.T) {
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
 	require.ErrorIs(t, err, down)
-	assert.NotErrorIs(t, err, assistantports.ErrNoTurnExecution)
+	assert.NotErrorIs(t, err, assistantturnports.ErrNoTurnExecution)
 }
 
 func TestTurnCanceller_CancelsTheExecution(t *testing.T) {

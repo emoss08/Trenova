@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -33,7 +33,7 @@ type Params struct {
 	Trust                agentports.AgentTrustService
 	Budgets              agentports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
-	Streams              assistantports.TurnStreamReader
+	Streams              assistantstreamports.TurnStreamReader
 	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -44,7 +44,7 @@ type Handler struct {
 	trust     agentports.AgentTrustService
 	budgets   agentports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
-	streams   assistantports.TurnStreamReader
+	streams   assistantstreamports.TurnStreamReader
 	logger    *zap.Logger
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware

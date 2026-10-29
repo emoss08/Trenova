@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -202,7 +202,10 @@ func TestRecorder_LiftsTheCallIDOutOfAToolEvent(t *testing.T) {
 
 	writer.Record(t.Context(), kernelports.StreamEvent{
 		Event: "tool_started",
-		Data:  assistantports.AssistantToolStartedEvent{CallID: "call_42", Name: "assign_worker"},
+		Data: assistantstreamports.AssistantToolStartedEvent{
+			CallID: "call_42",
+			Name:   "assign_worker",
+		},
 	})
 	writer.Flush(t.Context())
 
@@ -267,16 +270,19 @@ func TestRecord_KeepsWhenTheEventHappened(t *testing.T) {
 
 	started := int64(1_790_000_000)
 	writer.Record(t.Context(), kernelports.StreamEvent{
-		Event: assistantports.AssistantEventToolStarted,
-		Data:  assistantports.AssistantToolStartedEvent{CallID: "call_1"},
+		Event: assistantstreamports.AssistantEventToolStarted,
+		Data:  assistantstreamports.AssistantToolStartedEvent{CallID: "call_1"},
 		At:    started,
 	})
 	writer.Record(t.Context(), kernelports.StreamEvent{
-		Event: assistantports.AssistantEventToolFinished,
-		Data:  assistantports.AssistantToolFinishedEvent{CallID: "call_1"},
+		Event: assistantstreamports.AssistantEventToolFinished,
+		Data:  assistantstreamports.AssistantToolFinishedEvent{CallID: "call_1"},
 		At:    started + 95,
 	})
-	writer.Record(t.Context(), kernelports.StreamEvent{Event: assistantports.AssistantEventDone})
+	writer.Record(
+		t.Context(),
+		kernelports.StreamEvent{Event: assistantstreamports.AssistantEventDone},
+	)
 	writer.Flush(t.Context())
 
 	rows := repo.rows()

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,13 +44,13 @@ func (p *provisioner) EnsureSystem(
 }
 
 type pageThreads struct {
-	live     map[assistantports.PageThreadKey]*conversation.Thread
+	live     map[conversationports.PageThreadKey]*conversation.Thread
 	claimed  []*conversation.Thread
-	archived []assistantports.ArchiveSubjectThreadsRequest
+	archived []conversationports.ArchiveSubjectThreadsRequest
 }
 
-func keyOf(thread *conversation.Thread) assistantports.PageThreadKey {
-	return assistantports.PageThreadKey{
+func keyOf(thread *conversation.Thread) conversationports.PageThreadKey {
+	return conversationports.PageThreadKey{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: thread.OrganizationID,
 			BuID:  thread.BusinessUnitID,
@@ -63,7 +64,7 @@ func keyOf(thread *conversation.Thread) assistantports.PageThreadKey {
 
 func (p *pageThreads) GetPageThread(
 	_ context.Context,
-	key assistantports.PageThreadKey,
+	key conversationports.PageThreadKey,
 ) (*conversation.Thread, error) {
 	key.TenantInfo.UserID = pulid.Nil
 	if thread, ok := p.live[key]; ok {
@@ -90,7 +91,7 @@ func (p *pageThreads) ClaimPageThread(
 
 func (p *pageThreads) ArchiveSubjectThreads(
 	_ context.Context,
-	req assistantports.ArchiveSubjectThreadsRequest,
+	req conversationports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
 	p.archived = append(p.archived, req)
 	closed := 0
@@ -120,8 +121,10 @@ func newPageFixture(allowed ...string) *pageFixture {
 		permissions.allowed[key] = true
 	}
 	fixture := &pageFixture{
-		provisioner:   &provisioner{definitions: map[string]*agentdefinition.Definition{}},
-		threads:       &pageThreads{live: map[assistantports.PageThreadKey]*conversation.Thread{}},
+		provisioner: &provisioner{definitions: map[string]*agentdefinition.Definition{}},
+		threads: &pageThreads{
+			live: map[conversationports.PageThreadKey]*conversation.Thread{},
+		},
 		conversations: &creatingConversations{},
 		permissions:   permissions,
 		actor:         testActor(),

@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,10 +31,10 @@ type proposalEditStore interface {
 // agent's own values is kept, and an empty set clears what was saved.
 func (s *Service) SaveProposalEdits(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	proposalID pulid.ID,
 	modifications map[string]any,
-) (*assistantports.ProposalEdits, error) {
+) (*assistantproposalports.ProposalEdits, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (s *Service) SaveProposalEdits(
 		return nil, err
 	}
 
-	return &assistantports.ProposalEdits{
+	return &assistantproposalports.ProposalEdits{
 		ProposalID:           saved.ID,
 		PendingModifications: saved.PendingModifications,
 	}, nil

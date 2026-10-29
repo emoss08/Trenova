@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -165,7 +165,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 1,
-				Kind: assistantports.AssistantEventToolFinished, CallID: "c9",
+				Kind: assistantstreamports.AssistantEventToolFinished, CallID: "c9",
 				Payload: map[string]any{"callId": "c9", "name": "delete_everything",
 					"failed": true, "content": "that tool is not held"},
 				OccurredAt: aiaudittest.FixedNow - 930, CreatedAt: aiaudittest.FixedNow - 900,
@@ -173,14 +173,14 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 2,
-				Kind: assistantports.AssistantEventToolFinished, CallID: "c1",
+				Kind: assistantstreamports.AssistantEventToolFinished, CallID: "c1",
 				Payload:    map[string]any{"callId": "c1", "name": "shipment_get", "failed": true},
 				OccurredAt: aiaudittest.FixedNow - 930, CreatedAt: aiaudittest.FixedNow - 900,
 			},
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 3,
-				Kind: assistantports.AssistantEventDelegateStarted,
+				Kind: assistantstreamports.AssistantEventDelegateStarted,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"task": "look it up"},
 				OccurredAt: aiaudittest.FixedNow - 925, CreatedAt: aiaudittest.FixedNow - 900,
@@ -188,7 +188,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 4,
-				Kind: assistantports.AssistantEventDelegateFinished,
+				Kind: assistantstreamports.AssistantEventDelegateFinished,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"status": "exhausted", "reason": "ran out of tool calls"},
 				OccurredAt: aiaudittest.FixedNow - 920, CreatedAt: aiaudittest.FixedNow - 900,

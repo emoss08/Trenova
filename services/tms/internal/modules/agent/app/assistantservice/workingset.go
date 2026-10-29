@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationworkingset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -133,7 +133,7 @@ func (s *Service) keepWorkingSet(
 	}
 
 	next := conversationworkingset.Touch(turn.thread.WorkingSet, touched...)
-	if err := s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
 		ThreadID:   turn.thread.ID,
 		TenantInfo: tenant,
 		WorkingSet: &next,

@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -107,14 +107,14 @@ func (s *decisionStore) ListByProposals(
 }
 
 type conversationStore struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 	thread   *conversation.Thread
 	messages []conversation.Message
 }
 
 func (s *conversationStore) GetThreadOwned(
 	context.Context,
-	assistantports.GetThreadOwnedRequest,
+	conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if s.thread == nil {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -125,7 +125,7 @@ func (s *conversationStore) GetThreadOwned(
 
 func (s *conversationStore) ListMessages(
 	context.Context,
-	assistantports.ListMessagesRequest,
+	conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return s.messages, nil
 }

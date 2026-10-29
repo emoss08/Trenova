@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
@@ -46,8 +47,8 @@ func (s *Service) SearchDesk(
 		return []assistantports.DeskSearchResult{}, nil
 	}
 
-	search := func(kinds []string, limit int) ([]assistantports.DeskSearchRow, error) {
-		return s.conversations.SearchDesk(ctx, assistantports.SearchDeskRequest{
+	search := func(kinds []string, limit int) ([]conversationports.DeskSearchRow, error) {
+		return s.conversations.SearchDesk(ctx, conversationports.SearchDeskRequest{
 			TenantInfo:   actor.TenantInfo(),
 			UserID:       actor.UserID,
 			Query:        query,
@@ -56,7 +57,7 @@ func (s *Service) SearchDesk(
 		})
 	}
 
-	var rows []assistantports.DeskSearchRow
+	var rows []conversationports.DeskSearchRow
 	var err error
 	switch {
 	case kind != "":
@@ -64,7 +65,7 @@ func (s *Service) SearchDesk(
 	case query != "":
 		rows, err = search(deskSearchKinds, deskSearchLimitAllKinds)
 	default:
-		var chats, arts []assistantports.DeskSearchRow
+		var chats, arts []conversationports.DeskSearchRow
 		if chats, err = search([]string{"chat"}, deskSearchRecentChats); err == nil {
 			arts, err = search([]string{"art"}, deskSearchRecentArts)
 		}

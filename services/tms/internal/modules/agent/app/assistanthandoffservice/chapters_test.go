@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,17 +18,17 @@ import (
 )
 
 type fakeChapterSpans struct {
-	assistantports.AssistantChapterService
+	assistantchapterports.AssistantChapterService
 
-	span *assistantports.ChapterSpan
+	span *assistantchapterports.ChapterSpan
 	err  error
-	req  *assistantports.ChapterSpanRequest
+	req  *assistantchapterports.ChapterSpanRequest
 }
 
 func (f *fakeChapterSpans) Span(
 	_ context.Context,
-	req assistantports.ChapterSpanRequest,
-) (*assistantports.ChapterSpan, error) {
+	req assistantchapterports.ChapterSpanRequest,
+) (*assistantchapterports.ChapterSpan, error) {
 	f.req = &req
 	if f.err != nil {
 		return nil, f.err
@@ -37,8 +39,8 @@ func (f *fakeChapterSpans) Span(
 
 func through(sequence int) *int { return &sequence }
 
-func spanOf(title string, from int, last *int) *assistantports.ChapterSpan {
-	return &assistantports.ChapterSpan{
+func spanOf(title string, from int, last *int) *assistantchapterports.ChapterSpan {
+	return &assistantchapterports.ChapterSpan{
 		Chapter: &conversationchapter.Chapter{ID: pulid.MustNew("achp_"), Title: title},
 		From:    from,
 		Through: last,
@@ -53,7 +55,7 @@ func TestHistoryRequest_ReadsTheNewestOfTheWholeConversationWithoutAChapter(t *t
 
 	req := historyRequest(origin, tenant, nil)
 
-	assert.Equal(t, assistantports.ListMessagesRequest{
+	assert.Equal(t, conversationports.ListMessagesRequest{
 		ThreadID:     origin.ID,
 		TenantInfo:   tenant,
 		Limit:        120,

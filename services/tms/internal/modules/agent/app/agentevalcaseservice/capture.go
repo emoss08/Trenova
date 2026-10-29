@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -248,7 +248,7 @@ func (s *Service) captureMessage(
 	actor *permissionports.RequestActor,
 ) (*agentports.EvalCaseCapture, error) {
 	tenantInfo := req.tenant
-	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         req.threadID,
 		TenantInfo: tenantInfo,
 	})
@@ -409,7 +409,7 @@ func (s *Service) freezeChat(
 	tenantInfo pagination.TenantInfo,
 	anchor turnAnchor,
 ) (*frozenTurn, *redaction, error) {
-	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:     anchor.threadID,
 		TenantInfo:   tenantInfo,
 		ExcludeKinds: conversation.ModelHiddenKinds(),

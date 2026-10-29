@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -159,8 +159,8 @@ func (a *Activities) ModelCallActivity(
 		// run together.
 		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
 			publish(kernelports.StreamEvent{
-				Event: assistantports.AssistantEventRetrying,
-				Data: assistantports.AssistantRetryingEvent{
+				Event: assistantstreamports.AssistantEventRetrying,
+				Data: assistantstreamports.AssistantRetryingEvent{
 					Attempt: int(attempt) - 1,
 					Reason:  "The reply is being written again after an interruption.",
 					Kind:    llmports.RetryKindRestart,
@@ -199,8 +199,8 @@ func (f *firstWords) flush(event kernelports.StreamEvent) bool {
 	if f.sent {
 		return false
 	}
-	if event.Event != assistantports.AssistantEventDelta &&
-		event.Event != assistantports.AssistantEventReasoning {
+	if event.Event != assistantstreamports.AssistantEventDelta &&
+		event.Event != assistantstreamports.AssistantEventReasoning {
 		return false
 	}
 	f.sent = true

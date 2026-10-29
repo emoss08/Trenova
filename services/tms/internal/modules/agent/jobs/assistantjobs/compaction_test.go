@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -123,7 +124,7 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 			s.saved = in
 
 			return &CompactionEnding{Event: temporaltype.StreamItem{
-				Event: assistantports.AssistantEventCompactionFinished,
+				Event: assistantstreamports.AssistantEventCompactionFinished,
 			}}, nil
 		},
 	).Once()
@@ -181,8 +182,8 @@ func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 		Payload: payload,
 		Status:  conversation.AssistantTurnStatusStopped,
 	}, true)
-	assert.Equal(t, assistantports.AssistantEventCompactionCancelled, cancelled.Event.Event)
-	data, ok := cancelled.Event.Data.(assistantports.AssistantCompactionEvent)
+	assert.Equal(t, assistantstreamports.AssistantEventCompactionCancelled, cancelled.Event.Event)
+	data, ok := cancelled.Event.Data.(assistantstreamports.AssistantCompactionEvent)
 	assert.True(t, ok)
 	assert.True(
 		t,
@@ -195,7 +196,7 @@ func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 		Status:  conversation.AssistantTurnStatusFailed,
 		Message: compactionFailedMessage,
 	}, false)
-	assert.Equal(t, assistantports.AssistantEventError, failed.Event.Event)
+	assert.Equal(t, assistantstreamports.AssistantEventError, failed.Event.Event)
 }
 
 /*

@@ -20,7 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -39,8 +40,8 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Queue         assistantports.AssistantQueueRepository
-	Conversations assistantports.ConversationRepository
+	Queue         assistantturnports.AssistantQueueRepository
+	Conversations conversationports.ConversationRepository
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
 	Realtime      realtimeports.RealtimeService `optional:"true"`
@@ -51,7 +52,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req assistantports.ActiveAssistantTurnRequest,
+		req assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -63,20 +64,20 @@ type turnStarter interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req assistantports.GetThreadRequest,
+		req conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
 type Service struct {
 	l             *zap.Logger
-	queue         assistantports.AssistantQueueRepository
+	queue         assistantturnports.AssistantQueueRepository
 	conversations threadReader
 	turns         turnStarter
 	workflows     kernelports.WorkflowStarter
 	realtime      realtimeports.RealtimeService
 }
 
-var _ assistantports.AssistantQueueSettler = (*Service)(nil)
+var _ assistantturnports.AssistantQueueSettler = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
@@ -89,7 +90,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func NewSettler(s *Service) assistantports.AssistantQueueSettler { return s }
+func NewSettler(s *Service) assistantturnports.AssistantQueueSettler { return s }
 
 type Scope struct {
 	ThreadID pulid.ID
@@ -104,8 +105,8 @@ func (s *Scope) tenant() pagination.TenantInfo {
 	}
 }
 
-func (s *Scope) repo() *assistantports.AssistantQueueScope {
-	return &assistantports.AssistantQueueScope{
+func (s *Scope) repo() *assistantturnports.AssistantQueueScope {
+	return &assistantturnports.AssistantQueueScope{
 		ThreadID:   s.ThreadID,
 		UserID:     s.Actor.UserID,
 		TenantInfo: s.tenant(),
@@ -189,7 +190,7 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 
 	created, err := s.queue.Insert(ctx, item)
 	if err != nil {
-		if errors.Is(err, assistantports.ErrQueueFull) {
+		if errors.Is(err, assistantturnports.ErrQueueFull) {
 			return nil, errortypes.NewBusinessError(fmt.Sprintf(
 				"Up to %d messages can wait in a conversation. Send or remove one first.",
 				conversationqueue.MaxQueuedPerThread,
@@ -240,7 +241,7 @@ func (s *Service) Remove(ctx context.Context, req *ItemRequest) error {
 	if _, err := s.editable(ctx, req.Scope, req.ID); err != nil {
 		return err
 	}
-	if err := s.queue.Delete(ctx, &assistantports.QueuedMessageRequest{
+	if err := s.queue.Delete(ctx, &assistantturnports.QueuedMessageRequest{
 		ID:    req.ID,
 		Scope: *req.Scope.repo(),
 	}); err != nil {
@@ -271,7 +272,7 @@ func (s *Service) Reorder(
 		)
 	}
 
-	ordered, err := s.queue.Reorder(ctx, &assistantports.ReorderQueuedMessagesRequest{
+	ordered, err := s.queue.Reorder(ctx, &assistantturnports.ReorderQueuedMessagesRequest{
 		IDs:   req.IDs,
 		Scope: *req.Scope.repo(),
 	})
@@ -295,7 +296,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 	if err != nil {
 		return nil, err
 	}
-	key := &assistantports.QueuedMessageRequest{ID: req.ID, Scope: *req.Scope.repo()}
+	key := &assistantturnports.QueuedMessageRequest{ID: req.ID, Scope: *req.Scope.repo()}
 	defer s.announce(ctx, &req.Scope.Actor, req.Scope.ThreadID)
 
 	if active != nil {
@@ -303,7 +304,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 	}
 
 	item, err := s.queue.Claim(ctx, key)
-	if errors.Is(err, assistantports.ErrQueueEmpty) {
+	if errors.Is(err, assistantturnports.ErrQueueEmpty) {
 		return nil, errortypes.NewNotFoundError("{0} not found within your organization",
 			"Queued message")
 	}
@@ -325,7 +326,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 func (s *Service) steerNow(
 	ctx context.Context,
 	active *conversationturn.AssistantTurn,
-	key *assistantports.QueuedMessageRequest,
+	key *assistantturnports.QueuedMessageRequest,
 ) (*Outcome, error) {
 	if !steerable(active) {
 		return nil, errortypes.NewBusinessError(
@@ -359,11 +360,11 @@ func (s *Service) steerNow(
 
 func (s *Service) SettleQueue(
 	ctx context.Context,
-	req *assistantports.SettleQueueRequest,
-) *assistantports.QueuedTurn {
+	req *assistantturnports.SettleQueueRequest,
+) *assistantturnports.QueuedTurn {
 	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
 	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), tenant.DBTenant())
-	scope := &assistantports.AssistantQueueScope{ThreadID: req.ThreadID, TenantInfo: tenant}
+	scope := &assistantturnports.AssistantQueueScope{ThreadID: req.ThreadID, TenantInfo: tenant}
 	owner := permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
@@ -374,7 +375,7 @@ func (s *Service) SettleQueue(
 
 	changed := false
 	if len(req.Read) > 0 {
-		if err := s.queue.DeleteMany(ctx, &assistantports.DeleteQueuedMessagesRequest{
+		if err := s.queue.DeleteMany(ctx, &assistantturnports.DeleteQueuedMessagesRequest{
 			IDs:   req.Read,
 			Scope: *scope,
 		}); err != nil {
@@ -400,7 +401,7 @@ func (s *Service) SettleQueue(
 		return nil
 	}
 
-	return &assistantports.QueuedTurn{TurnID: turn.ID, QueuedID: item.ID, Input: turn.Input}
+	return &assistantturnports.QueuedTurn{TurnID: turn.ID, QueuedID: item.ID, Input: turn.Input}
 }
 
 func (s *Service) sendWhenFree(
@@ -429,10 +430,10 @@ type dispatched struct {
 
 func (s *Service) dispatchNext(
 	ctx context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) (*conversationturn.AssistantTurn, *dispatched) {
 	item, err := s.queue.ClaimNext(ctx, scope)
-	if errors.Is(err, assistantports.ErrQueueEmpty) {
+	if errors.Is(err, assistantturnports.ErrQueueEmpty) {
 		return nil, nil
 	}
 	if err != nil {
@@ -555,7 +556,7 @@ func (s *Service) editable(
 	}
 	item, err := s.queue.Get(
 		ctx,
-		&assistantports.QueuedMessageRequest{ID: id, Scope: *scope.repo()},
+		&assistantturnports.QueuedMessageRequest{ID: id, Scope: *scope.repo()},
 	)
 	if err != nil {
 		return nil, err
@@ -579,7 +580,7 @@ func (s *Service) editable(
 }
 
 func (s *Service) ownThread(ctx context.Context, scope *Scope) error {
-	_, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	_, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),
@@ -592,7 +593,7 @@ func (s *Service) active(
 	ctx context.Context,
 	scope *Scope,
 ) (*conversationturn.AssistantTurn, error) {
-	return s.turns.Active(ctx, assistantports.ActiveAssistantTurnRequest{
+	return s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),

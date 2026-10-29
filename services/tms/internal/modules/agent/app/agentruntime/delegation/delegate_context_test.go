@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,9 +66,9 @@ func TestDelegateInput_FencesWhatWasHandedOverAfterTheTask(t *testing.T) {
 func TestDelegateNote_PassesOnTheArtifactsTheReplyShowed(t *testing.T) {
 	t.Parallel()
 
-	report := assistantports.AssistantDelegateFinishedEvent{
+	report := assistantstreamports.AssistantDelegateFinishedEvent{
 		AgentName: "Billing exceptions",
-		Status:    assistantports.DelegateStatusCompleted,
+		Status:    assistantstreamports.DelegateStatusCompleted,
 		Reply: "There are 8 items; the [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) " +
 			"table lists them, and [Billing queue items](artifact:art_01M42AYFPF05FCCQ4R5R1Y7EQJ) again.",
 	}

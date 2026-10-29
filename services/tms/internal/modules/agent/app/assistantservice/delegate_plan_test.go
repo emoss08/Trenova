@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -239,7 +239,10 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 		&stubConversationRepo{thread: thread}, shadowSwitches{definition: delegate})
 	svc.plans = &threadPlans{plans: []*agentplan.AgentPlan{plan}}
 
-	listed, err := svc.ListThreadPlans(t.Context(), assistantports.GetThreadRequest{ID: thread.ID})
+	listed, err := svc.ListThreadPlans(
+		t.Context(),
+		conversationports.GetThreadRequest{ID: thread.ID},
+	)
 	require.NoError(t, err)
 
 	require.Len(t, listed, 1)

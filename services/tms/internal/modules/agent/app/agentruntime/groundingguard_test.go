@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -30,13 +30,13 @@ func (fx *groundingEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
 }
 
-func (fx *groundingEffects) regrounded() []assistantports.AssistantReplyRegroundedEvent {
-	out := make([]assistantports.AssistantReplyRegroundedEvent, 0, 2)
+func (fx *groundingEffects) regrounded() []assistantstreamports.AssistantReplyRegroundedEvent {
+	out := make([]assistantstreamports.AssistantReplyRegroundedEvent, 0, 2)
 	for _, event := range fx.events {
-		if event.Event != assistantports.AssistantEventReplyRegrounded {
+		if event.Event != assistantstreamports.AssistantEventReplyRegrounded {
 			continue
 		}
-		if data, ok := event.Data.(assistantports.AssistantReplyRegroundedEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantReplyRegroundedEvent); ok {
 			out = append(out, data)
 		}
 	}
@@ -128,9 +128,9 @@ func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 1)
-	assert.Equal(t, assistantports.RegroundRewrite, regrounded[0].Action)
+	assert.Equal(t, assistantstreamports.RegroundRewrite, regrounded[0].Action)
 	assert.Equal(t, []string{"commodities"}, regrounded[0].Fields)
-	assert.Contains(t, eventNames(run.fx.events), assistantports.AssistantEventRetrying,
+	assert.Contains(t, eventNames(run.fx.events), assistantstreamports.AssistantEventRetrying,
 		"the reader drops the draft it was shown")
 }
 
@@ -149,8 +149,8 @@ func TestGroundingGuard_NotesTheCardWhenTheRewriteStillDrifts(t *testing.T) {
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 2)
-	assert.Equal(t, assistantports.RegroundRewrite, regrounded[0].Action)
-	assert.Equal(t, assistantports.RegroundNote, regrounded[1].Action)
+	assert.Equal(t, assistantstreamports.RegroundRewrite, regrounded[0].Action)
+	assert.Equal(t, assistantstreamports.RegroundNote, regrounded[1].Action)
 }
 
 func TestGroundingGuard_CatchesAFigureNothingReturnedOrFiled(t *testing.T) {
@@ -290,7 +290,7 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 1)
-	assert.Equal(t, assistantports.RegroundRewrite, regrounded[0].Action)
+	assert.Equal(t, assistantstreamports.RegroundRewrite, regrounded[0].Action)
 	assert.Equal(t, []string{"52.3"}, regrounded[0].Figures)
 }
 
@@ -323,7 +323,7 @@ func TestGroundingGuard_NamesTheFiguresWhenTheRewriteStillStatesThem(t *testing.
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 2)
-	assert.Equal(t, assistantports.RegroundNote, regrounded[1].Action)
+	assert.Equal(t, assistantstreamports.RegroundNote, regrounded[1].Action)
 }
 
 func TestGroundingGuard_AcceptsWhatTheConversationRead(t *testing.T) {
@@ -870,7 +870,7 @@ func TestGroundingGuard_ChecksArithmeticOnWhatTheConversationRead(t *testing.T) 
 		}
 		assert.Equal(t, 3, run.completion.CallCount, tc.name)
 		require.Len(t, regrounded, 1, tc.name)
-		assert.Equal(t, assistantports.RegroundRewrite, regrounded[0].Action, tc.name)
+		assert.Equal(t, assistantstreamports.RegroundRewrite, regrounded[0].Action, tc.name)
 		assert.Equal(t, tc.figures, regrounded[0].Figures, tc.name)
 	}
 }

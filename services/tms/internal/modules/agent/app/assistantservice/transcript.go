@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,7 +53,7 @@ var transcriptJSON = sonic.Config{SortMapKeys: true}.Froze()
 
 func (s *Service) Transcript(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*kernelports.TranscriptFile, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
@@ -91,14 +91,14 @@ func (s *Service) Transcript(
 // run out, and hands it back oldest first.
 func (s *Service) allMessages(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) ([]conversation.Message, error) {
 	pages := make([][]conversation.Message, 0, 1)
 	total := 0
 	var before *int
 
 	for page := 0; page < transcriptMaxPages; page++ {
-		messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+		messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 			ThreadID:       req.ID,
 			TenantInfo:     req.TenantInfo,
 			Limit:          transcriptPageSize,
@@ -133,7 +133,7 @@ func (s *Service) allMessages(
 // been deleted leaves the conversation readable under a plain name.
 func (s *Service) agentName(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	thread *conversation.Thread,
 ) string {
 	if s.definitions == nil || thread.AgentDefinitionID.IsNil() {

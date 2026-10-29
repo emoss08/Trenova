@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -150,24 +150,25 @@ func (t *liveTurn) flush() {
 	t.mode = ""
 }
 
-func (t *liveTurn) frame(frame assistantports.TurnStreamFrame) {
+func (t *liveTurn) frame(frame assistantstreamports.TurnStreamFrame) {
 	if t == nil {
 		return
 	}
 
 	switch frame.Event {
-	case assistantports.AssistantEventDelta, assistantports.AssistantEventDelegateDelta:
+	case assistantstreamports.AssistantEventDelta, assistantstreamports.AssistantEventDelegateDelta:
 		t.stream(liveModeText, frameText(frame.Data))
-	case assistantports.AssistantEventReasoning, assistantports.AssistantEventDelegateReasoning:
+	case assistantstreamports.AssistantEventReasoning,
+		assistantstreamports.AssistantEventDelegateReasoning:
 		t.stream(liveModeThinking, frameText(frame.Data))
-	case assistantports.AssistantEventToolStarted:
-		var started assistantports.AssistantToolStartedEvent
+	case assistantstreamports.AssistantEventToolStarted:
+		var started assistantstreamports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			t.line("-> %s%s %s", started.Name, delegateTag(started.DelegateCallID),
 				stringutils.Ellipsize(compactJSON(started.Arguments, liveArgsLimit), liveArgsLimit))
 		}
-	case assistantports.AssistantEventToolFinished:
-		var finished assistantports.AssistantToolFinishedEvent
+	case assistantstreamports.AssistantEventToolFinished:
+		var finished assistantstreamports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
 			record := ToolCallRecord{
 				Verdict:  finished.Verdict,
@@ -181,10 +182,10 @@ func (t *liveTurn) frame(frame assistantports.TurnStreamFrame) {
 			t.line("<- %s%s %s · %s", finished.Name, delegateTag(finished.DelegateCallID),
 				verdictLabel(&record), stringutils.Ellipsize(detail, liveSummaryLimit))
 		}
-	case assistantports.AssistantEventMessage, assistantports.AssistantEventDone,
-		assistantports.AssistantEventAccepted, assistantports.AssistantEventTurn,
-		assistantports.AssistantEventThread, assistantports.AssistantEventContext,
-		assistantports.AssistantEventArtifact:
+	case assistantstreamports.AssistantEventMessage, assistantstreamports.AssistantEventDone,
+		assistantstreamports.AssistantEventAccepted, assistantstreamports.AssistantEventTurn,
+		assistantstreamports.AssistantEventThread, assistantstreamports.AssistantEventContext,
+		assistantstreamports.AssistantEventArtifact:
 		t.flush()
 	default:
 		t.line(

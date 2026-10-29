@@ -9,14 +9,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type stubChapters struct {
-	assistantports.ChapterRepository
+	assistantchapterports.ChapterRepository
 
 	chapters []*conversationchapter.Chapter
 	err      error
@@ -24,7 +25,7 @@ type stubChapters struct {
 
 func (s *stubChapters) List(
 	context.Context,
-	assistantports.ListChaptersRequest,
+	assistantchapterports.ListChaptersRequest,
 ) ([]*conversationchapter.Chapter, error) {
 	return s.chapters, s.err
 }
@@ -397,7 +398,7 @@ func TestTranscript_HeadsEachChapterFromTheConversationsChapters(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: input.Thread.ID},
+		conversationports.GetThreadRequest{ID: input.Thread.ID},
 	)
 	require.NoError(t, err)
 

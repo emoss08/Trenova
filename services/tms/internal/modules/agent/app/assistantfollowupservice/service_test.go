@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,14 +40,14 @@ func (f *fakeRuns) GetByID(
 }
 
 type fakeConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 	thread *conversation.Thread
-	asked  []assistantports.GetThreadOwnedRequest
+	asked  []conversationports.GetThreadOwnedRequest
 }
 
 func (f *fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req assistantports.GetThreadOwnedRequest,
+	req conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	f.asked = append(f.asked, req)
 

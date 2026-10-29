@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,18 +37,18 @@ func input() *chaptercontract.ThreadChaptersInput {
 	return &chaptercontract.ThreadChaptersInput{TenantInfo: tenant(), ThreadID: pulid.ID("athr_a")}
 }
 
-func turnRequest(turnID pulid.ID) assistantports.ChapterTurnRequest {
-	return assistantports.ChapterTurnRequest{
+func turnRequest(turnID pulid.ID) assistantchapterports.ChapterTurnRequest {
+	return assistantchapterports.ChapterTurnRequest{
 		TenantInfo: tenant(),
 		ThreadID:   pulid.ID("athr_a"),
 		UserID:     pulid.ID("usr_a"),
 		TurnID:     turnID,
-		Phase:      assistantports.ChapterPhaseOpened,
+		Phase:      assistantchapterports.ChapterPhaseOpened,
 	}
 }
 
-func modelPlan(req assistantports.ChapterTurnRequest) *assistantports.ChapterPlan {
-	return &assistantports.ChapterPlan{
+func modelPlan(req assistantchapterports.ChapterTurnRequest) *assistantchapterports.ChapterPlan {
+	return &assistantchapterports.ChapterPlan{
 		Turn:           req,
 		Opens:          true,
 		Fallback:       "Why is load 1200 late?",
@@ -63,7 +63,7 @@ func modelPlan(req assistantports.ChapterTurnRequest) *assistantports.ChapterPla
 
 func cue(
 	env *testsuite.TestWorkflowEnvironment,
-	req assistantports.ChapterTurnRequest,
+	req assistantchapterports.ChapterTurnRequest,
 	after time.Duration,
 ) {
 	env.RegisterDelayedCallback(func() {
@@ -80,10 +80,10 @@ func TestThreadChaptersWorkflow_AsksTheModelAndKeepsWhatItSaid(t *testing.T) {
 	cue(env, req, 0)
 
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.MatchedBy(
-		func(got *assistantports.ChapterTurnRequest) bool { return *got == req },
+		func(got *assistantchapterports.ChapterTurnRequest) bool { return *got == req },
 	)).Return(modelPlan(req), nil).Once()
 	env.OnActivity(a.ChapterModelActivity, mock.Anything, mock.MatchedBy(
-		func(plan *assistantports.ChapterPlan) bool {
+		func(plan *assistantchapterports.ChapterPlan) bool {
 			return plan.Turn.TurnID == req.TurnID && plan.Request != nil &&
 				plan.Request.SchemaName == "chapter_title"
 		},
@@ -93,7 +93,7 @@ func TestThreadChaptersWorkflow_AsksTheModelAndKeepsWhatItSaid(t *testing.T) {
 			return in.Plan != nil && in.Plan.Opens && in.Plan.Turn.TurnID == req.TurnID &&
 				in.Result != nil && in.Result.Text == `{"title":"Late load 1200"}`
 		},
-	)).Return(&assistantports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Opened: true}, nil).Once()
+	)).Return(&assistantchapterports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Opened: true}, nil).Once()
 
 	env.ExecuteWorkflow(ThreadChaptersWorkflow, input())
 
@@ -115,7 +115,7 @@ func TestThreadChaptersWorkflow_ASkippedTurnAsksNothingAndChangesNothing(t *test
 	cue(env, req, 0)
 
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.Anything).
-		Return(&assistantports.ChapterPlan{Turn: req, Skip: "the turn continues its chapter"}, nil).
+		Return(&assistantchapterports.ChapterPlan{Turn: req, Skip: "the turn continues its chapter"}, nil).
 		Once()
 	env.OnActivity(a.ChapterModelActivity, mock.Anything, mock.Anything).Never()
 	env.OnActivity(a.ApplyChapterActivity, mock.Anything, mock.Anything).Never()
@@ -139,15 +139,19 @@ func TestThreadChaptersWorkflow_APlanWithoutAQuestionForTheModelGoesStraightToAp
 	env := newEnv(t)
 	var a *Activities
 	req := turnRequest(pulid.ID("atrn_a"))
-	req.Phase = assistantports.ChapterPhaseAnswered
+	req.Phase = assistantchapterports.ChapterPhaseAnswered
 	cue(env, req, 0)
 
-	plan := &assistantports.ChapterPlan{Turn: req, ChapterID: pulid.ID("achp_a"), Remove: true}
+	plan := &assistantchapterports.ChapterPlan{
+		Turn:      req,
+		ChapterID: pulid.ID("achp_a"),
+		Remove:    true,
+	}
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.Anything).Return(plan, nil).Once()
 	env.OnActivity(a.ChapterModelActivity, mock.Anything, mock.Anything).Never()
 	env.OnActivity(a.ApplyChapterActivity, mock.Anything, mock.MatchedBy(
 		func(in *ApplyInput) bool { return in.Plan.Remove && in.Result == nil },
-	)).Return(&assistantports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Removed: true}, nil).Once()
+	)).Return(&assistantchapterports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Removed: true}, nil).Once()
 
 	env.ExecuteWorkflow(ThreadChaptersWorkflow, input())
 
@@ -181,7 +185,7 @@ func TestThreadChaptersWorkflow_AFailedModelCallStillKeepsTheChapter(t *testing.
 		func(in *ApplyInput) bool {
 			return in.Plan != nil && in.Plan.Turn.TurnID == req.TurnID && in.Result == nil
 		},
-	)).Return(&assistantports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Opened: true, Fallback: true}, nil).Once()
+	)).Return(&assistantchapterports.ChapterOutcome{ChapterID: pulid.ID("achp_a"), Opened: true, Fallback: true}, nil).Once()
 
 	env.ExecuteWorkflow(ThreadChaptersWorkflow, input())
 
@@ -205,11 +209,11 @@ func TestThreadChaptersWorkflow_AFailedPlanIsCountedAndTheNextTurnStillRuns(t *t
 	cue(env, second, time.Minute)
 
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.MatchedBy(
-		func(got *assistantports.ChapterTurnRequest) bool { return got.TurnID == first.TurnID },
+		func(got *assistantchapterports.ChapterTurnRequest) bool { return got.TurnID == first.TurnID },
 	)).Return(nil, temporal.NewNonRetryableApplicationError("down", "Down", errors.New("down")))
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.MatchedBy(
-		func(got *assistantports.ChapterTurnRequest) bool { return got.TurnID == second.TurnID },
-	)).Return(&assistantports.ChapterPlan{Turn: second, Skip: "the turn continues its chapter"}, nil).Once()
+		func(got *assistantchapterports.ChapterTurnRequest) bool { return got.TurnID == second.TurnID },
+	)).Return(&assistantchapterports.ChapterPlan{Turn: second, Skip: "the turn continues its chapter"}, nil).Once()
 
 	env.ExecuteWorkflow(ThreadChaptersWorkflow, input())
 
@@ -248,7 +252,7 @@ func TestThreadChaptersWorkflow_ContinuesAsNewAfterItsTurnsPerRun(t *testing.T) 
 	}
 
 	env.OnActivity(a.PlanChapterActivity, mock.Anything, mock.Anything).
-		Return(&assistantports.ChapterPlan{Skip: "the turn continues its chapter"}, nil)
+		Return(&assistantchapterports.ChapterPlan{Skip: "the turn continues its chapter"}, nil)
 
 	env.ExecuteWorkflow(ThreadChaptersWorkflow, input())
 

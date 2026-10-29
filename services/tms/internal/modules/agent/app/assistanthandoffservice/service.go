@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,22 +45,22 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Artifacts     assistantartifactports.AssistantArtifactRepository
 	Assistant     assistantports.AssistantService
-	Completion    llmports.StructuredCompleter           `optional:"true"`
-	Chapters      assistantports.AssistantChapterService `optional:"true"`
+	Completion    llmports.StructuredCompleter                  `optional:"true"`
+	Chapters      assistantchapterports.AssistantChapterService `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	artifacts     assistantartifactports.AssistantArtifactRepository
 	assistant     assistantports.AssistantService
 	completion    llmports.StructuredCompleter
-	chapters      assistantports.AssistantChapterService
+	chapters      assistantchapterports.AssistantChapterService
 }
 
 func New(p Params) assistantports.AssistantHandoffService {
@@ -86,7 +88,7 @@ func (s *Service) Handoff(
 
 	// Read under the person's own id: someone else's conversation is not
 	// found, which is the authorization.
-	origin, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	origin, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -161,7 +163,7 @@ func (s *Service) Handoff(
 	}
 	handoff.Artifacts = s.copyArtifacts(ctx, tenant, thread, pinned)
 
-	if _, err = s.conversations.AppendTurn(ctx, assistantports.AppendTurnRequest{
+	if _, err = s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{
@@ -174,7 +176,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	saved, err := s.conversations.AppendTurn(ctx, assistantports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
 		ThreadID:   origin.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{
@@ -263,7 +265,7 @@ func (s *Service) chapterSpan(
 	req *assistantports.HandoffThreadRequest,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-) (*assistantports.ChapterSpan, error) {
+) (*assistantchapterports.ChapterSpan, error) {
 	if req.ChapterID.IsNil() {
 		return nil, nil
 	}
@@ -271,7 +273,7 @@ func (s *Service) chapterSpan(
 		return nil, errortypes.NewBusinessError("Chapters are not available here")
 	}
 
-	return s.chapters.Span(ctx, assistantports.ChapterSpanRequest{
+	return s.chapters.Span(ctx, assistantchapterports.ChapterSpanRequest{
 		ID:         req.ChapterID,
 		ThreadID:   req.ThreadID,
 		UserID:     actor.UserID,
@@ -282,9 +284,9 @@ func (s *Service) chapterSpan(
 func historyRequest(
 	origin *conversation.Thread,
 	tenant pagination.TenantInfo,
-	span *assistantports.ChapterSpan,
-) assistantports.ListMessagesRequest {
-	req := assistantports.ListMessagesRequest{
+	span *assistantchapterports.ChapterSpan,
+) conversationports.ListMessagesRequest {
+	req := conversationports.ListMessagesRequest{
 		ThreadID:     origin.ID,
 		TenantInfo:   tenant,
 		Limit:        historyMessages,
@@ -304,7 +306,7 @@ func historyRequest(
 	return req
 }
 
-func handoffTitle(origin *conversation.Thread, span *assistantports.ChapterSpan) string {
+func handoffTitle(origin *conversation.Thread, span *assistantchapterports.ChapterSpan) string {
 	if span == nil {
 		return origin.Title
 	}

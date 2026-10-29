@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -96,13 +96,13 @@ func (f *fakeReflections) Update(
 }
 
 type fakeConversations struct {
-	assistantports.ConversationRepository
-	added []assistantports.AddSavedMemoriesRequest
+	conversationports.ConversationRepository
+	added []conversationports.AddSavedMemoriesRequest
 }
 
 func (f *fakeConversations) AddSavedMemories(
 	_ context.Context,
-	req assistantports.AddSavedMemoriesRequest,
+	req conversationports.AddSavedMemoriesRequest,
 ) error {
 	f.added = append(f.added, req)
 

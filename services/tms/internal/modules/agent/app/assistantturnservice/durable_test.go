@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ import (
 type recordingTurns struct {
 	stubTurns
 
-	completed []assistantports.CompleteAssistantTurnRequest
+	completed []assistantturnports.CompleteAssistantTurnRequest
 	marked    string
 	startErr  error
 }
@@ -42,7 +42,7 @@ func (r *recordingTurns) Start(
 }
 
 func (r *recordingTurns) Complete(
-	_ context.Context, req assistantports.CompleteAssistantTurnRequest,
+	_ context.Context, req assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	r.completed = append(r.completed, req)
 
@@ -68,7 +68,7 @@ func stopWith(
 	turn *conversationturn.AssistantTurn,
 	cancel func(workflowID string) error,
 ) error {
-	svc.canceller = assistantports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(_ context.Context, workflowID string) error {
 			return cancel(workflowID)
 		},
@@ -261,7 +261,7 @@ func TestStop_ReportsACancelThatFailed(t *testing.T) {
 
 func (r *recordingTurns) RecordFingerprint(
 	context.Context,
-	assistantports.RecordAssistantTurnFingerprintRequest,
+	assistantturnports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
 }

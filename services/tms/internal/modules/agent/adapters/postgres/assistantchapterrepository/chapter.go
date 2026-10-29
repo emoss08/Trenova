@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) assistantports.ChapterRepository {
+func New(p Params) assistantchapterports.ChapterRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistant-chapter-repository"),
@@ -58,7 +58,7 @@ func chaptersQuery(threadID pulid.ID) *keel.Query[*conversationchapter.Chapter] 
 
 func (r *repository) List(
 	ctx context.Context,
-	req assistantports.ListChaptersRequest,
+	req assistantchapterports.ListChaptersRequest,
 ) ([]*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversationchapter.Chapter, error) {
 		rows, err := chaptersQuery(req.ThreadID).
@@ -74,7 +74,7 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req assistantports.GetChapterRequest,
+	req assistantchapterports.GetChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		c := conversationdb.Chapters
@@ -89,7 +89,7 @@ func (r *repository) Get(
 
 func (r *repository) ForTurn(
 	ctx context.Context,
-	req assistantports.ChapterForTurnRequest,
+	req assistantchapterports.ChapterForTurnRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		c := conversationdb.Chapters
@@ -109,7 +109,7 @@ func (r *repository) ForTurn(
 
 func (r *repository) Count(
 	ctx context.Context,
-	req assistantports.ListChaptersRequest,
+	req assistantchapterports.ListChaptersRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		c := conversationdb.Chapters
@@ -144,7 +144,7 @@ func (r *repository) Create(
 
 func (r *repository) Retitle(
 	ctx context.Context,
-	req assistantports.RetitleChapterRequest,
+	req assistantchapterports.RetitleChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
@@ -184,7 +184,7 @@ func (r *repository) Retitle(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req assistantports.DeleteChapterRequest,
+	req assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		c := conversationdb.Chapters
@@ -203,7 +203,7 @@ func (r *repository) Delete(
 
 func (r *repository) TurnOfMessage(
 	ctx context.Context,
-	req assistantports.TurnOfMessageRequest,
+	req assistantchapterports.TurnOfMessageRequest,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
 		m := conversationdb.Messages

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +18,7 @@ type BoardFillRequest struct {
 }
 
 type BoardCardRequest struct {
-	Thread     GetThreadRequest
+	Thread     conversationports.GetThreadRequest
 	ArtifactID pulid.ID
 	Actor      *permissionports.RequestActor
 }

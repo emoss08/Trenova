@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -146,16 +146,16 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	assert.Equal(t, "Peak Distributing", answered.ToolSummary)
 	assert.Empty(t, asked.ToolCalls[0].Effect, "the call is stored as the model sent it")
 
-	var started *assistantports.AssistantToolStartedEvent
-	var finished *assistantports.AssistantToolFinishedEvent
-	var message *assistantports.AssistantMessageEvent
+	var started *assistantstreamports.AssistantToolStartedEvent
+	var finished *assistantstreamports.AssistantToolFinishedEvent
+	var message *assistantstreamports.AssistantMessageEvent
 	for _, event := range events {
 		switch data := event.Data.(type) {
-		case assistantports.AssistantToolStartedEvent:
+		case assistantstreamports.AssistantToolStartedEvent:
 			started = &data
-		case assistantports.AssistantToolFinishedEvent:
+		case assistantstreamports.AssistantToolFinishedEvent:
 			finished = &data
-		case assistantports.AssistantMessageEvent:
+		case assistantstreamports.AssistantMessageEvent:
 			message = &data
 		}
 	}
@@ -186,13 +186,13 @@ func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.
 		nil,
 	)
 
-	var finished *assistantports.AssistantToolFinishedEvent
+	var finished *assistantstreamports.AssistantToolFinishedEvent
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("report_create"),
 		Actor:      runtimetest.Actor(),
 		Input:      "Save a late loads report.",
 		Emit: func(event kernelports.StreamEvent) {
-			if data, ok := event.Data.(assistantports.AssistantToolFinishedEvent); ok {
+			if data, ok := event.Data.(assistantstreamports.AssistantToolFinishedEvent); ok {
 				finished = &data
 			}
 		},

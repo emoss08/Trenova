@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -312,7 +312,7 @@ func (a *Activities) threadActor(
 		)
 	}
 
-	thread, err := a.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	thread, err := a.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         threadID,
 		TenantInfo: tenant,
 	})
@@ -734,7 +734,7 @@ func (a *Activities) chatReplayInput(
 		)
 	}
 
-	messages, err := a.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	messages, err := a.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:     source.SubjectID,
 		TenantInfo:   tenant,
 		ExcludeKinds: conversation.ModelHiddenKinds(),

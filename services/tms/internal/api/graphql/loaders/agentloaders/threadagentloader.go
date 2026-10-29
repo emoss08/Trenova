@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,14 +15,14 @@ import (
 type threadAgentsByIDsLister interface {
 	ListThreadAgentsByIDs(
 		ctx context.Context,
-		req assistantports.ListThreadAgentsByIDsRequest,
+		req conversationports.ListThreadAgentsByIDsRequest,
 	) ([]*conversation.Thread, error)
 }
 
 type ThreadAgentByIDLoaderFactoryParams struct {
 	fx.In
 
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 }
 
 type ThreadAgentByIDLoaderFactory struct {
@@ -40,10 +40,13 @@ func newThreadAgentByIDLoader(f *ThreadAgentByIDLoaderFactory,
 ) *dataloadgen.Loader[string, *conversation.Thread] {
 	return loadercore.NewLoader(loadercore.BatchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*conversation.Thread, error) {
-			return f.threads.ListThreadAgentsByIDs(ctx, assistantports.ListThreadAgentsByIDsRequest{
-				IDs:        ids,
-				TenantInfo: tenantInfo,
-			})
+			return f.threads.ListThreadAgentsByIDs(
+				ctx,
+				conversationports.ListThreadAgentsByIDsRequest{
+					IDs:        ids,
+					TenantInfo: tenantInfo,
+				},
+			)
 		},
 		"Thread not found",
 	))

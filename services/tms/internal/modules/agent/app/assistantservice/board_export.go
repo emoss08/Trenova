@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/docrender"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +18,7 @@ import (
 
 func (s *Service) boardDocument(
 	ctx context.Context,
-	req *assistantports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*docrender.Document, bool, error) {
 	if s.boards == nil || s.artifacts == nil {

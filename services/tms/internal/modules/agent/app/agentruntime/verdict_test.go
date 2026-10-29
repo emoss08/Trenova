@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ import (
 func finishedVerdicts(events *[]kernelports.StreamEvent) map[string]string {
 	verdicts := make(map[string]string)
 	for _, event := range *events {
-		finished, ok := event.Data.(assistantports.AssistantToolFinishedEvent)
+		finished, ok := event.Data.(assistantstreamports.AssistantToolFinishedEvent)
 		if !ok {
 			continue
 		}

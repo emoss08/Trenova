@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -156,7 +156,7 @@ func TestRunEventEvent_ARefusalFollowsItsVerdict(t *testing.T) {
 				ID:         pulid.MustNew("are_"),
 				OwnerKind:  string(agent.RunOwnerAgentRun),
 				OwnerID:    pulid.MustNew("ar_"),
-				Kind:       assistantports.AssistantEventToolFinished,
+				Kind:       assistantstreamports.AssistantEventToolFinished,
 				CallID:     "call_1",
 				Payload:    payload,
 				OccurredAt: 1_700_000_000,
@@ -185,7 +185,7 @@ func TestRunEventEvent_ARefusalWithAStepIsTheStepsRow(t *testing.T) {
 		ID:        pulid.MustNew("are_"),
 		OwnerKind: string(agent.RunOwnerAgentRun),
 		OwnerID:   owner,
-		Kind:      assistantports.AssistantEventToolFinished,
+		Kind:      assistantstreamports.AssistantEventToolFinished,
 		CallID:    "call_1",
 		Payload: map[string]any{
 			payloadKeyFailed:  true,

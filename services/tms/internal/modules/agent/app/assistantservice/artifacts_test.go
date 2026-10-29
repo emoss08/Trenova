@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -378,8 +379,8 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	assert.Equal(t, thread.ID, repo.upserts[0].ThreadID)
 	assert.Equal(t, tenant.OrgID, repo.upserts[0].OrganizationID)
 	require.Len(t, events, 1)
-	assert.Equal(t, assistantports.AssistantEventArtifact, events[0].Event)
-	announced, ok := events[0].Data.(assistantports.AssistantArtifactEvent)
+	assert.Equal(t, assistantstreamports.AssistantEventArtifact, events[0].Event)
+	announced, ok := events[0].Data.(assistantstreamports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindEntityCard, announced.Kind)
 	assert.Equal(t, "call_customer_get", announced.SourceToolCallID)
@@ -424,12 +425,12 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	)
 
 	require.Len(t, events, 2)
-	moved, ok := events[0].Data.(assistantports.AssistantArtifactEvent)
+	moved, ok := events[0].Data.(assistantstreamports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindNavigation, moved.Kind)
 	assert.Equal(t, "/billing/invoices", moved.Path)
 
-	card, ok := events[1].Data.(assistantports.AssistantArtifactEvent)
+	card, ok := events[1].Data.(assistantstreamports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Empty(t, card.Path)
 	// The move is announced and not kept: only the card was saved.
@@ -501,8 +502,8 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 
 	page, err := svc.ListThreadArtifacts(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: thread.ID},
-		assistantports.ListArtifactsOptions{},
+		conversationports.GetThreadRequest{ID: thread.ID},
+		assistantartifactports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)
 	listed := page.Results

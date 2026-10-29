@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -257,12 +257,12 @@ type Delegation struct {
 }
 
 // Scope is how the turn's events and saved steps are tagged.
-func (d *Delegation) Scope(agentID pulid.ID) assistantports.DelegateScope {
+func (d *Delegation) Scope(agentID pulid.ID) assistantstreamports.DelegateScope {
 	if d == nil {
-		return assistantports.DelegateScope{}
+		return assistantstreamports.DelegateScope{}
 	}
 
-	return assistantports.DelegateScope{AgentID: agentID, DelegateCallID: d.CallID}
+	return assistantstreamports.DelegateScope{AgentID: agentID, DelegateCallID: d.CallID}
 }
 
 // DirectedTask is a task the person gave another agent from inside a

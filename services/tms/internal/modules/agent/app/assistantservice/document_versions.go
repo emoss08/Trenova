@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -33,7 +33,7 @@ const (
 // the conversation is the person's and the artifact a document in it.
 func (s *Service) documentLineage(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) ([]*assistantartifact.Artifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
@@ -75,10 +75,10 @@ func latestOf(versions []*assistantartifact.Artifact) *assistantartifact.Artifac
 // changed. Earlier versions stay as they were.
 func (s *Service) appendDocumentVersion(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	versions []*assistantartifact.Artifact,
 	body, note string,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	body = strings.TrimSpace(body)
 	switch {
 	case body == "":
@@ -139,10 +139,10 @@ func (s *Service) appendDocumentVersion(
 // SaveDocumentVersion keeps a person's edit of a document as its next version.
 func (s *Service) SaveDocumentVersion(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-	version assistantports.SaveDocumentVersionRequest,
-) (*assistantports.AssistantArtifact, error) {
+	version assistantartifactports.SaveDocumentVersionRequest,
+) (*assistantartifactports.AssistantArtifact, error) {
 	versions, err := s.documentLineage(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -159,9 +159,9 @@ func (s *Service) SaveDocumentVersion(
 // version, so nothing written since is lost.
 func (s *Service) RestoreDocumentVersion(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	versions, err := s.documentLineage(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -193,10 +193,10 @@ const rewriteSystem = "You edit one passage of a document a logistics team wrote
 // it as a new version or keeps what was there.
 func (s *Service) RewriteDocument(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-	rewrite assistantports.DocumentRewriteRequest,
-) (*assistantports.DocumentRewriteSuggestion, error) {
+	rewrite assistantartifactports.DocumentRewriteRequest,
+) (*assistantartifactports.DocumentRewriteSuggestion, error) {
 	versions, err := s.documentLineage(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func (s *Service) RewriteDocument(
 			{Title: "Passage to rewrite", Content: passage},
 			{
 				Title:   "How to rewrite it",
-				Trusted: rewrite.Mode != assistantports.DocumentRewriteAsk,
+				Trusted: rewrite.Mode != assistantartifactports.DocumentRewriteAsk,
 				Content: instruction,
 			},
 		}},
@@ -268,7 +268,7 @@ func (s *Service) RewriteDocument(
 		return nil, errortypes.NewBusinessError("The rewrite could not be written. Try again.")
 	}
 
-	var out assistantports.DocumentRewriteSuggestion
+	var out assistantartifactports.DocumentRewriteSuggestion
 	if err = sonic.UnmarshalString(result.Text, &out); err != nil ||
 		strings.TrimSpace(out.Text) == "" {
 		return nil, errortypes.NewBusinessError("The rewrite came back empty. Try again.")
@@ -278,7 +278,7 @@ func (s *Service) RewriteDocument(
 	return &out, nil
 }
 
-func rewriteInstruction(rewrite assistantports.DocumentRewriteRequest) (string, error) {
+func rewriteInstruction(rewrite assistantartifactports.DocumentRewriteRequest) (string, error) {
 	text := strings.TrimSpace(rewrite.Text)
 	if text == "" || len([]rune(text)) > maxRewriteRunes {
 		return "", errortypes.NewValidationError(
@@ -286,11 +286,11 @@ func rewriteInstruction(rewrite assistantports.DocumentRewriteRequest) (string, 
 		)
 	}
 	switch rewrite.Mode {
-	case assistantports.DocumentRewriteShorter:
+	case assistantartifactports.DocumentRewriteShorter:
 		return "Make it shorter: about half the words, keeping what matters.", nil
-	case assistantports.DocumentRewritePlainer:
+	case assistantartifactports.DocumentRewritePlainer:
 		return "Make it plainer: short sentences and everyday words, no jargon.", nil
-	case assistantports.DocumentRewriteAsk:
+	case assistantartifactports.DocumentRewriteAsk:
 		prompt := strings.TrimSpace(rewrite.Prompt)
 		if prompt == "" || len([]rune(prompt)) > maxPromptRunes {
 			return "", errortypes.NewValidationError(

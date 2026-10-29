@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -78,7 +78,9 @@ type chapterAnswer struct {
 	Title      string `json:"title"`
 }
 
-func baseRequest(turn *assistantports.ChapterTurnRequest) *llmports.StructuredCompletionRequest {
+func baseRequest(
+	turn *assistantchapterports.ChapterTurnRequest,
+) *llmports.StructuredCompletionRequest {
 	return &llmports.StructuredCompletionRequest{
 		TenantInfo: turn.TenantInfo,
 		Task:       aitask.TaskChapterTitling,
@@ -96,7 +98,7 @@ func baseRequest(turn *assistantports.ChapterTurnRequest) *llmports.StructuredCo
 }
 
 func decideRequest(
-	turn *assistantports.ChapterTurnRequest,
+	turn *assistantchapterports.ChapterTurnRequest,
 	current string,
 	recent []conversation.Message,
 	question string,
@@ -115,7 +117,7 @@ func decideRequest(
 }
 
 func nameRequest(
-	turn *assistantports.ChapterTurnRequest,
+	turn *assistantchapterports.ChapterTurnRequest,
 	question, reply string,
 ) *llmports.StructuredCompletionRequest {
 	req := baseRequest(turn)

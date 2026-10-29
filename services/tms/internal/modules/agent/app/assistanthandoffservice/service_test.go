@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,17 +24,17 @@ import (
 )
 
 type fakeConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	threads  map[pulid.ID]*conversation.Thread
 	history  []conversation.Message
 	appended map[pulid.ID][]conversation.Message
-	listed   []assistantports.ListMessagesRequest
+	listed   []conversationports.ListMessagesRequest
 }
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, ok := f.threads[req.ID]
 	if !ok || thread.UserID != req.UserID {
@@ -45,7 +46,7 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req assistantports.ListMessagesRequest,
+	req conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.listed = append(f.listed, req)
 
@@ -54,7 +55,7 @@ func (f *fakeConversations) ListMessages(
 
 func (f *fakeConversations) AppendTurn(
 	_ context.Context,
-	req assistantports.AppendTurnRequest,
+	req conversationports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	f.appended[req.ThreadID] = append(f.appended[req.ThreadID], req.Messages...)
 

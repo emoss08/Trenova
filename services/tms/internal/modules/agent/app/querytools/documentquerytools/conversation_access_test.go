@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -22,12 +22,12 @@ import (
 type fakeThreadOwners struct {
 	owners   map[pulid.ID]pulid.ID
 	err      error
-	requests []assistantports.ThreadOwnersRequest
+	requests []conversationports.ThreadOwnersRequest
 }
 
 func (f *fakeThreadOwners) ThreadOwners(
 	_ context.Context,
-	req assistantports.ThreadOwnersRequest,
+	req conversationports.ThreadOwnersRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
@@ -56,7 +56,7 @@ func conversationDocument(threadID pulid.ID) *document.Document {
 
 func conversationSummaryTool(
 	doc *document.Document,
-	threads assistantports.ThreadOwnerRepository,
+	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return NewGetDocumentSummaryTool(
 		&stubDocumentRepo{doc: doc},

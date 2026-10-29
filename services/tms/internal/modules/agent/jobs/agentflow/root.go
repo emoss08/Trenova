@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -128,8 +128,8 @@ type DelegateSpan struct {
 func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 	spans := make(map[string]DelegateSpan)
 	for _, event := range events {
-		if event.Event != assistantports.AssistantEventDelegateStarted &&
-			event.Event != assistantports.AssistantEventDelegateFinished {
+		if event.Event != assistantstreamports.AssistantEventDelegateStarted &&
+			event.Event != assistantstreamports.AssistantEventDelegateFinished {
 			continue
 		}
 		fields := eventFields(event.Data)
@@ -143,7 +143,7 @@ func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 		if event.At == 0 {
 			at = time.Time{}
 		}
-		if event.Event == assistantports.AssistantEventDelegateStarted {
+		if event.Event == assistantstreamports.AssistantEventDelegateStarted {
 			span.Start = at
 		} else {
 			span.End = at
@@ -160,20 +160,22 @@ func eventFields(data any) map[string]any {
 	switch typed := data.(type) {
 	case map[string]any:
 		return typed
-	case assistantports.AssistantDelegateStartedEvent:
+	case assistantstreamports.AssistantDelegateStartedEvent:
 		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
-	case *assistantports.AssistantDelegateStartedEvent:
+	case *assistantstreamports.AssistantDelegateStartedEvent:
 		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
-	case assistantports.AssistantDelegateFinishedEvent:
+	case assistantstreamports.AssistantDelegateFinishedEvent:
 		return delegateFinishedFields(&typed)
-	case *assistantports.AssistantDelegateFinishedEvent:
+	case *assistantstreamports.AssistantDelegateFinishedEvent:
 		return delegateFinishedFields(typed)
 	default:
 		return nil
 	}
 }
 
-func delegateFinishedFields(event *assistantports.AssistantDelegateFinishedEvent) map[string]any {
+func delegateFinishedFields(
+	event *assistantstreamports.AssistantDelegateFinishedEvent,
+) map[string]any {
 	return map[string]any{
 		delegateFieldCallID:    event.DelegateCallID,
 		delegateFieldStatus:    string(event.Status),

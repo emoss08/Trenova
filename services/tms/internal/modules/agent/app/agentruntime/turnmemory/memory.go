@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,7 +41,7 @@ func Note(t Turn, fx Emitter, outcome *toolcall.Result) {
 	if saved := outcome.Saved; saved != nil && saved.ID.IsNotNil() {
 		t.Result().SavedMemories = append(t.Result().SavedMemories, *saved)
 		fx.Emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventMemorySaved,
+			Event: assistantstreamports.AssistantEventMemorySaved,
 			Data:  *saved,
 		})
 	}
@@ -74,7 +74,7 @@ func NoteTool(t Turn, fx Emitter, tool string) {
 
 func memoryUsedEvent(ids []pulid.ID) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventMemoryUsed,
-		Data:  assistantports.AssistantMemoryUsedEvent{IDs: slices.Clone(ids)},
+		Event: assistantstreamports.AssistantEventMemoryUsed,
+		Data:  assistantstreamports.AssistantMemoryUsedEvent{IDs: slices.Clone(ids)},
 	}
 }

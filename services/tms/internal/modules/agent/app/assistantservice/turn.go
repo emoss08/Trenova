@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -86,8 +88,8 @@ func openingEvent(input string, decision agentguard.Decision) kernelports.Stream
 	}
 
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventAccepted,
-		Data: assistantports.AssistantAcceptedEvent{
+		Event: assistantstreamports.AssistantEventAccepted,
+		Data: assistantstreamports.AssistantAcceptedEvent{
 			Content:       input,
 			ScopeStage:    string(decision.Stage),
 			ScopeCategory: string(decision.Category),
@@ -183,7 +185,7 @@ func (s *Service) prepareTurn(
 		return nil, nil, multiErr
 	}
 
-	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -353,7 +355,7 @@ func (s *Service) FinishTurn(
 ) (*assistantports.SendMessageResult, error) {
 	plan := req.Plan
 
-	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -377,7 +379,7 @@ func (s *Service) FinishTurn(
 
 	artifacts.nameLinks(turn.Messages, &turn.Reply)
 
-	saved, err := s.conversations.AppendTurn(ctx, assistantports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
@@ -499,7 +501,7 @@ func (s *Service) keepThreadTaint(
 		return
 	}
 
-	if err := s.conversations.MarkThreadTainted(ctx, assistantports.MarkThreadTaintedRequest{
+	if err := s.conversations.MarkThreadTainted(ctx, conversationports.MarkThreadTaintedRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Taint:      thread.Taint,

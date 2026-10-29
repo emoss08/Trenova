@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -37,7 +37,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Repo          agentports.AgentReflectionRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Controls      tenantports.AgentControlRepository
 	Runs          agentruntimeports.AgentRunRepository
@@ -52,7 +52,7 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	repo          agentports.AgentReflectionRepository
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
 	runs          agentruntimeports.AgentRunRepository
@@ -88,7 +88,7 @@ func (s *Service) PrepareThread(
 	req *agentports.ReflectOnThreadRequest,
 ) (*agentports.ReflectionPlan, error) {
 	tenant := req.TenantInfo
-	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         req.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -115,7 +115,7 @@ func (s *Service) PrepareThread(
 		after = through
 	}
 
-	messages, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:      thread.ID,
 		TenantInfo:    tenant,
 		AfterSequence: &after,

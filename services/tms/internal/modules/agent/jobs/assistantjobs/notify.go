@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -48,7 +48,7 @@ type replyNotifications interface {
 type replyThreads interface {
 	GetThread(
 		ctx context.Context,
-		req assistantports.GetThreadRequest,
+		req conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -106,7 +106,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return nil
 	}
 
-	thread, err := a.threads.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := a.threads.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TenantInfo: tenant,

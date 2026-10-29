@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 func TestGetByIDQueryChecksTheOwnerWhenGiven(t *testing.T) {
 	t.Parallel()
 
-	owned, args := keeltest.Render(t, getByIDQuery(&assistantports.GetAssistantTurnRequest{
+	owned, args := keeltest.Render(t, getByIDQuery(&assistantturnports.GetAssistantTurnRequest{
 		ID:     pulid.ID("atrn_1"),
 		UserID: pulid.ID("usr_1"),
 	}))
@@ -22,7 +22,7 @@ func TestGetByIDQueryChecksTheOwnerWhenGiven(t *testing.T) {
 
 	anyone, _ := keeltest.Render(
 		t,
-		getByIDQuery(&assistantports.GetAssistantTurnRequest{ID: pulid.ID("atrn_1")}),
+		getByIDQuery(&assistantturnports.GetAssistantTurnRequest{ID: pulid.ID("atrn_1")}),
 	)
 	assert.NotContains(t, anyone, `"user_id" = `)
 }
@@ -30,7 +30,7 @@ func TestGetByIDQueryChecksTheOwnerWhenGiven(t *testing.T) {
 func TestActiveQueryReadsALiveTurn(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, activeQuery(&assistantports.ActiveAssistantTurnRequest{
+	sql, args := keeltest.Render(t, activeQuery(&assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID: pulid.ID("ath_1"),
 		UserID:   pulid.ID("usr_1"),
 	}))
@@ -41,7 +41,7 @@ func TestActiveQueryReadsALiveTurn(t *testing.T) {
 func TestLiveTurnQueriesJoinTheThreadOfTheSamePerson(t *testing.T) {
 	t.Parallel()
 
-	req := assistantports.ListLiveAssistantTurnsRequest{
+	req := assistantturnports.ListLiveAssistantTurnsRequest{
 		UserID:         pulid.ID("usr_1"),
 		ExcludeOrigins: []conversation.ThreadOrigin{conversation.ThreadOrigin("Schedule")},
 	}
@@ -59,7 +59,7 @@ func TestLiveThreadTitlesReadAnUnnamedConversationAsEmpty(t *testing.T) {
 
 	titles, _ := keeltest.Render(
 		t,
-		liveThreadTitlesQuery(&assistantports.ListLiveAssistantTurnsRequest{
+		liveThreadTitlesQuery(&assistantturnports.ListLiveAssistantTurnsRequest{
 			UserID: pulid.ID("usr_1"),
 		}),
 	)

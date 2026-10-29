@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -232,8 +232,8 @@ func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
 
 	removed := make([]pulid.ID, 0, 1)
 	for _, event := range events {
-		if event.Event == assistantports.AssistantEventArtifactRemoved {
-			data, ok := event.Data.(assistantports.AssistantArtifactRemovedEvent)
+		if event.Event == assistantstreamports.AssistantEventArtifactRemoved {
+			data, ok := event.Data.(assistantstreamports.AssistantArtifactRemovedEvent)
 			require.True(t, ok)
 			removed = append(removed, data.ID)
 		}

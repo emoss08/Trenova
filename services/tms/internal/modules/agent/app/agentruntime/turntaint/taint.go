@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -134,7 +134,7 @@ func callMark(
 
 func Event(mark agent.TaintMark, marks int) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventRunTainted,
-		Data:  assistantports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
+		Event: assistantstreamports.AssistantEventRunTainted,
+		Data:  assistantstreamports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
 	}
 }

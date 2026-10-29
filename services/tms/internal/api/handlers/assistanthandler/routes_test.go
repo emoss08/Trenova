@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -49,30 +52,30 @@ type reachedService struct {
 	assistantports.AssistantService
 
 	reached       bool
-	listed        *assistantports.ListThreadsRequest
-	counted       *assistantports.CountThreadShelvesRequest
+	listed        *conversationports.ListThreadsRequest
+	counted       *conversationports.CountThreadShelvesRequest
 	commands      *assistantports.CommandAvailabilityRequest
 	commandsActor *permissionports.RequestActor
 }
 
 func (s *reachedService) ListThreads(
 	_ context.Context,
-	req assistantports.ListThreadsRequest,
-) (*assistantports.ThreadPage, error) {
+	req conversationports.ListThreadsRequest,
+) (*conversationports.ThreadPage, error) {
 	s.reached = true
 	s.listed = &req
 
-	return &assistantports.ThreadPage{}, nil
+	return &conversationports.ThreadPage{}, nil
 }
 
 func (s *reachedService) CountThreadShelves(
 	_ context.Context,
-	req *assistantports.CountThreadShelvesRequest,
-) (*assistantports.ThreadShelfCounts, error) {
+	req *conversationports.CountThreadShelvesRequest,
+) (*conversationports.ThreadShelfCounts, error) {
 	s.reached = true
 	s.counted = req
 
-	return &assistantports.ThreadShelfCounts{}, nil
+	return &conversationports.ThreadShelfCounts{}, nil
 }
 
 func (s *reachedService) UpdateThread(
@@ -85,7 +88,7 @@ func (s *reachedService) UpdateThread(
 	return &conversation.Thread{}, nil
 }
 
-func (s *reachedService) DeleteThread(context.Context, assistantports.GetThreadRequest) error {
+func (s *reachedService) DeleteThread(context.Context, conversationports.GetThreadRequest) error {
 	s.reached = true
 
 	return nil
@@ -93,24 +96,24 @@ func (s *reachedService) DeleteThread(context.Context, assistantports.GetThreadR
 
 func (s *reachedService) PinArtifact(
 	context.Context,
-	assistantports.GetThreadRequest,
+	conversationports.GetThreadRequest,
 	pulid.ID,
 	bool,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	s.reached = true
 
-	return &assistantports.AssistantArtifact{}, nil
+	return &assistantartifactports.AssistantArtifact{}, nil
 }
 
 func (s *reachedService) SaveProposalEdits(
 	context.Context,
-	assistantports.GetThreadRequest,
+	conversationports.GetThreadRequest,
 	pulid.ID,
 	map[string]any,
-) (*assistantports.ProposalEdits, error) {
+) (*assistantproposalports.ProposalEdits, error) {
 	s.reached = true
 
-	return &assistantports.ProposalEdits{}, nil
+	return &assistantproposalports.ProposalEdits{}, nil
 }
 
 func (s *reachedService) CommandAvailability(

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -157,7 +157,7 @@ func Hand(
 	t HandingTurn,
 	fx Effects,
 	h *HandedTask,
-) (toolcall.Result, assistantports.AssistantDelegateFinishedEvent) {
+) (toolcall.Result, assistantstreamports.AssistantDelegateFinishedEvent) {
 	call := start(t, fx, h)
 	runs := fx.Delegate([]Call{call})
 
@@ -198,8 +198,8 @@ func start(t HandingTurn, fx Effects, h *HandedTask) Call {
 	}
 
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventDelegateStarted,
-		Data: assistantports.AssistantDelegateStartedEvent{
+		Event: assistantstreamports.AssistantEventDelegateStarted,
+		Data: assistantstreamports.AssistantDelegateStartedEvent{
 			DelegateCallID: call.ID,
 			AgentID:        delegate.ID,
 			AgentName:      delegate.Name,
@@ -230,7 +230,7 @@ func settle(
 	fx Effects,
 	h *HandedTask,
 	run *Run,
-) (outcome toolcall.Result, report assistantports.AssistantDelegateFinishedEvent) {
+) (outcome toolcall.Result, report assistantstreamports.AssistantDelegateFinishedEvent) {
 	call, delegate := h.Call, h.Delegate
 	report = Report(delegate, call.ID, *run)
 	if run.ExternalContent {
@@ -260,7 +260,7 @@ func settle(
 	}
 
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventDelegateFinished,
+		Event: assistantstreamports.AssistantEventDelegateFinished,
 		Data:  report,
 	})
 

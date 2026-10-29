@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +78,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	require.Len(t, saved, 1)
 	assert.Equal(t, "Actually the carrier is Werner, not JB Hunt.", saved[0].Content,
 		"the conversation keeps the person's words, not the prompt around them")
-	assert.Contains(t, eventNames(result.Outcome), assistantports.AssistantEventSteered)
+	assert.Contains(t, eventNames(result.Outcome), assistantstreamports.AssistantEventSteered)
 }
 
 func TestRunReadsTheSameSteerOnce(t *testing.T) {

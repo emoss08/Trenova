@@ -27,7 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -82,7 +83,7 @@ type Params struct {
 	Carriers      carrierports.CarrierRepository
 	Customers     customerports.CustomerRepository
 	Subjects      agentports.AgentSubjectRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Turns         *assistantturnservice.Service
 	RunService    agentports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
@@ -96,7 +97,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req assistantports.ActiveAssistantTurnRequest,
+		req assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -118,7 +119,7 @@ type Service struct {
 	waits         agentwaitports.AgentWaitRepository
 	runs          agentruntimeports.AgentRunRepository
 	facts         *facts
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	turns         turnStarter
 	runService    runStarter
 	workflows     kernelports.WorkflowStarter
@@ -383,7 +384,7 @@ func (s *Service) List(
 	ctx context.Context,
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
-	if _, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -741,7 +742,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		BuID:   wait.BusinessUnitID,
 		UserID: wait.UserID,
 	}
-	thread, err := s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         wait.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -752,7 +753,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 
-	active, err := s.turns.Active(ctx, assistantports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -813,7 +814,7 @@ func (s *Service) wakeCase(
 	if !thread.Snooze().Set() {
 		return
 	}
-	if _, err := s.conversations.WakeThread(ctx, &assistantports.WakeThreadRequest{
+	if _, err := s.conversations.WakeThread(ctx, &conversationports.WakeThreadRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,

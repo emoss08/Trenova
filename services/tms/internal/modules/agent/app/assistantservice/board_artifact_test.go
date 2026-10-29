@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -227,7 +228,7 @@ func TestExportDocument_PrintsABoardAsItReadsNow(t *testing.T) {
 		},
 		boards: boards,
 	}
-	req := assistantports.GetThreadRequest{
+	req := conversationports.GetThreadRequest{
 		ID:         thread.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

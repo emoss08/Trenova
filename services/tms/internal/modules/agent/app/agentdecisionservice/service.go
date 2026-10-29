@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -45,7 +46,7 @@ type Params struct {
 	RunRepo      agentruntimeports.AgentRunRepository
 	// Conversations says whose conversation raised a proposal, for a person
 	// deciding their own.
-	Conversations assistantports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository `optional:"true"`
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
@@ -70,7 +71,7 @@ type Service struct {
 	decisionRepo agentports.AgentDecisionRepository
 	proposalRepo agentports.AgentProposalRepository
 	runRepo      agentruntimeports.AgentRunRepository
-	threads      assistantports.ConversationRepository
+	threads      conversationports.ConversationRepository
 	shadow       *agentshadow.Resolver
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
@@ -184,7 +185,7 @@ func (s *Service) AssertOwnProposal(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, assistantports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,

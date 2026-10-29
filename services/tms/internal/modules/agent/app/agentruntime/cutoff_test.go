@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +88,7 @@ func runCutOff(
 func retryingReasons(events []kernelports.StreamEvent) []string {
 	reasons := make([]string, 0, 1)
 	for _, event := range events {
-		if data, ok := event.Data.(assistantports.AssistantRetryingEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantRetryingEvent); ok {
 			reasons = append(reasons, data.Reason)
 		}
 	}

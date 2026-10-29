@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -28,7 +28,7 @@ type pendingProposalRunRow struct {
 }
 
 func threadAttentionQuery(
-	req *assistantports.ListThreadAttentionRequest,
+	req *conversationports.ListThreadAttentionRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	pl := agentdb.AgentPlans
@@ -72,13 +72,13 @@ func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProp
 
 func (r *repository) ListThreadAttention(
 	ctx context.Context,
-	req assistantports.ListThreadAttentionRequest,
-) (map[pulid.ID]assistantports.ThreadAttentionRow, error) {
+	req conversationports.ListThreadAttentionRequest,
+) (map[pulid.ID]conversationports.ThreadAttentionRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]assistantports.ThreadAttentionRow, error) {
-			out := make(map[pulid.ID]assistantports.ThreadAttentionRow, len(req.ThreadIDs))
+		func(ctx context.Context) (map[pulid.ID]conversationports.ThreadAttentionRow, error) {
+			out := make(map[pulid.ID]conversationports.ThreadAttentionRow, len(req.ThreadIDs))
 			if len(req.ThreadIDs) == 0 {
 				return out, nil
 			}
@@ -92,7 +92,7 @@ func (r *repository) ListThreadAttention(
 			owned := make([]pulid.ID, 0, len(rows))
 			for _, row := range rows {
 				owned = append(owned, row.ThreadID)
-				out[row.ThreadID] = assistantports.ThreadAttentionRow{
+				out[row.ThreadID] = conversationports.ThreadAttentionRow{
 					PendingPlans:   row.PendingPlans,
 					LastTurnStatus: row.LastTurnStatus,
 				}
@@ -119,7 +119,7 @@ func (r *repository) ListThreadAttention(
 
 func (r *repository) MarkThreadRead(
 	ctx context.Context,
-	req assistantports.MarkThreadReadRequest,
+	req conversationports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		th := conversationdb.Threads
@@ -140,7 +140,7 @@ func (r *repository) MarkThreadRead(
 
 func (r *repository) WakeThread(
 	ctx context.Context,
-	req *assistantports.WakeThreadRequest,
+	req *conversationports.WakeThreadRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		th := conversationdb.Threads

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -149,7 +149,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		BuID:   doc.BusinessUnitID,
 		UserID: doc.UploadedByID,
 	}
-	sent, err := s.conversations.CarriesAttachment(ctx, &assistantports.CarriesAttachmentRequest{
+	sent, err := s.conversations.CarriesAttachment(ctx, &conversationports.CarriesAttachmentRequest{
 		ThreadID:   threads[0],
 		DocumentID: doc.ID,
 		TenantInfo: tenant,
@@ -162,7 +162,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		return
 	}
 
-	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         threads[0],
 		UserID:     doc.UploadedByID,
 		TenantInfo: tenant,

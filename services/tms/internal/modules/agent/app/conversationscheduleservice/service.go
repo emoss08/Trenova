@@ -28,7 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -84,7 +85,7 @@ type turns interface {
 	) (*conversationturn.AssistantTurn, error)
 	Active(
 		ctx context.Context,
-		req assistantports.ActiveAssistantTurnRequest,
+		req assistantturnports.ActiveAssistantTurnRequest,
 	) (*conversationturn.AssistantTurn, error)
 }
 
@@ -92,11 +93,11 @@ type turns interface {
 type threads interface {
 	GetThread(
 		ctx context.Context,
-		req assistantports.GetThreadRequest,
+		req conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 	GetThreadOwned(
 		ctx context.Context,
-		req assistantports.GetThreadOwnedRequest,
+		req conversationports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -112,7 +113,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Schedules     conversationscheduleports.ConversationScheduleRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Users         tenantports.UserRepository
 	Organizations tenantports.OrganizationRepository
@@ -216,7 +217,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -305,7 +306,7 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -507,7 +508,7 @@ func (s *Service) List(
 	tenant := tenantOf(req.Actor)
 	if req.ThreadID.IsNotNil() {
 		// Reading a conversation's schedules is reading the conversation.
-		if _, err := s.threads.GetThread(ctx, assistantports.GetThreadRequest{
+		if _, err := s.threads.GetThread(ctx, conversationports.GetThreadRequest{
 			ID:         req.ThreadID,
 			UserID:     req.Actor.UserID,
 			TenantInfo: tenant,
@@ -759,7 +760,7 @@ func (s *Service) run(
 		BuID:   schedule.BusinessUnitID,
 		UserID: schedule.UserID,
 	}
-	thread, err := s.threads.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	thread, err := s.threads.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         schedule.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -789,7 +790,7 @@ func (s *Service) run(
 		return nil, SkipNoAccess, nil
 	}
 
-	active, err := s.turns.Active(ctx, assistantports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,

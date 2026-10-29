@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -110,7 +112,7 @@ func (s *Service) PrepareCompaction(
 	req *CompactRequest,
 	actor *permissionports.RequestActor,
 ) (*CompactionPlan, error) {
-	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -195,7 +197,7 @@ func (s *Service) FinishCompaction(
 	summary = stringutils.Ellipsize(summary, maxSummaryChars)
 
 	tenant := actor.TenantInfo()
-	thread, err := s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -247,7 +249,7 @@ func (s *Service) FinishCompaction(
 	})
 	message.Compaction.After = usage.Total()
 
-	saved, err := s.conversations.AppendTurn(ctx, assistantports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages:   []conversation.Message{message},
@@ -274,7 +276,7 @@ func (s *Service) StopCompactingItself(
 ) error {
 	off := true
 
-	return s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
+	return s.conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
 		ThreadID:       threadID,
 		TenantInfo:     tenant,
 		AutoCompactOff: &off,
@@ -318,8 +320,8 @@ func (s *Service) measureAfterTurn(
 
 	if emit != nil {
 		emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventContext,
-			Data: assistantports.AssistantContextEvent{
+			Event: assistantstreamports.AssistantEventContext,
+			Data: assistantstreamports.AssistantContextEvent{
 				ThreadID:       thread.ID,
 				Usage:          &usage,
 				AutoCompactOff: thread.AutoCompactOff,
@@ -336,7 +338,7 @@ func (s *Service) keepContextUsage(
 	tenant pagination.TenantInfo,
 ) {
 	thread.ContextUsage = usage
-	if err := s.conversations.UpdateThreadContext(ctx, assistantports.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, conversationports.UpdateThreadContextRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Usage:      usage,
@@ -355,7 +357,7 @@ func (s *Service) modelHistory(
 	threadID pulid.ID,
 	tenant pagination.TenantInfo,
 ) ([]conversation.Message, error) {
-	return s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	return s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:        threadID,
 		TenantInfo:      tenant,
 		Limit:           historyLimit,

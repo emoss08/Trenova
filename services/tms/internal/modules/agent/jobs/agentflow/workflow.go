@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -284,10 +284,10 @@ func (fx *workflowEffects) Emit(event kernelports.StreamEvent) {
 // which the transcript keeps whole.
 func streamedText(event string) bool {
 	switch event {
-	case assistantports.AssistantEventDelta,
-		assistantports.AssistantEventReasoning,
-		assistantports.AssistantEventDelegateDelta,
-		assistantports.AssistantEventDelegateReasoning:
+	case assistantstreamports.AssistantEventDelta,
+		assistantstreamports.AssistantEventReasoning,
+		assistantstreamports.AssistantEventDelegateDelta,
+		assistantstreamports.AssistantEventDelegateReasoning:
 		return true
 	default:
 		return false
@@ -460,13 +460,13 @@ func delegateFailureReason(name string, failure *modelcallcontract.Failure) stri
 // shown to the person as they always are; they are not what it made.
 func publishedDocuments(
 	artifacts []*assistantartifact.Artifact,
-) []assistantports.DelegateDocument {
-	documents := make([]assistantports.DelegateDocument, 0, len(artifacts))
+) []assistantstreamports.DelegateDocument {
+	documents := make([]assistantstreamports.DelegateDocument, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		if artifact == nil || artifact.Kind != assistantartifact.KindDocument {
 			continue
 		}
-		documents = append(documents, assistantports.DelegateDocument{
+		documents = append(documents, assistantstreamports.DelegateDocument{
 			ID:    artifact.ID,
 			Kind:  string(artifact.Kind),
 			Title: artifact.Title,

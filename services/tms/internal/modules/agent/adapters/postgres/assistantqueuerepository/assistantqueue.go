@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) assistantports.AssistantQueueRepository {
+func New(p Params) assistantturnports.AssistantQueueRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistant-queue-repository"),
@@ -45,7 +45,7 @@ type queueTally struct {
 	Last  int64
 }
 
-func inScope(scope *assistantports.AssistantQueueScope) keel.Pred {
+func inScope(scope *assistantturnports.AssistantQueueScope) keel.Pred {
 	q := conversationdb.QueuedMessages
 
 	return keel.And(
@@ -61,13 +61,13 @@ func inOrder() []keel.Order {
 }
 
 func listQuery(
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
 	return conversationdb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
 }
 
 func getQuery(
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
@@ -78,7 +78,7 @@ func tallyQuery(threadID pulid.ID) *keel.Query[*conversationqueue.QueuedMessage]
 	q := conversationdb.QueuedMessages
 
 	return q.Pick(keel.Count(), keel.Int64Of(q.Position.Max()).Coalesce(0)).
-		Where(inScope(&assistantports.AssistantQueueScope{ThreadID: threadID}))
+		Where(inScope(&assistantturnports.AssistantQueueScope{ThreadID: threadID}))
 }
 
 func editQuery(
@@ -89,7 +89,10 @@ func editQuery(
 
 	return q.Where(
 		inScope(
-			&assistantports.AssistantQueueScope{ThreadID: entity.ThreadID, UserID: entity.UserID},
+			&assistantturnports.AssistantQueueScope{
+				ThreadID: entity.ThreadID,
+				UserID:   entity.UserID,
+			},
 		),
 		q.ID.Eq(entity.ID),
 		q.Version.Eq(version),
@@ -97,7 +100,7 @@ func editQuery(
 }
 
 func reorderQuery(
-	req *assistantports.ReorderQueuedMessagesRequest,
+	req *assistantturnports.ReorderQueuedMessagesRequest,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
@@ -114,20 +117,20 @@ func reorderPosition(ids []pulid.ID) keel.Assignment {
 }
 
 func headQuery(
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
 	return listQuery(scope).Limit(1).Lock(keel.ForUpdate, keel.SkipLocked)
 }
 
 func claimQuery(
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
 	return getQuery(req).Lock(keel.ForUpdate)
 }
 
 func (r *repository) List(
 	ctx context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) ([]*conversationqueue.QueuedMessage, error) {
 	return dbtx.Read(
 		ctx,
@@ -149,7 +152,7 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	return dbtx.Read(
 		ctx,
@@ -183,7 +186,7 @@ func (r *repository) Insert(
 				return nil, fmt.Errorf("read the conversation's queue: %w", err)
 			}
 			if tally.Count >= conversationqueue.MaxQueuedPerThread {
-				return nil, assistantports.ErrQueueFull
+				return nil, assistantturnports.ErrQueueFull
 			}
 
 			entity.Position = tally.Last + 1
@@ -233,7 +236,7 @@ func (r *repository) Update(
 
 func (r *repository) MarkSteer(
 	ctx context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	return dbtx.Write(
 		ctx,
@@ -253,7 +256,10 @@ func (r *repository) MarkSteer(
 	)
 }
 
-func (r *repository) Delete(ctx context.Context, req *assistantports.QueuedMessageRequest) error {
+func (r *repository) Delete(
+	ctx context.Context,
+	req *assistantturnports.QueuedMessageRequest,
+) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		n, err := getQuery(req).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -266,7 +272,7 @@ func (r *repository) Delete(ctx context.Context, req *assistantports.QueuedMessa
 
 func (r *repository) DeleteMany(
 	ctx context.Context,
-	req *assistantports.DeleteQueuedMessagesRequest,
+	req *assistantturnports.DeleteQueuedMessagesRequest,
 ) error {
 	if len(req.IDs) == 0 {
 		return nil
@@ -288,7 +294,7 @@ func (r *repository) DeleteMany(
 
 func (r *repository) Reorder(
 	ctx context.Context,
-	req *assistantports.ReorderQueuedMessagesRequest,
+	req *assistantturnports.ReorderQueuedMessagesRequest,
 ) ([]*conversationqueue.QueuedMessage, error) {
 	return dbtx.Write(
 		ctx,
@@ -318,7 +324,7 @@ func (r *repository) Reorder(
 
 func (r *repository) ClaimNext(
 	ctx context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) (*conversationqueue.QueuedMessage, error) {
 	return dbtx.Write(
 		ctx,
@@ -331,7 +337,7 @@ func (r *repository) ClaimNext(
 
 func (r *repository) Claim(
 	ctx context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	return dbtx.Write(
 		ctx,
@@ -344,18 +350,18 @@ func (r *repository) Claim(
 
 func (r *repository) claim(
 	ctx context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 	pick *keel.Query[*conversationqueue.QueuedMessage],
 ) (*conversationqueue.QueuedMessage, error) {
 	db := r.db.Keel(ctx)
 	entity, err := pick.First(ctx, db)
 	if errors.Is(err, keel.ErrNotFound) {
-		return nil, assistantports.ErrQueueEmpty
+		return nil, assistantturnports.ErrQueueEmpty
 	}
 	if err == nil {
 		err = conversationdb.QueuedMessages.DeleteRow(ctx, db, entity)
 		if errors.Is(err, keel.ErrNotFound) {
-			return nil, assistantports.ErrQueueEmpty
+			return nil, assistantturnports.ErrQueueEmpty
 		}
 	}
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -327,13 +327,13 @@ func (f GroundingFinding) Note() string {
 }
 
 func RegroundedEvent(
-	action assistantports.RegroundAction,
+	action assistantstreamports.RegroundAction,
 	finding GroundingFinding,
 	reason string,
 ) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventReplyRegrounded,
-		Data: assistantports.AssistantReplyRegroundedEvent{
+		Event: assistantstreamports.AssistantEventReplyRegrounded,
+		Data: assistantstreamports.AssistantReplyRegroundedEvent{
 			Action:  action,
 			Figures: finding.figures,
 			Fields:  finding.fields,

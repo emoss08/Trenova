@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -40,9 +40,9 @@ func newBatchRecorder(t *testing.T, rt *Service) *batchRecorder {
 
 func (fx *batchRecorder) record(event kernelports.StreamEvent) {
 	switch data := event.Data.(type) {
-	case assistantports.AssistantToolStartedEvent:
+	case assistantstreamports.AssistantToolStartedEvent:
 		fx.events = append(fx.events, "started "+data.CallID)
-	case assistantports.AssistantToolFinishedEvent:
+	case assistantstreamports.AssistantToolFinishedEvent:
 		fx.events = append(fx.events, "finished "+data.CallID)
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -102,7 +103,7 @@ type fakeThreads struct{ refuse bool }
 
 func (f *fakeThreads) GetThread(
 	context.Context,
-	assistantports.GetThreadRequest,
+	conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.refuse {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -509,7 +510,7 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 	}
 
 	card, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
-		Thread:     assistantports.GetThreadRequest{ID: f.thread},
+		Thread:     conversationports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
@@ -531,7 +532,7 @@ func TestCardRefusesWhatIsNotABoardOfThisConversation(t *testing.T) {
 	id := f.board(t, pulid.MustNew("shp_"), board.Snapshot{})
 
 	_, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
-		Thread:     assistantports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		Thread:     conversationports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
@@ -539,7 +540,7 @@ func TestCardRefusesWhatIsNotABoardOfThisConversation(t *testing.T) {
 
 	f.threads.refuse = true
 	_, err = f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
-		Thread:     assistantports.GetThreadRequest{ID: f.thread},
+		Thread:     conversationports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})

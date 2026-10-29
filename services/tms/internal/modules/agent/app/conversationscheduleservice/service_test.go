@@ -14,7 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -170,7 +171,7 @@ type fakeThreads struct {
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -181,7 +182,7 @@ func (f *fakeThreads) GetThread(
 
 func (f *fakeThreads) GetThreadOwned(
 	_ context.Context,
-	req assistantports.GetThreadOwnedRequest,
+	req conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -245,7 +246,7 @@ func (f *fakeTurns) StartTurn(
 
 func (f *fakeTurns) Active(
 	_ context.Context,
-	_ assistantports.ActiveAssistantTurnRequest,
+	_ assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }

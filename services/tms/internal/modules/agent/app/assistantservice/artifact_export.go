@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -51,7 +51,7 @@ type exportSource struct {
 
 func (s *Service) exportSourceOf(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*exportSource, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
@@ -99,7 +99,7 @@ func noteReadWith(artifact *assistantartifact.Artifact, arguments map[string]any
 // ArtifactCSVName is the file a table downloads as, named for its title.
 func (s *Service) ArtifactCSVName(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (string, error) {
 	source, err := s.exportSourceOf(ctx, req, artifactID)
@@ -115,7 +115,7 @@ func (s *Service) ArtifactCSVName(
 // from the source, so it holds every row the person may see.
 func (s *Service) ExportArtifactCSV(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	sink io.Writer,
 ) error {
@@ -160,7 +160,7 @@ func (s *Service) exportReport(
 // the arguments it was asked with and the person's own access.
 func (s *Service) exportTable(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	actor *permissionports.RequestActor,
 	source *exportSource,
 	sink io.Writer,
@@ -322,7 +322,7 @@ func (s *Service) mayRead(
 
 // timezoneOf is the person's own timezone, which is what "today" in the
 // arguments the agent passed was read in.
-func (s *Service) timezoneOf(ctx context.Context, req assistantports.GetThreadRequest) string {
+func (s *Service) timezoneOf(ctx context.Context, req conversationports.GetThreadRequest) string {
 	if s.users == nil {
 		return ""
 	}
@@ -341,7 +341,7 @@ func (s *Service) timezoneOf(ctx context.Context, req assistantports.GetThreadRe
 // bounds what its table showed and so what its download may hold.
 func (s *Service) ceilingOf(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) permission.FieldSensitivity {
 	definition := s.threadDefinition(ctx, req)
 	if definition == nil {
@@ -354,7 +354,7 @@ func (s *Service) ceilingOf(
 // threadDefinition is the agent the conversation is with, or nil.
 func (s *Service) threadDefinition(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) *agentdefinition.Definition {
 	if s.definitions == nil {
 		return nil

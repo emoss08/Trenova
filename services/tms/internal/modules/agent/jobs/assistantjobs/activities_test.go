@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,7 +27,7 @@ import (
 type turnRecords struct {
 	mu        sync.Mutex
 	turn      *conversationturn.AssistantTurn
-	completed []assistantports.CompleteAssistantTurnRequest
+	completed []assistantturnports.CompleteAssistantTurnRequest
 }
 
 func (r *turnRecords) Start(
@@ -37,7 +39,7 @@ func (r *turnRecords) Start(
 
 func (r *turnRecords) GetByID(
 	context.Context,
-	assistantports.GetAssistantTurnRequest,
+	assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -47,21 +49,21 @@ func (r *turnRecords) GetByID(
 
 func (r *turnRecords) Active(
 	context.Context,
-	assistantports.ActiveAssistantTurnRequest,
+	assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) ListLive(
 	context.Context,
-	assistantports.ListLiveAssistantTurnsRequest,
-) ([]*assistantports.LiveAssistantTurn, error) {
+	assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) Complete(
 	_ context.Context,
-	req assistantports.CompleteAssistantTurnRequest,
+	req assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -213,7 +215,7 @@ func TestFinishTurn_TellsTheReaderWhyTheQuestionWasTurnedAway(t *testing.T) {
 
 	ending := finish(t, a, finishInput(turn))
 
-	assert.Equal(t, assistantports.AssistantEventError, ending.Event.Event)
+	assert.Equal(t, assistantstreamports.AssistantEventError, ending.Event.Event)
 	assert.Equal(t, "This conversation is full. Start a new one.", ending.Result.Message)
 	require.Len(t, records.completed, 1)
 	assert.Equal(t, conversation.AssistantTurnStatusFailed, records.completed[0].Status)
@@ -244,7 +246,7 @@ func TestFinishTurn_NeverSavesATurnTwice(t *testing.T) {
 	ending := finish(t, a, finishInput(turn))
 
 	assert.Empty(t, records.completed, "nothing is saved or closed a second time")
-	assert.Equal(t, assistantports.AssistantEventDone, ending.Event.Event)
+	assert.Equal(t, assistantstreamports.AssistantEventDone, ending.Event.Event)
 	assert.Equal(t, true, ending.Event.Data.(map[string]any)["replay"])
 }
 
@@ -270,7 +272,7 @@ func TestFinishTurn_DoesNotRepeatASaveThatMayHaveLanded(t *testing.T) {
 	*/
 	require.Len(t, records.completed, 1)
 	assert.Equal(t, conversation.AssistantTurnStatusCompleted, records.completed[0].Status)
-	assert.Equal(t, assistantports.AssistantEventDone, ending.Event.Event)
+	assert.Equal(t, assistantstreamports.AssistantEventDone, ending.Event.Event)
 }
 
 // A save that failed cleanly appended nothing, so a later attempt saves.
@@ -411,7 +413,7 @@ func TestFinishTurn_DoesNotResumeFromAFollowUpThatNeverStarted(t *testing.T) {
 
 func (r *turnRecords) RecordFingerprint(
 	context.Context,
-	assistantports.RecordAssistantTurnFingerprintRequest,
+	assistantturnports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
 }

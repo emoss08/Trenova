@@ -111,10 +111,22 @@ packages:
   github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/assistantports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/briefingports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/agent/ports/conversationports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports:

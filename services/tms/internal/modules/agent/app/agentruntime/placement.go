@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -39,7 +39,7 @@ func (s *Service) placeArtifacts(
 			if len(problems.Stray) > 0 {
 				reason = replycheck.PlacementMovedReason
 			}
-			fx.Emit(replycheck.PassEvent(assistantports.RegroundPlaceArtifacts, reason, nil))
+			fx.Emit(replycheck.PassEvent(assistantstreamports.RegroundPlaceArtifacts, reason, nil))
 			fx.Emit(replycheck.ReplyReplacedEvent(placed, reason))
 			completion.Text = placed
 
@@ -50,8 +50,8 @@ func (s *Service) placeArtifacts(
 	if !state.Retried {
 		state.Retried = true
 		fx.Emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventRetrying,
-			Data: assistantports.AssistantRetryingEvent{
+			Event: assistantstreamports.AssistantEventRetrying,
+			Data: assistantstreamports.AssistantRetryingEvent{
 				Attempt: 1,
 				Reason:  replycheck.PlacementRetryReason,
 				Kind:    llmports.RetryKindRestart,
@@ -59,7 +59,7 @@ func (s *Service) placeArtifacts(
 		})
 		fx.Emit(
 			replycheck.PassEvent(
-				assistantports.RegroundRelinkArtifacts,
+				assistantstreamports.RegroundRelinkArtifacts,
 				replycheck.PlacementRetryReason,
 				nil,
 			),
@@ -81,7 +81,7 @@ func (s *Service) placeArtifacts(
 	placed, _ := replycheck.PlaceLinks(t, completion.Text, &problems)
 	fx.Emit(
 		replycheck.PassEvent(
-			assistantports.RegroundPlaceArtifacts,
+			assistantstreamports.RegroundPlaceArtifacts,
 			replycheck.PlacementPlacedReason,
 			nil,
 		),

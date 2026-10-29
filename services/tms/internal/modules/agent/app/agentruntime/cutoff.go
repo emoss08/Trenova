@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -22,8 +22,8 @@ func (s *Service) handleCutOff(
 		return false, false
 	}
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventRetrying,
-		Data: assistantports.AssistantRetryingEvent{
+		Event: assistantstreamports.AssistantEventRetrying,
+		Data: assistantstreamports.AssistantRetryingEvent{
 			Attempt: 1,
 			Reason:  loopguard.CutOffRetryReason,
 			Kind:    llmports.RetryKindRestart,

@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -34,9 +34,9 @@ import (
 // step (a refusal before anything was claimed) and the edges of a delegated
 // task.
 var projectedEventKinds = []string{
-	assistantports.AssistantEventToolFinished,
-	assistantports.AssistantEventDelegateStarted,
-	assistantports.AssistantEventDelegateFinished,
+	assistantstreamports.AssistantEventToolFinished,
+	assistantstreamports.AssistantEventDelegateStarted,
+	assistantstreamports.AssistantEventDelegateFinished,
 }
 
 type sourceRepository struct {

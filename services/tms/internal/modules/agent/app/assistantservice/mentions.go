@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -176,7 +177,7 @@ func (s *Service) searchKinds(
 		return []assistantports.MentionCandidate{}, nil
 	}
 
-	rows, err := s.conversations.SearchMentions(ctx, assistantports.SearchMentionsRequest{
+	rows, err := s.conversations.SearchMentions(ctx, conversationports.SearchMentionsRequest{
 		TenantInfo:   actor.TenantInfo(),
 		Query:        query,
 		Kinds:        kinds,

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -175,7 +175,7 @@ func (r *stubProposalRepo) ListByThread(
 // only reads a thread, and an unexpected call panics on the nil interface, which
 // is exactly the failure a test wants.
 type stubConversationRepo struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	thread *conversation.Thread
 	getErr error
@@ -183,7 +183,7 @@ type stubConversationRepo struct {
 
 func (r *stubConversationRepo) GetThread(
 	_ context.Context,
-	_ assistantports.GetThreadRequest,
+	_ conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if r.getErr != nil {
 		return nil, r.getErr
@@ -525,7 +525,7 @@ func TestListThreadProposals_ScopesToTheThreadAndReportsExecution(t *testing.T) 
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: threadID},
+		conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 
@@ -548,7 +548,7 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	_, err := svc.ListThreadProposals(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		conversationports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 	)
 
 	require.Error(t, err)
@@ -668,7 +668,7 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: threadID},
+		conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 

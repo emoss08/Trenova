@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -136,10 +137,10 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 	}
 }
 
-func (f *rowsFixture) request() assistantports.GetThreadRequest {
+func (f *rowsFixture) request() conversationports.GetThreadRequest {
 	user := pulid.MustNew("usr_")
 
-	return assistantports.GetThreadRequest{
+	return conversationports.GetThreadRequest{
 		ID:     f.thread.ID,
 		UserID: user,
 		TenantInfo: pagination.TenantInfo{
@@ -158,7 +159,7 @@ func TestArtifactRows_ReadsTheNextPageWithThePersonsAccess(t *testing.T) {
 		t.Context(),
 		req,
 		f.artifact.ID,
-		&assistantports.ArtifactRowsQuery{
+		&assistantartifactports.ArtifactRowsQuery{
 			After:         "c-1",
 			Limit:         25,
 			Query:         "dallas",
@@ -205,7 +206,10 @@ func TestArtifactRows_ATableAlreadySearchedCannotBeSearchedAgain(t *testing.T) {
 	f.artifact.Payload[payloadReadWith].(map[string]any)["query"] = "acme"
 
 	rows, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.NoError(t, err)
 	assert.False(t, rows.Searchable)
@@ -213,7 +217,7 @@ func TestArtifactRows_ATableAlreadySearchedCannotBeSearchedAgain(t *testing.T) {
 
 	_, err = f.svc.ArtifactRows(
 		t.Context(), f.request(), f.artifact.ID,
-		&assistantports.ArtifactRowsQuery{Limit: 25, Query: "dallas"},
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25, Query: "dallas"},
 	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -228,7 +232,10 @@ func TestArtifactRows_RefusesAPersonWhoCannotReadTheList(t *testing.T) {
 	})
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25},
 	)
 	var refused *errortypes.AuthorizationError
 	require.ErrorAs(t, err, &refused)
@@ -242,7 +249,10 @@ func TestArtifactRows_OnlyAListTableIsPaged(t *testing.T) {
 	f.artifact.Kind = assistantartifact.KindReportPreview
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.ErrorIs(t, err, errNotPageable)
 	assert.Empty(t, f.tool.calls)
@@ -255,7 +265,10 @@ func TestArtifactRows_AnotherConversationsTableIsNotFound(t *testing.T) {
 	f.artifact.ThreadID = pulid.MustNew("athr_")
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25},
 	)
 	var missing *errortypes.NotFoundError
 	require.ErrorAs(t, err, &missing)
@@ -267,54 +280,54 @@ func TestRowsArguments(t *testing.T) {
 
 	sortable := map[string]string{"customer": "customer.name"}
 	cases := map[string]struct {
-		query      assistantports.ArtifactRowsQuery
+		query      assistantartifactports.ArtifactRowsQuery
 		searchable bool
 		want       map[string]any
 		refused    string
 	}{
 		"a first page of the default size": {
-			query: assistantports.ArtifactRowsQuery{},
+			query: assistantartifactports.ArtifactRowsQuery{},
 			want:  map[string]any{argLimit: 25},
 		},
 		"a page larger than any list hands back": {
-			query: assistantports.ArtifactRowsQuery{Limit: 500},
+			query: assistantartifactports.ArtifactRowsQuery{Limit: 500},
 			want:  map[string]any{argLimit: 100},
 		},
 		"an offset": {
-			query: assistantports.ArtifactRowsQuery{Limit: 50, Offset: 50},
+			query: assistantartifactports.ArtifactRowsQuery{Limit: 50, Offset: 50},
 			want:  map[string]any{argLimit: 50, argOffset: 50},
 		},
 		"a sort with no direction is ascending": {
-			query: assistantports.ArtifactRowsQuery{Limit: 25, SortBy: "customer"},
+			query: assistantartifactports.ArtifactRowsQuery{Limit: 25, SortBy: "customer"},
 			want: map[string]any{
 				argLimit: 25, argSortBy: "customer.name", argSortDirection: "asc",
 			},
 		},
 		"a cursor and an offset": {
-			query:   assistantports.ArtifactRowsQuery{After: "c-1", Offset: 25},
+			query:   assistantartifactports.ArtifactRowsQuery{After: "c-1", Offset: 25},
 			refused: argOffset,
 		},
 		"a negative offset": {
-			query:   assistantports.ArtifactRowsQuery{Offset: -1},
+			query:   assistantartifactports.ArtifactRowsQuery{Offset: -1},
 			refused: argOffset,
 		},
 		"a column the list cannot sort by": {
-			query:   assistantports.ArtifactRowsQuery{SortBy: "freightCharge"},
+			query:   assistantartifactports.ArtifactRowsQuery{SortBy: "freightCharge"},
 			refused: argSortBy,
 		},
 		"a direction that is neither": {
-			query: assistantports.ArtifactRowsQuery{
+			query: assistantartifactports.ArtifactRowsQuery{
 				SortBy:        "customer",
 				SortDirection: "sideways",
 			},
 			refused: argSortDirection,
 		},
 		"a search of a list that takes none": {
-			query:   assistantports.ArtifactRowsQuery{Query: "dallas"},
+			query:   assistantartifactports.ArtifactRowsQuery{Query: "dallas"},
 			refused: argQuery,
 		},
 		"a search of a list that takes one": {
-			query:      assistantports.ArtifactRowsQuery{Query: "  dallas "},
+			query:      assistantartifactports.ArtifactRowsQuery{Query: "  dallas "},
 			searchable: true,
 			want:       map[string]any{argLimit: 25, argQuery: "dallas"},
 		},
@@ -344,7 +357,10 @@ func TestArtifactRows_AStaleCursorIsRefusedAsThePageNotAFault(t *testing.T) {
 	f.tool.err = fmt.Errorf("read shipments: %w", querytool.ErrStaleCursor)
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{After: "c-1"},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{After: "c-1"},
 	)
 	require.ErrorIs(t, err, errStalePage)
 }
@@ -356,7 +372,10 @@ func TestArtifactRows_ATableThatDoesNotSayHowItWasReadIsNotReadAgain(t *testing.
 	delete(f.artifact.Payload, payloadReadWith)
 
 	_, err := f.svc.ArtifactRows(
-		t.Context(), f.request(), f.artifact.ID, &assistantports.ArtifactRowsQuery{Limit: 25},
+		t.Context(),
+		f.request(),
+		f.artifact.ID,
+		&assistantartifactports.ArtifactRowsQuery{Limit: 25},
 	)
 	require.ErrorIs(t, err, errNotReread)
 	assert.Empty(t, f.tool.calls)

@@ -2,7 +2,7 @@ package modeladapter
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -23,7 +23,7 @@ type (
 	// MessageFile is a file a user message carries, and MessageFileContent
 	// its bytes as read for a model that reads files itself.
 	MessageFile        = llmports.MessageFile
-	MessageFileContent = assistantports.MessageFileContent
+	MessageFileContent = conversationports.MessageFileContent
 	AdvisorSpec        = llmports.AdvisorSpec
 	ProviderBlock      = conversation.ProviderBlock
 )

@@ -6,23 +6,24 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type deskSearchConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
-	calls []assistantports.SearchDeskRequest
-	rows  map[string][]assistantports.DeskSearchRow
+	calls []conversationports.SearchDeskRequest
+	rows  map[string][]conversationports.DeskSearchRow
 }
 
 func (c *deskSearchConversations) SearchDesk(
 	_ context.Context,
-	req assistantports.SearchDeskRequest,
-) ([]assistantports.DeskSearchRow, error) {
+	req conversationports.SearchDeskRequest,
+) ([]conversationports.DeskSearchRow, error) {
 	c.calls = append(c.calls, req)
-	out := []assistantports.DeskSearchRow{}
+	out := []conversationports.DeskSearchRow{}
 	for _, kind := range req.Kinds {
 		out = append(out, c.rows[kind]...)
 	}
@@ -33,7 +34,7 @@ func (c *deskSearchConversations) SearchDesk(
 func TestSearchDesk_NothingTypedListsRecentChatsThenArtifacts(t *testing.T) {
 	t.Parallel()
 
-	repo := &deskSearchConversations{rows: map[string][]assistantports.DeskSearchRow{
+	repo := &deskSearchConversations{rows: map[string][]conversationports.DeskSearchRow{
 		"chat": {{Kind: "chat", ID: "athr_1", Title: "Storm loads"}},
 		"art":  {{Kind: "art", ID: "aart_1", Title: "Workers"}},
 	}}
@@ -58,7 +59,7 @@ func TestSearchDesk_QuerySearchesEveryKindAndTrimsMessages(t *testing.T) {
 
 	long := strings.Repeat("filler words ", 20) + "the missing biller on SEED-INV-7 " +
 		strings.Repeat("more text ", 30)
-	repo := &deskSearchConversations{rows: map[string][]assistantports.DeskSearchRow{
+	repo := &deskSearchConversations{rows: map[string][]conversationports.DeskSearchRow{
 		"msg": {{Kind: "msg", ID: "amsg_1", Title: long}},
 	}}
 	service := &Service{conversations: repo}

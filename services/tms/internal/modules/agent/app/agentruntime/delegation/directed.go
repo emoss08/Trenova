@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 )
 
 // DirectedTask is the task the person handed another agent, on a turn that
@@ -59,23 +59,23 @@ func HandedRecords(records []agentrecord.RecordRef) *Context {
 // DirectedReply is what closes a directed turn: the other agent's answer,
 // or why there is none, so the conversation never ends on a tool result
 // and the person reads the outcome where they read every reply.
-func DirectedReply(report *assistantports.AssistantDelegateFinishedEvent) string {
+func DirectedReply(report *assistantstreamports.AssistantDelegateFinishedEvent) string {
 	reply := strings.TrimSpace(report.Reply)
 	switch report.Status {
-	case assistantports.DelegateStatusCompleted:
+	case assistantstreamports.DelegateStatusCompleted:
 		if reply != "" {
 			return reply
 		}
 		return report.AgentName + " finished without saying anything more."
-	case assistantports.DelegateStatusExhausted:
+	case assistantstreamports.DelegateStatusExhausted:
 		if reply != "" {
 			return reply + "\n\n" + report.Reason
 		}
 		return report.Reason
-	case assistantports.DelegateStatusDeclined,
-		assistantports.DelegateStatusRefused,
-		assistantports.DelegateStatusStopped,
-		assistantports.DelegateStatusFailed:
+	case assistantstreamports.DelegateStatusDeclined,
+		assistantstreamports.DelegateStatusRefused,
+		assistantstreamports.DelegateStatusStopped,
+		assistantstreamports.DelegateStatusFailed:
 		if report.Reason != "" {
 			return report.Reason
 		}

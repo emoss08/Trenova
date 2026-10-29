@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,11 +27,11 @@ type taintRun struct {
 	events []kernelports.StreamEvent
 }
 
-func (r taintRun) tainted() []assistantports.AssistantRunTaintedEvent {
-	out := make([]assistantports.AssistantRunTaintedEvent, 0, len(r.events))
+func (r taintRun) tainted() []assistantstreamports.AssistantRunTaintedEvent {
+	out := make([]assistantstreamports.AssistantRunTaintedEvent, 0, len(r.events))
 	for _, event := range r.events {
-		if data, ok := event.Data.(assistantports.AssistantRunTaintedEvent); ok &&
-			event.Event == assistantports.AssistantEventRunTainted {
+		if data, ok := event.Data.(assistantstreamports.AssistantRunTaintedEvent); ok &&
+			event.Event == assistantstreamports.AssistantEventRunTainted {
 			out = append(out, data)
 		}
 	}
@@ -380,7 +380,7 @@ func TestRun_AnnouncesWhatTheOpeningAddedBeforeTheFirstReply(t *testing.T) {
 	})
 
 	require.NotEmpty(t, run.events)
-	assert.Equal(t, assistantports.AssistantEventRunTainted, run.events[0].Event)
+	assert.Equal(t, assistantstreamports.AssistantEventRunTainted, run.events[0].Event)
 	announced := run.tainted()
 	require.Len(t, announced, 1)
 	assert.Equal(t, agent.TaintSourceAttachment, announced[0].Mark.Source)

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/lrucache"
@@ -41,15 +41,15 @@ type Service struct {
 	logger  *zap.Logger
 	files   documentports.ConversationFileReader
 	imaging kernelports.Imaging
-	cache   lrucache.Cache[string, *assistantports.MessageFileContent]
+	cache   lrucache.Cache[string, *conversationports.MessageFileContent]
 }
 
-func New(p Params) assistantports.MessageFileReader {
+func New(p Params) conversationports.MessageFileReader {
 	return &Service{
 		logger:  p.Logger.Named("message-files"),
 		files:   p.Files,
 		imaging: p.Imaging,
-		cache: lrucache.NewExpirable[string, *assistantports.MessageFileContent](
+		cache: lrucache.NewExpirable[string, *conversationports.MessageFileContent](
 			cachedFiles,
 			cachedFileTTL,
 		),
@@ -58,8 +58,8 @@ func New(p Params) assistantports.MessageFileReader {
 
 func (s *Service) ReadMessageFile(
 	ctx context.Context,
-	req *assistantports.ReadMessageFileRequest,
-) (*assistantports.MessageFileContent, error) {
+	req *conversationports.ReadMessageFileRequest,
+) (*conversationports.MessageFileContent, error) {
 	key := req.TenantInfo.OrgID.String() + "/" + req.TenantInfo.BuID.String() + "/" +
 		req.DocumentID.String()
 	if cached, ok := s.cache.Get(key); ok {
@@ -74,7 +74,7 @@ func (s *Service) ReadMessageFile(
 		return nil, err
 	}
 
-	content := &assistantports.MessageFileContent{
+	content := &conversationports.MessageFileContent{
 		Data:        file.Data,
 		ContentType: file.Document.FileType,
 	}

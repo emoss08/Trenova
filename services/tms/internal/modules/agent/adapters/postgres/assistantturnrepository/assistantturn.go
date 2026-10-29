@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) assistantports.AssistantTurnRepository {
+func New(p Params) assistantturnports.AssistantTurnRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistantturn-repository"),
@@ -64,7 +64,7 @@ func prepareTurn(turn *conversationturn.AssistantTurn) {
 }
 
 func getByIDQuery(
-	req *assistantports.GetAssistantTurnRequest,
+	req *assistantturnports.GetAssistantTurnRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
@@ -75,7 +75,7 @@ func getByIDQuery(
 }
 
 func activeQuery(
-	req *assistantports.ActiveAssistantTurnRequest,
+	req *assistantturnports.ActiveAssistantTurnRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 
@@ -87,7 +87,7 @@ func activeQuery(
 }
 
 func liveTurnsQuery(
-	req *assistantports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
 	at := conversationdb.AssistantTurns
 	th := conversationdb.Threads.As("live_thread")
@@ -102,7 +102,7 @@ func liveTurnsQuery(
 }
 
 func liveThreadTitlesQuery(
-	req *assistantports.ListLiveAssistantTurnsRequest,
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 
@@ -122,7 +122,7 @@ func (r *repository) Start(
 			prepareTurn(turn)
 			if err := conversationdb.AssistantTurns.Create(ctx, r.db.Keel(ctx), turn); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, assistantports.ErrTurnAlreadyRunning
+					return nil, assistantturnports.ErrTurnAlreadyRunning
 				}
 
 				r.l.Error("failed to start an assistant turn",
@@ -140,7 +140,7 @@ func (r *repository) Start(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req assistantports.GetAssistantTurnRequest,
+	req assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
 		turn, err := getByIDQuery(&req).One(ctx, r.db.Keel(ctx))
@@ -154,7 +154,7 @@ func (r *repository) GetByID(
 
 func (r *repository) Active(
 	ctx context.Context,
-	req assistantports.ActiveAssistantTurnRequest,
+	req assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
 		turn, err := activeQuery(&req).First(ctx, r.db.Keel(ctx))
@@ -172,12 +172,12 @@ func (r *repository) Active(
 
 func (r *repository) ListLive(
 	ctx context.Context,
-	req assistantports.ListLiveAssistantTurnsRequest,
-) ([]*assistantports.LiveAssistantTurn, error) {
+	req assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*assistantports.LiveAssistantTurn, error) {
+		func(ctx context.Context) ([]*assistantturnports.LiveAssistantTurn, error) {
 			at := conversationdb.AssistantTurns
 			var (
 				turns  []*conversationturn.AssistantTurn
@@ -202,9 +202,9 @@ func (r *repository) ListLive(
 			for _, title := range titles {
 				byThread[title.ID] = title.Title
 			}
-			out := make([]*assistantports.LiveAssistantTurn, 0, len(turns))
+			out := make([]*assistantturnports.LiveAssistantTurn, 0, len(turns))
 			for _, turn := range turns {
-				out = append(out, &assistantports.LiveAssistantTurn{
+				out = append(out, &assistantturnports.LiveAssistantTurn{
 					AssistantTurn: *turn,
 					ThreadTitle:   byThread[turn.ThreadID],
 				})
@@ -217,7 +217,7 @@ func (r *repository) ListLive(
 
 func (r *repository) RecordFingerprint(
 	ctx context.Context,
-	req assistantports.RecordAssistantTurnFingerprintRequest,
+	req assistantturnports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.Fingerprint == nil {
@@ -236,7 +236,7 @@ func (r *repository) RecordFingerprint(
 
 func (r *repository) Complete(
 	ctx context.Context,
-	req assistantports.CompleteAssistantTurnRequest,
+	req assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		at := conversationdb.AssistantTurns

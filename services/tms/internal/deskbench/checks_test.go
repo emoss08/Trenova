@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,13 +88,13 @@ func TestGroundingCheck_FailsAReplyTheGuardCorrected(t *testing.T) {
 	t.Parallel()
 
 	clean := groundingCheck([]*TurnRecord{{Events: []Event{{
-		Name: assistantports.AssistantEventReplyRegrounded,
+		Name: assistantstreamports.AssistantEventReplyRegrounded,
 		Data: map[string]any{"action": "relink_artifacts"},
 	}}}})
 	assert.True(t, clean.Passed, "an artifact link correction has a check of its own")
 
 	corrected := groundingCheck([]*TurnRecord{{Events: []Event{{
-		Name: assistantports.AssistantEventReplyRegrounded,
+		Name: assistantstreamports.AssistantEventReplyRegrounded,
 		Data: map[string]any{"action": "rewrite", "figures": []any{"52.3"}},
 	}}}})
 	assert.False(t, corrected.Passed)
@@ -105,12 +105,12 @@ func TestArtifactCorrections_CountOnlyWhatRestartedTheReply(t *testing.T) {
 	t.Parallel()
 
 	placed := Event{
-		Name: assistantports.AssistantEventReplyRegrounded,
-		Data: map[string]any{"action": string(assistantports.RegroundPlaceArtifacts)},
+		Name: assistantstreamports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(assistantstreamports.RegroundPlaceArtifacts)},
 	}
 	relinked := Event{
-		Name: assistantports.AssistantEventReplyRegrounded,
-		Data: map[string]any{"action": string(assistantports.RegroundRelinkArtifacts)},
+		Name: assistantstreamports.AssistantEventReplyRegrounded,
+		Data: map[string]any{"action": string(assistantstreamports.RegroundRelinkArtifacts)},
 	}
 
 	assert.Empty(t, artifactCorrections([]Event{placed}),

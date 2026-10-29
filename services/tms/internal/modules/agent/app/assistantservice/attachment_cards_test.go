@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -403,16 +403,16 @@ func (d *extractedDocuments) GetByID(
 }
 
 type attachmentConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	thread  *conversation.Thread
 	carries bool
-	asked   []assistantports.CarriesAttachmentRequest
+	asked   []conversationports.CarriesAttachmentRequest
 }
 
 func (c *attachmentConversations) CarriesAttachment(
 	_ context.Context,
-	req *assistantports.CarriesAttachmentRequest,
+	req *conversationports.CarriesAttachmentRequest,
 ) (bool, error) {
 	c.asked = append(c.asked, *req)
 
@@ -421,7 +421,7 @@ func (c *attachmentConversations) CarriesAttachment(
 
 func (c *attachmentConversations) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if c.thread == nil || c.thread.ID != req.ID || c.thread.UserID != req.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")

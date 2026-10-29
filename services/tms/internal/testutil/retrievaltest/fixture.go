@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -117,7 +117,7 @@ type Access struct {
 	Registry   *permissioncatalog.Registry
 	Tenant     pagination.TenantInfo
 	UserID     pulid.ID
-	Threads    assistantports.ThreadOwnerRepository
+	Threads    conversationports.ThreadOwnerRepository
 }
 
 var _ retrievalports.RetrievalAccess = Access{}
@@ -137,7 +137,7 @@ func (a Access) ReadableDocuments(
 	var owners map[pulid.ID]pulid.ID
 	if ids := document.ConversationIDs(docs); len(ids) > 0 && a.Threads != nil &&
 		a.UserID.IsNotNil() {
-		found, err := a.Threads.ThreadOwners(ctx, assistantports.ThreadOwnersRequest{
+		found, err := a.Threads.ThreadOwners(ctx, conversationports.ThreadOwnersRequest{
 			TenantInfo: a.Tenant,
 			ThreadIDs:  ids,
 		})

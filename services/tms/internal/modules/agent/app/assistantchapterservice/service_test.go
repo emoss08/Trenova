@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ func TestRename_KeepsThePersonsTitleOnOneLine(t *testing.T) {
 	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(0))
 	version := int64(3)
 
-	renamed, err := f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
+	renamed, err := f.svc.Rename(t.Context(), assistantchapterports.RenameChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -39,7 +39,7 @@ func TestRename_KeepsThePersonsTitleOnOneLine(t *testing.T) {
 
 	assert.Equal(t, "Acme invoice dispute", renamed.Title)
 	require.Len(t, f.chapters.retitled, 1)
-	assert.Equal(t, assistantports.RetitleChapterRequest{
+	assert.Equal(t, assistantchapterports.RetitleChapterRequest{
 		ID:          chapter.ID,
 		ThreadID:    f.thread.ID,
 		TenantInfo:  f.tenant,
@@ -61,7 +61,7 @@ func TestRename_RefusesATitleOverSixtyCharacters(t *testing.T) {
 	)
 	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(0))
 
-	_, err := f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
+	_, err := f.svc.Rename(t.Context(), assistantchapterports.RenameChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -85,7 +85,7 @@ func TestRename_RefusesABlankTitle(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
+	_, err := f.svc.Rename(t.Context(), assistantchapterports.RenameChapterRequest{
 		ID:         "achp_a",
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -108,14 +108,14 @@ func TestChapters_SomeoneElsesConversationIsNotFound(t *testing.T) {
 	f := newFixture(t)
 	stranger := pulid.MustNew("usr_")
 
-	_, err := f.svc.List(t.Context(), assistantports.ThreadChaptersRequest{
+	_, err := f.svc.List(t.Context(), assistantchapterports.ThreadChaptersRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     stranger,
 		TenantInfo: f.tenant,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = f.svc.Rename(t.Context(), assistantports.RenameChapterRequest{
+	_, err = f.svc.Rename(t.Context(), assistantchapterports.RenameChapterRequest{
 		ID:         "achp_a",
 		ThreadID:   f.thread.ID,
 		UserID:     stranger,
@@ -124,7 +124,7 @@ func TestChapters_SomeoneElsesConversationIsNotFound(t *testing.T) {
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	err = f.svc.Remove(t.Context(), assistantports.RemoveChapterRequest{
+	err = f.svc.Remove(t.Context(), assistantchapterports.RemoveChapterRequest{
 		ID:         "achp_a",
 		ThreadID:   f.thread.ID,
 		UserID:     stranger,
@@ -132,7 +132,7 @@ func TestChapters_SomeoneElsesConversationIsNotFound(t *testing.T) {
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	_, err = f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     stranger,
 		MessageID:  "amsg_a",
@@ -156,7 +156,7 @@ func TestRemove_DeletesAnyChapterThePersonPicks(t *testing.T) {
 	)
 	chapter := f.chapter(turn.ID, "My loads", conversationchapter.ChapterTitlePerson, sequence(0))
 
-	err := f.svc.Remove(t.Context(), assistantports.RemoveChapterRequest{
+	err := f.svc.Remove(t.Context(), assistantchapterports.RemoveChapterRequest{
 		ID:         chapter.ID,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -175,7 +175,7 @@ func TestRemove_AMissingChapterIsNotFound(t *testing.T) {
 
 	f := newFixture(t)
 
-	err := f.svc.Remove(t.Context(), assistantports.RemoveChapterRequest{
+	err := f.svc.Remove(t.Context(), assistantchapterports.RemoveChapterRequest{
 		ID:         "achp_gone",
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -202,7 +202,7 @@ func TestOpen_StartsAChapterAtTheQuestionOfTheMessagesTurn(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Three are late."},
 	}
 
-	opened, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	opened, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  messageID,
@@ -214,12 +214,12 @@ func TestOpen_StartsAChapterAtTheQuestionOfTheMessagesTurn(t *testing.T) {
 	assert.Equal(t, conversationchapter.ChapterTitleQuestion, opened.TitleSource)
 	assert.Equal(t, turn.ID, opened.TurnID)
 	require.Len(t, f.chapters.created, 1)
-	assert.Equal(t, []*assistantports.ChapterTurnRequest{{
+	assert.Equal(t, []*assistantchapterports.ChapterTurnRequest{{
 		TenantInfo: f.tenant,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		TurnID:     turn.ID,
-		Phase:      assistantports.ChapterPhaseRequested,
+		Phase:      assistantchapterports.ChapterPhaseRequested,
 	}}, f.scheduler.cues, "the model is asked to name it afterwards")
 }
 
@@ -250,7 +250,7 @@ func TestOpen_NamesTheQuietFirstChapterAlongsideTheNewOne(t *testing.T) {
 		{Role: conversation.RoleUser, Content: "driver hours for Tuesday"},
 	}
 
-	_, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	_, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  messageID,
@@ -260,7 +260,7 @@ func TestOpen_NamesTheQuietFirstChapterAlongsideTheNewOne(t *testing.T) {
 
 	cued := make([]pulid.ID, 0, len(f.scheduler.cues))
 	for _, cue := range f.scheduler.cues {
-		assert.Equal(t, assistantports.ChapterPhaseRequested, cue.Phase)
+		assert.Equal(t, assistantchapterports.ChapterPhaseRequested, cue.Phase)
 		cued = append(cued, cue.TurnID)
 	}
 	assert.Equal(t, []pulid.ID{turn.ID, first.ID}, cued,
@@ -274,7 +274,7 @@ func TestOpen_AMessageOutsideATurnCannotStartAChapter(t *testing.T) {
 	messageID := pulid.MustNew("amsg_")
 	f.chapters.turnOf[messageID] = ""
 
-	_, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	_, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  messageID,
@@ -291,7 +291,7 @@ func TestOpen_AnUnknownMessageIsNotFound(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	_, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  "amsg_gone",
@@ -314,7 +314,7 @@ func TestOpen_ATurnThatAlreadyOpensAChapterReturnsIt(t *testing.T) {
 	messageID := pulid.MustNew("amsg_")
 	f.chapters.turnOf[messageID] = turn.ID
 
-	opened, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	opened, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  messageID,
@@ -352,7 +352,7 @@ func TestOpen_RefusesPastTheLimit(t *testing.T) {
 	messageID := pulid.MustNew("amsg_")
 	f.chapters.turnOf[messageID] = turn.ID
 
-	_, err := f.svc.Open(t.Context(), assistantports.OpenChapterRequest{
+	_, err := f.svc.Open(t.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
 		MessageID:  messageID,
@@ -429,7 +429,7 @@ func TestSpan_ReadsTheConversationsChapters(t *testing.T) {
 	opening := f.chapter(first.ID, "Late loads", conversationchapter.ChapterTitleModel, sequence(2))
 	f.chapter(second.ID, "Acme invoice dispute", conversationchapter.ChapterTitleModel, sequence(9))
 
-	span, err := f.svc.Span(t.Context(), assistantports.ChapterSpanRequest{
+	span, err := f.svc.Span(t.Context(), assistantchapterports.ChapterSpanRequest{
 		ID:         opening.ID,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,
@@ -439,7 +439,7 @@ func TestSpan_ReadsTheConversationsChapters(t *testing.T) {
 
 	assert.Equal(
 		t,
-		&assistantports.ChapterSpan{Chapter: opening, From: 2, Through: intPtr(8)},
+		&assistantchapterports.ChapterSpan{Chapter: opening, From: 2, Through: intPtr(8)},
 		span,
 	)
 }

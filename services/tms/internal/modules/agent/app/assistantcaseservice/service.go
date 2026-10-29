@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -69,7 +69,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	States        *States
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Cases         deskcaseports.AssistantCaseRepository
 	Subjects      agentports.AgentSubjectRepository
 	Shipments     shipmentserviceports.ShipmentService
@@ -88,7 +88,7 @@ type Params struct {
 type Service struct {
 	*States
 
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	subjects      agentports.AgentSubjectRepository
 	shipments     shipmentserviceports.ShipmentService
 	agentWaits    agentwaitports.AgentWaitService
@@ -696,7 +696,7 @@ func (s *Service) ownThread(
 		return nil, errortypes.NewAuthorizationError("A case belongs to a person")
 	}
 
-	return s.conversations.GetThread(ctx, assistantports.GetThreadRequest{
+	return s.conversations.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,

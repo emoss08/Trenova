@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
@@ -161,9 +162,11 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
 			return unlearned{}
 		}),
-		fx.Decorate(func(assistantports.ChapterScheduler) assistantports.ChapterScheduler {
-			return unchaptered{}
-		}),
+		fx.Decorate(
+			func(assistantchapterports.ChapterScheduler) assistantchapterports.ChapterScheduler {
+				return unchaptered{}
+			},
+		),
 		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
 			return untrusted{AgentTrustService: inner}
 		}),

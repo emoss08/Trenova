@@ -1,4 +1,4 @@
-package assistantports
+package conversationports
 
 import (
 	"context"

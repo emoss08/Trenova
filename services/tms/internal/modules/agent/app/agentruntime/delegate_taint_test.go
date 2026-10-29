@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,9 +87,9 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	assert.Equal(t, []agent.TaintMark{document}, result.Delegations[0].Taint.Marks,
 		"the delegate's proposals carry its own turn's taint")
 
-	var announced []assistantports.AssistantRunTaintedEvent
+	var announced []assistantstreamports.AssistantRunTaintedEvent
 	for _, event := range fx.events {
-		if data, ok := event.Data.(assistantports.AssistantRunTaintedEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantRunTaintedEvent); ok {
 			announced = append(announced, data)
 		}
 	}
@@ -139,7 +139,7 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	result := driveWith(t, rt, req, fx)
 
 	assert.Len(t, result.Taint.Marks, 1)
-	assert.NotContains(t, fx.eventNames(), assistantports.AssistantEventRunTainted)
+	assert.NotContains(t, fx.eventNames(), assistantstreamports.AssistantEventRunTainted)
 }
 
 func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {

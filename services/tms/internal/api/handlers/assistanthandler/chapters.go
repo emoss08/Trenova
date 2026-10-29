@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func (h *Handler) listChapters(c *gin.Context) {
 		return
 	}
 
-	items, err := h.chapters.List(c.Request.Context(), assistantports.ThreadChaptersRequest{
+	items, err := h.chapters.List(c.Request.Context(), assistantchapterports.ThreadChaptersRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -71,7 +72,7 @@ func (h *Handler) openChapter(c *gin.Context) {
 		return
 	}
 
-	chapter, err := h.chapters.Open(c.Request.Context(), assistantports.OpenChapterRequest{
+	chapter, err := h.chapters.Open(c.Request.Context(), assistantchapterports.OpenChapterRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		MessageID:  body.MessageID,
@@ -98,14 +99,17 @@ func (h *Handler) renameChapter(c *gin.Context) {
 		return
 	}
 
-	chapter, err := h.chapters.Rename(c.Request.Context(), assistantports.RenameChapterRequest{
-		ID:         chapterID,
-		ThreadID:   req.ID,
-		UserID:     req.UserID,
-		Title:      body.Title,
-		Version:    body.Version,
-		TenantInfo: req.TenantInfo,
-	})
+	chapter, err := h.chapters.Rename(
+		c.Request.Context(),
+		assistantchapterports.RenameChapterRequest{
+			ID:         chapterID,
+			ThreadID:   req.ID,
+			UserID:     req.UserID,
+			Title:      body.Title,
+			Version:    body.Version,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -121,7 +125,7 @@ func (h *Handler) removeChapter(c *gin.Context) {
 		return
 	}
 
-	if err = h.chapters.Remove(c.Request.Context(), assistantports.RemoveChapterRequest{
+	if err = h.chapters.Remove(c.Request.Context(), assistantchapterports.RemoveChapterRequest{
 		ID:         chapterID,
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
@@ -134,7 +138,7 @@ func (h *Handler) removeChapter(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func chapterRequest(c *gin.Context) (assistantports.GetThreadRequest, pulid.ID, error) {
+func chapterRequest(c *gin.Context) (conversationports.GetThreadRequest, pulid.ID, error) {
 	req, err := threadRequest(c)
 	if err != nil {
 		return req, pulid.Nil, err

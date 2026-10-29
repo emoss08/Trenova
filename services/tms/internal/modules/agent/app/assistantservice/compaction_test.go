@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -221,8 +221,8 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	require.Len(t, conversations.contexts, 1)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, assistantports.AssistantEventContext, events[0].Event)
-	data, ok := events[0].Data.(assistantports.AssistantContextEvent)
+	assert.Equal(t, assistantstreamports.AssistantEventContext, events[0].Event)
+	data, ok := events[0].Data.(assistantstreamports.AssistantContextEvent)
 	require.True(t, ok)
 	assert.Equal(t, conversations.thread.ID, data.ThreadID)
 	assert.Equal(t, usage.Total(), data.Usage.Total())

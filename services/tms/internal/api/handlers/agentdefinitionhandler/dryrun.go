@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -79,13 +79,13 @@ func (h *Handler) dryRun(c *gin.Context) {
 	defer stream.Close()
 
 	sawTerminal := false
-	err = h.streams.Read(ctx, assistantports.ReadTurnStreamRequest{
-		Ref: assistantports.TurnStreamRef{
+	err = h.streams.Read(ctx, assistantstreamports.ReadTurnStreamRequest{
+		Ref: assistantstreamports.TurnStreamRef{
 			TenantInfo: tenant,
 			TurnID:     runID,
 			WorkflowID: run.GetID(),
 		},
-		OnFrame: func(frame assistantports.TurnStreamFrame) error {
+		OnFrame: func(frame assistantstreamports.TurnStreamFrame) error {
 			if frame.Terminal() {
 				sawTerminal = true
 			}
@@ -107,7 +107,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 		if err != nil {
 			h.logger.Warn("dry run stream ended early", zap.Error(err))
 		}
-		_ = stream.Emit(assistantports.AssistantEventError, gin.H{
+		_ = stream.Emit(assistantstreamports.AssistantEventError, gin.H{
 			"message": "The dry run stopped before it finished. Try again in a moment.",
 		})
 	}

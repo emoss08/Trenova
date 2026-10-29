@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
@@ -29,29 +31,29 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Turns     assistantports.AssistantTurnRepository
-	Reader    assistantports.TurnStreamReader
-	Canceller assistantports.AssistantTurnCanceller
+	Turns     assistantturnports.AssistantTurnRepository
+	Reader    assistantstreamports.TurnStreamReader
+	Canceller assistantturnports.AssistantTurnCanceller
 	Realtime  realtimeports.RealtimeService
-	Metrics   *metrics.Registry               `optional:"true"`
-	Quota     platformplanports.QuotaGuard    `optional:"true"`
-	Plans     platformplanports.PlanService   `optional:"true"`
-	Chapters  assistantports.ChapterScheduler `optional:"true"`
+	Metrics   *metrics.Registry                      `optional:"true"`
+	Quota     platformplanports.QuotaGuard           `optional:"true"`
+	Plans     platformplanports.PlanService          `optional:"true"`
+	Chapters  assistantchapterports.ChapterScheduler `optional:"true"`
 }
 
 type Service struct {
 	l         *zap.Logger
-	turns     assistantports.AssistantTurnRepository
-	reader    assistantports.TurnStreamReader
-	canceller assistantports.AssistantTurnCanceller
+	turns     assistantturnports.AssistantTurnRepository
+	reader    assistantstreamports.TurnStreamReader
+	canceller assistantturnports.AssistantTurnCanceller
 	realtime  realtimeports.RealtimeService
 	metrics   *aimetrics.Assistant
 	quota     platformplanports.QuotaGuard
 	plans     platformplanports.PlanService
-	chapters  assistantports.ChapterScheduler
+	chapters  assistantchapterports.ChapterScheduler
 }
 
-var _ assistantports.AssistantTurnStopper = (*Service)(nil)
+var _ assistantturnports.AssistantTurnStopper = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -105,7 +107,7 @@ func (s *Service) Start(
 		Status:         conversation.AssistantTurnStatusRunning,
 	})
 	if err != nil {
-		if errors.Is(err, assistantports.ErrTurnAlreadyRunning) {
+		if errors.Is(err, assistantturnports.ErrTurnAlreadyRunning) {
 			return nil, errortypes.NewBusinessError(
 				"This conversation is already working on a reply. Wait for it to finish, or stop it first.",
 			)
@@ -140,7 +142,7 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 // Active is the turn a conversation is still producing, or nil.
 func (s *Service) Active(
 	ctx context.Context,
-	req assistantports.ActiveAssistantTurnRequest,
+	req assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return s.turns.Active(ctx, req)
 }
@@ -150,15 +152,15 @@ func (s *Service) Active(
 // other.
 func (s *Service) ListLive(
 	ctx context.Context,
-	req assistantports.ListLiveAssistantTurnsRequest,
-) ([]*assistantports.LiveAssistantTurn, error) {
+	req assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return s.turns.ListLive(ctx, req)
 }
 
 // Get reads one turn, scoped to whoever asked for it.
 func (s *Service) Get(
 	ctx context.Context,
-	req assistantports.GetAssistantTurnRequest,
+	req assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return s.turns.GetByID(ctx, req)
 }
@@ -171,7 +173,7 @@ func (s *Service) Close(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) error {
-	err := s.turns.Complete(ctx, assistantports.CompleteAssistantTurnRequest{
+	err := s.turns.Complete(ctx, assistantturnports.CompleteAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 		Status:     status,
@@ -238,8 +240,8 @@ func tenantOf(turn *conversationturn.AssistantTurn) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID}
 }
 
-func streamRef(turn *conversationturn.AssistantTurn) assistantports.TurnStreamRef {
-	return assistantports.TurnStreamRef{
+func streamRef(turn *conversationturn.AssistantTurn) assistantstreamports.TurnStreamRef {
+	return assistantstreamports.TurnStreamRef{
 		TenantInfo: tenantOf(turn),
 		TurnID:     turn.ID,
 		WorkflowID: turn.ExecutionID(),
@@ -289,19 +291,19 @@ func (s *Service) cueChapter(ctx context.Context, turn *conversationturn.Assista
 	if s.chapters == nil {
 		return
 	}
-	s.chapters.Cue(ctx, &assistantports.ChapterTurnRequest{
+	s.chapters.Cue(ctx, &assistantchapterports.ChapterTurnRequest{
 		TenantInfo: tenantOf(turn),
 		ThreadID:   turn.ThreadID,
 		UserID:     turn.UserID,
 		TurnID:     turn.ID,
-		Phase:      assistantports.ChapterPhaseOpened,
+		Phase:      assistantchapterports.ChapterPhaseOpened,
 	})
 }
 
 // ErrNoExecution is what a cancel reports when no execution carries the
 // turn, which is how Stop tells a turn it must close itself from one it asked
 // to stop.
-var ErrNoExecution = assistantports.ErrNoTurnExecution
+var ErrNoExecution = assistantturnports.ErrNoTurnExecution
 
 // Stop ends a turn somebody is no longer waiting for.
 //
@@ -352,9 +354,9 @@ func (s *Service) Stop(ctx context.Context, turn *conversationturn.AssistantTurn
 // running, and every failure is reported together.
 func (s *Service) StopAllForUser(
 	ctx context.Context,
-	req assistantports.StopUserTurnsRequest,
+	req assistantturnports.StopUserTurnsRequest,
 ) error {
-	live, err := s.turns.ListLive(ctx, assistantports.ListLiveAssistantTurnsRequest{
+	live, err := s.turns.ListLive(ctx, assistantturnports.ListLiveAssistantTurnsRequest{
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
 	})

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -211,4 +212,4 @@ func TestDescribeSubject_WithholdsARecordThePersonCanNoLongerRead(t *testing.T) 
 	assert.Equal(t, 1, subjects.described)
 }
 
-var _ assistantports.ConversationRepository = (*creatingConversations)(nil)
+var _ conversationports.ConversationRepository = (*creatingConversations)(nil)

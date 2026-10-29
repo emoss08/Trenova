@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -248,7 +249,7 @@ func TestListThreadProposals_SaysWhoDecidedEachAndWhatTheyWrote(t *testing.T) {
 
 	result, err := svc.ListThreadProposals(
 		t.Context(),
-		assistantports.GetThreadRequest{ID: threadID},
+		conversationports.GetThreadRequest{ID: threadID},
 	)
 	require.NoError(t, err)
 	require.Len(t, result, 2)

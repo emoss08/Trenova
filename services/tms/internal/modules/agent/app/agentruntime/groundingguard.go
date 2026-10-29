@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -27,14 +27,14 @@ func (s *Service) reground(
 		state.Rewritten = true
 		reason := finding.RetryReason()
 		fx.Emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventRetrying,
-			Data: assistantports.AssistantRetryingEvent{
+			Event: assistantstreamports.AssistantEventRetrying,
+			Data: assistantstreamports.AssistantRetryingEvent{
 				Attempt: 1,
 				Reason:  reason,
 				Kind:    llmports.RetryKindRestart,
 			},
 		})
-		fx.Emit(replycheck.RegroundedEvent(assistantports.RegroundRewrite, finding, reason))
+		fx.Emit(replycheck.RegroundedEvent(assistantstreamports.RegroundRewrite, finding, reason))
 		t.messages = append(t.messages,
 			llmports.Message{
 				Role:          llmports.RoleAssistant,
@@ -49,7 +49,13 @@ func (s *Service) reground(
 	}
 
 	note := finding.Note()
-	fx.Emit(replycheck.RegroundedEvent(assistantports.RegroundNote, finding, finding.NoteReason()))
+	fx.Emit(
+		replycheck.RegroundedEvent(
+			assistantstreamports.RegroundNote,
+			finding,
+			finding.NoteReason(),
+		),
+	)
 	completion.Text += note
 	fx.Emit(modelstream.DeltaEvent(note))
 

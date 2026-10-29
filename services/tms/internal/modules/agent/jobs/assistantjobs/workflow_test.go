@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -152,7 +153,7 @@ func (s *AssistantTurnWorkflowTestSuite) finishes(ending *TurnEnding, err error)
 func doneEnding() *TurnEnding {
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{Status: "Completed"},
-		Event:  temporaltype.StreamItem{Event: assistantports.AssistantEventDone},
+		Event:  temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}
 }
 
@@ -179,7 +180,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestAnswersTheQuestionAndSavesIt() {
 	s.Require().NotNil(s.finished.Run)
 	s.Equal("Twelve loads are late.", s.finished.Run.Reply)
 	s.Require().NotEmpty(s.finished.Events)
-	s.Equal(assistantports.AssistantEventAccepted, s.finished.Events[0].Event,
+	s.Equal(assistantstreamports.AssistantEventAccepted, s.finished.Events[0].Event,
 		"the opening is kept in the turn's account")
 }
 
@@ -196,7 +197,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesARefusalWithoutAskingTheModel(
 	s.NoError(s.env.GetWorkflowError())
 	s.Require().NotNil(s.finished)
 	s.Nil(s.finished.Run)
-	s.Equal(assistantports.AssistantEventRefused, s.finished.Events[0].Event)
+	s.Equal(assistantstreamports.AssistantEventRefused, s.finished.Events[0].Event)
 }
 
 // A question turned away for a reason written for the person keeps that
@@ -308,7 +309,7 @@ func answeredEnding(reply string) *TurnEnding {
 			Status: "Completed",
 			Result: &assistantports.SendMessageResult{Reply: reply},
 		},
-		Event: temporaltype.StreamItem{Event: assistantports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}
 }
 
@@ -430,7 +431,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestTellsThePersonAboutARefusal() {
 				Refused: true,
 			},
 		},
-		Event: temporaltype.StreamItem{Event: assistantports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}, nil)
 
 	s.run()

@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -22,20 +24,20 @@ type fakeChapters struct {
 	chapters []*conversationchapter.Chapter
 	turnOf   map[pulid.ID]pulid.ID
 	created  []*conversationchapter.Chapter
-	retitled []assistantports.RetitleChapterRequest
-	deleted  []assistantports.DeleteChapterRequest
+	retitled []assistantchapterports.RetitleChapterRequest
+	deleted  []assistantchapterports.DeleteChapterRequest
 }
 
 func (f *fakeChapters) List(
 	context.Context,
-	assistantports.ListChaptersRequest,
+	assistantchapterports.ListChaptersRequest,
 ) ([]*conversationchapter.Chapter, error) {
 	return slices.Clone(f.chapters), nil
 }
 
 func (f *fakeChapters) Get(
 	_ context.Context,
-	req assistantports.GetChapterRequest,
+	req assistantchapterports.GetChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.ID == req.ID {
@@ -48,7 +50,7 @@ func (f *fakeChapters) Get(
 
 func (f *fakeChapters) ForTurn(
 	_ context.Context,
-	req assistantports.ChapterForTurnRequest,
+	req assistantchapterports.ChapterForTurnRequest,
 ) (*conversationchapter.Chapter, error) {
 	for _, chapter := range f.chapters {
 		if chapter.TurnID == req.TurnID {
@@ -59,7 +61,10 @@ func (f *fakeChapters) ForTurn(
 	return nil, nil
 }
 
-func (f *fakeChapters) Count(context.Context, assistantports.ListChaptersRequest) (int, error) {
+func (f *fakeChapters) Count(
+	context.Context,
+	assistantchapterports.ListChaptersRequest,
+) (int, error) {
 	return len(f.chapters), nil
 }
 
@@ -78,7 +83,7 @@ func (f *fakeChapters) Create(
 
 func (f *fakeChapters) Retitle(
 	_ context.Context,
-	req assistantports.RetitleChapterRequest,
+	req assistantchapterports.RetitleChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	f.retitled = append(f.retitled, req)
 	for _, chapter := range f.chapters {
@@ -95,7 +100,7 @@ func (f *fakeChapters) Retitle(
 
 func (f *fakeChapters) Delete(
 	_ context.Context,
-	req assistantports.DeleteChapterRequest,
+	req assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
 	f.deleted = append(f.deleted, req)
 	idx := slices.IndexFunc(f.chapters, func(c *conversationchapter.Chapter) bool {
@@ -112,7 +117,7 @@ func (f *fakeChapters) Delete(
 
 func (f *fakeChapters) TurnOfMessage(
 	_ context.Context,
-	req assistantports.TurnOfMessageRequest,
+	req assistantchapterports.TurnOfMessageRequest,
 ) (pulid.ID, error) {
 	turnID, ok := f.turnOf[req.MessageID]
 	if !ok {
@@ -123,17 +128,17 @@ func (f *fakeChapters) TurnOfMessage(
 }
 
 type fakeConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	thread *conversation.Thread
 	recent []conversation.Message
 	byTurn map[pulid.ID][]conversation.Message
-	listed []assistantports.ListMessagesRequest
+	listed []conversationports.ListMessagesRequest
 }
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Conversation not found")
@@ -144,7 +149,7 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req assistantports.ListMessagesRequest,
+	req conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.listed = append(f.listed, req)
 	if req.TurnID.IsNotNil() {
@@ -155,14 +160,14 @@ func (f *fakeConversations) ListMessages(
 }
 
 type fakeTurns struct {
-	assistantports.AssistantTurnRepository
+	assistantturnports.AssistantTurnRepository
 
 	turns map[pulid.ID]*conversationturn.AssistantTurn
 }
 
 func (f *fakeTurns) GetByID(
 	_ context.Context,
-	req assistantports.GetAssistantTurnRequest,
+	req assistantturnports.GetAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	turn, ok := f.turns[req.ID]
 	if !ok {
@@ -186,10 +191,10 @@ func (f *fakeControls) GetOrCreate(
 }
 
 type fakeScheduler struct {
-	cues []*assistantports.ChapterTurnRequest
+	cues []*assistantchapterports.ChapterTurnRequest
 }
 
-func (f *fakeScheduler) Cue(_ context.Context, req *assistantports.ChapterTurnRequest) {
+func (f *fakeScheduler) Cue(_ context.Context, req *assistantchapterports.ChapterTurnRequest) {
 	f.cues = append(f.cues, req)
 }
 
@@ -207,7 +212,7 @@ func (f *fakeRealtime) PublishResourceInvalidation(
 }
 
 type fixture struct {
-	svc           assistantports.AssistantChapterService
+	svc           assistantchapterports.AssistantChapterService
 	chapters      *fakeChapters
 	conversations *fakeConversations
 	turns         *fakeTurns
@@ -301,9 +306,9 @@ func (f *fixture) chapter(
 
 func (f *fixture) request(
 	turnID pulid.ID,
-	phase assistantports.ChapterPhase,
-) *assistantports.ChapterTurnRequest {
-	return &assistantports.ChapterTurnRequest{
+	phase assistantchapterports.ChapterPhase,
+) *assistantchapterports.ChapterTurnRequest {
+	return &assistantchapterports.ChapterTurnRequest{
 		TenantInfo: f.tenant,
 		ThreadID:   f.thread.ID,
 		UserID:     f.tenant.UserID,

@@ -8,31 +8,31 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
 
-var _ assistantports.PageThreadRepository = (*repository)(nil)
+var _ conversationports.PageThreadRepository = (*repository)(nil)
 
 var errNotPageThread = errors.New("a page conversation needs a page origin, a subject and an owner")
 
-func NewPageThreads(p Params) assistantports.PageThreadRepository {
+func NewPageThreads(p Params) conversationports.PageThreadRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.page-thread-repository"),
 	}
 }
 
-func pageKeyValid(key assistantports.PageThreadKey) bool {
+func pageKeyValid(key conversationports.PageThreadKey) bool {
 	return key.Origin.PageBound() && key.SubjectType != "" && key.SubjectID.IsNotNil() &&
 		key.UserID.IsNotNil() && key.TenantInfo.OrgID.IsNotNil() && key.TenantInfo.BuID.IsNotNil()
 }
 
 func (r *repository) GetPageThread(
 	ctx context.Context,
-	key assistantports.PageThreadKey,
+	key conversationports.PageThreadKey,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		if !pageKeyValid(key) {
@@ -60,7 +60,7 @@ func (r *repository) ClaimPageThread(
 	thread *conversation.Thread,
 ) (*conversation.Thread, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		key := assistantports.PageThreadKey{
+		key := conversationports.PageThreadKey{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: thread.OrganizationID,
 				BuID:  thread.BusinessUnitID,
@@ -95,7 +95,7 @@ func (r *repository) ClaimPageThread(
 
 func (r *repository) ArchiveSubjectThreads(
 	ctx context.Context,
-	req assistantports.ArchiveSubjectThreadsRequest,
+	req conversationports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if !req.Origin.PageBound() || req.SubjectType == "" || req.SubjectID.IsNil() {

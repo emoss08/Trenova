@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -231,9 +231,9 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 	assert.Equal(t, 1, result.Outcome.Result.ToolCallsUsed)
 	assert.Equal(t,
 		[]string{
-			assistantports.AssistantEventMessage,
-			assistantports.AssistantEventToolStarted,
-			assistantports.AssistantEventToolFinished,
+			assistantstreamports.AssistantEventMessage,
+			assistantstreamports.AssistantEventToolStarted,
+			assistantstreamports.AssistantEventToolFinished,
 		},
 		eventNames(result.Outcome),
 	)
@@ -560,5 +560,5 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 	require.Empty(t, result.Err)
 	assert.Equal(t, []int{0, 2048}, budgets)
 	assert.Equal(t, "Nothing is waiting.", result.Outcome.Result.Reply)
-	assert.Contains(t, eventNames(result.Outcome), assistantports.AssistantEventRetrying)
+	assert.Contains(t, eventNames(result.Outcome), assistantstreamports.AssistantEventRetrying)
 }

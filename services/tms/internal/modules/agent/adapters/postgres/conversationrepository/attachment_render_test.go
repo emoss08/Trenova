@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,10 +15,13 @@ func TestCarriesAttachmentAsksForThePersonsMessageInThatThread(t *testing.T) {
 
 	threadID := pulid.MustNew("athr_")
 	documentID := pulid.MustNew("doc_")
-	sql, args := keeltest.Render(t, carriesAttachmentQuery(&assistantports.CarriesAttachmentRequest{
-		ThreadID:   threadID,
-		DocumentID: documentID,
-	}))
+	sql, args := keeltest.Render(
+		t,
+		carriesAttachmentQuery(&conversationports.CarriesAttachmentRequest{
+			ThreadID:   threadID,
+			DocumentID: documentID,
+		}),
+	)
 
 	assert.Contains(t, sql, `am."thread_id" = $3`, sql)
 	assert.Contains(t, sql, `am."role" = 'User'`, sql)
@@ -33,7 +36,7 @@ func TestMessagesSinceCompactionReadAfterTheLatestSummary(t *testing.T) {
 	t.Parallel()
 
 	threadID := pulid.MustNew("athr_")
-	sql, args := keeltest.Render(t, messagesQuery(&assistantports.ListMessagesRequest{
+	sql, args := keeltest.Render(t, messagesQuery(&conversationports.ListMessagesRequest{
 		ThreadID:        threadID,
 		SinceCompaction: true,
 	}))

@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -166,12 +166,12 @@ func TestFinish_ADelegateHasItsOwnRootAndBothLinkEachOther(t *testing.T) {
 		},
 		Events: []temporaltype.StreamItem{
 			{
-				Event: assistantports.AssistantEventDelegateStarted,
+				Event: assistantstreamports.AssistantEventDelegateStarted,
 				Data:  map[string]any{"delegateCallId": "call_task_9"},
 				At:    1_790_000_010,
 			},
 			{
-				Event: assistantports.AssistantEventDelegateFinished,
+				Event: assistantstreamports.AssistantEventDelegateFinished,
 				Data: map[string]any{
 					"delegateCallId": "call_task_9",
 					"status":         "completed",

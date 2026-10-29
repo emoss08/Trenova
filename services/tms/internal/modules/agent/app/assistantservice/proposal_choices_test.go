@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -67,7 +68,7 @@ func (l *recordingLabeler) Labels(
 type choicesFixture struct {
 	svc      *Service
 	labeler  *recordingLabeler
-	request  assistantports.GetThreadRequest
+	request  conversationports.GetThreadRequest
 	first    pulid.ID
 	second   pulid.ID
 	gone     pulid.ID
@@ -125,7 +126,7 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 		},
 	}
 	threadID := pulid.MustNew("thr_")
-	f.request = assistantports.GetThreadRequest{
+	f.request = conversationports.GetThreadRequest{
 		ID:     threadID,
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{
@@ -150,7 +151,10 @@ func newChoicesFixture(t *testing.T, mayReadShipments bool) *choicesFixture {
 	return f
 }
 
-func subsetFieldOf(t *testing.T, proposal assistantports.AssistantProposal) toolschema.Field {
+func subsetFieldOf(
+	t *testing.T,
+	proposal assistantproposalports.AssistantProposal,
+) toolschema.Field {
 	t.Helper()
 
 	for _, field := range proposal.Fields {

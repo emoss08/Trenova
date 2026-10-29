@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -91,8 +91,8 @@ func (t *Turn) steer(fx TurnEffects, steer worldwatch.Steer) {
 		CreatedAt: fx.Now(),
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventSteered,
-		Data: assistantports.AssistantSteeredEvent{
+		Event: assistantstreamports.AssistantEventSteered,
+		Data: assistantstreamports.AssistantSteeredEvent{
 			ID:       steer.ID,
 			Content:  content,
 			Mentions: mentions,
@@ -113,7 +113,7 @@ func (t *Turn) worldChanged(fx TurnEffects, changes []realtimeports.WatchedRecor
 		CreatedAt:    fx.Now(),
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventWorldChanged,
-		Data:  assistantports.AssistantWorldChangedEvent{Changes: changes},
+		Event: assistantstreamports.AssistantEventWorldChanged,
+		Data:  assistantstreamports.AssistantWorldChangedEvent{Changes: changes},
 	})
 }

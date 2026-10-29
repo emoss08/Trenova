@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +22,7 @@ import (
 )
 
 type stubConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	thread   *conversation.Thread
 	appended []conversation.Message
@@ -31,18 +32,18 @@ type stubConversations struct {
 	appendCalls  int
 	// messages is what ListMessages serves; lastList is what it was asked.
 	messages []conversation.Message
-	lastList assistantports.ListMessagesRequest
+	lastList conversationports.ListMessagesRequest
 	// count is the thread's length as CountMessages reports it.
 	count int
 	// tainted is every time the thread's taint was written.
-	tainted []assistantports.MarkThreadTaintedRequest
+	tainted []conversationports.MarkThreadTaintedRequest
 	// contexts is every time the thread's context use was written.
-	contexts []assistantports.UpdateThreadContextRequest
+	contexts []conversationports.UpdateThreadContextRequest
 }
 
 func (s *stubConversations) UpdateThreadContext(
 	_ context.Context,
-	req assistantports.UpdateThreadContextRequest,
+	req conversationports.UpdateThreadContextRequest,
 ) error {
 	s.contexts = append(s.contexts, req)
 
@@ -51,7 +52,7 @@ func (s *stubConversations) UpdateThreadContext(
 
 func (s *stubConversations) MarkThreadTainted(
 	_ context.Context,
-	req assistantports.MarkThreadTaintedRequest,
+	req conversationports.MarkThreadTaintedRequest,
 ) error {
 	s.tainted = append(s.tainted, req)
 
@@ -60,21 +61,21 @@ func (s *stubConversations) MarkThreadTainted(
 
 func (s *stubConversations) CountMessages(
 	context.Context,
-	assistantports.CountMessagesRequest,
+	conversationports.CountMessagesRequest,
 ) (int, error) {
 	return s.count, nil
 }
 
 func (s *stubConversations) GetThread(
 	context.Context,
-	assistantports.GetThreadRequest,
+	conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return s.thread, nil
 }
 
 func (s *stubConversations) ListMessages(
 	_ context.Context,
-	req assistantports.ListMessagesRequest,
+	req conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	s.lastList = req
 
@@ -83,7 +84,7 @@ func (s *stubConversations) ListMessages(
 
 func (s *stubConversations) AppendTurn(
 	ctx context.Context,
-	req assistantports.AppendTurnRequest,
+	req conversationports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	s.appended = req.Messages
 	s.appendCtxErr = ctx.Err()
@@ -230,7 +231,7 @@ func TestListMessages_PagesFromTheEndAndSaysWhetherMoreExist(t *testing.T) {
 	before := 13
 
 	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread:         assistantports.GetThreadRequest{ID: conversations.thread.ID},
+		Thread:         conversationports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:          2,
 		BeforeSequence: &before,
 	})
@@ -255,7 +256,7 @@ func TestListMessages_ReportsTheLastPageAsSuch(t *testing.T) {
 	conversations.count = 2
 
 	page, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
+		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:  2,
 	})
 	require.NoError(t, err)
@@ -271,13 +272,13 @@ func TestListMessages_ClampsThePageSize(t *testing.T) {
 	svc, conversations := newConversationService(&scriptedCompletion{}, testDefinition())
 
 	_, err := svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
+		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, defaultPageLimit+1, conversations.lastList.Limit)
 
 	_, err = svc.ListMessages(t.Context(), assistantports.ListThreadMessagesRequest{
-		Thread: assistantports.GetThreadRequest{ID: conversations.thread.ID},
+		Thread: conversationports.GetThreadRequest{ID: conversations.thread.ID},
 		Limit:  100000,
 	})
 	require.NoError(t, err)
@@ -354,14 +355,14 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 }
 
 type deletingConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	err error
 }
 
 func (d *deletingConversations) DeleteThread(
 	context.Context,
-	assistantports.GetThreadRequest,
+	conversationports.GetThreadRequest,
 ) error {
 	return d.err
 }
@@ -380,7 +381,10 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 		proposals:     proposals,
 	}
 
-	require.NoError(t, svc.DeleteThread(t.Context(), assistantports.GetThreadRequest{ID: threadID}))
+	require.NoError(
+		t,
+		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
+	)
 	assert.Equal(t, []pulid.ID{threadID}, proposals.expiredThreads)
 
 	refused := &stubProposalRepo{}
@@ -389,7 +393,10 @@ func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
 		conversations: &deletingConversations{err: errors.New("not yours")},
 		proposals:     refused,
 	}
-	require.Error(t, svc.DeleteThread(t.Context(), assistantports.GetThreadRequest{ID: threadID}))
+	require.Error(
+		t,
+		svc.DeleteThread(t.Context(), conversationports.GetThreadRequest{ID: threadID}),
+	)
 	assert.Empty(t, refused.expiredThreads, "a delete that did not happen withdraws nothing")
 }
 
@@ -420,13 +427,13 @@ func (h *heldSchedules) Forget(_ context.Context, schedules []*conversationsched
 }
 
 type recordingDelete struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	err     error
 	deleted bool
 }
 
-func (d *recordingDelete) DeleteThread(context.Context, assistantports.GetThreadRequest) error {
+func (d *recordingDelete) DeleteThread(context.Context, conversationports.GetThreadRequest) error {
 	if d.err != nil {
 		return d.err
 	}
@@ -446,7 +453,7 @@ is left.
 func TestDeleteThread_ForgetsTheSchedulesItKept(t *testing.T) {
 	t.Parallel()
 
-	req := assistantports.GetThreadRequest{
+	req := conversationports.GetThreadRequest{
 		ID:     pulid.MustNew("athr_"),
 		UserID: pulid.MustNew("usr_"),
 	}

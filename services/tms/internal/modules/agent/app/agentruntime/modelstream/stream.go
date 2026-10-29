@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -181,22 +181,22 @@ func (s *Streamer) DeclareTools(
 
 func DeltaEvent(text string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventDelta,
-		Data:  assistantports.AssistantDeltaEvent{Text: text},
+		Event: assistantstreamports.AssistantEventDelta,
+		Data:  assistantstreamports.AssistantDeltaEvent{Text: text},
 	}
 }
 
 func reasoningEvent(text string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventReasoning,
-		Data:  assistantports.AssistantReasoningEvent{Text: text},
+		Event: assistantstreamports.AssistantEventReasoning,
+		Data:  assistantstreamports.AssistantReasoningEvent{Text: text},
 	}
 }
 
 func retryEvent(notice llmports.ChatRetryNotice) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventRetrying,
-		Data: assistantports.AssistantRetryingEvent{
+		Event: assistantstreamports.AssistantEventRetrying,
+		Data: assistantstreamports.AssistantRetryingEvent{
 			Attempt:     notice.Attempt,
 			Provider:    notice.Provider,
 			Reason:      notice.Reason,

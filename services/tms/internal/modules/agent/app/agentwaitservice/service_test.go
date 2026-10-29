@@ -14,7 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -271,7 +272,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) Active(
 	context.Context,
-	assistantports.ActiveAssistantTurnRequest,
+	assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
@@ -291,12 +292,12 @@ func (f *fakeTurns) StartTurn(
 }
 
 type fakeConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 }
 
 func (fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req assistantports.GetThreadOwnedRequest,
+	req conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{
 		ID:             req.ID,

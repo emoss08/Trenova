@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -23,9 +23,9 @@ const maxTurnRunes = 80
 // the pane shows a draft as sent the moment the decision ran.
 func (s *Service) ListThreadArtifacts(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
-	opts assistantports.ListArtifactsOptions,
-) (*assistantports.AssistantArtifactPage, error) {
+	req conversationports.GetThreadRequest,
+	opts assistantartifactports.ListArtifactsOptions,
+) (*assistantartifactports.AssistantArtifactPage, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -34,8 +34,8 @@ func (s *Service) ListThreadArtifacts(
 			"kind", errortypes.ErrInvalid, "There is no artifact kind by that name",
 		)
 	}
-	empty := &assistantports.AssistantArtifactPage{
-		Results: []assistantports.AssistantArtifact{},
+	empty := &assistantartifactports.AssistantArtifactPage{
+		Results: []assistantartifactports.AssistantArtifact{},
 		Counts: assistantartifactports.ArtifactCounts{
 			Families: map[assistantartifact.Family]int{},
 		},
@@ -58,7 +58,7 @@ func (s *Service) ListThreadArtifacts(
 		return nil, err
 	}
 
-	return &assistantports.AssistantArtifactPage{
+	return &assistantartifactports.AssistantArtifactPage{
 		Results:    s.presentArtifacts(ctx, req, page.Artifacts),
 		Total:      page.Total,
 		NextCursor: page.NextCursor,
@@ -68,9 +68,9 @@ func (s *Service) ListThreadArtifacts(
 
 func (s *Service) ArtifactLineage(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-) ([]assistantports.AssistantArtifact, error) {
+) ([]assistantartifactports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -92,9 +92,9 @@ func (s *Service) ArtifactLineage(
 
 func (s *Service) ArtifactBySlug(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	slug string,
-) ([]assistantports.AssistantArtifact, error) {
+) ([]assistantartifactports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -125,9 +125,9 @@ func (s *Service) ArtifactBySlug(
 // decisions, and the question of the turn each artifact came from.
 func (s *Service) presentArtifacts(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
-) []assistantports.AssistantArtifact {
+) []assistantartifactports.AssistantArtifact {
 	s.followDecisions(ctx, req, artifacts)
 
 	messageIDs := make([]pulid.ID, 0, len(artifacts))
@@ -143,7 +143,7 @@ func (s *Service) presentArtifacts(
 		s.logger.Warn("artifact turns could not be read", zap.Error(err))
 	}
 
-	out := make([]assistantports.AssistantArtifact, 0, len(artifacts))
+	out := make([]assistantartifactports.AssistantArtifact, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		shown := toAssistantArtifact(artifact)
 		shown.Turn = turnLabel(questions[artifact.MessageID])

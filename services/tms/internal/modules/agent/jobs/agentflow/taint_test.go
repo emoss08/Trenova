@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
@@ -93,7 +93,7 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 	assert.Contains(t, payment.HeldBy, agenttoolpolicy.HeldByTainted)
 	assert.False(t, payment.Tainted, "unknown is held, not recorded as a known taint")
 	assert.Nil(t, result.Outcome.Result.Taint, "the unknown stays unknown")
-	assert.NotContains(t, eventNames(result.Outcome), assistantports.AssistantEventRunTainted)
+	assert.NotContains(t, eventNames(result.Outcome), assistantstreamports.AssistantEventRunTainted)
 }
 
 /*
@@ -156,9 +156,9 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	require.True(t, tainted.Outcome.Result.Taint.Tainted())
 	assert.False(t, tainted.Outcome.Result.Actions[0].Executed)
 	assert.True(t, tainted.Outcome.Result.Actions[0].Tainted)
-	assert.Contains(t, eventNames(tainted.Outcome), assistantports.AssistantEventRunTainted,
+	assert.Contains(t, eventNames(tainted.Outcome), assistantstreamports.AssistantEventRunTainted,
 		"the trajectory keeps when the run became tainted")
-	assert.NotContains(t, eventNames(clean.Outcome), assistantports.AssistantEventRunTainted)
+	assert.NotContains(t, eventNames(clean.Outcome), assistantstreamports.AssistantEventRunTainted)
 }
 
 /*

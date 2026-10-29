@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
@@ -53,7 +53,7 @@ type ChaptersResult struct {
 }
 
 type ApplyInput struct {
-	Plan   *assistantports.ChapterPlan          `json:"plan"`
+	Plan   *assistantchapterports.ChapterPlan   `json:"plan"`
 	Result *llmports.StructuredCompletionResult `json:"result,omitempty"`
 }
 
@@ -73,7 +73,7 @@ func ThreadChaptersWorkflow(
 	result := &ChaptersResult{}
 
 	for {
-		var next assistantports.ChapterTurnRequest
+		var next assistantchapterports.ChapterTurnRequest
 		if !signals.ReceiveAsync(&next) {
 			received, _ := signals.ReceiveWithTimeout(ctx, chaptercontract.IdleWait, &next)
 			if !received {
@@ -95,13 +95,13 @@ func ThreadChaptersWorkflow(
 func handle(
 	ctx workflow.Context,
 	tenant pagination.TenantInfo,
-	req *assistantports.ChapterTurnRequest,
+	req *assistantchapterports.ChapterTurnRequest,
 	result *ChaptersResult,
 ) {
 	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	var plan assistantports.ChapterPlan
+	var plan assistantchapterports.ChapterPlan
 	if err := workflow.ExecuteActivity(
 		withPriority(ctx, planOptions, tenant), a.PlanChapterActivity, req,
 	).Get(ctx, &plan); err != nil {
@@ -128,7 +128,7 @@ func handle(
 		}
 	}
 
-	var outcome assistantports.ChapterOutcome
+	var outcome assistantchapterports.ChapterOutcome
 	if err := workflow.ExecuteActivity(
 		withPriority(ctx, applyOptions, tenant), a.ApplyChapterActivity, input,
 	).Get(ctx, &outcome); err != nil {
@@ -141,7 +141,7 @@ func handle(
 	result.absorb(&outcome)
 }
 
-func (r *ChaptersResult) absorb(outcome *assistantports.ChapterOutcome) {
+func (r *ChaptersResult) absorb(outcome *assistantchapterports.ChapterOutcome) {
 	if outcome.Opened {
 		r.Opened++
 	}

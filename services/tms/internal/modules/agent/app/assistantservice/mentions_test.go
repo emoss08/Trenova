@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -34,16 +35,16 @@ func (p *mentionPermissions) CheckBatch(
 }
 
 type mentionConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
-	captured assistantports.SearchMentionsRequest
-	rows     []assistantports.MentionRow
+	captured conversationports.SearchMentionsRequest
+	rows     []conversationports.MentionRow
 }
 
 func (c *mentionConversations) SearchMentions(
 	_ context.Context,
-	req assistantports.SearchMentionsRequest,
-) ([]assistantports.MentionRow, error) {
+	req conversationports.SearchMentionsRequest,
+) ([]conversationports.MentionRow, error) {
 	c.captured = req
 
 	return c.rows, nil
@@ -52,7 +53,7 @@ func (c *mentionConversations) SearchMentions(
 func TestSearchMentions_OnlySearchesWhatThePersonMayRead(t *testing.T) {
 	t.Parallel()
 
-	repo := &mentionConversations{rows: []assistantports.MentionRow{
+	repo := &mentionConversations{rows: []conversationports.MentionRow{
 		{Type: "shipment", ID: "shp_1", Label: "SEED-SHP-001", Subtitle: "New"},
 	}}
 	service := &Service{
@@ -174,9 +175,9 @@ func TestSearchMentions_LocationsAreSearchedOnlyUnderTheirOwnTab(t *testing.T) {
 func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
 	t.Parallel()
 
-	rows := make([]assistantports.MentionRow, 0, 4)
+	rows := make([]conversationports.MentionRow, 0, 4)
 	for _, id := range []string{"idsp_1", "idsp_2", "idsp_3", "idsp_4"} {
-		rows = append(rows, assistantports.MentionRow{Type: "invoice_dispute", ID: id})
+		rows = append(rows, conversationports.MentionRow{Type: "invoice_dispute", ID: id})
 	}
 	repo := &mentionConversations{rows: rows}
 	service := &Service{

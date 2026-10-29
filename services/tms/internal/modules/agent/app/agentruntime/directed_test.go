@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -97,14 +97,14 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	assert.Equal(t, 1, result.ToolCallsUsed)
 
 	assert.Equal(t, []string{
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventDelegateStarted,
-		assistantports.AssistantEventDelegateFinished,
-		assistantports.AssistantEventToolFinished,
-		assistantports.AssistantEventDelta,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventDelegateStarted,
+		assistantstreamports.AssistantEventDelegateFinished,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelta,
 	}, fx.eventNames(), "the stream shows it as any hand-off, then the answer")
-	started, ok := fx.events[2].Data.(assistantports.AssistantDelegateStartedEvent)
+	started, ok := fx.events[2].Data.(assistantstreamports.AssistantDelegateStartedEvent)
 	require.True(t, ok)
 	assert.Equal(t, callID, started.DelegateCallID)
 	assert.Equal(t, directedStep, started.Task)

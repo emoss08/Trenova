@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,13 +15,13 @@ import (
 
 // turnStopper remembers whose replies it was asked to stop.
 type turnStopper struct {
-	asked []assistantports.StopUserTurnsRequest
+	asked []assistantturnports.StopUserTurnsRequest
 	err   error
 }
 
 func (s *turnStopper) StopAllForUser(
 	_ context.Context,
-	req assistantports.StopUserTurnsRequest,
+	req assistantturnports.StopUserTurnsRequest,
 ) error {
 	s.asked = append(s.asked, req)
 

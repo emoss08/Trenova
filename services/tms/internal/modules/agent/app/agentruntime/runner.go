@@ -42,7 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -237,8 +237,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			if retries < loopguard.MaxReplyRetries {
 				retries++
 				fx.Emit(kernelports.StreamEvent{
-					Event: assistantports.AssistantEventRetrying,
-					Data: assistantports.AssistantRetryingEvent{
+					Event: assistantstreamports.AssistantEventRetrying,
+					Data: assistantstreamports.AssistantRetryingEvent{
 						Attempt: retries,
 						Reason:  loopguard.LoopRestartReason,
 						Kind:    llmports.RetryKindRestart,
@@ -248,8 +248,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 				continue
 			}
 			fx.Emit(kernelports.StreamEvent{
-				Event: assistantports.AssistantEventRetrying,
-				Data: assistantports.AssistantRetryingEvent{
+				Event: assistantstreamports.AssistantEventRetrying,
+				Data: assistantstreamports.AssistantRetryingEvent{
 					Attempt: retries + 1,
 					Reason:  loopguard.LoopRestartReason,
 					Kind:    llmports.RetryKindRestart,
@@ -348,8 +348,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 			ReplyProvider: completion.ProviderID,
 		})
 		fx.Emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventMessage,
-			Data: assistantports.AssistantMessageEvent{
+			Event: assistantstreamports.AssistantEventMessage,
+			Data: assistantstreamports.AssistantMessageEvent{
 				Content:      assistantTurn.Content,
 				ToolCalls:    s.access.CallsWithEffects(assistantTurn.ToolCalls),
 				Model:        assistantTurn.Model,
@@ -601,8 +601,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentruntimeports.RunResult, 
 
 func (s *Service) emitToolStarted(effects TurnEffects, call *llmports.ToolCall) {
 	effects.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventToolStarted,
-		Data: assistantports.AssistantToolStartedEvent{
+		Event: assistantstreamports.AssistantEventToolStarted,
+		Data: assistantstreamports.AssistantToolStartedEvent{
 			CallID:    call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
@@ -762,8 +762,8 @@ func (s *Service) recordToolResult(
 	}
 
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventToolFinished,
-		Data: assistantports.AssistantToolFinishedEvent{
+		Event: assistantstreamports.AssistantEventToolFinished,
+		Data: assistantstreamports.AssistantToolFinishedEvent{
 			CallID:        call.ID,
 			Name:          call.Name,
 			Failed:        outcome.Failed,

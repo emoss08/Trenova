@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -221,7 +222,7 @@ func (s *Service) claimPageThread(
 	}
 
 	if req.SubjectID.IsNotNil() {
-		existing, err := s.pageThreads.GetPageThread(ctx, assistantports.PageThreadKey{
+		existing, err := s.pageThreads.GetPageThread(ctx, conversationports.PageThreadKey{
 			TenantInfo:  req.TenantInfo,
 			UserID:      actor.UserID,
 			Origin:      req.Origin,
@@ -234,7 +235,7 @@ func (s *Service) claimPageThread(
 				return existing, nil
 			}
 			if _, archiveErr := s.pageThreads.ArchiveSubjectThreads(ctx,
-				assistantports.ArchiveSubjectThreadsRequest{
+				conversationports.ArchiveSubjectThreadsRequest{
 					TenantInfo:  req.TenantInfo,
 					Origin:      req.Origin,
 					SubjectType: subjectType,

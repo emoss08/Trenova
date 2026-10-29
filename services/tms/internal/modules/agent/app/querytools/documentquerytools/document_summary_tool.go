@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -45,7 +45,7 @@ func NewGetDocumentSummaryTool(
 	documents documentports.DocumentRepository,
 	contents contentReader,
 	permissions permissionports.PermissionEngine,
-	threads assistantports.ThreadOwnerRepository,
+	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return &getDocumentSummaryTool{
 		documents: documents,

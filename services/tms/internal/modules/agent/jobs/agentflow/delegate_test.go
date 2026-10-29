@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -189,14 +189,14 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	assert.Equal(t, "The Shipment Desk found it in Memphis.", result.Outcome.Result.Reply)
 
 	assert.Equal(t, []string{
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventDelegateStarted,
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventToolFinished,
-		assistantports.AssistantEventDelegateFinished,
-		assistantports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventDelegateStarted,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelegateFinished,
+		assistantstreamports.AssistantEventToolFinished,
 	}, eventNames(result.Outcome))
 	nested, ok := result.Outcome.Events[4].Data.(map[string]any)
 	require.True(t, ok)

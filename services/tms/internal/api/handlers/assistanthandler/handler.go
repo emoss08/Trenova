@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -41,7 +43,7 @@ type Params struct {
 	Queue                *assistantqueueservice.Service
 	Waits                *agentwaitservice.Service
 	Cases                deskcaseports.AssistantCaseService
-	Chapters             assistantports.AssistantChapterService
+	Chapters             assistantchapterports.AssistantChapterService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -56,7 +58,7 @@ type Handler struct {
 	queue     *assistantqueueservice.Service
 	waits     *agentwaitservice.Service
 	cases     deskcaseports.AssistantCaseService
-	chapters  assistantports.AssistantChapterService
+	chapters  assistantchapterports.AssistantChapterService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -272,15 +274,15 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // threadRequest builds the per-user scoped read used by every thread route. The
 // user comes from the auth context rather than the path, so one person cannot
 // read another's conversation by guessing an id.
-func threadRequest(c *gin.Context) (assistantports.GetThreadRequest, error) {
+func threadRequest(c *gin.Context) (conversationports.GetThreadRequest, error) {
 	authCtx := authctx.GetAuthContext(c)
 
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
-		return assistantports.GetThreadRequest{}, err
+		return conversationports.GetThreadRequest{}, err
 	}
 
-	return assistantports.GetThreadRequest{
+	return conversationports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -305,7 +307,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ListThreads(c.Request.Context(), assistantports.ListThreadsRequest{
+	result, err := h.service.ListThreads(c.Request.Context(), conversationports.ListThreadsRequest{
 		UserID:        authCtx.UserID,
 		TenantInfo:    tenantFromAuthContext(authCtx),
 		Limit:         query.Limit,
@@ -338,7 +340,7 @@ func (h *Handler) countThreadShelves(c *gin.Context) {
 
 	result, err := h.service.CountThreadShelves(
 		c.Request.Context(),
-		&assistantports.CountThreadShelvesRequest{
+		&conversationports.CountThreadShelvesRequest{
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 			Edges:      query.Edges,

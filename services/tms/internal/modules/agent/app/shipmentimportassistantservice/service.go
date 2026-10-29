@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,14 +24,14 @@ type Params struct {
 	Logger        *zap.Logger
 	ChatRepo      shipmentimportchatports.ShipmentImportChatRepository
 	ChatCacheRepo shipmentimportchatports.ShipmentImportChatCacheRepository
-	PageThreads   assistantports.PageThreadRepository `optional:"true"`
+	PageThreads   conversationports.PageThreadRepository `optional:"true"`
 }
 
 type Service struct {
 	logger        *zap.Logger
 	chatRepo      shipmentimportchatports.ShipmentImportChatRepository
 	chatCacheRepo shipmentimportchatports.ShipmentImportChatCacheRepository
-	pageThreads   assistantports.PageThreadRepository
+	pageThreads   conversationports.PageThreadRepository
 }
 
 var _ shipmentimportassistantports.ShipmentImportAssistantService = (*Service)(nil)
@@ -299,7 +299,7 @@ func (s *Service) closeConversations(
 
 	closed, err := s.pageThreads.ArchiveSubjectThreads(
 		ctx,
-		assistantports.ArchiveSubjectThreadsRequest{
+		conversationports.ArchiveSubjectThreadsRequest{
 			TenantInfo:  tenantInfo,
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,

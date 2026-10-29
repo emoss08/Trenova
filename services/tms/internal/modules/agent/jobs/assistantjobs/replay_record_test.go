@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
@@ -160,7 +160,7 @@ func registerTurnStandIns(
 					Status: string(conversation.AssistantTurnStatusCompleted),
 				},
 				Event: temporaltype.StreamItem{
-					Event: assistantports.AssistantEventDone,
+					Event: assistantstreamports.AssistantEventDone,
 					Data:  map[string]any{"turnId": in.Payload.TurnID.String()},
 				},
 			}, nil

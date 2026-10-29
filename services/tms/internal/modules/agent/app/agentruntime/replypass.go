@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/recordids"
 )
@@ -41,13 +41,17 @@ func (s *Service) passReply(
 
 	if stripped != completion.Text {
 		fx.Emit(
-			replycheck.PassEvent(assistantports.RegroundStripIDs, replycheck.StripIDsReason, nil),
+			replycheck.PassEvent(
+				assistantstreamports.RegroundStripIDs,
+				replycheck.StripIDsReason,
+				nil,
+			),
 		)
 	}
 	if table != nil {
 		fx.Emit(
 			replycheck.PassEvent(
-				assistantports.RegroundPointToTable,
+				assistantstreamports.RegroundPointToTable,
 				replycheck.PointToTableReason,
 				table,
 			),

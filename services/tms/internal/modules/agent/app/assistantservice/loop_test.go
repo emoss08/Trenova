@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -273,7 +273,7 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 		Input:      "Where is S12345?",
 	}, func(event kernelports.StreamEvent) {
 		if len(names) > 0 && names[len(names)-1] == event.Event &&
-			event.Event == assistantports.AssistantEventDelta {
+			event.Event == assistantstreamports.AssistantEventDelta {
 			return
 		}
 		names = append(names, event.Event)
@@ -282,12 +282,12 @@ func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
 	assert.Equal(t, "S12345 is in transit.", result.Reply)
 
 	assert.Equal(t, []string{
-		assistantports.AssistantEventAccepted,
-		assistantports.AssistantEventDelta,
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventToolFinished,
-		assistantports.AssistantEventDelta,
+		assistantstreamports.AssistantEventAccepted,
+		assistantstreamports.AssistantEventDelta,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelta,
 	}, names)
 }
 
@@ -308,6 +308,6 @@ func TestRunObserved_ReportsARefusalAndNothingElse(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, assistantports.AssistantEventRefused, events[0].Event)
+	assert.Equal(t, assistantstreamports.AssistantEventRefused, events[0].Event)
 	assert.Zero(t, completion.CallCount)
 }

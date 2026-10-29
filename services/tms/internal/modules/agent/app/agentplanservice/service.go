@@ -28,6 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -83,7 +85,7 @@ type runReader interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req assistantports.GetThreadRequest,
+		req conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -118,7 +120,7 @@ type Params struct {
 	Permissions permissionports.PermissionEngine
 	// Conversations says whose conversation raised a plan, for a person
 	// deciding their own.
-	Conversations assistantports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository `optional:"true"`
 	Shadow        *agentshadow.Resolver
 	AuditService  auditports.AuditService
 	Activity      agentports.AgentActivityPublisher `optional:"true"`
@@ -438,7 +440,7 @@ func (s *Service) AssertOwnPlan(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, assistantports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, conversationports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -545,8 +547,8 @@ func (s *Service) PlanHolds(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	plans []*agentplan.AgentPlan,
-) (map[pulid.ID]*assistantports.ProposalHold, error) {
-	holds := make(map[pulid.ID]*assistantports.ProposalHold, len(plans))
+) (map[pulid.ID]*assistantproposalports.ProposalHold, error) {
+	holds := make(map[pulid.ID]*assistantproposalports.ProposalHold, len(plans))
 	waiting := make([]pulid.ID, 0, len(plans))
 	for _, plan := range plans {
 		if plan != nil && plan.Status == agentplan.PlanStatusPending {

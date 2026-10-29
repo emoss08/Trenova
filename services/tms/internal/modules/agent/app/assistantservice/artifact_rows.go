@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -48,7 +49,7 @@ type listReader struct {
 
 func (s *Service) listOf(
 	ctx context.Context,
-	req *assistantports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 	actor *permissionports.RequestActor,
 	source *exportSource,
 ) (*listReader, error) {
@@ -150,10 +151,10 @@ func sortFieldFor(key string, fields []string) (string, bool) {
 //nolint:gocritic // hugeParam: GetThreadRequest is passed by value across AssistantService.
 func (s *Service) ArtifactRows(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
-	query *assistantports.ArtifactRowsQuery,
-) (*assistantports.ArtifactRows, error) {
+	query *assistantartifactports.ArtifactRowsQuery,
+) (*assistantartifactports.ArtifactRows, error) {
 	source, err := s.exportSourceOf(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -183,7 +184,7 @@ func (s *Service) ArtifactRows(
 		return nil, err
 	}
 
-	return &assistantports.ArtifactRows{
+	return &assistantartifactports.ArtifactRows{
 		Rows: projectRows(
 			columns,
 			typeutils.StringOfTrimmed(source.artifact.Payload["recordEntity"]),
@@ -201,7 +202,7 @@ func (s *Service) ArtifactRows(
 }
 
 func rowsArguments(
-	query *assistantports.ArtifactRowsQuery,
+	query *assistantartifactports.ArtifactRowsQuery,
 	sortable map[string]string,
 	searchable bool,
 ) (map[string]any, error) {

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -35,14 +35,14 @@ import (
 type Access struct {
 	Permissions permissionports.PermissionEngine
 	registry    *permissioncatalog.Registry
-	threads     assistantports.ThreadOwnerRepository
+	threads     conversationports.ThreadOwnerRepository
 }
 
 func NewAccess(permissions permissionports.PermissionEngine) Access {
 	return Access{Permissions: permissions, registry: permissioncatalog.NewRegistry()}
 }
 
-func (a Access) WithThreads(threads assistantports.ThreadOwnerRepository) Access {
+func (a Access) WithThreads(threads conversationports.ThreadOwnerRepository) Access {
 	a.threads = threads
 
 	return a
@@ -204,7 +204,7 @@ func (a Access) conversationOwners(
 		return map[pulid.ID]pulid.ID{}, nil
 	}
 
-	owners, err := a.threads.ThreadOwners(ctx, assistantports.ThreadOwnersRequest{
+	owners, err := a.threads.ThreadOwners(ctx, conversationports.ThreadOwnersRequest{
 		TenantInfo: querytool.TenantOf(params),
 		ThreadIDs:  ids,
 	})

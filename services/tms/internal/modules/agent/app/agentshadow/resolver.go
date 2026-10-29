@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -203,12 +203,12 @@ func PlanVerdict(
 	return Verdict{}
 }
 
-func (v Verdict) Hold() *assistantports.ProposalHold {
+func (v Verdict) Hold() *assistantproposalports.ProposalHold {
 	if !v.Shadow() {
 		return nil
 	}
 
-	return &assistantports.ProposalHold{Reason: string(v.Cause), AgentName: v.AgentName}
+	return &assistantproposalports.ProposalHold{Reason: string(v.Cause), AgentName: v.AgentName}
 }
 
 func VerdictFor(orgShadow bool, definition *agentdefinition.Definition) Verdict {

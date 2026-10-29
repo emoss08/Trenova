@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
@@ -219,11 +219,11 @@ func likeEscape(value string) string {
 
 func (r *repository) SearchMentions(
 	ctx context.Context,
-	req assistantports.SearchMentionsRequest,
-) ([]assistantports.MentionRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]assistantports.MentionRow, error) {
+	req conversationports.SearchMentionsRequest,
+) ([]conversationports.MentionRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversationports.MentionRow, error) {
 		if req.LimitPerKind <= 0 {
-			return []assistantports.MentionRow{}, nil
+			return []conversationports.MentionRow{}, nil
 		}
 		term := likeEscape(strings.TrimSpace(req.Query))
 		terms := mentionTerms{
@@ -232,7 +232,7 @@ func (r *repository) SearchMentions(
 			limit:    req.LimitPerKind,
 			offset:   max(req.Offset, 0),
 		}
-		results := make([][]assistantports.MentionRow, 0, len(req.Kinds))
+		results := make([][]conversationports.MentionRow, 0, len(req.Kinds))
 		items := make([]keel.BatchItem, 0, len(req.Kinds))
 		for _, kind := range req.Kinds {
 			query, ok := mentionQueries[kind]
@@ -243,12 +243,12 @@ func (r *repository) SearchMentions(
 			items = append(items, keel.IntoSlice(query(terms), &results[len(results)-1]))
 		}
 		if len(items) == 0 {
-			return []assistantports.MentionRow{}, nil
+			return []conversationports.MentionRow{}, nil
 		}
 		if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
 			return nil, fmt.Errorf("search mentions: %w", err)
 		}
-		out := make([]assistantports.MentionRow, 0, len(req.Kinds)*req.LimitPerKind)
+		out := make([]conversationports.MentionRow, 0, len(req.Kinds)*req.LimitPerKind)
 		for _, rows := range results {
 			out = append(out, rows...)
 		}

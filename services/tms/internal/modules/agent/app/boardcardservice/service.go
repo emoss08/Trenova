@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,7 +39,7 @@ type Params struct {
 	Permissions   permissionports.PermissionEngine
 	Summaries     agentports.RecordSummarizer
 	Artifacts     assistantartifactports.AssistantArtifactRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Analytics     kernelports.AnalyticsService
 	Receivables   customerledgerports.ARSnapshotReader
 	Audit         auditports.AuditService
@@ -68,7 +69,7 @@ type artifactReader interface {
 type threadReader interface {
 	GetThread(
 		ctx context.Context,
-		req assistantports.GetThreadRequest,
+		req conversationports.GetThreadRequest,
 	) (*conversation.Thread, error)
 }
 

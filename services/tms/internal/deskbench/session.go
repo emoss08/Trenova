@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -179,7 +179,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
 	for cursor := ""; ; {
-		page, err := s.bench.Assistant.ListThreads(ctx, assistantports.ListThreadsRequest{
+		page, err := s.bench.Assistant.ListThreads(ctx, conversationports.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,

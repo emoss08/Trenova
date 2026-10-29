@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/docrender"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,10 +31,10 @@ const (
 // PDF, printed by the same renderer as invoices, or as a Word file.
 func (s *Service) ExportDocument(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	format string,
-) (*assistantports.ArtifactFile, error) {
+) (*assistantartifactports.ArtifactFile, error) {
 	if doc, isBoard, err := s.boardDocument(ctx, &req, artifactID); isBoard {
 		if err != nil {
 			return nil, err
@@ -57,7 +58,7 @@ func (s *Service) renderDocument(
 	ctx context.Context,
 	doc *docrender.Document,
 	format string,
-) (*assistantports.ArtifactFile, error) {
+) (*assistantartifactports.ArtifactFile, error) {
 	name := assistantartifact.SlugBase(doc.Title)
 
 	switch format {
@@ -76,7 +77,7 @@ func (s *Service) renderDocument(
 			return nil, renderErr
 		}
 
-		return &assistantports.ArtifactFile{
+		return &assistantartifactports.ArtifactFile{
 			FileName: name + ".pdf", ContentType: "application/pdf", Body: body,
 		}, nil
 	case DocumentExportDOCX:
@@ -85,7 +86,7 @@ func (s *Service) renderDocument(
 			return nil, renderErr
 		}
 
-		return &assistantports.ArtifactFile{
+		return &assistantartifactports.ArtifactFile{
 			FileName: name + ".docx", ContentType: docxContentType, Body: body,
 		}, nil
 	default:

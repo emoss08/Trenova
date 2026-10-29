@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +44,7 @@ func TestPlan_TheFirstQuestionOpensAQuietChapterWithoutAskingTheModel(t *testing
 
 			plan, err := f.svc.Plan(
 				t.Context(),
-				f.request(turn.ID, assistantports.ChapterPhaseOpened),
+				f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
 			)
 			require.NoError(t, err)
 
@@ -77,7 +77,10 @@ func TestPlan_AutomaticChaptersOffSkipsALaterQuestion(t *testing.T) {
 		"Where is load 1200?",
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, skipAutoOff, plan.Skip)
@@ -101,7 +104,10 @@ func TestPlan_ANewChapterNamesTheQuietFirstOneWhenItOpens(t *testing.T) {
 		"Now the Acme invoice",
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
 	assert.True(t, plan.Decides)
@@ -127,7 +133,7 @@ func TestPlan_ANewChapterNamesTheQuietFirstOneWhenItOpens(t *testing.T) {
 
 	again, err := named.svc.Plan(
 		t.Context(),
-		named.request(next.ID, assistantports.ChapterPhaseOpened),
+		named.request(next.ID, assistantchapterports.ChapterPhaseOpened),
 	)
 	require.NoError(t, err)
 
@@ -161,7 +167,10 @@ func TestPlan_ALaterQuestionAsksWhetherItStartsANewChapter(t *testing.T) {
 		question,
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
 	assert.True(t, plan.Decides)
@@ -225,7 +234,10 @@ func TestPlan_TheCurrentChapterIsTheLatestOne(t *testing.T) {
 		"And the credit?",
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
 	require.NotNil(t, plan.Request)
@@ -252,7 +264,7 @@ func TestPlan_TurnsThatContinueAChapterAreSkipped(t *testing.T) {
 
 			plan, err := f.svc.Plan(
 				t.Context(),
-				f.request(turn.ID, assistantports.ChapterPhaseOpened),
+				f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
 			)
 			require.NoError(t, err)
 
@@ -285,7 +297,10 @@ func TestPlan_AScheduledRunAlwaysOpensAChapter(t *testing.T) {
 			question,
 		)
 
-		plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+		plan, err := f.svc.Plan(
+			t.Context(),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+		)
 		require.NoError(t, err)
 
 		assert.True(t, plan.Opens, "a scheduled run opens a chapter even after others")
@@ -308,7 +323,10 @@ func TestPlan_AScheduledRunAlwaysOpensAChapter(t *testing.T) {
 			question,
 		)
 
-		plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+		plan, err := f.svc.Plan(
+			t.Context(),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+		)
 		require.NoError(t, err)
 
 		assert.False(t, plan.Skipped())
@@ -329,7 +347,7 @@ func TestPlan_OpenedSkipsWhatCannotOpenAChapter(t *testing.T) {
 
 		plan, err := f.svc.Plan(
 			t.Context(),
-			f.request("atrn_gone", assistantports.ChapterPhaseOpened),
+			f.request("atrn_gone", assistantchapterports.ChapterPhaseOpened),
 		)
 		require.NoError(t, err)
 		assert.Equal(t, skipNoTurn, plan.Skip)
@@ -346,7 +364,10 @@ func TestPlan_OpenedSkipsWhatCannotOpenAChapter(t *testing.T) {
 		)
 		f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleQuestion, nil)
 
-		plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+		plan, err := f.svc.Plan(
+			t.Context(),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+		)
 		require.NoError(t, err)
 		assert.Equal(t, skipAlreadyOpen, plan.Skip)
 	})
@@ -361,7 +382,10 @@ func TestPlan_OpenedSkipsWhatCannotOpenAChapter(t *testing.T) {
 			"  \n ",
 		)
 
-		plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+		plan, err := f.svc.Plan(
+			t.Context(),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+		)
 		require.NoError(t, err)
 		assert.Equal(t, skipNoQuestion, plan.Skip)
 	})
@@ -389,7 +413,10 @@ func TestPlan_OpenedSkipsWhatCannotOpenAChapter(t *testing.T) {
 			"One more",
 		)
 
-		plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseOpened))
+		plan, err := f.svc.Plan(
+			t.Context(),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+		)
 		require.NoError(t, err)
 		assert.Equal(t, skipLimit, plan.Skip)
 	})
@@ -406,7 +433,10 @@ func TestPlan_AChapterWhoseTurnSavedNothingIsRemoved(t *testing.T) {
 	)
 	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleQuestion, nil)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	assert.False(t, plan.Skipped())
@@ -431,7 +461,10 @@ func TestPlan_ARefusedQuestionsChapterIsRemoved(t *testing.T) {
 		sequence(3),
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	assert.True(t, plan.Remove)
@@ -454,7 +487,7 @@ func TestPlan_AChapterThePersonNamedIsNeverRemovedOrRenamed(t *testing.T) {
 
 		plan, err := f.svc.Plan(
 			t.Context(),
-			f.request(turn.ID, assistantports.ChapterPhaseAnswered),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
 		)
 		require.NoError(t, err)
 
@@ -475,7 +508,7 @@ func TestPlan_AChapterThePersonNamedIsNeverRemovedOrRenamed(t *testing.T) {
 
 		plan, err := f.svc.Plan(
 			t.Context(),
-			f.request(turn.ID, assistantports.ChapterPhaseAnswered),
+			f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
 		)
 		require.NoError(t, err)
 
@@ -501,7 +534,10 @@ func TestPlan_AnAnsweredQuestionsChapterWaitsToBeNamedUntilAnotherOpens(t *testi
 		sequence(0),
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, skipNamed, plan.Skip)
@@ -531,7 +567,10 @@ func TestPlan_RequestedNamesAChapterFromItsQuestionAndReply(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Three loads are late on the Dallas lane."},
 	}
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseRequested))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseRequested),
+	)
 	require.NoError(t, err)
 
 	assert.False(t, plan.Skipped())
@@ -586,7 +625,7 @@ func TestPlan_AModelTitleIsRenamedOnlyAfterAShortQuestion(t *testing.T) {
 
 			plan, err := f.svc.Plan(
 				t.Context(),
-				f.request(turn.ID, assistantports.ChapterPhaseAnswered),
+				f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
 			)
 			require.NoError(t, err)
 
@@ -606,7 +645,10 @@ func TestPlan_AnUnfinishedReplyKeepsTheTitle(t *testing.T) {
 	)
 	f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleQuestion, sequence(0))
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, skipNamed, plan.Skip)
@@ -622,7 +664,10 @@ func TestPlan_AnsweredWithoutAChapterSkips(t *testing.T) {
 		"Late loads",
 	)
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, skipNoChapter, plan.Skip)
@@ -649,7 +694,10 @@ func TestPlan_RequestedNamesAChapterOpenedFromItsQuestion(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Three are late."},
 	}
 
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseRequested))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseRequested),
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, chapter.ID, plan.ChapterID)
@@ -657,7 +705,10 @@ func TestPlan_RequestedNamesAChapterOpenedFromItsQuestion(t *testing.T) {
 	assert.Equal(t, "chapter_title", plan.Request.SchemaName)
 
 	f.control.AutoChaptersOff = true
-	off, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhaseRequested))
+	off, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseRequested),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, skipNamed, off.Skip)
 }
@@ -672,7 +723,10 @@ func TestPlan_RefusesAnUnknownPhase(t *testing.T) {
 		"Late loads",
 	)
 
-	_, err := f.svc.Plan(t.Context(), f.request(turn.ID, assistantports.ChapterPhase("Whenever")))
+	_, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhase("Whenever")),
+	)
 
 	require.Error(t, err)
 }

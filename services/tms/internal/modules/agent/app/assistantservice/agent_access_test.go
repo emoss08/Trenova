@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -154,7 +155,7 @@ func TestGetThread_StaysReadableAndSaysWhetherItCanContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := assistantports.GetThreadRequest{
+	req := conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -188,7 +189,7 @@ func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := assistantports.GetThreadRequest{
+	req := conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -254,7 +255,7 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 	f.permissions.allowed = map[string]bool{}
 	actor := testActor()
 
-	thread, err := f.svc.GetThread(t.Context(), assistantports.GetThreadRequest{
+	thread, err := f.svc.GetThread(t.Context(), conversationports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),

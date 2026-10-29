@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,7 +62,7 @@ func TestDelegateOutcome_KeepsTheReportWholeWithinOneToolResult(t *testing.T) {
 
 	report := conversation.DelegateReport{
 		AgentName: "Billing helper",
-		Status:    assistantports.DelegateStatusCompleted,
+		Status:    assistantstreamports.DelegateStatusCompleted,
 		Reply:     strings.Repeat("r", 1900),
 	}
 	for idx := range 6 {

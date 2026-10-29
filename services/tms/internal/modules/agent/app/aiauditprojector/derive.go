@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -590,7 +590,7 @@ func (d *deriver) runEventEvent(
 	}
 
 	switch row.Kind {
-	case assistantports.AssistantEventToolFinished:
+	case assistantstreamports.AssistantEventToolFinished:
 		if failed, _ := payload[payloadKeyFailed].(bool); !failed {
 			return nil
 		}
@@ -613,11 +613,11 @@ func (d *deriver) runEventEvent(
 		if policy, ok := d.redactor.Policy(event.ToolName); ok {
 			event.ToolEffect = string(policy.EffectiveEffect())
 		}
-	case assistantports.AssistantEventDelegateStarted:
+	case assistantstreamports.AssistantEventDelegateStarted:
 		event.Kind = aiaudit.KindDelegationStarted
 		event.Outcome = aiaudit.OutcomeStarted
 		event.ToolName = delegateToolName
-	case assistantports.AssistantEventDelegateFinished:
+	case assistantstreamports.AssistantEventDelegateFinished:
 		event.Kind = aiaudit.KindDelegationEnded
 		event.Outcome = delegateOutcome(
 			conversation.DelegateStatus(typeutils.StringOf(payload[payloadKeyStatus])),
@@ -643,7 +643,7 @@ func (d *deriver) runEventEvent(
 const delegateToolName = "delegate_task"
 
 func delegateOrCallKey(kind string) string {
-	if kind == assistantports.AssistantEventToolFinished {
+	if kind == assistantstreamports.AssistantEventToolFinished {
 		return "callId"
 	}
 

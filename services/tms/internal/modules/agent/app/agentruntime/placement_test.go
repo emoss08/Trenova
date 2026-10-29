@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ func placementRun(
 
 func retried(events *[]kernelports.StreamEvent) bool {
 	for _, event := range *events {
-		if event.Event == assistantports.AssistantEventRetrying {
+		if event.Event == assistantstreamports.AssistantEventRetrying {
 			return true
 		}
 	}
@@ -87,8 +87,11 @@ func TestDrive_MovesALinkStandingApartIntoTheRepliesSentence(t *testing.T) {
 	assert.Empty(t, replycheck.StrayArtifactLinks(result.Reply))
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2, "the model is not asked again")
-	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
-		regroundedActions(events))
+	assert.Equal(
+		t,
+		[]assistantstreamports.RegroundAction{assistantstreamports.RegroundPlaceArtifacts},
+		regroundedActions(events),
+	)
 }
 
 // A link in a table cell sits where cutting it could leave the row saying
@@ -107,8 +110,11 @@ func TestDrive_AsksAgainForALinkInATable(t *testing.T) {
 
 	assert.Equal(t, fixed, result.Reply)
 	assert.True(t, retried(events))
-	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundRelinkArtifacts},
-		regroundedActions(events))
+	assert.Equal(
+		t,
+		[]assistantstreamports.RegroundAction{assistantstreamports.RegroundRelinkArtifacts},
+		regroundedActions(events),
+	)
 
 	last := completion.Requests[len(completion.Requests)-1].Messages
 	correction := last[len(last)-1]
@@ -142,9 +148,9 @@ func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 		replycheck.ArtifactRef(&card)+").", result.Reply)
 	assert.Empty(t, replycheck.StrayArtifactLinks(result.Reply))
 	assert.Len(t, completion.Requests, 3, "the model is asked once more, not twice")
-	assert.Equal(t, []assistantports.RegroundAction{
-		assistantports.RegroundRelinkArtifacts,
-		assistantports.RegroundPlaceArtifacts,
+	assert.Equal(t, []assistantstreamports.RegroundAction{
+		assistantstreamports.RegroundRelinkArtifacts,
+		assistantstreamports.RegroundPlaceArtifacts,
 	}, regroundedActions(events))
 }
 
@@ -268,8 +274,11 @@ func TestDrive_NamesATableTheReplyLeftOutWithoutAskingAgain(t *testing.T) {
 	assert.Equal(t, "Fifteen loads are late ("+replycheck.ArtifactRef(&table)+").", result.Reply)
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2)
-	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
-		regroundedActions(events))
+	assert.Equal(
+		t,
+		[]assistantstreamports.RegroundAction{assistantstreamports.RegroundPlaceArtifacts},
+		regroundedActions(events),
+	)
 }
 
 // An id the conversation never held is not left as a link that opens nothing.
@@ -342,8 +351,11 @@ func TestDrive_NamesALeftOutTableInTheRepliesOwnLanguage(t *testing.T) {
 	assert.Empty(t, replycheck.StrayArtifactLinks(result.Reply))
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2)
-	assert.Equal(t, []assistantports.RegroundAction{assistantports.RegroundPlaceArtifacts},
-		regroundedActions(events))
+	assert.Equal(
+		t,
+		[]assistantstreamports.RegroundAction{assistantstreamports.RegroundPlaceArtifacts},
+		regroundedActions(events),
+	)
 }
 
 func draftVersions(lineage bool) (first, second agentruntimeports.ShownArtifact) {

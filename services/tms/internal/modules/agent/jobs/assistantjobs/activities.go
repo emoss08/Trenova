@@ -24,7 +24,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,7 +80,7 @@ type ActivitiesParams struct {
 	Logger        *zap.Logger
 	Assistant     *assistantservice.Service
 	Turns         *assistantturnservice.Service
-	TurnRepo      assistantports.AssistantTurnRepository
+	TurnRepo      assistantturnports.AssistantTurnRepository
 	Steps         agentruntimeports.RunStepLedger
 	Notifications *notificationservice.Service
 	Trajectory    agentruntimeports.AgentRunEventRecorder `optional:"true"`
@@ -85,10 +88,10 @@ type ActivitiesParams struct {
 	Metrics       *metrics.Registry                       `optional:"true"`
 	// Workflows starts the compaction a turn that filled its conversation
 	// sets off.
-	Workflows   kernelports.WorkflowStarter          `optional:"true"`
-	Reflections agentports.AgentReflectionScheduler  `optional:"true"`
-	Queue       assistantports.AssistantQueueSettler `optional:"true"`
-	Chapters    assistantports.ChapterScheduler      `optional:"true"`
+	Workflows   kernelports.WorkflowStarter              `optional:"true"`
+	Reflections agentports.AgentReflectionScheduler      `optional:"true"`
+	Queue       assistantturnports.AssistantQueueSettler `optional:"true"`
+	Chapters    assistantchapterports.ChapterScheduler   `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -97,7 +100,7 @@ type Activities struct {
 	logger        *zap.Logger
 	assistant     *assistantservice.Service
 	turns         *assistantturnservice.Service
-	turnRepo      assistantports.AssistantTurnRepository
+	turnRepo      assistantturnports.AssistantTurnRepository
 	steps         agentruntimeports.RunStepLedger
 	trajectory    agentruntimeports.AgentRunEventRecorder
 	threads       replyThreads
@@ -106,8 +109,8 @@ type Activities struct {
 	metrics       *aimetrics.Assistant
 	workflows     kernelports.WorkflowStarter
 	reflections   agentports.AgentReflectionScheduler
-	queue         assistantports.AssistantQueueSettler
-	chapters      assistantports.ChapterScheduler
+	queue         assistantturnports.AssistantQueueSettler
+	chapters      assistantchapterports.ChapterScheduler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -233,7 +236,7 @@ func (a *Activities) FinishTurnActivity(
 	payload := in.Payload
 	tenant := payload.TenantInfo()
 
-	turn, err := a.turnRepo.GetByID(ctx, assistantports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: tenant,
 	})
@@ -319,9 +322,9 @@ func emitTurnRoots(
 		span := spans[delegation.CallID]
 		delegateStatus := span.Status
 		if delegateStatus == "" {
-			delegateStatus = string(assistantports.DelegateStatusCompleted)
+			delegateStatus = string(assistantstreamports.DelegateStatusCompleted)
 			if delegation.Failed {
-				delegateStatus = string(assistantports.DelegateStatusFailed)
+				delegateStatus = string(assistantstreamports.DelegateStatusFailed)
 			}
 		}
 		var failure *modelcallcontract.Failure
@@ -383,7 +386,7 @@ func (a *Activities) continueTurn(
 	ctx context.Context,
 	in *FinishTurnInput,
 	status conversation.AssistantTurnStatus,
-) *assistantports.QueuedTurn {
+) *assistantturnports.QueuedTurn {
 	return a.continueConversation(ctx, &conversationContinuation{
 		tenant:   in.Payload.TenantInfo(),
 		threadID: in.Payload.ThreadID,
@@ -415,10 +418,10 @@ type conversationContinuation struct {
 func (a *Activities) continueConversation(
 	ctx context.Context,
 	c *conversationContinuation,
-) *assistantports.QueuedTurn {
-	var next *assistantports.QueuedTurn
+) *assistantturnports.QueuedTurn {
+	var next *assistantturnports.QueuedTurn
 	if a.queue != nil {
-		next = a.queue.SettleQueue(ctx, &assistantports.SettleQueueRequest{
+		next = a.queue.SettleQueue(ctx, &assistantturnports.SettleQueueRequest{
 			TenantInfo: c.tenant,
 			ThreadID:   c.threadID,
 			UserID:     c.userID,
@@ -463,12 +466,12 @@ func (a *Activities) cueChapter(ctx context.Context, in *FinishTurnInput) {
 	}
 
 	payload := in.Payload
-	a.chapters.Cue(ctx, &assistantports.ChapterTurnRequest{
+	a.chapters.Cue(ctx, &assistantchapterports.ChapterTurnRequest{
 		TenantInfo: payload.TenantInfo(),
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TurnID:     payload.TurnID,
-		Phase:      assistantports.ChapterPhaseAnswered,
+		Phase:      assistantchapterports.ChapterPhaseAnswered,
 	})
 }
 
@@ -533,7 +536,7 @@ func (a *Activities) finish(
 				Result:  result,
 			},
 			Event: temporaltype.StreamItem{
-				Event: assistantports.AssistantEventDone,
+				Event: assistantstreamports.AssistantEventDone,
 				Data:  result,
 			},
 			Compact: compactionCue(status, result),
@@ -565,7 +568,7 @@ func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput)
 		return
 	}
 
-	if err := a.turnRepo.RecordFingerprint(ctx, assistantports.RecordAssistantTurnFingerprintRequest{
+	if err := a.turnRepo.RecordFingerprint(ctx, assistantturnports.RecordAssistantTurnFingerprintRequest{
 		ID:          in.Payload.TurnID,
 		TenantInfo:  in.Payload.TenantInfo(),
 		Fingerprint: fingerprint,
@@ -581,7 +584,7 @@ func failedEnding(status conversation.AssistantTurnStatus, message string) *Turn
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{Status: string(status), Message: message},
 		Event: temporaltype.StreamItem{
-			Event: assistantports.AssistantEventError,
+			Event: assistantstreamports.AssistantEventError,
 			Data:  map[string]any{"message": message},
 		},
 	}
@@ -693,7 +696,7 @@ func (a *Activities) alreadySaved(
 	ctx context.Context,
 	turn *conversationturn.AssistantTurn,
 ) *TurnEnding {
-	current, err := a.turnRepo.GetByID(ctx, assistantports.GetAssistantTurnRequest{
+	current, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID},
 	})
@@ -725,7 +728,7 @@ func (a *Activities) CloseTurnActivity(
 	payload *assistantcontract.AssistantTurnPayload,
 	message string,
 ) error {
-	turn, err := a.turnRepo.GetByID(ctx, assistantports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})

@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -233,15 +234,15 @@ func announceNext(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
 	payload *assistantcontract.AssistantTurnPayload,
-	next *assistantports.QueuedTurn,
+	next *assistantturnports.QueuedTurn,
 ) {
 	if next == nil || next.TurnID.IsNil() {
 		return
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: assistantports.AssistantEventNextTurn,
-		Data: assistantports.AssistantNextTurnEvent{
+		Event: assistantstreamports.AssistantEventNextTurn,
+		Data: assistantstreamports.AssistantNextTurnEvent{
 			TurnID:   next.TurnID,
 			ThreadID: payload.ThreadID,
 			QueuedID: next.QueuedID,
@@ -372,8 +373,8 @@ func (w *Workflows) compactIfFull(
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: assistantports.AssistantEventCompactionStarted,
-		Data: assistantports.AssistantCompactionEvent{
+		Event: assistantstreamports.AssistantEventCompactionStarted,
+		Data: assistantstreamports.AssistantCompactionEvent{
 			TurnID:   started.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     true,

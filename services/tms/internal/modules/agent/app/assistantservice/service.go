@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -35,7 +37,7 @@ type Params struct {
 	Guard         *agentguard.Service
 	Runtime       *agentruntime.Service
 	Contexts      agentruntimeports.RuntimeContextBuilder
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
 	Proposals     agentports.AgentProposalRepository
@@ -68,7 +70,7 @@ type Params struct {
 	// own, or one it handed a task to.
 	Runs         agentruntimeports.AgentRunRepository        `optional:"true"`
 	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
-	PageThreads  assistantports.PageThreadRepository         `optional:"true"`
+	PageThreads  conversationports.PageThreadRepository      `optional:"true"`
 	// AgentControls holds the per-person allowance; without it nobody is
 	// limited.
 	AgentControls tenantports.AgentControlRepository `optional:"true"`
@@ -97,7 +99,7 @@ type Params struct {
 	// Schedules settles the requests scheduled in a conversation being
 	// deleted, so none fires again and no open list keeps showing one.
 	Schedules conversationscheduleports.ConversationThreadSchedules `optional:"true"`
-	Chapters  assistantports.ChapterRepository                      `optional:"true"`
+	Chapters  assistantchapterports.ChapterRepository               `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -121,7 +123,7 @@ type Service struct {
 	guard         *agentguard.Service
 	runtime       *agentruntime.Service
 	contexts      agentruntimeports.RuntimeContextBuilder
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
@@ -143,7 +145,7 @@ type Service struct {
 	cases         deskcaseports.AssistantCaseStates
 	runs          agentruntimeports.AgentRunRepository
 	systemAgents  agentdefinitionports.SystemAgentProvisioner
-	pageThreads   assistantports.PageThreadRepository
+	pageThreads   conversationports.PageThreadRepository
 	agentControls tenantports.AgentControlRepository
 	users         tenantports.UserRepository
 	notifier      raiseNotifier
@@ -158,7 +160,7 @@ type Service struct {
 	waits         agentwaitports.AgentWaitRepository
 	readWaits     agentwaitports.DocumentReadWaiter
 	schedules     conversationscheduleports.ConversationThreadSchedules
-	chapters      assistantports.ChapterRepository
+	chapters      assistantchapterports.ChapterRepository
 }
 
 func New(p Params) *Service {

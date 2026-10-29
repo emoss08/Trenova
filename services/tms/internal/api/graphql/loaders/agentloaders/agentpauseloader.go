@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,11 +67,11 @@ func NewAgentPlanHoldLoaderFactory(p AgentPlanHoldLoaderFactoryParams) *AgentPla
 
 func newAgentPlanHoldLoader(f *AgentPlanHoldLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *assistantports.ProposalHold] {
+) *dataloadgen.Loader[string, *assistantproposalports.ProposalHold] {
 	return loadercore.NewLoader(loadercore.BatchValueFunc(
-		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*assistantports.ProposalHold, error) {
+		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]*assistantproposalports.ProposalHold, error) {
 			if f.plans == nil || f.planService == nil {
-				return map[pulid.ID]*assistantports.ProposalHold{}, nil
+				return map[pulid.ID]*assistantproposalports.ProposalHold{}, nil
 			}
 			plans, err := f.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
 				IDs:        ids,
@@ -95,7 +95,10 @@ func AgentsPaused(ctx context.Context, orgID string) (bool, error) {
 	return loadercore.Load(ctx, agentsPausedKey, orgID)
 }
 
-func AgentPlanHold(ctx context.Context, planID string) (*assistantports.ProposalHold, error) {
+func AgentPlanHold(
+	ctx context.Context,
+	planID string,
+) (*assistantproposalports.ProposalHold, error) {
 	return loadercore.Load(ctx, agentPlanHoldKey, planID)
 }
 

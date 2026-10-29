@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -135,7 +136,7 @@ func (s *Service) oldestUnreported(
 		return nil, nil
 	}
 
-	notes, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	notes, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 		Kinds:      []conversation.MessageKind{conversation.MessageKindDecisionNote},

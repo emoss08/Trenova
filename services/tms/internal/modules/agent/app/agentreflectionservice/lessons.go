@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -348,7 +348,7 @@ func (s *Service) attach(
 		return
 	}
 
-	if err := s.conversations.AddSavedMemories(ctx, assistantports.AddSavedMemoriesRequest{
+	if err := s.conversations.AddSavedMemories(ctx, conversationports.AddSavedMemoriesRequest{
 		MessageID:  plan.ReplyMessageID,
 		ThreadID:   plan.ThreadID,
 		TenantInfo: plan.TenantInfo,

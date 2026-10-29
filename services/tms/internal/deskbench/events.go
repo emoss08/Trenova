@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 )
 
 type eventCollector struct {
@@ -26,17 +26,17 @@ func newEventCollector(live *liveTurn) *eventCollector {
 
 func streamedText(event string) bool {
 	switch event {
-	case assistantports.AssistantEventDelta,
-		assistantports.AssistantEventReasoning,
-		assistantports.AssistantEventDelegateDelta,
-		assistantports.AssistantEventDelegateReasoning:
+	case assistantstreamports.AssistantEventDelta,
+		assistantstreamports.AssistantEventReasoning,
+		assistantstreamports.AssistantEventDelegateDelta,
+		assistantstreamports.AssistantEventDelegateReasoning:
 		return true
 	}
 
 	return false
 }
 
-func (e *eventCollector) onFrame(frame assistantports.TurnStreamFrame) error {
+func (e *eventCollector) onFrame(frame assistantstreamports.TurnStreamFrame) error {
 	e.live.frame(frame)
 	if streamedText(frame.Event) {
 		e.deltas++
@@ -56,13 +56,13 @@ func (e *eventCollector) onFrame(frame assistantports.TurnStreamFrame) error {
 	e.events = append(e.events, event)
 
 	switch frame.Event {
-	case assistantports.AssistantEventToolStarted:
-		var started assistantports.AssistantToolStartedEvent
+	case assistantstreamports.AssistantEventToolStarted:
+		var started assistantstreamports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			e.start(at, &started)
 		}
-	case assistantports.AssistantEventToolFinished:
-		var finished assistantports.AssistantToolFinishedEvent
+	case assistantstreamports.AssistantEventToolFinished:
+		var finished assistantstreamports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
 			e.finish(at, &finished)
 		}
@@ -75,7 +75,10 @@ func callKey(callID, delegateCallID string) string {
 	return delegateCallID + "/" + callID
 }
 
-func (e *eventCollector) start(at time.Time, started *assistantports.AssistantToolStartedEvent) {
+func (e *eventCollector) start(
+	at time.Time,
+	started *assistantstreamports.AssistantToolStartedEvent,
+) {
 	record := &ToolCallRecord{
 		CallID:         started.CallID,
 		Name:           started.Name,
@@ -89,7 +92,10 @@ func (e *eventCollector) start(at time.Time, started *assistantports.AssistantTo
 	e.byCall[callKey(started.CallID, started.DelegateCallID)] = record
 }
 
-func (e *eventCollector) finish(at time.Time, finished *assistantports.AssistantToolFinishedEvent) {
+func (e *eventCollector) finish(
+	at time.Time,
+	finished *assistantstreamports.AssistantToolFinishedEvent,
+) {
 	key := callKey(finished.CallID, finished.DelegateCallID)
 	record, ok := e.byCall[key]
 	if !ok {

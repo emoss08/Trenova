@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -41,8 +41,8 @@ func (s *Service) holdToCommand(
 
 	*held = true
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventRetrying,
-		Data: assistantports.AssistantRetryingEvent{
+		Event: assistantstreamports.AssistantEventRetrying,
+		Data: assistantstreamports.AssistantRetryingEvent{
 			Attempt: 1,
 			Reason:  hold.RetryReason,
 			Kind:    llmports.RetryKindRestart,

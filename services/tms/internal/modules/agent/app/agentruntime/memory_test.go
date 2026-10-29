@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -249,7 +249,7 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 
 	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")
 	require.Len(t, fx.events, 1)
-	assert.Equal(t, assistantports.AssistantEventMemoryUsed, fx.events[0].Event)
+	assert.Equal(t, assistantstreamports.AssistantEventMemoryUsed, fx.events[0].Event)
 	assert.Equal(t, []pulid.ID{already, fix}, turn.State().Result.UsedMemoryIDs)
 	assert.Empty(t, turn.State().ToolMemories)
 

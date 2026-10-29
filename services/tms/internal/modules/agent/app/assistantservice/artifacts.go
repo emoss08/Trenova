@@ -22,7 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -235,8 +236,8 @@ func (r *artifactRecorder) observe(
 // nothing is added beside the conversation.
 func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifact) {
 	r.emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventArtifact,
-		Data: assistantports.AssistantArtifactEvent{
+		Event: assistantstreamports.AssistantEventArtifact,
+		Data: assistantstreamports.AssistantArtifactEvent{
 			ID:               pulid.MustNew("art_"),
 			Kind:             artifact.Kind,
 			Status:           artifact.Status,
@@ -315,7 +316,7 @@ func (r *artifactRecorder) author() string {
 		return ""
 	}
 
-	return r.svc.agentName(r.ctx, assistantports.GetThreadRequest{
+	return r.svc.agentName(r.ctx, conversationports.GetThreadRequest{
 		ID:         r.thread.ID,
 		TenantInfo: r.tenant,
 	}, r.agentThread())
@@ -327,7 +328,7 @@ func (r *artifactRecorder) agentThread() *conversation.Thread {
 		return r.thread
 	}
 	r.agentRead = true
-	thread, err := r.svc.conversations.GetThread(r.ctx, assistantports.GetThreadRequest{
+	thread, err := r.svc.conversations.GetThread(r.ctx, conversationports.GetThreadRequest{
 		ID:         r.thread.ID,
 		UserID:     r.reader.UserID,
 		TenantInfo: r.tenant,
@@ -532,12 +533,12 @@ func linkedArtifacts(messages []conversation.Message) map[string]bool {
 }
 
 // artifacts is what the turn produced, for the turn's result.
-func (r *artifactRecorder) artifacts() []assistantports.AssistantArtifact {
+func (r *artifactRecorder) artifacts() []assistantartifactports.AssistantArtifact {
 	if r == nil || len(r.recorded) == 0 {
 		return nil
 	}
 
-	out := make([]assistantports.AssistantArtifact, 0, len(r.recorded))
+	out := make([]assistantartifactports.AssistantArtifact, 0, len(r.recorded))
 	for _, artifact := range r.recorded {
 		out = append(out, toAssistantArtifact(artifact))
 	}
@@ -637,8 +638,8 @@ func (r *artifactRecorder) store(
 		r.activity.ArtifactChanged(r.ctx, saved, r.actor, agentports.ActivityUpdated)
 	}
 	r.emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventArtifact,
-		Data: assistantports.AssistantArtifactEvent{
+		Event: assistantstreamports.AssistantEventArtifact,
+		Data: assistantstreamports.AssistantArtifactEvent{
 			ID:               saved.ID,
 			Kind:             saved.Kind,
 			Status:           saved.Status,
@@ -1930,8 +1931,10 @@ func (d jsonDocument) keyOrder() []string {
 	return slices.Sorted(maps.Keys(d.fields))
 }
 
-func toAssistantArtifact(artifact *assistantartifact.Artifact) assistantports.AssistantArtifact {
-	return assistantports.AssistantArtifact{
+func toAssistantArtifact(
+	artifact *assistantartifact.Artifact,
+) assistantartifactports.AssistantArtifact {
+	return assistantartifactports.AssistantArtifact{
 		ID:               artifact.ID,
 		ThreadID:         artifact.ThreadID,
 		MessageID:        artifact.MessageID,
@@ -1957,7 +1960,7 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) assistantports.As
 // which is what the pane showed last time.
 func (s *Service) followDecisions(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
 ) {
 	var wantProposals, wantPlans bool
@@ -2019,10 +2022,10 @@ func (s *Service) followDecisions(
 
 func (s *Service) PinArtifact(
 	ctx context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 	artifactID pulid.ID,
 	pinned bool,
-) (*assistantports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}

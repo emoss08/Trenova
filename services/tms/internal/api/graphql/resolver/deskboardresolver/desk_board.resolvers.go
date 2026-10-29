@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,7 +32,7 @@ func (r *QueryResolver) DeskBoardCard(ctx context.Context, threadID string, arti
 	}
 
 	card, err := r.BoardCards.Card(ctx, &assistantports.BoardCardRequest{
-		Thread: assistantports.GetThreadRequest{
+		Thread: conversationports.GetThreadRequest{
 			ID:         thread,
 			UserID:     authCtx.UserID,
 			TenantInfo: resolvercore.TenantInfo(authCtx),

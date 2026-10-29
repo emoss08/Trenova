@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,10 +46,10 @@ func passRun(t *testing.T, reply string, shown *agentruntimeports.ShownArtifact)
 	return result, events
 }
 
-func regroundedActions(events *[]kernelports.StreamEvent) []assistantports.RegroundAction {
-	actions := make([]assistantports.RegroundAction, 0, 2)
+func regroundedActions(events *[]kernelports.StreamEvent) []assistantstreamports.RegroundAction {
+	actions := make([]assistantstreamports.RegroundAction, 0, 2)
 	for _, event := range *events {
-		if data, ok := event.Data.(assistantports.AssistantReplyRegroundedEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantReplyRegroundedEvent); ok {
 			actions = append(actions, data.Action)
 		}
 	}
@@ -74,9 +74,9 @@ func TestDrive_PassesOverTheFinalReply(t *testing.T) {
 	assert.NotContains(t, result.Reply, "| --- |")
 	assert.Contains(t, result.Reply, replycheck.ArtifactRef(&kept))
 	assert.Equal(t, result.Reply, result.Messages[len(result.Messages)-1].Content)
-	assert.Equal(t, []assistantports.RegroundAction{
-		assistantports.RegroundStripIDs,
-		assistantports.RegroundPointToTable,
+	assert.Equal(t, []assistantstreamports.RegroundAction{
+		assistantstreamports.RegroundStripIDs,
+		assistantstreamports.RegroundPointToTable,
 	}, regroundedActions(events))
 
 	assertReplacedWithoutRestart(t, *events, result.Reply, replycheck.ReplyPassReplacedReason)
@@ -92,18 +92,18 @@ func assertReplacedWithoutRestart(
 ) {
 	t.Helper()
 
-	var replaced []assistantports.AssistantReplyReplacedEvent
+	var replaced []assistantstreamports.AssistantReplyReplacedEvent
 	afterReplaced := 0
 	for _, event := range events {
-		assert.NotEqual(t, assistantports.AssistantEventRetrying, event.Event,
+		assert.NotEqual(t, assistantstreamports.AssistantEventRetrying, event.Event,
 			"a correction the model was not asked for is not a retry")
-		if data, ok := event.Data.(assistantports.AssistantReplyReplacedEvent); ok {
-			assert.Equal(t, assistantports.AssistantEventReplyReplaced, event.Event)
+		if data, ok := event.Data.(assistantstreamports.AssistantReplyReplacedEvent); ok {
+			assert.Equal(t, assistantstreamports.AssistantEventReplyReplaced, event.Event)
 			replaced = append(replaced, data)
 			afterReplaced = 0
 			continue
 		}
-		if _, ok := event.Data.(assistantports.AssistantDeltaEvent); ok && len(replaced) > 0 {
+		if _, ok := event.Data.(assistantstreamports.AssistantDeltaEvent); ok && len(replaced) > 0 {
 			afterReplaced++
 		}
 	}
@@ -125,8 +125,8 @@ func TestDrive_LeavesACleanReplyAlone(t *testing.T) {
 	assert.Equal(t, reply, result.Reply)
 	assert.Empty(t, regroundedActions(events))
 	for _, event := range *events {
-		assert.NotEqual(t, assistantports.AssistantEventReplyReplaced, event.Event)
-		assert.NotEqual(t, assistantports.AssistantEventRetrying, event.Event)
+		assert.NotEqual(t, assistantstreamports.AssistantEventReplyReplaced, event.Event)
+		assert.NotEqual(t, assistantstreamports.AssistantEventRetrying, event.Event)
 	}
 }
 

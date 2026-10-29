@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -452,13 +452,13 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	fixture.events.events = []*agentrunevent.AgentRunEvent{
 		{
 			Sequence: 71,
-			Kind:     assistantports.AssistantEventToolStarted,
+			Kind:     assistantstreamports.AssistantEventToolStarted,
 			CallID:   "call_1",
 			Payload:  map[string]any{"name": "shipment_get", "arguments": map[string]any{"x": 1}},
 		},
 		{
 			Sequence: 72,
-			Kind:     assistantports.AssistantEventToolFinished,
+			Kind:     assistantstreamports.AssistantEventToolFinished,
 			CallID:   "call_1",
 			Payload: map[string]any{
 				"name":    "shipment_get",
@@ -468,7 +468,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 		},
 		{
 			Sequence: 73,
-			Kind:     assistantports.AssistantEventRunTainted,
+			Kind:     assistantstreamports.AssistantEventRunTainted,
 			Payload:  map[string]any{"mark": map[string]any{"source": "record_note"}},
 		},
 	}
@@ -554,7 +554,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 
 	view := agentRunEventViewFrom(&agentrunevent.AgentRunEvent{
 		Sequence: 4,
-		Kind:     assistantports.AssistantEventToolFinished,
+		Kind:     assistantstreamports.AssistantEventToolFinished,
 		CallID:   "call_1",
 		Payload: map[string]any{
 			"name":    "update_worker",
@@ -569,7 +569,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 	assert.Equal(t, "denied", view.Verdict)
 
 	ran := agentRunEventViewFrom(&agentrunevent.AgentRunEvent{
-		Kind:    assistantports.AssistantEventToolStarted,
+		Kind:    assistantstreamports.AssistantEventToolStarted,
 		Payload: map[string]any{"name": "shipment_get"},
 	})
 	assert.Empty(t, ran.Verdict, "a started call has no verdict yet")

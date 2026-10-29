@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,12 +40,12 @@ func (f *fakeRuns) GetByID(
 type fakeThreads struct {
 	owner  pulid.ID
 	thread pulid.ID
-	asked  []assistantports.GetThreadRequest
+	asked  []conversationports.GetThreadRequest
 }
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	f.asked = append(f.asked, req)
 	if req.ID != f.thread || req.UserID != f.owner {

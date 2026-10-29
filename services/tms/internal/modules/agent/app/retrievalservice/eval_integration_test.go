@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -62,7 +62,7 @@ type evalHarness struct {
 	repo     retrievalports.AIRetrievalRepository
 	sources  retrievalports.RetrievalSourceRepository
 	memories agentmemoryports.AgentMemoryRepository
-	threads  assistantports.ThreadOwnerRepository
+	threads  conversationports.ThreadOwnerRepository
 	registry *permissioncatalog.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo

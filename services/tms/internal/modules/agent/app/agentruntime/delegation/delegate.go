@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -153,7 +153,7 @@ type Run struct {
 	Failure string `json:"failure,omitempty"`
 	Stopped bool   `json:"stopped,omitempty"`
 	// Documents are what it kept beside the conversation.
-	Documents []assistantports.DelegateDocument `json:"documents,omitempty"`
+	Documents []assistantstreamports.DelegateDocument `json:"documents,omitempty"`
 	// ExternalContent says the delegate read content from outside the
 	// organization, which now reaches this turn through its answer.
 	ExternalContent bool `json:"externalContent,omitempty"`
@@ -372,20 +372,20 @@ func Report(
 	delegate agentturn.RuntimeDelegate,
 	callID string,
 	run Run,
-) assistantports.AssistantDelegateFinishedEvent {
-	report := assistantports.AssistantDelegateFinishedEvent{
+) assistantstreamports.AssistantDelegateFinishedEvent {
+	report := assistantstreamports.AssistantDelegateFinishedEvent{
 		DelegateCallID: callID,
 		AgentID:        delegate.ID,
 		AgentName:      delegate.Name,
 		Icon:           delegate.Icon,
 		Accent:         delegate.Accent,
-		Made:           []assistantports.DelegateWrite{},
-		Awaiting:       []assistantports.DelegateWrite{},
+		Made:           []assistantstreamports.DelegateWrite{},
+		Awaiting:       []assistantstreamports.DelegateWrite{},
 		Published:      slices.Clone(run.Documents),
 		Findings:       []conversation.DelegateFinding{},
 	}
 	if report.Published == nil {
-		report.Published = []assistantports.DelegateDocument{}
+		report.Published = []assistantstreamports.DelegateDocument{}
 	}
 
 	result := run.Result
@@ -397,7 +397,7 @@ func Report(
 			if action.Withdrawn {
 				continue
 			}
-			write := assistantports.DelegateWrite{
+			write := assistantstreamports.DelegateWrite{
 				ToolName:   action.ToolName,
 				CallID:     action.ToolCallID,
 				Tier:       action.Tier,
@@ -417,24 +417,24 @@ func Report(
 
 	switch {
 	case run.Declined != "":
-		report.Status = assistantports.DelegateStatusDeclined
+		report.Status = assistantstreamports.DelegateStatusDeclined
 		report.Reason = run.Declined
 	case run.Stopped:
-		report.Status = assistantports.DelegateStatusStopped
+		report.Status = assistantstreamports.DelegateStatusStopped
 		report.Reason = "The person stopped the reply before " + delegate.Name + " finished."
 	case run.Failure != "":
-		report.Status = assistantports.DelegateStatusFailed
+		report.Status = assistantstreamports.DelegateStatusFailed
 		report.Reason = run.Failure
 	case result == nil:
-		report.Status = assistantports.DelegateStatusFailed
+		report.Status = assistantstreamports.DelegateStatusFailed
 		report.Reason = delegate.Name + " did not report back."
 	case result.Exhausted:
-		report.Status = assistantports.DelegateStatusExhausted
+		report.Status = assistantstreamports.DelegateStatusExhausted
 		report.Reply = result.Reply
 		report.Reason = delegate.Name + " used every tool call its settings allow before it " +
 			"finished."
 	default:
-		report.Status = assistantports.DelegateStatusCompleted
+		report.Status = assistantstreamports.DelegateStatusCompleted
 		report.Reply = result.Reply
 	}
 
@@ -446,7 +446,7 @@ func Report(
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
 func Outcome(
-	report *assistantports.AssistantDelegateFinishedEvent,
+	report *assistantstreamports.AssistantDelegateFinishedEvent,
 	lookup bool,
 ) toolcall.Result {
 	encoded := encodedReport(report)
@@ -466,7 +466,7 @@ func Outcome(
 	}
 
 	switch report.Status {
-	case assistantports.DelegateStatusDeclined:
+	case assistantstreamports.DelegateStatusDeclined:
 		declined := toolcall.Failed(
 			"Tool %q was not run: %s",
 			runtimetools.DelegateTaskName,
@@ -475,17 +475,17 @@ func Outcome(
 		declined.DelegateReport = outcome.DelegateReport
 
 		return declined
-	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
+	case assistantstreamports.DelegateStatusFailed, assistantstreamports.DelegateStatusStopped:
 		outcome.Failed = true
-	case assistantports.DelegateStatusCompleted,
-		assistantports.DelegateStatusExhausted,
-		assistantports.DelegateStatusRefused:
+	case assistantstreamports.DelegateStatusCompleted,
+		assistantstreamports.DelegateStatusExhausted,
+		assistantstreamports.DelegateStatusRefused:
 	}
 
 	return outcome
 }
 
-func encodedReport(report *assistantports.AssistantDelegateFinishedEvent) string {
+func encodedReport(report *assistantstreamports.AssistantDelegateFinishedEvent) string {
 	for {
 		encoded, err := delegateJSON.MarshalToString(report)
 		if err != nil {
@@ -500,17 +500,17 @@ func encodedReport(report *assistantports.AssistantDelegateFinishedEvent) string
 }
 
 // Note tells the delegating model how to read the account above it.
-func Note(report *assistantports.AssistantDelegateFinishedEvent, lookup bool) string {
+func Note(report *assistantstreamports.AssistantDelegateFinishedEvent, lookup bool) string {
 	name := report.AgentName
 	if lookup {
 		return lookupNote(report)
 	}
 	switch report.Status {
-	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
+	case assistantstreamports.DelegateStatusFailed, assistantstreamports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished. Everything under made happened. " +
 			"Anything else it may have begun is unconfirmed: tell the person plainly, and do " +
 			"not claim it happened or that it did not.]"
-	case assistantports.DelegateStatusRefused:
+	case assistantstreamports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. Everything under made happened and " +
 			"everything under awaiting is waiting on the person; tell them so, without the " +
 			"withheld answer.]"
@@ -524,18 +524,18 @@ func Note(report *assistantports.AssistantDelegateFinishedEvent, lookup bool) st
 	}
 }
 
-func lookupNote(report *assistantports.AssistantDelegateFinishedEvent) string {
+func lookupNote(report *assistantstreamports.AssistantDelegateFinishedEvent) string {
 	name := report.AgentName
 	switch report.Status {
-	case assistantports.DelegateStatusFailed, assistantports.DelegateStatusStopped:
+	case assistantstreamports.DelegateStatusFailed, assistantstreamports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished and changed nothing. Work from the " +
 			"findings it did return, and tell the person plainly what is still unknown.]"
-	case assistantports.DelegateStatusRefused:
+	case assistantstreamports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. It changed nothing; work from its " +
 			"findings without the withheld answer.]"
-	case assistantports.DelegateStatusCompleted,
-		assistantports.DelegateStatusExhausted,
-		assistantports.DelegateStatusDeclined:
+	case assistantstreamports.DelegateStatusCompleted,
+		assistantstreamports.DelegateStatusExhausted,
+		assistantstreamports.DelegateStatusDeclined:
 	}
 	more := ""
 	if report.MoreFindings > 0 {

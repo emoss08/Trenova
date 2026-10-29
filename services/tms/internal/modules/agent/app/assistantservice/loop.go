@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -489,8 +489,8 @@ func outputDecision(
 
 func refusedEvent(decision agentguard.Decision) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventRefused,
-		Data: assistantports.AssistantRefusedEvent{
+		Event: assistantstreamports.AssistantEventRefused,
+		Data: assistantstreamports.AssistantRefusedEvent{
 			Message:  decision.Message,
 			Stage:    string(decision.Stage),
 			Category: string(decision.Category),

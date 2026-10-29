@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -122,8 +122,8 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 	for _, id := range ids {
 		r.forget(id)
 		r.emit(kernelports.StreamEvent{
-			Event: assistantports.AssistantEventArtifactRemoved,
-			Data:  assistantports.AssistantArtifactRemovedEvent{ID: id},
+			Event: assistantstreamports.AssistantEventArtifactRemoved,
+			Data:  assistantstreamports.AssistantArtifactRemovedEvent{ID: id},
 		})
 	}
 }

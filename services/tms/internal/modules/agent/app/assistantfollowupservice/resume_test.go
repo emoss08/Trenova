@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -20,12 +21,12 @@ import (
 type notedConversations struct {
 	*fakeConversations
 	notes []conversation.Message
-	asked []assistantports.ListMessagesRequest
+	asked []conversationports.ListMessagesRequest
 }
 
 func (f *notedConversations) ListMessages(
 	_ context.Context,
-	req assistantports.ListMessagesRequest,
+	req conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.asked = append(f.asked, req)
 

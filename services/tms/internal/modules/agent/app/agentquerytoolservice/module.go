@@ -39,7 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workforcequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
@@ -246,7 +246,7 @@ func provideGetDocumentSummaryTool(
 	documents documentports.DocumentRepository,
 	content documentports.DocumentContentService,
 	permissions permissionports.PermissionEngine,
-	threads assistantports.ThreadOwnerRepository,
+	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return documentquerytools.NewGetDocumentSummaryTool(documents, content, permissions, threads)
 }
@@ -324,7 +324,7 @@ func provideGetBankReceiptTool(
 func provideSearchDocumentsTool(
 	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads assistantports.ThreadOwnerRepository,
+	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return documentquerytools.NewSearchDocumentsTool(searcher, permissions, threads)
 }

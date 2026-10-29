@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -237,13 +237,13 @@ func encodePayload(data any) (map[string]any, bool) {
 // start and finish can be found without opening the payload.
 func callIDOf(data any) string {
 	switch typed := data.(type) {
-	case assistantports.AssistantToolStartedEvent:
+	case assistantstreamports.AssistantToolStartedEvent:
 		return typed.CallID
-	case *assistantports.AssistantToolStartedEvent:
+	case *assistantstreamports.AssistantToolStartedEvent:
 		return typed.CallID
-	case assistantports.AssistantToolFinishedEvent:
+	case assistantstreamports.AssistantToolFinishedEvent:
 		return typed.CallID
-	case *assistantports.AssistantToolFinishedEvent:
+	case *assistantstreamports.AssistantToolFinishedEvent:
 		return typed.CallID
 	default:
 		return ""

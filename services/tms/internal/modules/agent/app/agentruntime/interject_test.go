@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -133,7 +133,7 @@ func TestDrive_TellsTheModelWhenAWatchedRecordChangesElsewhere(t *testing.T) {
 
 	var announced bool
 	for _, event := range fx.events {
-		announced = announced || event.Event == assistantports.AssistantEventWorldChanged
+		announced = announced || event.Event == assistantstreamports.AssistantEventWorldChanged
 	}
 	assert.True(t, announced)
 }

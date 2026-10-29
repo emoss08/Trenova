@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,11 +32,14 @@ func (s *Service) personAllowance(
 	}
 
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-	used, err := s.conversations.CountQuestionsSince(ctx, assistantports.CountQuestionsSinceRequest{
-		TenantInfo: tenant,
-		UserID:     userID,
-		Since:      monthStart.Unix(),
-	})
+	used, err := s.conversations.CountQuestionsSince(
+		ctx,
+		conversationports.CountQuestionsSinceRequest{
+			TenantInfo: tenant,
+			UserID:     userID,
+			Since:      monthStart.Unix(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -33,7 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -140,9 +140,9 @@ type RunContext struct {
 // Scope is how the run's events are tagged for its reader: empty for the
 // run's own agent, the agent and the delegate call for one working on a task
 // it was handed.
-func (rc *RunContext) Scope() assistantports.DelegateScope {
+func (rc *RunContext) Scope() assistantstreamports.DelegateScope {
 	if rc.Delegation == nil || rc.Definition == nil {
-		return assistantports.DelegateScope{}
+		return assistantstreamports.DelegateScope{}
 	}
 
 	return rc.Delegation.Scope(rc.Definition.ID)
@@ -203,7 +203,7 @@ type ModelCallInput struct {
 	Stream bool `json:"stream"`
 	// Scope tags what is streamed when the reply is another agent's, on a
 	// task the run's own agent handed it.
-	Scope assistantports.DelegateScope `json:"scope,omitzero"`
+	Scope assistantstreamports.DelegateScope `json:"scope,omitzero"`
 }
 
 // OpenDelegateInput asks for another agent's turn on a task the run's agent

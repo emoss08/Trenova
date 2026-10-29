@@ -5,7 +5,7 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/mdtable"
 )
@@ -33,22 +33,25 @@ const (
 // that streamed, for a correction the model was not asked to make.
 func ReplyReplacedEvent(text, reason string) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventReplyReplaced,
-		Data:  assistantports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
+		Event: assistantstreamports.AssistantEventReplyReplaced,
+		Data:  assistantstreamports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
 	}
 }
 
 func PassEvent(
-	action assistantports.RegroundAction,
+	action assistantstreamports.RegroundAction,
 	reason string,
 	table *agentruntimeports.ShownArtifact,
 ) kernelports.StreamEvent {
-	data := assistantports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
+	data := assistantstreamports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
 	if table != nil {
 		data.ArtifactID = table.ID
 	}
 
-	return kernelports.StreamEvent{Event: assistantports.AssistantEventReplyRegrounded, Data: data}
+	return kernelports.StreamEvent{
+		Event: assistantstreamports.AssistantEventReplyRegrounded,
+		Data:  data,
+	}
 }
 
 func Refold(t Turn, callID, stale, folded string) {

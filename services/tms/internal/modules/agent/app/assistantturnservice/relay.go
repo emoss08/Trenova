@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
@@ -36,7 +37,7 @@ type RelayRequest struct {
 func (s *Service) Relay(
 	ctx context.Context,
 	req RelayRequest,
-	onFrame assistantports.TurnFrameFunc,
+	onFrame assistantstreamports.TurnFrameFunc,
 ) error {
 	turn := req.Turn
 
@@ -62,10 +63,10 @@ func (s *Service) Relay(
 	attached := time.Now()
 	spoke := false
 	sawTerminal := false
-	err := s.reader.Read(ctx, assistantports.ReadTurnStreamRequest{
+	err := s.reader.Read(ctx, assistantstreamports.ReadTurnStreamRequest{
 		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
-		OnFrame: func(frame assistantports.TurnStreamFrame) error {
+		OnFrame: func(frame assistantstreamports.TurnStreamFrame) error {
 			if fresh && !spoke {
 				spoke = true
 				s.metrics.RecordFirstEvent(time.Since(attached).Seconds())
@@ -111,7 +112,7 @@ func (s *Service) current(
 	ctx context.Context,
 	turn *conversationturn.AssistantTurn,
 ) *conversationturn.AssistantTurn {
-	current, err := s.turns.GetByID(ctx, assistantports.GetAssistantTurnRequest{
+	current, err := s.turns.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})
@@ -133,7 +134,7 @@ func (s *Service) current(
 func ClosingEvent(turn *conversationturn.AssistantTurn) kernelports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
 		return kernelports.StreamEvent{
-			Event: assistantports.AssistantEventError,
+			Event: assistantstreamports.AssistantEventError,
 			Data: map[string]any{
 				"message": "This reply did not finish. What ran has been kept in the conversation.",
 			},
@@ -141,7 +142,7 @@ func ClosingEvent(turn *conversationturn.AssistantTurn) kernelports.StreamEvent 
 	}
 
 	return kernelports.StreamEvent{
-		Event: assistantports.AssistantEventDone,
+		Event: assistantstreamports.AssistantEventDone,
 		Data: map[string]any{
 			"turnId":   turn.ID.String(),
 			"threadId": turn.ThreadID.String(),
@@ -154,7 +155,7 @@ func ClosingEvent(turn *conversationturn.AssistantTurn) kernelports.StreamEvent 
 	}
 }
 
-func closingFrame(turn *conversationturn.AssistantTurn) assistantports.TurnStreamFrame {
+func closingFrame(turn *conversationturn.AssistantTurn) assistantstreamports.TurnStreamFrame {
 	event := ClosingEvent(turn)
 
 	return frameOf(event.Event, event.Data)

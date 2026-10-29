@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -393,7 +394,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 		Page:       &agentpagecontext.PageContext{Path: "/dispatch"},
 	}, actor, func(event kernelports.StreamEvent) {
 		events = append(events, event.Event)
-		if event.Event == assistantports.AssistantEventThread {
+		if event.Event == assistantstreamports.AssistantEventThread {
 			announced = event.Data.(*conversation.Thread)
 		}
 	})
@@ -419,7 +420,12 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.Equal(t, "How many loads are late today?", conversations.created.Title)
 	require.NotNil(t, announced)
 	assert.Equal(t, conversations.created.ID, announced.ID)
-	assert.Equal(t, assistantports.AssistantEventThread, events[0], "the thread is announced first")
+	assert.Equal(
+		t,
+		assistantstreamports.AssistantEventThread,
+		events[0],
+		"the thread is announced first",
+	)
 	assert.Equal(t, "Twelve loads are late.", result.Reply)
 	assert.Equal(t, "/dispatch", conversations.appended[0].PageContext.Path)
 }

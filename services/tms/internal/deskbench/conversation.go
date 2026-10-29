@@ -20,6 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -123,8 +126,8 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 	}, nil
 }
 
-func (s *Session) threadRequest(threadID pulid.ID) assistantports.GetThreadRequest {
-	return assistantports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
+func (s *Session) threadRequest(threadID pulid.ID) conversationports.GetThreadRequest {
+	return conversationports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
 }
 
 func (c *Conversation) Turns() []*TurnRecord {
@@ -435,7 +438,7 @@ func (c *Conversation) fill(
 
 func (c *Conversation) describeProposal(
 	ctx context.Context,
-	summary *assistantports.AssistantProposal,
+	summary *assistantproposalports.AssistantProposal,
 ) *ProposalRecord {
 	record := &ProposalRecord{
 		ID:        summary.ID,
@@ -719,7 +722,7 @@ func (c *Conversation) lookupTurn(
 	ctx context.Context,
 	turnID pulid.ID,
 ) (*conversationturn.AssistantTurn, error) {
-	req := assistantports.GetAssistantTurnRequest{
+	req := assistantturnports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,
 		UserID:     c.session.User.ID,

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,25 +26,28 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 			{ToolCallID: "2", ToolName: "update_invoice", Tier: agent.TierActWithApproval},
 		}},
 		Events: []temporaltype.StreamItem{
-			{Event: assistantports.AssistantEventToolStarted, Data: map[string]any{"callId": "1"}},
 			{
-				Event: assistantports.AssistantEventToolFinished,
-				Data: assistantports.AssistantToolFinishedEvent{
+				Event: assistantstreamports.AssistantEventToolStarted,
+				Data:  map[string]any{"callId": "1"},
+			},
+			{
+				Event: assistantstreamports.AssistantEventToolFinished,
+				Data: assistantstreamports.AssistantToolFinishedEvent{
 					CallID: "1", Name: "invoice_get", Verdict: "ran",
 				},
 			},
 			{
-				Event: assistantports.AssistantEventToolFinished,
-				Data: &assistantports.AssistantToolFinishedEvent{
+				Event: assistantstreamports.AssistantEventToolFinished,
+				Data: &assistantstreamports.AssistantToolFinishedEvent{
 					CallID: "2", Name: "update_invoice", Verdict: "proposed", Proposed: true,
 				},
 			},
-			{Event: assistantports.AssistantEventToolFinished, Data: map[string]any{
+			{Event: assistantstreamports.AssistantEventToolFinished, Data: map[string]any{
 				"callId": "3", "name": "shipment_cancel", "verdict": "denied", "failed": true,
 			}},
 			{
-				Event: assistantports.AssistantEventToolFinished,
-				Data: assistantports.AssistantToolFinishedEvent{
+				Event: assistantstreamports.AssistantEventToolFinished,
+				Data: assistantstreamports.AssistantToolFinishedEvent{
 					CallID: "4", Name: "shipment_get", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
 				},
 			},

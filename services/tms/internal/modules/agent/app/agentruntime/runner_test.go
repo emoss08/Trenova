@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -554,7 +554,7 @@ func TestRun_EmitsTheTurnInOrder(t *testing.T) {
 		Input:      "Where is S12345?",
 		Emit: func(event kernelports.StreamEvent) {
 			if len(events) > 0 && events[len(events)-1] == event.Event &&
-				event.Event == assistantports.AssistantEventDelta {
+				event.Event == assistantstreamports.AssistantEventDelta {
 				return
 			}
 			events = append(events, event.Event)
@@ -563,11 +563,11 @@ func TestRun_EmitsTheTurnInOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{
-		assistantports.AssistantEventDelta,
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventToolFinished,
-		assistantports.AssistantEventDelta,
+		assistantstreamports.AssistantEventDelta,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelta,
 	}, events)
 }
 
@@ -849,10 +849,10 @@ func TestRun_StreamsKeepsAndReplaysReasoning(t *testing.T) {
 		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
 		Emit: func(event kernelports.StreamEvent) {
-			if event.Event == assistantports.AssistantEventReasoning {
+			if event.Event == assistantstreamports.AssistantEventReasoning {
 				thoughts = append(
 					thoughts,
-					event.Data.(assistantports.AssistantReasoningEvent).Text,
+					event.Data.(assistantstreamports.AssistantReasoningEvent).Text,
 				)
 			}
 		},
@@ -1032,10 +1032,10 @@ func TestRun_ForwardsARetryNoticeAndThePin(t *testing.T) {
 	completion.LastReq.RetrySink(
 		llmports.ChatRetryNotice{Attempt: 1, Provider: "second", Reason: "stream died"},
 	)
-	var retrying *assistantports.AssistantRetryingEvent
+	var retrying *assistantstreamports.AssistantRetryingEvent
 	for _, event := range events {
-		if event.Event == assistantports.AssistantEventRetrying {
-			data := event.Data.(assistantports.AssistantRetryingEvent)
+		if event.Event == assistantstreamports.AssistantEventRetrying {
+			data := event.Data.(assistantstreamports.AssistantRetryingEvent)
 			retrying = &data
 		}
 	}

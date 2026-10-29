@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,14 +14,14 @@ import (
 )
 
 type recordedQueue struct {
-	asked []*assistantports.SettleQueueRequest
-	next  *assistantports.QueuedTurn
+	asked []*assistantturnports.SettleQueueRequest
+	next  *assistantturnports.QueuedTurn
 }
 
 func (q *recordedQueue) SettleQueue(
 	_ context.Context,
-	req *assistantports.SettleQueueRequest,
-) *assistantports.QueuedTurn {
+	req *assistantturnports.SettleQueueRequest,
+) *assistantturnports.QueuedTurn {
 	q.asked = append(q.asked, req)
 	if !req.Dispatch {
 		return nil
@@ -54,7 +55,7 @@ func continuation(status conversation.AssistantTurnStatus) *conversationContinua
 func TestContinueConversation_WhatThePersonQueuedGoesFirst(t *testing.T) {
 	t.Parallel()
 
-	queue := &recordedQueue{next: &assistantports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+	queue := &recordedQueue{next: &assistantturnports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
 	followUps := &recordedFollowUps{}
 	a := &Activities{queue: queue, followUps: followUps}
 	c := continuation(conversation.AssistantTurnStatusCompleted)
@@ -89,7 +90,9 @@ func TestContinueConversation_AStoppedOrFailedTurnHoldsTheQueue(t *testing.T) {
 		conversation.AssistantTurnStatusStopped,
 		conversation.AssistantTurnStatusFailed,
 	} {
-		queue := &recordedQueue{next: &assistantports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+		queue := &recordedQueue{
+			next: &assistantturnports.QueuedTurn{TurnID: pulid.MustNew("atrn_")},
+		}
 		followUps := &recordedFollowUps{}
 		a := &Activities{queue: queue, followUps: followUps}
 

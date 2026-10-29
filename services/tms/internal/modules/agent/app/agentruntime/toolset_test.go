@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -561,9 +561,9 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	assert.Equal(t, runtimetools.FindToolsName, result.Messages[2].ToolName)
 	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
 
-	var finished []assistantports.AssistantToolFinishedEvent
+	var finished []assistantstreamports.AssistantToolFinishedEvent
 	for _, event := range *events {
-		if data, ok := event.Data.(assistantports.AssistantToolFinishedEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantToolFinishedEvent); ok {
 			finished = append(finished, data)
 		}
 	}

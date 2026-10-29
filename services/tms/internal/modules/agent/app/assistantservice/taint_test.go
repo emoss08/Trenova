@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -22,14 +23,14 @@ import (
 )
 
 type taintingConversations struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
-	marked []assistantports.MarkThreadTaintedRequest
+	marked []conversationports.MarkThreadTaintedRequest
 }
 
 func (r *taintingConversations) MarkThreadTainted(
 	_ context.Context,
-	req assistantports.MarkThreadTaintedRequest,
+	req conversationports.MarkThreadTaintedRequest,
 ) error {
 	r.marked = append(r.marked, req)
 

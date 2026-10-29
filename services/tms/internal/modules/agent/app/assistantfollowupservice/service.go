@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -34,7 +35,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Runs          agentruntimeports.AgentRunRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Permissions   permissionports.PermissionEngine
 	Turns         *assistantturnservice.Service
@@ -47,7 +48,7 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	runs          agentruntimeports.AgentRunRepository
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	permissions   permissionports.PermissionEngine
 	turns         turnStarter
@@ -183,7 +184,7 @@ func (s *Service) threadFor(
 		return nil, nil
 	}
 
-	return s.conversations.GetThreadOwned(ctx, assistantports.GetThreadOwnedRequest{
+	return s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         run.SubjectID,
 		TenantInfo: tenant,
 	})

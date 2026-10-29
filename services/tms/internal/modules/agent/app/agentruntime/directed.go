@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -50,14 +50,14 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentruntimeports.RunR
 		ToolCalls: []llmports.ToolCall{call},
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventMessage,
-		Data: assistantports.AssistantMessageEvent{
+		Event: assistantstreamports.AssistantEventMessage,
+		Data: assistantstreamports.AssistantMessageEvent{
 			ToolCalls: s.access.CallsWithEffects(opening.ToolCalls),
 		},
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: assistantports.AssistantEventToolStarted,
-		Data: assistantports.AssistantToolStartedEvent{
+		Event: assistantstreamports.AssistantEventToolStarted,
+		Data: assistantstreamports.AssistantToolStartedEvent{
 			CallID:    call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,

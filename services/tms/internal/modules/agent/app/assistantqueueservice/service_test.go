@@ -15,7 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +44,7 @@ func (q *memoryQueue) sorted() []*conversationqueue.QueuedMessage {
 
 func (q *memoryQueue) List(
 	_ context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) ([]*conversationqueue.QueuedMessage, error) {
 	out := make([]*conversationqueue.QueuedMessage, 0, len(q.items))
 	for _, item := range q.sorted() {
@@ -57,7 +58,7 @@ func (q *memoryQueue) List(
 
 func (q *memoryQueue) Get(
 	_ context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -77,7 +78,7 @@ func (q *memoryQueue) Insert(
 	entity *conversationqueue.QueuedMessage,
 ) (*conversationqueue.QueuedMessage, error) {
 	if len(q.items) >= conversationqueue.MaxQueuedPerThread {
-		return nil, assistantports.ErrQueueFull
+		return nil, assistantturnports.ErrQueueFull
 	}
 	entity.ID = pulid.MustNew(conversationqueue.QueuedMessageIDPrefix)
 	entity.Position = int64(len(q.items) + 1)
@@ -102,7 +103,7 @@ func (q *memoryQueue) Update(
 
 func (q *memoryQueue) MarkSteer(
 	ctx context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -113,7 +114,10 @@ func (q *memoryQueue) MarkSteer(
 	return q.Get(ctx, req)
 }
 
-func (q *memoryQueue) Delete(_ context.Context, req *assistantports.QueuedMessageRequest) error {
+func (q *memoryQueue) Delete(
+	_ context.Context,
+	req *assistantturnports.QueuedMessageRequest,
+) error {
 	q.items = slices.DeleteFunc(q.items, func(item *conversationqueue.QueuedMessage) bool {
 		return item.ID == req.ID
 	})
@@ -123,7 +127,7 @@ func (q *memoryQueue) Delete(_ context.Context, req *assistantports.QueuedMessag
 
 func (q *memoryQueue) DeleteMany(
 	_ context.Context,
-	req *assistantports.DeleteQueuedMessagesRequest,
+	req *assistantturnports.DeleteQueuedMessagesRequest,
 ) error {
 	q.items = slices.DeleteFunc(q.items, func(item *conversationqueue.QueuedMessage) bool {
 		return slices.Contains(req.IDs, item.ID)
@@ -134,7 +138,7 @@ func (q *memoryQueue) DeleteMany(
 
 func (q *memoryQueue) Reorder(
 	_ context.Context,
-	req *assistantports.ReorderQueuedMessagesRequest,
+	req *assistantturnports.ReorderQueuedMessagesRequest,
 ) ([]*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		item.Position = int64(slices.Index(req.IDs, item.ID) + 1)
@@ -145,7 +149,7 @@ func (q *memoryQueue) Reorder(
 
 func (q *memoryQueue) ClaimNext(
 	_ context.Context,
-	scope *assistantports.AssistantQueueScope,
+	scope *assistantturnports.AssistantQueueScope,
 ) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.sorted() {
 		if item.ThreadID == scope.ThreadID {
@@ -156,12 +160,12 @@ func (q *memoryQueue) ClaimNext(
 		}
 	}
 
-	return nil, assistantports.ErrQueueEmpty
+	return nil, assistantturnports.ErrQueueEmpty
 }
 
 func (q *memoryQueue) Claim(
 	_ context.Context,
-	req *assistantports.QueuedMessageRequest,
+	req *assistantturnports.QueuedMessageRequest,
 ) (*conversationqueue.QueuedMessage, error) {
 	for _, item := range q.items {
 		if item.ID == req.ID {
@@ -172,7 +176,7 @@ func (q *memoryQueue) Claim(
 		}
 	}
 
-	return nil, assistantports.ErrQueueEmpty
+	return nil, assistantturnports.ErrQueueEmpty
 }
 
 func (q *memoryQueue) Restore(_ context.Context, entity *conversationqueue.QueuedMessage) error {
@@ -190,7 +194,7 @@ type fakeTurns struct {
 
 func (f *fakeTurns) Active(
 	context.Context,
-	assistantports.ActiveAssistantTurnRequest,
+	assistantturnports.ActiveAssistantTurnRequest,
 ) (*conversationturn.AssistantTurn, error) {
 	return f.active, nil
 }
@@ -275,7 +279,7 @@ type ownedThreads struct{}
 
 func (ownedThreads) GetThread(
 	_ context.Context,
-	req assistantports.GetThreadRequest,
+	req conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }
@@ -326,8 +330,8 @@ func (h *harness) running() *conversationturn.AssistantTurn {
 	return h.turns.active
 }
 
-func (h *harness) settle(read []pulid.ID, dispatch bool) *assistantports.QueuedTurn {
-	return h.svc.SettleQueue(context.Background(), &assistantports.SettleQueueRequest{
+func (h *harness) settle(read []pulid.ID, dispatch bool) *assistantturnports.QueuedTurn {
+	return h.svc.SettleQueue(context.Background(), &assistantturnports.SettleQueueRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: h.scope.Actor.OrganizationID,
 			BuID:  h.scope.Actor.BusinessUnitID,

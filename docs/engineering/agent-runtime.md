@@ -507,7 +507,7 @@ durable boundary.
 
 The Anthropic adapter reads them at call time (`anthropicadapter/anthropicfiles.go`)
 through `Call.Files`, which the router binds to the request's tenant from
-`assistantports.MessageFileReader` (`messagefileservice`, over the documents module's
+`conversationports.MessageFileReader` (`messagefileservice`, over the documents module's
 `conversationfileservice`, which decrypts through `storedobject` and finds only a
 conversation's documents; no view is recorded, as for document intelligence).
 `aiprovider.Provider.FileInput` decides who reads files: an Anthropic Messages

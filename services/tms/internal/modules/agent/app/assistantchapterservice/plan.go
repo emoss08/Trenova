@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/numberguard"
@@ -32,11 +34,11 @@ const (
 
 func (s *Service) Plan(
 	ctx context.Context,
-	req *assistantports.ChapterTurnRequest,
-) (*assistantports.ChapterPlan, error) {
-	plan := &assistantports.ChapterPlan{Turn: *req}
+	req *assistantchapterports.ChapterTurnRequest,
+) (*assistantchapterports.ChapterPlan, error) {
+	plan := &assistantchapterports.ChapterPlan{Turn: *req}
 
-	turn, err := s.turns.GetByID(ctx, assistantports.GetAssistantTurnRequest{
+	turn, err := s.turns.GetByID(ctx, assistantturnports.GetAssistantTurnRequest{
 		ID:         req.TurnID,
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
@@ -57,7 +59,7 @@ func (s *Service) Plan(
 	}
 	auto := !control.AutoChaptersOff
 
-	existing, err := s.chapters.ForTurn(ctx, assistantports.ChapterForTurnRequest{
+	existing, err := s.chapters.ForTurn(ctx, assistantchapterports.ChapterForTurnRequest{
 		ThreadID:   req.ThreadID,
 		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
@@ -67,11 +69,11 @@ func (s *Service) Plan(
 	}
 
 	switch req.Phase {
-	case assistantports.ChapterPhaseOpened:
+	case assistantchapterports.ChapterPhaseOpened:
 		return s.planOpened(ctx, plan, turn, existing, auto)
-	case assistantports.ChapterPhaseAnswered:
+	case assistantchapterports.ChapterPhaseAnswered:
 		return s.planAnswered(ctx, plan, turn, existing, auto)
-	case assistantports.ChapterPhaseRequested:
+	case assistantchapterports.ChapterPhaseRequested:
 		return s.planRequested(ctx, plan, existing, auto)
 	default:
 		return nil, fmt.Errorf("unknown chapter phase %q", req.Phase)
@@ -80,11 +82,11 @@ func (s *Service) Plan(
 
 func (s *Service) planOpened(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	turn *conversationturn.AssistantTurn,
 	existing *conversationchapter.Chapter,
 	auto bool,
-) (*assistantports.ChapterPlan, error) {
+) (*assistantchapterports.ChapterPlan, error) {
 	question := strings.TrimSpace(turn.Input)
 	switch {
 	case existing != nil:
@@ -99,7 +101,7 @@ func (s *Service) planOpened(
 		return plan, nil
 	}
 
-	chapters, err := s.chapters.List(ctx, assistantports.ListChaptersRequest{
+	chapters, err := s.chapters.List(ctx, assistantchapterports.ListChaptersRequest{
 		ThreadID:   plan.Turn.ThreadID,
 		TenantInfo: plan.Turn.TenantInfo,
 	})
@@ -140,7 +142,7 @@ func (s *Service) planOpened(
 		return plan, nil
 	}
 
-	recent, err := s.conversations.ListMessages(ctx, assistantports.ListMessagesRequest{
+	recent, err := s.conversations.ListMessages(ctx, conversationports.ListMessagesRequest{
 		ThreadID:        plan.Turn.ThreadID,
 		TenantInfo:      plan.Turn.TenantInfo,
 		Limit:           recentMessages,
@@ -161,11 +163,11 @@ func (s *Service) planOpened(
 
 func (s *Service) planAnswered(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	turn *conversationturn.AssistantTurn,
 	existing *conversationchapter.Chapter,
 	auto bool,
-) (*assistantports.ChapterPlan, error) {
+) (*assistantchapterports.ChapterPlan, error) {
 	if existing == nil {
 		plan.Skip = skipNoChapter
 
@@ -195,10 +197,10 @@ func (s *Service) planAnswered(
 
 func (s *Service) planRequested(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	existing *conversationchapter.Chapter,
 	auto bool,
-) (*assistantports.ChapterPlan, error) {
+) (*assistantchapterports.ChapterPlan, error) {
 	switch {
 	case existing == nil:
 		plan.Skip = skipNoChapter
@@ -215,9 +217,9 @@ func (s *Service) planRequested(
 
 func (s *Service) planRename(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	existing *conversationchapter.Chapter,
-) (*assistantports.ChapterPlan, error) {
+) (*assistantchapterports.ChapterPlan, error) {
 	question, reply, err := s.turnText(
 		ctx,
 		plan.Turn.ThreadID,
@@ -258,17 +260,17 @@ func earlierToName(chapters []*conversationchapter.Chapter) pulid.ID {
 
 func (s *Service) Apply(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	result *llmports.StructuredCompletionResult,
-) (*assistantports.ChapterOutcome, error) {
-	outcome := &assistantports.ChapterOutcome{ChapterID: plan.ChapterID}
+) (*assistantchapterports.ChapterOutcome, error) {
+	outcome := &assistantchapterports.ChapterOutcome{ChapterID: plan.ChapterID}
 	if plan.Skipped() {
 		return outcome, nil
 	}
 	turn := &plan.Turn
 
 	if plan.Remove {
-		removed, err := s.chapters.Delete(ctx, assistantports.DeleteChapterRequest{
+		removed, err := s.chapters.Delete(ctx, assistantchapterports.DeleteChapterRequest{
 			ID:         plan.ChapterID,
 			ThreadID:   turn.ThreadID,
 			TenantInfo: turn.TenantInfo,
@@ -303,7 +305,7 @@ func (s *Service) Apply(
 
 		return s.open(ctx, plan, answer.Title, plan.ModelSource, outcome)
 	case answer.Title != "":
-		if _, err := s.chapters.Retitle(ctx, assistantports.RetitleChapterRequest{
+		if _, err := s.chapters.Retitle(ctx, assistantchapterports.RetitleChapterRequest{
 			ID:          plan.ChapterID,
 			ThreadID:    turn.ThreadID,
 			TenantInfo:  turn.TenantInfo,
@@ -325,11 +327,11 @@ func (s *Service) Apply(
 
 func (s *Service) open(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	title string,
 	source conversationchapter.ChapterTitleSource,
-	outcome *assistantports.ChapterOutcome,
-) (*assistantports.ChapterOutcome, error) {
+	outcome *assistantchapterports.ChapterOutcome,
+) (*assistantchapterports.ChapterOutcome, error) {
 	turn := &plan.Turn
 	chapter, err := s.create(ctx, &conversationchapter.Chapter{
 		OrganizationID: turn.TenantInfo.OrgID,
@@ -356,7 +358,7 @@ func (s *Service) open(
 }
 
 func (s *Service) read(
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 	result *llmports.StructuredCompletionResult,
 ) chapterAnswer {
 	if result == nil || strings.TrimSpace(result.Text) == "" {

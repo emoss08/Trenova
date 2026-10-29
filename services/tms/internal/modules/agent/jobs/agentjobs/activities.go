@@ -35,7 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -89,7 +89,7 @@ type ActivitiesParams struct {
 	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
 	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
 	Decisions     agentports.AgentDecisionRepository
-	Conversations assistantports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
 	Watchtower    watchtowerports.WatchtowerProjector `optional:"true"`
@@ -121,7 +121,7 @@ type Activities struct {
 	users         tenantports.UserRepository
 	scorer        *agentscoring.Scorer
 	decisions     agentports.AgentDecisionRepository
-	conversations assistantports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	subjects      agentruntimeports.AgentSubjectDescriber
 	activity      agentports.AgentActivityPublisher
 	watchtower    watchtowerports.WatchtowerProjector
@@ -981,7 +981,7 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 
 	deleted, err := a.conversations.DeleteStaleThreads(
 		ctx,
-		assistantports.DeleteStaleThreadsRequest{
+		conversationports.DeleteStaleThreadsRequest{
 			Origin: conversation.ThreadOriginAsk,
 			Before: input.Before,
 			Limit:  deleteStaleAskBatch,
@@ -994,12 +994,15 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 		a.logger.Info("removed quick questions nobody kept", zap.Int("deleted", deleted))
 	}
 
-	drafts, err := a.conversations.DeleteStaleThreads(ctx, assistantports.DeleteStaleThreadsRequest{
-		Origin:          conversation.ThreadOriginFormula,
-		Before:          input.Before,
-		Limit:           deleteStaleAskBatch,
-		SubjectlessOnly: true,
-	})
+	drafts, err := a.conversations.DeleteStaleThreads(
+		ctx,
+		conversationports.DeleteStaleThreadsRequest{
+			Origin:          conversation.ThreadOriginFormula,
+			Before:          input.Before,
+			Limit:           deleteStaleAskBatch,
+			SubjectlessOnly: true,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("delete stale formula threads: %w", err)
 	}

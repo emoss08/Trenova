@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -102,11 +102,11 @@ type definitionReader interface {
 type conversationReader interface {
 	GetThreadOwned(
 		ctx context.Context,
-		req assistantports.GetThreadOwnedRequest,
+		req conversationports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 	ListMessages(
 		ctx context.Context,
-		req assistantports.ListMessagesRequest,
+		req conversationports.ListMessagesRequest,
 	) ([]conversation.Message, error)
 }
 
@@ -131,7 +131,7 @@ type Params struct {
 	Decisions     agentports.AgentDecisionRepository
 	Runs          agentruntimeports.AgentRunRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Conversations assistantports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
 	Retention     tenantports.DataRetentionRepository
 	Registry      *permissioncatalog.Registry

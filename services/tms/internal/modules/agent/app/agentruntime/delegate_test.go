@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -161,7 +161,7 @@ func scriptedDelegateRun(delegate agentturn.RuntimeDelegate) delegation.Run {
 			},
 			ToolCallsUsed: 2,
 		},
-		Documents: []assistantports.DelegateDocument{
+		Documents: []assistantstreamports.DelegateDocument{
 			{ID: pulid.MustNew("aart_"), Kind: "document", Title: "Report notes"},
 		},
 	}
@@ -242,15 +242,15 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	assert.Equal(t, 1, result.ToolCallsUsed, "the task costs the turn one call")
 
 	assert.Equal(t, []string{
-		assistantports.AssistantEventMessage,
-		assistantports.AssistantEventToolStarted,
-		assistantports.AssistantEventDelegateStarted,
-		assistantports.AssistantEventDelegateFinished,
-		assistantports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventDelegateStarted,
+		assistantstreamports.AssistantEventDelegateFinished,
+		assistantstreamports.AssistantEventToolFinished,
 	}, fx.eventNames())
-	finished, ok := fx.events[3].Data.(assistantports.AssistantDelegateFinishedEvent)
+	finished, ok := fx.events[3].Data.(assistantstreamports.AssistantDelegateFinishedEvent)
 	require.True(t, ok)
-	assert.Equal(t, assistantports.DelegateStatusCompleted, finished.Status)
+	assert.Equal(t, assistantstreamports.DelegateStatusCompleted, finished.Status)
 	assert.Equal(t, "Report Builder", finished.AgentName)
 	assert.Equal(t, "receipt", finished.Icon)
 	assert.Equal(t, "teal", finished.Accent)
@@ -516,7 +516,7 @@ func TestDelegate_SeveralLookupsInOneReplyRunTogether(t *testing.T) {
 	assert.Equal(t, "call_b", result.Delegations[1].CallID)
 	started := 0
 	for _, name := range fx.eventNames() {
-		if name == assistantports.AssistantEventToolStarted {
+		if name == assistantstreamports.AssistantEventToolStarted {
 			started++
 		}
 	}

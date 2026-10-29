@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -193,14 +193,14 @@ type fakeConversations struct {
 
 func (f fakeConversations) GetThreadOwned(
 	context.Context,
-	assistantports.GetThreadOwnedRequest,
+	conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return f.thread, nil
 }
 
 func (f fakeConversations) ListMessages(
 	context.Context,
-	assistantports.ListMessagesRequest,
+	conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return f.messages, nil
 }

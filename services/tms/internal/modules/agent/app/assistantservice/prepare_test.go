@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +32,7 @@ type meetingConversations struct {
 
 func (m *meetingConversations) ListMessages(
 	ctx context.Context,
-	req assistantports.ListMessagesRequest,
+	req conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	close(m.listing)
 	m.listSawCount.Store(waitFor(ctx, m.counting))
@@ -41,7 +42,7 @@ func (m *meetingConversations) ListMessages(
 
 func (m *meetingConversations) CountMessages(
 	ctx context.Context,
-	req assistantports.CountMessagesRequest,
+	req conversationports.CountMessagesRequest,
 ) (int, error) {
 	close(m.counting)
 	m.countSawList.Store(waitFor(ctx, m.listing))

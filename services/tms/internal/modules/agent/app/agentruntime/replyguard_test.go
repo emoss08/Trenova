@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -46,8 +46,8 @@ func loopingTurn() *llmports.ChatCompletionResult {
 func restarts(events []kernelports.StreamEvent) int {
 	count := 0
 	for _, event := range events {
-		retry, ok := event.Data.(assistantports.AssistantRetryingEvent)
-		if ok && event.Event == assistantports.AssistantEventRetrying &&
+		retry, ok := event.Data.(assistantstreamports.AssistantRetryingEvent)
+		if ok && event.Event == assistantstreamports.AssistantEventRetrying &&
 			retry.Kind == llmports.RetryKindRestart {
 			count++
 		}
@@ -219,7 +219,7 @@ func TestRun_AsksAgainWhenTheThinkingLoops(t *testing.T) {
 	assert.Equal(t, 2, completion.CallCount)
 	assert.Equal(t, 1, restarts(events))
 	for _, event := range events {
-		thought, ok := event.Data.(assistantports.AssistantReasoningEvent)
+		thought, ok := event.Data.(assistantstreamports.AssistantReasoningEvent)
 		if ok {
 			assert.NotContains(
 				t,

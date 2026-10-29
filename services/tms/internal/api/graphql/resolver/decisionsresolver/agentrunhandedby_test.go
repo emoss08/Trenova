@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ import (
 )
 
 type threadAgentsRepo struct {
-	assistantports.ConversationRepository
+	conversationports.ConversationRepository
 
 	byID  map[pulid.ID]*conversation.Thread
 	reads int
@@ -25,7 +25,7 @@ type threadAgentsRepo struct {
 
 func (r *threadAgentsRepo) ListThreadAgentsByIDs(
 	_ context.Context,
-	req assistantports.ListThreadAgentsByIDsRequest,
+	req conversationports.ListThreadAgentsByIDsRequest,
 ) ([]*conversation.Thread, error) {
 	r.reads++
 	out := make([]*conversation.Thread, 0, len(req.IDs))

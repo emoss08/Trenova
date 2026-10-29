@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -97,7 +97,7 @@ type searchDocumentsTool struct {
 func NewSearchDocumentsTool(
 	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads assistantports.ThreadOwnerRepository,
+	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return &searchDocumentsTool{
 		searcher: searcher,

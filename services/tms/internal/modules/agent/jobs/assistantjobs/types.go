@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -60,7 +60,7 @@ type TurnEnding struct {
 	Compact *CompactionCue `json:"compact,omitempty"`
 	// Next is the turn the conversation's queue started once this one was
 	// saved.
-	Next *assistantports.QueuedTurn `json:"next,omitempty"`
+	Next *assistantturnports.QueuedTurn `json:"next,omitempty"`
 }
 
 // CompactionCue is a conversation a turn left full enough to compact itself.

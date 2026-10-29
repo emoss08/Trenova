@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
 )
@@ -13,12 +13,12 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Chapters   assistantports.AssistantChapterService
+	Chapters   assistantchapterports.AssistantChapterService
 	Completion llmports.CompletionService
 }
 
 type Activities struct {
-	chapters   assistantports.AssistantChapterService
+	chapters   assistantchapterports.AssistantChapterService
 	completion llmports.CompletionService
 }
 
@@ -30,8 +30,8 @@ var Module = fx.Module("assistant-chapter-jobs", fx.Provide(NewActivities))
 
 func (a *Activities) PlanChapterActivity(
 	ctx context.Context,
-	req *assistantports.ChapterTurnRequest,
-) (*assistantports.ChapterPlan, error) {
+	req *assistantchapterports.ChapterTurnRequest,
+) (*assistantchapterports.ChapterPlan, error) {
 	plan, err := a.chapters.Plan(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("plan the turn's chapter: %w", err)
@@ -42,7 +42,7 @@ func (a *Activities) PlanChapterActivity(
 
 func (a *Activities) ChapterModelActivity(
 	ctx context.Context,
-	plan *assistantports.ChapterPlan,
+	plan *assistantchapterports.ChapterPlan,
 ) (*llmports.StructuredCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
@@ -58,7 +58,7 @@ func (a *Activities) ChapterModelActivity(
 func (a *Activities) ApplyChapterActivity(
 	ctx context.Context,
 	in *ApplyInput,
-) (*assistantports.ChapterOutcome, error) {
+) (*assistantchapterports.ChapterOutcome, error) {
 	outcome, err := a.chapters.Apply(ctx, in.Plan, in.Result)
 	if err != nil {
 		return nil, fmt.Errorf("keep the turn's chapter: %w", err)
