@@ -156,32 +156,7 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerchecklistservice.StartRequest, *workerchecklistservice.StartPlan,
 	]{
-		Request: func(
-			params *agenttoolports.ToolExecuteParams,
-		) (*workerchecklistservice.StartRequest, error) {
-			workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			templateID, err := toolparams.RequirePulid(params.Params, paramChecklistTemplate)
-			if err != nil {
-				return nil, err
-			}
-			started, err := toolparams.OptionalScheduleDay(params.Params, paramStartedAt)
-			if err != nil {
-				return nil, err
-			}
-			req := &workerchecklistservice.StartRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
-				WorkerID:   workerID,
-				TemplateID: templateID,
-				UserID:     params.Actor.UserID,
-			}
-			if started != nil {
-				req.StartedAt = *started
-			}
-			return req, nil
-		},
+		Request: startChecklistRequest,
 		Plan: func(
 			ctx context.Context,
 			req *workerchecklistservice.StartRequest,
@@ -237,6 +212,33 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 				started.WorkerID), nil
 		},
 	})
+}
+
+func startChecklistRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*workerchecklistservice.StartRequest, error) {
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
+	if err != nil {
+		return nil, err
+	}
+	templateID, err := toolparams.RequirePulid(params.Params, paramChecklistTemplate)
+	if err != nil {
+		return nil, err
+	}
+	started, err := toolparams.OptionalScheduleDay(params.Params, paramStartedAt)
+	if err != nil {
+		return nil, err
+	}
+	req := &workerchecklistservice.StartRequest{
+		TenantInfo: toolparams.TenantFrom(*params),
+		WorkerID:   workerID,
+		TemplateID: templateID,
+		UserID:     params.Actor.UserID,
+	}
+	if started != nil {
+		req.StartedAt = *started
+	}
+	return req, nil
 }
 
 type checklistItemChange struct {

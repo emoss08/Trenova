@@ -3,6 +3,8 @@ package shipmenttools
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -41,20 +43,20 @@ func (t *PlaceShipmentHoldTool) Description() string {
 
 func (t *PlaceShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to hold, from the page, shipment_list."),
 			"holdReasonId": agenttoolschema.RecordIDText(permission.ResourceHoldReason,
 				"A hold reason id from masterdata_list_hold_reasons."),
 			toolparams.ParamNote: map[string]any{
-				"type": "string",
-				"description": "What prompted the hold, for whoever releases it. " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "What prompted the hold, for whoever releases it. " +
 					"Say what would have to be true to clear it.",
 			},
 		},
-		"required":             []string{toolparams.ParamShipmentID, "holdReasonId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{toolparams.ParamShipmentID, "holdReasonId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -78,7 +80,7 @@ func (t *PlaceShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *PlaceShipmentHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -138,8 +140,8 @@ func (t *ReleaseShipmentHoldTool) Description() string {
 
 func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the hold is on, from the page or "+
 					"shipment_list."),
@@ -147,8 +149,8 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 				"The hold to release, from the holds shipment_get lists, the page or the "+
 					"event that started this run. Never guess one."),
 		},
-		"required":             []string{toolparams.ParamShipmentID, "holdId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{toolparams.ParamShipmentID, "holdId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -171,7 +173,7 @@ func (t *ReleaseShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ReleaseShipmentHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -232,18 +234,21 @@ func (t *CancelShipmentTool) Description() string {
 
 func (t *CancelShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to cancel, from the page, shipment_list."),
 			toolparams.ParamReason: map[string]any{
-				"type": "string",
-				"description": "Why it is being cancelled, in the customer's or " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Why it is being cancelled, in the customer's or " +
 					"dispatcher's own terms. This is kept on the record.",
 			},
 		},
-		"required":             []string{toolparams.ParamShipmentID, toolparams.ParamReason},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			toolparams.ParamShipmentID,
+			toolparams.ParamReason,
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -266,7 +271,7 @@ func (t *CancelShipmentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {

@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
-func ClassifyCommentVisibility(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+func ClassifyCommentVisibility(
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agenttoolports.CallPolicy {
 	switch shipmentvocab.CommentVisibility(toolparams.OptionalString(params.Params, "visibility")) {
 	case shipmentvocab.CommentVisibilityCustomer:
 		return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}

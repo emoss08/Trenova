@@ -76,8 +76,8 @@ func RequireString(params map[string]any, key string) (string, error) {
 }
 
 func OptionalString(params map[string]any, key string) string {
-	if raw, ok := params[key]; ok {
-		if value, ok := raw.(string); ok {
+	if raw, given := params[key]; given {
+		if value, isText := raw.(string); isText {
 			return value
 		}
 	}
@@ -163,8 +163,8 @@ func RequirePulidSlice(params map[string]any, key string, limit int) ([]pulid.ID
 
 	ids := make([]pulid.ID, 0, len(values))
 	for index, value := range values {
-		text, ok := value.(string)
-		if !ok || strings.TrimSpace(text) == "" {
+		text, isText := value.(string)
+		if !isText || strings.TrimSpace(text) == "" {
 			return nil, fmt.Errorf("parameter %q[%d] must be a non-empty id", key, index)
 		}
 
@@ -194,7 +194,7 @@ func RequireMoney(params map[string]any, key string) (int64, error) {
 	return minor, nil
 }
 
-func OptionalMoney(params map[string]any, key string) (int64, bool, error) {
+func OptionalMoney(params map[string]any, key string) (minor int64, present bool, err error) {
 	value, present, err := OptionalDecimal(params, key)
 	if err != nil || !present {
 		return 0, false, err

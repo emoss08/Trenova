@@ -24,6 +24,16 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+type AddShipmentCommentTool struct {
+	comments shipmentcommentports.ShipmentCommentService
+}
+
+func NewAddShipmentCommentTool(
+	comments shipmentcommentports.ShipmentCommentService,
+) agenttoolports.AgentTool {
+	return &AddShipmentCommentTool{comments: comments}
+}
+
 func (t *AddShipmentCommentTool) Preview(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
@@ -97,16 +107,6 @@ func commentAudience(visibility shipmentvocab.CommentVisibility) string {
 	}
 }
 
-type AddShipmentCommentTool struct {
-	comments shipmentcommentports.ShipmentCommentService
-}
-
-func NewAddShipmentCommentTool(
-	comments shipmentcommentports.ShipmentCommentService,
-) agenttoolports.AgentTool {
-	return &AddShipmentCommentTool{comments: comments}
-}
-
 func (t *AddShipmentCommentTool) Name() string { return "shipment_add_comment" }
 
 func (t *AddShipmentCommentTool) Description() string {
@@ -171,7 +171,7 @@ func (t *AddShipmentCommentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AddShipmentCommentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	entity, err := t.comment(&params)
 	if err != nil {
@@ -236,7 +236,7 @@ func (t *AddShipmentCommentTool) comment(
 		Visibility:     visibility,
 		Priority:       priority,
 		Source:         shipmentvocab.CommentSourceAI,
-		Metadata:       commentTaintMetadata(*params),
+		Metadata:       commentTaintMetadata(params),
 	}, nil
 }
 
@@ -249,7 +249,7 @@ func (t *AddShipmentCommentTool) Validate(
 	return toolspec.PreviewValidates(ctx, t, &params)
 }
 
-func commentTaintMetadata(params agenttoolports.ToolExecuteParams) map[string]any {
+func commentTaintMetadata(params *agenttoolports.ToolExecuteParams) map[string]any {
 	if params.ApprovedFromProposal() || !params.CarriedTaint(timeutils.NowUnix()).Tainted() {
 		return nil
 	}

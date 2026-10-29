@@ -203,35 +203,9 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 		Reversible:  true,
 		Rationale: "Changes a hold inside Trenova; one made visible to the customer is shown " +
 			"to them, so that call is held to the customer-visible ceiling.",
-		Properties: map[string]any{
-			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
-				"The shipment the hold is on",
-			),
-			ParamHoldID: agenttoolschema.RecordIDText(
-				permission.ResourceShipmentHold,
-				"The hold to change, from the holds shipment_get lists or "+
-					"the page you are on. Never guess one.",
-			),
-			ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
-			toolparams.ParamNote: toolparams.StringProperty(
-				"What the hold waits on, replacing the note on it.",
-				maxHoldNoteChars,
-			),
-			paramBlocksDispatch: toolparams.BooleanProperty(
-				"Whether it stops the shipment being dispatched.",
-			),
-			ParamBlocksDelivery: toolparams.BooleanProperty(
-				"Whether it stops the shipment being delivered.",
-			),
-			ParamBlocksBilling: toolparams.BooleanProperty(
-				"Whether it stops the shipment being billed.",
-			),
-			ParamVisibleToCustomer: toolparams.BooleanProperty(
-				"Whether the customer sees the hold.",
-			),
-		},
-		Required: []string{toolparams.ParamShipmentID, ParamHoldID},
-		Target:   TargetShipment,
+		Properties: holdUpdateProperties(),
+		Required:   []string{toolparams.ParamShipmentID, ParamHoldID},
+		Target:     TargetShipment,
 	}, toolspec.ReceivablePlan[*holdPatch, *holdUpdatePlan]{
 		Request: readHoldPatch,
 		Plan: func(
@@ -289,6 +263,36 @@ func NewUpdateShipmentHoldTool(holds holdUpdater) agenttoolports.AgentTool {
 			agent.EgressCustomerVisible,
 		},
 		Classify: classifyHoldVisibility,
+	}
+}
+
+func holdUpdateProperties() map[string]any {
+	return map[string]any{
+		toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty(
+			"The shipment the hold is on",
+		),
+		ParamHoldID: agenttoolschema.RecordIDText(
+			permission.ResourceShipmentHold,
+			"The hold to change, from the holds shipment_get lists or "+
+				"the page you are on. Never guess one.",
+		),
+		ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
+		toolparams.ParamNote: toolparams.StringProperty(
+			"What the hold waits on, replacing the note on it.",
+			maxHoldNoteChars,
+		),
+		paramBlocksDispatch: toolparams.BooleanProperty(
+			"Whether it stops the shipment being dispatched.",
+		),
+		ParamBlocksDelivery: toolparams.BooleanProperty(
+			"Whether it stops the shipment being delivered.",
+		),
+		ParamBlocksBilling: toolparams.BooleanProperty(
+			"Whether it stops the shipment being billed.",
+		),
+		ParamVisibleToCustomer: toolparams.BooleanProperty(
+			"Whether the customer sees the hold.",
+		),
 	}
 }
 

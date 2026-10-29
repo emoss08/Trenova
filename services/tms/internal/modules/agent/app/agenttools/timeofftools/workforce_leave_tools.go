@@ -68,14 +68,31 @@ var leaveFrequencies = agenttoolschema.Source(
 )
 
 var leaveCaseFields = []string{
-	workforcekit.FieldWorkerID, paramLeaveType, changepreview.FieldStatus, paramLeaveFrequency, changepreview.FieldReason,
-	paramMilitaryCaregiver, workforcekit.FieldRequestedAt, paramStartsAt, paramEndsAt, workforcekit.FieldClosedAt,
-	"certificationStatus", workforcekit.FieldCertRequestedAt, "certificationDueAt",
-	paramEligibilityHours, workforcekit.FieldDocument, workforcekit.FieldNotes,
+	workforcekit.FieldWorkerID,
+	paramLeaveType,
+	changepreview.FieldStatus,
+	paramLeaveFrequency,
+	changepreview.FieldReason,
+	paramMilitaryCaregiver,
+	workforcekit.FieldRequestedAt,
+	paramStartsAt,
+	paramEndsAt,
+	workforcekit.FieldClosedAt,
+	"certificationStatus",
+	workforcekit.FieldCertRequestedAt,
+	"certificationDueAt",
+	paramEligibilityHours,
+	workforcekit.FieldDocument,
+	workforcekit.FieldNotes,
 }
 
 var leaveDayFields = []string{
-	workforcekit.FieldWorkerID, paramLeaveCaseID, paramUsedOn, paramLeaveHours, paramCounts, paramPTOLink,
+	workforcekit.FieldWorkerID,
+	paramLeaveCaseID,
+	paramUsedOn,
+	paramLeaveHours,
+	paramCounts,
+	paramPTOLink,
 	workforcekit.FieldNotes,
 }
 
@@ -227,17 +244,27 @@ func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]a
 	); err != nil {
 		return err
 	}
-	if entity.MilitaryCaregiver, err = workforcekit.OptionalBoolParam(params, paramMilitaryCaregiver,
-		false); err != nil {
+	if entity.MilitaryCaregiver, err = workforcekit.OptionalBoolParam(
+		params,
+		paramMilitaryCaregiver,
+		false,
+	); err != nil {
 		return err
 	}
 	if entity.EndsAt, err = toolparams.OptionalScheduleDay(params, paramEndsAt); err != nil {
 		return err
 	}
-	if entity.DocumentID, err = toolparams.OptionalID(params, workforcekit.ParamDocument); err != nil {
+	if entity.DocumentID, err = toolparams.OptionalID(
+		params,
+		workforcekit.ParamDocument,
+	); err != nil {
 		return err
 	}
-	if entity.Notes, err = toolparams.BoundedText(params, toolparams.ParamNote, workforcekit.NoteChars); err != nil {
+	if entity.Notes, err = toolparams.BoundedText(
+		params,
+		toolparams.ParamNote,
+		workforcekit.NoteChars,
+	); err != nil {
 		return err
 	}
 	hours, err := toolparams.OptionalIntInRange(
@@ -394,13 +421,19 @@ func leaveCaseUpdateFrom(
 		paramMilitaryCaregiver); err != nil {
 		return nil, err
 	}
-	if req.StartsAt, err = toolparams.OptionalScheduleDay(params.Params, paramStartsAt); err != nil {
+	if req.StartsAt, err = toolparams.OptionalScheduleDay(
+		params.Params,
+		paramStartsAt,
+	); err != nil {
 		return nil, err
 	}
 	if req.EndsAt, err = toolparams.OptionalScheduleDay(params.Params, paramEndsAt); err != nil {
 		return nil, err
 	}
-	if req.DocumentID, err = toolparams.OptionalID(params.Params, workforcekit.ParamDocument); err != nil {
+	if req.DocumentID, err = toolparams.OptionalID(
+		params.Params,
+		workforcekit.ParamDocument,
+	); err != nil {
 		return nil, err
 	}
 	hours, err := toolparams.OptionalIntInRange(

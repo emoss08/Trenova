@@ -218,7 +218,10 @@ func recalculateDecision(text *lifecycleText) *settlementDecision {
 		rationale: "Rebuilds a draft from the records it is computed from inside Trenova; " +
 			"nothing is paid until a person approves it.",
 		fields: []string{
-			settlementpreview.FieldHasExceptions, "shipmentCount", "payProfileName", "classification",
+			settlementpreview.FieldHasExceptions,
+			"shipmentCount",
+			"payProfileName",
+			"classification",
 		},
 		searchTerms: []string{"rerun totals", "recompute", "refresh totals"},
 	}

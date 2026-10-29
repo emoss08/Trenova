@@ -103,7 +103,7 @@ func (t *TenderToRoutingGuideTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *TenderToRoutingGuideTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -255,7 +255,7 @@ type tenderLineParam struct {
 
 func (t *TenderToCarriersTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -300,8 +300,8 @@ func (t *TenderToCarriersTool) request(
 	}
 
 	lines := make([]tendercreate.SpotTenderLine, 0, len(lineParams))
-	for idx, line := range lineParams {
-		parsed, lineErr := spotTenderLineOf(idx, line)
+	for idx := range lineParams {
+		parsed, lineErr := spotTenderLineOf(idx, &lineParams[idx])
 		if lineErr != nil {
 			return nil, lineErr
 		}
@@ -320,7 +320,7 @@ func (t *TenderToCarriersTool) request(
 	}, nil
 }
 
-func spotTenderLineOf(idx int, line tenderLineParam) (tendercreate.SpotTenderLine, error) {
+func spotTenderLineOf(idx int, line *tenderLineParam) (tendercreate.SpotTenderLine, error) {
 	carrierID, err := pulid.Parse(line.CarrierID)
 	if err != nil {
 		return tendercreate.SpotTenderLine{}, fmt.Errorf(

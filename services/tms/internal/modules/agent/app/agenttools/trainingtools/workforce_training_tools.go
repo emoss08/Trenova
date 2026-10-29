@@ -56,8 +56,18 @@ var trainingCloses = agenttoolschema.Source(
 )
 
 var trainingFields = []string{
-	workforcekit.FieldWorkerID, paramCourseID, changepreview.FieldStatus, "assignedAt", "dueAt", workforcekit.FieldCompletedAt,
-	workforcekit.FieldExpiresAt, paramScore, "passed", workforcekit.FieldDocument, workforcekit.FieldNotes, "waivedReason",
+	workforcekit.FieldWorkerID,
+	paramCourseID,
+	changepreview.FieldStatus,
+	"assignedAt",
+	"dueAt",
+	workforcekit.FieldCompletedAt,
+	workforcekit.FieldExpiresAt,
+	paramScore,
+	"passed",
+	workforcekit.FieldDocument,
+	workforcekit.FieldNotes,
+	"waivedReason",
 }
 
 type TrainingKeeper interface {
@@ -412,7 +422,10 @@ func completionFrom(
 	if req.ID, err = toolparams.OptionalID(params.Params, paramTrainingID); err != nil {
 		return nil, err
 	}
-	if req.WorkerID, err = toolparams.OptionalID(params.Params, toolparams.ParamWorkerID); err != nil {
+	if req.WorkerID, err = toolparams.OptionalID(
+		params.Params,
+		toolparams.ParamWorkerID,
+	); err != nil {
 		return nil, err
 	}
 	if req.CourseID, err = toolparams.OptionalID(params.Params, paramCourseID); err != nil {
@@ -436,7 +449,10 @@ func completionFrom(
 	if present {
 		req.Score = decimal.NewNullDecimal(score)
 	}
-	if req.DocumentID, err = toolparams.OptionalID(params.Params, workforcekit.ParamDocument); err != nil {
+	if req.DocumentID, err = toolparams.OptionalID(
+		params.Params,
+		workforcekit.ParamDocument,
+	); err != nil {
 		return nil, err
 	}
 	if req.Notes, err = toolparams.BoundedText(
@@ -687,34 +703,7 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*trainingClosing, *workertrainingservice.RecordChange,
 	]{
-		Request: func(params *agenttoolports.ToolExecuteParams) (*trainingClosing, error) {
-			id, err := toolparams.RequirePulid(params.Params, paramTrainingID)
-			if err != nil {
-				return nil, err
-			}
-			action, err := toolparams.RequireEnum(
-				params.Params,
-				paramTrainingClose,
-				trainingCloses.Values,
-			)
-			if err != nil {
-				return nil, err
-			}
-			reason, err := toolparams.BoundedText(
-				params.Params,
-				changepreview.FieldReason,
-				workforcekit.ShortChars,
-			)
-			if err != nil {
-				return nil, err
-			}
-			return &trainingClosing{close: action, req: &workertrainingservice.StatusRequest{
-				ID:         id,
-				TenantInfo: toolparams.TenantFrom(*params),
-				Reason:     reason,
-				UserID:     params.Actor.UserID,
-			}}, nil
-		},
+		Request: trainingClosingRequest,
 		Plan: func(
 			ctx context.Context,
 			closing *trainingClosing,
@@ -775,6 +764,37 @@ func newCloseWorkerTrainingTool(training TrainingKeeper) agenttoolports.AgentToo
 			), nil
 		},
 	})
+}
+
+func trainingClosingRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*trainingClosing, error) {
+	id, err := toolparams.RequirePulid(params.Params, paramTrainingID)
+	if err != nil {
+		return nil, err
+	}
+	action, err := toolparams.RequireEnum(
+		params.Params,
+		paramTrainingClose,
+		trainingCloses.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	reason, err := toolparams.BoundedText(
+		params.Params,
+		changepreview.FieldReason,
+		workforcekit.ShortChars,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &trainingClosing{close: action, req: &workertrainingservice.StatusRequest{
+		ID:         id,
+		TenantInfo: toolparams.TenantFrom(*params),
+		Reason:     reason,
+		UserID:     params.Actor.UserID,
+	}}, nil
 }
 
 func provideAssignWorkerTrainingTool(s *workertrainingservice.Service) agenttoolports.AgentTool {

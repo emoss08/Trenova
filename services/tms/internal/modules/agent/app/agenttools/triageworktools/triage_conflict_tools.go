@@ -152,35 +152,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			*triageconflictservice.ResolveRequest,
 			*triageconflictservice.ConflictPlan,
 		]{
-			Request: func(
-				params *agenttoolports.ToolExecuteParams,
-			) (*triageconflictservice.ResolveRequest, error) {
-				messageID, err := toolparams.RequirePulid(
-					params.Params,
-					inboundtools.ParamMessageID,
-				)
-				if err != nil {
-					return nil, err
-				}
-				conflictID, err := toolparams.RequireBoundedText(params.Params, paramConflictID,
-					maxConflictID)
-				if err != nil {
-					return nil, err
-				}
-				resolution, err := toolparams.RequireEnum(params.Params, paramConflictResolution,
-					triageConflictResolutions.Values)
-				if err != nil {
-					return nil, err
-				}
-
-				return &triageconflictservice.ResolveRequest{
-					TenantInfo: inboundtools.TenantOnly(params),
-					ActorID:    inboundtools.ActorOf(params),
-					MessageID:  messageID,
-					ConflictID: conflictID,
-					Resolution: resolution,
-				}, nil
-			},
+			Request: resolveConflictRequest,
 			Plan: func(
 				ctx context.Context,
 				req *triageconflictservice.ResolveRequest,
@@ -215,6 +187,36 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			},
 		},
 	)
+}
+
+func resolveConflictRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*triageconflictservice.ResolveRequest, error) {
+	messageID, err := toolparams.RequirePulid(
+		params.Params,
+		inboundtools.ParamMessageID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	conflictID, err := toolparams.RequireBoundedText(params.Params, paramConflictID,
+		maxConflictID)
+	if err != nil {
+		return nil, err
+	}
+	resolution, err := toolparams.RequireEnum(params.Params, paramConflictResolution,
+		triageConflictResolutions.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	return &triageconflictservice.ResolveRequest{
+		TenantInfo: inboundtools.TenantOnly(params),
+		ActorID:    inboundtools.ActorOf(params),
+		MessageID:  messageID,
+		ConflictID: conflictID,
+		Resolution: resolution,
+	}, nil
 }
 
 func NewReopenInboundConflictTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {

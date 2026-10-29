@@ -94,9 +94,17 @@ func PtoToolProviders() []any {
 	}
 }
 
-func ptoRecord(pto *worker.WorkerPTO) toolpreview.Record {
-	return workforcekit.Record(permission.ResourceWorkerPTO, pto.ID,
-		fmt.Sprintf("%s from %s", pto.Type, changepreview.DayText(pto.StartDate)), pto.Version)
+func ptoRecord(leave *worker.WorkerPTO) toolpreview.Record {
+	return workforcekit.Record(
+		permission.ResourceWorkerPTO,
+		leave.ID,
+		fmt.Sprintf(
+			"%s from %s",
+			leave.Type,
+			changepreview.DayText(leave.StartDate),
+		),
+		leave.Version,
+	)
 }
 
 func ptoDatesProperties() map[string]any {
@@ -113,12 +121,12 @@ func ptoDatesProperties() map[string]any {
 	}
 }
 
-func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) error {
+func applyPTODates(leave *worker.WorkerPTO, params map[string]any, required bool) error {
 	if kind, given, err := toolparams.OptionalEnum(params, paramPTOType,
 		agenttoolschema.PTOTypes.Values); err != nil {
 		return err
 	} else if given {
-		pto.Type = kind
+		leave.Type = kind
 	} else if required {
 		return fmt.Errorf("missing required parameter %q", paramPTOType)
 	}
@@ -126,8 +134,8 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 		key  string
 		dest *int64
 	}{
-		{paramPTOStart, &pto.StartDate},
-		{paramPTOEnd, &pto.EndDate},
+		{paramPTOStart, &leave.StartDate},
+		{paramPTOEnd, &leave.EndDate},
 	} {
 		day, err := toolparams.OptionalScheduleDay(params, field.key)
 		switch {
@@ -148,14 +156,14 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 	case err != nil:
 		return err
 	case reason != nil:
-		pto.Reason = *reason
+		leave.Reason = *reason
 	case required:
-		pto.Reason = string(pto.Type)
+		leave.Reason = string(leave.Type)
 	}
 	return nil
 }
 
-func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
+func newRequestWorkerPTOTool(requests ptoRequester) agenttoolports.AgentTool {
 	properties := ptoDatesProperties()
 	properties[toolparams.ParamWorkerID] = toolparams.WorkerProperty()
 	spec := workforcekit.WithSchema(workforcekit.Spec(
@@ -194,7 +202,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 				entity *worker.WorkerPTO,
 				params *agenttoolports.ToolExecuteParams,
 			) (*worker.WorkerPTO, error) {
-				return pto.PlanCreate(ctx, entity, params.Actor.UserID)
+				return requests.PlanCreate(ctx, entity, params.Actor.UserID)
 			},
 			Refused: func(*worker.WorkerPTO) string { return "Would file a time-off request." },
 			Render: func(_ *worker.WorkerPTO, planned *worker.WorkerPTO) (*agentpreview.ToolPreview, error) {
@@ -219,7 +227,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 				entity *worker.WorkerPTO,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agentrecord.ToolExecutionResult, error) {
-				created, err := pto.Create(ctx, entity, params.Actor.UserID)
+				created, err := requests.Create(ctx, entity, params.Actor.UserID)
 				if err != nil {
 					return nil, err
 				}
@@ -240,8 +248,8 @@ type ptoEdit struct {
 	params *agenttoolports.ToolExecuteParams
 }
 
-func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerPTO, error) {
-	current, err := pto.Get(ctx, &workerptoports.GetPTOByIDRequest{
+func (e *ptoEdit) entity(ctx context.Context, requests ptoRequester) (*worker.WorkerPTO, error) {
+	current, err := requests.Get(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         e.id,
 		TenantInfo: toolparams.TenantFrom(*e.params),
 	})
@@ -253,7 +261,7 @@ func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerP
 	return &entity, applyPTODates(&entity, e.params.Params, false)
 }
 
-func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
+func newUpdateWorkerPTOTool(requests ptoRequester) agenttoolports.AgentTool {
 	properties := ptoDatesProperties()
 	properties["ptoId"] = agenttoolschema.RecordIDText(
 		permission.ResourceWorkerPTO,
@@ -290,11 +298,11 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 			edit *ptoEdit,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[worker.WorkerPTO], error) {
-			entity, err := edit.entity(ctx, pto)
+			entity, err := edit.entity(ctx, requests)
 			if err != nil {
 				return nil, err
 			}
-			return pto.PlanUpdate(ctx, entity)
+			return requests.PlanUpdate(ctx, entity)
 		},
 		Refused: func(*ptoEdit) string { return "Would change a time-off request." },
 		Render: func(
@@ -313,11 +321,11 @@ func newUpdateWorkerPTOTool(pto ptoRequester) agenttoolports.AgentTool {
 			edit *ptoEdit,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			entity, err := edit.entity(ctx, pto)
+			entity, err := edit.entity(ctx, requests)
 			if err != nil {
 				return nil, err
 			}
-			updated, err := pto.Update(ctx, entity, params.Actor.UserID)
+			updated, err := requests.Update(ctx, entity, params.Actor.UserID)
 			if err != nil {
 				return nil, err
 			}
@@ -462,12 +470,12 @@ func newAdjustWorkerPTOBalanceTool(ledger PtoBalanceAdjuster) agenttoolports.Age
 	})
 }
 
-func provideRequestWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
-	return newRequestWorkerPTOTool(pto)
+func provideRequestWorkerPTOTool(service workerptoports.WorkerPTOService) agenttoolports.AgentTool {
+	return newRequestWorkerPTOTool(service)
 }
 
-func provideUpdateWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
-	return newUpdateWorkerPTOTool(pto)
+func provideUpdateWorkerPTOTool(service workerptoports.WorkerPTOService) agenttoolports.AgentTool {
+	return newUpdateWorkerPTOTool(service)
 }
 
 func provideAdjustWorkerPTOBalanceTool(ledger *ptoledgerservice.Service) agenttoolports.AgentTool {

@@ -6,6 +6,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
@@ -83,8 +85,8 @@ func (t *rescheduleStopTool) Description() string {
 
 func (t *rescheduleStopTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment the stop is on, from shipment_list."),
 			"stopId": agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
@@ -96,8 +98,12 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 				"When it now closes, in the same local time. Leave it out to keep the " +
 					"window's length."),
 		},
-		"required":             []string{toolparams.ParamShipmentID, "stopId", paramWindowStart},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			toolparams.ParamShipmentID,
+			"stopId",
+			paramWindowStart,
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -134,7 +140,7 @@ type stopScheduleView struct {
 
 func (t *rescheduleStopTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -348,8 +354,8 @@ func (t *addShipmentChargeTool) Description() string {
 
 func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The shipment to charge, from shipment_list."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
@@ -357,18 +363,21 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 				"The charge, from masterdata_list_accessorial_charges. Not detention: a detention "+
 					"charge is approved with detention_approve."),
 			paramUnits: map[string]any{
-				"type": "integer",
-				"description": "How many units: hours, stops, days or pieces for a per-unit " +
+				toolschema.KeyType: toolschema.TypeInteger,
+				toolschema.KeyDescription: "How many units: hours, stops, days or pieces for a per-unit " +
 					"charge. 1 for a flat charge. Defaults to 1.",
-				"minimum": 1,
-				"maximum": maxChargeUnits,
+				toolschema.KeyMinimum: 1,
+				toolschema.KeyMaximum: maxChargeUnits,
 			},
 			toolparams.ParamAmount: toolparams.StringProperty(
 				"The rate per unit, or the flat amount, as a decimal such as 150.00, when the "+
 					"person named one; leave it out to use the charge's configured rate.", 0),
 		},
-		"required":             []string{toolparams.ParamShipmentID, "accessorialChargeId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			toolparams.ParamShipmentID,
+			"accessorialChargeId",
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -398,7 +407,7 @@ type shipmentChargePlan struct {
 
 func (t *addShipmentChargeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

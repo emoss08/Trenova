@@ -87,12 +87,31 @@ var claimStatuses = agenttoolschema.Source(
 )
 
 var injuryFields = []string{
-	workforcekit.FieldWorkerID, "caseNumber", "caseYear", paramClassification, paramIllnessType,
-	paramTreatment, changepreview.FieldStatus, workforcekit.ParamOccurred, "reportedAt", "returnedToWorkAt",
-	paramEventLocation, changepreview.FieldDescription, paramBodyPart, paramHarmfulAgent, paramDaysAway,
-	paramDaysRestricted, paramPrivacyCase, paramClaimStatus, paramClaimNumber,
-	paramClaimCarrier, "claimFiledAt", "claimClosedAt", workforcekit.ParamSafetyEventID,
-	workforcekit.FieldDocument, workforcekit.FieldNotes,
+	workforcekit.FieldWorkerID,
+	"caseNumber",
+	"caseYear",
+	paramClassification,
+	paramIllnessType,
+	paramTreatment,
+	changepreview.FieldStatus,
+	workforcekit.ParamOccurred,
+	"reportedAt",
+	"returnedToWorkAt",
+	paramEventLocation,
+	changepreview.FieldDescription,
+	paramBodyPart,
+	paramHarmfulAgent,
+	paramDaysAway,
+	paramDaysRestricted,
+	paramPrivacyCase,
+	paramClaimStatus,
+	paramClaimNumber,
+	paramClaimCarrier,
+	"claimFiledAt",
+	"claimClosedAt",
+	workforcekit.ParamSafetyEventID,
+	workforcekit.FieldDocument,
+	workforcekit.FieldNotes,
 }
 
 type InjuryKeeper interface {
@@ -221,7 +240,10 @@ func injuryUpdateFrom(
 	if req.PrivacyCase, err = toolparams.OptionalBoolPointer(params, paramPrivacyCase); err != nil {
 		return err
 	}
-	if req.SafetyEventID, err = toolparams.OptionalID(params, workforcekit.ParamSafetyEventID); err != nil {
+	if req.SafetyEventID, err = toolparams.OptionalID(
+		params,
+		workforcekit.ParamSafetyEventID,
+	); err != nil {
 		return err
 	}
 	req.DocumentID, err = toolparams.OptionalID(params, workforcekit.ParamDocument)

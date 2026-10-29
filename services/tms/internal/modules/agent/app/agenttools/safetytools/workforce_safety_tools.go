@@ -125,10 +125,24 @@ var safetyEventMoves = agenttoolschema.Source(
 )
 
 var safetyEventFields = []string{
-	paramEventKind, paramEventSeverity, changepreview.FieldStatus, workforcekit.ParamOccurred, paramEventLocation,
-	changepreview.FieldDescription, paramPreventable, paramPoints, "pointsExpireAt", paramReferenceNumber,
-	changepreview.FieldShipmentID, paramInspectionLevel, paramInspectionRes, paramOutOfService,
-	paramFineAmount, paramCostAmount, workforcekit.FieldDocument, paramResolutionText,
+	paramEventKind,
+	paramEventSeverity,
+	changepreview.FieldStatus,
+	workforcekit.ParamOccurred,
+	paramEventLocation,
+	changepreview.FieldDescription,
+	paramPreventable,
+	paramPoints,
+	"pointsExpireAt",
+	paramReferenceNumber,
+	changepreview.FieldShipmentID,
+	paramInspectionLevel,
+	paramInspectionRes,
+	paramOutOfService,
+	paramFineAmount,
+	paramCostAmount,
+	workforcekit.FieldDocument,
+	paramResolutionText,
 }
 
 type SafetyKeeper interface {
@@ -925,7 +939,11 @@ func recognitionFrom(
 }
 
 var recognitionFields = []string{
-	workforcekit.FieldWorkerID, paramRecognitionKind, workforcekit.ParamTitle, changepreview.FieldMessage, workforcekit.ParamOccurred,
+	workforcekit.FieldWorkerID,
+	paramRecognitionKind,
+	workforcekit.ParamTitle,
+	changepreview.FieldMessage,
+	workforcekit.ParamOccurred,
 	paramVisibleToWorker,
 }
 
@@ -1069,8 +1087,13 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 }
 
 var violationFields = []string{
-	workforcekit.ParamSafetyEventID, workforcekit.FieldWorkerID, paramCSABasic, paramViolationCode, changepreview.FieldDescription,
-	paramSeverityWeight, paramOutOfService,
+	workforcekit.ParamSafetyEventID,
+	workforcekit.FieldWorkerID,
+	paramCSABasic,
+	paramViolationCode,
+	changepreview.FieldDescription,
+	paramSeverityWeight,
+	paramOutOfService,
 }
 
 func violationRecord(violation *fleetsafety.WorkerSafetyViolation) toolpreview.Record {
@@ -1127,56 +1150,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workersafetyservice.RecordViolationRequest, *fleetsafety.WorkerSafetyViolation,
 	]{
-		Request: func(
-			params *agenttoolports.ToolExecuteParams,
-		) (*workersafetyservice.RecordViolationRequest, error) {
-			eventID, err := toolparams.RequirePulid(params.Params, workforcekit.ParamSafetyEventID)
-			if err != nil {
-				return nil, err
-			}
-			description, err := toolparams.RequireBoundedText(
-				params.Params,
-				changepreview.FieldDescription,
-				workforcekit.NoteChars,
-			)
-			if err != nil {
-				return nil, err
-			}
-			basic, _, err := toolparams.OptionalEnum(params.Params, paramCSABasic, csaBasics.Values)
-			if err != nil {
-				return nil, err
-			}
-			code, err := toolparams.BoundedText(
-				params.Params,
-				paramViolationCode,
-				workforcekit.ShortChars,
-			)
-			if err != nil {
-				return nil, err
-			}
-			weight, err := violationWeight(params.Params)
-			if err != nil {
-				return nil, err
-			}
-			outOfService, err := workforcekit.OptionalBoolParam(
-				params.Params,
-				paramOutOfService,
-				false,
-			)
-			if err != nil {
-				return nil, err
-			}
-			return &workersafetyservice.RecordViolationRequest{
-				TenantInfo:     toolparams.TenantFrom(*params),
-				SafetyEventID:  eventID,
-				Basic:          basic,
-				Code:           code,
-				Description:    description,
-				SeverityWeight: weight,
-				OutOfService:   outOfService,
-				UserID:         params.Actor.UserID,
-			}, nil
-		},
+		Request: recordViolationRequest,
 		Plan: func(
 			ctx context.Context,
 			req *workersafetyservice.RecordViolationRequest,
@@ -1227,6 +1201,57 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	})
 }
 
+func recordViolationRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*workersafetyservice.RecordViolationRequest, error) {
+	eventID, err := toolparams.RequirePulid(params.Params, workforcekit.ParamSafetyEventID)
+	if err != nil {
+		return nil, err
+	}
+	description, err := toolparams.RequireBoundedText(
+		params.Params,
+		changepreview.FieldDescription,
+		workforcekit.NoteChars,
+	)
+	if err != nil {
+		return nil, err
+	}
+	basic, _, err := toolparams.OptionalEnum(params.Params, paramCSABasic, csaBasics.Values)
+	if err != nil {
+		return nil, err
+	}
+	code, err := toolparams.BoundedText(
+		params.Params,
+		paramViolationCode,
+		workforcekit.ShortChars,
+	)
+	if err != nil {
+		return nil, err
+	}
+	weight, err := violationWeight(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	outOfService, err := workforcekit.OptionalBoolParam(
+		params.Params,
+		paramOutOfService,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &workersafetyservice.RecordViolationRequest{
+		TenantInfo:     toolparams.TenantFrom(*params),
+		SafetyEventID:  eventID,
+		Basic:          basic,
+		Code:           code,
+		Description:    description,
+		SeverityWeight: weight,
+		OutOfService:   outOfService,
+		UserID:         params.Actor.UserID,
+	}, nil
+}
+
 type violationEdit struct {
 	params *agenttoolports.ToolExecuteParams
 	id     pulid.ID
@@ -1260,8 +1285,11 @@ func (e *violationEdit) request(
 	} else if code != nil {
 		req.Code = *code
 	}
-	if text, textErr := toolparams.OptionalBoundedText(e.params.Params, changepreview.FieldDescription,
-		workforcekit.NoteChars); textErr != nil {
+	if text, textErr := toolparams.OptionalBoundedText(
+		e.params.Params,
+		changepreview.FieldDescription,
+		workforcekit.NoteChars,
+	); textErr != nil {
 		return nil, textErr
 	} else if text != nil {
 		req.Description = *text

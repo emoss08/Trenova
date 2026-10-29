@@ -100,8 +100,8 @@ func (t *EvaluateServiceFailuresTool) Description() string {
 
 func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment to check, from shipment_get_tracking, "+
@@ -121,12 +121,12 @@ func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
 				MaxBulkEvaluationShipments,
 			),
 			"force": map[string]any{
-				"type": "boolean",
-				"description": "Re-check stops that were already evaluated. Default false; " +
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "Re-check stops that were already evaluated. Default false; " +
 					"set it only when an actual arrival was corrected.",
 			},
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -156,7 +156,7 @@ func (t *EvaluateServiceFailuresTool) Target(
 
 func (t *EvaluateServiceFailuresTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
@@ -232,7 +232,10 @@ func (t *EvaluateServiceFailuresTool) request(
 	); err != nil {
 		return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
 	}
-	if scope.stopID, _, err = toolparams.OptionalPulid(params.Params, toolparams.ParamStopID); err != nil {
+	if scope.stopID, _, err = toolparams.OptionalPulid(
+		params.Params,
+		toolparams.ParamStopID,
+	); err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", toolparams.ParamStopID, err)
 	}
 	if _, given := params.Params["shipmentIds"]; given {
@@ -333,8 +336,8 @@ func (t *ResolveServiceFailureTool) Description() string {
 
 func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"serviceFailureId": agenttoolschema.RecordIDText(
 				permission.ResourceServiceFailure,
 				"The failure's id, from exception_list_service_failures.",
@@ -345,12 +348,12 @@ func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
 					"Required when the failure has none; otherwise replaces it.",
 			),
 			toolparams.ParamNote: map[string]any{
-				"type":        "string",
-				"description": "What was found and done. Required.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "What was found and done. Required.",
 			},
 		},
-		toolschema.KeyRequired: []string{"serviceFailureId", toolparams.ParamNote},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"serviceFailureId", toolparams.ParamNote},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -379,7 +382,7 @@ func (t *ResolveServiceFailureTool) Target(
 
 func (t *ResolveServiceFailureTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams,
+	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	request, _, err := t.request(ctx, &params)
 	if err != nil {

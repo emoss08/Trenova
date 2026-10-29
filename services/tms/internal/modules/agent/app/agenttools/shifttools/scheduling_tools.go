@@ -771,6 +771,31 @@ type swapDecisionSpec struct {
 	searchTerms []string
 }
 
+func (spec *swapDecisionSpec) request(
+	params *agenttoolports.ToolExecuteParams,
+) (*schedulingservice.TransitionSwapRequest, error) {
+	id, err := toolparams.RequirePulid(params.Params, paramSwapID)
+	if err != nil {
+		return nil, err
+	}
+	note, err := toolparams.BoundedText(
+		params.Params,
+		toolparams.ParamNote,
+		maxScheduleNote,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &schedulingservice.TransitionSwapRequest{
+		ID:         id,
+		Status:     spec.status,
+		Note:       note,
+		TenantInfo: toolparams.TenantFrom(*params),
+		UserID:     params.Actor.UserID,
+	}, nil
+}
+
 func newSwapDecisionTool(
 	schedules scheduleKeeper,
 	spec *swapDecisionSpec,
@@ -800,30 +825,7 @@ func newSwapDecisionTool(
 			return toolparams.TargetOf(params, paramSwapID, permission.ResourceShiftSwap)
 		},
 	}, toolspec.ReceivablePlan[*schedulingservice.TransitionSwapRequest, *schedulingservice.SwapChange]{
-		Request: func(
-			params *agenttoolports.ToolExecuteParams,
-		) (*schedulingservice.TransitionSwapRequest, error) {
-			id, err := toolparams.RequirePulid(params.Params, paramSwapID)
-			if err != nil {
-				return nil, err
-			}
-			note, err := toolparams.BoundedText(
-				params.Params,
-				toolparams.ParamNote,
-				maxScheduleNote,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return &schedulingservice.TransitionSwapRequest{
-				ID:         id,
-				Status:     spec.status,
-				Note:       note,
-				TenantInfo: toolparams.TenantFrom(*params),
-				UserID:     params.Actor.UserID,
-			}, nil
-		},
+		Request: spec.request,
 		Plan: func(
 			ctx context.Context,
 			req *schedulingservice.TransitionSwapRequest,

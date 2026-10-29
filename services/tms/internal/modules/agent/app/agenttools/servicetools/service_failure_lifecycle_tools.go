@@ -306,31 +306,7 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 		Refused: func(*serviceFailureEdit) string {
 			return "Would update the service failure."
 		},
-		Render: func(
-			_ *serviceFailureEdit,
-			plan *servicefailureports.ServiceFailureLifecyclePreview,
-		) (*agentpreview.ToolPreview, error) {
-			change, err := toolpreview.Changed(
-				serviceFailureRecord(plan.Before),
-				plan.Before,
-				plan.After,
-				toolpreview.Only(
-					changepreview.FieldReasonCodeID,
-					changepreview.FieldNotes,
-					paramInternalNotes,
-					paramX12Status,
-					paramX12Reason,
-					paramX12Exception,
-				),
-				toolpreview.WithRefs(serviceFailureUserRefs),
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return toolpreview.Build(
-				"Would update service failure "+plan.Before.Number+".", change), nil
-		},
+		Render: renderServiceFailureEdit,
 		Run: func(
 			ctx context.Context,
 			edit *serviceFailureEdit,
@@ -348,6 +324,32 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 			return serviceFailureResult("updated", saved), nil
 		},
 	})
+}
+
+func renderServiceFailureEdit(
+	_ *serviceFailureEdit,
+	plan *servicefailureports.ServiceFailureLifecyclePreview,
+) (*agentpreview.ToolPreview, error) {
+	change, err := toolpreview.Changed(
+		serviceFailureRecord(plan.Before),
+		plan.Before,
+		plan.After,
+		toolpreview.Only(
+			changepreview.FieldReasonCodeID,
+			changepreview.FieldNotes,
+			paramInternalNotes,
+			paramX12Status,
+			paramX12Reason,
+			paramX12Exception,
+		),
+		toolpreview.WithRefs(serviceFailureUserRefs),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(
+		"Would update service failure "+plan.Before.Number+".", change), nil
 }
 
 type serviceFailureTransition struct {
